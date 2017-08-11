@@ -6,10 +6,10 @@
             Documentation
         </a>
         <div class="item">
-            <form id="tocsearch2" method="get" target="_blank" action="https://www.bing.com/search">
+            <form id="tocsearch2" role="form" method="get" target="_blank" action="https://www.bing.com/search">
                 <div class="ui fluid icon input">
                     <input type="hidden" name="q1" value="site:@homeurl@" />
-                    <input type="search" name="q" placeholder="Search...">
+                    <input type="search" name="q" placeholder="Search..." aria-label="Search Documentation">
                     <i onclick="document.getElementById('tocsearch2').submit();" tabindex="0" class="search link icon" aria-label="Search" role="button"></i>
                 </div>
             </form>

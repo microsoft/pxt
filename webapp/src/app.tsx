@@ -1398,9 +1398,9 @@ export class ProjectView
             agreeClass: "positive focused",
             htmlBody: `
 <p>${Util.htmlEscape(pxt.appTarget.description)}</p>
-<p>${lf("{0} version:", Util.htmlEscape(pxt.appTarget.name))} <a class="focused" href="${Util.htmlEscape(pxt.appTarget.appTheme.githubUrl)}/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.target)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>
-<p>${lf("{0} version:", "Microsoft MakeCode")} <a href="https://github.com/Microsoft/pxt/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.pxt)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
-${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}" target="_blank">${Util.htmlEscape(compileService.gittag)}</a></p>` : ""}
+<p>${lf("{0} version:", Util.htmlEscape(pxt.appTarget.name))} <a class="focused" href="${Util.htmlEscape(pxt.appTarget.appTheme.githubUrl)}/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.target)}" aria-label="${lf("{0} version : {1}", Util.htmlEscape(pxt.appTarget.name), Util.htmlEscape(pxt.appTarget.versions.target))}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>
+<p>${lf("{0} version:", "Microsoft MakeCode")} <a href="https://github.com/Microsoft/pxt/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.pxt)}" aria-label="${lf("{0} version: {1}", "Microsoft MakeCode", Util.htmlEscape(pxt.appTarget.versions.pxt))}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
+${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}" aria-label="${lf("{0} version: {1}", "C++ runtime", Util.htmlEscape(compileService.gittag))}" target="_blank">${Util.htmlEscape(compileService.gittag)}</a></p>` : ""}
 `
         }).done();
     }
@@ -1436,7 +1436,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             .then(resp => {
                 const svg = pxt.blocks.render(resp, { snippetMode: true });
                 const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
-                return pxt.blocks.layout.blocklyToSvgAsync(svg, '', viewBox[0], viewBox[1], viewBox[2], viewBox[3]);
+                return pxt.blocks.layout.blocklyToSvgAsync(svg, viewBox[0], viewBox[1], viewBox[2], viewBox[3]);
             }).then(re => re.xml);
     }
 
@@ -1634,13 +1634,13 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                             <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() }/>
                         </div>
 
-                        <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
+                        <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu") }>
                             {!sandbox ? <div className="left menu">
                                 <span id="logo" className="ui item logo">
                                     {targetTheme.logo || targetTheme.portraitLogo
-                                        ? <a className={`ui image ${targetTheme.portraitLogo ? " portrait hide" : ''}`} target="_blank" rel="noopener" href={targetTheme.logoUrl} aria-label={lf("{0} website", targetTheme.boardName)} role="menuitem"><img className="ui logo" src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>
+                                        ? <a className={`ui image ${targetTheme.portraitLogo ? " portrait hide" : ''}`} target="_blank" rel="noopener" href={targetTheme.logoUrl} aria-label={lf("{0} website", targetTheme.boardName) } role="menuitem"><img className="ui logo" src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>
                                         : <span className="name">{targetTheme.name}</span>}
-                                    {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" rel="noopener" href={targetTheme.logoUrl} aria-label={lf("{0} website", targetTheme.boardName)} role="menuitem"><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>) : null}
+                                    {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" rel="noopener" href={targetTheme.logoUrl} aria-label={lf("{0} website", targetTheme.boardName) } role="menuitem"><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>) : null}
                                 </span>
                                 {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="folder open large" ariaLabel={lf("Create or open recent project") } text={lf("Projects") } onClick={() => this.openProject() } /> : null}
                                 {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project") } text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
@@ -1687,9 +1687,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
                                 {inTutorial ? <sui.ButtonMenuItem class="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial(true) } /> : undefined}
                                 {!sandbox ? <a id="organization" href={targetTheme.organizationUrl} aria-label={`${targetTheme.organization} Logo`} role="menuitem" target="blank" rel="noopener" className="ui item logo" onClick={() => pxt.tickEvent("menu.org") }>
-
                                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>
+                                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`} />
                                         : <span className="name">{targetTheme.organization}</span>}
                                     {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>) : null}
                                 </a> : undefined }
@@ -1702,19 +1701,19 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     </div>
                     : undefined}
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined }
+                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
                 </div>
                 <div id="simulator">
                     <aside id="filelist" className="ui items">
-                        <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden">{lf("Simulator")}</label>
-                        <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-describedby="boardviewLabel" tabIndex={0}>
+                        <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden">{lf("Simulator") }</label>
+                        <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-labelledby="boardviewLabel" tabIndex={0}>
                         </div>
-                        { !isHeadless ? <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar")}>
+                        { !isHeadless ? <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar") }>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
                                 {run ? <sui.Button key='runbtn' class={`play-button ${this.state.running ? "stop" : "play"}`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
                                 {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
-                                {trace ? <sui.Button key='debug'  class={`trace-button ${this.state.tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace() } /> : undefined}
+                                {trace ? <sui.Button key='debug' class={`trace-button ${this.state.tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace() } /> : undefined}
                             </div>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {audio ? <sui.Button key='mutebtn' class={`mute-button ${this.state.mute ? 'red' : ''}`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
@@ -1736,9 +1735,9 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 </div>
                 {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined }
                 {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined }
-                {hideEditorToolbar ? undefined : <div id="editortools" role="complementary" aria-label={lf("Editor toolbar")}>
+                {hideEditorToolbar ? undefined : <div id="editortools" role="complementary" aria-label={lf("Editor toolbar") }>
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
-                </div> }
+                </div>}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
@@ -1753,7 +1752,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className="icon download"/>{lf("Download") }</a></span>
                 </div> : undefined}
                 {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment" role="alert">
-                    <button aria-label={lf("Close")} tabIndex={0} className="ui right floated icon button clear inverted" onClick={consentCookie}>
+                    <button aria-label={lf("Close") } tabIndex={0} className="ui right floated icon button clear inverted" onClick={consentCookie}>
                         <i className="remove icon"></i>
                     </button>
                     {lf("By using this site you agree to the use of cookies for analytics.") }
@@ -2180,7 +2179,14 @@ $(document).ready(() => {
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
             if (useLang) pxt.tickEvent("locale." + useLang + (live ? ".live" : ""));
             lang.initialLang = useLang;
-            return Util.updateLocalizationAsync(config.commitCdnUrl, useLang, pxt.appTarget.versions.pxtCrowdinBranch, live);
+            return Util.updateLocalizationAsync(
+                pxt.appTarget.id,
+                false,
+                config.commitCdnUrl,
+                useLang,
+                pxt.appTarget.versions.pxtCrowdinBranch,
+                pxt.appTarget.versions.branch,
+                live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())

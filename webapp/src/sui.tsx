@@ -302,11 +302,14 @@ export class Popup extends data.Component<UiProps, {}> {
 export class Field extends data.Component<{
     label?: string;
     children?: any;
+    ariaLabel?: string;
+    htmlFor?: string;
 }, {}> {
     renderCore() {
         return (
             <div className="field">
-                {this.props.label ? <label>{this.props.label}</label> : null}
+                {this.props.label ? <label htmlFor={!this.props.ariaLabel ? this.props.htmlFor : undefined}>{this.props.label}</label> : null}
+                {this.props.ariaLabel && this.props.htmlFor ? (<label htmlFor={this.props.htmlFor} className="accessible-hidden">{this.props.ariaLabel}</label>) : ""}
                 {this.props.children}
             </div>
         );
@@ -327,6 +330,7 @@ export class Input extends data.Component<{
     copy?: boolean;
     selectOnClick?: boolean;
     id?:string;
+    ariaLabel?:string;
 }, {}> {
 
     copy() {
@@ -357,7 +361,7 @@ export class Input extends data.Component<{
             : null;
 
         return (
-            <Field label={p.label}>
+            <Field ariaLabel={p.ariaLabel} htmlFor={p.id} label={p.label}>
                 <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "") }>
                     {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
                     {!p.lines || p.lines == 1 ? <input

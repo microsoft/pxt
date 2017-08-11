@@ -283,7 +283,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
 
     if (!args[0]) throw new Error("filename missing");
     switch (cmd.toLowerCase()) {
-        case "upload": return uploadCrowdinAsync(branch, prj, key, args[0]);
+        case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
         case "download": {
             if (!args[1]) throw new Error("output path missing");
             const fn = path.basename(args[0]);
@@ -307,8 +307,9 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
     }
 }
 
-function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string): Promise<void> {
-    const fn = path.basename(p);
+function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string, dir?: string): Promise<void> {
+    let fn = path.basename(p);
+    if (dir) fn = dir.replace(/[\\/]*$/g, '') + '/' + fn;
     const data = JSON.parse(fs.readFileSync(p, "utf8")) as Map<string>;
     console.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}${branch ? `?branch=${branch}` : ''}`);
     return pxt.crowdin.uploadTranslationAsync(branch, prj, key, fn, JSON.stringify(data));
@@ -1208,10 +1209,12 @@ function maxMTimeAsync(dirs: string[]) {
 export function buildTargetAsync(): Promise<void> {
     if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync()
+
     return simshimAsync()
         .then(() => buildFolderAsync('sim', true, 'sim'))
+        .then(() => extractLocStringsAsync("sim-strings", ["sim"]))
         .then(buildTargetCoreAsync)
-        .then(buildSemanticUIAsync)
+        .then(() => buildSemanticUIAsync())
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildFolderAsync('editor', true, 'editor'))
         .then(() => buildFolderAsync('server', true, 'server'))
@@ -1353,28 +1356,37 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     if (!cfg.appTheme.htmlDocIncludes)
         cfg.appTheme.htmlDocIncludes = {}
 
-    cfg.appTheme.locales = {}
-
-    let lpath = "docs/_locales"
-    if (fs.existsSync(lpath)) {
-        for (let loc of fs.readdirSync(lpath)) {
-            let fn = lpath + "/" + loc + "/_theme.json"
-            if (fs.existsSync(fn))
-                cfg.appTheme.locales[loc.toLowerCase()] = readJson(fn)
-        }
-    }
-
     if (fs.existsSync("built/templates.json")) {
         cfg.appTheme.htmlTemplates = readJson("built/templates.json")
     }
 
+    // extract strings from theme for target
+    const theme = cfg.appTheme;
+    let targetStrings: pxt.Map<string> = {};
+    if (theme.title) targetStrings[theme.title] = theme.title;
+    if (theme.name) targetStrings[theme.name] = theme.name;
+    if (theme.description) targetStrings[theme.description] = theme.description;
+    function walkDocs(docs: pxt.DocMenuEntry[]) {
+        if (!docs) return;
+        docs.forEach(doc => {
+            targetStrings[doc.name] = doc.name;
+            walkDocs(doc.subitems);
+        })
+    }
+    walkDocs(theme.docMenu);
+    let targetStringsSorted: pxt.Map<string> = {};
+    Object.keys(targetStrings).sort().map(k => targetStringsSorted[k] = k);
+
+    // write files
     nodeutil.mkdirP("built");
     fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
+    fs.writeFileSync("built/target-strings.json", JSON.stringify(targetStringsSorted, null, 2))
 }
 
-function buildSemanticUIAsync() {
+function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     const rtlcss = require('rtlcss');
     const autoprefixer = require('autoprefixer');
+    const forceRedbuild = parsed && parsed.flags["force"] || false;
 
     if (!fs.existsSync(path.join("theme", "style.less")) ||
         !fs.existsSync(path.join("theme", "theme.config")))
@@ -1388,7 +1400,7 @@ function buildSemanticUIAsync() {
             .some(stat => stat.mtime > csstime);
     }
 
-    if (!dirty) return Promise.resolve();
+    if (!dirty && !forceRedbuild) return Promise.resolve();
 
     nodeutil.mkdirP(path.join("built", "web"));
     return nodeutil.spawnAsync({
@@ -1414,6 +1426,13 @@ function buildSemanticUIAsync() {
         let rtlCss = rtlcss.process(semCss);
         pxt.debug("converting semantic css to rtl");
         fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
+    }).then(() => {
+        if (!fs.existsSync(path.join("theme", "blockly.less")))
+            return Promise.resolve();
+        return nodeutil.spawnAsync({
+            cmd: "node",
+            args: ["node_modules/less/bin/lessc", "theme/blockly.less", "built/web/blockly.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
+        })
     })
 }
 
@@ -1833,9 +1852,9 @@ class SnippetHost implements pxt.Host {
                         "pxt-core.d.ts",
                         "pxt-helpers.ts"
                     ] : [
-                        "main.blocks", //TODO: Probably don't want this
-                        "main.ts",
-                    ]
+                            "main.blocks", //TODO: Probably don't want this
+                            "main.ts",
+                        ]
                 })
             }
             else if (filename == "main.ts") {
@@ -3430,7 +3449,9 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
         }
         return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
             .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
-    } else return uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key)
+    } else return execCrowdinAsync("upload", "built/target-strings.json", crowdinDir)
+        .then(() => execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir))
+        .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key))
         .then(() => uploadDocs ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key) : Promise.resolve());
 }
 
@@ -4136,6 +4157,66 @@ function webstringsJson() {
     return missing
 }
 
+function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
+    let prereqs: string[] = [];
+    dirs.forEach(dir => prereqs = prereqs.concat(nodeutil.allFiles(dir, 20)));
+
+    let errCnt = 0;
+    let translationStrings: pxt.Map<string> = {}
+
+    function processLf(filename: string) {
+        if (!/\.(ts|tsx|html)$/.test(filename)) return
+        if (/\.d\.ts$/.test(filename)) return
+
+        pxt.debug(`extracting strings from${filename}`);
+        fs.readFileSync(filename, "utf8").split('\n').forEach((line: string, idx: number) => {
+            function err(msg: string) {
+                console.log("%s(%d): %s", filename, idx, msg);
+                errCnt++;
+            }
+
+            while (true) {
+                let newLine = line.replace(/\blf(_va)?\s*\(\s*(.*)/, (all, a, args) => {
+                    let m = /^("([^"]|(\\"))+")\s*[\),]/.exec(args)
+                    if (m) {
+                        try {
+                            let str = JSON.parse(m[1])
+                            translationStrings[str] = str;
+                        } catch (e) {
+                            err("cannot JSON-parse " + m[1])
+                        }
+                    } else {
+                        if (!/util\.ts$/.test(filename))
+                            err("invalid format of lf() argument: " + args)
+                    }
+                    return "BLAH " + args
+                })
+                if (newLine == line) return;
+                line = newLine
+            }
+        })
+    }
+
+    let fileCnt = 0;
+    prereqs.forEach(pth => {
+        fileCnt++;
+        processLf(pth);
+    });
+
+    let tr = Object.keys(translationStrings)
+    tr.sort()
+    let strings: pxt.Map<string> = {};
+    tr.forEach(function (k) { strings[k] = k; });
+
+    nodeutil.mkdirP('built');
+    fs.writeFileSync(`built/${output}.json`, JSON.stringify(strings, null, 2));
+
+    pxt.log("log strings: " + fileCnt + " files; " + tr.length + " strings -> " + output + ".json");
+    if (errCnt > 0)
+        pxt.log(`${errCnt} errors`);
+    return Promise.resolve();
+}
+
 function initCommands() {
     // Top level commands
     simpleCmd("help", "display this message or info about a command", pc => {
@@ -4353,7 +4434,17 @@ function initCommands() {
     advancedCommand("uploadfile", "upload file under <CDN>/files/PATH", uploadFileAsync, "<path>");
     advancedCommand("service", "simulate a query to web worker", serviceAsync, "<operation>");
     advancedCommand("time", "measure performance of the compiler on the current package", timeAsync);
-    advancedCommand("buildcss", "build required css files", buildSemanticUIAsync);
+
+    p.defineCommand({
+        name: "buildcss",
+        help: "build required css files",
+        flags: {
+            force: {
+                description: "force re-compile of less files"
+            }
+        }
+    }, buildSemanticUIAsync);
+
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
     advancedCommand("crowdin", "upload, download files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")
