@@ -283,6 +283,21 @@ namespace pxt.runner {
                         }
                     `;
                 })
+                return nsStyleBuffer;
+            })
+            .then((nsStyleBuffer) => {
+                Object.keys(pxt.blocks.blockColors).forEach((ns) => {
+                    const color = pxt.blocks.blockColors[ns] as string;
+                    nsStyleBuffer += `
+                        span.docs.${ns.toLowerCase()} {
+                            background-color: ${color} !important;
+                            border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
+                        }
+                    `;
+                })
+                return nsStyleBuffer;
+            })
+            .then((nsStyleBuffer) => {
                 // Inject css
                 let nsStyle = document.createElement('style');
                 nsStyle.id = "namespaceColors";
@@ -306,10 +321,10 @@ namespace pxt.runner {
             const text = $el.text();
             const mbtn = /^(\|+)([^\|]+)\|+$/.exec(text);
             if (mbtn) {
-                const mtxt = /^([^\:]*?)\:?([^\:]+)$/.exec(mbtn[2]);
-                const ns = mtxt[1].toLowerCase();
+                const mtxt = /^(([^\:\.]*?)[\:\.])?(.*)$/.exec(mbtn[2]);
+                const ns = mtxt[2] ? mtxt[2].trim().toLowerCase() : '';
                 const lev = mbtn[1].length == 1 ? `docs inlinebutton ${ns}` : `docs inlineblock ${ns}`;
-                const txt = mtxt[2];
+                const txt = mtxt[3].trim();
                 $el.replaceWith($(`<span class="${lev}"/>`).text(U.rlf(txt)));
                 return renderNextAsync();
             }
