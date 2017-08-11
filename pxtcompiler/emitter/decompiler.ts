@@ -334,7 +334,7 @@ ${output}</xml>`;
                     error(expr)
                     return false;
                 }
-                return callInfo.attrs.blockId && !callInfo.isExpression && hasArrowFunction(callInfo);
+                return callInfo.attrs.blockId && !callInfo.attrs.handlerStatement && !callInfo.isExpression && hasArrowFunction(callInfo);
             }
             return false;
         }
@@ -1655,7 +1655,7 @@ ${output}</xml>`;
             }
 
             const hasCallback = hasArrowFunction(info);
-            if (hasCallback && !topLevel) {
+            if (hasCallback && !info.attrs.handlerStatement && !topLevel) {
                 return Util.lf("Events must be top level");
             }
 
@@ -1721,6 +1721,15 @@ ${output}</xml>`;
                         const inf = params[i];
                         if (inf.paramFieldEditor && (!inf.paramFieldEditorOptions || !inf.paramFieldEditorOptions["decompileLiterals"])) {
                             fail = Util.lf("Field editor does not support literal arguments");
+                        }
+                    }
+                    else if (e.kind === SK.ArrowFunction && info.attrs.mutate === "objectdestructuring") {
+                        const ar = e as ts.ArrowFunction;
+                        if (ar.parameters.length) {
+                            const param = unwrapNode(ar.parameters[0]) as ts.ParameterDeclaration;
+                            if (param.kind === SK.Parameter && param.name.kind !== SK.ObjectBindingPattern) {
+                                fail = Util.lf("Object destructuring mutation callbacks can only have destructuring patters as arguments");
+                            }
                         }
                     }
                 });

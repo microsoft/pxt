@@ -22,12 +22,7 @@ Looking to help translate **microbit.org**? Try http://translate.microbit.org/ t
 
 ## Live Translations
 
-To test your changes "live", use **beta** build and the ``?livelang=CODE`` query argument where ``CODE`` is your language ISO code. For example, to see the french translations:
-
-* micro:bit: https://makecode.microbit.org/beta?livelang=fr
-* Minecraft: https://minecraft.makecode.com/beta?livelang=fr
-
-Note that there may be a delay of up to 5 minutes before your changes in Crowdin make it into the "live" view.
+All translations are "almost" live from the Crowdin project. Our cloud keeps a cache of the translated strings and updates to the **validated** strings will make it to production. Note that there may be a delay of up to 5 minutes before your changes in Crowdin make it into the "live" view.
 
 ## Translating the editor interface
 
@@ -50,14 +45,12 @@ Open the developer tools and watch the console, PXT wil validate the localized s
 * Do not reorder parameters
 * Maintain the same structure of ``|`` and ``%variables%``
 
+
+## Translating Target specific strings
+
+The `pxtarget.json` file contains a number of strings which
+show up on doc pages (mostly menu items and target name). These strings are uploaded as the ``targetid/target-strings.json`` file in Crowdin and loaded by the editor on demand.
+
 ## Translating Documentation
 
 Translation of documentation pages are pulled from crowdin by the cloud backend automatically.
-
-## Translating Help menu in editor
-
-The `pxtarget.json` file contains a number of strings which
-show up on doc pages (mostly menu items and target name). These can
-be localized in ``_theme.json`` files. 
-
-Check out `pxt-sample` target for an example!

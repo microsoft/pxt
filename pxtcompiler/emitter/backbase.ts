@@ -35,6 +35,7 @@ namespace ts.pxtc {
         proc_setup(main?: boolean) { return "TBD" }
         push_fixed(reg: string[]) { return "TBD" }
         push_local(reg: string) { return "TBD" }
+        push_locals(n: number) { return "TBD" }
         proc_setup_end() { return "" }
         pop_fixed(reg: string[]) { return "TBD" }
         pop_locals(n: number) { return "TBD" }
@@ -79,12 +80,13 @@ namespace ts.pxtc {
 
     export class ProctoAssembler {
 
-        private t: ThumbSnippets; // TODO change back to AssemblerSnippets
+        private t: AssemblerSnippets;
         private bin: Binary;
         private resText = ""
         private exprStack: ir.Expr[] = []
         private calls: ProcCallInfo[] = []
         private proc: ir.Procedure = null;
+        private baseStackSize = 0; // real stack size is this + exprStack.length
 
         constructor(t: AssemblerSnippets, bin: Binary, proc: ir.Procedure) {
             this.t = t;
@@ -94,6 +96,24 @@ namespace ts.pxtc {
         }
 
         private write = (s: string) => { this.resText += asmline(s); }
+
+        private stackSize() {
+            return this.baseStackSize + this.exprStack.length
+        }
+
+        private stackAlignmentNeeded(offset = 0) {
+            if (!target.stackAlign) return 0
+            let npush = target.stackAlign - ((this.stackSize() + offset) & (target.stackAlign - 1))
+            if (npush == target.stackAlign) return 0
+            else return npush
+        }
+
+        private alignStack(offset = 0) {
+            let npush = this.stackAlignmentNeeded(offset)
+            if (!npush) return ""
+            this.write(this.t.push_locals(npush))
+            return this.t.pop_locals(npush)
+        }
 
         public getAssembly() {
             return this.resText;
@@ -154,7 +174,10 @@ ${baseLabel}:
                 }
             }
 
-            this.write(this.t.debugger_proc(bkptLabel))
+            if (this.bin.options.breakpoints) {
+                this.write(this.t.debugger_proc(bkptLabel))
+            }
+            this.baseStackSize = 1 // push {lr}
             this.write(this.t.proc_setup(true))
             // initialize the locals
             let numlocals = this.proc.locals.length
@@ -162,6 +185,7 @@ ${baseLabel}:
                 this.write(this.t.reg_gets_imm("r0", 0));
             this.proc.locals.forEach(l => {
                 this.write(this.t.push_local("r0") + " ;loc")
+                this.baseStackSize++
             })
             this.write(this.t.proc_setup_end())
 
@@ -440,8 +464,14 @@ ${baseLabel}:
             if (U.startsWith(name, "thumb::")) {
                 this.write(this.t.rt_call(name.slice(7), "r0", "r1"))
             } else {
-                this.write(this.t.call_lbl(name))
+                this.alignedCall(name)
             }
+        }
+
+        private alignedCall(name: string, cmt = "") {
+            let unalign = this.alignStack()
+            this.write(this.t.call_lbl(name) + cmt)
+            this.write(unalign)
         }
 
         private emitHelper(asm: string) {
@@ -468,7 +498,20 @@ ${baseLabel}:
                 return a
             })
 
+            if (this.stackAlignmentNeeded()) needsRePush = true
+
             if (needsRePush) {
+                let interAlign = this.stackAlignmentNeeded(argStmts.length)
+                if (interAlign) {
+                    this.write(this.t.push_locals(interAlign))
+                    for (let i = 0; i < interAlign; ++i) {
+                        let dummy = ir.numlit(0)
+                        dummy.totalUses = 1
+                        dummy.currUses = 1
+                        this.exprStack.unshift(dummy)
+                    }
+                }
+
                 for (let a of argStmts) {
                     let idx = this.exprStack.indexOf(a)
                     assert(idx >= 0)
@@ -584,14 +627,20 @@ ${baseLabel}:
             let parms = this.proc.args.map(a => a.def)
             this.write(this.t.proc_setup())
             this.write(this.t.push_fixed(["r5", "r6", "r7"]))
-            if (parms.length >= 1)
-                this.write(this.t.push_local("r1"))
+            this.baseStackSize = 4 // above
+
+            let numpop = parms.length
+
+            let alignment = this.stackAlignmentNeeded(parms.length)
+            if (alignment) {
+                this.write(this.t.push_locals(alignment))
+                numpop += alignment
+            }
 
             parms.forEach((_, i) => {
                 if (i >= 3)
                     U.userError(U.lf("only up to three parameters supported in lambdas"))
-                if (i > 0) // r1 already done
-                    this.write(this.t.push_local(`r${i + 1}`))
+                this.write(this.t.push_local(`r${i + 1}`))
             })
             this.write(this.t.proc_setup_end())
 
@@ -610,8 +659,8 @@ ${baseLabel}:
             this.emitHelper(asm) // using shared helper saves about 3% of binary size
             this.write(this.t.call_lbl(this.proc.label()))
 
-            if (parms.length)
-                this.write(this.t.pop_locals(parms.length))
+            if (numpop)
+                this.write(this.t.pop_locals(numpop))
             this.write(this.t.pop_fixed(["r6", "r5", "r7"]))
             this.write(this.t.proc_return())
             this.write("@stackempty litfunc");
@@ -620,7 +669,7 @@ ${baseLabel}:
         private emitCallRaw(name: string) {
             let inf = hex.lookupFunc(name)
             assert(!!inf, "unimplemented raw function: " + name)
-            this.write(this.t.call_lbl(name) + " ; *" + inf.argsFmt + " (raw)")
+            this.alignedCall(name)
         }
     }
 }
