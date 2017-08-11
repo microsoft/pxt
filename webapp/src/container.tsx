@@ -53,6 +53,8 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
 
 export class SideDocs extends data.Component<ISettingsProps, {}> {
     private firstLoad = true;
+    private openingSideDoc = false;
+
     public static notify(message: pxsim.SimulatorMessage) {
         let sd = document.getElementById("sidedocsframe") as HTMLIFrameElement;
         if (sd && sd.contentWindow) sd.contentWindow.postMessage(message, "*");
@@ -63,6 +65,7 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
     }
 
     setPath(path: string, blocksEditor: boolean) {
+        this.openingSideDoc = true;
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
         const mode = blocksEditor ? "blocks" : "js";
         const url = `${docsUrl}#doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
@@ -103,6 +106,12 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
 
     componentDidUpdate() {
         this.props.parent.editor.resize();
+
+        let sidedocstoggle = document.getElementById("sidedocstoggle");
+        if (this.openingSideDoc && sidedocstoggle) {
+            sidedocstoggle.focus();
+            this.openingSideDoc = false;
+        }
     }
 
     renderCore() {

@@ -63,7 +63,7 @@ namespace pxt.runner {
 
         const theme = pxt.appTarget.appTheme || {};
         if (woptions.showEdit && !theme.hideDocsEdit) { // edit button
-            const $editBtn = $('<a class="item"><i aria-label="edit" class="edit icon"></i></a>').click(() => {
+            const $editBtn = $(`<a class="item" role="button" tabindex="0" aria-label="${lf("edit")}"><i role="presentation" aria-hidden="true" class="edit icon"></i></a>`).click(() => {
                 decompileResult.package.compressToFileAsync(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
                     .done(buf => window.open(`${getEditUrl(options)}/#project:${window.btoa(Util.uint8ArrayToString(buf))}`, 'pxt'))
             })
@@ -76,7 +76,7 @@ namespace pxt.runner {
 
             // js menu
             if ($svg) {
-                const $svgBtn = $('<a class="item blocks"><i aria-label="Blocks" class="puzzle icon"></i></a>').click(() => {
+                const $svgBtn = $(`<a class="item blocks" role="button" tabindex="0" aria-label="${lf("Blocks")}"><i role="presentation" aria-hidden="true" class="puzzle icon"></i></a>`).click(() => {
                     if ($c.find('.blocks')[0])
                         $c.find('.blocks').remove();
                     else {
@@ -94,7 +94,7 @@ namespace pxt.runner {
             if (woptions.showJs) {
                 appendJs($c, $js, woptions);
             } else {
-                const $jsBtn = $('<a class="item js"><i aria-label="JavaScript" class="align left icon"></i></a>').click(() => {
+                const $jsBtn = $(`<a class="item js" role="button" tabindex="0" aria-label="${lf("JavaScript")}"><i role="presentation" aria-hidden="true" class="align left icon"></i></a>`).click(() => {
                     if ($c.find('.js')[0])
                         $c.find('.js').remove();
                     else {
@@ -108,7 +108,7 @@ namespace pxt.runner {
 
         // runner menu
         if (woptions.run && !theme.hideDocsSimulator) {
-            let $runBtn = $('<a class="item"><i aria-label="run" class="play icon"></i></a>').click(() => {
+            let $runBtn = $(`<a class="item" role="button" tabindex="0" aria-label="${lf("run")}"><i role="presentation" aria-hidden="true" class="play icon"></i></a>`).click(() => {
                 if ($c.find('.sim')[0])
                     $c.find('.sim').remove(); // remove previous simulators
                 else {
@@ -122,7 +122,7 @@ namespace pxt.runner {
         }
 
         if (woptions.hexname && woptions.hex) {
-            let $hexBtn = $('<a class="item"><i aria-label="download" class="download icon"></i></a>').click(() => {
+            let $hexBtn = $(`<a class="item" role="button" tabindex="0" aria-label="${lf("download")}"><i role="presentation" aria-hidden="true" class="download icon"></i></a>`).click(() => {
                 BrowserUtils.browserDownloadBinText(woptions.hex, woptions.hexname, pxt.appTarget.compile.hexMimeType);
             })
             $menu.append($hexBtn);
