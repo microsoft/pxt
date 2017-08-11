@@ -564,6 +564,7 @@ export class Editor extends srceditor.Editor {
             false, null, () => {
                 this.showAdvanced = !this.showAdvanced;
                 this.updateToolbox();
+                this.resize();
             }, lf("{id:category}Advanced")))
         }
 
@@ -604,7 +605,7 @@ export class Editor extends srceditor.Editor {
                     el = monacoEditor.createCategoryElement(ns, md.color, md.icon, true, blocks, undefined, categoryName);
                 }
                 else {
-                    el = monacoEditor.createCategoryElement("", md.color, md.icon, false, snippets.getBuiltinCategory(ns).blocks, null, ns);
+                    el = monacoEditor.createCategoryElement("", md.color, md.icon, false, snippets.getBuiltinCategory(ns).blocks, null, Util.rlf(`{id:category}${ns}`));
                 }
                 group.appendChild(el);
             });
