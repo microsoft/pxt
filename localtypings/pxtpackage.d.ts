@@ -39,6 +39,11 @@ declare namespace pxt {
         card?: CodeCard;
         additionalFilePath?: string;
         gistId?: string;
+        extension?: PackageExtension; // describe the associated extension if any
+    }
+
+    interface PackageExtension {
+
     }
 
     interface PlatformIOConfig {
