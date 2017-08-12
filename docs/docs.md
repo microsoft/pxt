@@ -21,6 +21,7 @@ for creating JavaScript/Blocks online editors.
 * [Macros](/writing-docs/macros)
 * [Anchors](/writing-docs/anchors)
 * [Routing](/writing-docs/routing)
+* [Tutorials](/writing-docs/tutorials)
 * [Testing](/writing-docs/testing)
 
 ### [Translations](/translate)
