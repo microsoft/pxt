@@ -32,6 +32,9 @@
 @docsHeaderFont: @headerFont;
 @docsPageFont: @pageFont;
 
+@emSize      : 14px;
+@fontSize    : 12pt;
+
 /*-------------------
    Links
 --------------------*/
