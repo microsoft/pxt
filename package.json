@@ -79,7 +79,9 @@
     "request": "^2.79.0",
     "postcss": "^6.0.9",
     "rtlcss": "^2.2.0",
-    "cssnano": "^3.10.0"
+    "cssnano": "^3.10.0",
+    "browserify": "^13.0.0",
+    "uglify-js": "^3.0.27"
   },
   "optionalDependencies": {
     "keytar": "^3.0.2",

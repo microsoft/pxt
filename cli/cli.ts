@@ -657,6 +657,7 @@ interface UploadOptions {
     localDir?: string;
     githubOnly?: boolean;
     builtPackaged?: string;
+    minify?: boolean;
 }
 
 interface BlobReq {
@@ -966,10 +967,13 @@ function uploadCoreAsync(opts: UploadOptions) {
             rdf = readFileAsync(p)
         }
 
+        const uglify = opts.minify ? require("uglify-js") : undefined;
+
         let fileName = uploadFileName(p)
         let mime = U.getMime(p)
+        const minified = opts.minify && mime == "application/javascript" && fileName !== "target.js";
 
-        pxt.log(`    ${p} -> ${fileName} (${mime})`)
+        pxt.log(`    ${p} -> ${fileName} (${mime})` + (minified ? ' minified' : ""));
 
         let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
         let content = ""
@@ -992,6 +996,16 @@ function uploadCoreAsync(opts: UploadOptions) {
                 if (/^sim/.test(fileName)) {
                     // just force blobs for everything in simulator manifest
                     content = content.replace(/\/(cdn|sim)\//g, "/blb/")
+                }
+
+                if (minified) {
+                    const res = uglify.minify(content);
+                    if (!res.error) {
+                        content = res.code;
+                    }
+                    else {
+                        pxt.log(`        Could not minify ${fileName} ${res.error}`)
+                    }
                 }
 
                 if (replFiles.indexOf(fileName) >= 0) {
@@ -1043,7 +1057,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                 U.assert(!!opts.builtPackaged);
                 let fn = path.join(opts.builtPackaged, opts.localDir, fileName)
                 nodeutil.mkdirP(path.dirname(fn))
-                return writeFileAsync(fn, data)
+                return minified ? writeFileAsync(fn, content) : writeFileAsync(fn, data)
             }
 
             let req = {
@@ -1196,11 +1210,11 @@ function ghpInitAsync() {
         .then(() => ghpGitAsync("push", "--set-upstream", "origin", "gh-pages"))
 }
 
-export function ghpPushAsync(builtPackaged: string) {
+export function ghpPushAsync(builtPackaged: string, minify = false) {
     let repoName = ""
     return ghpInitAsync()
         .then(() => ghpSetupRepoAsync())
-        .then(name => internalStaticPkgAsync(builtPackaged, (repoName = name)))
+        .then(name => internalStaticPkgAsync(builtPackaged, (repoName = name), minify))
         .then(() => nodeutil.cpR(path.join(builtPackaged, repoName), "gh-pages"))
         .then(() => ghpGitAsync("add", "."))
         .then(() => ghpGitAsync("commit", "-m", "Auto-push"))
@@ -3689,16 +3703,17 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const route = parsed.flags["route"] as string || ".";
     const ghpages = parsed.flags["githubpages"];
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
+    const minify = !!parsed.flags["minify"];
 
     pxt.log(`packaging editor to ${builtPackaged}`)
 
     let p = rimrafAsync(builtPackaged, {})
-        .then(() => internalBuildTargetAsync({ packaged: true }));
-    if (ghpages) return p.then(() => ghpPushAsync(builtPackaged));
-    else return p.then(() => internalStaticPkgAsync(builtPackaged, route));
+        .then(() => buildTargetAsync());
+    if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
+    else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify));
 }
 
-function internalStaticPkgAsync(builtPackaged: string, label: string) {
+function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean) {
     const pref = path.resolve(builtPackaged);
     const localDir = label == "./" ? "./" : label ? "/" + label + "/" : "/"
     return uploadCoreAsync({
@@ -3708,7 +3723,8 @@ function internalStaticPkgAsync(builtPackaged: string, label: string) {
             .concat(targetFileList())
             .concat(["targetconfig.json"]),
         localDir,
-        builtPackaged
+        builtPackaged,
+        minify
     }).then(() => renderDocs(builtPackaged, localDir))
 }
 
@@ -4412,6 +4428,10 @@ function initCommands() {
                 description: "Specifies the output folder for the generated files",
                 argument: "output",
                 aliases: ["o"]
+            },
+            "minify": {
+                description: "minify all generated js files",
+                aliases: ["m", "uglify"]
             }
         }
     }, staticpkgAsync);
