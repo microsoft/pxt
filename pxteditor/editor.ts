@@ -160,6 +160,8 @@ namespace pxt.editor {
         addPackage(): void;
         typecheckNow(): void;
 
+        openExtension(extension: string, url: string, consentRequired?: boolean): void;
+
         fireResize(): void;
 
         isBlocksEditor(): boolean;

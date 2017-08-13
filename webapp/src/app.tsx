@@ -28,6 +28,7 @@ import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
+import * as extensions from "./extensions";
 import * as sounds from "./sounds";
 import * as make from "./make";
 import * as baseToolbox from "./toolbox";
@@ -95,6 +96,7 @@ export class ProjectView
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
     projects: projects.Projects;
+    extensions: extensions.Extensions;
     shareEditor: share.ShareEditor;
     languagePicker: lang.LanguagePicker;
     tutorialComplete: tutorial.TutorialComplete;
@@ -833,6 +835,11 @@ export class ProjectView
     addPackage() {
         pxt.tickEvent("menu.addpackage");
         this.scriptSearch.showAddPackages();
+    }
+
+    openExtension(extension: string, url: string, consentRequired?: boolean) {
+        pxt.tickEvent("menu.openextension", {extension: extension});
+        this.extensions.showExtension(extension, url, consentRequired);
     }
 
     newEmptyProject(name?: string, documentation?: string) {
@@ -1753,6 +1760,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} hasGettingStarted={gettingStarted} />}
+                {sandbox ? undefined : <extensions.Extensions parent={this} ref={v => this.extensions = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
                 {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined}

@@ -553,6 +553,7 @@ export interface ModalProps {
 
     onClose?: Function;
     onOpen?: Function;
+    onPositionChanged?: Function;
 
     open?: boolean;
     mountNode?: any;
@@ -653,7 +654,10 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 }
             }
 
-            if (Object.keys(newState).length > 0) this.setState(newState);
+            if (Object.keys(newState).length > 0) {
+                this.setState(newState);
+                if (this.props.onPositionChanged) this.props.onPositionChanged(this.props);
+            }
         }
 
         this.animationId = requestAnimationFrame(this.setPosition);

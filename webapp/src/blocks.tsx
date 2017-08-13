@@ -32,6 +32,7 @@ export class Editor extends srceditor.Editor {
     showToolboxCategories: CategoryMode = CategoryMode.Basic;
     cachedToolbox: string;
     filters: pxt.editor.ProjectFilters;
+    extensions: pxt.PackageConfig[];
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -87,10 +88,10 @@ export class Editor extends srceditor.Editor {
                     // Search needs a toolbox with ALL blocks
                     let tbAll: Element;
                     if (this.showToolboxCategories !== CategoryMode.All) {
-                        tbAll = pxt.blocks.initBlocks(this.blockInfo, toolbox, CategoryMode.All, this.filters);
+                        tbAll = pxt.blocks.initBlocks(this.blockInfo, toolbox, CategoryMode.All, this.filters, this.extensions);
                     }
 
-                    let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, this.showToolboxCategories, this.filters);
+                    let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, this.showToolboxCategories, this.filters, this.extensions);
                     this.updateToolbox(tb, this.showToolboxCategories);
                     if (this.showToolboxCategories !== CategoryMode.None && showSearch) {
                         pxt.blocks.initSearch(this.editor, tb, tbAll || tb,
@@ -99,6 +100,18 @@ export class Editor extends srceditor.Editor {
                             searchTb => this.updateToolbox(searchTb, this.showToolboxCategories, true));
                     }
                     pxt.blocks.initFlyouts(this.editor);
+                    // Register extension callbacks
+                    pxt.blocks.initExtensions(this.editor, this.extensions, (extensionName) => {
+                        const extension = this.extensions.filter(c => c.name == extensionName)[0];
+                        const parsedRepo = pxt.github.parseRepoId(extension.installedVersion);
+                        pxt.packagesConfigAsync()
+                            .then((config) => {
+                                const repoStatus = pxt.github.repoStatus(parsedRepo, config);
+                                const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
+                                const url = `https://${parsedRepo.owner}.github.io/${repoName}/`;
+                                this.parent.openExtension(extension.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
+                            });
+                    })
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -555,6 +568,13 @@ export class Editor extends srceditor.Editor {
         if (searchField && searchField.value) {
             searchField.value = '';
         }
+        // Get extension packages
+        this.extensions = pkg.allEditorPkgs()
+            .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
+            // Make sure the package has extensions enabled, and is a github package.
+            // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
+            .filter(config => !!config && !!config.extension && config.installedVersion.indexOf('github') == 0);
+
         return Promise.resolve();
     }
 
@@ -666,9 +686,9 @@ export class Editor extends srceditor.Editor {
         let tbAll: Element;
 
         if (this.showToolboxCategories !== CategoryMode.All) {
-            tbAll = pxt.blocks.createToolbox(this.blockInfo, toolbox, CategoryMode.All, this.filters);
+            tbAll = pxt.blocks.createToolbox(this.blockInfo, toolbox, CategoryMode.All, this.filters, this.extensions);
         }
-        let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, this.showToolboxCategories, this.filters);
+        let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, this.showToolboxCategories, this.filters, this.extensions);
         this.updateToolbox(tb, this.showToolboxCategories);
 
         pxt.blocks.cachedSearchTb = tb;
