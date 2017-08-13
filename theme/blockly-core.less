@@ -161,51 +161,65 @@ span.blocklyTreeIcon {
     font-size: 1.2rem;
     height: 100%;
     display: none;
+    vertical-align: middle;
 }
 .blocklyTreeSelected .blocklyTreeIcon{
     color: white;
 }
 .blocklyTreeIcon.blocklyTreeIconsearch::before {
     content: "\f002";
+    vertical-align: inherit;
 }
 .blocklyTreeIcon.blocklyTreeIconDefault::before {
     content: "\f12e";
+    vertical-align: inherit;
 }
 .blocklyTreeIcon.blocklyTreeIconadvancedcollapsed::before {
     content: "\f078";
+    vertical-align: inherit;
 }
 .blocklyTreeIcon.blocklyTreeIconadvancedexpanded::before {
     content: "\f077";
+    vertical-align: inherit;
 }
 .blocklyTreeIcon.blocklyTreeIconmore::before {
     content: "\f141";
+    vertical-align: inherit;
 }
 .blocklyTreeIcon.blocklyTreeIconaddpackage::before {
     content: "\f055";
+    vertical-align: inherit;
 }
 .blocklyTreeIcon.blocklyTreeIconloops::before {
     content: "\f01e";
+    vertical-align: inherit;
 }
 .blocklyTreeIcon.blocklyTreeIconmath::before {
     content: "\f1ec";
+    vertical-align: inherit;
 }
 .blocklyTreeIcon.blocklyTreeIconlogic::before {
     content: "\f074";
+    vertical-align: inherit;
 }
 .blocklyTreeIcon.blocklyTreeIconvariables::before {
     content: "\f039";
+    vertical-align: inherit;
 }
 .blocklyTreeIcon.blocklyTreeIcontext::before {
     content: "\f035";
+    vertical-align: inherit;
 }
 .blocklyTreeIcon.blocklyTreeIconarrays::before {
     content: "\f0cb";
+    vertical-align: inherit;
 }
 .blocklyTreeIcon.blocklyTreeIconfunctions {
     font-family: xicon !important;
 }
 .blocklyTreeIcon.blocklyTreeIconfunctions::before {
     content: "\f107";
+    vertical-align: inherit;
 }
 .blocklyFlyoutLabelIcon.blocklyFlyoutIconfunctions {
     font-family: xicon !important;
@@ -234,6 +248,8 @@ span.blocklyTreeIcon {
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthWide;
         min-height: @blocklyRowHeightWide;
+    }
+    span.blocklyTreeIcon {
         line-height: @blocklyRowHeightWide;
     }
     #blocklyTrashIcon {
@@ -247,6 +263,8 @@ span.blocklyTreeIcon {
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthComputer;
         min-height: @blocklyRowHeightComputer;
+    }
+    span.blocklyTreeIcon {
         line-height: @blocklyRowHeightComputer;
     }
     #blocklyTrashIcon {
@@ -260,8 +278,10 @@ span.blocklyTreeIcon {
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthTablet;
         min-height: @blocklyRowHeightTablet;
-        line-height: @blocklyRowHeightTablet;
         border-left-width: 12px !important;
+    }
+    span.blocklyTreeIcon {
+        line-height: @blocklyRowHeightTablet;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthTablet;
@@ -276,10 +296,10 @@ span.blocklyTreeIcon {
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthMobile;
         min-height: @blocklyRowHeightMobile;
-        line-height: @blocklyRowHeightMobile;
         border-left-width: 6px !important;
     }
     span.blocklyTreeIcon {
+        line-height: @blocklyRowHeightMobile;
         font-size: 1.5rem;
     }
     #blocklyTrashIcon {
@@ -337,5 +357,8 @@ span.blocklyTreeIcon {
     /* Hide the blockly toolbox search */
     #blocklySearchArea {
         display: none !important;
+    }    
+    span.blocklyTreeIcon {
+        vertical-align: top !important;
     }
 }
