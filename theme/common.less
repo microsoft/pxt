@@ -182,63 +182,34 @@ div.simframe > iframe {
 
 /* Menu */
 #menubar .ui.menu .item.editor-menuitem {
-    padding: 0;
+    margin: calc(@mainMenuHeight/10);
+    padding: calc(@mainMenuHeight/10);
+    background: fade(@black, 30%) !important;
+    border-radius: 0.5rem !important;
 }
-#menubar .ui.menu .item.editor-menuitem:hover {
-    background: none;
+.ui.menu.fixed .item.editor-menuitem .item {
+    border-radius: 0px !important;
 }
-#menubar .ui.menu.fixed .item.editor-menuitem .ui.grid {
-    background: fade(@black, 40%) !important;
-    border: 3px solid fade(@black, 20%);
-    border-radius: 2.5rem !important;
-    position: relative;
+.ui.inverted.menu.fixed .item.editor-menuitem :first-child {
+    border-top-left-radius: 0.2rem !important;
+    border-bottom-left-radius: 0.2rem !important;
 }
-#menubar .ui.menu.fixed .ui.item.editor-menuitem .item {
-    border-radius: 2.5rem !important;
-    width: 140px;
-    z-index: 2;
-}
-#menubar .ui.menu.fixed .ui.item.editor-menuitem .item.link:hover {
-    background: none;
-}
-#menubar .ui.menu.fixed .ui.item.editor-menuitem .item:not(.active) {
-    opacity: 0.6;
-}
-#menubar .ui.menu.inverted.fixed .ui.item.editor-menuitem .active.item {
-    background: none;
-    color: @mainMenuInvertedBackground !important;
-}
-.ui.item.editor-menuitem .item.toggle {
-    z-index: 1 !important;
-    margin: 1px;
-    height: 46px;
-    left: 0;
-    position: absolute;
-    opacity: 1 !important;
-    background: none;
-    margin: 0;
-    -webkit-transition: margin-left .3s; /* Safari */
-    -moz-transition: margin-left .3s; /* Mozilla */
-    -webkit-transition-timing-function: ease-in; /* Mozilla */
-    -o-transition: margin-left .3s; /* Opera */
-    transition: margin-left .3s;
-    transition-timing-function: ease-in;
-}
-
 .ui.inverted.menu.fixed .item.editor-menuitem :first-child[style*="display:none"] + .ui.inverted.menu.fixed .item.editor-menuitem :not([style*="display:none"]) {
     border-top-left-radius: 0.2rem !important;
     border-bottom-left-radius: 0.2rem !important;
 }
-
-.active.item.blocks-menuitem ~ .toggle {
-    margin-left: 0 !important;
-    box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
-    background: @editorToggleColor !important;
+.ui.inverted.menu.fixed .item.editor-menuitem :last-child {
+    border-top-right-radius: 0.2rem !important;
+    border-bottom-right-radius: 0.2rem !important;
 }
-.active.item.javascript-menuitem ~ .toggle {
-    margin-left: 140px !important;
-    box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-    background: @editorToggleColor !important;
+// Add a transition between the blocks / js menu item toggle options
+.ui.inverted.menu .item.editor-menuitem .item {
+    -webkit-transition: background .3s; /* Safari */
+    -moz-transition: background .3s; /* Mozilla */
+    -webkit-transition-timing-function: ease-in; /* Mozilla */
+    -o-transition: background .3s; /* Opera */
+    transition: background .3s;
+    transition-timing-function: ease-in;
 }
 
 /* Help card */
@@ -863,7 +834,6 @@ Avatar
     .sandbox #maineditor {
         top: @sandboxMobileMenuHeight;
     }
-
     /* Logo */
     .ui.item.logo img {
         max-height: 2.5rem;
@@ -872,6 +842,15 @@ Avatar
     }
     .ui.mini.image {
         display: block !important;
+    }
+    /* Blocks / JS toggle */
+    #menubar .ui.menu .item.editor-menuitem {
+        margin: calc(@mobileMenuHeight/12);
+        padding: calc(@mobileMenuHeight/12);
+    }
+    .sandbox #menubar .ui.menu .item.editor-menuitem {
+        margin: calc(@sandboxMobileMenuHeight/15);
+        padding: calc(@sandboxMobileMenuHeight/15);
     }
 }
 
@@ -990,24 +969,5 @@ Avatar
         width: inherit;
         bottom: 1.5rem;
         padding: 0.3rem;
-    }
-}
-
-@media only screen and (max-height: @thinEditorBreakpoint) and (max-width: @computerBreakpoint){
-    /* sim-menuitem visible in this view (in sandbox mode), adjust toggle margins */
-    #root.sandbox .active.item.sim-menuitem ~ .toggle {
-        margin-left: 0 !important;
-        box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-    #root.sandbox .active.item.blocks-menuitem ~ .toggle {
-        margin-left: 40px !important;
-        box-shadow: 2px 0px 0px rgba(0,0,0,0.1), -2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-    #root.sandbox .active.item.javascript-menuitem ~ .toggle {
-        margin-left: 80px !important;
-        box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
     }
 }
