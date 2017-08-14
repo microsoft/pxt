@@ -332,7 +332,7 @@ namespace pxt.blocks {
             toolboxStyleBuffer += `
                 .blocklyTreeIcon.${className}::before {
                     content: "${icon}";
-                    vertical-align: inherit;
+                    vertical-align: top;
                 }
             `;
         }
