@@ -1,6 +1,6 @@
 # Microsoft MakeCode Blog
 
-## [Microbit Editor v0.12.58](/blog/microbit/v0.12.58)
+## [Microbit Editor v0.12.60](/blog/microbit/v0.12.58)
 
 August 11th, 2017
 
