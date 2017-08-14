@@ -292,7 +292,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
                 }
             },
             onVisible: () => {
-                initializeFocusTabIndex(mo.get(0));
+                initializeFocusTabIndex(mo.get(0), true);
             }
         });
         mo.modal("show")

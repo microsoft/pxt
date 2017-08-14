@@ -777,11 +777,11 @@ export class Modal extends data.Component<ModalProps, ModalState> {
     getMountNode = () => this.props.mountNode || document.body;
 
     handleClose = (e: Event) => {
-        const { onClose } = this.props;
-        if (onClose) onClose(e, this.props);
-
         if (this.state.open != false)
             this.setState({open: false})
+
+        const { onClose } = this.props;
+        if (onClose) onClose(e, this.props);
     }
 
     handleOpen = (e: Event) => {
@@ -1032,11 +1032,11 @@ export class Portal extends data.Component<PortalProps, PortalState> {
     }
 
     close = (e: Event) => {
-        const { onClose } = this.props;
-        if (onClose) onClose(e);
-
         if (this.state.open != false)
             this.setState({open: false})
+
+        const { onClose } = this.props;
+        if (onClose) onClose(e);
     }
 
     open = (e: Event) => {

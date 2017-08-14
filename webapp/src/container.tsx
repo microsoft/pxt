@@ -127,7 +127,7 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
             <div id="sidedocs">
                 <iframe id="sidedocsframe" src={docsUrl} title={lf("Documentation")} aria-atomic="true" aria-live="assertive" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
                 <div id="sidedocsbar">
-                    <a className="ui icon link" role="link" tabIndex={0} data-content={lf("Open documentation in new tab") } aria-label={lf("Open documentation in new tab") } onClick={() => this.popOut() } >
+                    <a className="ui icon link" role="link" tabIndex={0} data-content={lf("Open documentation in new tab") } aria-label={lf("Open documentation in new tab") } onClick={() => this.popOut() } onKeyDown={sui.fireClickOnEnter} >
                         <i className="external icon"></i>
                     </a>
                 </div>
