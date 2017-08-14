@@ -50,6 +50,13 @@
 @tallEditorBreakpoint: 44rem;
 @thinEditorBreakpoint: 24rem;
 
+/*--------------
+   Form Input
+---------------*/
+
+@inputPlaceholderColor: lighten(@inputColor, 25);
+@inputPlaceholderFocusColor: lighten(@inputColor, 10);
+
 /*-------------------
      Neutral Text
 --------------------*/
