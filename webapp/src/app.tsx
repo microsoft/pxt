@@ -526,7 +526,8 @@ export class ProjectView
                 switch (t.subtype) {
                     case 'loaded':
                         let tt = msg as pxsim.TutorialLoadedMessage;
-                        this.editor.filterToolbox({ blocks: tt.toolboxSubset, defaultState: pxt.editor.FilterState.Hidden }, CategoryMode.Basic);
+                        if (tt.toolboxSubset && Object.keys(tt.toolboxSubset).length > 0)
+                            this.editor.filterToolbox({ blocks: tt.toolboxSubset, defaultState: pxt.editor.FilterState.Hidden }, CategoryMode.Basic);
                         let tutorialOptions = this.state.tutorialOptions;
                         tutorialOptions.tutorialReady = true;
                         tutorialOptions.tutorialStepInfo = tt.stepInfo;
