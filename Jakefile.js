@@ -261,7 +261,7 @@ file("built/web/pxtlib.js", [
     "built/pxtwinrt.js"
 ], function () {
     jake.mkdirP("built/web")
-    jake.cpR("node_modules/jquery/dist/jquery.js", "built/web/jquery.js")
+    jake.cpR("node_modules/jquery/dist/jquery.min.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
     jake.cpR("node_modules/fuse.js/src/fuse.min.js", "built/web/fuse.min.js")
 
