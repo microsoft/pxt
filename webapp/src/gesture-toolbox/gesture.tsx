@@ -205,7 +205,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         }
 
         const downloadGesture = (gestureID: number) => {
-            this.setState({ editGestureMode: true });
+            // this.setState({ editGestureMode: true });
 
             // TODO: download this gesture as a .JSON file
         }
@@ -408,11 +408,14 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             <div>
                                 {
                                     this.state.data.map((gesture) =>
-                                        <div style={containerStyle} className="ui segments link" onClick={() => {editGesture(gesture.gestureID)}}>
+                                        <div style={containerStyle} className="ui segments link-effect" onMouseOver={() => {Viz.d3.select("#edit-gesture-btn").classed("inverted", false)}} onMouseOut={() => {Viz.d3.select("#edit-gesture-btn").classed("inverted", true)}}>
                                             <div className="ui segment inverted teal" style={headerStyle}>
                                                 <div className="ui header inverted left floated">
                                                     {gesture.name}
                                                 </div>
+                                                <button className="ui icon button purple inverted compact tiny right floated" id="edit-gesture-btn" onClick={() => {editGesture(gesture.gestureID)}}>
+                                                    Edit Gesture
+                                                </button>
                                                 <button className="ui icon button blue inverted compact tiny right floated" onClick={() => {downloadGesture(gesture.gestureID)}}>
                                                     <i className="icon cloud download"></i>
                                                 </button>
