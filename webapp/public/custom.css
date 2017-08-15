@@ -258,13 +258,6 @@ span.blocklyTreeIcon {
     background: none !important;
 }
 
-/* This is to ensure the leds inside showLeds fill the entire checkbox */
-text.blocklyCheckbox {
-    fill: #ff3030 !important;
-    text-shadow: 0px 0px 6px #f00;
-    font-size: 17pt !important;
-}
-
 /*
 .blocklyPreview {
     position: absolute;
