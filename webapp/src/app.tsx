@@ -960,7 +960,7 @@ export class ProjectView
             .then(() => this.saveProjectNameAsync())
             .then(() => this.saveFileAsync())
             .then(() => {
-                if (!pxt.appTarget.compile.hasHex) {
+                if (!pxt.appTarget.compile.hasHex || pxt.appTarget.compile.useMkcd) {
                     this.saveProjectToFileAsync()
                         .finally(() => {
                             this.setState({ isSaving: false });
