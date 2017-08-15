@@ -275,7 +275,7 @@ namespace pxt.runner {
                 });
                 let nsStyleBuffer = '';
                 Object.keys(res).forEach(ns => {
-                    const color = res[ns];
+                    const color = res[ns] || '#dddddd';
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
