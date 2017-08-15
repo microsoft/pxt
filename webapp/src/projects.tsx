@@ -123,8 +123,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             pxt.tickEvent("projects.gallery", { name: scr.name });
             this.hide();
             switch (scr.cardType) {
-                case "example": chgCode(scr); break;
-                case "blocksExample": chgCode(scr, true); break;
+                case "example": chgCode(scr, true); break;
+                case "codeExample": chgCode(scr, true); break;
                 case "tutorial": this.props.parent.startTutorial(scr.url); break;
                 default:
                     const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url);
