@@ -93,13 +93,32 @@
         }
     }
 
-    .ui.button.download-button:hover > span, i {
+    .ui.button.download-button:hover > span, 
+    .ui.button.download-button:hover > i {
         color: white !important;
     }
 
     /* Hyperlinks */
     a {
         color: yellow !important;
+    }
+
+    #sidedocsbar {
+        background-color: black !important;
+
+        a {
+            color: white !important;
+            outline: 1px solid white;
+
+            &:focus {
+                outline: 1px solid @selected;
+                color: @selected !important;
+
+                i, span {
+                    color: @selected !important;
+                }
+            }
+        }
     }
 
     /* Items */
