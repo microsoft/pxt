@@ -252,6 +252,7 @@ declare namespace ts.pxtc {
         nativeType?: string; // currently only "thumb"
         hasHex: boolean;
         useUF2?: boolean;
+        useMkcd?: boolean;
         useELF?: boolean;
         useModulator?: boolean;
         hexMimeType?: string;
