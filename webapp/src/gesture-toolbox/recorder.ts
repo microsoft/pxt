@@ -132,6 +132,15 @@ export class Recorder {
         }
     }
 
+    public PauseEventListeners() {
+        window.onkeydown = null;
+        window.onkeyup = null;
+    }
+
+    public ResumeEventListeners() {
+        this.SetRecordingMethod(this.recordMode);
+    }
+
 }
 
 

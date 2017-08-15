@@ -500,10 +500,10 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             <div style={containerStyle} className="ui segments">
                                 <div className="ui segment inverted teal" style={headerStyle}>
                                     <div className="ui input">
-                                        <input style={inputStyle} type="text" ref="gesture-name-input" value={this.state.data[this.curGestureIndex].name} onChange={renameGesture}></input>
+                                        <input style={inputStyle} type="text" ref="gesture-name-input" value={this.state.data[this.curGestureIndex].name} onFocus={() => {this.recorder.PauseEventListeners();}} onBlur={() => {this.recorder.ResumeEventListeners();}} onChange={renameGesture}></input>
                                     </div>
                                     <div className="ui input">
-                                        <input style={inputStyle} type="text" ref="description-input" value={this.state.data[this.curGestureIndex].description} onChange={renameDescription}></input>
+                                        <input style={inputStyle} type="text" ref="description-input" value={this.state.data[this.curGestureIndex].description} onFocus={() => {this.recorder.PauseEventListeners();}} onBlur={() => {this.recorder.ResumeEventListeners();}} onChange={renameDescription}></input>
                                     </div>
                                         {/* <button className="ui right labeled icon button compact tiny">
                                             <i className="edit icon"></i>
