@@ -44,6 +44,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     private graphInitialized: boolean;
     private webcamInitialized: boolean;
     private recorderInitialized: boolean;
+    private shouldGenerateBlocks: boolean;
 
     private recorder: Recorder.Recorder;
     private curGestureIndex: number;
@@ -73,10 +74,10 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.graphInitialized = false;
         this.webcamInitialized = false;
         this.recorderInitialized = false;
+        this.shouldGenerateBlocks = false;
     }
 
-
-    hide() {
+    generateBlocks() {
         // TODO: generate blocks here!
         let codeBlocks: string[] = [];
 
@@ -86,6 +87,12 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         }
 
         this.props.parent.updateFileAsync("custom.ts", Model.SingleDTWCore.GenerateNamespace(codeBlocks));
+
+        this.shouldGenerateBlocks = false;
+    }
+
+    hide() {
+        if (this.shouldGenerateBlocks) this.generateBlocks();
 
         this.setState({ visible: false, editGestureMode: false });
         this.resetGraph();
@@ -173,7 +180,10 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         const backToMain = () => {
             let cloneData = this.state.data.slice();
+            // update name
             cloneData[this.curGestureIndex].name = (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value;
+            // update blocks if was touched
+            if (this.shouldGenerateBlocks) this.generateBlocks();
             this.setState({ editGestureMode: false, data: cloneData });
 
             this.resetGraph();
@@ -229,6 +239,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
             cloneData[gi].gestures.splice(si, 1);
             this.models[this.curGestureIndex].Update(cloneData[gi].getCroppedData());
+            this.shouldGenerateBlocks = true;
             cloneData[gi].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
 
             this.setState({ data: cloneData });
@@ -244,6 +255,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             cloneData[gi].gestures[si].cropEndIndex = newEnd;
 
             this.models[this.curGestureIndex].Update(cloneData[gi].getCroppedData());
+            this.shouldGenerateBlocks = true;
             cloneData[gi].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
 
             this.setState({ data: cloneData });
@@ -275,13 +287,14 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         const initRecorder = (elem: any) => {
             if (elem != null && !this.recorderInitialized) {
-                const gestureState = this;
+                // const gestureState = this;
                 const onNewSampleRecorded = (gestureIndex: number, newSample: Types.GestureSample) => {
 
-                    let cloneData = gestureState.state.data.slice();
+                    let cloneData = this.state.data.slice();
                     // do not change the order of the following lines:
                     cloneData[gestureIndex].gestures.push(newSample);
                     this.models[this.curGestureIndex].Update(cloneData[gestureIndex].getCroppedData());
+                    this.shouldGenerateBlocks = true;
                     cloneData[gestureIndex].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
                     // TODO: allow users to change the video in the future.
                     // Probably just for the demo:
@@ -324,6 +337,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             let cloneData = this.state.data.slice();
             cloneData[this.curGestureIndex].name = event.target.value;
             this.models[this.curGestureIndex].UpdateName(cloneData[this.curGestureIndex].name);
+            this.shouldGenerateBlocks = true;
 
             this.setState({ data: cloneData });
         }
@@ -332,6 +346,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             let cloneData = this.state.data.slice();
             cloneData[this.curGestureIndex].description = event.target.value;
             this.models[this.curGestureIndex].UpdateDescription(cloneData[this.curGestureIndex].description);
+            this.shouldGenerateBlocks = true;
 
             this.setState({ data: cloneData });
         }
