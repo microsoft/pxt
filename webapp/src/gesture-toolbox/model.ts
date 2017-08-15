@@ -6,6 +6,7 @@ import * as pkg from "./../package";
 export class SingleDTWCore {
     private classNumber: number;
     private gestureName: string;
+    private description: string;
 
     private dtw: Algorithms.DTW<Vector>;
     private dba: Algorithms.DBA<Vector>;
@@ -45,6 +46,11 @@ export class SingleDTWCore {
   
     public UpdateName(newName: string) {
         this.gestureName = newName;
+    }
+
+  
+    public UpdateDescription(newDescription: string) {
+        this.description = newDescription;
     }
 
 
@@ -300,11 +306,15 @@ export class SingleDTWCore {
         let initialized_varName = `is_initialized${uniqueId}`;
         let initializePredictor_funName = `initialize_predictor${uniqueId}`;
         let gesture_funName = `onGesture${functionName}`;
+        let description = this.description;
 
         let blockCode = `
             let ${event_src_id_varName}: number = ${this.eventSourceId.toString()};
             let ${initialized_varName}: boolean = false;
 
+            /**
+             * ${description}
+             */
             //% blockId=gesture_block_${uniqueId} block="on gesture ${this.gestureName}"
             export function ${gesture_funName}(elements: () => void) {
                 if (!${initialized_varName})

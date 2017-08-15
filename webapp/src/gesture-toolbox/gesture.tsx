@@ -34,19 +34,12 @@ interface GestureToolboxState {
     connected?: boolean;
 }
 
-export function getParent(): IProjectView {
-    return p;
-}
-
-
-let p: IProjectView;
-
 export class GestureToolbox extends data.Component<ISettingsProps, GestureToolboxState> {
     private graphX: Viz.RealTimeGraph;
     private graphY: Viz.RealTimeGraph;
     private graphZ: Viz.RealTimeGraph;
     private recognitionOverlay: Viz.RecognitionOverlay;
-    private generatedCodeBlocks: string[];
+    // private generatedCodeBlocks: string[];
 
     private graphInitialized: boolean;
     private webcamInitialized: boolean;
@@ -75,9 +68,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         this.lastConnectedTime = 0;
         this.models = [];
-        this.generatedCodeBlocks = [];
-
-        p = this.props.parent;
+        // this.generatedCodeBlocks = [];
 
         this.graphInitialized = false;
         this.webcamInitialized = false;
@@ -86,11 +77,15 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
 
     hide() {
-        if (this.state.editGestureMode) {
-            let cloneData = this.state.data.slice();
-            cloneData[this.curGestureIndex].name = (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value;
-            this.setState({ data: cloneData });
+        // TODO: generate blocks here!
+        let codeBlocks: string[] = [];
+
+        for (let i = 0; i < this.models.length; i++) {
+            if (this.models[i].isRunning())
+                codeBlocks.push(this.models[i].GenerateBlock());
         }
+
+        this.props.parent.updateFileAsync("custom.ts", Model.SingleDTWCore.GenerateNamespace(codeBlocks));
 
         this.setState({ visible: false, editGestureMode: false });
         this.resetGraph();
@@ -196,7 +191,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const editGesture = (gestureID: number) => {
             this.setState({ editGestureMode: true });
             this.resetGraph();
-
             this.curGestureIndex = this.getGestureIndex(gestureID);
         }
 
@@ -206,18 +200,18 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             // TODO: download this gesture as a .JSON file
         }
 
-        const createGestureBlock = (gestureID: number) => {
-            this.setState({ editGestureMode: true });
+        // const createGestureBlock = (gestureID: number) => {
+        //     this.setState({ editGestureMode: true });
 
-            // TODO: create "singular" gesture block for the current gesture
-            // this.props.parent.updateFileAsync("custom.ts", this.models[this.curGestureIndex].GenerateBlock());
-            if(this.generatedCodeBlocks[this.curGestureIndex] == undefined)
-                this.generatedCodeBlocks.push(this.models[this.curGestureIndex].GenerateBlock());
-            else
-                this.generatedCodeBlocks[this.curGestureIndex] = this.models[this.curGestureIndex].GenerateBlock();
+        //     // TODO: create "singular" gesture block for the current gesture
+        //     // this.props.parent.updateFileAsync("custom.ts", this.models[this.curGestureIndex].GenerateBlock());
+        //     if(this.generatedCodeBlocks[this.curGestureIndex] == undefined)
+        //         this.generatedCodeBlocks.push(this.models[this.curGestureIndex].GenerateBlock());
+        //     else
+        //         this.generatedCodeBlocks[this.curGestureIndex] = this.models[this.curGestureIndex].GenerateBlock();
 
-            this.props.parent.updateFileAsync("custom.ts", Model.SingleDTWCore.GenerateNamespace(this.generatedCodeBlocks));
-        }
+        //     this.props.parent.updateFileAsync("custom.ts", Model.SingleDTWCore.GenerateNamespace(this.generatedCodeBlocks));
+        // }
 
         const importGesture = () => {
         }
@@ -327,10 +321,22 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         // }
 
         const renameGesture = (event: any) => {
-            (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value = event.target.value;
-            this.editedGestureName = event.target.value;
+            let cloneData = this.state.data.slice();
+            cloneData[this.curGestureIndex].name = event.target.value;
+            this.models[this.curGestureIndex].UpdateName(cloneData[this.curGestureIndex].name);
+
+            this.setState({ data: cloneData });
         }
 
+        const renameDescription = (event: any) => {
+            let cloneData = this.state.data.slice();
+            cloneData[this.curGestureIndex].description = event.target.value;
+            this.models[this.curGestureIndex].UpdateDescription(cloneData[this.curGestureIndex].description);
+
+            this.setState({ data: cloneData });
+        }
+
+        const inputStyle = { height: "30px", padding: "auto auto auto 6px" };
         const colossalStyle = { fontSize: "5rem" };
         const headerStyle = { height: "60px" };
         const videoStyle = { height: "258px", margin: "15px 0 15px 0" };
@@ -479,7 +485,10 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             <div style={containerStyle} className="ui segments">
                                 <div className="ui segment inverted teal" style={headerStyle}>
                                     <div className="ui input">
-                                        <input width="25" type="text" ref="gesture-name-input" value={this.state.data[this.curGestureIndex].name} onChange={renameGesture}></input>
+                                        <input style={inputStyle} type="text" ref="gesture-name-input" value={this.state.data[this.curGestureIndex].name} onChange={renameGesture}></input>
+                                    </div>
+                                    <div className="ui input">
+                                        <input style={inputStyle} type="text" ref="description-input" value={this.state.data[this.curGestureIndex].description} onChange={renameDescription}></input>
                                     </div>
                                         {/* <button className="ui right labeled icon button compact tiny">
                                             <i className="edit icon"></i>
@@ -488,7 +497,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                     {/* <button className="ui icon button blue inverted compact tiny right floated" onClick={() => {downloadGesture(this.state.data[this.curGestureIndex].gestureID)}}>
                                         <i className="icon cloud download"></i>
                                     </button>
-                                    <button className="ui icon button violet inverted compact tiny right floated" onClick={() => {createGestureBlock(this.state.data[this.curGestureIndex].gestureID)}}>
+                                     */}
+                                    {/* <button className="ui icon button violet inverted compact tiny right floated" onClick={() => {createGestureBlock(this.state.data[this.curGestureIndex].gestureID)}}>
                                         <i className="icon puzzle"></i>
                                         &nbsp;Create Block
                                     </button> */}
