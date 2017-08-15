@@ -88,12 +88,11 @@
 @mainMenuInvertedBackground: @black;
 @mainMenuTutorialBackground: @orange;
 
-@mainMenuHeight: 4.0rem;
+@mainMenuHeight: 4.5rem;
 @mobileMenuHeight: 3.5rem;
 @sandboxMobileMenuHeight: 3.0rem;
 
 @tutorialSelectedMenuColor: @primaryColor;
-@editorToggleColor: white;
 
 /*-------------------
    Layout
@@ -146,3 +145,5 @@
 @blocklyRowHeightComputer: 40px;
 @blocklyRowHeightTablet: 45px;
 @blocklyRowHeightMobile: 50px;
+
+@blocklyRowSubcategoryHeight: 30px;

@@ -63,11 +63,15 @@ text.blocklyText {
 
 span.blocklyTreeLabel {
     font-size:1.25rem;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
+}
+
+span.blocklyTreeLabel, text.blocklyText {
+    user-drag: none;
     user-select: none;
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }
 
 .blocklyFlyoutButtonShadow {
@@ -89,16 +93,6 @@ span.blocklyTreeLabel {
 
 div.blocklyTreeRow, span.blocklyTreeLabel {
     cursor: pointer;
-}
-
-/* This horrendous selector and the next are for subcategories in the Blockly toolbox */
-div.blocklyTreeRoot div div div div div.blocklyTreeRow {
-    border-left-width: 12px !important;
-    padding-left: 0px !important;
-}
-
-div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
-    font-size: 1rem;
 }
 
 /* The trash icon inside the toolbox */
@@ -129,7 +123,7 @@ div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
 /* Blockly toolbox icons */
 span.blocklyTreeIcon {
     opacity: 1;
-    margin: -0.2em 0.25em 0.0em 0.25em;
+    margin: 0.0em 0.25em 0.0em 0.25em;
     width: 30px;
     font-family: 'Icons';
     font-style: normal;
@@ -204,6 +198,25 @@ span.blocklyTreeIcon {
     fill-opacity: 0.5;
 }
 
+/* This horrendous selector and the next are for subcategories in the Blockly toolbox */
+div.blocklyTreeRoot div div div div div.blocklyTreeRow {
+    padding-left: 0px !important;
+    border-left-width: 12px !important;
+    min-width: @blocklyRowSubcategoryHeight;
+    min-height: @blocklyRowSubcategoryHeight;
+    line-height: @blocklyRowSubcategoryHeight;
+}
+
+div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
+    font-size: 1rem;
+}
+
+/* This is to ensure the leds inside showLeds fill the entire checkbox */
+text.blocklyCheckbox {
+    fill: #ff3030 !important;
+    text-shadow: 0px 0px 6px #f00;
+    font-size: 17pt !important;
+}
 
 /*******************************
         Media Adjustments
@@ -262,10 +275,12 @@ span.blocklyTreeIcon {
     }
     span.blocklyTreeIcon {
         font-size: 1.5rem;
-        margin: 0.0em 0.25em 0.0em 0.25em;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthMobile;
+    }
+    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
+        border-left-width: 8px !important;
     }
 }
 
@@ -305,9 +320,6 @@ span.blocklyTreeIcon {
     div.blocklyTreeRow {
         padding-right: 0;
         text-align: center;
-    }
-    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
-        border-left-width: 8px !important;
     }
     text.blocklyCheckbox {
         font-size: 17pt !important;
