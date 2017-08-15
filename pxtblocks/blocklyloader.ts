@@ -333,17 +333,19 @@ namespace pxt.blocks {
             toolboxStyleBuffer += `
                 .blocklyTreeIcon.${className}::before {
                     content: "${icon}";
+                    vertical-align: middle;
                 }
             `;
         }
         else {
             toolboxStyleBuffer += `
                 .blocklyTreeIcon.${className} {
-                    display: inline-block !important;
                     background-image: url("${pxt.webConfig.commitCdnUrl + encodeURI(i)}")!important;
-                    width: 1em;
-                    height: 1em;
-                    background-size: 1em!important;
+                    width: 30px;
+                    height: 100%;
+                    background-size: 20px !important;
+                    background-repeat: no-repeat !important;
+                    background-position: 50% 50% !important;
                 }
             `;
         }

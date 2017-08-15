@@ -611,7 +611,7 @@ ${files["main.ts"]}
                         let uptoSteps = steps.join();
                         uptoSteps = uptoSteps.replace(/((?!.)\s)+/g, "\n");
 
-                        let regex = /```(sim|block|blocks|shuffle|filterblocks)\n([\s\S]*?)\n```/gmi;
+                        let regex = /```(sim|block|blocks|shuffle|filterblocks)\s*\n([\s\S]*?)\n```/gmi;
                         let match: RegExpExecArray;
                         let code = '';
                         while ((match = regex.exec(uptoSteps)) != null) {
