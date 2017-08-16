@@ -163,12 +163,12 @@ namespace pxt.blocks {
             },
             'math_number': {
                 name: Util.lf("{id:block}number"),
-                url: '/blocks/math/random',
+                url: '/types/number',
                 category: 'math'
             },
             'math_number_minmax': {
                 name: Util.lf("{id:block}number"),
-                url: '/blocks/math/random',
+                url: '/blocks/math',
                 category: 'math'
             },
             'math_arithmetic': {
