@@ -33,6 +33,12 @@
 @fontSize    : 12pt;
 
 /*-------------------
+   Links
+--------------------*/
+
+@linkColor           : #0F6C9B;
+
+/*-------------------
    Breakpoints
 --------------------*/
 
@@ -46,6 +52,30 @@
 
 @tallEditorBreakpoint: 44rem;
 @thinEditorBreakpoint: 24rem;
+
+/*--------------
+   Form Input
+---------------*/
+
+@inputPlaceholderColor: lighten(@inputColor, 25);
+@inputPlaceholderFocusColor: lighten(@inputColor, 10);
+
+/*-------------------
+     Neutral Text
+--------------------*/
+ 
+@invertedLightTextColor      : rgba(255, 255, 255, 0.9);
+
+
+/*******************************
+             States
+*******************************/
+
+/*-------------------
+      Disabled
+--------------------*/
+
+@disabledOpacity: 0.80;
 
 /*******************************
      PXT Variables

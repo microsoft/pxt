@@ -44,7 +44,12 @@
   margin: 0;
   background: grey;
   box-shadow: none !important;
-   transition: none;
+  transition: none;
+
+  &:hover,
+  &:focus {
+    background: #5A5A5A;
+  }
 }
 
 .sideDocs #sidedocsframe {
@@ -86,6 +91,7 @@
 
 #sidedocsbar .ui.link .icon {
   cursor: pointer;
+  font-size: @h3;
 }
 
 /* Large Monitor */

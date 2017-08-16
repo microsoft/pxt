@@ -1,0 +1,320 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+
+/* Messages */
+#msg .hc {
+    background-color: black !important;
+    border: 1px solid white !important;
+    border-radius: 0em;
+    color: white !important;
+}
+
+.hc {
+
+@selected: #10C8CD;
+@disabled: #3ff23f;
+
+    /* root */
+    #root {
+        background: black !important;
+    }
+
+    /* Simulator */
+    #filelist {
+        background: black !important;
+
+        #boardview {
+            background: black !important;
+        }
+    }
+
+
+    /* Menu bar */
+    #menubar .menu > .item:focus,
+    #menubar #accessibleMenu > .item:focus,
+    #menubar .editor-menuitem > .item:focus {
+        border: 1px solid @selected !important;
+    }
+
+    #menubar .menu > .item:focus > i, 
+    #menubar .menu > .item:focus > span {
+        color: @selected !important;
+    }
+
+    #menubar #accessibleMenu > .item:focus,
+    #menubar .editor-menuitem > .item:focus:not(.active) {
+        i, span {
+            color: @selected !important;
+        }
+    }
+
+    #menubar .ui.inverted.menu, #menubar #accessibleMenu .ui.item.link.inverted:hover {
+        background: black !important;
+        border-bottom: 1px solid white;
+    }
+
+    #menubar #accessibleMenu .ui.item.link {
+        color: white !important;
+    }
+
+    /* Editor toolbar */
+    #editortools {
+        background: black !important;
+        border-top: 1px solid white;
+    }
+
+    /* Buttons */
+    .ui.button {
+        background: black !important;
+        color: white !important;
+        outline: 1px solid white;
+
+        &:focus {
+            outline: 1px solid @selected;
+            color: @selected !important;
+
+            i, span {
+                color: @selected !important;
+            }
+        }
+    }
+
+    .ui.button.disabled {
+        opacity: 1 !important;
+        outline: 1px solid @disabled;
+
+        i, span {
+            color: @disabled !important;
+        }
+    }
+
+    .ui.button.download-button:hover > span, 
+    .ui.button.download-button:hover > i {
+        color: white !important;
+    }
+
+    /* Hyperlinks */
+    a {
+        color: yellow !important;
+    }
+
+    #sidedocsbar {
+        background-color: black !important;
+
+        a {
+            color: white !important;
+            outline: 1px solid white;
+
+            &:focus {
+                outline: 1px solid @selected;
+                color: @selected !important;
+
+                i, span {
+                    color: @selected !important;
+                }
+            }
+        }
+    }
+
+    /* Items */
+    .ui.item {
+        background: black !important;
+        color: white !important;
+    }
+
+    /* Dropdown */
+    .ui.menu .ui.dropdown .menu {
+        border: 1px solid white !important;
+    }
+
+    .ui.menu .ui.dropdown .menu, .ui.menu .ui.dropdown .menu > .item {
+        background: black !important;
+        color: white !important;
+
+        &:focus {
+            outline: 1px solid @selected;
+            color: @selected !important;
+            font-weight: normal !important;
+
+            i, span {
+                color: @selected !important;
+                font-weight: normal !important;
+            }
+        }
+    }
+    
+    .ui.menu .ui.dropdown .menu > .divider {
+        background: black !important;
+        border-top: 1px solid white !important;
+    }
+
+    /* Editor switch toggle */
+    #menubar .ui.menu .item.editor-menuitem { 
+        border: 1px solid white !important;
+    }
+
+    #menubar .ui.menu .item.editor-menuitem .active {
+        background: @selected !important;
+        color: black !important;
+    }
+
+    /* Modals */
+    .ui.modal {
+        border: 2px solid white !important;
+        border-radius: initial !important;
+        box-shadow: initial !important;
+    }
+
+    .ui.modal, .ui.modal > .header, .ui.modal > .content, .ui.modal > .actions, .ui.modal > .segment {
+        background: black !important;
+        color: white !important;
+    }
+
+    /* Tab list in Modals*/
+    .ui.secondary.menu > .item:not(.active), .ui.secondary.pointing.menu > .item:not(.active), .ui.secondary.inverted.menu .link.item:not(.active) {
+        color: white !important;
+        border-color: white !important;
+    }
+
+    .ui.secondary.menu > .item.active, .ui.secondary.menu > .item.active:hover,
+    .ui.secondary.pointing.menu > .item.active, .ui.secondary.pointing.menu > .item.active:hover {
+        color: @selected !important;
+        border: 2px solid @selected !important;
+        border-radius: initial !important;
+        box-shadow: initial !important;
+    }
+
+    .ui.modal.projectsdialog .tabsegment, .ui.modal .ui.inverted.segment, .ui.modal .ui.primary.inverted.segment {
+        background: black !important;
+        color: white !important;
+        border-color: white !important;
+
+        .header {
+            opacity: 1 !important;
+            color: white;
+        }
+    }
+
+    /* Cards */
+    .card {
+        background: black !important;
+        border: 2px solid white !important;
+        border-radius: initial !important;
+        box-shadow: initial !important;
+
+        .header, .description, .meta {
+            color: white !important;
+        }
+        
+        &:focus {
+            border: 2px solid @selected !important;
+
+            .header, .description, .meta {
+                color: @selected !important;
+            }
+        }
+
+        .ui.orange.labels .label, .ui.orange.label {
+            background: @disabled !important;
+            border-color: @disabled !important;
+            color: black !important;
+        }
+    }
+
+    #cookiemsg {
+        background: black !important;
+        border-radius: 0em;
+        border: 1px solid white !important;
+    }
+
+    /* Tutorial */
+    .ui.message {
+        background-color: black !important;
+        color: white !important;
+
+        .tutorialmessage {
+            outline: 1px solid white !important;
+            border: none !important;
+        
+            &:focus {
+                outline: 1px solid @selected !important;
+                color: @selected !important;
+            }
+        }
+    }
+
+    .ui.label {
+        background-color: black !important;
+        border: 2px solid white !important;
+        
+        &:focus {
+            border-color: @selected !important;
+            outline: none;
+        }
+    }
+
+    .ui.blue.labels .label, .ui.blue.label {
+        background-color: @selected !important;
+        border-color: @selected !important;
+    }
+
+    /* Blockly / Monaco toolbox */
+    .blocklyTreeSelected {
+        background: @selected !important;
+    }
+
+    .blocklyToolboxDiv, .monacoToolboxDiv {
+        background: black !important;
+        border-left: 1px solid white !important; 
+        border-right: 1px solid white !important;
+    }
+
+    .blocklyTreeLabel, .blocklyTreeIcon {
+        color: white !important;
+    }
+
+    .blocklyFlyoutBackground {
+        fill: black !important;
+        border-right: 1px solid white !important;
+    }
+
+    .monacoFlyout {
+        background: black !important;
+        border-right: 1px solid white !important;
+    }
+
+    /* Editor toolbox */
+    .filemenu {
+        .item {
+            background: black !important;
+            color: white !important;
+            border: 1px solid white !important;
+        }
+
+        .item:focus, .item.active {
+            background: @selected !important;
+
+            span, i {
+                color: black !important;
+            }
+        }
+    }
+
+    /* PxtJson */
+    #maineditor {
+        border-left: 1px solid white !important;
+    }
+
+    #maineditor, .ui.segment.form {
+        background: black !important;
+            
+        label {
+            color: white !important;
+        }
+    }
+}

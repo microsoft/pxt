@@ -40,6 +40,19 @@ html, body {
     right: 0;
 }
 
+.accessible-hidden {
+    position: absolute !important;
+    display: block;
+    visibility: visible;
+    overflow: hidden;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    border: 0;
+    padding: 0;
+    clip: rect(0 0 0 0);
+}
+
 /* Main Editor layout */
 #maineditor {
     left: @simulatorWidth;
@@ -181,6 +194,25 @@ div.simframe > iframe {
 }
 
 /* Menu */
+#accessibleMenu {
+    position: absolute;
+    z-index: 1001;
+    top: -20em;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+
+    .ui.item.link {
+        position: absolute;
+        width: 100%;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .ui.item.link:focus {
+        top:20em;
+    }
+}
+
 #menubar .ui.menu .item.editor-menuitem {
     padding: 0;
 }
@@ -424,11 +456,50 @@ div.simframe > iframe {
 
 .ui.modal.projectsdialog > .content {
     padding: 0 !important;
+    position: relative;
 }
 
 .ui.modal.projectsdialog .tabsegment {
     min-height: 450px;
     background: white !important;
+}
+
+
+/*******************************
+        Modal Close Icon
+*******************************/
+
+.ui.modal .closeIcon {
+    position: absolute;
+    top: 0; 
+    right: 0;
+}
+.ui.modal.projectsdialog .closeIcon {
+    top: 0.4rem;
+    right: 0.2rem;
+}
+
+.ui.button.icon.clear {
+    background: transparent;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+.ui.button.icon.inverted.clear:hover, .ui.button.icon.inverted.clear:focus {
+    color: @grey !important;
+}
+
+/*******************************
+        Notification Dialog
+*******************************/
+
+.notificationDialog.warning .header, .notificationDialog.warning .content, .notificationDialog.warning .actions {
+    background-color: @blue;
+    color: white;
+}
+
+.notificationDialog.warning .content a {
+    color: white;
+    font-weight: 400;
 }
 
 /*******************************
@@ -917,6 +988,10 @@ Field editors
     }
     .active.item.javascript-menuitem ~ .toggle {
         margin-left: 40px !important;
+    }
+    #menubar #accessibleMenu {
+        height: @mobileMenuHeight !important;
+        min-height: @mobileMenuHeight !important;
     }
     /* Top Menu */
     #maineditor {

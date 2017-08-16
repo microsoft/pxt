@@ -1,15 +1,15 @@
 <div class="ui vertical accent inverted sidebar menu left hideprint">
-    <a href="/" class="header item">
+    <a href="/" class="header item focused" tabindex="0" title="Go to editor">
         @targetlogo@
         &nbsp; &nbsp;
         Documentation
     </a>
     <div class="item">
-        <form id="tocsearch1" method="get" action="https://www.bing.com/search">
+        <form id="tocsearch1" role="form" method="get" action="https://www.bing.com/search">
             <div class="ui fluid icon input">
                 <input type="hidden" name="q1" value="site:@homeurl@" />
-                <input type="search" name="q" placeholder="Search...">
-                <i onclick="document.getElementById('tocsearch1').submit();" class="search link icon"></i>
+                <input type="search" name="q" placeholder="Search..." aria-label="Search Documentation">
+                <i onclick="document.getElementById('tocsearch1').submit();" tabindex="0" class="search link icon" aria-label="Search" role="button"></i>
             </div>
         </form>
     </div>
@@ -22,7 +22,7 @@
 
 <div class="ui fixed accent borderless inverted main menu hideprint">
   <div class="ui container">
-    <a id="togglesidebar" class="launch icon item">
+    <a id="togglesidebar" class="launch icon item" tabindex="0" title="Side menu" aria-label="Side menu" role="menu" aria-expanded="false">
       <i class="content icon"></i>
     </a>
 
@@ -31,7 +31,7 @@
     </div>
     
     <div class="right menu">
-        <a href="/" class="header item">
+        <a href="/" class="header item" tabindex="0" title="Go to editor">
             @targetlogo@
         </a>
     </div>

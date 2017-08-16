@@ -13,6 +13,10 @@
 
 <body id='root' class='root'>
 
+<div id="accessibleMenu" role="menubar">
+    <a href="#mainContentArticle" class="ui item link" tabindex="0" role="menuitem">Skip to the main content</a>
+</div>
+
 <!-- @include tocheader.html -->
 
 <div class="pusher">
@@ -21,12 +25,12 @@
 
     <!-- @include toc.html -->
     
-    <div class="article">
+    <div class="article" id="mainContentArticle">
         
         <!-- @include header.html -->
 
         <div id="docs" class="main ui container mainbody">
-            <button id="printbtn" class="circular ui icon right floated button hideprint">
+            <button id="printbtn" class="circular ui icon right floated button hideprint" title="Print this page">
                 <i class="icon print"></i>
             </button>
             @body@
