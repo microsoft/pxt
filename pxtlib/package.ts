@@ -196,7 +196,7 @@ namespace pxt {
 
         /**
          * For the given package config or ID, looks through all the currently installed packages to find conflicts in
-         * Yotta settings
+         * Yotta settings and version spec
          */
         findConflictsAsync(pkgOrId: string | PackageConfig, version: string): Promise<cpp.PkgConflictError[]> {
             let conflicts: cpp.PkgConflictError[] = [];
@@ -212,29 +212,37 @@ namespace pxt {
                 })
                 .then((cfg) => {
                     pkgCfg = cfg;
-
                     // Iterate through all installed packages and check for conflicting settings
-                    if (pkgCfg && pkgCfg.yotta) {
-                        const yottaCfg = U.jsonFlatten(pkgCfg.yotta.config);
+                    if (pkgCfg) {
+                        const yottaCfg = pkgCfg.yotta ? U.jsonFlatten(pkgCfg.yotta.config) : null;
                         this.parent.sortedDeps().forEach((depPkg) => {
-                            const depConfig = depPkg.config || JSON.parse(depPkg.readFile(CONFIG_NAME)) as PackageConfig;
-                            const hasYottaSettings = !!depConfig && !!depConfig.yotta && !!depPkg.config.yotta.config;
-                            if (hasYottaSettings) {
-                                const depYottaCfg = U.jsonFlatten(depConfig.yotta.config);
-                                for (const settingName of Object.keys(yottaCfg)) {
-                                    const depSetting = depYottaCfg[settingName];
-                                    const isJustDefaults = pkgCfg.yotta.configIsJustDefaults || depConfig.yotta.configIsJustDefaults;
-                                    if (depYottaCfg.hasOwnProperty(settingName) && depSetting !== yottaCfg[settingName] && !isJustDefaults && (!depPkg.parent.config.yotta || !depPkg.parent.config.yotta.ignoreConflicts)) {
-                                        const conflict = new cpp.PkgConflictError(lf("conflict on yotta setting {0} between packages {1} and {2}", settingName, pkgCfg.name, depPkg.id));
-                                        conflict.pkg0 = depPkg;
-                                        conflict.settingName = settingName;
-                                        conflicts.push(conflict);
+                            let foundYottaConflict = false;
+                            if (yottaCfg) {
+                                const depConfig = depPkg.config || JSON.parse(depPkg.readFile(CONFIG_NAME)) as PackageConfig;
+                                const hasYottaSettings = !!depConfig && !!depConfig.yotta && !!depPkg.config.yotta.config;
+                                if (hasYottaSettings) {
+                                    const depYottaCfg = U.jsonFlatten(depConfig.yotta.config);
+                                    for (const settingName of Object.keys(yottaCfg)) {
+                                        const depSetting = depYottaCfg[settingName];
+                                        const isJustDefaults = pkgCfg.yotta.configIsJustDefaults || depConfig.yotta.configIsJustDefaults;
+                                        if (depYottaCfg.hasOwnProperty(settingName) && depSetting !== yottaCfg[settingName] && !isJustDefaults && (!depPkg.parent.config.yotta || !depPkg.parent.config.yotta.ignoreConflicts)) {
+                                            const conflict = new cpp.PkgConflictError(lf("conflict on yotta setting {0} between packages {1} and {2}", settingName, pkgCfg.name, depPkg.id));
+                                            conflict.pkg0 = depPkg;
+                                            conflict.settingName = settingName;
+                                            conflicts.push(conflict);
+                                            foundYottaConflict = true;
+                                        }
                                     }
                                 }
                             }
+                            if (!foundYottaConflict && pkgCfg.name === depPkg.id && depPkg._verspec != version && !/^file:/.test(depPkg._verspec) && !/^file:/.test(version)) {
+                                const conflict = new cpp.PkgConflictError(lf("version mismatch for package {0} (installed: {1}, installing: {2})", depPkg, depPkg._verspec, version));
+                                conflict.pkg0 = depPkg;
+                                conflict.isVersionConflict = true;
+                                conflicts.push(conflict);
+                            }
                         });
                     }
-
                     // Also check for conflicts for all the specified package's dependencies (recursively)
                     return Object.keys(pkgCfg.dependencies).reduce((soFar, pkgDep) => {
                         return soFar
@@ -259,7 +267,9 @@ namespace pxt {
                     const additionalConflicts: cpp.PkgConflictError[] = [];
                     conflicts.forEach((c) => {
                         additionalConflicts.push.apply(additionalConflicts, allAncestors(c.pkg0).map((anc) => {
-                            const confl = new cpp.PkgConflictError(lf("conflict on yotta setting {0} between packages {1} and {2}", c.settingName, pkgCfg.name, c.pkg0.id));
+                            const confl = new cpp.PkgConflictError(c.isVersionConflict ?
+                                lf("a dependency of {0} has a version mismatch with package {1} (installed: {1}, installing: {2})", anc.id, pkgCfg.name, c.pkg0._verspec, version) :
+                                lf("conflict on yotta setting {0} between packages {1} and {2}", c.settingName, pkgCfg.name, c.pkg0.id));
                             confl.pkg0 = anc;
                             return confl;
                         }));
