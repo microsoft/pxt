@@ -140,25 +140,9 @@ namespace pxt.runner {
             pxt.debug("Downloading screenshot for: " + woptions.hexname);
             let filename = woptions.hexname.substr(0, woptions.hexname.lastIndexOf('.'));
             let fontSize = window.getComputedStyle($svg.get(0).getElementsByClassName("blocklyText").item(0)).getPropertyValue("font-size");
-            const customCss = `
-.blocklyMainBackground {
-    stroke:none !important;
-}
-
-.blocklyText {
-    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
-    font-size:${fontSize} !important;
-}
-
-.blocklyCheckbox,
-.blocklyLed {
-    fill: #ff3030 !important;
-    text-shadow: 0px 0px 6px #f00;
-    font-size: 17pt !important;
-}`;
             let svgElement = $svg.get(0) as any;
             let bbox = $svg.get(0).getBoundingClientRect();
-            pxt.blocks.layout.svgToPngAsync(svgElement, customCss, 0, 0, bbox.width, bbox.height, 4)
+            pxt.blocks.layout.svgToPngAsync(svgElement, 0, 0, bbox.width, bbox.height, 4)
                 .done(uri => {
                     if (uri)
                         BrowserUtils.browserDownloadDataUri(
@@ -277,6 +261,54 @@ namespace pxt.runner {
         }, { package: options.package, snippetMode: true });
     }
 
+    function renderNamespaces(options: ClientRenderOptions): Promise<void> {
+        return pxt.runner.decompileToBlocksAsync('', options)
+            .then((r) => {
+                let res: {[ns: string]: string} = {};
+                const info = r.compileBlocks.blocksInfo;
+                info.blocks.forEach(fn => {
+                    const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+                    if (!res[ns]) {
+                        const nsn = info.apis.byQName[ns];
+                        if (nsn && nsn.attributes.color)
+                            res[ns] = nsn.attributes.color;
+                    }
+                });
+                let nsStyleBuffer = '';
+                Object.keys(res).forEach(ns => {
+                    const color = res[ns] || '#dddddd';
+                    nsStyleBuffer += `
+                        span.docs.${ns.toLowerCase()} {
+                            background-color: ${color} !important;
+                            border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
+                        }
+                    `;
+                })
+                return nsStyleBuffer;
+            })
+            .then((nsStyleBuffer) => {
+                Object.keys(pxt.blocks.blockColors).forEach((ns) => {
+                    const color = pxt.blocks.blockColors[ns] as string;
+                    nsStyleBuffer += `
+                        span.docs.${ns.toLowerCase()} {
+                            background-color: ${color} !important;
+                            border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
+                        }
+                    `;
+                })
+                return nsStyleBuffer;
+            })
+            .then((nsStyleBuffer) => {
+                // Inject css
+                let nsStyle = document.createElement('style');
+                nsStyle.id = "namespaceColors";
+                nsStyle.type = 'text/css';
+                let head = document.head || document.getElementsByTagName('head')[0];
+                head.appendChild(nsStyle);
+                nsStyle.appendChild(document.createTextNode(nsStyleBuffer));
+            });
+    }
+
     function renderInlineBlocksAsync(options: pxt.blocks.BlocksRenderOptions): Promise<void> {
         options = Util.clone(options);
         options.emPixels = 18;
@@ -290,8 +322,10 @@ namespace pxt.runner {
             const text = $el.text();
             const mbtn = /^(\|+)([^\|]+)\|+$/.exec(text);
             if (mbtn) {
-                const lev = mbtn[1].length == 1 ? "docs inlinebutton" : "docs inlineblock";
-                const txt = mbtn[2];
+                const mtxt = /^(([^\:\.]*?)[\:\.])?(.*)$/.exec(mbtn[2]);
+                const ns = mtxt[2] ? mtxt[2].trim().toLowerCase() : '';
+                const lev = mbtn[1].length == 1 ? `docs inlinebutton ${ns}` : `docs inlineblock ${ns}`;
+                const txt = mtxt[3].trim();
                 $el.replaceWith($(`<span class="${lev}"/>`).text(U.rlf(txt)));
                 return renderNextAsync();
             }
@@ -583,6 +617,7 @@ namespace pxt.runner {
 
         renderTypeScript(options);
         return Promise.resolve()
+            .then(() => renderNamespaces(options))
             .then(() => renderInlineBlocksAsync(options))
             .then(() => renderShuffleAsync(options))
             .then(() => renderLinksAsync(options, options.linksClass, options.snippetReplaceParent, false))

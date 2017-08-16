@@ -392,9 +392,6 @@ export class Editor extends srceditor.Editor {
         let blocklyColors = (Blockly as any).Colours;
         Util.jsonMergeFrom(blocklyColors, pxt.appTarget.appTheme.blocklyColors || {});
         (Blockly as any).Colours = blocklyColors;
-        // zoom out on mobile by default
-        if (pxt.BrowserUtils.isMobile())
-            this.editor.zoomCenter(-4);
         this.editor.addChangeListener((ev) => {
             Blockly.Events.disableOrphans(ev);
             if (ev.type != 'ui') {
@@ -643,7 +640,7 @@ export class Editor extends srceditor.Editor {
                 maxScale: 2.5,
                 minScale: .2,
                 scaleSpeed: 1.05,
-                startScale: 0.9
+                startScale: pxt.BrowserUtils.isMobile() ? 1.2 : 0.9
             },
             rtl: Util.isUserLanguageRtl()
         };

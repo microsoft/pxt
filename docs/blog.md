@@ -1,5 +1,11 @@
 # Microsoft MakeCode Blog
 
+## [Microbit Editor v0.12.60](/blog/microbit/v0.12.58)
+
+August 11th, 2017
+
+[Read more](/blog/microbit/v0.12.58)
+
 ## [Timing Adventures in Infrared](/blog/timing-adventures-in-infrared)
 
 June 20, 2017 by [mmoskal](https://github.com/mmoskal)

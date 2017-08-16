@@ -78,7 +78,8 @@ declare namespace pxt {
         productId?: string; // used by node-serial
         nameFilter?: string; // regex to match devices
         rawHID?: boolean;
-        log?: boolean;
+        log?: boolean; // pipe messages to log
+        chromeExtension?: string; // unique identifier of the chrome extension
     }
 
     interface AppCloud {
@@ -160,7 +161,6 @@ declare namespace pxt {
         termsOfUseUrl?: string;
         contactUrl?: string;
         accentColor?: string;
-        locales?: Map<AppTheme>;
         cardLogo?: string;
         appLogo?: string;
         htmlDocIncludes?: Map<string>;
@@ -253,6 +253,7 @@ declare namespace ts.pxtc {
         nativeType?: string; // currently only "thumb"
         hasHex: boolean;
         useUF2?: boolean;
+        useMkcd?: boolean;
         useELF?: boolean;
         useModulator?: boolean;
         hexMimeType?: string;
