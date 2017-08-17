@@ -417,13 +417,16 @@ div.simframe > iframe {
 *******************************/
 
 .ui.modal .closeIcon {
-    position: absolute;
+    position: relative;
     top: 0; 
     right: 0;
+    z-index: 1002;
 }
 .ui.modal.projectsdialog .closeIcon {
-    top: 0.4rem;
-    right: 0.2rem;
+    position: absolute;
+    color: white;
+    padding: 1.75rem;
+    margin-right: 0px;
 }
 
 .ui.button.icon.clear {
