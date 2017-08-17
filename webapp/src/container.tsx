@@ -119,7 +119,9 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
                         <i className="external icon"></i>
                     </a></h3>
                 </div>
-                <iframe id="sidedocsframe" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
+                <div id="sidedocsframe-wrapper">
+                    <iframe id="sidedocsframe" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
+                </div>
             </div>
         </div>
     }
