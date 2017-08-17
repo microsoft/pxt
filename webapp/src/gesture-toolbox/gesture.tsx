@@ -30,6 +30,7 @@ export const connectionIndicatorID: string = "connection-indicator";
 interface GestureToolboxState {
     visible?: boolean;
     editGestureMode?: boolean;
+    editDescriptionMode?: boolean;
     data?: Types.Gesture[];
     connected?: boolean;
 }
@@ -63,6 +64,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.state = {
             visible: false,
             editGestureMode: false,
+            editDescriptionMode: false,
             data: data,
             connected: false
         };
@@ -94,7 +96,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     hide() {
         if (this.shouldGenerateBlocks) this.generateBlocks();
 
-        this.setState({ visible: false, editGestureMode: false });
+        this.setState({ visible: false, editGestureMode: false, editDescriptionMode: false });
         this.resetGraph();
     }
 
@@ -184,13 +186,13 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             cloneData[this.curGestureIndex].name = (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value;
             // update blocks if was touched
             if (this.shouldGenerateBlocks) this.generateBlocks();
-            this.setState({ editGestureMode: false, data: cloneData });
+            this.setState({ editGestureMode: false, editDescriptionMode: false, data: cloneData });
 
             this.resetGraph();
         }
 
         const newGesture = () => {
-            this.setState({ editGestureMode: true });
+            this.setState({ editGestureMode: true, editDescriptionMode: false });
             this.resetGraph();
             this.state.data.push(new Types.Gesture());
             // TODO: change this method of keeping the current gesture index to something more reliable
@@ -310,7 +312,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     // resize the scrollbar based on the window size:
                     let totalWidth = document.getElementById("recorded-gestures").offsetWidth;
                     let dispGestureWidth = document.getElementById("display-gesture").offsetWidth;
-                    let samplesContainerWidth = totalWidth - dispGestureWidth - 20;
+                    let samplesContainerWidth = totalWidth - dispGestureWidth - 40;
 
                     scrollBarDiv.style.width = samplesContainerWidth.toString() + "px";
                 }
@@ -364,12 +366,21 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             this.setState({ data: cloneData });
         }
 
+        const toggleEditDescription = (event: any) => {
+            if (this.state.editDescriptionMode)
+                this.setState({ editDescriptionMode: false });
+            else
+                this.setState({ editDescriptionMode: true });
+        }
+
         const inputStyle = { height: "30px", padding: "auto auto auto 6px" };
         const colossalStyle = { fontSize: "5rem" };
         const sampleMarginStyle = { margin: "0 10px 10px 0;" };
         const headerStyle = { height: "60px" };
+        const buttonHeightStyle = { height: "30px" };
         const videoStyle = { height: "258px", margin: "15px 0 15px 0" };
         const mainGraphStyle = { margin: "15px 15px 15px 0" };
+        
         // const scrollBarContainer = { overflowX: "scroll", width: "1500px" };
 
         return (
@@ -513,26 +524,18 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             </div>
                         </div>
                         <div id="recorded-gestures">
-                            <div className="ui segments" id="display-gesture">
+                            <div className="ui segments" id="display-gesture" style={this.state.data[this.curGestureIndex].gestures.length == 0 ? {} : {float: "left"}}>
                                 <div className="ui segment inverted teal" style={headerStyle}>
-                                    <div className="ui input">
+                                    <div className="ui action input left floated">
                                         <input style={inputStyle} type="text" ref="gesture-name-input" value={this.state.data[this.curGestureIndex].name} onFocus={() => {this.recorder.PauseEventListeners();}} onBlur={() => {this.recorder.ResumeEventListeners();}} onChange={renameGesture}></input>
+                                        <button className="ui icon button compact tiny" style={buttonHeightStyle}>
+                                            <i className="save icon"></i>
+                                        </button>
                                     </div>
-                                    <div className="ui input">
-                                        <input style={inputStyle} type="text" ref="description-input" value={this.state.data[this.curGestureIndex].description} onFocus={() => {this.recorder.PauseEventListeners();}} onBlur={() => {this.recorder.ResumeEventListeners();}} onChange={renameDescription}></input>
-                                    </div>
-                                        {/* <button className="ui right labeled icon button compact tiny">
-                                            <i className="edit icon"></i>
-                                            Rename
-                                        </button> */}
-                                    {/* <button className="ui icon button blue inverted compact tiny right floated" onClick={() => {downloadGesture(this.state.data[this.curGestureIndex].gestureID)}}>
-                                        <i className="icon cloud download"></i>
+                                    <button className="ui basic button right floated compact tiny blue" ref="description-add-btn" onClick={toggleEditDescription}>
+                                        <i className="icon add circle"></i>
+                                        Add Description
                                     </button>
-                                     */}
-                                    {/* <button className="ui icon button violet inverted compact tiny right floated" onClick={() => {createGestureBlock(this.state.data[this.curGestureIndex].gestureID)}}>
-                                        <i className="icon puzzle"></i>
-                                        &nbsp;Create Block
-                                    </button> */}
                                 </div>
                                 <div className="ui segment">
                                     <div className="ui grid">
@@ -559,6 +562,18 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                         }
                                     </div>
                                 </div>
+                                {
+                                this.state.editDescriptionMode ? 
+                                <div className="ui segment">
+                                    <div className="ui form">
+                                        <div className="field">
+                                            <label>Gesture Description</label>
+                                            <textarea rows={2} value={this.state.data[this.curGestureIndex].description} onFocus={() => {this.recorder.PauseEventListeners();}} onBlur={() => {this.recorder.ResumeEventListeners();}} onChange={renameDescription}></textarea>
+                                        </div>
+                                    </div>
+                                </div> 
+                                : undefined
+                                }
                             </div>
                             <div className="gestures-fluid-container" id="scrollbar-container">
                             {
