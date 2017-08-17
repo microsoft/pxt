@@ -487,7 +487,6 @@ declare namespace Blockly {
         xy_: goog.math.Coordinate;
 
 
-
         // Returns null if the field does not exist on the specified block.
         getFieldValue(field: string): string;
         // Returns null if the input does not exist on the specified block, or
