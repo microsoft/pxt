@@ -208,6 +208,7 @@ declare namespace pxt {
         blockColors?: Map<string>; // block namespace colors, used for build in categories
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
         useStartPage?: boolean;
+        noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
     }
 
     interface SocialOptions {
