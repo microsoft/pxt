@@ -625,6 +625,11 @@ namespace pxt.blocks {
         if (fn.attributes.undeletable)
             block.setDeletable(false);
 
+        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.disableContextMenuHelp) {
+            // Removes the help option from the Block context menu
+            block.customContextMenu = removeHelpMenuItem;
+        }
+
         parseFields(fn.attributes.block).map(field => {
             let i: any;
             if (!field.p) {
@@ -1493,6 +1498,18 @@ namespace pxt.blocks {
             blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"></block>`) + "</xml>") : undefined,
             url: url
         };
+
+        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.disableContextMenuHelp) {
+            const old = block.customContextMenu;
+
+            block.customContextMenu = function(items: Blockly.ContextMenu.MenuItem[]) {
+                if (old) {
+                    old(items);
+                }
+                // Remove the help option from the Block context menu
+                removeHelpMenuItem(items);
+            };
+        }
     }
 
     function installHelpResources(id: string, name: string, tooltip: any, url: string, colour: string) {
@@ -1729,6 +1746,16 @@ namespace pxt.blocks {
                 trashIcon.style.display = 'none';
                 blocklyTreeRoot.style.opacity = '1';
                 blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');
+            }
+        }
+    }
+
+    function removeHelpMenuItem(menuOptions: Blockly.ContextMenu.MenuItem[]) {
+        for (let i = 0; i < menuOptions.length; i++) {
+            const item = menuOptions[i];
+            if (item.text === (Blockly.Msg as any).HELP) {
+                menuOptions.splice(i, 1);
+                return;
             }
         }
     }

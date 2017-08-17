@@ -479,6 +479,7 @@ declare namespace Blockly {
         outputConnection: Connection;
         previousConnection: Connection;
         workspace: Workspace;
+        customContextMenu: (items: ContextMenu.MenuItem[]) => void;
 
         RTL: boolean;
 
