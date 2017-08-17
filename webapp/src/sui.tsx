@@ -887,6 +887,12 @@ export class Modal extends data.Component<ModalProps, ModalState> {
 
         const modalJSX = (
             <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.props.header ? this.id + 'title' : undefined} aria-describedby={this.props.description ? this.id + 'description' : this.id + 'desc'} >
+                {this.props.closeIcon ? <Button
+                    icon={closeIconName}
+                    class={`huge clear right floated closeIcon focused`}
+                    onClick={() => this.handleClose(null) }
+                    tabIndex={0}
+                    ariaLabel={lf("Close dialog")} /> : undefined }
                 {this.props.header ? <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
                     {this.props.header}
                     {this.props.helpUrl ?
@@ -908,12 +914,6 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                                 this.props.actionClick();
                             } } />
                     </div> : undefined }
-                {this.props.closeIcon ? <Button
-                    icon={closeIconName}
-                    class={`huge clear right floated closeIcon focused`}
-                    onClick={() => this.handleClose(null) }
-                    tabIndex={0}
-                    ariaLabel={lf("Close dialog")} /> : undefined }
             </div>
         )
 
