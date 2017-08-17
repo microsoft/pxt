@@ -479,11 +479,13 @@ declare namespace Blockly {
         outputConnection: Connection;
         previousConnection: Connection;
         workspace: Workspace;
+        customContextMenu: (items: ContextMenu.MenuItem[]) => void;
 
         RTL: boolean;
 
         // private
         xy_: goog.math.Coordinate;
+
 
 
         // Returns null if the field does not exist on the specified block.
