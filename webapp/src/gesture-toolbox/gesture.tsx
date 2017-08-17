@@ -300,6 +300,19 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     // Probably just for the demo:
                     cloneData[gestureIndex].displayVideo = cloneData[gestureIndex].gestures[0].video;
                     this.setState({ data: cloneData });
+
+                    this.forceUpdate();
+
+                    // focus the scrollbar on the latest sample
+                    let scrollBarDiv = document.getElementById("scrollbar-container");
+                    scrollBarDiv.scrollLeft = scrollBarDiv.scrollWidth;
+
+                    // resize the scrollbar based on the window size:
+                    let totalWidth = document.getElementById("recorded-gestures").offsetWidth;
+                    let dispGestureWidth = document.getElementById("display-gesture").offsetWidth;
+                    let samplesContainerWidth = totalWidth - dispGestureWidth - 20;
+
+                    scrollBarDiv.style.width = samplesContainerWidth.toString() + "px";
                 }
 
                 this.recorder = new Recorder.Recorder(this.curGestureIndex, Recorder.RecordMode.PressAndHold, onNewSampleRecorded);
@@ -353,10 +366,10 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         const inputStyle = { height: "30px", padding: "auto auto auto 6px" };
         const colossalStyle = { fontSize: "5rem" };
+        const sampleMarginStyle = { margin: "0 10px 10px 0;" };
         const headerStyle = { height: "60px" };
         const videoStyle = { height: "258px", margin: "15px 0 15px 0" };
         const mainGraphStyle = { margin: "15px 15px 15px 0" };
-        const containerStyle = { display: "inline-block", position: "relative", top: "1px", margin: "0 20px 15px 0" };
         // const scrollBarContainer = { overflowX: "scroll", width: "1500px" };
 
         return (
@@ -402,18 +415,18 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                         onClick={() => importGesture() }
                                         />
                         </div>
-                        <div className="ui divider"></div>
+                         <div className="ui divider"></div> 
                         {
                             this.state.data.length == 0 ? undefined :
                             <div>
                                 {
                                     this.state.data.map((gesture) =>
-                                        <div style={containerStyle} className="ui segments link-effect" onMouseOver={() => {Viz.d3.select("#edit-gesture-btn").classed("inverted", false)}} onMouseOut={() => {Viz.d3.select("#edit-gesture-btn").classed("inverted", true)}}>
+                                        <div className="ui segments link-effect gesture-container"> 
                                             <div className="ui segment inverted teal" style={headerStyle}>
                                                 <div className="ui header inverted left floated">
                                                     {gesture.name}
                                                 </div>
-                                                <button className="ui icon button purple inverted compact tiny right floated" id="edit-gesture-btn" onClick={() => {editGesture(gesture.gestureID)}}>
+                                                <button className="ui icon button purple inverted compact tiny right floated" onClick={() => {editGesture(gesture.gestureID)}}>
                                                     Edit Gesture
                                                 </button>
                                                 <button className="ui icon button blue inverted compact tiny right floated" onClick={() => {downloadGesture(gesture.gestureID)}}>
@@ -499,8 +512,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                 }
                             </div>
                         </div>
-                        <div>
-                            <div style={containerStyle} className="ui segments">
+                        <div id="recorded-gestures">
+                            <div className="ui segments" id="display-gesture">
                                 <div className="ui segment inverted teal" style={headerStyle}>
                                     <div className="ui input">
                                         <input style={inputStyle} type="text" ref="gesture-name-input" value={this.state.data[this.curGestureIndex].name} onFocus={() => {this.recorder.PauseEventListeners();}} onBlur={() => {this.recorder.ResumeEventListeners();}} onChange={renameGesture}></input>
@@ -547,6 +560,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                     </div>
                                 </div>
                             </div>
+                            <div className="gestures-fluid-container" id="scrollbar-container">
                             {
                                 this.state.data[this.curGestureIndex].gestures.map((sample) =>
                                     <GraphCard
@@ -560,9 +574,11 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                         maxVal={ 2450 }
                                         onDeleteHandler={ onSampleDelete }
                                         onCropHandler={ onSampleCrop }
+                                        style={ sampleMarginStyle }
                                     />
                                 )
                             }
+                            </div>
                             </div>
                         </div>
                     }

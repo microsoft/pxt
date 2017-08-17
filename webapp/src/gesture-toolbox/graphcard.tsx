@@ -266,15 +266,10 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
     render() {
         let headerStyle = { height: "60px" };
-        let containerStyle = { display: "inline-block", margin: "0 10px 10px 0" };
         let clipperStyle = { overflow: "hidden" };
-        let customStyle = {};
-
-        if (this.props.style != null)
-            $.extend(containerStyle, this.props.style);
 
         return (
-            <div className="ui segments" style={containerStyle}>
+            <div className="ui segments sample-graph" style={this.props.style}>
                 {
                 this.props.editable == false ? undefined :
                     <div className="ui segment inverted" style={headerStyle}>
@@ -295,7 +290,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
                         </div>
                     </div>
                 }
-                <div ref="graphContainer" className="ui segment">
+                <div ref="graphContainer" className="ui segment graph-container">
                     <div style={clipperStyle}>
                         <svg ref="svgX"></svg>
                         <svg ref="svgY"></svg>
