@@ -168,7 +168,7 @@ function hf2Async() {
 }
 
 let initPromise: Promise<pxt.HF2.Wrapper>
-export function initAsync() {
+export function initAsync(force=false) {
     let isFirstInit = false;
     if (!initPromise) {
         isFirstInit = true;
@@ -182,7 +182,7 @@ export function initAsync() {
     return initPromise
         .then((w) => {
             wrapper = w;
-            if (pxt.winrt.isWinRT() && !isFirstInit) {
+            if (force || pxt.winrt.isWinRT() && !isFirstInit) {
                 // For WinRT, disconnecting the device after flashing once puts the wrapper in a bad state.
                 // To workaround this, reconnect every time.
                 return wrapper.reconnectAsync();

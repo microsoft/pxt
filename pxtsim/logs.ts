@@ -197,6 +197,7 @@ namespace pxsim.logs {
                 switch (msg.type || '') {
                     case 'serial':
                         const smsg = msg as pxsim.SimulatorSerialMessage;
+                        /**
                         if (this.dropSim && smsg.sim) {
                             // drop simulated event since we are receiving real events
                             return;
@@ -205,6 +206,7 @@ namespace pxsim.logs {
                             this.clear();
                             this.dropSim = true;
                         }
+                        **/
                         const value = smsg.data || '';
                         const source = smsg.id || '?';
                         let theme = source.split('-')[0] || '';

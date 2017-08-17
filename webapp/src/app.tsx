@@ -1899,6 +1899,17 @@ function initLogin() {
     }
 }
 
+let timeout: number;
+let interval: number;
+function startT() {
+    timeout = window.setTimeout(() => interval = window.setInterval(initSerial, 5000), 5000);
+}
+
+function stopT() {
+    window.clearTimeout(timeout);
+    window.clearInterval(interval);
+}
+
 function initSerial() {
     if (!pxt.appTarget.serial || !pxt.winrt.isWinRT() && (!Cloud.isLocalHost() || !Cloud.localToken))
         return;
@@ -1907,6 +1918,8 @@ function initSerial() {
         hidbridge.initAsync()
             .then(dev => {
                 dev.onSerial = (buf, isErr) => {
+                    stopT();
+                    startT();
                     window.postMessage({
                         type: 'serial',
                         id: 'n/a', // TODO
