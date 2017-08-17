@@ -7,11 +7,17 @@ namespace pxsim.accessibility {
         elem.setAttribute("tabindex", "0");
     }
 
-    export function enableKeyboardInteraction(elem: Element, handler?: () => void): void {
+    export function enableKeyboardInteraction(elem: Element, handlerKeyDown?: () => void, handlerKeyUp?: () => void): void {
+        elem.addEventListener('keydown', (e: KeyboardEvent) => {
+            let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+            if ((charCode === 32 || charCode === 13) && handlerKeyDown) {
+                handlerKeyDown();
+            }
+        });
         elem.addEventListener('keyup', (e: KeyboardEvent) => {
             let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-            if (charCode === 32 || charCode === 13) {
-                handler();
+            if ((charCode === 32 || charCode === 13) && handlerKeyUp) {
+                handlerKeyUp();
             }
         });
     }
