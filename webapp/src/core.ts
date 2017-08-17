@@ -18,32 +18,32 @@ export type Component<S, T> = data.Component<S, T>;
 let dimmerInitialized = false;
 
 export function isLoading() {
-    return !!$('.ui.page.dimmer .loadingcontent')[0];
+    return !!$('.ui.loading.dimmer .loadingcontent')[0];
 }
 
 export function hideLoading() {
-    $('.ui.page.dimmer .loadingcontent').remove();
-    $('body.main').dimmer('hide');
+    $('.ui.loading.dimmer .loadingcontent').remove();
+    $('.ui.loading.dimmer').dimmer('hide');
 
     if (!dimmerInitialized) {
         initializeDimmer();
     }
-    $('body.main').dimmer('hide');
+    $('.ui.loading.dimmer').dimmer('hide');
 }
 
 export function showLoading(msg: string) {
     initializeDimmer();
-    $('body.main').dimmer('show');
-    $('.ui.page.dimmer').html(`
+    $('.ui.loading.dimmer').dimmer('show');
+    $('.ui.loading.dimmer').html(`
   <div class="content loadingcontent">
-    <div class="ui text large loader msg">{lf("Please wait")}</div>
+    <div class="ui text large loader msg">${lf("Please wait")}</div>
   </div>
 `)
-    $('.ui.page.dimmer .msg').text(msg)
+    $('.ui.loading.dimmer .msg').text(msg)
 }
 
 function initializeDimmer() {
-    $('body.main').dimmer({
+    $('body.main').dimmer({'dimmerName': 'loading'}).dimmer({
         closable: false
     });
     dimmerInitialized = true;
