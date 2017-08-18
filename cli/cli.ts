@@ -1828,7 +1828,7 @@ let commonfiles: Map<string> = {}
 
 class SnippetHost implements pxt.Host {
     //Global cache of module files
-    static files: Map<Map<string>> = {}
+    files: Map<Map<string>> = {}
 
     constructor(public name: string, public main: string, public extraDependencies: string[], private includeCommon = false) { }
 
@@ -1837,14 +1837,14 @@ class SnippetHost implements pxt.Host {
     }
 
     readFile(module: pxt.Package, filename: string): string {
-        if (SnippetHost.files[module.id] && SnippetHost.files[module.id][filename]) {
-            return SnippetHost.files[module.id][filename]
+        if (this.files[module.id] && this.files[module.id][filename]) {
+            return this.files[module.id][filename]
         }
         if (module.id == "this") {
             if (filename == "pxt.json") {
-                return JSON.stringify({
+                return JSON.stringify(<pxt.PackageConfig>{
                     "name": this.name,
-                    "dependencies": this.dependencies,
+                    "dependencies": this.dependencies(),
                     "description": "",
                     "files": this.includeCommon ? [
                         "main.blocks", //TODO: Probably don't want this
@@ -1916,10 +1916,10 @@ class SnippetHost implements pxt.Host {
     }
 
     writeFile(module: pxt.Package, filename: string, contents: string) {
-        if (!SnippetHost.files[module.id]) {
-            SnippetHost.files[module.id] = {}
+        if (!this.files[module.id]) {
+            this.files[module.id] = {}
         }
-        SnippetHost.files[module.id][filename] = contents
+        this.files[module.id][filename] = contents
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
@@ -1947,8 +1947,8 @@ class SnippetHost implements pxt.Host {
         return Promise.resolve("*")
     }
 
-    private get dependencies(): { [key: string]: string } {
-        let stdDeps: { [key: string]: string } = {}
+    private dependencies(): Map<string> {
+        let stdDeps: Map<string> = {}
         for (let extraDep of this.extraDependencies) {
             stdDeps[extraDep] = `file:../${extraDep}`
         }
@@ -3030,7 +3030,6 @@ function testPkgConflictsAsync() {
         };
 
         let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", tc.main, tc.dependencies));
-        SnippetHost.files = {};
         tc.expectedConflicts = tc.expectedConflicts.sort();
         tc.expectedInUse = tc.expectedInUse.sort();
 
