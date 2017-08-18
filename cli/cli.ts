@@ -1846,6 +1846,9 @@ class SnippetHost implements pxt.Host {
                     "name": this.name,
                     "dependencies": this.dependencies(),
                     "description": "",
+                    "yotta": {
+                        "ignoreConflicts": true
+                    },
                     "files": this.includeCommon ? [
                         "main.blocks", //TODO: Probably don't want this
                         "main.ts",
@@ -1861,9 +1864,7 @@ class SnippetHost implements pxt.Host {
                 return this.main
             }
         } else if (pxt.appTarget.bundledpkgs[module.id] && filename === pxt.CONFIG_NAME) {
-            const config =  JSON.parse(pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME]) as pxt.PackageConfig;
-            if (config.yotta) config.yotta.ignoreConflicts = true;
-            return JSON.stringify(config, null, 2);
+            return pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME];
         } else {
             let p0 = path.join(module.id, filename);
             let p1 = path.join('libs', module.id, filename)
