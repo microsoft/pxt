@@ -556,7 +556,8 @@ export class ProjectView
         logs.clear();
         this.setState({
             showFiles: false,
-            filters: filters
+            filters: filters,
+            tutorialOptions: undefined
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
@@ -1462,6 +1463,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
     }
 
     openTutorials() {
+//        this.setState({tutorialOptions: undefined});
         pxt.tickEvent("menu.openTutorials");
         this.projects.showOpenTutorials();
     }
@@ -1491,6 +1493,10 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 }
                 //TODO: parse for tutorial options, mainly initial blocks
             }).then(() => {
+                return this.createProjectAsync({
+                    name: title
+                });
+            }).then(() => {
                 let tutorialOptions: pxt.editor.TutorialOptions = {
                     tutorial: tutorialId,
                     tutorialName: title,
@@ -1501,12 +1507,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
                 let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
                 tc.setPath(tutorialId);
-            }).then(() => {
-                return this.createProjectAsync({
-                    name: title
-                });
-            })
-            .catch((e) => {
+            }).catch((e) => {
                 core.hideLoading();
                 core.handleNetworkError(e);
             });
@@ -1555,6 +1556,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
     }
 
     completeTutorial() {
+//        this.setState({tutorialOptions: undefined});
         pxt.tickEvent("tutorial.complete");
         this.tutorialComplete.show();
     }
@@ -1640,7 +1642,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             hideMenuBar ? 'hideMenuBar' : '',
             hideEditorToolbar ? 'hideEditorToolbar' : '',
             sandbox && simActive ? 'simView' : '',
-            'full-abs'
+            'full-abs',
+            'dimmable'
         ]);
 
         return (
