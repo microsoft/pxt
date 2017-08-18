@@ -3723,6 +3723,7 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
             .concat(targetFileList())
             .concat(["targetconfig.json"]),
         localDir,
+        target: (pxt.appTarget.id || "unknownstatic"),
         builtPackaged,
         minify
     }).then(() => renderDocs(builtPackaged, localDir))
