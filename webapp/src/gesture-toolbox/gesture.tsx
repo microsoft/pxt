@@ -98,6 +98,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         this.setState({ visible: false, editGestureMode: false, editDescriptionMode: false });
         this.resetGraph();
+        this.recorder.PauseWebcam();
     }
 
 
@@ -189,6 +190,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             this.setState({ editGestureMode: false, editDescriptionMode: false, data: cloneData });
 
             this.resetGraph();
+            this.recorder.PauseWebcam();
         }
 
         const newGesture = () => {
@@ -201,7 +203,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         }
 
         const editGesture = (gestureID: number) => {
-            this.setState({ editGestureMode: true });
+            this.setState({ editGestureMode: true, editDescriptionMode: false });
             this.resetGraph();
             this.curGestureIndex = this.getGestureIndex(gestureID);
         }
@@ -211,19 +213,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
             // TODO: download this gesture as a .JSON file
         }
-
-        // const createGestureBlock = (gestureID: number) => {
-        //     this.setState({ editGestureMode: true });
-
-        //     // TODO: create "singular" gesture block for the current gesture
-        //     // this.props.parent.updateFileAsync("custom.ts", this.models[this.curGestureIndex].GenerateBlock());
-        //     if(this.generatedCodeBlocks[this.curGestureIndex] == undefined)
-        //         this.generatedCodeBlocks.push(this.models[this.curGestureIndex].GenerateBlock());
-        //     else
-        //         this.generatedCodeBlocks[this.curGestureIndex] = this.models[this.curGestureIndex].GenerateBlock();
-
-        //     this.props.parent.updateFileAsync("custom.ts", Model.SingleDTWCore.GenerateNamespace(this.generatedCodeBlocks));
-        // }
 
         const importGesture = () => {
         }
