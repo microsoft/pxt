@@ -22,28 +22,29 @@ export function isLoading() {
 }
 
 export function hideLoading() {
-    $('.ui.loading.dimmer .loadingcontent').remove();
-    $('.ui.loading.dimmer').dimmer('hide');
-
+    $('.ui.dimmer.loading .loadingcontent').remove();
+    $('.ui.dimmer.loading').dimmer('hide');
     if (!dimmerInitialized) {
         initializeDimmer();
     }
-    $('.ui.loading.dimmer').dimmer('hide');
+    setTimeout(function () {
+        $('.ui.dimmer.loading').dimmer('hide');
+    }, 200);
 }
 
 export function showLoading(msg: string) {
     initializeDimmer();
-    $('.ui.loading.dimmer').dimmer('show');
-    $('.ui.loading.dimmer').html(`
+    $('.ui.dimmer.loading').dimmer('show');
+    $('.ui.dimmer.loading').html(`
   <div class="content loadingcontent">
     <div class="ui text large loader msg">${lf("Please wait")}</div>
   </div>
 `)
-    $('.ui.loading.dimmer .msg').text(msg)
+    $('.ui.dimmer.loading .msg').text(msg);
 }
 
 function initializeDimmer() {
-    $('body.main').dimmer({'dimmerName': 'loading'}).dimmer({
+    $('#content').dimmer({'dimmerName': 'loading'}).dimmer({
         closable: false
     });
     dimmerInitialized = true;
