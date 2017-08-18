@@ -7,6 +7,7 @@ namespace ts.pxtc {
     export const SK = SyntaxKind;
 
     export const numReservedGlobals = 1;
+    const whitespaceRegex = /^\s$/;
 
     interface NodeWithId extends Node {
         pxtNodeId: number;
@@ -1359,7 +1360,9 @@ namespace ts.pxtc {
                         }
                         break;
                     default:
-                        userError(9206, lf("Only 0 . _ (off) and 1 # * (on) are allowed in image literals"))
+                        if(!isWhitespace(s[i])) {
+                            userError(9206, lf("Only 0 . _ (off) and 1 # * (on) are allowed in image literals"))
+                        }
                 }
             }
 
@@ -1380,6 +1383,10 @@ ${lbl}: .short 0xffff
                 imageLiteral: lbl,
                 jsLit
             }
+        }
+
+        function isWhitespace(character: string) {
+            return whitespaceRegex.test(character);
         }
 
         function mkSyntheticInt(v: number): LiteralExpression {
