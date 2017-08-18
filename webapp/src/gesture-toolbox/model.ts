@@ -95,7 +95,7 @@ export class SingleDTWCore {
         mainSample.cropStartIndex = 0;
         mainSample.startTime = 0;
         mainSample.endTime = 0;
-        mainSample.video = null;
+        mainSample.videoLink = null;
 
         return mainSample;
     }

@@ -15,7 +15,8 @@ export class Gesture {
     public name: string;
     public description: string;
     public displayGesture: GestureSample;
-    public displayVideo: any;
+    public displayVideoLink: any;
+    public displayVideoData: any;
     private static id: number = 0;
     public gestureID: number;
 
@@ -47,7 +48,8 @@ export class Gesture {
 
 export class GestureSample {
     public rawData: Vector[];
-    public video: any;
+    public videoLink: any;
+    public videoData: any;
     public startTime: number;
     public endTime: number;
     private static id: number = 0;

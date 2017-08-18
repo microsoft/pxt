@@ -19,6 +19,9 @@ import * as Indicator from "./indicator";
 import { GraphCard } from "./graphcard";
 import { streamerCode } from "./streamer";
 
+const JSZip = require("jszip");
+const FileSaver = require("file-saver");
+
 type ISettingsProps = pxt.editor.ISettingsProps;
 type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
@@ -209,9 +212,15 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         }
 
         const downloadGesture = (gestureID: number) => {
-            // this.setState({ editGestureMode: true });
+            let gestureIndex = this.getGestureIndex(gestureID);
+            let zip = new JSZip();
+            zip.file("gesture.json", JSON.stringify(this.state.data[gestureIndex]));
+            zip.file("video.mp4", this.state.data[gestureIndex].displayVideoData, {binary: true});
 
-            // TODO: download this gesture as a .JSON file
+            zip.generateAsync({type: "blob"}).then(function(content: any) {
+                    // see FileSaver.js 
+                    FileSaver.saveAs(content, "gesture.zip");
+            });            
         }
 
         const importGesture = () => {
@@ -289,7 +298,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     cloneData[gestureIndex].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
                     // TODO: allow users to change the video in the future.
                     // Probably just for the demo:
-                    cloneData[gestureIndex].displayVideo = cloneData[gestureIndex].gestures[0].video;
+                    cloneData[gestureIndex].displayVideoLink = cloneData[gestureIndex].gestures[0].videoLink;
+                    cloneData[gestureIndex].displayVideoData = cloneData[gestureIndex].gestures[0].videoData;
                     this.setState({ data: cloneData });
 
                     this.forceUpdate();
@@ -439,7 +449,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                             </div>
                                             <div className="ui segment">
                                                 <div className="ui grid">
-                                                    <video style={videoStyle} className="flipped-video" src={gesture.displayVideo} autoPlay loop></video>
+                                                    <video style={videoStyle} className="flipped-video" src={gesture.displayVideoLink} autoPlay loop></video>
                                                     <GraphCard
                                                         key={ gesture.gestureID }
                                                         editable={ false }
@@ -536,7 +546,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                             this.state.data[this.curGestureIndex].gestures.length == 0 ?
                                             <video style={videoStyle} src="" autoPlay loop></video>
                                             :
-                                            <video style={videoStyle} className="flipped-video" src={this.state.data[this.curGestureIndex].displayVideo} autoPlay loop></video>
+                                            <video style={videoStyle} className="flipped-video" src={this.state.data[this.curGestureIndex].displayVideoLink} autoPlay loop></video>
                                         }
                                         {
                                             this.state.data[this.curGestureIndex].gestures.length == 0 ?

@@ -97,7 +97,8 @@ export class Recorder {
 
                 mediaRecorder.ondataavailable = (blob: any) => {
                     let vid = window.URL.createObjectURL(blob);
-                    this.sample.video = vid;
+                    this.sample.videoLink = vid;
+                    this.sample.videoData = blob;
                     this.onRecordHandler(this.gestureIndex, this.sample);
                 };
 

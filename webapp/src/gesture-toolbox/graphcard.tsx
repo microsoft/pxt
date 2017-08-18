@@ -249,7 +249,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
             .attr("d", "M" + (svgCropWidth - strokeWidth / 2).toString() + " 0 v " + svgCropHeight)
             .attr("stroke-width", strokeWidth)
             .attr("stroke", "black") //attr("id", "").on("click", () => {})
-            .attr("style", "cursor:w-resize")
+            .attr("style", "cursor:e-resize")
             .call(d3.drag()
                 .on("drag", dragRight));
 
@@ -291,12 +291,14 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
                     </div>
                 }
                 <div ref="graphContainer" className="ui segment graph-container">
-                    <div style={clipperStyle}>
-                        <svg ref="svgX"></svg>
-                        <svg ref="svgY"></svg>
-                        <svg ref="svgZ"></svg>
-                        <svg ref="svgCrop"></svg>
-                    </div>
+                    {
+                        <div style={clipperStyle}>
+                            <svg ref="svgX"></svg>
+                            <svg ref="svgY"></svg>
+                            <svg ref="svgZ"></svg>
+                            <svg ref="svgCrop"></svg>
+                        </div>
+                    }
                 </div>
             </div>
         );
