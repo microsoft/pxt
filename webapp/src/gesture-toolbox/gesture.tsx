@@ -306,7 +306,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     this.forceUpdate();
 
                     // focus the scrollbar on the latest sample
-                    let scrollBarDiv = document.getElementById("scrollbar-container");
+                    let scrollBarDiv = document.getElementById("gestures-fluid-container");
                     scrollBarDiv.scrollLeft = scrollBarDiv.scrollWidth;
 
                     // resize the scrollbar based on the window size:
@@ -374,7 +374,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         }
 
         const inputStyle = { height: "30px", padding: "auto auto auto 6px" };
-        const colossalStyle = { fontSize: "5rem" };
+        const colossalStyle = { fontSize: "5rem", margin: "0" };
         const sampleMarginStyle = { margin: "0 10px 10px 0;" };
         const headerStyle = { height: "60px" };
         const buttonHeightStyle = { height: "30px" };
@@ -502,17 +502,21 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             <div className="three wide column">
                                 {
                                     this.state.connected ?
-                                    <div ref={initRecorder}>
-                                        <button id="record-btn" className="circular ui icon button" style={colossalStyle}>
-                                            <i className="icon record"></i>
-                                        </button>
-                                        <br/>
-                                        <span className="ui text">Record method:</span>
-                                        <select id="record-mode-select" className="ui search dropdown" onChange={onRecordMethodChange}>
-                                            <option value="PressAndHold">Press &amp; Hold</option>
-                                            <option value="PressToToggle">Press to Toggle</option>
-                                        </select>
-                                        <div>
+                                    <div ref={initRecorder} className="ui segments basic">
+                                        <div className="ui segment basic center aligned">
+                                            <button id="record-btn" className="circular ui icon button" style={colossalStyle}>
+                                                <i className="icon record"></i>
+                                            </button>
+                                        </div>
+                                        <div className="ui segment basic center aligned">
+                                            <span className="ui text">Record method:</span>
+                                            <br/>
+                                            <br/>
+                                            
+                                            <select id="record-mode-select" className="ui dropdown" onChange={onRecordMethodChange}>
+                                                <option value="PressAndHold">Press &amp; Hold</option>
+                                                <option value="PressToToggle">Press to Toggle</option>
+                                            </select>                                            
                                         </div>
                                     </div>
                                     :
@@ -524,7 +528,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             </div>
                         </div>
                         <div id="recorded-gestures">
-                            <div className="ui segments" id="display-gesture" style={this.state.data[this.curGestureIndex].gestures.length == 0 ? {} : {float: "left"}}>
+                            <div className="ui segments" id="display-gesture">
                                 <div className="ui segment inverted teal" style={headerStyle}>
                                     <div className="ui action input left floated">
                                         <input style={inputStyle} type="text" ref="gesture-name-input" value={this.state.data[this.curGestureIndex].name} onFocus={() => {this.recorder.PauseEventListeners();}} onBlur={() => {this.recorder.ResumeEventListeners();}} onChange={renameGesture}></input>
@@ -575,7 +579,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                 : undefined
                                 }
                             </div>
-                            <div className="gestures-fluid-container" id="scrollbar-container">
+                            <div id="gestures-fluid-container">
                             {
                                 this.state.data[this.curGestureIndex].gestures.map((sample) =>
                                     <GraphCard
