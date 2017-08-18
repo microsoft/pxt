@@ -3247,7 +3247,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             filename: f,
             diagnostics: infos
         })
-        infos.forEach(info => console.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
+        infos.forEach(info => pxt.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
     }
     return Promise.map(snippets, (snippet: CodeSnippet) => {
         pxt.debug(`compiling ${snippet.name}`);
@@ -3294,6 +3294,9 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
         if (ignoreCount > 0) {
             pxt.log(`Skipped ${ignoreCount} snippets`)
         }
+    }).then(() => {
+        if (failures.length > 0)
+            U.userError(`${failures.length} snippets not compiling in the docs`)
     })
 }
 
@@ -3947,7 +3950,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
             }
             const isResource = /\.[a-z]+$/i.test(url)
             if (!isResource && !toc) {
-                pxt.log(`link not in SUMMARY: ${url}`);
+                pxt.debug(`link not in SUMMARY: ${url}`);
                 noTOCs.push(url);
             }
             // TODO: correct resolution of static resources
@@ -4009,9 +4012,14 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
 
     pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in SUMMARY, ${snippets.length} snippets`);
     fs.writeFileSync("built/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), "utf8");
+
+    let p = Promise.resolve();
     if (compileSnippets)
-        return testSnippetsAsync(snippets, re);
-    return Promise.resolve();
+        p = p.then(() => testSnippetsAsync(snippets, re));
+    return p.then(() => {
+        if (broken > 0)
+            U.userError(`${broken} broken links found in the docs`);
+    })
 }
 
 function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {

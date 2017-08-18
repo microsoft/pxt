@@ -60,7 +60,7 @@ begin with `0` so the last element's index is one less than the array length.
 Arrays are a very useful way to collect and organize information. There are more advanced operations and
 functions you can use on arrays. See [arrays](/blocks/arrays) for other array operations.
 
-Here's an example using [**insertAt**](/blocks/arrays/insert-at) to insert a number into the middle of an array.
+Here's an example using [**insertAt**](/blocks/arrays/insertat) to insert a number into the middle of an array.
 
 ```block
 let scores = [8, 5, 9, 3, 2, 4];
