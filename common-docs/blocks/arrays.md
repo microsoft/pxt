@@ -13,6 +13,6 @@
 
 ## See also
 
-[index of](/blocks/arrays/index-of), [push](/blocks/arrays/push), [pop](/blocks/arrays/pop),
-[shift](/blocks/arrays/shift), [unshift](/blocks/arrays/unshift), [insert at](/blocks/arrays/insert-at),
-[remove at](/blocks/arrays/remove-at), [reverse](/blocks/arrays/reverse)
+[index of](/blocks/arrays/indexof), [push](/blocks/arrays/push), [pop](/blocks/arrays/pop),
+[shift](/blocks/arrays/shift), [unshift](/blocks/arrays/unshift), [insert at](/blocks/arrays/insertat),
+[remove at](/blocks/arrays/removeat), [reverse](/blocks/arrays/reverse)
