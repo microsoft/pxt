@@ -495,9 +495,19 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 this.setState({ editDescriptionMode: true });
         }
 
+        const addCloseHandler = () => {
+            $($('.message .close')
+                .on('click', function() {
+                    $(this)
+                    .closest('.message')
+                    .remove();
+                    ;
+                }))
+        }
+
         const inputStyle = { height: "30px", padding: "auto auto auto 6px" };
         const colossalStyle = { fontSize: "5rem", margin: "0" };
-        const sampleMarginStyle = { margin: "0 10px 10px 0;" };
+        const sampleMarginStyle = { margin: "0 10px 10px 0" };
         const headerStyle = { height: "60px" };
         const buttonHeightStyle = { height: "30px" };
         const mainGraphStyle = { margin: "15px 15px 15px 0" };
@@ -611,31 +621,54 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     :
                     <div>
                         <div className="ui segment three column grid">
-                            <div className="four wide column">
+                            <div className="five wide column">
                                 {
                                     this.state.connected ?
                                     <video id="webcam-video" className="flipped-video"></video>
                                     :
-                                    <div>Not Connected</div>
+                                    undefined
                                 }
                             </div>
-                            <div className="nine wide column">
+                            <div className="eight wide column">
                                 {
                                     this.state.connected ?
-                                    <div ref={initGraph}>
-                                        <svg className="row" id="realtime-graph-x"></svg>
-                                        <svg className="row" id="realtime-graph-y"></svg>
-                                        <svg className="row" id="realtime-graph-z"></svg>
-                                        <svg id="recognition-overlay"></svg>
+                                    <div>
+                                        <div ref={initGraph}>
+                                            <svg className="row" id="realtime-graph-x"></svg>
+                                            <svg className="row" id="realtime-graph-y"></svg>
+                                            <svg className="row" id="realtime-graph-z"></svg>
+                                            <svg id="recognition-overlay"></svg>
+                                        </div>
+                                        <div className="ui info message" ref={addCloseHandler}>
+                                        <i className="close icon"></i>
+                                        <div className="header">
+                                            Recording new gestures
+                                        </div>
+                                        <ul className="list">
+                                            <li>Perform the gesture and take a look at how the signals representing the accelerometer data are changing</li>
+                                            <li>To record a new sample, press and hold the space-bar while performing the gesture (you can edit or delete them later)</li>
+                                        </ul>
+                                        </div>
                                     </div>
                                     :
-                                    <div>
-                                        <ol className="ui list">
-                                            <li>Connect circuit playground</li>
-                                            <li>Set to program mode</li>
-                                            <li>Upload <em>streamer.uf2</em></li>
-                                        </ol>
+                                    <div className="ui message">
+                                        <div className="content">
+                                            <div className="header">
+                                                Steps to Program Streamer
+                                            </div>
+                                            <ul className="list">
+                                                <li>Make sure that the Circuit Playground Express is connected to your computer</li>
+                                                <li>Set the device to <em>Program Mode</em> (all of the neopixel lights should turn green)</li>
+                                                <li>Upload the <em>streamer.uf2</em> program to the device by dragging it into the device's removable drive</li>
+                                            </ul>
+                                            <br/>
+                                            <button id="program-streamer-btn" className="ui button compact icon-and-text primary download-button big">
+                                                <i className="download icon icon-and-text"></i>
+                                                <span className="ui text">Program Streamer</span>
+                                            </button>
+                                        </div>
                                     </div>
+
                                 }
                             </div>
                             <div className="three wide column">
@@ -659,10 +692,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                         </div>
                                     </div>
                                     :
-                                    <button id="program-streamer-btn" className="ui button icon-and-text primary fluid download-button big">
-                                        <i className="download icon icon-and-text"></i>
-                                        <span className="ui text">Program Streamer</span>
-                                    </button>
+                                    undefined    
                                 }
                             </div>
                         </div>
