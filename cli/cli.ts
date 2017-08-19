@@ -3943,8 +3943,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     function pushUrl(url: string, toc: boolean) {
         // cache value
         if (!urls.hasOwnProperty(url)) {
-            const isPackage = /^\/pkg\//.test(url);
-            if (isPackage) {
+            const specialPath = /^\/pkg\//.test(url) || /^\/--[a-z]+/.test(url);
+            if (specialPath) {
                 urls[url] = url;
                 return;
             }
