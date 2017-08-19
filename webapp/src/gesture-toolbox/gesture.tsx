@@ -215,7 +215,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             let gestureIndex = this.getGestureIndex(gestureID);
             let zip = new JSZip();
             zip.file("gesture.json", JSON.stringify(this.state.data[gestureIndex]));
-            zip.file("video.mp4", this.state.data[gestureIndex].displayVideoData, {binary: true});
+            zip.file("video.mp4", this.state.data[gestureIndex].displayVideoData, {base64: true});
 
             zip.generateAsync({type: "blob"}).then(function(content: any) {
                     // see FileSaver.js 
@@ -224,6 +224,58 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         }
 
         const importGesture = () => {
+            document.getElementById("file-input-btn").click();
+        }
+
+        const handleFileSelect = (evt: any) => {
+            let files = evt.target.files; // FileList object
+
+            // files is a FileList of File objects. List some properties.
+            for (let i = 0; i < files.length ; i++) {
+                let importedGesture: Types.Gesture = new Types.Gesture();
+
+                JSZip.loadAsync(files[i]).then((zip: any) => {
+                    zip.forEach((relativePath: string, zipEntry: any) => {
+                        // console.log(zipEntry);
+                        if (zipEntry.name == "gesture.json") {
+                            // set the parameters
+                            zipEntry.async("string").then((text: string) => {
+                                // console.log(text);
+                                let parsedGesture = JSON.parse(text) as Types.Gesture;
+                                importedGesture.description = parsedGesture.description;
+                                importedGesture.displayGesture = parsedGesture.displayGesture;
+                                importedGesture.gestures = parsedGesture.gestures;
+                                importedGesture.labelNumber = parsedGesture.labelNumber;
+                                importedGesture.name = parsedGesture.name;
+                            })
+                        }
+                        else if (zipEntry.name == "video.mp4") {
+                            // set the video
+                            zipEntry.async("base64").then((data: any) => {
+                                // using this base64 to blob conversion:
+                                // https://stackoverflow.com/questions/16245767/creating-a-blob-from-a-base64-string-in-javascript
+                                let byteCharacters = atob(data);
+                                let byteNumbers = new Array(byteCharacters.length);
+
+                                for (let i = 0; i < byteCharacters.length; i++)
+                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+
+                                let byteArray = new Uint8Array(byteNumbers);
+                                let blob = new Blob([byteArray], {type: "video/mp4"});
+
+                                importedGesture.displayVideoLink = window.URL.createObjectURL(blob);
+                                importedGesture.displayVideoData = blob;
+                            })
+                        }
+                    });
+                })
+
+                let cloneData = this.state.data.slice();
+                cloneData.push(importedGesture);
+                let curIndex = cloneData.length - 1;
+                this.models.push(new Model.SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name));
+                this.setState({ data: cloneData });
+            }
         }
 
         const onConnectionStatusChange = (connectionStatus: boolean) => {
@@ -337,16 +389,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             }
         }
 
-        // const renameGesture = (gid: number) => {
-        //     let gi = this.getGestureIndex(gid);
-
-        //     cloneData[gi].name = (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value;
-        //     let cloneData = this.state.data.slice();
-        //     this.models[this.curGestureIndex].UpdateName(cloneData[gi].name);
-
-        //     this.setState({ data: cloneData });
-        // }
-
         const renameGesture = (event: any) => {
             let cloneData = this.state.data.slice();
             cloneData[this.curGestureIndex].name = event.target.value;
@@ -425,6 +467,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                         onClick={() => importGesture() }
                                         />
                         </div>
+                        <input type="file" id="file-input-btn" name="files[]" multiple onChange={handleFileSelect}></input>
                          <div className="ui divider"></div> 
                         {
                             this.state.data.length == 0 ? undefined :
