@@ -7,6 +7,7 @@ namespace ts.pxtc {
     export const SK = SyntaxKind;
 
     export const numReservedGlobals = 1;
+    const whitespaceRegex = /^\s$/;
 
     interface NodeWithId extends Node {
         pxtNodeId: number;
@@ -541,10 +542,10 @@ namespace ts.pxtc {
         return val
     }
 
-    // this function works assuming that the program has passed the 
+    // this function works assuming that the program has passed the
     // TypeScript type checker. We are going to simply rule out some
     // cases that pass the TS checker. We only compare type
-    // pairs that the TS checker compared. 
+    // pairs that the TS checker compared.
 
     // we are checking that subType is a subtype of supType, so that
     // an assignment of the form trg <- src is safe, where supType is the
@@ -1359,7 +1360,9 @@ namespace ts.pxtc {
                         }
                         break;
                     default:
-                        userError(9206, lf("Only 0 . _ (off) and 1 # * (on) are allowed in image literals"))
+                        if (!isWhitespace(s[i])) {
+                            userError(9206, lf("Only 0 . _ (off) and 1 # * (on) are allowed in image literals"))
+                        }
                 }
             }
 
@@ -1380,6 +1383,10 @@ ${lbl}: .short 0xffff
                 imageLiteral: lbl,
                 jsLit
             }
+        }
+
+        function isWhitespace(character: string) {
+            return whitespaceRegex.test(character);
         }
 
         function mkSyntheticInt(v: number): LiteralExpression {
@@ -1960,7 +1967,7 @@ ${lbl}: .short 0xffff
                 } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                     if (node == funcExpr) {
                         // in this special base case, we have property access recv.foo
-                        // where recv is a map obejct 
+                        // where recv is a map obejct
                         let name = getName(decl)
                         let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
                         if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
@@ -1981,7 +1988,7 @@ ${lbl}: .short 0xffff
                         return res
                     } else {
                         // in this case, recv.foo represents a function/lambda
-                        // so the receiver is not needed, as we have already done 
+                        // so the receiver is not needed, as we have already done
                         // the property lookup to get the lambda
                         args.shift()
                         callInfo.args.shift()
@@ -2002,7 +2009,7 @@ ${lbl}: .short 0xffff
                     userError(9220, lf("namespaces cannot be called directly"))
             }
 
-            // otherwise we assume a lambda 
+            // otherwise we assume a lambda
             if (args.length > 3)
                 userError(9217, lf("lambda functions with more than 3 arguments not supported"))
 
