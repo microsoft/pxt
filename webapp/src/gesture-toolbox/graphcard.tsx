@@ -186,6 +186,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
 
         let svgCropWidth = width - this.props.dx; //because the graph doesn't show the last point! TODO: fix this!
+        if (svgCropWidth < 0) svgCropWidth = 0;
         let svgCropHeight = height * 3 + 15;
         let strokeWidth = 2;
 

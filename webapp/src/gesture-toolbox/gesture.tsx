@@ -52,6 +52,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
     private recorder: Recorder.Recorder;
     private curGestureIndex: number;
+    private mainViewGesturesGraphsKey: number;
     private editedGestureName: string;
 
     private models: Model.SingleDTWCore[];
@@ -81,6 +82,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.webcamInitialized = false;
         this.recorderInitialized = false;
         this.shouldGenerateBlocks = false;
+        
+        this.mainViewGesturesGraphsKey = 999;
     }
 
     generateBlocks() {
@@ -319,6 +322,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 let curIndex = cloneData.length - 1;
                 this.models.push(new Model.SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name));
                 this.setState({ data: cloneData });
+                this.forceUpdate();
             }
         }
 
@@ -511,7 +515,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             <div>
                                 {
                                     this.state.data.map((gesture) =>
-                                        <div className="ui segments link-effect gesture-container"> 
+                                        <div className="ui segments link-effect gesture-container" key={this.mainViewGesturesGraphsKey++}> 
                                             <div className="ui segment inverted teal" style={headerStyle}>
                                                 <div className="ui header inverted left floated">
                                                     {gesture.name}
