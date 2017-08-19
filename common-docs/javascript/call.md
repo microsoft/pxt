@@ -28,13 +28,9 @@ Math.min(1, 2)
 
 It's a syntax error to have a left parenthesis without the "closing" right parenthesis:
 
-```typescript
+```typescript-ignore
 Math.min(
 ```
 
 If a function has zero arguments, you still
-need the parentheses in order to call the function. For example
-
-```typescript
-Math.randomBoolean()
-```
+need the parentheses in order to call the function.
