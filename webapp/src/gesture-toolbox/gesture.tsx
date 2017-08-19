@@ -15,7 +15,7 @@ import * as Types from "./types";
 import * as Webcam from "./webcam";
 import * as Viz from "./visualizations";
 import * as Model from "./model";
-import * as Indicator from "./indicator";
+
 import { GraphCard } from "./graphcard";
 import { streamerCode } from "./streamer";
 
@@ -28,7 +28,6 @@ type IAppState = pxt.editor.IAppState;
 type IProjectView = pxt.editor.IProjectView;
 
 export const gesturesContainerID: string = "gestures-container";
-export const connectionIndicatorID: string = "connection-indicator";
 
 interface GestureToolboxState {
     visible?: boolean;
@@ -36,6 +35,7 @@ interface GestureToolboxState {
     editDescriptionMode?: boolean;
     data?: Types.Gesture[];
     connected?: boolean;
+    reconnecting?: boolean;
 }
 
 export class GestureToolbox extends data.Component<ISettingsProps, GestureToolboxState> {
@@ -57,7 +57,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
     private models: Model.SingleDTWCore[];
 
-    lastConnectedTime: number;
+    private lastConnectedTime: number;
+    private reconnectAttempts: number;
+    private intervalID: number;
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -70,7 +72,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             editGestureMode: false,
             editDescriptionMode: false,
             data: data,
-            connected: false
+            connected: false,
+            reconnecting: false
         };
 
         this.lastConnectedTime = 0;
@@ -84,6 +87,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.shouldGenerateBlocks = false;
         
         this.mainViewGesturesGraphsKey = 999;
+        this.reconnectAttempts = 0;
     }
 
     generateBlocks() {
@@ -124,8 +128,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const onSerialData = (buf: any, isErr: any) => {
             let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
             let newData = Recorder.parseString(strBuf);
-
-            this.lastConnectedTime = Date.now();
+            
+            if (newData.acc)
+                this.lastConnectedTime = Date.now();
 
             if (this.state.editGestureMode && this.state.connected) {
                 if (newData.acc && this.graphZ.isInitialized()) {
@@ -153,6 +158,45 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 }
             }
         };
+
+        this.intervalID = setInterval(() => {
+            let elapsedTime = Date.now() - this.lastConnectedTime;
+
+            if (elapsedTime > 1000) {
+                if (this.state.connected && !this.state.reconnecting) {
+                    // make sure that it only calls setState when it's going to change the state (and not overwrite the same state)
+                    this.setState({ connected: false });
+                }
+
+                if(!this.state.reconnecting) {
+                    // make sure that it doesn't try to call hidbridge.initAsync() when it is being reconnected (and cause a race condition)
+                    this.setState({ reconnecting: true });
+
+                    if (hidbridge.shouldUse())
+                        hidbridge.initAsync()
+                        .then(dev => {
+                            dev.onSerial = onSerialData;
+                        })
+                        .catch(reason => {
+                            this.setState({ connected: false, reconnecting: false });
+                        });
+                }
+                else {
+                    this.reconnectAttempts++;
+                    if(this.reconnectAttempts == 3) {
+                        this.reconnectAttempts = 0;
+                        this.setState({ connected: false, reconnecting: false });
+                    }
+                }
+            }
+            else {
+                // we are connected to the device
+                if (!this.state.connected) {
+                    // make sure that it only calls setState when it's going to change the state (and not overwrite the same state)
+                    this.setState({ connected: true, reconnecting: false });
+                }
+            }
+        }, 1100);
 
         if (hidbridge.shouldUse()) {
             hidbridge.initAsync()
@@ -326,11 +370,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             }
         }
 
-        const onConnectionStatusChange = (connectionStatus: boolean) => {
-            if (this.state.connected != connectionStatus)
-                this.setState({ connected: connectionStatus });
-        }
-
         const onSampleDelete = (gid: number, sid: number) => {
             let gi = this.getGestureIndex(gid);
             let si = this.getSampleIndex(gi, sid);
@@ -468,23 +507,40 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         return (
             <sui.Modal open={this.state.visible} className="gesturedialog" size="fullscreen"
                 onClose={() => this.hide() } dimmer={true} closeIcon={false} closeOnDimmerClick>
-                <sui.Segment attached="top">
+                <sui.Segment attached="top" className="top-bar">
                     {this.state.editGestureMode
                         ?
-                        <button className="ui button icon huge clear left floated" onClick={() => backToMain() }>
-                            <i className="icon chevron left"></i>
+                        <button className="ui button icon huge clear left floated" id="back-btn" onClick={() => backToMain() }>
+                            <i className="icon chevron left large"></i>
                         </button>
                         :
                         <span className="ui header left floated">{lf("Gesture Toolbox")}</span>
                     }
-                    <Indicator.ConnectionIndicator
-                        parent={ this }
-                        onConnStatChangeHandler={ onConnectionStatusChange }
-                        class={ "right floated" }
-                    />
-                    {/* <button className="ui button icon huge clear" onClick={() => this.hide() }>
-                        <i className="icon close"></i>
-                    </button> */}
+                    <button className="ui button icon huge clear" id="clear-btn" onClick={() => this.hide() }>
+                        <i className="icon close large"></i>
+                    </button>
+                    {
+                        this.state.connected ? 
+                        <div className="ui basic label green" id="indicator">
+                            <i className="icon checkmark green"></i>
+                            Connected
+                        </div>
+                        :
+                        <div>
+                            {
+                                this.state.reconnecting ?
+                                <div className="ui basic label yellow" id="indicator">
+                                    <i className="icon refresh yellow"></i>
+                                    Reconnecting
+                                </div>
+                                :
+                                <div className="ui basic label red" id="indicator">
+                                    <i className="icon remove red"></i>
+                                    Disconnected
+                                </div>
+                            }
+                        </div>
+                    }
                 </sui.Segment>
                 <div className="ui segment bottom attached tab active tabsegment">
                 {
