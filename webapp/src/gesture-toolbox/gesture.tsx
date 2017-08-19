@@ -75,6 +75,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.lastConnectedTime = 0;
         this.models = [];
         // this.generatedCodeBlocks = [];
+        this.curGestureIndex = 0;
 
         this.graphInitialized = false;
         this.webcamInitialized = false;
@@ -101,7 +102,16 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         this.setState({ visible: false, editGestureMode: false, editDescriptionMode: false });
         this.resetGraph();
-        this.recorder.PauseWebcam();
+        
+        if (this.state.editGestureMode)
+            this.recorder.PauseWebcam();
+        
+        if (this.state.data.length > 0 && this.state.data[this.curGestureIndex].gestures.length == 0) {
+            // delete the gesture
+            let cloneData = this.state.data.slice();
+            cloneData.splice(this.curGestureIndex, 1);
+            this.setState({ data: cloneData });
+        }
     }
 
 
@@ -154,15 +164,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.graphInitialized = false;
         this.webcamInitialized = false;
         this.recorderInitialized = false;
-        // this.recorder.Disable();
-
-        // mediaStream.stop();
-        if (this.state.data.length > 0 && this.state.data[this.curGestureIndex].gestures.length == 0) {
-            // delete the gesture
-            let cloneData = this.state.data.slice();
-            cloneData.splice(this.curGestureIndex, 1);
-            this.setState({ data: cloneData });
-        }
     }
 
     getGestureIndex(gid: number): number {
@@ -181,6 +182,37 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         return -1;
     }
 
+    parseJSONGesture(importedSample: any): Types.GestureSample {
+        let sample = new Types.GestureSample();
+
+        for (let k = 0; k < importedSample.rawData.length; k++) {
+            let vec = importedSample.rawData[k];
+            sample.rawData.push(new Types.Vector(vec.X, vec.Y, vec.Z));
+        }
+
+        sample.videoLink = importedSample.videoLink;
+        sample.videoData = importedSample.videoData;
+        sample.startTime = importedSample.startTime;
+        sample.endTime = importedSample.endTime;
+        sample.cropStartIndex = importedSample.cropStartIndex;
+        sample.cropEndIndex = importedSample.cropEndIndex;
+
+        return sample;
+    }
+
+    updateScrollbar() {
+        // focus the scrollbar on the latest sample
+        let scrollBarDiv = document.getElementById("gestures-fluid-container");
+        scrollBarDiv.scrollLeft = scrollBarDiv.scrollWidth;
+
+        // resize the scrollbar based on the window size:
+        let totalWidth = document.getElementById("recorded-gestures").offsetWidth;
+        let dispGestureWidth = document.getElementById("display-gesture").offsetWidth;
+        let samplesContainerWidth = totalWidth - dispGestureWidth - 40;
+
+        scrollBarDiv.style.width = samplesContainerWidth.toString() + "px";
+    }
+
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
 
@@ -194,6 +226,13 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
             this.resetGraph();
             this.recorder.PauseWebcam();
+            
+            if (this.state.data.length > 0 && this.state.data[this.curGestureIndex].gestures.length == 0) {
+                // delete the gesture
+                let cloneData = this.state.data.slice();
+                cloneData.splice(this.curGestureIndex, 1);
+                this.setState({ data: cloneData });
+            }
         }
 
         const newGesture = () => {
@@ -232,7 +271,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
             // files is a FileList of File objects. List some properties.
             for (let i = 0; i < files.length ; i++) {
-                let importedGesture: Types.Gesture = new Types.Gesture();
+                let parsedGesture: Types.Gesture = new Types.Gesture();
 
                 JSZip.loadAsync(files[i]).then((zip: any) => {
                     zip.forEach((relativePath: string, zipEntry: any) => {
@@ -241,12 +280,17 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             // set the parameters
                             zipEntry.async("string").then((text: string) => {
                                 // console.log(text);
-                                let parsedGesture = JSON.parse(text) as Types.Gesture;
-                                importedGesture.description = parsedGesture.description;
-                                importedGesture.displayGesture = parsedGesture.displayGesture;
-                                importedGesture.gestures = parsedGesture.gestures;
-                                importedGesture.labelNumber = parsedGesture.labelNumber;
-                                importedGesture.name = parsedGesture.name;
+                                let importedGesture = (JSON.parse(text) as Types.Gesture);
+                                parsedGesture.description = importedGesture.description;
+                                parsedGesture.name = importedGesture.name;
+                                parsedGesture.labelNumber = importedGesture.labelNumber;
+
+                                for (let j = 0; j < importedGesture.gestures.length; j++) {
+                                    parsedGesture.gestures.push(this.parseJSONGesture(importedGesture.gestures[j]));
+                                }
+                                
+                                parsedGesture.displayGesture = this.parseJSONGesture(importedGesture.displayGesture);
+
                             })
                         }
                         else if (zipEntry.name == "video.mp4") {
@@ -263,15 +307,15 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                 let byteArray = new Uint8Array(byteNumbers);
                                 let blob = new Blob([byteArray], {type: "video/mp4"});
 
-                                importedGesture.displayVideoLink = window.URL.createObjectURL(blob);
-                                importedGesture.displayVideoData = blob;
+                                parsedGesture.displayVideoLink = window.URL.createObjectURL(blob);
+                                parsedGesture.displayVideoData = blob;
                             })
                         }
                     });
                 })
 
                 let cloneData = this.state.data.slice();
-                cloneData.push(importedGesture);
+                cloneData.push(parsedGesture);
                 let curIndex = cloneData.length - 1;
                 this.models.push(new Model.SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name));
                 this.setState({ data: cloneData });
@@ -350,22 +394,16 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     cloneData[gestureIndex].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
                     // TODO: allow users to change the video in the future.
                     // Probably just for the demo:
-                    cloneData[gestureIndex].displayVideoLink = cloneData[gestureIndex].gestures[0].videoLink;
-                    cloneData[gestureIndex].displayVideoData = cloneData[gestureIndex].gestures[0].videoData;
-                    this.setState({ data: cloneData });
+                    if (this.state.data[gestureIndex].gestures.length == 1) {
+                        // update video
+                        cloneData[gestureIndex].displayVideoLink = cloneData[gestureIndex].gestures[0].videoLink;
+                        cloneData[gestureIndex].displayVideoData = cloneData[gestureIndex].gestures[0].videoData;
+                    }
 
+                    this.setState({ data: cloneData });
                     this.forceUpdate();
 
-                    // focus the scrollbar on the latest sample
-                    let scrollBarDiv = document.getElementById("gestures-fluid-container");
-                    scrollBarDiv.scrollLeft = scrollBarDiv.scrollWidth;
-
-                    // resize the scrollbar based on the window size:
-                    let totalWidth = document.getElementById("recorded-gestures").offsetWidth;
-                    let dispGestureWidth = document.getElementById("display-gesture").offsetWidth;
-                    let samplesContainerWidth = totalWidth - dispGestureWidth - 40;
-
-                    scrollBarDiv.style.width = samplesContainerWidth.toString() + "px";
+                    this.updateScrollbar();
                 }
 
                 this.recorder = new Recorder.Recorder(this.curGestureIndex, Recorder.RecordMode.PressAndHold, onNewSampleRecorded);
@@ -419,7 +457,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const sampleMarginStyle = { margin: "0 10px 10px 0;" };
         const headerStyle = { height: "60px" };
         const buttonHeightStyle = { height: "30px" };
-        const videoStyle = { height: "258px", margin: "15px 0 15px 0" };
         const mainGraphStyle = { margin: "15px 15px 15px 0" };
         
         // const scrollBarContainer = { overflowX: "scroll", width: "1500px" };
@@ -492,7 +529,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                             </div>
                                             <div className="ui segment">
                                                 <div className="ui grid">
-                                                    <video style={videoStyle} className="flipped-video" src={gesture.displayVideoLink} autoPlay loop></video>
+                                                    <video className="flipped-video gesture-video" src={gesture.displayVideoLink} autoPlay loop></video>
                                                     <GraphCard
                                                         key={ gesture.gestureID }
                                                         editable={ false }
@@ -587,9 +624,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                     <div className="ui grid">
                                         {
                                             this.state.data[this.curGestureIndex].gestures.length == 0 ?
-                                            <video style={videoStyle} src="" autoPlay loop></video>
+                                            <video className="flipped-video gesture-video" src="" autoPlay loop></video>
                                             :
-                                            <video style={videoStyle} className="flipped-video" src={this.state.data[this.curGestureIndex].displayVideoLink} autoPlay loop></video>
+                                            <video className="flipped-video gesture-video" src={this.state.data[this.curGestureIndex].displayVideoLink} autoPlay loop></video>
                                         }
                                         {
                                             this.state.data[this.curGestureIndex].gestures.length == 0 ?
@@ -636,6 +673,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                         onDeleteHandler={ onSampleDelete }
                                         onCropHandler={ onSampleCrop }
                                         style={ sampleMarginStyle }
+                                        ref={this.updateScrollbar}
                                     />
                                 )
                             }

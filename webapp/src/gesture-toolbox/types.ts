@@ -35,7 +35,7 @@ export class Gesture {
             let sample: Vector[] = [];
 
             for (let j = this.gestures[i].cropStartIndex; j <= this.gestures[i].cropEndIndex; j++) {
-                sample.push(this.gestures[i].rawData[j].clone());
+                sample.push(this.gestures[i].rawData[j].Clone());
             }
 
             all_data.push(sample);
@@ -61,6 +61,23 @@ export class GestureSample {
         this.rawData = [];
         this.sampleID = GestureSample.id++;
     }
+
+    public Clone(): GestureSample {
+        let cloneSample = new GestureSample();
+
+        for (let i = 0; i < this.rawData.length; i++) {
+            cloneSample.rawData.push(this.rawData[i]);
+        }
+
+        cloneSample.videoLink = this.videoLink;
+        cloneSample.videoData = this.videoData;
+        cloneSample.startTime = this.startTime;
+        cloneSample.endTime = this.endTime;
+        cloneSample.cropStartIndex = this.cropStartIndex;
+        cloneSample.cropEndIndex = this.cropEndIndex;
+
+        return cloneSample;
+    }
 }
 
 
@@ -75,7 +92,7 @@ export class Vector {
         this.Z = z;
     }
 
-    public clone() {
+    public Clone() {
         return new Vector(this.X, this.Y, this.Z);
     }
 }
