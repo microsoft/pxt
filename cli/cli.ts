@@ -3118,19 +3118,19 @@ function testPkgConflictsAsync() {
                     }
                 }
 
-                console.log(`package conflict test OK: ${tc.id}`);
+                pxt.log(`package conflict test OK: ${tc.id}`);
                 return Promise.resolve();
             })
             .catch((e) => {
-                console.log(`package conflict test FAILED: ${tc.id}`);
+                pxt.log(`package conflict test FAILED: ${tc.id}`);
                 testFailed("Uncaught exception during test: " + e.message || e);
             });
     })
         .then(() => {
-            console.log(`${testCases.length - failures.length} passed, ${failures.length} failed`);
+            pxt.log(`${testCases.length - failures.length} passed, ${failures.length} failed`);
 
             if (failures.length) {
-                console.log(failures.map((e) => `Failure in test case ${e.testCase}: ${e.reason}`).join("\n"));
+                pxt.log(failures.map((e) => `Failure in test case ${e.testCase}: ${e.reason}`).join("\n"));
                 process.exit(1);
             }
         })
@@ -3204,7 +3204,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
         infos.forEach(info => pxt.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
     }
     return Promise.map(snippets, (snippet: CodeSnippet) => {
-        pxt.debug(`compiling ${snippet.name}`);
+        pxt.debug(`compiling ${snippet.name} (${snippet.type})`);
         const name = snippet.name;
         const pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, Object.keys(snippet.packages)));
         return pkg.getCompileOptionsAsync().then(opts => {
@@ -4020,7 +4020,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => {
             snippets.push(snippet);
             const dir = path.join("built/docs/snippets", snippet.type);
-            const fn = `${dir}/${entrypath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.ts`;
+            const fn = `${dir}/${entrypath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${/^(block|blocks|typescript|sig)$/.test(snippet.type) ? "ts" : "json"}`;
             nodeutil.mkdirP(dir);
             fs.writeFileSync(fn, snippet.code);
         });
