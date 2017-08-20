@@ -58,6 +58,7 @@ const lf = Util.lf
 pxsim.util.injectPolyphils();
 
 let theEditor: ProjectView;
+export let compile_ws: any;
 
 /*
 class CloudSyncButton extends data.Component<ISettingsProps, {}> {
@@ -1840,6 +1841,24 @@ function initLogin() {
     }
 }
 
+function initCompile() {
+
+    // this code will ask the CLI to go into the current project's directory and run `pxt` to build using yotta (locally)
+    compile_ws = new WebSocket(`ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/compile`);
+    pxt.debug('initializing compile pipe');
+
+    compile_ws.onopen = (ev: any) => {
+        pxt.debug('compile: socket opened');
+    }
+
+    compile_ws.onclose = (ev: any) => {
+        pxt.debug('compile: socket closed')
+    }
+
+    compile_ws.onmessage = (ev: any) => {
+    }
+}
+
 function initSerial() {
     if (!pxt.appTarget.serial || !pxt.winrt.isWinRT() && (!Cloud.isLocalHost() || !Cloud.localToken))
         return;
@@ -2236,6 +2255,7 @@ $(document).ready(() => {
                 theEditor.setState(state);
             }
             initSerial();
+            initCompile();
             initScreenshots();
             initHashchange();
             electron.init();

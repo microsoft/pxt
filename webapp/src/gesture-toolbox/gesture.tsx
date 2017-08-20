@@ -15,6 +15,7 @@ import * as Types from "./types";
 import * as Webcam from "./webcam";
 import * as Viz from "./visualizations";
 import * as Model from "./model";
+import { compile_ws } from "./../app";
 
 import { GraphCard } from "./graphcard";
 import { streamerCode } from "./streamer";
@@ -505,6 +506,10 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 }))
         }
 
+        const uploadStreamerCode = () => {
+            compile_ws.send("compile");
+        }
+
         const inputStyle = { height: "30px", padding: "auto auto auto 6px" };
         const colossalStyle = { fontSize: "5rem", margin: "0" };
         const sampleMarginStyle = { margin: "0 10px 10px 0" };
@@ -662,7 +667,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                                 <li>Upload the <em>streamer.uf2</em> program to the device by dragging it into the device's removable drive</li>
                                             </ul>
                                             <br/>
-                                            <button id="program-streamer-btn" className="ui button compact icon-and-text primary download-button big">
+                                            <button id="program-streamer-btn" className="ui button compact icon-and-text primary download-button big" onClick={uploadStreamerCode}>
                                                 <i className="download icon icon-and-text"></i>
                                                 <span className="ui text">Program Streamer</span>
                                             </button>

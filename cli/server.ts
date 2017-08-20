@@ -368,6 +368,7 @@ export function expandDocFileTemplate(name: string) {
 
 let wsSerialClients: WebSocket[] = [];
 let electronSocket: WebSocket = null;
+let compileSocket: WebSocket = null;
 let webappReady = false;
 let electronPendingMessages: ElectronMessage[] = [];
 
@@ -560,6 +561,29 @@ function initSocketServer(wsPort: number, hostname: string) {
         })
     }
 
+    function startCompileSocket(request: any, socket: any, body: any) {
+        compileSocket = new WebSocket(request, socket, body);
+        compileSocket.onmessage = function (event: any) {
+            if (event.data == "compile") {
+                // start compiling
+                let cmd = require('node-cmd');
+                cmd.get("./upload.sh", function (err: any, data: any, stderr: any) {
+                     console.log(data);
+                });
+            }
+        };
+
+        compileSocket.onclose = function (event: any) {
+            console.log('Compile socket connection closed');
+            compileSocket = null;
+        };
+
+        compileSocket.onerror = function () {
+            console.log('Compile socket connection closed');
+            compileSocket = null;
+        };
+    }
+
     function startElectronChannel(request: any, socket: any, body: any) {
         electronSocket = new WebSocket(request, socket, body);
         electronSocket.onmessage = function (event: any) {
@@ -597,6 +621,8 @@ function initSocketServer(wsPort: number, hostname: string) {
                     startHID(request, socket, body);
                 else if (request.url == "/" + serveOptions.localToken + "/electron")
                     startElectronChannel(request, socket, body);
+                else if (request.url == "/" + serveOptions.localToken + "/compile")
+                    startCompileSocket(request, socket, body);
                 else console.log('refused connection at ' + request.url);
             }
         } catch (e) {
