@@ -3205,6 +3205,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
     }
     return Promise.map(snippets, (snippet: CodeSnippet) => {
         const name = snippet.name;
+        const fn = snippet.file || snippet.name;
         pxt.debug(`compiling ${name} (${snippet.type})`);
 
         if (snippet.ext == "json") {
@@ -3212,13 +3213,13 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                 const codecards = JSON.parse(snippet.code)
                 if (!codecards || !Array.isArray(codecards))
                     throw new Error("codecards must be an JSON array")
-                addSuccess(name);
+                addSuccess(fn);
             } catch (e) {
-                addFailure(name, [{
+                addFailure(fn, [{
                     code: 4242,
                     category: ts.DiagnosticCategory.Error,
                     messageText: e.message,
-                    fileName: name,
+                    fileName: fn,
                     start: 1,
                     line: 1,
                     length: 1,
@@ -3242,10 +3243,10 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                     const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false })
                     const success = !!bresp.outfiles['main.blocks']
                     if (success) return addSuccess(name)
-                    else return addFailure(name, bresp.diagnostics)
+                    else return addFailure(fn, bresp.diagnostics)
                 }
                 else {
-                    return addSuccess(name)
+                    return addSuccess(fn)
                 }
             }
             else {
@@ -4045,6 +4046,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
             const fn = `${dir}/${entrypath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
             nodeutil.mkdirP(dir);
             fs.writeFileSync(fn, snippet.code);
+            snippet.file = fn;
         });
     }
 
@@ -4156,6 +4158,7 @@ export interface CodeSnippet {
     type: string;
     ext: string;
     packages: pxt.Map<string>;
+    file?: string;
 }
 
 export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
