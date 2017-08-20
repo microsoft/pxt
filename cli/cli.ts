@@ -3204,8 +3204,30 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
         infos.forEach(info => pxt.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
     }
     return Promise.map(snippets, (snippet: CodeSnippet) => {
-        pxt.debug(`compiling ${snippet.name} (${snippet.type})`);
         const name = snippet.name;
+        pxt.debug(`compiling ${name} (${snippet.type})`);
+
+        if (snippet.ext == "json") {
+            try {
+                const codecards = JSON.parse(snippet.code)
+                if (!codecards || !Array.isArray(codecards))
+                    throw new Error("codecards must be an JSON array")
+                addSuccess(name);
+            } catch(e) {
+                addFailure(name, [{
+                    code: 4242,
+                    category: ts.DiagnosticCategory.Error,
+                    messageText: e.message,
+                    fileName: name,
+                    start: 1,
+                    line: 1,
+                    length: 1,
+                    column: 1
+                }]);
+            }
+            return Promise.resolve();
+        }
+
         const pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, Object.keys(snippet.packages)));
         return pkg.getCompileOptionsAsync().then(opts => {
             opts.ast = true
@@ -4020,7 +4042,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => {
             snippets.push(snippet);
             const dir = path.join("built/docs/snippets", snippet.type);
-            const fn = `${dir}/${entrypath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${/^(block|blocks|typescript|sig)$/.test(snippet.type) ? "ts" : "json"}`;
+            const fn = `${dir}/${entrypath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
             nodeutil.mkdirP(dir);
             fs.writeFileSync(fn, snippet.code);
         });
@@ -4132,17 +4154,21 @@ export interface CodeSnippet {
     name: string;
     code: string;
     type: string;
+    ext: string;
     packages: pxt.Map<string>;
 }
 
 export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
-    const supported: pxt.Map<boolean> = {
-        "blocks": true,
-        "block": true,
-        "typescript": true,
-        "sig": true,
-        "namespaces": true,
-        "cards": true
+    const supported: pxt.Map<string> = {
+        "blocks": "ts",
+        "block": "ts",
+        "typescript": "ts",
+        "sig": "ts",
+        "namespaces": "ts",
+        "cards": "ts",
+        "codecard": "json",
+        "shuffle": "json",
+        "sim": "ts"
     }
     const snippets = getSnippets(md);
     const codeSnippets = snippets.filter(snip => !snip.ignore && !!supported[snip.type]);
@@ -4165,6 +4191,7 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
             name: `${pkgName}-${i}`,
             code: snip.code,
             type: snip.type,
+            ext: supported[snip.type],
             packages: pkgs
         };
     })
