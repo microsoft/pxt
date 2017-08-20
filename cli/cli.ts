@@ -3213,7 +3213,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                 if (!codecards || !Array.isArray(codecards))
                     throw new Error("codecards must be an JSON array")
                 addSuccess(name);
-            } catch(e) {
+            } catch (e) {
                 addFailure(name, [{
                     code: 4242,
                     category: ts.DiagnosticCategory.Error,
