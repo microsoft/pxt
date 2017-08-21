@@ -1899,57 +1899,28 @@ function initLogin() {
     }
 }
 
-let poller: number;
-let timer: number;
+let hidConnectionPoller: number;
+let hidPollerDelay: number;
 
-function startPoller() {
-    poller = window.setInterval(initSerial, 2000);
+function startHidConnectionPoller() {
+    hidConnectionPoller = window.setInterval(initSerial, 5000);
 }
 
-function setTimer() {
-    clearTimeout(timer);
-    clearInterval(poller);
-    timer = window.setTimeout(startPoller, 5000);
+function setHidPollerDelay() {
+    clearTimeout(hidPollerDelay);
+    clearInterval(hidConnectionPoller);
+    hidPollerDelay = window.setTimeout(startHidConnectionPoller, 5000);
 }
-
-
-/**
-let serialConnectionHandler = Util.debounce(() => {
-    window.setInterval(() => {
-        hidbridge.initAsync(true)
-            .then(dev => {
-                dev.onSerial = (buf, isErr) => {
-                    serialConnectionHandler()
-                    window.postMessage({
-                            type: 'serial',
-                            id: 'n/a', // TODO
-                            data: Util.fromUTF8(Util.uint8ArrayToString(buf))
-                        }, "*")
-                    }
-                })
-            .catch(e => {
-                console.log("Error connecting to device")
-            })
-    }, 2000)
-}, 5000, false)
 
 function initSerial() {
-    return serialConnectionHandler()
-}
-**/
-
-function initSerial() {
-    console.log("in initSerial");
     if (!pxt.appTarget.serial || !pxt.winrt.isWinRT() && (!Cloud.isLocalHost() || !Cloud.localToken))
         return;
 
     if (hidbridge.shouldUse()) {
-        console.log("here");
         hidbridge.initAsync(true)
             .then(dev => {
                 dev.onSerial = (buf, isErr) => {
-                    setTimer();
-                    console.log("just reset timer");
+                    setHidPollerDelay();
                     window.postMessage({
                         type: 'serial',
                         id: 'n/a', // TODO
@@ -2368,8 +2339,7 @@ $(document).ready(() => {
             if (state) {
                 theEditor.setState({ editorState: state });
             }
-//            initSerial();
-            startPoller();
+            startHidConnectionPoller();
             initScreenshots();
             initHashchange();
             electron.init();
