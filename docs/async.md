@@ -5,7 +5,7 @@
 JavaScript is generally speaking single threaded (there are web workers and other such inventions, but these are generally considered separate processes, that share no address space with the main process). If a function needs to wait for
 some input (e.g., web request), you need to supply a callback function that gets
 executed when the data is available. 
-```js
+```typescript-ignore
 downloadData("https://example.com/", (err, data) => {
     if (err) { ... }
     else {
@@ -21,7 +21,7 @@ One way to fix this is to use promises, but the idea
 remains the same --- in the `.then()` handler you provide the function to execute
 when data is available, but the advantage is that you can often avoid nesting
 them (functions returning promises are often by convention called `somethingAsync`):
-```js
+```typescript-ignore
 downloadDataAsync("https://example.com/")
     .then(data => {
         let parsed = JSON.parse(data)
@@ -35,7 +35,7 @@ There are proposals of introducing C#-style `async`/`await` to JavaScript.
 In fact TypeScript can compile `async/await` to ES6 generators (yield).
 In that case you can use `await` operator to make a call to a promise-returning
 function look sequential:
-```js
+```typescript-ignore
 let parsed = JSON.parse(await downloadDataAsync("https://example.com/"))
 ...
 let somewhere = await downloadDataAsync("https://somewhere-else.com/")
@@ -58,7 +58,7 @@ regular functions. This loses information about where your thread can
 be interrupted, but we can hopefully recover that in the IDE (by for example
 displaying a little clock next to async calls).
 
-```js
+```typescript-ignore
 let parsed = JSON.parse(downloadData("https://example.com/"))
 ...
 let somewhere = downloadData("https://somewhere-else.com/")
@@ -74,7 +74,7 @@ debugger is another major one).
 Currently, to implement an async function, you first need to add `//% promise`
 attribute to the declaration:
 
-```typescript
+```typescript-ignore
 //? Downloads data from remote site.
 //% promise shim=basic::downloadData
 export function downloadData(url:string) { return "" }
@@ -82,7 +82,7 @@ export function downloadData(url:string) { return "" }
 
 In the simulator you return a promise:
 
-```typescript
+```typescript-ignore
 export function downloadDataAsync(url:string) {
     return new Promise<string>((resolve, reject) =>
         $.get(url, (data, status) => {

@@ -35,4 +35,4 @@ for (let item of jumbled) {
 
 ## See also
 
-[remove at](/blocks/arrays/remove-at)
+[remove at](/reference/arrays/remove-at)
