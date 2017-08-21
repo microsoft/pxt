@@ -4478,6 +4478,7 @@ function initCommands() {
 
     p.defineCommand({
         name: "checkdocs",
+        onlineHelp: true,
         help: "check docs for broken links, typing errors, etc...",
         flags: {
             snippets: { description: "compile snippets" },
