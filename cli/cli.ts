@@ -3588,6 +3588,7 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
         pkgversion: "0.0.0",
         fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
         localDir,
+        target: (pxt.appTarget.id || "unknownstatic"),
         builtPackaged,
         minify
     }).then(() => renderDocs(builtPackaged, localDir))
