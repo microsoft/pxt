@@ -1828,7 +1828,7 @@ let commonfiles: Map<string> = {}
 
 class SnippetHost implements pxt.Host {
     //Global cache of module files
-    static files: Map<Map<string>> = {}
+    files: Map<Map<string>> = {}
 
     constructor(public name: string, public main: string, public extraDependencies: string[], private includeCommon = false) { }
 
@@ -1837,15 +1837,18 @@ class SnippetHost implements pxt.Host {
     }
 
     readFile(module: pxt.Package, filename: string): string {
-        if (SnippetHost.files[module.id] && SnippetHost.files[module.id][filename]) {
-            return SnippetHost.files[module.id][filename]
+        if (this.files[module.id] && this.files[module.id][filename]) {
+            return this.files[module.id][filename]
         }
         if (module.id == "this") {
             if (filename == "pxt.json") {
-                return JSON.stringify({
+                return JSON.stringify(<pxt.PackageConfig>{
                     "name": this.name,
-                    "dependencies": this.dependencies,
+                    "dependencies": this.dependencies(),
                     "description": "",
+                    "yotta": {
+                        "ignoreConflicts": true
+                    },
                     "files": this.includeCommon ? [
                         "main.blocks", //TODO: Probably don't want this
                         "main.ts",
@@ -1916,10 +1919,10 @@ class SnippetHost implements pxt.Host {
     }
 
     writeFile(module: pxt.Package, filename: string, contents: string) {
-        if (!SnippetHost.files[module.id]) {
-            SnippetHost.files[module.id] = {}
+        if (!this.files[module.id]) {
+            this.files[module.id] = {}
         }
-        SnippetHost.files[module.id][filename] = contents
+        this.files[module.id][filename] = contents
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
@@ -1947,8 +1950,8 @@ class SnippetHost implements pxt.Host {
         return Promise.resolve("*")
     }
 
-    private get dependencies(): { [key: string]: string } {
-        let stdDeps: { [key: string]: string } = {}
+    private dependencies(): Map<string> {
+        let stdDeps: Map<string> = {}
         for (let extraDep of this.extraDependencies) {
             stdDeps[extraDep] = `file:../${extraDep}`
         }
@@ -3030,7 +3033,6 @@ function testPkgConflictsAsync() {
         };
 
         let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", tc.main, tc.dependencies));
-        SnippetHost.files = {};
         tc.expectedConflicts = tc.expectedConflicts.sort();
         tc.expectedInUse = tc.expectedInUse.sort();
 
@@ -3245,7 +3247,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             filename: f,
             diagnostics: infos
         })
-        infos.forEach(info => console.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
+        infos.forEach(info => pxt.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
     }
     return Promise.map(snippets, (snippet: CodeSnippet) => {
         pxt.debug(`compiling ${snippet.name}`);
@@ -3292,6 +3294,9 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
         if (ignoreCount > 0) {
             pxt.log(`Skipped ${ignoreCount} snippets`)
         }
+    }).then(() => {
+        if (failures.length > 0)
+            U.userError(`${failures.length} snippets not compiling in the docs`)
     })
 }
 
@@ -3938,14 +3943,14 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     function pushUrl(url: string, toc: boolean) {
         // cache value
         if (!urls.hasOwnProperty(url)) {
-            const isPackage = /^\/pkg\//.test(url);
-            if (isPackage) {
+            const specialPath = /^\/pkg\//.test(url) || /^\/--[a-z]+/.test(url);
+            if (specialPath) {
                 urls[url] = url;
                 return;
             }
             const isResource = /\.[a-z]+$/i.test(url)
             if (!isResource && !toc) {
-                pxt.log(`link not in SUMMARY: ${url}`);
+                pxt.debug(`link not in SUMMARY: ${url}`);
                 noTOCs.push(url);
             }
             // TODO: correct resolution of static resources
@@ -4007,9 +4012,14 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
 
     pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in SUMMARY, ${snippets.length} snippets`);
     fs.writeFileSync("built/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), "utf8");
+
+    let p = Promise.resolve();
     if (compileSnippets)
-        return testSnippetsAsync(snippets, re);
-    return Promise.resolve();
+        p = p.then(() => testSnippetsAsync(snippets, re));
+    return p.then(() => {
+        if (broken > 0)
+            U.userError(`${broken} broken links found in the docs`);
+    })
 }
 
 function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {

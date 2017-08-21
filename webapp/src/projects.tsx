@@ -9,6 +9,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
+import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
 import * as gallery from "./gallery";
@@ -122,7 +123,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             pxt.tickEvent("projects.gallery", { name: scr.name });
             this.hide();
             switch (scr.cardType) {
-                case "example": chgCode(scr); break;
+                case "example": chgCode(scr, true); break;
+                case "codeExample": chgCode(scr, false); break;
                 case "tutorial": this.props.parent.startTutorial(scr.url); break;
                 default:
                     const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url);
@@ -131,13 +133,23 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             }
         }
 
-        const chgCode = (scr: pxt.CodeCard) => {
+        const chgCode = (scr: pxt.CodeCard, loadBlocks?: boolean) => {
             core.showLoading(lf("Loading..."));
             gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
                 .done(opts => {
-                    core.hideLoading();
-                    if (opts)
-                        this.props.parent.newProject(opts);
+                    if (opts) {
+                        if (loadBlocks) {
+                            const ts = opts.filesOverride["main.ts"]
+                            compiler.getBlocksAsync()
+                                .then(blocksInfo => compiler.decompileSnippetAsync(ts, blocksInfo))
+                                .then(resp => {
+                                    opts.filesOverride["main.blocks"] = resp
+                                    this.props.parent.newProject(opts);
+                                })
+                        } else {
+                            this.props.parent.newProject(opts);
+                        }
+                    }
                 });
         }
         const upd = (v: any) => {

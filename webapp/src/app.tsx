@@ -537,7 +537,8 @@ export class ProjectView
         logs.clear();
         this.setState({
             showFiles: false,
-            filters: filters
+            filters: filters,
+            tutorialOptions: undefined
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
@@ -1434,6 +1435,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
     }
 
     openTutorials() {
+//        this.setState({tutorialOptions: undefined});
         pxt.tickEvent("menu.openTutorials");
         this.projects.showOpenTutorials();
     }
@@ -1463,6 +1465,10 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 }
                 //TODO: parse for tutorial options, mainly initial blocks
             }).then(() => {
+                return this.createProjectAsync({
+                    name: title
+                });
+            }).then(() => {
                 let tutorialOptions: pxt.editor.TutorialOptions = {
                     tutorial: tutorialId,
                     tutorialName: title,
@@ -1473,10 +1479,6 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
 
                 let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
                 tc.setPath(tutorialId);
-            }).then(() => {
-                return this.createProjectAsync({
-                    name: title
-                });
             });
     }
 
@@ -1523,6 +1525,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
     }
 
     completeTutorial() {
+//        this.setState({tutorialOptions: undefined});
         pxt.tickEvent("tutorial.complete");
         this.tutorialComplete.show();
     }
@@ -1606,7 +1609,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             hideMenuBar ? 'hideMenuBar' : '',
             hideEditorToolbar ? 'hideEditorToolbar' : '',
             sandbox && simActive ? 'simView' : '',
-            'full-abs'
+            'full-abs',
+            'dimmable'
         ]);
 
         return (
@@ -1630,12 +1634,9 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                     </span>
                                 </div>}
                             {!inTutorial && !targetTheme.blocksOnly ? <sui.Item class="editor-menuitem">
-                                <div className="ui grid padded">
-                                    {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined}
-                                    <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
-                                    <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
-                                    <div className="ui item toggle"></div>
-                                </div>
+                                {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined}
+                                <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
+                                <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
                             </sui.Item> : undefined}
                             {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined}
                             <div className="right menu">
