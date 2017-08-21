@@ -1931,27 +1931,57 @@ function initLogin() {
     }
 }
 
-let timeout: number;
-let interval: number;
-function startT() {
-    timeout = window.setTimeout(() => interval = window.setInterval(initSerial, 5000), 5000);
+let poller: number;
+let timer: number;
+
+function startPoller() {
+    poller = window.setInterval(initSerial, 2000);
 }
 
-function stopT() {
-    window.clearTimeout(timeout);
-    window.clearInterval(interval);
+function setTimer() {
+    clearTimeout(timer);
+    clearInterval(poller);
+    timer = window.setTimeout(startPoller, 5000);
 }
+
+
+/**
+let serialConnectionHandler = Util.debounce(() => {
+    window.setInterval(() => {
+        hidbridge.initAsync(true)
+            .then(dev => {
+                dev.onSerial = (buf, isErr) => {
+                    serialConnectionHandler()
+                    window.postMessage({
+                            type: 'serial',
+                            id: 'n/a', // TODO
+                            data: Util.fromUTF8(Util.uint8ArrayToString(buf))
+                        }, "*")
+                    }
+                })
+            .catch(e => {
+                console.log("Error connecting to device")
+            })
+    }, 2000)
+}, 5000, false)
 
 function initSerial() {
+    return serialConnectionHandler()
+}
+**/
+
+function initSerial() {
+    console.log("in initSerial");
     if (!pxt.appTarget.serial || !pxt.winrt.isWinRT() && (!Cloud.isLocalHost() || !Cloud.localToken))
         return;
 
     if (hidbridge.shouldUse()) {
-        hidbridge.initAsync()
+        console.log("here");
+        hidbridge.initAsync(true)
             .then(dev => {
                 dev.onSerial = (buf, isErr) => {
-                    stopT();
-                    startT();
+                    setTimer();
+                    console.log("just reset timer");
                     window.postMessage({
                         type: 'serial',
                         id: 'n/a', // TODO
@@ -2392,7 +2422,8 @@ $(document).ready(() => {
             if (state) {
                 theEditor.setState({ editorState: state });
             }
-            initSerial();
+//            initSerial();
+            startPoller();
             initScreenshots();
             initHashchange();
             electron.init();
