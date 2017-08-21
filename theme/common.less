@@ -40,19 +40,6 @@ html, body {
     right: 0;
 }
 
-.accessible-hidden {
-    position: absolute !important;
-    display: block;
-    visibility: visible;
-    overflow: hidden;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    border: 0;
-    padding: 0;
-    clip: rect(0 0 0 0);
-}
-
 /* Main Editor layout */
 #maineditor {
     left: @simulatorWidth;
@@ -194,25 +181,6 @@ div.simframe > iframe {
 }
 
 /* Menu */
-#accessibleMenu {
-    position: absolute;
-    z-index: 1001;
-    top: -20em;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-
-    .ui.item.link {
-        position: absolute;
-        width: 100%;
-        color: rgba(255, 255, 255, 0.9);
-    }
-
-    .ui.item.link:focus {
-        top:20em;
-    }
-}
-
 #menubar .ui.menu .item.editor-menuitem {
     margin: calc(@mainMenuHeight/10);
     padding: calc(@mainMenuHeight/10);
@@ -880,10 +848,6 @@ Avatar
     }
     .active.item.javascript-menuitem ~ .toggle {
         margin-left: 40px !important;
-    }
-    #menubar #accessibleMenu {
-        height: @mobileMenuHeight !important;
-        min-height: @mobileMenuHeight !important;
     }
     /* Top Menu */
     #maineditor {

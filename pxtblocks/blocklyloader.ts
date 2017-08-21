@@ -1265,7 +1265,8 @@ namespace pxt.blocks {
         (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown = function(e: any) {
             const x = e.which || e.keyCode;
             const interceptCharacter = x != 37 && x != 38 && x != 39 && x != 40 // Arrows (Handled by Blockly)
-                && !e.ctrlKey && !e.metaKey && !e.altKey; // Meta keys
+                && !e.ctrlKey && !e.metaKey && !e.altKey // Meta keys
+                && x != 9; // Don't capture the tab key
             if (interceptCharacter) {
                 let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
                 if (x == 8) { // Backspace
