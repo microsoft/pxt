@@ -177,7 +177,6 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
             core.showLoading(lf("Loading..."));
             gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
                 .done(opts => {
-                    core.hideLoading();
                     if (opts) {
                         if (loadBlocks) {
                             const ts = opts.filesOverride["main.ts"]
