@@ -56,10 +56,14 @@ namespace pxt.editor {
         | "event"
         | "simevent"
 
-        // package extension
-        | "pkgextstate" // extension is ready, loaded or unloaded, EditorPkgExtStateRequest
-        | "pkgextdata" // extension is saving data, EditorPkgExtSaveRequest
-        | "pkgextresource" // request for resources like serial, EditorPkgExtResourceRequest
+        // package extension messasges
+        | ExtInitializeType
+        | ExtDataStreamType
+        | ExtQueryPermissionType
+        | ExtRequestPermissionType
+        | ExtUserCodeType
+        | ExtReadCodeType
+        | ExtWriteCodeType
         ;
     }
 
@@ -180,31 +184,6 @@ namespace pxt.editor {
     export interface EditorPkgExtMessageResponse extends EditorMessageResponse {
         // extension identifier
         package: string;
-    }
-
-    // editor load extension in iframe
-    // extesion sends a 'loaded' message when ready
-    // editor sends a visible message when extension is about to be loaded
-    // with existing data if any
-    // editor sends a hidden message when the extension is about to be hidden
-    export interface EditorPkgExtStateRequest extends EditorPkgExtMessageRequest {
-        action: "pkgextstate";
-        state: "loaded" | "visible" | "hidden";
-    }
-
-    // extension sends a data message to update its data
-    // editor sends a data message to tell the extension to update its data view
-    export interface EditorPkgExtDataRequest extends EditorPkgExtMessageRequest {
-        action: "pkgextdata";
-        data?: PackageExtensionData;
-    }
-
-    // extension requests for resource access to the editor
-    export interface EditorPkgExtResourceRequest extends EditorPkgExtMessageRequest {
-        action: "pkgextresource";
-        resources: {
-            serial?: boolean;
-        }
     }
 
     const pendingRequests: pxt.Map<{

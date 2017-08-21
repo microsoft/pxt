@@ -1,6 +1,4 @@
-/// <reference path="../../localtypings/pxtcustomeditor.d.ts" />
-
-import ext = pxt.extension;
+import e = pxt.editor;
 import * as pkg from "./package";
 
 enum Permissions {
@@ -16,12 +14,12 @@ enum PermissionStatus {
 }
 
 export class ExtensionHost {
-    private statuses: pxt.Map<ext.Permissions<PermissionStatus>> = {};
+    private statuses: pxt.Map<e.Permissions<PermissionStatus>> = {};
 
-    handleExtensionMessage(message: ext.Message) {
+    handleExtensionMessage(message: e.EditorMessage) {
         switch (message.type) {
             case "request":
-                this.handleRequestAsync(message as ext.Request);
+                this.handleRequestAsync(message as e.ExtensionRequest);
                 break;
             case "response":
             case "event":
@@ -29,14 +27,14 @@ export class ExtensionHost {
         }
     }
 
-    sendResponse(response: ext.Response) {
+    sendResponse(response: e.EditorMessageResponse) {
         // TODO
     }
 
-    handleRequestAsync(request: ext.Request) {
+    handleRequestAsync(request: e.ExtensionRequest): Promise<void> {
         const resp = mkResponse(request);
 
-        switch (request.subtype) {
+        switch (request.action) {
             case "init":
                 this.sendResponse(resp);
                 break;
@@ -44,16 +42,16 @@ export class ExtensionHost {
                 return this.permissionOperation(request.id, Permissions.Serial, resp, handleDataStreamRequest);
             case "querypermission":
                 const perm = this.getPermissions(request.id)
-                const r = resp as ext.QueryPermissionResponse;
-                r.body = statusesToResponses(perm);
+                const r = resp as e.ExtensionResponse;
+                r.resp = statusesToResponses(perm);
                 this.sendResponse(r);
                 break;
             case "requestpermission":
-                return this.requestPermissionsAsync(request.id, resp as ext.PermissionResponse, request.body);
+                return this.requestPermissionsAsync(request.id, resp as e.PermissionResponse, request.body);
             case "usercode":
                 return this.permissionOperation(request.id, Permissions.ReadUserCode, resp, handleUserCodeRequest);
             case "readcode":
-                handleReadCodeRequest(request.id, resp as ext.ReadCodeResponse);
+                handleReadCodeRequest(request.id, resp as e.ReadCodeResponse);
                 this.sendResponse(resp);
                 break;
             case "writecode":
@@ -66,7 +64,7 @@ export class ExtensionHost {
         return Promise.resolve();
     }
 
-    permissionOperation(id: string, permission: Permissions, resp: ext.Response, cb: (resp: ext.Response) => void) {
+    permissionOperation(id: string, permission: Permissions, resp: e.ExtensionResponse, cb: (resp: e.ExtensionResponse) => void) {
         return this.checkPermissionAsync(id, permission)
             .then(() => {
                 cb(resp);
@@ -74,12 +72,12 @@ export class ExtensionHost {
             })
             .catch(() => {
                 resp.success = false;
-                resp.message = "permission denied";
+                resp.error = "permission denied";
                 this.sendResponse(resp);
             });
     }
 
-    getPermissions(id: string): ext.Permissions<PermissionStatus> {
+    getPermissions(id: string): e.Permissions<PermissionStatus> {
         if (!this.statuses[id]) {
             this.statuses[id] = {
                 serial: PermissionStatus.NotYetPrompted,
@@ -91,7 +89,7 @@ export class ExtensionHost {
 
     checkPermissionAsync(id: string, permission: Permissions): Promise<boolean> {
         const perm = this.getPermissions(id)
-        
+
         let status: PermissionStatus;
         switch (permission) {
             case Permissions.Serial: status = perm.serial; break;
@@ -103,7 +101,7 @@ export class ExtensionHost {
         }
 
         return Promise.resolve(status === PermissionStatus.Granted);
-            
+
     }
 
     promptForPermissionAsync(id: string, permission: Permissions): Promise<boolean> {
@@ -111,31 +109,32 @@ export class ExtensionHost {
         return Promise.resolve(false);
     }
 
-    requestPermissionsAsync(id: string, resp: ext.PermissionResponse, p: ext.Permissions<boolean>) {
+    requestPermissionsAsync(id: string, resp: e.PermissionResponse, p: e.Permissions<boolean>) {
         const promises: Promise<boolean>[] = [];
 
-        if (resp.body.readUserCode) {
+        if (p.readUserCode) {
             promises.push(this.checkPermissionAsync(id, Permissions.ReadUserCode));
         }
-        if (resp.body.serial) {
+        if (p.serial) {
             promises.push(this.checkPermissionAsync(id, Permissions.Serial));
         }
 
         return Promise.all(promises)
-            .then(() => statusesToResponses(this.getPermissions(id)));
+            .then(() => statusesToResponses(this.getPermissions(id)))
+            .then(responses => { resp.resp = responses });
     }
 }
 
-function handleUserCodeRequest(resp: ext.Response) {
+function handleUserCodeRequest(resp: e.ExtensionResponse) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
-    resp.body = mainPackage.getAllFiles();
+    resp.resp = mainPackage.getAllFiles();
 }
 
-function handleDataStreamRequest(resp: ext.Response) {
+function handleDataStreamRequest(resp: e.ExtensionResponse) {
     // TODO
 }
 
-function handleReadCodeRequest(id: string, resp: ext.ReadCodeResponse) {
+function handleReadCodeRequest(id: string, resp: e.ReadCodeResponse) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     const extPackage = mainPackage.pkgAndDeps().filter(p => p.getPkgId() === id)[0];
     if (extPackage) {
@@ -147,11 +146,11 @@ function handleReadCodeRequest(id: string, resp: ext.ReadCodeResponse) {
     }
     else {
         resp.success = false;
-        resp.message = "could not find package";
+        resp.error = "could not find package";
     }
 }
 
-function handleWriteCodeRequest(id: string, resp: ext.Response, files: ext.ExtensionFiles) {
+function handleWriteCodeRequest(id: string, resp: e.ExtensionResponse, files: e.ExtensionFiles) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     const extPackage = mainPackage.pkgAndDeps().filter(p => p.getPkgId() === id)[0];
     if (extPackage) {
@@ -164,42 +163,41 @@ function handleWriteCodeRequest(id: string, resp: ext.Response, files: ext.Exten
     }
     else {
         resp.success = false;
-        resp.message = "could not find package";
+        resp.error = "could not find package";
     }
 }
 
-function mkEvent(event: string): ext.Event {
+function mkEvent(event: string): e.ExtensionEvent {
     return {
-        type: "event",
+        type: "pxtpkgext",
         event
     };
 }
 
-function mkResponse(request: ext.Request, success = true): ext.Response {
+function mkResponse(request: e.ExtensionRequest, success = true): e.ExtensionResponse {
     return {
-        type: "response",
+        type: "pxtpkgext",
         id: request.id,
-        subtype: request.subtype,
-        requestSeq: request.seq,
         success
     };
 }
 
-function statusesToResponses(perm: ext.Permissions<PermissionStatus>): ext.Permissions<ext.PermissionResponses> {
+function statusesToResponses(perm: e.Permissions<PermissionStatus>): e.Permissions<e.PermissionResponses> {
     return {
         readUserCode: statusToResponse(perm.readUserCode),
         serial: statusToResponse(perm.serial)
     };
 }
 
-function statusToResponse(p: PermissionStatus): ext.PermissionResponses {
+function statusToResponse(p: PermissionStatus): e.PermissionResponses {
     switch (p) {
         case PermissionStatus.NotYetPrompted:
         case PermissionStatus.Denied:
-            return ext.PermissionResponses.Denied;
+            return e.PermissionResponses.Denied;
         case PermissionStatus.Granted:
-            return ext.PermissionResponses.Granted;
+            return e.PermissionResponses.Granted;
         case PermissionStatus.NotAvailable:
-            return ext.PermissionResponses.NotAvailable;
+        default:
+            return e.PermissionResponses.NotAvailable;
     }
 }
