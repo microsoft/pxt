@@ -34,4 +34,4 @@ let unzapped = radLevels.removeAt(level);
 
 ## See also
 
-[insert at](/blocks/arrays/insert-at)
+[insert at](/reference/arrays/insert-at)

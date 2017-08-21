@@ -36,4 +36,4 @@ while (junk.length > 0) {
 
 ## See also
 
-[push](/blocks/arrays/push), [shift](/blocks/arrays/shift)
+[push](/reference/arrays/push), [shift](/reference/arrays/shift)
