@@ -203,9 +203,12 @@ export class Editor extends srceditor.Editor {
          * @param {function()=} opt_callback The callback when the alert is dismissed.
          */
         Blockly.alert = function (message, opt_callback) {
-            return core.dialogAsync({
+            return core.confirmAsync({
                 hideCancel: true,
                 header: lf("Alert"),
+                agreeLbl: lf("Ok"),
+                agreeClass: "positive",
+                agreeIcon: "checkmark",
                 body: message,
                 size: "small"
             }).then(() => {
