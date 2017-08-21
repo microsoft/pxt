@@ -59,7 +59,8 @@
     "typings/**",
     "localtypings/**",
     "docfiles",
-    "theme"
+    "theme",
+    "common-docs"
   ],
   "main": "built/pxt.js",
   "engines": {
