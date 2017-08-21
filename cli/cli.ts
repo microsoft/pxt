@@ -3206,7 +3206,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
     return Promise.map(snippets, (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
-        pxt.debug(`compiling ${name} (${snippet.type})`);
+        pxt.debug(`compiling ${fn} (${snippet.type})`);
 
         if (snippet.ext == "json") {
             try {
@@ -3218,7 +3218,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                 addFailure(fn, [{
                     code: 4242,
                     category: ts.DiagnosticCategory.Error,
-                    messageText: e.message,
+                    messageText: "invalid JSON: " + e.message,
                     fileName: fn,
                     start: 1,
                     line: 1,
@@ -3258,7 +3258,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                     code: 4242,
                     category: ts.DiagnosticCategory.Error,
                     messageText: e.message,
-                    fileName: name,
+                    fileName: fn,
                     start: 1,
                     line: 1,
                     length: 1,
@@ -4169,9 +4169,9 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
         "sig": "ts",
         "namespaces": "ts",
         "cards": "ts",
-        "codecard": "json",
-        "shuffle": "json",
-        "sim": "ts"
+        "shuffle": "ts",
+        "sim": "ts",
+        "codecard": "json"
     }
     const snippets = getSnippets(md);
     const codeSnippets = snippets.filter(snip => !snip.ignore && !!supported[snip.type]);
