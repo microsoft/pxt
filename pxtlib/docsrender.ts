@@ -278,6 +278,12 @@ namespace pxt.docs {
             params["github"] = "";
         }
 
+        // Add accessiblity menu 
+        const accMenuHtml = `
+            <a href="#maincontent" class="ui item link" tabindex="0" role="menuitem">${lf("Skip to main content")}</a>
+        `
+        params['accMenu'] = accMenuHtml;
+
         let style = '';
         if (theme.accentColor) style += `
 .ui.accent { color: ${theme.accentColor}; }
@@ -295,6 +301,7 @@ namespace pxt.docs {
         d.finish = () => injectHtml(d.html, params, [
             "body",
             "menu",
+            "accMenu",
             "TOC",
             "prev",
             "next",

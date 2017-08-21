@@ -11,11 +11,13 @@
 
 *:focus{
     outline: 2px dotted black !important;
-    z-index: 1000;
 }
-
 .blocklyTreeRoot:focus {
     outline: none !important;
+}
+
+.ui.item:focus, .ui.button:focus {
+    z-index: 1000;
 }
 
 .accessible-hidden {

@@ -21,6 +21,14 @@
 
 @selected: #10C8CD;
 @disabled: #3ff23f;
+@hcYellow: yellow;
+
+    *:focus{
+        outline: 2px dotted @selected !important;
+    }
+    .blocklyTreeRoot:focus {
+        outline: none !important;
+    }
 
     /* root */
     #root {
@@ -36,14 +44,7 @@
         }
     }
 
-
     /* Menu bar */
-    #menubar .menu > .item:focus,
-    #menubar #accessibleMenu > .item:focus,
-    #menubar .editor-menuitem > .item:focus {
-        border: 1px solid @selected !important;
-    }
-
     #menubar .menu > .item:focus > i, 
     #menubar .menu > .item:focus > span {
         color: @selected !important;
@@ -75,10 +76,9 @@
     .ui.button {
         background: black !important;
         color: white !important;
-        outline: 1px solid white;
+        border: 1px solid white !important;
 
         &:focus {
-            outline: 1px solid @selected;
             color: @selected !important;
 
             i, span {
@@ -89,7 +89,7 @@
 
     .ui.button.disabled {
         opacity: 1 !important;
-        outline: 1px solid @disabled;
+        border: 1px solid @disabled !important;
 
         i, span {
             color: @disabled !important;
@@ -101,9 +101,21 @@
         color: white !important;
     }
 
+    /* Inputs */
+    input {
+        background: black !important;
+        color: white !important; 
+    }
+    .ui.input input {
+        border: 1px solid white !important;
+    }
+    input::placeholder {
+        color: @hcYellow !important;
+    }
+
     /* Hyperlinks */
     a {
-        color: yellow !important;
+        color: @hcYellow !important;
     }
 
     #sidedocsbar {
@@ -111,10 +123,9 @@
 
         a {
             color: white !important;
-            outline: 1px solid white;
+            outline: 1px solid white !important;
 
             &:focus {
-                outline: 1px solid @selected;
                 color: @selected !important;
 
                 i, span {
@@ -140,7 +151,6 @@
         color: white !important;
 
         &:focus {
-            outline: 1px solid @selected;
             color: @selected !important;
             font-weight: normal !important;
 
@@ -181,7 +191,7 @@
     /* Tab list in Modals*/
     .ui.secondary.menu > .item:not(.active), .ui.secondary.pointing.menu > .item:not(.active), .ui.secondary.inverted.menu .link.item:not(.active) {
         color: white !important;
-        border-color: white !important;
+        border: 1px solid white !important;
     }
 
     .ui.secondary.menu > .item.active, .ui.secondary.menu > .item.active:hover,
@@ -215,8 +225,6 @@
         }
         
         &:focus {
-            border: 2px solid @selected !important;
-
             .header, .description, .meta {
                 color: @selected !important;
             }
@@ -245,7 +253,6 @@
             border: none !important;
         
             &:focus {
-                outline: 1px solid @selected !important;
                 color: @selected !important;
             }
         }
@@ -256,8 +263,7 @@
         border: 2px solid white !important;
         
         &:focus {
-            border-color: @selected !important;
-            outline: none;
+            outline: none !important;
         }
     }
 
