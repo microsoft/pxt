@@ -17,8 +17,11 @@
 @brown:#00BCF2;
 @grey:#505050;
 
-@pageBackground: #ffffff;
+@greenTextColor: #107C10;
 
+@lightTextColor              : rgba(0, 0, 0, 0.68);
+
+@pageBackground: #ffffff;
 
 /*-------------------
      Fonts
