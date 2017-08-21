@@ -1101,6 +1101,7 @@ namespace pxt.blocks {
 
         let blocklySearchInputField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
         let blocklySearchInput = document.getElementById('blocklySearchInput') as HTMLElement;
+        let blocklySearchLabel = document.getElementById('blocklySearchLabel') as HTMLElement;
 
         let origClassName = 'ui fluid icon input';
         if (!blocklySearchInput) {
@@ -1110,6 +1111,7 @@ namespace pxt.blocks {
             blocklySearchInput = document.createElement('div');
             blocklySearchInput.id = 'blocklySearchInput';
             blocklySearchInput.className = origClassName;
+            blocklySearchInput.setAttribute("role", "search");
 
             blocklySearchInputField = document.createElement('input');
             blocklySearchInputField.type = 'text';
@@ -1120,9 +1122,17 @@ namespace pxt.blocks {
             // Append to dom
             let blocklySearchInputIcon = document.createElement('i');
             blocklySearchInputIcon.className = 'search icon';
+            blocklySearchInputIcon.setAttribute("role", "presentation");
+            blocklySearchInputIcon.setAttribute("aria-hidden", "true");
+
+            blocklySearchLabel = document.createElement('div');
+            blocklySearchLabel.className = 'accessible-hidden';
+            blocklySearchLabel.id = 'blocklySearchLabel';
+            blocklySearchLabel.setAttribute('aria-live', "polite");
 
             blocklySearchInput.appendChild(blocklySearchInputField);
             blocklySearchInput.appendChild(blocklySearchInputIcon);
+            blocklySearchInput.appendChild(blocklySearchLabel);
             blocklySearchArea.appendChild(blocklySearchInput);
             const toolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0];
             if (toolboxDiv) // Only add if a toolbox exists, eg not in sandbox mode
@@ -1145,6 +1155,9 @@ namespace pxt.blocks {
         const searchChangeHandler = Util.debounce(() => {
             let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
             let searchFor = searchField.value.toLowerCase();
+            let blocklySearchLabel = document.getElementById('blocklySearchLabel') as HTMLElement;
+
+            blocklySearchLabel.innerText = "";
 
             if (searchFor != '') {
                 blocklySearchInput.className += ' loading';
@@ -1183,6 +1196,13 @@ namespace pxt.blocks {
                     pxt.log("searching for: " + searchFor);
                     updateUsedBlocks = false;
                     if (!blocks) return;
+
+                    if (blocks.length == 0) {
+                        blocklySearchLabel.innerText = lf("No search results...");
+                    } else {
+                        blocklySearchLabel.innerText = lf("{0} results matching '{1}'", blocks.length, blocklySearchInputField.value.toLowerCase());
+                    }
+
                     if (blocks.length == 0) {
                         let label = goog.dom.createDom('label');
                         label.setAttribute('text', lf("No search results..."));
