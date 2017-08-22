@@ -102,11 +102,9 @@
     }
 
     /* Inputs */
-    input {
+    .ui.input:not(.blocklySearchInput) input {
         background: black !important;
         color: white !important; 
-    }
-    .ui.input input {
         border: 1px solid white !important;
     }
     input::placeholder {
@@ -261,10 +259,6 @@
     .ui.label {
         background-color: black !important;
         border: 2px solid white !important;
-        
-        &:focus {
-            outline: none !important;
-        }
     }
 
     .ui.blue.labels .label, .ui.blue.label {
@@ -308,7 +302,7 @@
         .item:focus, .item.active {
             background: @selected !important;
 
-            span, i {
+            span {
                 color: black !important;
             }
         }
