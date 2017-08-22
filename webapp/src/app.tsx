@@ -603,8 +603,10 @@ export class ProjectView
 
         this.stopSimulator(true);
         pxt.blocks.cleanBlocks();
-        let logs = this.refs["logs"] as logview.LogView;
-        logs.clear();
+        let simLogs = this.refs["simLogs"] as logview.LogView;
+        let devLogs = this.refs["devLogs"] as logview.LogView;
+        simLogs.clear();
+        devLogs.clear();
         this.setState({
             showFiles: false,
             editorState: editorState,
@@ -1221,7 +1223,7 @@ export class ProjectView
     }
 
     clearLog() {
-        let logs = this.refs["logs"] as logview.LogView;
+        let logs = this.refs["simLogs"] as logview.LogView;
         logs.clear();
     }
 
@@ -1841,8 +1843,11 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true })} /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
-                        <div className="ui editorFloat portrait hide">
-                            <logview.LogView ref="logs" />
+                        <div className="ui editorFloat portrait">
+                            <logview.LogView ref="simLogs" isSim={true} />
+                        </div>
+                        <div className="ui editorFloat portrait">
+                            <logview.LogView ref="devLogs" isSim={false} />
                         </div>
                         {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
                     </aside>

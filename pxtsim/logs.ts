@@ -1,5 +1,6 @@
 namespace pxsim.logs {
     export interface ILogProps {
+        isSim?: boolean;
         maxEntries?: number;
         maxLineLength?: number;
         maxAccValues?: number;
@@ -75,6 +76,7 @@ namespace pxsim.logs {
         private dropSim = false; // drop simulator events
         public element: HTMLDivElement;
         private labelElement: HTMLElement;
+        private isSim: boolean;
 
         constructor(public props: ILogProps) {
             this.registerEvents();
@@ -83,6 +85,7 @@ namespace pxsim.logs {
             this.element.className = "ui segment hideempty logs";
             if (this.props.onClick)
                 this.element.onclick = () => this.props.onClick(this.rows());
+            this.isSim = !!this.props.isSim || false;
         }
 
         public setLabel(text: string, theme?: string) {
@@ -181,7 +184,7 @@ namespace pxsim.logs {
                         let i = buf.lastIndexOf("\n");
                         if (i >= 0) {
                             let msgb = buf.substring(0, i + 1);
-                            msgb.split('\n').filter(line => !!line).forEach(line => this.appendEntry('microbit' + msg.id, line, 'black'));
+                            msgb.split('\n').filter(line => !!line).forEach(line => this.appendEntry('microbit' + msg.id, line, 'black', false));
                             buf = buf.slice(i + 1);
                         }
 
@@ -208,29 +211,31 @@ namespace pxsim.logs {
                         }
                         **/
                         const sim = !!smsg.sim || false;
-                        const value = smsg.data || '';
-                        const source = smsg.id || '?';
-                        let theme = source.split('-')[0] || '';
-                        if (!/^[a-z]+$/.test(theme)) theme = 'black';
-                        let buffer = this.serialBuffers[source] || '';
-                        for (let i = 0; i < value.length; ++i) {
-                            switch (value.charCodeAt(i)) {
-                                case 10: //'\n'
-                                    this.appendEntry(source, buffer, theme, sim);
-                                    buffer = '';
-                                    break;
-                                case 13: //'\r'
-                                    break;
-                                default:
-                                    buffer += value[i];
-                                    if (buffer.length > (this.props.maxLineLength || 255)) {
+                        if (sim == this.isSim) {
+                            const value = smsg.data || '';
+                            const source = smsg.id || '?';
+                            let theme = source.split('-')[0] || '';
+                            if (!/^[a-z]+$/.test(theme)) theme = 'black';
+                            let buffer = this.serialBuffers[source] || '';
+                            for (let i = 0; i < value.length; ++i) {
+                                switch (value.charCodeAt(i)) {
+                                    case 10: //'\n'
                                         this.appendEntry(source, buffer, theme, sim);
-                                        buffer = ''
-                                    }
-                                    break;
+                                        buffer = '';
+                                        break;
+                                    case 13: //'\r'
+                                        break;
+                                    default:
+                                        buffer += value[i];
+                                        if (buffer.length > (this.props.maxLineLength || 255)) {
+                                            this.appendEntry(source, buffer, theme, sim);
+                                            buffer = ''
+                                        }
+                                        break;
+                                }
                             }
+                            this.serialBuffers[source] = buffer;
                         }
-                        this.serialBuffers[source] = buffer;
                         break;
                 }
             }, false);
@@ -307,7 +312,8 @@ namespace pxsim.logs {
                 }
                 e.element.appendChild(e.valueElement);
                 ens.push(e);
-                sim ? this.element.insertBefore(e.element, this.element.firstChild) : this.element.appendChild(e.element);
+                //sim ? this.element.insertBefore(e.element, this.element.firstChild) : this.element.appendChild(e.element);
+                this.element.appendChild(e.element);
                 this.scheduleRender(e);
 
                 if (raiseTrends && this.props.onTrendChartChanged)
