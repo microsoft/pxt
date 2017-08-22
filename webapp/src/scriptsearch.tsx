@@ -93,6 +93,13 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             || this.state.searchFor != nextState.searchFor;
     }
 
+    componentDidUpdate() {
+        let searchInput = ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement;
+        if (searchInput) {
+            searchInput.focus();
+        }
+    }
+
     renderCore() {
         if (!this.state.visible) return <div></div>;
 
