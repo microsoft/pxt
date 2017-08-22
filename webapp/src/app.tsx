@@ -1987,6 +1987,13 @@ function initTheme() {
             pxt.debug(`swapping to ${semanticHref}`)
             semanticLink.setAttribute("href", semanticHref);
         }
+        // replace blockly.css with rtlblockly.css
+        const blocklyLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "blockly.css"))[0];
+        const blocklyHref = blocklyLink.getAttribute("data-rtl");
+        if (blocklyHref) {
+            pxt.debug(`swapping to ${blocklyHref}`)
+            blocklyLink.setAttribute("href", blocklyHref);
+        }
     }
 
     function patchCdn(url: string): string {
