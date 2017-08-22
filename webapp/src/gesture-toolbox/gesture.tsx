@@ -323,6 +323,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             // files is a FileList of File objects. List some properties.
             for (let i = 0; i < files.length ; i++) {
                 let parsedGesture: Types.Gesture = new Types.Gesture();
+                let cloneData = this.state.data.slice();
+                cloneData.push(parsedGesture);
 
                 JSZip.loadAsync(files[i]).then((zip: any) => {
                     zip.forEach((relativePath: string, zipEntry: any) => {
@@ -342,6 +344,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                 
                                 parsedGesture.displayGesture = this.parseJSONGesture(importedGesture.displayGesture);
 
+                                this.setState({ data: cloneData });
                             })
                         }
                         else if (zipEntry.name == "video.mp4") {
@@ -360,17 +363,18 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
                                 parsedGesture.displayVideoLink = window.URL.createObjectURL(blob);
                                 parsedGesture.displayVideoData = blob;
+
+                                this.setState({ data: cloneData });
                             })
                         }
                     });
                 })
 
-                let cloneData = this.state.data.slice();
-                cloneData.push(parsedGesture);
+                
                 let curIndex = cloneData.length - 1;
                 this.models.push(new Model.SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name));
                 this.setState({ data: cloneData });
-                this.forceUpdate();
+                // this.forceUpdate();
             }
         }
 
@@ -448,7 +452,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     }
 
                     this.setState({ data: cloneData });
-                    this.forceUpdate();
+                    // this.forceUpdate();
 
                     this.updateScrollbar();
                 }
