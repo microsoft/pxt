@@ -284,6 +284,14 @@ namespace pxt.docs {
         `
         params['accMenu'] = accMenuHtml;
 
+        // Add print button
+        const printBtnHtml = `
+            <button id="printbtn" class="circular ui icon right floated button hideprint" title="${lf("Print this page")}">
+                <i class="icon print"></i>
+            </button>
+        `
+        params['printBtn'] = printBtnHtml;
+
         let style = '';
         if (theme.accentColor) style += `
 .ui.accent { color: ${theme.accentColor}; }
@@ -305,6 +313,7 @@ namespace pxt.docs {
             "TOC",
             "prev",
             "next",
+            "printBtn",
             "breadcrumb",
             "targetlogo",
             "github",
