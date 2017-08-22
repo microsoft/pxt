@@ -931,7 +931,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
             "@defaultLocaleStrings@": "",
             "@cachedHexFiles@": "",
-            "@targetEditorJs@": ""
+            "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : ""
         }
     }
 
