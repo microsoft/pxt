@@ -23,6 +23,12 @@ Yosemite, OS X 10.11 El Capitan, or macOS 10.12 Sierra:
 
 * Safari 9 or higher
 
+## Android
+
+* Google Chrome
+* Chrome for Android
+* Firefox for Android
+
 ## Linux
 
 If you're using a Raspberry Pi, please see [the documentation

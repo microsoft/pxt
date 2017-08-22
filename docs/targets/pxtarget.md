@@ -23,7 +23,7 @@ Here's more about [creating a target](/target-creation)
 The interface `TargetBundle` describes the PXT packages that come bundled 
 with the target (as opposed to being pulled from the web), as well as the semantic
 version of the target:
-```ts
+```typescript-ignore
     interface TargetBundle extends AppTarget {
         versions: TargetVersions;       // DERIVED: defines the semantic versioning for the target
         bundleddirs: string[];          // packages to be bundled into web app (libs/*)
@@ -34,7 +34,7 @@ version of the target:
 
 PXT uses [semantic versioning](http://semver.org/) of its targets and packages.  The TargetVersions
 interface has two relevant fields that are populated as specified below:
-```ts
+```typescript-ignore
     interface TargetVersions {
         target: string; // equal to version field in "package.json"
         pxt: string;    // equal to version field in "package.json" or "node_modules/pxt-core/package.json"
@@ -46,7 +46,7 @@ interface has two relevant fields that are populated as specified below:
 A target can use many packages in addition to the required "corepkg". To 
 ensure that a package is bundled into the web app, you must include it in this list. For 
 example in http://github.com/microsoft/pxt-microbit/blob/master, we see:
-```typescript
+```typescript-ignore
     "bundleddirs": [
         "libs/core",
         "libs/radio",
@@ -62,7 +62,7 @@ via an "add package" request by the end user).
 ## AppTarget
 
 Most of the user-defined fields for `pxttarget.json` are described by the interface `AppTarget`.
-```typescript
+```typescript-ignore
     interface AppTarget {
         id: string;             // unique id: should match ^[a-z]+$; used in URLs and domain names
         name: string;           // friendly name (spaces allowed)
@@ -90,7 +90,7 @@ Most of the user-defined fields for `pxttarget.json` are described by the interf
 A target must have a core [package](/packages) under the libs/ directory 
 where the core APIs for the target reside.
 The core package should always be bundled with the web app, as shown below:
-```typescript
+```typescript-ignore
     "corepkg": "core",
     "bundleddirs": [
         "libs/core"
@@ -102,7 +102,7 @@ The core package should always be bundled with the web app, as shown below:
 PXT supports compilation to both JavaScript and ARM machine code (native). Web-only targets
 will not need the native compilation path.
 
-```typescript
+```typescript-ignore
     interface CompileTarget {
         isNative: boolean;      // false -> JavaScript compilation only, for simulator
         hasHex: boolean;        // output binary file (implies isNative)
@@ -133,7 +133,7 @@ will not need the native compilation path.
 PXT has a large number of options for controlling 
 the [look and feel](/targets/theming) of a target.
 Here is the appTheme from pxt-sample with some comments:
-```typescript
+```typescript-ignore
     "appTheme": {
         // URLs to use for various components of the UI
         "logoUrl": "https://microsoft.github.io/pxt-sample/",
@@ -167,7 +167,7 @@ Here is the appTheme from pxt-sample with some comments:
 PXT has a cloud backend that provides a set of services to the web app.  The services are configured using
 the `cloud` field in pxttarget.json, defined by the `AppCloud` interface:
 
-```typescript
+```typescript-ignore
     interface AppCloud {
         sharing?: boolean;      // enable anonymous sharing of projects via URL
         importing?: boolean;    // enable import of a previously shared project from 
@@ -187,7 +187,7 @@ the `cloud` field in pxttarget.json, defined by the `AppCloud` interface:
 ```
 
 For example in the pxttarget.json for http://github.com/microsoft/pxt-microbit, we see:
-```typescript
+```typescript-ignore
     "cloud": {
         "workspace": false,
         "packages": true,
@@ -207,7 +207,7 @@ app (typically for physical computing devices like the micro:bit).  PXT uses the
 term [board](/targets/board) to refer to the main physical computing device shown in the simulator.
 Each target has one board (plus optional parts).
 
-```typescript
+```typescript-ignore
     interface AppSimulator {
         // define aspects of physical computing device
         boardDefinition?: BoardDefinition;
@@ -238,7 +238,7 @@ Each target has one board (plus optional parts).
 
 This severely misnamed option controls the available blocks in the Blockly editor:
 
-```typescript
+```typescript-ignore
     interface RuntimeOptions {
         // control whether or not Blockly built-in categories appear
         mathBlocks?: boolean;       
@@ -265,7 +265,7 @@ or [platformio](http://platformio.org/).
 PXT defaults to using local installs of yotta and platformio.
 PXT expects to find the C/C++ sources on github.
 
-```typescript
+```typescript-ignore
     interface TargetCompileService {
         buildEngine?: string;           // default is yotta, set to platformio
         // where are the sources

@@ -36,5 +36,5 @@ while (ints.length > 0) {
 
 ## See also
 
-[unshift](/blocks/arrays/unshift), [pop](/blocks/arrays/pop)
+[unshift](/reference/arrays/unshift), [pop](/reference/arrays/pop)
 

@@ -29,4 +29,4 @@ pets.push("guinea pig");
 
 ## Sea also
 
-[pop](/blocks/arrays/pop), [unshift](/blocks/arrays/unshift)
+[pop](/reference/arrays/pop), [unshift](/reference/arrays/unshift)

@@ -89,6 +89,7 @@ Run ``pxt help`` for the list of all commands. The following list of links conta
 * [login](/cli/login), store a GitHub token
 * [bump](/cli/bump), increment the version number
 * [update](/cli/update), updates the ``pxt-core`` dependency and runs installation steps
+* [checkdocs](/cli/checkdocs), validates the documentation links and snippets
 * [staticpkg](/cli/staticpkg), compiles editor into flat file system
 * [cherrypick](/cli/cherrypick), recursive cherry picking
 * [hidserial](/cli/hidserial), monitor `serial.write(...)` from certain boards

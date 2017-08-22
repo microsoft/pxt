@@ -61,7 +61,8 @@
     "typings/**",
     "localtypings/**",
     "docfiles",
-    "theme"
+    "theme",
+    "common-docs"
   ],
   "main": "built/pxt.js",
   "engines": {
@@ -78,8 +79,10 @@
     "rimraf": "2.5.4",
     "request": "^2.79.0",
     "browserify": "^13.0.0",
-    "rtlcss": "^2.1.2",
-    "uglify-js": "^3.0.27"
+    "uglify-js": "^3.0.27",
+    "postcss": "^6.0.9",
+    "rtlcss": "^2.2.0",
+    "cssnano": "^3.10.0"
   },
   "optionalDependencies": {
     "keytar": "^3.0.2",
