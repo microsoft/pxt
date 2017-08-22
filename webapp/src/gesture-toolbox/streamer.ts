@@ -1,8 +1,112 @@
 export let streamerCode = `
+let sampleRate = 0
+let prevTime = 0
+let time = 0
+let z = 0
+let y = 0
+let x = 0
+let threshold = 0
+// The main loop:
+loops.forever(function () {
+    while (true) {
+        // If enough time has elapsed or the timer rolls over,
+        // do something
+        x = input.acceleration(Dimension.X)
+        y = input.acceleration(Dimension.Y)
+        z = input.acceleration(Dimension.Z)
+        spring.Feed(new Vector(x, y, z));
+serial.writeLine("A " + x + " " + y + " " + z)
+        loops.pause(40)
+    }
+})
+threshold = 235757
+let infinityPrototype: Vector[];
+infinityPrototype = []
+infinityPrototype = [
+    new Vector(200, 128, -612)
+                            , 
+    new Vector(240, 184, -652)
+                            , 
+    new Vector(634, 406, -627)
+                            , 
+    new Vector(1379, 698, -669)
+                            , 
+    new Vector(2028, 972, -76)
+                            , 
+    new Vector(2036, 916, 236)
+                            , 
+    new Vector(2036, 840, 492)
+                            , 
+    new Vector(1955, 717, 627)
+                            , 
+    new Vector(1292, 532, 500)
+                            , 
+    new Vector(1144, 444, 476)
+                            , 
+    new Vector(980, 380, 604)
+                            , 
+    new Vector(659, 272, 448)
+                            , 
+    new Vector(284, 228, 424)
+                            , 
+    new Vector(36, 200, 380)
+                            , 
+    new Vector(-262, 150, 285)
+                            , 
+    new Vector(-232, 180, 148)
+                            , 
+    new Vector(-172, 272, 68)
+                            , 
+    new Vector(384, 364, -56)
+                            , 
+    new Vector(1244, 460, -348)
+                            , 
+    new Vector(1904, 464, -595)
+                            , 
+    new Vector(2042, 736, -1328)
+                            , 
+    new Vector(2036, 644, -1580)
+                            , 
+    new Vector(1644, 620, -1664)
+                            , 
+    new Vector(1192, 448, -1608)
+                            , 
+    new Vector(744, 320, -1488)
+                            , 
+    new Vector(524, 244, -1256)
+                            , 
+    new Vector(211, 102, -922)
+                            , 
+    new Vector(-36, -28, -536)
+                            , 
+    new Vector(-240, -76, -392)
+                            , 
+    new Vector(-312, -160, -144)
+                            , 
+    new Vector(-376, -156, -48)
+                            , 
+    new Vector(-316, -32, 88)
+                            , 
+    new Vector(136, 72, -36)
+                            , 
+    new Vector(1260, 68, 424)
+                            , 
+    new Vector(2013, 93, 742)
+                            , 
+    new Vector(1875, 333, 266)
+                            ]
+time = 0
+prevTime = 0
+// the trained reference prototype for making an
+// infinity gesture with the circuit playground
+function report(dmin: number, ts: number, te: number): void {
+
+}
+let spring = new SpringAlgorithm(infinityPrototype, threshold, ManhattanDistance, report);
+sampleRate = 40
 function ManhattanDistance(a: Vector, b: Vector): number {
     return Math.abs(a.X - b.X) + Math.abs(a.Y - b.Y) + Math.abs(a.Z - b.Z);
 }
-
 class SpringAlgorithm {
     private distFunction: (a: Vector, b: Vector) => number;
 
@@ -54,9 +158,9 @@ class SpringAlgorithm {
             this.s2.push(0);
         }
 
-        for (let i = 1; i <= this.M; i++) {
-            this.d[i] = 1e8;
-            this.s[i] = 0;
+        for (let j = 1; j <= this.M; j++) {
+            this.d[j] = 1e8;
+            this.s[j] = 0;
         }
 
         this.dmin = 1e8;
@@ -76,30 +180,30 @@ class SpringAlgorithm {
         s[0] = t;
 
         // update M distances (d[] based on dp[]) and M starting points (s[] based on sp[]):
-        for (let i = 1; i <= this.M; i++) {
-            let dist = this.distFunction(this.Y[i - 1], xt);
-            let di_minus1 = d[i - 1];
-            let dip = this.d[i];
-            let dip_minus1 = this.d[i - 1];
+        for (let k = 1; k <= this.M; k++) {
+            let dist = this.distFunction(this.Y[k - 1], xt);
+            let di_minus1 = d[k - 1];
+            let dip = this.d[k];
+            let dip_minus1 = this.d[k - 1];
 
             // compute dbest and use that to compute s[i]
             if (di_minus1 <= dip && di_minus1 <= dip_minus1) {
-                d[i] = dist + di_minus1;
-                s[i] = s[i - 1];
+                d[k] = dist + di_minus1;
+                s[k] = s[k - 1];
             } else if (dip <= di_minus1 && dip <= dip_minus1) {
-                d[i] = dist + dip;
-                s[i] = this.s[i];
+                d[k] = dist + dip;
+                s[k] = this.s[k];
             } else {
-                d[i] = dist + dip_minus1;
-                s[i] = this.s[i - 1];
+                d[k] = dist + dip_minus1;
+                s[k] = this.s[k - 1];
             }
         }
 
         if (this.dmin <= this.eps) {
             let condition = true;
 
-            for (let i = 0; i <= this.M; i++)
-                if (!(d[i] >= this.dmin || s[i] > this.te - this.margin))
+            for (let l = 0; l <= this.M; l++)
+                if (!(d[l] >= this.dmin || s[l] > this.te - this.margin))
                     condition = false;
 
             if (condition) {
@@ -109,9 +213,9 @@ class SpringAlgorithm {
                     this.report(this.dmin, this.ts - 1, this.te - 1);
                 this.dmin = 1e8;
 
-                for (let i = 1; i <= this.M; i++) {
-                    if (s[i] <= this.te - this.margin) {
-                        d[i] = 1e8;
+                for (let m = 1; m <= this.M; m++) {
+                    if (s[m] <= this.te - this.margin) {
+                        d[m] = 1e8;
                     }
                 }
             }
@@ -128,7 +232,6 @@ class SpringAlgorithm {
         this.t = t;
     }
 }
-
 class Vector {
     public X: number;
     public Y: number;
@@ -140,7 +243,6 @@ class Vector {
         this.Z = z;
     }
 }
-
 class Match {
     public MinimumDistance: number;
     public Ts: number;
@@ -152,80 +254,8 @@ class Match {
         this.Ts = ts;
     }
 }
-
 enum DataType {
     Integer = 0,
     Float = 1
 }
-
-let threshold = 235757;
-
-// the trained reference prototype for making an infinity gesture with the circuit playground
-
-let infinityPrototype = [
-    new Vector(200, 128, -612),
-    new Vector(240, 184, -652),
-    new Vector(634, 406, -627),
-    new Vector(1379, 698, -669),
-    new Vector(2028, 972, -76),
-    new Vector(2036, 916, 236),
-    new Vector(2036, 840, 492),
-    new Vector(1955, 717, 627),
-    new Vector(1292, 532, 500),
-    new Vector(1144, 444, 476),
-    new Vector(980, 380, 604),
-    new Vector(659, 272, 448),
-    new Vector(284, 228, 424),
-    new Vector(36, 200, 380),
-    new Vector(-262, 150, 285),
-    new Vector(-232, 180, 148),
-    new Vector(-172, 272, 68),
-    new Vector(384, 364, -56),
-    new Vector(1244, 460, -348),
-    new Vector(1904, 464, -595),
-    new Vector(2042, 736, -1328),
-    new Vector(2036, 644, -1580),
-    new Vector(1644, 620, -1664),
-    new Vector(1192, 448, -1608),
-    new Vector(744, 320, -1488),
-    new Vector(524, 244, -1256),
-    new Vector(211, 102, -922),
-    new Vector(-36, -28, -536),
-    new Vector(-240, -76, -392),
-    new Vector(-312, -160, -144),
-    new Vector(-376, -156, -48),
-    new Vector(-316, -32, 88),
-    new Vector(136, 72, -36),
-    new Vector(1260, 68, 424),
-    new Vector(2013, 93, 742),
-    new Vector(1875, 333, 266)
-];
-
-function report(dmin: number, ts: number, te: number): void {
-    light.pixels.showAnimation(light.animation(LightAnimation.Rainbow), 500);
-    light.pixels.setAll(0);
-}
-
-let spring = new SpringAlgorithm(infinityPrototype, threshold, ManhattanDistance, report);
-
-let prevTime = 0;
-let time = 0;
-let sampleRate = 40;
-
-// The main loop:
-loops.forever(() => {
-    while (true) {
-        // If enough time has elapsed or the timer rolls over,
-        // do something
-        let x = input.acceleration(Dimension.X);
-        let y = input.acceleration(Dimension.Y);
-        let z = input.acceleration(Dimension.Z);
-
-        spring.Feed(new Vector(x, y, z));
-
-        serial.writeLine("A " + x + " " + y + " " + z);
-
-        loops.pause(40);
-    }
-})
 `
