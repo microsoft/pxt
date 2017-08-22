@@ -12,8 +12,13 @@ export interface LogViewState {
     trends?: boolean;
 }
 
-export class LogView extends React.Component<{}, LogViewState> {
+export interface LogViewProps {
+    isSim?: boolean;
+}
+
+export class LogView extends React.Component<LogViewProps, LogViewState> {
     private view: pxsim.logs.LogViewElement;
+    public isSim: boolean;
 
     constructor(props: any) {
         super(props);
@@ -26,6 +31,7 @@ export class LogView extends React.Component<{}, LogViewState> {
 
         // init view
         this.view = new pxsim.logs.LogViewElement({
+            isSim: props.isSim,
             maxEntries: 80,
             maxAccValues: 500,
             onClick: (es) => this.onClick(es),
@@ -37,6 +43,8 @@ export class LogView extends React.Component<{}, LogViewState> {
             nameFilter: serial.nameFilter
         })
         this.state = {};
+
+        this.view.setLabel(this.props.isSim ? lf("SIM") : ("DEV"));
     }
 
     componentDidMount() {
@@ -57,7 +65,7 @@ export class LogView extends React.Component<{}, LogViewState> {
 
         if (streams && this.state.stream) this.view.setLabel(lf("streaming to cloud"), "green cloudflash");
         else if (streams && this.state.trends) this.view.setLabel(lf("streaming off"), "gray");
-        else this.view.setLabel(undefined);
+//        else this.view.setLabel(undefined);
         if (this.state.stream)
             this.scheduleStreamData();
     }
