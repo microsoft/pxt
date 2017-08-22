@@ -134,6 +134,8 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 }
 
 export class TutorialCard extends data.Component<ISettingsProps, {}> {
+    private focusInitialized = false;
+
     constructor(props: ISettingsProps) {
         super(props);
     }
@@ -177,6 +179,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
         sounds.tutorialNext();
         document.documentElement.removeEventListener("keydown", this.closeLightboxOnEscape);
         core.initializeFocusTabIndex($('#tutorialcard').get(0), true, undefined, true);
+        this.focusInitialized = false;
         let tutorialmessage = document.getElementsByClassName("tutorialmessage");
         if (tutorialmessage.length > 0) {
             (tutorialmessage.item(0) as HTMLElement).focus();
@@ -196,7 +199,17 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
         if (document.getElementsByClassName("dimmable dimmed").length > 0) {
             let tutorialCard = $('#tutorialcard').get(0);
             if (tutorialCard !== undefined) {
-                core.initializeFocusTabIndex(tutorialCard, true);
+                core.initializeFocusTabIndex(tutorialCard, true, false);
+                if (!this.focusInitialized) { 
+                    /* the first time we load the tutorial, the OK button is not visible yet. 
+                    Couple of second after, this method is called several time. 'focusInitialized' help 
+                    to prevent to reset the focus if the user already started to move with the keyboard. */
+                    let root = document.getElementById('root');
+                    if (root.classList.contains('dimmed')) {
+                        this.focusInitialized = true;
+                        document.getElementById('tutorialOkButton').focus();
+                    }
+                }
             }
         }
     }
@@ -232,7 +245,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
                     <div className={`tutorialmessage ${hasHint ? 'focused' : undefined}`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1} onClick={() => {if (hasHint) this.showHint();}} onKeyDown={sui.fireClickOnEnter}>
                         <div className="content" dangerouslySetInnerHTML={{__html: tutorialHeaderContent}} />
                     </div>
-                    <sui.Button class="large green okbutton showlightbox focused" text={lf("Ok") } onClick={() => this.closeLightbox() } onKeyDown={sui.fireClickOnEnter} />
+                    <sui.Button id="tutorialOkButton" class="large green okbutton showlightbox focused" text={lf("Ok") } onClick={() => this.closeLightbox() } onKeyDown={sui.fireClickOnEnter} />
                 </div>
                 {hasNext ? <sui.Button icon="right chevron" class={`ui right icon button nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next") } ariaLabel={lf("Go to the next step of the tutorial.")} onClick={() => this.nextTutorialStep() } onKeyDown={sui.fireClickOnEnter} /> : undefined }
                 {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : 'focused'}`} text={lf("Finish") } ariaLabel={lf("Finish the tutorial.")} onClick={() => this.finishTutorial() } onKeyDown={sui.fireClickOnEnter} /> : undefined }
