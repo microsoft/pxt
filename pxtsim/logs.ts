@@ -207,6 +207,7 @@ namespace pxsim.logs {
                             this.dropSim = true;
                         }
                         **/
+                        const sim = !!smsg.sim || false;
                         const value = smsg.data || '';
                         const source = smsg.id || '?';
                         let theme = source.split('-')[0] || '';
@@ -215,7 +216,7 @@ namespace pxsim.logs {
                         for (let i = 0; i < value.length; ++i) {
                             switch (value.charCodeAt(i)) {
                                 case 10: //'\n'
-                                    this.appendEntry(source, buffer, theme);
+                                    this.appendEntry(source, buffer, theme, sim);
                                     buffer = '';
                                     break;
                                 case 13: //'\r'
@@ -223,7 +224,7 @@ namespace pxsim.logs {
                                 default:
                                     buffer += value[i];
                                     if (buffer.length > (this.props.maxLineLength || 255)) {
-                                        this.appendEntry(source, buffer, theme);
+                                        this.appendEntry(source, buffer, theme, sim);
                                         buffer = ''
                                     }
                                     break;
@@ -235,7 +236,7 @@ namespace pxsim.logs {
             }, false);
         }
 
-        appendEntry(source: string, value: string, theme: string) {
+        appendEntry(source: string, value: string, theme: string, sim: boolean) {
             if (this.labelElement && !this.labelElement.parentElement)
                 this.element.insertBefore(this.labelElement, this.element.firstElementChild);
 
@@ -306,7 +307,7 @@ namespace pxsim.logs {
                 }
                 e.element.appendChild(e.valueElement);
                 ens.push(e);
-                this.element.appendChild(e.element);
+                sim ? this.element.insertBefore(e.element, this.element.firstChild) : this.element.appendChild(e.element);
                 this.scheduleRender(e);
 
                 if (raiseTrends && this.props.onTrendChartChanged)
