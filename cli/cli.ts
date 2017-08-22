@@ -1505,26 +1505,55 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         cmd: "node",
         args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
     }).then(() => {
-        let fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff")
-        let url = "url(data:application/font-woff;charset=utf-8;base64,"
+        const fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff")
+        const url = "url(data:application/font-woff;charset=utf-8;base64,"
             + fontFile.toString("base64") + ") format('woff')"
         let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
         semCss = semCss.replace('src: url("fonts/icons.eot");', "")
             .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
-        fs.writeFileSync('built/web/semantic.css', semCss)
-        return semCss;
-    }).then((semCss) => {
-        const rtlcss = require('rtlcss');
-        const rtlCss = rtlcss.process(semCss);
-        pxt.debug("converting semantic css to rtl");
-        fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
+        fs.writeFileSync('built/web/semantic.css', semCss);
     }).then(() => {
+        // generate blockly css
         if (!fs.existsSync(path.join("theme", "blockly.less")))
             return Promise.resolve();
         return nodeutil.spawnAsync({
             cmd: "node",
             args: ["node_modules/less/bin/lessc", "theme/blockly.less", "built/web/blockly.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
         })
+    }).then(() => {
+        // run postcss with autoprefixer and rtlcss
+        pxt.debug("running postcss");
+        const postcss = require('postcss');
+        const browserList = [
+            "Chrome >= 38",
+            "Firefox >= 31",
+            "Edge >= 12",
+            "ie >= 11",
+            "Safari >= 9",
+            "Opera >= 21",
+            "iOS >= 9",
+            "ChromeAndroid >= 59",
+            "FirefoxAndroid >= 55"
+        ]
+        const cssnano = require('cssnano')({
+            autoprefixer: {browsers: browserList, add: true}
+        });
+        const rtlcss = require('rtlcss');
+        const files = ['semantic.css', 'blockly.css']
+        files.forEach(cssFile => {
+            fs.readFile(`built/web/${cssFile}`, "utf8", (err, css) => {
+            postcss([cssnano])
+                .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` }).then((result: any) => {
+                    fs.writeFile(`built/web/${cssFile}`, result.css, (err2, css2) => {
+                        // process rtl css
+                        postcss([rtlcss])
+                            .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
+                                fs.writeFile(`built/web/rtl${cssFile}`, result2.css);
+                            });
+                    });
+                });
+            })
+        });
     })
 }
 
