@@ -58,9 +58,9 @@ begin with `0` so the last element's index is one less than the array length.
 ## Advanced
 
 Arrays are a very useful way to collect and organize information. There are more advanced operations and
-functions you can use on arrays. See [arrays](/blocks/arrays) for other array operations.
+functions you can use on arrays. See [arrays](/reference/arrays) for other array operations.
 
-Here's an example using [**insertAt**](/blocks/arrays/insertat) to insert a number into the middle of an array.
+Here's an example using [**insertAt**](/reference/arrays/insert-at) to insert a number into the middle of an array.
 
 ```block
 let scores = [8, 5, 9, 3, 2, 4];
@@ -71,4 +71,4 @@ scores.insertAt(3, 1);
 
 ### See also #seealso
  
-[Arrays](/blocks/arrays)
+[Arrays](/reference/arrays)
