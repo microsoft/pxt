@@ -242,6 +242,7 @@ export class ButtonMenuItem extends UiElement<ItemProps> {
 }
 
 export interface ButtonProps extends WithPopupProps {
+    id?: string;
     title?: string;
     ariaLabel?: string;
     ariaExpanded?: boolean;
@@ -254,6 +255,7 @@ export class Button extends UiElement<ButtonProps> {
     renderCore() {
         return (
             <button className={genericClassName("ui button", this.props) + " " + (this.props.disabled ? "disabled" : "") }
+                id={this.props.id}
                 role={this.props.role}
                 title={this.props.title}
                 tabIndex={this.props.tabIndex || 0}
