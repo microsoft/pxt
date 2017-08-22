@@ -1,5 +1,5 @@
 function handleEnterKey(e) {
-    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+    var charCode = (typeof e.which == "number") ? e.which : e.keyCode
     if (charCode === 13 || charCode === 32) { // Enter or Space key
         e.preventDefault();
         e.currentTarget.click();
@@ -54,18 +54,18 @@ function searchSubmit(form) {
 }
 
 function setupSidebar() {
-    let togglesidebar = document.getElementById("togglesidebar");
+    var togglesidebar = document.getElementById("togglesidebar");
     togglesidebar.onkeydown = handleEnterKey;
 
 
     $('.ui.sidebar')
         .sidebar({ 
             dimPage: false,
-            onShow: () => {
+            onShow: function () {
                 togglesidebar.setAttribute("aria-expanded", "true");
                 document.getElementsByClassName("sidebar").item(0).getElementsByClassName("focused").item(0).focus();
             },
-            onHidden: () => {
+            onHidden: function () {
                 togglesidebar.setAttribute("aria-expanded", "false");
             }
         })
@@ -84,21 +84,21 @@ function setupSidebar() {
             }
         });
 
-    let accordions = document.getElementsByClassName("ui accordion");
-    for (let i = 0; i < accordions.length; i++) {
-        let nodes = accordions.item(i).getElementsByClassName("title");
-        for (let j = 0; j < nodes.length; j++) {
-            let hrefNode = nodes.item(j).getElementsByTagName("a").item(0);
-            let iNode = nodes.item(j).getElementsByTagName("i").item(0);
-            iNode.onclick = (e) => {
+    var accordions = document.getElementsByClassName("ui accordion");
+    for (var i = 0; i < accordions.length; i++) {
+        var nodes = accordions.item(i).getElementsByClassName("title");
+        for (var j = 0; j < nodes.length; j++) {
+            var hrefNode = nodes.item(j).getElementsByTagName("a").item(0);
+            var iNode = nodes.item(j).getElementsByTagName("i").item(0);
+            iNode.onclick = function (e) {
                 if (hrefNode.hasAttribute("aria-expanded") && hrefNode.getAttribute("aria-expanded") === "true") {
                     hrefNode.setAttribute("aria-expanded", "false");
                 } else {
                     hrefNode.setAttribute("aria-expanded", "true");
                 }
             };
-            hrefNode.onkeydown = (e) => {
-                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+            hrefNode.onkeydown = function (e) {
+                var charCode = (typeof e.which == "number") ? e.which : e.keyCode
                 if (charCode === 39) {
                     $(e.target.parentElement.parentElement).accordion("open", 0);
                     e.target.setAttribute("aria-expanded", "true");
@@ -110,8 +110,8 @@ function setupSidebar() {
         }
     }
 
-    let searchIcons = document.getElementsByClassName("search link icon");
-    for (let i = 0; i < searchIcons.length; i++) {
+    var searchIcons = document.getElementsByClassName("search link icon");
+    for (var i = 0; i < searchIcons.length; i++) {
         searchIcons.item(i).onkeydown = handleEnterKey;
     }
 }
