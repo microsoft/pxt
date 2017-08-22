@@ -25,10 +25,12 @@ namespace pxt.editor {
 
     export interface ExtensionResponse extends EditorMessageResponse {
         type: "pxtpkgext";
+        extId: string;
     }
 
     export interface ExtensionRequest extends EditorMessageRequest {
         type: "pxtpkgext";
+        extId: string;
         body?: any;
     }
 

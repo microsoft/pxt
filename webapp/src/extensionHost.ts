@@ -27,11 +27,19 @@ export class ExtensionHost {
         }
     }
 
-    sendResponse(response: e.EditorMessageResponse) {
+    sendEvent(event: string) {
+        this.send(mkEvent(event));
+    }
+
+    private send(message: e.EditorMessage) {
         // TODO
     }
 
-    handleRequestAsync(request: e.ExtensionRequest): Promise<void> {
+    private sendResponse(response: e.EditorMessageResponse) {
+        this.sendResponse(response);
+    }
+
+    private handleRequestAsync(request: e.ExtensionRequest): Promise<void> {
         const resp = mkResponse(request);
 
         switch (request.action) {
@@ -39,23 +47,23 @@ export class ExtensionHost {
                 this.sendResponse(resp);
                 break;
             case "datastream":
-                return this.permissionOperation(request.id, Permissions.Serial, resp, handleDataStreamRequest);
+                return this.permissionOperation(request.extId, Permissions.Serial, resp, handleDataStreamRequest);
             case "querypermission":
-                const perm = this.getPermissions(request.id)
+                const perm = this.getPermissions(request.extId)
                 const r = resp as e.ExtensionResponse;
                 r.resp = statusesToResponses(perm);
                 this.sendResponse(r);
                 break;
             case "requestpermission":
-                return this.requestPermissionsAsync(request.id, resp as e.PermissionResponse, request.body);
+                return this.requestPermissionsAsync(request.extId, resp as e.PermissionResponse, request.body);
             case "usercode":
-                return this.permissionOperation(request.id, Permissions.ReadUserCode, resp, handleUserCodeRequest);
+                return this.permissionOperation(request.extId, Permissions.ReadUserCode, resp, handleUserCodeRequest);
             case "readcode":
-                handleReadCodeRequest(request.id, resp as e.ReadCodeResponse);
+                handleReadCodeRequest(request.extId, resp as e.ReadCodeResponse);
                 this.sendResponse(resp);
                 break;
             case "writecode":
-                handleWriteCodeRequest(request.id, resp, request.body);
+                handleWriteCodeRequest(request.extId, resp, request.body);
                 this.sendResponse(resp);
                 break;
 
@@ -64,7 +72,7 @@ export class ExtensionHost {
         return Promise.resolve();
     }
 
-    permissionOperation(id: string, permission: Permissions, resp: e.ExtensionResponse, cb: (resp: e.ExtensionResponse) => void) {
+    private permissionOperation(id: string, permission: Permissions, resp: e.ExtensionResponse, cb: (resp: e.ExtensionResponse) => void) {
         return this.checkPermissionAsync(id, permission)
             .then(() => {
                 cb(resp);
@@ -77,7 +85,7 @@ export class ExtensionHost {
             });
     }
 
-    getPermissions(id: string): e.Permissions<PermissionStatus> {
+    private getPermissions(id: string): e.Permissions<PermissionStatus> {
         if (!this.statuses[id]) {
             this.statuses[id] = {
                 serial: PermissionStatus.NotYetPrompted,
@@ -87,7 +95,7 @@ export class ExtensionHost {
         return this.statuses[id]
     }
 
-    checkPermissionAsync(id: string, permission: Permissions): Promise<boolean> {
+    private checkPermissionAsync(id: string, permission: Permissions): Promise<boolean> {
         const perm = this.getPermissions(id)
 
         let status: PermissionStatus;
@@ -104,12 +112,12 @@ export class ExtensionHost {
 
     }
 
-    promptForPermissionAsync(id: string, permission: Permissions): Promise<boolean> {
+    private promptForPermissionAsync(id: string, permission: Permissions): Promise<boolean> {
         // TODO
         return Promise.resolve(false);
     }
 
-    requestPermissionsAsync(id: string, resp: e.PermissionResponse, p: e.Permissions<boolean>) {
+    private requestPermissionsAsync(id: string, resp: e.PermissionResponse, p: e.Permissions<boolean>) {
         const promises: Promise<boolean>[] = [];
 
         if (p.readUserCode) {
@@ -178,6 +186,7 @@ function mkResponse(request: e.ExtensionRequest, success = true): e.ExtensionRes
     return {
         type: "pxtpkgext",
         id: request.id,
+        extId: request.extId,
         success
     };
 }
