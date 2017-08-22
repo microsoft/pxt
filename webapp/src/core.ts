@@ -19,6 +19,10 @@ export type Component<S, T> = data.Component<S, T>;
 
 let dimmerInitialized = false;
 
+export const tabKey = 9;
+export const enterKey = 13;
+export const spaceKey = 32;
+
 export function isLoading() {
     return !!$('.ui.loading.dimmer .loadingcontent')[0];
 }
@@ -203,10 +207,10 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
       ${options.body ? "<p>" + Util.htmlEscape(options.body) + "</p>" : ""}
       ${options.htmlBody || ""}
       ${options.input ? `<div class="ui fluid action input">
-         <input class="userinput" spellcheck="false" placeholder="${Util.htmlEscape(options.input)}" type="text">
+         <input class="userinput focused" spellcheck="false" placeholder="${Util.htmlEscape(options.input)}" type="text">
          </div>` : ""}
       ${options.copyable ? `<div class="ui fluid action input">
-         <input class="linkinput" readonly spellcheck="false" type="text" value="${Util.htmlEscape(options.copyable)}">
+         <input class="linkinput focused" readonly spellcheck="false" type="text" value="${Util.htmlEscape(options.copyable)}">
          <button class="ui teal right labeled icon button copybtn" data-content="${lf("Copied!")}">
             ${lf("Copy")}
             <i class="copy icon"></i>
@@ -376,7 +380,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
             dialogInput.setSelectionRange(0, 9999);
             dialogInput.onkeyup = (e: KeyboardEvent) => {
                 let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-                if (charCode === 13 || charCode === 32) {
+                if (charCode === enterKey || charCode === core.spaceKey) {
                     e.preventDefault();
                     (document.getElementsByClassName("approve positive").item(0) as HTMLElement).click();
                 }
@@ -504,7 +508,7 @@ function unregisterFocusTracking(data: FocusDataEventInfo): void {
 
 function giveFocusToFirstTag(e: KeyboardEvent) {
     let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-    if (charCode === 9 && !e.shiftKey) {
+    if (charCode === tabKey && !e.shiftKey) {
         e.preventDefault();
         unregisterFocusTracking(this);
         initializeFocusTabIndex(this.targetArea, true);
@@ -516,7 +520,7 @@ function giveFocusToFirstTag(e: KeyboardEvent) {
 
 function giveFocusToLastTag(e: KeyboardEvent) {
     let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-    if (charCode === 9 && e.shiftKey) {
+    if (charCode === tabKey && e.shiftKey) {
         e.preventDefault();
         unregisterFocusTracking(this);
         initializeFocusTabIndex(this.targetArea, true, false);

@@ -1,6 +1,6 @@
 function handleEnterKey(e) {
     let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-    if (charCode === 13 || charCode === 32) {
+    if (charCode === 13 || charCode === 32) { // Enter or Space key
         e.preventDefault();
         e.currentTarget.click();
     }

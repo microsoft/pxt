@@ -1101,7 +1101,7 @@ namespace pxt.blocks {
 
         let blocklySearchInputField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
         let blocklySearchInput = document.getElementById('blocklySearchInput') as HTMLElement;
-        let blocklySearchLabel = document.getElementById('blocklySearchLabel') as HTMLElement;
+        let blocklyHiddenSearchLabel = document.getElementById('blocklySearchLabel') as HTMLElement;
 
         let origClassName = 'ui fluid icon input';
         if (!blocklySearchInput) {
@@ -1125,14 +1125,14 @@ namespace pxt.blocks {
             blocklySearchInputIcon.setAttribute("role", "presentation");
             blocklySearchInputIcon.setAttribute("aria-hidden", "true");
 
-            blocklySearchLabel = document.createElement('div');
-            blocklySearchLabel.className = 'accessible-hidden';
-            blocklySearchLabel.id = 'blocklySearchLabel';
-            blocklySearchLabel.setAttribute('aria-live', "polite");
+            blocklyHiddenSearchLabel = document.createElement('div');
+            blocklyHiddenSearchLabel.className = 'accessible-hidden';
+            blocklyHiddenSearchLabel.id = 'blocklySearchLabel';
+            blocklyHiddenSearchLabel.setAttribute('aria-live', "polite");
 
             blocklySearchInput.appendChild(blocklySearchInputField);
             blocklySearchInput.appendChild(blocklySearchInputIcon);
-            blocklySearchInput.appendChild(blocklySearchLabel);
+            blocklySearchInput.appendChild(blocklyHiddenSearchLabel);
             blocklySearchArea.appendChild(blocklySearchInput);
             const toolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0];
             if (toolboxDiv) // Only add if a toolbox exists, eg not in sandbox mode
@@ -1155,9 +1155,9 @@ namespace pxt.blocks {
         const searchChangeHandler = Util.debounce(() => {
             let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
             let searchFor = searchField.value.toLowerCase();
-            let blocklySearchLabel = document.getElementById('blocklySearchLabel') as HTMLElement;
+            let blocklyHiddenSearchLabel = document.getElementById('blocklySearchLabel') as HTMLElement;
 
-            blocklySearchLabel.innerText = "";
+            blocklyHiddenSearchLabel.innerText = "";
 
             if (searchFor != '') {
                 blocklySearchInput.className += ' loading';
@@ -1198,9 +1198,9 @@ namespace pxt.blocks {
                     if (!blocks) return;
 
                     if (blocks.length == 0) {
-                        blocklySearchLabel.innerText = lf("No search results...");
+                        blocklyHiddenSearchLabel.innerText = lf("No search results...");
                     } else {
-                        blocklySearchLabel.innerText = lf("{0} results matching '{1}'", blocks.length, blocklySearchInputField.value.toLowerCase());
+                        blocklyHiddenSearchLabel.innerText = lf("{0} result matching '{1}'", blocks.length, blocklySearchInputField.value.toLowerCase());
                     }
 
                     if (blocks.length == 0) {

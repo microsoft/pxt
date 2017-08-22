@@ -1530,12 +1530,12 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
     }
 
     toggleHighContrast() {
-        const hc = !this.state.highContrast;
-        pxt.tickEvent("menu.highcontrast", { on: hc ? 1 : 0 });
-        this.setState({ highContrast: hc }, () => this.restartSimulator());
-        core.highContrast = hc;
+        const highContrastOn = !this.state.highContrast;
+        pxt.tickEvent("menu.highcontrast", { on: highContrastOn ? 1 : 0 });
+        this.setState({ highContrast: highContrastOn }, () => this.restartSimulator());
+        core.highContrast = highContrastOn;
         if (this.editor && this.editor.isReady) {
-            this.editor.setHighContrast(hc);
+            this.editor.setHighContrast(highContrastOn);
         }
     }
 

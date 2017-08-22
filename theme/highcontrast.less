@@ -24,7 +24,7 @@
 @hcYellow: yellow;
 
     *:focus{
-        outline: 2px dotted @selected !important;
+        outline: 2px solid @selected !important;
     }
     .blocklyTreeRoot:focus {
         outline: none !important;
@@ -80,6 +80,7 @@
 
         &:focus {
             color: @selected !important;
+            border-color: @selected !important;
 
             i, span {
                 color: @selected !important;

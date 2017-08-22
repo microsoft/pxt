@@ -174,7 +174,7 @@ pxt extract ${url}`;
                     { url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
                         <sui.Input id="projectUri" class="focused mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel"/>
-                        <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project. You can copy it by pressing Control C.")}</label>
+                        <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
                     </div>
                         : undefined }
                     { ready ? <div>
@@ -188,7 +188,7 @@ pxt extract ${url}`;
                         { advancedMenu ?
                             <sui.Field>
                                 <sui.Input id="embedCode" class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true}/>
-                                <label htmlFor="embedCode" id="embedCodeLabel" className="accessible-hidden">{lf("This is the read-only code for the selected tab. You can copy it by pressing Control C.")}</label>
+                                <label htmlFor="embedCode" id="embedCodeLabel" className="accessible-hidden">{lf("This is the read-only code for the selected tab.")}</label>
                             </sui.Field> : null }
                     </div> : undefined }
                 </div>

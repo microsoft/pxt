@@ -58,7 +58,7 @@ function removeClass(el: HTMLElement, cls: string) {
 
 export function fireClickOnEnter(e: React.KeyboardEvent): void {
     let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-    if (charCode === 13 || charCode === 32) {
+    if (charCode === core.enterKey || charCode === core.spaceKey) {
         e.preventDefault();
         (e.currentTarget as HTMLElement).click();
     }
@@ -96,9 +96,9 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
 
     private menuItemKeyDown = (e: KeyboardEvent) => {
         let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-        if (charCode === 9) {
+        if (charCode === core.tabKey) {
             this.close()
-        } else if (charCode === 32 || charCode === 13) {
+        } else if (charCode === core.enterKey || charCode === core.spaceKey) {
             /* give the focus back to the dropdown menu, so if the menuitem opens a modal,
                the focus will not be reset once the modal is closed. */
             this.child("").focus()
@@ -107,7 +107,7 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
 
     private dropDownKeyDown = (e: JQueryKeyEventObject) => {
         let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-        if (charCode === 32 || charCode === 13) {
+        if (charCode === core.enterKey || charCode === core.spaceKey) {
             if (this.isOpened) {
                 this.child("").dropdown("hide")
             } else {
@@ -149,7 +149,7 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
                 this.isOpened = true
                 this.forceUpdate()
 
-                var menuItems = this.child(".item")
+                let menuItems = this.child(".item")
                 menuItems.each((index: number, elem: HTMLElement) => {
                     elem.onkeydown = this.menuItemKeyDown
                 })

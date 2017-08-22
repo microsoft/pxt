@@ -8,18 +8,23 @@ namespace pxsim.accessibility {
     }
 
     export function enableKeyboardInteraction(elem: Element, handlerKeyDown?: () => void, handlerKeyUp?: () => void): void {
-        elem.addEventListener('keydown', (e: KeyboardEvent) => {
-            let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-            if ((charCode === 32 || charCode === 13) && handlerKeyDown) {
-                handlerKeyDown();
-            }
-        });
-        elem.addEventListener('keyup', (e: KeyboardEvent) => {
-            let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-            if ((charCode === 32 || charCode === 13) && handlerKeyUp) {
-                handlerKeyUp();
-            }
-        });
+        if (handlerKeyDown) {
+            elem.addEventListener('keydown', (e: KeyboardEvent) => {
+                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                if (charCode === 32 || charCode === 13) { // Enter or Space key
+                    handlerKeyDown();
+                }
+            });
+        }
+
+        if (handlerKeyUp) {
+            elem.addEventListener('keyup', (e: KeyboardEvent) => {
+                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                if (charCode === 32 || charCode === 13) { // Enter or Space key
+                    handlerKeyUp();
+                }
+            });
+        }
     }
 
     export function setAria(elem: Element, role?: string, label?: string): void {
