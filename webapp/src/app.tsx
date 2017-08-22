@@ -2254,7 +2254,7 @@ $(document).ready(() => {
             if (state) {
                 theEditor.setState(state);
             }
-            initSerial();
+            // initSerial();
             initCompile();
             initScreenshots();
             initHashchange();
