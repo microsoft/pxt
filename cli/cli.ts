@@ -962,11 +962,10 @@ function uploadCoreAsync(opts: UploadOptions) {
         }
 
         const uglify = opts.minify ? require("uglify-js") : undefined;
-        const uglifycss = opts.minify ? require("uglifycss") : undefined;
 
         let fileName = uploadFileName(p)
         let mime = U.getMime(p)
-        const minified = opts.minify && (mime == "application/javascript" || mime == "text/css") && fileName !== "target.js";
+        const minified = opts.minify && mime == "application/javascript" && fileName !== "target.js";
 
         pxt.log(`    ${p} -> ${fileName} (${mime})` + (minified ? ' minified' : ""));
 
@@ -994,15 +993,12 @@ function uploadCoreAsync(opts: UploadOptions) {
                 }
 
                 if (minified) {
-                    if (mime == "application/javascript") {
-                        const res = uglify.minify(content);
-                        if (!res.error) {
-                            content = res.code;
-                        } else {
-                            pxt.log(`        Could not minify ${fileName} ${res.error}`)
-                        }
-                    } else if (mime == "text/css") {
-                        content = uglifycss.processString(content);
+                    const res = uglify.minify(content);
+                    if (!res.error) {
+                        content = res.code;
+                    }
+                    else {
+                        pxt.log(`        Could not minify ${fileName} ${res.error}`)
                     }
                 }
 
