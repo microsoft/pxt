@@ -36,7 +36,6 @@ interface GestureToolboxState {
     editDescriptionMode?: boolean;
     data?: Types.Gesture[];
     connected?: boolean;
-    reconnecting?: boolean;
 }
 
 export class GestureToolbox extends data.Component<ISettingsProps, GestureToolboxState> {
@@ -73,8 +72,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             editGestureMode: false,
             editDescriptionMode: false,
             data: data,
-            connected: false,
-            reconnecting: false
+            connected: false
         };
 
         this.lastConnectedTime = 0;
@@ -126,6 +124,49 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     show() {
         this.setState({ visible: true });
 
+        this.intervalID = setInterval(() => {
+            let elapsedTime = Date.now() - this.lastConnectedTime;
+
+            if (elapsedTime > 1000) {
+                if (this.state.connected) {
+                    // make sure that it only calls setState when it's going to change the state (and not overwrite the same state)
+                    this.setState({ connected: false });
+                }
+
+                // if(!this.state.reconnecting) {
+                //     // make sure that it doesn't try to call hidbridge.initAsync() when it is being reconnected (and cause a race condition)
+                //     this.setState({ reconnecting: true });
+
+                //     if (hidbridge.shouldUse())
+                //         hidbridge.initAsync()
+                //         .then(dev => {
+                //             dev.onSerial = onSerialData;
+                //         })
+                //         .catch(reason => {
+                //             this.setState({ connected: false, reconnecting: false });
+                //         });
+                // }
+                // else {
+                //     this.reconnectAttempts++;
+                //     if(this.reconnectAttempts == 3) {
+                //         this.reconnectAttempts = 0;
+                //         this.setState({ connected: false, reconnecting: false });
+                //     }
+                // }
+            }
+            else {
+                // we are connected to the device
+                if (!this.state.connected) {
+                    // make sure that it only calls setState when it's going to change the state (and not overwrite the same state)
+                    this.setState({ connected: true });
+                }
+            }
+        }, 500);
+
+        this.connectToDevice();
+    }
+
+    connectToDevice() {
         const onSerialData = (buf: any, isErr: any) => {
             let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
             let newData = Recorder.parseString(strBuf);
@@ -159,45 +200,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 }
             }
         };
-
-        this.intervalID = setInterval(() => {
-            let elapsedTime = Date.now() - this.lastConnectedTime;
-
-            if (elapsedTime > 1000) {
-                if (this.state.connected && !this.state.reconnecting) {
-                    // make sure that it only calls setState when it's going to change the state (and not overwrite the same state)
-                    this.setState({ connected: false });
-                }
-
-                if(!this.state.reconnecting) {
-                    // make sure that it doesn't try to call hidbridge.initAsync() when it is being reconnected (and cause a race condition)
-                    this.setState({ reconnecting: true });
-
-                    if (hidbridge.shouldUse())
-                        hidbridge.initAsync()
-                        .then(dev => {
-                            dev.onSerial = onSerialData;
-                        })
-                        .catch(reason => {
-                            this.setState({ connected: false, reconnecting: false });
-                        });
-                }
-                else {
-                    this.reconnectAttempts++;
-                    if(this.reconnectAttempts == 3) {
-                        this.reconnectAttempts = 0;
-                        this.setState({ connected: false, reconnecting: false });
-                    }
-                }
-            }
-            else {
-                // we are connected to the device
-                if (!this.state.connected) {
-                    // make sure that it only calls setState when it's going to change the state (and not overwrite the same state)
-                    this.setState({ connected: true, reconnecting: false });
-                }
-            }
-        }, 1100);
 
         if (hidbridge.shouldUse()) {
             hidbridge.initAsync()
@@ -300,13 +302,14 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         const downloadGesture = (gestureID: number) => {
             let gestureIndex = this.getGestureIndex(gestureID);
+            let gestureName = this.state.data[gestureIndex].name;
             let zip = new JSZip();
             zip.file("gesture.json", JSON.stringify(this.state.data[gestureIndex]));
             zip.file("video.mp4", this.state.data[gestureIndex].displayVideoData, {base64: true});
 
             zip.generateAsync({type: "blob"}).then(function(content: any) {
                     // see FileSaver.js 
-                    FileSaver.saveAs(content, "gesture.zip");
+                    FileSaver.saveAs(content, gestureName + ".zip");
             });            
         }
 
@@ -496,22 +499,17 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 this.setState({ editDescriptionMode: true });
         }
 
-        const addCloseHandler = () => {
-            $($('.message .close')
-                .on('click', function() {
-                    $(this)
-                    .closest('.message')
-                    .remove();
-                    ;
-                }))
-        }
-
         const uploadStreamerCode = () => {
             compile_ws.send("compile");
         }
 
+        const reconnectDevice = () => {
+            this.connectToDevice();
+        }
+
         const inputStyle = { height: "30px", padding: "auto auto auto 6px" };
-        const colossalStyle = { fontSize: "5rem", margin: "0" };
+        const colossalStyle = { fontSize: "3.5rem", margin: "0" };
+        const gestureContainerMargin = { margin: "0 15px 15px 0" };
         const sampleMarginStyle = { margin: "0 10px 10px 0" };
         const headerStyle = { height: "60px" };
         const buttonHeightStyle = { height: "30px" };
@@ -542,18 +540,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                         </div>
                         :
                         <div>
-                            {
-                                this.state.reconnecting ?
-                                <div className="ui basic label yellow" id="indicator">
-                                    <i className="icon refresh yellow"></i>
-                                    Reconnecting
-                                </div>
-                                :
-                                <div className="ui basic label red" id="indicator">
-                                    <i className="icon remove red"></i>
-                                    Disconnected
-                                </div>
-                            }
+                            <button className="ui icon button basic refresh yellow compact tiny" id="indicator" onClick={reconnectDevice}>
+                                Reconnect?
+                            </button>
                         </div>
                     }
                 </sui.Segment>
@@ -586,7 +575,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             <div>
                                 {
                                     this.state.data.map((gesture) =>
-                                        <div className="ui segments link-effect gesture-container" key={this.mainViewGesturesGraphsKey++}> 
+                                        <div className="ui segments link-effect gesture-container" key={this.mainViewGesturesGraphsKey++} style={gestureContainerMargin}> 
                                             <div className="ui segment inverted teal" style={headerStyle}>
                                                 <div className="ui header inverted left floated">
                                                     {gesture.name}
@@ -626,7 +615,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     :
                     <div>
                         <div className="ui segment three column grid">
-                            <div className="five wide column">
+                            <div className="four wide column">
                                 {
                                     this.state.connected ?
                                     <video id="webcam-video" className="flipped-video"></video>
@@ -634,7 +623,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                     undefined
                                 }
                             </div>
-                            <div className="eight wide column">
+                            <div className="nine wide column">
                                 {
                                     this.state.connected ?
                                     <div>
@@ -644,16 +633,20 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                             <svg className="row" id="realtime-graph-z"></svg>
                                             <svg id="recognition-overlay"></svg>
                                         </div>
-                                        <div className="ui info message" ref={addCloseHandler}>
-                                        <i className="close icon"></i>
-                                        <div className="header">
-                                            Recording new gestures
-                                        </div>
-                                        <ul className="list">
-                                            <li>Perform the gesture and take a look at how the signals representing the accelerometer data are changing</li>
-                                            <li>To record a new sample, press and hold the space-bar while performing the gesture (you can edit or delete them later)</li>
-                                        </ul>
-                                        </div>
+                                        {/* {
+                                            this.state.showInstructions ?
+                                            <div className="ui info message" id="instructions-message">
+                                                <i className="close icon"></i>
+                                                <div className="header">
+                                                    Recording new gestures
+                                                </div>
+                                                <ul className="list">
+                                                    <li>Perform the gesture and take a look at how the signals representing the accelerometer data are changing</li>
+                                                    <li>To record a new sample, press and hold the space-bar while performing the gesture (you can edit or delete them later)</li>
+                                                </ul>
+                                            </div>
+                                            : undefined
+                                        } */}
                                     </div>
                                     :
                                     <div className="ui message">
@@ -688,8 +681,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                         <div className="ui segment basic center aligned">
                                             <span className="ui text">Record method:</span>
                                             <br/>
-                                            <br/>
-                                            
                                             <select id="record-mode-select" className="ui dropdown" onChange={onRecordMethodChange}>
                                                 <option value="PressAndHold">Press &amp; Hold</option>
                                                 <option value="PressToToggle">Press to Toggle</option>
