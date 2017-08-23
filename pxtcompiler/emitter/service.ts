@@ -893,10 +893,8 @@ namespace ts.pxtc.service {
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 
             if (attrs && attrs.paramDefl && attrs.paramDefl[name]) {
-                if (typeNode.kind == SK.StringKeyword) {
-                    return `"${attrs.paramDefl[name]}"`;
-                }
-                return attrs.paramDefl[name];
+                const defaultName = attrs.paramDefl[name];
+                return typeNode.kind == SK.StringKeyword && defaultName.indexOf(`"`) != 0 ? `"${defaultName}"` : defaultName;
             }
             switch (typeNode.kind) {
                 case SK.StringKeyword: return (name == "leds" ? defaultImgLit : `""`);
