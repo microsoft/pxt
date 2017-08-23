@@ -137,7 +137,7 @@ namespace pxt.blocks {
                     "min": Util.lf("smaller value of 2 numbers"),
                     "max": Util.lf("larger value of 2 numbers")
                 },
-                url: '/blocks/math',
+                url: '/reference/math',
                 operators: {
                     'op': ["min", "max"]
                 },
@@ -146,7 +146,7 @@ namespace pxt.blocks {
             'math_op3': {
                 name: Util.lf("absolute number"),
                 tooltip: Util.lf("absolute value of a number"),
-                url: '/blocks/math/abs',
+                url: '/referece/math/abs',
                 category: 'math',
                 block: {
                     message0: Util.lf("absolute of %1")
@@ -155,7 +155,7 @@ namespace pxt.blocks {
             'device_random': {
                 name: Util.lf("pick random number"),
                 tooltip: Util.lf("Returns a random integer between 0 and the specified bound (inclusive)."),
-                url: '/blocks/math/random',
+                url: '/reference/math/random',
                 category: 'math',
                 block: {
                     message0: Util.lf("pick random 0 to %1")
@@ -168,12 +168,12 @@ namespace pxt.blocks {
             },
             'math_number_minmax': {
                 name: Util.lf("{id:block}number"),
-                url: '/blocks/math',
+                url: '/reference/math',
                 category: 'math'
             },
             'math_arithmetic': {
                 name: Util.lf("arithmetic operation"),
-                url: '/blocks/math',
+                url: '/reference/math',
                 tooltip: {
                     ADD: Util.lf("Return the sum of the two numbers."),
                     MINUS: Util.lf("Return the difference of the two numbers."),
@@ -196,7 +196,7 @@ namespace pxt.blocks {
             'math_modulo': {
                 name: Util.lf("division remainder"),
                 tooltip: Util.lf("Return the remainder from dividing the two numbers."),
-                url: '/blocks/math',
+                url: '/reference/math',
                 category: 'math',
                 block: {
                     MATH_MODULO_TITLE: Util.lf("remainder of %1 ÷ %2")
@@ -260,7 +260,7 @@ namespace pxt.blocks {
             'lists_create_with': {
                 name: Util.lf("create an array"),
                 tooltip: Util.lf("Creates a new array."),
-                url: '/blocks/arrays/create',
+                url: '/reference/arrays/create',
                 category: 'arrays',
                 blockTextSearch: "LISTS_CREATE_WITH_INPUT_WITH",
                 block: {
@@ -273,7 +273,7 @@ namespace pxt.blocks {
             'lists_length': {
                 name: Util.lf("array length"),
                 tooltip: Util.lf("Returns the number of items in an array."),
-                url: '/blocks/arrays/length',
+                url: '/reference/arrays/length',
                 category: 'arrays',
                 block: {
                     LISTS_LENGTH_TITLE: Util.lf("length of array %1")
@@ -282,7 +282,7 @@ namespace pxt.blocks {
             'lists_index_get': {
                 name: Util.lf("get a value in an array"),
                 tooltip: Util.lf("Returns the value at the given index in an array."),
-                url: '/blocks/arrays/get',
+                url: '/reference/arrays/get',
                 category: 'arrays',
                 block: {
                     message0: Util.lf("%1 get value at %2")
@@ -291,7 +291,7 @@ namespace pxt.blocks {
             'lists_index_set': {
                 name: Util.lf("set a value in an array"),
                 tooltip: Util.lf("Sets the value at the given index in an array"),
-                url: '/blocks/arrays/set',
+                url: '/reference/arrays/set',
                 category: 'arrays',
                 block: {
                     message0: Util.lf("%1 set value at %2 to %3")
