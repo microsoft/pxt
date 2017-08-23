@@ -91,8 +91,8 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "monaco-editor": "0.9.0",
-    "pxt-monaco-typescript": "2.2.6",
+    "monaco-editor": "0.10.0",
+    "pxt-monaco-typescript": "2.3.3",
     "jake": "^8.0.12",
     "jquery": "^2.2.0",
     "karma": "^1.7.0",
