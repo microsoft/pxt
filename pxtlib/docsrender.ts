@@ -232,7 +232,7 @@ namespace pxt.docs {
         let breadcrumbHtml = '';
         if (breadcrumb.length > 1) {
             breadcrumbHtml = `
-            <nav class="ui breadcrumb" aria-label="Breadcrumb">
+            <nav class="ui breadcrumb" aria-label="${lf('Breadcrumb')}">
                 ${breadcrumb.map((b, i) =>
                     `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section"
                         href="${html2Quote(b.href)}" aria-current="${i == breadcrumb.length - 1 ? "page" : ""}">${html2Quote(b.name)}</a>`)
@@ -244,12 +244,12 @@ namespace pxt.docs {
 
         if (currentTocEntry) {
             if (currentTocEntry.prevPath) {
-                params["prev"] = `<a href="${currentTocEntry.prevPath}" class="navigation navigation-prev " aria-label="Previous page: ${currentTocEntry.prevName}">
+                params["prev"] = `<a href="${currentTocEntry.prevPath}" class="navigation navigation-prev " title="${'Previous page: {0}', currentTocEntry.prevName}">
                                     <i class="icon angle left"></i>
                                 </a>`;
             }
             if (currentTocEntry.nextPath) {
-                params["next"] = `<a href="${currentTocEntry.nextPath}" class="navigation navigation-next " aria-label="Next page: ${currentTocEntry.nextName}">
+                params["next"] = `<a href="${currentTocEntry.nextPath}" class="navigation navigation-next " title="${'Next page {0}', currentTocEntry.nextName}">
                                     <i class="icon angle right"></i>
                                 </a>`;
             }
