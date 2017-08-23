@@ -292,6 +292,25 @@ namespace pxt.docs {
         `
         params['printBtn'] = printBtnHtml;
 
+        // Add sidebar toggle
+        const sidebarToggleHtml = `
+            <a id="togglesidebar" class="launch icon item" tabindex="0" title="Side menu" aria-label="${lf("Side menu")}" role="menu" aria-expanded="false">
+                <i class="content icon"></i>
+            </a>
+        `
+        params['sidebarToggle'] = sidebarToggleHtml;
+
+        // Add search bars
+        const searchBarIds = ['tocsearch1', 'tocsearch2']
+        const searchBarsHtml = searchBarIds.map((searchBarId) => {
+            return `
+                <input type="search" name="q" placeholder="${lf("Search...")}" aria-label="${lf("Search Documentation")}">
+                <i onclick="document.getElementById('${searchBarId}').submit();" tabindex="0" class="search link icon" aria-label="${lf("Search")}" role="button"></i>
+            `;
+        })
+        params["searchBar1"] = searchBarsHtml[0];
+        params["searchBar2"] = searchBarsHtml[1];
+
         let style = '';
         if (theme.accentColor) style += `
 .ui.accent { color: ${theme.accentColor}; }
@@ -318,7 +337,10 @@ namespace pxt.docs {
             "targetlogo",
             "github",
             "JSON",
-            "appstoremeta"
+            "appstoremeta",
+            "sidebarToggle",
+            "searchBar1",
+            "searchBar2"
         ])
     }
 
