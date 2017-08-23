@@ -161,6 +161,7 @@ namespace pxt.editor {
         typecheckNow(): void;
 
         openExtension(extension: string, url: string, consentRequired?: boolean): void;
+        handleExtensionRequest(request: ExtensionRequest): void;
 
         fireResize(): void;
 

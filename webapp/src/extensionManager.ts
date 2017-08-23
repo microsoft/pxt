@@ -1,22 +1,31 @@
 import e = pxt.editor;
 import * as pkg from "./package";
 
-enum Permissions {
+export enum Permissions {
     Serial,
     ReadUserCode
 }
 
-enum PermissionStatus {
+export enum PermissionStatus {
     Granted,
     Denied,
     NotAvailable,
     NotYetPrompted
 }
 
-export class ExtensionHost {
-    private statuses: pxt.Map<e.Permissions<PermissionStatus>> = {};
+export interface ExtensionHost {
+    send(extId: string, message: e.ExtensionMessage): void;
+    promptForPermissionAsync(id: string, permission: Permissions): Promise<boolean>;
+}
 
-    handleExtensionMessage(message: e.EditorMessage) {
+export class ExtensionManager {
+    private statuses: pxt.Map<e.Permissions<PermissionStatus>> = {};
+    private consent: pxt.Map<boolean>;
+
+    constructor (private host: ExtensionHost) {
+    }
+
+    handleExtensionMessage(message: e.ExtensionMessage) {
         switch (message.type) {
             case "request":
                 this.handleRequestAsync(message as e.ExtensionRequest);
@@ -27,20 +36,28 @@ export class ExtensionHost {
         }
     }
 
-    sendEvent(event: string) {
-        this.send(mkEvent(event));
+    sendEvent(extId: string, event: string) {
+        this.host.send(extId, mkEvent(event));
     }
 
-    private send(message: e.EditorMessage) {
-        // TODO
+    setConsent(extId: string, allowed: boolean) {
+        this.consent[extId] = allowed;
     }
 
-    private sendResponse(response: e.EditorMessageResponse) {
-        this.sendResponse(response);
+    hasConsent(extId: string) {
+        return this.consent[extId];
+    }
+
+    private sendResponse(response: e.ExtensionResponse) {
+        this.host.send(response.extId, response);
     }
 
     private handleRequestAsync(request: e.ExtensionRequest): Promise<void> {
         const resp = mkResponse(request);
+
+        if (!this.hasConsent(request.extId)) {
+            return;
+        }
 
         switch (request.action) {
             case "init":
@@ -105,16 +122,11 @@ export class ExtensionHost {
         }
 
         if (status === PermissionStatus.NotYetPrompted) {
-            return this.promptForPermissionAsync(id, permission);
+            return this.host.promptForPermissionAsync(id, permission);
         }
 
         return Promise.resolve(status === PermissionStatus.Granted);
 
-    }
-
-    private promptForPermissionAsync(id: string, permission: Permissions): Promise<boolean> {
-        // TODO
-        return Promise.resolve(false);
     }
 
     private requestPermissionsAsync(id: string, resp: e.PermissionResponse, p: e.Permissions<boolean>) {
