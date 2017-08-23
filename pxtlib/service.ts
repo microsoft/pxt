@@ -20,7 +20,7 @@ namespace ts.pxtc {
         description: string;
         type: string;
         initializer?: string;
-        defaults?: string[];
+        default?: string;
         properties?: PropertyDesc[];
         options?: pxt.Map<PropertyOption>;
         isEnum?: boolean;
