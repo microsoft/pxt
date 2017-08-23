@@ -887,13 +887,16 @@ namespace ts.pxtc.service {
             return undefined;
         }
         const checker = service ? service.getProgram().getTypeChecker() : undefined;
-        const args = n.parameters ? n.parameters.filter(param => !param.questionToken).map(param => {
+        const args = n.parameters ? n.parameters.filter(param => !param.initializer && !param.questionToken).map(param => {
             const typeNode = param.type;
             if (!typeNode) return "null";
 
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 
             if (attrs && attrs.paramDefl && attrs.paramDefl[name]) {
+                if (typeNode.kind == SK.StringKeyword) {
+                    return `"${attrs.paramDefl[name]}"`;
+                }
                 return attrs.paramDefl[name];
             }
             switch (typeNode.kind) {

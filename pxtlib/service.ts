@@ -341,12 +341,17 @@ namespace ts.pxtc {
         let didSomething = true
         while (didSomething) {
             didSomething = false
-            cmt = cmt.replace(/\/\/%[ \t]*([\w\.]+)(=(("[^"\n]+")|'([^'\n]+)'|([^\s]*)))?/,
+            cmt = cmt.replace(/\/\/%[ \t]*([\w\.]+)(=(("[^"\n]*")|'([^'\n]*)'|([^\s]*)))?/,
                 (f: string, n: string, d0: string, d1: string,
                     v0: string, v1: string, v2: string) => {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
+                    if (!v) v = "";
                     if (U.endsWith(n, ".defl")) {
-                        res.paramDefl[n.slice(0, n.length - 5)] = v
+                        if (v.indexOf(" ") > -1) {
+                            res.paramDefl[n.slice(0, n.length - 5)] = `"${v}"`
+                        } else {
+                            res.paramDefl[n.slice(0, n.length - 5)] = v
+                        }
                     } else if (U.endsWith(n, ".fieldEditor")) {
                         if (!res.paramFieldEditor) res.paramFieldEditor = {}
                         res.paramFieldEditor[n.slice(0, n.length - 12)] = v
@@ -396,6 +401,23 @@ namespace ts.pxtc {
             doccmt = doccmt.replace(/\n\s*(\*\s*)?/g, "\n")
             doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(.*)$/mg, (full: string, name: string, desc: string) => {
                 res.paramHelp[name] = desc
+                if (!res.paramDefl[name]) {
+                    let m = /\beg\.?:\s*(.+)/.exec(desc);
+                    if (m && m[1]) {
+                        let defaultValue = /(?:"([^"]*)")|(?:'([^']*)')|(?:([^\s,]+))/g.exec(m[1]);
+                        if (defaultValue) {
+                            let val = defaultValue[1] || defaultValue[2] || defaultValue[3];
+                            if (!val) val = "";
+                            // If there are spaces in the value, it means the value was surrounded with quotes, so add them back
+                            if (val.indexOf(" ") > -1) {
+                                res.paramDefl[name] = `"${val}"`;
+                            }
+                            else {
+                                res.paramDefl[name] = val;
+                            }
+                        }
+                    }
+                }
                 return ""
             })
             res.jsDoc += doccmt
