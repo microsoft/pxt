@@ -13,6 +13,7 @@ import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
 import * as gallery from "./gallery";
+import * as ext from "./extensionManager";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -25,10 +26,10 @@ interface ExtensionsState {
     consent?: boolean;
 }
 
-export class Extensions extends data.Component<ISettingsProps, ExtensionsState> {
+export class Extensions extends data.Component<ISettingsProps, ExtensionsState> implements ext.ExtensionHost {
     private packagesConfig: pxt.PackagesConfig;
     private extensionWrapper: HTMLDivElement;
-    private consentedTo: {[extension: string]: boolean} = {};
+    private manager: ext.ExtensionManager;
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -36,6 +37,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
             visible: false,
             consent: false
         }
+        this.manager = new ext.ExtensionManager(this);
     }
 
     hide() {
@@ -46,12 +48,12 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
     }
 
     showExtension(extension: string, url: string, consentRequired: boolean) {
-        let consent = consentRequired ? this.consentedTo[extension] : true;
+        let consent = consentRequired ? this.manager.hasConsent(extension) : true;
         this.setState({ visible: true, extension: extension, url: url, consent: consent});
     }
 
     submitConsent() {
-        this.consentedTo[this.state.extension] = true;
+        this.manager.setConsent(this.state.extension, true);
         this.setState({consent: true});
     }
 
@@ -69,7 +71,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
     private updateDimensions() {
         if (this.extensionWrapper) {
-            // Resize current frame 
+            // Resize current frame
             const extension = this.extensionWrapper.getAttribute('data-frame');
             if (extension) {
                 const frame = Extensions.getFrame(extension);
@@ -95,6 +97,25 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
     componentDidUpdate() {
         this.updateDimensions();
+    }
+
+    handleExtensionRequest(request: pxt.editor.ExtensionRequest) {
+        this.manager.handleExtensionMessage(request);
+    }
+
+    send(extId: string, editorMessage: pxt.editor.ExtensionMessage) {
+        const frame = Extensions.getFrame(extId)
+        if (frame) {
+            frame.contentWindow.postMessage(editorMessage, "*");
+        }
+        else {
+            console.warn(`Attempting to post message to unloaded extesnion ${extId}`);
+        }
+    }
+
+    promptForPermissionAsync(id: string, permission: ext.Permissions): Promise<boolean> {
+        // TODO
+        return Promise.resolve(false);
     }
 
     static getCustomContent() {

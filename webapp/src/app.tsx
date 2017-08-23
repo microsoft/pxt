@@ -32,7 +32,7 @@ import * as extensions from "./extensions";
 import * as sounds from "./sounds";
 import * as make from "./make";
 import * as baseToolbox from "./toolbox";
-import * as monacoToolbox from "./monacoSnippets"
+import * as monacoToolbox from "./monacoSnippets";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -840,6 +840,10 @@ export class ProjectView
     openExtension(extension: string, url: string, consentRequired?: boolean) {
         pxt.tickEvent("menu.openextension", {extension: extension});
         this.extensions.showExtension(extension, url, consentRequired);
+    }
+
+    handleExtensionRequest(request: pxt.editor.ExtensionRequest): void {
+        this.extensions.handleExtensionRequest(request);
     }
 
     newEmptyProject(name?: string, documentation?: string) {
