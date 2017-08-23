@@ -898,6 +898,9 @@ namespace ts.pxtc.service {
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 
             if (attrs && attrs.paramDefl && attrs.paramDefl[name]) {
+                if (typeNode.kind == SK.StringKeyword) {
+                    return `"${attrs.paramDefl[name]}"`;
+                }
                 return attrs.paramDefl[name];
             }
             switch (typeNode.kind) {
