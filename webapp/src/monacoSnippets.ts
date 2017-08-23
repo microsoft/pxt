@@ -170,7 +170,7 @@ export const maths: BuiltinCategoryDefinition = {
         },
         {
             name: "random",
-            snippet: `Math.random(4)`,
+            snippet: `Math.random()`,
             attributes: {
                 jsDoc: lf("Returns a random number between 0 and an upper bound")
             }
