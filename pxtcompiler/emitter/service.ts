@@ -891,7 +891,7 @@ namespace ts.pxtc.service {
             return undefined;
         }
         const checker = service ? service.getProgram().getTypeChecker() : undefined;
-        const args = n.parameters ? n.parameters.filter(param => !param.questionToken).map(param => {
+        const args = n.parameters ? n.parameters.filter(param => !param.initializer && !param.questionToken).map(param => {
             const typeNode = param.type;
             if (!typeNode) return "null";
 
@@ -899,7 +899,8 @@ namespace ts.pxtc.service {
 
             if (attrs && attrs.paramDefl && attrs.paramDefl[name]) {
                 if (typeNode.kind == SK.StringKeyword) {
-                    return `"${attrs.paramDefl[name]}"`;
+                    const defaultName = attrs.paramDefl[name];
+                    return typeNode.kind == SK.StringKeyword && defaultName.indexOf(`"`) != 0 ? `"${defaultName}"` : defaultName;
                 }
                 return attrs.paramDefl[name];
             }
@@ -919,6 +920,8 @@ namespace ts.pxtc.service {
                                         return `${type.symbol.name}.${(decl.members[0].name as ts.Identifier).text}`;
                                     }
                                 }
+                                return `0`;
+                            } else if (type.flags & ts.TypeFlags.Number) {
                                 return `0`;
                             }
                         }
