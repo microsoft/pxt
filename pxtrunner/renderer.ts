@@ -400,8 +400,8 @@ namespace pxt.runner {
                         let ii = r.compileBlocks.blocksInfo.apis.byQName[info.qName];
                         let nsi = r.compileBlocks.blocksInfo.apis.byQName[ii.namespace];
                         addItem({
-                            name: nsi.attributes.blockNamespace || nsi.name, 
-                            url: nsi.attributes.help || ("reference/" + (nsi.attributes.blockNamespace || nsi.name).toLowerCase()), 
+                            name: nsi.attributes.blockNamespace || nsi.name,
+                            url: nsi.attributes.help || ("reference/" + (nsi.attributes.blockNamespace || nsi.name).toLowerCase()),
                             description: nsi.attributes.jsDoc,
                             blocksXml: block && block.codeCard
                                 ? block.codeCard.blocksXml
