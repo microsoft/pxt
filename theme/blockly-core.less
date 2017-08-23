@@ -244,6 +244,10 @@ text.blocklyCheckbox {
     font-size: 17pt !important;
 }
 
+div.blocklyTreeRow {
+    height: 100%;
+}
+
 /*******************************
         Media Adjustments
 *******************************/
@@ -257,6 +261,7 @@ text.blocklyCheckbox {
     }
     span.blocklyTreeIcon {
         line-height: @blocklyRowHeightWide;
+        min-height: @blocklyRowHeightWide;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthWide;
@@ -272,6 +277,7 @@ text.blocklyCheckbox {
     }
     span.blocklyTreeIcon {
         line-height: @blocklyRowHeightComputer;
+        min-height: @blocklyRowHeightComputer;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthComputer;
@@ -288,6 +294,7 @@ text.blocklyCheckbox {
     }
     span.blocklyTreeIcon {
         line-height: @blocklyRowHeightTablet;
+        min-height: @blocklyRowHeightTablet;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthTablet;
@@ -306,6 +313,7 @@ text.blocklyCheckbox {
     }
     span.blocklyTreeIcon {
         line-height: @blocklyRowHeightMobile;
+        min-height: @blocklyRowHeightMobile;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthMobile;
