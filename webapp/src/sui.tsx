@@ -210,7 +210,7 @@ export class Item extends data.Component<ItemProps, {}> {
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}` }
                 role={this.props.role}
                 aria-label={ariaLabel || title || text}
-                title={title || ariaLabel || text}
+                title={title || text}
                 tabIndex={this.props.tabIndex || 0}
                 key={this.props.value}
                 data-value={this.props.value}

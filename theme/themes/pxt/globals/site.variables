@@ -39,7 +39,7 @@
    Links
 --------------------*/
 
-@linkColor           : #0F6C9B;
+@linkColor           : #004d99;
 
 /*-------------------
    Breakpoints
