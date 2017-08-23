@@ -369,6 +369,7 @@ namespace pxt.blocks {
     let namespaceStyleBuffer: string = '';
     export function appendNamespaceCss(namespace: string, color: string) {
         const ns = namespace.toLowerCase();
+        color = color || '#dddddd'; // Default toolbox color
         if (namespaceStyleBuffer.indexOf(ns) > -1) return;
         namespaceStyleBuffer += `
             span.docs.${ns} {
