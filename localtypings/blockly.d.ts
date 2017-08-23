@@ -333,7 +333,7 @@ declare namespace Blockly {
     let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: (e: any) => void): void;
     function bindEventWithChecks_(node: any, eventName: string, target: any, fn: (e: any) => void, nocapture?: boolean): void;
-    function terminateDrag_(): void;
+    function unbindEvent_(bindData: any): Function;
     function svgResize(workspace: Blockly.Workspace): void;
     function hueToRgb(hue: number): string;
 
@@ -412,6 +412,7 @@ declare namespace Blockly {
         isCurrentlyEditable(): boolean;
         setSourceBlock(block: Block): void;
         static getCachedWidth(textElement: Element): number;
+        addArgType(argType: string): void;
     }
 
     class FieldVariable extends Field {
@@ -434,6 +435,8 @@ declare namespace Blockly {
         static htmlInput_: HTMLInputElement;
 
         onHtmlInputChange_(e: any): void;
+        validate_(): void;
+        resizeEditor_(): void;
     }
 
     class FieldDropdown extends Field {
