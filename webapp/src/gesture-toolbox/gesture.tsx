@@ -16,7 +16,6 @@ import * as Webcam from "./webcam";
 import * as Viz from "./visualizations";
 import * as Model from "./model";
 import { compile_ws } from "./../app";
-
 import { GraphCard } from "./graphcard";
 import { streamerCode } from "./streamer";
 
@@ -31,10 +30,15 @@ type IProjectView = pxt.editor.IProjectView;
 export const gesturesContainerID: string = "gestures-container";
 
 interface GestureToolboxState {
+    // show or hide the GestureToolbox
     visible?: boolean;
+    // switch between the edit gesture mode and the main gesture view containing all of the recorded and imported gestures
     editGestureMode?: boolean;
-    editDescriptionMode?: boolean;
+    // within the editGestureMode, shows or hides the description bar on the bottom of the main DisplayGesture
+    gestureDescriptionVisible?: boolean;
+    // contains all of the gesture data
     data?: Types.Gesture[];
+    // is the Circuit Playground streaming accelerometer data or not
     connected?: boolean;
 }
 
@@ -43,12 +47,11 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     private graphY: Viz.RealTimeGraph;
     private graphZ: Viz.RealTimeGraph;
     private recognitionOverlay: Viz.RecognitionOverlay;
-    // private generatedCodeBlocks: string[];
 
     private graphInitialized: boolean;
     private webcamInitialized: boolean;
     private recorderInitialized: boolean;
-    private shouldGenerateBlocks: boolean;
+    private hasBeenModified: boolean;
 
     private recorder: Recorder.Recorder;
     private curGestureIndex: number;
@@ -58,39 +61,38 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     private models: Model.SingleDTWCore[];
 
     private lastConnectedTime: number;
-    private reconnectAttempts: number;
     private intervalID: number;
 
     constructor(props: ISettingsProps) {
         super(props);
 
-        // TODO: change this to load from outside
         let data: Types.Gesture[] = [];
 
         this.state = {
             visible: false,
             editGestureMode: false,
-            editDescriptionMode: false,
+            gestureDescriptionVisible: false,
             data: data,
             connected: false
         };
 
+        this.mainViewGesturesGraphsKey = 999;
         this.lastConnectedTime = 0;
+
         this.models = [];
-        // this.generatedCodeBlocks = [];
         this.curGestureIndex = 0;
 
         this.graphInitialized = false;
         this.webcamInitialized = false;
         this.recorderInitialized = false;
-        this.shouldGenerateBlocks = false;
-        
-        this.mainViewGesturesGraphsKey = 999;
-        this.reconnectAttempts = 0;
+        this.hasBeenModified = false;
     }
 
+    /**
+     * will generate the code blocks for each running DTW model and will rewrite 
+     * the contents of the custom.ts file with 
+     */
     generateBlocks() {
-        // TODO: generate blocks here!
         let codeBlocks: string[] = [];
 
         for (let i = 0; i < this.models.length; i++) {
@@ -100,24 +102,33 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         this.props.parent.updateFileAsync("custom.ts", Model.SingleDTWCore.GenerateNamespace(codeBlocks));
 
-        this.shouldGenerateBlocks = false;
+        this.hasBeenModified = false;
     }
 
-    hide() {
-        if (this.shouldGenerateBlocks) this.generateBlocks();
-
-        this.setState({ visible: false, editGestureMode: false, editDescriptionMode: false });
-        this.resetGraph();
-        
-        if (this.state.editGestureMode)
-            this.recorder.PauseWebcam();
-        
+    /**
+     * Removes the currently active gesture if it contains no samples
+     */
+    deleteIfGestureEmpty() {
         if (this.state.data.length > 0 && this.state.data[this.curGestureIndex].gestures.length == 0) {
             // delete the gesture
             let cloneData = this.state.data.slice();
             cloneData.splice(this.curGestureIndex, 1);
             this.setState({ data: cloneData });
         }
+    }
+
+    hide() {
+        // generates the blocks and reloads the workspace to make them available instantly 
+        // though it will not reload if there were no changes to any of the gestures
+        if (this.hasBeenModified) this.generateBlocks();
+
+        this.setState({ visible: false, editGestureMode: false, gestureDescriptionVisible: false });
+        this.resetGraph();
+        
+        if (this.state.editGestureMode)
+            this.recorder.PauseWebcam();
+
+        this.deleteIfGestureEmpty();
     }
 
 
@@ -132,6 +143,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     // make sure that it only calls setState when it's going to change the state (and not overwrite the same state)
                     this.setState({ connected: false });
                 }
+
+                // TODO: this reconnect has been messing around with the hid serialport, which
+                // doesn't allow the device to be reprogrammed
 
                 // if(!this.state.reconnecting) {
                 //     // make sure that it doesn't try to call hidbridge.initAsync() when it is being reconnected (and cause a race condition)
@@ -166,11 +180,16 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.connectToDevice();
     }
 
+    /**
+     * Initializes the serial port (using hid for the Circuit Playground) and sets the onSerialData event function
+     * to update the realtime graph, feed the recorder, and feed the realtime DTW model (if it is running)
+     */
     connectToDevice() {
         const onSerialData = (buf: any, isErr: any) => {
             let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
             let newData = Recorder.parseString(strBuf);
             
+            // make sure that the input stream of data is correct (contains accelerometer data)
             if (newData.acc)
                 this.lastConnectedTime = Date.now();
 
@@ -185,15 +204,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     if (this.models[this.curGestureIndex].isRunning()) {
                         let match = this.models[this.curGestureIndex].Feed(newData.accVec);
                         if (match.classNum != 0) {
-                            // console.log("RECOGNIZED GESTURE");
-                            // TODO: add moving window that will show it has recognized something...
-                            // in particular, it will be a rectangle on top of the graph with these dimensions (at each data tick):
+                            // a gesture has been recognized - create the green rectangle overlay on the realtime graph
                             this.recognitionOverlay.add(match, this.models[this.curGestureIndex].getTick());
-
-                            // one way to implement this would be to create a RecognitionRectangle with a run() function
-                            // push them into an array (because we might have more than one that needs to be shown at each tick)
-                            // and then call the run() function on each element inside the array on each tick()
-                            // though I'm sure that there would definitely be nicer ways to visualize this...
                         }
                         this.recognitionOverlay.tick(this.models[this.curGestureIndex].getTick());
                     }
@@ -209,13 +221,20 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         }
     }
 
-
+    /**
+     * Sets the RealTimeGraph, Webcam, and the Recorder uninitialized to make sure that they get initialized again when
+     * editing a gesture or creating a new gesture when changing the component's state back to {editGesture: true}
+     */
     resetGraph() {
         this.graphInitialized = false;
         this.webcamInitialized = false;
         this.recorderInitialized = false;
     }
 
+    /**
+     * returns the gesture index within the state.data[] array based on the unique gesture id.
+     * @param gid the unique gesture id assigned automatically when instantiating a new gesture
+     */
     getGestureIndex(gid: number): number {
         for (let i = 0; i < this.state.data.length; i++) {
             if (this.state.data[i].gestureID == gid) return i;
@@ -224,6 +243,11 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         return -1;
     }
 
+    /**
+     * returns the gesture index within the state.data[] array based on the unique gesture id.
+     * @param gid the unique gesture id assigned automatically when instantiating a new gesture
+     * @param sid the unique sample id assigned automatically when instantiating a new sample
+     */
     getSampleIndex(gid: number, sid: number): number {
         for (let i = 0; i < this.state.data[gid].gestures.length; i++) {
             if (this.state.data[gid].gestures[i].sampleID == sid) return i;
@@ -232,6 +256,10 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         return -1;
     }
 
+    /**
+     * Populates a GestureSample object with a given javascript object of a GestureSample and returns it.
+     * @param importedSample the javascript object that contains a complete GestureSample (excpet the video data)
+     */
     parseJSONGesture(importedSample: any): Types.GestureSample {
         let sample = new Types.GestureSample();
 
@@ -250,6 +278,10 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         return sample;
     }
 
+    /**
+     * Updates the scrollbar's horizontal position based on the width of the DisplayGesture on the left.
+     * This function will make sure that the scrollbar would not get wider than the GestureToolbox container
+     */
     updateScrollbar() {
         // focus the scrollbar on the latest sample
         let scrollBarDiv = document.getElementById("gestures-fluid-container");
@@ -266,27 +298,29 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
 
+        /**
+         * returns from the editGesture window to the main window and 
+         * generates the gesture blocks if they have been modified
+         */
         const backToMain = () => {
             let cloneData = this.state.data.slice();
             // update name
             cloneData[this.curGestureIndex].name = (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value;
             // update blocks if was touched
-            if (this.shouldGenerateBlocks) this.generateBlocks();
-            this.setState({ editGestureMode: false, editDescriptionMode: false, data: cloneData });
+            if (this.hasBeenModified) this.generateBlocks();
+            this.setState({ editGestureMode: false, gestureDescriptionVisible: false, data: cloneData });
 
             this.resetGraph();
             this.recorder.PauseWebcam();
-            
-            if (this.state.data.length > 0 && this.state.data[this.curGestureIndex].gestures.length == 0) {
-                // delete the gesture
-                let cloneData = this.state.data.slice();
-                cloneData.splice(this.curGestureIndex, 1);
-                this.setState({ data: cloneData });
-            }
+            this.deleteIfGestureEmpty();
         }
 
+        /**
+         * updates this.state.data[] array and the models[] array with a 
+         * new Gesture and switches to the editGesture window
+         */
         const newGesture = () => {
-            this.setState({ editGestureMode: true, editDescriptionMode: false });
+            this.setState({ editGestureMode: true, gestureDescriptionVisible: false });
             this.resetGraph();
             this.state.data.push(new Types.Gesture());
             // TODO: change this method of keeping the current gesture index to something more reliable
@@ -294,12 +328,22 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             this.models.push(new Model.SingleDTWCore(this.state.data[this.curGestureIndex].gestureID + 1, this.state.data[this.curGestureIndex].name));
         }
 
+        /**
+         * sets the current active gesture with the given gesture id and 
+         * switches to the editGesture window
+         * @param gestureID the unique gesture id to switch to
+         */
         const editGesture = (gestureID: number) => {
-            this.setState({ editGestureMode: true, editDescriptionMode: false });
+            this.setState({ editGestureMode: true, gestureDescriptionVisible: false });
             this.resetGraph();
             this.curGestureIndex = this.getGestureIndex(gestureID);
         }
 
+        /**
+         * converts all of the gesture data (Gesture and GestureSample[]) of the given gesture into a JSON file
+         * and compress it along with the main recorded video and finally will download it to the users browser.
+         * @param gestureID the unique gesture id of the gesture to be downloaded
+         */
         const downloadGesture = (gestureID: number) => {
             let gestureIndex = this.getGestureIndex(gestureID);
             let gestureName = this.state.data[gestureIndex].name;
@@ -313,10 +357,17 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             });            
         }
 
+        /**
+         * opens the "file selector input" in the browser to import a new gesture
+         */
         const importGesture = () => {
             document.getElementById("file-input-btn").click();
         }
 
+        /**
+         * decompresses and parses the imported gesture file and will 
+         * update this.state.data[] array with the newly imported gesture
+         */
         const handleFileSelect = (evt: any) => {
             let files = evt.target.files; // FileList object
 
@@ -330,9 +381,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     zip.forEach((relativePath: string, zipEntry: any) => {
                         // console.log(zipEntry);
                         if (zipEntry.name == "gesture.json") {
-                            // set the parameters
+                            // populate the parameters of the newly imported gesture
                             zipEntry.async("string").then((text: string) => {
-                                // console.log(text);
                                 let importedGesture = (JSON.parse(text) as Types.Gesture);
                                 parsedGesture.description = importedGesture.description;
                                 parsedGesture.name = importedGesture.name;
@@ -370,14 +420,17 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     });
                 })
 
-                
                 let curIndex = cloneData.length - 1;
                 this.models.push(new Model.SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name));
                 this.setState({ data: cloneData });
-                // this.forceUpdate();
             }
         }
 
+        /**
+         * this function is passed to an editable GraphCard component which contains a delete button
+         * @param gid the unique gesture id of the gesture that contains the sample which is going to be deleted
+         * @param sid the unique sample id which is going to be deleted
+         */
         const onSampleDelete = (gid: number, sid: number) => {
             let gi = this.getGestureIndex(gid);
             let si = this.getSampleIndex(gi, sid);
@@ -386,12 +439,19 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
             cloneData[gi].gestures.splice(si, 1);
             this.models[this.curGestureIndex].Update(cloneData[gi].getCroppedData());
-            this.shouldGenerateBlocks = true;
+            this.hasBeenModified = true;
             cloneData[gi].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
 
             this.setState({ data: cloneData });
         }
 
+        /**
+         * this function is passed to an editable GraphCard component which contains a crop functionality
+         * @param gid the unique gesture id of the gesture that contains the sample which is going to be deleted
+         * @param sid the unique sample id which is going to be deleted
+         * @param newStart the updated cropStartIndex
+         * @param newEnd the updated cropEndIndex
+         */
         const onSampleCrop = (gid: number, sid: number, newStart: number, newEnd: number) => {
             let gi = this.getGestureIndex(gid);
             let si = this.getSampleIndex(gi, sid);
@@ -402,12 +462,18 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             cloneData[gi].gestures[si].cropEndIndex = newEnd;
 
             this.models[this.curGestureIndex].Update(cloneData[gi].getCroppedData());
-            this.shouldGenerateBlocks = true;
+            this.hasBeenModified = true;
             cloneData[gi].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
 
             this.setState({ data: cloneData });
         }
 
+        /**
+         * This function is auotmatically called when the div containing the Realtime Graph is mounted (using react's ref attribute).
+         * It will instantiate all of the x, y, z graphs in addition to the green recognition overlay
+         * to be triggered and visualized when a gesture is recognized.
+         * @param elem points to the div containing the Realtime Graph 
+         */
         const initGraph = (elem: any) => {
             if (elem != null && !this.graphInitialized) {
                 // initialize SVG
@@ -432,19 +498,29 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             }
         }
 
+        /**
+         * This function is auotmatically called when the div containing the Recorder is mounted (using react's ref attribute).
+         * it will initialize the recorder (which itself will initialize the keyboard events for recording) in 
+         * addition to the record button that will turn green when recording.
+         * @param elem points to the div containing the Recorder
+         */
         const initRecorder = (elem: any) => {
             if (elem != null && !this.recorderInitialized) {
-                // const gestureState = this;
+                /**
+                 * This function is passed to the recorder to be called when a new gesture was recorded.
+                 * It will be called when the media stream recorder has finished generating the recorded video.
+                 * It will then update the this.state.data[] array, regenerate the DTW model, and update the scrollbar.
+                 */
                 const onNewSampleRecorded = (gestureIndex: number, newSample: Types.GestureSample) => {
 
                     let cloneData = this.state.data.slice();
                     // do not change the order of the following lines:
                     cloneData[gestureIndex].gestures.push(newSample);
                     this.models[this.curGestureIndex].Update(cloneData[gestureIndex].getCroppedData());
-                    this.shouldGenerateBlocks = true;
+                    this.hasBeenModified = true;
                     cloneData[gestureIndex].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
-                    // TODO: allow users to change the video in the future.
-                    // Probably just for the demo:
+                    // Currently, it will set the DisplayGesture.video to the *first* recorded video for that gesture
+                    // TODO: allow users to change the display video in the future.
                     if (this.state.data[gestureIndex].gestures.length == 1) {
                         // update video
                         cloneData[gestureIndex].displayVideoLink = cloneData[gestureIndex].gestures[0].videoLink;
@@ -452,8 +528,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     }
 
                     this.setState({ data: cloneData });
-                    // this.forceUpdate();
-
                     this.updateScrollbar();
                 }
 
@@ -464,6 +538,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             }
         }
 
+        /**
+         * Updates the recorder with the newly set record method
+         */
         const onRecordMethodChange = (event: any) => {
             let element = document.getElementById("record-mode-select") as HTMLSelectElement;
 
@@ -478,35 +555,52 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             }
         }
 
+        /**
+         * Updates the gesture name
+         */
         const renameGesture = (event: any) => {
             let cloneData = this.state.data.slice();
             cloneData[this.curGestureIndex].name = event.target.value;
             this.models[this.curGestureIndex].UpdateName(cloneData[this.curGestureIndex].name);
-            this.shouldGenerateBlocks = true;
+            this.hasBeenModified = true;
 
             this.setState({ data: cloneData });
         }
 
+        /**
+         * Updates the gesture description
+         */
         const renameDescription = (event: any) => {
             let cloneData = this.state.data.slice();
             cloneData[this.curGestureIndex].description = event.target.value;
             this.models[this.curGestureIndex].UpdateDescription(cloneData[this.curGestureIndex].description);
-            this.shouldGenerateBlocks = true;
+            this.hasBeenModified = true;
 
             this.setState({ data: cloneData });
         }
 
+        /**
+         * Toggles between the two states of showing the "add description text box" and hiding it.
+         */
         const toggleEditDescription = (event: any) => {
-            if (this.state.editDescriptionMode)
-                this.setState({ editDescriptionMode: false });
+            if (this.state.gestureDescriptionVisible)
+                this.setState({ gestureDescriptionVisible: false });
             else
-                this.setState({ editDescriptionMode: true });
+                this.setState({ gestureDescriptionVisible: true });
         }
 
+        /**
+         * Uploads the streamer code
+         * TODO: update this to modify main.ts with streamer code, and then upload it to the device
+         * instead of requiring unix cmd copy/paste mechanism of a pre-generated streamer.uf2 file.
+         */
         const uploadStreamerCode = () => {
             compile_ws.send("compile");
         }
 
+        /**
+         * tries to reconnect the serial port
+         */
         const reconnectDevice = () => {
             this.connectToDevice();
         }
@@ -519,8 +613,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const buttonHeightStyle = { height: "30px" };
         const mainGraphStyle = { margin: "15px 15px 15px 0" };
         
-        // const scrollBarContainer = { overflowX: "scroll", width: "1500px" };
-
         return (
             <sui.Modal open={this.state.visible} className="gesturedialog" size="fullscreen"
                 onClose={() => this.hide() } dimmer={true} closeIcon={false} closeOnDimmerClick>
@@ -736,7 +828,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                     </div>
                                 </div>
                                 {
-                                this.state.editDescriptionMode ? 
+                                this.state.gestureDescriptionVisible ? 
                                 <div className="ui segment">
                                     <div className="ui form">
                                         <div className="field">
