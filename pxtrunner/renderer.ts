@@ -388,6 +388,7 @@ namespace pxt.runner {
             const file = r.compileJS.ast.getSourceFile("main.ts");
             const stmts = file.statements.slice(0).reverse();
             const ul = $('<div />').addClass('ui cards');
+            ul.attr("role", "listbox");
             const addItem = (card: pxt.CodeCard) => {
                 if (!card) return;
                 ul.append(pxt.docs.codeCard.render(card, { hideHeader: true, shortName: true }));
@@ -517,6 +518,7 @@ namespace pxt.runner {
         } else {
             let cd = document.createElement("div")
             cd.className = "ui cards";
+            cd.setAttribute("role", "listbox")
             cards.forEach(card => cd.appendChild(pxt.docs.codeCard.render(card, options)));
             c.replaceWith(cd);
         }

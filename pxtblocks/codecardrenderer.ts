@@ -36,6 +36,10 @@ namespace pxt.docs.codeCard {
         }
 
         let r = div(null, 'ui card ' + (card.color || '') + (link ? ' link' : ''), link ? "a" : "div");
+
+        r.setAttribute("role", "option");
+        r.setAttribute("aria-selected", "true");
+
         if (url) (r as HTMLAnchorElement).href = url;
         if (!options.hideHeader && (card.header || card.blocks || card.javascript || card.hardware || card.software || card.any)) {
             let h = div(r, "ui content " + (card.responsive ? " tall desktop only" : ""));
@@ -88,6 +92,7 @@ namespace pxt.docs.codeCard {
         if (name || card.description) {
             let ct = div(r, "ui content");
             if (name) {
+                r.setAttribute("aria-label", name);
                 if (url && !link) a(ct, url, name, 'header');
                 else div(ct, 'header', 'div', name);
             }
