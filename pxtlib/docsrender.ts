@@ -232,7 +232,7 @@ namespace pxt.docs {
         let breadcrumbHtml = '';
         if (breadcrumb.length > 1) {
             breadcrumbHtml = `
-            <nav class="ui breadcrumb" aria-label="${lf('Breadcrumb')}">
+            <nav class="ui breadcrumb" aria-label="${lf("Breadcrumb")}">
                 ${breadcrumb.map((b, i) =>
                     `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section"
                         href="${html2Quote(b.href)}" aria-current="${i == breadcrumb.length - 1 ? "page" : ""}">${html2Quote(b.name)}</a>`)
