@@ -13,7 +13,7 @@ namespace ts.pxtc {
 
     function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
-        if (p.defaults) return p.default
+        if (p.default) return p.default
         if (p.type == "number") return "0"
         if (p.type == "boolean") return "false"
         else if (p.type == "string") {
