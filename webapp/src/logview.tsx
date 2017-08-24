@@ -33,6 +33,7 @@ export class LogView extends React.Component<LogViewProps, LogViewState> {
         this.view = new pxsim.logs.LogViewElement({
             isSim: props.isSim,
             maxEntries: 80,
+            maxLineLength: 16,
             maxAccValues: 500,
             onClick: (es) => this.onClick(es),
             onTrendChartChanged: () => this.setState({ trends: this.view.hasTrends() }),
