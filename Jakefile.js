@@ -366,7 +366,18 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
                 `FloatHorizontalRange(Math.max(0, clientRect.right - clientRectDeltaLeft), clientRect.width)`)
     // Issue 2: Delete key is a composition input on Android 6+, monaco-editor/#563
     monacoeditor = monacoeditor.replace(/if \(typeInput\.text !== ''\)/gi,
-                `if (typeInput.text !== '' || typeInput.replaceCharCnt == 1)`)
+                `if (typeInput.text !== '' || (typeInput.text === '' && typeInput.replaceCharCnt == 1))`)
+    // Issue 3: Gboard on Android ignores the autocomplete field, and so I'm disabling composition updates on keyboards that support it.
+    monacoeditor = monacoeditor.replace(/exports\.isChromev56 = \(userAgent\.indexOf\('Chrome\/56\.'\) >= 0/gi,
+                `exports.isAndroid = (userAgent.indexOf('Android') >= 0);\n    exports.isChromev56 = (userAgent.indexOf('Chrome/56.') >= 0`)
+    monacoeditor = monacoeditor.replace(/var newState = _this\._textAreaState\.readFromTextArea\(_this\._textArea\);/gi,
+                `var newState = _this._textAreaState.readFromTextArea(_this._textArea);\n                if (browser.isAndroid) newState.selectionStart = newState.selectionEnd;`)
+    monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionstart', function \(e\) {/gi,
+                `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionstart', function (e) {\n                if (browser.isAndroid) return;`)
+    monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionupdate', function \(e\) {/gi,
+                `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionupdate', function (e) {\n                if (browser.isAndroid) return;`)
+    monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionend', function \(e\) {/gi,
+                `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionend', function (e) {\n                if (browser.isAndroid) return;`)
     fs.writeFileSync("built/web/vs/editor/editor.main.js", monacoeditor)
 
     jake.mkdirP("webapp/public/vs")
