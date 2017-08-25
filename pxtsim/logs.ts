@@ -30,12 +30,14 @@ namespace pxsim.logs {
     interface ILogEntryElement extends ILogEntry {
         dirty: boolean;
         element?: HTMLDivElement;
-        accvaluesElement?: HTMLSpanElement;
+//        accvaluesElement?: HTMLSpanElement;
+        accvaluesElement?: HTMLDivElement;
         countElement?: HTMLSpanElement;
-        chartElement?: TrendChartElement;
+//        chartElement?: TrendChartElement;
+        chartElement?: HTMLCanvasElement;
         valueElement?: Text;
     }
-
+/**
     class TrendChartElement {
         public element: SVGSVGElement;
         g: SVGGElement;
@@ -67,7 +69,7 @@ namespace pxsim.logs {
             svg.hydrate(this.line, { points: points });
         }
     }
-
+**/
     export class LogViewElement {
         static counter = 0;
         private shouldScroll = false;
@@ -298,6 +300,20 @@ namespace pxsim.logs {
                 e.element.className = "ui log " + e.theme;
                 let raiseTrends = false;
                 if (e.accvalues) {
+                    e.accvaluesElement = document.createElement("div");
+                    e.accvaluesElement.className = "foo";
+                    e.accvaluesElement.textContent = "HI I'M A CONSOLE";
+                    e.chartElement = document.createElement("canvas");
+                    e.chartElement.className = "bar";
+                    e.element.appendChild(e.chartElement);
+                    e.element.appendChild(e.accvaluesElement);
+
+                    let p: pxsim.Point[] = [];
+                    p.push(new pxsim.Point(1, 2));
+                    p.push(new pxsim.Point(3, 4));
+                    p.push(new pxsim.Point(5, 6));
+                    new pxsim.CanvasChart().drawChart(e.chartElement, p);
+                    /**
                     e.accvaluesElement = document.createElement('span');
                     e.accvaluesElement.className = "ui log " + e.theme + " gauge"
                     e.chartElement = new TrendChartElement(e, "ui trend " + e.theme)
@@ -309,15 +325,17 @@ namespace pxsim.logs {
                     e.element.appendChild(e.chartElement.element);
 
                     raiseTrends = true;
+                    **/
                 }
                 e.element.appendChild(e.valueElement);
                 ens.push(e);
                 //sim ? this.element.insertBefore(e.element, this.element.firstChild) : this.element.appendChild(e.element);
                 this.element.appendChild(e.element);
                 this.scheduleRender(e);
-
+                /**
                 if (raiseTrends && this.props.onTrendChartChanged)
                     this.props.onTrendChartChanged();
+                **/
             }
         }
 
@@ -334,8 +352,10 @@ namespace pxsim.logs {
             this.element.innerHTML = '';
             this.serialBuffers = {};
             this.dropSim = false;
+            /**
             if (this.props.onTrendChartChanged)
                 this.props.onTrendChartChanged();
+            **/
         }
 
         private render() {
@@ -344,7 +364,7 @@ namespace pxsim.logs {
 
                 if (entry.countElement) entry.countElement.innerText = entry.count.toString();
                 if (entry.accvaluesElement) entry.accvaluesElement.innerText = entry.value;
-                if (entry.chartElement) entry.chartElement.render();
+//                if (entry.chartElement) entry.chartElement.render();
                 entry.valueElement.textContent = entry.accvalues ? '' : entry.value;
                 entry.dirty = false;
             });
