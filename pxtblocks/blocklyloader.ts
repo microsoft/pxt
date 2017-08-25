@@ -333,7 +333,6 @@ namespace pxt.blocks {
             toolboxStyleBuffer += `
                 .blocklyTreeIcon.${className}::before {
                     content: "${icon}";
-                    vertical-align: middle;
                 }
             `;
         }
@@ -1550,7 +1549,8 @@ namespace pxt.blocks {
                 "check": ['Array']
                 }
             ],
-            "output": 'Number'
+            "output": 'Number',
+            "outputShape": Blockly.OUTPUT_SHAPE_ROUND
             });
         }
 
@@ -2883,7 +2883,8 @@ namespace pxt.blocks {
                 "check": ['String']
                 }
             ],
-            "output": 'Number'
+            "output": 'Number',
+            "outputShape": Blockly.OUTPUT_SHAPE_ROUND
             });
         }
         installBuiltinHelpInfo(textLengthId);
