@@ -9,9 +9,16 @@
           Accessibility
 *******************************/
 
-*:focus{
-    outline: 2px solid #4D90FE !important;
+*:focus {
+    outline: 1px solid transparent !important;
 }
+
+@media not all and (pointer:coarse) {
+    *:focus {
+        outline: 2px solid #4D90FE !important;
+    }
+}
+
 .blocklyTreeRoot:focus {
     outline: none !important;
 }
