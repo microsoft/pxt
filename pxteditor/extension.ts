@@ -73,12 +73,9 @@ namespace pxt.editor {
      */
     export type ExtInitializeType = "extinit";
 
-    export interface InitializeEvent extends ExtensionEvent {
-        event: ExtInitializeType;
-    }
-
     export interface InitializeRequest extends ExtensionRequest {
         action: ExtInitializeType;
+        body: string;
     }
 
     export interface InitializeResponse extends ExtensionResponse {
