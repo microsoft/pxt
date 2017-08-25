@@ -13,7 +13,7 @@ namespace ts.pxtc {
 
     function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
-        if (p.defaults) return p.defaults[0]
+        if (p.default) return p.default
         if (p.type == "number") return "0"
         if (p.type == "boolean") return "false"
         else if (p.type == "string") {
@@ -171,7 +171,6 @@ namespace ts.pxtc {
                     let desc = attributes.paramHelp[n] || ""
                     let minVal = attributes.paramMin && attributes.paramMin[n];
                     let maxVal = attributes.paramMax && attributes.paramMax[n];
-                    let m = /\beg\.?:\s*(.+)/.exec(desc)
                     let props: PropertyDesc[];
                     if (attributes.mutate && p.type.kind === SK.FunctionType) {
                         const callBackSignature = typechecker.getSignatureFromDeclaration(p.type as FunctionTypeNode);
@@ -202,7 +201,7 @@ namespace ts.pxtc {
                         description: desc,
                         type: typeOf(p.type, p),
                         initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
-                        defaults: m && m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim()) : undefined,
+                        default: attributes.paramDefl[n],
                         properties: props,
                         options: options,
                         isEnum
@@ -887,14 +886,15 @@ namespace ts.pxtc.service {
             return undefined;
         }
         const checker = service ? service.getProgram().getTypeChecker() : undefined;
-        const args = n.parameters ? n.parameters.filter(param => !param.questionToken).map(param => {
+        const args = n.parameters ? n.parameters.filter(param => !param.initializer && !param.questionToken).map(param => {
             const typeNode = param.type;
             if (!typeNode) return "null";
 
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 
             if (attrs && attrs.paramDefl && attrs.paramDefl[name]) {
-                return attrs.paramDefl[name];
+                const defaultName = attrs.paramDefl[name];
+                return typeNode.kind == SK.StringKeyword && defaultName.indexOf(`"`) != 0 ? `"${defaultName}"` : defaultName;
             }
             switch (typeNode.kind) {
                 case SK.StringKeyword: return (name == "leds" ? defaultImgLit : `""`);
