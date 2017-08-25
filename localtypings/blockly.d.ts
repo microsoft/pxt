@@ -453,6 +453,7 @@ declare namespace Blockly {
         protected getOptions(): (string[] | Object)[];
         onItemSelected(menu: goog.ui.Menu, menuItem: goog.ui.MenuItem): void;
         positionArrow(x: number): number;
+        shouldShowRect_(): boolean;
     }
 
     class FieldNumber extends FieldTextInput {
@@ -574,6 +575,7 @@ declare namespace Blockly {
         setWarningText(text: string): void;
         isEditable(): boolean;
         isInsertionMarker(): boolean;
+        isShadow(): boolean;
 
         render(): void;
         bumpNeighbours_(): void;

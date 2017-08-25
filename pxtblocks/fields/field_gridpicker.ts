@@ -16,6 +16,7 @@ namespace pxtblockly {
         tooltipsXOffset?: string;
         tooltipsYOffset?: string;
         hasSearchBar?: boolean;
+        hideRect?: boolean;
     }
 
     export class FieldGridPicker extends Blockly.FieldDropdown implements Blockly.FieldCustom {
@@ -38,6 +39,7 @@ namespace pxtblockly {
         private tooltips_: goog.ui.Tooltip[] = [];
 
         private hasSearchBar_: boolean;
+        private hideRect_: boolean;
 
         constructor(text: string, options: FieldGridPickerOptions, validator?: Function) {
             super(options.data);
@@ -57,6 +59,7 @@ namespace pxtblockly {
 
             this.tooltipConfig_ = tooltipCfg;
             this.hasSearchBar_ = !!options.hasSearchBar || false;
+            this.hideRect_ = !!options.hideRect || false;
         }
 
         /**
@@ -142,6 +145,15 @@ namespace pxtblockly {
                     goog.style.setWidth(elem, largestTextItem);
                 }
             }
+        }
+
+        /**
+         * Whether or not to show a box around the dropdown menu.
+         * @return {boolean} True if we should show a box (rect) around the dropdown menu. Otherwise false.
+         * @private
+         */
+        shouldShowRect_() {
+            return !this.hideRect_ ? !this.sourceBlock_.isShadow() : false;
         }
 
         /**
