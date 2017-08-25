@@ -14,26 +14,21 @@ export enum PermissionStatus {
 }
 
 export interface ExtensionHost {
-    send(extId: string, message: e.ExtensionMessage): void;
+    send(name: string, message: e.ExtensionMessage): void;
     promptForPermissionAsync(id: string, permission: Permissions): Promise<boolean>;
 }
 
 export class ExtensionManager {
     private statuses: pxt.Map<e.Permissions<PermissionStatus>> = {};
-    private consent: pxt.Map<boolean>;
+    private nameToExtId: pxt.Map<string> = {};
+    private extIdToName: pxt.Map<string> = {};
+    private consent: pxt.Map<boolean> = {};
 
     constructor (private host: ExtensionHost) {
     }
 
     handleExtensionMessage(message: e.ExtensionMessage) {
-        switch (message.type) {
-            case "request":
-                this.handleRequestAsync(message as e.ExtensionRequest);
-                break;
-            case "response":
-            case "event":
-                break;
-        }
+        this.handleRequestAsync(message as e.ExtensionRequest);
     }
 
     sendEvent(extId: string, event: string) {
@@ -48,39 +43,55 @@ export class ExtensionManager {
         return this.consent[extId];
     }
 
+    getExtId(name: string): string {
+        if (!this.nameToExtId[name]) {
+            this.nameToExtId[name] = Util.guidGen();
+            this.extIdToName[this.nameToExtId[name]] = name;
+        }
+        return this.nameToExtId[name];
+    }
+
     private sendResponse(response: e.ExtensionResponse) {
-        this.host.send(response.extId, response);
+        this.host.send(this.extIdToName[response.extId], response);
     }
 
     private handleRequestAsync(request: e.ExtensionRequest): Promise<void> {
         const resp = mkResponse(request);
 
+        if (request.action === "extinit") {
+            if (request.body) {
+                resp.extId = this.getExtId((request as e.InitializeRequest).body);
+                this.sendResponse(resp);
+            }
+            return Promise.resolve();
+        }
+
         if (!this.hasConsent(request.extId)) {
-            return;
+            resp.success = false;
+            resp.error = ""
+            this.sendResponse(resp);
+            return Promise.reject("No consent");
         }
 
         switch (request.action) {
-            case "init":
-                this.sendResponse(resp);
-                break;
-            case "datastream":
+            case "extdatastream":
                 return this.permissionOperation(request.extId, Permissions.Serial, resp, handleDataStreamRequest);
-            case "querypermission":
+            case "extquerypermission":
                 const perm = this.getPermissions(request.extId)
                 const r = resp as e.ExtensionResponse;
                 r.resp = statusesToResponses(perm);
                 this.sendResponse(r);
                 break;
-            case "requestpermission":
+            case "extrequestpermission":
                 return this.requestPermissionsAsync(request.extId, resp as e.PermissionResponse, request.body);
-            case "usercode":
+            case "extusercode":
                 return this.permissionOperation(request.extId, Permissions.ReadUserCode, resp, handleUserCodeRequest);
-            case "readcode":
-                handleReadCodeRequest(request.extId, resp as e.ReadCodeResponse);
+            case "extreadcode":
+                handleReadCodeRequest(this.extIdToName[request.extId], resp as e.ReadCodeResponse);
                 this.sendResponse(resp);
                 break;
-            case "writecode":
-                handleWriteCodeRequest(request.extId, resp, request.body);
+            case "extwritecode":
+                handleWriteCodeRequest(this.extIdToName[request.extId], resp, request.body);
                 this.sendResponse(resp);
                 break;
 
@@ -89,10 +100,10 @@ export class ExtensionManager {
         return Promise.resolve();
     }
 
-    private permissionOperation(id: string, permission: Permissions, resp: e.ExtensionResponse, cb: (resp: e.ExtensionResponse) => void) {
+    private permissionOperation(id: string, permission: Permissions, resp: e.ExtensionResponse, cb: (name: string, resp: e.ExtensionResponse) => void) {
         return this.checkPermissionAsync(id, permission)
             .then(() => {
-                cb(resp);
+                cb(this.extIdToName[id], resp);
                 this.sendResponse(resp);
             })
             .catch(() => {
@@ -145,18 +156,18 @@ export class ExtensionManager {
     }
 }
 
-function handleUserCodeRequest(resp: e.ExtensionResponse) {
+function handleUserCodeRequest(name: string, resp: e.ExtensionResponse) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     resp.resp = mainPackage.getAllFiles();
 }
 
-function handleDataStreamRequest(resp: e.ExtensionResponse) {
+function handleDataStreamRequest(name: string, resp: e.ExtensionResponse) {
     // TODO
 }
 
-function handleReadCodeRequest(id: string, resp: e.ReadCodeResponse) {
+function handleReadCodeRequest(name: string, resp: e.ReadCodeResponse) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
-    const extPackage = mainPackage.pkgAndDeps().filter(p => p.getPkgId() === id)[0];
+    const extPackage = mainPackage.pkgAndDeps().filter(p => p.getPkgId() === name)[0];
     if (extPackage) {
         const files = extPackage.getAllFiles();
         resp.body = {
@@ -170,9 +181,9 @@ function handleReadCodeRequest(id: string, resp: e.ReadCodeResponse) {
     }
 }
 
-function handleWriteCodeRequest(id: string, resp: e.ExtensionResponse, files: e.ExtensionFiles) {
+function handleWriteCodeRequest(name: string, resp: e.ExtensionResponse, files: e.ExtensionFiles) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
-    const extPackage = mainPackage.pkgAndDeps().filter(p => p.getPkgId() === id)[0];
+    const extPackage = mainPackage.pkgAndDeps().filter(p => p.getPkgId() === name)[0];
     if (extPackage) {
         if (files.json !== undefined) {
             extPackage.setFile("extension.json", files.json);

@@ -48,19 +48,22 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
     }
 
     showExtension(extension: string, url: string, consentRequired: boolean) {
-        let consent = consentRequired ? this.manager.hasConsent(extension) : true;
+        let consent = consentRequired ? this.manager.hasConsent(this.manager.getExtId(extension)) : true;
         this.setState({ visible: true, extension: extension, url: url, consent: consent});
     }
 
     submitConsent() {
-        this.manager.setConsent(this.state.extension, true);
+        this.manager.setConsent(this.manager.getExtId(this.state.extension), true);
         this.setState({consent: true});
     }
 
     initializeFrame() {
+        this.manager.setConsent(this.manager.getExtId(this.state.extension), true);
         const frame = Extensions.getFrame(this.state.extension);
         frame.style.display = 'block';
-        if (!frame.src) frame.src = this.state.url;
+        if (!frame.src) {
+            frame.src = this.state.url;
+        }
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ExtensionsState, nextContext: any): boolean {
@@ -103,13 +106,13 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         this.manager.handleExtensionMessage(request);
     }
 
-    send(extId: string, editorMessage: pxt.editor.ExtensionMessage) {
-        const frame = Extensions.getFrame(extId)
+    send(name: string, editorMessage: pxt.editor.ExtensionMessage) {
+        const frame = Extensions.getFrame(name);
         if (frame) {
             frame.contentWindow.postMessage(editorMessage, "*");
         }
         else {
-            console.warn(`Attempting to post message to unloaded extesnion ${extId}`);
+            console.warn(`Attempting to post message to unloaded extesnion ${name}`);
         }
     }
 
