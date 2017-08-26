@@ -883,6 +883,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
         "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
+        "@cachedHexFilesArray@": hexFiles.length ? hexFiles.join(`",\n"`) : "",
         "@targetEditorJs@": targetEditorJs
     }
 
@@ -930,6 +931,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "docs.html",
         "siminstructions.html",
         "release.manifest",
+        "serviceworker.js",
         "worker.js",
         "tdworker.js",
         "monacoworker.js",
