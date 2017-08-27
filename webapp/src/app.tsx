@@ -1884,6 +1884,8 @@ function enableAnalytics() {
         stats["screen.height"] = screen.height;
         stats["screen.availwidth"] = screen.availWidth;
         stats["screen.availheight"] = screen.availHeight;
+        stats["window.innerWidth"] = window.innerWidth;
+        stats["window.innerHeight"] = window.innerHeight;
         stats["screen.devicepixelratio"] = pxt.BrowserUtils.devicePixelRatio();
     }
     pxt.tickEvent("editor.loaded", stats);
