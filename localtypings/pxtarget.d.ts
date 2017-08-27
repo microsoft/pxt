@@ -209,6 +209,7 @@ declare namespace pxt {
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
         useStartPage?: boolean;
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
+        appPathNames?: string[]; // Authorized URL paths in electron or UWP, all other paths will display a warning banner
     }
 
     interface SocialOptions {
