@@ -1,6 +1,6 @@
-var CACHE_NAME = 'pxt-cache-v2';
+// Making any chance to the service worker reloads a new one.
 
-
+var CACHE_NAME = 'pxt-cache-v1';
 
 // keep in sync with release.manifest
 var urlsToCache = [
@@ -17,6 +17,7 @@ var urlsToCache = [
   "https://az742082.vo.msecnd.net/pub/psopafpj",
 
   // editor
+  "/index.html",
   "/blb/semantic.js",
   "/blb/main.js",
   "/blb/typescript.js",
@@ -31,14 +32,18 @@ var urlsToCache = [
   "/blb/pxtwinrt.js",
   "/blb/pxteditor.js",
   "/blb/pxtsim.js",
+  '/blb/target.js',
   "/blb/blockly.css",
   "/blb/semantic.css",
   "/blb/rtlsemantic.css",
   "/blb/custom.css",
   "/blb/icons.css",
-  "@defaultLocaleStrings@",
+  "https://pxt.azureedge.net/compile/891e8d1de39291e987de74fd39e3def559f1b1d3756d49b30abded43b3ab113c.hex",
+  "https://pxt.azureedge.net/compile/9a33180063f74816ae836442cd53e4c6559c6a39901d8537f1ee03c4b6aa8dab.hex",
+  /*"@defaultLocaleStrings@",
   "@cachedHexFilesArray@",
   "@targetEditorJs@",
+  */
 
   // Blockly
   "/blb/blockly/blockly_compressed.js",
@@ -48,6 +53,9 @@ var urlsToCache = [
   "/cdn/blockly/media/click.mp3",
   "/cdn/blockly/media/disconnect.wav",
   "/cdn/blockly/media/delete.mp3",
+  "/cdn/blockly/media/handopen.cur",
+  "/cdn/blockly/media/handdelete.cur",
+  "/cdn/blockly/media/handclosed.cur",
 
   // monaco
   "/blb/vs/loader.js",
@@ -64,7 +72,11 @@ var urlsToCache = [
   "/blb/vs/language/typescript/src/worker.js",
 
   // AI
-  "https://az416426.vo.msecnd.net/scripts/a/ai.0.js"
+  "https://az416426.vo.msecnd.net/scripts/a/ai.0.js",
+
+  "worker.js",
+  "monacoworker.js",
+  "/cdn/editor.js"
 ];
 
 self.addEventListener('install', function (event) {
@@ -99,51 +111,82 @@ self.addEventListener('activate', function(event) {
 });
 
 self.addEventListener('fetch', function(event) {
-  event.respondWith(
-    (event.request.url.indexOf('/api/') >= 0) ?
-      fetch(event.request)
-    : caches.match(event.request).then(function (response) {
-      // Cache hit - return response
-      if (response) {
-        console.log("Cache response hit")
-        console.log(response);
-        return response;
-      }
-      // IMPORTANT: Clone the request. A request is a stream and
-      // can only be consumed once. Since we are consuming this
-      // once by cache and once by the browser for fetch, we need
-      // to clone the response.
-      var fetchRequest = event.request.clone();
-      
-      return fetch(fetchRequest).then(
-        function(response) {
-          // Check if we received a valid response
-          if(!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
+  // Parse the URL:
+  var requestURL = new URL(event.request.url);
 
-          // IMPORTANT: Clone the response. A response is a stream
-          // and because we want the browser to consume the response
-          // as well as the cache consuming the response, we need
-          // to clone it so we have two streams.
-          var responseToCache = response.clone();
+  // Always go to web with any cloud API request
+  if (/\/api\//.test(requestURL.pathname)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
-          caches.open(CACHE_NAME)
-            .then(function(cache) {
-              cache.put(event.request, responseToCache);
-            });
+  // Always go to the web for vo.msecnd.net requests or App Insights requests
+  if (/vo\.msecnd\.net/.test(requestURL.hostname) || /dc.services.visualstudio.com/.test(requestURL.hostname)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
-          return response;
-        }
-      ).catch(function () {
-        console.log("failed with request.. ")
-        console.log(event.request)
-        if (event.request.url.indexOf('/api/') >= 0) {
-          console.log("Trying to find API")
-        }
-      });
+  caches.match(event.request, {
+    ignoreSearch: true
+  }).then(function(response) {
+    if (response) {
+      console.log("returned cache response.")
+      return response;
+    }
+    console.log(requestURL.origin + " : " + requestURL.hostname + " : " + requestURL.pathname);
+    return fetch(event.request);
+  })
+
+  /*
+  //If there's a cached version available, use it, but fetch an update for next time.
+    event.respondWith(
+    caches.open('mysite-dynamic').then(function(cache) {
+      return cache.match(event.request).then(function(response) {
+        var fetchPromise = fetch(event.request).then(function(networkResponse) {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        })
+        return response || fetchPromise;
+      })
     })
   );
+
+  */
+  /*
+  // Try the cache first
+  caches.match(event.request, {
+    ignoreSearch: true
+  }).then(function (cache) {
+    // Cache hit - return response
+    if (response) {
+      console.log("Cache response hit")
+      console.log(response);
+      return response;
+    }
+    // IMPORTANT: Clone the request. A request is a stream and
+    // can only be consumed once. Since we are consuming this
+    // once by cache and once by the browser for fetch, we need
+    // to clone the response.
+    var fetchRequest = event.request.clone();
+    
+    return fetch(fetchRequest).then(
+      function(response) {
+        // Check if we received a valid response
+        if(!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
+
+        return response;
+      }
+    ).catch(function () {
+      console.log("failed with request.. ")
+      console.log(event.request)
+      if (event.request.url.indexOf('/api/') >= 0) {
+        console.log("Trying to find API")
+      }
+    });
+  })*/
+
 });
 
 // v1

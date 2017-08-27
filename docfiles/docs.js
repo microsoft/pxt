@@ -184,6 +184,6 @@ function registerServiceWorker() {
 }
 
 $(document).ready(function () {
-    registerServiceWorker();
+    //registerServiceWorker();
     renderSnippets();
 });
