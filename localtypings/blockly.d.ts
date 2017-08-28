@@ -341,6 +341,8 @@ declare namespace Blockly {
     function confirm(message: string, callback: (response: boolean) => void): void;
     function prompt(message: string, defaultValue: string, callback: (response: string) => void): void;
 
+    function hideChaff(): void;
+
     let ALIGN_LEFT: number;
     let ALIGN_RIGHT: number;
     let ALIGN_CENTRE: number;

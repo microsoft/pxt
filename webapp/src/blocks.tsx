@@ -510,6 +510,11 @@ export class Editor extends srceditor.Editor {
         this.editor.zoomCenter(-1);
     }
 
+    closeFlyout () {
+        if (!this.editor) return;
+        Blockly.hideChaff();
+    }
+
     getId() {
         return "blocksArea"
     }
