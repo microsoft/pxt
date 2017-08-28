@@ -1630,6 +1630,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         }
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
+        const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
+        const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
 
         // For apps, if the user is not on the live website, display a warning banner
         const isApp = electron.isElectron || pxt.winrt.isWinRT() || !!(window as any).ipcRenderer;
@@ -1642,8 +1644,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         const rootClasses = sui.cx([
-            (this.state.hideEditorFloats || this.state.collapseEditorTools) && !inTutorial ? " hideEditorFloats" : '',
-            this.state.collapseEditorTools && !inTutorial ? " collapsedEditorTools" : '',
+            shouldHideEditorFloats ? " hideEditorFloats" : '',
+            shouldCollapseEditorTools ? " collapsedEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
