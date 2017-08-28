@@ -930,6 +930,7 @@ export class ProjectView
         if (options.filesOverride)
             Util.jsonCopyFrom(files, options.filesOverride)
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n"
+        files["serialdata.json"] = JSON.stringify({"pineapple": "banana"}) + "\n"
         return workspace.installAsync({
             name: cfg.name,
             meta: {},
@@ -1845,6 +1846,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                         </div>
                         <div className="ui editorFloat portrait">
                             <logview.LogView ref="simLogs" isSim={true} />
+                            <sui.Button key='serialdatabtn' class={'serialdata-button'} icon={'maximize'} title={fullscreenTooltip} onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/serialdata.json"))} />
                         </div>
                         <div className="ui editorFloat portrait">
                             <logview.LogView ref="devLogs" isSim={false} />
