@@ -291,7 +291,7 @@ namespace pxt.blocks {
     }
 
     function infer(e: Environment, w: B.Workspace) {
-        w.getAllBlocks().filter(b => !b.disabled).forEach((b: B.Block) => {
+        if (w) w.getAllBlocks().filter(b => !b.disabled).forEach((b: B.Block) => {
             try {
                 switch (b.type) {
                     case "math_op2":
@@ -1434,7 +1434,7 @@ namespace pxt.blocks {
 
         // determine for-loop compatibility: for each get or
         // set block, 1) make sure that the variable is bound, then 2) mark the variable if needed.
-        w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
+        if (w) w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
             if (b.type == "variables_get" || b.type == "variables_set" || b.type == "variables_change") {
                 let x = escapeVarName(b.getFieldValue("VAR"), e);
                 if (lookup(e, x) == null)
