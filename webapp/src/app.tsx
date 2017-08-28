@@ -35,6 +35,7 @@ import * as monacoToolbox from "./monacoSnippets"
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
+import * as serialdata from "./serialdata"
 import * as blocks from "./blocks"
 import * as codecard from "./codecard"
 import * as logview from "./logview"
@@ -90,6 +91,7 @@ export class ProjectView
     editorFile: pkg.File;
     textEditor: monaco.Editor;
     pxtJsonEditor: pxtjson.Editor;
+    serialDataEditor: serialdata.Editor;
     blocksEditor: blocks.Editor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
@@ -343,6 +345,7 @@ export class ProjectView
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
+        this.serialDataEditor = new serialdata.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
 
         let changeHandler = () => {
@@ -357,7 +360,7 @@ export class ProjectView
                 this.stopSimulator();
             this.editorChangeHandler();
         }
-        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.serialDataEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }

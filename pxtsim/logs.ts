@@ -34,7 +34,7 @@ namespace pxsim.logs {
         accvaluesElement?: HTMLDivElement;
         countElement?: HTMLSpanElement;
 //        chartElement?: TrendChartElement;
-        chartElement?: HTMLCanvasElement;
+//        chartElement?: HTMLCanvasElement;
         valueElement?: Text;
     }
 /**
@@ -301,19 +301,10 @@ namespace pxsim.logs {
                 let raiseTrends = false;
                 if (e.accvalues) {
                     e.accvaluesElement = document.createElement("div");
-                    e.accvaluesElement.className = "foo";
-                    e.accvaluesElement.textContent = "HI I'M A CONSOLE";
-                    e.chartElement = document.createElement("canvas");
-                    e.chartElement.className = "bar";
-                    e.element.appendChild(e.chartElement);
+                    e.accvaluesElement.textContent = "HI I'M A DIV";
                     e.element.appendChild(e.accvaluesElement);
-
-                    let p: pxsim.Point[] = [];
-                    p.push(new pxsim.Point(1, 2));
-                    p.push(new pxsim.Point(3, 4));
-                    p.push(new pxsim.Point(5, 6));
-                    new pxsim.CanvasChart().drawChart(e.chartElement, p);
-                    /**
+                }
+                    /** 
                     e.accvaluesElement = document.createElement('span');
                     e.accvaluesElement.className = "ui log " + e.theme + " gauge"
                     e.chartElement = new TrendChartElement(e, "ui trend " + e.theme)
@@ -325,14 +316,12 @@ namespace pxsim.logs {
                     e.element.appendChild(e.chartElement.element);
 
                     raiseTrends = true;
-                    **/
                 }
                 e.element.appendChild(e.valueElement);
                 ens.push(e);
                 //sim ? this.element.insertBefore(e.element, this.element.firstChild) : this.element.appendChild(e.element);
                 this.element.appendChild(e.element);
                 this.scheduleRender(e);
-                /**
                 if (raiseTrends && this.props.onTrendChartChanged)
                     this.props.onTrendChartChanged();
                 **/
