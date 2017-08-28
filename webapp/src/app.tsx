@@ -1637,7 +1637,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const isApp = electron.isElectron || pxt.winrt.isWinRT() || !!(window as any).ipcRenderer;
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
-        const showExperimentalBanner = isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
+        const showExperimentalBanner = !Cloud.isLocalHost() && isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
         const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
         // update window title
