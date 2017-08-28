@@ -1635,9 +1635,10 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
         // For apps, if the user is not on the live website, display a warning banner
         const isApp = electron.isElectron || pxt.winrt.isWinRT() || !!(window as any).ipcRenderer;
+        const isLocalServe = location.hostname === "localhost";
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
-        const showExperimentalBanner = isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
+        const showExperimentalBanner = !isLocalServe && isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
         const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
         // update window title
