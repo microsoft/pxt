@@ -99,10 +99,10 @@ function setupSidebar() {
             };
             hrefNode.onkeydown = function (e) {
                 var charCode = (typeof e.which == "number") ? e.which : e.keyCode
-                if (charCode === 39) {
+                if (charCode === 39) { // Right key
                     $(e.target.parentElement.parentElement).accordion("open", 0);
                     e.target.setAttribute("aria-expanded", "true");
-                } else if (charCode === 37) {
+                } else if (charCode === 37) { // Left key
                     $(e.target.parentElement.parentElement).accordion("close", 0);
                     e.target.setAttribute("aria-expanded", "false");
                 }
