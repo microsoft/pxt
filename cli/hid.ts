@@ -144,6 +144,17 @@ export class HidIO implements HF2.PacketIO {
         this.dev.on("error", (v: Error) => this.onError(v))
     }
 
+    talkOneAsync(pkt: Uint8Array): Promise<Uint8Array> {
+        return new Promise<Uint8Array>((resolve, reject) => {
+            let prev = this.onData
+            this.onData = buf => {
+                this.onData = prev
+                resolve(buf)
+            }
+            this.sendPacketAsync(pkt).catch(reject)
+        })
+    }
+
     sendPacketAsync(pkt: Uint8Array): Promise<void> {
         //console.log("SEND: " + new Buffer(pkt).toString("hex"))
         return Promise.resolve()

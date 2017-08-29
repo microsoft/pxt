@@ -466,8 +466,12 @@ function initSocketServer(wsPort: number, hostname: string) {
                             case "talk":
                                 return Promise.mapSeries(msg.arg.cmds, (obj: any) => {
                                     pxt.debug(`hid talk ${obj.cmd}`)
-                                    return hio.talkAsync(obj.cmd, U.fromHex(obj.data))
-                                        .then(res => ({ data: U.toHex(res) }))
+                                    if (hio.rawMode)
+                                        return (hio.io as hid.HidIO).talkOneAsync(U.fromHex(obj.data))
+                                            .then(res => ({ data: U.toHex(res) }))
+                                    else
+                                        return hio.talkAsync(obj.cmd, U.fromHex(obj.data))
+                                            .then(res => ({ data: U.toHex(res) }))
                                 });
                             case "sendserial":
                                 return hio.sendSerialAsync(U.fromHex(msg.arg.data), msg.arg.isError)
