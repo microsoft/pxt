@@ -378,7 +378,6 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
                 `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionupdate', function (e) {\n                if (browser.isAndroid) return;`)
     monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionend', function \(e\) {/gi,
                 `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionend', function (e) {\n                if (browser.isAndroid) return;`)
-    
     fs.writeFileSync("built/web/vs/editor/editor.main.js", monacoeditor)
 
     jake.mkdirP("webapp/public/vs")

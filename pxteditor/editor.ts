@@ -54,6 +54,7 @@ namespace pxt.editor {
         tracing?: boolean;
 
         highContrast?: boolean;
+        hideExperimentalBanner?: boolean;
     }
 
     export interface ProjectCreationOptions {
@@ -154,6 +155,7 @@ namespace pxt.editor {
         toggleSimulatorCollapse(): void;
         proxySimulatorMessage(content: string): void;
         toggleTrace(intervalSpeed?: number): void;
+        closeFlyout(): void;
 
         startTutorial(tutorialId: string): void;
 

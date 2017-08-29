@@ -467,6 +467,11 @@ export class Editor extends srceditor.Editor {
         this.forceDiagnosticsUpdate();
     }
 
+    closeFlyout() {
+        if (!this.editor) return;
+        this.resetFlyout(true);
+    }
+
     private loadReference() {
         Util.assert(this.editor != undefined); // Guarded
         let currentPosition = this.editor.getPosition();

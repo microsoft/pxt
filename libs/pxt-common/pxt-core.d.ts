@@ -252,7 +252,7 @@ declare namespace String {
      */
     //% help=math/string-from-char-code
     //% shim=String_::fromCharCode
-    //% advanced=true
+    //% weight=0
     //% blockNamespace="Math" blockId="stringFromCharCode" block="text from char code %code" weight=1
     function fromCharCode(code: number): string;
 }

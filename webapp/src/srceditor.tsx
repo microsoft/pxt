@@ -81,6 +81,8 @@ export class Editor implements pxt.editor.IEditor {
     zoomIn() { }
     zoomOut() { }
 
+    closeFlyout() { }
+
     /*******************************
      loadFile
     *******************************/
