@@ -54,6 +54,7 @@ namespace pxt.editor {
         tracing?: boolean;
 
         highContrast?: boolean;
+        hideExperimentalBanner?: boolean;
     }
 
     export interface ProjectCreationOptions {

@@ -47,6 +47,7 @@ export class Editor extends srceditor.Editor {
 
     saveToTypeScript(): Promise<string> {
         if (!this.typeScriptSaveable) return Promise.resolve('');
+        this.clearHighlightedStatements();
         try {
             return pxt.blocks.compileAsync(this.editor, this.blockInfo)
                 .then((compilationResult) => {

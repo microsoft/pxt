@@ -1572,6 +1572,10 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
+    hideBanner() {
+        this.setState({ hideExperimentalBanner: true });
+    }
+
     renderCore() {
         theEditor = this;
 
@@ -1630,13 +1634,23 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         }
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
+        const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
+        const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
+
+        // For apps, if the user is not on the live website, display a warning banner
+        const isApp = electron.isElectron || pxt.winrt.isWinRT() || !!(window as any).ipcRenderer;
+        const isLocalServe = location.hostname === "localhost";
+        const isExperimentalUrlPath = location.pathname !== "/"
+            && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
+        const showExperimentalBanner = !isLocalServe && isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
+        const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         const rootClasses = sui.cx([
-            (this.state.hideEditorFloats || this.state.collapseEditorTools) && !inTutorial ? " hideEditorFloats" : '',
-            this.state.collapseEditorTools && !inTutorial ? " collapsedEditorTools" : '',
+            shouldHideEditorFloats ? " hideEditorFloats" : '',
+            shouldCollapseEditorTools ? " collapsedEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
@@ -1652,6 +1666,14 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
         return (
             <div id='root' className={rootClasses}>
+                {showExperimentalBanner ? <div id="experimentalBanner" className="ui icon top attached fixed negative mini message">
+                    <i className="warning circle icon"></i>
+                    <i className="close icon" onClick={() => this.hideBanner() }></i>
+                    <div className="content">
+                        <div className="header">{lf("You are viewing an experimental version of the editor") }</div>
+                        <a href={liveUrl}>{lf("Take me back") }</a>
+                    </div>
+                </div> : undefined}
                 {useModulator ? <audio id="modulatorAudioOutput" controls></audio> : undefined}
                 {useModulator ? <div id="modulatorWrapper"><div id="modulatorBubble"><canvas id="modulatorWavStrip"></canvas></div></div> : undefined}
                 {hideMenuBar ? undefined :
