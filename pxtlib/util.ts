@@ -1013,6 +1013,34 @@ namespace ts.pxtc.BrowserImpl {
         hs[7] += h
     }
 
+    export function sha256block(buf: Uint8Array) {
+        let hs = new Uint32Array(8);
+        hs[0] = 0x6a09e667
+        hs[1] = 0xbb67ae85
+        hs[2] = 0x3c6ef372
+        hs[3] = 0xa54ff53a
+        hs[4] = 0x510e527f
+        hs[5] = 0x9b05688c
+        hs[6] = 0x1f83d9ab
+        hs[7] = 0x5be0cd19
+
+        let w = new Uint32Array(64);
+
+        let chunkLen = 16 * 4;
+
+        assert(buf.length % chunkLen == 0)
+
+        for (let i = 0; i < buf.length; i += chunkLen) {
+            for (let j = 0; j < 16; j++) {
+                let off = (j << 2) + i
+                w[j] = (buf[off] << 24) | (buf[off + 1] << 16) | (buf[off + 2] << 8) | buf[off + 3]
+            }
+            sha256round(hs, w)
+        }
+
+        return hs
+    }
+
     export function sha256buffer(buf: Uint8Array) {
         let h = new Uint32Array(8);
         h[0] = 0x6a09e667
