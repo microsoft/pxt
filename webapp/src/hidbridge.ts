@@ -17,7 +17,6 @@ interface HidDevice {
     release: number; // 0x4201
 }
 
-
 export class HIDError extends Error {
     constructor(msg: string) {
         super(msg)
@@ -130,12 +129,27 @@ class BridgeIO implements pxt.HF2.PacketIO {
         })
     }
 
-    initAsync() {
-        bridgeByPath[this.dev.path] = this
-        return iface.opAsync("init", {
-            path: this.dev.path
-        })
+    initAsync(): Promise<void> {
+        return iface.opAsync("list", {})
+            .then((devs0: any) => {
+                let devs = devs0.devices as HidDevice[]
+                let d0 = devs.filter(d => (d.release & 0xff00) == 0x4200)[0]
+                if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID)
+                    d0 = devs[0]
+                if (d0) {
+                    if (this.dev)
+                        delete bridgeByPath[this.dev.path]
+                    this.dev = d0
+                    bridgeByPath[this.dev.path] = this
+                }
+                else throw new Error("No device connected")
+            })
+            .then(() => iface.opAsync("init", {
+                path: this.dev.path,
+                raw: this.rawMode,
+            }))
     }
+
 }
 
 function hf2Async() {
