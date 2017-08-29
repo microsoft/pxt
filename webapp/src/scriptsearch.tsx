@@ -213,11 +213,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 <div className="ui vertical segment">
                     <div className="ui search">
                         <div className="ui fluid action input" role="search">
+                            <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.length + urldata.length, this.state.searchFor)}</div>
                             <input ref="searchInput" className="focused" type="text" placeholder={lf("Search or enter project URL...") } onKeyUp={kupd} />
                             <button title={lf("Search") } className="ui right icon button" onClick={upd}>
                                 <i className="search icon"></i>
                             </button>
-                            <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.length + urldata.length, this.state.searchFor)}</div>
                         </div>
                     </div>
                     <div className="ui cards" role="listbox">

@@ -54,7 +54,7 @@ export class Editor extends srceditor.Editor {
     nsMap: pxt.Map<MonacoBlockDefinition[]>;
     loadingMonaco: boolean;
     showAdvanced: boolean;
-    giveFocusOnLoading: boolean = true;
+    giveFocusOnLoading: boolean = false;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -1024,8 +1024,6 @@ export class Editor extends srceditor.Editor {
                 if (this.giveFocusOnLoading) {
                     this.editor.focus();
                 }
-
-                this.giveFocusOnLoading = true;
             }).finally(() => {
                 editorArea.removeChild(loading);
             });

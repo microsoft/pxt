@@ -108,7 +108,7 @@ function htmlmsg(kind: string, msg: string) {
         });
     } else {
         msgTag.children().each((index: number, elem: Element) => {
-            if (!elem.classList.contains('hc')) {
+            if (elem.classList.contains('hc')) {
                 elem.classList.remove('hc')
             }
         });
@@ -483,6 +483,14 @@ export function scrollIntoView(item: JQuery, margin = 0) {
         parent.scrollTop(newTop)
         //parent.animate({ 'scrollTop': newTop }, 'fast');
     }
+}
+
+export function resetFocus() {
+    let accessibleMenu = document.getElementById('accessibleMenu');
+    accessibleMenu.tabIndex = 0;
+    accessibleMenu.focus();
+    accessibleMenu.blur();
+    accessibleMenu.tabIndex = -1;
 }
 
 interface FocusDataEventInfo {

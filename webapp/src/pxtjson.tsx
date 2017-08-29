@@ -2,6 +2,7 @@ import * as React from "react";
 import * as pkg from "./package";
 import * as srceditor from "./srceditor"
 import * as sui from "./sui";
+import * as core from "./core";
 import * as codecard from "./codecard"
 
 import Cloud = pxt.Cloud;
@@ -36,6 +37,7 @@ export class Editor extends srceditor.Editor {
                 this.changeMade = true;
                 // switch to previous coding experience
                 this.parent.openPreviousEditor();
+                core.resetFocus();
             })
         }
         const setFileName = (v: string) => {
