@@ -23,39 +23,31 @@
 </style>
 
 <script>
-    var extId;
-    var logs;
-    var idToType = {};
-    function receiveMessage(ev) {
-        var msg = ev.data;
-        logs.innerText += formatResponse(msg);
-        var action = idToType[msg.id];
-        if (action === "extinit") {
-            handleInit(msg);
+var extId = window.location.hash.substr(1);
+var logs;
+var idToType = {};
+
+function receiveMessage(ev) {
+    var msg = ev.data;
+    logs.innerText += formatResponse(msg);
+    delete idToType[msg.id];
+}
+
+function formatResponse(resp) {
+    var action = idToType[resp.id];
+    return "\n< " + action + " (response) s=" + resp.success + " "
+            + (resp.error ? resp.error : "") + (resp.resp ? JSON.stringify(resp.resp) : "");
         }
-        delete idToType[msg.id];
-    }
 
-    function formatResponse(resp) {
-        var action = idToType[resp.id];
-        return "\n< " + action + " (response) s=" + resp.success + " "
-            + (resp.error ? resp.error : "") + (resp.body ? JSON.stringify(resp.body) : "");
-    }
-
-    function handleInit(msg) {
-        extId = msg.extId;
-        logs.innerText += "\n<< got id " + extId;
-    }
-
-    function sendRequest(action) {
-        var msg = mkRequest(action);
-        switch (action) {
-            case "extdatastream":
+        function sendRequest(action) {
+            var msg = mkRequest(action);
+            switch (action) {
+                case "extdatastream":
                 msg.body = {
                     serial: true
                 };
                 break;
-            case "extquerypermission":
+                case "extquerypermission":
             break;
             case "extrequestpermission":
                 msg.body = {
@@ -67,19 +59,18 @@
             case "extreadcode":
             break;
             case "extwritecode":
-                msg.body = {
-                    code: "let x = 0;",
+            msg.body = {
+                code: "let x = 0;",
                     json: '{ "whatever": "sure" }'
                 }
                 break;
             case "extinit":
-                msg.body = "neoanim"
             break;
         }
         logs.innerText += "\n> " + msg.action;
         window.parent.postMessage(msg, "*");
     }
-
+    
     function mkRequest(action) {
         var id = Math.random().toString();
         idToType[id] = action;
@@ -92,29 +83,30 @@
         }
     }
 
-    function bindButtons() {
-        var elt = document.getElementById("buttons");
+function bindButtons() {
+    var elt = document.getElementById("buttons");
 
-        for (let i = 0; i < elt.childNodes.length; i++) {
-            var btn = elt.childNodes.item(i);
+    for (let i = 0; i < elt.childNodes.length; i++) {
+        var btn = elt.childNodes.item(i);
             
-            if (btn.nodeType === Node.ELEMENT_NODE) {
-                let action = btn.getAttribute("action");
-                if (action) {
-                    btn.addEventListener("click", function() {
-                        sendRequest(action);
-                    });
-                }
+        if (btn.nodeType === Node.ELEMENT_NODE) {
+            let action = btn.getAttribute("action");
+            if (action) {
+                btn.addEventListener("click", function() {
+                    sendRequest(action);
+                });
             }
         }
     }
+}
 
-    window.addEventListener("message", receiveMessage, false);
-    window.onload = function() {
-        bindButtons();
-        logs = document.getElementById("logs");
-        this.sendRequest("extinit");
-    }
+window.addEventListener("message", receiveMessage, false);
+window.onload = function() {
+    bindButtons();
+    logs = document.getElementById("logs");
+    this.sendRequest("extinit");
+    logs.innerText += "\n<< got id " + extId;
+}
 </script>
 
 <body>

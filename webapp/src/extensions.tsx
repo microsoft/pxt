@@ -24,12 +24,22 @@ interface ExtensionsState {
     extension?: string;
     url?: string;
     consent?: boolean;
+    permissions?: ext.Permissions[];
+}
+
+interface PermissionRequest {
+    extId: string;
+    permissions: ext.Permissions[];
+    resolver: (choice: boolean) => void;
 }
 
 export class Extensions extends data.Component<ISettingsProps, ExtensionsState> implements ext.ExtensionHost {
     private packagesConfig: pxt.PackagesConfig;
     private extensionWrapper: HTMLDivElement;
     private manager: ext.ExtensionManager;
+    private permissionCB: (choice: boolean) => void;
+
+    private pendingPermissionRequests: PermissionRequest[] = [];
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -62,13 +72,14 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         const frame = Extensions.getFrame(this.state.extension);
         frame.style.display = 'block';
         if (!frame.src) {
-            frame.src = this.state.url;
+            frame.src = this.state.url + "#" + this.manager.getExtId(this.state.extension);
         }
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ExtensionsState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
             || this.state.extension != nextState.extension
+            || this.state.permissions != nextState.permissions
             || this.state.consent != nextState.consent;
     }
 
@@ -117,8 +128,17 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
     }
 
     promptForPermissionAsync(id: string, permission: ext.Permissions): Promise<boolean> {
-        // TODO
-        return Promise.resolve(false);
+        this.setState({ permissions: [permission] })
+        return new Promise<boolean>((resolve, reject) => {
+            this.permissionCB = resolve;
+        })
+    }
+
+    private onPermissionDecision(approved: boolean) {
+        this.setState({ permissions: null })
+        if (this.permissionCB) {
+            this.permissionCB(approved);
+        }
     }
 
     static getCustomContent() {
@@ -150,8 +170,35 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         return frame;
     }
 
+    getIconForPermission(permission: ext.Permissions) {
+        switch (permission) {
+            case ext.Permissions.Serial:
+                return "usb"
+            case ext.Permissions.ReadUserCode:
+                return "code";
+        }
+    }
+
+    getDisplayNameForPermission(permission: ext.Permissions) {
+        switch (permission) {
+            case ext.Permissions.Serial:
+                return lf("Serial")
+            case ext.Permissions.ReadUserCode:
+                return lf("Read your code");
+        }
+    }
+
+    getDescriptionForPermission(permission: ext.Permissions) {
+        switch (permission) {
+            case ext.Permissions.Serial:
+                return lf("The extension will be able to read any serial data streamed to the editor")
+            case ext.Permissions.ReadUserCode:
+                return lf("The extension will be able to read the code in the current project");
+        }
+    }
+
     renderCore() {
-        const {visible, extension, url, consent} = this.state;
+        const {visible, extension, url, consent, permissions} = this.state;
         const needsConsent = !consent;
         const theme = pxt.appTarget.appTheme;
 
@@ -161,14 +208,45 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         };
         if (!needsConsent && visible) this.initializeFrame();
         return (
-            <sui.Modal open={visible} className={`${needsConsent ? 'extensionconsentdialog' : 'extensiondialog'}`} size="fullscreen" closeIcon={false}
+            <sui.Modal open={visible} className={`${needsConsent ? 'extensionconsentdialog' : 'extensiondialog'}`} size="fullscreen" closeIcon={true}
                 onClose={() => this.hide() } dimmer={true}
                 action={action}
                 actionClick={actionClick}
                 onPositionChanged={() => this.updateDimensions()}
                 closeOnDimmerClick>
                 {consent ?
-                    <div id="extensionWrapper" data-frame={extension} ref={v => this.extensionWrapper = v}></div>
+                    <div id="extensionWrapper" data-frame={extension} ref={v => this.extensionWrapper = v}>
+                    {permissions ?
+                        <sui.Modal className="extensionpermissiondialog basic" size="fullscreen" closeIcon={false} dimmer={true} open={true} dimmerClassName="permissiondimmer">
+                            <div className="permissiondialoginner">
+                                <div>
+                                    {lf("Permission Request", extension)}
+                                </div>
+                                <div>
+                                    {lf("Extension {1} is requesting the following permission:", extension)}
+                                </div>
+                                <div className="ui inverted list">
+                                    {permissions.map(permission => 
+                                    <div className="item">
+                                        <i className={`${this.getIconForPermission(permission)} icon`}/>
+                                        <div className="content">
+                                            <div className="header">{this.getDisplayNameForPermission(permission)}</div>
+                                            <div className="description">{this.getDescriptionForPermission(permission)}</div>
+                                        </div>
+                                    </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="actions">
+                                <sui.Button text={lf("Deny")} class={`deny inverted`}
+                                    onClick={() => this.onPermissionDecision(false)} />
+                                <sui.Button text={lf("Approve")} class={`approve inverted green`}
+                                    onClick={() => this.onPermissionDecision(true)} />
+                            </div>
+                        </sui.Modal>
+                        : undefined
+                    }
+                    </div>
                 :   <div>
                         <div className="ui form">
                             <div className="ui icon violet message">

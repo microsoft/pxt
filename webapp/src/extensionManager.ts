@@ -28,7 +28,8 @@ export class ExtensionManager {
     }
 
     handleExtensionMessage(message: e.ExtensionMessage) {
-        this.handleRequestAsync(message as e.ExtensionRequest);
+        this.handleRequestAsync(message as e.ExtensionRequest)
+        .catch(e => {})
     }
 
     sendEvent(extId: string, event: string) {
@@ -58,14 +59,6 @@ export class ExtensionManager {
     private handleRequestAsync(request: e.ExtensionRequest): Promise<void> {
         const resp = mkResponse(request);
 
-        if (request.action === "extinit") {
-            if (request.body) {
-                resp.extId = this.getExtId((request as e.InitializeRequest).body);
-                this.sendResponse(resp);
-            }
-            return Promise.resolve();
-        }
-
         if (!this.hasConsent(request.extId)) {
             resp.success = false;
             resp.error = ""
@@ -74,6 +67,9 @@ export class ExtensionManager {
         }
 
         switch (request.action) {
+            case "extinit":
+                this.sendResponse(resp);
+                break;
             case "extdatastream":
                 return this.permissionOperation(request.extId, Permissions.Serial, resp, handleDataStreamRequest);
             case "extquerypermission":
@@ -102,13 +98,20 @@ export class ExtensionManager {
 
     private permissionOperation(id: string, permission: Permissions, resp: e.ExtensionResponse, cb: (name: string, resp: e.ExtensionResponse) => void) {
         return this.checkPermissionAsync(id, permission)
-            .then(() => {
-                cb(this.extIdToName[id], resp);
-                this.sendResponse(resp);
+            .then(hasPermission => {
+                if (hasPermission) {
+                    cb(this.extIdToName[id], resp);
+                    this.sendResponse(resp);
+                }
+                else {
+                    resp.success = false;
+                    resp.error = "permission denied";
+                    this.sendResponse(resp);
+                }
             })
-            .catch(() => {
+            .catch(e => {
                 resp.success = false;
-                resp.error = "permission denied";
+                resp.error = e;
                 this.sendResponse(resp);
             });
     }
@@ -170,7 +173,7 @@ function handleReadCodeRequest(name: string, resp: e.ReadCodeResponse) {
     const extPackage = mainPackage.pkgAndDeps().filter(p => p.getPkgId() === name)[0];
     if (extPackage) {
         const files = extPackage.getAllFiles();
-        resp.body = {
+        resp.resp = {
             json: files["extension.json"],
             code: files["extension.ts"]
         };
