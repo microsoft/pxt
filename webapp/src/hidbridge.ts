@@ -58,27 +58,34 @@ function init() {
 }
 
 export function shouldUse() {
-    return pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && Cloud.isLocalHost() && !!Cloud.localToken
+    let serial = pxt.appTarget.serial
+    return serial && serial.useHF2 && (Cloud.isLocalHost() && !!Cloud.localToken || pxt.winrt.isWinRT());
 }
 
 
 export function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
     init()
-    return iface.opAsync("list", {})
-        .then((devs: any) => {
-            let d0 = (devs.devices as HidDevice[]).filter(d => (d.release & 0xff00) == 0x4200)[0]
-            if (d0) return new BridgeIO(d0)
-            else throw new Error("No device connected")
-        })
-        .then(b => b.initAsync().then(() => b))
+    let raw = false
+    if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID)
+        raw = true
+    let b = new BridgeIO(raw)
+    return b.initAsync()
+        .then(() => b);
+
 }
+
+pxt.HF2.mkPacketIOAsync = mkBridgeAsync;
+
 
 class BridgeIO implements pxt.HF2.PacketIO {
     onData = (v: Uint8Array) => { };
     onError = (e: Error) => { };
     onSerial = (v: Uint8Array, isErr: boolean) => { };
+    public dev: HidDevice
 
-    constructor(public dev: HidDevice) {
+    constructor(public rawMode = false) {
+        if (rawMode)
+            this.onEvent = v => this.onData(v)
     }
 
     onOOB(v: OOB) {
@@ -106,6 +113,12 @@ class BridgeIO implements pxt.HF2.PacketIO {
     }
 
     sendPacketAsync(pkt: Uint8Array): Promise<void> {
+        if (this.rawMode)
+            return iface.opAsync("send", {
+                path: this.dev.path,
+                data: U.toHex(pkt),
+                raw: true
+            })
         throw new Error("should use talksAsync()!")
     }
 
@@ -126,7 +139,7 @@ class BridgeIO implements pxt.HF2.PacketIO {
 }
 
 function hf2Async() {
-    return mkBridgeAsync()
+    return pxt.HF2.mkPacketIOAsync()
         .then(h => {
             let w = new pxt.HF2.Wrapper(h)
             return w.reconnectAsync(true)
