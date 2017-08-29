@@ -1,4 +1,4 @@
-# Statements
+ # Statements
 
 The following JavaScript statements are supported for the @boardname@:
 
@@ -22,7 +22,7 @@ The following JavaScript statements are supported for the @boardname@:
 * [`return` statement](http://devdocs.io/javascript/statements/return)
 * [`debugger` statement for breakpoints](http://devdocs.io/javascript/statements/debugger)
 
-## Labelling statements
+## Labeling statements
 
-* [labelled statement](http://devdocs.io/javascript/statements/label)
+* [`label:` statement](http://devdocs.io/javascript/statements/label)
 * [`default` statement](http://devdocs.io/javascript/statements/default)
