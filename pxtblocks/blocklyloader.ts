@@ -1261,24 +1261,31 @@ namespace pxt.blocks {
         }
 
         // Override Blockly's toolbox keydown method to intercept characters typed and move the focus to the search input
-        const oldKeyDown = Blockly.Toolbox.TreeNode.prototype.onKeyDown;
         (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown = function(e: any) {
-            const x = e.which || e.keyCode;
-            const interceptCharacter = x != 37 && x != 38 && x != 39 && x != 40 // Arrows (Handled by Blockly)
-                && !e.ctrlKey && !e.metaKey && !e.altKey // Meta keys
-                && x != 9; // Don't capture the tab key
-            if (interceptCharacter) {
+            const keyCode = e.which || e.keyCode;
+            const characterKey = (keyCode > 64 && keyCode < 91); // Letter keys
+            const spaceEnterKey = keyCode == 32 || keyCode == 13; // Spacebar or Enter keys
+            if (characterKey) {
                 let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
-                if (x == 8) { // Backspace
-                    searchField.focus();
-                    searchField.select();
-                } else {
-                    let char = String.fromCharCode(x);
-                    searchField.value = searchField.value + char;
-                    searchField.focus();
-                }
+
+                let char = String.fromCharCode(keyCode);
+                searchField.value = searchField.value + char;
+                searchField.focus();
+                return true;
             } else {
-                oldKeyDown.call(this, e);
+                if (this.getTree() && this.getTree().toolbox_.horizontalLayout_) {
+                    let map: {[keyCode: number]: number} = {};
+                    let next = goog.events.KeyCodes.DOWN
+                    let prev = goog.events.KeyCodes.UP
+                    map[goog.events.KeyCodes.RIGHT] = this.rightToLeft_ ? prev : next;
+                    map[goog.events.KeyCodes.LEFT] = this.rightToLeft_ ? next : prev;
+                    map[goog.events.KeyCodes.UP] = goog.events.KeyCodes.LEFT;
+                    map[goog.events.KeyCodes.DOWN] = goog.events.KeyCodes.RIGHT;
+
+                    let newKeyCode = map[e.keyCode];
+                    e.keyCode = newKeyCode || e.keyCode;
+                }
+                return (Blockly.Toolbox.TreeNode as any).superClass_.onKeyDown.call(this, e);
             }
         }
     }
