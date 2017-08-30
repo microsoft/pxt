@@ -108,7 +108,7 @@ function htmlmsg(kind: string, msg: string) {
         });
     } else {
         msgTag.children().each((index: number, elem: Element) => {
-            if (!elem.classList.contains('hc')) {
+            if (elem.classList.contains('hc')) {
                 elem.classList.remove('hc')
             }
         });
@@ -483,6 +483,14 @@ export function scrollIntoView(item: JQuery, margin = 0) {
         parent.scrollTop(newTop)
         //parent.animate({ 'scrollTop': newTop }, 'fast');
     }
+}
+
+export function resetFocus() {
+    let content = document.getElementById('content');
+    content.tabIndex = 0;
+    content.focus();
+    content.blur();
+    content.tabIndex = -1;
 }
 
 interface FocusDataEventInfo {

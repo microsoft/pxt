@@ -14,8 +14,15 @@
 }
 
 @media not all and (pointer:coarse) {
-    *:not([tabindex='-1']):focus {
+    *:not([tabindex='-1']):focus,
+    [role='menuitem']:focus {
         outline: 2px solid #4D90FE !important;
+    }
+
+    .blocklyWidgetDiv *:focus,
+    .blocklySVG *:focus,
+    .monaco-editor *:focus {
+        outline: 1px solid transparent !important;
     }
 }
 

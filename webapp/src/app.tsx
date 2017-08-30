@@ -205,7 +205,12 @@ export class ProjectView
     openJavaScript(giveFocusOnLoading = true) {
         pxt.tickEvent("menu.javascript");
         if (this.isJavaScriptActive()) {
-            if (this.state.embedSimView) this.setState({ embedSimView: false });
+            if (this.state.embedSimView) {
+                this.setState({ embedSimView: false });
+            }
+            if (giveFocusOnLoading) {
+                this.textEditor.editor.focus();
+            }
             return;
         }
         if (this.textEditor) {
@@ -241,7 +246,7 @@ export class ProjectView
 
     openPreviousEditor() {
         if (this.prevEditorId == "monacoEditor") {
-            this.openJavaScript();
+            this.openJavaScript(false);
         } else {
             this.openBlocks();
         }
@@ -378,7 +383,7 @@ export class ProjectView
 
         const hc = this.state.highContrast;
         // save file before change
-        this.saveFileAsync()
+        return this.saveFileAsync()
             .then(() => {
                 this.editorFile = this.state.currFile as pkg.File; // TODO
                 let previousEditor = this.editor;
@@ -916,6 +921,7 @@ export class ProjectView
         const opts: core.ConfirmOptions = {
             header: lf("Rename your project"),
             agreeLbl: lf("Save"),
+            agreeClass: "green",
             input: lf("Enter your project name here")
         };
         return core.confirmAsync(opts).then(res => {
@@ -1175,7 +1181,9 @@ export class ProjectView
 
     editText() {
         if (this.editor != this.textEditor) {
-            this.updateEditorFile(this.textEditor)
+            this.updateEditorFile(this.textEditor).then(() => {
+                this.textEditor.editor.focus();
+            });
             this.forceUpdate();
         }
     }
@@ -1526,6 +1534,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             .finally(() => {
                 core.hideLoading()
                 this.setState({ active: true, tutorialOptions: undefined, tracing: undefined });
+                core.resetFocus();
             });
     }
 
