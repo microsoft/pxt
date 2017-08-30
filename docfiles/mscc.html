@@ -1,0 +1,29 @@
+<script type="text/javascript">
+    function showCookieConsent() {
+        // only loaded for targets served from Microsoft's cloud
+        if (typeof pxtTargetBundle == "undefined") return;
+
+        var domain = (pxtTargetBundle.appTheme || { homeUrl: "unknown.com" }).homeUrl.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+        var sitename = pxtTargetBundle.id;
+        var url = "https://uhf.microsoft.com/" + navigator.language + "/shell/api/mscc?sitename=" + encodeURIComponent(sitename) + "&domain=" + encodeURIComponent(domain) + "&mscc_eudomain=true";
+        $.getJSON(url, function (info) {
+            if (!info || !info.IsConsentRequired) return undefined;
+
+            info.Css.forEach(css => {
+                var link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = css;
+                document.head.appendChild(link);
+            })
+
+            var d = $('<div class="mscc"></div>');
+            d.html(info.Markup);
+            $(document.body).prepend(d);
+            info.Js.forEach(function (js) {
+                $.getScript(js)
+            });
+        });
+    }
+    // target.js must be loaded
+    ksRunnerReady(function () { showCookieConsent(); });
+</script>
