@@ -13,7 +13,8 @@
     outline: 1px solid transparent !important;
 }
 
-@media not all and (pointer:coarse) {
+@media not all and (pointer:coarse), /* If not touch screen */
+all and (-ms-high-contrast: none), (-ms-high-contrast: active) { /* Or if IE 10+ */
     *:not([tabindex='-1']):focus,
     [role='menuitem']:focus {
         outline: 2px solid #4D90FE !important;

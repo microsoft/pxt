@@ -1661,7 +1661,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 {inTutorial ? <sui.Item class="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
                             </div> : <div className="left menu">
                                     <span id="logo" className="ui item logo">
-                                        <img className="ui mini image" src={Util.toDataUri(rightLogo) } tabIndex={0} onClick={() => this.launchFullEditor() } onKeyPress={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`}/>
+                                        <img className="ui mini image" src={Util.toDataUri(rightLogo) } tabIndex={0} onClick={() => this.launchFullEditor() } onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`}/>
                                     </span>
                                 </div> }
                             {!inTutorial && !targetTheme.blocksOnly ? <div className="ui item link editor-menuitem">
