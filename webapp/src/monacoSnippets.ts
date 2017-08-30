@@ -169,10 +169,10 @@ export const maths: BuiltinCategoryDefinition = {
             }
         },
         {
-            name: "random",
-            snippet: `Math.random(4)`,
+            name: "randomRange",
+            snippet: `Math.randomRange(0, 10)`,
             attributes: {
-                jsDoc: lf("Returns a random number between 0 and an upper bound")
+                jsDoc: lf("Returns a random number between min and max")
             }
         },
         {
