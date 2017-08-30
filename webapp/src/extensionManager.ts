@@ -15,7 +15,13 @@ export enum PermissionStatus {
 
 export interface ExtensionHost {
     send(name: string, message: e.ExtensionMessage): void;
-    promptForPermissionAsync(id: string, permission: Permissions): Promise<boolean>;
+    promptForPermissionAsync(name: string, permission: Permissions[]): Promise<boolean>;
+}
+
+export interface PermissionRequest {
+    extId: string;
+    permissions: Permissions[];
+    resolver: (choice: boolean) => void;
 }
 
 export class ExtensionManager {
@@ -23,6 +29,9 @@ export class ExtensionManager {
     private nameToExtId: pxt.Map<string> = {};
     private extIdToName: pxt.Map<string> = {};
     private consent: pxt.Map<boolean> = {};
+
+    private pendingRequests: PermissionRequest[] = [];
+    private queueLock = false;
 
     constructor (private host: ExtensionHost) {
     }
@@ -126,6 +135,45 @@ export class ExtensionManager {
         return this.statuses[id]
     }
 
+    private queuePermissionRequest(extId: string, permission: Permissions): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            const req: PermissionRequest = {
+                extId,
+                permissions: [permission],
+                resolver: resolve
+            };
+            
+            this.pendingRequests.push(req);
+            if (!this.queueLock && this.pendingRequests.length === 1) {
+                this.queueLock = true;
+                this.nextPermissionRequest();
+            }
+        });
+    }
+
+    private nextPermissionRequest() {
+        if (this.pendingRequests.length) {
+            const current = this.pendingRequests.shift();
+
+            // Don't allow duplicate requests to prevent spamming
+            current.permissions = current.permissions.filter(p => this.hasNotBeenPrompted(current.extId, p))
+            
+            if (current.permissions.length) {
+                this.host.promptForPermissionAsync(this.extIdToName[current.extId], current.permissions)
+                .done(approved => {
+                    current.resolver(approved);
+                    this.nextPermissionRequest();
+                })
+            }
+            else {
+                this.nextPermissionRequest();
+            }
+        }
+        else {
+            this.queueLock = false;
+        }
+    }
+
     private checkPermissionAsync(id: string, permission: Permissions): Promise<boolean> {
         const perm = this.getPermissions(id)
 
@@ -136,7 +184,17 @@ export class ExtensionManager {
         }
 
         if (status === PermissionStatus.NotYetPrompted) {
-            return this.host.promptForPermissionAsync(id, permission);
+            return this.queuePermissionRequest(id, permission)
+                .then(approved => {
+                    const newStatus = approved ? PermissionStatus.Granted : PermissionStatus.Denied;
+                    switch (permission) {
+                        case Permissions.Serial:
+                            this.statuses[id].serial = newStatus; break;
+                        case Permissions.ReadUserCode:
+                            this.statuses[id].readUserCode = newStatus; break;
+                    }
+                    return approved;
+                });
         }
 
         return Promise.resolve(status === PermissionStatus.Granted);
@@ -156,6 +214,16 @@ export class ExtensionManager {
         return Promise.all(promises)
             .then(() => statusesToResponses(this.getPermissions(id)))
             .then(responses => { resp.resp = responses });
+    }
+
+    hasNotBeenPrompted(extId: string, permission: Permissions) {
+        const perm = this.getPermissions(extId);
+        let status: PermissionStatus;
+        switch (permission) {
+            case Permissions.Serial: status = perm.serial; break;
+            case Permissions.ReadUserCode: status = perm.readUserCode; break;
+        }
+        return status === PermissionStatus.NotYetPrompted;
     }
 }
 
