@@ -1028,7 +1028,7 @@ namespace ts.pxtc.BrowserImpl {
 
         let chunkLen = 16 * 4;
 
-        assert(buf.length % chunkLen == 0)
+        Util.assert(buf.length % chunkLen == 0)
 
         for (let i = 0; i < buf.length; i += chunkLen) {
             for (let j = 0; j < 16; j++) {
