@@ -82,7 +82,12 @@ export class TutorialContent extends data.Component<ISettingsProps, TutorialCont
         // Show light box
         sounds.tutorialStep();
         $('#root')
-            .dimmer({'closable': true})
+            .dimmer({
+                'closable': true,
+                onShow: () => {
+                    document.getElementById('tutorialOkButton').focus();
+                }
+            })
             .dimmer('show');
     }
 
@@ -134,7 +139,6 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 }
 
 export class TutorialCard extends data.Component<ISettingsProps, {}> {
-    private focusInitialized = false;
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -179,7 +183,6 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
         sounds.tutorialNext();
         document.documentElement.removeEventListener("keydown", this.closeLightboxOnEscape);
         core.initializeFocusTabIndex($('#tutorialcard').get(0), true, undefined, true);
-        this.focusInitialized = false;
         let tutorialmessage = document.getElementsByClassName("tutorialmessage");
         if (tutorialmessage.length > 0) {
             (tutorialmessage.item(0) as HTMLElement).focus();
@@ -196,21 +199,9 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
     }
 
     componentDidUpdate() {
-        if (document.getElementsByClassName("dimmable dimmed").length > 0) {
-            let tutorialCard = $('#tutorialcard').get(0);
-            if (tutorialCard !== undefined) {
-                core.initializeFocusTabIndex(tutorialCard, true, false);
-                if (!this.focusInitialized) { 
-                    /* the first time we load the tutorial, the OK button is not visible yet. 
-                    Couple of second after, this method is called several time. 'focusInitialized' help 
-                    to prevent to reset the focus if the user already started to move with the keyboard. */
-                    let root = document.getElementById('root');
-                    if (root.classList.contains('dimmed')) {
-                        this.focusInitialized = true;
-                        document.getElementById('tutorialOkButton').focus();
-                    }
-                }
-            }
+        let tutorialCard = $('#tutorialcard').get(0);
+        if (tutorialCard !== undefined) {
+            core.initializeFocusTabIndex(tutorialCard, true, false);
         }
     }
 

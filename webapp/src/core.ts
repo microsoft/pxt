@@ -486,11 +486,11 @@ export function scrollIntoView(item: JQuery, margin = 0) {
 }
 
 export function resetFocus() {
-    let accessibleMenu = document.getElementById('accessibleMenu');
-    accessibleMenu.tabIndex = 0;
-    accessibleMenu.focus();
-    accessibleMenu.blur();
-    accessibleMenu.tabIndex = -1;
+    let content = document.getElementById('content');
+    content.tabIndex = 0;
+    content.focus();
+    content.blur();
+    content.tabIndex = -1;
 }
 
 interface FocusDataEventInfo {
