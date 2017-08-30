@@ -4,16 +4,16 @@ namespace pxsim.logs {
         maxEntries?: number;
         maxLineLength?: number;
         maxAccValues?: number;
-        onClick?: (entries: ILogEntry[]) => void;
-        onTrendChartChanged?: () => void;
-        onTrendChartClick?: (entry: ILogEntry) => void;
+//        onClick?: (entries: ILogEntry[]) => void;
+//        onTrendChartChanged?: () => void;
+//        onTrendChartClick?: (entry: ILogEntry) => void;
 
         // information for optional extensions
-        chromeExtension?: string;
-        useHF2?: boolean;
-        vendorId?: string; // used by node-serial
-        productId?: string; // used by node-serial
-        nameFilter?: string; // regex to match devices
+//        chromeExtension?: string;
+//        useHF2?: boolean;
+//        vendorId?: string; // used by node-serial
+//        productId?: string; // used by node-serial
+//        nameFilter?: string; // regex to match devices
     }
 
     export interface ILogEntry {
@@ -30,11 +30,11 @@ namespace pxsim.logs {
     interface ILogEntryElement extends ILogEntry {
         dirty: boolean;
         element?: HTMLDivElement;
-//        accvaluesElement?: HTMLSpanElement;
-        accvaluesElement?: HTMLDivElement;
+//        accvaluesElement?: HTMLDivElement;
+        accvaluesElement?: HTMLElement;
         countElement?: HTMLSpanElement;
 //        chartElement?: TrendChartElement;
-//        chartElement?: HTMLCanvasElement;
+        chartElement?: HTMLCanvasElement;
         valueElement?: Text;
     }
 /**
@@ -82,11 +82,11 @@ namespace pxsim.logs {
 
         constructor(public props: ILogProps) {
             this.registerEvents();
-            this.registerChromeSerial();
+//            this.registerChromeSerial();
             this.element = document.createElement("div");
-            this.element.className = "ui segment hideempty logs";
-            if (this.props.onClick)
-                this.element.onclick = () => this.props.onClick(this.rows());
+//            this.element.className = "ui segment hideempty logs";
+//            if (this.props.onClick)
+//                this.element.onclick = () => this.props.onClick(this.rows());
             this.isSim = !!this.props.isSim || false;
         }
 
@@ -103,11 +103,13 @@ namespace pxsim.logs {
                 this.labelElement.appendChild(document.createTextNode(text));
             }
         }
-
+/**
         public hasTrends(): boolean {
             return this.entries.some(entry => !!entry.chartElement);
         }
-
+**/
+/** 
+        //no references?
         // creates a deep clone of the log entries
         public rows(): ILogEntry[] {
             return this.entries.map(e => {
@@ -123,7 +125,9 @@ namespace pxsim.logs {
                 };
             });
         }
-
+**/
+/** 
+ * //not using these for now
         public streamPayload(startTime: number): { fields: string[]; values: number[][]; } {
             // filter out data
             let es = this.entries.filter(e => !!e.accvalues && e.time + e.accvalues[e.accvalues.length - 1].t >= startTime);
@@ -195,23 +199,13 @@ namespace pxsim.logs {
                 });
             }
         }
-
+**/
         registerEvents() {
             window.addEventListener('message', (ev: MessageEvent) => {
                 let msg = ev.data;
                 switch (msg.type || '') {
                     case 'serial':
                         const smsg = msg as pxsim.SimulatorSerialMessage;
-                        /**
-                        if (this.dropSim && smsg.sim) {
-                            // drop simulated event since we are receiving real events
-                            return;
-                        } else if (!this.dropSim && !smsg.sim) {
-                            // first non-simulator serial event, drop all previous events
-                            this.clear();
-                            this.dropSim = true;
-                        }
-                        **/
                         const sim = !!smsg.sim || false;
                         if (sim == this.isSim) {
                             const value = smsg.data || '';
@@ -244,6 +238,12 @@ namespace pxsim.logs {
         }
 
         appendEntry(source: string, value: string, theme: string, sim: boolean) {
+            /**
+             * source: e.g., "red-1234567"
+             * value: e.g., "x:123"
+             * theme: e.g., "red"
+             * sim: e.g., "false"
+             */
             if (this.labelElement && !this.labelElement.parentElement)
                 this.element.insertBefore(this.labelElement, this.element.firstElementChild);
 
@@ -300,10 +300,17 @@ namespace pxsim.logs {
                 e.element.className = "ui log " + e.theme;
                 let raiseTrends = false;
                 if (e.accvalues) {
-                    e.accvaluesElement = document.createElement("div");
-                    e.accvaluesElement.textContent = "HI I'M A DIV";
+                    e.accvaluesElement = document.createElement("span");
+                    e.accvaluesElement.className = "ui log " + e.theme + " gauge"
+                    e.chartElement = document.createElement("canvas");
+                    new CanvasChart().drawChart(e.chartElement, [new Point(e.accvalues[0].t, e.accvalues[0].v)])
                     e.element.appendChild(e.accvaluesElement);
+                    e.element.appendChild(e.chartElement);
                 }
+                e.element.appendChild(e.valueElement);
+                ens.push(e);
+                this.element.appendChild(e.element);
+                this.scheduleRender(e);
                     /** 
                     e.accvaluesElement = document.createElement('span');
                     e.accvaluesElement.className = "ui log " + e.theme + " gauge"
@@ -354,13 +361,14 @@ namespace pxsim.logs {
                 if (entry.countElement) entry.countElement.innerText = entry.count.toString();
                 if (entry.accvaluesElement) entry.accvaluesElement.innerText = entry.value;
 //                if (entry.chartElement) entry.chartElement.render();
+                if (entry.chartElement) new CanvasChart().drawChart(entry.chartElement, entry.accvalues.map(accvalue => new Point(accvalue.t, accvalue.v)))
                 entry.valueElement.textContent = entry.accvalues ? '' : entry.value;
                 entry.dirty = false;
             });
             this.renderFiberId = 0;
         }
     }
-
+    /** TODO add these back
     export function entriesToCSV(entries: ILogEntry[]) {
         // first log all data entries to CSV
         let dataEntries: ILogEntry[] = [];
@@ -412,4 +420,5 @@ namespace pxsim.logs {
             + entry.accvalues.map(v => ((v.t - t0) / 1000) + ", " + v.v).join('\n');
         return csv;
     }
+    **/
 }

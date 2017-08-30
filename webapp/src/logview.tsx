@@ -6,7 +6,7 @@ import * as sui from "./sui"
 import * as core from "./core";
 
 const STREAM_INTERVAL = 30000;
-
+/** 
 export interface LogViewState {
     stream?: pxt.streams.JsonStream;
     trends?: boolean;
@@ -205,3 +205,4 @@ export class LogView extends React.Component<LogViewProps, LogViewState> {
         }).done();
     }
 }
+**/

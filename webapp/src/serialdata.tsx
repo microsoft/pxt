@@ -12,35 +12,36 @@ import Util = pxt.Util;
 const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
-    points: canvaschart.Point[] = [];
+//    private points: canvaschart.Point[] = [];
+    private view: pxsim.logs.LogViewElement;
+    // TODO: pass this in at initialization
+    public isSim: boolean = true;
+    private element: HTMLDivElement;
 
     acceptsFile(file: pkg.File) {
+        // TODO hardcoded string
         return file.name === "serialdata.json"
     }
 
+    constructor(public parent: pxt.editor.IProjectView) {
+        super(parent)
+        this.view = new pxsim.logs.LogViewElement({
+            isSim: this.isSim,
+            maxEntries: 80,
+            maxLineLength: 500,
+            maxAccValues: 500
+        })
+        this.view.setLabel(this.isSim ? lf("SIM") : lf("DEV"));
+    }
+
     display() {
-        window.addEventListener("message", (ev: MessageEvent) => {
-            let msg = ev.data;
-            console.log("PINEAPPLE " + msg.type);
-            if (msg.type === "serial") {
-                let data = msg.data.slice(0, msg.data.length - 1);
-                let datasplit = data.split(":");
-                let x = datasplit[0];
-                let y = datasplit[1];
-                this.points.push(new canvaschart.Point(Date.now(), y));
-                new canvaschart.CanvasChart().drawChart(document.getElementById("fizzle") as HTMLCanvasElement, this.points);
-            }
-        });
         return (
-            <div className="ui content">
-                <canvas id="fizzle">
-                </canvas>
+            <div ref={(el) => {this.element = el}}>
             </div>
         )
     }
 
-    /** 
     domUpdate() {
+        this.element.appendChild(this.view.element);
     }
-    **/
 }

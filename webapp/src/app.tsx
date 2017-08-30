@@ -606,10 +606,10 @@ export class ProjectView
 
         this.stopSimulator(true);
         pxt.blocks.cleanBlocks();
-        let simLogs = this.refs["simLogs"] as logview.LogView;
-        let devLogs = this.refs["devLogs"] as logview.LogView;
-        simLogs.clear();
-        devLogs.clear();
+//        let simLogs = this.refs["simLogs"] as logview.LogView;
+//        let devLogs = this.refs["devLogs"] as logview.LogView;
+//        simLogs.clear();
+//        devLogs.clear();
         this.setState({
             showFiles: false,
             editorState: editorState,
@@ -1227,8 +1227,8 @@ export class ProjectView
     }
 
     clearLog() {
-        let logs = this.refs["simLogs"] as logview.LogView;
-        logs.clear();
+//        let logs = this.refs["simLogs"] as logview.LogView;
+//        logs.clear();
     }
 
     hwDebug() {
@@ -1848,11 +1848,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
                         <div className="ui editorFloat portrait">
-                            <logview.LogView ref="simLogs" isSim={true} />
                             <sui.Button key='serialdatabtn' class={'serialdata-button'} icon={'maximize'} title={fullscreenTooltip} onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/serialdata.json"))} />
-                        </div>
-                        <div className="ui editorFloat portrait">
-                            <logview.LogView ref="devLogs" isSim={false} />
                         </div>
                         {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
                     </aside>
