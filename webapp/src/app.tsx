@@ -36,7 +36,7 @@ import * as monacoToolbox from "./monacoSnippets"
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
-import * as serialdata from "./serialdata"
+import * as serial from "./serial"
 import * as blocks from "./blocks"
 import * as codecard from "./codecard"
 import * as logview from "./logview"
@@ -92,7 +92,7 @@ export class ProjectView
     editorFile: pkg.File;
     textEditor: monaco.Editor;
     pxtJsonEditor: pxtjson.Editor;
-    serialDataEditor: serialdata.Editor;
+    serialEditor: serial.Editor;
     blocksEditor: blocks.Editor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
@@ -353,7 +353,7 @@ export class ProjectView
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
-        this.serialDataEditor = new serialdata.Editor(this);
+        this.serialEditor = new serial.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
 
         let changeHandler = () => {
@@ -368,7 +368,7 @@ export class ProjectView
                 this.stopSimulator();
             this.editorChangeHandler();
         }
-        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.serialDataEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.serialEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -933,7 +933,7 @@ export class ProjectView
         if (options.filesOverride)
             Util.jsonCopyFrom(files, options.filesOverride)
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n"
-        files["serialdata.json"] = JSON.stringify({"pineapple": "banana"}) + "\n"
+        files["serial.json"] = JSON.stringify({"pineapple": "banana"}) + "\n"
         return workspace.installAsync({
             name: cfg.name,
             meta: {},
@@ -1848,7 +1848,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
                         <div className="ui editorFloat portrait">
-                            <sui.Button key='serialdatabtn' class={'serialdata-button'} icon={'maximize'} title={fullscreenTooltip} onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/serialdata.json"))} />
+                            <sui.Button key='serialbtn' class={'serial-button'} icon={'maximize'} title={fullscreenTooltip} onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/serial.json"))} />
                         </div>
                         {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
                     </aside>
