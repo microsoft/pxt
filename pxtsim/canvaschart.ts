@@ -237,9 +237,8 @@ namespace pxsim {
             let mant_norm = Math.abs(mantissaYmax) * expo;
 
             // trunc ends
-            let ip_start, ip_end;
-            ip_start = Math.floor(start_norm * this.sign(start));
-            ip_end = Math.ceil(end_norm * this.sign(end));
+            let ip_start = Math.floor(start_norm * this.sign(start));
+            let ip_end = Math.ceil(end_norm * this.sign(end));
 
             mantissaYmax = Math.ceil(mant_norm);
 
