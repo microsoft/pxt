@@ -256,7 +256,7 @@ declare namespace String {
     /**
      * Make a string from the given ASCII character code.
      */
-    //% help=math/string-from-char-code
+    //% help=math/from-char-code
     //% shim=String_::fromCharCode
     //% advanced=true
     //% blockNamespace="Math" blockId="stringFromCharCode" block="text from char code %code" weight=1
