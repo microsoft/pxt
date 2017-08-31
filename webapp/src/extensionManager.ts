@@ -14,26 +14,31 @@ export enum PermissionStatus {
 }
 
 export interface ExtensionHost {
-    send(extId: string, message: e.ExtensionMessage): void;
-    promptForPermissionAsync(id: string, permission: Permissions): Promise<boolean>;
+    send(name: string, message: e.ExtensionMessage): void;
+    promptForPermissionAsync(name: string, permission: Permissions[]): Promise<boolean>;
+}
+
+export interface PermissionRequest {
+    extId: string;
+    permissions: Permissions[];
+    resolver: (choice: boolean) => void;
 }
 
 export class ExtensionManager {
     private statuses: pxt.Map<e.Permissions<PermissionStatus>> = {};
-    private consent: pxt.Map<boolean>;
+    private nameToExtId: pxt.Map<string> = {};
+    private extIdToName: pxt.Map<string> = {};
+    private consent: pxt.Map<boolean> = {};
+
+    private pendingRequests: PermissionRequest[] = [];
+    private queueLock = false;
 
     constructor (private host: ExtensionHost) {
     }
 
     handleExtensionMessage(message: e.ExtensionMessage) {
-        switch (message.type) {
-            case "request":
-                this.handleRequestAsync(message as e.ExtensionRequest);
-                break;
-            case "response":
-            case "event":
-                break;
-        }
+        this.handleRequestAsync(message as e.ExtensionRequest)
+        .catch(e => {})
     }
 
     sendEvent(extId: string, event: string) {
@@ -48,39 +53,50 @@ export class ExtensionManager {
         return this.consent[extId];
     }
 
+    getExtId(name: string): string {
+        if (!this.nameToExtId[name]) {
+            this.nameToExtId[name] = Util.guidGen();
+            this.extIdToName[this.nameToExtId[name]] = name;
+        }
+        return this.nameToExtId[name];
+    }
+
     private sendResponse(response: e.ExtensionResponse) {
-        this.host.send(response.extId, response);
+        this.host.send(this.extIdToName[response.extId], response);
     }
 
     private handleRequestAsync(request: e.ExtensionRequest): Promise<void> {
         const resp = mkResponse(request);
 
         if (!this.hasConsent(request.extId)) {
-            return;
+            resp.success = false;
+            resp.error = ""
+            this.sendResponse(resp);
+            return Promise.reject("No consent");
         }
 
         switch (request.action) {
-            case "init":
+            case "extinit":
                 this.sendResponse(resp);
                 break;
-            case "datastream":
+            case "extdatastream":
                 return this.permissionOperation(request.extId, Permissions.Serial, resp, handleDataStreamRequest);
-            case "querypermission":
+            case "extquerypermission":
                 const perm = this.getPermissions(request.extId)
                 const r = resp as e.ExtensionResponse;
                 r.resp = statusesToResponses(perm);
                 this.sendResponse(r);
                 break;
-            case "requestpermission":
+            case "extrequestpermission":
                 return this.requestPermissionsAsync(request.extId, resp as e.PermissionResponse, request.body);
-            case "usercode":
+            case "extusercode":
                 return this.permissionOperation(request.extId, Permissions.ReadUserCode, resp, handleUserCodeRequest);
-            case "readcode":
-                handleReadCodeRequest(request.extId, resp as e.ReadCodeResponse);
+            case "extreadcode":
+                handleReadCodeRequest(this.extIdToName[request.extId], resp as e.ReadCodeResponse);
                 this.sendResponse(resp);
                 break;
-            case "writecode":
-                handleWriteCodeRequest(request.extId, resp, request.body);
+            case "extwritecode":
+                handleWriteCodeRequest(this.extIdToName[request.extId], resp, request.body);
                 this.sendResponse(resp);
                 break;
 
@@ -89,15 +105,22 @@ export class ExtensionManager {
         return Promise.resolve();
     }
 
-    private permissionOperation(id: string, permission: Permissions, resp: e.ExtensionResponse, cb: (resp: e.ExtensionResponse) => void) {
+    private permissionOperation(id: string, permission: Permissions, resp: e.ExtensionResponse, cb: (name: string, resp: e.ExtensionResponse) => void) {
         return this.checkPermissionAsync(id, permission)
-            .then(() => {
-                cb(resp);
-                this.sendResponse(resp);
+            .then(hasPermission => {
+                if (hasPermission) {
+                    cb(this.extIdToName[id], resp);
+                    this.sendResponse(resp);
+                }
+                else {
+                    resp.success = false;
+                    resp.error = "permission denied";
+                    this.sendResponse(resp);
+                }
             })
-            .catch(() => {
+            .catch(e => {
                 resp.success = false;
-                resp.error = "permission denied";
+                resp.error = e;
                 this.sendResponse(resp);
             });
     }
@@ -112,6 +135,45 @@ export class ExtensionManager {
         return this.statuses[id]
     }
 
+    private queuePermissionRequest(extId: string, permission: Permissions): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            const req: PermissionRequest = {
+                extId,
+                permissions: [permission],
+                resolver: resolve
+            };
+            
+            this.pendingRequests.push(req);
+            if (!this.queueLock && this.pendingRequests.length === 1) {
+                this.queueLock = true;
+                this.nextPermissionRequest();
+            }
+        });
+    }
+
+    private nextPermissionRequest() {
+        if (this.pendingRequests.length) {
+            const current = this.pendingRequests.shift();
+
+            // Don't allow duplicate requests to prevent spamming
+            current.permissions = current.permissions.filter(p => this.hasNotBeenPrompted(current.extId, p))
+            
+            if (current.permissions.length) {
+                this.host.promptForPermissionAsync(this.extIdToName[current.extId], current.permissions)
+                .done(approved => {
+                    current.resolver(approved);
+                    this.nextPermissionRequest();
+                })
+            }
+            else {
+                this.nextPermissionRequest();
+            }
+        }
+        else {
+            this.queueLock = false;
+        }
+    }
+
     private checkPermissionAsync(id: string, permission: Permissions): Promise<boolean> {
         const perm = this.getPermissions(id)
 
@@ -122,7 +184,17 @@ export class ExtensionManager {
         }
 
         if (status === PermissionStatus.NotYetPrompted) {
-            return this.host.promptForPermissionAsync(id, permission);
+            return this.queuePermissionRequest(id, permission)
+                .then(approved => {
+                    const newStatus = approved ? PermissionStatus.Granted : PermissionStatus.Denied;
+                    switch (permission) {
+                        case Permissions.Serial:
+                            this.statuses[id].serial = newStatus; break;
+                        case Permissions.ReadUserCode:
+                            this.statuses[id].readUserCode = newStatus; break;
+                    }
+                    return approved;
+                });
         }
 
         return Promise.resolve(status === PermissionStatus.Granted);
@@ -143,23 +215,33 @@ export class ExtensionManager {
             .then(() => statusesToResponses(this.getPermissions(id)))
             .then(responses => { resp.resp = responses });
     }
+
+    hasNotBeenPrompted(extId: string, permission: Permissions) {
+        const perm = this.getPermissions(extId);
+        let status: PermissionStatus;
+        switch (permission) {
+            case Permissions.Serial: status = perm.serial; break;
+            case Permissions.ReadUserCode: status = perm.readUserCode; break;
+        }
+        return status === PermissionStatus.NotYetPrompted;
+    }
 }
 
-function handleUserCodeRequest(resp: e.ExtensionResponse) {
+function handleUserCodeRequest(name: string, resp: e.ExtensionResponse) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     resp.resp = mainPackage.getAllFiles();
 }
 
-function handleDataStreamRequest(resp: e.ExtensionResponse) {
+function handleDataStreamRequest(name: string, resp: e.ExtensionResponse) {
     // TODO
 }
 
-function handleReadCodeRequest(id: string, resp: e.ReadCodeResponse) {
+function handleReadCodeRequest(name: string, resp: e.ReadCodeResponse) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
-    const extPackage = mainPackage.pkgAndDeps().filter(p => p.getPkgId() === id)[0];
+    const extPackage = mainPackage.pkgAndDeps().filter(p => p.getPkgId() === name)[0];
     if (extPackage) {
         const files = extPackage.getAllFiles();
-        resp.body = {
+        resp.resp = {
             json: files["extension.json"],
             code: files["extension.ts"]
         };
@@ -170,9 +252,9 @@ function handleReadCodeRequest(id: string, resp: e.ReadCodeResponse) {
     }
 }
 
-function handleWriteCodeRequest(id: string, resp: e.ExtensionResponse, files: e.ExtensionFiles) {
+function handleWriteCodeRequest(name: string, resp: e.ExtensionResponse, files: e.ExtensionFiles) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
-    const extPackage = mainPackage.pkgAndDeps().filter(p => p.getPkgId() === id)[0];
+    const extPackage = mainPackage.pkgAndDeps().filter(p => p.getPkgId() === name)[0];
     if (extPackage) {
         if (files.json !== undefined) {
             extPackage.setFile("extension.json", files.json);

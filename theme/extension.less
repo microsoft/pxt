@@ -7,7 +7,7 @@
 
 iframe.extension-frame {
     position: fixed;
-    z-index: 1001; /* So it show's up above the modal dimmer */
+    z-index: 1001; /* So it shows up above the modal dimmer */
 }
 
 /*******************************
@@ -23,4 +23,23 @@ iframe.extension-frame {
 .ui.modal.extensiondialog #extensionWrapper {
     width: 100%;
     height: 100%;
+}
+
+.permissiondialoginner {
+    width: 40%;
+    margin-left: 30%;
+    margin-bottom: 3em;
+}
+
+.permissiondialogheader {
+    margin-bottom: 1.5em;
+    font-size: 1.5em;
+}
+
+.modals.dimmer.permissiondimmer {
+    z-index: 1002; /* So it shows up above the extension iframe */
+}
+
+.ui.modal .actions > .button.deny {
+    margin-left: 55%
 }
