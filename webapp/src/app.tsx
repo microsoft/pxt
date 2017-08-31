@@ -583,10 +583,7 @@ export class ProjectView
 
         this.stopSimulator(true);
         pxt.blocks.cleanBlocks();
-//        let simLogs = this.refs["simLogs"] as logview.LogView;
-//        let devLogs = this.refs["devLogs"] as logview.LogView;
-//        simLogs.clear();
-//        devLogs.clear();
+        this.clearSerial()
         this.setState({
             showFiles: false,
             editorState: editorState,
@@ -1029,7 +1026,7 @@ export class ProjectView
         }
         const simRestart = this.state.running;
         this.setState({ compiling: true });
-        this.clearLog();
+        this.clearSerial();
         this.editor.beforeCompile();
         if (simRestart) this.stopSimulator();
         let state = this.editor.snapshotState()
@@ -1189,9 +1186,10 @@ export class ProjectView
             })
     }
 
-    clearLog() {
+    clearSerial() {
 //        let logs = this.refs["simLogs"] as logview.LogView;
 //        logs.clear();
+        this.serialEditor.clear()
     }
 
     hwDebug() {
@@ -1225,7 +1223,7 @@ export class ProjectView
         }
 
         this.stopSimulator();
-        this.clearLog();
+        this.clearSerial();
 
         let state = this.editor.snapshotState()
         return compiler.compileAsync(opts)
