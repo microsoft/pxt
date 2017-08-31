@@ -24,7 +24,7 @@ export class Editor extends srceditor.Editor {
     private maxLineLength: number = 255
     private maxAccValues: number = 500
     private renderFiberId: number
-    
+
     acceptsFile(file: pkg.File) {
         // TODO hardcoded string
         return file.name === "serial.json"
@@ -33,7 +33,7 @@ export class Editor extends srceditor.Editor {
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
         this.setLabel(this.isSim ? lf("SIM") : lf("DEV"))
-        window.addEventListener("message", this.processMessage, false)
+        window.addEventListener("message", this.processMessage.bind(this), false)
     }
 
     processMessage(ev:MessageEvent) {
@@ -158,7 +158,7 @@ export class Editor extends srceditor.Editor {
 
     scheduleRender(e: ILogEntryElement) {
         e.dirty = true;
-        //if (!this.renderFiberId) this.renderFiberId = setTimeout(() => this.render(), 50);
+        if (!this.renderFiberId) this.renderFiberId = setTimeout(() => this.render(), 50);
     }
 
     setLabel(text: string, theme?: string) {
@@ -180,7 +180,6 @@ export class Editor extends srceditor.Editor {
 
             if (entry.countElement) entry.countElement.innerText = entry.count.toString();
             if (entry.accvaluesElement) entry.accvaluesElement.innerText = entry.value;
-    //                if (entry.chartElement) entry.chartElement.render();
             if (entry.chartElement) new canvaschart.CanvasChart().drawChart(entry.chartElement, entry.accvalues.map(accvalue => new canvaschart.Point(accvalue.t, accvalue.v)))
             entry.valueElement.textContent = entry.accvalues ? '' : entry.value;
             entry.dirty = false;
@@ -191,12 +190,25 @@ export class Editor extends srceditor.Editor {
     display() {
         return (
             <div className="serialEditor" ref={(el) => {this.element = el}}>
-                {this.entries.map(e => <div className="entry">Hi i'm an entry</div>)}
+                {this.entries.map(e =>
+                    <div className="entry">
+                        <div className="entryCount" ref={(el) => e.countElement = el}></div>
+                        <div className="entryValue" ref={(el) => e.accvaluesElement = el}></div>
+                        <canvas className="entryChart" ref={(el) => e.chartElement = el}></canvas>
+                    </div>
+                )}
             </div>
         )
     }
 
     domUpdate() {
+        /**
+        this.entries.forEach((e) => {
+            if (e.chartElement) {
+                new canvaschart.CanvasChart().drawChart(e.chartElement, e.accvalues.map(accvalue => new canvaschart.Point(accvalue.t, accvalue.v)))
+            }
+        })
+        **/
     }
 }
 
