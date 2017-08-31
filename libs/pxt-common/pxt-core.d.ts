@@ -293,12 +293,12 @@ declare namespace Math {
     function pow(x: number, y: number): number;
 
     /**
-     * Return a pseudorandom number between 0 and `max`.
+     * Return a pseudorandom number between 0 and `limit`.
      */
-    //% blockId="device_random" block="pick random 0 to %max"
+    //% blockId="device_random" block="pick random 0 to %limit"
     //% help=math/random
     //% shim=Math_::random
-    function random(max: number): number;
+    function random(limit: number): number;
 
     /**
      * Return the square root of a number.
