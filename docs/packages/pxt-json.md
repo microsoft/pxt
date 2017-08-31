@@ -25,6 +25,8 @@ The `pxt.json` is described by the interface `PackageConfig`:
         card?: CodeCard;
         documentation?: string; // doc page to open when loading project
 
+        extension?: PackageExtension; // see /packages/extensions
+
         // semver description for support target version
         version?: string;
         installedVersion?: string;
