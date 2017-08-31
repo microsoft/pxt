@@ -21,7 +21,7 @@
     * [Theming Editor](/targets/theming)
 * [Creating Packages](/packages)
     * [Getting started](/packages/getting-started)
-    * [pxt.json](/packages/pxt-json)
+    * [pxt.json](/packages/pxtJson)
     * [Package versioning](/packages/versioning)
     * [Package approval](/packages/approval)
     * [Package extensions](/packages/extensions)

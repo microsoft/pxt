@@ -42,7 +42,7 @@ for creating JavaScript/Blocks online editors.
 * [SAMD21 Targets](/targets/samd21targets)
 
 ### [Creating Packages](/packages)
-* [pxt.json](/packages/pxt-json)
+* [pxt.json](/packages/pxtJson)
 
 ### [Command Line Interface](/cli)
 * [build](/cli/build)
