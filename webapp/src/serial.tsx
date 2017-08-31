@@ -12,14 +12,21 @@ import Util = pxt.Util
 const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
+    //?
     static counter = 0
-    private entries: ILogEntryElement[] = []
-    private serialBuffers: pxsim.Map<string> = {}
-    private isSim: boolean = true
+    private graphEntries: ILogEntryElement[] = []
+    private consoleEntries: IConsoleEntry[] = []
+    private consoleBuffer: string = ""
+
     public element: HTMLDivElement
     private labelElement: HTMLElement
-    private shouldScroll = false
+    private graphElement: HTMLElement
+    private consoleElement: HTMLElement
+
+    // TODO this!
     // TODO pass these values in with props or config?
+    private shouldScroll = false
+    private isSim: boolean = true
     private maxEntries: number = 80
     private maxLineLength: number = 255
     private maxAccValues: number = 500
@@ -30,14 +37,58 @@ export class Editor extends srceditor.Editor {
         return file.name === "serial.json"
     }
 
+    isGraphable(v: string) {
+        return /[a-z]*:[0-9.]*/.test(v)
+    }
+
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
+        // TODO
         this.setLabel(this.isSim ? lf("SIM") : lf("DEV"))
         window.addEventListener("message", this.processMessage.bind(this), false)
     }
 
-    processMessage(ev:MessageEvent) {
-        let msg = ev.data;
+    processMessage(ev: MessageEvent) {
+        let msg = ev.data
+        if (msg.type === "serial") {
+            const smsg = msg as pxsim.SimulatorSerialMessage
+            const sim = !!smsg.sim || false
+            if (sim == this.isSim) {
+                const data = smsg.data || ""
+                const source = smsg.id || "?"
+                let theme = source.split("-")[0] || "black"
+
+                if (this.isGraphable(data)) {
+                    this.appendGraphEntry(source, data, theme, sim)
+                } else {
+                    this.appendConsoleEntry(data)
+                }
+            }
+        }
+    }
+
+    appendGraphEntry(source: string, data: string, theme: string, sim: boolean) {
+    }
+
+    appendConsoleEntry(data: string) {
+        for (let i = 0; i < data.length; ++i) {
+            let ch = data[i]
+            if (ch === "\n" || this.consoleBuffer.length > this.maxLineLength) {
+                let consoleEntry: IConsoleEntry = {
+                    data: this.consoleBuffer
+                }
+                this.consoleEntries.push(consoleEntry)
+                this.consoleBuffer = ""
+                if (this.consoleEntries.length > this.maxAccValues) {
+                    this.consoleEntries.shift()
+                }
+                this.scheduleRender()
+            } else {
+                this.consoleBuffer += ch
+            }
+        }
+    }
+    /**
         switch (msg.type || '') {
             case 'serial':
                 const smsg = msg as pxsim.SimulatorSerialMessage;
@@ -48,6 +99,11 @@ export class Editor extends srceditor.Editor {
                     let theme = source.split('-')[0] || '';
                     if (!/^[a-z]+$/.test(theme)) theme = 'black';
                     let buffer = this.serialBuffers[source] || '';
+
+                    if (this.isGraphable(value)) {
+
+                    }
+
                     for (let i = 0; i < value.length; ++i) {
                         switch (value.charCodeAt(i)) {
                             case 10: //'\n'
@@ -70,18 +126,17 @@ export class Editor extends srceditor.Editor {
                 break;
         }
     }
-
+    **/
+    /**
     appendEntry(source: string, value: string, theme: string, sim: boolean) {
-        /**
-         * source: e.g., "red-1234567"
-         * value: e.g., "x:123"
-         * theme: e.g., "red"
-         * sim: e.g., "false"
-         */
+         //source: e.g., "red-1234567"
+         //value: e.g., "x:123"
+         //theme: e.g., "red"
+         //sim: e.g., "false"
         if (this.labelElement && !this.labelElement.parentElement)
             this.element.insertBefore(this.labelElement, this.element.firstElementChild);
 
-        let ens = this.entries;
+        let ens = this.graphEntries;
         while (ens.length > this.maxEntries) {
             let po = ens.shift();
             if (po.element && po.element.parentElement) po.element.parentElement.removeChild(po.element);
@@ -147,17 +202,19 @@ export class Editor extends srceditor.Editor {
             this.scheduleRender(e);
         }
     }
+    **/
 
     clear() {
-        this.entries = [];
+        this.graphEntries = [];
         if (this.labelElement && this.labelElement.parentElement)
             this.labelElement.parentElement.removeChild(this.labelElement);
-        this.element.innerHTML = '';
-        this.serialBuffers = {};
+        if (this.element)
+            this.element.innerHTML = "";
+        this.consoleBuffer = "";
     }
 
-    scheduleRender(e: ILogEntryElement) {
-        e.dirty = true;
+    scheduleRender() {
+        //e.dirty = true;
         if (!this.renderFiberId) this.renderFiberId = setTimeout(() => this.render(), 50);
     }
 
@@ -175,50 +232,83 @@ export class Editor extends srceditor.Editor {
         }
     }
     render() {
-        this.entries.forEach(entry => {
+        //TODO handle dirty setting, no longer in scheduleRender
+        /**
+        this.graphEntries.forEach(entry => {
             if (!entry.dirty) return;
 
             if (entry.countElement) entry.countElement.innerText = entry.count.toString();
             if (entry.accvaluesElement) entry.accvaluesElement.innerText = entry.value;
             if (entry.chartElement) new canvaschart.CanvasChart().drawChart(entry.chartElement, entry.accvalues.map(accvalue => new canvaschart.Point(accvalue.t, accvalue.v)))
+                //TODO valueElement obsolete
             entry.valueElement.textContent = entry.accvalues ? '' : entry.value;
             entry.dirty = false;
         });
+        **/
+        /**
+        let console = (
+            <div className="console" ref={(el) => this.consoleElement = el}>
+                {this.consoleEntries.map(e =>
+                    <div className="consoleEntry" ref={(el) => e.consoleElement = el}>{e.data}</div>
+                )}
+            </div>
+        )
+        **/
+        let console = document.createElement("div")
+        console.className = "console"
+        this.consoleEntries.forEach(e => {
+            let consoleEntry = document.createElement("div")
+            consoleEntry.className = "consoleEntry"
+            consoleEntry.textContent = e.data
+            console.appendChild(consoleEntry)
+        })
+        this.element.appendChild(console)
         this.renderFiberId = 0;
     }
 
     display() {
         return (
             <div className="serialEditor" ref={(el) => {this.element = el}}>
-                {this.entries.map(e =>
-                    <div className="entry">
-                        <div className="entryCount" ref={(el) => e.countElement = el}></div>
-                        <div className="entryValue" ref={(el) => e.accvaluesElement = el}></div>
-                        <canvas className="entryChart" ref={(el) => e.chartElement = el}></canvas>
-                    </div>
-                )}
             </div>
         )
+        /**
+        return (
+            <div className="foo"></div>
+        )
+        **/
+        /**
+        return (
+            <div className="serialEditor" ref={(el) => {this.element = el}}>
+                <div className="graphs">
+                    {this.graphEntries.map(e =>
+                        <div>
+                            <span className="graphLabel" ref={(el) => e.accvaluesElement = el}></span>
+                            <canvas className="graphCanvas" ref = {(el) => e.chartElement = el}></canvas>
+                        </div>
+                    )}
+                </div>
+                <div className="console">
+                    {this.consoleEntries.map(e =>
+                        <div className="consoleEntry" ref={(el) => e.consoleElement = el}></div>
+                    )}
+                </div>
+            </div>
+        )
+        **/
     }
 
     domUpdate() {
-        /**
-        this.entries.forEach((e) => {
-            if (e.chartElement) {
-                new canvaschart.CanvasChart().drawChart(e.chartElement, e.accvalues.map(accvalue => new canvaschart.Point(accvalue.t, accvalue.v)))
-            }
-        })
-        **/
+        this.scheduleRender()
     }
 }
-
+/**
 interface ILogProps {
     isSim?: boolean
     maxEntries?: number
     maxLineLength?: number
     maxAccValues?: number
 }
-
+**/
 interface ILogEntry {
     id: number
     theme: string
@@ -237,4 +327,9 @@ interface ILogEntryElement extends ILogEntry {
     countElement?: HTMLSpanElement
     chartElement?: HTMLCanvasElement
     valueElement?: Text
+}
+
+interface IConsoleEntry {
+    data: string
+    consoleElement?: HTMLElement
 }
