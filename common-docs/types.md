@@ -13,6 +13,10 @@ The following built-in types are supported for the @boardname@:
 
 * **[Array](/types/array)**: a list of items of a primitive type
 
+## Functions
+
+* **[Function](types/function)**: code you can reuse anywhere in a program 
+
 ## #custom
 
 ## User data
