@@ -1244,9 +1244,10 @@ ${output}</xml>`;
                             defaultV = false;
                         } else if (isLiteralNode(e)) {
                             const param = paramInfo[i];
+                            const fieldText = param.paramFieldEditor == 'text' ? (e as ts.StringLiteral).text : e.getText();
 
                             if (param.decompileLiterals) {
-                                let fieldBlock = getFieldBlock(param.type, param.fieldName, e.getText(), true);
+                                let fieldBlock = getFieldBlock(param.type, param.fieldName, fieldText, true);
                                 if (param.paramShadowOptions) {
                                     fieldBlock.mutation = {"customfield": Util.htmlEscape(JSON.stringify(param.paramShadowOptions))};
                                 }
@@ -1260,7 +1261,7 @@ ${output}</xml>`;
                                 defaultV = false;
                             }
                             else if (param.paramFieldEditorOptions && param.paramFieldEditorOptions['onParentBlock']) {
-                                (r.fields || (r.fields = [])).push(getField(vName, e.getText()));
+                                (r.fields || (r.fields = [])).push(getField(vName, fieldText));
                                 return;
                             }
                         }

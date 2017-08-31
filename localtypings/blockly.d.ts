@@ -518,6 +518,7 @@ declare namespace Blockly {
 
         // Returns null if the field does not exist on the specified block.
         getFieldValue(field: string): string;
+        getField(field: string): Blockly.Field;
         // Returns null if the input does not exist on the specified block, or
         // is disconnected.
         getInputTargetBlock(field: string): Block;
