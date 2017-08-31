@@ -21,16 +21,16 @@ allow programming of music-making applications based on augmented reality.
 
 1.	Find a JavaScript library or web service that aligns with your domain/interests (1 week);
 2.	Describe a simplified Application Programming Interface (API) for this library/service using TypeScript (www.typescriptlang.org); 
-3.	Configure a new MakeCode editor to surface your API as visual blocks (https://makecode.com/target-creation); 
+3.	Configure a new MakeCode editor to surface your API as visual blocks;
 4.	Write an interpreter that brings your API to life in the web browser;
 5.	Deploy your MakeCode web app and test with your customers.
 
 # Week 1: Getting started with MakeCode
 
-1. Get a [GitHub](www.github.com) account, if you don't already have one;
-2. Download and install a git or [GitHub](http://desktop.github.com) client; 
-3. Download and install [node.js](www.nodejs.org);
-4. Download and install [VS Code](https://code.visualstudio.com), the premier [TypeScript](www.typescriptlang.org) editor;
+1. Get a [GitHub](https://www.github.com) account, if you don't already have one;
+2. Download and install a git client or [GitHub client](https://desktop.github.com); 
+3. Download and install [node.js](https://www.nodejs.org);
+4. Download and install [VS Code](https://code.visualstudio.com), the premier [TypeScript](https://www.typescriptlang.org) editor;
 5. Clone the GitHub repository (repo) at https://github.com/microsoft/pxt-sample to your machine;
 6. Follow the directions in the [MakeCode sample](https://github.com/microsoft/pxt-sample) to build and run the target.
 
