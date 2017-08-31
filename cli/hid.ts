@@ -32,10 +32,19 @@ export function listAsync() {
 }
 
 export function serialAsync() {
-    return hf2DeviceAsync()
+    return initAsync()
         .then(d => {
             connectSerial(d)
         })
+}
+
+export function dmesgAsync() {
+    return initAsync()
+        .then(d => d.talkAsync(pxt.HF2.HF2_CMD_DMESG)
+            .then(resp => {
+                console.log(U.fromUTF8(U.uint8ArrayToString(resp)))
+                return d.disconnectAsync()
+            }))
 }
 
 function hex(n: number) {
@@ -50,21 +59,35 @@ export function getHF2Devices() {
     const hid = getHID();
     if (!hid) return [];
     let devices = hid.devices() as HidDevice[]
-    return devices.filter(d => (d.release & 0xff00) == 0x4200)
+    let serial = pxt.appTarget.serial
+    return devices.filter(d =>
+        (serial && parseInt(serial.productId) == d.productId && parseInt(serial.vendorId) == d.vendorId) ||
+        (d.release & 0xff00) == 0x4200)
 }
 
-export function hf2ConnectAsync(path: string) {
-    let h = new HF2.Wrapper(new HidIO(path))
-    return h.reconnectAsync(true).then(() => h)
+export function hf2ConnectAsync(path: string, raw = false) {
+    return Promise.resolve()
+        .then(() => {
+            // in .then() to make sure we catch errors
+            let h = new HF2.Wrapper(new HidIO(path))
+            h.rawMode = raw
+            return h.reconnectAsync(true).then(() => h)
+        })
 }
+
+export function mkPacketIOAsync() {
+    return Promise.resolve()
+        .then(() => {
+            // in .then() to make sure we catch errors
+            return new HidIO(null)
+        })
+}
+
+pxt.HF2.mkPacketIOAsync = mkPacketIOAsync
 
 let hf2Dev: Promise<HF2.Wrapper>
-export function hf2DeviceAsync(path: string = null): Promise<HF2.Wrapper> {
+export function initAsync(path: string = null): Promise<HF2.Wrapper> {
     if (!hf2Dev) {
-        let devs = getHF2Devices()
-        if (devs.length == 0)
-            return Promise.reject(new HIDError("no devices found"))
-        path = devs[0].path
         hf2Dev = hf2ConnectAsync(path)
     }
     return hf2Dev
@@ -90,17 +113,29 @@ export class HIDError extends Error {
 
 export class HidIO implements HF2.PacketIO {
     dev: any;
+    private path: string;
 
     onData = (v: Uint8Array) => { };
+    onEvent = (v: Uint8Array) => { };
     onError = (e: Error) => { };
 
-    constructor(private path: string) {
+    constructor(private requestedPath: string) {
         this.connect()
     }
 
     private connect() {
         const hid = getHID();
         U.assert(hid)
+
+        if (this.requestedPath == null) {
+            let devs = getHF2Devices()
+            if (devs.length == 0)
+                throw new HIDError("no devices found")
+            this.path = devs[0].path
+        } else {
+            this.path = this.requestedPath
+        }
+
         this.dev = new HID.HID(this.path)
         this.dev.on("data", (v: Buffer) => {
             //console.log("got", v.toString("hex"))
@@ -109,12 +144,23 @@ export class HidIO implements HF2.PacketIO {
         this.dev.on("error", (v: Error) => this.onError(v))
     }
 
+    talkOneAsync(pkt: Uint8Array): Promise<Uint8Array> {
+        return new Promise<Uint8Array>((resolve, reject) => {
+            let prev = this.onData
+            this.onData = buf => {
+                this.onData = prev
+                resolve(buf)
+            }
+            this.sendPacketAsync(pkt).catch(reject)
+        })
+    }
+
     sendPacketAsync(pkt: Uint8Array): Promise<void> {
         //console.log("SEND: " + new Buffer(pkt).toString("hex"))
         return Promise.resolve()
             .then(() => {
                 let lst = [0]
-                for (let i = 0; i < 64; ++i)
+                for (let i = 0; i < Math.max(64, pkt.length); ++i)
                     lst.push(pkt[i] || 0)
                 this.dev.write(lst)
             })
@@ -126,19 +172,26 @@ export class HidIO implements HF2.PacketIO {
         throw new HIDError(fullmsg)
     }
 
-    reconnectAsync(): Promise<void> {
-        if (this.dev) {
-            // see https://github.com/node-hid/node-hid/issues/61
-            this.dev.removeAllListeners("data");
-            this.dev.removeAllListeners("error");
-            let pkt = new Uint8Array([0x48])
-            this.sendPacketAsync(pkt).catch(e => { })
-        }
+    disconnectAsync(): Promise<void> {
+        if (!this.dev) return Promise.resolve()
+
+        // see https://github.com/node-hid/node-hid/issues/61
+        this.dev.removeAllListeners("data");
+        this.dev.removeAllListeners("error");
+        let pkt = new Uint8Array([0x48])
+        this.sendPacketAsync(pkt).catch(e => { })
         return Promise.delay(100)
             .then(() => {
-                if (this.dev)
+                if (this.dev) {
                     this.dev.close()
-                this.dev = null
+                    this.dev = null
+                }
+            })
+    }
+
+    reconnectAsync(): Promise<void> {
+        return this.disconnectAsync()
+            .then(() => {
                 this.connect()
             })
     }
