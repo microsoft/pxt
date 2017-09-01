@@ -266,6 +266,9 @@ export class Editor extends srceditor.Editor {
 
         if (monacoArea && monacoToolbox && this.editor) {
             this.editor.layout({ width: monacoArea.offsetWidth - monacoToolbox.clientWidth, height: monacoArea.offsetHeight });
+
+            const rgba = (this.editor as any)._themeService._theme.colors['editor.background'].rgba;
+            this.parent.updateEditorLogo(monacoToolbox.clientWidth, `rgba(${rgba.r},${rgba.g},${rgba.b},${rgba.a})`);
         }
     }
 
