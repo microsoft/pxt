@@ -5,5 +5,5 @@ The **Microsoft MakeCode** team wants to be sure that every person on the planet
 The current section explains how to use the accessibility features of **Microsoft MakeCode**. The main features are:
 
 * [Keyboard Navigation](/accessibility/keyboardnavigation)
+* [Assistive technologies](/accessibility/screenreaders)
 * [High Contrast](/accessibility/highcontrast)
-* [Screen Readers](/accessibility/screenreaders)

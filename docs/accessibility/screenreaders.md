@@ -1,6 +1,6 @@
-# Screen Readers
+# Assistive technologies
 
-Several screen readers exist and allow consumers with vision impairement to use MakeCode.
+Several screen readers exist and allow consumers with vision impairment to use MakeCode.
 
 ## JAWS (Job Access With Speech) Screen Reader
 
@@ -18,6 +18,6 @@ The Narrator is the built-in screen reader provided with Windows. There is two w
 
 ## Voice Over
 
-Voice Over is the built-in screen reader provided with macOS. There is two way to start Voice Over :
-* Press the ``Command + F5`` keys.
+Voice Over is the built-in screen reader provided with macOS. There are two ways to start Voice Over :
+* Press the ``⌘ + F5`` keys.
 * Use the ``Universal Access`` pane of ``System Preferences``.

@@ -21,6 +21,6 @@ For example, it is often that a DIV element is clickable and visually looks like
 * Finally, without counting the accessibility issues related to new or current libraries you want to use, the cost required to make your changes accessibile is estimated between 5 and 15% of additional implementing time.
 
 The following documentation explains in more details what to consider to make your changes accessible :
-* [Keyboard](/develop/accessibilitykeyboard.md) related issues
-* Screen reader
-* High contrast
+* [Keyboard](/develop/accessibilitykeyboard) related issues
+* [Assistive technologies](/develop/accessibilityscreenreader)
+* [High contrast](/develop/accessibilityhighcontrast)

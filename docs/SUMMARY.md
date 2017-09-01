@@ -17,6 +17,8 @@
     * [Source Embedding](/source-embedding)
     * [Updating Blockly Version](/develop/blocklyupgrade)
     * [Accessibility](/develop/accessibility)
+* [Test Docs](/docs)
+    * [Accessibility](/test/accessibility)
 * [Creating Targets](/target-creation)
     * [Defining Blocks](/defining-blocks)
     * [Auto-generation of .d.ts](/simshim)
