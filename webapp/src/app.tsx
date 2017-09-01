@@ -904,6 +904,7 @@ export class ProjectView
         if (options.filesOverride)
             Util.jsonCopyFrom(files, options.filesOverride)
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n"
+        //TODO this
         files["serial.json"] = JSON.stringify({"pineapple": "banana"}) + "\n"
         return workspace.installAsync({
             name: cfg.name,
@@ -1198,8 +1199,6 @@ export class ProjectView
     }
 
     clearSerial() {
-//        let logs = this.refs["simLogs"] as logview.LogView;
-//        logs.clear();
         this.serialEditor.clear()
     }
 
