@@ -724,7 +724,7 @@ ${output}</xml>`;
                 return;
             }
 
-            if (callInfo.attrs.blockId === "lists_length") {
+            if (callInfo.attrs.blockId === "lists_length" || callInfo.attrs.blockId === "text_length") {
                 return {
                     kind: "expr",
                     type: U.htmlEscape(callInfo.attrs.blockId),
@@ -1915,7 +1915,7 @@ ${output}</xml>`;
         function checkPropertyAccessExpression(n: ts.PropertyAccessExpression) {
             const callInfo: pxtc.CallInfo = (n as any).callInfo;
             if (callInfo) {
-                if (callInfo.attrs.blockIdentity || callInfo.attrs.blockId === "lists_length") {
+                if (callInfo.attrs.blockIdentity || callInfo.attrs.blockId === "lists_length" || callInfo.attrs.blockId === "text_length") {
                     return undefined;
                 }
                 else if (callInfo.decl.kind === SK.EnumMember) {
