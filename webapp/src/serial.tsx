@@ -43,11 +43,16 @@ export class Editor extends srceditor.Editor {
     isGraphable(v: string) {
         return /[a-z]*:[0-9.]*/.test(v)
     }
+    
+    setSim(b: boolean) {
+        this.isSim = b
+        this.clear()
+        //TODO not working
+        this.setLabel(this.isSim ? lf("SIM") : lf("DEV"))
+    }
 
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
-        // TODO this not happening
-        this.setLabel(this.isSim ? lf("SIM") : lf("DEV"))
         window.addEventListener("message", this.processMessage.bind(this), false)
     }
 
