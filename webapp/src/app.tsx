@@ -1814,7 +1814,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
                         </div>
                         <div className="ui editorFloat portrait">
-                            <sui.Button key='serialbtn' class={'serial-button'} icon={'maximize'} title={fullscreenTooltip} onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/serial.json"))} />
+                            <sui.Button key='simserialbtn' class={'serial-button'} text={lf("Simulator serial")} icon={'maximize'} title={fullscreenTooltip} onClick={() => {this.serialEditor.setSim(true); this.setFile(pkg.mainEditorPkg().lookupFile("this/serial.json"))}} />
+                            <sui.Button key='devserialbtn' class={'serial-button'} text={lf("Device serial")} icon={'maximize'} title={fullscreenTooltip} onClick={() => {this.serialEditor.setSim(false); this.setFile(pkg.mainEditorPkg().lookupFile("this/serial.json"))}} />
                         </div>
                         {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
                     </aside>
