@@ -1859,6 +1859,7 @@ function initSerial() {
                 dev.onSerial = (buf, isErr) => {
                     window.postMessage({
                         type: 'serial',
+                        source: "device_ws",
                         id: 'n/a', // TODO
                         data: Util.fromUTF8(Util.uint8ArrayToString(buf))
                     }, "*")
@@ -1882,6 +1883,7 @@ function initSerial() {
         try {
             let msg = JSON.parse(ev.data) as pxsim.SimulatorMessage;
             if (msg && msg.type == 'serial')
+                (msg as any).source = "device_ws",
                 window.postMessage(msg, "*")
         }
         catch (e) {
@@ -2331,6 +2333,10 @@ $(document).ready(() => {
                 ipcRenderer.sendToHost("sendToApp", ev.data);
             else if (window.parent && window != window.parent)
                 window.parent.postMessage(ev.data, "*");
+        }
+
+        if (m.type === "serial" && (m as any).source === "device_ws") {
+            simulator.driver.postMessage(m);
         }
 
         if (m.type == "tutorial" || m.type == "popoutcomplete") {
