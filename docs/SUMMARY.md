@@ -42,4 +42,4 @@
     * [update](/cli/update)
     * [pyconv](/cli/pyconv)
     * [hidserial](/cli/hidserial)
-* [UF2 FIle Format](http://github.com/microsoft/uf2) 
+* [UF2 FIle Format](http://github.com/microsoft/uf2)

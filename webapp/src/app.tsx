@@ -176,6 +176,17 @@ export class ProjectView
         }
     }
 
+    updateEditorLogo(left: number, rgba?: string) {
+        if (pxt.appTarget.appTheme.hideMenuBar) {
+            const editorLogo = document.getElementById('editorlogo');
+            if (editorLogo) {
+                editorLogo.style.left = `${left}px`;
+                editorLogo.style.display = 'block';
+                editorLogo.style.background = rgba || '';
+            }
+        }
+    }
+
     saveFileAsync(): Promise<void> {
         if (!this.editorFile)
             return Promise.resolve()
@@ -1799,6 +1810,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     {lf("By using this site you agree to the use of cookies for analytics.")}
                     <a target="_blank" className="ui link" href={pxt.appTarget.appTheme.privacyUrl} rel="noopener">{lf("Learn more")}</a>
                 </div>}
+                {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
             </div>
         );
     }

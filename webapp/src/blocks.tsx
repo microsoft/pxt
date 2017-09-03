@@ -47,7 +47,7 @@ export class Editor extends srceditor.Editor {
 
     saveToTypeScript(): Promise<string> {
         if (!this.typeScriptSaveable) return Promise.resolve('');
-        //this.clearHighlightedStatements();
+        this.clearHighlightedStatements();
         try {
             return pxt.blocks.compileAsync(this.editor, this.blockInfo)
                 .then((compilationResult) => {
@@ -471,13 +471,15 @@ export class Editor extends srceditor.Editor {
     }
 
     resize(e?: Event) {
-        let blocklyArea = document.getElementById('blocksArea');
-        let blocklyDiv = document.getElementById('blocksEditor');
+        const blocklyArea = document.getElementById('blocksArea');
+        const blocklyDiv = document.getElementById('blocksEditor');
         // Position blocklyDiv over blocklyArea.
         if (blocklyArea && this.editor) {
             blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
             blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
             Blockly.svgResize(this.editor);
+            const blocklyToolbox = document.getElementsByClassName('blocklyToolboxDiv')[0];
+            this.parent.updateEditorLogo(blocklyToolbox.clientWidth);
         }
     }
 
