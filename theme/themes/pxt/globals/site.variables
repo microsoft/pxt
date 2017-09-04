@@ -20,6 +20,7 @@
 @greenTextColor: #107C10;
 
 @lightTextColor              : rgba(0, 0, 0, 0.68);
+@invertedUnselectedTextColor : rgba(255, 255, 255, 0.8); 
 
 @pageBackground: #ffffff;
 
