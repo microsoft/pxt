@@ -1,6 +1,6 @@
 # Accessibility
 
-The **Microsoft MakeCode** team wants to be sure that every person on the planet can play with it to achieve more. It is very important for us when we're working to make computer science more accessible to consumers with disabilities.
+This page describes the technical documentation of **Microsoft MakeCode** related to accessibility.
 
 ## Being responsible
 
@@ -25,3 +25,8 @@ The following topics discuss accessible development for MakeCode:
 * [Keyboard](/develop/accessibility/accessibility-keyboard) related issues
 * [Assistive technologies](/develop/accessibility/accessibility-screen-reader)
 * [High contrast](/develop/accessibility/accessibility-high-contrast)
+
+## Testing the accessibility features
+
+When you do your changes on the accessibility, be sure to do the right tests.
+[How to test the accessibility features and what to test](/develop/accessibility/accessibility-testing)
