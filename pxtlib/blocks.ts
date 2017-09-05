@@ -370,7 +370,7 @@ namespace pxt.blocks {
             'text_length': {
                 name: Util.lf("number of characters in the string"),
                 tooltip: Util.lf("Returns the number of letters (including spaces) in the provided text."),
-                url: 'types/string/length',
+                url: 'reference/text/length',
                 category: 'text',
                 block: {
                     TEXT_LENGTH_TITLE: Util.lf("length of text %1")
@@ -379,7 +379,7 @@ namespace pxt.blocks {
             'text_join': {
                 name: Util.lf("join items to create text"),
                 tooltip: Util.lf("Create a piece of text by joining together any number of items."),
-                url: 'types/string/join',
+                url: 'reference/text/join',
                 category: 'text',
                 block: {
                     TEXT_JOIN_TITLE_CREATEWITH: Util.lf("join")
