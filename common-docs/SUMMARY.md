@@ -52,6 +52,7 @@
     * [String](/types/string)
     * [Boolean](/types/boolean)
     * [Array](/types/array)
+    * [Function](/types/function)
 
 ## #other
 
