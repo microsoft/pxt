@@ -1,87 +1,86 @@
 # Testing the accessibility features
 
-This page describes the testing documentation of **Microsoft MakeCode** related to accessibility.
+The accessibilty features are validated using a test process. This guide describes how to test and validate the UI elements of **Microsoft MakeCode** and targets.
 
-## Testing
+## Testing sites and targets
 
-Makecode.com, MakeCode's targets and documentation must be tested.
+Makecode.com, MakeCode targets, and documentation must be tested for these core features:
 
 * [Keyboard navigation](#testing-keyboard-navigation)
 * [Assistive technologies](#testing-assistive-technologies)
 * [High contrast](#testing-high-contrast)
 
-The following external websites accessible from the following menus **must not** be tested :
+There are some exceptions to the accessibility test coverage. These external resources are excluded from testing:
 
 * MakeCode editor (PXT)/Help/Support
 * PXT/Help/Buy
 * PXT/Settings/Privacy & Cookies
 * PXT/Settings/Terms Of Use
 * PXT/Settings/Give Feedback
-* In MakeCode.com, the YouTube integration
+* In MakeCode.com, any YouTube integration
 
-# Testing keyboard navigation
+## Testing keyboard navigation
 
-Users must be able to do the same things with the keyboard than with the mouse in MakeCode.
+Users must have the same access with the keyboard to UI elements that the mouse and touch input have in MakeCode.
 
-## Navigation way
+### Navigation path
 
-While working with a Left To Right reading way environement, the user must able to **navigate from left to right, from top to bottom** by using ``Tab`` key, and the opposite by using ``Shift + Tab``.
-There is an exception for the simulator. The keyboard navigation does not respect the reading way **yet**.
+Using a left-to-right reading order, the user must be able to **navigate from left to right, from top to bottom** using the ``Tab`` key. The user must also be able to navigate in the opposite direction using the ``Shift + Tab`` keys.
+The simulator is exempt from this. Keyboard navigation in the simulator doesn't follow any reading order **yet**.
 
 ![](/static/images/accessibility-keyboard-navigation.gif)
 
-## Tab panels
+### Tab panels
 
-By convention, tab panels must be navigable with the ``Left``, ``Right``, ``Up`` and ``Down`` arrow keys. In Right To Left reading mode, the behavior must follow the reading way. The navigation must be looping, which means that once at the last tab, we must come back directly to the first one after a ``Tab``.
+By convention, tab panels must always be navigable with the ``Left``, ``Right``, ``Up`` and ``Down`` arrow keys. In right-to-left reading mode, the behavior must follow the reading order. The navigation must loop, which means that once the last tab position is reached, the next ``Tab`` key press takes the reader back to the first tab position.
 
 ![](/static/images/accessibility-tabpanel.gif)
 
-## Dialog box
+### Dialog box
 
-A lot of dialog box are available in PXT. Projects button, Share, Language, About and others are opening dialog box. While a dialog box is opened, the user must not be able to access to interactive element outside of the dialog without closing it.
-We must be sure that the user cannot access to anything outside of the dialog box without closing it and that the keyboard navigation is trapped.
+Many dialog boxes are shown in PXT. Dialog boxes are used for the Projects button, Share, Language, About, and others. When a dialog box is open, the user must not have to access to any interactive element outside of the dialog prior to closing it. The keyboard navigation is 'trapped' inside the dialog.
 
-The user must be able to close a dialog by activating the answer buttons (OK, Accept, Cancel...), the close button or by pressing ``Escape``.
+The dialog must close itself with activation of the answer buttons (OK, Accept, Cancel...), the close button, or by pressing ``Escape``.
 
 ![](/static/images/accessibility-modals.gif)
 
-## Tree view
+### Tree view
 
-The tree views have a standard way to navigate.
-The user must be able to use the ``Right`` or ``Left`` keys to expand or collapse a node. He must be able to use ``Tab`` to navigate in the tree, and ``Enter`` to activate a node. Depending of what kind of interaction is available, the ``Enter`` key can also expand or collapse a node and replace the ``Left`` or ``Right`` keys.
+The tree views use standard navigation. The user must be able to use the ``Right`` or ``Left`` keys to expand or collapse a node. The ``Tab``key navigates into the tree and ``Enter`` activates a node. Depending on what kind of interaction is available, the ``Enter`` key will also expand or collapse a node and instead of using the ``Left`` or ``Right`` keys.
 
 ![](/static/images/accessibility-treeview.gif)
 
-## Drop down menu
+### Drop down menu
 
-Two drop down menu exist in PXT. They are located at the top right hand-corner.
-The menu must be opened when the focus is given it's parent button and must be close if the user press ``Tab``, ``Shift + Tab`` or ``Escape``. WHile the menu is open, the user must be able to navigate inside of the drop down menu with the ``Up`` and ``Down`` arrow keys. The navigation must not be looping.
+Dropdown menues are located at the top right hand-corner of the view. A menu must be opened when the focus is given to it's parent button and must be close if the user press ``Tab``, ``Shift + Tab`` or ``Escape``. When the menu is open, navigation through the options of the dropdown menu are with the ``Up`` and ``Down`` arrow keys. The navigation must not loop.
 
 ![](/static/images/accessibility-dropdown.gif)
 
-## Slider
+### Slider
 
-The slider's value can be changed by pressing the ``Left``, ``Right``, ``Up`` and ``Down`` arrow keys.
+The slider's value is changed by pressing the ``Left``, ``Right``, ``Up``, and ``Down`` arrow keys.
 
-# Testing assistive technologies
+## Testing assistive technologies
 
-The assistive technologies allow blind people to use a software without seeing the screen. They use the keyboard navigation and a screen reader that will read the content of the page where the user focus on.
+The assistive technologies help someone with visual impairment navigate a UI without seeing a screen. Keyboard navigation with the use of a screen reader reads the content of the page where the user is focused.
 
-## Screen readers
+### Screen readers
 
-We must test MakeCode with several screen readers to be sure that it is accessible on all platforms :
-* Voice Over (included to macOS). Please try it with Safari, Chrome and FireFox on macOS.
-* [NVDA](https://www.nvaccess.org/) (for Windows). Please try is with Chrome and FireFox.
-* Narrator (included to Windows). Please try it with IE and MS Edge.
-* [JAWS](http://www.freedomscientific.com/Products/Blindness/JAWS). It is the most used screen reader on Windows and is mainly used with FireFox.
+MakeCode is tested with several screen readers to ensure accessibility on all platforms:
 
-**JAWS is not free to use**. A business license key can be found on Microsoft's internal tools for Microsoft employees.
+* Voice Over (included macOS). Test with Safari, Chrome and FireFox on macOS.
+* [NVDA](https://www.nvaccess.org/) (for Windows). Check it with Chrome and FireFox.
+* Narrator (included in Windows). Test with IE and MS Edge.
+* [JAWS](http://www.freedomscientific.com/Products/Blindness/JAWS). Run a test with this screen reader since it is the one most widely used readers for Windows. It is commonly used along with FireFox.
 
-## Testing screen readers
+**JAWS is not free to use**. For Microsoft employees, a business license key is available at Microsoft's internal tools site.
 
-To test the screen readers, we could try to navigates into PXT by closing the eyes or just not watching the screen and see if we are not lost in the editor while navigating with the keyboard.
+### Testing screen readers
 
-We must consider that every interactive component must be announced :
+Simulate the conditions of visual impairment. You could try navigating through the editorclosing your eyes or just not watch the screen and see if you become lostin the editor during keyboard navigation.
+
+Every interactive component must be announced during navigation:
+
 * List box
 * List box item (and know if it is selected)
 * Tree view
@@ -97,14 +96,14 @@ We must consider that every interactive component must be announced :
 * Input (and know the current value)
 * Search result (at least the number of result)
 
-The way the components are described is different from a screen reader to another, but we must be sure that for all of them, the provided information are enough to understand the purpose of the interactive component, its content and its state (in particular when it is disabled). We must consider that the user already knows how to interact with a slider, a drop down menu and else but it happens that an additional explaination of how to use it is provided by a screen reader.
+The way components are described is different from a one screen reader to another. Verify that all of them provide enough information to understand the purpose of the interactive component, its content, and its state (especially when disabled). Although it is assumend that the user already knows how to interact with a slider, a dropdown menu, or other component, verify that any additional usage information is provided by the screen reader.
 
-# Testing high contrast
+## Testing high contrast
 
-The high contrast mode helps people with vision impairment to read the screen. The goal of this mode is to increase the contrast between the text, interactive element and the background. For example, a white text on black background is easier to read than a light grey text on a white background.
+High contrast mode helps people with vision impairment read the screen. The goal of this mode is to increase the contrast between the text, interactive elements, and the background. For example, a white text on black background is easier to read than a light grey text on a white background.
 
-The high contrast mode can be enabled independently from the operating system configuration. Therefore, it can be enabled manually from the ``Hidden Tab Menu`` or from the ``Settings`` menu.
+High contrast is available independently from the operating system configuration. It is enabled manually from the ``Hidden Tab Menu`` or from the ``Settings`` menu.
 
 ![](/static/images/accessibility-highcontrast.png)
 
-As there are variations between the high contrast mode of the website and the render when the high contrast modes of the hosting operating system are enabled, the guideline to test the high contrast is simply to be sure that all text and interactive elements are well visible and that the focus is visible enough to be determine with a low vision on which component we are navigating.
+Variations can exist between the high contrast mode of a website and the rendering in high contrast mode of the host operating system. A simple guideline when testing high contrast is to just make sure that all text and interactive elements highly visible. Check that the focus indication is visible enough to determine which component is at current position in the navigation path.

@@ -1,10 +1,10 @@
 # Accessibility
 
-This page describes the technical documentation of **Microsoft MakeCode** related to accessibility.
+Accessiblity features are included as a core part of **Microsoft MakeCode**. Any MakeCode target can extend accessiblity to itself by following the recommendations provided in this guide.
 
 ## Being responsible
 
-We can ensure that MakeCode achieves it's accessibility goals only if every contributor is responsible to insure the accessibility of their own features or changes. The guidance given here will help you know what is important and what to keep in mind while designing and developing for MakeCode.
+We can ensure that MakeCode achieves it's accessibility goals only if every contributor is responsible to ensure the accessibility of their own features or changes. The guidance given here will help you know what is important and what to keep in mind while designing and developing for MakeCode.
 
 ## Accessible Rich Internet Applications (WAI-ARIA) 1.1
 
