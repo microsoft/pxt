@@ -43,7 +43,7 @@ export class Editor extends srceditor.Editor {
     isGraphable(v: string) {
         return /[a-z]*:[0-9.]*/.test(v)
     }
-    
+
     setSim(b: boolean) {
         this.isSim = b
         this.clear()
@@ -189,7 +189,7 @@ export class Editor extends srceditor.Editor {
             }
             //TODO dk about this
             e.canvasElement.innerHTML = ""
-            new canvaschart.CanvasChart().drawChart(e.canvasElement, e.accvalues.map(accvalue => new canvaschart.Point(accvalue.t, accvalue.v)))
+            new canvaschart.CanvasChart().drawChart(e.canvasElement, e.accvalues)
             e.dirty = false
         })
         this.renderFiberId = 0
