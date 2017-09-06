@@ -1,3 +1,5 @@
+/// <reference path="../../localtypings/smoothie.d.ts" />
+
 import * as React from "react"
 import * as pkg from "./package"
 import * as core from "./core"
@@ -159,6 +161,7 @@ export class Editor extends srceditor.Editor {
     }
 
     render() {
+        /** 
         this.consoleEntries.forEach(e => {
             if (!e.dirty) return
             let consoleDiv = document.createElement("div")
@@ -193,11 +196,12 @@ export class Editor extends srceditor.Editor {
             e.dirty = false
         })
         this.renderFiberId = 0
+        **/
     }
 
     display() {
         return (
-            <div className="serialEditor" ref={(el) => {this.element = el}}>
+            <div id="serialEditor" ref={(el) => {this.element = el}}>
                 <sui.Button text={lf("Start")} onClick= {() => this.active = true} />
                 <sui.Button text={lf("Stop")} onClick = {() => this.active = false} />
                 <div className="graphs" ref={(el) => {this.graphElement = el}}></div>
@@ -207,7 +211,12 @@ export class Editor extends srceditor.Editor {
     }
 
     domUpdate() {
-        this.scheduleRender()
+        //this.scheduleRender()
+        let canvas: HTMLCanvasElement = document.createElement("canvas")
+        canvas.id = "smoothieTest"
+        document.getElementById("serialEditor").appendChild(canvas)
+        let s = new SmoothieChart()
+        s.streamTo(canvas)
     }
 
     setLabel(text: string, theme?: string) {
