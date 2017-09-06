@@ -18,3 +18,8 @@ temp/
 *.log
 update-settings.sh
 .DS_Store
+paper.out
+paper.dvi
+paper.fls
+paper.fdb_latexmk
+paper.aux
