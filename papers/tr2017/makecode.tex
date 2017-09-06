@@ -2,7 +2,7 @@
 \label{sec:makecode}
 
 \begin{figure}[t]
-    \includegraphics[width=3.3in]{diagrams.pdf}
+    \includegraphics[width=4.5in]{diagrams.pdf}
 \caption{\label{fig:makecode}MakeCode Architecture}
 \end{figure}
 
@@ -12,7 +12,8 @@ code, as shown in Figure~\ref{fig:makecode}.
 The web app is written in TypeScript. The web app also incorporates the TypeScript compiler and 
 language service (www.typescriptlang.org) which are used in several ways, as detailed below. 
 The remaining subsections describe the parts of Figure~\ref{fig:makecode}.
-Device Runtime and Shim Generation
+
+\subsection{Device Runtime and Shim Generation}
 
 A MakeCode target is defined, in part, by its device runtime, which can be a combination of C++ 
 and Static TypeScript (STS) code. The C++ runtime for the target microcontroller is precompiled 
@@ -21,26 +22,27 @@ other assets) so that the web app can function when the browser is offline. Addi
 components may be authored in STS, which allows the device runtime to be updated without the need
 for any C++ programming, and permits components of the device runtime to be shared by both the device
 and simulator runtimes.  We will describe later how elements of the C++ runtime are exposed to STS
-(via automated shim generation).  The ability to author the device runtime in both STS and C++ is
-a unique aspect of MakeCode's design. 
+(via automated shim generation). The ability to author the device runtime in both STS and C++ is
+a unique aspect of MakeCode's design.
 
 Whether runtime components are authored in C++ or STS, all runtime APIs are exposed as fully-typed
 TypeScript definitions (for runtime components written in TypeScript) or declarations (for runtime
 components written in C++). A full-typed runtime improves the end-user experience by making it easier
 to discover APIs; it also enables the type inference provided by the TypeScript compiler to infer types
-for (unannotated) user code. 
+for (unannotated) user code.
 
 MakeCode supports a simple foreign function interface from TypeScript to C++ based on namespaces,
 enumerations, functions, and basic type mappings. MakeCode uses top-level namespaces (in both C++ and
 TypeScript) to organize sets of related functions.  Preceding a C++ namespace, enumeration, or function
-with \emph{//\%} indicates that MakeCode should map the C++ construct to TypeScript. 
+with \emph{//\%} indicates that MakeCode should map the C++ construct to TypeScript.
 Within the \emph{//\%} comment, attributes are used to define the visual appearance for that
 language construct, such as for the led namespace in the micro:bit target:
 
 \begin{lstlisting}
-//\% color=\#5C2D91 weight=97 icon="\uf205"
-namespace led \{ ... \}
-\end{lstlisting}    	 
+//% color=#5C2D91 weight=97 icon="\uf205"
+namespace led { 
+...
+\end{lstlisting}
 
 Here is the C++ file defining the micro:bit's led namespace and its functions:
 \begin{center}
@@ -101,7 +103,7 @@ inside a namespace of the name FooMethods.  See, for example, how a C++ buffer a
 \end{center}
 
 You can find the resulting TypeScript Buffer interface in the shim file for the micro:bit
-(already referenced). 
+(already referenced above). 
 
 \subsection{Block Metadata Generation}
 
@@ -145,7 +147,7 @@ TypeScript supports programming constructs that are not available in Blockly, su
 Such constructs are converted into grey uneditable blocks in Blockly, with the construct's program
 text intact. This means MakeCode always can decompile a TypeScript program to Blockly and then recover
 the program text of the grey blocks when converting from Blockly back to TypeScript
- (see https://github.com/Microsoft/pxt/blob/master/pxtcompiler/emitter/decompiler.ts) 
+ (see \url{https://github.com/Microsoft/pxt/blob/master/pxtcompiler/emitter/decompiler.ts}). 
 
 \subsection{Compilation Pipeline}
 
@@ -167,7 +169,7 @@ references to the driver runtime in the user's program, producing a binary execu
 can be found at \url{https://github.com/Microsoft/pxt/tree/master/pxtcompiler/emitter} and 
 \url{https://github.com/Microsoft/pxt/tree/master/pxtlib/emitter}.
 
-\subsection{Asynchronous Functions}
+\subsubsection{Asynchronous Functions}
 
 A key part of the compilation process is to allow users to call async functions (identified through
 the \emph{//\% async} annotation) as if they were regular (blocking) functions.  This is done by
@@ -180,15 +182,19 @@ a series of event handlers.  The JavaScript-based simulator runtime uses promise
 single-threaded context, but these promises are hidden from the end user.    The CODAL C++ device runtime supports fibers
 with the ability to pause, so for compilation to a device, the compiler simply emits a call to pause at a suspension point. 
 
-\subsection{Untagged and Tagged Strategies}
+\subsubsection{Untagged and Tagged Strategies}
 
 The MakeCode compiler supports the Static TypeScript language subset described in Section X, with two compilation
 strategies: untagged and tagged. 
 \emph{TODO}
 Untagged compilation strategy
-No support for doubles. 32-bit integers (signed only). Use static type system to distinguish between integers and references.  No runtime support.  Not fully compatible with JavaScript semantics. Null = Undefined = 0 = default integer value.  Support for different integer sizes using type aliases (this is used for AVR). 
+No support for doubles. 32-bit integers (signed only). Use static type system to distinguish between integers and references.
+No runtime support.  Not fully compatible with JavaScript semantics. Null = Undefined = 0 = default integer value.  Support for
+different integer sizes using type aliases (this is used for AVR). 
 Tagged compilation strategy
-In the tagged strategy, numbers are either tagged 31-bit signed integers, or if they do not fit, boxed doubles. Code generation to check tag bit. Special constants like false, null and undefined are given special values and can be distinguished. Fully compatible with JavaScript semantics (number, null, undefined).   Can accommodate a richer type system. 
+In the tagged strategy, numbers are either tagged 31-bit signed integers, or if they do not fit, boxed doubles. Code generation
+to check tag bit. Special constants like false, null and undefined are given special values and can be distinguished. Fully
+compatible with JavaScript semantics (number, null, undefined).   Can accommodate a richer type system. 
 
 \subsection{Simulator}
 
@@ -209,18 +215,19 @@ MakeCode provides various components to make device-based simulators easier to b
 
 Packages are MakeCode's dynamic/static library mechanism for extending a target (by adding new code/data to the device
 and simulator runtimes, as well as accompanying documentation). The following package extends the micro:bit target so
-that the micro:bit can drive a NeoPixel strip of RGB LEDs: https://github.com/Microsoft/pxt-neopixel. To see how this
-package is surfaced to the end-user, visit http://makecode.microbit.org/ and select the ``Add Package'' option from the
+that the micro:bit can drive a NeoPixel strip of RGB LEDs: \url{https://github.com/Microsoft/pxt-neopixel}. To see how this
+package is surfaced to the end-user, visit \url{http://makecode.microbit.org/} and select the ``Add Package'' option from the
 gear menu; you will see the package ``neopixel'' listed in the available options. If you click on it, a new block category
 named ``Neopixel'' will be added to the editor. In this scenario, PXT dynamically loads the (white listed) neopixel 
 package directly from GitHub, compiles it and incorporates it into the web app. Packages also can be bundled with a web
 app (the analog of static linking).  
 
 Hardware partners already have started to create MakeCode packages for the micro:bit.
-Seeed Studio (https://www.seeedstudio.com/) has created packages to add its Grove components to a micro:bit.
+Seeed Studio (\url{https://www.seeedstudio.com/}) has created packages to add its Grove components to a micro:bit.
 Grove components are accessed via the I2C serial protocol, supported by the micro:bit device runtime.
 All micro:bit packages for the Grove components are authored in Static TypeScript (gesture, ultrasonic-ranger,
-4-digital-display, two-led-matrix).
+4-digital-display, two-led-matrix). These packages can be found under GitHub user ``Tinkertanker'', prefixed with
+``pxt-''. Sparkfun has created MakeCode packages for its micro:bit shields (GitHub user ``sparkfun'').
 
 % https://github.com/Tinkertanker/pxt-ssd1306-microbit
 % https://github.com/Tinkertanker/pxt-ir-microbit 
