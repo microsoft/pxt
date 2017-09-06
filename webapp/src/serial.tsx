@@ -60,7 +60,7 @@ export class Editor extends srceditor.Editor {
         let msg = ev.data
         if (this.active && msg.type === "serial") {
             const smsg = msg as pxsim.SimulatorSerialMessage
-            const sim = !!smsg.sim || false
+            const sim = !!smsg.sim
             if (sim == this.isSim) {
                 const data = smsg.data || ""
                 const source = smsg.id || "?"
