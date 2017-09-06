@@ -905,7 +905,7 @@ export class ProjectView
             Util.jsonCopyFrom(files, options.filesOverride)
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n"
         //TODO this
-        files["serial.json"] = JSON.stringify({"pineapple": "banana"}) + "\n"
+        files["serial.txt"] = JSON.stringify({"pineapple": "banana"}) + "\n"
         return workspace.installAsync({
             name: cfg.name,
             meta: {},
@@ -1814,8 +1814,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
                         </div>
                         <div className="ui editorFloat portrait">
-                            <sui.Button key='simserialbtn' class={'serial-button'} text={lf("Simulator serial")} icon={'maximize'} title={fullscreenTooltip} onClick={() => {this.serialEditor.setSim(true); this.setFile(pkg.mainEditorPkg().lookupFile("this/serial.json"))}} />
-                            <sui.Button key='devserialbtn' class={'serial-button'} text={lf("Device serial")} icon={'maximize'} title={fullscreenTooltip} onClick={() => {this.serialEditor.setSim(false); this.setFile(pkg.mainEditorPkg().lookupFile("this/serial.json"))}} />
+                            <sui.Button key='simserialbtn' class={'serial-button'} text={lf("Simulator serial")} icon={'maximize'} title={fullscreenTooltip} onClick={() => {this.serialEditor.setSim(true); this.setFile(pkg.mainEditorPkg().lookupFile("this/serial.txt"))}} />
+                            <sui.Button key='devserialbtn' class={'serial-button'} text={lf("Device serial")} icon={'maximize'} title={fullscreenTooltip} onClick={() => {this.serialEditor.setSim(false); this.setFile(pkg.mainEditorPkg().lookupFile("this/serial.txt"))}} />
                         </div>
                         {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
                     </aside>

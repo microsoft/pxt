@@ -37,7 +37,7 @@ export class Editor extends srceditor.Editor {
 
     acceptsFile(file: pkg.File) {
         // TODO hardcoded string
-        return file.name === "serial.json"
+        return file.name === "serial.txt"
     }
 
     isGraphable(v: string) {
@@ -48,7 +48,7 @@ export class Editor extends srceditor.Editor {
         this.isSim = b
         this.clear()
         //TODO not working
-        this.setLabel(this.isSim ? lf("SIM") : lf("DEV"))
+        this.setLabel(this.isSim ? lf("Simulator serial output") : lf("Device serial output"))
     }
 
     constructor(public parent: pxt.editor.IProjectView) {
@@ -162,7 +162,7 @@ export class Editor extends srceditor.Editor {
         this.consoleEntries.forEach(e => {
             if (!e.dirty) return
             let consoleDiv = document.createElement("div")
-            consoleDiv.className = "coconut"
+            consoleDiv.className = "consoleArea"
             consoleDiv.textContent = e.data
             e.element = consoleDiv
             this.consoleElement.appendChild(consoleDiv)
@@ -173,11 +173,11 @@ export class Editor extends srceditor.Editor {
             if (!e.dirty) return
             if (!e.element) {
                 let graphDiv = document.createElement("div")
-                graphDiv.className = "guava"
+                graphDiv.className = "graphArea"
                 let labelDiv = document.createElement("div")
-                labelDiv.className = "lemon"
+                labelDiv.className = "labelArea"
                 let canvas = document.createElement("canvas")
-                canvas.className = "coconut"
+                canvas.className = "canvasArea"
                 //TODO hacky
                 canvas.setAttribute("width", "1000px")
                 graphDiv.appendChild(labelDiv)
