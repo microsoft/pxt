@@ -1811,7 +1811,7 @@ ${output}</xml>`;
 
     function isAutoDeclaration(decl: VariableDeclaration) {
         if (decl.initializer) {
-            if (decl.initializer.kind === SyntaxKind.NullKeyword || decl.initializer.kind === SyntaxKind.FalseKeyword) {
+            if (decl.initializer.kind === SyntaxKind.NullKeyword || decl.initializer.kind === SyntaxKind.FalseKeyword || isDefaultArray(decl.initializer)) {
                 return true
             }
             else if (isStringOrNumericLiteral(decl.initializer.kind)) {
@@ -1825,6 +1825,10 @@ ${output}</xml>`;
             }
         }
         return false;
+    }
+
+    function isDefaultArray(e: Expression) {
+        return e.kind === SK.ArrayLiteralExpression && (e as ArrayLiteralExpression).elements.length === 0;
     }
 
     function getCallInfo(checker: ts.TypeChecker, node: ts.Node, apiInfo: ApisInfo) {
