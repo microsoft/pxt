@@ -8,22 +8,26 @@
 /*******************************
           Accessibility
 *******************************/
-
-*:focus {
-    outline: 1px solid transparent !important;
+*[tabindex='0']:focus,
+*[tabindex*='d1']:focus,
+*[tabindex*='d2']:focus, /* Takes items with a defined tabIndex from 0 to 29. */
+*[role='menuitem']:focus {
+    outline: 2px solid #4D90FE !important;
 }
 
-@media not all and (pointer:coarse) {
-    *:not([tabindex='-1']):focus,
-    [role='menuitem']:focus {
-        outline: 2px solid #4D90FE !important;
-    }
-
-    .blocklyWidgetDiv *:focus,
-    .blocklySVG *:focus,
-    .monaco-editor *:focus {
+@media all and (pointer:coarse) { /* If touch screen */
+    *[tabindex='0']:focus,
+    *[tabindex*='d1']:focus,
+    *[tabindex*='d2']:focus,
+    *[role='menuitem']:focus {
         outline: 1px solid transparent !important;
     }
+}
+
+.blocklyWidgetDiv *:focus,
+.blocklySVG *:focus,
+.monaco-editor *:focus {
+    outline: 1px solid transparent !important;
 }
 
 .blocklyTreeRoot:focus {

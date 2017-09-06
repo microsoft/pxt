@@ -139,6 +139,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 }
 
 export class TutorialCard extends data.Component<ISettingsProps, {}> {
+    private focusInitialized: boolean;
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -161,6 +162,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
         const nextStep = currentStep + 1;
 
         options.tutorialStep = nextStep;
+        this.focusInitialized = false;
 
         pxt.tickEvent(`tutorial.next`, { tutorial: options.tutorial, step: nextStep });
         this.props.parent.setTutorialStep(nextStep);
@@ -199,9 +201,12 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
     }
 
     componentDidUpdate() {
-        let tutorialCard = $('#tutorialcard').get(0);
-        if (tutorialCard !== undefined) {
-            core.initializeFocusTabIndex(tutorialCard, true, false);
+        if (!this.focusInitialized) {
+            let tutorialCard = document.getElementById('tutorialcard');
+            if (tutorialCard !== null) {
+                this.focusInitialized = true;
+                core.initializeFocusTabIndex(tutorialCard, true, false);
+            }
         }
     }
 
@@ -286,7 +291,7 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
                 closeOnDimmerClick closeOnDocumentClick
                 >
                 <div className="ui two stackable cards">
-                    <div className="ui grid centered link card focused" aria-selected="true" aria-label={lf("More Tutorials")} tabIndex={0} onClick={() => this.moreTutorials() } onKeyPress={sui.fireClickOnEnter}>
+                    <div className="ui grid centered link card focused" aria-selected="true" aria-label={lf("More Tutorials")} tabIndex={0} onClick={() => this.moreTutorials() } onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
                             <i className="avatar-image icon huge" style={{fontSize: '100px'}}/>
                         </div>
@@ -296,7 +301,7 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
                             </div>
                         </div>
                     </div>
-                    <div className="ui grid centered link card" aria-selected="true" aria-label={lf("Exit Tutorial")} tabIndex={0} onClick={() => this.exitTutorial() } onKeyPress={sui.fireClickOnEnter}>
+                    <div className="ui grid centered link card" aria-selected="true" aria-label={lf("Exit Tutorial")} tabIndex={0} onClick={() => this.exitTutorial() } onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
                             <i className="external icon huge black" style={{fontSize: '100px'}} />
                         </div>
