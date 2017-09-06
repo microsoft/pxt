@@ -1,9 +1,4 @@
 
-
-export class Point {
-    constructor (public x: number, public y: number) { }
-}
-
 export class CanvasChart {
     public lineColor = "#f00";
     public gridColor = "#ccc";
@@ -17,7 +12,7 @@ export class CanvasChart {
     public area = true;
 
     // Variables used for data configuration.
-    private points: Point[];
+    private points: {t: number, v: number}[];
 
     // Variables used for canvas / drawing.
     private canvas: HTMLCanvasElement;
@@ -44,15 +39,15 @@ export class CanvasChart {
         this.axesPaddingY = 30;
     }
 
-    public drawChart(canvas: HTMLCanvasElement, points: Point[]) {
+    public drawChart(canvas: HTMLCanvasElement, points: {t: number, v: number}[]) {
         this.initialize(canvas, points);
         if (this.points.length < 2) return;
         // Sort the points so our line doesn't cross.
         this.points.sort(function (left, right) {
-            if (left.x > right.x) {
+            if (left.t > right.t) {
                 return 1;
             }
-            if (left.x < right.x) {
+            if (left.t < right.t) {
                 return -1;
             }
             return 0;
@@ -66,7 +61,7 @@ export class CanvasChart {
         this.drawAxes();
     }
 
-    private initialize(canvas: HTMLCanvasElement, points: Point[]) {
+    private initialize(canvas: HTMLCanvasElement, points: {t: number, v: number}[]) {
         this.canvas = canvas;
         this.context = this.canvas.getContext("2d");
         this.points = points;
@@ -166,22 +161,22 @@ export class CanvasChart {
     // Returns: none
     private calculateScale() {
 
-        this.scaleXMin = this.points[0].x;
-        this.scaleXMax = this.points[0].x;
-        this.scaleYMax = this.points[0].y;
-        this.scaleYMin = this.points[0].y;
+        this.scaleXMin = this.points[0].t;
+        this.scaleXMax = this.points[0].t;
+        this.scaleYMax = this.points[0].v;
+        this.scaleYMin = this.points[0].v;
         for (let j = 0, len2 = this.points.length; j < len2; j++) {
-            if (this.scaleXMax < this.points[j].x) {
-                this.scaleXMax = this.points[j].x;
+            if (this.scaleXMax < this.points[j].t) {
+                this.scaleXMax = this.points[j].t;
             }
-            if (this.scaleYMax < this.points[j].y) {
-                this.scaleYMax = this.points[j].y;
+            if (this.scaleYMax < this.points[j].v) {
+                this.scaleYMax = this.points[j].v;
             }
-            if (this.scaleXMin > this.points[j].x) {
-                this.scaleXMin = this.points[j].x;
+            if (this.scaleXMin > this.points[j].t) {
+                this.scaleXMin = this.points[j].t;
             }
-            if (this.scaleYMin > this.points[j].y) {
-                this.scaleYMin = this.points[j].y;
+            if (this.scaleYMin > this.points[j].v) {
+                this.scaleYMin = this.points[j].v;
             }
         }
 
@@ -304,14 +299,14 @@ export class CanvasChart {
         let yFactor = this.chartHeight / yRange;
 
         let draw = (close: boolean) => {
-            let nextX = (this.points[0].x - this.scaleXMin) * xFactor;
-            let nextY = (this.points[0].y - this.scaleYMin) * yFactor;
+            let nextX = (this.points[0].t - this.scaleXMin) * xFactor;
+            let nextY = (this.points[0].v - this.scaleYMin) * yFactor;
             let startX = nextX;
             let startY = nextY;
             this.context.moveTo(nextX, this.chartHeight - nextY);
             for (let i = 1, len = this.points.length; i < len; i++) {
-                nextX = (this.points[i].x - this.scaleXMin) * xFactor,
-                nextY = (this.points[i].y - this.scaleYMin) * yFactor;
+                nextX = (this.points[i].t - this.scaleXMin) * xFactor,
+                nextY = (this.points[i].v - this.scaleYMin) * yFactor;
                 this.context.lineTo(nextX, (this.chartHeight - nextY));
             }
             if (close) {
