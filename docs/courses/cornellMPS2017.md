@@ -34,7 +34,8 @@ allow programming of music-making applications based on augmented reality.
 5. Clone the GitHub repository (repo) at https://github.com/microsoft/pxt-sample to your machine;
 6. Follow the directions in the [microsoft/pxt-sample](https://github.com/microsoft/pxt-sample) to build and run the target.
 
-If you are unfamiliar with the above technologies, spend a little time searching and reading about them. 
+If you are unfamiliar with the above technologies, spend a little time searching and reading about them. From
+most important to least important for the project: TypeScript/JavaScript, GitHub, VS Code, node.js.
 
 # Week 2
 
