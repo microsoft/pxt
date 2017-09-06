@@ -91,4 +91,4 @@ The high contrast mode in the editor is available even when the operating system
 
 ## JavaScript editor
 
-Read more about accessiblity for the **JavaScript editor** (keyboard navigation, screen readers and high contrast) in the [Monaco Editor Accessibility Guide](https://github.com/Microsoft/monaco-editor/wiki/Monaco-Editor-Accessibility-Guide).
+Read more about accessibility for the **JavaScript editor** (keyboard navigation, screen readers and high contrast) in the [Monaco Editor Accessibility Guide](https://github.com/Microsoft/monaco-editor/wiki/Monaco-Editor-Accessibility-Guide).

@@ -1,6 +1,6 @@
 # Accessibility
 
-Accessiblity features are included as a core part of **Microsoft MakeCode**. Any MakeCode target can extend accessiblity to itself by following the recommendations provided in this guide.
+Accessibility features are included as a core part of **Microsoft MakeCode**. Any MakeCode target can extend accessibility to itself by following the recommendations provided in this guide.
 
 ## Being responsible
 

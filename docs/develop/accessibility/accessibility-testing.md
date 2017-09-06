@@ -1,6 +1,6 @@
 # Testing the accessibility features
 
-The accessibilty features are validated using a test process. This guide describes how to test and validate the UI elements of **Microsoft MakeCode** and targets.
+The accessibility features are validated using a test process. This guide describes how to test and validate the UI elements of **Microsoft MakeCode** and targets.
 
 ## Testing sites and targets
 
@@ -68,7 +68,7 @@ The assistive technologies help someone with visual impairment navigate a UI wit
 
 MakeCode is tested with several screen readers to ensure accessibility on all platforms:
 
-* Voice Over (included macOS). Test with Safari, Chrome and FireFox on macOS.
+* Voice Over (included in macOS). Test with Safari, Chrome and FireFox on macOS.
 * [NVDA](https://www.nvaccess.org/) (for Windows). Check it with Chrome and FireFox.
 * Narrator (included in Windows). Test with IE and MS Edge.
 * [JAWS](http://www.freedomscientific.com/Products/Blindness/JAWS). Run a test with this screen reader since it is the one most widely used readers for Windows. It is commonly used along with FireFox.
@@ -82,19 +82,19 @@ Simulate the conditions of visual impairment. You could try navigating through t
 Every interactive component must be announced during navigation:
 
 * List box
-* List box item (and know if it is selected)
+* List box item (also, tells if it's selected)
 * Tree view
-* Tree item (and know if it is expanded)
+* Tree item (also, tells if it's expanded)
 * Tab panel
 * Dialog
 * Alert
 * Button
 * Menu bar
 * Menu item
-* Drop down menu (and know if it is expanded)
-* Sliders (and know its value when we change it)
-* Input (and know the current value)
-* Search result (at least the number of result)
+* Drop down menu (also, tells if it's expanded)
+* Sliders (also, mentions the new value if it changes)
+* Input (also, mentions the current value)
+* Search result (at least tells the total number of results)
 
 The way components are described is different from a one screen reader to another. Verify that all of them provide enough information to understand the purpose of the interactive component, its content, and its state (especially when disabled). Although it is assumend that the user already knows how to interact with a slider, a dropdown menu, or other component, verify that any additional usage information is provided by the screen reader.
 
@@ -106,4 +106,4 @@ High contrast is available independently from the operating system configuration
 
 ![](/static/images/accessibility-highcontrast.png)
 
-Variations can exist between the high contrast mode of a website and the rendering in high contrast mode of the host operating system. A simple guideline when testing high contrast is to just make sure that all text and interactive elements highly visible. Check that the focus indication is visible enough to determine which component is at current position in the navigation path.
+Variations can exist between the high contrast mode of a website and the rendering in high contrast mode of the host operating system. A simple guideline when testing high contrast is to just make sure that all text and interactive elements are highly visible. Check that the focus indication is visible enough to determine which component is at current position in the navigation path.
