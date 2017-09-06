@@ -12,6 +12,17 @@
 	<link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/4.1.0/css/fabric.min.css">
 
 	<style>
+		@media not all and (pointer:coarse) {
+			*:not([tabindex='-1']):focus {
+				outline: auto !important; /* initial or inherit has no render on Chrome */
+			}
+
+			.ui.inverted:not(#makecode-resources-container) .ui.card:not([tabindex='-1']):focus,
+			.ui.button.green:focus {
+				outline: 2px solid white !important;
+			}
+		}
+
 		#makecode-fixed-menu {
 			background: #2D404F;
 			background: rgba(45, 64, 79, 0.9);
