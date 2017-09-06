@@ -23,7 +23,7 @@ if (myScore == perfect) {
 }
 ```
 
-## Opposite condition: `else`
+## Opposite condition: `else` #oppositecondition
 
 If you want some other code to run when the opposite condition is **true**, you put it in
 an additional block area called **`else`**.

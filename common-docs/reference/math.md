@@ -14,7 +14,7 @@ num = 0;
 num = 1;
 num = 2;
 ```
-### Floating point: numbers with a fractional part
+### Floating point: numbers with a fractional part #floatingpoints
 
 Numbers can have their fractional part too. The decimal point is between the digits of the number.
 But, _floating point_ numbers have the decimal point at any spot between digits, like: 3.14159 or 651.75.
