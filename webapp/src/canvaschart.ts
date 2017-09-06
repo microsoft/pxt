@@ -44,7 +44,7 @@ export class CanvasChart {
         this.axesPaddingY = 30;
     }
 
-    public drawChart(canvas: HTMLCanvasElement, points: pxsim.Point[]) {
+    public drawChart(canvas: HTMLCanvasElement, points: Point[]) {
         this.initialize(canvas, points);
         if (this.points.length < 2) return;
         // Sort the points so our line doesn't cross.
