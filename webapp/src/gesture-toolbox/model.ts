@@ -26,6 +26,10 @@ export class SingleDTWCore {
         return this.running;
     }
 
+    public EnableRunning() {
+        this.running = true;
+    }
+
     public getTick() {
         return this.dtw.getTick();
     }

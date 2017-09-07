@@ -113,6 +113,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             // delete the gesture
             let cloneData = this.state.data.slice();
             cloneData.splice(this.curGestureIndex, 1);
+            // delete the model
+            this.models.splice(this.curGestureIndex, 1);
             this.setState({ data: cloneData });
         }
     }
@@ -376,6 +378,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 let parsedGesture: Types.Gesture = new Types.Gesture();
                 let cloneData = this.state.data.slice();
                 cloneData.push(parsedGesture);
+                let curIndex = cloneData.length - 1;
 
                 JSZip.loadAsync(files[i]).then((zip: any) => {
                     zip.forEach((relativePath: string, zipEntry: any) => {
@@ -393,8 +396,13 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                 }
                                 
                                 parsedGesture.displayGesture = this.parseJSONGesture(importedGesture.displayGesture);
+                                
+                                let newModel = new Model.SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name);
+                                newModel.Update(cloneData[curIndex].getCroppedData());
+                                this.models.push(newModel);
 
                                 this.setState({ data: cloneData });
+                                this.hasBeenModified = true;
                             })
                         }
                         else if (zipEntry.name == "video.mp4") {
@@ -420,10 +428,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     });
                 })
 
-                let curIndex = cloneData.length - 1;
-                this.models.push(new Model.SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name));
                 this.setState({ data: cloneData });
-                this.hasBeenModified = true;
             }
         }
 
