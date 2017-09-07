@@ -105,6 +105,7 @@ namespace pxsim {
         hasHint?: boolean;
         content?: string;
         headerContent?: string;
+        ariaLabel?: string;
     }
 
     export interface TutorialLoadedMessage extends TutorialMessage {
