@@ -11,7 +11,10 @@
 *[tabindex='0']:focus,
 *[tabindex*='d1']:focus,
 *[tabindex*='d2']:focus, /* Takes items with a defined tabIndex from 0 to 29. */
-*[role='menuitem']:focus {
+*[role='menuitem']:focus,
+a:not([tabindex='-1']):focus,
+input:not([tabindex='-1']):focus,
+button:not([tabindex='-1']):focus {
     outline: 2px solid #4D90FE !important;
 }
 
@@ -19,15 +22,19 @@
     *[tabindex='0']:focus,
     *[tabindex*='d1']:focus,
     *[tabindex*='d2']:focus,
-    *[role='menuitem']:focus {
+    *[role='menuitem']:focus,
+    a:not([tabindex='-1']):focus,
+    input:not([tabindex='-1']):focus,
+    button:not([tabindex='-1']):focus {
         outline: 1px solid transparent !important;
     }
 }
 
 .blocklyWidgetDiv *:focus,
 .blocklySVG *:focus,
-.monaco-editor *:focus {
-    outline: 1px solid transparent !important;
+.monaco-editor *:focus,
+#monacoEditor *:focus {
+    outline: none !important;
 }
 
 .blocklyTreeRoot:focus {
