@@ -68,8 +68,8 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     const docUrl = pxt.appTarget.appTheme.usbDocs;
     const saveAs = pxt.BrowserUtils.hasSaveAs();
     const body = saveAs ? lf("Click 'Save As' and save the {0} file to the {1} drive to transfer the code into your {2}.",
-            pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
-            boardDriveName, boardName)
+        pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
+        boardDriveName, boardName)
         : lf("Move the {0} file to the {1} drive to transfer the code into your {2}.",
             pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
             boardDriveName, boardName)
@@ -134,6 +134,7 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 
 export function initCommandsAsync(): Promise<void> {
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
+    pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
     if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
