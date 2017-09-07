@@ -167,7 +167,7 @@ namespace pxt.blocks {
             'math_op3': {
                 name: Util.lf("absolute number"),
                 tooltip: Util.lf("absolute value of a number"),
-                url: '/blocks/math/abs',
+                url: '/reference/math',
                 category: 'math',
                 block: {
                     message0: Util.lf("absolute of %1")
