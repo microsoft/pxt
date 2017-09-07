@@ -54,9 +54,14 @@ The main innovations of MCCU are:
 \item The design and implementation of \emph{MakeCode}, which bridges the worlds of JavaScript and C++, 
       enabling beginners to get started programming microcontrollers from any modern web browser and enabling 
       hardware vendors to innovate and safely add new components to the mix. 
-\item \emph{Static TypeScript}, a statically-typed subset of TypeScript for fast execution on low-memory devices and a simple model for linking against pre-compiled C++; Static TypeScript also can be used to write safe and performant device driver code.
-\item \emph{CODAL}, the Component-oriented Device Abstraction Layer, maps each hardware component to one or more software components that communicate over a message bus and schedule event handlers to run non-preemptively on fibers. 
-\item The USB Flashing Format (\emph{UF2}), a file format designed for flashing microcontrollers over the Mass Storage Class (removable USB pen drive) protocol.  This new file format greatly speeds the installation of user programs and is robust to difference in operating systems.
+\item \emph{Static TypeScript}, a statically-typed subset of TypeScript for fast execution on low-memory devices 
+      and a simple model for linking against pre-compiled C++; Static TypeScript also can be used to write safe 
+      and performant device driver code.
+\item \emph{CODAL}, the Component-oriented Device Abstraction Layer, maps each hardware component to one or more 
+      software components that communicate over a message bus and schedule event handlers to run non-preemptively on fibers. 
+\item The USB Flashing Format (\emph{UF2}), a file format designed for flashing microcontrollers over the Mass Storage
+      Class (removable USB pen drive) protocol.  This new file format greatly speeds the installation of user programs
+      and is robust to difference in operating systems.
 \end{itemize}
 
 MCCU combines these innovations in programming languages, language runtime, and code loading to make a simple 
@@ -73,9 +78,12 @@ We encourage the reader to choose a board and experiment with programming it, us
 to appreciate the qualitative aspects of MCCU: its simplicity and ease of use.  In this paper, we will evaluate quantitative aspects of MCCU: 
 compilation speed, code size, and runtime performance.  In particular, we evaluate:
 \begin{itemize}
-\item the compile time of Static TypeScript compile/link of user code (to machine code) with respect to the GCC-based C/C++ toolchain, as well as the size of the resulting executable;
+\item the compile time of Static TypeScript compile/link of user code (to machine code) with respect 
+      to the GCC-based C/C++ toolchain, as well as the size of the resulting executable;
 \item the time to load code onto a microcontroller using UF2, compared to standard bootloaders; 
-\item The performance of a set of small benchmarks, written in both Static TypeScript and C++, compiled with the MakeCode and GCC-based toolchains, as well as the performance of device drivers written in Static TypeScript compared to their C++ counterparts.
+\item The performance of a set of small benchmarks, written in both Static TypeScript and C++,
+      compiled with the MakeCode and GCC-based toolchains, as well as the performance of device drivers
+      written in Static TypeScript compared to their C++ counterparts.
 \end{itemize}
 [evaluate with respect to the popular Arduino toolset, for boards with 8-bit (AVR) and 32-bit (Cortex-M0) microcontrollers. 
 Summary of evaluation]

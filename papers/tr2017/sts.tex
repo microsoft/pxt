@@ -33,18 +33,16 @@ STS arises from TypeScript by:
     in the argument type, covariant in the return type) subtyping for functions and methods;
 \item \emph{restricting} casts between records and classes: a class can be cast to a record, but a record cannot be cast to a class.
 \end{itemize}
-STS is a syntactic subset of TypeScript – there is no change to the syntax of TypeScript.
+STS is a syntactic subset of TypeScript -- there is no change to the syntax of TypeScript.
 \emph{[TODO: also, we disllow update of method property]} 
-In terms of type checking, STS also is a subset of TypeScript. Simply put, given a STS program P,
-for every type compatibility or subtype relation R(P) of TypeScript, the corresponding relation R’(P) in STS
-is a subset of relation R. Every STS program is a TypeScript program. 
+In terms of type checking, STS also is a subset of TypeScript. Simply put, given a STS program $P$,
+for every type compatibility or subtype relation $R(P)$ of TypeScript, the corresponding relation $R'(P)$ in STS
+is a subset of relation $R$. Every STS program is a TypeScript program. 
 \emph{[TODO: semantics preserved by erasure for programs written entirely in STS]}
 STS guarantees the absence of runtime type errors, including downcasts.
 The major class of runtime errors still possible is dereference of null/undefined values. 
 STS can be supported by a simple runtime model, like that for C++, using classic vtables and interface tables,
 rather than the prototype-based runtime model used for full TypeScript/JavaScript.
-
-\emph{[TODO: rest of section – type system details, compiler representation]}
 
 \subsection{Eliminating Types: Any, Union, Intersection}
 
@@ -92,14 +90,10 @@ created (using new) and static properties accessed; a class type describing the 
 [but the class type contains a link back to the class declaration;  STS treatment of classes using a nominal interpretation, names 
 and extends for subtyping]
 
-% Subtyping and type compatibility: program first must pass all the TypeScript checks (to catch errors); we then perform subtyping and type compatibility checks again. 
-% Syntactically, many ways to describe object types. STS 
-% -	Class type reference
-% -	Interface type reference,
-% -	array types, tuple types, function types, and constructor types
-% -	Object type literal, array type literal, function type literal
-% -	Object literals, array literals, function expressions and declarations 
+% Subtyping and type compatibility: program first must pass all the TypeScript checks (to catch errors); we then perform subtyping and type compatibility checks again.  
 % “The primitive types are the Number, Boolean, String, Symbol, Void, Null, and Undefined types and all user defined enum types.”
 % Disallowed casts.
-% Compilation 
-% Classic vtable for classes (prefix); classic interface table for classes and records
+
+\subsection{Compilation of STS}
+
+Classic vtable for classes (prefix); classic interface table for classes and records
