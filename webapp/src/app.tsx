@@ -1709,7 +1709,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             {!sandbox ? <div className="left menu">
                                 <span id="logo" className="ui item logo">
                                     {targetTheme.logo || targetTheme.portraitLogo
-                                        ? <a className="ui image" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo)} alt={`${targetTheme.boardName} Logo`} /></a>
+                                        ? <a className="ui image landscape only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo)} alt={`${targetTheme.boardName} Logo`} /></a>
                                         : <span className="name">{targetTheme.name}</span>}
                                     {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo)} alt={`${targetTheme.boardName} Logo`} /></a>) : null}
                                 </span>
@@ -1721,12 +1721,11 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                         <img className="ui mini image" src={Util.toDataUri(rightLogo)} tabIndex={0} onClick={() => this.launchFullEditor()} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
                                     </span>
                                 </div>}
-                            {!inTutorial && !targetTheme.blocksOnly ? <div class="editor-menuitem">
+                            {!inTutorial && !targetTheme.blocksOnly ? <div className="ui item link editor-menuitem">
                                 <div className="ui grid padded">
                                     {sandbox ? <sui.Item class="sim-menuitem thin portrait only" role="menuitem" textClass="landscape only" text={lf("Simulator")} icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView()} title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined}
                                     <sui.Item class="blocks-menuitem" role="menuitem" textClass="landscape only" text={lf("Blocks")} icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks()} title={lf("Convert code to Blocks")} />
                                     <sui.Item class="javascript-menuitem" role="menuitem" textClass="landscape only" text={lf("JavaScript")} icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript()} title={lf("Convert code to JavaScript")} />
-                                    <div className="ui item toggle"></div>
                                 </div>
                             </div> : undefined}
                             {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined}

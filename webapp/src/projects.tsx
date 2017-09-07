@@ -302,14 +302,6 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                             else name = Util.rlf(t);
                             return (<sui.MenuItem key={`tab${t}`} id={`${t}tab`} ariaControls={tab == t ? `tab${t}` : undefined} className={tab == t ? "focused" : undefined} active={tab == t} name={name} onClick={() => this.setState({ tab: t }) } />)
                         }) }
-                        <div className="right menu">
-                            <sui.Button
-                                icon='close'
-                                class={`huge clear ${targetTheme.invertedMenu ? 'inverted' : ''}`}
-                                tabIndex={0}
-                                ariaLabel={lf("Close dialog")}
-                                onClick={() => this.hide(/* closeOnly */ true) } />
-                        </div>
                     </sui.Menu>
                 </sui.Segment>
                 {tab == WELCOME ? <div className={tabClasses}>
