@@ -11,11 +11,17 @@ import * as pkg from "./package";
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
+export let highContrast: boolean;
+
 const lf = Util.lf;
 
 export type Component<S, T> = data.Component<S, T>;
 
 let dimmerInitialized = false;
+
+export const tabKey = 9;
+export const enterKey = 13;
+export const spaceKey = 32;
 
 export function isLoading() {
     return !!$('.ui.loading.dimmer .loadingcontent')[0];
@@ -37,7 +43,7 @@ export function showLoading(msg: string) {
     $('.ui.dimmer.loading').dimmer('show');
     $('.ui.dimmer.loading').html(`
   <div class="content loadingcontent">
-    <div class="ui text large loader msg">${lf("Please wait")}</div>
+    <div class="ui text large loader msg" aria-live="assertive">${lf("Please wait")}</div>
   </div>
 `)
     $('.ui.dimmer.loading .msg').text(msg);
@@ -92,6 +98,22 @@ let lastTime: any = {}
 function htmlmsg(kind: string, msg: string) {
     let now = Date.now()
     let prev = lastTime[kind] || 0
+
+    let msgTag = $('#msg');
+    if (highContrast) {
+        msgTag.children().each((index: number, elem: Element) => {
+            if (!elem.classList.contains('hc')) {
+                elem.classList.add('hc')
+            }
+        });
+    } else {
+        msgTag.children().each((index: number, elem: Element) => {
+            if (elem.classList.contains('hc')) {
+                elem.classList.remove('hc')
+            }
+        });
+    }
+
     if (now - prev < 100)
         $('#' + kind + 'msg').text(msg);
     else {
@@ -177,18 +199,18 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         .map(logo => `<img class="ui logo" src="${Util.toDataUri(logo)}" />`)
         .join(' ');
     let html = `
-  <div class="ui ${options.size || "small"} modal">
-    <div class="header">
+  <div role="dialog" class="ui ${options.size || "small"} modal">
+    <div role="heading" class="header">
         ${Util.htmlEscape(options.header)}
     </div>
     <div class="content">
       ${options.body ? "<p>" + Util.htmlEscape(options.body) + "</p>" : ""}
       ${options.htmlBody || ""}
       ${options.input ? `<div class="ui fluid action input">
-         <input class="userinput" spellcheck="false" placeholder="${Util.htmlEscape(options.input)}" type="text">
+         <input class="userinput focused" spellcheck="false" placeholder="${Util.htmlEscape(options.input)}" type="text">
          </div>` : ""}
       ${options.copyable ? `<div class="ui fluid action input">
-         <input class="linkinput" readonly spellcheck="false" type="text" value="${Util.htmlEscape(options.copyable)}">
+         <input class="linkinput focused" readonly spellcheck="false" type="text" value="${Util.htmlEscape(options.copyable)}">
          <button class="ui teal right labeled icon button copybtn" data-content="${lf("Copied!")}">
             ${lf("Copy")}
             <i class="copy icon"></i>
@@ -201,7 +223,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     if (!options.hideCancel) {
         buttons.push({
             label: options.disagreeLbl || lf("Cancel"),
-            class: options.disagreeClass || "cancel",
+            class: (options.disagreeClass || "cancel") + " focused",
             icon: options.disagreeIcon || "cancel"
         })
     }
@@ -234,6 +256,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     (modal.find(".ui.accordion") as any).accordion()
 
     return new Promise<void>((resolve, reject) => {
+        let focusedNodeBeforeOpening = document.activeElement as HTMLElement;
         let mo: JQuery;
         let timer = options.timeout ? setTimeout(() => {
             timer = 0;
@@ -260,6 +283,9 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
             onHidden: () => {
                 modal.remove();
                 mo.remove();
+                if (focusedNodeBeforeOpening != null) {
+                    focusedNodeBeforeOpening.focus();
+                }
             },
             onApprove: onfinish,
             onDeny: onfinish,
@@ -270,6 +296,9 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
                     resolve()
                 }
             },
+            onVisible: () => {
+                initializeFocusTabIndex(mo.get(0), true);
+            }
         });
         mo.modal("show")
     })
@@ -287,7 +316,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
     if (!options.hideAgree) {
         options.buttons.push({
             label: options.agreeLbl || lf("Go ahead!"),
-            class: options.agreeClass,
+            class: options.agreeClass + " focused",
             icon: options.agreeIcon,
             onclick: () => {
                 result = 1
@@ -298,7 +327,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
     if (options.deleteLbl) {
         options.buttons.push({
             label: options.deleteLbl,
-            class: "delete red",
+            class: "delete red focused",
             icon: "trash",
             onclick: () => {
                 result = 2
@@ -315,7 +344,7 @@ export function confirmDelete(what: string, cb: () => Promise<void>) {
         header: lf("Would you like to delete '{0}'?", what),
         body: lf("It will be deleted for good. No undo."),
         agreeLbl: lf("Delete"),
-        agreeClass: "red",
+        agreeClass: "red focused",
         agreeIcon: "trash",
     }).then(res => {
         if (res) {
@@ -342,7 +371,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     }
 
     options.htmlBody = `<div class="ui fluid icon input">
-                            <input type="text" id="promptDialogInput" value="${options.defaultValue}">
+                            <input class="focused" type="text" id="promptDialogInput" value="${options.defaultValue}">
                         </div>`;
 
     options.onLoaded = () => {
@@ -351,7 +380,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
             dialogInput.setSelectionRange(0, 9999);
             dialogInput.onkeyup = (e: KeyboardEvent) => {
                 let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-                if (charCode === 13 || charCode === 32) {
+                if (charCode === enterKey || charCode === spaceKey) {
                     e.preventDefault();
                     (document.getElementsByClassName("approve positive").item(0) as HTMLElement).click();
                 }
@@ -453,6 +482,96 @@ export function scrollIntoView(item: JQuery, margin = 0) {
     if (newTop != selfTop) {
         parent.scrollTop(newTop)
         //parent.animate({ 'scrollTop': newTop }, 'fast');
+    }
+}
+
+export function resetFocus() {
+    let content = document.getElementById('content');
+    content.tabIndex = 0;
+    content.focus();
+    content.blur();
+    content.tabIndex = -1;
+}
+
+interface FocusDataEventInfo {
+    firstTag: HTMLElement;
+    lastTag: HTMLElement;
+    targetArea: any;
+    giveFocusToLastTagBinding: (e: UIEvent) => any;
+    giveFocusToFirstTagBinding: (e: UIEvent) => any
+}
+
+function unregisterFocusTracking(data: FocusDataEventInfo): void {
+    if (!data) {
+        return;
+    }
+
+    data.firstTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToLastTagBinding);
+    data.lastTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToFirstTagBinding);
+    if (data.firstTag === data.lastTag) {
+        data.firstTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToFirstTagBinding);
+        data.lastTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToLastTagBinding);
+    }
+}
+
+function giveFocusToFirstTag(e: KeyboardEvent) {
+    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+    if (charCode === tabKey && !e.shiftKey) {
+        e.preventDefault();
+        unregisterFocusTracking(this);
+        initializeFocusTabIndex(this.targetArea, true);
+    } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
+        unregisterFocusTracking(this);
+        initializeFocusTabIndex(this.targetArea, true, false);
+    }
+}
+
+function giveFocusToLastTag(e: KeyboardEvent) {
+    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+    if (charCode === tabKey && e.shiftKey) {
+        e.preventDefault();
+        unregisterFocusTracking(this);
+        initializeFocusTabIndex(this.targetArea, true, false);
+        this.lastTag.focus();
+    } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
+        unregisterFocusTracking(this);
+        initializeFocusTabIndex(this.targetArea, true, false);
+    }
+}
+
+export function initializeFocusTabIndex(element: Element, allowResetFocus = false, giveFocusToFirstElement = true, unregisterOnly = false) {
+    if (!allowResetFocus && element !== document.activeElement && element.contains(document.activeElement)) {
+        return;
+    }
+
+    unregisterFocusTracking((element as any).focusDataInfo);
+    if (unregisterOnly) {
+        return;
+    }
+
+    const focused = element.getElementsByClassName("focused");
+    if (focused.length == 0) {
+        return;
+    }
+
+    const firstTag = focused[0] as HTMLElement;
+    const lastTag = focused.length > 1 ? focused[focused.length - 1] as HTMLElement : firstTag;
+
+    let data = <FocusDataEventInfo>{};
+    data.firstTag = firstTag;
+    data.lastTag = lastTag;
+    data.targetArea = element;
+    data.giveFocusToLastTagBinding = giveFocusToLastTag.bind(data);
+    data.giveFocusToFirstTagBinding = giveFocusToFirstTag.bind(data);
+    (element as any).focusDataInfo = data;
+
+    if (firstTag !== lastTag) {
+        firstTag.addEventListener('keydown', data.giveFocusToLastTagBinding);
+    }
+    lastTag.addEventListener('keydown', data.giveFocusToFirstTagBinding);
+
+    if (giveFocusToFirstElement) {
+        firstTag.focus();
     }
 }
 

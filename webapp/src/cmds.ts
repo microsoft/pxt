@@ -83,13 +83,13 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
         buttons: [downloadAgain ? {
             label: fn,
             icon: "download",
-            class: "lightgrey",
+            class: "lightgrey focused",
             url,
             fileName: fn
         } : undefined, docUrl ? {
             label: lf("Help"),
             icon: "help",
-            class: "lightgrey",
+            class: "lightgrey focused",
             url: docUrl
         } : undefined],
         timeout: 10000

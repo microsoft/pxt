@@ -84,6 +84,7 @@ namespace pxt.editor {
         hasHint?: boolean;
         content?: string;
         headerContent?: string;
+        ariaLabel?: string;
     }
 
     export interface TutorialOptions {
