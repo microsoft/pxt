@@ -16,11 +16,12 @@ const lf = Util.lf
 export class Editor extends srceditor.Editor {
     //?
     static counter = 0
-    private graphEntries: ILogEntryElement[] = []
+    //private graphEntries: ILogEntryElement[] = []
+    private graphLines: IGraphLine[] = []
     private consoleEntries: IConsoleEntry[] = []
     private consoleBuffer: string = ""
 
-    public element: HTMLDivElement
+    public element: HTMLElement
     private labelElement: HTMLElement
     private graphElement: HTMLElement
     private consoleElement: HTMLElement
@@ -78,7 +79,21 @@ export class Editor extends srceditor.Editor {
     }
 
     appendGraphEntry(source: string, data: string, theme: string, sim: boolean) {
+        let m = /^\s*(([^:]+):)?\s*(-?\d+)/i.exec(data)
+        let variable = m ? (m[2] || ' ') : undefined
+        let nvalue = m ? parseInt(m[3]) : null
+
+        let last: IGraphLine = undefined
+
+        for (let i = 0; i < this.graphLines.length; ++i) {
+            let line = this.graphLines[i]
+            if (line.source === source && line.variable === variable) {
+                last = line
+                break
+            }
+        }
         //TODO consolidate with other regex - have isGraphable return split data
+        /** 
         let m = /^\s*(([^:]+):)?\s*(-?\d+)/i.exec(data)
         let variable = m ? (m[2] || ' ') : undefined
         let nvalue = m ? parseInt(m[3]) : null
@@ -115,6 +130,7 @@ export class Editor extends srceditor.Editor {
             this.graphEntries.push(graph)
         }
         this.scheduleRender()
+        **/
     }
 
     appendConsoleEntry(data: string) {
@@ -132,12 +148,14 @@ export class Editor extends srceditor.Editor {
                     let po = this.consoleEntries.shift();
                     if (po.element && po.element.parentElement) po.element.parentElement.removeChild(po.element);
                 }
-                this.scheduleRender()
+                //this.scheduleRender()
             }
         }
     }
 
     clear() {
+        //TODO something
+        /**
         this.graphEntries = [];
         if (this.labelElement && this.labelElement.parentElement)
             this.labelElement.parentElement.removeChild(this.labelElement)
@@ -154,10 +172,11 @@ export class Editor extends srceditor.Editor {
             if (e.element && e.element.parentElement) e.element.parentElement.removeChild(e.element)
         })
         this.consoleBuffer = ""
+        **/
     }
 
     scheduleRender() {
-        if (!this.renderFiberId) this.renderFiberId = setTimeout(() => this.render(), 50);
+        //if (!this.renderFiberId) this.renderFiberId = setTimeout(() => this.render(), 50);
     }
 
     render() {
@@ -201,6 +220,15 @@ export class Editor extends srceditor.Editor {
 
     display() {
         return (
+            <div id="serialEditor">
+                <div id="graphs">
+                    <canvas id="coconut"></canvas>
+                </div>
+                <div id="console"></div>
+            </div>
+        )
+        /**
+        return (
             <div id="serialEditor" ref={(el) => {this.element = el}}>
                 <sui.Button text={lf("Start")} onClick= {() => this.active = true} />
                 <sui.Button text={lf("Stop")} onClick = {() => this.active = false} />
@@ -208,18 +236,23 @@ export class Editor extends srceditor.Editor {
                 <div className="console" ref={(el) => {this.consoleElement = el}}></div>
             </div>
         )
+        **/
     }
 
     domUpdate() {
+        //TODO look at this
         //this.scheduleRender()
+        /**
         let canvas: HTMLCanvasElement = document.createElement("canvas")
         canvas.id = "smoothieTest"
         document.getElementById("serialEditor").appendChild(canvas)
         let s = new SmoothieChart()
         s.streamTo(canvas)
+        **/
     }
 
     setLabel(text: string, theme?: string) {
+        //TODO look at this
         if (this.labelElement && this.labelElement.innerText == text) return
 
         if (this.labelElement) {
@@ -234,6 +267,7 @@ export class Editor extends srceditor.Editor {
     }
 }
 
+/**
 interface ILogEntry {
     //TODO get rid of some of these fields
     id?: number
@@ -252,9 +286,18 @@ interface ILogEntryElement extends ILogEntry {
     canvasElement?: HTMLCanvasElement
     dataElement?: HTMLDivElement
 }
+**/
 
 interface IConsoleEntry {
     data: string
     dirty: boolean
     element?: HTMLElement
+}
+
+interface IGraphLine {
+    source: string,
+    currentValue: string,
+    variable: string,
+    theme: string,
+    line: TimeSeries
 }
