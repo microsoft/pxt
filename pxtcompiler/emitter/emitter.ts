@@ -591,29 +591,29 @@ namespace ts.pxtc {
             }
     }
 
-    function typeCheckSrcFlowstoTrg(src: Node | Type, trg: Node | Type) {
+    function typeCheckSubtoSup(sub: Node | Type, sup: Node | Type) {
         // get the direct types
-        let trgTypeLoc = (trg as any).kind ? checker.getTypeAtLocation(trg as Node) : trg as Type;
-        let srcTypeLoc = (src as any).kind ? checker.getTypeAtLocation(src as Node) : src as Type;
+        let supTypeLoc = (sup as any).kind ? checker.getTypeAtLocation(sup as Node) : sup as Type;
+        let subTypeLoc = (sub as any).kind ? checker.getTypeAtLocation(sub as Node) : sub as Type;
 
         // get the contextual types, if possible
-        let trgType = isExpression(trg as Node) ? checker.getContextualType(<Expression>(trg as Node)) : trgTypeLoc
-        if (!trgType)
-            trgType = trgTypeLoc
-        let srcType = isExpression(src as Node) ? checker.getContextualType(<Expression>(src as Node)) : srcTypeLoc
-        if (!srcType)
-            srcType = srcTypeLoc
+        let supType = isExpression(sup as Node) ? checker.getContextualType(<Expression>(sup as Node)) : supTypeLoc
+        if (!supType)
+            supType = supTypeLoc
+        let subType = isExpression(sub as Node) ? checker.getContextualType(<Expression>(sub as Node)) : subTypeLoc
+        if (!subType)
+            subType = subTypeLoc
 
-        if (!trgType || !srcType)
+        if (!supType || !subType)
             return;
 
         // src may get its type from trg via context, in which case
         // we want to use the direct type of src
-        if (trgType == srcType && srcType != srcTypeLoc)
-            srcType = srcTypeLoc
+        if (supType == subType && subType != subTypeLoc)
+            subType = subTypeLoc
 
         occursCheck = []
-        let [ok, message] = checkSubtype(srcType, trgType)
+        let [ok, message] = checkSubtype(subType, supType)
         if (!ok) {
             userError(9263, lf(message))
         }
@@ -636,6 +636,32 @@ namespace ts.pxtc {
     // an assignment of the form trg <- src is safe, where supType is the
     // type of trg and subType is the type of src
     function checkSubtype(subType: Type, superType: Type): [boolean, string] {
+
+        function checkMembers() {
+            let superProps = checker.getPropertiesOfType(superType)
+            let subProps = checker.getPropertiesOfType(subType)
+            let [ret, msg] = [true, ""]
+            superProps.forEach(superProp => {
+                let superPropDecl = <PropertyDeclaration>superProp.valueDeclaration
+                let find = subProps.filter(sp => sp.name == superProp.name)
+                if (find.length == 1) {
+                    let subPropDecl = <PropertyDeclaration>find[0].valueDeclaration
+                    // TODO: record the property on which we have a mismatch
+                    let [retSub, msgSub] = checkSubtype(checker.getTypeAtLocation(subPropDecl), checker.getTypeAtLocation(superPropDecl))
+                    if (ret && !retSub)[ret, msg] = [retSub, msgSub]
+                } else if (find.length == 0) {
+                    if (!(superProp.flags & SymbolFlags.Optional)) {
+                        // we have a cast to an interface with more properties (unsound)
+                        [ret, msg] = [false, "Property " + superProp.name + " not present in " + subType.getSymbol().name]
+                    } else {
+                        // we will reach this case for something like
+                        // let x: Foo = { a:42 }
+                        // where x has some optional properties, in addition to "a"
+                    }
+                }
+            })
+            return insertSubtype(key, [ret, msg])
+        }
 
         let subId = (subType as any).id
         let superId = (superType as any).id
@@ -667,8 +693,10 @@ namespace ts.pxtc {
                     if (inheritsFrom(superDecl, subDecl))
                         return insertSubtype(key, [false, "Downcasts not supported."])
                     else
-                        return insertSubtype(key, [false, "Casts between unrelated classes not supported."])
+                        return insertSubtype(key, [false, "Classes " + subDecl.name.getText() + " and " + superDecl.name.getText() + " are not related by inheritance."])
                 }
+                // need to also check subtyping on members
+                return checkMembers();
             } else {
                 if (!(subType.flags & (TypeFlags.Undefined | TypeFlags.Null))) {
                     return insertSubtype(key, [false, "Cast to class not supported."])
@@ -697,29 +725,7 @@ namespace ts.pxtc {
             }
         } else if (isInterfaceType(superType)) {
             if (isStructureType(subType)) {
-                let superProps = checker.getPropertiesOfType(superType)
-                let subProps = checker.getPropertiesOfType(subType)
-                let [ret, msg] = [true, ""]
-                superProps.forEach(superProp => {
-                    let superPropDecl = <PropertyDeclaration>superProp.valueDeclaration
-                    let find = subProps.filter(sp => sp.name == superProp.name)
-                    if (find.length == 1) {
-                        let subPropDecl = <PropertyDeclaration>find[0].valueDeclaration
-                        // TODO: record the property on which we have a mismatch
-                        let [retSub, msgSub] = checkSubtype(checker.getTypeAtLocation(subPropDecl), checker.getTypeAtLocation(superPropDecl))
-                        if (ret && !retSub)[ret, msg] = [retSub, msgSub]
-                    } else if (find.length == 0) {
-                        if (!(superProp.flags & SymbolFlags.Optional)) {
-                            // we have a cast to an interface with more properties (unsound)
-                            [ret, msg] = [false, "Property " + superProp.name + " not present in " + subType.getSymbol().name]
-                        } else {
-                            // we will reach this case for something like
-                            // let x: Foo = { a:42 }
-                            // where x has some optional properties, in addition to "a"
-                        }
-                    }
-                })
-                return insertSubtype(key, [ret, msg])
+                return checkMembers();
             }
         } else if (isArrayType(superType)) {
             if (isArrayType(subType)) {
@@ -1175,14 +1181,19 @@ namespace ts.pxtc {
                         case SK.ExtendsKeyword:
                             if (!h.types || h.types.length != 1)
                                 throw userError(9228, lf("invalid extends clause"))
-                            let tp = typeOf(h.types[0])
-                            if (tp && isClassType(tp)) {
+                            let superType = typeOf(h.types[0])
+                            if (superType && isClassType(superType)) {
                                 // check if user defined
                                 // let filename = getSourceFileOfNode(tp.symbol.valueDeclaration).fileName
                                 // if (program.getRootFileNames().indexOf(filename) == -1) {
                                 //    throw userError(9228, lf("cannot inherit from built-in type."))
                                 // }
-                                return getClassInfo(tp)
+
+                                // need to redo subtype checking on members
+                                let subType = checker.getTypeAtLocation(node)
+                                typeCheckSubtoSup(subType, superType)
+
+                                return getClassInfo(superType)
                             } else {
                                 throw userError(9228, lf("cannot inherit from this type"))
                             }
@@ -1913,7 +1924,7 @@ ${lbl}: .short 0xffff
                 let p = parms[i]
                 // there may be more arguments than parameters
                 if (p && p.valueDeclaration && p.valueDeclaration.kind == SK.Parameter)
-                    typeCheckSrcFlowstoTrg(args[i], p.valueDeclaration)
+                    typeCheckSubtoSup(args[i], p.valueDeclaration)
             }
 
             // TODO: this is micro:bit specific and should be lifted out
@@ -2324,11 +2335,11 @@ ${lbl}: .short 0xffff
             }
         }
         function emitTypeAssertion(node: TypeAssertion) {
-            typeCheckSrcFlowstoTrg(node.expression, node)
+            typeCheckSubtoSup(node.expression, node)
             return emitExpr(node.expression)
         }
         function emitAsExpression(node: AsExpression) {
-            typeCheckSrcFlowstoTrg(node.expression, node)
+            typeCheckSubtoSup(node.expression, node)
             return emitExpr(node.expression)
         }
         function emitParenExpression(node: ParenthesizedExpression) {
@@ -2699,7 +2710,7 @@ ${lbl}: .short 0xffff
 
         function emitStore(trg: Expression, src: Expression, checkAssign: boolean = false) {
             if (checkAssign) {
-                typeCheckSrcFlowstoTrg(src, trg)
+                typeCheckSubtoSup(src, trg)
             }
             let decl = getDecl(trg)
             let isGlobal = isGlobalVar(decl)
@@ -3555,14 +3566,14 @@ ${lbl}: .short 0xffff
             if (node.kind === SK.BindingElement) {
                 emitBrk(node)
                 let rhs = bindingElementAccessExpression(node as BindingElement)
-                typeCheckSrcFlowstoTrg(rhs[1], node)
+                typeCheckSubtoSup(rhs[1], node)
                 proc.emitExpr(loc.storeByRef(rhs[0]))
                 proc.stackEmpty();
             }
             else if (node.initializer) {
                 // TODO: make sure we don't emit code for top-level globals being initialized to zero
                 emitBrk(node)
-                typeCheckSrcFlowstoTrg(node.initializer, node)
+                typeCheckSubtoSup(node.initializer, node)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 proc.stackEmpty();
             }
