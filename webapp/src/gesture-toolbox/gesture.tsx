@@ -423,6 +423,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 let curIndex = cloneData.length - 1;
                 this.models.push(new Model.SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name));
                 this.setState({ data: cloneData });
+                this.hasBeenModified = true;
             }
         }
 
