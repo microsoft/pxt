@@ -45,9 +45,7 @@ namespace led {
 \end{lstlisting}
 
 Here is the C++ file defining the micro:bit's led namespace and its functions:
-\begin{center}
-\url{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/led.cpp}
-\end{center}
+~\href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/led.cpp}{pxt-microbit/libs/core/led.cpp}.
 
 Mapping of functions and enumerations between C++ and TypeScript is straightforward. 
 Here's an example of the C++ function plot in the led namespace that wraps a more
@@ -75,10 +73,8 @@ the TypeScript shim to its C++ function (shim=led::plot):
 function plot(x: number, y: number): void;
 \end{lstlisting}
 
-Here is the shim file generated from the annotated C++ sources for the micro:bit device runtime: 
-\begin{center}
-\url{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/shims.d.ts}
-\end{center}
+Here is the shim file generated from C++ micro:bit device runtime:
+\href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/shims.d.ts}{pxt-microbit/libs/core/shims.d.ts}.
 
 To support the foreign function interface, MakeCode defines a mapping between C++ and TypeScript types.
 Boolean and void have straightforward mappings from C++ to TypeScript (bool → boolean, void → void). 
@@ -97,10 +93,7 @@ These C++ types are mapped to the TypeScript types string and ()=>void, respecti
 MakeCode allows a set of C++ functions with the same first parameter (of type Foo) to be
 exposed as a TypeScript interface Foo as follows: this set of C++ functions must be grouped
 inside a namespace of the name FooMethods.  See, for example, how a C++ buffer abstraction is exposed:
-
-\begin{center}
-\url{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp}
-\end{center}
+\href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp}{pxt-microbit/libs/core/buffer.cpp}.
 
 You can find the resulting TypeScript Buffer interface in the shim file for the micro:bit
 (already referenced above). 
