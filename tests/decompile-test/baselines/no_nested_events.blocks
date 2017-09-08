@@ -16,4 +16,11 @@
 </block>
 </statement>
 </block>
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation declaredvars="i" numlines="1" line0="i &#61; 0" />
+</block>
+</statement>
+</block>
 </xml>
