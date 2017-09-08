@@ -16,7 +16,7 @@ const lf = Util.lf
 export class Editor extends srceditor.Editor {
 
     private chartWrappers: ChartWrapper[] = []
-    private consoleEntries: String[] = []
+    private consoleEntries: string[] = []
     private consoleBuffer: string = ""
     // TODO pass these values in with props or config?
     private shouldScroll = false
@@ -143,8 +143,7 @@ export class Editor extends srceditor.Editor {
     }
 
     domUpdate() {
-        //TODO should this be here?
-        this.startRecording()
+        //TODO
     }
 
     setLabel(text: string, theme?: string) {
