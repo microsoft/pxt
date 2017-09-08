@@ -14,6 +14,13 @@ import Util = pxt.Util
 const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
+
+    private smoothie = new SmoothieChart(
+        {responsive: true,
+        grid: { strokeStyle:'rgb(125, 0, 0)', fillStyle:'rgb(60, 0, 0)',
+                lineWidth: 1, millisPerLine: 250, verticalSections: 6 },
+        labels: { fillStyle:'rgb(255, 255, 0)'}}
+    )    
     //?
     static counter = 0
     //private graphEntries: ILogEntryElement[] = []
@@ -57,6 +64,8 @@ export class Editor extends srceditor.Editor {
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
         window.addEventListener("message", this.processMessage.bind(this), false)
+        //THIS DOES NOT WORK
+        //this.smoothie.streamTo(document.getElementById("coconut") as HTMLCanvasElement)
     }
 
     processMessage(ev: MessageEvent) {
@@ -91,6 +100,18 @@ export class Editor extends srceditor.Editor {
                 last = line
                 break
             }
+        }
+
+        if (last) {
+            last.line.append(new Date().getTime(), nvalue)
+        } else {
+            let newLine = new TimeSeries()
+            this.smoothie.addTimeSeries(newLine)
+            this.graphLines.push({
+                source: source,
+                variable: variable,
+                line: newLine
+            })
         }
         //TODO consolidate with other regex - have isGraphable return split data
         /** 
@@ -240,6 +261,7 @@ export class Editor extends srceditor.Editor {
     }
 
     domUpdate() {
+        this.smoothie.streamTo(document.getElementById("coconut") as HTMLCanvasElement)
         //TODO look at this
         //this.scheduleRender()
         /**
@@ -296,8 +318,6 @@ interface IConsoleEntry {
 
 interface IGraphLine {
     source: string,
-    currentValue: string,
     variable: string,
-    theme: string,
     line: TimeSeries
 }
