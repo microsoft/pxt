@@ -54,9 +54,7 @@ function searchSubmit(form) {
 }
 
 function setupSidebar() {
-    var togglesidebar = document.getElementById("togglesidebar");
-    togglesidebar.onkeydown = handleEnterKey;
-
+    $("#togglesidebar").on('keydown', handleEnterKey);
 
     $('.ui.sidebar')
         .sidebar({ 
