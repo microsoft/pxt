@@ -14,8 +14,10 @@
 *[role='menuitem']:focus,
 a:not([tabindex='-1']):focus,
 input:not([tabindex='-1']):focus,
-button:not([tabindex='-1']):focus {
-    outline: 2px solid #4D90FE !important;
+button:not([tabindex='-1']):focus,
+textarea:not([tabindex='-1']):focus,
+.ui.form input:not([tabindex='-1']):focus {
+    outline: 2px solid #4D90FE;
 }
 
 @media all and (pointer:coarse) { /* If touch screen */
@@ -25,20 +27,19 @@ button:not([tabindex='-1']):focus {
     *[role='menuitem']:focus,
     a:not([tabindex='-1']):focus,
     input:not([tabindex='-1']):focus,
-    button:not([tabindex='-1']):focus {
+    button:not([tabindex='-1']):focus,
+    textarea:not([tabindex='-1']):focus,
+    .ui.form input:not([tabindex='-1']):focus {
         outline: 1px solid transparent !important;
     }
 }
 
+.blocklyTreeRoot:focus,
 .blocklyWidgetDiv *:focus,
 .blocklySVG *:focus,
 .monaco-editor *:focus,
 #monacoEditor *:focus {
-    outline: none !important;
-}
-
-.blocklyTreeRoot:focus {
-    outline: none !important;
+    outline: 1px solid transparent !important;
 }
 
 .ui.item:focus, .ui.button:focus {

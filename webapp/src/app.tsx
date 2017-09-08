@@ -1713,6 +1713,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                         : <span className="name">{targetTheme.name}</span>}
                                     {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo)} alt={`${targetTheme.boardName} Logo`} /></a>) : null}
                                 </span>
+                                {betaUrl ? <a href={`${betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
                                 {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="folder open large" ariaLabel={lf("Create or open recent project")} text={lf("Projects")} onClick={() => this.openProject()} /> : null}
                                 {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={() => this.embed()} /> : null}
                                 {inTutorial ? <sui.Item class="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
@@ -1726,6 +1727,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                     {sandbox ? <sui.Item class="sim-menuitem thin portrait only" role="menuitem" textClass="landscape only" text={lf("Simulator")} icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView()} title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined}
                                     <sui.Item class="blocks-menuitem" role="menuitem" textClass="landscape only" text={lf("Blocks")} icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks()} title={lf("Convert code to Blocks")} />
                                     <sui.Item class="javascript-menuitem" role="menuitem" textClass="landscape only" text={lf("JavaScript")} icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript()} title={lf("Convert code to JavaScript")} />
+                                    <div className="ui item toggle"></div>
                                 </div>
                             </div> : undefined}
                             {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined}
@@ -1762,7 +1764,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                         : <span className="name">{targetTheme.organization}</span>}
                                     {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo)} alt={`${targetTheme.organization} Logo`} />) : null}
                                 </a> : undefined}
-                                {betaUrl ? <a href={`${betaUrl}`} className="ui red mini corner top left attached label betalabel">{lf("Beta")}</a> : undefined}
                             </div>
                         </div>
                     </header> }
@@ -1802,7 +1803,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     </aside>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
                     {this.allEditors.map(e => e.displayOuter())}
                 </div>
                 {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined }
