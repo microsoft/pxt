@@ -1480,9 +1480,9 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 if (!titleRegex || titleRegex.length < 1) return;
                 title = titleRegex[1].trim();
 
-                let steps = md.split(/^###[^#].*$/gmi);
+                let steps = md.split(/^##[^#].*$/gmi);
                 for (let step = 1; step < steps.length; step++) {
-                    let stepmd = `###${steps[step]}`;
+                    let stepmd = `##${steps[step]}`;
                     result.push(stepmd);
                 }
                 //TODO: parse for tutorial options, mainly initial blocks
