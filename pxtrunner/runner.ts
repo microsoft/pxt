@@ -621,6 +621,7 @@ ${files["main.ts"]}
                         for (let i = 0; i < stepcontent.length - 1; i++) {
                             content.innerHTML = stepcontent[i + 1];
                             stepInfo[i].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
+                            stepInfo[i].ariaLabel = content.firstElementChild.textContent;
                             stepInfo[i].content = stepcontent[i + 1];
                         }
                         content.innerHTML = '';

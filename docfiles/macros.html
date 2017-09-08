@@ -75,28 +75,28 @@
 </aside>
 
 <aside id=top-dropdown class=menu>
-    <div class="ui simple dropdown item" title="@TITLE@">
+    <nav div class="ui simple dropdown item" title="@TITLE@">
         @NAME@
         <i class="dropdown icon"></i>
         <div class="menu">
             @ITEMS@
         </div>
-    </div>
+    </nav>
 </aside>
 
 <aside id=inner-dropdown class=menu>
-    <div class="item" title="@TITLE@">
+    <nav class="item" title="@TITLE@">
         <i class="dropdown icon"></i> @NAME@
         <div class="menu">
             @ITEMS@
         </div>
-    </div>
+    </nav>
 </aside>
 
 
 <!-- TOC in the sidebar -->
 <aside id=item class=toc>
-    <a class="item @ACTIVE@" href="@LINK@">@NAME@</a>
+    <a class="item @ACTIVE@" href="@LINK@" role="menuitem">@NAME@</a>
 </aside>
 
 <aside id=divider class=toc>
@@ -105,7 +105,7 @@
 
 <aside id=top-dropdown class=toc>
     <div class="item" title="@TITLE@">
-        <a class="header @ACTIVE@" href="@LINK@">@NAME@</a>
+        <a class="header @ACTIVE@" href="@LINK@" role="menu">@NAME@</a>
         <div class="menu">
             @ITEMS@
         </div>
@@ -113,10 +113,10 @@
 </aside>
 
 <aside id=inner-dropdown class=toc>
-    <div class="ui inverted accordion item visible" title="@TITLE@">
+    <div class="ui inverted accordion item visible" role="tree" title="@TITLE@">
         <div class="@ACTIVE@ title">
             <i class="dropdown icon"></i>
-            <a class="header" href="@LINK@">@NAME@</a>
+            <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
         </div>
         <div class="@ACTIVE@ content">
             @ITEMS@
@@ -128,7 +128,7 @@
     <div class="inverted accordion item visible" title="@TITLE@">
         <div class="@ACTIVE@ title">
             <i class="dropdown icon"></i>
-            <a class="header" href="@LINK@">@NAME@</a>
+            <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
         </div>
         <div class="@ACTIVE@ content">
             @ITEMS@
