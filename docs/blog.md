@@ -1,5 +1,11 @@
 # Microsoft MakeCode Blog
 
+## [Microsoft MakeCode gets accessible](/blog/makecode-gets-accessible)
+
+September 8th, 2017
+
+[Read more](/blog/makecode-gets-accessible)
+
 ## [Microbit Editor v0.12.64](/blog/microbit/v0.12.58)
 
 August 11th, 2017
