@@ -17,10 +17,9 @@ export class Editor extends srceditor.Editor {
 
     private smoothie = new SmoothieChart(
         {responsive: true,
-        grid: { strokeStyle:'rgb(125, 0, 0)', fillStyle:'rgb(60, 0, 0)',
-                lineWidth: 1, millisPerLine: 250, verticalSections: 6 },
-        labels: { fillStyle:'rgb(255, 255, 0)'}}
-    )    
+        grid: { lineWidth: 1, millisPerLine: 250, verticalSections: 6 },
+        labels: { fillStyle: 'rgb(255, 255, 0)'}}
+    )
     //?
     static counter = 0
     //private graphEntries: ILogEntryElement[] = []
@@ -106,7 +105,7 @@ export class Editor extends srceditor.Editor {
             last.line.append(new Date().getTime(), nvalue)
         } else {
             let newLine = new TimeSeries()
-            this.smoothie.addTimeSeries(newLine)
+            this.smoothie.addTimeSeries(newLine, {strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4})
             this.graphLines.push({
                 source: source,
                 variable: variable,
@@ -242,6 +241,8 @@ export class Editor extends srceditor.Editor {
     display() {
         return (
             <div id="serialEditor">
+                <sui.Button text={lf("Start")} onClick= {() => {this.active = true; this.smoothie.start()}} />
+                <sui.Button text={lf("Stop")} onClick = {() => {this.active = false; this.smoothie.stop()}} />
                 <div id="graphs">
                     <canvas id="coconut"></canvas>
                 </div>
@@ -261,6 +262,8 @@ export class Editor extends srceditor.Editor {
     }
 
     domUpdate() {
+        //TODO hacky!
+        document.getElementById("coconut").setAttribute("style", "height:200px; width:100%;")
         this.smoothie.streamTo(document.getElementById("coconut") as HTMLCanvasElement)
         //TODO look at this
         //this.scheduleRender()
