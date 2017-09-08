@@ -135,13 +135,6 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
             <block type="math_number" gap="8">
                 <field name="NUM">0</field>
             </block>
-            <block type="device_random" gap="8">
-                <value name="limit">
-                    <shadow type="math_number">
-                        <field name="NUM">4</field>
-                    </shadow>
-                </value>
-            </block>
             <category colour="#712672" name="More" nameid="more" iconclass="blocklyTreeIconmore" expandedclass="blocklyTreeIconmore">
                 <block type="math_modulo">
                     <value name="DIVIDEND">

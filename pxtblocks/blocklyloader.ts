@@ -2132,29 +2132,6 @@ namespace pxt.blocks {
             }
         };
 
-        // device_random
-        const deviceRandomId = "device_random";
-        const deviceRandomDef = pxt.blocks.getBlockDefinition(deviceRandomId);
-        Blockly.Blocks[deviceRandomId] = {
-            init: function () {
-                this.jsonInit({
-                    "message0": deviceRandomDef.block["message0"],
-                    "args0": [
-                        {
-                            "type": "input_value",
-                            "name": "limit",
-                            "check": "Number"
-                        }
-                    ],
-                    "inputsInline": true,
-                    "output": "Number",
-                    "colour": blockColors['math']
-                });
-
-                setBuiltinHelpInfo(this, deviceRandomId);
-            }
-        };
-
         // builtin math_number
         //XXX Integer validation needed.
         const mInfo = pxt.blocks.getBlockDefinition("math_number");
