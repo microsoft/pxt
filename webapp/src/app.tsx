@@ -521,6 +521,7 @@ export class ProjectView
         let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
         if (!tc) return;
         if (step > -1) {
+            tc.focusInitialized = false;
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
             this.setState({ tutorialOptions: tutorialOptions });

@@ -139,7 +139,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 }
 
 export class TutorialCard extends data.Component<ISettingsProps, {}> {
-    private focusInitialized: boolean;
+    public focusInitialized: boolean;
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -162,7 +162,6 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
         const nextStep = currentStep + 1;
 
         options.tutorialStep = nextStep;
-        this.focusInitialized = false;
 
         pxt.tickEvent(`tutorial.next`, { tutorial: options.tutorial, step: nextStep });
         this.props.parent.setTutorialStep(nextStep);
