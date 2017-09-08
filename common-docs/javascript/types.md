@@ -138,7 +138,7 @@ Declaring variables of type `void` is not useful.
 
 ## Null and undefined
 
-A variable isn't always set to a value. If you want a variable to exist yet not have it set to  a value of a type, it can be set to nothing, or `null`. This is often useful to indicate that a value isn't meaningful for evaluation at the moment.
+A variable isn't always set to a value. If you want a variable to exist but not have it set to  a value of a type, it can be set to nothing, or `null`. This is often useful to indicate that a variable isn't meaningful for evaluation at the moment.
 
 ```typescript-ignore
 if (encoder.active) {
