@@ -15,8 +15,8 @@ const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
 
-    private smoothies: IChartInfoObject[] = []
-    private consoleEntries: IConsoleEntry[] = []
+    private chartWrappers: ChartWrapper[] = []
+    private consoleEntries: String[] = []
     private consoleBuffer: string = ""
     // TODO pass these values in with props or config?
     private shouldScroll = false
@@ -70,38 +70,22 @@ export class Editor extends srceditor.Editor {
         let variable = m ? (m[2] || ' ') : undefined
         let nvalue = m ? parseInt(m[3]) : null
 
-        let last: IChartInfoObject = undefined
-
-        for (let i = 0; i < this.smoothies.length; ++i) {
-            let chart = this.smoothies[i]
-            if (chart.source === source && chart.variable === variable) {
-                last = chart
+        //See if there is a "home chart" that this point belongs to -
+        //if not, create a new chart
+        let homeChart: ChartWrapper = undefined
+        for (let i = 0; i < this.chartWrappers.length; ++i) {
+            let chartWrapper = this.chartWrappers[i]
+            if (chartWrapper.shouldContain(source, variable)) {
+                homeChart = chartWrapper
                 break
             }
         }
-
-        if (last) {
-            last.line.append(new Date().getTime(), nvalue)
+        if (homeChart) {
+            homeChart.addPoint(nvalue)
         } else {
-            let newLine = new TimeSeries()
-            //TODO abstract this into function/config
-            let newChart = new SmoothieChart({
-                responsive: true,
-                grid: { lineWidth: 1, millisPerLine: 250, verticalSections: 6 },
-                labels: { fillStyle: 'rgb(255, 255, 0)' }
-            })
-            newChart.addTimeSeries(newLine, {strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4})
-            let newCanvas = document.createElement("canvas")
-            newCanvas.setAttribute("style", "height:200px; width:100%;")
-            document.getElementById("graphs").appendChild(newCanvas)
-            newChart.streamTo(newCanvas)
-            this.smoothies.push({
-                element: newCanvas,
-                chart: newChart,
-                line: newLine,
-                source: source,
-                variable: variable
-            })
+            let newChart = new ChartWrapper(source, variable, nvalue)
+            this.chartWrappers.push(newChart)
+            document.getElementById("charts").appendChild(newChart.getElement())
         }
     }
 
@@ -110,45 +94,49 @@ export class Editor extends srceditor.Editor {
             let ch = data[i]
             this.consoleBuffer += ch
             if (ch === "\n" || this.consoleBuffer.length > this.maxLineLength) {
-                let consoleEntry: IConsoleEntry = {
-                    data: this.consoleBuffer,
-                    dirty: true
+
+                let newEntry = document.createElement("div")
+                newEntry.textContent = this.consoleBuffer
+                let consoleRoot = document.getElementById("console")
+                consoleRoot.appendChild(newEntry)
+                if (consoleRoot.childElementCount > this.maxConsoleEntries) {
+                    consoleRoot.removeChild(consoleRoot.firstChild)
                 }
-                this.consoleEntries.push(consoleEntry)
                 this.consoleBuffer = ""
-                while (this.consoleEntries.length > this.maxConsoleEntries) {
-                    let po = this.consoleEntries.shift();
-                    if (po.element && po.element.parentElement) po.element.parentElement.removeChild(po.element);
-                }
-                //this.scheduleRender()
             }
         }
     }
 
-    //TODO tight coupling
-    stopSmoothies() {
-        this.smoothies.forEach(s => s.chart.stop())
+    stopRecording() {
+        this.chartWrappers.forEach(s => s.stop())
     }
 
-    startSmoothies() {
-        this.smoothies.forEach(s => s.chart.start())
+    startRecording() {
+        this.chartWrappers.forEach(s => s.start())
+    }
+
+    clearNode(e: HTMLElement) {
+        while (e.hasChildNodes()) {
+            e.removeChild(e.firstChild)
+        }
     }
 
     clear() {
-        //TODO something
-        this.smoothies.forEach((s) => {
-            s.element.parentElement.removeChild(s.element)
-        })
-        this.smoothies = []
+        let chartRoot = document.getElementById("charts")
+        let consoleRoot = document.getElementById("console")
+        this.clearNode(chartRoot)
+        this.clearNode(consoleRoot)
+        this.chartWrappers = []
+        this.consoleEntries = []
+        this.consoleBuffer = ""
     }
 
     display() {
         return (
             <div id="serialEditor">
-                <sui.Button text={lf("Start")} onClick= {() => {this.active = true; this.startSmoothies()}} />
-                <sui.Button text={lf("Stop")} onClick = {() => {this.active = false; this.stopSmoothies()}} />
-                <div id="graphs">
-                </div>
+                <sui.Button text={lf("Start")} onClick= {() => {this.active = true; this.startRecording()}} />
+                <sui.Button text={lf("Stop")} onClick = {() => {this.active = false; this.stopRecording()}} />
+                <div id="charts"> </div>
                 <div id="console"></div>
             </div>
         )
@@ -156,7 +144,7 @@ export class Editor extends srceditor.Editor {
 
     domUpdate() {
         //TODO should this be here?
-        this.startSmoothies()
+        this.startRecording()
     }
 
     setLabel(text: string, theme?: string) {
@@ -177,16 +165,48 @@ export class Editor extends srceditor.Editor {
     }
 }
 
-interface IConsoleEntry {
-    data: string
-    dirty: boolean
-    element?: HTMLElement
-}
+class ChartWrapper {
+    private element: HTMLCanvasElement
+    private chart: SmoothieChart
+    private line: TimeSeries
+    private source: string
+    private variable: string
+    private chartConfig = {
+        responsive: true,
+        grid: { lineWidth: 1, millisPerLine: 250, verticalSections: 6 },
+        labels: { fillStyle: 'rgb(255, 255, 0)' }
+    }
+    private lineConfig =  {strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4}
 
-interface IChartInfoObject {
-    element: HTMLCanvasElement,
-    chart: SmoothieChart,
-    line: TimeSeries,
-    source: string,
-    variable: string
+    constructor(source: string, variable: string, value: number) {
+        this.source = source
+        this.variable = variable
+        this.line = new TimeSeries()
+        this.chart = new SmoothieChart(this.chartConfig)
+        this.chart.addTimeSeries(this.line, this.lineConfig)
+        this.element = document.createElement("canvas")
+        //TODO nooo
+        this.element.setAttribute("style", "height:200px; width:100%;")
+        this.chart.streamTo(this.element)
+    }
+
+    public getElement() {
+        return this.element
+    }
+
+    public shouldContain(source: string, variable: string) {
+        return this.source == source && this.variable == variable
+    }
+
+    public addPoint(value: number) {
+        this.line.append(new Date().getTime(), value)
+    }
+
+    public start() {
+        this.chart.start()
+    }
+
+    public stop() {
+        this.chart.stop()
+    }
 }
