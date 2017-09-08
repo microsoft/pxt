@@ -1756,7 +1756,7 @@ namespace pxt.blocks {
         msg.ENABLE_BLOCK = lf("Enable Block");
         msg.DISABLE_BLOCK = lf("Disable Block");
         msg.DELETE_BLOCK = lf("Delete Block");
-        msg.DELETE_X_BLOCKS = lf("Delete %1 Blocks");
+        msg.DELETE_X_BLOCKS = lf("Delete All Blocks");
         msg.HELP = lf("Help");
 
         // inject hook to handle openings docs
@@ -1864,7 +1864,7 @@ namespace pxt.blocks {
 
             const deleteOption = {
                 text: deleteList.length == 1 ? lf("Delete Block") :
-                    lf("Delete {0} Blocks", deleteList.length),
+                    lf("Delete All Blocks", deleteList.length),
                 enabled: deleteList.length > 0,
                 callback: function () {
                     pxt.tickEvent("blocks.context.delete");
