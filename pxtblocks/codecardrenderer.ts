@@ -95,7 +95,7 @@ namespace pxt.docs.codeCard {
             screenshot.src = `https://img.youtube.com/vi/${card.youTubeId}/maxresdefault.jpg`;
             img.appendChild(screenshot)
         }
-        
+
         if (name || card.description) {
             let ct = div(r, "ui content");
             if (name) {
