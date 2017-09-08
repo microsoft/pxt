@@ -12,6 +12,7 @@
     * [Partial Flashing](/partial-flashing)
     * [Source Embedding](/source-embedding)
     * [Updating Blockly Version](/develop/blocklyupgrade)
+    * [Accessibility](/develop/accessibility)
 * [Creating Targets](/target-creation)
     * [Defining Blocks](/defining-blocks)
     * [Auto-generation of .d.ts](/simshim)
@@ -39,3 +40,4 @@
     * [login](/cli/login)
     * [staticpkg](/cli/staticpkg)
     * [update](/cli/update)
+* [Accessibility](/accessibility)
