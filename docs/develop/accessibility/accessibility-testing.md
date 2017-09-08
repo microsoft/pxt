@@ -28,13 +28,13 @@ Users must have the same access with the keyboard to UI elements that the mouse 
 Using a left-to-right reading order, the user must be able to **navigate from left to right, from top to bottom** using the ``Tab`` key. The user must also be able to navigate in the opposite direction using the ``Shift + Tab`` keys.
 The simulator is exempt from this. Keyboard navigation in the simulator doesn't follow any reading order **yet**.
 
-![](/static/images/accessibility-keyboard-navigation.gif)
+![](/static/images/accessibility/accessibility-keyboard-navigation.gif)
 
 ### Tab panels
 
 By convention, tab panels must always be navigable with the ``Left``, ``Right``, ``Up`` and ``Down`` arrow keys. In right-to-left reading mode, the behavior must follow the reading order. The navigation must loop, which means that once the last tab position is reached, the next ``Tab`` key press takes the reader back to the first tab position.
 
-![](/static/images/accessibility-tabpanel.gif)
+![](/static/images/accessibility/accessibility-tabpanel.gif)
 
 ### Dialog box
 
@@ -42,19 +42,19 @@ Many dialog boxes are shown in PXT. Dialog boxes are used for the Projects butto
 
 The dialog must close itself with activation of the answer buttons (OK, Accept, Cancel...), the close button, or by pressing ``Escape``.
 
-![](/static/images/accessibility-modals.gif)
+![](/static/images/accessibility/accessibility-modals.gif)
 
 ### Tree view
 
 The tree views use standard navigation. The user must be able to use the ``Right`` or ``Left`` keys to expand or collapse a node. The ``Tab``key navigates into the tree and ``Enter`` activates a node. Depending on what kind of interaction is available, the ``Enter`` key will also expand or collapse a node and instead of using the ``Left`` or ``Right`` keys.
 
-![](/static/images/accessibility-treeview.gif)
+![](/static/images/accessibility/accessibility-treeview.gif)
 
 ### Drop down menu
 
 Dropdown menues are located at the top right hand-corner of the view. A menu must be opened when the focus is given to it's parent button and must be close if the user press ``Tab``, ``Shift + Tab`` or ``Escape``. When the menu is open, navigation through the options of the dropdown menu are with the ``Up`` and ``Down`` arrow keys. The navigation must not loop.
 
-![](/static/images/accessibility-dropdown.gif)
+![](/static/images/accessibility/accessibility-dropdown.gif)
 
 ### Slider
 
@@ -104,6 +104,6 @@ High contrast mode helps people with vision impairment read the screen. The goal
 
 High contrast is available independently from the operating system configuration. It is enabled manually from the ``Hidden Tab Menu`` or from the ``Settings`` menu.
 
-![](/static/images/accessibility-highcontrast.png)
+![](/static/images/accessibility/accessibility-highcontrast.png)
 
 Variations can exist between the high contrast mode of a website and the rendering in high contrast mode of the host operating system. A simple guideline when testing high contrast is to just make sure that all text and interactive elements are highly visible. Check that the focus indication is visible enough to determine which component is at current position in the navigation path.

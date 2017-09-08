@@ -21,7 +21,7 @@ Sometimes MakeCode shows a dialog on top of the editor. When a dialog is display
 
 To close a dialog, navigate to the close button (shown as an **X** at the top right or top left corner) and press ``Enter`` or ``Space``. The ``Escape`` key will dismiss the dialog without having to navigate to the close button.
 
-#### JavaScript editor
+#### JavaScript editor navigation
 
 These keyboard shortcuts are used in the [JavaScript editor](#javascript-editor):
 
@@ -32,7 +32,7 @@ These keyboard shortcuts are used in the [JavaScript editor](#javascript-editor)
 
 When navigating through the editor with the keyboard, focus is shown with a blue outline around the interactive element. When a contextual menu opens, the ``Top`` and ``Bottom`` arrow keys navigate into, through, and out of the menu. The ``Enter`` or ``Space`` keys validate the selection. Pressing ``Tab`` or ``Shift+Tab`` moves to the next or previous interactive element outside of the current drop-down menu.
 
-![](/static/images/accessibility-context-menu.png)
+![](/static/images/accessibility/accessibility-context-menu.png)
 
 ### Block editor
 
@@ -45,7 +45,7 @@ The **documentation** for Microsoft MakeCode is also accessible. Just like on th
 The side bar menu is accessible with the ``Tab`` key.
 Some menu items are cascading (a hierarchical view is shown with an arrow on the side of the menu item):
 
-![](/static/images/accessibility-documentation-treeview.png)
+![](/static/images/accessibility/accessibility-documentation-treeview.png)
 
 Use the ``Left`` or ``Right`` arrow keys to expand or collapse menu items.
 
@@ -87,7 +87,7 @@ The high contrast helps people to locate and distinguish between the different v
 
 The high contrast mode in the editor is available even when the operating system configuration hasn't enabled it. In MakeCode, it is enabled manually from either the ``Hidden Tab Menu`` or the ``Settings`` menu.
 
-![](/static/images/accessibility-highcontrast.png)
+![](/static/images/accessibility/accessibility-highcontrast.png)
 
 ## JavaScript editor
 
