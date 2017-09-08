@@ -173,7 +173,7 @@ namespace ts.pxtc {
         if (opts.ast || opts.forceEmit || res.diagnostics.length == 0) {
             const binOutput = compileBinary(program, host, opts, res);
             res.times["compilebinary"] = Date.now() - emitStart
-            res.diagnostics = patchUpDiagnostics(binOutput.diagnostics)
+            res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(binOutput.diagnostics))
         }
 
         if (res.diagnostics.length == 0)
