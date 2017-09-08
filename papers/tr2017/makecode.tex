@@ -80,14 +80,15 @@ To support the foreign function interface, MakeCode defines a mapping between C+
 Boolean and void have straightforward mappings from C++ to TypeScript (bool → boolean, void → void). 
 As JavaScript only supports number, which is a C++ float/double, MakeCode uses TypeScript's support
 for type aliases to name the various C++ integer types commonly used for microcontroller programming
-(int $\rightarrow$ int32, unsigned $\rightarrow$  uint32, short $\rightarrow$ int16, 
-byte $\rightarrow$ uint8, sbyte $\rightarrow$ int8).  This is particularly
-useful for saving space on 8-bit architectures such as the AVR. 
+(int32, uint32, int16, uint16, int8, uint8). 
+% don't use int, unsigned etc. they are actually different sizes on different compilers for AVR
+This is particularly useful for saving space on 8-bit architectures such as the AVR. 
 
 MakeCode supports both untagged and tagged integers (described more later).  Under the untagged strategy,
 a JavaScript number is interpreted as a C++ int by default, while the tagged strategy allows both
 interpretation as integer and double (with an optimization to convert from integer to double, as required).  
 MakeCode includes reference counted C++ types for strings (StringData*) and parameterless lambdas (Action).
+TODO we also support lambdas with up to 3 parameters and a return type
 
 These C++ types are mapped to the TypeScript types string and ()=>void, respectively.
 MakeCode allows a set of C++ functions with the same first parameter (of type Foo) to be
@@ -162,6 +163,8 @@ references to the driver runtime in the user's program, producing a binary execu
 can be found at \url{https://github.com/Microsoft/pxt/tree/master/pxtcompiler/emitter} and 
 \url{https://github.com/Microsoft/pxt/tree/master/pxtlib/emitter}.
 
+TODO: in fact it's the assembler that resolves runtime references; linker only injects a binary blob into the runtime; maybe it's not worth talking about it though
+
 \subsubsection{Asynchronous Functions}
 
 A key part of the compilation process is to allow users to call async functions (identified through
@@ -174,6 +177,10 @@ programming model which relies on promises to achieve asynchronous execution, br
 a series of event handlers.  The JavaScript-based simulator runtime uses promises to achieve asynchronous execution in a
 single-threaded context, but these promises are hidden from the end user.    The CODAL C++ device runtime supports fibers
 with the ability to pause, so for compilation to a device, the compiler simply emits a call to pause at a suspension point. 
+
+TODO: The async annotation is only relevant for the JS code. In ARM/AVR it doesn't do anything.
+One way to say it is to say it's there to simulate cooperative multi-threading in JS, since
+it is already implemented in C++ by CODAL.
 
 \subsubsection{Untagged and Tagged Strategies}
 
@@ -236,3 +243,16 @@ All micro:bit packages for the Grove components are authored in Static TypeScrip
 % o	Libs/package/
 % [talk about C++] Various examples.
 % [more about customer editor associated with a package]
+
+For packages containing C++ files, a new C++ runtime has to be compiled in the cloud.
+This is achieved by collecting all C++ files (all packages plus MakeCode core runtime),
+computing a hash, checking in local in-browser cache if such a runtime was retrieved
+before, otherwise checking and otherwise asking the cloud service to compile it.
+Of course, the cloud service will return a cached copy, if the same set of C++
+files is to be compiled again. The cache hit ratio in both the browser cache,
+and the cloud cache are very high. 
+The first hit ratio is high because the cloud needs to be consulted
+only when a new package is added to the project, and this particular combination 
+of packages was never used before on current machine.
+The second is high because people rarely combine many packages (due to
+hardware and memory constraints), and there is only so many of them.
