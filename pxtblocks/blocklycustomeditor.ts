@@ -24,6 +24,7 @@ namespace pxt.blocks {
             // Get the value in range.
             return String(Math.round(Number(text)));
         };
+        registerFieldEditor('text', pxtblockly.FieldTextInput);
         registerFieldEditor('note', pxtblockly.FieldNote, noteValidator);
         registerFieldEditor('gridpicker', pxtblockly.FieldGridPicker);
         registerFieldEditor('textdropdown', pxtblockly.FieldTextDropdown);

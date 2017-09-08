@@ -757,7 +757,7 @@ export class Editor extends srceditor.Editor {
                 // Create a flyout and add the category methods in there
 
                 // Add the heading label
-                if (!pxt.appTarget.appTheme.hideFlyoutHeadings && pxt.BrowserUtils.isMobile()) {
+                if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
                     let monacoHeadingLabel = document.createElement('div');
                     monacoHeadingLabel.className = 'monacoFlyoutLabel monacoFlyoutHeading';
                     let monacoHeadingIcon = document.createElement('span');

@@ -1244,9 +1244,10 @@ ${output}</xml>`;
                             defaultV = false;
                         } else if (isLiteralNode(e)) {
                             const param = paramInfo[i];
+                            const fieldText = param.paramFieldEditor == 'text' ? (e as ts.StringLiteral).text : e.getText();
 
                             if (param.decompileLiterals) {
-                                let fieldBlock = getFieldBlock(param.type, param.fieldName, e.getText(), true);
+                                let fieldBlock = getFieldBlock(param.type, param.fieldName, fieldText, true);
                                 if (param.paramShadowOptions) {
                                     fieldBlock.mutation = {"customfield": Util.htmlEscape(JSON.stringify(param.paramShadowOptions))};
                                 }
@@ -1260,7 +1261,7 @@ ${output}</xml>`;
                                 defaultV = false;
                             }
                             else if (param.paramFieldEditorOptions && param.paramFieldEditorOptions['onParentBlock']) {
-                                (r.fields || (r.fields = [])).push(getField(vName, e.getText()));
+                                (r.fields || (r.fields = [])).push(getField(vName, fieldText));
                                 return;
                             }
                         }
@@ -1811,7 +1812,7 @@ ${output}</xml>`;
 
     function isAutoDeclaration(decl: VariableDeclaration) {
         if (decl.initializer) {
-            if (decl.initializer.kind === SyntaxKind.NullKeyword || decl.initializer.kind === SyntaxKind.FalseKeyword) {
+            if (decl.initializer.kind === SyntaxKind.NullKeyword || decl.initializer.kind === SyntaxKind.FalseKeyword || isDefaultArray(decl.initializer)) {
                 return true
             }
             else if (isStringOrNumericLiteral(decl.initializer.kind)) {
@@ -1825,6 +1826,10 @@ ${output}</xml>`;
             }
         }
         return false;
+    }
+
+    function isDefaultArray(e: Expression) {
+        return e.kind === SK.ArrayLiteralExpression && (e as ArrayLiteralExpression).elements.length === 0;
     }
 
     function getCallInfo(checker: ts.TypeChecker, node: ts.Node, apiInfo: ApisInfo) {

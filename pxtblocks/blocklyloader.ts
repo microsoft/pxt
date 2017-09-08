@@ -970,7 +970,7 @@ namespace pxt.blocks {
                         childCats[j].setAttribute('colour', nsColor);
                     }
                 }
-                if (!pxt.appTarget.appTheme.hideFlyoutHeadings && pxt.BrowserUtils.isMobile()) {
+                if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
                     // Add the Heading label
                     let headingLabel = goog.dom.createDom('label');
                     headingLabel.setAttribute('text', topCats[i].getAttribute('name'));
@@ -2366,7 +2366,7 @@ namespace pxt.blocks {
         Blockly.Variables.flyoutCategory = function(workspace) {
             let xmlList: HTMLElement[] = [];
 
-            if (!pxt.appTarget.appTheme.hideFlyoutHeadings && pxt.BrowserUtils.isMobile()) {
+            if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
                 // Add the Heading label
                 let headingLabel = goog.dom.createDom('label') as HTMLElement;
                 headingLabel.setAttribute('text', lf("Variables"));
@@ -2688,7 +2688,7 @@ namespace pxt.blocks {
         Blockly.Procedures.flyoutCategory = function (workspace: Blockly.Workspace) {
             let xmlList: HTMLElement[] = [];
 
-            if (!pxt.appTarget.appTheme.hideFlyoutHeadings && pxt.BrowserUtils.isMobile()) {
+            if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
                 // Add the Heading label
                 let headingLabel = goog.dom.createDom('label');
                 headingLabel.setAttribute('text', lf("Functions"));

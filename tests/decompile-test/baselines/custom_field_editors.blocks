@@ -18,6 +18,11 @@
 <next>
 <block type="test_customFieldEditorOnParentBlock">
 <field name="value">100</field>
+<next>
+<block type="test_customTextFieldEditorOnParentBlock">
+<field name="text">text</field>
+</block>
+</next>
 </block>
 </next>
 </block>
