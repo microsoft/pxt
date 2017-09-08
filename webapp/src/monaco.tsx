@@ -1208,8 +1208,8 @@ export class Editor extends srceditor.Editor {
                         message: message,
                         startLineNumber: d.line + 1,
                         startColumn: d.column,
-                        endLineNumber: (d.endLine || endPos.lineNumber) + 1,
-                        endColumn: d.endColumn || endPos.column
+                        endLineNumber: d.endLine == undefined ? endPos.lineNumber : d.endLine + 1,
+                        endColumn: d.endColumn == undefined ? endPos.column : d.endColumn
                     })
                 }
             }
