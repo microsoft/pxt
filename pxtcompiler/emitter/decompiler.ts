@@ -280,6 +280,15 @@ namespace ts.pxtc.decompiler {
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
     }
 
+    enum ReferenceType {
+        // Variable is never referenced
+        None = 0,
+        // Variable is only referenced in "non-grey" blocks
+        InBlocksOnly = 1,
+        // Variable is referenced at least once inside "grey" blocks
+        InTextBlocks = 2
+    }
+
     export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile, options: DecompileBlocksOptions, renameMap?: RenameMap): pxtc.CompileResult {
         let stmts: ts.Statement[] = file.statements;
         let result: pxtc.CompileResult = {
@@ -289,7 +298,7 @@ namespace ts.pxtc.decompiler {
         const fileText = file.getFullText();
         let output = ""
 
-        const varUsages: pxt.Map<boolean> = {};
+        const varUsages: pxt.Map<ReferenceType> = {};
         const autoDeclarations: [string, ts.Node][] = [];
         const declaredFunctions: pxt.Map<boolean> = {};
 
@@ -557,6 +566,7 @@ ${output}</xml>`;
 
         function getTypeScriptExpressionBlock(n: ts.Node) {
             const text = applyRenamesInRange(n.getFullText(), n.getFullStart(), n.getEnd());
+            trackVariableUsagesInText(n);
             return getFieldBlock(pxtc.TS_OUTPUT_TYPE, "EXPRESSION", text);
         }
 
@@ -648,7 +658,7 @@ ${output}</xml>`;
 
         function getIdentifier(identifier: Identifier): ExpressionNode {
             const name = getVariableName(identifier);
-            varUsages[name] = true;
+            trackVariableUsage(name, ReferenceType.InBlocksOnly);
             return getFieldBlock("variables_get", "VAR", name);
         }
 
@@ -883,6 +893,8 @@ ${output}</xml>`;
                 mutation: {}
             };
 
+            trackVariableUsagesInText(node);
+
             let text = node.getText();
             const start = node.getStart();
             const end = node.getEnd();
@@ -894,6 +906,9 @@ ${output}</xml>`;
                 for (const declaration of (node as ts.VariableStatement).declarationList.declarations) {
                     declaredVariables.push(getVariableName(declaration.name as ts.Identifier));
                 }
+            }
+            else if (node.kind === SK.VariableDeclaration) {
+                declaredVariables.push(getVariableName((node as ts.VariableDeclaration).name as ts.Identifier));
             }
 
             if (declaredVariables.length) {
@@ -1080,7 +1095,7 @@ ${output}</xml>`;
 
         function getVariableSetOrChangeBlock(name: ts.Identifier, value: Node | number, changed = false, overrideName = false): StatementNode {
             const renamed = getVariableName(name);
-            varUsages[renamed] = true;
+            trackVariableUsage(renamed, ReferenceType.InBlocksOnly);
             // We always do a number shadow even if the variable is not of type number
             return {
                 kind: "statement",
@@ -1369,10 +1384,20 @@ ${output}</xml>`;
                     // Preserve any variable edeclarations that were never used
                     let current = stmt;
                     autoDeclarations.forEach(([name, node]) => {
-                        if (varUsages[name]) {
+                        if (varUsages[name] === ReferenceType.InBlocksOnly) {
                             return;
                         }
-                        const v = getVariableSetOrChangeBlock((node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
+                        let e = (node as ts.VariableDeclaration).initializer;
+                        let v: StatementNode;
+                        if (varUsages[name] === ReferenceType.InTextBlocks) {
+                            // If a variable is referenced inside a "grey" block, we need
+                            // to be conservative because our type inference might not work
+                            // on the round trip
+                            v = getTypeScriptStatementBlock(node);
+                        }
+                        else {
+                            v = getVariableSetOrChangeBlock((node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
+                        }
                         v.next = current;
                         current = v;
                     });
@@ -1404,6 +1429,21 @@ ${output}</xml>`;
             if (options.alwaysEmitOnStart) {
                 write(`<block type="${ts.pxtc.ON_START_TYPE}"></block>`);
             }
+        }
+
+        function trackVariableUsage(name: string, type: ReferenceType) {
+            if (varUsages[name] !== ReferenceType.InTextBlocks) {
+                varUsages[name] = type;
+            }
+        }
+
+        function trackVariableUsagesInText(node: ts.Node) {
+            ts.forEachChild(node, (n) => {
+                if (n.kind === SK.Identifier) {
+                    trackVariableUsage(getVariableName(n as ts.Identifier), ReferenceType.InTextBlocks)
+                }
+                trackVariableUsagesInText(n);
+            })
         }
 
         /**
