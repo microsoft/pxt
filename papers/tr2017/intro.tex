@@ -3,19 +3,19 @@
 
 Over the last decade, microcontrollers, the workhorses of embedded systems, have become 
 central to efforts in making and education. For example, the Arduino project (\url{www.arduino.cc}), 
-started in 2003, created a printed circuit board (the Uno) based on the 8-bit Atmel 
-AVR microcontroller unit that makes most of its I/O pins available via headers. Hardware modules 
-(shields) may be connected to the main board to extend its capability. 
-The Arduino ecosystem, based on an open hardware design, has grown tremendously in the past 15 years, 
+started in 2003, created the Uno using an 8-bit Atmel 
+AVR microcontroller. The Uno makes most of its microcontrollers I/O pins available via headers;
+external hardware modules (shields) may be connected to Uno's printed circuit board to extend 
+its capability.    The Arduino ecosystem has grown tremendously in the past 15 years, 
 with the support of companies such as Adafruit Industries (\url{www.adafruit.com}) and 
 Sparkfun Electronics (\url{www.sparkfun.com}), to name a few.
 
-In contrast, what has not changed much is the way microcontrollers are programmed,
-which is with the C/C++ programming language (as well assembly).   
+What has not changed much is the way microcontrollers are programmed,
+which is with the C and C++ programming languages, as well as assembly.   
 This is not a huge surprise, given the low-level nature of microcontroller programming, 
-where direct access to the hardware is the order of the day. There generally is no operating 
+where direct access to the hardware is needed. There generally is no operating 
 system running on such boards, as they have very little RAM (2K for the Uno, for example) and 
-lack memory protection hardware.  What is more surprising about the Arduino platform is that:
+lack memory protection hardware. What is more surprising about the Arduino platform is that:
 \begin{itemize}
 \item it encourages the programmer to use polling to interact with sensors, 
 which leads to monolithic sequential programs;
@@ -95,18 +95,16 @@ MakeCode targets for the three previously mentioned boards are at
 \href{https://github.com/microsoft/pxt-adafruit}{microsoft/pxt-adafruit}, and
 \href{https://github.com/microsoft/pxt-arduino-uno}{microsoft/pxt-arduino-uno}.
 The latter two targets make use of a common set of MakeCode libraries (packages) at
-\href{https://github.com/microsoft/pxt-common-packages}{microsoft/pxt-common-packages},  
-Many other MakeCode packages, developed by Microsoft and 
-hardware partners \emph{ [details later]. A few examples: XYZ.  }
+\href{https://github.com/microsoft/pxt-common-packages}{microsoft/pxt-common-packages}.
 
 %Lancaster University githubs:
 %•	https://github.com/lancaster-university/codal-core
 %•	https://github.com/lancaster-university/codal 
 %•	micro:bit DAL: https://github.com/lancaster-university/microbit-dal, predecessor of CODAL 
-%UF2 githubs
-%•	Specification: https://github.com/microsoft/uf2 
-%•	SAMD21: https://github.com/microsoft/uf2-samd21
-%•	Atmega32UP???
+
+The UF2 specification is at \href{https://github.com/microsoft/uf2}{microsoft/uf2},
+with implementations at href{https://github.com/microsoft/uf2-samd21}{microsoft/uf2-samd21}
+and \href{https://github.com/mmoskal/uf2-uno}{mmoskal/uf2-uno}.
 
 The rest of this paper is organized as follows. Section~\ref{sec:makecode} presents the design and implementation of the MakeCode framework. 
 Section~\ref{sec:sts} describes Static TypeScript and section~\ref{sec:codal} presents the CODAL C++ runtime. 
