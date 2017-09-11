@@ -164,7 +164,7 @@ class ChartWrapper {
     private lineConfig =  {strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4}
 
     constructor(source: string, variable: string, value: number) {
-        this.rootElement.className = "ui grid"
+        this.rootElement.className = "ui segment"
         this.source = source
         this.variable = variable
         this.chart.addTimeSeries(this.line, this.lineConfig)
@@ -180,27 +180,18 @@ class ChartWrapper {
     }
 
     public makeLabel() {
-        let labelWrapper = document.createElement("div")
-        labelWrapper.className = "two wide column"
         let label = document.createElement("div")
-        label.className = "ui red label"
+        label.className = "ui red top left attached label"
         label.innerText = this.variable
-        labelWrapper.appendChild(label)
-        //return label
-        return labelWrapper
-
+        return label
     }
 
     public makeCanvas() {
         let canvas = document.createElement("canvas")
         this.chart.streamTo(canvas)
-        let canvasWrapper = document.createElement("div")
-        canvasWrapper.className = "fourteen wide column"
-        canvasWrapper.appendChild(canvas)
         //TODO
         canvas.setAttribute("style", "height:200px; width:100%;")
-        //return canvas
-        return canvasWrapper
+        return canvas
     }
     public getElement() {
         return this.rootElement
