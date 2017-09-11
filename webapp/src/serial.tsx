@@ -134,7 +134,7 @@ export class Editor extends srceditor.Editor {
                 <div id="serialEditorTitle">{this.isSim ? "Simulator serial data" : "Device serial data"}</div>
                 <sui.Button text={lf("Start")} onClick= {() => {this.active = true; this.startRecording()}} />
                 <sui.Button text={lf("Stop")} onClick = {() => {this.active = false; this.stopRecording()}} />
-                <div id="charts"> </div>
+                <div id="charts"></div>
                 <div id="console"></div>
             </div>
         )
@@ -146,7 +146,9 @@ export class Editor extends srceditor.Editor {
 }
 
 class ChartWrapper {
-    private element: HTMLCanvasElement
+    private rootElement: HTMLElement
+    //private labelElement: HTMLElement
+    //private element: HTMLCanvasElement
     private chart: SmoothieChart
     private line: TimeSeries
     private source: string
@@ -164,15 +166,23 @@ class ChartWrapper {
         this.line = new TimeSeries()
         this.chart = new SmoothieChart(this.chartConfig)
         this.chart.addTimeSeries(this.line, this.lineConfig)
-        this.element = document.createElement("canvas")
-        //TODO nooo
-        this.element.setAttribute("style", "height:200px; width:100%;")
-        this.chart.streamTo(this.element)
+
+        this.rootElement = document.createElement("div")
+        let canvas = document.createElement("canvas")
+        //TODO
+        canvas.setAttribute("style", "height:200px; width:100%;")
+        this.chart.streamTo(canvas)
+
+        let label = document.createElement("span")
+        label.innerText = this.variable
+        this.rootElement.appendChild(label)
+        this.rootElement.appendChild(canvas)
+
         this.addPoint(value)
     }
 
     public getElement() {
-        return this.element
+        return this.rootElement
     }
 
     public shouldContain(source: string, variable: string) {
