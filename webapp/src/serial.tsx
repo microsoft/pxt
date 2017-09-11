@@ -37,8 +37,6 @@ export class Editor extends srceditor.Editor {
     setSim(b: boolean) {
         this.isSim = b
         this.clear()
-        //TODO 
-        this.setLabel(this.isSim ? lf("Simulator serial output") : lf("Device serial output"))
     }
 
     constructor(public parent: pxt.editor.IProjectView) {
@@ -94,7 +92,6 @@ export class Editor extends srceditor.Editor {
             let ch = data[i]
             this.consoleBuffer += ch
             if (ch === "\n" || this.consoleBuffer.length > this.maxLineLength) {
-
                 let newEntry = document.createElement("div")
                 newEntry.textContent = this.consoleBuffer
                 let consoleRoot = document.getElementById("console")
@@ -134,6 +131,7 @@ export class Editor extends srceditor.Editor {
     display() {
         return (
             <div id="serialEditor">
+                <div id="serialEditorTitle">{this.isSim ? "Simulator serial data" : "Device serial data"}</div>
                 <sui.Button text={lf("Start")} onClick= {() => {this.active = true; this.startRecording()}} />
                 <sui.Button text={lf("Stop")} onClick = {() => {this.active = false; this.stopRecording()}} />
                 <div id="charts"> </div>
@@ -144,23 +142,6 @@ export class Editor extends srceditor.Editor {
 
     domUpdate() {
         //TODO
-    }
-
-    setLabel(text: string, theme?: string) {
-        //TODO look at this
-        /**
-        if (this.labelElement && this.labelElement.innerText == text) return
-
-        if (this.labelElement) {
-            if (this.labelElement.parentElement) this.labelElement.parentElement.removeChild(this.labelElement)
-            this.labelElement = undefined
-        }
-        if (text) {
-            this.labelElement = document.createElement("a")
-            this.labelElement.className = `ui ${theme} top right attached mini label`
-            this.labelElement.appendChild(document.createTextNode(text))
-        }
-        **/
     }
 }
 
@@ -187,6 +168,7 @@ class ChartWrapper {
         //TODO nooo
         this.element.setAttribute("style", "height:200px; width:100%;")
         this.chart.streamTo(this.element)
+        this.addPoint(value)
     }
 
     public getElement() {
