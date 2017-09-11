@@ -27,7 +27,7 @@ export class Editor extends srceditor.Editor {
 
     acceptsFile(file: pkg.File) {
         // TODO hardcoded string
-        return file.name === "serial.txt"
+        return file.name === pxt.SERIAL_EDITOR_FILE
     }
 
     isGraphable(v: string) {
