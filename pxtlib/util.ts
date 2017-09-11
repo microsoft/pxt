@@ -125,7 +125,7 @@ namespace ts.pxtc.Util {
         return !!v && typeof v === "object" && !Array.isArray(v)
     }
 
-    export function memcpy(trg: Uint8Array, trgOff: number, src: Uint8Array, srcOff?: number, len?: number) {
+    export function memcpy(trg: Uint8Array, trgOff: number, src: ArrayLike<number>, srcOff?: number, len?: number) {
         if (srcOff === void 0)
             srcOff = 0
         if (len === void 0)
@@ -707,20 +707,29 @@ namespace ts.pxtc.Util {
         _localizeStrings = strs;
     }
 
-    export function updateLocalizationAsync(baseUrl: string, code: string, branch?: string, live?: boolean): Promise<any> {
+    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0]
 
+        const stringFiles: { branch: string, path: string }[] = simulator
+            ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" }]
+            : [
+                { branch: pxtBranch, path: "strings.json" },
+                { branch: targetBranch, path: targetId + "/target-strings.json" }
+            ];
+
         if (_localizeLang != code && live) {
-            return downloadLiveTranslationsAsync(code, "strings.json", branch)
-                .then(tr => {
-                    _localizeStrings = tr || {};
-                    _localizeLang = code;
-                    localizeLive = true;
-                }, e => {
-                    console.log('failed to load localizations')
-                })
+            _localizeStrings = {};
+            _localizeLang = code;
+            localizeLive = true;
+            return Promise.mapSeries(stringFiles, (file) => {
+                return downloadLiveTranslationsAsync(code, file.path, file.branch)
+                    .then((tr) => Object.keys(tr)
+                        .filter(k => !!tr[k])
+                        .forEach(k => _localizeStrings[k] = tr[k])
+                    , e => console.log(`failed to load localizations for file ${file}`));
+            });
         }
 
         if (_localizeLang != code) {

@@ -184,3 +184,11 @@ namespace music {
     export function builtInMelody(melody: Melodies): number { return 0 };
 
 }
+
+//% weight=10 color="#31bca3" icon="\uf110" advanced=true
+namespace control {
+
+    //% help=control/run-in-background blockAllowMultiple=1 handlerStatement=1
+    //% blockId="control_run_in_background" block="run in background" blockGap=8
+    export function runInBackground(action: () => void) { }
+}

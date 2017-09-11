@@ -1,5 +1,18 @@
 # Microsoft MakeCode Blog
 
+## [Microbit Editor v0.13.20](/blog/microbit/v0.13.20)
+
+September 8th, 2017
+
+Microsoft MakeCode accessibility support
+[Read more](/blog/microbit/v0.13.20)
+
+## [Microbit Editor v0.12.64](/blog/microbit/v0.12.58)
+
+August 11th, 2017
+
+[Read more](/blog/microbit/v0.12.58)
+
 ## [Timing Adventures in Infrared](/blog/timing-adventures-in-infrared)
 
 June 20, 2017 by [mmoskal](https://github.com/mmoskal)

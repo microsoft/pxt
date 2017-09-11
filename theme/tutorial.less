@@ -66,7 +66,7 @@ body#docs.tutorial {
     box-shadow: none;
     border: none;
 }
-#docs.tutorial #content{
+#docs.tutorial #root{
     margin-bottom: 0.5rem !important;
 }
 
@@ -109,14 +109,14 @@ body#docs.tutorial {
 
 #tutorialcard .tutorialmessage .content {
     width: 100%;
-    font-size: 16px;
+    font-size: 12pt;
     height: 3.5rem;
     margin-bottom: 1rem;
     overflow: auto;
     cursor:pointer;
 }
 #tutorialcard .tutorialmessage .content p {
-    line-height: 25px !important;
+    line-height: 27px !important;
 }
 
 #tutorialcard .tutorialmessage {
@@ -127,12 +127,8 @@ body#docs.tutorial {
     margin-bottom: 1rem;
 }
 
-#root.dimmable.dimmed #tutorialcard .ui.message {
-    border-radius: 3px;
-}
-
-#root.dimmable.dimmed #tutorialcard .tutorialmessage {
-    border: solid white 2px;
+#root.dimmable.dimmed .ui.segment.message {
+    border-radius: 5px;
 }
 
 /* Show / Hide in dimmer */
@@ -196,8 +192,8 @@ i.icon.avatar-image {
 ******************************/
 
 span.docs.inlinebutton {
-    padding: 0.15rem 0.3rem;
-    border-radius: 0.3rem;
+    padding: 0.4rem;
+    border-radius: 0.2rem;
     white-space: nowrap;
     background-color: @primaryColor;
     border: 1px solid lighten(@primaryColor, 20%);
@@ -205,8 +201,8 @@ span.docs.inlinebutton {
 }
 
 span.docs.inlineblock {
-    padding: 0.15rem 0.3rem;
-    border-radius: 0.4rem 0 0 0.4rem;
+    padding: 0.10rem 0.3rem;
+    border-radius: 0.3rem;
     white-space: nowrap;
     background-color: lighten(@orange, 10%);
     border: 1px solid @orange;

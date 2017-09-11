@@ -274,6 +274,7 @@ task('wapp', [
     'built/web/worker.js',
     'built/web/fonts/icons.woff2',
     'built/web/icons.css',
+    'built/web/blockly.css',
     'built/web/semantic.css',
     "built/web/semantic.js"
 ])
@@ -288,7 +289,7 @@ file("built/web/pxtlib.js", [
     "built/pxtwinrt.js"
 ], function () {
     jake.mkdirP("built/web")
-    jake.cpR("node_modules/jquery/dist/jquery.js", "built/web/jquery.js")
+    jake.cpR("node_modules/jquery/dist/jquery.min.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
     jake.cpR("node_modules/fuse.js/src/fuse.min.js", "built/web/fuse.min.js")
 
@@ -360,8 +361,23 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     monacoeditor = monacoeditor.replace(/((GoToDefinitionAction|'editor.action.(changeAll|quickOutline|previewDeclaration|referenceSearch.trigger)')[.\s\S]*?)(menuOpts:[.\s\S]*?})/gi, '$1')
     monacoeditor = monacoeditor.replace(/.*define\(\"vs\/language\/typescript\/src\/monaco.contribution\",.*/gi, `${monacotypescriptcontribution}`)
     // Fix for android keyboard issues:
-    monacoeditor = monacoeditor.replace(/this\.textArea\.setAttribute\('autocorrect', 'off'\);/gi,
-                `this.textArea.setAttribute('autocorrect', 'off');\n            this.textArea.setAttribute('autocomplete', 'off');`)
+    // Issue 1: getClientRects issue on Android 5.1 (Chrome 40), monaco-editor/#562
+    monacoeditor = monacoeditor.replace(/FloatHorizontalRange\(Math\.max\(0, clientRect\.left - clientRectDeltaLeft\), clientRect\.width\)/gi,
+                `FloatHorizontalRange(Math.max(0, clientRect.right - clientRectDeltaLeft), clientRect.width)`)
+    // Issue 2: Delete key is a composition input on Android 6+, monaco-editor/#563
+    monacoeditor = monacoeditor.replace(/if \(typeInput\.text !== ''\)/gi,
+                `if (typeInput.text !== '' || (typeInput.text === '' && typeInput.replaceCharCnt == 1))`)
+    // Issue 3: Gboard on Android ignores the autocomplete field, and so I'm disabling composition updates on keyboards that support it.
+    monacoeditor = monacoeditor.replace(/exports\.isChromev56 = \(userAgent\.indexOf\('Chrome\/56\.'\) >= 0/gi,
+                `exports.isAndroid = (userAgent.indexOf('Android') >= 0);\n    exports.isChromev56 = (userAgent.indexOf('Chrome/56.') >= 0`)
+    monacoeditor = monacoeditor.replace(/var newState = _this\._textAreaState\.readFromTextArea\(_this\._textArea\);/gi,
+                `var newState = _this._textAreaState.readFromTextArea(_this._textArea);\n                if (browser.isAndroid) newState.selectionStart = newState.selectionEnd;`)
+    monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionstart', function \(e\) {/gi,
+                `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionstart', function (e) {\n                if (browser.isAndroid) return;`)
+    monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionupdate', function \(e\) {/gi,
+                `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionupdate', function (e) {\n                if (browser.isAndroid) return;`)
+    monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionend', function \(e\) {/gi,
+                `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionend', function (e) {\n                if (browser.isAndroid) return;`)
     fs.writeFileSync("built/web/vs/editor/editor.main.js", monacoeditor)
 
     jake.mkdirP("webapp/public/vs")
@@ -410,6 +426,12 @@ file('built/web/worker.js', ["built/webapp/src/app.js"], function () {
 
 file('built/web/fonts/icons.woff2', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes/default/assets/fonts", "built/web/")
+})
+
+file('built/web/blockly.css', ['built/pxt.js',
+    "theme/blockly.less", "theme/theme.config", "theme/themes/pxt/globals/site.variables"
+], { async: true }, function () {
+    cmdIn(this, ".", 'node built/pxt.js buildcss')
 })
 
 file('built/web/semantic.css', ['built/pxt.js',

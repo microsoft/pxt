@@ -68,7 +68,7 @@ If you're adding your own C++ or assembly functions in packages
 and you either cannot or don't want to add a corresponding function to the simulator,
 you can provide a simulator-only implementation. For example:
 
-```js
+```typescript-ignore
 /**
  *  Writes to the Bluetooth UART service buffer.
  */
@@ -133,7 +133,7 @@ namespace DevicePinMethods {
 
 This will result in the following declarations being generated:
 
-```typescript
+```typescript-ignore
 declare namespace pins {
     //% fixedInstance shim=pins::getPin(0)
     const A0: DevicePin;
@@ -160,8 +160,7 @@ The namespace `FooMethods` is turned into an `interface Foo`. These
 are usually used to wrap native C++ classes that require no reference
 counting. Thus, you also need to manually add the following TypeScript:
 
-```typescript
-//% noRefCounting
+```typescript-ignore
 interface DevicePin {
     // no methods needed, they come from C++
 }
@@ -172,7 +171,6 @@ chaos will prevail (even though you might not see it at the beginning).
 
 You can also specify inheritance in such a declaration:
 
-```typescript
-//% noRefCounting
+```typescript-ignore
 interface AnalogPin extends DigitalPin {}
 ```

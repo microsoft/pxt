@@ -291,7 +291,7 @@ namespace pxt.blocks {
     }
 
     function infer(e: Environment, w: B.Workspace) {
-        w.getAllBlocks().filter(b => !b.disabled).forEach((b: B.Block) => {
+        if (w) w.getAllBlocks().filter(b => !b.disabled).forEach((b: B.Block) => {
             try {
                 switch (b.type) {
                     case "math_op2":
@@ -666,7 +666,7 @@ namespace pxt.blocks {
     }
 
     function compileProcedure(e: Environment, b: B.Block, comments: string[]): JsNode[] {
-        const name = escapeVarName(b.getFieldValue("NAME"), e);
+        const name = escapeVarName(b.getFieldValue("NAME"), e, true);
         const stmts = getInputTargetBlock(b, "STACK");
         return [
             mkText("function " + name + "() "),
@@ -675,7 +675,7 @@ namespace pxt.blocks {
     }
 
     function compileProcedureCall(e: Environment, b: B.Block, comments: string[]): JsNode {
-        const name = escapeVarName(b.getFieldValue("NAME"), e);
+        const name = escapeVarName(b.getFieldValue("NAME"), e, true);
         return mkStmt(mkText(name + "()"));
     }
 
@@ -799,6 +799,7 @@ namespace pxt.blocks {
     export interface RenameMap {
         oldToNew: Map<string>;
         takenNames: Map<boolean>;
+        oldToNewFunctions: Map<string>;
     }
 
     export enum VarUsage {
@@ -854,7 +855,8 @@ namespace pxt.blocks {
             errors: [],
             renames: {
                 oldToNew: {},
-                takenNames: {}
+                takenNames: {},
+                oldToNewFunctions: {}
             },
             stats: {}
         }
@@ -965,10 +967,15 @@ namespace pxt.blocks {
     }
 
     // convert to javascript friendly name
-    export function escapeVarName(name: string, e: Environment): string {
+    export function escapeVarName(name: string, e: Environment, isFunction = false): string {
         if (!name) return '_';
 
-        if (e.renames.oldToNew[name]) {
+        if (isFunction) {
+            if (e.renames.oldToNewFunctions[name]) {
+                return e.renames.oldToNewFunctions[name];
+            }
+        }
+        else if (e.renames.oldToNew[name]) {
             return e.renames.oldToNew[name];
         }
 
@@ -984,7 +991,12 @@ namespace pxt.blocks {
             n += i;
         }
 
-        e.renames.oldToNew[name] = n;
+        if (isFunction) {
+            e.renames.oldToNewFunctions[name] = n;
+        }
+        else {
+            e.renames.oldToNew[name] = n;
+        }
         e.renames.takenNames[n] = true;
         return n;
     }
@@ -1434,7 +1446,7 @@ namespace pxt.blocks {
 
         // determine for-loop compatibility: for each get or
         // set block, 1) make sure that the variable is bound, then 2) mark the variable if needed.
-        w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
+        if (w) w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
             if (b.type == "variables_get" || b.type == "variables_set" || b.type == "variables_change") {
                 let x = escapeVarName(b.getFieldValue("VAR"), e);
                 if (lookup(e, x) == null)
@@ -1560,9 +1572,9 @@ namespace pxt.blocks {
             // multiple calls allowed
             if (b.type == ts.pxtc.ON_START_TYPE)
                 flagDuplicate(ts.pxtc.ON_START_TYPE, b);
-            else if (b.type === "procedures_defnoreturn" || call && call.attrs.blockAllowMultiple) return;
+            else if (b.type === "procedures_defnoreturn" || call && call.attrs.blockAllowMultiple && !call.attrs.handlerStatement) return;
             // is this an event?
-            else if (call && call.hasHandler) {
+            else if (call && call.hasHandler && !call.attrs.handlerStatement) {
                 // compute key that identifies event call
                 // detect if same event is registered already
                 const key = callKey(e, b);

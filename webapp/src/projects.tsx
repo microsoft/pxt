@@ -137,7 +137,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         const theme = pxt.appTarget.appTheme;
         const galleries = theme.galleries || {};
         const galleryNames = Object.keys(galleries);
-        const tabs = [WELCOME, MYSTUFF].concat(Object.keys(galleries));
+        const tabs = (pxt.appTarget.appTheme.useStartPage ? [WELCOME, MYSTUFF] : [MYSTUFF]).concat(Object.keys(galleries));
 
         // lf("Make")
         // lf("Code")
@@ -159,13 +159,17 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
             pxt.tickEvent("projects.gallery", { name: scr.name });
             this.hide();
             switch (scr.cardType) {
-                case "example": chgCode(scr); break;
-                case "blocksExample": chgCode(scr, true); break;
+                case "example": chgCode(scr, true); break;
+                case "codeExample": chgCode(scr, false); break;
                 case "tutorial": this.props.parent.startTutorial(scr.url); break;
                 default:
                     const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url);
                     if (m) this.props.parent.startTutorial(m[1]);
-                    else this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
+                    else {
+                        if (scr.youTubeId && !scr.url)
+                            window.open('https://youtu.be/' + scr.youTubeId, 'yt');
+                        else this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
+                    }
             }
         }
 
@@ -173,7 +177,6 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
             core.showLoading(lf("Loading..."));
             gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
                 .done(opts => {
-                    core.hideLoading();
                     if (opts) {
                         if (loadBlocks) {
                             const ts = opts.filesOverride["main.ts"]
@@ -308,10 +311,10 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     </sui.Menu>
                 </sui.Segment>
                 {tab == WELCOME ? <div className={tabClasses}>
-                    <div className="ui stackable two column grid">
-                        <div className="six wide column">
-                            <h2 className="row">{pxt.appTarget.name}</h2>
-                            <div className={"row large ui loader"}></div>
+                    <div className="ui stackable two column grid welcomegrid">
+                        <div className="six wide column labelsgroup">
+                            <h2 className="editorname">{pxt.appTarget.name}</h2>
+                            <div className={"large ui loader editoravatar"}></div>
                         </div>
                         <div className="group ten wide column">
                             <div className="ui cards centered">
@@ -323,12 +326,12 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                     onClick={() => resume() }
                                     /> : undefined}
                                 {pxt.appTarget.appTheme.sideDoc ? <codecard.CodeCardView
-                                        key={'gettingstarted'}
-                                        iconColor="green"
-                                        iconContent={lf("Getting started") }
-                                        description={lf("Create a fun, beginner project in a guided tutorial") }
-                                        onClick={() => gettingStarted() }
-                                        /> : undefined}
+                                    key={'gettingstarted'}
+                                    iconColor="green"
+                                    iconContent={lf("Getting started") }
+                                    description={lf("Create a fun, beginner project in a guided tutorial") }
+                                    onClick={() => gettingStarted() }
+                                    /> : undefined}
                                 <codecard.CodeCardView
                                     key={'newproject'}
                                     iconColor="brown"

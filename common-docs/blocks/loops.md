@@ -8,3 +8,7 @@ for(let value of [""]) {}
 ```
 
 ### #specific
+
+## See also #seealso
+
+[for](/blocks/loops/for), [while](/blocks/loops/while), [repeat](/blocks/loops/repeat)

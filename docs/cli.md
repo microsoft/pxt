@@ -10,7 +10,7 @@ npm install -g pxt
 
 ### ~ hint
 
-On Windows, make sure the following are installed:
+If you are building pxt-microbit on Windows, make sure the following are installed:
 
 1. [Yotta (follow manual install for Windows)](http://docs.yottabuild.org/#installing-on-windows)
 2. [SRecord 1.64](https://sourceforge.net/projects/srecord/files/srecord-win32/1.64/) and move it to ``` C:\```
@@ -89,6 +89,7 @@ Run ``pxt help`` for the list of all commands. The following list of links conta
 * [login](/cli/login), store a GitHub token
 * [bump](/cli/bump), increment the version number
 * [update](/cli/update), updates the ``pxt-core`` dependency and runs installation steps
+* [checkdocs](/cli/checkdocs), validates the documentation links and snippets
 * [staticpkg](/cli/staticpkg), compiles editor into flat file system
 * [cherrypick](/cli/cherrypick), recursive cherry picking
 * [hidserial](/cli/hidserial), monitor `serial.write(...)` from certain boards

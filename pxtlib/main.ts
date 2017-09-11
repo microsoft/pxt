@@ -212,4 +212,18 @@ namespace pxt {
     export const CLOUD_ID = "pxt/"
     export const BLOCKS_PROJECT_NAME = "blocksprj";
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";
+
+    export function outputName(trg: CompileTarget = null) {
+        if (!trg) trg = appTarget.compile
+        if (trg.useUF2)
+            return ts.pxtc.BINARY_UF2
+        else if (trg.useELF)
+            return ts.pxtc.BINARY_ELF
+        else
+            return ts.pxtc.BINARY_HEX
+    }
+
+    export function isOutputText(trg: CompileTarget = null) {
+        return outputName(trg) == ts.pxtc.BINARY_HEX
+    }
 }

@@ -525,6 +525,8 @@ export class Editor extends srceditor.Editor {
             this.selectedCategoryRow.className = 'blocklyTreeRow';
         }
 
+        this.parent.setState({ hideEditorFloats: !clear });
+
         if (clear) {
             this.selectedCategoryRow = null;
         }
@@ -567,6 +569,8 @@ export class Editor extends srceditor.Editor {
             false, null, () => {
                 this.showAdvanced = !this.showAdvanced;
                 this.updateToolbox();
+                this.parent.setState({ hideEditorFloats: false });
+                this.resize();
             }, lf("{id:category}Advanced")))
         }
 
@@ -711,6 +715,8 @@ export class Editor extends srceditor.Editor {
                 monacoFlyout.style.display = 'none';
 
                 treerow.className = 'blocklyTreeRow';
+
+                this.parent.setState({ hideEditorFloats: false });
                 return;
             } else {
                 // Selected category
@@ -743,7 +749,7 @@ export class Editor extends srceditor.Editor {
                 // Create a flyout and add the category methods in there
 
                 // Add the heading label
-                if (!pxt.appTarget.appTheme.hideFlyoutHeadings && pxt.BrowserUtils.isMobile()) {
+                if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
                     let monacoHeadingLabel = document.createElement('div');
                     monacoHeadingLabel.className = 'monacoFlyoutLabel monacoFlyoutHeading';
                     let monacoHeadingIcon = document.createElement('span');
@@ -1202,8 +1208,8 @@ export class Editor extends srceditor.Editor {
                         message: message,
                         startLineNumber: d.line + 1,
                         startColumn: d.column,
-                        endLineNumber: (d.endLine || endPos.lineNumber) + 1,
-                        endColumn: d.endColumn || endPos.column
+                        endLineNumber: d.endLine == undefined ? endPos.lineNumber : d.endLine + 1,
+                        endColumn: d.endColumn == undefined ? endPos.column : d.endColumn
                     })
                 }
             }

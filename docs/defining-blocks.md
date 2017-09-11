@@ -10,24 +10,24 @@ simulator files.
 
 Each top-level javascript namespace is used to populate a category in the Block Editor toolbox. The name will automatically be capitalized in the toolbox.
 
-````
+```typescript-ignore
 namespace basic {
     ...
 }
-````
+```
 
 You can also provide a JsDoc comment, color and weight for the namespace, as well as a friendly name (in Unicode). 
 We strongly recommend carefully picking colors as it dramatically impacts
 that appearance and readability of your blocks. All blocks within the same namespace have the same color so that users can find the category easily from
 samples.
 
-````
+```typescript-ignore
 /**
  * Provides access to basic micro:bit functionality.
  */
 //% color=190 weight=100 icon="\uf1ec" block="Basic Blocks"
 namespace basic {
-````
+```
 
 * `icon` icon Unicode character from the icon font to display. The [Semantic UI](https://semantic-ui.com/elements/icon.html) icon set has been ported from Font Awesome (v4.5.6 at the time of writing), and a full list can be found at http://fontawesome.io/icons/
 * `color` should be included in a comment line starting with `\\%`. The color takes a **hue** value or a HTML color.
@@ -38,7 +38,7 @@ To have a category appear under the "Advanced" section of the Block Editor toolb
 
 All **exported** functions with a `block` attribute will be available in the Block Editor.
 
-```
+```typescript-ignore
 //% block
 export function showNumber(v: number, interval: number = 150): void
 { }
@@ -48,7 +48,7 @@ export function showNumber(v: number, interval: number = 150): void
 If you need more control over the appearance of the block,
 you can specify the `blockId` and `block` parameters.
 
-```
+```typescript-ignore
 //% blockId=device_show_number
 //% block="show|number %v"
 export function showNumber(v: number, interval: number = 150): void
@@ -97,8 +97,7 @@ If the callback in the API is designed to take in parameters, the best way to ma
 to the blocks is by passing the callback a single parameter with a class type that contains
 all the other values. For example:
 
-```typescript
-
+```typescript-ignore
 export class ArgumentClass {
     argumentA: number;
     argumentB: string;
@@ -116,12 +115,10 @@ to let users change what parameters appear in the blocks. Each parameter will be
 optional variable field in the block that defines a variable that can be used within the callback.
 The variable fields compile to object destructuring in the TypeScript code. For example:
 
-```typescript
-
+```typescript-ignore
 addSomeEventHandler(({argumentA, argumentB}) => {
 
 })
-
 ```
 
 For an example of this pattern in action, see the `radio.onDataPacketReceived` block in
@@ -131,8 +128,7 @@ In some cases it can be useful to change the runtime behavior of the API based o
 user. To enable that behavior, create an enum with entries that have the same names as the argument object's
 properties and add an extra parameter taking in an enum array to the API. For example:
 
-```typescript
-
+```typescript-ignore
 export class ArgumentClass {
     argumentA: number;
     argumentB: string;
@@ -154,8 +150,7 @@ export function addSomeEventHandler(args: ArgNames[], (a: ArgumentClass) => void
 Note the `mutatePropertyEnum` attribute added to the comment annotations. The block for this API will
 look the same as the previous example but the compiled code will also include the arguments passed:
 
-```typescript
-
+```typescript-ignore
 addSomeEventHandler([ArgNames.argumentA, ArgNames.argumentB], ({argumentA, argumentB}) => {
 
 })
@@ -172,7 +167,7 @@ The other attributes related to object destructuring mutators include:
 
 Enum are supported and will automatically be represented by a dropdown in blocks.
 
-```
+```typescript-ignore
 enum Button {
     A = 1,
     B = 2,
@@ -189,7 +184,7 @@ enum Button {
 
 It's possible to provide a drop-down for a parameter that is not an enum. It involves the following step:
 * create an enum with desired drop down entry
-```
+```typescript-ignore
 enum Delimiters {
     //% block="new line"
     NewLine = 1,
@@ -198,7 +193,7 @@ enum Delimiters {
 }
 ```
 * a function that takes the enum as parameter and returns the according value
-```
+```typescript-ignore
 //% blockId="delimiter_conv" block="%del"
 export function delimiters(del : Delimiters) : string {
     switch(del) {
@@ -209,7 +204,7 @@ export function delimiters(del : Delimiters) : string {
 }
 ```
 * use the enum conversion function block id (``delimiter_conv``) as the value in the ``block`` parameter of your function
-```
+```typescript-ignore
 //% blockId="read_until" block="read until %del=delimiter_conv"
 export function readUntil(del: string) : string {
     ...
@@ -219,7 +214,7 @@ export function readUntil(del: string) : string {
 ## Docs and default values
 
 The JSDoc comment is automatically used as the help for the block.
-````
+```typescript-ignore
 /**
  * Scroll a number on the screen. If the number fits on the screen (i.e. is a single digit), do not scroll.
  * @param interval speed of scroll; eg: 150, 100, 200, -100
@@ -227,7 +222,7 @@ The JSDoc comment is automatically used as the help for the block.
 //% help=functions/show-number
 export function showNumber(value: number, interval: number = 150): void
 { }
-````
+```
 
 * If `@param` annotation is available with an `eg:` section, the first
 value is used as the shadow value.
@@ -242,7 +237,7 @@ It is possible to expose instance methods and object factories, either directly
 or with a bit of flattening (which is recommended, as flat, C-style APIs map best to blocks).
 
 ### Direct
-```typescript
+```typescript-ignore
 //%
 class Message {
     ...
@@ -256,7 +251,7 @@ class Message {
 
 You will need to expose a factory method to create your objects as needed. For the example above, we add a function that creates the message:
 
-```typescript
+```typescript-ignore
 //% blockId="create_message" block="create message|with %text"
 export function createMessage(text: string) : Message {
     return new Message(text);
@@ -269,7 +264,7 @@ If object has a reasonable default constructor, and it is harmless to call this
 constructor even if the variable needs to be overwritten later, then it's useful
 to designate a parameter-less function as auto-create, like this:
 
-```typescript
+```typescript-ignore
 namespace images {
     export function emptyImage(width = 5, height = 5): Image { ... }
 }
@@ -293,7 +288,7 @@ It is sometimes the case that there is only a fixed number of instances
 of a given class. One example is object representing pins on an electronic board.
 It is possible to expose these instances in a manner similar to an enum:
 
-```typescript
+```typescript-ignore
 //% fixedInstances
 class DigitalPin {
     ...
@@ -319,7 +314,7 @@ integer value. The variables `D0` and `D1` can have additional annotations
 Fixed instances also support inheritance. For example, consider adding the following
 declarations.
 
-```typescript
+```typescript-ignore
 //% fixedInstances
 class AnalogPin extends DigitalPin {
     ...
@@ -340,7 +335,23 @@ the optionals on `digital write` will be now `D0`, `D1` and `A0`.
 Variables with `fixedInstance` annotations can be added anywhere, at the top-level,
 even in different libraries or namespaces.
 
-This feature is often used with `indexedInstance*` and `noRefCounting` attributes.
+This feature is often used with `indexedInstance*` attributes.
+
+It is also possible to define the instances to be used in blocks in TypeScript,
+for example:
+
+```typescript-ignore
+namespace pins {
+    //% fixedInstance whenUsed
+    export const A7 = new AnalogPin(7);
+}
+``` 
+
+The `whenUsed` annotation causes the variable to be only included in compilation
+when it is used, even though it is initialized with something that can possibly
+have side effects. This happens automatically when there is no initializer,
+or the initializer is a simple constant, but for function calls and constructors
+you have to include `whenUsed`.
 
 ## Ordering
 

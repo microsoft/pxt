@@ -35,6 +35,7 @@ declare namespace pxt {
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
         yotta?: YottaConfig;
+        npmDependencies?: Map<string>;
         card?: CodeCard;
         additionalFilePath?: string;
         gistId?: string;
@@ -78,7 +79,7 @@ declare namespace pxt {
         time?: number;
         url?: string;
         responsive?: boolean;
-        cardType?: "example" | "blocksExample" | "tutorial" | "project";
+        cardType?: "example" | "codeExample" | "tutorial" | "project";
 
         header?: string;
         any?: number;

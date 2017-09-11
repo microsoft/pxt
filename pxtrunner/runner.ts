@@ -147,7 +147,13 @@ namespace pxt.runner {
 
         patchSemantic();
         const cfg = pxt.webConfig
-        return Util.updateLocalizationAsync(cfg.commitCdnUrl, lang, versions ? versions.pxtCrowdinBranch : "", live)
+        return Util.updateLocalizationAsync(
+            pxt.appTarget.id,
+            true,
+            cfg.commitCdnUrl, lang,
+            versions ? versions.pxtCrowdinBranch : "",
+            versions ? versions.branch : "",
+            live)
             .then(() => {
                 mainPkg = new pxt.MainPackage(new Host());
             })
@@ -285,9 +291,12 @@ namespace pxt.runner {
             const localeLiveRx = /^live-/;
             editorLocale = locale;
             return pxt.Util.updateLocalizationAsync(
+                pxt.appTarget.id,
+                true,
                 pxt.webConfig.commitCdnUrl,
                 editorLocale.replace(localeLiveRx, ''),
                 pxt.appTarget.versions.pxtCrowdinBranch,
+                pxt.appTarget.versions.branch,
                 localeLiveRx.test(editorLocale)
             );
         }
@@ -602,7 +611,7 @@ ${files["main.ts"]}
                         let uptoSteps = steps.join();
                         uptoSteps = uptoSteps.replace(/((?!.)\s)+/g, "\n");
 
-                        let regex = /```(sim|block|blocks|shuffle|filterblocks)\n([\s\S]*?)\n```/gmi;
+                        let regex = /```(sim|block|blocks|shuffle|filterblocks)\s*\n([\s\S]*?)\n```/gmi;
                         let match: RegExpExecArray;
                         let code = '';
                         while ((match = regex.exec(uptoSteps)) != null) {
@@ -635,6 +644,7 @@ ${files["main.ts"]}
                         for (let i = 0; i < stepcontent.length - 1; i++) {
                             content.innerHTML = stepcontent[i + 1];
                             stepInfo[i].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
+                            stepInfo[i].ariaLabel = content.firstElementChild.textContent;
                             stepInfo[i].content = stepcontent[i + 1];
                         }
                         content.innerHTML = '';

@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
 </head>
 <style type="text/css">
     @import "/blb/semantic.css";
@@ -72,10 +73,10 @@
             msg.project = prj;
             if (filter) msg.filters = JSON.parse(JSON.stringify(filters));
             msg.response = true;
-        } else if (action == `renderblocks`) {
+        } else if (action == 'renderblocks') {
             msg.response = true;
-            msg.ts = `control.forever(() => { })`
-        } else if (action == `toggletrace`) {
+            msg.ts = 'control.forever(() => { })'
+        } else if (action == 'toggletrace') {
             msg.intervalSpeed = 1000;
         }
         if (msg.response)

@@ -2,14 +2,14 @@
 
 interface Array<T> {
     /**
-      * Gets or sets the length of the array. This is a number one higher than the highest element defined in an array.
+      * Get or set the length of an array. This number is one more than the index of the last element the array.
       */
     //% shim=Array_::length weight=84
     //% blockId="lists_length" block="length of %VALUE" blockBuiltin=true blockNamespace="arrays"
     length: number;
 
     /**
-      * Appends new elements to an array.
+      * Append a new element to an array.
       * @param items New elements of the Array.
       */
     //% help=arrays/push
@@ -18,7 +18,7 @@ interface Array<T> {
     push(item: T): void;
 
     /**
-      * Removes the last element from an array and returns it.
+      * Remove the last element from an array and return it.
       */
     //% help=arrays/pop
     //% shim=Array_::pop weight=48
@@ -26,7 +26,7 @@ interface Array<T> {
     pop(): T;
 
     /**
-      * Reverses the elements in an Array. The first array element becomes the last, and the last array element becomes the first.
+      * Reverse the elements in an array. The first array element becomes the last, and the last array element becomes the first.
       */
     //% help=arrays/reverse
     //% helper=arrayReverse weight=10 advanced=true
@@ -34,7 +34,7 @@ interface Array<T> {
     reverse(): void;
 
     /**
-      * Removes the first element from an array and returns that element. This method changes the length of the array.
+      * Remove the first element from an array and return it. This method changes the length of the array.
       */
     //% help=arrays/shift
     //% helper=arrayShift weight=70 advanced=true
@@ -42,7 +42,7 @@ interface Array<T> {
     shift(): T;
 
     /**
-      * Adds one element to the beginning of an array and returns the new length of the array.
+      * Add one element to the beginning of an array and return the new length of the array.
       * @param element to insert at the start of the Array.
       */
     //% help=arrays/unshift
@@ -52,7 +52,7 @@ interface Array<T> {
     unshift(value: T): number;
 
     /**
-      * Returns a section of an array.
+      * Return a section of an array.
       * @param start The beginning of the specified portion of the array. eg: 0
       * @param end The end of the specified portion of the array. eg: 0
       */
@@ -61,7 +61,7 @@ interface Array<T> {
     slice(start: number, end: number): T[];
 
     /**
-      * Removes elements from an array.
+      * Remove elements from an array.
       * @param start The zero-based location in the array from which to start removing elements. eg: 0
       * @param deleteCount The number of elements to remove. eg: 0
       */
@@ -69,28 +69,28 @@ interface Array<T> {
     splice(start: number, deleteCount: number): void;
 
     /**
-      * Sorts the elements of an array in place and returns the array. The sort is not necessarily stable.
+      * Sort the elements of an array in place and returns the array. The sort is not necessarily stable.
       * @param specifies a function that defines the sort order. If omitted, the array is sorted according to the prmitive type
       */
     //% helper=arraySort weight=40
     sort(callbackfn?: (value1: T, value2: T) => number): T[];
 
     /**
-      * Calls a defined callback function on each element of an array, and returns an array that contains the results.
+      * Call a defined callback function on each element of an array, and return an array containing the results.
       * @param callbackfn A function that accepts up to two arguments. The map method calls the callbackfn function one time for each element in the array.
       */
     //% helper=arrayMap weight=40
     map<U>(callbackfn: (value: T, index: number) => U): U[];
 
     /**
-      * Returns the elements of an array that meet the condition specified in a callback function.
+      * Return the elements of an array that meet the condition specified in a callback function.
       * @param callbackfn A function that accepts up to two arguments. The filter method calls the callbackfn function one time for each element in the array.
       */
     //% helper=arrayFilter weight=40
     filter(callbackfn: (value: T, index: number) => boolean): T[];
 
     /**
-      * Calls the specified callback function for all the elements in an array. The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.
+      * Call the specified callback function for all the elements in an array. The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.
       * @param callbackfn A function that accepts up to three arguments. The reduce method calls the callbackfn function one time for each element in the array.
       * @param initialValue Initial value to start the accumulation. The first call to the callbackfn function provides this value as an argument instead of an array value.
       */
@@ -98,12 +98,12 @@ interface Array<T> {
     reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number) => U, initialValue: U): U;
 
 
-    /** Removes the first occurence of an object. Returns true if removed. */
+    /** Remove the first occurence of an object. Returns true if removed. */
     //% shim=Array_::removeElement weight=48
     removeElement(element: T): boolean;
 
-    /** Removes the object at position index. */
-    //% help=arrays/removeat
+    /** Remove the element at a certain index. */
+    //% help=arrays/remove-at
     //% shim=Array_::removeAt weight=49 advanced=true
     //% blockId="array_removeat" block="%list| remove value at %index" blockNamespace="arrays"
     removeAt(index: number): T;
@@ -113,23 +113,23 @@ interface Array<T> {
      * @param index the zero-based position in the list to insert the value, eg: 0
      * @param the value to insert, eg: 0
      */
-    //% help=arrays/insertat
+    //% help=arrays/insert-at
     //% shim=Array_::insertAt weight=84 advanced=true
     //% blockId="array_insertAt" block="%list| insert at %index| value %value" blockNamespace="arrays"
     insertAt(index: number, value: T): void;
 
     /**
-      * Returns the index of the first occurrence of a value in an array.
+      * Return the index of the first occurrence of a value in an array.
       * @param item The value to locate in the array.
       * @param fromIndex The array index at which to begin the search. If fromIndex is omitted, the search starts at index 0.
       */
-    //% help=arrays/indexof
+    //% help=arrays/index-of
     //% shim=Array_::indexOf weight=50 advanced=true
     //% blockId="array_indexof" block="%list| find index of %value" blockNamespace="arrays"
     indexOf(item: T, fromIndex?: number): number;
 
     /**
-     * Gets the value at a particular index
+     * Get the value at a particular index
      * @param index the zero-based position in the list of the item, eg: 0
      */
     //% help=arrays/get
@@ -137,7 +137,7 @@ interface Array<T> {
     get(index: number): T;
 
     /**
-     * Stores the value at a particular index
+     * Store a value at a particular index
      * @param index the zero-based position in the list to store the value, eg: 0
      * @param the value to insert, eg: 0
      */
@@ -161,7 +161,7 @@ declare interface String {
     concat(other: string): string;
 
     /**
-     * Returns the character at the specified index.
+     * Return the character at the specified index.
      * @param index The zero-based index of the desired character.
      */
     //% shim=String_::charAt weight=48
@@ -175,14 +175,14 @@ declare interface String {
     length: number;
 
     /**
-     * Returns the Unicode value of the character at the specified location.
+     * Return the Unicode value of the character at the specified location.
      * @param index The zero-based index of the desired character. If there is no character at the specified index, NaN is returned.
      */
     //% shim=String_::charCodeAt
     charCodeAt(index: number): number;
 
     /**
-     * Determines whether relative order of two strings (in ASCII encoding).
+     * See how the order of characters in two strings is different (in ASCII encoding).
      * @param that String to compare to target string
      */
     //% shim=String_::compare
@@ -191,7 +191,7 @@ declare interface String {
     compare(that: string): number;
 
     /**
-     * Return substring of the current string.
+     * Return a substring of the current string.
      * @param start first character index; can be negative from counting from the end, eg:0
      * @param length number of characters to extract
      */
@@ -241,6 +241,10 @@ declare interface Boolean {
     toString(): string;
 }
 
+/**
+ * Combine, split, and search text strings.
+*/
+//% blockNamespace="Text"
 declare namespace String {
 
     /**
@@ -261,6 +265,16 @@ declare interface Number {
     toString(): string;
 }
 
+/**
+ * Add, remove, and replace items in lists.
+*/
+//% blockNamespace="Arrays"
+declare namespace Array {
+}
+
+/**
+ * More complex operations with numbers.
+*/
 declare namespace Math {
     /**
      * Returns the value of a base expression taken to a specified power.

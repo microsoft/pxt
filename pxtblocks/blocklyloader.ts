@@ -338,11 +338,12 @@ namespace pxt.blocks {
         else {
             toolboxStyleBuffer += `
                 .blocklyTreeIcon.${className} {
-                    display: inline-block !important;
                     background-image: url("${pxt.webConfig.commitCdnUrl + encodeURI(i)}")!important;
-                    width: 1em;
-                    height: 1em;
-                    background-size: 1em!important;
+                    width: 30px;
+                    height: 100%;
+                    background-size: 20px !important;
+                    background-repeat: no-repeat !important;
+                    background-position: 50% 50% !important;
                 }
             `;
         }
@@ -358,10 +359,23 @@ namespace pxt.blocks {
         }
 
         if (toolboxStyle.sheet) {
-            toolboxStyle.textContent = toolboxStyleBuffer;
+            toolboxStyle.textContent = toolboxStyleBuffer + namespaceStyleBuffer;
         } else {
-            toolboxStyle.appendChild(document.createTextNode(toolboxStyleBuffer));
+            toolboxStyle.appendChild(document.createTextNode(toolboxStyleBuffer + namespaceStyleBuffer));
         }
+    }
+
+    let namespaceStyleBuffer: string = '';
+    export function appendNamespaceCss(namespace: string, color: string) {
+        const ns = namespace.toLowerCase();
+        color = color || '#dddddd'; // Default toolbox color
+        if (namespaceStyleBuffer.indexOf(ns) > -1) return;
+        namespaceStyleBuffer += `
+            span.docs.${ns} {
+                background-color: ${color} !important;
+                border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
+            }
+        `;
     }
 
     let iconCanvasCache: Map<string> = {};
@@ -788,8 +802,8 @@ namespace pxt.blocks {
 
         // hook up/down if return value is void
         const hasHandlers = hasArrowFunction(fn);
-        block.setPreviousStatement(!hasHandlers && fn.retType == "void");
-        block.setNextStatement(!hasHandlers && fn.retType == "void");
+        block.setPreviousStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
+        block.setNextStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
 
         block.setTooltip(fn.attributes.jsDoc);
     }
@@ -929,6 +943,8 @@ namespace pxt.blocks {
             for (let i = 0; i < cats.length; i++) {
                 cats[i].setAttribute('name',
                     Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
+                // Append Namespace CSS
+                appendNamespaceCss(cats[i].getAttribute('name'), cats[i].getAttribute('colour'));
             }
 
             // update category colors and add heading
@@ -944,7 +960,7 @@ namespace pxt.blocks {
                         childCats[j].setAttribute('colour', nsColor);
                     }
                 }
-                if (!pxt.appTarget.appTheme.hideFlyoutHeadings && pxt.BrowserUtils.isMobile()) {
+                if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
                     // Add the Heading label
                     let headingLabel = goog.dom.createDom('label');
                     headingLabel.setAttribute('text', topCats[i].getAttribute('name'));
@@ -2334,7 +2350,7 @@ namespace pxt.blocks {
         Blockly.Variables.flyoutCategory = function(workspace) {
             let xmlList: HTMLElement[] = [];
 
-            if (!pxt.appTarget.appTheme.hideFlyoutHeadings && pxt.BrowserUtils.isMobile()) {
+            if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
                 // Add the Heading label
                 let headingLabel = goog.dom.createDom('label') as HTMLElement;
                 headingLabel.setAttribute('text', lf("Variables"));
@@ -2655,7 +2671,7 @@ namespace pxt.blocks {
         Blockly.Procedures.flyoutCategory = function (workspace: Blockly.Workspace) {
             let xmlList: HTMLElement[] = [];
 
-            if (!pxt.appTarget.appTheme.hideFlyoutHeadings && pxt.BrowserUtils.isMobile()) {
+            if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
                 // Add the Heading label
                 let headingLabel = goog.dom.createDom('label');
                 headingLabel.setAttribute('text', lf("Functions"));

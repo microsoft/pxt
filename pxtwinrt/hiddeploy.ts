@@ -37,7 +37,7 @@ namespace pxt.winrt {
             if (!this.dev) return Promise.resolve();
 
             const ar: number[] = [0];
-            for (let i = 0; i < 64; ++i)
+            for (let i = 0; i < Math.max(pkt.length, 64); ++i)
                 ar.push(pkt[i] || 0);
             const dataWriter = new Windows.Storage.Streams.DataWriter();
             dataWriter.writeBytes(ar);

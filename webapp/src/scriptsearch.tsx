@@ -116,13 +116,17 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const upd = (v: any) => {
             let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
 
-            // Hidden way to navigate to /beta, useful for UWP app testing
-            if (str === "@/beta") {
+            // Hidden navigation, used to test /beta or other versions inside released Electron and UWP apps
+            // Secret prefix is $@@@, e.g.: $@@@beta
+            const urlPathExec = /^\$@@@(.*)$/.exec(str);
+            let urlPath = urlPathExec && urlPathExec[1];
+            if (urlPath) {
                 let homeUrl = pxt.appTarget.appTheme.homeUrl;
                 if (!/\/$/.test(homeUrl)) {
                     homeUrl += "/";
                 }
-                window.location.href = homeUrl + "beta";
+                urlPath = urlPath.replace(/^\//, "");
+                window.location.href = homeUrl + urlPath;
             }
             else {
                 this.setState({ searchFor: str });
@@ -165,7 +169,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             // Single conflict: "Package a is..."
                             lf("Package {0} is incompatible with {1}. Remove {0} and add {1}?", conflicts[0].pkg0.id, config.name) :
                             // 2 conflicts: "Packages A and B are..."; 3+ conflicts: "Packages A, B, C and D are..."
-                            lf("Packages {0} and {1} are incompatible with {2}. Remove them and add {2}?", conflicts.slice(0, -1).map((c) => c.pkg0.id).join(","), conflicts.slice(-1)[0].pkg0.id, config.name);
+                            lf("Packages {0} and {1} are incompatible with {2}. Remove them and add {2}?", conflicts.slice(0, -1).map((c) => c.pkg0.id).join(", "), conflicts.slice(-1)[0].pkg0.id, config.name);
 
                         addDependencyPromise = addDependencyPromise
                             .then(() => core.confirmAsync({

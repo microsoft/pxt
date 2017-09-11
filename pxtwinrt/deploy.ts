@@ -8,7 +8,7 @@ namespace pxt.winrt {
         pxt.debug(`deploying to drives ${drives}`)
 
         const drx = new RegExp(drives);
-        const firmware = pxt.appTarget.compile.useUF2 ? pxtc.BINARY_UF2 : pxtc.BINARY_HEX;
+        const firmware = pxt.outputName()
         const r = res.outfiles[firmware];
 
         function writeAsync(folder: Windows.Storage.StorageFolder): Promise<void> {

@@ -55,6 +55,7 @@ namespace pxt.editor {
         tracing?: boolean;
 
         highContrast?: boolean;
+        hideExperimentalBanner?: boolean;
     }
 
     export interface ProjectCreationOptions {
@@ -84,6 +85,7 @@ namespace pxt.editor {
         hasHint?: boolean;
         content?: string;
         headerContent?: string;
+        ariaLabel?: string;
     }
 
     export interface TutorialOptions {
