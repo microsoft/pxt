@@ -1458,7 +1458,6 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
     }
 
     openTutorials() {
-//        this.setState({tutorialOptions: undefined});
         pxt.tickEvent("menu.openTutorials");
         this.projects.showOpenTutorials();
     }
@@ -1475,19 +1474,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         let result: string[] = [];
 
         sounds.initTutorial(); // pre load sounds
-        return pxt.Cloud.downloadMarkdownAsync(tutorialId)
-            .then(md => {
-                let titleRegex = /^#\s*(.*)/g.exec(md);
-                if (!titleRegex || titleRegex.length < 1) return;
-                title = titleRegex[1].trim();
-
-                let steps = md.split(/^##[^#].*$/gmi);
-                for (let step = 1; step < steps.length; step++) {
-                    let stepmd = `##${steps[step]}`;
-                    result.push(stepmd);
-                }
-                //TODO: parse for tutorial options, mainly initial blocks
-            }).then(() => {
+        return Promise.resolve().then(() => {
                 return this.createProjectAsync({
                     name: title
                 });
@@ -1495,8 +1482,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 let tutorialOptions: pxt.editor.TutorialOptions = {
                     tutorial: tutorialId,
                     tutorialName: title,
-                    tutorialStep: 0,
-                    tutorialSteps: result
+                    tutorialStep: 0
                 };
                 this.setState({ tutorialOptions: tutorialOptions, tracing: undefined })
 
@@ -1550,7 +1536,6 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
     }
 
     completeTutorial() {
-//        this.setState({tutorialOptions: undefined});
         pxt.tickEvent("tutorial.complete");
         this.tutorialComplete.show();
     }
