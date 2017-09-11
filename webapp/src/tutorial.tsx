@@ -26,14 +26,15 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     render() {
-        const { tutorialReady, tutorialSteps, tutorialStep, tutorialName } = this.props.parent.state.tutorialOptions;
+        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialName } = this.props.parent.state.tutorialOptions;
         const state = this.props.parent.state;
         const targetTheme = pxt.appTarget.appTheme;
         const currentStep = tutorialStep;
+        if (!tutorialReady) return <div />;
 
         return <div className="ui item">
             <div className="ui item tutorial-menuitem" role="menubar">
-                {tutorialSteps.map((step, index) =>
+                {tutorialStepInfo.map((step, index) =>
                     (index == currentStep) ?
                         <span className="step-label" key={'tutorialStep' + index}>
                             <a className={`ui circular label ${currentStep == index ? 'blue selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} role="menuitem" aria-label={lf("Tutorial step {0}. This is the current step", index + 1)} tabIndex={0} onClick={() => this.openTutorialStep(index) } onKeyDown={sui.fireClickOnEnter}>{index + 1}</a>
@@ -216,13 +217,13 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
 
     render() {
         const options = this.props.parent.state.tutorialOptions;
-        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialSteps } = options;
+        const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
         if (!tutorialReady) return <div />
         const tutorialHeaderContent = tutorialStepInfo[tutorialStep].headerContent;
         let tutorialAriaLabel = tutorialStepInfo[tutorialStep].ariaLabel;
 
         const currentStep = tutorialStep;
-        const maxSteps = tutorialSteps.length;
+        const maxSteps = tutorialStepInfo.length;
         const hasPrevious = tutorialReady && currentStep != 0;
         const hasNext = tutorialReady && currentStep != maxSteps - 1;
         const hasFinish = currentStep == maxSteps - 1;

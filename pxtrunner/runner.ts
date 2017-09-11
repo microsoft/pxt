@@ -591,7 +591,7 @@ ${files["main.ts"]}
             .then(tutorialmd => {
                 let steps = tutorialmd.split(/^###[^#].*$/gmi);
                 let stepInfo: editor.TutorialStepInfo[] = [];
-                tutorialmd.replace(/###[^#](.*)/g, (f, s) => {
+                tutorialmd.replace(/^##[^#](.*)$/gmi, (f, s) => {
                     let info: editor.TutorialStepInfo = {
                         fullscreen: s.indexOf('@fullscreen') > -1,
                         hasHint: s.indexOf('@nohint') < 0
