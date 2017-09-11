@@ -58,32 +58,39 @@ function init() {
 }
 
 export function shouldUse() {
-    return pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && Cloud.isLocalHost() && !!Cloud.localToken
+    let serial = pxt.appTarget.serial
+    return serial && serial.useHF2 && (Cloud.isLocalHost() && !!Cloud.localToken || pxt.winrt.isWinRT());
 }
 
-
-export function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
+function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
     init()
-    return iface.opAsync("list", {})
-        .then((devs: any) => {
-            let d0 = (devs.devices as HidDevice[]).filter(d => (d.release & 0xff00) == 0x4200)[0]
-            if (d0) return new BridgeIO(d0)
-            else throw new Error("No device connected")
-        })
-        .then(b => b.initAsync().then(() => b))
+    let raw = false
+    if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID)
+        raw = true
+    let b = new BridgeIO(raw)
+    return b.initAsync()
+        .then(() => b);
 }
+
+pxt.HF2.mkPacketIOAsync = mkBridgeAsync;
 
 class BridgeIO implements pxt.HF2.PacketIO {
     onData = (v: Uint8Array) => { };
+    onEvent = (v: Uint8Array) => { };
     onError = (e: Error) => { };
     onSerial = (v: Uint8Array, isErr: boolean) => { };
+    public dev: HidDevice;
 
-    constructor(public dev: HidDevice) {
+    constructor(public rawMode = false) {
+        if (rawMode)
+            this.onEvent = v => this.onData(v)
     }
 
     onOOB(v: OOB) {
         if (v.op == "serial") {
             this.onSerial(U.fromHex(v.result.data), v.result.isError)
+        } else if (v.op = "event") {
+            this.onEvent(U.fromHex(v.result.data))
         }
     }
 
@@ -101,11 +108,23 @@ class BridgeIO implements pxt.HF2.PacketIO {
         throw new HIDError(U.lf("USB/HID error on device {0} ({1})", this.dev.product, msg))
     }
 
-    reconnectAsync() {
+    reconnectAsync(): Promise<void> {
         return this.initAsync()
     }
 
+    disconnectAsync(): Promise<void> {
+        return iface.opAsync("disconnect", {
+            path: this.dev.path
+        })
+    }
+
     sendPacketAsync(pkt: Uint8Array): Promise<void> {
+        if (this.rawMode)
+            return iface.opAsync("send", {
+                path: this.dev.path,
+                data: U.toHex(pkt),
+                raw: true
+            })
         throw new Error("should use talksAsync()!")
     }
 
@@ -117,16 +136,30 @@ class BridgeIO implements pxt.HF2.PacketIO {
         })
     }
 
-    initAsync() {
-        bridgeByPath[this.dev.path] = this
-        return iface.opAsync("init", {
-            path: this.dev.path
-        })
+    initAsync(): Promise<void> {
+        return iface.opAsync("list", {})
+            .then((devs0: any) => {
+                let devs = devs0.devices as HidDevice[]
+                let d0 = devs.filter(d => (d.release & 0xff00) == 0x4200)[0]
+                if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID)
+                    d0 = devs[0]
+                if (d0) {
+                    if (this.dev)
+                        delete bridgeByPath[this.dev.path]
+                    this.dev = d0
+                    bridgeByPath[this.dev.path] = this
+                }
+                else throw new Error("No device connected")
+            })
+            .then(() => iface.opAsync("init", {
+                path: this.dev.path,
+                raw: this.rawMode,
+            }))
     }
 }
 
 function hf2Async() {
-    return mkBridgeAsync()
+    return pxt.HF2.mkPacketIOAsync()
         .then(h => {
             let w = new pxt.HF2.Wrapper(h)
             return w.reconnectAsync(true)
@@ -136,11 +169,25 @@ function hf2Async() {
 
 let initPromise: Promise<pxt.HF2.Wrapper>
 export function initAsync() {
-    if (!initPromise)
+    let isFirstInit = false;
+    if (!initPromise) {
+        isFirstInit = true;
         initPromise = hf2Async()
             .catch(err => {
                 initPromise = null
                 return Promise.reject(err)
             })
+    }
+    let wrapper: pxt.HF2.Wrapper;
     return initPromise
+        .then((w) => {
+            wrapper = w;
+            if (pxt.winrt.isWinRT() && !isFirstInit) {
+                // For WinRT, disconnecting the device after flashing once puts the wrapper in a bad state.
+                // To workaround this, reconnect every time.
+                return wrapper.reconnectAsync();
+            }
+            return Promise.resolve();
+        })
+        .then(() => wrapper);
 }

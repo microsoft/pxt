@@ -20,7 +20,7 @@ namespace ts.pxtc {
         description: string;
         type: string;
         initializer?: string;
-        defaults?: string[];
+        default?: string;
         properties?: PropertyDesc[];
         options?: pxt.Map<PropertyOption>;
         isEnum?: boolean;
@@ -297,7 +297,16 @@ namespace ts.pxtc {
                     }
                 }
                 else if (fn.attributes.block && locBlock) {
-                    fn.attributes.block = locBlock;
+                    const ps = pxt.blocks.parameterNames(fn);
+                    const oldBlock = fn.attributes.block;
+                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock);
+                    if (oldBlock != fn.attributes.block) {
+                        const locps = pxt.blocks.parameterNames(fn);
+                        if (JSON.stringify(ps) != JSON.stringify(locps)) {
+                            pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`)
+                            fn.attributes.block = oldBlock;
+                        }
+                    }
                 }
             }))
             .then(() => apis);
@@ -332,12 +341,17 @@ namespace ts.pxtc {
         let didSomething = true
         while (didSomething) {
             didSomething = false
-            cmt = cmt.replace(/\/\/%[ \t]*([\w\.]+)(=(("[^"\n]+")|'([^'\n]+)'|([^\s]*)))?/,
+            cmt = cmt.replace(/\/\/%[ \t]*([\w\.]+)(=(("[^"\n]*")|'([^'\n]*)'|([^\s]*)))?/,
                 (f: string, n: string, d0: string, d1: string,
                     v0: string, v1: string, v2: string) => {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
+                    if (!v) v = "";
                     if (U.endsWith(n, ".defl")) {
-                        res.paramDefl[n.slice(0, n.length - 5)] = v
+                        if (v.indexOf(" ") > -1) {
+                            res.paramDefl[n.slice(0, n.length - 5)] = `"${v}"`
+                        } else {
+                            res.paramDefl[n.slice(0, n.length - 5)] = v
+                        }
                     } else if (U.endsWith(n, ".fieldEditor")) {
                         if (!res.paramFieldEditor) res.paramFieldEditor = {}
                         res.paramFieldEditor[n.slice(0, n.length - 12)] = v
@@ -387,6 +401,23 @@ namespace ts.pxtc {
             doccmt = doccmt.replace(/\n\s*(\*\s*)?/g, "\n")
             doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(.*)$/mg, (full: string, name: string, desc: string) => {
                 res.paramHelp[name] = desc
+                if (!res.paramDefl[name]) {
+                    let m = /\beg\.?:\s*(.+)/.exec(desc);
+                    if (m && m[1]) {
+                        let defaultValue = /(?:"([^"]*)")|(?:'([^']*)')|(?:([^\s,]+))/g.exec(m[1]);
+                        if (defaultValue) {
+                            let val = defaultValue[1] || defaultValue[2] || defaultValue[3];
+                            if (!val) val = "";
+                            // If there are spaces in the value, it means the value was surrounded with quotes, so add them back
+                            if (val.indexOf(" ") > -1) {
+                                res.paramDefl[name] = `"${val}"`;
+                            }
+                            else {
+                                res.paramDefl[name] = val;
+                            }
+                        }
+                    }
+                }
                 return ""
             })
             res.jsDoc += doccmt
@@ -568,6 +599,104 @@ namespace ts.pxtc {
                     res[i] = bl.data[addr - bl.targetAddr]
             }
             return res
+        }
+
+        export const startMagic = "UF2\x0AWQ]\x9E"
+        export const endMagic = "0o\xB1\x0A"
+
+        function setWord(block: Uint8Array, ptr: number, v: number) {
+            block[ptr] = (v & 0xff)
+            block[ptr + 1] = ((v >> 8) & 0xff)
+            block[ptr + 2] = ((v >> 16) & 0xff)
+            block[ptr + 3] = ((v >> 24) & 0xff)
+        }
+
+        export interface BlockFile {
+            currBlock: Uint8Array;
+            currPtr: number;
+            blocks: Uint8Array[];
+            ptrs: number[];
+        }
+
+        export function newBlockFile(): BlockFile {
+            return {
+                currBlock: null,
+                currPtr: -1,
+                blocks: [],
+                ptrs: []
+            }
+        }
+
+        export function serializeFile(f: BlockFile) {
+            for (let i = 0; i < f.blocks.length; ++i) {
+                setWord(f.blocks[i], 24, f.blocks.length)
+            }
+            let res = ""
+            for (let b of f.blocks)
+                res += Util.uint8ArrayToString(b)
+            return res
+        }
+
+        export function writeBytes(f: BlockFile, addr: number, bytes: number[]) {
+            let currBlock = f.currBlock
+            let needAddr = addr >> 8
+
+            // account for unaligned writes
+            // this function is only used to write small chunks, so recursion is fine
+            let firstChunk = 256 - (addr & 0xff)
+            if (bytes.length > firstChunk) {
+                writeBytes(f, addr, bytes.slice(0, firstChunk))
+                writeBytes(f, addr + firstChunk, bytes.slice(firstChunk))
+                return
+            }
+
+            if (needAddr != f.currPtr) {
+                let i = 0;
+                currBlock = null
+                for (let i = 0; i < f.ptrs.length; ++i) {
+                    if (f.ptrs[i] == needAddr) {
+                        currBlock = f.blocks[i]
+                        break
+                    }
+                }
+                if (!currBlock) {
+                    currBlock = new Uint8Array(512)
+                    setWord(currBlock, 0, UF2_MAGIC_START0)
+                    setWord(currBlock, 4, UF2_MAGIC_START1)
+                    setWord(currBlock, 12, needAddr << 8)
+                    setWord(currBlock, 16, 256)
+                    setWord(currBlock, 20, f.blocks.length)
+                    setWord(currBlock, 512 - 4, UF2_MAGIC_END)
+                    f.blocks.push(currBlock)
+                    f.ptrs.push(needAddr)
+                }
+                f.currPtr = needAddr
+                f.currBlock = currBlock
+            }
+            let p = (addr & 0xff) + 32
+            for (let i = 0; i < bytes.length; ++i)
+                currBlock[p + i] = bytes[i]
+        }
+
+        export function writeHex(f: BlockFile, hex: string[]) {
+            let upperAddr = "0000"
+
+            for (let i = 0; i < hex.length; ++i) {
+                let m = /:02000004(....)/.exec(hex[i])
+                if (m) {
+                    upperAddr = m[1]
+                }
+                m = /^:..(....)00(.*)[0-9A-F][0-9A-F]$/.exec(hex[i])
+                if (m) {
+                    let newAddr = parseInt(upperAddr + m[1], 16)
+                    let hh = m[2]
+                    let arr: number[] = []
+                    for (let j = 0; j < hh.length; j += 2) {
+                        arr.push(parseInt(hh[j] + hh[j + 1], 16))
+                    }
+                    writeBytes(f, newAddr, arr)
+                }
+            }
         }
     }
 }

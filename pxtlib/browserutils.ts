@@ -148,8 +148,9 @@ namespace pxt.BrowserUtils {
             matches = /Version\/([0-9\.]+)/i.exec(navigator.userAgent);
             // pinned web site have a different user agent
             // Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Mobile/14D27
+            // Mozilla/5.0 (iPad; CPU OS 10_3_3 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko) Mobile/14G60
             if (!matches)
-                matches = /(iPod|iPhone|iPad) OS (\d+)/i.exec(navigator.userAgent);
+                matches = /(iPod|iPhone|iPad); CPU .*?OS (\d+)/i.exec(navigator.userAgent);
         }
         else if (isChrome()) {
             matches = /(Chrome|Chromium)\/([0-9\.]+)/i.exec(navigator.userAgent);
@@ -243,10 +244,14 @@ namespace pxt.BrowserUtils {
 
     export function browserDownloadDataUri(uri: string, name: string, userContextWindow?: Window) {
         const windowOpen = isBrowserDownloadInSameWindow();
+        const versionString = browserVersion();
+        const v = parseInt(versionString || "0")
         if (windowOpen) {
             if (userContextWindow) userContextWindow.location.href = uri;
             else window.open(uri, "_self");
-        } else if (pxt.BrowserUtils.isSafari()) {
+        } else if (pxt.BrowserUtils.isSafari()
+            && (v < 10 || (versionString.indexOf('10.0') == 0) || isMobile())) {
+            // For Safari versions prior to 10.1 and all Mobile Safari versions
             // For mysterious reasons, the "link" trick closes the
             // PouchDB database
             let iframe = document.getElementById("downloader") as HTMLIFrameElement;
@@ -330,5 +335,23 @@ namespace pxt.BrowserUtils {
             script.addEventListener('error', (e) => reject(e));
             document.body.appendChild(script);
         });
+    }
+
+    export function loadAjaxAsync(url: string): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            let httprequest = new XMLHttpRequest();
+            httprequest.onreadystatechange = function() {
+                if (httprequest.readyState == XMLHttpRequest.DONE ) {
+                    if (httprequest.status == 200) {
+                        resolve(httprequest.responseText);
+                    }
+                    else {
+                        reject(httprequest.status);
+                    }
+                }
+            };
+            httprequest.open("GET", url, true);
+            httprequest.send();
+        })
     }
 }

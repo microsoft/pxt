@@ -121,6 +121,7 @@ namespace pxt.cpp {
         pkg1: Package;
         settingName: string;
         isUserError: boolean;
+        isVersionConflict: boolean;
 
         constructor(msg: string) {
             super(msg)
@@ -637,11 +638,11 @@ namespace pxt.cpp {
 #ifdef PXT_MAIN
 PXT_MAIN
 #else
-int main() { 
-    uBit.init(); 
-    pxt::start(); 
-    while (1) uBit.sleep(10000);    
-    return 0; 
+int main() {
+    uBit.init();
+    pxt::start();
+    while (1) uBit.sleep(10000);
+    return 0;
 }
 #endif
 `

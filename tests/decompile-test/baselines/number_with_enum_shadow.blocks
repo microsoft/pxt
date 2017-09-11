@@ -1,0 +1,34 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="test_number_with_enum_shadow">
+<value name="arg1">
+<shadow type="test_enum_value"/>
+<block type="math_number">
+<field name="NUM">5</field>
+</block>
+</value>
+<next>
+<block type="test_number_with_enum_shadow">
+<value name="arg1">
+<shadow type="test_enum_value"/>
+<block type="typescript_expression">
+<field name="EXPRESSION">EnumWithValueBlock.testValue1</field>
+</block>
+</value>
+<next>
+<block type="test_number_with_enum_shadow">
+<value name="arg1">
+<shadow type="test_enum_value">
+<field name="value">EnumWithValueBlock.testValue1</field>
+</shadow>
+</value>
+</block>
+</next>
+</block>
+</next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+</block>
+</statement>
+</block>
+</xml>

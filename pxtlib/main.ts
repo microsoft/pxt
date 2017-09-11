@@ -382,7 +382,7 @@ namespace pxt {
 
         /**
          * For the given package config or ID, looks through all the currently installed packages to find conflicts in
-         * Yotta settings
+         * Yotta settings and version spec
          */
         findConflictsAsync(pkgOrId: string | PackageConfig, version: string): Promise<cpp.PkgConflictError[]> {
             let conflicts: cpp.PkgConflictError[] = [];
@@ -405,6 +405,7 @@ namespace pxt {
                         this.parent.sortedDeps().forEach((depPkg) => {
                             const depConfig = depPkg.config || JSON.parse(depPkg.readFile(CONFIG_NAME)) as PackageConfig;
                             const hasYottaSettings = !!depConfig && !!depConfig.yotta && !!depPkg.config.yotta.config;
+                            let foundYottaConflict = false;
                             if (hasYottaSettings) {
                                 const depYottaCfg = U.jsonFlatten(depConfig.yotta.config);
                                 for (const settingName of Object.keys(yottaCfg)) {
@@ -415,8 +416,15 @@ namespace pxt {
                                         conflict.pkg0 = depPkg;
                                         conflict.settingName = settingName;
                                         conflicts.push(conflict);
+                                        foundYottaConflict = true;
                                     }
                                 }
+                            }
+                            if (!foundYottaConflict && pkgCfg.name === depPkg.id && depPkg._verspec != version && !/^file:/.test(depPkg._verspec) && !/^file:/.test(version)) {
+                                const conflict = new cpp.PkgConflictError(lf("version mismatch for package {0} (installed: {1}, installing: {2})", depPkg, depPkg._verspec, version));
+                                conflict.pkg0 = depPkg;
+                                conflict.isVersionConflict = true;
+                                conflicts.push(conflict);
                             }
                         });
                     }
@@ -445,7 +453,9 @@ namespace pxt {
                     const additionalConflicts: cpp.PkgConflictError[] = [];
                     conflicts.forEach((c) => {
                         additionalConflicts.push.apply(additionalConflicts, allAncestors(c.pkg0).map((anc) => {
-                            const confl = new cpp.PkgConflictError(lf("conflict on yotta setting {0} between packages {1} and {2}", c.settingName, pkgCfg.name, c.pkg0.id));
+                            const confl = new cpp.PkgConflictError(c.isVersionConflict ?
+                                lf("a dependency of {0} has a version mismatch with package {1} (installed: {1}, installing: {2})", anc.id, pkgCfg.name, c.pkg0._verspec, version) :
+                                lf("conflict on yotta setting {0} between packages {1} and {2}", c.settingName, pkgCfg.name, c.pkg0.id));
                             confl.pkg0 = anc;
                             return confl;
                         }));

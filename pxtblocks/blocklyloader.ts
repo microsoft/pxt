@@ -309,10 +309,23 @@ namespace pxt.blocks {
         }
 
         if (toolboxStyle.sheet) {
-            toolboxStyle.textContent = toolboxStyleBuffer;
+            toolboxStyle.textContent = toolboxStyleBuffer + namespaceStyleBuffer;
         } else {
-            toolboxStyle.appendChild(document.createTextNode(toolboxStyleBuffer));
+            toolboxStyle.appendChild(document.createTextNode(toolboxStyleBuffer + namespaceStyleBuffer));
         }
+    }
+
+    let namespaceStyleBuffer: string = '';
+    export function appendNamespaceCss(namespace: string, color: string) {
+        const ns = namespace.toLowerCase();
+        color = color || '#dddddd'; // Default toolbox color
+        if (namespaceStyleBuffer.indexOf(ns) > -1) return;
+        namespaceStyleBuffer += `
+            span.docs.${ns} {
+                background-color: ${color} !important;
+                border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
+            }
+        `;
     }
 
     let iconCanvasCache: Map<string> = {};
@@ -917,6 +930,8 @@ namespace pxt.blocks {
             for (let i = 0; i < cats.length; i++) {
                 cats[i].setAttribute('name',
                     Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
+                // Append Namespace CSS
+                appendNamespaceCss(cats[i].getAttribute('name'), cats[i].getAttribute('colour'));
             }
         }
 
@@ -925,10 +940,11 @@ namespace pxt.blocks {
         // lf("{id:category}Loops")
         // lf("{id:category}Logic")
         // lf("{id:category}Variables")
-        // lf("{id:category}Arrays")
-        // lf("{id:category}Text")
         // lf("{id:category}Math")
         // lf("{id:category}Advanced")
+        // lf("{id:category}Functions")
+        // lf("{id:category}Arrays")
+        // lf("{id:category}Text")
         // lf("{id:category}Search")
         // lf("{id:category}More\u2026")
 
@@ -1085,6 +1101,7 @@ namespace pxt.blocks {
 
         let blocklySearchInputField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
         let blocklySearchInput = document.getElementById('blocklySearchInput') as HTMLElement;
+        let blocklyHiddenSearchLabel = document.getElementById('blocklySearchLabel') as HTMLElement;
 
         let origClassName = 'ui fluid icon input';
         if (!blocklySearchInput) {
@@ -1094,6 +1111,7 @@ namespace pxt.blocks {
             blocklySearchInput = document.createElement('div');
             blocklySearchInput.id = 'blocklySearchInput';
             blocklySearchInput.className = origClassName;
+            blocklySearchInput.setAttribute("role", "search");
 
             blocklySearchInputField = document.createElement('input');
             blocklySearchInputField.type = 'text';
@@ -1104,9 +1122,17 @@ namespace pxt.blocks {
             // Append to dom
             let blocklySearchInputIcon = document.createElement('i');
             blocklySearchInputIcon.className = 'search icon';
+            blocklySearchInputIcon.setAttribute("role", "presentation");
+            blocklySearchInputIcon.setAttribute("aria-hidden", "true");
+
+            blocklyHiddenSearchLabel = document.createElement('div');
+            blocklyHiddenSearchLabel.className = 'accessible-hidden';
+            blocklyHiddenSearchLabel.id = 'blocklySearchLabel';
+            blocklyHiddenSearchLabel.setAttribute('aria-live', "polite");
 
             blocklySearchInput.appendChild(blocklySearchInputField);
             blocklySearchInput.appendChild(blocklySearchInputIcon);
+            blocklySearchInput.appendChild(blocklyHiddenSearchLabel);
             blocklySearchArea.appendChild(blocklySearchInput);
             const toolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0];
             if (toolboxDiv) // Only add if a toolbox exists, eg not in sandbox mode
@@ -1129,6 +1155,9 @@ namespace pxt.blocks {
         const searchChangeHandler = Util.debounce(() => {
             let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
             let searchFor = searchField.value.toLowerCase();
+            let blocklyHiddenSearchLabel = document.getElementById('blocklySearchLabel') as HTMLElement;
+
+            blocklyHiddenSearchLabel.innerText = "";
 
             if (searchFor != '') {
                 blocklySearchInput.className += ' loading';
@@ -1167,6 +1196,13 @@ namespace pxt.blocks {
                     pxt.log("searching for: " + searchFor);
                     updateUsedBlocks = false;
                     if (!blocks) return;
+
+                    if (blocks.length == 0) {
+                        blocklyHiddenSearchLabel.innerText = lf("No search results...");
+                    } else {
+                        blocklyHiddenSearchLabel.innerText = lf("{0} result matching '{1}'", blocks.length, blocklySearchInputField.value.toLowerCase());
+                    }
+
                     if (blocks.length == 0) {
                         let label = goog.dom.createDom('label');
                         label.setAttribute('text', lf("No search results..."));
@@ -1225,23 +1261,31 @@ namespace pxt.blocks {
         }
 
         // Override Blockly's toolbox keydown method to intercept characters typed and move the focus to the search input
-        const oldKeyDown = Blockly.Toolbox.TreeNode.prototype.onKeyDown;
         (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown = function(e: any) {
-            const x = e.which || e.keyCode;
-            const interceptCharacter = x != 37 && x != 38 && x != 39 && x != 40 // Arrows (Handled by Blockly)
-                && !e.ctrlKey && !e.metaKey && !e.altKey; // Meta keys
-            if (interceptCharacter) {
+            const keyCode = e.which || e.keyCode;
+            const characterKey = (keyCode > 64 && keyCode < 91); // Letter keys
+            const spaceEnterKey = keyCode == 32 || keyCode == 13; // Spacebar or Enter keys
+            if (characterKey) {
                 let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
-                if (x == 8) { // Backspace
-                    searchField.focus();
-                    searchField.select();
-                } else {
-                    let char = String.fromCharCode(x);
-                    searchField.value = searchField.value + char;
-                    searchField.focus();
-                }
+
+                let char = String.fromCharCode(keyCode);
+                searchField.value = searchField.value + char;
+                searchField.focus();
+                return true;
             } else {
-                oldKeyDown.call(this, e);
+                if (this.getTree() && this.getTree().toolbox_.horizontalLayout_) {
+                    let map: {[keyCode: number]: number} = {};
+                    let next = goog.events.KeyCodes.DOWN
+                    let prev = goog.events.KeyCodes.UP
+                    map[goog.events.KeyCodes.RIGHT] = this.rightToLeft_ ? prev : next;
+                    map[goog.events.KeyCodes.LEFT] = this.rightToLeft_ ? next : prev;
+                    map[goog.events.KeyCodes.UP] = goog.events.KeyCodes.LEFT;
+                    map[goog.events.KeyCodes.DOWN] = goog.events.KeyCodes.RIGHT;
+
+                    let newKeyCode = map[e.keyCode];
+                    e.keyCode = newKeyCode || e.keyCode;
+                }
+                return (Blockly.Toolbox.TreeNode as any).superClass_.onKeyDown.call(this, e);
             }
         }
     }
@@ -2088,29 +2132,6 @@ namespace pxt.blocks {
             }
         };
 
-        // device_random
-        const deviceRandomId = "device_random";
-        const deviceRandomDef = pxt.blocks.getBlockDefinition(deviceRandomId);
-        Blockly.Blocks[deviceRandomId] = {
-            init: function () {
-                this.jsonInit({
-                    "message0": deviceRandomDef.block["message0"],
-                    "args0": [
-                        {
-                            "type": "input_value",
-                            "name": "limit",
-                            "check": "Number"
-                        }
-                    ],
-                    "inputsInline": true,
-                    "output": "Number",
-                    "colour": blockColors['math']
-                });
-
-                setBuiltinHelpInfo(this, deviceRandomId);
-            }
-        };
-
         // builtin math_number
         //XXX Integer validation needed.
         const mInfo = pxt.blocks.getBlockDefinition("math_number");
@@ -2257,13 +2278,15 @@ namespace pxt.blocks {
         msg.VARIABLES_GET_CREATE_SET = variablesGetDef.block["VARIABLES_GET_CREATE_SET"];
         installBuiltinHelpInfo(variablesGetId);
 
+        // Dropdown menu of variables_get
+        msg.RENAME_VARIABLE = lf("Rename variable...");
+        msg.DELETE_VARIABLE = lf("Delete the \"%1\" variable");
+
         // builtin variables_set
         const variablesSetId = "variables_set";
         const variablesSetDef = pxt.blocks.getBlockDefinition(variablesSetId);
         msg.VARIABLES_SET = variablesSetDef.block["VARIABLES_SET"];
         msg.VARIABLES_DEFAULT_NAME = varname;
-        //XXX Do not translate the default variable name.
-        //XXX Variable names with Unicode character are harmful at this point.
         msg.VARIABLES_SET_CREATE_GET = lf("Create 'get %1'");
         installBuiltinHelpInfo(variablesSetId);
 

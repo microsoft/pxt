@@ -54,6 +54,7 @@ export class Editor extends srceditor.Editor {
     nsMap: pxt.Map<MonacoBlockDefinition[]>;
     loadingMonaco: boolean;
     showAdvanced: boolean;
+    giveFocusOnLoading: boolean = false;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -544,7 +545,7 @@ export class Editor extends srceditor.Editor {
         root.className = 'blocklyTreeRoot';
         toolbox.appendChild(root);
         let group = document.createElement('div');
-        group.setAttribute('role', 'group');
+        group.setAttribute('role', 'tree');
         root.appendChild(group);
 
         const namespaces = this.getNamespaces().map(ns => [ns, this.getNamespaceAttrs(ns)] as [string, pxtc.CommentAttrs]);
@@ -563,6 +564,7 @@ export class Editor extends srceditor.Editor {
             false, null, () => {
                 this.showAdvanced = !this.showAdvanced;
                 this.updateToolbox();
+                this.resize();
             }, lf("{id:category}Advanced")))
         }
 
@@ -603,7 +605,7 @@ export class Editor extends srceditor.Editor {
                     el = monacoEditor.createCategoryElement(ns, md.color, md.icon, true, blocks, undefined, categoryName);
                 }
                 else {
-                    el = monacoEditor.createCategoryElement("", md.color, md.icon, false, snippets.getBuiltinCategory(ns).blocks, null, ns);
+                    el = monacoEditor.createCategoryElement("", md.color, md.icon, false, snippets.getBuiltinCategory(ns).blocks, null, Util.rlf(`{id:category}${ns}`));
                 }
                 group.appendChild(el);
             });
@@ -1018,6 +1020,10 @@ export class Editor extends srceditor.Editor {
 
                 this.resize();
                 this.resetFlyout(true);
+
+                if (this.giveFocusOnLoading) {
+                    this.editor.focus();
+                }
             }).finally(() => {
                 editorArea.removeChild(loading);
             });
@@ -1103,10 +1109,10 @@ export class Editor extends srceditor.Editor {
                     monacoErrors.push({
                         severity: monaco.Severity.Error,
                         message: message,
-                        startLineNumber: d.line,
+                        startLineNumber: d.line + 1,
                         startColumn: d.column,
-                        endLineNumber: d.endLine || endPos.lineNumber,
-                        endColumn: d.endColumn || endPos.column
+                        endLineNumber: d.endLine == undefined ? endPos.lineNumber : d.endLine + 1,
+                        endColumn: d.endColumn == undefined ? endPos.column : d.endColumn
                     })
                 }
             }

@@ -88,7 +88,7 @@ namespace pxt.crowdin {
                     }
                 }
 
-                const data: any = resp.json || { error: {} }
+                const data: any = resp.json || JSON.parse(resp.text) || { error: {} }
                 if (resp.statusCode == 404 && data.error.code == 17) {
                     pxt.log(`parent directory missing for ${name}`)
                     const par = name.replace(/\/[^\/]+$/, "")

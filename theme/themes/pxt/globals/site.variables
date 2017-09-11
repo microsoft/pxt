@@ -17,8 +17,12 @@
 @brown:#00BCF2;
 @grey:#505050;
 
-@pageBackground: #ffffff;
+@greenTextColor: #107C10;
 
+@lightTextColor              : rgba(0, 0, 0, 0.68);
+@invertedUnselectedTextColor : rgba(255, 255, 255, 0.8); 
+
+@pageBackground: #ffffff;
 
 /*-------------------
      Fonts
@@ -28,6 +32,15 @@
 
 @docsHeaderFont: @headerFont;
 @docsPageFont: @pageFont;
+
+@emSize      : 14px;
+@fontSize    : 12pt;
+
+/*-------------------
+   Links
+--------------------*/
+
+@linkColor           : #004d99;
 
 /*-------------------
    Breakpoints
@@ -43,6 +56,30 @@
 
 @tallEditorBreakpoint: 44rem;
 @thinEditorBreakpoint: 24rem;
+
+/*--------------
+   Form Input
+---------------*/
+
+@inputPlaceholderColor: lighten(@inputColor, 25);
+@inputPlaceholderFocusColor: lighten(@inputColor, 10);
+
+/*-------------------
+     Neutral Text
+--------------------*/
+ 
+@invertedLightTextColor      : rgba(255, 255, 255, 0.9);
+
+
+/*******************************
+             States
+*******************************/
+
+/*-------------------
+      Disabled
+--------------------*/
+
+@disabledOpacity: 0.80;
 
 /*******************************
      PXT Variables
@@ -60,9 +97,7 @@
 
 @mainMenuHeight: 4.5rem;
 @mobileMenuHeight: 3.5rem;
-@sandboxMobileMenuHeight: 2.5rem;
-
-@mainMenuBlocksJsToggleColor: @primaryColor;
+@sandboxMobileMenuHeight: 3.0rem;
 
 @tutorialSelectedMenuColor: @primaryColor;
 
@@ -111,4 +146,11 @@
 @blocklyRowWidthWide: 200px;
 @blocklyRowWidthComputer: 180px;
 @blocklyRowWidthTablet: 150px;
-@blocklyRowWidthMobile: 45px;
+@blocklyRowWidthMobile: 50px;
+
+@blocklyRowHeightWide: 40px;
+@blocklyRowHeightComputer: 40px;
+@blocklyRowHeightTablet: 45px;
+@blocklyRowHeightMobile: 50px;
+
+@blocklyRowSubcategoryHeight: 30px;

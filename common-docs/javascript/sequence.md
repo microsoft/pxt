@@ -46,4 +46,4 @@ doSomething(); // THIS LINE WILL NEVER EXECUTE!
 
 ### ~
 
-[Read more](http://inimino.org/~inimino/blog/javascript_semicolons) about semicolons in JavaScript.
+[Read more about semicolons in JavaScript](http://inimino.org/~inimino/blog/javascript_semicolons).

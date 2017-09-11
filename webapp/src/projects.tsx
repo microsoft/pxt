@@ -9,6 +9,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
+import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
 import * as gallery from "./gallery";
@@ -122,7 +123,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             pxt.tickEvent("projects.gallery", { name: scr.name });
             this.hide();
             switch (scr.cardType) {
-                case "example": chgCode(scr); break;
+                case "example": chgCode(scr, true); break;
+                case "codeExample": chgCode(scr, false); break;
                 case "tutorial": this.props.parent.startTutorial(scr.url); break;
                 default:
                     const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url);
@@ -131,13 +133,23 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             }
         }
 
-        const chgCode = (scr: pxt.CodeCard) => {
+        const chgCode = (scr: pxt.CodeCard, loadBlocks?: boolean) => {
             core.showLoading(lf("Loading..."));
             gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
                 .done(opts => {
-                    core.hideLoading();
-                    if (opts)
-                        this.props.parent.newProject(opts);
+                    if (opts) {
+                        if (loadBlocks) {
+                            const ts = opts.filesOverride["main.ts"]
+                            compiler.getBlocksAsync()
+                                .then(blocksInfo => compiler.decompileSnippetAsync(ts, blocksInfo))
+                                .then(resp => {
+                                    opts.filesOverride["main.blocks"] = resp
+                                    this.props.parent.newProject(opts);
+                                })
+                        } else {
+                            this.props.parent.newProject(opts);
+                        }
+                    }
                 });
         }
         const upd = (v: any) => {
@@ -226,19 +238,15 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
                     <sui.Menu inverted={targetTheme.invertedMenu} secondary>
                         {tabs.map(t =>
-                            <sui.MenuItem key={`tab${t}`} active={tab == t} name={t == MYSTUFF ? lf("My Stuff") : Util.rlf(t) } onClick={() => this.setState({ tab: t }) } />) }
-                        <div className="right menu">
-                            <sui.Button
-                                icon='close'
-                                class={`huge clear ${targetTheme.invertedMenu ? 'inverted' : ''}`}
-                                onClick={() => this.setState({ visible: false }) } />
-                        </div>
+                            <sui.MenuItem key={`tab${t}`} id={`${t}tab`} ariaControls={tab == t ? `tab${t}` : undefined} className={tab == t ? "focused" : undefined} active={tab == t} name={t == MYSTUFF ? lf("My Stuff") : Util.rlf(t) } onClick={() => this.setState({ tab: t }) } />) }
                     </sui.Menu>
                 </sui.Segment>
-                {tab == MYSTUFF ? <div className={tabClasses}>
+                {tab == MYSTUFF ? <div className={tabClasses} id={`tab${tab}`} role="tabpanel" aria-labelledby={`${tab}tab`} aria-hidden="false">
                     <div className="group">
                         <div className="ui cards">
                             <codecard.CodeCardView
+                                ariaLabel={lf("Creates a new empty project")}
+                                role="button"
                                 key={'newproject'}
                                 icon="file outline"
                                 iconColor="primary"
@@ -248,6 +256,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                 />
                             {pxt.appTarget.compile ?
                                 <codecard.CodeCardView
+                                    ariaLabel={lf("Open files from your computer")}
+                                    role="button"
                                     key={'import'}
                                     icon="upload"
                                     iconColor="secondary"
@@ -257,6 +267,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                     /> : undefined }
                             {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
                                 <codecard.CodeCardView
+                                    ariaLabel={lf("Open a shared project URL")}
+                                    role="button"
                                     key={'importurl'}
                                     icon="cloud download"
                                     iconColor="secondary"
@@ -266,6 +278,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                     /> : undefined }
                             { legacyUrl ?
                                 <codecard.CodeCardView
+                                    ariaLabel={lf("Import old programs")}
+                                    role="button"
                                     key={'importlegacy'}
                                     icon="archive"
                                     iconColor="secondary"
@@ -280,9 +294,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             <h3 className="ui dividing header disabled">
                                 {headerGroup.name}
                             </h3>
-                            <div className="ui cards">
+                            <div className="ui cards" role={headerGroup.headers.length ? "listbox" : undefined}>
                                 {headerGroup.headers.map(scr =>
                                     <codecard.CodeCardView
+                                        ariaLabel={scr.name}
+                                        role="option"
                                         key={'local' + scr.id}
                                         name={scr.name}
                                         time={scr.recentUse}
@@ -295,9 +311,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         </div>
                     ) }
                     <div className="group">
-                        <div className="ui cards">
+                        <div className="ui cards" role={urldata.length ? "listbox" : undefined}>
                             {urldata.map(scr =>
                                 <codecard.CodeCardView
+                                    ariaLabel={scr.name}
+                                    role="option"
                                     name={scr.name}
                                     time={scr.time}
                                     header={'/' + scr.id}
@@ -311,9 +329,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         </div>
                     </div>
                 </div> : undefined }
-                {tab != MYSTUFF ? <div className={tabClasses}>
-                    <div className="ui cards centered">
+                {tab != MYSTUFF ? <div id={`tab${tab}`} role="tabpanel" aria-labelledby={`${tab}tab`} aria-hidden="false" className={tabClasses}>
+                    <div className="ui cards centered" role={gals[tab].length ? "listbox" : undefined}>
                         {gals[tab].map(scr => <codecard.CodeCardView
+                            ariaLabel={scr.name}
+                            role="option"
                             key={tab + scr.name}
                             name={scr.name}
                             description={scr.description}
@@ -331,6 +351,12 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         </div>
                     </div>
                     : undefined }
+                <sui.Button
+                    icon='close'
+                    class={`closeIcon huge clear ${targetTheme.invertedMenu ? 'inverted' : ''} focused`}
+                    onClick={() => this.setState({ visible: false }) }
+                    tabIndex={0}
+                    ariaLabel={lf("Close dialog")} />
             </sui.Modal >
         );
     }

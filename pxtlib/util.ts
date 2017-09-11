@@ -99,7 +99,7 @@ namespace ts.pxtc.Util {
         return !!v && typeof v === "object" && !Array.isArray(v)
     }
 
-    export function memcpy(trg: Uint8Array, trgOff: number, src: Uint8Array, srcOff?: number, len?: number) {
+    export function memcpy(trg: Uint8Array, trgOff: number, src: ArrayLike<number>, srcOff?: number, len?: number) {
         if (srcOff === void 0)
             srcOff = 0
         if (len === void 0)
@@ -669,20 +669,29 @@ namespace ts.pxtc.Util {
         _localizeStrings = strs;
     }
 
-    export function updateLocalizationAsync(baseUrl: string, code: string, branch?: string, live?: boolean): Promise<any> {
+    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0]
 
+        const stringFiles: { branch: string, path: string }[] = simulator
+            ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" }]
+            : [
+                { branch: pxtBranch, path: "strings.json" },
+                { branch: targetBranch, path: targetId + "/target-strings.json" }
+            ];
+
         if (_localizeLang != code && live) {
-            return downloadLiveTranslationsAsync(code, "strings.json", branch)
-                .then(tr => {
-                    _localizeStrings = tr || {};
-                    _localizeLang = code;
-                    localizeLive = true;
-                }, e => {
-                    console.log('failed to load localizations')
-                })
+            _localizeStrings = {};
+            _localizeLang = code;
+            localizeLive = true;
+            return Promise.mapSeries(stringFiles, (file) => {
+                return downloadLiveTranslationsAsync(code, file.path, file.branch)
+                    .then((tr) => Object.keys(tr)
+                        .filter(k => !!tr[k])
+                        .forEach(k => _localizeStrings[k] = tr[k])
+                    , e => console.log(`failed to load localizations for file ${file}`));
+            });
         }
 
         if (_localizeLang != code) {
@@ -891,7 +900,7 @@ namespace ts.pxtc.BrowserImpl {
 
             client = new XMLHttpRequest();
             if (options.responseArrayBuffer)
-               client.responseType = "arraybuffer";
+                client.responseType = "arraybuffer";
             client.onreadystatechange = () => {
                 if (resolved) return // Safari/iOS likes to call this thing more than once
 
@@ -1002,6 +1011,34 @@ namespace ts.pxtc.BrowserImpl {
         hs[5] += f
         hs[6] += g
         hs[7] += h
+    }
+
+    export function sha256block(buf: Uint8Array) {
+        let hs = new Uint32Array(8);
+        hs[0] = 0x6a09e667
+        hs[1] = 0xbb67ae85
+        hs[2] = 0x3c6ef372
+        hs[3] = 0xa54ff53a
+        hs[4] = 0x510e527f
+        hs[5] = 0x9b05688c
+        hs[6] = 0x1f83d9ab
+        hs[7] = 0x5be0cd19
+
+        let w = new Uint32Array(64);
+
+        let chunkLen = 16 * 4;
+
+        Util.assert(buf.length % chunkLen == 0)
+
+        for (let i = 0; i < buf.length; i += chunkLen) {
+            for (let j = 0; j < 16; j++) {
+                let off = (j << 2) + i
+                w[j] = (buf[off] << 24) | (buf[off + 1] << 16) | (buf[off + 2] << 8) | buf[off + 3]
+            }
+            sha256round(hs, w)
+        }
+
+        return hs
     }
 
     export function sha256buffer(buf: Uint8Array) {

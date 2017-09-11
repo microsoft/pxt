@@ -51,6 +51,8 @@
     * [Number](/types/number)
     * [String](/types/string)
     * [Boolean](/types/boolean)
+    * [Array](/types/array)
+    * [Function](/types/function)
 
 ## #other
 
@@ -66,10 +68,8 @@
 
 ## Developers #devs
 
-Here's some basic information for coding outside of the web app:
+* Developers
     * [Command Line Interface](/cli)
     * [Visual Studio Code support](/code)
     * [Coding on Raspberry Pi](/raspberry-pi)
-
-See [http://www.makecode.com/docs] for complete developer documentation.
 

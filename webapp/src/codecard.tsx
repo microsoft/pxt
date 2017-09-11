@@ -32,7 +32,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
             : undefined;
         const sideUrl = url && /^\//.test(url) ? "#doc:" + url : url;
         const className = card.className;
-        const cardDiv = <div className={`ui card ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`} title={card.title} onClick={e => card.onClick ? card.onClick(e) : undefined } >
+        const cardDiv = <div className={`ui card ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`} role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={card.ariaLabel || card.title} title={card.title} onClick={e => card.onClick ? card.onClick(e) : undefined } tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={card.onClick ? sui.fireClickOnEnter : null}>
             {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
                 <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "") }>
                     <div className="right floated meta">
@@ -44,14 +44,14 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                     </div>
                     {card.header}
                 </div> : null }
-            <div className={"ui image"}>
+            {card.label || card.blocksXml || card.typeScript || card.imageUrl ? <div className={"ui image"}>
                 {card.label ? <label className="ui orange right ribbon label">{card.label}</label> : undefined }
                 {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : null}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : null}
                 {card.imageUrl ? <div className="ui cardimage" style={ { backgroundImage: `url("${card.imageUrl}")` } } /> : null}
-            </div>
+                </div> : undefined }
             {card.icon ?
-                <div className={`${'ui button massive ' + card.iconColor}`}> <i className={`${'icon ' + card.icon}`}></i> </div> : null}
+                <div className="ui"><div className={`${'ui button massive fluid ' + card.iconColor}`}> <i className={`${'icon ' + card.icon}`}></i> </div></div> : undefined }
             {card.shortName || card.name || card.description ?
                 <div className="content">
                     {card.shortName || card.name ? <div className="header">{card.shortName || card.name}</div> : null}

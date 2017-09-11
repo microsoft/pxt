@@ -202,13 +202,23 @@ export class ProjectView
             && this.editorFile && !this.editorFile.isReadonly() && /(\.ts|pxt.json)$/.test(this.editorFile.name);
     }
 
-    openJavaScript() {
+    openJavaScript(giveFocusOnLoading = true) {
         pxt.tickEvent("menu.javascript");
         if (this.isJavaScriptActive()) {
-            if (this.state.embedSimView) this.setState({ embedSimView: false });
+            if (this.state.embedSimView) {
+                this.setState({ embedSimView: false });
+            }
+            if (giveFocusOnLoading) {
+                this.textEditor.editor.focus();
+            }
             return;
         }
-        if (this.isBlocksActive()) this.blocksEditor.openTypeScript();
+        if (this.textEditor) {
+            this.textEditor.giveFocusOnLoading = giveFocusOnLoading;
+        }
+        if (this.isBlocksActive()) {
+            this.blocksEditor.openTypeScript();
+        }
         else this.setFile(pkg.mainEditorPkg().files["main.ts"])
     }
 
@@ -236,7 +246,7 @@ export class ProjectView
 
     openPreviousEditor() {
         if (this.prevEditorId == "monacoEditor") {
-            this.openJavaScript();
+            this.openJavaScript(false);
         } else {
             this.openBlocks();
         }
@@ -373,7 +383,7 @@ export class ProjectView
 
         const hc = this.state.highContrast;
         // save file before change
-        this.saveFileAsync()
+        return this.saveFileAsync()
             .then(() => {
                 this.editorFile = this.state.currFile as pkg.File; // TODO
                 let previousEditor = this.editor;
@@ -441,6 +451,10 @@ export class ProjectView
                 });
             }
         } else {
+            if (this.isTextEditor() || this.isPxtJsonEditor()) {
+                this.textEditor.giveFocusOnLoading = false
+            }
+
             this.setFile(fn)
         }
     }
@@ -489,6 +503,7 @@ export class ProjectView
         let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
         if (!tc) return;
         if (step > -1) {
+            tc.focusInitialized = false;
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
             this.setState({ tutorialOptions: tutorialOptions });
@@ -537,7 +552,8 @@ export class ProjectView
         logs.clear();
         this.setState({
             showFiles: false,
-            filters: filters
+            filters: filters,
+            tutorialOptions: undefined
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
@@ -888,7 +904,7 @@ export class ProjectView
             header: lf("Reset"),
             body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),
             agreeLbl: lf("Reset"),
-            agreeClass: "red",
+            agreeClass: "red focused",
             agreeIcon: "sign out",
             disagreeLbl: lf("Cancel")
         }).then(r => {
@@ -906,6 +922,7 @@ export class ProjectView
         const opts: core.ConfirmOptions = {
             header: lf("Rename your project"),
             agreeLbl: lf("Save"),
+            agreeClass: "green",
             input: lf("Enter your project name here")
         };
         return core.confirmAsync(opts).then(res => {
@@ -1165,7 +1182,9 @@ export class ProjectView
 
     editText() {
         if (this.editor != this.textEditor) {
-            this.updateEditorFile(this.textEditor)
+            this.updateEditorFile(this.textEditor).then(() => {
+                this.textEditor.editor.focus();
+            });
             this.forceUpdate();
         }
     }
@@ -1180,8 +1199,8 @@ export class ProjectView
             },
             htmlBody: `<div class="ui form">
   <div class="ui field">
-    <label>${lf("Select a {0} file to open.", ext)}</label>
-    <input type="file" class="ui button blue fluid"></input>
+    <label id="selectFileToOpenLabel">${lf("Select a {0} file to open.", ext)}</label>
+    <input type="file" tabindex="0" autofocus aria-describedby="selectFileToOpenLabel" class="ui button blue fluid focused"></input>
   </div>
 </div>`,
         }).done(res => {
@@ -1209,7 +1228,7 @@ export class ProjectView
             htmlBody: `<div class="ui form">
   <div class="ui field">
     <label>${lf("What is the URL of the offensive project?")}</label>
-    <input type="url" placeholder="Enter project URL here..."></input>
+    <input type="url" class="focused" tabindex="0" autofocus placeholder="Enter project URL here..."></input>
   </div>
   <div class="ui field">
     <label>${lf("Why do you find it offensive?")}</label>
@@ -1258,8 +1277,8 @@ export class ProjectView
     </div>
 </div>
   <div class="ui field">
-    <label>${lf("Copy the URL of the project.")}</label>
-    <input type="url" placeholder="${shareUrl}..." class="ui button blue fluid"></input>
+    <label id="selectUrlToOpenLabel">${lf("Copy the URL of the project.")}</label>
+    <input type="url" tabindex="0" autofocus aria-describedby="selectUrlToOpenLabel" placeholder="${shareUrl}..." class="ui button blue fluid"></input>
   </div>
 </div>`,
         }).done(res => {
@@ -1371,6 +1390,10 @@ export class ProjectView
         return this.editor == this.textEditor;
     }
 
+    isPxtJsonEditor(): boolean {
+        return this.editor == this.pxtJsonEditor;
+    }
+
     isBlocksEditor(): boolean {
         return this.editor == this.blocksEditor;
     }
@@ -1382,11 +1405,12 @@ export class ProjectView
             header: lf("About {0}", pxt.appTarget.name),
             hideCancel: true,
             agreeLbl: lf("Ok"),
+            agreeClass: "positive focused",
             htmlBody: `
 <p>${Util.htmlEscape(pxt.appTarget.description)}</p>
-<p>${lf("{0} version:", Util.htmlEscape(pxt.appTarget.name))} <a href="${Util.htmlEscape(pxt.appTarget.appTheme.githubUrl)}/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.target)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>
-<p>${lf("{0} version:", "Microsoft MakeCode")} <a href="https://github.com/Microsoft/pxt/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.pxt)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
-${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}" target="_blank">${Util.htmlEscape(compileService.gittag)}</a></p>` : ""}
+<p>${lf("{0} version:", Util.htmlEscape(pxt.appTarget.name))} <a class="focused" href="${Util.htmlEscape(pxt.appTarget.appTheme.githubUrl)}/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.target)}" aria-label="${lf("{0} version : {1}", Util.htmlEscape(pxt.appTarget.name), Util.htmlEscape(pxt.appTarget.versions.target))}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>
+<p>${lf("{0} version:", "Microsoft MakeCode")} <a href="https://github.com/Microsoft/pxt/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.pxt)}" aria-label="${lf("{0} version: {1}", "Microsoft MakeCode", Util.htmlEscape(pxt.appTarget.versions.pxt))}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
+${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}" aria-label="${lf("{0} version: {1}", "C++ runtime", Util.htmlEscape(compileService.gittag))}" target="_blank">${Util.htmlEscape(compileService.gittag)}</a></p>` : ""}
 `
         }).done();
     }
@@ -1422,7 +1446,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             .then(resp => {
                 const svg = pxt.blocks.render(resp, { snippetMode: true });
                 const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
-                return pxt.blocks.layout.blocklyToSvgAsync(svg, '', viewBox[0], viewBox[1], viewBox[2], viewBox[3]);
+                return pxt.blocks.layout.blocklyToSvgAsync(svg, viewBox[0], viewBox[1], viewBox[2], viewBox[3]);
             }).then(re => re.xml);
     }
 
@@ -1450,33 +1474,20 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         let result: string[] = [];
 
         sounds.initTutorial(); // pre load sounds
-        return pxt.Cloud.downloadMarkdownAsync(tutorialId)
-            .then(md => {
-                let titleRegex = /^#\s*(.*)/g.exec(md);
-                if (!titleRegex || titleRegex.length < 1) return;
-                title = titleRegex[1].trim();
-
-                let steps = md.split(/^###[^#].*$/gmi);
-                for (let step = 1; step < steps.length; step++) {
-                    let stepmd = `###${steps[step]}`;
-                    result.push(stepmd);
-                }
-                //TODO: parse for tutorial options, mainly initial blocks
+        return Promise.resolve().then(() => {
+                return this.createProjectAsync({
+                    name: title
+                });
             }).then(() => {
                 let tutorialOptions: pxt.editor.TutorialOptions = {
                     tutorial: tutorialId,
                     tutorialName: title,
-                    tutorialStep: 0,
-                    tutorialSteps: result
+                    tutorialStep: 0
                 };
-                this.setState({ tutorialOptions: tutorialOptions })
+                this.setState({ tutorialOptions: tutorialOptions, tracing: undefined })
 
                 let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
                 tc.setPath(tutorialId);
-            }).then(() => {
-                return this.createProjectAsync({
-                    name: title
-                });
             });
     }
 
@@ -1509,16 +1520,18 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             })
             .finally(() => {
                 core.hideLoading()
-                this.setState({ active: true, tutorialOptions: undefined });
+                this.setState({ active: true, tutorialOptions: undefined, tracing: undefined });
+                core.resetFocus();
             });
     }
 
     toggleHighContrast() {
-        const hc = !this.state.highContrast;
-        pxt.tickEvent("menu.highcontrast", { on: hc ? 1 : 0 });
-        this.setState({ highContrast: hc }, () => this.restartSimulator());
+        const highContrastOn = !this.state.highContrast;
+        pxt.tickEvent("menu.highcontrast", { on: highContrastOn ? 1 : 0 });
+        this.setState({ highContrast: highContrastOn }, () => this.restartSimulator());
+        core.highContrast = highContrastOn;
         if (this.editor && this.editor.isReady) {
-            this.editor.setHighContrast(hc);
+            this.editor.setHighContrast(highContrastOn);
         }
     }
 
@@ -1576,7 +1589,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const { hideMenuBar, hideEditorToolbar} = targetTheme;
         const isHeadless = simOpts.headless;
         const cookieKey = "cookieconsent"
-        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey);
+        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey) 
+                                || sandbox;
         const simActive = this.state.embedSimView;
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
@@ -1597,6 +1611,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             (this.state.hideEditorFloats || this.state.collapseEditorTools) && !inTutorial ? " hideEditorFloats" : '',
             this.state.collapseEditorTools && !inTutorial ? " collapsedEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
+            this.state.highContrast ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
             inTutorial ? 'tutorial' : '',
@@ -1605,93 +1620,103 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             hideMenuBar ? 'hideMenuBar' : '',
             hideEditorToolbar ? 'hideEditorToolbar' : '',
             sandbox && simActive ? 'simView' : '',
-            'full-abs'
+            'full-abs',
+            'dimmable'
         ]);
 
         return (
             <div id='root' className={rootClasses}>
                 {hideMenuBar ? undefined :
-                    <div id="menubar" role="banner">
-                        <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
+                    <header id="menubar" role="banner" className={"ui menu"}>
+                        <div id="accessibleMenu" role="menubar">
+                            <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor") } onClick={() => this.openJavaScript() }/>
+                            {selectLanguage ? <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language") } onClick={() => this.selectLang() }/> : undefined }
+                            {targetTheme.highContrast ? <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() }/> : undefined }
+                        </div>
+
+                        <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu") }>
                             {!sandbox ? <div className="left menu">
-                                <span id="logo" className="ui item logo">
+                                <a id="logo" className="ui item logo" target="_blank" rel="noopener" href={targetTheme.logoUrl} aria-label={lf("{0} website", targetTheme.boardName) } role="menuitem">
                                     {targetTheme.logo || targetTheme.portraitLogo
-                                        ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>
+                                        ? <span className={`ui image ${targetTheme.portraitLogo ? " portrait hide" : ''}`}><img className="ui logo" src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></span>
                                         : <span className="name">{targetTheme.name}</span>}
-                                    {targetTheme.portraitLogo ? (<a className="ui" target="_blank" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>) : null}
-                                </span>
-                                {!inTutorial ? <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open large" text={lf("Projects") } onClick={() => this.openProject() } /> : null}
-                                {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="shareproject" role="menuitem" textClass="widedesktop only" text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
-                                {inTutorial ? <sui.Item class="tutorialname" role="menuitem" textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
+                                    {targetTheme.portraitLogo ? (<span className="ui portrait only"><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></span>) : null}
+                                </a>
+                                {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="folder open large" ariaLabel={lf("Create or open recent project") } text={lf("Projects") } onClick={() => this.openProject() } /> : null}
+                                {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project") } text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
+                                {inTutorial ? <sui.Item class="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
                             </div> : <div className="left menu">
                                     <span id="logo" className="ui item logo">
-                                        <img className="ui mini image" src={Util.toDataUri(rightLogo) } onClick={() => this.launchFullEditor() } alt={`${targetTheme.boardName} Logo`}/>
+                                        <img className="ui mini image" src={Util.toDataUri(rightLogo) } tabIndex={0} onClick={() => this.launchFullEditor() } onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`}/>
                                     </span>
                                 </div> }
-                            {!inTutorial && !targetTheme.blocksOnly ? <sui.Item class="editor-menuitem">
-                                {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
-                                <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
-                                <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
-                            </sui.Item> : undefined}
+                            {!inTutorial && !targetTheme.blocksOnly ? <div className="ui item link editor-menuitem">
+                                {sandbox ? <sui.Item class="sim-menuitem thin portrait only" role="menuitem" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
+                                <sui.Item class="blocks-menuitem" role="menuitem" textClass="landscape only" text={lf("Blocks") } icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
+                                <sui.Item class="javascript-menuitem" role="menuitem" textClass="landscape only" text={lf("JavaScript") } icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript(false) } title={lf("Convert code to JavaScript") } />
+                            </div> : undefined}
                             {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined}
                             <div className="right menu">
                                 {docMenu ? <container.DocsMenuItem parent={this} /> : undefined}
                                 {sandbox || inTutorial ? undefined :
                                     <sui.DropdownMenuItem icon='setting large' title={lf("More...") } class="more-dropdown-menuitem">
-                                        {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
-                                        {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined}
-                                        {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined}
-                                        {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...") } onClick={() => this.showReportAbuse() } /> : undefined}
+                                        {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } tabIndex={-1}/> : undefined}
+                                        {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } tabIndex={-1}/> : undefined}
+                                        {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } tabIndex={-1}/> : undefined}
+                                        {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...") } onClick={() => this.showReportAbuse() } tabIndex={-1}/> : undefined}
                                         <div className="ui divider"></div>
-                                        {selectLanguage ? <sui.Item icon="xicon globe" role="menuitem" text={lf("Language") } onClick={() => this.selectLang() } /> : undefined }
-                                        {targetTheme.highContrast ? <sui.Item role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() } /> : undefined }
+                                        {selectLanguage ? <sui.Item icon="xicon globe" role="menuitem" text={lf("Language") } onClick={() => this.selectLang() } tabIndex={-1}/> : undefined }
+                                        {targetTheme.highContrast ? <sui.Item role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() } tabIndex={-1}/> : undefined }
                                         {
                                             // we always need a way to clear local storage, regardless if signed in or not
                                         }
-                                        <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => this.reset() } />
+                                        <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => this.reset() } tabIndex={-1}/>
                                         <div className="ui divider"></div>
-                                        {targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank">{lf("Privacy & Cookies") }</a> : undefined}
-                                        {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined}
-                                        <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
-                                        {electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } /> : undefined}
+                                        {targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank" tabIndex={-1}>{lf("Privacy & Cookies") }</a> : undefined}
+                                        {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank" tabIndex={-1}>{lf("Terms Of Use") }</a> : undefined}
+                                        <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } tabIndex={-1}/>
+                                        {electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } tabIndex={-1}/> : undefined}
                                         {targetTheme.feedbackUrl ? <div className="ui divider"></div> : undefined }
-                                        {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback") } target="_blank">{lf("Give Feedback") }</a> : undefined}
+                                        {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback") } target="_blank" rel="noopener" tabIndex={-1} >{lf("Give Feedback") }</a> : undefined}
+
                                     </sui.DropdownMenuItem> }
 
                                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
-                                {!sandbox && gettingStarted ? <span className="ui item tablet only"><sui.Button class="small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined}
                                 {inTutorial ? <sui.ButtonMenuItem class="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial(true) } /> : undefined}
-
-                                {!sandbox ? <a id="organization" href={targetTheme.organizationUrl} target="blank" className="ui item logo" onClick={() => pxt.tickEvent("menu.org") }>
+                                {!sandbox ? <a id="organization" href={targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo" onClick={() => pxt.tickEvent("menu.org") }>
                                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>
+                                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization)} />
                                         : <span className="name">{targetTheme.organization}</span>}
-                                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>) : null}
+                                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization)}/>) : null}
                                 </a> : undefined }
                             </div>
                         </div>
-                    </div> }
+                    </header> }
                 {gettingStarted ?
                     <div id="getting-started-btn">
                         <sui.Button class="portrait hide bottom attached small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
                     </div>
                     : undefined}
+                <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
+                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
+                </div>
                 <div id="simulator">
-                    <div id="filelist" className="ui items" role="complementary">
-                        <div id="boardview" className={`ui vertical editorFloat`}>
+                    <aside id="filelist" className="ui items">
+                        <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden" aria-hidden="true">{lf("Simulator") }</label>
+                        <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-labelledby="boardviewLabel">
                         </div>
-                        { !isHeadless ? <div className="ui item grid centered portrait hide simtoolbar">
+                        { !isHeadless ? <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar") }>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
                                 {run ? <sui.Button key='runbtn' class={`play-button ${this.state.running ? "stop" : "play"}`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
                                 {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
-                                {trace ? <sui.Button key='debug'  class={`trace-button ${this.state.tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace() } /> : undefined}
+                                {trace ? <sui.Button key='debug' class={`trace-button ${this.state.tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace() } /> : undefined}
                             </div>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {audio ? <sui.Button key='mutebtn' class={`mute-button ${this.state.mute ? 'red' : ''}`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
                                 {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined}
                             </div>
-                        </div> : undefined }
+                        </aside> : undefined }
                         <div className="ui item portrait hide">
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
@@ -1700,17 +1725,16 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                             <logview.LogView ref="logs" />
                         </div>
                         {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
-                    </div>
+                    </aside>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined }
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
                 {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined }
                 {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined }
-                {hideEditorToolbar ? undefined : <div id="editortools" role="complementary">
+                {hideEditorToolbar ? undefined : <div id="editortools" role="complementary" aria-label={lf("Editor toolbar") }>
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
-                </div> }
+                </div>}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
@@ -1719,17 +1743,17 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined }
                 <notification.NotificationDialog parent={this} ref={v => this.notificationDialog = v} />
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
-                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                    <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
-                    <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
+                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
+                    <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use") }</a>
+                    <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy") }</a>
                     <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className="icon download"/>{lf("Download") }</a></span>
                 </div> : undefined}
-                {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
-                    <button arial-label={lf("Ok") } className="ui right floated icon button clear inverted" onClick={consentCookie}>
+                {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment" role="alert">
+                    <button aria-label={lf("Close") } tabIndex={0} className="ui right floated icon button clear inverted" onClick={consentCookie}>
                         <i className="remove icon"></i>
                     </button>
                     {lf("By using this site you agree to the use of cookies for analytics.") }
-                    <a target="_blank" className="ui link" href={pxt.appTarget.appTheme.privacyUrl}>{lf("Learn more") }</a>
+                    <a target="_blank" className="ui link" href={pxt.appTarget.appTheme.privacyUrl} rel="noopener">{lf("Learn more") }</a>
                 </div>}
             </div>
         );
@@ -1880,6 +1904,8 @@ function enableAnalytics() {
         stats["screen.height"] = screen.height;
         stats["screen.availwidth"] = screen.availWidth;
         stats["screen.availheight"] = screen.availHeight;
+        stats["screen.innerWidth"] = window.innerWidth;
+        stats["screen.innerHeight"] = window.innerHeight;
         stats["screen.devicepixelratio"] = pxt.BrowserUtils.devicePixelRatio();
     }
     pxt.tickEvent("editor.loaded", stats);
@@ -1957,6 +1983,13 @@ function initTheme() {
         if (semanticHref) {
             pxt.debug(`swapping to ${semanticHref}`)
             semanticLink.setAttribute("href", semanticHref);
+        }
+        // replace blockly.css with rtlblockly.css
+        const blocklyLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "blockly.css"))[0];
+        const blocklyHref = blocklyLink.getAttribute("data-rtl");
+        if (blocklyHref) {
+            pxt.debug(`swapping to ${blocklyHref}`)
+            blocklyLink.setAttribute("href", blocklyHref);
         }
     }
 
@@ -2152,7 +2185,14 @@ $(document).ready(() => {
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
             if (useLang) pxt.tickEvent("locale." + useLang + (live ? ".live" : ""));
             lang.initialLang = useLang;
-            return Util.updateLocalizationAsync(config.commitCdnUrl, useLang, pxt.appTarget.versions.pxtCrowdinBranch, live);
+            return Util.updateLocalizationAsync(
+                pxt.appTarget.id,
+                false,
+                config.commitCdnUrl,
+                useLang,
+                pxt.appTarget.versions.pxtCrowdinBranch,
+                pxt.appTarget.versions.branch,
+                live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
