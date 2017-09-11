@@ -904,8 +904,6 @@ export class ProjectView
         if (options.filesOverride)
             Util.jsonCopyFrom(files, options.filesOverride)
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n"
-        //TODO this
-        files["serial.txt"] = JSON.stringify({"pineapple": "banana"}) + "\n"
         return workspace.installAsync({
             name: cfg.name,
             meta: {},
