@@ -131,11 +131,14 @@ export class Editor extends srceditor.Editor {
     display() {
         return (
             <div id="serialEditor">
-                <div id="serialEditorTitle">{this.isSim ? "Simulator serial data" : "Device serial data"}</div>
-                <sui.Button text={lf("Start")} onClick= {() => {this.active = true; this.startRecording()}} />
-                <sui.Button text={lf("Stop")} onClick = {() => {this.active = false; this.stopRecording()}} />
-                <div id="charts"></div>
-                <div id="console"></div>
+                <div className="ui center aligned container">
+                    <div id="serialEditorTitle" className="ui massive red label">{this.isSim ? lf("Simulator") : lf("Device")}</div>
+                    <br />
+                    <sui.Button text={lf("Start")} onClick= {() => {this.active = true; this.startRecording()}} />
+                    <sui.Button text={lf("Stop")} onClick = {() => {this.active = false; this.stopRecording()}} />
+                </div>
+                <div id="charts" className="ui"></div>
+                <div id="console" className="ui content"></div>
             </div>
         )
     }
@@ -146,11 +149,10 @@ export class Editor extends srceditor.Editor {
 }
 
 class ChartWrapper {
-    private rootElement: HTMLElement
+    private rootElement: HTMLElement = document.createElement("div")
     //private labelElement: HTMLElement
     //private element: HTMLCanvasElement
-    private chart: SmoothieChart
-    private line: TimeSeries
+    private line: TimeSeries = new TimeSeries()
     private source: string
     private variable: string
     private chartConfig = {
@@ -158,29 +160,48 @@ class ChartWrapper {
         grid: { lineWidth: 1, millisPerLine: 250, verticalSections: 6 },
         labels: { fillStyle: 'rgb(255, 255, 0)' }
     }
+    private chart: SmoothieChart = new SmoothieChart(this.chartConfig)
     private lineConfig =  {strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4}
 
     constructor(source: string, variable: string, value: number) {
+        this.rootElement.className = "ui grid"
         this.source = source
         this.variable = variable
-        this.line = new TimeSeries()
-        this.chart = new SmoothieChart(this.chartConfig)
         this.chart.addTimeSeries(this.line, this.lineConfig)
 
-        this.rootElement = document.createElement("div")
-        let canvas = document.createElement("canvas")
-        //TODO
-        canvas.setAttribute("style", "height:200px; width:100%;")
-        this.chart.streamTo(canvas)
+        let canvas = this.makeCanvas()
+        //this.chart.streamTo(canvas)
 
-        let label = document.createElement("span")
-        label.innerText = this.variable
+        let label = this.makeLabel()
         this.rootElement.appendChild(label)
         this.rootElement.appendChild(canvas)
 
         this.addPoint(value)
     }
 
+    public makeLabel() {
+        let labelWrapper = document.createElement("div")
+        labelWrapper.className = "two wide column"
+        let label = document.createElement("div")
+        label.className = "ui red label"
+        label.innerText = this.variable
+        labelWrapper.appendChild(label)
+        //return label
+        return labelWrapper
+
+    }
+
+    public makeCanvas() {
+        let canvas = document.createElement("canvas")
+        this.chart.streamTo(canvas)
+        let canvasWrapper = document.createElement("div")
+        canvasWrapper.className = "fourteen wide column"
+        canvasWrapper.appendChild(canvas)
+        //TODO
+        canvas.setAttribute("style", "height:200px; width:100%;")
+        //return canvas
+        return canvasWrapper
+    }
     public getElement() {
         return this.rootElement
     }
