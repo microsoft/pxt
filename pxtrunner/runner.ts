@@ -593,8 +593,7 @@ ${files["main.ts"]}
                 let stepInfo: editor.TutorialStepInfo[] = [];
                 tutorialmd.replace(/^##[^#](.*)$/gmi, (f, s) => {
                     let info: editor.TutorialStepInfo = {
-                        fullscreen: s.indexOf('@fullscreen') > -1,
-                        hasHint: s.indexOf('@nohint') < 0
+                        fullscreen: s.indexOf('@fullscreen') > -1
                     }
                     stepInfo.push(info);
                     return ""
@@ -646,6 +645,7 @@ ${files["main.ts"]}
                             stepInfo[i].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
                             stepInfo[i].ariaLabel = content.firstElementChild.textContent;
                             stepInfo[i].content = stepcontent[i + 1];
+                            stepInfo[i].hasHint = content.childElementCount > 1;
                         }
                         content.innerHTML = '';
                         // return the result
