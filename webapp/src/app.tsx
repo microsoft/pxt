@@ -1681,8 +1681,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                         <a href={liveUrl}>{lf("Take me back") }</a>
                     </div>
                 </div> : undefined}
-                {useModulator ? <audio id="modulatorAudioOutput" controls></audio> : undefined}
-                {useModulator ? <div id="modulatorWrapper"><div id="modulatorBubble"><canvas id="modulatorWavStrip"></canvas></div></div> : undefined}
                 {hideMenuBar ? undefined :
                     <header id="menubar" role="banner" className={"ui menu"}>
                         <div id="accessibleMenu" role="menubar">
@@ -1753,6 +1751,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             </div>
                         </div>
                     </header> }
+                {useModulator ? <audio id="modulatorAudioOutput" controls></audio> : undefined}
+                {useModulator ? <div id="modulatorWrapper"><div id="modulatorBubble"><canvas id="modulatorWavStrip"></canvas></div></div> : undefined}
                 {gettingStarted ?
                     <div id="getting-started-btn">
                         <sui.Button class="portrait hide bottom attached small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started")} onClick={() => this.gettingStarted()} />
