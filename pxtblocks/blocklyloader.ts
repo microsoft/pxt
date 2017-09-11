@@ -142,6 +142,8 @@ namespace pxt.blocks {
         block.setAttribute("type", fn.attributes.blockId);
         if (fn.attributes.blockGap)
             block.setAttribute("gap", fn.attributes.blockGap);
+        else if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.defaultBlockGap)
+            block.setAttribute("gap", pxt.appTarget.appTheme.defaultBlockGap.toString());
         if ((fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property)
             && attrNames["this"]) {
             let attr = attrNames["this"];
