@@ -1,5 +1,6 @@
 const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display: none">
-    <category name="Loops" nameid="loops" colour="#107c10" category="50" web-icon="\uf01e" iconclass="blocklyTreeIconloops" expandedclass="blocklyTreeIconloops">
+    <category name="Loops" nameid="loops" colour="#107c10" category="50" web-icon="\uf01e" iconclass="blocklyTreeIconloops" expandedclass="blocklyTreeIconloops">    
+        <label text="Control, Loops, Pause" web-class="blocklyFlyoutGroup" web-line="1.5"/>
         <block type="controls_repeat_ext">
             <value name="TIMES">
                 <shadow type="math_number">
@@ -27,7 +28,8 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
             </value>
         </block>
     </category>
-    <category name="Logic" nameid="logic" colour="#006970" category="49" web-icon="\uf074" iconclass="blocklyTreeIconlogic" expandedclass="blocklyTreeIconlogic">
+    <category name="Logic" nameid="logic" colour="#006970" category="49" web-icon="\uf074" iconclass="blocklyTreeIconlogic" expandedclass="blocklyTreeIconlogic">    
+        <label text="Conditionals" web-class="blocklyFlyoutGroup" web-line="1.5"/>
         <block type="controls_if" gap="8">
             <value name="IF0">
                 <shadow type="logic_boolean">
@@ -43,6 +45,7 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
                 </shadow>
             </value>
         </block>
+        <label text="Comparison" web-class="blocklyFlyoutGroup" web-line="1.5"/>
         <block type="logic_compare" gap="8">
             <value name="A">
                 <shadow type="math_number">
@@ -68,6 +71,7 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
                 </shadow>
             </value>
         </block>
+        <label text="Boolean" web-class="blocklyFlyoutGroup" web-line="1.5"/>
         <block type="logic_operation" gap="8"></block>
         <block type="logic_operation" gap="8">
             <field name="OP">OR</field>
@@ -80,7 +84,8 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
     </category>
     <category name="Variables" nameid="variables" colour="#A80000" custom="VARIABLE" category="48" iconclass="blocklyTreeIconvariables" expandedclass="blocklyTreeIconvariables">
     </category>
-    <category name="Math" nameid="math" colour="#712672" category="47" web-icon="\uf1ec" iconclass="blocklyTreeIconmath" expandedclass="blocklyTreeIconmath">
+    <category name="Math" nameid="math" colour="#712672" category="47" web-icon="\uf1ec" iconclass="blocklyTreeIconmath" expandedclass="blocklyTreeIconmath">    
+        <label text="Arithmetic" web-class="blocklyFlyoutGroup" web-line="1.5"/>
         <block type="math_arithmetic" gap="8">
             <value name="A">
                 <shadow type="math_number">
@@ -135,52 +140,51 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
         <block type="math_number" gap="8">
             <field name="NUM">0</field>
         </block>
-        <category colour="#712672" name="More" nameid="more" iconclass="blocklyTreeIconmore" expandedclass="blocklyTreeIconmore">
-            <block type="math_modulo">
-                <value name="DIVIDEND">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-                <value name="DIVISOR">
-                    <shadow type="math_number">
-                        <field name="NUM">1</field>
-                    </shadow>
-                </value>
-            </block>
-            <block type="math_op2" gap="8">
-                <value name="x">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-                <value name="y">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-            </block>
-            <block type="math_op2" gap="8">
-                <value name="x">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-                <value name="y">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-                <field name="op">max</field>
-            </block>
-            <block type="math_op3">
-                <value name="x">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-            </block>
-        </category>
+        <label text="Operations" web-class="blocklyFlyoutGroup" web-line="1.5"/>
+        <block type="math_modulo">
+            <value name="DIVIDEND">
+                <shadow type="math_number">
+                    <field name="NUM">0</field>
+                </shadow>
+            </value>
+            <value name="DIVISOR">
+                <shadow type="math_number">
+                    <field name="NUM">1</field>
+                </shadow>
+            </value>
+        </block>
+        <block type="math_op2" gap="8">
+            <value name="x">
+                <shadow type="math_number">
+                    <field name="NUM">0</field>
+                </shadow>
+            </value>
+            <value name="y">
+                <shadow type="math_number">
+                    <field name="NUM">0</field>
+                </shadow>
+            </value>
+        </block>
+        <block type="math_op2" gap="8">
+            <value name="x">
+                <shadow type="math_number">
+                    <field name="NUM">0</field>
+                </shadow>
+            </value>
+            <value name="y">
+                <shadow type="math_number">
+                    <field name="NUM">0</field>
+                </shadow>
+            </value>
+            <field name="op">max</field>
+        </block>
+        <block type="math_op3">
+            <value name="x">
+                <shadow type="math_number">
+                    <field name="NUM">0</field>
+                </shadow>
+            </value>
+        </block>
     </category>
     <category name="Functions" nameid="functions" colour="#005a9e" custom="PROCEDURE" category="46" iconclass="blocklyTreeIconfunctions" expandedclass="blocklyTreeIconfunctions" advanced="true">
     </category>

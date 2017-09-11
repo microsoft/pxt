@@ -118,6 +118,8 @@ namespace ts.pxtc {
         autoCreate?: string;
         noRefCounting?: boolean;
         color?: string;
+        colorSecondary?: string;
+        colorTertiary?: string;
         icon?: string;
         imageLiteral?: number;
         weight?: number;

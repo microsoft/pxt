@@ -176,6 +176,17 @@ export class ProjectView
         }
     }
 
+    updateEditorLogo(left: number, rgba?: string) {
+        if (pxt.appTarget.appTheme.hideMenuBar) {
+            const editorLogo = document.getElementById('editorlogo');
+            if (editorLogo) {
+                editorLogo.style.left = `${left}px`;
+                editorLogo.style.display = 'block';
+                editorLogo.style.background = rgba || '';
+            }
+        }
+    }
+
     saveFileAsync(): Promise<void> {
         if (!this.editorFile)
             return Promise.resolve()
@@ -1134,6 +1145,10 @@ export class ProjectView
         this.setState({ fullscreen: !this.state.fullscreen });
     }
 
+    closeFlyout() {
+        this.editor.closeFlyout();
+    }
+
     toggleMute() {
         pxt.tickEvent("simulator.mute", { view: 'computer', muteTo: '' + !this.state.mute });
         simulator.mute(!this.state.mute);
@@ -1795,6 +1810,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     {lf("By using this site you agree to the use of cookies for analytics.")}
                     <a target="_blank" className="ui link" href={pxt.appTarget.appTheme.privacyUrl} rel="noopener">{lf("Learn more")}</a>
                 </div>}
+                {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
             </div>
         );
     }
@@ -2286,7 +2302,7 @@ $(document).ready(() => {
             }
 
             // default handlers
-            if (hd) return theEditor.loadHeaderAsync(hd, null)
+            if (hd) return theEditor.loadHeaderAsync(hd, theEditor.state.filters)
             else theEditor.newProject();
             return Promise.resolve();
         })

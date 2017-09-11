@@ -1,6 +1,6 @@
 # Types
 
-For programs to be useful, we need to be able to work with some of the simplest units of data: 
+For programs to be useful, we need to be able to work with some of the simplest units of data:
 numbers, strings, structures, boolean values, and the like.
 
 ## Type Inference
@@ -14,7 +14,7 @@ let y = x + 3
 ```
 
 The type of the `x` variable is inferred to be `number`. Similarly, the type of `y` variable also is inferred to be `number`.
-This kind of inference takes place when initializing variables and members, 
+This kind of inference takes place when initializing variables and members,
 setting parameter default values, and determining function return types.
 
 All the examples below give an example type annotation, but will work just the same without the annotation.
@@ -29,7 +29,7 @@ let isDone: boolean = false;
 
 ## Number
 
-### ~ hint 
+### ~ hint
 In JavaScript, `numbers` are floating point values.
 However, for the @boardname@, `numbers` are integer values.
 ### ~

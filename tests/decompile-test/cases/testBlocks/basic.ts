@@ -169,6 +169,11 @@ namespace testNamespace {
     //% value.fieldOptions.decompileLiterals=true
     export function customFieldEditorOnParentBlock(value: number): void { }
 
+    //% blockId=test_customTextFieldEditorOnParentBlock block="%text"
+    //% text.fieldEditor="text" text.fieldOptions.onParentBlock=true
+    //% text.fieldOptions.decompileLiterals=true
+    export function customTextFieldEditorOnParentBlock(text: string): void { }
+
     //% blockId=test_customShadowField block="%value"
     //% value.fieldEditor="note" value.fieldOptions.decompileLiterals=true
     export function customShadowField(value: number): number { return value; }

@@ -279,10 +279,24 @@ div.simframe > iframe {
     margin-right: 1rem;
 }
 
-.modal img.ui.logo {
-    max-width: 10em;
-    max-height: 3em;
-    vertical-align: middle;
+/* Powered by Microsoft logo*/
+#editorlogo {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    height: 25px;
+    background-color: @blocklySvgColor;
+    z-index: 10;
+    display: none;
+}
+#editorlogo > .poweredbylogo {
+    position: absolute;
+    left: 10px;
+    bottom: 5px;
+    width: 100%;
+    height: 17px;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 
 /* Sandbox */
@@ -715,18 +729,40 @@ Field editors
 
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
+    #editorlogo > .poweredbylogo {
+        background-image: @poweredByLarge;
+    }
 }
 
 /* Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+    #editorlogo > .poweredbylogo {
+        background-image: @poweredByLarge;
+    }
 }
 
 /* Tablet */
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
+    #editorlogo {
+        height: 18px;
+    }
+    #editorlogo > .poweredbylogo {
+        height: 13px;
+        bottom: 3px;
+        background-image: @poweredBySmall;
+    }
 }
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
+    #editorlogo {
+        height: 18px;
+    }
+    #editorlogo > .poweredbylogo {
+        height: 13px;
+        bottom: 3px;
+        background-image: @poweredBySmall;
+    }
 }
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */

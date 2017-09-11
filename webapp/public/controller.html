@@ -34,22 +34,22 @@
     }
 </style>
 <script>
-    let projects = [
+    var projects = [
 {
   "text": {
-    "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <block type=\"device_forever\" id=\",{,HjW]u:lVGcDRS_Cu|\" x=\"-247\" y=\"113\"></block>\n</xml>",
+    "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <block type=\"pxt-on-start\" id=\",{,HjW]u:lVGcDRS_Cu|\" x=\"-247\" y=\"113\"></block>\n</xml>",
     "main.ts": "\n",
     "README.md": " ",
     "pxt.json": "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ]\n}"
   }
 }];
-    let filters = {
+    var filters = {
         "namespaces": {
             "loops": 0
         }
     }
-    let lastSaved;
-    let filter = false;
+    var lastSaved;
+    var filter = false;
 
     function toggleFilters() {
         filter = !filter;
@@ -62,14 +62,14 @@
         console.log('send ' + action)
         var logs = document.getElementById("logs");
         logs.innerText += "> " + action + "\n";
-        let editor = document.getElementById("iframe").contentWindow;
-        let msg = {
+        var editor = document.getElementById("iframe").contentWindow;
+        var msg = {
             type: "pxteditor",
             id: Math.random().toString(),
             action: action
         };
         if(action == 'importproject') {
-            let prj = JSON.parse(JSON.stringify(projects[0]));
+            var prj = JSON.parse(JSON.stringify(projects[0]));
             msg.project = prj;
             if (filter) msg.filters = JSON.parse(JSON.stringify(filters));
             msg.response = true;
@@ -85,8 +85,8 @@
     }
 
     function receiveMessage(ev) {
-        let editor = document.getElementById("iframe").contentWindow;
-        let msg = ev.data;
+        var editor = document.getElementById("iframe").contentWindow;
+        var msg = ev.data;
         console.log('received...')
         console.log(msg)
         var logs = document.getElementById("logs");
@@ -114,9 +114,9 @@
             }
         }
         if (msg.type == "pxteditor") {
-            let req = pendingMsgs[msg.id];
+            var req = pendingMsgs[msg.id];
             if (req.action == "renderblocks") {
-                let img = document.createElement("img");
+                var img = document.createElement("img");
                 img.src = msg.resp;
                 logs.appendChild(img)
             }
@@ -141,9 +141,10 @@
         <button class="ui button" onclick="sendMessage('undo')">undo</button>
         <button class="ui button" onclick="sendMessage('redo')">redo</button>
         <button class="ui button" onclick="sendMessage('renderblocks')">renderblocks</button>
+        <button class="ui button" onclick="sendMessage('closeflyout')">close flyout</button>
     </div>
     <pre id="logs" class="ui"></pre>
-    <iframe id="iframe" src="http://localhost:3232/index.html?dbg=1&editorlayout=ide" />
+    <iframe id="iframe" src="index.html?dbg=1&editorlayout=ide" />
 </body>
 
 <script>

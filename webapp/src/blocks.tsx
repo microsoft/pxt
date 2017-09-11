@@ -392,6 +392,10 @@ export class Editor extends srceditor.Editor {
         let blocklyOptions = this.getBlocklyOptions(showCategories);
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
+        // set Blockly Colors
+        let blocklyColors = (Blockly as any).Colours;
+        Util.jsonMergeFrom(blocklyColors, pxt.appTarget.appTheme.blocklyColors || {});
+        (Blockly as any).Colours = blocklyColors;
         this.editor.addChangeListener((ev) => {
             Blockly.Events.disableOrphans(ev);
             if (ev.type != 'ui') {
@@ -467,13 +471,15 @@ export class Editor extends srceditor.Editor {
     }
 
     resize(e?: Event) {
-        let blocklyArea = document.getElementById('blocksArea');
-        let blocklyDiv = document.getElementById('blocksEditor');
+        const blocklyArea = document.getElementById('blocksArea');
+        const blocklyDiv = document.getElementById('blocksEditor');
         // Position blocklyDiv over blocklyArea.
         if (blocklyArea && this.editor) {
             blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
             blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
             Blockly.svgResize(this.editor);
+            const blocklyToolbox = document.getElementsByClassName('blocklyToolboxDiv')[0];
+            this.parent.updateEditorLogo(blocklyToolbox.clientWidth);
         }
     }
 
@@ -505,6 +511,11 @@ export class Editor extends srceditor.Editor {
     zoomOut() {
         if (!this.editor) return;
         this.editor.zoomCenter(-1);
+    }
+
+    closeFlyout () {
+        if (!this.editor) return;
+        Blockly.hideChaff();
     }
 
     getId() {
@@ -640,7 +651,7 @@ export class Editor extends srceditor.Editor {
                 maxScale: 2.5,
                 minScale: .2,
                 scaleSpeed: 1.05,
-                startScale: pxt.BrowserUtils.isMobile() ? 1.2 : 1.0
+                startScale: pxt.BrowserUtils.isMobile() ? 1.2 : 0.9
             },
             rtl: Util.isUserLanguageRtl()
         };

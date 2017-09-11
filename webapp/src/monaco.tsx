@@ -266,6 +266,9 @@ export class Editor extends srceditor.Editor {
 
         if (monacoArea && monacoToolbox && this.editor) {
             this.editor.layout({ width: monacoArea.offsetWidth - monacoToolbox.clientWidth, height: monacoArea.offsetHeight });
+
+            const rgba = (this.editor as any)._themeService._theme.colors['editor.background'].rgba;
+            this.parent.updateEditorLogo(monacoToolbox.clientWidth, `rgba(${rgba.r},${rgba.g},${rgba.b},${rgba.a})`);
         }
     }
 
@@ -465,6 +468,11 @@ export class Editor extends srceditor.Editor {
         this.parent.settings.editorFontSize = currentFont - 1;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
+    }
+
+    closeFlyout() {
+        if (!this.editor) return;
+        this.resetFlyout(true);
     }
 
     private loadReference() {

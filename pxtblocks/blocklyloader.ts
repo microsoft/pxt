@@ -102,6 +102,7 @@ namespace pxt.blocks {
         const typeInfo = typeDefaults[type];
 
         shadow.setAttribute("type", shadowType || typeInfo && typeInfo.block || type);
+        shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
         if (typeInfo) {
             const field = document.createElement("field");
@@ -564,7 +565,7 @@ namespace pxt.blocks {
         if (pre)
             i.appendField(pre);
         if (right)
-            i.setAlign(Blockly.ALIGN_RIGHT)
+            i.setAlign(Blockly.ALIGN_LEFT)
         // Ignore generic types
         if (type && type != "T") {
             if (arrayTypeRegex.test(type)) {
@@ -620,7 +621,14 @@ namespace pxt.blocks {
         }
 
         block.setTooltip(fn.attributes.jsDoc);
-        block.setColour(color);
+        block.setColour(color, fn.attributes.colorSecondary, fn.attributes.colorTertiary);
+        let blockShape = Blockly.OUTPUT_SHAPE_ROUND;
+        switch (fn.retType) {
+            case "number": blockShape = Blockly.OUTPUT_SHAPE_ROUND; break;
+            case "boolean": blockShape = Blockly.OUTPUT_SHAPE_HEXAGONAL; break;
+            case "string": blockShape = Blockly.OUTPUT_SHAPE_SQUARE; break;
+        }
+        block.setOutputShape(blockShape);
         if (fn.attributes.undeletable)
             block.setDeletable(false);
 
@@ -660,8 +668,9 @@ namespace pxt.blocks {
                             v.attributes.blockImage ? {
                                 src: pxt.webConfig.commitCdnUrl + `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
                                 alt: k,
-                                width: 32,
-                                height: 32
+                                width: 36,
+                                height: 36,
+                                value: v.name
                             } : k,
                             v.namespace + "." + v.name
                         ];
@@ -758,12 +767,6 @@ namespace pxt.blocks {
             })
         }
 
-        const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
-        if (body) {
-            block.appendStatementInput("HANDLER")
-                .setCheck("null");
-        }
-
         if (fn.attributes.imageLiteral) {
             for (let r = 0; r < 5; ++r) {
                 let ri = block.appendDummyInput();
@@ -783,6 +786,13 @@ namespace pxt.blocks {
         }
         else {
             block.setInputsInline(fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+        }
+
+        const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
+        if (body) {
+            block.appendStatementInput("HANDLER")
+                .setCheck("null");
+            block.setInputsInline(true);
         }
 
         switch (fn.retType) {
@@ -1441,7 +1451,7 @@ namespace pxt.blocks {
         goog.provide('Blockly.Blocks.device');
         goog.require('Blockly.Blocks');
 
-        if (window.navigator.pointerEnabled) {
+        if ((window as any).PointerEvent) {
             (Blockly.bindEvent_ as any).TOUCH_MAP = {
                 mousedown: 'pointerdown',
                 mousemove: 'pointermove',
@@ -1476,10 +1486,10 @@ namespace pxt.blocks {
         installHelpResources(id, info.name, info.tooltip, info.url, getNamespaceColor(info.category));
     }
 
-    function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string, undeletable?: boolean) {
+    function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string, undeletable?: boolean) {
         if (tooltip && (typeof tooltip === "string" || typeof tooltip === "function")) block.setTooltip(tooltip);
         if (url) block.setHelpUrl(url);
-        if (colour) block.setColour(colour);
+        if (colour) block.setColour(colour, colourSecondary, colourTertiary);
         if (undeletable) block.setDeletable(false);
 
         let tb = document.getElementById('blocklyToolboxDefinition');
@@ -1494,7 +1504,7 @@ namespace pxt.blocks {
         };
     }
 
-    function installHelpResources(id: string, name: string, tooltip: any, url: string, colour: string) {
+    function installHelpResources(id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string) {
         let block = Blockly.Blocks[id];
         let old = block.init;
         if (!old) return;
@@ -1502,7 +1512,7 @@ namespace pxt.blocks {
         block.init = function () {
             old.call(this);
             let block = this;
-            setHelpResources(this, id, name, tooltip, url, colour);
+            setHelpResources(this, id, name, tooltip, url, colour, colourSecondary, colourTertiary);
         }
     }
 
@@ -1539,7 +1549,8 @@ namespace pxt.blocks {
                 "check": ['Array']
                 }
             ],
-            "output": 'Number'
+            "output": 'Number',
+            "outputShape": Blockly.OUTPUT_SHAPE_ROUND
             });
         }
 
@@ -1745,7 +1756,7 @@ namespace pxt.blocks {
         msg.ENABLE_BLOCK = lf("Enable Block");
         msg.DISABLE_BLOCK = lf("Disable Block");
         msg.DELETE_BLOCK = lf("Delete Block");
-        msg.DELETE_X_BLOCKS = lf("Delete %1 Blocks");
+        msg.DELETE_X_BLOCKS = lf("Delete All Blocks");
         msg.HELP = lf("Help");
 
         // inject hook to handle openings docs
@@ -1853,7 +1864,7 @@ namespace pxt.blocks {
 
             const deleteOption = {
                 text: deleteList.length == 1 ? lf("Delete Block") :
-                    lf("Delete {0} Blocks", deleteList.length),
+                    lf("Delete All Blocks", deleteList.length),
                 enabled: deleteList.length > 0,
                 callback: function () {
                     pxt.tickEvent("blocks.context.delete");
@@ -1963,8 +1974,6 @@ namespace pxt.blocks {
                 block.addSelect));
             this.listeners_.push(Blockly.bindEvent_(rect, 'mouseout', block,
                 block.removeSelect));
-            // pxtblockly: don't show context menu on right click
-            this.listeners_.push(Blockly.bindEventWithChecks_(root, 'contextmenu', null, Blockly.utils.noEvent));
 
             const that = this;
             function select() {
@@ -2020,6 +2029,7 @@ namespace pxt.blocks {
                     onStartDef.tooltip,
                     onStartDef.url,
                     String((pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || getNamespaceColor('loops')),
+                    undefined, undefined,
                     pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartUnDeletable : false
                 );
             }
@@ -2243,6 +2253,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
+                    "outputShape": mathOp2Def.outputShape,
                     "colour": getNamespaceColor('math')
                 });
 
@@ -2275,6 +2286,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
+                    "outputShape": mathOp3Def.outputShape,
                     "colour": getNamespaceColor('math')
                 });
 
@@ -2290,7 +2302,9 @@ namespace pxt.blocks {
             mInfo.name,
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             mInfo.url,
-            getNamespaceColor(mInfo.category)
+            (Blockly as any).Colours.textField,
+            (Blockly as any).Colours.textField,
+            (Blockly as any).Colours.textField
         );
 
         // builtin math_number_minmax
@@ -2301,7 +2315,9 @@ namespace pxt.blocks {
             mMInfo.name,
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             mMInfo.url,
-            getNamespaceColor(mMInfo.category)
+            (Blockly as any).Colours.textField,
+            (Blockly as any).Colours.textField,
+            (Blockly as any).Colours.textField
         );
 
         // builtin math_arithmetic
@@ -2449,7 +2465,7 @@ namespace pxt.blocks {
                         value.appendChild(shadow);
                         let field = goog.dom.createDom('field');
                         field.setAttribute('name', 'NUM');
-                        field.appendChild(document.createTextNode("0"));
+                        field.appendChild(document.createTextNode("1"));
                         shadow.appendChild(field);
                         block.appendChild(value);
                     }
@@ -2531,6 +2547,7 @@ namespace pxt.blocks {
                 .appendField('', 'PARAMS');
             this.setColour(getNamespaceColor('functions'));
             this.arguments_ = [];
+            this.setStartHat(true);
             this.setStatements_(true);
             this.statementConnection_ = null;
         };
@@ -2584,8 +2601,8 @@ namespace pxt.blocks {
              * @this Blockly.Block
              */
             onchange: function(event: any) {
-                if (!this.workspace || this.workspace.isFlyout) {
-                    // Block is deleted or is in a flyout.
+                if (!this.workspace || this.workspace.isFlyout || this.isInsertionMarker()) {
+                    // Block is deleted or is in a flyout or insertion marker.
                     return;
                 }
                 if (event.type == Blockly.Events.CREATE &&
@@ -2840,7 +2857,11 @@ namespace pxt.blocks {
 
     function initText() {
         // builtin text
-        installBuiltinHelpInfo('text');
+        const textInfo = pxt.blocks.getBlockDefinition('text');
+        installHelpResources('text', textInfo.name, textInfo.tooltip, textInfo.url,
+            (Blockly as any).Colours.textField,
+            (Blockly as any).Colours.textField,
+            (Blockly as any).Colours.textField);
 
         // builtin text_length
         const msg: any = Blockly.Msg;
@@ -2862,7 +2883,8 @@ namespace pxt.blocks {
                 "check": ['String']
                 }
             ],
-            "output": 'Number'
+            "output": 'Number',
+            "outputShape": Blockly.OUTPUT_SHAPE_ROUND
             });
         }
         installBuiltinHelpInfo(textLengthId);

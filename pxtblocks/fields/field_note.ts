@@ -387,10 +387,21 @@ namespace pxtblockly {
             return this;
         }
 
+        onHtmlInputChange_(e: any) {
+            super.onHtmlInputChange_(e);
+            Blockly.DropDownDiv.hideWithoutAnimation();
+        }
+
         /**
          * Create a piano under the note field.
          */
         showEditor_(opt_quietInput?: boolean): void {
+            // If there is an existing drop-down someone else owns, hide it immediately and clear it.
+            Blockly.DropDownDiv.hideWithoutAnimation();
+            Blockly.DropDownDiv.clearContent();
+
+            let contentDiv = Blockly.DropDownDiv.getContentDiv();
+
             //  change Note name to number frequency
             Blockly.FieldNumber.prototype.setText.call(this, this.getText());
 
@@ -400,8 +411,8 @@ namespace pxtblockly {
             let pianoHeight: number;
             let keyWidth: number = 22;
             let keyHeight: number = 90;
-            let labelHeight: number;
-            let prevNextHeight: number;
+            let labelHeight: number = 20;
+            let prevNextHeight: number = 20;
             let whiteKeyCounter: number = 0;
             let selectedKeyColor: string = "yellowgreen";
             let soundingKeys: number = 0;
@@ -414,7 +425,7 @@ namespace pxtblockly {
             let piano: Array<goog.ui.CustomButton> = [];
             //  initializate
             pianoWidth = keyWidth * (this.nKeys_ - (this.nKeys_ / 12 * 5));
-            pianoHeight = keyHeight;
+            pianoHeight = keyHeight + labelHeight;
 
             //  Create the piano using Closure (CustomButton).
             for (let i = 0; i < this.nKeys_; i++) {
@@ -424,56 +435,31 @@ namespace pxtblockly {
             if (editorWidth < pianoWidth) {
                 pagination = true;
                 pianoWidth = 7 * keyWidth;
+                pianoHeight = keyHeight + labelHeight + prevNextHeight;
             }
             //  Check if Mobile, pagination -> true
             let quietInput = opt_quietInput || false;
             if (!quietInput && (goog.userAgent.MOBILE || goog.userAgent.ANDROID)) {
                 pagination = true;
                 mobile = true;
-                let r = keyWidth / keyHeight;
-                keyWidth = Math.ceil(windowSize.width / 7);
-                keyHeight = Math.ceil(keyWidth / r);
+                keyWidth = keyWidth * 2;
+                keyHeight = keyHeight * 2;
                 pianoWidth = 7 * keyWidth;
-                pianoHeight = keyHeight;
-                labelHeight = keyWidth / 1.5;
-                prevNextHeight = keyWidth / 1.5;
+                labelHeight = labelHeight * 1.2;
+                prevNextHeight = prevNextHeight * 2;
+                pianoHeight = keyHeight + labelHeight + prevNextHeight;
             }
 
             //  create piano div
-            let div = Blockly.WidgetDiv.DIV;
-            let pianoDiv = goog.dom.createDom("div", {});
+            let pianoDiv = goog.dom.createDom("div", {}) as HTMLElement;
             pianoDiv.className = "blocklyPianoDiv";
-            div.appendChild(pianoDiv);
+            contentDiv.appendChild(pianoDiv);
             let scrollOffset = goog.style.getViewportPageOffset(document);
-            //let pianoHeight = keyHeight + div.scrollHeight + 5;
             let xy = this.getAbsoluteXY_();
             let borderBBox = this.getScaledBBox_();
-            let topPosition: number = 0, leftPosition: number = 0;
-            //  Flip the piano vertically if off the bottom (only in web view).
-            if (!mobile) {
-                if (xy.y + pianoHeight + borderBBox.height >=
-                    windowSize.height + scrollOffset.y) {
-                    topPosition = -(pianoHeight + borderBBox.height);
-                }
-                if (this.sourceBlock_.RTL) {
-                    xy.x += borderBBox.width;
-                    xy.x -= pianoWidth;
-                    leftPosition += borderBBox.width;
-                    leftPosition -= pianoWidth;
-                    // Don't go offscreen left.
-                    if (xy.x < scrollOffset.x) {
-                        leftPosition = scrollOffset.x - xy.x;
-                    }
-                } else {
-                    // Don't go offscreen right.
-                    if (xy.x > windowSize.width + scrollOffset.x - pianoWidth) {
-                        leftPosition -= xy.x - (windowSize.width + scrollOffset.x - pianoWidth);
-                    }
-                }
-            } else {
-                leftPosition = -(<HTMLElement>document.getElementsByClassName("blocklyWidgetDiv")[0]).offsetLeft;   //+ ((windowSize.width - this.pianoWidth_) / 2);
-                topPosition = windowSize.height - (keyHeight + labelHeight + prevNextHeight) - (<HTMLElement>document.getElementsByClassName("blocklyWidgetDiv")[0]).offsetTop - borderBBox.height;
-            }
+
+            let leftPosition = 0; //-(<HTMLElement>document.getElementsByClassName("blocklyDropdownDiv")[0]).offsetLeft;   //+ ((windowSize.width - this.pianoWidth_) / 2);
+            let topPosition = 0; //(keyHeight + labelHeight + prevNextHeight);
 
             //  save all changes in the same group of events
             Blockly.Events.setGroup(true);
@@ -531,7 +517,6 @@ namespace pxtblockly {
                     function () {
                         let script = showNoteLabel.getContent() as HTMLElement;
                         script.innerText = this.getId();
-                        this.labelHeight_ = (<HTMLElement>document.getElementsByClassName("blocklyNoteLabel")[0]).offsetHeight;
                     }, false, key
                 );
 
@@ -549,7 +534,6 @@ namespace pxtblockly {
             showNoteLabel.render(pianoDiv);
             let scriptLabel = showNoteLabel.getContent() as HTMLElement;
             scriptLabel.innerText = "-";
-            labelHeight = (<HTMLElement>document.getElementsByClassName("blocklyNoteLabel")[0]).offsetHeight;
 
             // create next and previous CustomButtons for pagination
             let prevButton = new goog.ui.CustomButton();
@@ -558,7 +542,6 @@ namespace pxtblockly {
             let nextButtonStyle = getNextPrevStyle(topPosition, leftPosition, false, mobile);
             if (pagination) {
                 scriptLabel.innerText = "Octave #1";
-                labelHeight = (<HTMLElement>document.getElementsByClassName("blocklyNoteLabel")[0]).offsetHeight;
                 //  render previous button
                 let script: HTMLElement;
                 prevButton.setContent(prevButtonStyle);
@@ -592,7 +575,6 @@ namespace pxtblockly {
                             piano[i + newFirstKey].setVisible(true);
                         currentPage--;
                         scriptLabel.innerText = "Octave #" + (currentPage + 1);
-                        this.labelHeight_ = (<HTMLElement>document.getElementsByClassName("blocklyNoteLabel")[0]).offsetHeight;
                     }, false, prevButton
                 );
                 goog.events.listen(nextButton.getElement(),
@@ -612,7 +594,6 @@ namespace pxtblockly {
                             piano[i + newFirstKey].setVisible(true);
                         currentPage++;
                         scriptLabel.innerText = "Octave #" + (currentPage + 1);
-                        this.labelHeight_ = (<HTMLElement>document.getElementsByClassName("blocklyNoteLabel")[0]).offsetHeight;
                     }, false, nextButton
                 );
             }
@@ -791,13 +772,42 @@ namespace pxtblockly {
                 return pos - (keyWidth / 4);
             }
 
+            pianoDiv.style.width = pianoWidth + "px";
+            pianoDiv.style.height = (pianoHeight + 1) + "px";
+            contentDiv.style.width = (pianoWidth + 1) + "px";
 
+            let primaryColour = ((this.sourceBlock_ as any).isShadow()) ?
+                this.sourceBlock_.parentBlock_.getColour() : this.sourceBlock_.getColour();
+
+            (Blockly.DropDownDiv as any).setColour(primaryColour, (this.sourceBlock_ as any).getColourTertiary());
+
+            // Calculate positioning based on the field position.
+            let scale = (this.sourceBlock_.workspace as any).scale;
+            let bBox = {width: this.size_.width, height: this.size_.height};
+            bBox.width *= scale;
+            bBox.height *= scale;
+            let position = this.fieldGroup_.getBoundingClientRect();
+            let primaryX = position.left + bBox.width / 2;
+            let primaryY = position.top + bBox.height;
+            let secondaryX = primaryX;
+            let secondaryY = position.top;
+            // Set bounds to workspace; show the drop-down.
+            (Blockly.DropDownDiv as any).setBoundsElement(this.sourceBlock_.workspace.getParentSvg().parentNode);
+            (Blockly.DropDownDiv as any).show(this, primaryX, primaryY, secondaryX, secondaryY,
+                this.onHide.bind(this));
         }
+
+        /**
+         * Callback for when the drop-down is hidden.
+         */
+        private onHide() {
+        };
+
         /**
          * Close the note picker if this input is being deleted.
          */
         dispose() {
-            Blockly.WidgetDiv.hideIfOwner(this);
+            (Blockly.DropDownDiv as any).hideIfOwner(this);
             Blockly.FieldTextInput.superClass_.dispose.call(this);
         }
     }

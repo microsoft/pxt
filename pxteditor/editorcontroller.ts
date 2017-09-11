@@ -40,6 +40,7 @@ namespace pxt.editor {
         | "stopsimulator" // EditorMessageStopRequest
         | "hidesimulator"
         | "showsimulator"
+        | "closeflyout"
         | "newproject"
         | "importproject"
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
@@ -201,6 +202,7 @@ namespace pxt.editor {
                     case "restartsimulator": p = p.then(() => projectView.restartSimulator()); break;
                     case "hidesimulator": p = p.then(() => projectView.collapseSimulator()); break;
                     case "showsimulator": p = p.then(() => projectView.expandSimulator()); break;
+                    case "closeflyout": p = p.then(() => projectView.closeFlyout()); break;
                     case "redo": p = p.then(() => {
                         const editor = projectView.editor;
                         if (editor && editor.hasRedo())
