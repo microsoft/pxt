@@ -17,6 +17,11 @@ namespace ts.pxtc.decompiler {
         fieldName?: string;
     }
 
+    interface DecompilerEnv {
+        blocks: BlocksInfo;
+        declaredFunctions: pxt.Map<boolean>;
+    }
+
     const numberType = "math_number";
     const stringType = "text";
     const booleanType = "logic_boolean";
@@ -280,22 +285,34 @@ namespace ts.pxtc.decompiler {
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
     }
 
+    enum ReferenceType {
+        // Variable is never referenced
+        None = 0,
+        // Variable is only referenced in "non-grey" blocks
+        InBlocksOnly = 1,
+        // Variable is referenced at least once inside "grey" blocks
+        InTextBlocks = 2
+    }
+
     export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile, options: DecompileBlocksOptions, renameMap?: RenameMap): pxtc.CompileResult {
         let stmts: ts.Statement[] = file.statements;
         let result: pxtc.CompileResult = {
             blocksInfo: blocksInfo,
             outfiles: {}, diagnostics: [], success: true, times: {}
         }
+        const env: DecompilerEnv = {
+            blocks: blocksInfo,
+            declaredFunctions: {}
+        };
         const fileText = file.getFullText();
         let output = ""
 
-        const varUsages: pxt.Map<boolean> = {};
+        const varUsages: pxt.Map<ReferenceType> = {};
         const autoDeclarations: [string, ts.Node][] = [];
-        const declaredFunctions: pxt.Map<boolean> = {};
 
         ts.forEachChild(file, topLevelNode => {
-            if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, blocksInfo, false, true)) {
-                declaredFunctions[getVariableName((topLevelNode as ts.FunctionDeclaration).name)] = true;
+            if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, env, false, true)) {
+                env.declaredFunctions[getVariableName((topLevelNode as ts.FunctionDeclaration).name)] = true;
             }
         })
 
@@ -493,7 +510,7 @@ ${output}</xml>`;
         }
 
         function getOutputBlock(n: ts.Node): OutputNode {
-            if (checkExpression(n, blocksInfo)) {
+            if (checkExpression(n, env)) {
                 return getTypeScriptExpressionBlock(n);
             }
             else {
@@ -557,6 +574,7 @@ ${output}</xml>`;
 
         function getTypeScriptExpressionBlock(n: ts.Node) {
             const text = applyRenamesInRange(n.getFullText(), n.getFullStart(), n.getEnd());
+            trackVariableUsagesInText(n);
             return getFieldBlock(pxtc.TS_OUTPUT_TYPE, "EXPRESSION", text);
         }
 
@@ -648,7 +666,7 @@ ${output}</xml>`;
 
         function getIdentifier(identifier: Identifier): ExpressionNode {
             const name = getVariableName(identifier);
-            varUsages[name] = true;
+            trackVariableUsage(name, ReferenceType.InBlocksOnly);
             return getFieldBlock("variables_get", "VAR", name);
         }
 
@@ -785,7 +803,7 @@ ${output}</xml>`;
             const node = n as ts.Node;
             let stmt: StatementNode;
 
-            if (checkStatement(node, blocksInfo, asExpression, topLevel)) {
+            if (checkStatement(node, env, asExpression, topLevel)) {
                 stmt = getTypeScriptStatementBlock(node);
             }
             else {
@@ -883,6 +901,8 @@ ${output}</xml>`;
                 mutation: {}
             };
 
+            trackVariableUsagesInText(node);
+
             let text = node.getText();
             const start = node.getStart();
             const end = node.getEnd();
@@ -894,6 +914,9 @@ ${output}</xml>`;
                 for (const declaration of (node as ts.VariableStatement).declarationList.declarations) {
                     declaredVariables.push(getVariableName(declaration.name as ts.Identifier));
                 }
+            }
+            else if (node.kind === SK.VariableDeclaration) {
+                declaredVariables.push(getVariableName((node as ts.VariableDeclaration).name as ts.Identifier));
             }
 
             if (declaredVariables.length) {
@@ -1080,7 +1103,7 @@ ${output}</xml>`;
 
         function getVariableSetOrChangeBlock(name: ts.Identifier, value: Node | number, changed = false, overrideName = false): StatementNode {
             const renamed = getVariableName(name);
-            varUsages[renamed] = true;
+            trackVariableUsage(renamed, ReferenceType.InBlocksOnly);
             // We always do a number shadow even if the variable is not of type number
             return {
                 kind: "statement",
@@ -1138,7 +1161,7 @@ ${output}</xml>`;
                 const builtin = builtinBlocks[info.qName];
                 if (!builtin) {
                     const name = getVariableName(node.expression as ts.Identifier);
-                    if (declaredFunctions[name]) {
+                    if (env.declaredFunctions[name]) {
                         return {
                             kind: "statement",
                             type: "procedures_callnoreturn",
@@ -1352,7 +1375,7 @@ ${output}</xml>`;
             statements.reverse().forEach(statement => {
                 if ((statement.kind === SK.FunctionDeclaration ||
                     (statement.kind == SK.ExpressionStatement && isEventExpression(statement as ts.ExpressionStatement))) &&
-                    !checkStatement(statement, blocksInfo, false, topLevel)) {
+                    !checkStatement(statement, env, false, topLevel)) {
                     eventStatements.unshift(statement)
                 }
                 else {
@@ -1370,10 +1393,20 @@ ${output}</xml>`;
                     // Preserve any variable edeclarations that were never used
                     let current = stmt;
                     autoDeclarations.forEach(([name, node]) => {
-                        if (varUsages[name]) {
+                        if (varUsages[name] === ReferenceType.InBlocksOnly) {
                             return;
                         }
-                        const v = getVariableSetOrChangeBlock((node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
+                        let e = (node as ts.VariableDeclaration).initializer;
+                        let v: StatementNode;
+                        if (varUsages[name] === ReferenceType.InTextBlocks) {
+                            // If a variable is referenced inside a "grey" block, we need
+                            // to be conservative because our type inference might not work
+                            // on the round trip
+                            v = getTypeScriptStatementBlock(node);
+                        }
+                        else {
+                            v = getVariableSetOrChangeBlock((node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
+                        }
                         v.next = current;
                         current = v;
                     });
@@ -1405,6 +1438,21 @@ ${output}</xml>`;
             if (options.alwaysEmitOnStart) {
                 write(`<block type="${ts.pxtc.ON_START_TYPE}"></block>`);
             }
+        }
+
+        function trackVariableUsage(name: string, type: ReferenceType) {
+            if (varUsages[name] !== ReferenceType.InTextBlocks) {
+                varUsages[name] = type;
+            }
+        }
+
+        function trackVariableUsagesInText(node: ts.Node) {
+            ts.forEachChild(node, (n) => {
+                if (n.kind === SK.Identifier) {
+                    trackVariableUsage(getVariableName(n as ts.Identifier), ReferenceType.InTextBlocks)
+                }
+                trackVariableUsagesInText(n);
+            })
         }
 
         /**
@@ -1481,20 +1529,20 @@ ${output}</xml>`;
         }
     }
 
-    function checkStatement(node: ts.Node, blocksInfo: BlocksInfo, asExpression = false, topLevel = false): string {
+    function checkStatement(node: ts.Node, env: DecompilerEnv, asExpression = false, topLevel = false): string {
         switch (node.kind) {
             case SK.WhileStatement:
             case SK.IfStatement:
             case SK.Block:
                 return undefined;
             case SK.ExpressionStatement:
-                return checkStatement((node as ts.ExpressionStatement).expression, blocksInfo, asExpression, topLevel);
+                return checkStatement((node as ts.ExpressionStatement).expression, env, asExpression, topLevel);
             case SK.VariableStatement:
-                return checkVariableStatement(node as ts.VariableStatement, blocksInfo);
+                return checkVariableStatement(node as ts.VariableStatement, env);
             case SK.CallExpression:
-                return checkCall(node as ts.CallExpression, blocksInfo, asExpression, topLevel);
+                return checkCall(node as ts.CallExpression, env, asExpression, topLevel);
             case SK.VariableDeclaration:
-                return checkVariableDeclaration(node as ts.VariableDeclaration, blocksInfo);
+                return checkVariableDeclaration(node as ts.VariableDeclaration, env);
             case SK.PostfixUnaryExpression:
             case SK.PrefixUnaryExpression:
                 return checkIncrementorExpression(node as (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression));
@@ -1502,7 +1550,7 @@ ${output}</xml>`;
             case SK.ArrowFunction:
                 return checkArrowFunction(node as ts.ArrowFunction);
             case SK.BinaryExpression:
-                return checkBinaryExpression(node as ts.BinaryExpression, blocksInfo);
+                return checkBinaryExpression(node as ts.BinaryExpression, env);
             case SK.ForStatement:
                 return checkForStatement(node as ts.ForStatement);
             case SK.ForOfStatement:
@@ -1576,7 +1624,7 @@ ${output}</xml>`;
             return undefined;
         }
 
-        function checkBinaryExpression(n: ts.BinaryExpression, blocksInfo: BlocksInfo) {
+        function checkBinaryExpression(n: ts.BinaryExpression, env: DecompilerEnv) {
             if (n.left.kind !== SK.Identifier && n.left.kind !== SK.ElementAccessExpression) {
                 return Util.lf("Only variable names may be assigned to")
             }
@@ -1589,7 +1637,7 @@ ${output}</xml>`;
             else {
                 switch (n.operatorToken.kind) {
                     case SK.EqualsToken:
-                        return checkExpression(n.right, blocksInfo);
+                        return checkExpression(n.right, env);
                     case SK.PlusEqualsToken:
                     case SK.MinusEqualsToken:
                         return undefined;
@@ -1619,7 +1667,7 @@ ${output}</xml>`;
             return undefined;
         }
 
-        function checkVariableDeclaration(n: ts.VariableDeclaration, blocksInfo: BlocksInfo) {
+        function checkVariableDeclaration(n: ts.VariableDeclaration, env: DecompilerEnv) {
             let check: string;
 
             if (n.name.kind !== SK.Identifier) {
@@ -1629,15 +1677,15 @@ ${output}</xml>`;
                 check = Util.lf("Variable declarations must have an initializer");
             }
             else if (!isAutoDeclaration(n)) {
-                check = checkExpression(n.initializer, blocksInfo);
+                check = checkExpression(n.initializer, env);
             }
 
             return check;
         }
 
-        function checkVariableStatement(n: ts.VariableStatement, blocksInfo: BlocksInfo) {
+        function checkVariableStatement(n: ts.VariableStatement, env: DecompilerEnv) {
             for (const declaration of n.declarationList.declarations) {
-                const res = checkVariableDeclaration(declaration, blocksInfo);
+                const res = checkVariableDeclaration(declaration, env);
                 if (res) {
                     return res;
                 }
@@ -1645,7 +1693,7 @@ ${output}</xml>`;
             return undefined;
         }
 
-        function checkCall(n: ts.CallExpression, blocksInfo: BlocksInfo, asExpression = false, topLevel = false) {
+        function checkCall(n: ts.CallExpression, env: DecompilerEnv, asExpression = false, topLevel = false) {
             const info: pxtc.CallInfo = (n as any).callInfo;
             if (!info) {
                 return Util.lf("Function call not supported in the blocks");
@@ -1664,7 +1712,12 @@ ${output}</xml>`;
                 const builtin = builtinBlocks[info.qName];
                 if (!builtin) {
                     if (n.arguments.length === 0 && n.expression.kind === SK.Identifier) {
-                        return undefined; // Could be user defined function
+                        if (!env.declaredFunctions[(n.expression as ts.Identifier).text]) {
+                            return Util.lf("Call statements must have a valid declared function");
+                        }
+                        else {
+                            return undefined;
+                        }
                     }
                     return Util.lf("Function call not supported in the blocks");
                 }
@@ -1672,7 +1725,7 @@ ${output}</xml>`;
                 info.attrs.blockId = builtin.blockId;
             }
 
-            const params = getParameterInfo(info, blocksInfo);
+            const params = getParameterInfo(info, env.blocks);
             const argumentDifference = info.args.length - params.length;
 
             if (info.attrs.imageLiteral) {
@@ -1698,7 +1751,7 @@ ${output}</xml>`;
                 }
             }
 
-            const api = blocksInfo.apis.byQName[info.qName];
+            const api = env.blocks.apis.byQName[info.qName];
             if (api && api.parameters && api.parameters.length) {
                 let fail: string;
                 const instance = api.kind == pxtc.SymbolKind.Method || api.kind == pxtc.SymbolKind.Property;
@@ -1741,7 +1794,7 @@ ${output}</xml>`;
             }
 
             if (api) {
-                const ns = blocksInfo.apis.byQName[api.namespace];
+                const ns = env.blocks.apis.byQName[api.namespace];
                 if (ns && ns.attributes.fixedInstances && info.args.length) {
                     const callInfo: pxtc.CallInfo = (info.args[0] as any).callInfo;
                     if (!callInfo || !callInfo.attrs.fixedInstance) {
@@ -1881,7 +1934,7 @@ ${output}</xml>`;
         }
     }
 
-    function checkExpression(n: ts.Node, blocksInfo: BlocksInfo): string {
+    function checkExpression(n: ts.Node, env: DecompilerEnv): string {
         switch (n.kind) {
             case SK.NumericLiteral:
             case SK.TrueKeyword:
@@ -1891,7 +1944,7 @@ ${output}</xml>`;
             case SK.ElementAccessExpression:
                 return undefined;
             case SK.ParenthesizedExpression:
-                return checkExpression((n as ts.ParenthesizedExpression).expression, blocksInfo);
+                return checkExpression((n as ts.ParenthesizedExpression).expression, env);
             case SK.StringLiteral:
             case SK.FirstTemplateToken:
             case SK.NoSubstitutionTemplateLiteral:
@@ -1908,7 +1961,7 @@ ${output}</xml>`;
             case SK.PropertyAccessExpression:
                 return checkPropertyAccessExpression(n as ts.PropertyAccessExpression);
             case SK.CallExpression:
-                return checkStatement(n, blocksInfo, true);
+                return checkStatement(n, env, true);
         }
         return Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]);
 
@@ -1930,7 +1983,7 @@ ${output}</xml>`;
                     if (parent) {
                         const parentInfo: pxtc.CallInfo = (parent as any).callInfo;
                         if (parentInfo && parentInfo.args) {
-                            const api = blocksInfo.apis.byQName[parentInfo.qName];
+                            const api = env.blocks.apis.byQName[parentInfo.qName];
                             const instance = api.kind == pxtc.SymbolKind.Method || api.kind == pxtc.SymbolKind.Property;
                             if (api) {
                                 parentInfo.args.forEach((arg, i) => {
