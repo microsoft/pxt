@@ -430,12 +430,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         super(props)
         this.state = {
         }
-
-        this.next = this.next.bind(this);
-        this.prev = this.prev.bind(this);
-        this.to = this.to.bind(this);
-        this.create = this.create.bind(this);
-        this.destory = this.destory.bind(this);
     }
 
     fetchGallery(path: string): pxt.CodeCard[] {
@@ -467,7 +461,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     updateCarousel() {
         if (!this.prevGalleries.length && !this.prevHeaders.length) return;
         this.carousel = $(this.node);
-        //this.carousel.owlCarousel(this.getCarouselOptions());
     }
 
     getCarouselOptions() {
@@ -481,41 +474,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             slidesToScroll: 1
         };
         return options;
-    }
-
-    create() {
-        //if (this.carousel) this.carousel.owlCarousel(this.getCarouselOptions());
-    }
-
-    destory() {
-        //if (this.carousel) this.carousel.trigger('destroy.owl.carousel');
-    }
-
-    next(speed: number) {
-        if (typeof (speed) == 'number') {
-            this.carousel.trigger('next.owl.carousel', [speed]);
-        }
-        else {
-            this.carousel.trigger('next.owl.carousel');
-        }
-    }
-
-    prev(speed: number) {
-        if (typeof (speed) == 'number') {
-            this.carousel.trigger('prev.owl.carousel', [speed]);
-        }
-        else {
-            this.carousel.trigger('prev.owl.carousel');
-        }
-    }
-
-    to(position: number, speed: number) {
-        if (typeof (position) == 'number' && typeof (speed) == 'number') {
-            this.carousel.trigger('to.owl.carousel', [position, speed]);
-        }
-        else {
-            this.carousel.trigger('to.owl.carousel');
-        }
     }
 
     renderCore() {
@@ -552,8 +510,31 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             {this.hasFetchErrors ?
                 <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
                 :
-                <Slider dots={true} accessibility={true}>
-                    
+                <Slider dots={true} accessibility={true} speed={500} slidesToScroll={1} slidesToShow={5}>
+                    {cards ? cards.map(scr =>
+                        <codecard.CodeCardView
+                            key={path + scr.name}
+                            name={scr.name}
+                            description={scr.description}
+                            url={scr.url}
+                            imageUrl={scr.imageUrl}
+                            youTubeId={scr.youTubeId}
+                            hoverIcon={hoverIcon}
+                            hoverButton={hoverButton}
+                            hoverButtonClass={hoverButtonClass}
+                            onClick={() => chgGallery(scr) }
+                            />
+                    ) : headers.slice(0, 5).map(scr =>
+                        <codecard.CodeCardView
+                            cardType="file"
+                            className="file"
+                            key={'local' + scr.id}
+                            name={scr.name}
+                            time={scr.recentUse}
+                            url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
+                            onClick={() => chgHeader(scr) }
+                            />
+                    ) }
                 </Slider>}
         </div>;
     }
