@@ -200,6 +200,7 @@ declare namespace pxt {
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
         selectLanguage?: boolean; // add language picker to settings menu
+        defaultBlockGap?: number; // For targets to override block gap
     }
 
     interface DocMenuEntry {
