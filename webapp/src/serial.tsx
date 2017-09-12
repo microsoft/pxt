@@ -130,12 +130,15 @@ export class Editor extends srceditor.Editor {
 
     display() {
         return (
-            <div id="serialEditor">
-                <div className="ui center aligned container">
-                    <div id="serialEditorTitle" className="ui massive red label">{this.isSim ? lf("Simulator") : lf("Device")}</div>
-                    <br />
-                    <sui.Button text={lf("Start")} onClick= {() => {this.active = true; this.startRecording()}} />
-                    <sui.Button text={lf("Stop")} onClick = {() => {this.active = false; this.stopRecording()}} />
+            <div id="serialEditor" className="ui">
+                <div className="ui segment">
+                    <span id="serialEditorTitle" className="ui huge left aligned header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
+                    <button className="ui right floated icon button" onClick= {() => {this.active = true; this.startRecording()}}>
+                        <i className="stop icon"></i>
+                    </button>
+                    <button className="ui right floated icon button" onClick = {() => {this.active = false; this.stopRecording()}}>
+                        <i className="play icon"></i>
+                    </button>
                 </div>
                 <div id="charts" className="ui"></div>
                 <div id="console" className="ui content"></div>
