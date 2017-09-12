@@ -103,6 +103,7 @@ namespace pxsim.visuals {
         public init(bus: EventBus, state: ButtonPairState) {
             this.state = state;
             this.bus = bus;
+            this.state.setBus(bus);
             this.defs = [];
             this.element = this.mkBtns();
             this.updateState();
@@ -179,12 +180,11 @@ namespace pxsim.visuals {
                 })
                 btn.addEventListener(pointerEvents.up, ev => {
                     btnStates[index].pressed = false;
-                    this.bus.queue(btnStates[index].id, this.state.props.BUTTON_EVT_UP);
-                    this.bus.queue(btnStates[index].id, this.state.props.BUTTON_EVT_CLICK);
                 })
             })
             let updateBtns = (s: boolean) => {
-                btnStates.forEach(b => b.pressed = s)
+                btnStates.forEach(b => b.setPressedSilent(s))
+                this.state.abBtn.pressed = s;
             };
             this.abBtn.addEventListener(pointerEvents.down, ev => {
                 updateBtns(true);
@@ -194,8 +194,6 @@ namespace pxsim.visuals {
             })
             this.abBtn.addEventListener(pointerEvents.up, ev => {
                 updateBtns(false);
-                this.bus.queue(this.state.abBtn.id, this.state.props.BUTTON_EVT_UP);
-                this.bus.queue(this.state.abBtn.id, this.state.props.BUTTON_EVT_CLICK);
             })
         }
     }
