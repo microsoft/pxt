@@ -90,10 +90,10 @@ export class Editor extends srceditor.Editor {
                 blockFile = this.currFile.getVirtualFileName();
             }
 
-            const failedAsync = (file: string) => {
+            const failedAsync = (file: string, programTooLarge = false) => {
                 core.cancelAsyncLoading();
                 this.forceDiagnosticsUpdate();
-                return this.showConversionFailedDialog(file);
+                return this.showConversionFailedDialog(file, programTooLarge);
             }
 
             // might be undefined
@@ -138,7 +138,9 @@ export class Editor extends srceditor.Editor {
                         .then(resp => {
                             if (!resp.success) {
                                 this.currFile.diagnostics = resp.diagnostics;
-                                return failedAsync(blockFile);
+                                let tooLarge = false;
+                                resp.diagnostics.forEach(d => tooLarge = (tooLarge || d.code === 9266 /* error code when script is too large */));
+                                return failedAsync(blockFile, tooLarge);
                             }
                             xml = resp.outfiles[blockFile];
                             Util.assert(!!xml);
@@ -154,11 +156,16 @@ export class Editor extends srceditor.Editor {
         core.showLoadingAsync(lf("switching to blocks..."), promise).done();
     }
 
-    public showConversionFailedDialog(blockFile: string): Promise<void> {
+    public showConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {
         let bf = pkg.mainEditorPkg().files[blockFile];
+        if (programTooLarge) {
+            pxt.tickEvent("typescript.programTooLarge");
+        }
         return core.confirmAsync({
-            header: lf("Oops, there is a problem converting your code."),
-            body: lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version."),
+            header: programTooLarge ? lf("Program too large") : lf("Oops, there is a problem converting your code."),
+            body: programTooLarge ?
+                lf("Your program is too large to convert into blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.") :
+                lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version."),
             agreeLbl: lf("Discard and go to Blocks"),
             agreeClass: "cancel",
             agreeIcon: "cancel",
@@ -181,9 +188,8 @@ export class Editor extends srceditor.Editor {
         })
     }
 
-    public decompileAsync(blockFile: string): Promise<boolean> {
+    public decompileAsync(blockFile: string): Promise<pxtc.CompileResult> {
         return compiler.decompileAsync(blockFile)
-            .then(resp => resp.success);
     }
 
     display() {

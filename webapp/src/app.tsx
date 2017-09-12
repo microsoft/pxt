@@ -438,10 +438,12 @@ export class ProjectView
                 // current file is the ts file, so just switch
                 this.textEditor.openBlocks();
             } else if (tsFile) {
-                this.textEditor.decompileAsync(tsFile.name).then((success) => {
-                    if (!success) {
+                this.textEditor.decompileAsync(tsFile.name).then(resp => {
+                    if (!resp.success) {
                         this.setFile(tsFile)
-                        this.textEditor.showConversionFailedDialog(fn.name)
+                        let tooLarge = false;
+                        resp.diagnostics.forEach(d => tooLarge = (tooLarge || d.code === 9266 /* error code when script is too large */));
+                        this.textEditor.showConversionFailedDialog(fn.name, tooLarge)
                     } else {
                         this.setFile(fn)
                     }
@@ -573,8 +575,8 @@ export class ProjectView
                 if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName()) {
                     if (!file.content) // empty blocks file, open javascript editor
                         file = main.lookupFile("this/" + file.getVirtualFileName()) || file
-                    else this.textEditor.decompileAsync(file.getVirtualFileName()).then((success) => {
-                        if (!success)
+                    else this.textEditor.decompileAsync(file.getVirtualFileName()).then(resp => {
+                        if (!resp.success)
                             file = main.lookupFile("this/" + file.getVirtualFileName()) || file
                     });
                 }

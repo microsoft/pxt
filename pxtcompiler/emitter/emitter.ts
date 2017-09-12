@@ -80,7 +80,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9266
+    // next free error 9267
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
