@@ -64,6 +64,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         const embedding = !!cloud.embedding;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
+        const hideEmbed = !!targetTheme.hideShareEmbed;
 
         let ready = false;
         let mode = this.state.mode;
@@ -177,7 +178,7 @@ pxt extract ${url}`;
                         <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
                     </div>
                         : undefined }
-                    { ready ? <div>
+                    { ready && !hideEmbed ? <div>
                         <div className="ui divider"></div>
                         <sui.Button class="labeled focused" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } ariaExpanded={advancedMenu} onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
                         { advancedMenu ?
