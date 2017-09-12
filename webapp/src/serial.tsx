@@ -189,8 +189,8 @@ class ChartWrapper {
     public makeCanvas() {
         let canvas = document.createElement("canvas")
         this.chart.streamTo(canvas)
-        //TODO
-        canvas.setAttribute("style", "height:200px; width:100%;")
+        canvas.width = canvas.offsetWidth
+        canvas.height = canvas.offsetHeight
         return canvas
     }
     public getElement() {
