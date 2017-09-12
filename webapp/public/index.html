@@ -9,6 +9,10 @@
     <!-- @include appmeta.html -->
 
     <link id="blocklycss" rel="stylesheet" data-rtl="/blb/rtlblockly.css" href="/blb/blockly.css" type="text/css">
+    <style type="text/css">
+        @import "/blb/owl.carousel/owl.carousel.min.css";
+        @import "/blb/owl.carousel/owl.theme.default.min.css";
+    </style>
     <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" type="text/css">
     <style type="text/css">
         @import "/blb/custom.css";
@@ -42,6 +46,7 @@
     <!-- patch to load JS in electron -->
     <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
     <script type="text/javascript" src="/blb/jquery.js"></script>
+    <script type="text/javascript" src="/blb/owl.carousel/owl.carousel.min.js"></script>
     <script type="text/javascript" src="/blb/blockly/blockly_compressed.js"></script>
     <script type="text/javascript" src="/blb/blockly/blocks_compressed.js"></script>
     <script type="text/javascript" src="/blb/blockly/msg/js/en.js"></script>

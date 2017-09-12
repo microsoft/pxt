@@ -635,7 +635,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             }
 
             const marginTop = -Math.round(height / 2);
-            const scrolling = height >= window.innerHeight;
+            const scrolling = this.props.size == 'fullscreen' || height >= window.innerHeight;
 
             const newState: ModalState = {};
 
@@ -742,6 +742,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             ? null
             : cx([
                 'ui',
+                size,
                 dimmer === 'inverted' ? 'inverted' : '',
                 pxt.options.light ? '' : "transition",
                 'page modals dimmer visible active',

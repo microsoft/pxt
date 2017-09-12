@@ -152,7 +152,7 @@ declare namespace pxt {
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
-        sideDoc?: string; // if set: show the getting started button, clicking on getting started button links to that page
+        sideDoc?: string; // @deprecated. if set: show the getting started button, clicking on getting started button links to that page
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
         feedbackUrl?: string; // is set: a feedback link will show in the settings menu
         boardName?: string;
@@ -179,7 +179,7 @@ declare namespace pxt {
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
-        galleries?: pxt.Map<string>; // list of galleries to display in projects dialog
+        galleries?: pxt.Map<string|GalleryEntry>; // list of galleries to display in projects dialog
         crowdinProject?: string;
         crowdinBranch?: string; // optional branch specification for pxt
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
@@ -208,10 +208,17 @@ declare namespace pxt {
         blockColors?: Map<string>; // block namespace colors, used for build in categories
         blocklyColors?: Blockly.Colours; // Blockly workspace, flyout and other colors
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
-        useStartPage?: boolean;
+        skipHomeScreen?: boolean; // hide the home page on editor load and go straight to the editor view, loading the previous project
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
         appPathNames?: string[]; // Authorized URL paths in electron or UWP, all other paths will display a warning banner
         defaultBlockGap?: number; // For targets to override block gap
+    }
+
+    interface GalleryEntry {
+        path: string;
+        hoverIcon?: string;
+        hoverButton?: string;
+        hoverButtonClass?: string;
     }
 
     interface SocialOptions {
