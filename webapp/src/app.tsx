@@ -441,7 +441,7 @@ export class ProjectView
                 this.textEditor.decompileAsync(tsFile.name).then((success) => {
                     if (!success) {
                         this.setFile(tsFile)
-                        this.textEditor.showConversionFailedDialog(fn.name)
+                        this.textEditor.showConversionFailedDialog(fn.name, false)
                     } else {
                         this.setFile(fn)
                     }
