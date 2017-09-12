@@ -707,15 +707,15 @@ namespace pxt.blocks {
     ///////////////////////////////////////////////////////////////////////////////
 
     function extractNumber(b: B.Block): number {
-        let v = b.getFieldValue("NUM");
+        let v = b.getFieldValue(b.type === "math_number_minmax" ? "SLIDER" : "NUM");
         const parsed = parseFloat(v);
-        checkNumber(parsed);
+        checkNumber(parsed, b);
         return parsed;
     }
 
-    function checkNumber(n: number) {
-        if (n === Infinity || n === NaN) {
-            U.userError(lf("Number entered is either too large or too small"));
+    function checkNumber(n: number, b?: B.Block) {
+        if (n === Infinity || isNaN(n)) {
+            throwBlockError(lf("Number entered is either too large or too small"), b);
         }
     }
 
@@ -1732,6 +1732,15 @@ namespace pxt.blocks {
                 });
 
             return stmtsVariables.concat(stmtsMain)
+        } catch (err) {
+            let be: B.Block = (err as any).block;
+            if (be) {
+                be.setWarningText(err + "");
+                e.errors.push(be);
+            }
+            else {
+                throw err;
+            }
         } finally {
             removeAllPlaceholders();
         }
