@@ -666,7 +666,7 @@ namespace pxt.blocks {
     }
 
     function compileProcedure(e: Environment, b: B.Block, comments: string[]): JsNode[] {
-        const name = escapeVarName(b.getFieldValue("NAME"), e);
+        const name = escapeVarName(b.getFieldValue("NAME"), e, true);
         const stmts = getInputTargetBlock(b, "STACK");
         return [
             mkText("function " + name + "() "),
@@ -675,7 +675,7 @@ namespace pxt.blocks {
     }
 
     function compileProcedureCall(e: Environment, b: B.Block, comments: string[]): JsNode {
-        const name = escapeVarName(b.getFieldValue("NAME"), e);
+        const name = escapeVarName(b.getFieldValue("NAME"), e, true);
         return mkStmt(mkText(name + "()"));
     }
 
@@ -799,6 +799,7 @@ namespace pxt.blocks {
     export interface RenameMap {
         oldToNew: Map<string>;
         takenNames: Map<boolean>;
+        oldToNewFunctions: Map<string>;
     }
 
     export enum VarUsage {
@@ -854,7 +855,8 @@ namespace pxt.blocks {
             errors: [],
             renames: {
                 oldToNew: {},
-                takenNames: {}
+                takenNames: {},
+                oldToNewFunctions: {}
             },
             stats: {}
         }
@@ -965,10 +967,15 @@ namespace pxt.blocks {
     }
 
     // convert to javascript friendly name
-    export function escapeVarName(name: string, e: Environment): string {
+    export function escapeVarName(name: string, e: Environment, isFunction = false): string {
         if (!name) return '_';
 
-        if (e.renames.oldToNew[name]) {
+        if (isFunction) {
+            if (e.renames.oldToNewFunctions[name]) {
+                return e.renames.oldToNewFunctions[name];
+            }
+        }
+        else if (e.renames.oldToNew[name]) {
             return e.renames.oldToNew[name];
         }
 
@@ -984,7 +991,12 @@ namespace pxt.blocks {
             n += i;
         }
 
-        e.renames.oldToNew[name] = n;
+        if (isFunction) {
+            e.renames.oldToNewFunctions[name] = n;
+        }
+        else {
+            e.renames.oldToNew[name] = n;
+        }
         e.renames.takenNames[n] = true;
         return n;
     }

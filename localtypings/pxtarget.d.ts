@@ -210,6 +210,8 @@ declare namespace pxt {
         useStartPage?: boolean;
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
         appPathNames?: string[]; // Authorized URL paths in electron or UWP, all other paths will display a warning banner
+        defaultBlockGap?: number; // For targets to override block gap
+        hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
     }
 
     interface SocialOptions {
