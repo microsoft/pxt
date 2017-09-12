@@ -201,6 +201,7 @@ declare namespace pxt {
         highContrast?: boolean; // simulator has a high contrast mode
         selectLanguage?: boolean; // add language picker to settings menu
         defaultBlockGap?: number; // For targets to override block gap
+        hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
     }
 
     interface DocMenuEntry {
