@@ -82,7 +82,9 @@ namespace pxt.blocks.layout {
         return toSvgAsync(ws)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
-                return toPngAsyncInternal(sg.width, sg.height, 4, sg.xml);
+                const pixn = sg.width * sg.height;
+                const pixelDensity = pixn > 1280 * 1280 ? 1 : pixn > 800 * 800 ? 2 : 4;
+                return toPngAsyncInternal(sg.width, sg.height, pixelDensity, sg.xml);
             });
     }
 
