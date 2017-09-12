@@ -1,5 +1,6 @@
 /// <reference path="../../typings/globals/react/index.d.ts" />
 /// <reference path="../../typings/globals/react-dom/index.d.ts" />
+/// <reference path="../../localtypings/react-slick.d.ts" />
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
@@ -14,12 +15,14 @@ import * as compiler from "./compiler";
 import * as codecard from "./codecard"
 import * as gallery from "./gallery";
 
+import Slider from 'react-slick';
+
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 import Cloud = pxt.Cloud;
 
 interface ProjectsProps extends ISettingsProps {
-    hasGettingStarted: boolean;
+    //hasGettingStarted: boolean;
 }
 
 interface ProjectsState {
@@ -37,8 +40,6 @@ const MYSTUFF = "__mystuff";
 export class Projects extends data.Component<ProjectsProps, ProjectsState> {
     private prevGhData: pxt.github.GitRepo[] = [];
     private prevUrlData: Cloud.JsonScript[] = [];
-    private prevGalleries: pxt.Map<pxt.CodeCard[]> = {};
-    private galleryFetchErrors: { [tab: string]: boolean } = {};
 
     constructor(props: ProjectsProps) {
         super(props)
@@ -62,7 +63,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         this.setState({ visible: false, isInitialStartPage: false });
     }
 
-    showInitialStartPage(resumeProject?: pxt.workspace.Header) {
+    showHome(resumeProject?: pxt.workspace.Header) {
         this.setState({
             visible: true,
             tab: WELCOME,
@@ -74,26 +75,12 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
     showOpenProject(tab?: string) {
         const gals = pxt.appTarget.appTheme.galleries || {};
         tab = (!tab || !gals[tab]) ? MYSTUFF : tab;
-        this.setState({ visible: true, tab: tab || MYSTUFF });
+        this.setState({ visible: true, tab: tab || WELCOME });
     }
 
     showOpenTutorials() {
         const gals = Object.keys(pxt.appTarget.appTheme.galleries || {});
-        this.setState({ visible: true, tab: gals[0] || MYSTUFF });
-    }
-
-    fetchGallery(tab: string, path: string): pxt.CodeCard[] {
-        if (this.state.tab != tab) return [];
-
-        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as gallery.Gallery[];
-        if (res) {
-            if (res instanceof Error) {
-                this.galleryFetchErrors[tab] = true;
-            } else {
-                this.prevGalleries[path] = Util.concat(res.map(g => g.cards));
-            }
-        }
-        return this.prevGalleries[path] || [];
+        this.setState({ visible: true, tab: gals[0] || WELCOME });
     }
 
     fetchUrlData(): Cloud.JsonScript[] {
@@ -136,8 +123,6 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
 
         const theme = pxt.appTarget.appTheme;
         const galleries = theme.galleries || {};
-        const galleryNames = Object.keys(galleries);
-        const tabs = (pxt.appTarget.appTheme.useStartPage ? [WELCOME, MYSTUFF] : [MYSTUFF]).concat(Object.keys(galleries));
 
         // lf("Make")
         // lf("Code")
@@ -147,8 +132,6 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
 
         const headers = this.fetchLocalData();
         const urldata = this.fetchUrlData();
-        this.galleryFetchErrors = {};
-        const gals = Util.mapMap(galleries, k => this.fetchGallery(k, galleries[k]));
 
         const chgHeader = (hdr: pxt.workspace.Header) => {
             pxt.tickEvent(tab == WELCOME ? "projects.welcome.resume" : "projects.header");
@@ -245,7 +228,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         }
         const projectGalleries = () => {
             pxt.tickEvent("projects.welcome.galleries");
-            this.setState({ tab: galleryNames[0] })
+            //this.setState({ tab: galleryNames[0] })
         }
 
         const isEmpty = () => {
@@ -281,8 +264,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
             { name: lf("Older"), headers: headersOlder },
         ];
 
-        const hadFetchError = this.galleryFetchErrors[tab];
-        const isLoading = tab != WELCOME && tab != MYSTUFF && !hadFetchError && !gals[tab].length;
+        //const hadFetchError = this.galleryFetchErrors[tab];
+        const isLoading = tab != WELCOME && tab != MYSTUFF;// && !hadFetchError && !gals[tab].length;
 
         const tabClasses = sui.cx([
             isLoading ? 'loading' : '',
@@ -291,71 +274,59 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
 
         return (
             <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={false}
-                onClose={() => this.hide(/* closeOnly */ true) } dimmer={true}
-                closeOnDimmerClick>
-                <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
-                    <sui.Menu inverted={targetTheme.invertedMenu} secondary>
-                        {tabs.map(t => {
-                            let name: string;
-                            if (t == MYSTUFF) name = lf("My Stuff");
-                            else if (t == WELCOME) name = lf("Welcome!");
-                            else name = Util.rlf(t);
-                            return (<sui.MenuItem key={`tab${t}`} active={tab == t} name={name} onClick={() => this.setState({ tab: t }) } />)
-                        }) }
+                onClose={() => this.hide(/* closeOnly */ true) } dimmer={true}>
+                <div id="menubar" role="banner">
+                    <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
+                        <div className="left menu">
+                            <span className="ui item logo brand">
+                                {targetTheme.logo || targetTheme.portraitLogo
+                                    ? <a className="ui image" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`} /></a>
+                                    : <span className="name">{targetTheme.name}</span>}
+                                {targetTheme.portraitLogo ? (<a className="ui" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`} /></a>) : null}
+                            </span>
+                        </div>
                         <div className="right menu">
-                            <sui.Button
-                                icon='close'
-                                class={`huge clear ${targetTheme.invertedMenu ? 'inverted' : ''}`}
-                                onClick={() => this.hide(/* closeOnly */ true) } />
+                            <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={() => pxt.tickEvent("menu.org") }>
+                                {targetTheme.organizationWideLogo || targetTheme.organizationLogo
+                                    ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`} />
+                                    : <span className="name">{targetTheme.organization}</span>}
+                                {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`} />) : null}
+                            </a>
                         </div>
-                    </sui.Menu>
-                </sui.Segment>
+                    </div>
+                </div>
                 {tab == WELCOME ? <div className={tabClasses}>
-                    <div className="ui stackable two column grid welcomegrid">
-                        <div className="six wide column labelsgroup">
-                            <h2 className="editorname">{pxt.appTarget.name}</h2>
-                            <div className={"large ui loader editoravatar"}></div>
-                        </div>
-                        <div className="group ten wide column">
-                            <div className="ui cards centered">
-                                {this.state.resumeProject ? <codecard.CodeCardView
-                                    key={'resume'}
-                                    iconColor="teal"
-                                    iconContent={lf("Resume") }
-                                    description={lf("Load the last project you worked on") }
-                                    onClick={() => resume() }
-                                    /> : undefined}
-                                {pxt.appTarget.appTheme.sideDoc ? <codecard.CodeCardView
-                                    key={'gettingstarted'}
-                                    iconColor="green"
-                                    iconContent={lf("Getting started") }
-                                    description={lf("Create a fun, beginner project in a guided tutorial") }
-                                    onClick={() => gettingStarted() }
-                                    /> : undefined}
-                                <codecard.CodeCardView
-                                    key={'newproject'}
-                                    iconColor="brown"
-                                    iconContent={lf("New project") }
-                                    description={lf("Start a new, empty project") }
-                                    onClick={() => newProject() }
-                                    />
-                                <codecard.CodeCardView
-                                    key={'loadproject'}
-                                    iconColor="grey"
-                                    iconContent={lf("Load project") }
-                                    description={lf("Load a previous project") }
-                                    onClick={() => loadProject() }
-                                    />
-                                {galleryNames.length > 0 ? <codecard.CodeCardView
-                                    key={'projectgalleries'}
-                                    iconColor="orange"
-                                    iconContent={lf("Project galleries") }
-                                    description={lf("Browse guided tutorials, project samples and awesome activities") }
-                                    onClick={() => projectGalleries() }
-                                    /> : undefined}
+                    <div className="ui segment gallerysegement">
+
+                    </div>
+                    <div className="ui segment gallerysegment">
+                        <h4 className="ui header">{lf("My Stuff") }</h4>
+                        <div className="ui stackable grid">
+                            <div className="four wide column">
+                                <div className="ui card newprojectcard">
+                                    <div className="content">
+                                        <i className="icon huge add circle"></i>
+                                        <span className="header">{lf("New Project...") }</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="twelve wide column">
+                                <h4 className="ui header">{lf("Recent") }</h4>
+                                <ProjectsCarousel parent={this.props.parent} name={'recent'}/>
                             </div>
                         </div>
                     </div>
+                    {Object.keys(galleries).map(galleryName =>
+                        <div>
+                            <div className="ui divider"></div>
+                            <div className="ui segment gallerysegment">
+                                <h2 className="ui header">{galleryName}</h2>
+                                <div className="content">
+                                    <ProjectsCarousel parent={this.props.parent} name={galleryName} galleryEntry={galleries[galleryName]}/>
+                                </div>
+                            </div>
+                        </div>
+                    ) }
                 </div> : undefined }
                 {tab == MYSTUFF ? <div className={tabClasses}>
                     <div className="group">
@@ -425,20 +396,6 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     </div>
                 </div> : undefined }
                 {tab != MYSTUFF && tab != WELCOME ? <div className={tabClasses}>
-                    {hadFetchError ?
-                        <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
-                        : <div className="ui cards centered">
-                            {gals[tab].map(scr => <codecard.CodeCardView
-                                key={tab + scr.name}
-                                name={scr.name}
-                                description={scr.description}
-                                url={scr.url}
-                                imageUrl={scr.imageUrl}
-                                youTubeId={scr.youTubeId}
-                                onClick={() => chgGallery(scr) }
-                                />
-                            ) }
-                        </div>}
                 </div> : undefined }
                 { isEmpty() ?
                     <div className="ui items">
@@ -449,5 +406,155 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     : undefined }
             </sui.Modal >
         );
+    }
+}
+
+interface ProjectsCarouselProps extends ISettingsProps {
+    name: string;
+    galleryEntry?: string | pxt.GalleryEntry;
+    cardWidth?: number;
+}
+
+interface ProjectsCarouselState {
+
+}
+
+export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, ProjectsCarouselState> {
+    private prevGalleries: pxt.CodeCard[] = [];
+    private prevHeaders: pxt.workspace.Header[] = [];
+    private hasFetchErrors = false;
+    private node: any;
+    private carousel: any;
+
+    constructor(props: ProjectsCarouselProps) {
+        super(props)
+        this.state = {
+        }
+
+        this.next = this.next.bind(this);
+        this.prev = this.prev.bind(this);
+        this.to = this.to.bind(this);
+        this.create = this.create.bind(this);
+        this.destory = this.destory.bind(this);
+    }
+
+    fetchGallery(path: string): pxt.CodeCard[] {
+        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as gallery.Gallery[];
+        if (res) {
+            if (res instanceof Error) {
+                this.hasFetchErrors = true;
+            } else {
+                this.prevGalleries = Util.concat(res.map(g => g.cards));
+            }
+        }
+        return this.prevGalleries || [];
+    }
+
+    fetchLocalData(): pxt.workspace.Header[] {
+        let headers: pxt.workspace.Header[] = this.getData("header:*")
+        this.prevHeaders = headers || [];
+        return headers;
+    }
+
+    componentDidMount() {
+        this.updateCarousel();
+    }
+
+    componentDidUpdate(prevProps: ProjectsCarouselProps, prevState: ProjectsCarouselState) {
+        this.updateCarousel();
+    }
+
+    updateCarousel() {
+        if (!this.prevGalleries.length && !this.prevHeaders.length) return;
+        this.carousel = $(this.node);
+        //this.carousel.owlCarousel(this.getCarouselOptions());
+    }
+
+    getCarouselOptions() {
+        const isRTL = Util.isUserLanguageRtl();
+        const options: any = {
+            accessibility: true,
+            dots: true,
+            infinite: true,
+            speed: 500,
+            slidesToShow: 1,
+            slidesToScroll: 1
+        };
+        return options;
+    }
+
+    create() {
+        //if (this.carousel) this.carousel.owlCarousel(this.getCarouselOptions());
+    }
+
+    destory() {
+        //if (this.carousel) this.carousel.trigger('destroy.owl.carousel');
+    }
+
+    next(speed: number) {
+        if (typeof (speed) == 'number') {
+            this.carousel.trigger('next.owl.carousel', [speed]);
+        }
+        else {
+            this.carousel.trigger('next.owl.carousel');
+        }
+    }
+
+    prev(speed: number) {
+        if (typeof (speed) == 'number') {
+            this.carousel.trigger('prev.owl.carousel', [speed]);
+        }
+        else {
+            this.carousel.trigger('prev.owl.carousel');
+        }
+    }
+
+    to(position: number, speed: number) {
+        if (typeof (position) == 'number' && typeof (speed) == 'number') {
+            this.carousel.trigger('to.owl.carousel', [position, speed]);
+        }
+        else {
+            this.carousel.trigger('to.owl.carousel');
+        }
+    }
+
+    renderCore() {
+        //const {visible, tab} = this.state;
+        const {name, galleryEntry} = this.props;
+        const theme = pxt.appTarget.appTheme;
+        const isGallery = galleryEntry && !(typeof galleryEntry == "string");
+        const path = isGallery ? (galleryEntry as pxt.GalleryEntry).path : (galleryEntry as string);
+        const hoverIcon = isGallery ? (galleryEntry as pxt.GalleryEntry).hoverIcon : '';
+        const hoverButton = isGallery ? (galleryEntry as pxt.GalleryEntry).hoverButton : '';
+        const hoverButtonClass = isGallery ? (galleryEntry as pxt.GalleryEntry).hoverButtonClass : '';
+
+        // Fetch the gallery
+        this.hasFetchErrors = false;
+        let cards: pxt.CodeCard[];
+        let headers: pxt.workspace.Header[];
+        if (path) {
+            cards = this.fetchGallery(path);
+        } else {
+            headers = this.fetchLocalData();
+        }
+
+        const chgGallery = (src: any) => {
+            console.log(src);
+        }
+
+        const chgHeader = (src: any) => {
+            console.log(src);
+        }
+
+        const sliderSettings = this.getCarouselOptions();
+
+        return <div>
+            {this.hasFetchErrors ?
+                <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
+                :
+                <Slider dots={true} accessibility={true}>
+                    
+                </Slider>}
+        </div>;
     }
 }
