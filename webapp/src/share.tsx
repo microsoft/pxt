@@ -64,11 +64,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         const embedding = !!cloud.embedding;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
-<<<<<<< HEAD
-=======
         const hideEmbed = !!targetTheme.hideShareEmbed;
-        const showSocialIcons = !!targetTheme.socialOptions;        
->>>>>>> 8fad7baa... support for hiding embed options (#2916)
 
         let ready = false;
         let mode = this.state.mode;
