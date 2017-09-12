@@ -713,7 +713,7 @@ namespace pxt.blocks {
         return parsed;
     }
 
-    function checkNumber(n: number, b?: B.Block) {
+    function checkNumber(n: number, b: B.Block) {
         if (n === Infinity || isNaN(n)) {
             throwBlockError(lf("Number entered is either too large or too small"), b);
         }
@@ -836,17 +836,17 @@ namespace pxt.blocks {
         return mkPrefix("!", [H.mkParenthesizedExpression(expr)]);
     }
 
-    function extractNumberLit(e: JsNode): number {
+    function extractNumberLit(e: JsNode, b: B.Block): number {
         if (e.type != NT.Prefix || !/^-?\d+$/.test(e.op))
             return null
         const parsed = parseInt(e.op);
-        checkNumber(parsed);
+        checkNumber(parsed, b);
         return parsed;
     }
 
     function compileRandom(e: Environment, b: B.Block, comments: string[]): JsNode {
         let expr = compileExpression(e, getInputTargetBlock(b, "limit"), comments);
-        let v = extractNumberLit(expr)
+        let v = extractNumberLit(expr, b)
         if (v != null)
             return H.mathCall("random", [H.mkNumberLiteral(v + 1)]);
         else
