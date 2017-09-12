@@ -323,7 +323,7 @@ namespace ts.pxtc.decompiler {
             }
         })
 
-        let n : StatementNode;
+        let n: StatementNode;
         try {
             n = codeBlock(stmts, undefined, true);
         }
@@ -345,7 +345,7 @@ namespace ts.pxtc.decompiler {
         }
 
         if (n) {
-            emitStatementNode(n);   
+            emitStatementNode(n);
         }
 
         result.outfiles[file.fileName.replace(/(\.blocks)?\.\w*$/i, '') + '.blocks'] = `<xml xmlns="http://www.w3.org/1999/xhtml">
