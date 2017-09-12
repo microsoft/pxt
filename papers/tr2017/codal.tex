@@ -4,7 +4,9 @@
 \emph{TBALL comment: the main focus on CODAL here is the support for event-based programming with concurrrent handlers,
    providing the bridge between scripting languages such as JavaScript and the world of microcontrollers. }
 
-For reasons of efficiency and ease of access to hardware, code for microcontrollers is typically written in C/C++. 
+\emph{TBALL comment: a second focus, also important, is how CODAL is architected to support multiple boards}
+
+For reasons of efficiency and ease of access to hardware, code for microcontrollers is typically written in C and/or C++. 
 However, this still leaves the programming model undefined. The Arduino programming model is based on polling: 
 an Arduino ``sketch'' is a program template that consists of a setup procedure, for initialization of data structures,
 and a loop procedure; programmers implement the body of setup and loop, where they explicitly poll the state of the
@@ -17,24 +19,70 @@ and communicate via events using a publish/subscribe mechanism.  Components can 
 concurrently using a non-preemptive fiber scheduler. Each software component abstracts a hardware feature, sensor,
 or connected device. \emph{TODO: how CODAL handles responsiveness?}
 
-The CODAL runtime provides higher-level abstractions to the compiler developer than the Arduino runtime, making it
+The CODAL runtime provides higher-level abstractions to the compiler developer, making it
 easy to compile event-based mechanisms, such as found in scripting languages like JavaScript, to the world of the
-microcontroller.  [Greater flexibility, learning opportunities. We will show it is competitive in terms of memory
-usage and performance.]
+microcontroller.   The CODAL runtime has two layers:
+\begin{itemize}
 
-\subsection{Components}
+\item \emph{Core Abstractions}: this layer defines the 
+base classes for (\href{https://www.github.com/lancaster-university/codal-core}{lancaster-university/codal-core}
+components, eventing, scheduling and device abstractions; \emph{design goal: processor agnostic}
+
+\item \emph{Processor/board optimization and specialization}: 
+\href{https://www.github.com/lancaster-university/codal-samd21-mbed}{lancaster-university/codal-samd21-mbed}, 
+~\href{https://www.github.com/lancaster-university/codal-atmega328p}{lancaster-university/codal-atmega328p};
+\end{itemize}
+
+% \emph{Build shell}:~\href{https://www.github.com/lancaster-university/codal}{lancaster-university/codal};
+
+\subsection{Core Abstractions}
+
+\subsubsection{System Components}
+
+% Timer
+% Pin
+% Heap Allocator
+% USB
+% Logging
+% Fibers and Scheduler
+
+
+\subsubsection{Device Components}
+
+% higher-level abstractions than GPIO 
+
+% #define DEVICE_ID_BUTTON_A            1                         // IDs used by commonly used components. Used by convention.
+% #define DEVICE_ID_BUTTON_B            2
+% #define DEVICE_ID_BUTTON_AB           3
+% #define DEVICE_ID_BUTTON_RESET        4
+% #define DEVICE_ID_ACCELEROMETER       5
+% #define DEVICE_ID_COMPASS             6
+% #define DEVICE_ID_DISPLAY             7
+% #define DEVICE_ID_THERMOMETER         8
+% #define DEVICE_ID_RADIO               9
+% #define DEVICE_ID_RADIO_DATA_READY    10
+% #define DEVICE_ID_MULTIBUTTON_ATTACH  11
+% #define DEVICE_ID_SERIAL              12
+% #define DEVICE_ID_GESTURE             13
+% #define DEVICE_ID_SYSTEM_TIMER        14
+% #define DEVICE_ID_SCHEDULER           15
+% #define DEVICE_ID_COMPONENT           16
+% #define DEVICE_ID_LIGHT_SENSOR        17
+% #define DEVICE_ID_TOUCH_SENSOR        18
+% #define DEVICE_ID_SYSTEM_DAC          19
+% #define DEVICE_ID_SYSTEM_MICROPHONE   20
+% #define DEVICE_ID_SYSTEM_LEVEL_DETECTOR 21
+
+\subsubsection{Events and the Message Bus}
 
 \emph{TODO - CodalComponent: software model of device driver (physical and logical); components requiring periodic invocation}
-
-\subsection{Events and the Message Bus}
 
 A message bus enables a simple but powerful eventing model. Every runtime component has its own namespace for events
 which can be raised at any time. Users may register event handlers for any number of such events. Moreover, event handlers
 are transparently run in their own fiber - providing decoupling of user code from system code, device drivers and interrupts.
 Fibers may also block awaiting events---a simple yet effective condition synchronisation mechanism.
 
-
-\subsection{Fiber Scheduler}
+\subsubsection{Fiber Scheduler}
 
 A fiber scheduler enables a degree of managed concurrency on the device. Many high level languages require asynchronous
 execution for responsiveness. Support for these languages can be greatly simplified through the presence of a scheduler. 
@@ -43,6 +91,11 @@ by recent studies of concurrency in visual programming languages \cite{meerbaum2
 scheduler is that when no user code needs to be executed, the device can safely be put into a power efficient sleep mode,
 transparently to the user.
 
-\subsection{CodalDevice}
+\subsubsection{CodalDevice}
 
 \emph{Putting it all together}
+
+
+\subsection{Processor}
+
+\subsubsection{SAMD21}
