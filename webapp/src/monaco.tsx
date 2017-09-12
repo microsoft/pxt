@@ -158,9 +158,12 @@ export class Editor extends srceditor.Editor {
 
     public showConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {
         let bf = pkg.mainEditorPkg().files[blockFile];
+        if (programTooLarge) {
+            pxt.tickEvent("typescript.programTooLarge");
+        }
         return core.confirmAsync({
             header: programTooLarge ? lf("Program too large") : lf("Oops, there is a problem converting your code."),
-            body: programTooLarge ? 
+            body: programTooLarge ?
                 lf("Your program is too large to convert into blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.") :
                 lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version."),
             agreeLbl: lf("Discard and go to Blocks"),
