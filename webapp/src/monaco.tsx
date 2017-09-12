@@ -185,9 +185,8 @@ export class Editor extends srceditor.Editor {
         })
     }
 
-    public decompileAsync(blockFile: string): Promise<boolean> {
+    public decompileAsync(blockFile: string): Promise<pxtc.CompileResult> {
         return compiler.decompileAsync(blockFile)
-            .then(resp => resp.success);
     }
 
     display() {
