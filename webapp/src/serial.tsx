@@ -25,6 +25,10 @@ export class Editor extends srceditor.Editor {
     private maxConsoleEntries: number = 100
     private active: boolean = true
 
+    getId() {
+        return "serialEditor"
+    }
+
     acceptsFile(file: pkg.File) {
         // TODO hardcoded string
         return file.name === pxt.SERIAL_EDITOR_FILE
@@ -83,12 +87,7 @@ export class Editor extends srceditor.Editor {
         } else {
             let newChart = new ChartWrapper(source, variable, nvalue)
             this.chartWrappers.push(newChart)
-            //TODO ugh
-            let newRow = document.createElement("div")
-            newRow.className = "row"
-            newRow.appendChild(newChart.getElement())
-            document.getElementById("charts").appendChild(newRow)
-            //document.getElementById("charts").appendChild(newChart.getElement())
+            document.getElementById("serialCharts").appendChild(newChart.getElement())
         }
     }
 
@@ -99,7 +98,7 @@ export class Editor extends srceditor.Editor {
             if (ch === "\n" || this.consoleBuffer.length > this.maxLineLength) {
                 let newEntry = document.createElement("div")
                 newEntry.textContent = this.consoleBuffer
-                let consoleRoot = document.getElementById("console")
+                let consoleRoot = document.getElementById("serialConsole")
                 consoleRoot.appendChild(newEntry)
                 if (consoleRoot.childElementCount > this.maxConsoleEntries) {
                     consoleRoot.removeChild(consoleRoot.firstChild)
@@ -124,8 +123,8 @@ export class Editor extends srceditor.Editor {
     }
 
     clear() {
-        let chartRoot = document.getElementById("charts")
-        let consoleRoot = document.getElementById("console")
+        let chartRoot = document.getElementById("serialCharts")
+        let consoleRoot = document.getElementById("serialConsole")
         this.clearNode(chartRoot)
         this.clearNode(consoleRoot)
         this.chartWrappers = []
@@ -135,6 +134,21 @@ export class Editor extends srceditor.Editor {
 
     display() {
         return (
+            <div id="serialArea">
+                <div id="serialHeader" className="ui segment">
+                    <span className="ui huge left aligned header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
+                    <button className="ui right floated icon button" onClick= {() => {this.active = false; this.pauseRecording()}}>
+                        <i className="pause icon"></i>
+                    </button>
+                    <button className="ui right floated icon button" onClick = {() => {this.active = true; this.startRecording()}}>
+                        <i className="play icon"></i>
+                    </button>
+                </div>
+                <div id="serialCharts"></div>
+                <div className="ui fitted divider"></div>
+                <div id="serialConsole"></div>
+            </div>
+            /**
             <div id="serialEditor" className="ui grid">
                 <div className="four column row">
                     <div className="left floated column">
@@ -155,6 +169,7 @@ export class Editor extends srceditor.Editor {
                 <div id="console" className="row">
                 </div>
             </div>
+            **/
             /**
             <div id="serialEditor" className="ui grid">
                 <div className="ui segment">

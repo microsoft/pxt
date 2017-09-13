@@ -7,27 +7,37 @@
 
 #serialEditor {
     background-color: #FFF;
-    padding: 0.5rem;
 }
 
-#serialEditor .ui.segment {
-    padding: 0;
+#serialArea .ui.segment {
     border: none;
     box-shadow: none;
 }
 
-#charts {
-    overflow-y: auto;
-    max-height: 50%;
+#serialCharts .ui.segment {
+    padding: 0;
+    height: 200px;
 }
 
-#charts .ui.segment {
-    height: 12rem;
+/** TODO **/
+
+#serialCharts canvas {
     width: 100%;
-}
-
-#serialEditor canvas {
     height: 100%;
-    width: 100%;
     margin: 0 !important;
+}
+
+#serialArea {
+    height: 100%;
+}
+
+#serialHeader {
+    height: 10%;
+    margin: 0;
+}
+
+#serialCharts,
+#serialConsole {
+    height: 45%;
+    overflow-y: auto;
 }
