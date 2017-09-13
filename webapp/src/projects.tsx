@@ -22,7 +22,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 import Cloud = pxt.Cloud;
 
 interface ProjectsProps extends ISettingsProps {
-    //hasGettingStarted: boolean;
+    hasGettingStarted: boolean;
 }
 
 interface ProjectsState {
@@ -296,8 +296,16 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     </div>
                 </div>
                 {tab == WELCOME ? <div className={tabClasses}>
-                    <div className="ui segment gallerysegement">
-
+                    <div className="ui segment getting-started-segment">
+                        <div className="ui stackable grid equal width">
+                            <div className="column" />
+                            <div className="column right aligned">
+                                <div className="getting-started">
+                                    <h2>{lf("First time here?")}</h2>
+                                    <div className="ui huge primary button" onClick={gettingStarted}>{lf("Get Started")}<i className="right arrow icon"></i></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div className="ui segment gallerysegment">
                         <h4 className="ui header">{lf("My Stuff") }</h4>
@@ -311,7 +319,6 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                 </div>
                             </div>
                             <div className="twelve wide column">
-                                <h4 className="ui header">{lf("Recent") }</h4>
                                 <ProjectsCarousel parent={this.props.parent} name={'recent'}/>
                             </div>
                         </div>
@@ -416,7 +423,9 @@ interface ProjectsCarouselProps extends ISettingsProps {
 }
 
 interface ProjectsCarouselState {
-
+    expanded?: boolean;
+    slickGoTo?: number;
+    slickSetOption?: any;
 }
 
 export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, ProjectsCarouselState> {
@@ -429,7 +438,12 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     constructor(props: ProjectsCarouselProps) {
         super(props)
         this.state = {
+            expanded: false,
+            slickGoTo: 0,
+            slickSetOption: undefined
         }
+
+        this.showDetails = this.showDetails.bind(this);
     }
 
     fetchGallery(path: string): pxt.CodeCard[] {
@@ -476,8 +490,12 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         return options;
     }
 
+    showDetails(index: number, src: any) {
+        this.setState({ expanded: true, slickGoTo: index });
+    }
+
     renderCore() {
-        //const {visible, tab} = this.state;
+        const {expanded, slickGoTo, slickSetOption} = this.state;
         const {name, galleryEntry} = this.props;
         const theme = pxt.appTarget.appTheme;
         const isGallery = galleryEntry && !(typeof galleryEntry == "string");
@@ -505,37 +523,57 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         }
 
         const sliderSettings = this.getCarouselOptions();
+        const responsiveOptions = [{
+            breakpoint: 1024,
+            settings: {
+                slidesToShow: 3,
+                slidesToScroll: 3,
+                infinite: false
+            }
+        }, {
+                breakpoint: 600,
+                settings: {
+                    slidesToShow: 2,
+                    slidesToScroll: 2,
+                    infinite: false
+                }
+            }, {
+                breakpoint: 300,
+                settings: "unslick" // destroys slick
+            }];
 
-        return <div>
+        return <div className="ui dimmable">
             {this.hasFetchErrors ?
                 <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
                 :
-                <Slider dots={true} accessibility={true} speed={500} slidesToScroll={1} slidesToShow={5}>
-                    {cards ? cards.map(scr =>
-                        <codecard.CodeCardView
-                            key={path + scr.name}
-                            name={scr.name}
-                            description={scr.description}
-                            url={scr.url}
-                            imageUrl={scr.imageUrl}
-                            youTubeId={scr.youTubeId}
-                            hoverIcon={hoverIcon}
-                            hoverButton={hoverButton}
-                            hoverButtonClass={hoverButtonClass}
-                            onClick={() => chgGallery(scr) }
-                            />
+                <Slider slickGoTo={slickGoTo} dots={false} infinite={false} slidesToShow={4} slidesToScroll={4} responsive={responsiveOptions}>
+                    {cards ? cards.map((scr, index) =>
+                        <div key={path + scr.name}>
+                            {expanded ? <div>{scr.name}</div> :
+                                <codecard.CodeCardView
+                                    name={scr.name}
+                                    description={scr.description}
+                                    url={scr.url}
+                                    imageUrl={scr.imageUrl}
+                                    youTubeId={scr.youTubeId}
+                                    hoverIcon={hoverIcon}
+                                    hoverButton={hoverButton}
+                                    hoverButtonClass={hoverButtonClass}
+                                    onClick={() => this.showDetails(index, scr) }
+                                    />
+                            }</div>
                     ) : headers.slice(0, 5).map(scr =>
-                        <codecard.CodeCardView
+                        <div><codecard.CodeCardView
                             cardType="file"
                             className="file"
                             key={'local' + scr.id}
                             name={scr.name}
                             time={scr.recentUse}
                             url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                            onClick={() => chgHeader(scr) }
-                            />
+                            /></div>
                     ) }
                 </Slider>}
+            {expanded ? <div className="expanded"></div> : undefined}
         </div>;
     }
 }

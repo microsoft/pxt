@@ -14,12 +14,21 @@
 
 /* Carousel */
 .projectsdialog {
-    .owl-carousel .item-video {
-        width: 300px;
-        height: 300px;
-    }
-    .owl-carousel .item-img img {
-        min-height: 200px;
+    .getting-started-segment {
+        margin-left: -1rem;
+        margin-right: -0.7rem;
+        margin-top: calc(@mainMenuHeight - 1rem) !important;
+        padding: 0;
+        border-radius: 0;
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-image: url(@gettingStartedImageUrl);
+        height: 400px;
+
+        .getting-started {
+            padding: 2rem;
+            margin-top: 150px;
+        }
     }
 
     .ui.segment.tabsegment {
@@ -34,6 +43,35 @@
 
         .header {
             font-size: 24px;
+        }
+    }
+}
+
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+    /* Carousel */
+    .projectsdialog {
+        .getting-started-segment {
+            margin-top: calc(@mobileMenuHeight - 1rem) !important;
+            height: 300px;
+
+            .getting-started {
+                margin-top: 100px;
+            }
+        }
+    }
+}
+
+
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+    .projectsdialog {
+        .getting-started-segment {
+            .getting-started {
+                margin-top: 0px;
+            }
         }
     }
 }
