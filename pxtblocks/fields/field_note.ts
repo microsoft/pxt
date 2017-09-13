@@ -411,7 +411,7 @@ namespace pxtblockly {
             let pianoHeight: number;
             let keyWidth: number = 22;
             let keyHeight: number = 90;
-            let labelHeight: number = 20;
+            let labelHeight: number = 24;
             let prevNextHeight: number = 20;
             let whiteKeyCounter: number = 0;
             let selectedKeyColor: string = "yellowgreen";
@@ -673,7 +673,7 @@ namespace pxtblockly {
              * @param {number} leftPosition horizontal position of the label
              * @param {boolean} isMobile true if the device is a mobile
              * @return {goog.dom} DOM with the new css style.
-             * @private 
+             * @private
              */
             function getShowNoteStyle(topPosition: number, leftPosition: number, isMobile: boolean) {
                 topPosition += keyHeight;
@@ -698,7 +698,7 @@ namespace pxtblockly {
              * @param {boolean} isPrev true if is previous button, false otherwise
              * @param {boolean} isMobile true if the device is a mobile
              * @return {goog.dom} DOM with the new css style.
-             * @private 
+             * @private
              */
             function getNextPrevStyle(topPosition: number, leftPosition: number, isPrev: boolean, isMobile: boolean) {
                 //  x position of the prev/next button
