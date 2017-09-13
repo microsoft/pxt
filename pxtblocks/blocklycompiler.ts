@@ -1471,15 +1471,28 @@ namespace pxt.blocks {
         return tdASTtoTS(e, compiled);
     }
 
+    function eventWeight(b: B.Block, e: Environment) {
+        if (b.type === ts.pxtc.ON_START_TYPE) {
+            return 0;
+        }
+        const api = e.stdCallTable[b.type];
+        if (api && api.attrs.afterOnStart) {
+            return 1;
+        }
+        else {
+            return -1;
+        }
+    }
+
     function compileWorkspace(e: Environment, w: B.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
         try {
             infer(e, w);
 
             const stmtsMain: JsNode[] = [];
 
-            // all compiled top level blocks are event, move on start to bottom
+            // all compiled top level blocks are events
             const topblocks = w.getTopBlocks(true).sort((a, b) => {
-                return (a.type == ts.pxtc.ON_START_TYPE ? 1 : 0) - (b.type == ts.pxtc.ON_START_TYPE ? 1 : 0);
+                return eventWeight(a, e) - eventWeight(b, e)
             });
 
             updateDisabledBlocks(e, w.getAllBlocks(), topblocks);

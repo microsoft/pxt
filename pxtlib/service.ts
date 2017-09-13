@@ -135,6 +135,7 @@ namespace ts.pxtc {
         groups?: string[];
         labelLineWidth?: string;
         handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
+        afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
 
         // on interfaces
         indexerGet?: string;
@@ -356,7 +357,7 @@ namespace ts.pxtc {
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
-    const booleanAttributes = ["advanced", "handlerStatement"]
+    const booleanAttributes = ["advanced", "handlerStatement", "afterOnStart"]
 
     export function parseCommentString(cmt: string): CommentAttrs {
         let res: CommentAttrs = {
