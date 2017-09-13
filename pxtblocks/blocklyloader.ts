@@ -1430,6 +1430,14 @@ namespace pxt.blocks {
         }
     }
 
+    export function removeSearch() {
+        let blocklySearchArea = document.getElementById('blocklySearchArea') as HTMLInputElement;
+
+        if (blocklySearchArea) {
+            blocklySearchArea.parentNode.removeChild(blocklySearchArea);
+        }
+    }
+
     function categoryElement(tb: Element, nameid: string): Element {
         return tb ? getFirstChildWithAttr(tb, "category", "nameid", nameid.toLowerCase()) : undefined;
     }

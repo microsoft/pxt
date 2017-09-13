@@ -554,10 +554,10 @@ export class ProjectView
     }
 
     reloadHeaderAsync() {
-        return this.loadHeaderAsync(this.state.header, this.state.filters)
+        return this.loadHeaderAsync(this.state.header, this.state.editorState)
     }
 
-    loadHeaderAsync(h: pxt.workspace.Header, filters?: pxt.editor.ProjectFilters): Promise<void> {
+    loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
         if (!h)
             return Promise.resolve()
 
@@ -567,7 +567,7 @@ export class ProjectView
         logs.clear();
         this.setState({
             showFiles: false,
-            filters: filters,
+            editorState: editorState,
             tutorialOptions: undefined
         })
         return pkg.loadPkgAsync(h.id)
@@ -601,7 +601,7 @@ export class ProjectView
                 }
 
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
-                    this.loadHeaderAsync(h, this.state.filters).done()
+                    this.loadHeaderAsync(h, this.state.editorState).done()
                 }
 
                 pkg.mainPkg.getCompileOptionsAsync()
@@ -774,7 +774,7 @@ export class ProjectView
         }
     }
 
-    importProjectAsync(project: pxt.workspace.Project, filters?: pxt.editor.ProjectFilters): Promise<void> {
+    importProjectAsync(project: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void> {
         let h: pxt.workspace.InstallHeader = project.header;
         if (!h) {
             h = {
@@ -787,7 +787,7 @@ export class ProjectView
             }
         }
         return workspace.installAsync(h, project.text)
-            .then(hd => this.loadHeaderAsync(hd, filters));
+            .then(hd => this.loadHeaderAsync(hd, editorState));
     }
 
     initDragAndDrop() {
@@ -882,7 +882,7 @@ export class ProjectView
             pubCurrent: false,
             target: pxt.appTarget.id,
             temporary: options.temporary
-        }, files).then(hd => this.loadHeaderAsync(hd, options.filters))
+        }, files).then(hd => this.loadHeaderAsync(hd, {filters: options.filters}))
     }
 
     switchTypeScript() {
@@ -1478,7 +1478,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
     }
 
     openTutorials() {
-//        this.setState({tutorialOptions: undefined});
         pxt.tickEvent("menu.openTutorials");
         this.projects.showOpenTutorials();
     }
@@ -1518,7 +1517,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     tutorialStep: 0,
                     tutorialSteps: result
                 };
-                this.setState({ tutorialOptions: tutorialOptions, tracing: undefined })
+                this.setState({ tutorialOptions: tutorialOptions, editorState: {searchBar: false}, tracing: undefined })
 
                 let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
                 tc.setPath(tutorialId);
@@ -1545,7 +1544,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         } else {
             curr.temporary = false;
         }
-        this.setState({ active: false, filters: undefined });
+        this.setState({ active: false, editorState: undefined });
         return workspace.saveAsync(curr, {})
             .then(() => { return keep ? workspace.installAsync(curr, files) : Promise.resolve(null); })
             .then(() => {
@@ -2272,7 +2271,7 @@ $(document).ready(() => {
         })
         .then((state) => {
             if (state) {
-                theEditor.setState(state);
+                theEditor.setState({editorState: state});
             }
             initSerial();
             initScreenshots();
@@ -2302,7 +2301,7 @@ $(document).ready(() => {
             }
 
             // default handlers
-            if (hd) return theEditor.loadHeaderAsync(hd, theEditor.state.filters)
+            if (hd) return theEditor.loadHeaderAsync(hd, theEditor.state.editorState)
             else theEditor.newProject();
             return Promise.resolve();
         })

@@ -29,7 +29,7 @@ namespace pxt.editor {
     export interface IAppState {
         active?: boolean; // is this tab visible at all
         header?: pxt.workspace.Header;
-        filters?: pxt.editor.ProjectFilters;
+        editorState?: EditorState;
         currFile?: IFile;
         fileState?: string;
         showFiles?: boolean;
@@ -55,6 +55,11 @@ namespace pxt.editor {
 
         highContrast?: boolean;
         hideExperimentalBanner?: boolean;
+    }
+
+    export interface EditorState {
+        filters?: pxt.editor.ProjectFilters;
+        searchBar?: boolean; // show the search bar in editor
     }
 
     export interface ProjectCreationOptions {
@@ -112,7 +117,7 @@ namespace pxt.editor {
         saveFileAsync(): Promise<void>;
         loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;
         reloadHeaderAsync(): Promise<void>;
-        importProjectAsync(prj: pxt.workspace.Project, filters?: pxt.editor.ProjectFilters): Promise<void>;
+        importProjectAsync(prj: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void>;
         overrideTypescriptFile(text: string): void;
 
         exportAsync(): Promise<string>;

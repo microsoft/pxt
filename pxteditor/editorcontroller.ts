@@ -109,6 +109,8 @@ namespace pxt.editor {
     export interface EditorSyncState {
         // (optional) filtering argument
         filters?: pxt.editor.ProjectFilters;
+        // (optional) show or hide the search bar
+        searchBar?: boolean;
     }
 
     export interface EditorWorkspaceSyncResponse extends EditorMessageResponse {
@@ -134,6 +136,7 @@ namespace pxt.editor {
         project: pxt.workspace.Project;
         // (optional) filtering argument
         filters?: pxt.editor.ProjectFilters;
+        searchBar?: boolean;
     }
 
     export interface EditorMessageRenderBlocksRequest extends EditorMessageRequest {
@@ -225,7 +228,10 @@ namespace pxt.editor {
                     }
                     case "importproject": {
                         const load = data as EditorMessageImportProjectRequest;
-                        p = p.then(() => projectView.importProjectAsync(load.project, load.filters));
+                        p = p.then(() => projectView.importProjectAsync(load.project, {
+                            filters: load.filters,
+                            searchBar: load.searchBar
+                        }));
                         break;
                     }
                     case "proxytosim": {
