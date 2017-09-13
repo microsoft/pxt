@@ -696,7 +696,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             dimmerClassName,
             size,
         } = this.props
-        const inverted = pxt.appTarget.appTheme.invertedMenu;
+        const inverted = !!pxt.appTarget.appTheme.invertedMenu;
 
         const { marginTop, scrolling } = this.state
         const classes = cx([
