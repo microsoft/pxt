@@ -35,9 +35,9 @@ Property | Description
 `device.oemName` |
 `device.model` |
 `device.network` | number  - IANA interface type
-`device.resolution`  | screen res
+`device.resolution`  | screen resolution
 `device.locale` | display language of the OS
-`device.ip` |
+`device.ip` | last 8 bits zeroed out to anonymise
 `device.language` |
 `device.os` |  OS running on the device
 `device.osversion` | 
