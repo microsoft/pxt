@@ -691,7 +691,7 @@ export class Editor extends srceditor.Editor {
         groups?: string[],
         labelLineWidth?: string) {
         // Filter the toolbox
-        let filters = this.parent.state.filters;
+        let filters = this.parent.state.editorState ? this.parent.state.editorState.filters : undefined;
         const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
         let hasChild = false;
         if (filters && categoryState !== undefined && fns) {
