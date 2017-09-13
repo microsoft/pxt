@@ -36,22 +36,23 @@ We have created a new programming platform that bridges the worlds of the microc
 and the web app. The major goals of the platform are to: (1)
 make it simple to program microcontrollers using an interactive web app that also functions offline;
 (2) allow a user's compiled program to be easily installed on a microcontroller;
-(3) support the addition of new of software/hardware components to a microcontroller.
-The platform is defined by four new technologies:
-\begin{itemize}
-      
-\item 
-\emph{MakeCode} is a new web app (\url{www.makecode.com}) that supports 
-both visual block-based programming and text-based programming using TypeScript (\url{www.typescriptlang.org}), 
-a gradually-typed superset of JavaScript. 
-The web app also converts between the two program representations. The web app supports in-browser execution 
-via a device simulator, as well as compilation to machine code and linking against a 
-pre-compiled C++ runtime. No C/C++ compiler is invoked to compile user code. 
-The result of compilation is a binary file that is ``downloaded'' from the web app to the user's computer. 
+(3) enable the safe addition of new of software/hardware components to a microcontroller.
 
-\item \emph{Static TypeScript} is a statically-typed subset of TypeScript for fast execution on low-memory devices 
-and a simple model for linking against pre-compiled C++; Static TypeScript also can be used to write safe 
-device driver code.
+The platform builds on stack of four novel technologies.
+The entry point of the platform is \emph{MakeCode} (\url{www.makecode.com}),
+a web app that supports both visual block-based programming and text-based programming,
+via \emph{Static TypeScript}, with conversion 
+between the two program representations. The web app has in-browser execution 
+via a device simulator, as well as compilation to machine code and linking against a 
+pre-compiled C++ runtime (\emph{CODAL}). No C/C++ compiler is invoked to compile user code. 
+The result of compilation is a binary file that is ``downloaded'' from the web app to the user's 
+computer and then flashed to the microcontroller, with the aid of the \emph{UF2} file format.
+The other three major technologies in the stack are:
+\begin{itemize}
+
+\item \emph{Static TypeScript} is a statically-typed subset of TypeScript (\url{www.typescriptlang.org}), 
+a gradually-typed superset of JavaScript, for fast execution on low-memory devices 
+and a simple model for linking against pre-compiled C++; 
 
 \item \emph{CODAL}, the Component-oriented Device Abstraction Layer, is a new C++ library that maps 
 each hardware component of a device to one or more software components that communicate over a message bus and
@@ -62,7 +63,7 @@ Class (removable USB pen drive) protocol.  This new file format greatly speeds t
 and is robust to difference in operating systems.
 \end{itemize}
 These advances enable beginners to get started programming microcontrollers from any modern web browser, and enable
-hardware vendors to innovate and safely add new components to the mix using Static TypeScript, and its
+hardware vendors to innovate and safely add new components to the mix using Static TypeScript, leveraging its
 foreign function interface to C++. Once the web app has been loaded, 
 all the above functionality works offline (i.e., if the host machine loses its connection 
 to the internet).
@@ -88,23 +89,25 @@ compilation speed, code size, and runtime performance.  In particular, we evalua
 [evaluate with respect to the popular Arduino toolset, for boards with 8-bit (AVR) and 32-bit (Cortex-M0) microcontrollers. 
 Summary of evaluation]
 
-The platform's components are open source on GitHub. The MakeCode framework is at \url{https://github.com/microsoft/pxt}.
-(PXT is previous codename of MakeCode). 
-MakeCode targets for the three previously mentioned boards are at 
-\href{https://github.com/microsoft/pxt-microbit}{microsoft/pxt-microbit}, 
-\href{https://github.com/microsoft/pxt-adafruit}{microsoft/pxt-adafruit}, and
-\href{https://github.com/microsoft/pxt-arduino-uno}{microsoft/pxt-arduino-uno}.
+All of the platform's components are open source on GitHub. The MakeCode framework is at \emph{\href{https://github.com/microsoft/pxt}{pxt}}
+(PXT is the previous codename of MakeCode). MakeCode targets for the three previously mentioned boards are at: 
+~\emph{\href{https://github.com/microsoft/pxt-microbit}{pxt-microbit}}, 
+~\emph{\href{https://github.com/microsoft/pxt-adafruit}{pxt-adafruit}}, and
+~\emph{\href{https://github.com/microsoft/pxt-arduino-uno}{pxt-arduino-uno}}.
 The latter two targets make use of a common set of MakeCode libraries (packages) at
-\href{https://github.com/microsoft/pxt-common-packages}{microsoft/pxt-common-packages}.
-
-%Lancaster University githubs:
-%•	https://github.com/lancaster-university/codal-core
-%•	https://github.com/lancaster-university/codal 
-%•	micro:bit DAL: https://github.com/lancaster-university/microbit-dal, predecessor of CODAL 
-
-The UF2 specification is at \href{https://github.com/microsoft/uf2}{microsoft/uf2},
-with implementations at href{https://github.com/microsoft/uf2-samd21}{microsoft/uf2-samd21}
-and \href{https://github.com/mmoskal/uf2-uno}{mmoskal/uf2-uno}.
+\emph{\href{https://github.com/microsoft/pxt-common-packages}{pxt-common-packages}},
+which build upon CODAL's microcontroller-independent core abstractions at
+~\emph{\href{https://github.com/lancaster-university/codal-core}{codal-core}}.  
+Microcontroller-dependent specialization and optimizations for the SAMD21
+and Atmega328 can be found at:
+~\emph{\href{https://github.com/lancaster-university/codal-samd21-mbed}{codal-samd21-mbed}}, and
+~\emph{\href{https://github.com/lancaster-university/codal-atmega328p}{codal-atmega328p}}.
+% https://github.com/lancaster-university/codal 
+The pxt-microbit target uses a predecessor of the CODAL called the DAL (at
+~\emph{\href{https://github.com/lancaster-university/microbit-dal}{microbit-dal}}).
+The UF2 specification is at~\emph{\href{https://github.com/microsoft/uf2}{uf2}},
+with implementations at~\emph{\href{https://github.com/microsoft/uf2-samd21}{uf2-samd21}}
+and~\emph{\href{https://github.com/mmoskal/uf2-uno}{uf2-uno}}.
 
 The rest of this paper is organized as follows. Section~\ref{sec:makecode} presents the design and implementation of the MakeCode framework. 
 Section~\ref{sec:sts} describes Static TypeScript and section~\ref{sec:codal} presents the CODAL C++ runtime. 
