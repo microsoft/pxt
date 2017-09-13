@@ -22,7 +22,7 @@ export class Editor extends srceditor.Editor {
     private shouldScroll = false
     private isSim: boolean = true
     private maxLineLength: number = 500
-    private maxConsoleEntries: number = 20
+    private maxConsoleEntries: number = 100
     private active: boolean = true
 
     acceptsFile(file: pkg.File) {
@@ -83,7 +83,12 @@ export class Editor extends srceditor.Editor {
         } else {
             let newChart = new ChartWrapper(source, variable, nvalue)
             this.chartWrappers.push(newChart)
-            document.getElementById("charts").appendChild(newChart.getElement())
+            //TODO ugh
+            let newRow = document.createElement("div")
+            newRow.className = "row"
+            newRow.appendChild(newChart.getElement())
+            document.getElementById("charts").appendChild(newRow)
+            //document.getElementById("charts").appendChild(newChart.getElement())
         }
     }
 
@@ -104,7 +109,7 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    stopRecording() {
+    pauseRecording() {
         this.chartWrappers.forEach(s => s.stop())
     }
 
@@ -130,19 +135,41 @@ export class Editor extends srceditor.Editor {
 
     display() {
         return (
-            <div id="serialEditor" className="ui">
+            <div id="serialEditor" className="ui grid">
+                <div className="four column row">
+                    <div className="left floated column">
+                        <div className="ui huge header">{this.isSim ? lf("Simulator") : lf("Device")}</div>
+                    </div>
+                    <div className="right floated column">
+                        <button className="ui icon button" onClick = {() => {this.active = true; this.startRecording()}}>
+                            <i className="play icon"></i>
+                        </button>
+                        <button className="ui icon button" onClick = {() => {this.active = false; this.pauseRecording()}}>
+                            <i className="pause icon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div className="row">
+                    <div id="charts" className="ui one column grid"></div>
+                </div>
+                <div id="console" className="row">
+                </div>
+            </div>
+            /**
+            <div id="serialEditor" className="ui grid">
                 <div className="ui segment">
                     <span id="serialEditorTitle" className="ui huge left aligned header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
-                    <button className="ui right floated icon button" onClick= {() => {this.active = true; this.startRecording()}}>
-                        <i className="stop icon"></i>
+                    <button className="ui right floated icon button" onClick= {() => {this.active = false; this.pauseRecording()}}>
+                        <i className="pause icon"></i>
                     </button>
-                    <button className="ui right floated icon button" onClick = {() => {this.active = false; this.stopRecording()}}>
+                    <button className="ui right floated icon button" onClick = {() => {this.active = true; this.startRecording()}}>
                         <i className="play icon"></i>
                     </button>
                 </div>
                 <div id="charts" className="ui"></div>
                 <div id="console" className="ui content"></div>
             </div>
+            **/
         )
     }
 
@@ -184,7 +211,7 @@ class ChartWrapper {
 
     public makeLabel() {
         let label = document.createElement("div")
-        label.className = "ui red top left attached label"
+        label.className = "ui top left attached label"
         label.innerText = this.variable
         return label
     }
