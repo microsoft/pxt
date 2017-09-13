@@ -109,6 +109,7 @@ namespace pxt.editor {
     export interface EditorSyncState {
         // (optional) filtering argument
         filters?: pxt.editor.ProjectFilters;
+        // (optional) show or hide the search bar
         searchBar?: boolean;
     }
 
