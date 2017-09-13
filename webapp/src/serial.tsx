@@ -87,7 +87,16 @@ export class Editor extends srceditor.Editor {
         } else {
             let newChart = new ChartWrapper(source, variable, nvalue)
             this.chartWrappers.push(newChart)
-            document.getElementById("serialCharts").appendChild(newChart.getElement())
+            let serialChartRoot = document.getElementById("serialCharts")
+            serialChartRoot.appendChild(newChart.getElement())
+            
+            let c = serialChartRoot.lastChild.childNodes[1] as HTMLCanvasElement
+            c.width = c.offsetWidth
+            c.height = c.offsetHeight
+            //TODO
+            //let c = newChart.getCanvas()
+            //c.width = c.offsetWidth 
+            //c.height = c.offsetHeight
         }
     }
 
@@ -195,6 +204,7 @@ export class Editor extends srceditor.Editor {
 
 class ChartWrapper {
     private rootElement: HTMLElement = document.createElement("div")
+    private canvas: HTMLCanvasElement = undefined
     //private labelElement: HTMLElement
     //private element: HTMLCanvasElement
     private line: TimeSeries = new TimeSeries()
@@ -234,9 +244,14 @@ class ChartWrapper {
     public makeCanvas() {
         let canvas = document.createElement("canvas")
         this.chart.streamTo(canvas)
-        canvas.width = canvas.offsetWidth
-        canvas.height = canvas.offsetHeight
+        //canvas.width = canvas.offsetWidth
+        //canvas.height = canvas.offsetHeight
+        this.canvas = canvas
         return canvas
+    }
+
+    public getCanvas() {
+        return this.canvas
     }
     public getElement() {
         return this.rootElement

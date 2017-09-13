@@ -558,6 +558,7 @@
        * Make sure the canvas has the optimal resolution for the device's pixel ratio.
        */
       SmoothieChart.prototype.resize = function () {
+        /** 
         var dpr = !this.options.enableDpiScaling || !window ? 1 : window.devicePixelRatio,
             width, height;
         if (this.options.responsive) {
@@ -594,6 +595,7 @@
             this.canvas.getContext('2d').scale(dpr, dpr);
           }
         }
+        **/
       };
     
       /**
