@@ -5,6 +5,9 @@
 /* Reference import */
 @import (reference) "semantic.less";
 
+/*******************************
+         Side docs
+*******************************/
 
 /* Side Docs layout */
 #sidedocs {
@@ -44,6 +47,11 @@
   background: grey;
   box-shadow: none !important;
   transition: none;
+
+  &:hover,
+  &:focus {
+    background: #5A5A5A;
+  }
 }
 
 .sideDocs #sidedocs {
@@ -99,6 +107,7 @@
 
 #sidedocsbar .ui.link .icon {
   cursor: pointer;
+  font-size: @h3;
 }
 
 /* Large Monitor */

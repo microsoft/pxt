@@ -58,6 +58,7 @@ export class Editor extends srceditor.Editor {
     nsMap: pxt.Map<MonacoBlockDefinition[]>;
     loadingMonaco: boolean;
     showAdvanced: boolean;
+    giveFocusOnLoading: boolean = false;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -556,7 +557,7 @@ export class Editor extends srceditor.Editor {
         root.className = 'blocklyTreeRoot';
         toolbox.appendChild(root);
         let group = document.createElement('div');
-        group.setAttribute('role', 'group');
+        group.setAttribute('role', 'tree');
         root.appendChild(group);
 
         const namespaces = this.getNamespaces().map(ns => [ns, this.getNamespaceAttrs(ns)] as [string, pxtc.CommentAttrs]);
@@ -1127,6 +1128,10 @@ export class Editor extends srceditor.Editor {
 
                 this.resize();
                 this.resetFlyout(true);
+
+                if (this.giveFocusOnLoading) {
+                    this.editor.focus();
+                }
             }).finally(() => {
                 editorArea.removeChild(loading);
             });

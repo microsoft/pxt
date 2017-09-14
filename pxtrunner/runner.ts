@@ -589,9 +589,9 @@ ${files["main.ts"]}
 
         return initPromise.then(() => pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive))
             .then(tutorialmd => {
-                let steps = tutorialmd.split(/^###[^#].*$/gmi);
+                let steps = tutorialmd.split(/^##[^#].*$/gmi);
                 let stepInfo: editor.TutorialStepInfo[] = [];
-                tutorialmd.replace(/###[^#](.*)/g, (f, s) => {
+                tutorialmd.replace(/^##[^#](.*)$/gmi, (f, s) => {
                     let info: editor.TutorialStepInfo = {
                         fullscreen: s.indexOf('@fullscreen') > -1
                     }
@@ -599,7 +599,7 @@ ${files["main.ts"]}
                     return ""
                 });
 
-                if (steps.length < 1) return;
+                if (steps.length < 1) return Promise.resolve();
                 let options = steps[0];
                 steps = steps.slice(1, steps.length); // Remove tutorial title
 
@@ -634,12 +634,12 @@ ${files["main.ts"]}
                                 }
                             })
                         }
-                        return;
+                        return Promise.resolve();
                     })
                     .then(() => renderMarkdownAsync(content, tutorialmd, { tutorial: true }))
                     .then(() => {
                         // Split the steps
-                        let stepcontent = content.innerHTML.split(/<h3.*\/h3>/gi);
+                        let stepcontent = content.innerHTML.split(/<h2.*\/h2>/gi);
                         for (let i = 0; i < stepcontent.length - 1; i++) {
                             content.innerHTML = stepcontent[i + 1];
                             stepInfo[i].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
