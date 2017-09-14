@@ -1852,9 +1852,6 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
         .then(() => buildTargetAsync().then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
-        .then(() => buildTargetDocsAsync(false, true).then(r => { }, e => {
-            buildFailed("target build failed: " + e.message, e)
-        }))
         .then(() => {
             let toWatch = [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)
             if (hasCommonPackages) {
