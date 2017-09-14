@@ -38,7 +38,7 @@ Integer values can be specified via decimal, hexadecimal and octal notation:
 
 ```typescript
 let decimal: number = 42;
-let hex: number = 0xf00d;
+let hexadecimal: number = 0xf00d;
 let binary: number = 0b1010;
 let octal: number = 0o744;
 ```
@@ -130,8 +130,9 @@ You may commonly see this as the return type of functions that do not return a v
 
 ```typescript
 function warnUser(): void {
-    basic.showString("This is my warning message");
+    //...
 }
+warnUser();
 ```
 
 Declaring variables of type `void` is not useful.
