@@ -696,6 +696,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             dimmerClassName,
             size,
         } = this.props
+        const inverted = !!pxt.appTarget.appTheme.invertedMenu;
 
         const { marginTop, scrolling } = this.state
         const classes = cx([
@@ -713,7 +714,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
                 {this.props.closeIcon ? <Button
                         icon={closeIconName}
-                        class="huge clear right floated"
+                        class={"huge clear right floated" + (inverted ? " inverted" : "")}
                         onClick={() => this.handleClose(null) } /> : undefined }
                 {this.props.helpUrl ?
                     <a className={`ui button huge icon clear right floated`} href={this.props.helpUrl} target="_docs">
