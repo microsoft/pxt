@@ -1,6 +1,6 @@
 # Microsoft MakeCode Blog
 
-## [Microbit Editor v0.13.20](/blog/microbit/v0.13.20)
+## [Microbit Editor v0.13.20 (Accessibility)](/blog/microbit/v0.13.20)
 
 September 8th, 2017
 

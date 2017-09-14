@@ -195,7 +195,8 @@ pxt extract ${url}`;
 
         return (
             <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Share Project") } size="small"
-                onClose={() => this.setState({ visible: false }) } dimmer={true}
+                onClose={() => this.setState({ visible: false }) }
+                dimmer={true}
                 action={action}
                 actionClick={publish}
                 actionLoading={actionLoading}
@@ -214,24 +215,26 @@ pxt extract ${url}`;
                         : undefined }
                     { url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
-                        <sui.Input class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true}/>
+                        <sui.Input id="projectUri" class="focused mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" />
+                        <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
                         {showSocialIcons ? <div className="social-icons">
-                            <a className="ui button large icon facebook" onClick={(e) => { showFbPopup(); e.preventDefault(); return false; } }><i className="icon facebook"></i></a>
-                            <a className="ui button large icon twitter" onClick={(e) => { showTwtPopup(); e.preventDefault(); return false; } }><i className="icon twitter"></i></a>
+                            <a className="ui button large icon facebook" tabIndex={0} aria-label="Facebook" onClick={(e) => { showFbPopup(); e.preventDefault(); return false; } }><i className="icon facebook"></i></a>
+                            <a className="ui button large icon twitter" tabIndex={0} aria-label="Twitter" onClick={(e) => { showTwtPopup(); e.preventDefault(); return false; } }><i className="icon twitter"></i></a>
                         </div> : undefined}
                     </div>
                         : undefined }
                     { ready && !hideEmbed ? <div>
                         <div className="ui divider"></div>
-                        <sui.Button class="labeled" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
+                        <sui.Button class="labeled focused" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } ariaExpanded={advancedMenu} onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
                         { advancedMenu ?
                             <sui.Menu pointing secondary>
                                 {formats.map(f =>
-                                    <sui.MenuItem key={`tab${f.label}`} active={mode == f.mode} name={f.label} onClick={() => this.setState({ mode: f.mode }) } />) }
+                                    <sui.MenuItem key={`tab${f.label}`} id={`tab${f.mode}`} active={mode == f.mode} name={f.label} onClick={() => this.setState({ mode: f.mode }) } />) }
                             </sui.Menu> : undefined }
                         { advancedMenu ?
                             <sui.Field>
-                                <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true}/>
+                                <sui.Input id="embedCode" class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true}/>
+                                <label htmlFor="embedCode" id="embedCodeLabel" className="accessible-hidden">{lf("This is the read-only code for the selected tab.")}</label>
                             </sui.Field> : null }
                     </div> : undefined }
                 </div>

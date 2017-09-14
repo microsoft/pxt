@@ -52,12 +52,6 @@ body {
     right: 8px;
 }
 
-.ui.button.icon.clear {
-    background: transparent;
-    border: 0 !important;
-    box-shadow: none !important;
-}
-
 .rtl .ui.menu .ui.dropdown .menu > .item .icon:not(.dropdown) {
     margin: 0.0em 0.0em 0.0em 0.75em
 }

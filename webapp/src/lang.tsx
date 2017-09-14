@@ -124,26 +124,33 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
         const modalSize = languagesToShow.length > 4 ? "large" : "small";
 
         return (
-            <sui.Modal open={this.state.visible} header={lf("Select Language") } size={modalSize}
-                onClose={() => this.hide() } dimmer={true}
+            <sui.Modal open={this.state.visible}
+                header={lf("Select Language") }
+                size={modalSize}
+                onClose={() => this.hide() }
+                dimmer={true}
                 closeIcon={true}
-                closeOnDimmerClick closeOnDocumentClick
+                allowResetFocus={true}
+                closeOnDimmerClick
+                closeOnDocumentClick
                 >
                 {!fetchedLangs ?
                     <div className="ui message info">{lf("loading...") }</div> : undefined}
                 {fetchedLangs ? <div className="group">
-                    <div className="ui cards centered">
+                    <div className="ui cards centered" role="listbox">
                         {languagesToShow.map(langId =>
-                            <codecard.CodeCardView className="card-selected"
+                            <codecard.CodeCardView className={`card-selected focused`}
                                 key={langId}
                                 name={allLanguages[langId].localizedName}
+                                ariaLabel={allLanguages[langId].englishName}
+                                role="option"
                                 description={allLanguages[langId].englishName}
                                 onClick={() => this.changeLanguage(langId) }
                                 />
                         ) }
                     </div></div> : undefined }
                 <p><br/><br/>
-                    <a href={`https://crowdin.com/project/${targetTheme.crowdinProject}`} target="_blank">{lf("Help us translate") }</a>
+                    <a href={`https://crowdin.com/project/${targetTheme.crowdinProject}`} target="_blank" aria-label={lf("Help us translate")}>{lf("Help us translate") }</a>
                 </p>
             </sui.Modal>
         );

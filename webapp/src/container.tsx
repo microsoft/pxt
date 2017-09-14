@@ -6,6 +6,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
+import * as core from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -40,11 +41,11 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
 
     render() {
         const targetTheme = pxt.appTarget.appTheme;
-        return <sui.DropdownMenuItem icon="help circle large" class="help-dropdown-menuitem" textClass={"landscape only"} title={lf("Reference, lessons, ...") }>
+        return <sui.DropdownMenuItem icon="help circle large" class="help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help") }>
             {targetTheme.docMenu.map(m =>
-                m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" text={Util.rlf(m.name)} class="" onClick={() => this.openTutorial(m.path) } />
-                : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" className="ui item link" href={m.path} target="docs">{Util.rlf(m.name)}</a>
-                : <sui.Item key={"docsmenu" + m.path} role="menuitem" text={Util.rlf(m.name)} class="" onClick={() => this.openDocs(m.path) } />
+                m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class="" onClick={() => this.openTutorial(m.path) } />
+                : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} className="ui item link" href={m.path} target="docs">{Util.rlf(m.name)}</a>
+                : <sui.Item key={"docsmenu" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class="" onClick={() => this.openDocs(m.path) } />
             ) }
         </sui.DropdownMenuItem>
     }
@@ -52,6 +53,8 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
 
 export class SideDocs extends data.Component<ISettingsProps, {}> {
     private firstLoad = true;
+    private openingSideDoc = false;
+
     public static notify(message: pxsim.SimulatorMessage) {
         let sd = document.getElementById("sidedocsframe") as HTMLIFrameElement;
         if (sd && sd.contentWindow) sd.contentWindow.postMessage(message, "*");
@@ -62,6 +65,7 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
     }
 
     setPath(path: string, blocksEditor: boolean) {
+        this.openingSideDoc = true;
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
         const mode = blocksEditor ? "blocks" : "js";
         const url = `${docsUrl}#doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
@@ -97,10 +101,17 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
     toggleVisibility() {
         const state = this.props.parent.state;
         this.props.parent.setState({ sideDocsCollapsed: !state.sideDocsCollapsed });
+        document.getElementById("sidedocstoggle").focus();
     }
 
     componentDidUpdate() {
         this.props.parent.editor.resize();
+
+        let sidedocstoggle = document.getElementById("sidedocstoggle");
+        if (this.openingSideDoc && sidedocstoggle) {
+            sidedocstoggle.focus();
+            this.openingSideDoc = false;
+        }
     }
 
     renderCore() {
@@ -109,18 +120,18 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         if (!docsUrl) return null;
 
         return <div>
-            <button id="sidedocstoggle" role="button" className="ui icon button" onClick={() => this.toggleVisibility() }>
+            <button id="sidedocstoggle" role="button" aria-label={state.sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button" onClick={() => this.toggleVisibility() }>
                 <i className={`icon large inverted ${state.sideDocsCollapsed ? 'book' : 'chevron right'}`}></i>
                 {state.sideDocsCollapsed ? <i className={`icon large inverted chevron left hover`}></i> : undefined }
             </button>
             <div id="sidedocs">
-                <div id="sidedocsbar">
-                    <h3><a className="ui icon link" data-content={lf("Open documentation in new tab") } title={lf("Open documentation in new tab") } onClick={() => this.popOut()} >
-                        <i className="external icon"></i>
-                    </a></h3>
-                </div>
                 <div id="sidedocsframe-wrapper">
-                    <iframe id="sidedocsframe" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
+                    <iframe id="sidedocsframe" src={docsUrl} title={lf("Documentation")} aria-atomic="true" aria-live="assertive" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
+                </div>
+                <div id="sidedocsbar">
+                    <a className="ui icon link" role="link" tabIndex={0} data-content={lf("Open documentation in new tab") } aria-label={lf("Open documentation in new tab") } onClick={() => this.popOut() } onKeyDown={sui.fireClickOnEnter} >
+                        <i className="external icon"></i>
+                    </a>
                 </div>
             </div>
         </div>

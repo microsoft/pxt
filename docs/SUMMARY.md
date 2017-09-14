@@ -45,3 +45,4 @@
     * [hidserial](/cli/hidserial)
 * [UF2 FIle Format](http://github.com/microsoft/uf2)
 * [Accessibility](/accessibility)
+* [Telemetry](/telemetry)

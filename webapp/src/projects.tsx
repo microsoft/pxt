@@ -300,14 +300,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                             if (t == MYSTUFF) name = lf("My Stuff");
                             else if (t == WELCOME) name = lf("Welcome!");
                             else name = Util.rlf(t);
-                            return (<sui.MenuItem key={`tab${t}`} active={tab == t} name={name} onClick={() => this.setState({ tab: t }) } />)
+                            return (<sui.MenuItem key={`tab${t}`} id={`${t}tab`} ariaControls={tab == t ? `tab${t}` : undefined} className={tab == t ? "focused" : undefined} active={tab == t} name={name} onClick={() => this.setState({ tab: t }) } />)
                         }) }
-                        <div className="right menu">
-                            <sui.Button
-                                icon='close'
-                                class={`huge clear ${targetTheme.invertedMenu ? 'inverted' : ''}`}
-                                onClick={() => this.hide(/* closeOnly */ true) } />
-                        </div>
                     </sui.Menu>
                 </sui.Segment>
                 {tab == WELCOME ? <div className={tabClasses}>
@@ -319,6 +313,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         <div className="group ten wide column">
                             <div className="ui cards centered">
                                 {this.state.resumeProject ? <codecard.CodeCardView
+                                    ariaLabel={lf("Load the last project you worked on")}
+                                    role="button"
                                     key={'resume'}
                                     iconColor="teal"
                                     iconContent={lf("Resume") }
@@ -326,6 +322,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                     onClick={() => resume() }
                                     /> : undefined}
                                 {pxt.appTarget.appTheme.sideDoc ? <codecard.CodeCardView
+                                    ariaLabel={lf("Getting started")}
+                                    role="button"
                                     key={'gettingstarted'}
                                     iconColor="green"
                                     iconContent={lf("Getting started") }
@@ -333,6 +331,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                     onClick={() => gettingStarted() }
                                     /> : undefined}
                                 <codecard.CodeCardView
+                                    ariaLabel={lf("New project")}
+                                    role="button"
                                     key={'newproject'}
                                     iconColor="brown"
                                     iconContent={lf("New project") }
@@ -340,6 +340,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                     onClick={() => newProject() }
                                     />
                                 <codecard.CodeCardView
+                                    ariaLabel={lf("Load project")}
+                                    role="button"
                                     key={'loadproject'}
                                     iconColor="grey"
                                     iconContent={lf("Load project") }
@@ -347,6 +349,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                     onClick={() => loadProject() }
                                     />
                                 {galleryNames.length > 0 ? <codecard.CodeCardView
+                                    ariaLabel={lf("Browse guided tutorials, project samples and awesome activities")}
+                                    role="button"
                                     key={'projectgalleries'}
                                     iconColor="orange"
                                     iconContent={lf("Project galleries") }
@@ -357,10 +361,12 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         </div>
                     </div>
                 </div> : undefined }
-                {tab == MYSTUFF ? <div className={tabClasses}>
+                {tab == MYSTUFF ? <div className={tabClasses} id={`tab${tab}`} role="tabpanel" aria-labelledby={`${tab}tab`} aria-hidden="false">
                     <div className="group">
                         <div className="ui cards">
                             <codecard.CodeCardView
+                                ariaLabel={lf("Creates a new empty project")}
+                                role="button"
                                 key={'newproject'}
                                 icon="file outline"
                                 iconColor="primary"
@@ -370,6 +376,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                 />
                             {pxt.appTarget.compile ?
                                 <codecard.CodeCardView
+                                    ariaLabel={lf("Open files from your computer")}
+                                    role="button"
                                     key={'import'}
                                     icon="upload"
                                     iconColor="secondary"
@@ -379,6 +387,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                     /> : undefined }
                             {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
                                 <codecard.CodeCardView
+                                    ariaLabel={lf("Open a shared project URL")}
+                                    role="button"
                                     key={'importurl'}
                                     icon="cloud download"
                                     iconColor="secondary"
@@ -393,9 +403,11 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                             <h3 className="ui dividing header disabled">
                                 {headerGroup.name}
                             </h3>
-                            <div className="ui cards">
+                            <div className="ui cards" role={headerGroup.headers.length ? "listbox" : undefined}>
                                 {headerGroup.headers.map(scr =>
                                     <codecard.CodeCardView
+                                        ariaLabel={scr.name}
+                                        role="option"
                                         key={'local' + scr.id}
                                         name={scr.name}
                                         time={scr.recentUse}
@@ -408,9 +420,11 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         </div>
                     ) }
                     <div className="group">
-                        <div className="ui cards">
+                        <div className="ui cards" role={urldata.length ? "listbox" : undefined}>
                             {urldata.map(scr =>
                                 <codecard.CodeCardView
+                                    ariaLabel={scr.name}
+                                    role="option"
                                     name={scr.name}
                                     time={scr.time}
                                     header={'/' + scr.id}
@@ -424,11 +438,13 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         </div>
                     </div>
                 </div> : undefined }
-                {tab != MYSTUFF && tab != WELCOME ? <div className={tabClasses}>
+                {tab != MYSTUFF && tab != WELCOME ? <div className={tabClasses} id={`tab${tab}`} role="tabpanel" aria-labelledby={`${tab}tab`} aria-hidden="false">
                     {hadFetchError ?
                         <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
-                        : <div className="ui cards centered">
+                        : <div className="ui cards centered" role={gals[tab].length ? "listbox" : undefined}>
                             {gals[tab].map(scr => <codecard.CodeCardView
+                                ariaLabel={scr.name}
+                                role="option"
                                 key={tab + scr.name}
                                 name={scr.name}
                                 description={scr.description}
@@ -447,6 +463,12 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         </div>
                     </div>
                     : undefined }
+                <sui.Button
+                    icon='close'
+                    class={`closeIcon huge clear ${targetTheme.invertedMenu ? 'inverted' : ''} focused`}
+                    onClick={() => this.setState({ visible: false }) }
+                    tabIndex={0}
+                    ariaLabel={lf("Close dialog")} />
             </sui.Modal >
         );
     }

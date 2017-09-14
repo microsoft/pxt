@@ -36,6 +36,10 @@ namespace pxt.docs.codeCard {
         }
 
         let r = div(null, 'ui card ' + (card.color || '') + (link ? ' link' : ''), link ? "a" : "div");
+
+        r.setAttribute("role", "option");
+        r.setAttribute("aria-selected", "true");
+
         if (url) (r as HTMLAnchorElement).href = url;
         if (!options.hideHeader && (card.header || card.blocks || card.javascript || card.hardware || card.software || card.any)) {
             let h = div(r, "ui content " + (card.responsive ? " tall desktop only" : ""));
@@ -49,6 +53,7 @@ namespace pxt.docs.codeCard {
             if (card.header) div(h, 'description', 'span', card.header);
         }
 
+        const name = (options.shortName ? card.shortName : '') || card.name;
         let img = div(r, "ui image" + (card.responsive ? " tall landscape only" : ""));
 
         if (card.label) {
@@ -79,6 +84,8 @@ namespace pxt.docs.codeCard {
             let image = document.createElement("img") as HTMLImageElement;
             image.className = "ui image";
             image.src = card.imageUrl;
+            image.alt = name;
+            image.setAttribute("role", "presentation");
             img.appendChild(image)
         }
 
@@ -89,10 +96,10 @@ namespace pxt.docs.codeCard {
             img.appendChild(screenshot)
         }
 
-        const name = (options.shortName ? card.shortName : '') || card.name;
         if (name || card.description) {
             let ct = div(r, "ui content");
             if (name) {
+                r.setAttribute("aria-label", name);
                 if (url && !link) a(ct, url, name, 'header');
                 else div(ct, 'header', 'div', name);
             }

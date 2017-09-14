@@ -67,7 +67,7 @@ function runKarma(that, flags) {
     cmdIn(that, "node_modules/.bin", command);
 }
 
-task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor'], { parallelLimit: 10 })
 
 task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testlang', 'karma'])
 
@@ -109,6 +109,9 @@ module.exports = null;
 file('built/nodeutil.js', ['built/cli.js'])
 file('built/pxt.d.ts', ['built/cli.js'], function () {
     jake.cpR("built/cli.d.ts", "built/pxt.d.ts")
+})
+file('built/target.js', ['built/pxt.js'], { async: true }, function() {
+    cmdIn(this, ".", "node built/pxt.js buildtarget");
 })
 file('built/typescriptServices.d.ts', ['node_modules/typescript/lib/typescriptServices.d.ts'], function () {
     if (!fs.existsSync("built")) fs.mkdirSync("built");
