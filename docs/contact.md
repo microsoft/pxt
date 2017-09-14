@@ -12,4 +12,4 @@ https://github.com/Microbit/pxt
 
 # Email
 
-Send us an email at ``yelm-eng at microsoft.com``.
+Send us an email at ``makecode at microsoft dot com``.

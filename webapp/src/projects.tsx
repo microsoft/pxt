@@ -299,8 +299,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         const tabIcon = tab == WELCOME ? "home large" : undefined;
 
         return (
-            <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={false}
-                onClose={() => this.hide(/* closeOnly */ true) } dimmer={true}>
+            <sui.Modal open={visible} className="projectsdialog" size="fullscreen" onClose={() => this.hide(/* closeOnly */ true) } dimmer={true} closeOnDimmerClick>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         <div className="left menu">
@@ -342,13 +341,13 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                             </div>
                             <div className="column right aligned">
                                 {pxt.appTarget.compile ?
-                                    <sui.Button key="importfile" icon="upload" class="secondary tiny" textClass="landscape only" text={lf("Import File")} title={lf("Open files from your computer")} onClick={() => importHex() } /> : undefined}
+                                    <sui.Button key="importfile" icon="upload" class="secondary tiny" textClass="landscape only" text={lf("Import File") } title={lf("Open files from your computer") } onClick={() => importHex() } /> : undefined}
                                 {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
-                                    <sui.Button key="importurl" icon="cloud download" class="secondary tiny" textClass="landscape only" text={lf("Import URL")} title={lf("Open a shared project URL")} onClick={() => importUrl() } /> : undefined}
+                                    <sui.Button key="importurl" icon="cloud download" class="secondary tiny" textClass="landscape only" text={lf("Import URL") } title={lf("Open a shared project URL") } onClick={() => importUrl() } /> : undefined}
                             </div>
                         </div>
                         <div className="content">
-                            <ProjectsCarousel key={`${MYSTUFF}_carousel`} parent={this.props.parent} name={'recent'} hide={() => this.hide()}/>
+                            <ProjectsCarousel key={`${MYSTUFF}_carousel`} parent={this.props.parent} name={'recent'} hide={() => this.hide() }/>
                         </div>
                     </div>
                     {Object.keys(galleries).map(galleryName =>
@@ -357,11 +356,11 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                             <div className="ui segment gallerysegment">
                                 <div className="ui grid equal width padded stackable">
                                     <div className="column">
-                                        <h2 className="ui header">{Util.rlf(galleryName)} </h2>
+                                        <h2 className="ui header">{Util.rlf(galleryName) } </h2>
                                     </div>
                                 </div>
                                 <div className="content">
-                                    <ProjectsCarousel  key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} galleryEntry={galleries[galleryName]} hide={() => this.hide()}/>
+                                    <ProjectsCarousel  key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} galleryEntry={galleries[galleryName]} hide={() => this.hide() }/>
                                 </div>
                             </div>
                         </div>
@@ -372,10 +371,12 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy") }</a> : undefined }
                     </div> : undefined }
                 </div> : undefined }
-                {tab == MYSTUFF ? <div className={tabClasses}>
+                {tab == MYSTUFF ? <div className={tabClasses} id={`tab${tab}`} role="tabpanel" aria-labelledby={`${tab}tab`} aria-hidden="false">
                     <div className="group">
                         <div className="ui cards">
                             <codecard.CodeCardView
+                                ariaLabel={lf("Creates a new empty project") }
+                                role="button"
                                 key={'newproject'}
                                 icon="file outline"
                                 iconColor="primary"
@@ -385,6 +386,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                 />
                             {pxt.appTarget.compile ?
                                 <codecard.CodeCardView
+                                    ariaLabel={lf("Open files from your computer") }
+                                    role="button"
                                     key={'import'}
                                     icon="upload"
                                     iconColor="secondary"
@@ -394,6 +397,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                     /> : undefined }
                             {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
                                 <codecard.CodeCardView
+                                    ariaLabel={lf("Open a shared project URL") }
+                                    role="button"
                                     key={'importurl'}
                                     icon="cloud download"
                                     iconColor="secondary"
@@ -408,9 +413,11 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                             <h3 className="ui dividing header disabled">
                                 {headerGroup.name}
                             </h3>
-                            <div className="ui cards">
+                            <div className="ui cards" role={headerGroup.headers.length ? "listbox" : undefined}>
                                 {headerGroup.headers.map(scr =>
                                     <codecard.CodeCardView
+                                        ariaLabel={scr.name}
+                                        role="option"
                                         key={'local' + scr.id}
                                         name={scr.name}
                                         time={scr.recentUse}
@@ -423,9 +430,11 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         </div>
                     ) }
                     <div className="group">
-                        <div className="ui cards">
+                        <div className="ui cards" role={urldata.length ? "listbox" : undefined}>
                             {urldata.map(scr =>
                                 <codecard.CodeCardView
+                                    ariaLabel={scr.name}
+                                    role="option"
                                     name={scr.name}
                                     time={scr.time}
                                     header={'/' + scr.id}
@@ -439,11 +448,13 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         </div>
                     </div>
                 </div> : undefined }
-                {tab != MYSTUFF && tab != WELCOME ? <div className={tabClasses}>
+                {tab != MYSTUFF && tab != WELCOME ? <div className={tabClasses} id={`tab${tab}`} role="tabpanel" aria-labelledby={`${tab}tab`} aria-hidden="false">
                     {hadFetchError ?
                         <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
-                        : <div className="ui cards centered">
+                        : <div className="ui cards centered" role={gals[tab].length ? "listbox" : undefined}>
                             {gals[tab].map(scr => <codecard.CodeCardView
+                                ariaLabel={scr.name}
+                                role="option"
                                 key={tab + scr.name}
                                 name={scr.name}
                                 description={scr.description}
@@ -627,7 +638,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     ) : headers.slice(0, 10).map((scr, index) =>
                         <div>
                             {scr.id == 'new' ?
-                                <div className="ui card newprojectcard" onClick={() => this.newProject()}>
+                                <div className="ui card newprojectcard" onClick={() => this.newProject() }>
                                     <div className="content">
                                         <i className="icon huge add circle"></i>
                                         <span className="header">{scr.name}</span>

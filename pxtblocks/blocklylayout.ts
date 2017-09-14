@@ -169,14 +169,16 @@ namespace pxt.blocks.layout {
         return pxt.BrowserUtils.loadAjaxAsync(customCssHref)
             .then((customCss) => {
 
-            // CSS may contain <, > which need to be stored in CDATA section
-            cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
-            xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
+                const blocklySvg = Util.toArray(document.head.querySelectorAll("style"))
+                    .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
+                // CSS may contain <, > which need to be stored in CDATA section
+                cssLink.appendChild(xsg.createCDATASection((blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss + '\n\n'));
+                xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 
-            return expandImagesAsync(xsg)
-                .then(() => {
-                    return { width: width, height: height, xml: documentToSvg(xsg) };
-                });
+                return expandImagesAsync(xsg)
+                    .then(() => {
+                        return { width: width, height: height, xml: documentToSvg(xsg) };
+                    });
             })
     }
 

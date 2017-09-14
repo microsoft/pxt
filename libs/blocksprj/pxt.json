@@ -2,7 +2,9 @@
     "name": "empty",
     "description": "An empty project for docs rendering",
     "files": [
-        "main.ts"
+        "main.ts",
+        "pxt-core.d.ts",
+        "pxt-helpers.ts"
     ],
     "public": true,
     "dependencies": {}

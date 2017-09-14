@@ -211,8 +211,13 @@ namespace pxt.docs {
                 mparams["EXPANDED"] = 'false';
             }
             if (m.subitems && m.subitems.length > 0) {
-                if (lev == 0) templ = toc["top-dropdown"]
-                else if (lev == 1) templ = toc["inner-dropdown"]
+                if (lev == 0) {
+                    if (m.name !== "") {
+                        templ = toc["top-dropdown"]
+                    } else {
+                        templ = toc["top-dropdown-noHeading"]
+                    }
+                } else if (lev == 1) templ = toc["inner-dropdown"]
                 else templ = toc["nested-dropdown"]
                 mparams["ITEMS"] = m.subitems.map(e => recTOC(e, lev + 1)).join("\n")
             } else {

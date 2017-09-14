@@ -26,20 +26,21 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     render() {
-        const { tutorialReady, tutorialSteps, tutorialStep, tutorialName } = this.props.parent.state.tutorialOptions;
+        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialName } = this.props.parent.state.tutorialOptions;
         const state = this.props.parent.state;
         const targetTheme = pxt.appTarget.appTheme;
         const currentStep = tutorialStep;
+        if (!tutorialReady) return <div />;
 
         return <div className="ui item">
-            <div className="ui item tutorial-menuitem">
-                {tutorialSteps.map((step, index) =>
+            <div className="ui item tutorial-menuitem" role="menubar">
+                {tutorialStepInfo.map((step, index) =>
                     (index == currentStep) ?
                         <span className="step-label" key={'tutorialStep' + index}>
-                            <a className={`ui circular label ${currentStep == index ? 'blue selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.openTutorialStep(index) }>{index + 1}</a>
+                            <a className={`ui circular label ${currentStep == index ? 'blue selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} role="menuitem" aria-label={lf("Tutorial step {0}. This is the current step", index + 1)} tabIndex={0} onClick={() => this.openTutorialStep(index) } onKeyDown={sui.fireClickOnEnter}>{index + 1}</a>
                         </span> :
                         <span className="step-label" key={'tutorialStep' + index} data-tooltip={`${index + 1}`} data-inverted="" data-position="bottom center">
-                            <a className={`ui empty circular label ${!tutorialReady ? 'disabled' : ''} clear`} onClick={() => this.openTutorialStep(index) }></a>
+                            <a className={`ui empty circular label ${!tutorialReady ? 'disabled' : ''} clear`} role="menuitem" aria-label={lf("Tutorial step {0}", index + 1)} tabIndex={0} onClick={() => this.openTutorialStep(index) } onKeyDown={sui.fireClickOnEnter}></a>
                         </span>
                 ) }
             </div>
@@ -82,7 +83,12 @@ export class TutorialContent extends data.Component<ISettingsProps, TutorialCont
         // Show light box
         sounds.tutorialStep();
         $('#root')
-            .dimmer({'closable': true})
+            .dimmer({
+                'closable': true,
+                onShow: () => {
+                    document.getElementById('tutorialOkButton').focus();
+                }
+            })
             .dimmer('show');
     }
 
@@ -122,18 +128,20 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 
         return <sui.Modal open={visible} className="hintdialog" size="small" header={header} closeIcon={true}
                 onClose={() => this.setState({ visible: false })} dimmer={true}
-                closeOnDimmerClick closeOnDocumentClick>
+                closeOnDimmerClick closeOnDocumentClick closeOnEscape>
                     <div className="content">
                         <div dangerouslySetInnerHTML={{__html: tutorialHint}} />
                     </div>
                     <div className="actions" style={{textAlign: "right"}}>
-                        <sui.Button class="green" icon={`check`} text={lf("Ok") } onClick={() => this.setState({ visible: false }) } />
+                        <sui.Button class="green focused" icon={`check`} text={lf("Ok") } onClick={() => this.setState({ visible: false }) } onKeyDown={sui.fireClickOnEnter} />
                     </div>
             </sui.Modal>;
     }
 }
 
 export class TutorialCard extends data.Component<ISettingsProps, {}> {
+    public focusInitialized: boolean;
+
     constructor(props: ISettingsProps) {
         super(props);
     }
@@ -165,9 +173,22 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
         this.props.parent.completeTutorial();
     }
 
+    closeLightboxOnEscape = (e: KeyboardEvent) => {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        if (charCode === 27) {
+            this.closeLightbox();
+        }
+    }
+
     closeLightbox() {
         // Hide light box
         sounds.tutorialNext();
+        document.documentElement.removeEventListener("keydown", this.closeLightboxOnEscape);
+        core.initializeFocusTabIndex($('#tutorialcard').get(0), true, undefined, true);
+        let tutorialmessage = document.getElementsByClassName("tutorialmessage");
+        if (tutorialmessage.length > 0) {
+            (tutorialmessage.item(0) as HTMLElement).focus();
+        }
         $('#root')
             .dimmer('hide');
     }
@@ -176,6 +197,17 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
         $('#tutorialhint')
          .modal('attach events', '#tutorialcard .ui.button.hintbutton', 'show');
         ;
+        document.documentElement.addEventListener("keydown", this.closeLightboxOnEscape);
+    }
+
+    componentDidUpdate() {
+        if (!this.focusInitialized) {
+            let tutorialCard = document.getElementById('tutorialcard');
+            if (tutorialCard !== null) {
+                this.focusInitialized = true;
+                core.initializeFocusTabIndex(tutorialCard, true, false);
+            }
+        }
     }
 
     showHint() {
@@ -185,29 +217,34 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
 
     render() {
         const options = this.props.parent.state.tutorialOptions;
-        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialSteps } = options;
+        const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
         if (!tutorialReady) return <div />
         const tutorialHeaderContent = tutorialStepInfo[tutorialStep].headerContent;
+        let tutorialAriaLabel = tutorialStepInfo[tutorialStep].ariaLabel;
 
         const currentStep = tutorialStep;
-        const maxSteps = tutorialSteps.length;
+        const maxSteps = tutorialStepInfo.length;
         const hasPrevious = tutorialReady && currentStep != 0;
         const hasNext = tutorialReady && currentStep != maxSteps - 1;
         const hasFinish = currentStep == maxSteps - 1;
         const hasHint = tutorialStepInfo[tutorialStep].hasHint;
 
+        if (hasHint) {
+            tutorialAriaLabel += lf("Press Space or Enter to show a hint.");
+        }
+
         return <div id="tutorialcard" className={`ui ${tutorialReady ? 'tutorialReady' : ''}`} >
             <div className='ui buttons'>
                 <div className="ui segment attached message">
-                    <div className='avatar-image' onClick={() => this.showHint()}></div>
-                    {hasHint ? <sui.Button class="mini blue hintbutton hidelightbox" text={lf("Hint") } onClick={() => this.showHint()} /> : undefined }
-                    <div className='tutorialmessage' onClick={() => this.showHint()}>
+                    <div className='avatar-image' onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter}></div>
+                    {hasHint ? <sui.Button class="mini blue hintbutton hidelightbox" text={lf("Hint") } tabIndex={-1} onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter} /> : undefined }
+                    <div className={`tutorialmessage ${hasHint ? 'focused' : undefined}`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1} onClick={() => {if (hasHint) this.showHint();}} onKeyDown={sui.fireClickOnEnter}>
                         <div className="content" dangerouslySetInnerHTML={{__html: tutorialHeaderContent}} />
                     </div>
-                    <sui.Button class="large green okbutton showlightbox" text={lf("Ok") } onClick={() => this.closeLightbox() } />
+                    <sui.Button id="tutorialOkButton" class="large green okbutton showlightbox focused" text={lf("Ok") } onClick={() => this.closeLightbox() } onKeyDown={sui.fireClickOnEnter} />
                 </div>
-                {hasNext ? <sui.Button icon="right chevron" class={`ui right icon button nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next") } onClick={() => this.nextTutorialStep() } /> : undefined }
-                {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish") } onClick={() => this.finishTutorial() } /> : undefined }
+                {hasNext ? <sui.Button icon="right chevron" class={`ui right icon button nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next") } ariaLabel={lf("Go to the next step of the tutorial.")} onClick={() => this.nextTutorialStep() } onKeyDown={sui.fireClickOnEnter} /> : undefined }
+                {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : 'focused'}`} text={lf("Finish") } ariaLabel={lf("Finish the tutorial.")} onClick={() => this.finishTutorial() } onKeyDown={sui.fireClickOnEnter} /> : undefined }
             </div>
         </div>;
     }
@@ -254,7 +291,7 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
                 closeOnDimmerClick closeOnDocumentClick
                 >
                 <div className="ui two stackable cards">
-                    <div className="ui grid centered link card" onClick={() => this.moreTutorials() }>
+                    <div className="ui grid centered link card focused" aria-selected="true" aria-label={lf("More Tutorials")} tabIndex={0} onClick={() => this.moreTutorials() } onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
                             <i className="avatar-image icon huge" style={{fontSize: '100px'}}/>
                         </div>
@@ -264,7 +301,7 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
                             </div>
                         </div>
                     </div>
-                    <div className="ui grid centered link card" onClick={() => this.exitTutorial() }>
+                    <div className="ui grid centered link card" aria-selected="true" aria-label={lf("Exit Tutorial")} tabIndex={0} onClick={() => this.exitTutorial() } onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
                             <i className="external icon huge black" style={{fontSize: '100px'}} />
                         </div>

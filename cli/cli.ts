@@ -4205,7 +4205,7 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
     const snippets = getSnippets(md);
     const codeSnippets = snippets.filter(snip => !snip.ignore && !!supported[snip.type]);
     const pkgs: pxt.Map<string> = {
-        "core": "*"
+        "blocksprj": "*"
     }
     snippets.filter(snip => snip.type == "package")
         .map(snip => snip.code.split('\n'))

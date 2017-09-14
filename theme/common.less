@@ -409,7 +409,6 @@ div.simframe > iframe {
         Projects Modal
 *******************************/
 
-
 .ui.modal.projectsdialog .ui.dividing.header, .ui.modal.projectsdialog .content > .header{
     font-weight: normal !important;
 }
@@ -448,6 +447,30 @@ div.simframe > iframe {
 
 .ui.modal.projectsdialog > .content {
     padding: 0 !important;
+    position: relative;
+}
+
+/*******************************
+        Modal Close Icon
+*******************************/
+
+.ui.modal .closeIcon {
+    position: absolute;
+    top: 0; 
+    right: 0;
+}
+.ui.modal.projectsdialog .closeIcon {
+    top: 0.4rem;
+    right: 0.2rem;
+}
+
+.ui.button.icon.clear {
+    background: transparent;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+.ui.button.icon.inverted.clear:hover, .ui.button.icon.inverted.clear:focus {
+    color: @grey !important;
 }
 
 /*******************************

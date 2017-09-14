@@ -63,13 +63,17 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             return (
                 <a key={file.getName() }
                     onClick={() => parent.setSideFile(file) }
+                    tabIndex={0}
+                    role="treeitem"
+                    aria-label={parent.state.currFile == file ? lf("{0}, it is the current opened file in the JavaScript editor", file.name) : file.name}
+                    onKeyDown={sui.fireClickOnEnter}
                     className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                     >
                     {file.name} {meta.isSaved ? "" : "*"}
                     {/\.ts$/.test(file.name) ? <i className="align left icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
                     {meta.isReadonly ? <i className="lock icon"></i> : null}
                     {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
-                    {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" onClick={(e) => this.removeFile(e, file) } /> : ''}
+                    {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" title={lf("Delete file {0}", file.name)} onClick={(e) => this.removeFile(e, file) } onKeyDown={(e) => e.stopPropagation()} /> : ''}
                 </a>);
         })
     }
@@ -80,10 +84,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             && p.getPkgId() != "built"
             && p.getPkgId() != pxt.appTarget.corepkg;
         let upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
-        return [<div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => this.togglePkg(p) }>
+        return [<div key={"hd-" + p.getPkgId() } className="header link item" role="treeitem" aria-expanded={expands[p.getPkgId()]} aria-label={lf("{0}, {1}", p.getPkgId(), expands[p.getPkgId()] ? lf("expanded") : lf("collapsed"))} onClick={() => this.togglePkg(p) } tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
             <i className={`chevron ${expands[p.getPkgId()] ? "down" : "right"} icon`}></i>
-            {upd ? <sui.Button class="primary label" icon="refresh" onClick={(e) => this.updatePkg(e, p) } /> : ''}
-            {del ? <sui.Button class="primary label" icon="trash" onClick={(e) => this.removePkg(e, p) } /> : ''}
+            {upd ? <sui.Button class="primary label" icon="refresh" title={lf("Refresh package {0}", p.getPkgId())} onClick={(e) => this.updatePkg(e, p) } onKeyDown={(e) => e.stopPropagation()} /> : ''}
+            {del ? <sui.Button class="primary label" icon="trash" title={lf("Delete package {0}", p.getPkgId())} onClick={(e) => this.removePkg(e, p) } onKeyDown={(e) => e.stopPropagation()} /> : ''}
             {p.getPkgId() }
         </div>
         ].concat(expands[p.getPkgId()] ? this.filesOf(p) : [])
@@ -155,11 +159,11 @@ namespace custom {
         const show = !!this.props.parent.state.showFiles;
         const targetTheme = pxt.appTarget.appTheme;
         const plus = show && !pkg.mainEditorPkg().files[customFile]
-        return <div className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only`}>
-            <div key="projectheader" className="link item" onClick={() => this.toggleVisibility() }>
+        return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only`}>
+            <div role="treeitem" aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={() => this.toggleVisibility() } tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                 {lf("Explorer") }
                 <i className={`chevron ${show ? "down" : "right"} icon`}></i>
-                {plus ? <sui.Button class="primary label" icon="plus" onClick={(e) => this.addCustomBlocksFile() } /> : undefined }
+                {plus ? <sui.Button class="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={(e) => {this.addCustomBlocksFile(); e.stopPropagation();} } onKeyDown={(e) => e.stopPropagation()} /> : undefined }
             </div>
             {show ? Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined }
         </div>;

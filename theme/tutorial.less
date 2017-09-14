@@ -5,12 +5,17 @@
 /* Reference import */
 @import (reference) "semantic.less";
 
+@inlineBlockColor: #D83B01;
+
 /*******************************
-             Layout
+      Tutorial mode
 *******************************/
 
 .tutorial #maineditor .full-abs {
     top: 5.5rem;
+}
+.tutorial #maineditor #monacoEditor {
+    top: 0rem;
 }
 /* Tutorial Mode */
 #menubar .ui.menu .item.tutorial-menuitem {
@@ -36,7 +41,7 @@
 
 #tutorialcard {
     position: relative;
-    z-index: 0;
+    z-index: 1;
     height: 6rem;
     width: 100%;
     padding-left: 1rem;
@@ -146,6 +151,7 @@ body#docs.tutorial {
 
 #root.dimmable.dimmed #tutorialcard.tutorialReady .ui.prevbutton, #root.dimmable.dimmed #tutorialcard.tutorialReady .ui.nextbutton {
     opacity: 0 !important;
+    z-index: -1;
 }
 
 #tutorialcard .ui.button.okbutton {
@@ -204,8 +210,8 @@ span.docs.inlineblock {
     padding: 0.10rem 0.3rem;
     border-radius: 0.3rem;
     white-space: nowrap;
-    background-color: lighten(@orange, 10%);
-    border: 1px solid @orange;
+    background-color: @inlineBlockColor;
+    border: 1px solid darken(@inlineBlockColor, 0.2);
     color: @white;
 }
 

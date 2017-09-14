@@ -1269,6 +1269,7 @@ namespace pxt.blocks {
 
         let blocklySearchInputField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
         let blocklySearchInput = document.getElementById('blocklySearchInput') as HTMLElement;
+        let blocklyHiddenSearchLabel = document.getElementById('blocklySearchLabel') as HTMLElement;
 
         let origClassName = 'ui fluid icon input';
         if (!blocklySearchInput) {
@@ -1278,6 +1279,7 @@ namespace pxt.blocks {
             blocklySearchInput = document.createElement('div');
             blocklySearchInput.id = 'blocklySearchInput';
             blocklySearchInput.className = origClassName;
+            blocklySearchInput.setAttribute("role", "search");
 
             blocklySearchInputField = document.createElement('input');
             blocklySearchInputField.type = 'text';
@@ -1288,9 +1290,17 @@ namespace pxt.blocks {
             // Append to dom
             let blocklySearchInputIcon = document.createElement('i');
             blocklySearchInputIcon.className = 'search icon';
+            blocklySearchInputIcon.setAttribute("role", "presentation");
+            blocklySearchInputIcon.setAttribute("aria-hidden", "true");
+
+            blocklyHiddenSearchLabel = document.createElement('div');
+            blocklyHiddenSearchLabel.className = 'accessible-hidden';
+            blocklyHiddenSearchLabel.id = 'blocklySearchLabel';
+            blocklyHiddenSearchLabel.setAttribute('aria-live', "polite");
 
             blocklySearchInput.appendChild(blocklySearchInputField);
             blocklySearchInput.appendChild(blocklySearchInputIcon);
+            blocklySearchInput.appendChild(blocklyHiddenSearchLabel);
             blocklySearchArea.appendChild(blocklySearchInput);
             const toolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0];
             if (toolboxDiv) // Only add if a toolbox exists, eg not in sandbox mode
@@ -1313,6 +1323,9 @@ namespace pxt.blocks {
         const searchChangeHandler = Util.debounce(() => {
             let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
             let searchFor = searchField.value.toLowerCase();
+            let blocklyHiddenSearchLabel = document.getElementById('blocklySearchLabel') as HTMLElement;
+
+            blocklyHiddenSearchLabel.innerText = "";
 
             if (searchFor != '') {
                 blocklySearchInput.className += ' loading';
@@ -1351,6 +1364,13 @@ namespace pxt.blocks {
                     pxt.log("searching for: " + searchFor);
                     updateUsedBlocks = false;
                     if (!blocks) return;
+
+                    if (blocks.length == 0) {
+                        blocklyHiddenSearchLabel.innerText = lf("No search results...");
+                    } else {
+                        blocklyHiddenSearchLabel.innerText = lf("{0} result matching '{1}'", blocks.length, blocklySearchInputField.value.toLowerCase());
+                    }
+
                     if (blocks.length == 0) {
                         let label = goog.dom.createDom('label');
                         label.setAttribute('text', lf("No search results..."));
@@ -1409,24 +1429,40 @@ namespace pxt.blocks {
         }
 
         // Override Blockly's toolbox keydown method to intercept characters typed and move the focus to the search input
-        const oldKeyDown = Blockly.Toolbox.TreeNode.prototype.onKeyDown;
         (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown = function(e: any) {
-            const x = e.which || e.keyCode;
-            const interceptCharacter = x != 37 && x != 38 && x != 39 && x != 40 // Arrows (Handled by Blockly)
-                && !e.ctrlKey && !e.metaKey && !e.altKey; // Meta keys
-            if (interceptCharacter) {
+            const keyCode = e.which || e.keyCode;
+            const characterKey = (keyCode > 64 && keyCode < 91); // Letter keys
+            const spaceEnterKey = keyCode == 32 || keyCode == 13; // Spacebar or Enter keys
+            if (characterKey) {
                 let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
-                if (x == 8) { // Backspace
-                    searchField.focus();
-                    searchField.select();
-                } else {
-                    let char = String.fromCharCode(x);
-                    searchField.value = searchField.value + char;
-                    searchField.focus();
-                }
+
+                let char = String.fromCharCode(keyCode);
+                searchField.value = searchField.value + char;
+                searchField.focus();
+                return true;
             } else {
-                oldKeyDown.call(this, e);
+                if (this.getTree() && this.getTree().toolbox_.horizontalLayout_) {
+                    let map: {[keyCode: number]: number} = {};
+                    let next = goog.events.KeyCodes.DOWN
+                    let prev = goog.events.KeyCodes.UP
+                    map[goog.events.KeyCodes.RIGHT] = this.rightToLeft_ ? prev : next;
+                    map[goog.events.KeyCodes.LEFT] = this.rightToLeft_ ? next : prev;
+                    map[goog.events.KeyCodes.UP] = goog.events.KeyCodes.LEFT;
+                    map[goog.events.KeyCodes.DOWN] = goog.events.KeyCodes.RIGHT;
+
+                    let newKeyCode = map[e.keyCode];
+                    e.keyCode = newKeyCode || e.keyCode;
+                }
+                return (Blockly.Toolbox.TreeNode as any).superClass_.onKeyDown.call(this, e);
             }
+        }
+    }
+
+    export function removeSearch() {
+        let blocklySearchArea = document.getElementById('blocklySearchArea') as HTMLInputElement;
+
+        if (blocklySearchArea) {
+            blocklySearchArea.parentNode.removeChild(blocklySearchArea);
         }
     }
 
