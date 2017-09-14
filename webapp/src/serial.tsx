@@ -15,7 +15,8 @@ const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
 
-    private chartWrappers: ChartWrapper[] = []
+    private chartWrappers: Chart[] = []
+    private chartIdx: number = 0
     private consoleEntries: string[] = []
     private consoleBuffer: string = ""
     // TODO pass these values in with props or config?
@@ -74,7 +75,7 @@ export class Editor extends srceditor.Editor {
 
         //See if there is a "home chart" that this point belongs to -
         //if not, create a new chart
-        let homeChart: ChartWrapper = undefined
+        let homeChart: Chart = undefined
         for (let i = 0; i < this.chartWrappers.length; ++i) {
             let chartWrapper = this.chartWrappers[i]
             if (chartWrapper.shouldContain(source, variable)) {
@@ -85,7 +86,8 @@ export class Editor extends srceditor.Editor {
         if (homeChart) {
             homeChart.addPoint(nvalue)
         } else {
-            let newChart = new ChartWrapper(source, variable, nvalue)
+            let newChart = new Chart(source, variable, nvalue, this.chartIdx)
+            this.chartIdx++
             this.chartWrappers.push(newChart)
             let serialChartRoot = document.getElementById("serialCharts")
             serialChartRoot.appendChild(newChart.getElement())
@@ -202,7 +204,7 @@ export class Editor extends srceditor.Editor {
     }
 }
 
-class ChartWrapper {
+class Chart {
     private rootElement: HTMLElement = document.createElement("div")
     private canvas: HTMLCanvasElement = undefined
     //private labelElement: HTMLElement
@@ -210,19 +212,28 @@ class ChartWrapper {
     private line: TimeSeries = new TimeSeries()
     private source: string
     private variable: string
-    private chartConfig = {
+    private chartConfig = { 
         responsive: true,
-        grid: { lineWidth: 1, millisPerLine: 250, verticalSections: 6 },
-        labels: { fillStyle: 'rgb(255, 255, 0)' }
+        interpolation: "linear",
+        fps: 30, 
+        millisPerPixel: 20, 
+        grid: { strokeStyle: '#555555', lineWidth: 1, millisPerLine: 1000, verticalSections: 4}
     }
     private chart: SmoothieChart = new SmoothieChart(this.chartConfig)
-    private lineConfig =  {strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4}
+    //private lineConfig =  {strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4}
+    private lineConfigs = [
+        { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 4 },
+        { strokeStyle: 'rgba(0, 0, 255, 1)', fillStyle: 'rgba(0, 0, 255, 0.2)', lineWidth: 4 },
+        { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4 },
+        { strokeStyle: 'rgba(255, 255, 0, 1)', fillStyle: 'rgba(255, 255, 0, 0.2)', lineWidth: 4 }
+    ]
+    
 
-    constructor(source: string, variable: string, value: number) {
+    constructor(source: string, variable: string, value: number, chartIdx: number) {
         this.rootElement.className = "ui segment"
         this.source = source
         this.variable = variable
-        this.chart.addTimeSeries(this.line, this.lineConfig)
+        this.chart.addTimeSeries(this.line, this.lineConfigs[chartIdx%4])
 
         let canvas = this.makeCanvas()
         //this.chart.streamTo(canvas)
@@ -236,7 +247,7 @@ class ChartWrapper {
 
     public makeLabel() {
         let label = document.createElement("div")
-        label.className = "ui top left attached label"
+        label.className = "ui top left huge attached label"
         label.innerText = this.variable
         return label
     }
