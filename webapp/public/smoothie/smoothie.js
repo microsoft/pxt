@@ -558,7 +558,6 @@
        * Make sure the canvas has the optimal resolution for the device's pixel ratio.
        */
       SmoothieChart.prototype.resize = function () {
-        /** 
         var dpr = !this.options.enableDpiScaling || !window ? 1 : window.devicePixelRatio,
             width, height;
         if (this.options.responsive) {
@@ -569,11 +568,13 @@
     
           if (width !== this.lastWidth) {
             this.lastWidth = width;
-            this.canvas.setAttribute('width', (Math.floor(width * dpr)).toString());
+            this.canvas.setAttribute("width", width.toString())
+            //this.canvas.setAttribute('width', (Math.floor(width * dpr)).toString());
           }
           if (height !== this.lastHeight) {
             this.lastHeight = height;
-            this.canvas.setAttribute('height', (Math.floor(height * dpr)).toString());
+            this.canvas.setAttribute("height", height.toString())
+            //this.canvas.setAttribute('height', (Math.floor(height * dpr)).toString());
           }
         } else if (dpr !== 1) {
           // Older behaviour: use the canvas's inner dimensions and scale the element's size
@@ -595,7 +596,6 @@
             this.canvas.getContext('2d').scale(dpr, dpr);
           }
         }
-        **/
       };
     
       /**
