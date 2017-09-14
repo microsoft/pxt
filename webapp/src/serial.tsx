@@ -91,10 +91,11 @@ export class Editor extends srceditor.Editor {
             this.chartWrappers.push(newChart)
             let serialChartRoot = document.getElementById("serialCharts")
             serialChartRoot.appendChild(newChart.getElement())
-            
+            /**
             let c = serialChartRoot.lastChild.childNodes[1] as HTMLCanvasElement
             c.width = c.offsetWidth
             c.height = c.offsetHeight
+            **/
             //TODO
             //let c = newChart.getCanvas()
             //c.width = c.offsetWidth 
