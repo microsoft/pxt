@@ -3512,7 +3512,7 @@ function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch:
         // check if directory has a .crowdinignore file
         if (nodeutil.fileExistsSync(path.join(path.dirname(f), ".crowdinignore"))) {
             pxt.log(`skpping ${f} because of .crowdinignore file`)
-            return Promise.resolve();
+            return nextFileAsync(todo.pop());
         }
 
         const data = fs.readFileSync(f, 'utf8');
