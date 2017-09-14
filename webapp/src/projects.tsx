@@ -38,8 +38,9 @@ const WELCOME = "__welcome";
 const MYSTUFF = "__mystuff";
 
 export class Projects extends data.Component<ProjectsProps, ProjectsState> {
-    private prevGhData: pxt.github.GitRepo[] = [];
     private prevUrlData: Cloud.JsonScript[] = [];
+    private prevGalleries: pxt.Map<pxt.CodeCard[]> = {};
+    private galleryFetchErrors: { [tab: string]: boolean } = {};
 
     constructor(props: ProjectsProps) {
         super(props)
@@ -74,13 +75,28 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
 
     showOpenProject(tab?: string) {
         const gals = pxt.appTarget.appTheme.galleries || {};
-        tab = (!tab || !gals[tab]) ? MYSTUFF : tab;
+        tab = (!tab || !gals[tab]) ? WELCOME : tab;
         this.setState({ visible: true, tab: tab || WELCOME });
     }
 
     showOpenTutorials() {
         const gals = Object.keys(pxt.appTarget.appTheme.galleries || {});
         this.setState({ visible: true, tab: gals[0] || WELCOME });
+    }
+
+    fetchGallery(tab: string, gallery: string | pxt.GalleryEntry): pxt.CodeCard[] {
+        if (this.state.tab != tab) return [];
+        const path = typeof gallery == "string" ? gallery as string : (gallery as pxt.GalleryEntry).path;
+
+        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as gallery.Gallery[];
+        if (res) {
+            if (res instanceof Error) {
+                this.galleryFetchErrors[tab] = true;
+            } else {
+                this.prevGalleries[path] = Util.concat(res.map(g => g.cards));
+            }
+        }
+        return this.prevGalleries[path] || [];
     }
 
     fetchUrlData(): Cloud.JsonScript[] {
@@ -120,6 +136,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
 
     renderCore() {
         const {visible, tab} = this.state;
+        const {hasGettingStarted} = this.props;
 
         const theme = pxt.appTarget.appTheme;
         const galleries = theme.galleries || {};
@@ -132,6 +149,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
 
         const headers = this.fetchLocalData();
         const urldata = this.fetchUrlData();
+        this.galleryFetchErrors = {};
+        const gals = Util.mapMap(galleries, k => this.fetchGallery(k, galleries[k]));
 
         const chgHeader = (hdr: pxt.workspace.Header) => {
             pxt.tickEvent(tab == WELCOME ? "projects.welcome.resume" : "projects.header");
@@ -231,6 +250,10 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
             //this.setState({ tab: galleryNames[0] })
         }
 
+        const seeAll = (gal: string) => {
+            this.setState({ tab: gal });
+        }
+
         const isEmpty = () => {
             if (this.state.searchFor) {
                 if (headers.length > 0
@@ -264,13 +287,16 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
             { name: lf("Older"), headers: headersOlder },
         ];
 
-        //const hadFetchError = this.galleryFetchErrors[tab];
-        const isLoading = tab != WELCOME && tab != MYSTUFF;// && !hadFetchError && !gals[tab].length;
+        const hadFetchError = this.galleryFetchErrors[tab];
+        const isLoading = tab != WELCOME && tab != MYSTUFF && !hadFetchError && !gals[tab].length;
 
         const tabClasses = sui.cx([
             isLoading ? 'loading' : '',
             'ui segment bottom attached tab active tabsegment'
         ]);
+
+        const tabName = tab == WELCOME ? lf("Home") : tab == MYSTUFF ? lf("My Stuff") : Util.rlf(tab);
+        const tabIcon = tab == WELCOME ? "home large" : undefined;
 
         return (
             <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={false}
@@ -285,6 +311,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                 {targetTheme.portraitLogo ? (<a className="ui" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`} /></a>) : null}
                             </span>
                         </div>
+                        <div className="ui item">{tabIcon ? <i className={`icon ${tabIcon}`} aria-hidden={true}/> : undefined} {tabName}</div>
                         <div className="right menu">
                             <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={() => pxt.tickEvent("menu.org") }>
                                 {targetTheme.organizationWideLogo || targetTheme.organizationLogo
@@ -296,31 +323,24 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     </div>
                 </div>
                 {tab == WELCOME ? <div className={tabClasses}>
-                    <div className="ui segment getting-started-segment">
-                        <div className="ui stackable grid equal width">
-                            <div className="column" />
-                            <div className="column right aligned">
-                                <div className="getting-started">
-                                    <h2>{lf("First time here?")}</h2>
-                                    <div className="ui huge primary button" onClick={gettingStarted}>{lf("Get Started")}<i className="right arrow icon"></i></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="ui segment gallerysegment">
-                        <h4 className="ui header">{lf("My Stuff") }</h4>
-                        <div className="ui stackable grid">
-                            <div className="four wide column">
-                                <div className="ui card newprojectcard">
-                                    <div className="content">
-                                        <i className="icon huge add circle"></i>
-                                        <span className="header">{lf("New Project...") }</span>
+                    {hasGettingStarted ?
+                        <div className="ui segment getting-started-segment">
+                            <div className="ui stackable grid equal width padded">
+                                <div className="column" />
+                                <div className="column right aligned">
+                                    <div className="getting-started">
+                                        <h2>{lf("First time here?") }</h2>
+                                        <div className="ui huge primary button" onClick={gettingStarted}>{lf("Get Started") }<i className="right arrow icon"></i></div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="twelve wide column">
-                                <ProjectsCarousel parent={this.props.parent} name={'recent'}/>
-                            </div>
+                        </div> : undefined }
+                    <div className="ui segment gallerysegment">
+                        <h4 className="ui header">{lf("My Stuff") }
+                            <a className="secondary right aligned" onClick={() => seeAll(MYSTUFF) }>{lf("See All") }</a>
+                        </h4>
+                        <div className="content">
+                            <ProjectsCarousel parent={this.props.parent} name={'recent'} />
                         </div>
                     </div>
                     {Object.keys(galleries).map(galleryName =>
@@ -334,6 +354,11 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                             </div>
                         </div>
                     ) }
+                    {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl ? <div className="ui horizontal small divided link list homefooter">
+                        {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
+                        {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use") }</a> : undefined }
+                        {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy") }</a> : undefined }
+                    </div> : undefined }
                 </div> : undefined }
                 {tab == MYSTUFF ? <div className={tabClasses}>
                     <div className="group">
@@ -403,6 +428,20 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     </div>
                 </div> : undefined }
                 {tab != MYSTUFF && tab != WELCOME ? <div className={tabClasses}>
+                    {hadFetchError ?
+                        <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
+                        : <div className="ui cards centered">
+                            {gals[tab].map(scr => <codecard.CodeCardView
+                                key={tab + scr.name}
+                                name={scr.name}
+                                description={scr.description}
+                                url={scr.url}
+                                imageUrl={scr.imageUrl}
+                                youTubeId={scr.youTubeId}
+                                onClick={() => chgGallery(scr) }
+                                />
+                            ) }
+                        </div>}
                 </div> : undefined }
                 { isEmpty() ?
                     <div className="ui items">
@@ -512,6 +551,10 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             cards = this.fetchGallery(path);
         } else {
             headers = this.fetchLocalData();
+            headers.unshift({
+                id: 'new',
+                name: lf("New Project")
+            } as any)
         }
 
         const chgGallery = (src: any) => {
@@ -523,14 +566,22 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         }
 
         const sliderSettings = this.getCarouselOptions();
-        const responsiveOptions = [{
-            breakpoint: 1024,
-            settings: {
-                slidesToShow: 3,
-                slidesToScroll: 3,
-                infinite: false
-            }
-        }, {
+        const responsiveOptions = [
+            {
+                breakpoint: 1300,
+                settings: {
+                    slidesToShow: 4,
+                    slidesToScroll: 4,
+                    infinite: false
+                }
+            }, {
+                breakpoint: 1024,
+                settings: {
+                    slidesToShow: 3,
+                    slidesToScroll: 3,
+                    infinite: false
+                }
+            }, {
                 breakpoint: 600,
                 settings: {
                     slidesToShow: 2,
@@ -546,33 +597,44 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             {this.hasFetchErrors ?
                 <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
                 :
-                <Slider slickGoTo={slickGoTo} dots={false} infinite={false} slidesToShow={4} slidesToScroll={4} responsive={responsiveOptions}>
+                <Slider slickGoTo={slickGoTo} dots={false} infinite={false} slidesToShow={5} slidesToScroll={5} responsive={responsiveOptions}>
                     {cards ? cards.map((scr, index) =>
                         <div key={path + scr.name}>
-                            {expanded ? <div>{scr.name}</div> :
+                            <codecard.CodeCardView
+                                name={scr.name}
+                                url={scr.url}
+                                imageUrl={scr.imageUrl}
+                                youTubeId={scr.youTubeId}
+                                hoverIcon={hoverIcon}
+                                hoverButton={hoverButton}
+                                hoverButtonClass={hoverButtonClass}
+                                onClick={() => this.showDetails(index, scr) }
+                                />
+                        </div>
+                    ) : headers.slice(0, 10).map((scr, index) =>
+                        <div>
+                            {scr.id == 'new' ?
+                                <div className="ui card newprojectcard">
+                                    <div className="content">
+                                        <i className="icon huge add circle"></i>
+                                        <span className="header">{scr.name}</span>
+                                    </div>
+                                </div>
+                                :
                                 <codecard.CodeCardView
+                                    cardType="file"
+                                    className="file"
+                                    key={'local' + scr.id}
                                     name={scr.name}
-                                    description={scr.description}
-                                    url={scr.url}
-                                    imageUrl={scr.imageUrl}
-                                    youTubeId={scr.youTubeId}
-                                    hoverIcon={hoverIcon}
-                                    hoverButton={hoverButton}
-                                    hoverButtonClass={hoverButtonClass}
+                                    time={scr.recentUse}
+                                    url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                                     onClick={() => this.showDetails(index, scr) }
                                     />
-                            }</div>
-                    ) : headers.slice(0, 5).map(scr =>
-                        <div><codecard.CodeCardView
-                            cardType="file"
-                            className="file"
-                            key={'local' + scr.id}
-                            name={scr.name}
-                            time={scr.recentUse}
-                            url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                            /></div>
+                            }
+                        </div>
                     ) }
-                </Slider>}
+                </Slider>
+            }
             {expanded ? <div className="expanded"></div> : undefined}
         </div>;
     }
