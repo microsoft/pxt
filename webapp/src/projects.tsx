@@ -336,20 +336,32 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                             </div>
                         </div> : undefined }
                     <div className="ui segment gallerysegment">
-                        <h4 className="ui header">{lf("My Stuff") }
-                            <a className="secondary right aligned" onClick={() => seeAll(MYSTUFF) }>{lf("See All") }</a>
-                        </h4>
+                        <div className="ui grid equal width padded stackable">
+                            <div className="column">
+                                <h2 className="ui header">{lf("My Stuff") } </h2>
+                            </div>
+                            <div className="column right aligned">
+                                {pxt.appTarget.compile ?
+                                    <sui.Button key="importfile" icon="upload" class="secondary tiny" textClass="landscape only" text={lf("Import File")} title={lf("Open files from your computer")} onClick={() => importHex() } /> : undefined}
+                                {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
+                                    <sui.Button key="importurl" icon="cloud download" class="secondary tiny" textClass="landscape only" text={lf("Import URL")} title={lf("Open a shared project URL")} onClick={() => importUrl() } /> : undefined}
+                            </div>
+                        </div>
                         <div className="content">
-                            <ProjectsCarousel parent={this.props.parent} name={'recent'} />
+                            <ProjectsCarousel key={`${MYSTUFF}_carousel`} parent={this.props.parent} name={'recent'} hide={() => this.hide()}/>
                         </div>
                     </div>
                     {Object.keys(galleries).map(galleryName =>
                         <div>
                             <div className="ui divider"></div>
                             <div className="ui segment gallerysegment">
-                                <h2 className="ui header">{galleryName}</h2>
+                                <div className="ui grid equal width padded stackable">
+                                    <div className="column">
+                                        <h2 className="ui header">{Util.rlf(galleryName)} </h2>
+                                    </div>
+                                </div>
                                 <div className="content">
-                                    <ProjectsCarousel parent={this.props.parent} name={galleryName} galleryEntry={galleries[galleryName]}/>
+                                    <ProjectsCarousel  key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} galleryEntry={galleries[galleryName]} hide={() => this.hide()}/>
                                 </div>
                             </div>
                         </div>
@@ -459,12 +471,11 @@ interface ProjectsCarouselProps extends ISettingsProps {
     name: string;
     galleryEntry?: string | pxt.GalleryEntry;
     cardWidth?: number;
+    hide: Function;
 }
 
 interface ProjectsCarouselState {
-    expanded?: boolean;
-    slickGoTo?: number;
-    slickSetOption?: any;
+
 }
 
 export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, ProjectsCarouselState> {
@@ -477,9 +488,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     constructor(props: ProjectsCarouselProps) {
         super(props)
         this.state = {
-            expanded: false,
-            slickGoTo: 0,
-            slickSetOption: undefined
         }
 
         this.showDetails = this.showDetails.bind(this);
@@ -529,12 +537,17 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         return options;
     }
 
+    newProject() {
+        pxt.tickEvent("projects.carousel.new");
+        this.props.hide();
+        this.props.parent.newProject();
+    }
+
     showDetails(index: number, src: any) {
         this.setState({ expanded: true, slickGoTo: index });
     }
 
     renderCore() {
-        const {expanded, slickGoTo, slickSetOption} = this.state;
         const {name, galleryEntry} = this.props;
         const theme = pxt.appTarget.appTheme;
         const isGallery = galleryEntry && !(typeof galleryEntry == "string");
@@ -597,7 +610,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             {this.hasFetchErrors ?
                 <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
                 :
-                <Slider slickGoTo={slickGoTo} dots={false} infinite={false} slidesToShow={5} slidesToScroll={5} responsive={responsiveOptions}>
+                <Slider dots={false} infinite={false} slidesToShow={5} slidesToScroll={5} responsive={responsiveOptions}>
                     {cards ? cards.map((scr, index) =>
                         <div key={path + scr.name}>
                             <codecard.CodeCardView
@@ -614,7 +627,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     ) : headers.slice(0, 10).map((scr, index) =>
                         <div>
                             {scr.id == 'new' ?
-                                <div className="ui card newprojectcard">
+                                <div className="ui card newprojectcard" onClick={() => this.newProject()}>
                                     <div className="content">
                                         <i className="icon huge add circle"></i>
                                         <span className="header">{scr.name}</span>
@@ -635,7 +648,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     ) }
                 </Slider>
             }
-            {expanded ? <div className="expanded"></div> : undefined}
         </div>;
     }
 }

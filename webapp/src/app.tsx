@@ -1247,6 +1247,8 @@ export class ProjectView
             if (res) {
                 pxt.tickEvent("menu.open.file");
                 this.importFile(input.files[0]);
+            } else {
+                this.projects.showOpenProject();
             }
         })
     }
@@ -1330,6 +1332,8 @@ export class ProjectView
                 } else {
                     loadHeaderBySharedId(id);
                 }
+            } else {
+                this.projects.showOpenProject();
             }
         })
     }
