@@ -2,7 +2,7 @@
 \label{sec:makecode}
 
 \begin{figure}[t]
-    \includegraphics[width=4.5in]{diagrams.pdf}
+    \includegraphics[width=4.5in]{makecodeFig.pdf}
 \caption{\label{fig:makecode}MakeCode Architecture}
 \end{figure}
 
@@ -11,6 +11,8 @@ for microcontroller-based devices, free of the need for a C++ compiler for the c
 code, as shown in Figure~\ref{fig:makecode}. 
 The web app is written in TypeScript. The web app also incorporates the TypeScript compiler and 
 language service, used in several ways, as detailed below. 
+The web app is built from a target (e.g., \emph{\href{https://github.com/microsoft/pxt-microbit}{pxt-microbit}})
+which extends the core framework (\emph{\href{https://github.com/microsoft/pxt}{pxt}}).
 The remaining subsections describe the parts of Figure~\ref{fig:makecode}.
 
 \subsection{Device Runtime and Shim Generation}
