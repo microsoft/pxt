@@ -37,7 +37,7 @@
 .ui.card.newprojectcard {
     border-radius: 10px;
     background: fade(@primaryColor, 50%);
-    border: 2px dashed @solidBorderColor;
+    border: 2px solid @solidBorderColor;
     text-align: center;
     color: @white;
     font-size: 18pt;

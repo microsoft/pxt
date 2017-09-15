@@ -583,11 +583,26 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 settings: "unslick" // destroys slick
             }];
 
+        let sliding = false;
+        const beforeChange = () => {
+            sliding = true;
+        }
+
+        const afterChange = () => {
+            sliding = false;
+        }
+
+        const onClick = (scr: any) => {
+            if (!sliding) {
+                this.props.onClick(scr);
+            }
+        }
+
         return <div className="ui dimmable">
             {this.hasFetchErrors ?
                 <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
                 :
-                <Slider dots={false} infinite={false} slidesToShow={5} slidesToScroll={5} responsive={responsiveOptions}>
+                <Slider dots={false} infinite={false} slidesToShow={5} slidesToScroll={5} responsive={responsiveOptions} beforeChange={beforeChange} afterChange={afterChange} >
                     {cards ? cards.map((scr, index) =>
                         <div key={path + scr.name}>
                             <codecard.CodeCardView
@@ -597,13 +612,13 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 url={scr.url}
                                 imageUrl={scr.imageUrl}
                                 youTubeId={scr.youTubeId}
-                                onClick={() => this.props.onClick(scr) }
+                                onClick={() => onClick(scr) }
                                 />
                         </div>
                     ) : headers.map((scr, index) =>
                         <div>
                             {scr.id == 'new' ?
-                                <div className="ui card newprojectcard" onClick={() => this.newProject() }>
+                                <div className="ui card newprojectcard" tabIndex={1} title={lf("Creates a new empty project") } onClick={() => this.newProject() }>
                                     <div className="content">
                                         <i className="icon huge add circle"></i>
                                         <span className="header">{scr.name}</span>
@@ -617,7 +632,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                     name={scr.name}
                                     time={scr.recentUse}
                                     url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                                    onClick={() => this.props.onClick(scr) }
+                                    onClick={() => onClick(scr) }
                                     />
                             }
                         </div>
