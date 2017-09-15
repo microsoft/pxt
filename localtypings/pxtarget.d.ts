@@ -206,6 +206,7 @@ declare namespace pxt {
         useUploadMessage?: boolean; // change "Download" text to "Upload"
         downloadIcon?: string; // which icon io use for download
         blockColors?: Map<string>; // block namespace colors, used for build in categories
+        blocklyColors?: Blockly.Colours; // Blockly workspace, flyout and other colors
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
         useStartPage?: boolean;
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded

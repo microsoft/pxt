@@ -176,6 +176,17 @@ export class ProjectView
         }
     }
 
+    updateEditorLogo(left: number, rgba?: string) {
+        if (pxt.appTarget.appTheme.hideMenuBar) {
+            const editorLogo = document.getElementById('editorlogo');
+            if (editorLogo) {
+                editorLogo.style.left = `${left}px`;
+                editorLogo.style.display = 'block';
+                editorLogo.style.background = rgba || '';
+            }
+        }
+    }
+
     saveFileAsync(): Promise<void> {
         if (!this.editorFile)
             return Promise.resolve()
@@ -560,10 +571,10 @@ export class ProjectView
     }
 
     reloadHeaderAsync() {
-        return this.loadHeaderAsync(this.state.header, this.state.filters)
+        return this.loadHeaderAsync(this.state.header, this.state.editorState)
     }
 
-    loadHeaderAsync(h: pxt.workspace.Header, filters?: pxt.editor.ProjectFilters): Promise<void> {
+    loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
         if (!h)
             return Promise.resolve()
 
@@ -573,7 +584,7 @@ export class ProjectView
         logs.clear();
         this.setState({
             showFiles: false,
-            filters: filters,
+            editorState: editorState,
             tutorialOptions: undefined
         })
         return pkg.loadPkgAsync(h.id)
@@ -607,7 +618,7 @@ export class ProjectView
                 }
 
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
-                    this.loadHeaderAsync(h, this.state.filters).done()
+                    this.loadHeaderAsync(h, this.state.editorState).done()
                 }
 
                 pkg.mainPkg.getCompileOptionsAsync()
@@ -780,7 +791,7 @@ export class ProjectView
         }
     }
 
-    importProjectAsync(project: pxt.workspace.Project, filters?: pxt.editor.ProjectFilters): Promise<void> {
+    importProjectAsync(project: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void> {
         let h: pxt.workspace.InstallHeader = project.header;
         if (!h) {
             h = {
@@ -793,7 +804,7 @@ export class ProjectView
             }
         }
         return workspace.installAsync(h, project.text)
-            .then(hd => this.loadHeaderAsync(hd, filters));
+            .then(hd => this.loadHeaderAsync(hd, editorState));
     }
 
     initDragAndDrop() {
@@ -888,7 +899,7 @@ export class ProjectView
             pubCurrent: false,
             target: pxt.appTarget.id,
             temporary: options.temporary
-        }, files).then(hd => this.loadHeaderAsync(hd, options.filters))
+        }, files).then(hd => this.loadHeaderAsync(hd, {filters: options.filters}))
     }
 
     switchTypeScript() {
@@ -1150,6 +1161,10 @@ export class ProjectView
         }
 
         this.setState({ fullscreen: !this.state.fullscreen });
+    }
+
+    closeFlyout() {
+        this.editor.closeFlyout();
     }
 
     toggleMute() {
@@ -1514,7 +1529,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     tutorialName: title,
                     tutorialStep: 0
                 };
-                this.setState({ tutorialOptions: tutorialOptions, tracing: undefined })
+                this.setState({ tutorialOptions: tutorialOptions, editorState: {searchBar: false}, tracing: undefined })
 
                 let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
                 tc.setPath(tutorialId);
@@ -1541,7 +1556,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         } else {
             curr.temporary = false;
         }
-        this.setState({ active: false, filters: undefined });
+        this.setState({ active: false, editorState: undefined });
         return workspace.saveAsync(curr, {})
             .then(() => { return keep ? workspace.installAsync(curr, files) : Promise.resolve(null); })
             .then(() => {
@@ -1817,6 +1832,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     {lf("By using this site you agree to the use of cookies for analytics.")}
                     <a target="_blank" className="ui link" href={pxt.appTarget.appTheme.privacyUrl} rel="noopener">{lf("Learn more")}</a>
                 </div>}
+                {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
             </div>
         );
     }
@@ -2278,7 +2294,7 @@ $(document).ready(() => {
         })
         .then((state) => {
             if (state) {
-                theEditor.setState(state);
+                theEditor.setState({editorState: state});
             }
             initSerial();
             initScreenshots();
@@ -2308,7 +2324,7 @@ $(document).ready(() => {
             }
 
             // default handlers
-            if (hd) return theEditor.loadHeaderAsync(hd, null)
+            if (hd) return theEditor.loadHeaderAsync(hd, theEditor.state.editorState)
             else theEditor.newProject();
             return Promise.resolve();
         })

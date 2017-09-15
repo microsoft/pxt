@@ -87,6 +87,9 @@
 
 @avatarUrl: data-uri("../docs/static/avatar.svg");
 
+@poweredBySmall: data-uri("../docs/static/logo/Powered-By-Microsoft-logo-small.png");
+@poweredByLarge: data-uri("../docs/static/logo/Powered-By-Microsoft-logo.png");
+
 /*-------------------
    Menu
 --------------------*/

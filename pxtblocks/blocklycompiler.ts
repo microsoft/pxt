@@ -1060,8 +1060,12 @@ namespace pxt.blocks {
         if (lit)
             return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
         let f = b.getFieldValue(p.field);
-        if (f != null)
+        if (f != null) {
+            if (b.getField(p.field) instanceof pxtblockly.FieldTextInput) {
+                return H.mkStringLiteral(f);
+            }
             return mkText(f);
+        }
         else {
             attachPlaceholderIf(e, b, p.field);
             const target = getInputTargetBlock(b, p.field);
@@ -1136,6 +1140,7 @@ namespace pxt.blocks {
         // b.getFieldValue may be string, numbers
         const argb = getInputTargetBlock(b, arg);
         if (argb) return compileExpression(e, argb, comments);
+        if (b.getField(arg) instanceof pxtblockly.FieldTextInput) return H.mkStringLiteral(b.getFieldValue(arg));
         return mkText(b.getFieldValue(arg))
     }
 
@@ -1424,7 +1429,7 @@ namespace pxt.blocks {
         }
 
         // collect local variables.
-        w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
+        if (w) w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
             if (b.type == "controls_for" || b.type == "controls_simple_for" || b.type == "controls_for_of") {
                 let x = escapeVarName(b.getFieldValue("VAR"), e);
                 if (b.type == "controls_for_of") {
