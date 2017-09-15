@@ -228,26 +228,10 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
             this.hide();
             this.props.parent.setFile(pkg.mainEditorPkg().files[pxt.CONFIG_NAME])
         }
-        const resume = () => {
-            if (this.state.isInitialStartPage) {
-                chgHeader(this.state.resumeProject);
-            } else {
-                // The msot recent project is already loaded in the editor, so this is a no-op
-                this.hide();
-            }
-        }
         const gettingStarted = () => {
             pxt.tickEvent("projects.welcome.gettingstarted");
             this.hide();
             this.props.parent.gettingStarted();
-        }
-        const loadProject = () => {
-            pxt.tickEvent("projects.welcome.loadproject");
-            this.setState({ tab: MYSTUFF });
-        }
-        const projectGalleries = () => {
-            pxt.tickEvent("projects.welcome.galleries");
-            //this.setState({ tab: galleryNames[0] })
         }
 
         const seeAll = (gal: string) => {
@@ -305,9 +289,9 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         <div className="left menu">
                             <span className="ui item logo brand">
                                 {targetTheme.logo || targetTheme.portraitLogo
-                                    ? <a className="ui image landscape only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo)} alt={`${targetTheme.boardName} Logo`} /></a>
+                                    ? <a className="ui image landscape only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`} /></a>
                                     : <span className="name">{targetTheme.name}</span>}
-                                {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo)} alt={`${targetTheme.boardName} Logo`} /></a>) : null}
+                                {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`} /></a>) : null}
                             </span>
                         </div>
                         <div className="ui item">{tabIcon ? <i className={`icon ${tabIcon}`} aria-hidden={true}/> : undefined} {tabName}</div>
@@ -347,7 +331,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                             </div>
                         </div>
                         <div className="content">
-                            <ProjectsCarousel key={`${MYSTUFF}_carousel`} parent={this.props.parent} name={'recent'} hide={() => this.hide() }/>
+                            <ProjectsCarousel key={`${MYSTUFF}_carousel`} parent={this.props.parent} name={'recent'} hide={() => this.hide() } onClick={(scr: any) => chgHeader(scr) }/>
                         </div>
                     </div>
                     {Object.keys(galleries).map(galleryName =>
@@ -360,7 +344,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                     </div>
                                 </div>
                                 <div className="content">
-                                    <ProjectsCarousel  key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} galleryEntry={galleries[galleryName]} hide={() => this.hide() }/>
+                                    <ProjectsCarousel  key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} galleryEntry={galleries[galleryName]} hide={() => this.hide() } onClick={(scr: any) => chgGallery(scr) }/>
                                 </div>
                             </div>
                         </div>
@@ -483,6 +467,7 @@ interface ProjectsCarouselProps extends ISettingsProps {
     galleryEntry?: string | pxt.GalleryEntry;
     cardWidth?: number;
     hide: Function;
+    onClick: Function;
 }
 
 interface ProjectsCarouselState {
@@ -581,14 +566,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             } as any)
         }
 
-        const chgGallery = (src: any) => {
-            console.log(src);
-        }
-
-        const chgHeader = (src: any) => {
-            console.log(src);
-        }
-
         const sliderSettings = this.getCarouselOptions();
         const responsiveOptions = [
             {
@@ -625,6 +602,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     {cards ? cards.map((scr, index) =>
                         <div key={path + scr.name}>
                             <codecard.CodeCardView
+                                className="example"
                                 name={scr.name}
                                 url={scr.url}
                                 imageUrl={scr.imageUrl}
@@ -632,7 +610,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 hoverIcon={hoverIcon}
                                 hoverButton={hoverButton}
                                 hoverButtonClass={hoverButtonClass}
-                                onClick={() => this.showDetails(index, scr) }
+                                onClick={() => this.props.onClick(scr) }
                                 />
                         </div>
                     ) : headers.slice(0, 10).map((scr, index) =>
@@ -652,7 +630,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                     name={scr.name}
                                     time={scr.recentUse}
                                     url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                                    onClick={() => this.showDetails(index, scr) }
+                                    onClick={() => this.props.onClick(scr) }
                                     />
                             }
                         </div>

@@ -24,6 +24,10 @@
         margin-left: 4rem;
         min-width: 5rem;
         padding-left: 1.5rem;
+        height: 8rem;
+    }
+    .meta {
+        height: 4rem;
     }
 }
 
@@ -37,7 +41,7 @@
     font-size: 18pt;
 
     .content {
-        height: 200px;
+        height: 12rem;
     }
     .header {
         color: @white;
@@ -47,4 +51,25 @@
 }
 .ui.card.newprojectcard:hover {
     border: 2px solid @blue;
+}
+
+/* Example card */
+.ui.card.example {
+    .ui.image {
+        height: 8rem;
+    }
+    .content {
+        height: 4rem;
+    }
+}
+
+/* Project code cards */
+.ui.cardimage {
+    background-color: @secondaryColor;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 8rem;
+    border-top-left-radius: @defaultBorderRadius;
+    border-top-right-radius: @defaultBorderRadius;
 }
