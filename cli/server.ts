@@ -141,8 +141,9 @@ function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsP
                         files: files
                     };
                     return existsAsync(path.join(dirname, "icon.jpeg"));
-                }).then(icon => {
-                    r.icon = icon ? "/icon/" + logicalDirname : undefined;
+                }).then(exists => exists ? true : existsAsync(path.join(dirname, "icon.gif")))
+                .then(exists => {
+                    r.icon = exists ? "/icon/" + logicalDirname : undefined;
                     return r;
                 })
         })
@@ -155,8 +156,11 @@ function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, ico
 
     function writeUriAsync(name: string, uri: string) {
         if (!uri) return Promise.resolve();
-        const m = uri.match(/^data:image\/(png|jpeg);base64,(.*)$/);
-        if (!m) return Promise.resolve();
+        const m = uri.match(/^data:image\/(png|jpeg|gif);base64,(.*)$/);
+        if (!m) {
+            console.log(`unknown image format ${uri.slice(0, 100)}`);
+            return Promise.resolve();
+        }
         const ext = m[1];
         const data = m[2];
         const fn = path.join(dirname, name + "." + ext);
@@ -814,8 +818,15 @@ export function serveAsync(options: ServeOptions) {
         }
 
         if (elts[0] == "icon") {
-            const name = path.join(userProjectsDir, elts[1], "icon.jpeg");
+            let name = path.join(userProjectsDir, elts[1], "icon.jpeg");
             return existsAsync(name)
+                .then(exists => {
+                    if (exists) return true;
+                    else {
+                        name = path.join(userProjectsDir, elts[1], "icon.gif");
+                        return existsAsync(name);
+                    }
+                })
                 .then(exists => exists ? sendFile(name) : error(404));
         }
 

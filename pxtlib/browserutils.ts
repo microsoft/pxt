@@ -327,12 +327,15 @@ namespace pxt.BrowserUtils {
     }
 
     export function loadScriptAsync(url: string): Promise<void> {
+        if (document.body.querySelector(`script[src="${url}"]`))
+            return Promise.resolve();
+
         return new Promise<void>((resolve, reject) => {
             const script = document.createElement('script');
             script.type = 'text/javascript';
-            script.src = url;
             script.addEventListener('load', () => resolve());
             script.addEventListener('error', (e) => reject(e));
+            script.src = url;
             document.body.appendChild(script);
         });
     }

@@ -116,6 +116,20 @@ export class ProjectView
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 20;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
+
+        this.initRecorder();
+    }
+
+    initRecorder() {
+        window.addEventListener('message', (ev: MessageEvent) => {
+            let msg = ev.data as pxsim.SimulatorMessage;
+            if (this.state.recording && msg && msg.type == "recorder") {
+                const scmsg = msg as pxsim.SimulatorRecorderMessage;
+                if (scmsg.action == "frame" && scmsg.data) {
+                    screenshot.addFrameAsync(scmsg.data).done();
+                }
+            }
+        }, false);
     }
 
     updateVisibility() {
@@ -1096,6 +1110,7 @@ export class ProjectView
     stopSimulator(unload?: boolean) {
         simulator.stop(unload)
         this.setState({ running: false })
+        this.stopRecording();
     }
 
     proxySimulatorMessage(content: string) {
@@ -1150,6 +1165,30 @@ export class ProjectView
         }
 
         this.setState({ fullscreen: !this.state.fullscreen });
+    }
+
+    stopRecording() {
+        if (this.state.recording) {
+            simulator.driver.stopRecording();
+            this.setState({ recording: false });
+            screenshot.stopRecordingAsync(this.state.header, pkg.genFileName(""))
+                .done(() => {
+                    pxt.tickEvent("recorder.saved")
+                });
+        }
+    }
+
+    toggleRecording() {
+        pxt.tickEvent("simulator.record")
+        if (!this.state.recording) {
+            let size = simulator.driver.startRecording();
+            if (size) {
+                screenshot.startRecordingAsync(size.width, size.height).done(() => {
+                    this.setState({ recording: true });
+                })
+            }
+        }
+        else this.stopRecording();
     }
 
     toggleMute() {
@@ -1623,6 +1662,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const trace = run && simOpts.enableTrace;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
+        const recorder = run && this.state.fullscreen && !pxt.options.light && !simOpts.hideRecorder;
+        const recording = recorder && !!this.state.recording;
         const useModulator = compile.useModulator;
         const { hideMenuBar, hideEditorToolbar } = targetTheme;
         const isHeadless = simOpts.headless;
@@ -1778,6 +1819,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {audio ? <sui.Button key='mutebtn' class={`mute-button ${this.state.mute ? 'red' : ''}`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute()} /> : undefined}
                                 {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen()} /> : undefined}
+                                {recorder ? <sui.Button key='recorderbtn' class={`recorder-button`} icon={recording ? 'square red' : 'circle'} title={lf("Record animated gif") } onClick={() => this.toggleRecording() } /> : undefined }
                             </div>
                         </aside> : undefined }
                         <div className="ui item portrait hide">

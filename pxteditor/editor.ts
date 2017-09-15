@@ -50,6 +50,7 @@ namespace pxt.editor {
         showParts?: boolean;
         fullscreen?: boolean;
         mute?: boolean;
+        recording?: boolean;
         embedSimView?: boolean;
         tracing?: boolean;
 

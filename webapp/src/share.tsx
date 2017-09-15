@@ -14,7 +14,9 @@ export enum ShareMode {
     Screenshot,
     Url,
     Editor,
+    Gif,
     Simulator,
+    Code,
     Cli
 }
 
@@ -98,6 +100,9 @@ pxt extract ${url}`;
                     case ShareMode.Editor:
                         embed = pxt.docs.embedUrl(rootUrl, "pub", header.pubId);
                         break;
+                    case ShareMode.Gif:
+                        embed = `<a href="${editUrl}"><img src="${header.icon}" /></a>`;
+                        break;
                     case ShareMode.Simulator:
                         let padding = '81.97%';
                         // TODO: parts aspect ratio
@@ -108,6 +113,7 @@ pxt extract ${url}`;
                     case ShareMode.Url:
                         embed = editUrl;
                         break;
+                    case ShareMode.Screenshot:
                     default:
                         if (isBlocks && pxt.blocks.layout.screenshotEnabled()) {
                             // Render screenshot
@@ -159,9 +165,11 @@ pxt extract ${url}`;
 
         const formats = [{ mode: ShareMode.Screenshot, label: lf("Screenshot") },
             { mode: ShareMode.Editor, label: lf("Editor") },
+            header && header.icon ? { mode: ShareMode.Gif, label: lf("Gif") } : undefined,
             { mode: ShareMode.Simulator, label: lf("Simulator") },
+            { mode: ShareMode.Code, label: lf("Code") },
             { mode: ShareMode.Cli, label: lf("Command line") }
-        ];
+        ].filter(f => !!f);
 
         const action = !ready ? lf("Publish project") : undefined;
         const actionLoading = this.props.parent.state.publishing && !this.state.sharingError;
@@ -204,6 +212,9 @@ pxt extract ${url}`;
                 closeOnDimmerClick closeOnDocumentClick
                 >
                 <div className={`ui form`}>
+                    { action && header && header.icon ?
+                        <img src={header.icon} className={"ui medium image centered"} /> : undefined
+                    }
                     { action ?
                         <div>
                             <p>{lf("You need to publish your project to share it or embed it in other web pages.") + " " +

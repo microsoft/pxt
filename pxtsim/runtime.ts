@@ -85,6 +85,9 @@ namespace pxsim {
             this.runOptions = msg;
             return Promise.resolve()
         }
+        public screenshot(): string {
+            return undefined;
+        }
         public kill() { }
 
         protected serialOutBuffer: string = '';
@@ -243,6 +246,9 @@ namespace pxsim {
 
         dead = false;
         running = false;
+        recording = false;
+        lastRecordedUri: string;
+        recordingTimer = 0;
         startTime = 0;
         id: string;
         globals: any = {};
@@ -282,13 +288,57 @@ namespace pxsim {
         }
 
         kill() {
-            this.dead = true
+            this.dead = true;
             // TODO fix this
             this.setRunning(false);
         }
 
         updateDisplay() {
-            this.board.updateView()
+            this.board.updateView();
+            this.postFrame();
+        }
+
+        startRecording() {
+            if (this.recording) return;
+
+            this.recording = true;
+            this.recordingTimer = setInterval(() => this.postFrame(), 50);
+        }
+
+        stopRecording() {
+            if (!this.recording) return;
+            if (this.recordingTimer) clearInterval(this.recordingTimer);
+            this.recording = false;
+            this.recordingTimer = 0;
+            this.lastRecordedUri = undefined;
+        }
+
+        postFrame() {
+            if (!this.recording) return;
+            const uri = this.board.screenshot();
+            if (uri == this.lastRecordedUri) return;
+
+            // it's safer to render the SVG within the current CSS context
+            this.renderScreenshot(uri);
+            this.lastRecordedUri = uri;
+        }
+
+        private renderScreenshot(uri: string) {
+            const img = new Image;
+            img.onload = function () {
+                const cvs = document.createElement("canvas") as HTMLCanvasElement;
+                cvs.width = img.width;
+                cvs.height = img.height;
+                const ctx = cvs.getContext("2d");
+                ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, cvs.width, cvs.height);
+                const canvasdata = cvs.toDataURL("image/png");
+                Runtime.postMessage(<SimulatorRecorderMessage>{
+                    type: "recorder",
+                    action: "frame",
+                    data: uri
+                })
+            };
+            img.src = uri;
         }
 
         private numDisplayUpdates = 0;
@@ -310,6 +360,7 @@ namespace pxsim {
                     this.startTime = U.now();
                     Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'running' });
                 } else {
+                    this.stopRecording();
                     Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'killed' });
                 }
                 if (this.stateChanged) this.stateChanged();

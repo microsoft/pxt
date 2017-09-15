@@ -155,6 +155,10 @@ svg.ui.trend.black polyline {
     stroke:#000;
 }
 
+.glow {
+    outline: solid 3px yellow;
+}
+
 .grayscale {
     -moz-filter: grayscale(1);
     -webkit-filter: grayscale(1);
