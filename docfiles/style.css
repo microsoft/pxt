@@ -390,5 +390,9 @@ print only stuff
     ul, ol, img, h2, h3 {
         page-break-inside: avoid;
     }
+    /* images */
+    .ui.image {
+        max-width: 60%;
+    }
     /* headers, footers */ 
 }

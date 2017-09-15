@@ -418,7 +418,7 @@ namespace pxt.docs {
             marked = requireMarked();
             let renderer = new marked.Renderer()
             renderer.image = function (href: string, title: string, text: string) {
-                let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
+                let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
                 if (title) {
                     out += ' title="' + title + '"';
                 }
@@ -541,7 +541,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
 
         // try getting a better custom image for twitter
         const imgM = /<div class="ui embed mdvid"[^<>]+?data-placeholder="([^"]+)"[^>]*\/?>/i.exec(html)
-            || /<img class="ui image" src="([^"]+)"[^>]*\/?>/i.exec(html);
+            || /<img class="ui [^"]*image" src="([^"]+)"[^>]*\/?>/i.exec(html);
         if (imgM)
             pubinfo["cardLogo"] = html2Quote(imgM[1]);
 
