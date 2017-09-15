@@ -23,14 +23,15 @@
 /* Arrows */
 .slick-prev,
 .slick-next {
+    z-index: 10;
     position: absolute;
     display: block;
-    height: 30px;
-    width: 30px;
+    height: 100%;
+    width: 50px;
     line-height: 0px;
     font-size: 0px;
     cursor: pointer;
-    background: transparent;
+    background: @homeScreenBackground;
     color: transparent;
     top: 50%;
     -webkit-transform: translate(0, -50%);
@@ -41,7 +42,6 @@
     outline: none;
     &:hover, &:focus {
         outline: none;
-        background: transparent;
         color: transparent;
         &:before {
             opacity: @slick-opacity-on-hover;
@@ -63,10 +63,10 @@
 }
 
 .slick-prev {
-    left: -35px;
+    left: -55px;
     [dir="rtl"] & {
         left: auto;
-        right: -35px;
+        right: -55px;
     }
     &:before {
         content: @slick-prev-character;
@@ -77,9 +77,9 @@
 }
 
 .slick-next {
-    right: -35px;
+    right: -55px;
     [dir="rtl"] & {
-        left: -35px;
+        left: -55px;
         right: auto;
     }
     &:before {

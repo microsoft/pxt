@@ -28,6 +28,8 @@
     }
     .meta {
         height: 4rem;
+        padding: 1rem;
+        text-align: right;
     }
 }
 
@@ -61,6 +63,9 @@
     .content {
         height: 4rem;
     }
+}
+.ui.card.example:hover {
+    transform: scale(1.1);
 }
 
 /* Project code cards */

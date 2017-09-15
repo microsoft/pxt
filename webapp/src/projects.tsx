@@ -84,9 +84,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         this.setState({ visible: true, tab: gals[0] || WELCOME });
     }
 
-    fetchGallery(tab: string, gallery: string | pxt.GalleryEntry): pxt.CodeCard[] {
+    fetchGallery(tab: string, path: string): pxt.CodeCard[] {
         if (this.state.tab != tab) return [];
-        const path = typeof gallery == "string" ? gallery as string : (gallery as pxt.GalleryEntry).path;
 
         let res = this.getData(`gallery:${encodeURIComponent(path)}`) as gallery.Gallery[];
         if (res) {
@@ -223,11 +222,6 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
             this.hide();
             this.props.parent.newProject();
         }
-        const renameProject = () => {
-            pxt.tickEvent("projects.rename");
-            this.hide();
-            this.props.parent.setFile(pkg.mainEditorPkg().files[pxt.CONFIG_NAME])
-        }
         const gettingStarted = () => {
             pxt.tickEvent("projects.welcome.gettingstarted");
             this.hide();
@@ -344,7 +338,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                     </div>
                                 </div>
                                 <div className="content">
-                                    <ProjectsCarousel  key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} galleryEntry={galleries[galleryName]} hide={() => this.hide() } onClick={(scr: any) => chgGallery(scr) }/>
+                                    <ProjectsCarousel  key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} hide={() => this.hide() } onClick={(scr: any) => chgGallery(scr) }/>
                                 </div>
                             </div>
                         </div>
@@ -464,7 +458,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
 
 interface ProjectsCarouselProps extends ISettingsProps {
     name: string;
-    galleryEntry?: string | pxt.GalleryEntry;
+    path?: string;
     cardWidth?: number;
     hide: Function;
     onClick: Function;
@@ -544,13 +538,8 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     }
 
     renderCore() {
-        const {name, galleryEntry} = this.props;
+        const {name, path} = this.props;
         const theme = pxt.appTarget.appTheme;
-        const isGallery = galleryEntry && !(typeof galleryEntry == "string");
-        const path = isGallery ? (galleryEntry as pxt.GalleryEntry).path : (galleryEntry as string);
-        const hoverIcon = isGallery ? (galleryEntry as pxt.GalleryEntry).hoverIcon : '';
-        const hoverButton = isGallery ? (galleryEntry as pxt.GalleryEntry).hoverButton : '';
-        const hoverButtonClass = isGallery ? (galleryEntry as pxt.GalleryEntry).hoverButtonClass : '';
 
         // Fetch the gallery
         this.hasFetchErrors = false;
@@ -603,17 +592,15 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         <div key={path + scr.name}>
                             <codecard.CodeCardView
                                 className="example"
+                                key={'gallery' + scr.name}
                                 name={scr.name}
                                 url={scr.url}
                                 imageUrl={scr.imageUrl}
                                 youTubeId={scr.youTubeId}
-                                hoverIcon={hoverIcon}
-                                hoverButton={hoverButton}
-                                hoverButtonClass={hoverButtonClass}
                                 onClick={() => this.props.onClick(scr) }
                                 />
                         </div>
-                    ) : headers.slice(0, 10).map((scr, index) =>
+                    ) : headers.map((scr, index) =>
                         <div>
                             {scr.id == 'new' ?
                                 <div className="ui card newprojectcard" onClick={() => this.newProject() }>

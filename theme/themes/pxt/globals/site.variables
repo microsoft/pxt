@@ -124,6 +124,8 @@
 @editorToolsBackground: @simulatorBackground;
 @blocklySvgColor: #fff;
 
+@homeScreenBackground: #fff;
+
 /*-------------------
    Full screen
 --------------------*/

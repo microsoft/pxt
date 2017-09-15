@@ -4043,7 +4043,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     const theme = pxt.appTarget.appTheme;
     if (theme) {
         if (theme.galleries)
-            Object.keys(theme.galleries).forEach(gallery => todo.push(typeof theme.galleries[gallery] == "string" ? theme.galleries[gallery] as string : (theme.galleries[gallery] as pxt.GalleryEntry).path));
+            Object.keys(theme.galleries).forEach(gallery => todo.push(theme.galleries[gallery]));
         if (theme.sideDoc)
             todo.push(theme.sideDoc);
         if (theme.usbDocs)

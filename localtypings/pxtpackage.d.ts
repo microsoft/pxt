@@ -99,9 +99,5 @@ declare namespace pxt {
 
         target?: string;
         className?: string;
-
-        hoverIcon?: string;
-        hoverButton?: string;
-        hoverButtonClass?: string;
     }
 }

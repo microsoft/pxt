@@ -20,15 +20,6 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
         ($('.ui.embed') as any).embed();
     }
 
-    componentDidMount() {
-        const card = this.props
-        if (card.hoverButton || card.hoverIcon) {
-            $('.ui.card .ui.image .carddimmer').dimmer({
-                on: 'hover'
-            });
-        }
-    }
-
     render() {
         const card = this.props
         let color = card.color || "";
@@ -43,18 +34,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
         const className = card.className;
         const cardType = card.cardType;
 
-        // Hover JSX
-        const hoverJSX = (card.hoverButton || card.hoverIcon ?
-            <div className="ui dimmer">
-                <div className="content">
-                    <div className="center">
-                        {card.hoverButton ? <div className={`ui inverted button ${card.hoverButtonClass}`}>{card.hoverButton}</div>
-                            : <div className="ui icon"><i className={`icon ${card.hoverIcon}`}></i></div>}
-                    </div>
-                </div>
-            </div> : undefined);
-
-        const imageUrl = card.imageUrl || (card.youTubeId ? `https://img.youtube.com/vi/${card.youTubeId}/maxresdefault.jpg` : undefined)
+        const imageUrl = card.imageUrl || (card.youTubeId ? `https://img.youtube.com/vi/${card.youTubeId}/maxresdefault.jpg` : undefined);
 
         const cardDiv = <div className={`ui card ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`} role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={card.ariaLabel || card.title} title={card.title} onClick={e => card.onClick ? card.onClick(e) : undefined } tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={card.onClick ? sui.fireClickOnEnter : null}>
             {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
@@ -72,7 +52,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                 {card.label ? <label className="ui orange right ribbon label">{card.label}</label> : undefined }
                 {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
-                {imageUrl ? <div className="ui dimmable carddimmer"> {hoverJSX} <div className="ui cardimage" style={ { backgroundImage: `url("${imageUrl}")`}} /> </div> : undefined}
+                {imageUrl ? <div className="ui dimmable carddimmer"><div className="ui cardimage" style={ { backgroundImage: `url("${imageUrl}")`}} /> </div> : undefined}
                 {card.cardType == "file" ? <div className="ui fileimage" /> : undefined}
             </div> : undefined }
             {card.icon || card.iconContent ?
