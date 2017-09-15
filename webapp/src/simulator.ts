@@ -19,6 +19,7 @@ const themes = ["blue", "red", "green", "yellow"];
 let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
 let tutorialMode: boolean;
+let displayedModals: pxt.Map<boolean> = {};
 
 let $debugger: JQuery;
 
@@ -104,7 +105,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                     break;
                 case "modal":
                     stop();
-                    if (!tutorialMode && !pxt.shell.isSandboxMode()) {
+                    if (!pxt.shell.isSandboxMode() && (!msg.showOnlyOnce || !displayedModals[msg.modalMessageId])) {
                         const modalOpts: core.ConfirmOptions = {
                             header: msg.header,
                             body: msg.body,
@@ -121,6 +122,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                             modalOpts.hideAgree = true;
                         }
 
+                        displayedModals[msg.modalMessageId] = true;
                         core.confirmAsync(modalOpts)
                             .then((selection) => {
                                 if (hasTrustedLink && selection == 1) {
