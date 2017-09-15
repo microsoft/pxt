@@ -208,7 +208,7 @@ declare namespace pxt {
         blockColors?: Map<string>; // block namespace colors, used for build in categories
         blocklyColors?: Blockly.Colours; // Blockly workspace, flyout and other colors
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
-        skipHomeScreen?: boolean; // hide the home page on editor load and go straight to the editor view, loading the previous project
+        showHomeScreen?: boolean; // show the home page on editor load
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
         appPathNames?: string[]; // Authorized URL paths in electron or UWP, all other paths will display a warning banner
         defaultBlockGap?: number; // For targets to override block gap

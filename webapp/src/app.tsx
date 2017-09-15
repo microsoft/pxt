@@ -2309,7 +2309,7 @@ $(document).ready(() => {
 
             // Only show the start screen if there are no initial projects requested
             // (e.g. from the URL hash or from WinRT activation arguments)
-            const skipStartScreen = pxt.appTarget.appTheme.allowParentController || pxt.appTarget.appTheme.skipHomeScreen || /skipHomeScreen=1/i.test(window.location.href);
+            const skipStartScreen = pxt.appTarget.appTheme.allowParentController || !pxt.appTarget.appTheme.showHomeScreen || /skipHomeScreen=1/i.test(window.location.href);
             const shouldShowHomeScreen = !isSandbox && !skipStartScreen  && !hasWinRTProject && !isProjectRelatedHash(hash);
             if (shouldShowHomeScreen) {
                 theEditor.projects.showHome(hd);
