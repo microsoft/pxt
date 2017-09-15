@@ -69,6 +69,7 @@ namespace pxsim {
         copyable?: string;
         linkButtonHref?: string;
         linkButtonLabel?: string;
+        displayOnceId?: string; // An id for the modal command, if the sim wants the modal to be displayed only once in the session
     }
     export interface SimulatorRadioPacketMessage extends SimulatorMessage {
         type: "radiopacket";

@@ -92,6 +92,9 @@
 @poweredBySmall: data-uri("../docs/static/logo/Powered-By-Microsoft-logo-small.png");
 @poweredByLarge: data-uri("../docs/static/logo/Powered-By-Microsoft-logo.png");
 
+@poweredBySmall: data-uri("../docs/static/logo/Powered-By-Microsoft-logo-small.png");
+@poweredByLarge: data-uri("../docs/static/logo/Powered-By-Microsoft-logo.png");
+
 /*-------------------
    Menu
 --------------------*/

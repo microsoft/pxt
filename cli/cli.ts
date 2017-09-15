@@ -1852,9 +1852,6 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
         .then(() => buildTargetAsync().then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
-        .then(() => buildTargetDocsAsync(false, true).then(r => { }, e => {
-            buildFailed("target build failed: " + e.message, e)
-        }))
         .then(() => {
             let toWatch = [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)
             if (hasCommonPackages) {
@@ -3496,6 +3493,9 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
 function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
     pxt.log(`uploading from ${srcDir} to ${crowdinDir} under project ${prj}/${branch || ""}`)
 
+    let ignoredDirectories: Map<boolean> = {};
+    nodeutil.allFiles(srcDir).filter(d => nodeutil.fileExistsSync(path.join(path.dirname(d), ".crowdinignore"))).forEach(f => ignoredDirectories[path.dirname(f)] = true);
+    const ignoredDirectoriesList = Object.keys(ignoredDirectories);
     const todo = nodeutil.allFiles(srcDir).filter(f => /\.md$/.test(f) && !/_locales/.test(f)).reverse();
     const knownFolders: Map<boolean> = {};
     const ensureFolderAsync = (crowdd: string) => {
@@ -3510,10 +3510,10 @@ function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch:
         if (!f) return Promise.resolve();
         const crowdf = path.join(crowdinDir, f);
         const crowdd = path.dirname(crowdf);
-        // check if directory has a .crowdinignore file
-        if (nodeutil.fileExistsSync(path.join(path.dirname(f), ".crowdinignore"))) {
+        // check if file should be ignored
+        if (ignoredDirectoriesList.filter(d => path.dirname(f).indexOf(d) == 0).length > 0) {
             pxt.log(`skpping ${f} because of .crowdinignore file`)
-            return Promise.resolve();
+            return nextFileAsync(todo.pop());
         }
 
         const data = fs.readFileSync(f, 'utf8');
