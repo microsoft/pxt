@@ -64,7 +64,8 @@
         height: 4rem;
     }
 }
-.ui.card.example:hover {
+/* Hover animation on home screen cards */
+.ui.card.file:hover, .ui.card.newprojectcard:hover, .ui.card.example:hover {
     transform: scale(1.1);
 }
 
