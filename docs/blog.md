@@ -7,7 +7,7 @@ September 8th, 2017
 Microsoft MakeCode accessibility support
 [Read more](/blog/microbit/v0.13.20)
 
-## [Microbit Editor v0.12.64](/blog/microbit/v0.12.58)
+## [Microbit Editor v0.12.64 (Function Block](/blog/microbit/v0.12.58)
 
 August 11th, 2017
 
