@@ -1170,7 +1170,17 @@ namespace pxt.blocks {
             argumentDeclaration = b.mutation.compileMutation(e, comments);
         }
         else if (stdfun.handlerArgs.length) {
-            let handlerArgs = stdfun.handlerArgs.map(arg => escapeVarName(b.getFieldValue("HANDLER_" + arg.name), e));
+            let handlerArgs: string[] = []; // = stdfun.handlerArgs.map(arg => escapeVarName(b.getFieldValue("HANDLER_" + arg.name), e));
+            for (let i = 0; i < stdfun.handlerArgs.length; i++) {
+                const arg = stdfun.handlerArgs[i];
+                const varName = b.getFieldValue("HANDLER_" + arg.name);
+                if (varName !== null) {
+                    handlerArgs.push(escapeVarName(varName, e));
+                }
+                else {
+                    break;
+                }
+            }
             argumentDeclaration = mkText(`function (${handlerArgs.join(", ")})`)
         }
 

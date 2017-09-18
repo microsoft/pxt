@@ -1235,12 +1235,22 @@ ${output}</xml>`;
                         else {
                             let arrow = e as ArrowFunction;
                             if (arrow.parameters.length) {
-                                const sym = blocksInfo.blocksById[info.attrs.blockId];
-                                const paramDesc = sym.parameters[i];
-                                paramDesc.handlerParameters.forEach((arg, i) => {
-                                    const name = arrow.parameters[i].name as ts.Identifier;
-                                    (r.fields || (r.fields = [])).push(getField("HANDLER_" + arg.name, name.text));
-                                });
+                                if (info.attrs.optionalVariableArgs) {
+                                    r.mutation = {
+                                        "numargs": arrow.parameters.length.toString()
+                                    };
+                                    arrow.parameters.forEach((parameter, i) => {
+                                        r.mutation["arg" + i] = (parameter.name as ts.Identifier).text;
+                                    });
+                                }
+                                else {
+                                    const sym = blocksInfo.blocksById[info.attrs.blockId];
+                                    const paramDesc = sym.parameters[i];
+                                    paramDesc.handlerParameters.forEach((arg, i) => {
+                                        const name = arrow.parameters[i].name as ts.Identifier;
+                                        (r.fields || (r.fields = [])).push(getField("HANDLER_" + arg.name, name.text));
+                                    });
+                                }
                             }
                         }
                         (r.handlers || (r.handlers = [])).push({ name: "HANDLER", statement: getStatementBlock(e) });

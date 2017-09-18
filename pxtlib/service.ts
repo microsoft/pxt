@@ -150,6 +150,8 @@ namespace ts.pxtc {
         mutatePropertyEnum?: string;
         inlineInputMode?: string; // can be inline, external, or auto
 
+        optionalVariableArgs?: boolean;
+
         _name?: string;
         _source?: string;
         jsDoc?: string;
@@ -359,7 +361,7 @@ namespace ts.pxtc {
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
-    const booleanAttributes = ["advanced", "handlerStatement"]
+    const booleanAttributes = ["advanced", "handlerStatement", "optionalVariableArgs"]
 
     export function parseCommentString(cmt: string): CommentAttrs {
         let res: CommentAttrs = {

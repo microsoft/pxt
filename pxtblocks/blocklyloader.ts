@@ -748,10 +748,15 @@ namespace pxt.blocks {
 
         if (handlerArgs.length) {
             hasHandler = true;
-            let i = block.appendDummyInput();
-            handlerArgs.forEach(arg => {
-                i.appendField(new Blockly.FieldVariable(arg.name), "HANDLER_" + arg.name);
-            });
+            if (fn.attributes.optionalVariableArgs) {
+                initVariableArgsBlock(block, handlerArgs);
+            }
+            else {
+                let i = block.appendDummyInput();
+                handlerArgs.forEach(arg => {
+                    i.appendField(new Blockly.FieldVariable(arg.name), "HANDLER_" + arg.name);
+                });
+            }
         }
 
         if (fn.attributes.mutate) {
@@ -849,6 +854,68 @@ namespace pxt.blocks {
         let e = categoryElement(tb, name);
         if (e && e.parentNode) // IE11: no parentElement
             e.parentNode.removeChild(e);
+    }
+
+    function initVariableArgsBlock(b: B.Block, handlerArgs: pxt.blocks.HandlerArg[]) {
+        U.assert(!(b as MutatingBlock).domToMutation);
+        U.assert(!(b as MutatingBlock).mutationToDom);
+
+        let currentlyVisible = 0;
+        let actuallyVisible = 0;
+
+        let i = b.appendDummyInput();
+
+        let updateShape = () => {
+            if (currentlyVisible === actuallyVisible) {
+                return;
+            }
+
+            if (currentlyVisible > actuallyVisible) {
+                const diff = currentlyVisible - actuallyVisible;
+                for (let j = 0; j < diff; j++) {
+                    const arg = handlerArgs[actuallyVisible + j];
+                    i.insertFieldAt(i.fieldRow.length - 1, new Blockly.FieldVariable(arg.name), "HANDLER_" + arg.name);
+                }
+            }
+            else {
+                let diff = actuallyVisible - currentlyVisible;
+                for (let j = 0; j < diff; j++) {
+                    const arg = handlerArgs[actuallyVisible - j - 1];
+                    i.removeField("HANDLER_" + arg.name);
+                }
+            }
+
+            actuallyVisible = currentlyVisible;
+        };
+
+        i.appendField(new Blockly.FieldImage("/cdn/blockly/media/add.svg", 24, 24, "*", () => {
+            currentlyVisible = Math.min(currentlyVisible + 1, handlerArgs.length);
+            updateShape();
+        }));
+
+        (b as MutatingBlock).domToMutation = element => {
+            let numArgs = parseInt(element.getAttribute("numargs"));
+            currentlyVisible = Math.min(isNaN(numArgs) ? 0 : numArgs, handlerArgs.length);
+
+            updateShape();
+
+            for (let j = 0; j < currentlyVisible; j++) {
+                let varName = element.getAttribute("arg" + j);
+                b.setFieldValue(varName, "HANDLER_" + handlerArgs[j].name);
+            }
+        };
+
+        (b as MutatingBlock).mutationToDom = () => {
+            let mut = document.createElement("mutation");
+            mut.setAttribute("numArgs", currentlyVisible.toString());
+
+            for (let j = 0; j < currentlyVisible; j++) {
+                let varName = b.getFieldValue("HANDLER_" + handlerArgs[j].name);
+                mut.setAttribute("arg" + j, varName);
+            }
+
+            return mut;
+        };
     }
 
     export interface BlockFilters {
