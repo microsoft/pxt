@@ -425,4 +425,8 @@ print only stuff
         color: black !important;
         box-shadow: none !important;
     }
+    /* images */
+    .ui.image {
+        max-width: 60%;
+    }
 }
