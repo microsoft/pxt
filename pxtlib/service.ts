@@ -127,6 +127,7 @@ namespace ts.pxtc {
         subcategory?: string;
         // On namepspace
         subcategories?: string[];
+        afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
 
         // on interfaces
         indexerGet?: string;
@@ -330,7 +331,7 @@ namespace ts.pxtc {
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
-    const booleanAttributes = ["advanced"]
+    const booleanAttributes = ["advanced", "afterOnStart"]
 
     export function parseCommentString(cmt: string): CommentAttrs {
         let res: CommentAttrs = {
