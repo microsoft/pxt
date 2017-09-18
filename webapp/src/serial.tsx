@@ -128,6 +128,19 @@ export class Editor extends srceditor.Editor {
         this.chartWrappers.forEach(s => s.start())
     }
 
+    toggleRecording() {
+        if (this.active) {
+            this.active = false
+            this.pauseRecording()
+            //TODO nooooooooo
+            document.getElementById("serialRecordButton").className="play icon"
+        } else {
+            this.active = true
+            this.startRecording()
+            document.getElementById("serialRecordButton").className="pause icon"
+        }
+    }
+
     clearNode(e: HTMLElement) {
         while (e.hasChildNodes()) {
             e.removeChild(e.firstChild)
@@ -149,11 +162,8 @@ export class Editor extends srceditor.Editor {
             <div id="serialArea">
                 <div id="serialHeader" className="ui segment">
                     <span className="ui huge left aligned header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
-                    <button className="ui right floated icon button" onClick= {() => {this.active = false; this.pauseRecording()}}>
-                        <i className="pause icon"></i>
-                    </button>
-                    <button className="ui right floated icon button" onClick = {() => {this.active = true; this.startRecording()}}>
-                        <i className="play icon"></i>
+                    <button className="ui right floated icon button" onClick ={this.toggleRecording.bind(this)}>
+                        <i id="serialRecordButton" className={this.active ? "pause icon" : "play icon"}></i>
                     </button>
                 </div>
                 <div id="serialCharts"></div>
