@@ -6,19 +6,24 @@ import * as sui from "./sui"
 import * as core from "./core";
 
 export interface LogViewProps {
-    isSim?: boolean
+    isSim: boolean,
+    onClick: any
 }
 
 export class LogView extends React.Component<LogViewProps, {}>{
-    public isSim: boolean
 
     constructor(props: any) {
         super(props)
-        this.isSim = !!props.isSim
     }
 
     render() {
-        return <div>{this.isSim ? "Simulator fizzle" : "Device fizzle"}</div>
+        return(
+            <div className="ui segment">
+                <div className="ui bottom left attached label">{this.props.isSim ? lf("Simulator") : lf("Device")}</div>
+                Receiving data
+                <sui.Button icon={"external square"} onClick={this.props.onClick} />
+            </div>
+        ) 
     }
 }
 /**
