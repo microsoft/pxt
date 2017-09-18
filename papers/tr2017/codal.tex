@@ -21,16 +21,23 @@ or connected device. \emph{TODO: how CODAL handles responsiveness?}
 
 The CODAL runtime provides higher-level abstractions to the compiler developer, making it
 easy to compile event-based mechanisms, such as found in scripting languages like JavaScript, to the world of the
-microcontroller.   The CODAL runtime has two layers:
+microcontroller.   The CODAL runtime has several layers:
 \begin{itemize}
 
-\item \emph{Core Abstractions}: this layer defines the 
-base classes for (\href{https://www.github.com/lancaster-university/codal-core}{lancaster-university/codal-core}
-components, eventing, scheduling and device abstractions; \emph{design goal: processor agnostic}
+\item \emph{Core Abstractions}:
+\emph{\href{https://www.github.com/lancaster-university/codal-core}{codal-core}} defines the base classes for
+components, eventing, scheduling and processor/platform-independent driver abstractions (for example,
+\emph{LinearAnalogSensor}, given an input range and an output range for an analog pin, automatically scales sampled data 
+from that pin into the given output range);
 
-\item \emph{Processor/board optimization and specialization}: 
-\href{https://www.github.com/lancaster-university/codal-samd21-mbed}{lancaster-university/codal-samd21-mbed}, 
-~\href{https://www.github.com/lancaster-university/codal-atmega328p}{lancaster-university/codal-atmega328p};
+\item \emph{Platform/device-specific} implementations and optimizations are defined in separate repos. For example, 
+\emph{\href{https://www.github.com/lancaster-university/codal-mbed}{codal-mbed}}
+provides Mbed-specific implementations of CODAL abstractions of pins, timers, as well as serial and I2C
+communications. Further specialization of this repo for the SAMD21 microcontroller is provided by 
+\emph{\href{https://www.github.com/lancaster-university/codal-samd21-mbed}{codal-samd21-mbed}}. 
+This repo also includes device-specific code for the Adafruit Circuit Playground Express (see CIRCUIT\_PLAYGROUND
+directory).
+
 \end{itemize}
 
 % \emph{Build shell}:~\href{https://www.github.com/lancaster-university/codal}{lancaster-university/codal};
