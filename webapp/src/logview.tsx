@@ -5,8 +5,25 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 import * as core from "./core";
 
+export interface LogViewProps {
+    isSim?: boolean
+}
+
+export class LogView extends React.Component<LogViewProps, {}>{
+    public isSim: boolean
+
+    constructor(props: any) {
+        super(props)
+        this.isSim = !!props.isSim
+    }
+
+    render() {
+        return <div>{this.isSim ? "Simulator fizzle" : "Device fizzle"}</div>
+    }
+}
+/**
 const STREAM_INTERVAL = 30000;
-/** 
+
 export interface LogViewState {
     stream?: pxt.streams.JsonStream;
     trends?: boolean;
