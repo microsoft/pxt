@@ -1246,9 +1246,9 @@ ${output}</xml>`;
                                 else {
                                     const sym = blocksInfo.blocksById[info.attrs.blockId];
                                     const paramDesc = sym.parameters[i];
-                                    paramDesc.handlerParameters.forEach((arg, i) => {
-                                        const name = arrow.parameters[i].name as ts.Identifier;
-                                        (r.fields || (r.fields = [])).push(getField("HANDLER_" + arg.name, name.text));
+                                    arrow.parameters.forEach((parameter, i) => {
+                                        const arg = paramDesc.handlerParameters[i];
+                                        (r.fields || (r.fields = [])).push(getField("HANDLER_" + arg.name, (parameter.name as ts.Identifier).text));
                                     });
                                 }
                             }
