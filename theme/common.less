@@ -284,7 +284,7 @@ div.simframe > iframe {
     position: fixed;
     bottom: 0;
     right: 0;
-    height: 25px;
+    height: 42px;
     background-color: @blocklySvgColor;
     z-index: 10;
     display: none;
@@ -294,7 +294,7 @@ div.simframe > iframe {
     left: 10px;
     bottom: 5px;
     width: 100%;
-    height: 17px;
+    height: 32px;
     background-repeat: no-repeat;
     background-size: contain;
 }
@@ -443,11 +443,36 @@ div.simframe > iframe {
 
 .ui.modal.projectsdialog > .content {
     padding: 0 !important;
+    position: relative;
 }
 
 .ui.modal.projectsdialog .tabsegment {
     min-height: 450px;
     background: white !important;
+}
+
+
+/*******************************
+        Modal Close Icon
+*******************************/
+
+.ui.modal .closeIcon {
+    position: absolute;
+    top: 0; 
+    right: 0;
+}
+.ui.modal.projectsdialog .closeIcon {
+    top: 0.4rem;
+    right: 0.2rem;
+}
+
+.ui.button.icon.clear {
+    background: transparent;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+.ui.button.icon.inverted.clear:hover, .ui.button.icon.inverted.clear:focus {
+    color: @grey !important;
 }
 
 /*******************************
@@ -747,7 +772,7 @@ Field editors
         height: 18px;
     }
     #editorlogo > .poweredbylogo {
-        height: 13px;
+        height: 12px;
         bottom: 3px;
         background-image: @poweredBySmall;
     }

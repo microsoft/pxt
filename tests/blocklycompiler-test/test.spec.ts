@@ -301,4 +301,10 @@ describe("blockly compiler", function() {
             blockTestAsync("variables_reserved_names").then(done, done);
         });
     });
+
+    describe("compiling functions", () => {
+        it("should handle name collisions", done => {
+            blockTestAsync("functions_names").then(done, done);
+        });
+    })
 });

@@ -122,7 +122,8 @@ namespace pxsim.svg {
     export function buttonEvents(el: Element,
         move?: (ev: MouseEvent) => void,
         start?: (ev: MouseEvent) => void,
-        stop?: (ev: MouseEvent) => void) {
+        stop?: (ev: MouseEvent) => void,
+        keydown?: (ev: KeyboardEvent) => void) {
         let captured = false;
         touchEvents.mousedown.forEach(evname => el.addEventListener(evname, (ev: MouseEvent) => {
             captured = true;
@@ -144,7 +145,11 @@ namespace pxsim.svg {
         touchEvents.mouseleave.forEach(evname => el.addEventListener(evname, (ev: MouseEvent) => {
             captured = false;
             if (stop) stop(ev);
-        }, false))
+        }, false));
+        el.addEventListener('keydown', (ev: KeyboardEvent) => {
+            captured = false;
+            if (keydown) keydown(ev);
+        });
     }
 
     export function mkLinearGradient(id: string): SVGLinearGradientElement {

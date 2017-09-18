@@ -36,7 +36,7 @@ When a variable is declared using `let`, it uses what some call *lexical-scoping
 Unlike variables declared with `var` whose scopes leak out to their containing function, 
 block-scoped variables are not visible outside of their nearest containing block or `for`-loop.
 
-```typescript
+```typescript-ignore
 function f(input: boolean) {
     let a = 100;
 

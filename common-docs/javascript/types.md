@@ -1,9 +1,9 @@
 # Types
 
-For programs to be useful, we need to be able to work with some of the simplest units of data: 
+For programs to be useful, we need to be able to work with some of the simplest units of data:
 numbers, strings, structures, boolean values, and the like.
 
-# Type Inference
+## Type Inference
 
 In TypeScript, there are several places where type inference is used to provide type information when there is
 no explicit type annotation. For example, in this code
@@ -14,12 +14,12 @@ let y = x + 3
 ```
 
 The type of the `x` variable is inferred to be `number`. Similarly, the type of `y` variable also is inferred to be `number`.
-This kind of inference takes place when initializing variables and members, 
+This kind of inference takes place when initializing variables and members,
 setting parameter default values, and determining function return types.
 
 All the examples below give an example type annotation, but will work just the same without the annotation.
 
-# Boolean
+## Boolean
 
 The most basic datatype is the simple true/false value, which is called a `boolean` value.
 
@@ -27,9 +27,9 @@ The most basic datatype is the simple true/false value, which is called a `boole
 let isDone: boolean = false;
 ```
 
-# Number
+## Number
 
-### ~ hint 
+### ~ hint
 In JavaScript, `numbers` are floating point values.
 However, for the @boardname@, `numbers` are integer values.
 ### ~
@@ -38,12 +38,12 @@ Integer values can be specified via decimal, hexadecimal and octal notation:
 
 ```typescript
 let decimal: number = 42;
-let hex: number = 0xf00d;
+let hexadecimal: number = 0xf00d;
 let binary: number = 0b1010;
 let octal: number = 0o744;
 ```
 
-# String #string
+## String #string
 
 As in other languages, we use the type `string` to refer to textual data.
 Use double quotes (`"`) or single quotes (`'`) to surround string data.
@@ -73,7 +73,7 @@ let sentence: string = "Hello, my name is " + fullName + ".\n\n" +
     "I'll be " + (age + 1) + " years old next month."
 ```
 
-# Array #array
+## Array #array
 
 Arrays allow you to work with an expandable sequence of values, addressed by an integer-valued index.
 Array types can be written in one of two ways.
@@ -93,7 +93,7 @@ let list: Array<number> = [1, 2, 3];
 For the @boardname@, all elements of an array must have the same type.
 ### ~
 
-# Enum
+## Enum
 
 A helpful addition to the standard set of datatypes from JavaScript is the `enum`.
 As in languages like C#, an enum is a way of giving more friendly names to sets of numeric values.
@@ -119,19 +119,47 @@ enum Color {Red = 1, Green = 2, Blue = 4}
 let c: Color = Color.Green;
 ```
 
-# Any
+## Any
 
 The TypeScript type `any` is not supported in the @boardname@.
 
-# Void
+## Void
 
 `void` is the absence of having any type at all.
 You may commonly see this as the return type of functions that do not return a value:
 
 ```typescript
 function warnUser(): void {
-    basic.showString("This is my warning message");
+    //...
 }
+warnUser();
 ```
 
 Declaring variables of type `void` is not useful.
+
+## Null and undefined
+
+A variable isn't always set to a value. If you want a variable to exist but not have it set to  a value of a type, it can be set to nothing, or `null`. This is often useful to indicate that a variable isn't meaningful for evaluation at the moment.
+
+```typescript-ignore
+if (encoder.active) {
+    position = encoder.readPosition();
+} else {
+    position = null;
+}
+```
+In a similar way, `undefined` indicates that a variable has no value:
+
+```typescript-ignore
+let message: string = undefined;
+let received = false;
+
+while (!received) {
+    message = ports.readString();
+    if (message != undefined)
+        recieved = true;
+    } else {
+        pause(1000);
+    }
+}
+```

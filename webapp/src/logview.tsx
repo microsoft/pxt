@@ -159,7 +159,7 @@ export class LogView extends React.Component<{}, LogViewState> {
                 })
             },
             htmlBody: `
-<div class="ui cards">
+<div class="ui cards" role="listbox">
     <div class="ui card">
         <div class="content">
             <div class="header">${lf("Local File")}</div>

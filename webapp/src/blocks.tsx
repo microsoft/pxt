@@ -32,6 +32,7 @@ export class Editor extends srceditor.Editor {
     showToolboxCategories: CategoryMode = CategoryMode.Basic;
     cachedToolbox: string;
     filters: pxt.editor.ProjectFilters;
+    showSearch: boolean;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -82,7 +83,7 @@ export class Editor extends srceditor.Editor {
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
-                    let showSearch = true;
+                    let showSearch = this.showSearch;
                     let toolbox = this.getDefaultToolbox(this.showToolboxCategories);
 
                     // Search needs a toolbox with ALL blocks
@@ -98,6 +99,8 @@ export class Editor extends srceditor.Editor {
                             searchFor => compiler.apiSearchAsync(searchFor)
                                 .then((fns: pxtc.service.SearchInfo[]) => fns),
                             searchTb => this.updateToolbox(searchTb, this.showToolboxCategories, true));
+                    } else {
+                        pxt.blocks.removeSearch();
                     }
                     pxt.blocks.initFlyouts(this.editor);
 
@@ -555,10 +558,15 @@ export class Editor extends srceditor.Editor {
         if (this.currFile && this.currFile != file) {
             this.filterToolbox(null);
         }
-        if (this.parent.state.filters) {
-            this.filterToolbox(this.parent.state.filters);
+        if (this.parent.state.editorState && this.parent.state.editorState.filters) {
+            this.filterToolbox(this.parent.state.editorState.filters);
         } else {
             this.filters = null;
+        }
+        if (this.parent.state.editorState && this.parent.state.editorState.searchBar != undefined) {
+            this.showSearch = this.parent.state.editorState.searchBar;
+        } else {
+            this.showSearch = true;
         }
         this.currFile = file;
         // Clear the search field if a value exists
@@ -651,7 +659,7 @@ export class Editor extends srceditor.Editor {
                 maxScale: 2.5,
                 minScale: .2,
                 scaleSpeed: 1.05,
-                startScale: pxt.BrowserUtils.isMobile() ? 1.2 : 0.9
+                startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.9
             },
             rtl: Util.isUserLanguageRtl()
         };

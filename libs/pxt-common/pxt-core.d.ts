@@ -29,7 +29,7 @@ interface Array<T> {
       * Reverse the elements in an array. The first array element becomes the last, and the last array element becomes the first.
       */
     //% help=arrays/reverse
-    //% helper=arrayReverse weight=10 advanced=true
+    //% helper=arrayReverse weight=10
     //% blockId="array_reverse" block="reverse %list" blockNamespace="arrays"
     reverse(): void;
 
@@ -37,7 +37,7 @@ interface Array<T> {
       * Remove the first element from an array and return it. This method changes the length of the array.
       */
     //% help=arrays/shift
-    //% helper=arrayShift weight=70 advanced=true
+    //% helper=arrayShift weight=70
     //% blockId="array_shift" block="get and remove first value from %list" blockNamespace="arrays"
     shift(): T;
 
@@ -46,7 +46,7 @@ interface Array<T> {
       * @param element to insert at the start of the Array.
       */
     //% help=arrays/unshift
-    //% helper=arrayUnshift weight=69 advanced=true
+    //% helper=arrayUnshift weight=69
     //% blockId="array_unshift" block="%list| insert %value| at beginning" blockNamespace="arrays"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
     unshift(value: T): number;
@@ -57,7 +57,7 @@ interface Array<T> {
       * @param end The end of the specified portion of the array. eg: 0
       */
     //% help=arrays/slice
-    //% helper=arraySlice weight=41 advanced=true blockNamespace="arrays"
+    //% helper=arraySlice weight=41 blockNamespace="arrays"
     slice(start: number, end: number): T[];
 
     /**
@@ -104,7 +104,7 @@ interface Array<T> {
 
     /** Remove the element at a certain index. */
     //% help=arrays/remove-at
-    //% shim=Array_::removeAt weight=49 advanced=true
+    //% shim=Array_::removeAt weight=49
     //% blockId="array_removeat" block="%list| remove value at %index" blockNamespace="arrays"
     removeAt(index: number): T;
 
@@ -114,7 +114,7 @@ interface Array<T> {
      * @param the value to insert, eg: 0
      */
     //% help=arrays/insert-at
-    //% shim=Array_::insertAt weight=84 advanced=true
+    //% shim=Array_::insertAt weight=84
     //% blockId="array_insertAt" block="%list| insert at %index| value %value" blockNamespace="arrays"
     insertAt(index: number, value: T): void;
 
@@ -124,7 +124,7 @@ interface Array<T> {
       * @param fromIndex The array index at which to begin the search. If fromIndex is omitted, the search starts at index 0.
       */
     //% help=arrays/index-of
-    //% shim=Array_::indexOf weight=50 advanced=true
+    //% shim=Array_::indexOf weight=50
     //% blockId="array_indexof" block="%list| find index of %value" blockNamespace="arrays"
     indexOf(item: T, fromIndex?: number): number;
 

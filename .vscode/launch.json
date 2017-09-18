@@ -26,7 +26,7 @@
 			"request": "launch",
 			"program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
 			"stopOnEntry": false,
-			"args": ["built/tests/decompile-test/decompiler.js", "--no-timeouts"],
+			"args": ["built/tests/decompile-test/runner.js", "--no-timeouts"],
 			"cwd": "${workspaceRoot}",
 			"runtimeExecutable": null,
 			"env": { "NODE_ENV": "testing"}
