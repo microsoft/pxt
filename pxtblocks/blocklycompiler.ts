@@ -1169,6 +1169,10 @@ namespace pxt.blocks {
         if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.ObjectDestructuringMutator) {
             argumentDeclaration = b.mutation.compileMutation(e, comments);
         }
+        else if (stdfun.handlerArgs.length) {
+            let handlerArgs = stdfun.handlerArgs.map(arg => escapeVarName(b.getFieldValue("HANDLER_" + arg.name), e));
+            argumentDeclaration = mkText(`function (${handlerArgs.join(", ")})`)
+        }
 
         return mkCallWithCallback(e, ns, stdfun.f, compiledArgs, body, argumentDeclaration, stdfun.isExtensionMethod);
     }
@@ -1219,6 +1223,7 @@ namespace pxt.blocks {
         f: string;
         args: StdArg[];
         attrs: ts.pxtc.CommentAttrs;
+        handlerArgs?: HandlerArg[];
         isExtensionMethod?: boolean;
         isExpression?: boolean;
         imageLiteral?: number;
@@ -1374,16 +1379,16 @@ namespace pxt.blocks {
                         return;
                     }
                     e.renames.takenNames[fn.namespace] = true;
-                    let fieldMap = pxt.blocks.parameterNames(fn);
+                    let { attrNames, handlerArgs } = pxt.blocks.parameterNames(fn);
                     let instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
                     let args = (fn.parameters || []).map(p => {
-                        if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };
+                        if (attrNames[p.name] && attrNames[p.name].name) return { field: attrNames[p.name].name };
                         else return null;
                     }).filter(a => !!a);
 
                     if (instance && !fn.attributes.defaultInstance) {
                         args.unshift({
-                            field: fieldMap["this"].name
+                            field: attrNames["this"].name
                         });
                     }
 
@@ -1392,10 +1397,11 @@ namespace pxt.blocks {
                         f: fn.name,
                         args: args,
                         attrs: fn.attributes,
+                        handlerArgs,
                         isExtensionMethod: instance,
                         isExpression: fn.retType && fn.retType !== "void",
                         imageLiteral: fn.attributes.imageLiteral,
-                        hasHandler: fn.parameters && fn.parameters.some(p => (p.type == "() => void" || !!p.properties)),
+                        hasHandler: !!handlerArgs.length || fn.parameters && fn.parameters.some(p => (p.type == "() => void" || !!p.properties)),
                         property: !fn.parameters,
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
@@ -1412,8 +1418,24 @@ namespace pxt.blocks {
                 return true;
             else if (isMutatingBlock(b) && b.mutation.isDeclaredByMutation(name))
                 return true;
-            else
-                return variableIsScoped(b.getSurroundParent(), name);
+
+            let stdFunc = e.stdCallTable[b.type];
+
+            if (stdFunc && stdFunc.handlerArgs.length) {
+                let foundIt = false;
+                stdFunc.handlerArgs.forEach(arg => {
+                    if (foundIt) return;
+                    let varName = escapeVarName(b.getFieldValue("HANDLER_" + arg.name), e);
+                    if (name === varName) {
+                        foundIt = true;
+                    }
+                });
+                if (foundIt) {
+                    return true;
+                }
+            }
+
+            return variableIsScoped(b.getSurroundParent(), name);
         };
 
         function trackLocalDeclaration(name: string, type: string) {
@@ -1446,6 +1468,14 @@ namespace pxt.blocks {
                         trackLocalDeclaration(escapeVarName(varName, e), declarations[varName]);
                     }
                 }
+            }
+
+            let stdFunc = e.stdCallTable[b.type];
+            if (stdFunc && stdFunc.handlerArgs.length) {
+                stdFunc.handlerArgs.forEach(arg => {
+                    let varName = b.getFieldValue("HANDLER_" + arg.name)
+                    trackLocalDeclaration(escapeVarName(varName, e), arg.type);
+                });
             }
         });
 

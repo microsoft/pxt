@@ -134,10 +134,11 @@ namespace pxt.blocks {
         return value;
     }
 
-    function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>): HTMLElement {
+    function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, params: pxt.blocks.BlockParameters): HTMLElement {
         //
         // toolbox update
         //
+        let { attrNames, handlerArgs } = params;
         let block = document.createElement("block");
         block.setAttribute("type", fn.attributes.blockId);
         if (fn.attributes.blockGap)
@@ -174,6 +175,12 @@ namespace pxt.blocks {
                         shadowValue.firstChild.appendChild(container);
                     block.appendChild(shadowValue);
                 })
+            handlerArgs.forEach(arg => {
+                const field = document.createElement("field");
+                field.setAttribute("name", "HANDLER_" + arg.name);
+                field.textContent = arg.name;
+                block.appendChild(field);
+            });
         }
         searchElementCache[fn.attributes.blockId] = block.cloneNode(true);
         return block;
@@ -525,7 +532,7 @@ namespace pxt.blocks {
         return newCategory;
     }
 
-    function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>, blockXml: HTMLElement): boolean {
+    function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, params: pxt.blocks.BlockParameters, blockXml: HTMLElement): boolean {
         let id = fn.attributes.blockId;
 
         if (builtinBlocks[id]) {
@@ -548,7 +555,7 @@ namespace pxt.blocks {
             fn: fn,
             block: {
                 codeCard: mkCard(fn, blockXml),
-                init: function () { initBlock(this, info, fn, attrNames) }
+                init: function () { initBlock(this, info, fn, params) }
             }
         }
 
@@ -604,7 +611,8 @@ namespace pxt.blocks {
         return false
     }
 
-    function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>) {
+    function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, params: pxt.blocks.BlockParameters) {
+        let { attrNames, handlerArgs } = params;
         const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
         const nsinfo = info.apis.byQName[ns];
@@ -736,6 +744,16 @@ namespace pxt.blocks {
             }
         });
 
+        let hasHandler = false;
+
+        if (handlerArgs.length) {
+            hasHandler = true;
+            let i = block.appendDummyInput();
+            handlerArgs.forEach(arg => {
+                i.appendField(new Blockly.FieldVariable(arg.name), "HANDLER_" + arg.name);
+            });
+        }
+
         if (fn.attributes.mutate) {
             addMutation(block as MutatingBlock, fn, fn.attributes.mutate);
         }
@@ -791,7 +809,7 @@ namespace pxt.blocks {
         }
 
         const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
-        if (body) {
+        if (body || hasHandler) {
             block.appendStatementInput("HANDLER")
                 .setCheck("null");
             block.setInputsInline(true);

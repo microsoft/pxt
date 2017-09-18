@@ -24,6 +24,7 @@ namespace ts.pxtc {
         initializer?: string;
         default?: string;
         properties?: PropertyDesc[];
+        handlerParameters?: PropertyDesc[];
         options?: pxt.Map<PropertyOption>;
         isEnum?: boolean;
     }
@@ -321,11 +322,11 @@ namespace ts.pxtc {
                     }
                 }
                 else if (fn.attributes.block && locBlock) {
-                    const ps = pxt.blocks.parameterNames(fn);
+                    const ps = pxt.blocks.parameterNames(fn).attrNames;
                     const oldBlock = fn.attributes.block;
                     fn.attributes.block = pxt.blocks.normalizeBlock(locBlock);
                     if (oldBlock != fn.attributes.block) {
-                        const locps = pxt.blocks.parameterNames(fn);
+                        const locps = pxt.blocks.parameterNames(fn).attrNames;
                         if (JSON.stringify(ps) != JSON.stringify(locps)) {
                             pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`)
                             fn.attributes.block = oldBlock;

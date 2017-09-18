@@ -166,20 +166,31 @@ namespace ts.pxtc {
                 pkg,
                 extendsTypes,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
-                parameters: !hasParams ? null : (decl.parameters || []).map((p, i) => {
+                parameters: !hasParams ? null : (decl.parameters as ParameterDeclaration[] || []).map((p, i) => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
                     let minVal = attributes.paramMin && attributes.paramMin[n];
                     let maxVal = attributes.paramMax && attributes.paramMax[n];
                     let m = /\beg\.?:\s*(.+)/.exec(desc)
                     let props: PropertyDesc[];
-                    if (attributes.mutate && p.type.kind === SK.FunctionType) {
+                    let parameters: PropertyDesc[];
+                    if (p.type && p.type.kind === SK.FunctionType) {
                         const callBackSignature = typechecker.getSignatureFromDeclaration(p.type as FunctionTypeNode);
                         const callbackParameters = callBackSignature.getParameters();
-                        assert(callbackParameters.length > 0);
-                        props = typechecker.getTypeAtLocation(callbackParameters[0].valueDeclaration).getProperties().map(prop => {
-                            return { name: prop.getName(), type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(prop, callbackParameters[0].valueDeclaration)) }
-                        });
+                        if (attributes.mutate === "objectdestructuring") {
+                            assert(callbackParameters.length > 0);
+                            props = typechecker.getTypeAtLocation(callbackParameters[0].valueDeclaration).getProperties().map(prop => {
+                                return { name: prop.getName(), type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(prop, callbackParameters[0].valueDeclaration)) }
+                            });
+                        }
+                        else {
+                           parameters = callbackParameters.map((sym, i) => {
+                               return {
+                                   name: sym.getName(),
+                                   type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(sym, p))
+                               };
+                           });
+                        }
                     }
                     let options: Map<PropertyOption> = {};
                     const paramType = typechecker.getTypeAtLocation(p);
@@ -204,6 +215,7 @@ namespace ts.pxtc {
                         initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
                         default: attributes.paramDefl[n],
                         properties: props,
+                        handlerParameters: parameters,
                         options: options,
                         isEnum
                     }
