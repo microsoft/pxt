@@ -32,15 +32,19 @@ export class LogView extends React.Component<LogViewProps, LogViewState>{
             }
         }
     }
-    
+
+    clear() {
+        this.setState({active: false})
+    }
+
     render() {
-        return(
+        return(!this.state.active ? (<div></div>) : (
             <div className="ui segment">
                 <div className="ui bottom left attached label">{this.props.isSim ? lf("Simulator") : lf("Device")}</div>
-                Receiving data
+                {this.state.active ? "Receiving data" : "I'm invisible"}
                 <sui.Button icon={"external square"} onClick={this.props.onClick} />
             </div>
-        ) 
+        ))
     }
 }
 /**
