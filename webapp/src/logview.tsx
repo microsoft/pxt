@@ -5,17 +5,34 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 import * as core from "./core";
 
+//TODO fix type of onclick
 export interface LogViewProps {
     isSim: boolean,
     onClick: any
 }
 
-export class LogView extends React.Component<LogViewProps, {}>{
+export interface LogViewState {
+    active?: boolean
+}
+
+export class LogView extends React.Component<LogViewProps, LogViewState>{
 
     constructor(props: any) {
         super(props)
+        this.state = {active: false}
+        window.addEventListener("message", this.setActive.bind(this))
     }
 
+    setActive(ev: MessageEvent) {
+        let msg = ev.data
+        if (!this.state.active && msg.type === "serial") {
+            const sim = !!msg.sim
+            if (sim === this.props.isSim) {
+                this.setState({active: true})
+            }
+        }
+    }
+    
     render() {
         return(
             <div className="ui segment">
