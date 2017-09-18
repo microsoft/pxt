@@ -43,7 +43,7 @@ let binary: number = 0b1010;
 let octal: number = 0o744;
 ```
 
-## String
+## String #string
 
 As in other languages, we use the type `string` to refer to textual data.
 Use double quotes (`"`) or single quotes (`'`) to surround string data.
@@ -73,7 +73,7 @@ let sentence: string = "Hello, my name is " + fullName + ".\n\n" +
     "I'll be " + (age + 1) + " years old next month."
 ```
 
-## Array
+## Array #array
 
 Arrays allow you to work with an expandable sequence of values, addressed by an integer-valued index.
 Array types can be written in one of two ways.
