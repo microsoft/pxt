@@ -2049,6 +2049,7 @@ function initTheme() {
 
     theme.appLogo = patchCdn(theme.appLogo)
     theme.cardLogo = patchCdn(theme.cardLogo)
+    theme.homeScreenHero = patchCdn(theme.homeScreenHero)
 
     if (pxt.appTarget.simulator
         && pxt.appTarget.simulator.boardDefinition

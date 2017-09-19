@@ -301,7 +301,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                 </div>
                 {tab == WELCOME ? <div className={tabClasses}>
                     {hasGettingStarted ?
-                        <div className="ui segment getting-started-segment" style={{backgroundImage: `url(${pxt.webConfig.commitCdnUrl + encodeURI(targetTheme.homeScreenHero)})`}}>
+                        <div className="ui segment getting-started-segment" style={{backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})`}}>
                             <div className="ui stackable grid equal width padded">
                                 <div className="column" />
                                 <div className="column right aligned">
