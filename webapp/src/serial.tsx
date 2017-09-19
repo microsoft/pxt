@@ -14,7 +14,6 @@ import Util = pxt.Util
 const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
-    //TODO don't need private etc
     chartWrappers: Chart[] = []
     chartIdx: number = 0
     consoleBuffer: string = ""
@@ -33,7 +32,6 @@ export class Editor extends srceditor.Editor {
     }
 
     acceptsFile(file: pkg.File) {
-        // TODO hardcoded string
         return file.name === pxt.SERIAL_EDITOR_FILE
     }
 
@@ -289,29 +287,25 @@ export class Editor extends srceditor.Editor {
 }
 
 class Chart {
-    private rootElement: HTMLElement = document.createElement("div")
-    private canvas: HTMLCanvasElement = undefined
-    //private labelElement: HTMLElement
-    //private element: HTMLCanvasElement
-    private line: TimeSeries = new TimeSeries()
-    private source: string
-    private variable: string
-    private chartConfig = { 
+    rootElement: HTMLElement = document.createElement("div")
+    canvas: HTMLCanvasElement = undefined
+    line: TimeSeries = new TimeSeries()
+    source: string
+    variable: string
+    chartConfig = { 
         responsive: true,
         interpolation: "linear",
         fps: 30, 
         millisPerPixel: 20, 
         grid: { strokeStyle: '#555555', lineWidth: 1, millisPerLine: 1000, verticalSections: 4}
     }
-    private chart: SmoothieChart = new SmoothieChart(this.chartConfig)
-    //private lineConfig =  {strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4}
-    private lineConfigs = [
+    chart: SmoothieChart = new SmoothieChart(this.chartConfig)
+    lineConfigs = [
         { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 4 },
         { strokeStyle: 'rgba(0, 0, 255, 1)', fillStyle: 'rgba(0, 0, 255, 0.2)', lineWidth: 4 },
         { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4 },
         { strokeStyle: 'rgba(255, 255, 0, 1)', fillStyle: 'rgba(255, 255, 0, 0.2)', lineWidth: 4 }
     ]
-    
 
     constructor(source: string, variable: string, value: number, chartIdx: number) {
         this.rootElement.className = "ui segment"
@@ -320,8 +314,6 @@ class Chart {
         this.chart.addTimeSeries(this.line, this.lineConfigs[chartIdx%4])
 
         let canvas = this.makeCanvas()
-        //this.chart.streamTo(canvas)
-
         let label = this.makeLabel()
         this.rootElement.appendChild(label)
         this.rootElement.appendChild(canvas)
@@ -329,42 +321,41 @@ class Chart {
         this.addPoint(value)
     }
 
-    public makeLabel() {
+    makeLabel() {
         let label = document.createElement("div")
         label.className = "ui top left huge attached label"
         label.innerText = this.variable
         return label
     }
 
-    public makeCanvas() {
+    makeCanvas() {
         let canvas = document.createElement("canvas")
         this.chart.streamTo(canvas)
-        //canvas.width = canvas.offsetWidth
-        //canvas.height = canvas.offsetHeight
         this.canvas = canvas
         return canvas
     }
 
-    public getCanvas() {
+    getCanvas() {
         return this.canvas
     }
-    public getElement() {
+
+    getElement() {
         return this.rootElement
     }
 
-    public shouldContain(source: string, variable: string) {
+    shouldContain(source: string, variable: string) {
         return this.source == source && this.variable == variable
     }
 
-    public addPoint(value: number) {
+    addPoint(value: number) {
         this.line.append(new Date().getTime(), value)
     }
 
-    public start() {
+    start() {
         this.chart.start()
     }
 
-    public stop() {
+    stop() {
         this.chart.stop()
     }
 }
