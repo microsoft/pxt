@@ -157,11 +157,59 @@ export class Editor extends srceditor.Editor {
         this.consoleBuffer = ""
     }
 
+    entriesToCSV(){
+        //TODO add graphable entries
+        return this.consoleEntries.join(",")
+    }
+
+    showStreamDialog() {
+        const targetTheme = pxt.appTarget.appTheme;        
+        let rootUrl = targetTheme.embedUrl
+        if (!rootUrl) {
+            //TODO csv is empty
+            pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", 'text/csv')
+            return;
+        }
+        if (!/\/$/.test(rootUrl)) rootUrl += '/';
+
+        core.confirmAsync({
+            logos: undefined,
+            header: lf("Analyze Data"),
+            hideAgree: true,
+            disagreeLbl: lf("Close"),
+            onLoaded: (_) => {
+                _.find('#datasavelocalfile').click(() => {
+                    _.modal('hide');
+                    pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", 'text/csv')
+                })
+            },
+            htmlBody:`
+                <div></div>
+                <div class="ui cards" role="listbox">
+                    <div class="ui card">
+                        <div class="content">
+                            <div class="header">${lf("Local File")}</div>
+                            <div class="description">
+                                ${lf("Save the data to your 'Downloads' folder.")}
+                            </div>
+                        </div>
+                        <div id="datasavelocalfile" class="ui bottom attached button">
+                            <i class="download icon"></i>
+                            ${lf("Download data")}
+                        </div>        
+                    </div>
+                </div>`
+        }).done();
+    }
+
     display() {
         return (
             <div id="serialArea">
                 <div id="serialHeader" className="ui segment">
                     <span className="ui huge left aligned header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
+                    <button className="ui left floated icon button" onClick={this.showStreamDialog.bind(this)}>
+                        <i className="download icon"></i>
+                    </button>
                     <button className="ui right floated icon button" onClick ={this.toggleRecording.bind(this)}>
                         <i id="serialRecordButton" className={this.active ? "pause icon" : "play icon"}></i>
                     </button>
