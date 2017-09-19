@@ -14,17 +14,22 @@ import Util = pxt.Util
 const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
-
+    //TODO don't need private etc
     private chartWrappers: Chart[] = []
     private chartIdx: number = 0
-    private consoleEntries: string[] = []
+    //private consoleEntries: string[] = []
     private consoleBuffer: string = ""
     // TODO pass these values in with props or config?
-    private shouldScroll = false
+    //private shouldScroll = false
     private isSim: boolean = true
+    //TODO dis
     private maxLineLength: number = 500
     private maxConsoleEntries: number = 100
     private active: boolean = true
+    //TODO unnecessary type declarations
+    private rawDataBuffer: string = ""
+    //TODO is this reasonable?
+    private maxBufferLength: number = 5000
 
     getId() {
         return "serialEditor"
@@ -52,19 +57,33 @@ export class Editor extends srceditor.Editor {
     processMessage(ev: MessageEvent) {
         let msg = ev.data
         if (this.active && msg.type === "serial") {
+            //TODO y tho
             const smsg = msg as pxsim.SimulatorSerialMessage
             const sim = !!smsg.sim
             if (sim == this.isSim) {
                 const data = smsg.data || ""
                 const source = smsg.id || "?"
+                //TODO not using theme anymore
                 let theme = source.split("-")[0] || "black"
+
+                //TODO incorporate source?
+                this.appendRawData(data)
 
                 if (this.isGraphable(data)) {
                     this.appendGraphEntry(source, data, theme, sim)
                 } else {
+                    //TODO incorporate source?
                     this.appendConsoleEntry(data)
                 }
             }
+        }
+    }
+
+    appendRawData(data: string) {
+        this.rawDataBuffer += data
+        let excessChars = this.rawDataBuffer.length - this.maxBufferLength 
+        if (excessChars > 0) {
+            this.rawDataBuffer = this.rawDataBuffer.slice(excessChars)
         }
     }
 
@@ -132,12 +151,12 @@ export class Editor extends srceditor.Editor {
         if (this.active) {
             this.active = false
             this.pauseRecording()
-            //TODO nooooooooo
-            document.getElementById("serialRecordButton").className="play icon"
+            //TODO nooooooooo baaaaaaaaaad
+            document.getElementById("serialRecordButton").className = "record icon"
         } else {
             this.active = true
             this.startRecording()
-            document.getElementById("serialRecordButton").className="pause icon"
+            document.getElementById("serialRecordButton").className = "pause icon"
         }
     }
 
@@ -153,21 +172,22 @@ export class Editor extends srceditor.Editor {
         this.clearNode(chartRoot)
         this.clearNode(consoleRoot)
         this.chartWrappers = []
-        this.consoleEntries = []
+        //this.consoleEntries = []
         this.consoleBuffer = ""
     }
 
     entriesToCSV(){
         //TODO add graphable entries
-        return this.consoleEntries.join(",")
+        //return this.consoleEntries.join(",")
+        return this.rawDataBuffer
     }
 
     showStreamDialog() {
-        const targetTheme = pxt.appTarget.appTheme;        
+        const targetTheme = pxt.appTarget.appTheme
         let rootUrl = targetTheme.embedUrl
         if (!rootUrl) {
             //TODO csv is empty
-            pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", 'text/csv')
+            pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.txt", "text/plain")
             return;
         }
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
@@ -180,11 +200,11 @@ export class Editor extends srceditor.Editor {
             onLoaded: (_) => {
                 _.find('#datasavelocalfile').click(() => {
                     _.modal('hide');
-                    pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", 'text/csv')
+                    pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.txt", "text/plain")
                 })
             },
-            htmlBody:`
-                <div></div>
+            htmlBody:
+                `<div></div>
                 <div class="ui cards" role="listbox">
                     <div class="ui card">
                         <div class="content">
@@ -199,7 +219,7 @@ export class Editor extends srceditor.Editor {
                         </div>        
                     </div>
                 </div>`
-        }).done();
+        }).done()
     }
 
     goBack() {
@@ -219,7 +239,7 @@ export class Editor extends srceditor.Editor {
                         <i className="download icon"></i>
                     </button>
                     <button className="ui right floated icon button" onClick ={this.toggleRecording.bind(this)}>
-                        <i id="serialRecordButton" className={this.active ? "pause icon" : "play icon"}></i>
+                        <i id="serialRecordButton" className={this.active ? "pause icon" : "record icon"}></i>
                     </button>
                 </div>
                 <div id="serialCharts"></div>
