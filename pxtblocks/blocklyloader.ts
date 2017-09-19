@@ -352,7 +352,7 @@ namespace pxt.blocks {
         else {
             toolboxStyleBuffer += `
                 .blocklyTreeIcon.${className} {
-                    background-image: url("${pxt.webConfig.commitCdnUrl + encodeURI(i)}")!important;
+                    background-image: url("${Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(i))}")!important;
                     width: 30px;
                     height: 100%;
                     background-size: 20px !important;
@@ -408,10 +408,10 @@ namespace pxt.blocks {
                 url = iconCanvasCache[c] = canvas.toDataURL();
             }
             else {
-                url = pxt.webConfig.commitCdnUrl + encodeURI(c);
+                url = Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(c));
             }
         }
-        return new Blockly.FieldImage(url, 16, 16, '');
+        return new Blockly.FieldImage(url, 16, 16, false, '');
     }
 
     function getChildCategories(parent: Element) {
@@ -678,7 +678,7 @@ namespace pxt.blocks {
                         const k = v.attributes.block || v.attributes.blockId || v.name;
                         return [
                             v.attributes.blockImage ? {
-                                src: pxt.webConfig.commitCdnUrl + `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
+                                src: Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
                                 alt: k,
                                 width: 36,
                                 height: 36,
@@ -890,7 +890,7 @@ namespace pxt.blocks {
             actuallyVisible = currentlyVisible;
         };
 
-        i.appendField(new Blockly.FieldImage("/cdn/blockly/media/add.svg", 24, 24, "*", () => {
+        i.appendField(new Blockly.FieldImage(Util.pathJoin(pxt.webConfig.commitCdnUrl, "blockly/media/add.svg"), 24, 24, false, lf("Add argument"), () => {
             currentlyVisible = Math.min(currentlyVisible + 1, handlerArgs.length);
             updateShape();
         }));
@@ -1076,7 +1076,7 @@ namespace pxt.blocks {
                             toolboxStyleBuffer += `
                                 .blocklyFlyoutLabelIcon.blocklyFlyoutIcon${topCats[i].getAttribute('name')} {
                                     display: inline-block !important;
-                                    background-image: url("${pxt.webConfig.commitCdnUrl + encodeURI(icon)}")!important;
+                                    background-image: url("${Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon))}")!important;
                                     width: 1em;
                                     height: 1em;
                                     background-size: 1em!important;

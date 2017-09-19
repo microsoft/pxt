@@ -485,7 +485,7 @@ declare namespace Blockly {
     }
 
     class FieldImage extends Field {
-        constructor(url: string, width: number, height: number, def: string, callback?: () => void);
+        constructor(url: string, width: number, height: number, flip_rtl: boolean, alt: string, callback?: () => void);
     }
 
     interface BlockDefinition {
