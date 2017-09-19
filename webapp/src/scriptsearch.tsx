@@ -124,8 +124,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
 
             // Hidden navigation, used to test /beta or other versions inside released Electron and UWP apps
-            // Secret prefix is $@@@, e.g.: $@@@beta
-            const urlPathExec = /^\$@@@(.*)$/.exec(str);
+            // Secret prefix is /@, e.g.: /@beta
+            const urlPathExec = /^\/@(.*)$/.exec(str);
             let urlPath = urlPathExec && urlPathExec[1];
             if (urlPath) {
                 let homeUrl = pxt.appTarget.appTheme.homeUrl;
@@ -133,7 +133,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                     homeUrl += "/";
                 }
                 urlPath = urlPath.replace(/^\//, "");
-                window.location.href = homeUrl + urlPath;
+                urlPath = urlPath.replace(/\/$/, "");
+                window.location.href =`${homeUrl}${urlPath}/${location.search}${location.hash}`;
             }
             else {
                 this.setState({ searchFor: str });
