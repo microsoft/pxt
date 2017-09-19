@@ -6,8 +6,8 @@
         disableAjaxTracking: true,
         overridePageViewDuration: false,
         disableExceptionTracking: true,
-        isCookieUseDisabled: false,
-        isStorageUseDisabled: false
+        isCookieUseDisabled: true,
+        isStorageUseDisabled: true
     });
     window.appInsights=appInsights;
     appInsights.queue.push(function () {
@@ -26,4 +26,3 @@
     });
     appInsights.trackPageView(null, null, {urlReferrer: document.referrer});
 </script>
-<!-- @include mscc.html -->
