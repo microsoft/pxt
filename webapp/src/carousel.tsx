@@ -5,6 +5,8 @@ export interface ICarouselProps extends React.Props<Carousel> {
     pageLength: number;
     // Percentage of child width to bleed over either edge of the page
     bleedPercent: number;
+    // The maximum margin to show between items
+    maxMargin?: number;
 }
 
 export interface ICarouselState {
@@ -64,6 +66,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
 
     public componentDidMount() {
         this.initDragSurface();
+        this.updateDimensions();
         window.addEventListener("resize", (e) => {
             this.updateDimensions();
         })
@@ -74,15 +77,20 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     }
 
     public updateDimensions() {
-        this.containerWidth = this.container.getBoundingClientRect().width;
-        if (this.childrenElements.length) {
-            this.childWidth = this.childrenElements[0].getBoundingClientRect().width;
-            const margin = Math.floor((this.containerWidth - this.childWidth * this.props.pageLength - 2 * this.childWidth * this.props.bleedPercent / 100) / this.props.pageLength);
-            this.childMargin = Math.max(margin, 0);
-            this.childrenElements.forEach(c => c.style.marginRight = (this.childMargin + "px"));
-            this.actualPageLength = Math.min(this.props.pageLength, Math.floor(this.containerWidth / (this.childMargin + this.childWidth)));
+        if (this.container) {
+            this.containerWidth = this.container.getBoundingClientRect().width;
+            if (this.childrenElements.length) {
+                this.childWidth = this.childrenElements[0].getBoundingClientRect().width;
+                const margin = Math.floor((this.containerWidth - this.childWidth * this.props.pageLength - 2 * this.childWidth * this.props.bleedPercent / 100) / this.props.pageLength);
+                this.childMargin = Math.max(margin, 0);
+                if (this.props.maxMargin !== undefined) {
+                    this.childMargin = Math.min(this.childMargin, this.props.maxMargin);
+                }
+                this.childrenElements.forEach(c => c.style.marginRight = (this.childMargin + "px"));
+                this.actualPageLength = Math.min(this.props.pageLength, Math.floor(this.containerWidth / (this.childMargin + this.childWidth)));
+            }
+            this.dragSurface.style.width = this.totalLength() + "px";
         }
-        this.dragSurface.style.width = this.totalLength() + "px";
     }
 
     private initDragSurface() {
@@ -120,8 +128,9 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
                 this.definitelyDragging = true;
                 event.stopPropagation();
                 event.preventDefault();
-                this.dragMove(event.screenX);
-
+                window.requestAnimationFrame(() => {
+                    this.dragMove(event.screenX);
+                });
             }
         });
     }

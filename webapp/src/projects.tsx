@@ -513,19 +513,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.carousel = $(this.node);
     }
 
-    getCarouselOptions() {
-        const isRTL = Util.isUserLanguageRtl();
-        const options: any = {
-            accessibility: true,
-            dots: true,
-            infinite: true,
-            speed: 500,
-            slidesToShow: 1,
-            slidesToScroll: 1
-        };
-        return options;
-    }
-
     newProject() {
         pxt.tickEvent("projects.carousel.new");
         this.props.hide();
@@ -562,7 +549,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             {this.hasFetchErrors ?
                 <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
                 :
-                <carousel.Carousel pageLength={4} bleedPercent={20}>
+                <carousel.Carousel maxMargin={20} pageLength={4} bleedPercent={20}>
                     {cards ? cards.map((scr, index) =>
                         <div key={path + scr.name}>
                             <codecard.CodeCardView
