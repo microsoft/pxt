@@ -292,13 +292,13 @@ declare namespace goog {
             APOSTROPHE: number,
             AT_SIGN: number,
             B: number,
-            BACKSLASH: number,	
+            BACKSLASH: number,
             BACKSPACE: number,
             C: number,
-            CAPS_LOCK: number,	
-            CLOSE_SQUARE_BRACKET: number,	
+            CAPS_LOCK: number,
+            CLOSE_SQUARE_BRACKET: number,
             COMMA: number,
-            CONTEXT_MENU: number,	
+            CONTEXT_MENU: number,
             CTRL: number,
             D: number,
             DASH: number,
@@ -340,7 +340,7 @@ declare namespace goog {
             LAST_MEDIA_KEY: number,
             LEFT: number,
             M: number,
-            MAC_ENTER: number,	
+            MAC_ENTER: number,
             MAC_FF_META: number,
             MAC_WK_CMD_LEFT: number,
             MAC_WK_CMD_RIGHT: number,
@@ -368,7 +368,7 @@ declare namespace goog {
             ONE: number,
             OPEN_SQUARE_BRACKET: number,
             P: number,
-            PAGE_DOWN: number,	
+            PAGE_DOWN: number,
             PAGE_UP: number,
             PAUSE: number,
             PERIOD: number,
@@ -471,7 +471,7 @@ declare namespace Blockly {
     const OUTPUT_SHAPE_HEXAGONAL: number;
     const OUTPUT_SHAPE_ROUND: number;
     const OUTPUT_SHAPE_SQUARE: number;
-    
+
     let VARIABLE_CATEGORY_NAME: string;
     let PROCEDURE_CATEGORY_NAME: string;
 
@@ -484,8 +484,8 @@ declare namespace Blockly {
         function noEvent(e: Event): void;
     }
 
-    class FieldImage {
-        constructor(url: string, width: number, height: number, def: string);
+    class FieldImage extends Field {
+        constructor(url: string, width: number, height: number, flip_rtl: boolean, alt: string, callback?: () => void);
     }
 
     interface BlockDefinition {
@@ -589,11 +589,11 @@ declare namespace Blockly {
     }
 
     class FieldNumberDropdown extends FieldDropdown {
-        constructor(value: string | number, menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], opt_min?: any, opt_max?: any, opt_precision?: any, opt_validator?: Function);        
+        constructor(value: string | number, menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], opt_min?: any, opt_max?: any, opt_precision?: any, opt_validator?: Function);
     }
 
     class FieldIconMenu extends FieldDropdown {
-        constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], params?: pxt.Map<string> ); 
+        constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], params?: pxt.Map<string> );
     }
 
     class FieldSlider extends FieldNumber {
@@ -752,6 +752,7 @@ declare namespace Blockly {
 
         appendField(field: Field | string, opt_name?: string): Input;
         appendTitle(field: any, opt_name?: string): Input;
+        insertFieldAt(index: number, field: Field | string, opt_name?: string): void;
         dispose(): void;
         init(): void;
         isVisible(): boolean;
