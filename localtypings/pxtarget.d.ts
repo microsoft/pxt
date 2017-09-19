@@ -74,6 +74,7 @@ declare namespace pxt {
 
     interface AppSerial {
         useHF2?: boolean;
+        useEditor?: boolean;
         vendorId?: string; // used by node-serial
         productId?: string; // used by node-serial
         nameFilter?: string; // regex to match devices
