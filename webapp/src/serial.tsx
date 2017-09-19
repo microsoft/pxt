@@ -19,12 +19,11 @@ export class Editor extends srceditor.Editor {
     consoleBuffer: string = ""
     // TODO pass these values in with props or config
     isSim: boolean = true
-    //TODO dis
-    maxLineLength: number = 500
+    maxConsoleLineLength: number = 500
     maxConsoleEntries: number = 100
     active: boolean = true
     rawDataBuffer: string = ""
-    //TODO is this reasonable?
+    //TODO reasonable buffer size?
     maxBufferLength: number = 5000
 
     getId() {
@@ -105,15 +104,6 @@ export class Editor extends srceditor.Editor {
             this.chartWrappers.push(newChart)
             let serialChartRoot = document.getElementById("serialCharts")
             serialChartRoot.appendChild(newChart.getElement())
-            /**
-            let c = serialChartRoot.lastChild.childNodes[1] as HTMLCanvasElement
-            c.width = c.offsetWidth
-            c.height = c.offsetHeight
-            **/
-            //TODO
-            //let c = newChart.getCanvas()
-            //c.width = c.offsetWidth 
-            //c.height = c.offsetHeight
         }
     }
 
@@ -121,7 +111,7 @@ export class Editor extends srceditor.Editor {
         for (let i = 0; i < data.length; ++i) {
             let ch = data[i]
             this.consoleBuffer += ch
-            if (ch === "\n" || this.consoleBuffer.length > this.maxLineLength) {
+            if (ch === "\n" || this.consoleBuffer.length > this.maxConsoleLineLength) {
                 let newEntry = document.createElement("div")
                 newEntry.textContent = this.consoleBuffer
                 let consoleRoot = document.getElementById("serialConsole")
@@ -146,7 +136,7 @@ export class Editor extends srceditor.Editor {
         if (this.active) {
             this.active = false
             this.pauseRecording()
-            //TODO nooooooooo baaaaaaaaaad
+            //TODO nooooo
             document.getElementById("serialRecordButton").className = "record icon"
         } else {
             this.active = true
@@ -167,22 +157,18 @@ export class Editor extends srceditor.Editor {
         this.clearNode(chartRoot)
         this.clearNode(consoleRoot)
         this.chartWrappers = []
-        //this.consoleEntries = []
         this.consoleBuffer = ""
     }
 
-    entriesToCSV(){
-        //TODO add graphable entries
-        //return this.consoleEntries.join(",")
+    entriesToPlaintext() {
         return this.rawDataBuffer
     }
 
-    showStreamDialog() {
+    showExportDialog() {
         const targetTheme = pxt.appTarget.appTheme
         let rootUrl = targetTheme.embedUrl
         if (!rootUrl) {
-            //TODO csv is empty
-            pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.txt", "text/plain")
+            pxt.commands.browserDownloadAsync(this.entriesToPlaintext(), "data.txt", "text/plain")
             return;
         }
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
@@ -195,7 +181,7 @@ export class Editor extends srceditor.Editor {
             onLoaded: (_) => {
                 _.find('#datasavelocalfile').click(() => {
                     _.modal('hide');
-                    pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.txt", "text/plain")
+                    pxt.commands.browserDownloadAsync(this.entriesToPlaintext(), "data.txt", "text/plain")
                 })
             },
             htmlBody:
@@ -230,7 +216,7 @@ export class Editor extends srceditor.Editor {
                         <i className="arrow left icon"></i>
                     </button>
                     <span className="ui huge header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
-                    <button className="ui right floated icon button" onClick={this.showStreamDialog.bind(this)}>
+                    <button className="ui right floated icon button" onClick={this.showExportDialog().bind(this)}>
                         <i className="download icon"></i>
                     </button>
                     <button className="ui right floated icon button" onClick ={this.toggleRecording.bind(this)}>
@@ -241,48 +227,10 @@ export class Editor extends srceditor.Editor {
                 <div className="ui fitted divider"></div>
                 <div id="serialConsole"></div>
             </div>
-            /**
-            <div id="serialEditor" className="ui grid">
-                <div className="four column row">
-                    <div className="left floated column">
-                        <div className="ui huge header">{this.isSim ? lf("Simulator") : lf("Device")}</div>
-                    </div>
-                    <div className="right floated column">
-                        <button className="ui icon button" onClick = {() => {this.active = true; this.startRecording()}}>
-                            <i className="play icon"></i>
-                        </button>
-                        <button className="ui icon button" onClick = {() => {this.active = false; this.pauseRecording()}}>
-                            <i className="pause icon"></i>
-                        </button>
-                    </div>
-                </div>
-                <div className="row">
-                    <div id="charts" className="ui one column grid"></div>
-                </div>
-                <div id="console" className="row">
-                </div>
-            </div>
-            **/
-            /**
-            <div id="serialEditor" className="ui grid">
-                <div className="ui segment">
-                    <span id="serialEditorTitle" className="ui huge left aligned header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
-                    <button className="ui right floated icon button" onClick= {() => {this.active = false; this.pauseRecording()}}>
-                        <i className="pause icon"></i>
-                    </button>
-                    <button className="ui right floated icon button" onClick = {() => {this.active = true; this.startRecording()}}>
-                        <i className="play icon"></i>
-                    </button>
-                </div>
-                <div id="charts" className="ui"></div>
-                <div id="console" className="ui content"></div>
-            </div>
-            **/
         )
     }
 
     domUpdate() {
-        //TODO
     }
 }
 
@@ -292,11 +240,11 @@ class Chart {
     line: TimeSeries = new TimeSeries()
     source: string
     variable: string
-    chartConfig = { 
+    chartConfig = {
         responsive: true,
         interpolation: "linear",
-        fps: 30, 
-        millisPerPixel: 20, 
+        fps: 30,
+        millisPerPixel: 20,
         grid: { strokeStyle: '#555555', lineWidth: 1, millisPerLine: 1000, verticalSections: 4}
     }
     chart: SmoothieChart = new SmoothieChart(this.chartConfig)
