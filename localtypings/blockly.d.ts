@@ -501,7 +501,7 @@ declare namespace Blockly {
         function createSvgElement(tag: string, options: any, fg?: any): any;
     }
 
-    class FieldImage {
+    class FieldImage extends Field {
         constructor(src: string, width: number, height: number, flip_rtl?: boolean, opt_alt?: string, opt_onClick?: Function);
     }
 
@@ -751,6 +751,7 @@ declare namespace Blockly {
 
         appendField(field: Field | string, opt_name?: string): Input;
         appendTitle(field: any, opt_name?: string): Input;
+        insertFieldAt(index: number, field: Field | string, opt_name?: string): void;
         dispose(): void;
         init(): void;
         isVisible(): boolean;
