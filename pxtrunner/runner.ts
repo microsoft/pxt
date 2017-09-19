@@ -645,7 +645,7 @@ ${files["main.ts"]}
                     .then(() => renderMarkdownAsync(content, tutorialmd, { tutorial: true }))
                     .then(() => {
                         // Split the steps
-                        let stepcontent = content.innerHTML.split(/<h2.*\/h2>/gi);
+                        let stepcontent = content.innerHTML.split(newAuthoring ? /<h2.*\/h2>/gi : /<h3.*\/h3>/gi);
                         for (let i = 0; i < stepcontent.length - 1; i++) {
                             content.innerHTML = stepcontent[i + 1];
                             stepInfo[i].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
