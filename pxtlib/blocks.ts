@@ -8,6 +8,16 @@ namespace pxt.blocks {
         shadowValue?: string;
     }
 
+    export interface HandlerArg {
+        name: string,
+        type: string
+    }
+
+    export interface BlockParameters {
+        attrNames: Map<BlockParameter>;
+        handlerArgs: HandlerArg[];
+    }
+
     export function normalizeBlock(b: string): string {
         if (!b) return b;
         // normalize and validate common errors
@@ -21,17 +31,23 @@ namespace pxt.blocks {
         return nb;
     }
 
-    export function parameterNames(fn: pxtc.SymbolInfo): Map<BlockParameter> {
+    export function parameterNames(fn: pxtc.SymbolInfo): BlockParameters {
         // collect blockly parameter name mapping
         const instance = (fn.kind == ts.pxtc.SymbolKind.Method || fn.kind == ts.pxtc.SymbolKind.Property) && !fn.attributes.defaultInstance;
         let attrNames: Map<BlockParameter> = {};
+        let handlerArgs: HandlerArg[] = [];
 
         if (instance) attrNames["this"] = { name: "this", type: fn.namespace };
         if (fn.parameters)
-            fn.parameters.forEach(pr => attrNames[pr.name] = {
-                name: pr.name,
-                type: pr.type,
-                shadowValue: pr.default || undefined
+            fn.parameters.forEach(pr => {
+                attrNames[pr.name] = {
+                    name: pr.name,
+                    type: pr.type,
+                    shadowValue: pr.default || undefined
+                };
+                if (pr.handlerParameters) {
+                    pr.handlerParameters.forEach(arg => handlerArgs.push(arg))
+                }
             });
         if (fn.attributes.block) {
             Object.keys(attrNames).forEach(k => attrNames[k].name = "");
@@ -50,7 +66,10 @@ namespace pxt.blocks {
                 if (m[3]) at.shadowType = m[3];
             }
         }
-        return attrNames;
+        return {
+            attrNames,
+            handlerArgs
+        };
     }
 
 

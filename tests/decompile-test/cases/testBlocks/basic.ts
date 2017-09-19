@@ -91,6 +91,14 @@ namespace testNamespace {
     //% block="Callback with optional arg"
     export function optionalArgumentWithCallback(arg1: () => void, arg2?: number) { }
 
+    //% blockId=test_handler_arguments
+    //% block="Handler arguments"
+    export function callbackWithArguments(cb: (a: number, b: number) => void) {}
+
+    //% blockId=test_handler_arguments2 optionalVariableArgs=true
+    //% block="Handler with optioinal arguments"
+    export function callbackWithIgnoredArguments(cb: (c: number, d: number) => void) {}
+
     /**
      * Enum value function
      */

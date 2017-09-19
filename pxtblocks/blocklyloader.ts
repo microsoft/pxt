@@ -134,10 +134,11 @@ namespace pxt.blocks {
         return value;
     }
 
-    function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>): HTMLElement {
+    function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, params: pxt.blocks.BlockParameters): HTMLElement {
         //
         // toolbox update
         //
+        let { attrNames, handlerArgs } = params;
         let block = document.createElement("block");
         block.setAttribute("type", fn.attributes.blockId);
         if (fn.attributes.blockGap)
@@ -174,6 +175,12 @@ namespace pxt.blocks {
                         shadowValue.firstChild.appendChild(container);
                     block.appendChild(shadowValue);
                 })
+            handlerArgs.forEach(arg => {
+                const field = document.createElement("field");
+                field.setAttribute("name", "HANDLER_" + arg.name);
+                field.textContent = arg.name;
+                block.appendChild(field);
+            });
         }
         searchElementCache[fn.attributes.blockId] = block.cloneNode(true);
         return block;
@@ -525,7 +532,7 @@ namespace pxt.blocks {
         return newCategory;
     }
 
-    function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>, blockXml: HTMLElement): boolean {
+    function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, params: pxt.blocks.BlockParameters, blockXml: HTMLElement): boolean {
         let id = fn.attributes.blockId;
 
         if (builtinBlocks[id]) {
@@ -548,7 +555,7 @@ namespace pxt.blocks {
             fn: fn,
             block: {
                 codeCard: mkCard(fn, blockXml),
-                init: function () { initBlock(this, info, fn, attrNames) }
+                init: function () { initBlock(this, info, fn, params) }
             }
         }
 
@@ -604,7 +611,8 @@ namespace pxt.blocks {
         return false
     }
 
-    function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>) {
+    function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, params: pxt.blocks.BlockParameters) {
+        let { attrNames, handlerArgs } = params;
         const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
         const nsinfo = info.apis.byQName[ns];
@@ -736,6 +744,21 @@ namespace pxt.blocks {
             }
         });
 
+        let hasHandler = false;
+
+        if (handlerArgs.length) {
+            hasHandler = true;
+            if (fn.attributes.optionalVariableArgs) {
+                initVariableArgsBlock(block, handlerArgs);
+            }
+            else {
+                let i = block.appendDummyInput();
+                handlerArgs.forEach(arg => {
+                    i.appendField(new Blockly.FieldVariable(arg.name), "HANDLER_" + arg.name);
+                });
+            }
+        }
+
         if (fn.attributes.mutate) {
             addMutation(block as MutatingBlock, fn, fn.attributes.mutate);
         }
@@ -791,7 +814,7 @@ namespace pxt.blocks {
         }
 
         const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
-        if (body) {
+        if (body || hasHandler) {
             block.appendStatementInput("HANDLER")
                 .setCheck("null");
             block.setInputsInline(true);
@@ -831,6 +854,68 @@ namespace pxt.blocks {
         let e = categoryElement(tb, name);
         if (e && e.parentNode) // IE11: no parentElement
             e.parentNode.removeChild(e);
+    }
+
+    function initVariableArgsBlock(b: B.Block, handlerArgs: pxt.blocks.HandlerArg[]) {
+        U.assert(!(b as MutatingBlock).domToMutation);
+        U.assert(!(b as MutatingBlock).mutationToDom);
+
+        let currentlyVisible = 0;
+        let actuallyVisible = 0;
+
+        let i = b.appendDummyInput();
+
+        let updateShape = () => {
+            if (currentlyVisible === actuallyVisible) {
+                return;
+            }
+
+            if (currentlyVisible > actuallyVisible) {
+                const diff = currentlyVisible - actuallyVisible;
+                for (let j = 0; j < diff; j++) {
+                    const arg = handlerArgs[actuallyVisible + j];
+                    i.insertFieldAt(i.fieldRow.length - 1, new Blockly.FieldVariable(arg.name), "HANDLER_" + arg.name);
+                }
+            }
+            else {
+                let diff = actuallyVisible - currentlyVisible;
+                for (let j = 0; j < diff; j++) {
+                    const arg = handlerArgs[actuallyVisible - j - 1];
+                    i.removeField("HANDLER_" + arg.name);
+                }
+            }
+
+            actuallyVisible = currentlyVisible;
+        };
+
+        i.appendField(new Blockly.FieldImage("/cdn/blockly/media/add.svg", 24, 24, "*", () => {
+            currentlyVisible = Math.min(currentlyVisible + 1, handlerArgs.length);
+            updateShape();
+        }));
+
+        (b as MutatingBlock).domToMutation = element => {
+            let numArgs = parseInt(element.getAttribute("numargs"));
+            currentlyVisible = Math.min(isNaN(numArgs) ? 0 : numArgs, handlerArgs.length);
+
+            updateShape();
+
+            for (let j = 0; j < currentlyVisible; j++) {
+                let varName = element.getAttribute("arg" + j);
+                b.setFieldValue(varName, "HANDLER_" + handlerArgs[j].name);
+            }
+        };
+
+        (b as MutatingBlock).mutationToDom = () => {
+            let mut = document.createElement("mutation");
+            mut.setAttribute("numArgs", currentlyVisible.toString());
+
+            for (let j = 0; j < currentlyVisible; j++) {
+                let varName = b.getFieldValue("HANDLER_" + handlerArgs[j].name);
+                mut.setAttribute("arg" + j, varName);
+            }
+
+            return mut;
+        };
     }
 
     export interface BlockFilters {
