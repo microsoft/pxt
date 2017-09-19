@@ -133,6 +133,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 allowResetFocus={true}
                 closeOnDimmerClick
                 closeOnDocumentClick
+                closeOnEscape
                 >
                 {!fetchedLangs ?
                     <div className="ui message info">{lf("loading...") }</div> : undefined}

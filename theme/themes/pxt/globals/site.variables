@@ -86,6 +86,8 @@
 *******************************/
 
 @avatarUrl: data-uri("../docs/static/avatar.svg");
+@fileLogoUrl: data-uri("../docs/static/filelogo.svg");
+@gettingStartedImageUrl: "/cdn/static/getting-started/getting-started.png";
 
 @poweredBySmall: data-uri("../docs/static/logo/Powered-By-Microsoft-logo-small.png");
 @poweredByLarge: data-uri("../docs/static/logo/Powered-By-Microsoft-logo.png");
@@ -121,6 +123,8 @@
 @simulatorBackground: #fff;
 @editorToolsBackground: @simulatorBackground;
 @blocklySvgColor: #fff;
+
+@homeScreenBackground: #fff;
 
 /*-------------------
    Full screen

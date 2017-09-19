@@ -181,10 +181,10 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
                 aria-haspopup="true">
                 {genericContent(this.props) }
                 <div className="menu"
-                     role="menu"
-                     aria-expanded={this.isOpened}
-                     aria-label={lf("Dropdown menu {0}", this.props.title)}
-                     aria-hidden={!this.isOpened}>
+                    role="menu"
+                    aria-expanded={this.isOpened}
+                    aria-label={lf("Dropdown menu {0}", this.props.title) }
+                    aria-hidden={!this.isOpened}>
                     {this.props.children}
                 </div>
             </div>);
@@ -216,7 +216,7 @@ export class Item extends data.Component<ItemProps, {}> {
                 data-value={this.props.value}
                 onClick={this.props.onClick}
                 onKeyDown={this.props.onKeyDown || fireClickOnEnter}>
-                {genericContent(this.props)}
+                {genericContent(this.props) }
                 {this.props.children}
             </div>);
     }
@@ -233,7 +233,7 @@ export class ButtonMenuItem extends UiElement<ItemProps> {
                 data-value={this.props.value}
                 onClick={this.props.onClick}
                 onKeyDown={this.props.onKeyDown || fireClickOnEnter}>
-                <div className={genericClassName("ui button", this.props)}>
+                <div className={genericClassName("ui button", this.props) }>
                     {genericContent(this.props) }
                     {this.props.children}
                 </div>
@@ -331,8 +331,8 @@ export class Input extends data.Component<{
     readOnly?: boolean;
     copy?: boolean;
     selectOnClick?: boolean;
-    id?:string;
-    ariaLabel?:string;
+    id?: string;
+    ariaLabel?: string;
 }, {}> {
 
     copy() {
@@ -652,7 +652,7 @@ export class Menu extends data.Component<MenuProps, MenuState> {
 
 
     componentDidMount() {
-        var menuItems = this.child(".link")
+        let menuItems = this.child(".link")
         menuItems.each((index: number, elem: HTMLElement) => {
             elem.onkeydown = this.handleKeyboardNavigation
         })
@@ -719,6 +719,7 @@ export interface ModalProps {
     closeIcon?: any;
     closeOnDimmerClick?: boolean;
     closeOnDocumentClick?: boolean;
+    closeOnEscape?: boolean;
     dimmer?: boolean | 'blurring' | 'inverted';
     dimmerClassName?: string;
     description?: string;
@@ -764,7 +765,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
 
     componentWillMount() {
         const { open } = this.props;
-        this.state = {open: open}
+        this.state = { open: open }
     }
 
     componentWillReceiveProps(nextProps: ModalProps) {
@@ -780,7 +781,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
 
     handleClose = (e: Event) => {
         if (this.state.open != false)
-            this.setState({open: false})
+            this.setState({ open: false })
 
         const { onClose } = this.props;
         if (onClose) onClose(e, this.props);
@@ -791,7 +792,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         if (onOpen) onOpen(e, this.props);
 
         if (this.state.open != true)
-            this.setState({open: true})
+            this.setState({ open: true })
     }
 
     setPosition = () => {
@@ -808,7 +809,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             }
 
             const marginTop = -Math.round(height / 2);
-            const scrolling = height >= window.innerHeight;
+            const scrolling = this.props.size == 'fullscreen' || height >= window.innerHeight;
 
             const newState: ModalState = {};
 
@@ -865,6 +866,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             closeIcon,
             closeOnDimmerClick,
             closeOnDocumentClick,
+            closeOnEscape,
             dimmer,
             dimmerClassName,
             size,
@@ -888,10 +890,10 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 {this.props.header ? <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
                     {this.props.header}
                     {this.props.helpUrl ?
-                    <a className={`ui huge icon clear focused`} href={this.props.helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", this.props.header)}>
-                        <i className="help icon"></i>
-                    </a>
-                    : undefined}
+                        <a className={`ui huge icon clear focused`} href={this.props.helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", this.props.header) }>
+                            <i className="help icon"></i>
+                        </a>
+                        : undefined}
                 </div> : undefined }
                 {this.props.description ? <label id={this.id + 'description'} className="accessible-hidden">{this.props.description}</label> : undefined}
                 <div id={this.id + 'desc'} className="content">
@@ -906,20 +908,21 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                                 this.props.actionClick();
                             } } />
                     </div> : undefined }
-                {this.props.closeIcon ? <Button
+                {closeIcon ? <Button
                     icon={closeIconName}
                     class={`huge clear right floated closeIcon focused`}
                     onClick={() => this.handleClose(null) }
                     tabIndex={0}
-                    ariaLabel={lf("Close dialog")} /> : undefined }
+                    ariaLabel={lf("Close dialog") } /> : undefined }
             </div>
         )
 
         const dimmerClasses = !dimmer
             ? null
             : cx([
-                core.highContrast ? 'hc' : '', 
+                core.highContrast ? 'hc' : '',
                 'ui',
+                size,
                 dimmer === 'inverted' ? 'inverted' : '',
                 pxt.options.light ? '' : "transition",
                 'page modals dimmer visible active',
@@ -932,6 +935,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             <Portal
                 closeOnRootNodeClick={closeOnDimmerClick}
                 closeOnDocumentClick={closeOnDocumentClick}
+                closeOnEscape={closeOnEscape}
                 className={dimmerClasses}
                 mountNode={this.getMountNode() }
                 onMount={this.handlePortalMount}
@@ -996,7 +1000,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
 
     componentWillMount() {
         const { open } = this.props;
-        this.state = {open: open}
+        this.state = { open: open }
     }
 
     componentWillReceiveProps(nextProps: ModalProps) {
@@ -1019,19 +1023,21 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         }
     }
 
-    private handleEscape = (e: KeyboardEvent) => {
+    handleEscape = (e: KeyboardEvent) => {
         let charCode = (typeof e.which == "number") ? e.which : e.keyCode
         if (charCode !== 27) {
             return;
         }
-
-        e.preventDefault();
-        this.close(e);
+        const { closeOnEscape } = this.props;
+        if (closeOnEscape) {
+            e.preventDefault();
+            this.close(e);
+        }
     }
 
     close = (e: Event) => {
         if (this.state.open != false)
-            this.setState({open: false})
+            this.setState({ open: false })
 
         const { onClose } = this.props;
         if (onClose) onClose(e);
@@ -1042,7 +1048,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         if (onOpen) onOpen(e);
 
         if (this.state.open != true)
-            this.setState({open: true})
+            this.setState({ open: true })
     }
 
     mountPortal = () => {

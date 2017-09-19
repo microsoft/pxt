@@ -1,3 +1,8 @@
 /*******************************
          Site Overrides
 *******************************/
+
+
+/* Make fullscreen modals appear as fullscreen pages */
+@scrollingMargin: 0rem;
+@fullScreenWidth: 100%;

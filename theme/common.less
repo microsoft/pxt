@@ -13,6 +13,11 @@ html, body {
     min-width: 320px;
 }
 
+* {
+  min-height: 0;
+  min-width: 0;
+}
+
 /* Main Layout */
 #filelist,
 #maineditor,
@@ -246,17 +251,6 @@ div.simframe > iframe {
     font-size:0.8rem;
 }
 
-/* Project code cards */
-.ui.cardimage {
-    background-color: @secondaryColor;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    height: 10rem;
-    border-top-left-radius: @defaultBorderRadius;
-    border-top-right-radius: @defaultBorderRadius;
-}
-
 /* Logo */
 .ui.menu .ui.item.logo {
     font-size: 2.2rem;
@@ -404,7 +398,6 @@ div.simframe > iframe {
         Projects Modal
 *******************************/
 
-
 .ui.modal.projectsdialog .ui.dividing.header, .ui.modal.projectsdialog .content > .header{
     font-weight: normal !important;
 }
@@ -445,12 +438,6 @@ div.simframe > iframe {
     padding: 0 !important;
     position: relative;
 }
-
-.ui.modal.projectsdialog .tabsegment {
-    min-height: 450px;
-    background: white !important;
-}
-
 
 /*******************************
         Modal Close Icon
@@ -890,7 +877,7 @@ Field editors
         left:@simulatorWidthSmall;
     }
     /* Logo */
-    #logo .name {
+    .ui.logo.brand .name {
         display: none !important;
     }
     /* Help card */
@@ -904,7 +891,7 @@ Field editors
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
     /* Logo */
-    #logo, #organization {
+    .ui.logo.brand, .ui.logo.organization {
         font-size: 0rem;
         padding-right: 0;
     }
