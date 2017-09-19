@@ -19,8 +19,4 @@ declare namespace Blockly {
     interface FieldCustomConstructor {
         new(text: string, options: FieldCustomOptions, validator?: Function): FieldCustom;
     }
-
-    class FieldIconMenu extends FieldDropdown {
-        constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], params?: pxt.Map<string>);
-    }
 }
