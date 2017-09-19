@@ -1846,7 +1846,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true })} /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
-                        <div className="ui editorFloat portrait hide">
+                        <div id="serialPreview" className="ui editorFloat portrait hide">
                             <logview.LogView ref="simLogs" isSim={true} onClick={() => {this.serialEditor.setSim(true); this.setFile(pkg.mainEditorPkg().lookupFile("this/" + pxt.SERIAL_EDITOR_FILE))}}/>
                             <logview.LogView ref="devLogs" isSim={false} onClick={() => {this.serialEditor.setSim(false); this.setFile(pkg.mainEditorPkg().lookupFile("this/" + pxt.SERIAL_EDITOR_FILE))}}/>
                         </div>
