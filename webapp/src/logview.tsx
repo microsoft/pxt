@@ -5,6 +5,7 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 import * as core from "./core";
 
+//TODO change name of this module
 //TODO fix type of onclick
 export interface LogViewProps {
     isSim: boolean,

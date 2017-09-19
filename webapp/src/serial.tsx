@@ -202,12 +202,20 @@ export class Editor extends srceditor.Editor {
         }).done();
     }
 
+    goBack() {
+        //TODO tight coupling
+        this.parent.openPreviousEditor()
+    }
+
     display() {
         return (
             <div id="serialArea">
                 <div id="serialHeader" className="ui segment">
-                    <span className="ui huge left aligned header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
-                    <button className="ui left floated icon button" onClick={this.showStreamDialog.bind(this)}>
+                <button className="ui left floated icon button" onClick={this.goBack.bind(this)}>
+                        <i className="arrow left icon"></i>
+                    </button>
+                    <span className="ui huge header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
+                    <button className="ui right floated icon button" onClick={this.showStreamDialog.bind(this)}>
                         <i className="download icon"></i>
                     </button>
                     <button className="ui right floated icon button" onClick ={this.toggleRecording.bind(this)}>
