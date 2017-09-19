@@ -14,7 +14,7 @@ import Util = pxt.Util
 const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
-    chartWrappers: Chart[] = []
+    charts: Chart[] = []
     chartIdx: number = 0
     consoleBuffer: string = ""
     // TODO pass these values in with props or config
@@ -89,10 +89,10 @@ export class Editor extends srceditor.Editor {
         //See if there is a "home chart" that this point belongs to -
         //if not, create a new chart
         let homeChart: Chart = undefined
-        for (let i = 0; i < this.chartWrappers.length; ++i) {
-            let chartWrapper = this.chartWrappers[i]
-            if (chartWrapper.shouldContain(source, variable)) {
-                homeChart = chartWrapper
+        for (let i = 0; i < this.charts.length; ++i) {
+            let chart = this.charts[i]
+            if (chart.shouldContain(source, variable)) {
+                homeChart = chart
                 break
             }
         }
@@ -101,7 +101,7 @@ export class Editor extends srceditor.Editor {
         } else {
             let newChart = new Chart(source, variable, nvalue, this.chartIdx)
             this.chartIdx++
-            this.chartWrappers.push(newChart)
+            this.charts.push(newChart)
             let serialChartRoot = document.getElementById("serialCharts")
             serialChartRoot.appendChild(newChart.getElement())
         }
@@ -125,11 +125,11 @@ export class Editor extends srceditor.Editor {
     }
 
     pauseRecording() {
-        this.chartWrappers.forEach(s => s.stop())
+        this.charts.forEach(s => s.stop())
     }
 
     startRecording() {
-        this.chartWrappers.forEach(s => s.start())
+        this.charts.forEach(s => s.start())
     }
 
     toggleRecording() {
@@ -156,7 +156,7 @@ export class Editor extends srceditor.Editor {
         let consoleRoot = document.getElementById("serialConsole")
         this.clearNode(chartRoot)
         this.clearNode(consoleRoot)
-        this.chartWrappers = []
+        this.charts = []
         this.consoleBuffer = ""
     }
 
