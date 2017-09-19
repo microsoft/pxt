@@ -2730,7 +2730,10 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
     }
 
     let simDeclRes = pxtc.compile(opts)
-    reportDiagnostics(simDeclRes.diagnostics);
+
+    // The program we compiled was missing files, so filter out those errors
+    reportDiagnostics(simDeclRes.diagnostics.filter(d => d.code != 5012 /* file not found */ && d.code != 2318/* missing global type */));
+
     let typechecker = simDeclRes.ast.getTypeChecker()
     let doSymbol = (sym: ts.Symbol) => {
         if (sym.getFlags() & ts.SymbolFlags.HasExports) {
