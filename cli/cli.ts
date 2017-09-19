@@ -1536,22 +1536,22 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
             "FirefoxAndroid >= 55"
         ]
         const cssnano = require('cssnano')({
-            autoprefixer: {browsers: browserList, add: true}
+            autoprefixer: { browsers: browserList, add: true }
         });
         const rtlcss = require('rtlcss');
         const files = ['semantic.css', 'blockly.css']
         files.forEach(cssFile => {
             fs.readFile(`built/web/${cssFile}`, "utf8", (err, css) => {
-            postcss([cssnano])
-                .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` }).then((result: any) => {
-                    fs.writeFile(`built/web/${cssFile}`, result.css, (err2, css2) => {
-                        // process rtl css
-                        postcss([rtlcss])
-                            .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                fs.writeFile(`built/web/rtl${cssFile}`, result2.css);
-                            });
+                postcss([cssnano])
+                    .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` }).then((result: any) => {
+                        fs.writeFile(`built/web/${cssFile}`, result.css, (err2, css2) => {
+                            // process rtl css
+                            postcss([rtlcss])
+                                .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
+                                    fs.writeFile(`built/web/rtl${cssFile}`, result2.css);
+                                });
+                        });
                     });
-                });
             })
         });
     })
@@ -1717,7 +1717,9 @@ function buildTargetCoreAsync() {
     nodeutil.mkdirP(hexCachePath);
 
     console.log(`building target.json in ${process.cwd()}...`)
-    return forEachBundledPkgAsync((pkg, dirname) => {
+
+    return buildTargetDocsAsync(false, true)
+        .then(() => forEachBundledPkgAsync((pkg, dirname) => {
         pxt.log(`building ${dirname}`);
         let isPrj = /prj$/.test(dirname);
         const config = JSON.parse(fs.readFileSync(pxt.CONFIG_NAME, "utf8")) as pxt.PackageConfig;
@@ -1752,7 +1754,7 @@ function buildTargetCoreAsync() {
                     }
                 }
             })
-    }, /*includeProjects*/ true)
+    }, /*includeProjects*/ true))
         .then(() => {
             let info = travisInfo()
             cfg.versions = {
@@ -3673,7 +3675,7 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
     return buildTargetDocsAsync(
         !!parsed.flags["docs"],
-        !!parsed.flags["locs"],
+        !!parsed.flags["loc"],
         parsed.flags["files"] as string,
         !!parsed.flags["create"]
     );
