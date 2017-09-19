@@ -216,7 +216,7 @@ export class Editor extends srceditor.Editor {
                         <i className="arrow left icon"></i>
                     </button>
                     <span className="ui huge header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
-                    <button className="ui right floated icon button" onClick={this.showExportDialog().bind(this)}>
+                    <button className="ui right floated icon button" onClick={this.showExportDialog.bind(this)}>
                         <i className="download icon"></i>
                     </button>
                     <button className="ui right floated icon button" onClick ={this.toggleRecording.bind(this)}>
