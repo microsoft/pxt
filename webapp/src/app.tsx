@@ -260,6 +260,15 @@ export class ProjectView
         this.shouldTryDecompile = false;
     }
 
+    openSerial(isSim: boolean) {
+        if (pxt.appTarget.serial && pxt.appTarget.serial.useEditor) {
+            this.serialEditor.setSim(isSim)
+            this.setFile(pkg.mainEditorPkg().lookupFile("this/" + pxt.SERIAL_EDITOR_FILE))
+        } else {
+            return
+        }
+    }
+
     openPreviousEditor() {
         if (this.prevEditorId == "monacoEditor") {
             this.openJavaScript(false);
@@ -1805,8 +1814,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
                         <div id="serialPreview" className="ui editorFloat portrait hide">
-                            <logview.LogView ref="simLogs" isSim={true} onClick={() => {this.serialEditor.setSim(true); this.setFile(pkg.mainEditorPkg().lookupFile("this/" + pxt.SERIAL_EDITOR_FILE))}}/>
-                            <logview.LogView ref="devLogs" isSim={false} onClick={() => {this.serialEditor.setSim(false); this.setFile(pkg.mainEditorPkg().lookupFile("this/" + pxt.SERIAL_EDITOR_FILE))}}/>
+                            <logview.LogView ref="simLogs" isSim={true} onClick={() => this.openSerial(true)} />
+                            <logview.LogView ref="devLogs" isSim={false} onClick={() => this.openSerial(false)} />
                         </div>
                         {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
                     </aside>
