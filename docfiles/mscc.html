@@ -25,5 +25,6 @@
         });
     }
     // target.js must be loaded
-    ksRunnerReady(function () { showCookieConsent(); });
+    if (typeof ksRunnerReady !== "undefined")
+        ksRunnerReady(function () { showCookieConsent(); });
 </script>
