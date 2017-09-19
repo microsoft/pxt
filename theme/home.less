@@ -1,0 +1,100 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+.ui.segment.gallerysegment { 
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 2rem;
+    margin-top: -1rem;
+    padding-top: 0rem;
+    padding-bottom: 0rem;
+}
+
+/* Carousel */
+.projectsdialog {
+    .getting-started-segment {
+        margin-left: -1rem;
+        margin-right: -1rem;
+        margin-top: -2.1rem !important;
+        padding: 0;
+        border-radius: 0;
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-image: url(@gettingStartedImageUrl);
+        height: 400px;
+
+        .getting-started {
+            padding: 2rem;
+            margin-top: 150px;
+        }
+    }
+
+    .content {
+        height: 100%;
+    }
+
+    .ui.segment.tabsegment {
+        padding-top: calc(@mainMenuHeight + 2rem) !important;
+        margin: 0;
+        width: 100%;
+        min-height: 100%;
+        background: @homeScreenBackground;
+    }
+
+    .gallerysegment {
+        .header {
+            font-size: 24px;
+        }
+    }
+    .ui.divider {
+        margin-left: 2rem;
+        margin-right: 2rem;
+    }
+
+    /* Footer, Privary, Terms of Use */
+    .homefooter {
+        left: 0;
+        right: 0;
+        width: 100%;
+        text-align: center;
+        .item{
+            font-size: 0.7rem !important;
+        }
+    }
+}
+
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+    /* Carousel */
+    .projectsdialog {
+        .getting-started-segment {
+            height: 300px;
+
+            .getting-started {
+                margin-top: 100px;
+            }
+        }
+
+        .ui.segment.tabsegment {
+            padding-top: calc(@mobileMenuHeight + 2rem) !important;
+
+        }
+    }
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+    .projectsdialog {
+        .getting-started-segment {
+            .getting-started {
+                margin-top: 0px;
+            }
+        }
+    }
+}

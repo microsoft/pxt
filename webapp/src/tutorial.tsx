@@ -128,7 +128,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 
         return <sui.Modal open={visible} className="hintdialog" size="small" header={header} closeIcon={true}
                 onClose={() => this.setState({ visible: false })} dimmer={true}
-                closeOnDimmerClick closeOnDocumentClick>
+                closeOnDimmerClick closeOnDocumentClick closeOnEscape>
                     <div className="content">
                         <div dangerouslySetInnerHTML={{__html: tutorialHint}} />
                     </div>

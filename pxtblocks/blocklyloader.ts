@@ -637,11 +637,9 @@ namespace pxt.blocks {
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(color, fn.attributes.colorSecondary, fn.attributes.colorTertiary);
         let blockShape = Blockly.OUTPUT_SHAPE_ROUND;
-        switch (fn.retType) {
-            case "number": blockShape = Blockly.OUTPUT_SHAPE_ROUND; break;
-            case "boolean": blockShape = Blockly.OUTPUT_SHAPE_HEXAGONAL; break;
-            case "string": blockShape = Blockly.OUTPUT_SHAPE_SQUARE; break;
-        }
+        if (fn.retType == "boolean")
+            blockShape = Blockly.OUTPUT_SHAPE_HEXAGONAL;
+
         block.setOutputShape(blockShape);
         if (fn.attributes.undeletable)
             block.setDeletable(false);
@@ -2042,7 +2040,7 @@ namespace pxt.blocks {
         // We override Blockly's category mouse event handler so that only one
         // category can be expanded at a time. Also prevent categories from toggling
         // once openend.
-        Blockly.Toolbox.TreeNode.prototype.onMouseDown = function (a: Event) {
+        Blockly.Toolbox.TreeNode.prototype.onClick_ = function (a: Event) {
             // Expand icon.
             const that = <Blockly.Toolbox.TreeNode>this;
 

@@ -1025,7 +1025,7 @@ declare namespace Blockly {
             getTree(): TreeControl;
             hasChildren(): boolean;
             isSelected(): boolean;
-            onMouseDown(e: Event): void;
+            onClick_(e: Event): void;
             select(): void;
             setExpanded(expanded: boolean): void;
             toggle(): void;

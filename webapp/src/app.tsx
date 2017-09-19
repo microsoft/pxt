@@ -1267,6 +1267,8 @@ export class ProjectView
             if (res) {
                 pxt.tickEvent("menu.open.file");
                 this.importFile(input.files[0]);
+            } else {
+                this.projects.showOpenProject();
             }
         })
     }
@@ -1350,6 +1352,8 @@ export class ProjectView
                 } else {
                     loadHeaderBySharedId(id);
                 }
+            } else {
+                this.projects.showOpenProject();
             }
         })
     }
@@ -1631,8 +1635,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
-        const gettingStarted = !sandbox && !inTutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks && !targetTheme.useStartPage;
-        const gettingStartedTooltip = lf("Open beginner tutorial");
+        const gettingStarted = !sandbox && !inTutorial && targetTheme && targetTheme.sideDoc && !this.state.sideDocsLoadUrl;
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
         const trace = run && simOpts.enableTrace;
@@ -1708,14 +1711,14 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu") }>
                             {!sandbox ? <div className="left menu">
-                                <span id="logo" className="ui item logo">
+                                <span className="ui item logo brand">
                                     {targetTheme.logo || targetTheme.portraitLogo
                                         ? <a className="ui image landscape only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo)} alt={`${targetTheme.boardName} Logo`} /></a>
                                         : <span className="name">{targetTheme.name}</span>}
                                     {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo)} alt={`${targetTheme.boardName} Logo`} /></a>) : null}
                                 </span>
                                 {betaUrl ? <a href={`${betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
-                                {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="folder open large" ariaLabel={lf("Create or open recent project")} text={lf("Projects")} onClick={() => this.openProject()} /> : null}
+                                {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={() => this.openProject()} /> : null}
                                 {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={() => this.embed()} /> : null}
                                 {inTutorial ? <sui.Item class="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
                             </div> : <div className="left menu">
@@ -1759,7 +1762,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={() => this.launchFullEditor()} /> : undefined}
                                 {inTutorial ? <sui.ButtonMenuItem class="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={() => this.exitTutorial(true)} /> : undefined}
 
-                                {!sandbox ? <a id="organization" href={targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo" onClick={() => pxt.tickEvent("menu.org")}>
+                                {!sandbox ? <a href={targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={() => pxt.tickEvent("menu.org")}>
                                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                                         ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo)} alt={`${targetTheme.organization} Logo`} />
                                         : <span className="name">{targetTheme.organization}</span>}
@@ -1770,11 +1773,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     </header> }
                 {useModulator ? <audio id="modulatorAudioOutput" controls></audio> : undefined}
                 {useModulator ? <div id="modulatorWrapper"><div id="modulatorBubble"><canvas id="modulatorWavStrip"></canvas></div></div> : undefined}
-                {gettingStarted ?
-                    <div id="getting-started-btn">
-                        <sui.Button class="portrait hide bottom attached small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started")} onClick={() => this.gettingStarted()} />
-                    </div>
-                    : undefined}
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
                 </div>
@@ -2311,11 +2309,12 @@ $(document).ready(() => {
             let hd = workspace.getHeaders()[0];
             if (ent) hd = workspace.getHeader(ent.id);
 
-            // Only show the start page if there are no initial projects requested
+            // Only show the start screen if there are no initial projects requested
             // (e.g. from the URL hash or from WinRT activation arguments)
-            const shouldShowStartPage = !isSandbox && pxt.appTarget.appTheme.useStartPage && !hasWinRTProject && !isProjectRelatedHash(hash);
-            if (shouldShowStartPage) {
-                theEditor.projects.showInitialStartPage(hd);
+            const skipStartScreen = pxt.appTarget.appTheme.allowParentController || !pxt.appTarget.appTheme.showHomeScreen || /skipHomeScreen=1/i.test(window.location.href);
+            const shouldShowHomeScreen = !isSandbox && !skipStartScreen  && !hasWinRTProject && !isProjectRelatedHash(hash);
+            if (shouldShowHomeScreen) {
+                theEditor.projects.showHome(hd);
                 return Promise.resolve();
             }
             if (hash.cmd && handleHash(hash)) {

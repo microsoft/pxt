@@ -201,7 +201,9 @@ pxt extract ${url}`;
                 actionClick={publish}
                 actionLoading={actionLoading}
                 closeIcon={true}
-                closeOnDimmerClick closeOnDocumentClick
+                closeOnDimmerClick
+                closeOnDocumentClick
+                closeOnEscape
                 >
                 <div className={`ui form`}>
                     { action ?
