@@ -5,6 +5,53 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 import * as core from "./core";
 
+//TODO change name of this module
+//TODO fix type of onclick
+export interface LogViewProps {
+    isSim: boolean,
+    onClick: any
+}
+
+export interface LogViewState {
+    active?: boolean
+}
+
+export class LogView extends React.Component<LogViewProps, LogViewState>{
+
+    constructor(props: any) {
+        super(props)
+        this.state = {active: false}
+        window.addEventListener("message", this.setActive.bind(this))
+    }
+
+    setActive(ev: MessageEvent) {
+        let msg = ev.data
+        if (!this.state.active && msg.type === "serial") {
+            const sim = !!msg.sim
+            if (sim === this.props.isSim) {
+                this.setState({active: true})
+            }
+        }
+    }
+
+    clear() {
+        this.setState({active: false})
+    }
+
+    render() {
+        return(!this.state.active ? (<div></div>) : (
+            <div className="ui left labeled button">
+                <a className="ui basic label">
+                    {this.props.isSim ? lf("Simulator serial") : lf("Device serial")}
+                </a>
+                <div className="ui button" onClick={this.props.onClick}>
+                    <i className="external square icon"></i>
+                </div>
+            </div>
+        ))
+    }
+}
+/**
 const STREAM_INTERVAL = 30000;
 
 export interface LogViewState {
@@ -12,8 +59,13 @@ export interface LogViewState {
     trends?: boolean;
 }
 
-export class LogView extends React.Component<{}, LogViewState> {
+export interface LogViewProps {
+    isSim?: boolean;
+}
+
+export class LogView extends React.Component<LogViewProps, LogViewState> {
     private view: pxsim.logs.LogViewElement;
+    public isSim: boolean;
 
     constructor(props: any) {
         super(props);
@@ -26,7 +78,9 @@ export class LogView extends React.Component<{}, LogViewState> {
 
         // init view
         this.view = new pxsim.logs.LogViewElement({
+            isSim: props.isSim,
             maxEntries: 80,
+            maxLineLength: 16,
             maxAccValues: 500,
             onClick: (es) => this.onClick(es),
             onTrendChartChanged: () => this.setState({ trends: this.view.hasTrends() }),
@@ -37,6 +91,8 @@ export class LogView extends React.Component<{}, LogViewState> {
             nameFilter: serial.nameFilter
         })
         this.state = {};
+
+        this.view.setLabel(this.props.isSim ? lf("SIM") : ("DEV"));
     }
 
     componentDidMount() {
@@ -57,7 +113,7 @@ export class LogView extends React.Component<{}, LogViewState> {
 
         if (streams && this.state.stream) this.view.setLabel(lf("streaming to cloud"), "green cloudflash");
         else if (streams && this.state.trends) this.view.setLabel(lf("streaming off"), "gray");
-        else this.view.setLabel(undefined);
+//        else this.view.setLabel(undefined);
         if (this.state.stream)
             this.scheduleStreamData();
     }
@@ -196,3 +252,4 @@ export class LogView extends React.Component<{}, LogViewState> {
         }).done();
     }
 }
+**/

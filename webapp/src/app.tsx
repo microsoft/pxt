@@ -35,6 +35,7 @@ import * as monacoToolbox from "./monacoSnippets"
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
+import * as serial from "./serial"
 import * as blocks from "./blocks"
 import * as codecard from "./codecard"
 import * as logview from "./logview"
@@ -90,6 +91,7 @@ export class ProjectView
     editorFile: pkg.File;
     textEditor: monaco.Editor;
     pxtJsonEditor: pxtjson.Editor;
+    serialEditor: serial.Editor;
     blocksEditor: blocks.Editor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
@@ -258,6 +260,15 @@ export class ProjectView
         this.shouldTryDecompile = false;
     }
 
+    openSerial(isSim: boolean) {
+        if (pxt.appTarget.serial && pxt.appTarget.serial.useEditor) {
+            this.serialEditor.setSim(isSim)
+            this.setFile(pkg.mainEditorPkg().lookupFile("this/" + pxt.SERIAL_EDITOR_FILE))
+        } else {
+            return
+        }
+    }
+
     openPreviousEditor() {
         if (this.prevEditorId == "monacoEditor") {
             this.openJavaScript(false);
@@ -343,6 +354,7 @@ export class ProjectView
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
+        this.serialEditor = new serial.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
 
         let changeHandler = () => {
@@ -357,7 +369,7 @@ export class ProjectView
                 this.stopSimulator();
             this.editorChangeHandler();
         }
-        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.serialEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -580,8 +592,7 @@ export class ProjectView
 
         this.stopSimulator(true);
         pxt.blocks.cleanBlocks();
-        let logs = this.refs["logs"] as logview.LogView;
-        logs.clear();
+        this.clearSerial()
         this.setState({
             showFiles: false,
             editorState: editorState,
@@ -1023,7 +1034,7 @@ export class ProjectView
         }
         const simRestart = this.state.running;
         this.setState({ compiling: true });
-        this.clearLog();
+        this.clearSerial();
         this.editor.beforeCompile();
         if (simRestart) this.stopSimulator();
         let state = this.editor.snapshotState()
@@ -1183,9 +1194,12 @@ export class ProjectView
             })
     }
 
-    clearLog() {
-        let logs = this.refs["logs"] as logview.LogView;
-        logs.clear();
+    clearSerial() {
+        this.serialEditor.clear()
+        let simLogs = this.refs["simLogs"] as logview.LogView
+        let devLogs = this.refs["devLogs"] as logview.LogView
+        simLogs.clear()
+        devLogs.clear()
     }
 
     hwDebug() {
@@ -1219,7 +1233,7 @@ export class ProjectView
         }
 
         this.stopSimulator();
-        this.clearLog();
+        this.clearSerial();
 
         let state = this.editor.snapshotState()
         return compiler.compileAsync(opts)
@@ -1797,8 +1811,9 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true })} /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
-                        <div className="ui editorFloat portrait hide">
-                            <logview.LogView ref="logs" />
+                        <div id="serialPreview" className="ui editorFloat portrait hide">
+                            <logview.LogView ref="simLogs" isSim={true} onClick={() => this.openSerial(true)} />
+                            <logview.LogView ref="devLogs" isSim={false} onClick={() => this.openSerial(false)} />
                         </div>
                         {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
                     </aside>
@@ -1885,14 +1900,28 @@ function initLogin() {
     }
 }
 
+let hidConnectionPoller: number;
+let hidPollerDelay: number;
+
+function startHidConnectionPoller() {
+    hidConnectionPoller = window.setInterval(initSerial, 5000);
+}
+
+function setHidPollerDelay() {
+    clearTimeout(hidPollerDelay);
+    clearInterval(hidConnectionPoller);
+    hidPollerDelay = window.setTimeout(startHidConnectionPoller, 5000);
+}
+
 function initSerial() {
     if (!pxt.appTarget.serial || !pxt.winrt.isWinRT() && (!Cloud.isLocalHost() || !Cloud.localToken))
         return;
 
     if (hidbridge.shouldUse()) {
-        hidbridge.initAsync()
+        hidbridge.initAsync(true)
             .then(dev => {
                 dev.onSerial = (buf, isErr) => {
+                    setHidPollerDelay();
                     window.postMessage({
                         type: 'serial',
                         id: 'n/a', // TODO
@@ -2296,7 +2325,7 @@ $(document).ready(() => {
             if (state) {
                 theEditor.setState({editorState: state});
             }
-            initSerial();
+            startHidConnectionPoller();
             initScreenshots();
             initHashchange();
             electron.init();

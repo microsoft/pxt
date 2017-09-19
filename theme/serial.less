@@ -1,0 +1,55 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+#serialEditor {
+    background-color: #FFF;
+}
+
+#serialArea {
+    height: 100%;
+}
+
+#serialArea .ui.segment {
+    border: none;
+    padding: 0;
+    box-shadow: none;
+}
+
+#serialHeader {
+    height: 10%;
+    margin: 0;
+}
+
+#serialConsole {
+    height: 35%;
+    overflow-y: auto;
+}
+
+#serialCharts {
+    height: 55%;
+    overflow-y: auto;
+}
+
+#serialCharts .ui.label {
+    color: #FFF;
+    background: transparent;
+}
+
+#serialCharts .ui.segment {
+    padding: 0;
+    height: 10rem;
+}
+
+#serialCharts canvas {
+    width: 100%;
+    height: 100%;
+    margin: 0 !important;
+}
+
+#serialPreview .ui.left.labeled.button {
+    margin: 1px;
+}
