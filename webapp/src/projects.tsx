@@ -338,7 +338,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                     </div>
                                 </div>
                                 <div className="content">
-                                    <ProjectsCarousel  key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} hide={() => this.hide() } onClick={(scr: any) => chgGallery(scr) }/>
+                                    <ProjectsCarousel key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} hide={() => this.hide() } onClick={(scr: any) => chgGallery(scr) }/>
                                 </div>
                             </div>
                         </div>

@@ -1,6 +1,6 @@
 /// <reference path="pxtpackage.d.ts" />
 /// <reference path="pxtparts.d.ts" />
-/// <reference path="blockly.d.ts" />
+/// <reference path="pxtblockly.d.ts" />
 
 declare namespace pxt {
     // targetconfig.json
