@@ -168,7 +168,7 @@ namespace pxt.blocks {
         let symbol = blockSymbol(type);
         if (!symbol || !b) return;
 
-        let params = parameterNames(symbol);
+        let params = parameterNames(symbol).attrNames;
         symbol.parameters.forEach((p, i) => {
             let ptype = info.apis.byQName[p.type];
             if (ptype && ptype.kind == pxtc.SymbolKind.Enum) {
