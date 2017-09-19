@@ -9,10 +9,29 @@
     background-color: #FFF;
 }
 
+#serialArea {
+    height: 100%;
+}
+
 #serialArea .ui.segment {
     border: none;
     padding: 0;
     box-shadow: none;
+}
+
+#serialHeader {
+    height: 10%;
+    margin: 0;
+}
+
+#serialConsole {
+    height: 35%;
+    overflow-y: auto;
+}
+
+#serialCharts {
+    height: 55%;
+    overflow-y: auto;
 }
 
 #serialCharts .ui.label {
@@ -25,31 +44,10 @@
     height: 10rem;
 }
 
-/** TODO **/
-
 #serialCharts canvas {
     width: 100%;
     height: 100%;
     margin: 0 !important;
-}
-
-#serialArea {
-    height: 100%;
-}
-
-#serialHeader {
-    height: 10%;
-    margin: 0;
-}
-
-#serialCharts {
-    height: 55%;
-    overflow-y: auto;
-}
-
-#serialConsole {
-    height: 35%;
-    overflow-y: auto;
 }
 
 #serialPreview .ui.left.labeled.button {

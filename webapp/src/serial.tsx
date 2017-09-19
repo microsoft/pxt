@@ -15,21 +15,18 @@ const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
     //TODO don't need private etc
-    private chartWrappers: Chart[] = []
-    private chartIdx: number = 0
-    //private consoleEntries: string[] = []
-    private consoleBuffer: string = ""
-    // TODO pass these values in with props or config?
-    //private shouldScroll = false
-    private isSim: boolean = true
+    chartWrappers: Chart[] = []
+    chartIdx: number = 0
+    consoleBuffer: string = ""
+    // TODO pass these values in with props or config
+    isSim: boolean = true
     //TODO dis
-    private maxLineLength: number = 500
-    private maxConsoleEntries: number = 100
-    private active: boolean = true
-    //TODO unnecessary type declarations
-    private rawDataBuffer: string = ""
+    maxLineLength: number = 500
+    maxConsoleEntries: number = 100
+    active: boolean = true
+    rawDataBuffer: string = ""
     //TODO is this reasonable?
-    private maxBufferLength: number = 5000
+    maxBufferLength: number = 5000
 
     getId() {
         return "serialEditor"
