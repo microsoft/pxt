@@ -3,7 +3,11 @@
         // only loaded for targets served from Microsoft's cloud
         if (typeof pxtTargetBundle == "undefined") return;
 
-        var domain = (pxtTargetBundle.appTheme || { homeUrl: "unknown.com" }).homeUrl.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+        // check enable for target
+        var theme = (pxtTargetBundle.appTheme || { homeUrl: "unknown.com" });
+        if (!theme.msccCookieConsent) return;
+
+        var domain = theme.homeUrl.replace(/^https?:\/\//i, '').replace(/\/$/, '');
         var sitename = pxtTargetBundle.id;
         var url = "https://uhf.microsoft.com/" + navigator.language + "/shell/api/mscc?sitename=" + encodeURIComponent(sitename) + "&domain=" + encodeURIComponent(domain) + "&mscc_eudomain=true";
         $.getJSON(url, function (info) {

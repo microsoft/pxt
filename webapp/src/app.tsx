@@ -32,6 +32,7 @@ import * as sounds from "./sounds";
 import * as make from "./make";
 import * as baseToolbox from "./toolbox";
 import * as monacoToolbox from "./monacoSnippets"
+import * as cookies from "./cookies"
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -1644,8 +1645,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const useModulator = compile.useModulator;
         const { hideMenuBar, hideEditorToolbar } = targetTheme;
         const isHeadless = simOpts.headless;
-        const cookieKey = "cookieconsent"
-        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey)
+        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || cookies.hasConsent()
             || sandbox;
         const simActive = this.state.embedSimView;
         const blockActive = this.isBlocksActive();
@@ -1655,7 +1655,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const betaUrl = targetTheme.betaUrl;
 
         const consentCookie = () => {
-            pxt.storage.setLocal(cookieKey, "1");
+            cookies.setConsent();
             this.forceUpdate();
         }
 
@@ -2262,14 +2262,14 @@ $(document).ready(() => {
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
-    Promise.resolve()
+    cookies.loadAsync()
         .then(() => {
             const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
             if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
-                lang.setCookieLang(mlang[2]);
+                cookies.setCookieLang(mlang[2]);
                 window.location.hash = window.location.hash.replace(mlang[0], "");
             }
-            const useLang = mlang ? mlang[2] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+            const useLang = mlang ? mlang[2] : (cookies.cookieLang() || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
             if (useLang) pxt.tickEvent("locale." + useLang + (live ? ".live" : ""));
             lang.initialLang = useLang;

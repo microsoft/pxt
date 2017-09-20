@@ -3,6 +3,7 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 import * as codecard from "./codecard"
 import * as data from "./data"
+import * as cookies from "./cookies"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -50,30 +51,9 @@ const allLanguages: pxt.Map<Language> = {
     "zh-CN": { englishName: "Chinese (Simplified, China)", localizedName: "简体中文 (中国)" },
     "zh-TW": { englishName: "Chinese (Traditional, Taiwan)", localizedName: "中文 (台湾)" },
 };
-const pxtLangCookieId = "PXT_LANG";
-const langCookieExpirationDays = 30;
 const defaultLanguages = ["en"];
 
 export let initialLang: string;
-
-export function getCookieLang() {
-    const cookiePropRegex = new RegExp(`${pxt.Util.escapeForRegex(pxtLangCookieId)}=(.*?)(?:;|$)`)
-    const cookieValue = cookiePropRegex.exec(document.cookie);
-    return cookieValue && cookieValue[1] || null;
-}
-
-export function setCookieLang(langId: string) {
-    if (!allLanguages[langId]) {
-        return;
-    }
-
-    if (langId !== getCookieLang()) {
-        pxt.tickEvent(`menu.lang.setcookielang.${langId}`);
-        const expiration = new Date();
-        expiration.setTime(expiration.getTime() + (langCookieExpirationDays * 24 * 60 * 60 * 1000));
-        document.cookie = `${pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}`;
-    }
-}
 
 export class LanguagePicker extends data.Component<ISettingsProps, LanguagesState> {
     constructor(props: ISettingsProps) {
@@ -96,7 +76,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
             return;
         }
 
-        setCookieLang(langId);
+        cookies.setCookieLang(langId);
 
         if (langId !== initialLang) {
             pxt.tickEvent(`menu.lang.changelang.${langId}`);

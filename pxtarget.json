@@ -18,6 +18,7 @@
         "cardLogo": "./static/logo.svg",
         "appLogo": "./static/logo.svg",
         "crowdinProject": "kindscript",        
+        "msccCookieConsent": true,
         "docMenu": [
             {
                 "name": "About",
