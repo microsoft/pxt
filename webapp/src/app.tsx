@@ -98,6 +98,7 @@ export class ProjectView
     shareEditor: share.ShareEditor;
     languagePicker: lang.LanguagePicker;
     tutorialComplete: tutorial.TutorialComplete;
+    importDialog: projects.ImportDialog;
     prevEditorId: string;
 
     private lastChangeTime: number;
@@ -1273,6 +1274,10 @@ export class ProjectView
         })
     }
 
+    importProjectDialog() {
+        this.importDialog.show();
+    }
+
     showReportAbuse() {
         pxt.tickEvent("menu.reportabuse");
         let urlInput: JQuery;
@@ -1814,6 +1819,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} hasGettingStarted={gettingStarted} />}
+                {sandbox ? undefined : <projects.ImportDialog parent={this} ref={v => this.importDialog = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
                 {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined}
