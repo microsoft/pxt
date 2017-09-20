@@ -142,8 +142,7 @@ namespace pxt.editor {
         removeFile(fn: IFile, skipConfirm?: boolean): void;
         updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
 
-        openProject(tab?: string): void;
-        openTutorials(): void;
+        openHome(): void;
         setTutorialStep(step: number): void;
         exitTutorial(keep?: boolean): void;
         completeTutorial(): void;
