@@ -1018,7 +1018,9 @@ namespace pxt.blocks {
                     let categoryState = filters.namespaces && filters.namespaces[catName] != undefined ? filters.namespaces[catName] : filters.defaultState;
                     let blocks = cat.getElementsByTagName(`block`);
 
-                    let hasVisibleChildren = filterBlocks(blocks, categoryState);
+                    let hasVisibleChildren = (catName == "variables" && filters.blocks)
+                        ? filters.blocks["variables_get"] || filters.blocks["variables_set"]
+                        : filterBlocks(blocks, categoryState);
                     switch (categoryState) {
                         case FilterState.Disabled:
                             if (!hasVisibleChildren) {
@@ -1263,7 +1265,7 @@ namespace pxt.blocks {
         }
 
         // Override Blockly's toolbox keydown method to intercept characters typed and move the focus to the search input
-        (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown = function(e: any) {
+        (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown = function (e: any) {
             const keyCode = e.which || e.keyCode;
             const characterKey = (keyCode > 64 && keyCode < 91); // Letter keys
             const spaceEnterKey = keyCode == 32 || keyCode == 13; // Spacebar or Enter keys
@@ -1276,7 +1278,7 @@ namespace pxt.blocks {
                 return true;
             } else {
                 if (this.getTree() && this.getTree().toolbox_.horizontalLayout_) {
-                    let map: {[keyCode: number]: number} = {};
+                    let map: { [keyCode: number]: number } = {};
                     let next = goog.events.KeyCodes.DOWN
                     let prev = goog.events.KeyCodes.UP
                     map[goog.events.KeyCodes.RIGHT] = this.rightToLeft_ ? prev : next;
@@ -1402,17 +1404,17 @@ namespace pxt.blocks {
         // allows both Strings and Arrays in its input check and that confuses
         // our Blockly compiler
         let block = Blockly.Blocks[listsLengthId];
-        block.init = function() {
+        block.init = function () {
             this.jsonInit({
-            "message0": msg.LISTS_LENGTH_TITLE,
-            "args0": [
-                {
-                "type": "input_value",
-                "name": "VALUE",
-                "check": ['Array']
-                }
-            ],
-            "output": 'Number'
+                "message0": msg.LISTS_LENGTH_TITLE,
+                "args0": [
+                    {
+                        "type": "input_value",
+                        "name": "VALUE",
+                        "check": ['Array']
+                    }
+                ],
+                "output": 'Number'
             });
         }
 
@@ -2372,7 +2374,7 @@ namespace pxt.blocks {
              * @return {string} Procedure name.
              * @this Blockly.Block
              */
-            getProcedureCall: function() {
+            getProcedureCall: function () {
                 // The NAME field is guaranteed to exist, null will never be returned.
                 return /** @type {string} */ (this.getFieldValue('NAME'));
             },
@@ -2383,7 +2385,7 @@ namespace pxt.blocks {
              * @param {string} newName Renamed procedure.
              * @this Blockly.Block
              */
-            renameProcedure: function(oldName: string, newName: string) {
+            renameProcedure: function (oldName: string, newName: string) {
                 if (Blockly.Names.equals(oldName, this.getProcedureCall())) {
                     this.setFieldValue(newName, 'NAME');
                 }
@@ -2394,7 +2396,7 @@ namespace pxt.blocks {
              * @param {!Blockly.Events.Abstract} event Change event.
              * @this Blockly.Block
              */
-            onchange: function(event: any) {
+            onchange: function (event: any) {
                 if (!this.workspace || this.workspace.isFlyout) {
                     // Block is deleted or is in a flyout.
                     return;
@@ -2450,12 +2452,12 @@ namespace pxt.blocks {
                     }
                 }
             },
-            mutationToDom: function() {
+            mutationToDom: function () {
                 const mutationElement = document.createElement("mutation");
                 mutationElement.setAttribute("name", this.getProcedureCall());
                 return mutationElement;
             },
-            domToMutation: function(element: Element) {
+            domToMutation: function (element: Element) {
                 const name = element.getAttribute("name");
                 this.renameProcedure(this.getProcedureCall(), name);
             },
@@ -2464,13 +2466,13 @@ namespace pxt.blocks {
              * @param {!Array} options List of menu options to add to.
              * @this Blockly.Block
              */
-            customContextMenu: function(options: any) {
-                let option: any = {enabled: true};
+            customContextMenu: function (options: any) {
+                let option: any = { enabled: true };
                 option.text = (Blockly as any).Msg.PROCEDURES_HIGHLIGHT_DEF;
                 let name = this.getProcedureCall();
                 let workspace = this.workspace;
-                option.callback = function() {
-                let def = Blockly.Procedures.getDefinition(name, workspace);
+                option.callback = function () {
+                    let def = Blockly.Procedures.getDefinition(name, workspace);
                     def && def.select();
                 };
                 options.push(option);
@@ -2521,9 +2523,9 @@ namespace pxt.blocks {
                 (workspace as any).toolbox_.clearSelection();
             }
 
-            workspace.registerButtonCallback('CREATE_FUNCTION', function(button) {
+            workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
                 let promptAndCheckWithAlert = (defaultName: string) => {
-                    Blockly.prompt(newFunctionTitle, defaultName, function(newFunc) {
+                    Blockly.prompt(newFunctionTitle, defaultName, function (newFunc) {
                         // Merge runs of whitespace.  Strip leading and trailing whitespace.
                         // Beyond this, all names are legal.
                         if (newFunc) {
@@ -2537,14 +2539,14 @@ namespace pxt.blocks {
                             if (workspace.variableIndexOf(newFunc) != -1) {
                                 Blockly.alert((Blockly as any).Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
                                     newFunc.toLowerCase()),
-                                    function() {
+                                    function () {
                                         promptAndCheckWithAlert(newFunc);  // Recurse
                                     });
                             }
                             else if (!Blockly.Procedures.isLegalName_(newFunc, workspace)) {
                                 Blockly.alert((Blockly as any).Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
                                     newFunc.toLowerCase()),
-                                    function() {
+                                    function () {
                                         promptAndCheckWithAlert(newFunc);  // Recurse
                                     });
                             }
@@ -2650,17 +2652,17 @@ namespace pxt.blocks {
         // allows both Strings and Arrays in its input check and that confuses
         // our Blockly compiler
         let block = Blockly.Blocks[textLengthId];
-        block.init = function() {
+        block.init = function () {
             this.jsonInit({
-            "message0": msg.TEXT_LENGTH_TITLE,
-            "args0": [
-                {
-                "type": "input_value",
-                "name": "VALUE",
-                "check": ['String']
-                }
-            ],
-            "output": 'Number'
+                "message0": msg.TEXT_LENGTH_TITLE,
+                "args0": [
+                    {
+                        "type": "input_value",
+                        "name": "VALUE",
+                        "check": ['String']
+                    }
+                ],
+                "output": 'Number'
             });
         }
         installBuiltinHelpInfo(textLengthId);
