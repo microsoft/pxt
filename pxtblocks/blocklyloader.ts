@@ -1138,67 +1138,6 @@ namespace pxt.blocks {
             updateUsedBlocks = true;
         }
 
-        // Rearrange blocks in the flyout and add group labels
-        if (tb) {
-            let categories = tb.getElementsByTagName(`category`);
-            for (let ci = 0; ci < categories.length; ++ci) {
-                let cat = categories.item(ci);
-                let catName = cat.getAttribute("nameid");
-                if (catName === "advanced") continue;
-
-                let blocks = getDirectChildren(cat, `block`);
-                let groups = cat.getAttribute("groups");
-                let labelLineWidth = cat.getAttribute("labellinewidth");
-                let blockGroups: {[group: string]: Element[]} = {}
-                let sortedGroups: string[] = [];
-                if (groups) sortedGroups = groups.split(', ');
-
-                // Organize the blocks into the different groups
-                for (let bi = 0; bi < blocks.length; ++bi) {
-                    let blk = blocks[bi];
-                    let group = blk.getAttribute("group") || 'other';
-                    if (!blockGroups[group]) blockGroups[group] = [];
-                    blockGroups[group].push(blk);
-                }
-
-                if (Object.keys(blockGroups).length > 1) {
-                    // Add any missing groups to the sorted groups list
-                    Object.keys(blockGroups).sort().forEach(group => {
-                        if (sortedGroups.indexOf(group) == -1) {
-                            sortedGroups.push(group);
-                        }
-                    })
-
-                    // Add the blocks to the xmlList
-                    let xmlList: Element[] = [];
-                    for (let bg = 0; bg < sortedGroups.length; ++bg) {
-                        let group = sortedGroups[bg];
-                        // Add the group label
-                        if (group != 'other') {
-                            let groupLabel = goog.dom.createDom('label');
-                            groupLabel.setAttribute('text', pxt.Util.rlf(`{id:group}${group}`));
-                            groupLabel.setAttribute('web-class', 'blocklyFlyoutGroup');
-                            groupLabel.setAttribute('web-line', '1.5');
-                            if (labelLineWidth) groupLabel.setAttribute('web-line-width', labelLineWidth);
-                            xmlList.push(groupLabel as HTMLElement);
-                        }
-
-                        // Add the blocks in that group
-                        if (blockGroups[group])
-                            blockGroups[group].forEach(groupedBlock => {
-                                cat.removeChild(groupedBlock);
-                                xmlList.push(groupedBlock);
-                            })
-                    }
-
-                    // Add the blocks back into the category
-                    xmlList.forEach(arrangedBlock => {
-                        cat.appendChild(arrangedBlock);
-                    })
-                }
-            }
-        }
-
         // Filter the blocks
         if (tb && filters) {
             function filterBlocks(blocks: any, defaultState?: number) {
@@ -1291,6 +1230,67 @@ namespace pxt.blocks {
                     if (blockCount.length == 0) {
                         if (cat.parentNode) cat.parentNode.removeChild(cat);
                     }
+                }
+            }
+        }
+
+        // Rearrange blocks in the flyout and add group labels
+        if (tb) {
+            let categories = tb.getElementsByTagName(`category`);
+            for (let ci = 0; ci < categories.length; ++ci) {
+                let cat = categories.item(ci);
+                let catName = cat.getAttribute("nameid");
+                if (catName === "advanced") continue;
+
+                let blocks = getDirectChildren(cat, `block`);
+                let groups = cat.getAttribute("groups");
+                let labelLineWidth = cat.getAttribute("labellinewidth");
+                let blockGroups: {[group: string]: Element[]} = {}
+                let sortedGroups: string[] = [];
+                if (groups) sortedGroups = groups.split(', ');
+
+                // Organize the blocks into the different groups
+                for (let bi = 0; bi < blocks.length; ++bi) {
+                    let blk = blocks[bi];
+                    let group = blk.getAttribute("group") || 'other';
+                    if (!blockGroups[group]) blockGroups[group] = [];
+                    blockGroups[group].push(blk);
+                }
+
+                if (Object.keys(blockGroups).length > 1) {
+                    // Add any missing groups to the sorted groups list
+                    Object.keys(blockGroups).sort().forEach(group => {
+                        if (sortedGroups.indexOf(group) == -1) {
+                            sortedGroups.push(group);
+                        }
+                    })
+
+                    // Add the blocks to the xmlList
+                    let xmlList: Element[] = [];
+                    for (let bg = 0; bg < sortedGroups.length; ++bg) {
+                        let group = sortedGroups[bg];
+                        // Add the group label
+                        if (group != 'other') {
+                            let groupLabel = goog.dom.createDom('label');
+                            groupLabel.setAttribute('text', pxt.Util.rlf(`{id:group}${group}`));
+                            groupLabel.setAttribute('web-class', 'blocklyFlyoutGroup');
+                            groupLabel.setAttribute('web-line', '1.5');
+                            if (labelLineWidth) groupLabel.setAttribute('web-line-width', labelLineWidth);
+                            xmlList.push(groupLabel as HTMLElement);
+                        }
+
+                        // Add the blocks in that group
+                        if (blockGroups[group])
+                            blockGroups[group].forEach(groupedBlock => {
+                                cat.removeChild(groupedBlock);
+                                xmlList.push(groupedBlock);
+                            })
+                    }
+
+                    // Add the blocks back into the category
+                    xmlList.forEach(arrangedBlock => {
+                        cat.appendChild(arrangedBlock);
+                    })
                 }
             }
         }
