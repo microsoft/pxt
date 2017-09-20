@@ -650,3 +650,78 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         )
     }
 }
+
+
+export interface ExitAndSaveDialogState {
+    visible?: boolean;
+}
+
+export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSaveDialogState> {
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            visible: false
+        }
+    }
+
+    hide() {
+        this.setState({ visible: false });
+    }
+
+    show() {
+        this.setState({ visible: true });
+    }
+
+    componentDidUpdate() {
+        if (!this.state.visible) return;
+        // Save on enter typed
+        let dialogInput = document.getElementById('projectNameInput') as HTMLInputElement;
+        if (dialogInput) {
+            dialogInput.setSelectionRange(0, 9999);
+            dialogInput.onkeyup = (e: KeyboardEvent) => {
+                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                if (charCode === core.ENTER_KEY || charCode === core.SPACE_KEY) {
+                    e.preventDefault();
+                    (document.getElementsByClassName("approve positive").item(0) as HTMLElement).click();
+                }
+            }
+        }
+    }
+
+    renderCore() {
+        const { visible } = this.state;
+        const { projectName } = this.props.parent.state;
+        const setFileName = (name: string) => {
+            this.props.parent.updateHeaderName(name);
+        }
+
+        const save = () => {
+            this.props.parent.openProject();
+        }
+        const cancel = () => {
+            this.hide();
+        }
+
+        const actions = [{
+            label: lf("Save"),
+            onClick: save,
+            className: 'positive'
+        },{
+            label: lf("Cancel"),
+            onClick: cancel
+        }]
+
+        return (
+            <sui.Modal open={visible} className="exitandsave" header={lf("Save and Exit?") } size="small"
+                onClose={() => this.hide() } dimmer={true}
+                actions={actions}
+                closeIcon={true}
+                closeOnDimmerClick closeOnDocumentClick closeOnEscape
+                >
+                <div className="ui segment form text">
+                    <sui.Input id={"projectNameInput"} class="focused" label={lf("Project Name") } ariaLabel={lf("Type a name for your project") } value={projectName} onChange={setFileName}/>
+                </div>
+            </sui.Modal>
+        )
+    }
+}

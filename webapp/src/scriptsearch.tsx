@@ -224,7 +224,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 onClose={() => this.setState({ visible: false }) }
                 closeIcon={true}
                 helpUrl="/packages"
-                closeOnDimmerClick
+                closeOnDimmerClick closeOnEscape
                 description={lf("Add a package to the project") }>
                 <div className="ui vertical segment">
                     <div className="ui search">

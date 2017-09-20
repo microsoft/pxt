@@ -193,13 +193,18 @@ pxt extract ${url}`;
             sui.popupWindow(twitterUrl, lf("Share on Twitter"), 600, 600);
         }
 
+        const actions = [{
+            label: action,
+            onClick: publish,
+            loading: actionLoading,
+            className: 'primary'
+        }]
+
         return (
             <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Share Project") } size="small"
                 onClose={() => this.setState({ visible: false }) }
                 dimmer={true}
-                action={action}
-                actionClick={publish}
-                actionLoading={actionLoading}
+                actions={actions}
                 closeIcon={true}
                 closeOnDimmerClick
                 closeOnDocumentClick

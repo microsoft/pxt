@@ -43,7 +43,6 @@
         width: 100%;
         min-height: 100%;
         background: @homeScreenBackground;
-        overflow: hidden;
     }
 
     .gallerysegment {
@@ -180,9 +179,13 @@
     }
 }
 
-/* Full screen dimmer */
-
-.modals.dimmer .ui.fullscreen.scrolling.modal { 
-    margin: 0 !important;
-    padding: 0 !important;
+/* Mobile only */
+@media only screen and (max-width: @largestMobileScreen) {
+    .projectsdialog {
+        .getting-started-segment {
+            .getting-started-header {
+                font-size: 30px;
+            }
+        }
+    }
 }

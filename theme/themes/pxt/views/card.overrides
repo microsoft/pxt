@@ -60,10 +60,10 @@
 /* Example card */
 .ui.card.example {
     .ui.image {
-        height: 8rem;
+        height: 9rem;
     }
     .content {
-        height: 4rem;
+        height: 3rem;
     }
 }
 /* Hover animation on home screen cards */
@@ -77,7 +77,7 @@
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
-    height: 8rem;
+    height: 12rem;
 }
 
 /* <= Tablet (Mobile + Tablet) */
