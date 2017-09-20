@@ -80,7 +80,6 @@ including the micro:bit (a Nordic nRF51822 microcontroller with Cortex-M0 proces
 Playground Express (CPX: an Atmel SAMD21 microcontroller with Cortex-M0+ processor, 32K RAM), and the Arduino Uno 
 (Uno: an Atmel ATmega328 microcontroller with AVR processor, 2K RAM). 
 
-
 We encourage the reader to choose a board and experiment with programming it, using the simulator to explore many 
 of each board's features, to appreciate the qualitative aspects of the platform: its simplicity and ease of use.  In this 
 paper, we will evaluate quantitative aspects of the platform: 
@@ -110,7 +109,7 @@ boxes represent repos external to the platform.
   
 The MakeCode framework 
 is at \emph{\href{https://github.com/microsoft/pxt}{pxt}} (PXT is the previous codename of MakeCode). 
-A MakeCode \emph{pxt-target} extends the framework to create an environment for a specific board. Targets
+A PXT \emph{target} extends the framework to create an environment for a specific board. Targets
 for the three previously mentioned boards are at: 
 ~\emph{\href{https://github.com/microsoft/pxt-microbit}{pxt-microbit}}, 
 ~\emph{\href{https://github.com/microsoft/pxt-adafruit}{pxt-adafruit}}, and
@@ -119,8 +118,9 @@ The latter two targets make use of a common set of MakeCode libraries (packages)
 \emph{\href{https://github.com/microsoft/pxt-common-packages}{pxt-common-packages}},
 which build upon CODAL's microcontroller-independent core abstractions at
 ~\emph{\href{https://github.com/lancaster-university/codal-core}{codal-core}}.  
-Microcontroller-dependent specialization and optimizations for the SAMD21
-and Atmega328 targets can be found at:
+Platform- and microcontroller-dependent specialization and optimizations for ARM's Mbed platform, 
+and SAMD21 and Atmega328 microcontrollers can be found at
+~\emph{\href{https://github.com/lancaster-university/codal-mbed}{codal-mbed}},
 ~\emph{\href{https://github.com/lancaster-university/codal-samd21-mbed}{codal-samd21-mbed}}, and
 ~\emph{\href{https://github.com/lancaster-university/codal-atmega328p}{codal-atmega328p}}.
 The repo \emph{\href{https://github.com/lancaster-university/codal}{codal}} provides the
@@ -128,13 +128,14 @@ build tooling for compiling a CODAL target.  As can be seen in Figure~\ref{fig:r
 CODAL (the blue boxes) abstracts over platform and microcontroller specific
 implementations (for example, MBED), while MakeCode abstracts over programming editors
 and languages (Blockly, Monaco, and TypeScript).
-
-The pxt-microbit target uses a predecessor of the CODAL called the DAL (at
-~\emph{\href{https://github.com/lancaster-university/microbit-dal}{microbit-dal}}).
 The UF2 specification is at~\emph{\href{https://github.com/microsoft/uf2}{uf2}},
 with implementations at~\emph{\href{https://github.com/microsoft/uf2-samd21}{uf2-samd21}}
 and~\emph{\href{https://github.com/mmoskal/uf2-uno}{uf2-uno}}. These repos are not
 shown in the Figure. 
+
+The pxt-microbit target uses a predecessor of the CODAL called the DAL (at
+~\emph{\href{https://github.com/lancaster-university/microbit-dal}{microbit-dal}}).
+
 
 The rest of this paper is organized as follows. Section~\ref{sec:makecode} presents the design and implementation of the MakeCode framework. 
 Section~\ref{sec:sts} describes Static TypeScript and section~\ref{sec:codal} presents the CODAL C++ runtime. 
