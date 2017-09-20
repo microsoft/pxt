@@ -482,7 +482,7 @@ export class Editor extends srceditor.Editor {
             blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
             Blockly.svgResize(this.editor);
             const blocklyToolbox = document.getElementsByClassName('blocklyToolboxDiv')[0];
-            this.parent.updateEditorLogo(blocklyToolbox.clientWidth);
+            if (blocklyToolbox) this.parent.updateEditorLogo(blocklyToolbox.clientWidth);
         }
     }
 

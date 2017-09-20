@@ -124,6 +124,7 @@ namespace pxt.editor {
         newEmptyProject(name?: string, documentation?: string): void;
         newProject(options?: ProjectCreationOptions): void;
         createProjectAsync(options: ProjectCreationOptions): Promise<void>;
+        importProjectDialog(): void;
         importFileDialog(): void;
         importUrlDialog(): void;
         removeProject(): void;
@@ -141,6 +142,7 @@ namespace pxt.editor {
         removeFile(fn: IFile, skipConfirm?: boolean): void;
         updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
 
+        openProject(tab?: string): void;
         openTutorials(): void;
         setTutorialStep(step: number): void;
         exitTutorial(keep?: boolean): void;

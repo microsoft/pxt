@@ -205,11 +205,18 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                 .then(r => this.props.parent.loadHeaderAsync(r))
                 .done(() => core.hideLoading())
         }
+        const importProject = () => {
+            pxt.tickEvent("projects.importdialog");
+            this.hide();
+            this.props.parent.importProjectDialog();
+        }
+        // Deprecated
         const importHex = () => {
             pxt.tickEvent("projects.import");
             this.hide();
             this.props.parent.importFileDialog();
         }
+        // Deprecated
         const importUrl = () => {
             pxt.tickEvent("projects.importurl");
             this.hide();
@@ -299,7 +306,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                 </div>
                 {tab == WELCOME ? <div className={tabClasses}>
                     {hasGettingStarted ?
-                        <div className="ui segment getting-started-segment" style={{backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})`}}>
+                        <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }}>
                             <div className="ui grid equal width padded">
                                 <div className="column right aligned">
                                     <div className="getting-started">
@@ -315,10 +322,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                 <h2 className="ui header">{lf("My Stuff") } </h2>
                             </div>
                             <div className="column right aligned">
-                                {pxt.appTarget.compile ?
-                                    <sui.Button key="importfile" icon="upload" class="secondary tiny" textClass="landscape only" text={lf("Import File") } title={lf("Open files from your computer") } onClick={() => importHex() } /> : undefined}
-                                {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
-                                    <sui.Button key="importurl" icon="cloud download" class="secondary tiny" textClass="landscape only" text={lf("Import URL") } title={lf("Open a shared project URL") } onClick={() => importUrl() } /> : undefined}
+                                {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing) ?
+                                    <sui.Button key="import" icon="upload" class="secondary tiny" textClass="landscape only" text={lf("Import") } title={lf("Import a project") } onClick={() => importProject() } /> : undefined}
                             </div>
                         </div>
                         <div className="content">
@@ -559,5 +564,79 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 </carousel.Carousel>
             }
         </div>;
+    }
+}
+
+export interface ImportDialogState {
+    visible?: boolean;
+}
+
+export class ImportDialog extends data.Component<ISettingsProps, ImportDialogState> {
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            visible: false
+        }
+    }
+
+    hide() {
+        this.setState({ visible: false });
+    }
+
+    close() {
+        this.setState({ visible: false });
+        this.props.parent.openProject();
+    }
+
+    show() {
+        this.setState({ visible: true });
+    }
+
+    renderCore() {
+        const { visible } = this.state;
+
+        const importHex = () => {
+            pxt.tickEvent("projects.import");
+            this.hide();
+            this.props.parent.importFileDialog();
+        }
+        const importUrl = () => {
+            pxt.tickEvent("projects.importurl");
+            this.hide();
+            this.props.parent.importUrlDialog();
+        }
+
+        return (
+            <sui.Modal open={this.state.visible} className="importdialog" header={lf("Import") } size="small"
+                onClose={() => this.close() } dimmer={true}
+                closeIcon={true}
+                closeOnDimmerClick closeOnDocumentClick
+                >
+                <div className="ui cards">
+                    {pxt.appTarget.compile ?
+                        <codecard.CodeCardView
+                            ariaLabel={lf("Open files from your computer") }
+                            role="button"
+                            key={'import'}
+                            icon="upload"
+                            iconColor="secondary"
+                            name={lf("Import File...") }
+                            description={lf("Open files from your computer") }
+                            onClick={() => importHex() }
+                            /> : undefined }
+                    {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
+                        <codecard.CodeCardView
+                            ariaLabel={lf("Open a shared project URL") }
+                            role="button"
+                            key={'importurl'}
+                            icon="cloud download"
+                            iconColor="secondary"
+                            name={lf("Import URL...") }
+                            description={lf("Open a shared project URL") }
+                            onClick={() => importUrl() }
+                            /> : undefined }
+                </div>
+            </sui.Modal>
+        )
     }
 }
