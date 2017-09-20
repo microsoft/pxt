@@ -162,7 +162,7 @@ namespace pxt.editor {
         toggleTrace(intervalSpeed?: number): void;
         closeFlyout(): void;
 
-        startTutorial(tutorialId: string): void;
+        startTutorial(tutorialId: string, tutorialTitle?: string): void;
 
         addPackage(): void;
         typecheckNow(): void;

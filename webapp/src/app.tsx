@@ -1511,15 +1511,15 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         this.projects.showOpenTutorials();
     }
 
-    startTutorial(tutorialId: string) {
+    startTutorial(tutorialId: string, tutorialTitle?: string) {
         pxt.tickEvent("tutorial.start");
         core.showLoading(lf("starting tutorial..."));
-        this.startTutorialAsync(tutorialId)
+        this.startTutorialAsync(tutorialId, tutorialTitle)
             .then(() => Promise.delay(500));
     }
 
-    startTutorialAsync(tutorialId: string): Promise<void> {
-        let title = tutorialId;
+    startTutorialAsync(tutorialId: string, tutorialTitle?: string): Promise<void> {
+        let title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
         let result: string[] = [];
 
         sounds.initTutorial(); // pre load sounds
