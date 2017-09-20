@@ -471,8 +471,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         super(props)
         this.state = {
         }
-
-        this.showDetails = this.showDetails.bind(this);
     }
 
     fetchGallery(path: string): pxt.CodeCard[] {
@@ -493,27 +491,10 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         return headers;
     }
 
-    componentDidMount() {
-        this.updateCarousel();
-    }
-
-    componentDidUpdate(prevProps: ProjectsCarouselProps, prevState: ProjectsCarouselState) {
-        this.updateCarousel();
-    }
-
-    updateCarousel() {
-        if (!this.prevGalleries.length && !this.prevHeaders.length) return;
-        this.carousel = $(this.node);
-    }
-
     newProject() {
-        pxt.tickEvent("projects.carousel.new");
+        pxt.tickEvent("projects.new");
         this.props.hide();
         this.props.parent.newProject();
-    }
-
-    showDetails(index: number, src: any) {
-        this.setState({ expanded: true, slickGoTo: index });
     }
 
     renderCore() {
