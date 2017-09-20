@@ -41,7 +41,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
 
     public render() {
         this.childrenElements = [];
-        return <div className="ui grid middle aligned carouselouter">
+        return <div className="ui carouselouter">
             <span className="carouselarrow left aligned" onClick={() => this.onArrowClick(true)}>
                 <i className="icon large circle angle left"/>
             </span>
@@ -193,6 +193,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
             const diff = this.targetOffset - this.currentOffset;
             if (Math.abs(diff) < ANIMATION_DEBUFF_DIST) {
                 this.setPosition(this.targetOffset);
+                this.animationId = 0;
             }
             else {
                 if (diff > 0) {
