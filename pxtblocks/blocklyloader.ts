@@ -164,7 +164,7 @@ namespace pxt.blocks {
                         container = document.createElement('mutation');
                         container.setAttribute('min', pr.options['min'].value);
                         container.setAttribute('max', pr.options['max'].value);
-                        container.setAttribute('label', pr.name.charAt(0).toUpperCase() +  pr.name.slice(1));
+                        container.setAttribute('label', pr.name.charAt(0).toUpperCase() + pr.name.slice(1));
                         if (pr.options['fieldEditorOptions']) {
                             if (pr.options['fieldEditorOptions'].value['step']) container.setAttribute('step', pr.options['fieldEditorOptions'].value['step']);
                         }
@@ -1182,7 +1182,9 @@ namespace pxt.blocks {
                     let categoryState = filters.namespaces && filters.namespaces[catName] != undefined ? filters.namespaces[catName] : filters.defaultState;
                     let blocks = cat.getElementsByTagName(`block`);
 
-                    let hasVisibleChildren = filterBlocks(blocks, categoryState);
+                    let hasVisibleChildren = (catName == "variables" && filters.blocks)
+                        ? filters.blocks["variables_get"] || filters.blocks["variables_set"]
+                        : filterBlocks(blocks, categoryState);
                     switch (categoryState) {
                         case FilterState.Disabled:
                             if (!hasVisibleChildren) {
@@ -1245,7 +1247,7 @@ namespace pxt.blocks {
                 let blocks = getDirectChildren(cat, `block`);
                 let groups = cat.getAttribute("groups");
                 let labelLineWidth = cat.getAttribute("labellinewidth");
-                let blockGroups: {[group: string]: Element[]} = {}
+                let blockGroups: { [group: string]: Element[] } = {}
                 let sortedGroups: string[] = [];
                 if (groups) sortedGroups = groups.split(', ');
 
@@ -1300,8 +1302,8 @@ namespace pxt.blocks {
 
         function initBuiltinCategoryXml(name: string, remove: boolean) {
             if (remove) {
-                 removeCategory(tb, name);
-                 return;
+                removeCategory(tb, name);
+                return;
             }
 
             const cat = categoryElement(tb, name);
@@ -1516,7 +1518,7 @@ namespace pxt.blocks {
         }
 
         // Override Blockly's toolbox keydown method to intercept characters typed and move the focus to the search input
-        (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown = function(e: any) {
+        (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown = function (e: any) {
             const keyCode = e.which || e.keyCode;
             const characterKey = (keyCode > 64 && keyCode < 91); // Letter keys
             const spaceEnterKey = keyCode == 32 || keyCode == 13; // Spacebar or Enter keys
@@ -1530,7 +1532,7 @@ namespace pxt.blocks {
                 return true;
             } else {
                 if (this.getTree() && this.getTree().toolbox_.horizontalLayout_) {
-                    let map: {[keyCode: number]: number} = {};
+                    let map: { [keyCode: number]: number } = {};
                     let next = goog.events.KeyCodes.DOWN
                     let prev = goog.events.KeyCodes.UP
                     map[goog.events.KeyCodes.RIGHT] = this.rightToLeft_ ? prev : next;
@@ -1665,18 +1667,18 @@ namespace pxt.blocks {
         // allows both Strings and Arrays in its input check and that confuses
         // our Blockly compiler
         let block = Blockly.Blocks[listsLengthId];
-        block.init = function() {
+        block.init = function () {
             this.jsonInit({
-            "message0": msg.LISTS_LENGTH_TITLE,
-            "args0": [
-                {
-                "type": "input_value",
-                "name": "VALUE",
-                "check": ['Array']
-                }
-            ],
-            "output": 'Number',
-            "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+                "message0": msg.LISTS_LENGTH_TITLE,
+                "args0": [
+                    {
+                        "type": "input_value",
+                        "name": "VALUE",
+                        "check": ['Array']
+                    }
+                ],
+                "output": 'Number',
+                "outputShape": Blockly.OUTPUT_SHAPE_ROUND
             });
         }
 
@@ -2489,7 +2491,7 @@ namespace pxt.blocks {
 
     function initVariables() {
         let varname = lf("{id:var}item");
-        Blockly.Variables.flyoutCategory = function(workspace) {
+        Blockly.Variables.flyoutCategory = function (workspace) {
             let xmlList: HTMLElement[] = [];
 
             if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
@@ -2506,7 +2508,7 @@ namespace pxt.blocks {
             button.setAttribute('text', lf("Make a Variable"));
             button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
-            workspace.registerButtonCallback('CREATE_VARIABLE', function(button) {
+            workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
                 Blockly.Variables.createVariable(button.getTargetWorkspace());
             });
 
@@ -2516,7 +2518,7 @@ namespace pxt.blocks {
             xmlList = xmlList.concat(blockList);
             return xmlList;
         };
-        Blockly.Variables.flyoutCategoryBlocks = function(workspace) {
+        Blockly.Variables.flyoutCategoryBlocks = function (workspace) {
             let variableModelList = workspace.getVariablesOfType('');
             variableModelList.sort(Blockly.VariableModel.compareByName);
             // In addition to the user's variables, we also want to display the default
@@ -2551,10 +2553,10 @@ namespace pxt.blocks {
                 if (Blockly.Blocks['variables_set']) {
                     let gap = Blockly.Blocks['variables_change'] ? 8 : 24;
                     let blockText = '<xml>' +
-                            '<block type="variables_set" gap="' + gap + '">' +
-                            Blockly.Variables.generateVariableFieldXml_(firstVariable) +
-                            '</block>' +
-                            '</xml>';
+                        '<block type="variables_set" gap="' + gap + '">' +
+                        Blockly.Variables.generateVariableFieldXml_(firstVariable) +
+                        '</block>' +
+                        '</xml>';
                     let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
                     {
                         let value = goog.dom.createDom('value');
@@ -2704,7 +2706,7 @@ namespace pxt.blocks {
              * @return {string} Procedure name.
              * @this Blockly.Block
              */
-            getProcedureCall: function() {
+            getProcedureCall: function () {
                 // The NAME field is guaranteed to exist, null will never be returned.
                 return /** @type {string} */ (this.getFieldValue('NAME'));
             },
@@ -2715,7 +2717,7 @@ namespace pxt.blocks {
              * @param {string} newName Renamed procedure.
              * @this Blockly.Block
              */
-            renameProcedure: function(oldName: string, newName: string) {
+            renameProcedure: function (oldName: string, newName: string) {
                 if (Blockly.Names.equals(oldName, this.getProcedureCall())) {
                     this.setFieldValue(newName, 'NAME');
                 }
@@ -2726,7 +2728,7 @@ namespace pxt.blocks {
              * @param {!Blockly.Events.Abstract} event Change event.
              * @this Blockly.Block
              */
-            onchange: function(event: any) {
+            onchange: function (event: any) {
                 if (!this.workspace || this.workspace.isFlyout || this.isInsertionMarker()) {
                     // Block is deleted or is in a flyout or insertion marker.
                     return;
@@ -2782,12 +2784,12 @@ namespace pxt.blocks {
                     }
                 }
             },
-            mutationToDom: function() {
+            mutationToDom: function () {
                 const mutationElement = document.createElement("mutation");
                 mutationElement.setAttribute("name", this.getProcedureCall());
                 return mutationElement;
             },
-            domToMutation: function(element: Element) {
+            domToMutation: function (element: Element) {
                 const name = element.getAttribute("name");
                 this.renameProcedure(this.getProcedureCall(), name);
             },
@@ -2796,13 +2798,13 @@ namespace pxt.blocks {
              * @param {!Array} options List of menu options to add to.
              * @this Blockly.Block
              */
-            customContextMenu: function(options: any) {
-                let option: any = {enabled: true};
+            customContextMenu: function (options: any) {
+                let option: any = { enabled: true };
                 option.text = (Blockly as any).Msg.PROCEDURES_HIGHLIGHT_DEF;
                 let name = this.getProcedureCall();
                 let workspace = this.workspace;
-                option.callback = function() {
-                let def = Blockly.Procedures.getDefinition(name, workspace);
+                option.callback = function () {
+                    let def = Blockly.Procedures.getDefinition(name, workspace);
                     def && def.select();
                 };
                 options.push(option);
@@ -2866,9 +2868,9 @@ namespace pxt.blocks {
                 newBlock.select();
             }
 
-            workspace.registerButtonCallback('CREATE_FUNCTION', function(button) {
+            workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
                 let promptAndCheckWithAlert = (defaultName: string) => {
-                    Blockly.prompt(newFunctionTitle, defaultName, function(newFunc) {
+                    Blockly.prompt(newFunctionTitle, defaultName, function (newFunc) {
                         // Merge runs of whitespace.  Strip leading and trailing whitespace.
                         // Beyond this, all names are legal.
                         if (newFunc) {
@@ -2882,14 +2884,14 @@ namespace pxt.blocks {
                             if (workspace.getVariable(newFunc)) {
                                 Blockly.alert((Blockly as any).Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
                                     newFunc.toLowerCase()),
-                                    function() {
+                                    function () {
                                         promptAndCheckWithAlert(newFunc);  // Recurse
                                     });
                             }
                             else if (!Blockly.Procedures.isLegalName_(newFunc, workspace)) {
                                 Blockly.alert((Blockly as any).Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
                                     newFunc.toLowerCase()),
-                                    function() {
+                                    function () {
                                         promptAndCheckWithAlert(newFunc);  // Recurse
                                     });
                             }
@@ -2999,18 +3001,18 @@ namespace pxt.blocks {
         // allows both Strings and Arrays in its input check and that confuses
         // our Blockly compiler
         let block = Blockly.Blocks[textLengthId];
-        block.init = function() {
+        block.init = function () {
             this.jsonInit({
-            "message0": msg.TEXT_LENGTH_TITLE,
-            "args0": [
-                {
-                "type": "input_value",
-                "name": "VALUE",
-                "check": ['String']
-                }
-            ],
-            "output": 'Number',
-            "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+                "message0": msg.TEXT_LENGTH_TITLE,
+                "args0": [
+                    {
+                        "type": "input_value",
+                        "name": "VALUE",
+                        "check": ['String']
+                    }
+                ],
+                "output": 'Number',
+                "outputShape": Blockly.OUTPUT_SHAPE_ROUND
             });
         }
         installBuiltinHelpInfo(textLengthId);
