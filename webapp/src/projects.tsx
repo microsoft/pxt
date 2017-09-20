@@ -469,11 +469,20 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     private hasFetchErrors = false;
     private node: any;
     private carousel: any;
+    private latestProject: codecard.CodeCardView
 
     constructor(props: ProjectsCarouselProps) {
         super(props)
         this.state = {
         }
+    }
+
+    componentDidMount() {
+       if (this.props.parent.state.header) {
+           if (this.latestProject && this.latestProject.element) {
+               this.latestProject.element.focus()
+           }
+       }
     }
 
     fetchGallery(path: string): pxt.CodeCard[] {
@@ -550,6 +559,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 </div>
                                 :
                                 <codecard.CodeCardView
+                                    ref={(view) => {if (index === 1) this.latestProject = view }}
                                     cardType="file"
                                     className="file"
                                     key={'local' + scr.id}
