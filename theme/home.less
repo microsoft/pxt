@@ -43,7 +43,6 @@
         width: 100%;
         min-height: 100%;
         background: @homeScreenBackground;
-        overflow: hidden;
     }
 
     .gallerysegment {
@@ -178,5 +177,17 @@
     .carouselarrow {
         width: @carouselArrowSizeMobile;
         font-size: @carouselArrowSizeMobile / 1.18 !important;
+    }
+}
+
+
+/* Mobile only */
+@media only screen and (max-width: @largestMobileScreen) {
+    .projectsdialog {
+        .getting-started-segment {
+            .getting-started-header {
+                font-size: 30px;
+            }
+        }
     }
 }
