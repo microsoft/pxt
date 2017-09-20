@@ -154,7 +154,7 @@ namespace pxt.editor {
         proxySimulatorMessage(content: string): void;
         toggleTrace(): void;
 
-        startTutorial(tutorialId: string): void;
+        startTutorial(tutorialId: string, tutorialTitle?: string): void;
 
         addPackage(): void;
         typecheckNow(): void;

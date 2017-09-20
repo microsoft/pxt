@@ -125,7 +125,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             switch (scr.cardType) {
                 case "example": chgCode(scr, true); break;
                 case "codeExample": chgCode(scr, false); break;
-                case "tutorial": this.props.parent.startTutorial(scr.url); break;
+                case "tutorial": this.props.parent.startTutorial(scr.url, scr.name); break;
                 default:
                     const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url);
                     if (m) this.props.parent.startTutorial(m[1]);
