@@ -838,7 +838,8 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const mountNode = this.getMountNode();
 
         if (dimmer) {
-            mountNode.classList.add('dimmable', 'dimmed');
+            mountNode.classList.add('dimmable');
+            mountNode.classList.add('dimmed');
 
             if (dimmer === 'blurring' && !pxt.options.light) {
                 mountNode.classList.add('blurring');
