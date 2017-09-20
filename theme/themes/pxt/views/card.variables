@@ -3,11 +3,12 @@
 *******************************/
 
 @solidBorderColor: #e9eef2;
+@hoverBorderColor: white;
 
-@borderWidth: 2px;
+@borderWidth: 3px;
 
 @border: @borderWidth solid @solidBorderColor;
-@linkHoverBorder: @borderWidth solid @blue;
+@linkHoverBorder: @borderWidth solid @hoverBorderColor;
 
 @boxShadow: none;
 @linkHoverBoxShadow: @boxShadow;

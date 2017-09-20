@@ -25,6 +25,9 @@
         min-width: 5rem;
         padding-left: 1.5rem;
         height: 8rem;
+        .header {
+            word-wrap: break-word;
+        }
     }
     .meta {
         height: 4rem;
@@ -34,9 +37,8 @@
 }
 
 /* New project card */
-.ui.card.newprojectcard {
-    border-radius: 10px;
-    background: fade(@primaryColor, 50%);
+.ui.card.link.newprojectcard {
+    background: fade(@primaryColor, 50%) !important;
     border: 2px solid @solidBorderColor;
     text-align: center;
     color: @white;
@@ -76,6 +78,11 @@
     background-repeat: no-repeat;
     background-position: center;
     height: 8rem;
-    border-top-left-radius: @defaultBorderRadius;
-    border-top-right-radius: @defaultBorderRadius;
+}
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+    .ui.card, .ui.cards>.card {
+        width: 200px;
+    }
 }

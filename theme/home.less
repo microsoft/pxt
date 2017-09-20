@@ -5,21 +5,12 @@
 /* Reference import */
 @import (reference) "semantic.less";
 
-.ui.segment.gallerysegment { 
-    background: none;
-    border: none;
-    box-shadow: none;
-    padding: 2rem;
-    margin-top: -1rem;
-    padding-top: 0rem;
-    padding-bottom: 0rem;
-}
+@carouselArrowSize: 60px;
+@carouselArrowSizeMobile: 40px;
 
 /* Carousel */
 .projectsdialog {
     .getting-started-segment {
-        margin-left: -1rem;
-        margin-right: -1rem;
         margin-top: -2.1rem !important;
         padding: 0;
         border-radius: 0;
@@ -27,9 +18,17 @@
         background-size: cover;
         height: 350px;
 
+        .column {
+            padding: 0 !important;
+        }
+
         .getting-started {
-            padding: 2rem;
-            margin-top: 150px;
+            padding: @carouselArrowSize;
+            margin-top: 100px;
+        }
+        .getting-started-header {
+            font-size: 60px;
+            text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
         }
     }
 
@@ -38,21 +37,34 @@
     }
 
     .ui.segment.tabsegment {
+        padding: 0;
         padding-top: calc(@mainMenuHeight + 2rem) !important;
         margin: 0;
         width: 100%;
         min-height: 100%;
         background: @homeScreenBackground;
+        overflow: hidden;
     }
 
     .gallerysegment {
-        .header {
+        background: none;
+        border: none;
+        box-shadow: none;
+        padding: 0rem;
+        margin: 0;
+        padding-top: 1.5rem;
+        .ui.header {
+            margin: 0;
+            padding-left: @carouselArrowSize;
             font-size: 24px;
+            color: @green;
         }
-    }
-    .ui.divider {
-        margin-left: 2rem;
-        margin-right: 2rem;
+        .column {
+            padding: 0 !important;
+        }
+        .column.right.aligned {
+            padding-right: @carouselArrowSize !important;
+        }
     }
 
     /* Footer, Privary, Terms of Use */
@@ -61,39 +73,110 @@
         right: 0;
         width: 100%;
         text-align: center;
+        padding: 5px !important;
         .item{
-            font-size: 0.7rem !important;
+            font-size: 0.8rem !important;
         }
+    }
+
+    .ui.card {
+        border-radius: 0px;
     }
 }
 
+/* Carousel */
+
+.carouselouter {
+    position: relative;
+}
+
+.carouselcontainer {
+    overflow-x: hidden;
+    overflow-y: visible;
+    padding: 1rem @carouselArrowSize !important;
+}
+
+.carouselbody {
+    overflow-y: visible;
+}
+
+.carouselitem {
+    float: left;
+}
+
+.carouselarrow {
+    z-index: 10;
+    position: absolute;
+    display: block;
+    height: 100%;
+    width: @carouselArrowSize;
+    font-size: @carouselArrowSize / 1.18 !important;
+    line-height: 1;
+    cursor: pointer;
+    background: @homeScreenBackground;
+    color: @primaryColor;
+    top: 0;
+    opacity: 0.7;
+}
+.carouselarrow:hover, .carouselarrow:focus{
+    opacity: 1;
+    transition: opacity .1s ease-out 0s;
+    .icon {
+        transform: scale(1.4);
+        transition: transform .1s ease-out 0s;
+    }
+}
+.carouselarrow .icon {
+    top: 40%;
+    position: absolute;
+}
+
+.carouselarrow.left {
+    left: 0rem;
+}
+
+.carouselarrow.right {
+    right: 0rem;
+}
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
     /* Carousel */
     .projectsdialog {
         .getting-started-segment {
-            height: 300px;
+            height: 250px;
 
             .getting-started {
-                margin-top: 100px;
+                padding: @carouselArrowSizeMobile;
+                margin-top: 40px;
+            }
+            .getting-started-header {
+                font-size: 40px;
             }
         }
 
         .ui.segment.tabsegment {
             padding-top: calc(@mobileMenuHeight + 2rem) !important;
-
         }
-    }
-}
 
-/* Mobile */
-@media only screen and (max-width: @largestMobileScreen) {
-    .projectsdialog {
-        .getting-started-segment {
-            .getting-started {
-                margin-top: 0px;
+        .gallerysegment {
+            .column {
+                padding: 0 !important;
+            }
+            .column.right.aligned {
+                padding-right: @carouselArrowSizeMobile !important;
+            }
+            .ui.header {
+                padding-left: @carouselArrowSizeMobile;
             }
         }
+    }
+
+    .carouselcontainer {
+        padding: 1rem @carouselArrowSizeMobile !important;
+    }
+    .carouselarrow {
+        width: @carouselArrowSizeMobile;
+        font-size: @carouselArrowSizeMobile / 1.18 !important;
     }
 }

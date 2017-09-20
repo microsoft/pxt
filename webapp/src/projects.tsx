@@ -1,6 +1,5 @@
 /// <reference path="../../typings/globals/react/index.d.ts" />
 /// <reference path="../../typings/globals/react-dom/index.d.ts" />
-/// <reference path="../../localtypings/react-slick.d.ts" />
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
@@ -14,8 +13,7 @@ import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
 import * as gallery from "./gallery";
-
-import Slider from 'react-slick';
+import * as carousel from "./carousel";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -302,18 +300,17 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                 {tab == WELCOME ? <div className={tabClasses}>
                     {hasGettingStarted ?
                         <div className="ui segment getting-started-segment" style={{backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})`}}>
-                            <div className="ui stackable grid equal width padded">
-                                <div className="column" />
+                            <div className="ui grid equal width padded">
                                 <div className="column right aligned">
                                     <div className="getting-started">
-                                        <h2>{lf("First time here?") }</h2>
+                                        <h2 className="getting-started-header">{lf("First time here?") }</h2>
                                         <div className="ui huge primary button" onClick={gettingStarted}>{lf("Get Started") }<i className="right arrow icon"></i></div>
                                     </div>
                                 </div>
                             </div>
                         </div> : undefined }
-                    <div className="ui segment gallerysegment">
-                        <div className="ui grid equal width padded stackable">
+                    <div key={`${MYSTUFF}_gallerysegment`} className="ui segment gallerysegment">
+                        <div className="ui grid equal width padded">
                             <div className="column">
                                 <h2 className="ui header">{lf("My Stuff") } </h2>
                             </div>
@@ -329,17 +326,10 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         </div>
                     </div>
                     {Object.keys(galleries).map(galleryName =>
-                        <div>
-                            <div className="ui divider"></div>
-                            <div className="ui segment gallerysegment">
-                                <div className="ui grid equal width padded stackable">
-                                    <div className="column">
-                                        <h2 className="ui header">{Util.rlf(galleryName) } </h2>
-                                    </div>
-                                </div>
-                                <div className="content">
-                                    <ProjectsCarousel key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} hide={() => this.hide() } onClick={(scr: any) => chgGallery(scr) }/>
-                                </div>
+                        <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
+                            <h2 className="ui header">{Util.rlf(galleryName) } </h2>
+                            <div className="content">
+                                <ProjectsCarousel key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} hide={() => this.hide() } onClick={(scr: any) => chgGallery(scr) }/>
                             </div>
                         </div>
                     ) }
@@ -479,8 +469,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         super(props)
         this.state = {
         }
-
-        this.showDetails = this.showDetails.bind(this);
     }
 
     fetchGallery(path: string): pxt.CodeCard[] {
@@ -501,40 +489,10 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         return headers;
     }
 
-    componentDidMount() {
-        this.updateCarousel();
-    }
-
-    componentDidUpdate(prevProps: ProjectsCarouselProps, prevState: ProjectsCarouselState) {
-        this.updateCarousel();
-    }
-
-    updateCarousel() {
-        if (!this.prevGalleries.length && !this.prevHeaders.length) return;
-        this.carousel = $(this.node);
-    }
-
-    getCarouselOptions() {
-        const isRTL = Util.isUserLanguageRtl();
-        const options: any = {
-            accessibility: true,
-            dots: true,
-            infinite: true,
-            speed: 500,
-            slidesToShow: 1,
-            slidesToScroll: 1
-        };
-        return options;
-    }
-
     newProject() {
-        pxt.tickEvent("projects.carousel.new");
+        pxt.tickEvent("projects.new");
         this.props.hide();
         this.props.parent.newProject();
-    }
-
-    showDetails(index: number, src: any) {
-        this.setState({ expanded: true, slickGoTo: index });
     }
 
     renderCore() {
@@ -555,54 +513,15 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             } as any)
         }
 
-        const sliderSettings = this.getCarouselOptions();
-        const responsiveOptions = [
-            {
-                breakpoint: 1300,
-                settings: {
-                    slidesToShow: 4,
-                    slidesToScroll: 4,
-                    infinite: false
-                }
-            }, {
-                breakpoint: 1024,
-                settings: {
-                    slidesToShow: 3,
-                    slidesToScroll: 3,
-                    infinite: false
-                }
-            }, {
-                breakpoint: 600,
-                settings: {
-                    slidesToShow: 2,
-                    slidesToScroll: 2,
-                    infinite: false
-                }
-            }, {
-                breakpoint: 300,
-                settings: "unslick" // destroys slick
-            }];
-
-        let sliding = false;
-        const beforeChange = () => {
-            sliding = true;
-        }
-
-        const afterChange = () => {
-            sliding = false;
-        }
-
         const onClick = (scr: any) => {
-            if (!sliding) {
-                this.props.onClick(scr);
-            }
+            this.props.onClick(scr);
         }
 
         return <div className="ui dimmable">
             {this.hasFetchErrors ?
                 <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
                 :
-                <Slider dots={false} infinite={false} slidesToShow={5} slidesToScroll={5} responsive={responsiveOptions} beforeChange={beforeChange} afterChange={afterChange} >
+                <carousel.Carousel maxMargin={20} pageLength={4} bleedPercent={20}>
                     {cards ? cards.map((scr, index) =>
                         <div key={path + scr.name}>
                             <codecard.CodeCardView
@@ -616,9 +535,9 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 />
                         </div>
                     ) : headers.map((scr, index) =>
-                        <div>
+                        <div key={'local' + scr.id}>
                             {scr.id == 'new' ?
-                                <div className="ui card newprojectcard" tabIndex={1} title={lf("Creates a new empty project") } onClick={() => this.newProject() }>
+                                <div className="ui card link newprojectcard" tabIndex={0} title={lf("Creates a new empty project") } onClick={() => this.newProject() }>
                                     <div className="content">
                                         <i className="icon huge add circle"></i>
                                         <span className="header">{scr.name}</span>
@@ -637,7 +556,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             }
                         </div>
                     ) }
-                </Slider>
+                </carousel.Carousel>
             }
         </div>;
     }
