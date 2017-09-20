@@ -1520,12 +1520,13 @@ namespace pxt.blocks {
             const keyCode = e.which || e.keyCode;
             const characterKey = (keyCode > 64 && keyCode < 91); // Letter keys
             const spaceEnterKey = keyCode == 32 || keyCode == 13; // Spacebar or Enter keys
-            if (characterKey) {
+            const ctrlCmdKey = (e.ctrlKey || e.metaKey); // Ctrl / Cmd keys
+            if (characterKey && !ctrlCmdKey) {
                 let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
 
                 let char = String.fromCharCode(keyCode);
-                searchField.value = searchField.value + char;
                 searchField.focus();
+                searchField.value = searchField.value + char;
                 return true;
             } else {
                 if (this.getTree() && this.getTree().toolbox_.horizontalLayout_) {
