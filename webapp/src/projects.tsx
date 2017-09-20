@@ -309,7 +309,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                 </div>
                             </div>
                         </div> : undefined }
-                    <div className="ui segment gallerysegment">
+                    <div key={`${MYSTUFF}_gallerysegment`} className="ui segment gallerysegment">
                         <div className="ui grid equal width padded">
                             <div className="column">
                                 <h2 className="ui header">{lf("My Stuff") } </h2>
@@ -326,12 +326,10 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         </div>
                     </div>
                     {Object.keys(galleries).map(galleryName =>
-                        <div>
-                            <div className="ui segment gallerysegment">
-                                <h2 className="ui header">{Util.rlf(galleryName) } </h2>
-                                <div className="content">
-                                    <ProjectsCarousel key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} hide={() => this.hide() } onClick={(scr: any) => chgGallery(scr) }/>
-                                </div>
+                        <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
+                            <h2 className="ui header">{Util.rlf(galleryName) } </h2>
+                            <div className="content">
+                                <ProjectsCarousel key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} hide={() => this.hide() } onClick={(scr: any) => chgGallery(scr) }/>
                             </div>
                         </div>
                     ) }
@@ -537,7 +535,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 />
                         </div>
                     ) : headers.map((scr, index) =>
-                        <div>
+                        <div key={'local' + scr.id}>
                             {scr.id == 'new' ?
                                 <div className="ui card link newprojectcard" tabIndex={0} title={lf("Creates a new empty project") } onClick={() => this.newProject() }>
                                     <div className="content">
