@@ -5,7 +5,7 @@
 /* Reference import */
 @import (reference) "semantic.less";
 
-.ui.segment.gallerysegment { 
+.ui.segment.gallerysegment {
     background: none;
     border: none;
     box-shadow: none;
@@ -70,16 +70,38 @@
 }
 
 
+.carouselouter {
+    margin-left: 2rem !important;
+    margin-right: 2rem !important;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
+
 .carouselcontainer {
     overflow-x: hidden;
+    overflow-y: visible;
+}
+
+.carouselbody {
+    overflow-y: visible;
 }
 
 .carouselitem {
-    display: inline-block;
+    float: left;
 }
 
 .carouselarrow {
     color: grey;
+    position: absolute;
+    top: 45%;
+}
+
+.carouselarrow.left {
+    left: -1rem;
+}
+
+.carouselarrow.right {
+    right: -1rem;
 }
 
 /* <= Tablet (Mobile + Tablet) */
