@@ -18,8 +18,12 @@
         background-size: cover;
         height: 350px;
 
+        .column {
+            padding: 0 !important;
+        }
+
         .getting-started {
-            padding: 2rem;
+            padding: @carouselArrowSize;
             margin-top: 100px;
         }
         .getting-started-header {
@@ -143,6 +147,7 @@
             height: 250px;
 
             .getting-started {
+                padding: @carouselArrowSizeMobile;
                 margin-top: 40px;
             }
             .getting-started-header {

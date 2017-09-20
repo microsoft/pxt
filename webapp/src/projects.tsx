@@ -300,7 +300,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                 {tab == WELCOME ? <div className={tabClasses}>
                     {hasGettingStarted ?
                         <div className="ui segment getting-started-segment" style={{backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})`}}>
-                            <div className="ui stackable grid equal width padded">
+                            <div className="ui grid equal width padded">
                                 <div className="column right aligned">
                                     <div className="getting-started">
                                         <h2 className="getting-started-header">{lf("First time here?") }</h2>
