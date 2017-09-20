@@ -58,7 +58,7 @@ function removeClass(el: HTMLElement, cls: string) {
 
 export function fireClickOnEnter(e: React.KeyboardEvent): void {
     let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-    if (charCode === core.enterKey || charCode === core.spaceKey) {
+    if (charCode === core.ENTER_KEY || charCode === core.SPACE_KEY) {
         e.preventDefault();
         (e.currentTarget as HTMLElement).click();
     }
@@ -96,9 +96,9 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
 
     private menuItemKeyDown = (e: KeyboardEvent) => {
         let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-        if (charCode === core.tabKey) {
+        if (charCode === core.TAB_KEY) {
             this.close()
-        } else if (charCode === core.enterKey || charCode === core.spaceKey) {
+        } else if (charCode === core.ENTER_KEY || charCode === core.SPACE_KEY) {
             /* give the focus back to the dropdown menu, so if the menuitem opens a modal,
                the focus will not be reset once the modal is closed. */
             this.child("").focus()
@@ -107,7 +107,7 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
 
     private dropDownKeyDown = (e: JQueryKeyEventObject) => {
         let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-        if (charCode === core.enterKey || charCode === core.spaceKey) {
+        if (charCode === core.ENTER_KEY || charCode === core.SPACE_KEY) {
             if (this.isOpened) {
                 this.child("").dropdown("hide")
             } else {
@@ -712,6 +712,13 @@ export class Menu extends data.Component<MenuProps, MenuState> {
     }
 }
 
+export interface ModalAction {
+    label: string;
+    onClick: () => void;
+    className?: string;
+    loading?: boolean;
+}
+
 export interface ModalProps {
     basic?: boolean;
     children?: any;
@@ -736,9 +743,7 @@ export interface ModalProps {
     header?: string;
     helpUrl?: string;
 
-    action?: string;
-    actionClick?: () => void;
-    actionLoading?: boolean;
+    actions?: ModalAction[];
 }
 
 export interface ModalState {
@@ -794,7 +799,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         if (onOpen) onOpen(e, this.props);
 
         if (this.state.open != true)
-            this.setState({ open: true, scrolling: false})
+            this.setState({ open: true, scrolling: false })
     }
 
     setPosition = () => {
@@ -902,14 +907,17 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 <div id={this.id + 'desc'} className="content">
                     {children}
                 </div>
-                {this.props.action && this.props.actionClick ?
+                {this.props.actions ?
                     <div className="actions">
-                        <Button
-                            text={this.props.action}
-                            class={`approve primary ${this.props.actionLoading ? "loading disabled" : ""} focused`}
-                            onClick={() => {
-                                this.props.actionClick();
-                            } } />
+                        {this.props.actions.map(action =>
+                            <Button
+                                key={`action_${action.label}`}
+                                text={action.label}
+                                class={`approve ${action.className || ''} ${action.loading ? "loading disabled" : ""} focused`}
+                                onClick={() => {
+                                    action.onClick();
+                                } } />
+                        ) }
                     </div> : undefined }
                 {closeIcon ? <Button
                     icon={closeIconName}
