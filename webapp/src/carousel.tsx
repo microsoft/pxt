@@ -1,21 +1,16 @@
 import * as React from "react";
 
 export interface ICarouselProps extends React.Props<Carousel> {
-    // Number of items to show per "page"
-    pageLength: number;
     // Percentage of child width to bleed over either edge of the page
     bleedPercent: number;
-    // The maximum margin to show between items
-    maxMargin?: number;
 }
 
 export interface ICarouselState {
-
+    leftDisabled?: boolean;
+    rightDisabled?: boolean;
 }
 
-const ANIMATION_MOVE_DIST = 30;
-const ANIMATION_DEBUFF_DIST = 31;
-const OUT_OF_BOUND_MARGIN = 20;
+const OUT_OF_BOUND_MARGIN = 80;
 
 export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     private dragSurface: HTMLDivElement;
@@ -24,37 +19,38 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     private definitelyDragging = false;
 
     private childWidth: number;
-    private childMargin: number;
     private containerWidth: number;
     private actualPageLength: number;
 
     private currentOffset = 0;
-    private targetOffset = 0;
     private index = 0;
 
     private dragStartX: number;
     private dragStartOffset: number;
     private dragOffset: number;
 
+    private animation: AnimationState;
+
     private animationId: number;
     private childrenElements: HTMLDivElement[] = [];
 
     public render() {
         this.childrenElements = [];
+        const { rightDisabled, leftDisabled } = this.state || {} as any;
         return <div className="ui carouselouter">
-            <span className="carouselarrow left aligned" tabIndex={0} onClick={() => this.onArrowClick(true)}>
+            <span className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")} tabIndex={0} onClick={() => this.onArrowClick(true)}>
                 <i className="icon circle angle left"/>
             </span>
             <div className="carouselcontainer" ref={r => this.container = r}>
                 <div className="carouselbody" ref={r => this.dragSurface = r}>
                 {
-                    React.Children.map(this.props.children, child => <div className="carouselitem" ref={r => this.childrenElements.push(r)}>
+                    React.Children.map(this.props.children, child => <div className="carouselitem" ref={r => r && this.childrenElements.push(r)}>
                         {child}
                     </div>)
                 }
                 </div>
             </div>
-            <span className="carouselarrow right aligned" tabIndex={0} onClick={() => this.onArrowClick(false)}>
+            <span className={"carouselarrow right aligned" + (rightDisabled ? " arrowdisabled" : "")} tabIndex={0} onClick={() => this.onArrowClick(false)}>
                 <i className="icon circle angle right"/>
             </span>
         </div>
@@ -81,15 +77,10 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
             this.containerWidth = this.container.getBoundingClientRect().width;
             if (this.childrenElements.length) {
                 this.childWidth = this.childrenElements[0].getBoundingClientRect().width;
-                const margin = Math.floor((this.containerWidth - this.childWidth * this.props.pageLength - 2 * this.childWidth * this.props.bleedPercent / 100) / this.props.pageLength);
-                this.childMargin = 4;//Math.max(margin, 0);
-                if (this.props.maxMargin !== undefined) {
-                    this.childMargin = Math.min(this.childMargin, this.props.maxMargin);
-                }
-                this.childrenElements.forEach(c => c.style.marginRight = (this.childMargin + "px"));
-                this.actualPageLength = Math.min(this.props.pageLength, Math.floor(this.containerWidth / (this.childMargin + this.childWidth)));
+                this.actualPageLength = Math.floor(this.containerWidth / this.childWidth)
             }
             this.dragSurface.style.width = this.totalLength() + "px";
+            this.updateArrows();
         }
     }
 
@@ -125,7 +116,9 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
 
         this.dragSurface.addEventListener("mousemove", event => {
             if (this.isDragging) {
-                this.definitelyDragging = true;
+                if (Math.abs(event.screenX - this.dragStartX) > 3) {
+                    this.definitelyDragging = true;
+                }
                 event.stopPropagation();
                 event.preventDefault();
                 window.requestAnimationFrame(() => {
@@ -166,7 +159,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
 
     private calculateIndex() {
         if (this.dragSurface) {
-            const bucketIndex = Math.abs(Math.floor(this.currentOffset / (this.childWidth + this.childMargin)));
+            const bucketIndex = Math.abs(Math.floor(this.currentOffset / this.childWidth));
             let index: number;
             if (this.currentOffset < this.dragStartOffset) {
                 index = bucketIndex;
@@ -175,34 +168,34 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
                 index = bucketIndex - 1;
             }
 
-            this.setIndex(index);
+            this.setIndex(index, 100);
         }
     }
 
-    private setIndex(index: number) {
-        this.index = Math.max(Math.min(index, this.childrenElements.length - this.props.pageLength), 0);
+    private setIndex(index: number, millis?: number) {
+        const newIndex = Math.max(Math.min(index, this.maxIndex()), 0);
 
-        this.targetOffset = this.indexToOffset(this.index);
+        if (!millis) {
+            millis = Math.abs(newIndex - this.index) * 100;
+        }
+
+        this.index = newIndex;
+        this.updateArrows();
+
+        this.animation = new AnimationState(this.currentOffset, this.indexToOffset(this.index), millis);
         if (!this.animationId) {
             this.animationId = window.requestAnimationFrame(this.easeTowardsIndex.bind(this));
         }
     }
 
-    private easeTowardsIndex() {
+    private easeTowardsIndex(time: number) {
         if (this.dragSurface) {
-            const diff = this.targetOffset - this.currentOffset;
-            if (Math.abs(diff) < ANIMATION_DEBUFF_DIST) {
-                this.setPosition(this.targetOffset);
+            this.setPosition(this.animation.getPosition(time));
+            if (this.animation.isComplete) {
+                this.animation = undefined;
                 this.animationId = 0;
             }
             else {
-                if (diff > 0) {
-                    this.setPosition(this.currentOffset + ANIMATION_MOVE_DIST);
-                }
-                else {
-                    this.setPosition(this.currentOffset - ANIMATION_MOVE_DIST);
-                }
-
                 this.animationId = window.requestAnimationFrame(this.easeTowardsIndex.bind(this));
             }
         }
@@ -212,15 +205,55 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         if (index <= 0) {
             return 0;
         }
-        return -1 * (index * (this.childWidth + this.childMargin) - this.childWidth * this.props.bleedPercent / 100);
+        return -1 * (index * this.childWidth - this.childWidth * this.props.bleedPercent / 100);
     }
 
     private totalLength() {
-        return React.Children.count(this.props.children) *
-            (this.childWidth + this.childMargin) + OUT_OF_BOUND_MARGIN;
+        return React.Children.count(this.props.children) * this.childWidth  + OUT_OF_BOUND_MARGIN;
     }
 
     private maxScrollOffset() {
-        return -1 * (this.totalLength() - this.props.pageLength * (this.childWidth + this.childMargin) + OUT_OF_BOUND_MARGIN);
+        return Math.min(-1 * (this.totalLength() - this.actualPageLength * this.childWidth + OUT_OF_BOUND_MARGIN), 0);
+    }
+
+    private maxIndex() {
+        return Math.max(this.childrenElements.length - this.actualPageLength, 0);
+    }
+
+    private updateArrows() {
+        const { rightDisabled, leftDisabled } = this.state || {} as any;
+        const newRightDisabled = this.index === this.maxIndex();
+        const newLeftDisabled = this.index === 0;
+
+        if (newRightDisabled !== rightDisabled || newLeftDisabled !== leftDisabled) {
+            this.setState({
+                leftDisabled: newLeftDisabled,
+                rightDisabled: newRightDisabled
+            });
+        }
+    }
+}
+
+class AnimationState {
+    private slope: number;
+    private startTime: number;
+    public isComplete = false;
+
+    constructor (private start: number, private end: number, private millis: number) {
+        this.slope = (end - start) / millis;
+    }
+
+    getPosition(time: number) {
+        if (this.isComplete) return this.end;
+        if (this.startTime === undefined) {
+            this.startTime = time;
+            return this.start;
+        }
+        const diff = time - this.startTime;
+        if (diff > this.millis) {
+            this.isComplete = true;
+            return this.end;
+        }
+        return this.start + Math.floor(this.slope * diff);
     }
 }
