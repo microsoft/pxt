@@ -590,8 +590,14 @@ ${files["main.ts"]}
         return initPromise.then(() => pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive))
             .then(tutorialmd => {
                 let steps = tutorialmd.split(/^##[^#].*$/gmi);
+                let newAuthoring = true;
+                if (steps.length <= 1) {
+                    // try again, using old logic. 
+                    steps = tutorialmd.split(/^###[^#].*$/gmi);
+                    newAuthoring = false;
+                }
                 let stepInfo: editor.TutorialStepInfo[] = [];
-                tutorialmd.replace(/^##[^#](.*)$/gmi, (f, s) => {
+                tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
                     let info: editor.TutorialStepInfo = {
                         fullscreen: s.indexOf('@fullscreen') > -1
                     }
@@ -639,7 +645,7 @@ ${files["main.ts"]}
                     .then(() => renderMarkdownAsync(content, tutorialmd, { tutorial: true }))
                     .then(() => {
                         // Split the steps
-                        let stepcontent = content.innerHTML.split(/<h2.*\/h2>/gi);
+                        let stepcontent = content.innerHTML.split(newAuthoring ? /<h2.*\/h2>/gi : /<h3.*\/h3>/gi);
                         for (let i = 0; i < stepcontent.length - 1; i++) {
                             content.innerHTML = stepcontent[i + 1];
                             stepInfo[i].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;

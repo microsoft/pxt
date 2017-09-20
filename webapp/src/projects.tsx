@@ -156,7 +156,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         }
         const chgGallery = (scr: pxt.CodeCard) => {
             pxt.tickEvent("projects.gallery", { name: scr.name });
-            this.hide();
+            if (!scr.youTubeId || scr.url) this.hide();
             switch (scr.cardType) {
                 case "example": chgCode(scr, true); break;
                 case "codeExample": chgCode(scr, false); break;
@@ -299,7 +299,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                 </div>
                 {tab == WELCOME ? <div className={tabClasses}>
                     {hasGettingStarted ?
-                        <div className="ui segment getting-started-segment">
+                        <div className="ui segment getting-started-segment" style={{backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})`}}>
                             <div className="ui stackable grid equal width padded">
                                 <div className="column right aligned">
                                     <div className="getting-started">
@@ -330,7 +330,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                             <div className="ui segment gallerysegment">
                                 <h2 className="ui header">{Util.rlf(galleryName) } </h2>
                                 <div className="content">
-                                    <ProjectsCarousel  key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} hide={() => this.hide() } onClick={(scr: any) => chgGallery(scr) }/>
+                                    <ProjectsCarousel key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} hide={() => this.hide() } onClick={(scr: any) => chgGallery(scr) }/>
                                 </div>
                             </div>
                         </div>
