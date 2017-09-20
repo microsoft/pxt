@@ -1859,7 +1859,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             <logview.LogView ref="simLogs" isSim={true} onClick={() => this.openSerial(true)} />
                             <logview.LogView ref="devLogs" isSim={false} onClick={() => this.openSerial(false)} />
                         </div>
-                        {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
+                        {sandbox || isBlocks || this.editor == this.serialEditor ? undefined : <filelist.FileList parent={this} />}
                     </aside>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
