@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "chai": "registry:npm/chai#3.5.0+20160723033700",
-    "request": "registry:npm/request#2.69.0+20160428223725",
-    "react-slick": "github:DefinitelyTyped/DefinitelyTyped/types/react-slick/index.d.ts#6ab6d781770a1e87a86c75865c37ec50d05b04b3"
+    "request": "registry:npm/request#2.69.0+20160428223725"
   }
 }

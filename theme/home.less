@@ -5,32 +5,27 @@
 /* Reference import */
 @import (reference) "semantic.less";
 
-.ui.segment.gallerysegment {
-    background: none;
-    border: none;
-    box-shadow: none;
-    padding: 2rem;
-    margin-top: -1rem;
-    padding-top: 0rem;
-    padding-bottom: 0rem;
-}
+@carouselArrowSize: 60px;
+@carouselArrowSizeMobile: 40px;
 
 /* Carousel */
 .projectsdialog {
     .getting-started-segment {
-        margin-left: -1rem;
-        margin-right: -1rem;
         margin-top: -2.1rem !important;
         padding: 0;
         border-radius: 0;
         background-repeat: no-repeat;
         background-size: cover;
         background-image: url(@gettingStartedImageUrl);
-        height: 400px;
+        height: 350px;
 
         .getting-started {
             padding: 2rem;
-            margin-top: 150px;
+            margin-top: 100px;
+        }
+        .getting-started-header {
+            font-size: 60px;
+            text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
         }
     }
 
@@ -39,22 +34,34 @@
     }
 
     .ui.segment.tabsegment {
+        padding: 0;
         padding-top: calc(@mainMenuHeight + 2rem) !important;
         margin: 0;
         width: 100%;
         min-height: 100%;
         background: @homeScreenBackground;
+        overflow: hidden;
     }
 
     .gallerysegment {
-        .header {
+        background: none;
+        border: none;
+        box-shadow: none;
+        padding: 0rem;
+        margin: 0;
+        padding-top: 1.5rem;
+        .ui.header {
+            margin: 0;
+            padding-left: @carouselArrowSize;
             font-size: 24px;
             color: @green;
         }
-    }
-    .ui.divider {
-        margin-left: 2rem;
-        margin-right: 2rem;
+        .column {
+            padding: 0 !important;
+        }
+        .column.right.aligned {
+            padding-right: @carouselArrowSize !important;
+        }
     }
 
     /* Footer, Privary, Terms of Use */
@@ -63,23 +70,27 @@
         right: 0;
         width: 100%;
         text-align: center;
+        padding: 5px !important;
         .item{
-            font-size: 0.7rem !important;
+            font-size: 0.8rem !important;
         }
+    }
+
+    .ui.card {
+        border-radius: 0px;
     }
 }
 
+/* Carousel */
 
 .carouselouter {
-    margin-left: 2rem !important;
-    margin-right: 2rem !important;
+    position: relative;
 }
 
 .carouselcontainer {
     overflow-x: hidden;
     overflow-y: visible;
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
+    padding: 1rem @carouselArrowSize !important;
 }
 
 .carouselbody {
@@ -91,17 +102,33 @@
 }
 
 .carouselarrow {
-    color: grey;
+    z-index: 10;
     position: absolute;
-    top: 45%;
+    display: block;
+    height: 100%;
+    width: @carouselArrowSize;
+    font-size: @carouselArrowSize / 1.18 !important;
+    line-height: 1;
+    cursor: pointer;
+    background: @homeScreenBackground;
+    color: @primaryColor;
+    top: 0;
+    opacity: 0.7;
+}
+.carouselarrow:hover, .carouselarrow:focus{
+    opacity: 1;
+}
+.carouselarrow .icon {
+    top: 40%;
+    position: absolute;
 }
 
 .carouselarrow.left {
-    left: -1rem;
+    left: 0rem;
 }
 
 .carouselarrow.right {
-    right: -1rem;
+    right: 0rem;
 }
 
 /* <= Tablet (Mobile + Tablet) */
@@ -109,17 +136,39 @@
     /* Carousel */
     .projectsdialog {
         .getting-started-segment {
-            height: 300px;
+            height: 250px;
 
             .getting-started {
-                margin-top: 100px;
+                margin-top: 40px;
+            }
+            .getting-started-header {
+                font-size: 40px;
             }
         }
 
         .ui.segment.tabsegment {
             padding-top: calc(@mobileMenuHeight + 2rem) !important;
-
         }
+
+        .gallerysegment {
+            .column {
+                padding: 0 !important;
+            }
+            .column.right.aligned {
+                padding-right: @carouselArrowSizeMobile !important;
+            }
+            .ui.header {
+                padding-left: @carouselArrowSizeMobile;
+            }
+        }
+    }
+
+    .carouselcontainer {
+        padding: 1rem @carouselArrowSizeMobile !important;
+    }
+    .carouselarrow {
+        width: @carouselArrowSizeMobile;
+        font-size: @carouselArrowSizeMobile / 1.18 !important;
     }
 }
 

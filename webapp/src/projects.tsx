@@ -1,6 +1,5 @@
 /// <reference path="../../typings/globals/react/index.d.ts" />
 /// <reference path="../../typings/globals/react-dom/index.d.ts" />
-/// <reference path="../../localtypings/react-slick.d.ts" />
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
@@ -302,17 +301,16 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     {hasGettingStarted ?
                         <div className="ui segment getting-started-segment">
                             <div className="ui stackable grid equal width padded">
-                                <div className="column" />
                                 <div className="column right aligned">
                                     <div className="getting-started">
-                                        <h2>{lf("First time here?") }</h2>
+                                        <h2 className="getting-started-header">{lf("First time here?") }</h2>
                                         <div className="ui huge primary button" onClick={gettingStarted}>{lf("Get Started") }<i className="right arrow icon"></i></div>
                                     </div>
                                 </div>
                             </div>
                         </div> : undefined }
                     <div className="ui segment gallerysegment">
-                        <div className="ui grid equal width padded stackable">
+                        <div className="ui grid equal width padded">
                             <div className="column">
                                 <h2 className="ui header">{lf("My Stuff") } </h2>
                             </div>
@@ -329,13 +327,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     </div>
                     {Object.keys(galleries).map(galleryName =>
                         <div>
-                            <div className="ui divider"></div>
                             <div className="ui segment gallerysegment">
-                                <div className="ui grid equal width padded stackable">
-                                    <div className="column">
-                                        <h2 className="ui header">{Util.rlf(galleryName) } </h2>
-                                    </div>
-                                </div>
+                                <h2 className="ui header">{Util.rlf(galleryName) } </h2>
                                 <div className="content">
                                     <ProjectsCarousel  key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} hide={() => this.hide() } onClick={(scr: any) => chgGallery(scr) }/>
                                 </div>
@@ -565,7 +558,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     ) : headers.map((scr, index) =>
                         <div>
                             {scr.id == 'new' ?
-                                <div className="ui card newprojectcard" tabIndex={1} title={lf("Creates a new empty project") } onClick={() => this.newProject() }>
+                                <div className="ui card link newprojectcard" tabIndex={0} title={lf("Creates a new empty project") } onClick={() => this.newProject() }>
                                     <div className="content">
                                         <i className="icon huge add circle"></i>
                                         <span className="header">{scr.name}</span>

@@ -42,8 +42,8 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     public render() {
         this.childrenElements = [];
         return <div className="ui carouselouter">
-            <span className="carouselarrow left aligned" onClick={() => this.onArrowClick(true)}>
-                <i className="icon large circle angle left"/>
+            <span className="carouselarrow left aligned" tabIndex={0} onClick={() => this.onArrowClick(true)}>
+                <i className="icon circle angle left"/>
             </span>
             <div className="carouselcontainer" ref={r => this.container = r}>
                 <div className="carouselbody" ref={r => this.dragSurface = r}>
@@ -54,8 +54,8 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
                 }
                 </div>
             </div>
-            <span className="carouselarrow right aligned" onClick={() => this.onArrowClick(false)}>
-                <i className="icon large circle angle right"/>
+            <span className="carouselarrow right aligned" tabIndex={0} onClick={() => this.onArrowClick(false)}>
+                <i className="icon circle angle right"/>
             </span>
         </div>
     }
@@ -82,7 +82,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
             if (this.childrenElements.length) {
                 this.childWidth = this.childrenElements[0].getBoundingClientRect().width;
                 const margin = Math.floor((this.containerWidth - this.childWidth * this.props.pageLength - 2 * this.childWidth * this.props.bleedPercent / 100) / this.props.pageLength);
-                this.childMargin = Math.max(margin, 0);
+                this.childMargin = 4;//Math.max(margin, 0);
                 if (this.props.maxMargin !== undefined) {
                     this.childMargin = Math.min(this.childMargin, this.props.maxMargin);
                 }

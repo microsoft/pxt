@@ -34,9 +34,8 @@
 }
 
 /* New project card */
-.ui.card.newprojectcard {
-    border-radius: 10px;
-    background: fade(@primaryColor, 50%);
+.ui.card.link.newprojectcard {
+    background: fade(@primaryColor, 50%) !important;
     border: 2px solid @solidBorderColor;
     text-align: center;
     color: @white;
@@ -76,6 +75,4 @@
     background-repeat: no-repeat;
     background-position: center;
     height: 8rem;
-    border-top-left-radius: @defaultBorderRadius;
-    border-top-right-radius: @defaultBorderRadius;
 }
