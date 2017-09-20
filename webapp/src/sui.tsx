@@ -755,7 +755,8 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         super(props)
         this.id = Util.guidGen();
         this.state = {
-            open: this.props.open
+            open: this.props.open,
+            scrolling: false
         }
     }
 
@@ -772,6 +773,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const newState: ModalState = {};
         if (nextProps.open != undefined) {
             newState.open = nextProps.open;
+            newState.scrolling = false;
         }
 
         if (Object.keys(newState).length > 0) this.setState(newState)
@@ -792,7 +794,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         if (onOpen) onOpen(e, this.props);
 
         if (this.state.open != true)
-            this.setState({ open: true })
+            this.setState({ open: true, scrolling: false})
     }
 
     setPosition = () => {
