@@ -5,7 +5,7 @@
 
 /* Full screen dialog */
 
-.ui.fullscreen.scrolling.modal {
+.modals.dimmer .ui.fullscreen.scrolling.modal {
     height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;

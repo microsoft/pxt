@@ -76,6 +76,9 @@
     .ui.card {
         border-radius: 0px;
     }
+    .header {
+        user-select: none;
+    }
 }
 
 
@@ -93,6 +96,7 @@
 
 .carouselbody {
     overflow-y: visible;
+    touch-action: pan-y;
 }
 
 .carouselitem {
@@ -135,6 +139,10 @@
 
 .carouselarrow.right {
     right: 0rem;
+}
+
+.carouselarrow.arrowdisabled {
+    display: none;
 }
 
 
