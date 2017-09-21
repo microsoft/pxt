@@ -17,6 +17,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     private container: HTMLDivElement;
     private isDragging = false;
     private definitelyDragging = false;
+    private cancelClick = false;
 
     private childWidth: number;
     private containerWidth: number;
@@ -85,20 +86,14 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     }
 
     private initDragSurface() {
-        this.dragSurface.addEventListener("click", event => {
-            if (this.definitelyDragging) {
-                event.stopPropagation();
-                event.preventDefault();
-                this.definitelyDragging = false;
-            }
-        });
+        let down = (event: MouseEvent | TouchEvent | PointerEvent) => {
+            console.log("down");
+            this.definitelyDragging = false;
+            this.dragStart(getX(event));
+        };
 
-        this.dragSurface.addEventListener("mousedown", event => {
-            event.preventDefault();
-            this.dragStart(event.screenX);
-        });
-
-        this.dragSurface.addEventListener("mouseup", event => {
+        let up = (event: MouseEvent | TouchEvent | PointerEvent) => {
+            console.log("up");
             if (this.isDragging) {
                 this.dragEnd();
                 if (this.definitelyDragging) {
@@ -106,26 +101,59 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
                     event.stopPropagation();
                 }
             }
-        });
+        };
 
-        this.dragSurface.addEventListener("mouseleave", event => {
+        let leave = (event: MouseEvent | TouchEvent | PointerEvent) => {
+            console.log("leave");
             if (this.isDragging) {
                 this.dragEnd();
             }
-        });
+        };
 
-        this.dragSurface.addEventListener("mousemove", event => {
+        let move = (event: MouseEvent | TouchEvent | PointerEvent) => {
+            console.log("move");
             if (this.isDragging) {
-                if (Math.abs(event.screenX - this.dragStartX) > 3) {
+                let x = getX(event);
+                if (Math.abs(x - this.dragStartX) > 3) {
                     this.definitelyDragging = true;
                 }
                 event.stopPropagation();
                 event.preventDefault();
                 window.requestAnimationFrame(() => {
-                    this.dragMove(event.screenX);
+                    this.dragMove(x);
                 });
             }
+        };
+
+
+        this.dragSurface.addEventListener("click", event => {
+            console.log("click");
+            if (this.definitelyDragging) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
         });
+
+
+        if ((window as any).PointerEvent) {
+            this.dragSurface.addEventListener("pointerdown", down);
+            this.dragSurface.addEventListener("pointerup", up);
+            this.dragSurface.addEventListener("pointerleave", leave);
+            this.dragSurface.addEventListener("pointermove", move);
+        }
+        else {
+            this.dragSurface.addEventListener("mousedown", down);
+            this.dragSurface.addEventListener("mouseup", up);
+            this.dragSurface.addEventListener("mouseleave", leave);
+            this.dragSurface.addEventListener("mousemove", move);
+
+            if (pxt.BrowserUtils.isTouchEnabled()) {
+                this.dragSurface.addEventListener("touchstart", down);
+                this.dragSurface.addEventListener("touchend", up);
+                this.dragSurface.addEventListener("touchcancel", leave);
+                this.dragSurface.addEventListener("touchmove", move);
+            }
+        }
     }
 
     private dragStart(startX: number) {
@@ -134,6 +162,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         this.dragStartOffset = this.currentOffset;
         if (this.animationId) {
             window.cancelAnimationFrame(this.animationId);
+            this.animationId = 0;
         }
     }
 
@@ -255,5 +284,14 @@ class AnimationState {
             return this.end;
         }
         return this.start + Math.floor(this.slope * diff);
+    }
+}
+
+function getX(event: MouseEvent | TouchEvent | PointerEvent) {
+    if ("screenX" in event) {
+        return (event as MouseEvent).screenX;
+    }
+    else {
+        return (event as TouchEvent).changedTouches[0].screenX
     }
 }
