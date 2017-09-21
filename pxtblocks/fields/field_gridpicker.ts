@@ -88,10 +88,9 @@ namespace pxtblockly {
             let tableContainerDom = tableContainer.getElement();
             if (tableContainerDom) {
                 let menuItemsDom = tableContainerDom.childNodes;
-                try {
+                if (menuItemsDom.length && menuItemsDom[0].childNodes) {
                     let firstItem = menuItemsDom[0].childNodes[0] as HTMLElement
                     firstItem.className += " goog-menuitem-highlight"
-                } catch (e) {
                 }
                 for (let i = 0; i < menuItemsDom.length; ++i) {
                     const elem = menuItemsDom[i] as HTMLElement;
