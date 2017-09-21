@@ -10,7 +10,7 @@ export interface ICarouselState {
     rightDisabled?: boolean;
 }
 
-const OUT_OF_BOUND_MARGIN = 80;
+const OUT_OF_BOUND_MARGIN = 300;
 
 export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     private dragSurface: HTMLDivElement;

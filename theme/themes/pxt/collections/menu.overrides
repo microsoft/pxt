@@ -9,6 +9,11 @@
     right: 0;
 }
 
+
+.ui.menu.fixed {
+    position: absolute;   
+}
+
 #menubar .ui.menu {
     height: @mainMenuHeight;
     min-height: @mainMenuMinHeight !important;
