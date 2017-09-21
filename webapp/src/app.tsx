@@ -94,10 +94,11 @@ export class ProjectView
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
-    projects: projects.Projects;
+    home: projects.Projects;
     shareEditor: share.ShareEditor;
     languagePicker: lang.LanguagePicker;
-    tutorialComplete: tutorial.TutorialComplete;
+    importDialog: projects.ImportDialog;
+    exitAndSaveDialog: projects.ExitAndSaveDialog;
     prevEditorId: string;
 
     private lastChangeTime: number;
@@ -668,7 +669,7 @@ export class ProjectView
             return workspace.saveAsync(curr, {})
                 .then(() => {
                     if (workspace.getHeaders().length > 0) {
-                        this.projects.showOpenProject();
+                        this.home.showHome();
                     } else {
                         this.newProject();
                     }
@@ -819,9 +820,14 @@ export class ProjectView
         );
     }
 
-    openProject(tab?: string) {
+    openHome() {
         pxt.tickEvent("menu.open");
-        this.projects.showOpenProject(tab);
+        this.home.showHome();
+    }
+
+    exitAndSave() {
+        pxt.tickEvent("menu.exitAndSave");
+        this.exitAndSaveDialog.show();
     }
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
@@ -1268,9 +1274,13 @@ export class ProjectView
                 pxt.tickEvent("menu.open.file");
                 this.importFile(input.files[0]);
             } else {
-                this.projects.showOpenProject();
+                this.home.showHome();
             }
         })
+    }
+
+    importProjectDialog() {
+        this.importDialog.show();
     }
 
     showReportAbuse() {
@@ -1353,7 +1363,7 @@ export class ProjectView
                     loadHeaderBySharedId(id);
                 }
             } else {
-                this.projects.showOpenProject();
+                this.home.showHome();
             }
         })
     }
@@ -1506,11 +1516,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         this.startTutorial(targetTheme.sideDoc);
     }
 
-    openTutorials() {
-        pxt.tickEvent("menu.openTutorials");
-        this.projects.showOpenTutorials();
-    }
-
     startTutorial(tutorialId: string, tutorialTitle?: string) {
         pxt.tickEvent("tutorial.start");
         core.showLoading(lf("starting tutorial..."));
@@ -1548,7 +1553,10 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         core.showLoading(lf("leaving tutorial..."));
         this.exitTutorialAsync(keep)
             .then(() => Promise.delay(500))
-            .done(() => core.hideLoading());
+            .done(() => {
+                core.hideLoading();
+                this.openHome();
+            })
     }
 
     exitTutorialAsync(keep?: boolean) {
@@ -1589,7 +1597,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
     completeTutorial() {
         pxt.tickEvent("tutorial.complete");
-        this.tutorialComplete.show();
+        this.openHome();
     }
 
     showTutorialHint() {
@@ -1635,7 +1643,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
-        const gettingStarted = !sandbox && !inTutorial && targetTheme && targetTheme.sideDoc && !this.state.sideDocsLoadUrl;
+        const gettingStarted = !sandbox && targetTheme && targetTheme.sideDoc && !this.state.sideDocsLoadUrl;
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
         const trace = run && simOpts.enableTrace;
@@ -1718,7 +1726,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                     {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo)} alt={`${targetTheme.boardName} Logo`} /></a>) : null}
                                 </span>
                                 {betaUrl ? <a href={`${betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
-                                {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={() => this.openProject()} /> : null}
+                                {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={() => this.exitAndSave()} /> : null}
                                 {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={() => this.embed()} /> : null}
                                 {inTutorial ? <sui.Item class="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
                             </div> : <div className="left menu">
@@ -1813,10 +1821,11 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 </div>}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
-                {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} hasGettingStarted={gettingStarted} />}
+                {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.home = v} hasGettingStarted={gettingStarted} />}
+                {sandbox ? undefined : <projects.ImportDialog parent={this} ref={v => this.importDialog = v} />}
+                {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={v => this.exitAndSaveDialog = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
-                {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined}
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use")}</a>
@@ -2111,9 +2120,9 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
             editor.startTutorial(hash.arg);
             window.location.hash = "";
             return true;
-        case "projects":
-            pxt.tickEvent("hash.projects");
-            editor.openProject(hash.arg);
+        case "home":
+            pxt.tickEvent("hash.home");
+            editor.openHome();
             window.location.hash = "";
             return true;
         case "sandbox":
@@ -2315,7 +2324,7 @@ $(document).ready(() => {
             const skipStartScreen = pxt.appTarget.appTheme.allowParentController || !pxt.appTarget.appTheme.showHomeScreen || /skipHomeScreen=1/i.test(window.location.href);
             const shouldShowHomeScreen = !isSandbox && !skipStartScreen  && !hasWinRTProject && !isProjectRelatedHash(hash);
             if (shouldShowHomeScreen) {
-                theEditor.projects.showHome(hd);
+                theEditor.home.showHome();
                 return Promise.resolve();
             }
             if (hash.cmd && handleHash(hash)) {

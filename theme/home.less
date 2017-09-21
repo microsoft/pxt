@@ -43,7 +43,6 @@
         width: 100%;
         min-height: 100%;
         background: @homeScreenBackground;
-        overflow: hidden;
     }
 
     .gallerysegment {
@@ -57,7 +56,6 @@
             margin: 0;
             padding-left: @carouselArrowSize;
             font-size: 24px;
-            color: @green;
         }
         .column {
             padding: 0 !important;
@@ -117,6 +115,7 @@
     color: @primaryColor;
     top: 0;
     opacity: 0.7;
+    overflow: hidden;
 }
 .carouselarrow:hover, .carouselarrow:focus{
     opacity: 1;
@@ -180,3 +179,20 @@
         font-size: @carouselArrowSizeMobile / 1.18 !important;
     }
 }
+
+/* Mobile only */
+@media only screen and (max-width: @largestMobileScreen) {
+    .projectsdialog {
+        .getting-started-segment {
+            .getting-started-header {
+                font-size: 30px;
+            }
+        }
+    }
+}
+
+/* Full screen dialog */
+.modals.dimmer .ui.fullscreen.scrolling.modal { 		
+    margin: 0 !important;		
+    padding: 0 !important;		
+} 

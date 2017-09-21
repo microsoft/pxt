@@ -28,12 +28,10 @@ interface ProjectsState {
     visible?: boolean;
     tab?: string;
     isInitialStartPage?: boolean;
-    resumeProject?: pxt.workspace.Header;
     welcomeDescription?: string;
 }
 
-const WELCOME = "__welcome";
-const MYSTUFF = "__mystuff";
+const HOME = "__welcome";
 
 export class Projects extends data.Component<ProjectsProps, ProjectsState> {
     private prevUrlData: Cloud.JsonScript[] = [];
@@ -44,7 +42,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         super(props)
         this.state = {
             visible: false,
-            tab: MYSTUFF
+            tab: HOME
         }
     }
 
@@ -53,33 +51,17 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
             // If this was the initial start page and the dialog was close without a selection being made, load the
             // previous project if available or create a new one
             pxt.tickEvent("projects.welcome.hide");
-            if (this.state.resumeProject) {
-                this.props.parent.loadHeaderAsync(this.state.resumeProject);
-            } else {
-                this.props.parent.newProject();
-            }
+            this.props.parent.newProject();
         }
         this.setState({ visible: false, isInitialStartPage: false });
     }
 
-    showHome(resumeProject?: pxt.workspace.Header) {
+    showHome() {
         this.setState({
             visible: true,
-            tab: WELCOME,
-            isInitialStartPage: true,
-            resumeProject
+            tab: HOME,
+            isInitialStartPage: true
         });
-    }
-
-    showOpenProject(tab?: string) {
-        const gals = pxt.appTarget.appTheme.galleries || {};
-        tab = (!tab || !gals[tab]) ? WELCOME : tab;
-        this.setState({ visible: true, tab: tab || WELCOME });
-    }
-
-    showOpenTutorials() {
-        const gals = Object.keys(pxt.appTarget.appTheme.galleries || {});
-        this.setState({ visible: true, tab: gals[0] || WELCOME });
     }
 
     fetchGallery(tab: string, path: string): pxt.CodeCard[] {
@@ -111,7 +93,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
     }
 
     fetchLocalData(): pxt.workspace.Header[] {
-        if (this.state.tab != MYSTUFF) return [];
+        if (this.state.tab != HOME) return [];
 
         let headers: pxt.workspace.Header[] = this.getData("header:*")
         if (this.state.searchFor)
@@ -135,8 +117,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         const {visible, tab} = this.state;
         const {hasGettingStarted} = this.props;
 
-        const theme = pxt.appTarget.appTheme;
-        const galleries = theme.galleries || {};
+        const targetTheme = pxt.appTarget.appTheme;
+        const galleries = targetTheme.galleries || {};
 
         // lf("Make")
         // lf("Code")
@@ -150,7 +132,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         const gals = Util.mapMap(galleries, k => this.fetchGallery(k, galleries[k]));
 
         const chgHeader = (hdr: pxt.workspace.Header) => {
-            pxt.tickEvent(tab == WELCOME ? "projects.welcome.resume" : "projects.header");
+            pxt.tickEvent("projects.header");
             this.hide();
             this.props.parent.loadHeaderAsync(hdr)
         }
@@ -191,34 +173,10 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     }
                 });
         }
-        const upd = (v: any) => {
-            let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
-            this.setState({ searchFor: str })
-        };
-        const kupd = (ev: __React.KeyboardEvent) => {
-            if (ev.keyCode == 13) upd(ev);
-        }
-        const installScript = (scr: Cloud.JsonScript) => {
+        const importProject = () => {
+            pxt.tickEvent("projects.importdialog");
             this.hide();
-            core.showLoading(lf("loading project..."));
-            workspace.installByIdAsync(scr.id)
-                .then(r => this.props.parent.loadHeaderAsync(r))
-                .done(() => core.hideLoading())
-        }
-        const importHex = () => {
-            pxt.tickEvent("projects.import");
-            this.hide();
-            this.props.parent.importFileDialog();
-        }
-        const importUrl = () => {
-            pxt.tickEvent("projects.importurl");
-            this.hide();
-            this.props.parent.importUrlDialog();
-        }
-        const newProject = () => {
-            pxt.tickEvent(tab == WELCOME ? "projects.welcome.new" : "projects.new");
-            this.hide();
-            this.props.parent.newProject();
+            this.props.parent.importProjectDialog();
         }
         const gettingStarted = () => {
             pxt.tickEvent("projects.welcome.gettingstarted");
@@ -226,53 +184,16 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
             this.props.parent.gettingStarted();
         }
 
-        const seeAll = (gal: string) => {
-            this.setState({ tab: gal });
-        }
-
-        const isEmpty = () => {
-            if (this.state.searchFor) {
-                if (headers.length > 0
-                    || urldata.length > 0)
-                    return false;
-                return true;
-            }
-            return false;
-        }
-
-        const targetTheme = pxt.appTarget.appTheme;
-
-        const headersToday = headers.filter(
-            (h) => { let days = this.numDaysOld(h.modificationTime); return days == 0; });
-        const headersYesterday = headers.filter(
-            (h) => { let days = this.numDaysOld(h.modificationTime); return days == 1; });
-        const headersThisWeek = headers.filter(
-            (h) => { let days = this.numDaysOld(h.modificationTime); return days > 1 && days <= 7; });
-        const headersLastWeek = headers.filter(
-            (h) => { let days = this.numDaysOld(h.modificationTime); return days > 7 && days <= 14; });
-        const headersThisMonth = headers.filter(
-            (h) => { let days = this.numDaysOld(h.modificationTime); return days > 14 && days <= 30; });
-        const headersOlder = headers.filter(
-            (h) => { let days = this.numDaysOld(h.modificationTime); return days > 30; });
-        const headersGrouped: { name: string, headers: pxt.workspace.Header[] }[] = [
-            { name: lf("Today"), headers: headersToday },
-            { name: lf("Yesterday"), headers: headersYesterday },
-            { name: lf("This Week"), headers: headersThisWeek },
-            { name: lf("Last Week"), headers: headersLastWeek },
-            { name: lf("This Month"), headers: headersThisMonth },
-            { name: lf("Older"), headers: headersOlder },
-        ];
-
         const hadFetchError = this.galleryFetchErrors[tab];
-        const isLoading = tab != WELCOME && tab != MYSTUFF && !hadFetchError && !gals[tab].length;
+        const isLoading = tab != HOME && !hadFetchError && !gals[tab].length;
 
         const tabClasses = sui.cx([
             isLoading ? 'loading' : '',
             'ui segment bottom attached tab active tabsegment'
         ]);
 
-        const tabName = tab == WELCOME ? lf("Home") : tab == MYSTUFF ? lf("My Stuff") : Util.rlf(tab);
-        const tabIcon = tab == WELCOME ? "home large" : undefined;
+        const tabName = tab == HOME ? lf("Home") : Util.rlf(tab);
+        const tabIcon = tab == HOME ? "home large" : undefined;
 
         return (
             <sui.Modal open={visible} className="projectsdialog" size="fullscreen" onClose={() => this.hide(/* closeOnly */ true) } dimmer={true} closeOnDimmerClick>
@@ -297,9 +218,9 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         </div>
                     </div>
                 </div>
-                {tab == WELCOME ? <div className={tabClasses}>
+                {tab == HOME ? <div className={tabClasses}>
                     {hasGettingStarted ?
-                        <div className="ui segment getting-started-segment" style={{backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})`}}>
+                        <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }}>
                             <div className="ui grid equal width padded">
                                 <div className="column right aligned">
                                     <div className="getting-started">
@@ -309,20 +230,18 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                 </div>
                             </div>
                         </div> : undefined }
-                    <div key={`${MYSTUFF}_gallerysegment`} className="ui segment gallerysegment">
+                    <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment">
                         <div className="ui grid equal width padded">
                             <div className="column">
                                 <h2 className="ui header">{lf("My Stuff") } </h2>
                             </div>
                             <div className="column right aligned">
-                                {pxt.appTarget.compile ?
-                                    <sui.Button key="importfile" icon="upload" class="secondary tiny" textClass="landscape only" text={lf("Import File") } title={lf("Open files from your computer") } onClick={() => importHex() } /> : undefined}
-                                {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
-                                    <sui.Button key="importurl" icon="cloud download" class="secondary tiny" textClass="landscape only" text={lf("Import URL") } title={lf("Open a shared project URL") } onClick={() => importUrl() } /> : undefined}
+                                {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing) ?
+                                    <sui.Button key="import" icon="upload" class="secondary tiny" textClass="landscape only" text={lf("Import") } title={lf("Import a project") } onClick={() => importProject() } /> : undefined}
                             </div>
                         </div>
                         <div className="content">
-                            <ProjectsCarousel key={`${MYSTUFF}_carousel`} parent={this.props.parent} name={'recent'} hide={() => this.hide() } onClick={(scr: any) => chgHeader(scr) }/>
+                            <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} hide={() => this.hide() } onClick={(scr: any) => chgHeader(scr) }/>
                         </div>
                     </div>
                     {Object.keys(galleries).map(galleryName =>
@@ -339,108 +258,6 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy") }</a> : undefined }
                     </div> : undefined }
                 </div> : undefined }
-                {tab == MYSTUFF ? <div className={tabClasses} id={`tab${tab}`} role="tabpanel" aria-labelledby={`${tab}tab`} aria-hidden="false">
-                    <div className="group">
-                        <div className="ui cards">
-                            <codecard.CodeCardView
-                                ariaLabel={lf("Creates a new empty project") }
-                                role="button"
-                                key={'newproject'}
-                                icon="file outline"
-                                iconColor="primary"
-                                name={lf("New Project...") }
-                                description={lf("Creates a new empty project") }
-                                onClick={() => newProject() }
-                                />
-                            {pxt.appTarget.compile ?
-                                <codecard.CodeCardView
-                                    ariaLabel={lf("Open files from your computer") }
-                                    role="button"
-                                    key={'import'}
-                                    icon="upload"
-                                    iconColor="secondary"
-                                    name={lf("Import File...") }
-                                    description={lf("Open files from your computer") }
-                                    onClick={() => importHex() }
-                                    /> : undefined }
-                            {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
-                                <codecard.CodeCardView
-                                    ariaLabel={lf("Open a shared project URL") }
-                                    role="button"
-                                    key={'importurl'}
-                                    icon="cloud download"
-                                    iconColor="secondary"
-                                    name={lf("Import URL...") }
-                                    description={lf("Open a shared project URL") }
-                                    onClick={() => importUrl() }
-                                    /> : undefined }
-                        </div>
-                    </div>
-                    {headersGrouped.filter(g => g.headers.length != 0).map(headerGroup =>
-                        <div key={'localgroup' + headerGroup.name} className="group">
-                            <h3 className="ui dividing header disabled">
-                                {headerGroup.name}
-                            </h3>
-                            <div className="ui cards" role={headerGroup.headers.length ? "listbox" : undefined}>
-                                {headerGroup.headers.map(scr =>
-                                    <codecard.CodeCardView
-                                        ariaLabel={scr.name}
-                                        role="option"
-                                        key={'local' + scr.id}
-                                        name={scr.name}
-                                        time={scr.recentUse}
-                                        imageUrl={scr.icon}
-                                        url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                                        onClick={() => chgHeader(scr) }
-                                        />
-                                ) }
-                            </div>
-                        </div>
-                    ) }
-                    <div className="group">
-                        <div className="ui cards" role={urldata.length ? "listbox" : undefined}>
-                            {urldata.map(scr =>
-                                <codecard.CodeCardView
-                                    ariaLabel={scr.name}
-                                    role="option"
-                                    name={scr.name}
-                                    time={scr.time}
-                                    header={'/' + scr.id}
-                                    description={scr.description}
-                                    key={'cloud' + scr.id}
-                                    onClick={() => installScript(scr) }
-                                    url={'/' + scr.id}
-                                    color="blue"
-                                    />
-                            ) }
-                        </div>
-                    </div>
-                </div> : undefined }
-                {tab != MYSTUFF && tab != WELCOME ? <div className={tabClasses} id={`tab${tab}`} role="tabpanel" aria-labelledby={`${tab}tab`} aria-hidden="false">
-                    {hadFetchError ?
-                        <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
-                        : <div className="ui cards centered" role={gals[tab].length ? "listbox" : undefined}>
-                            {gals[tab].map(scr => <codecard.CodeCardView
-                                ariaLabel={scr.name}
-                                role="option"
-                                key={tab + scr.name}
-                                name={scr.name}
-                                description={scr.description}
-                                url={scr.url}
-                                imageUrl={scr.imageUrl}
-                                youTubeId={scr.youTubeId}
-                                onClick={() => chgGallery(scr) }
-                                />
-                            ) }
-                        </div>}
-                </div> : undefined }
-                { isEmpty() ?
-                    <div className="ui items">
-                        <div className="ui item">
-                            {lf("We couldn't find any projects matching '{0}'", this.state.searchFor) }
-                        </div>
-                    </div>
-                    : undefined }
             </sui.Modal >
         );
     }
@@ -464,11 +281,20 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     private hasFetchErrors = false;
     private node: any;
     private carousel: any;
+    private latestProject: codecard.CodeCardView
 
     constructor(props: ProjectsCarouselProps) {
         super(props)
         this.state = {
         }
+    }
+
+    componentDidMount() {
+       if (this.props.parent.state.header) {
+           if (this.latestProject && this.latestProject.element) {
+               this.latestProject.element.focus()
+           }
+       }
     }
 
     fetchGallery(path: string): pxt.CodeCard[] {
@@ -545,6 +371,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 </div>
                                 :
                                 <codecard.CodeCardView
+                                    ref={(view) => {if (index === 1) this.latestProject = view }}
                                     cardType="file"
                                     className="file"
                                     key={'local' + scr.id}
@@ -559,5 +386,154 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 </carousel.Carousel>
             }
         </div>;
+    }
+}
+
+export interface ImportDialogState {
+    visible?: boolean;
+}
+
+export class ImportDialog extends data.Component<ISettingsProps, ImportDialogState> {
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            visible: false
+        }
+    }
+
+    hide() {
+        this.setState({ visible: false });
+    }
+
+    close() {
+        this.setState({ visible: false });
+        this.props.parent.openHome();
+    }
+
+    show() {
+        this.setState({ visible: true });
+    }
+
+    renderCore() {
+        const { visible } = this.state;
+
+        const importHex = () => {
+            pxt.tickEvent("projects.import");
+            this.hide();
+            this.props.parent.importFileDialog();
+        }
+        const importUrl = () => {
+            pxt.tickEvent("projects.importurl");
+            this.hide();
+            this.props.parent.importUrlDialog();
+        }
+
+        return (
+            <sui.Modal open={this.state.visible} className="importdialog" header={lf("Import") } size="small"
+                onClose={() => this.close() } dimmer={true}
+                closeIcon={true}
+                closeOnDimmerClick closeOnDocumentClick
+                >
+                <div className="ui cards">
+                    {pxt.appTarget.compile ?
+                        <codecard.CodeCardView
+                            ariaLabel={lf("Open files from your computer") }
+                            role="button"
+                            key={'import'}
+                            icon="upload"
+                            iconColor="secondary"
+                            name={lf("Import File...") }
+                            description={lf("Open files from your computer") }
+                            onClick={() => importHex() }
+                            /> : undefined }
+                    {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
+                        <codecard.CodeCardView
+                            ariaLabel={lf("Open a shared project URL") }
+                            role="button"
+                            key={'importurl'}
+                            icon="cloud download"
+                            iconColor="secondary"
+                            name={lf("Import URL...") }
+                            description={lf("Open a shared project URL") }
+                            onClick={() => importUrl() }
+                            /> : undefined }
+                </div>
+            </sui.Modal>
+        )
+    }
+}
+
+
+export interface ExitAndSaveDialogState {
+    visible?: boolean;
+}
+
+export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSaveDialogState> {
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            visible: false
+        }
+    }
+
+    hide() {
+        this.setState({ visible: false });
+    }
+
+    show() {
+        this.setState({ visible: true });
+    }
+
+    componentDidUpdate() {
+        if (!this.state.visible) return;
+        // Save on enter typed
+        let dialogInput = document.getElementById('projectNameInput') as HTMLInputElement;
+        if (dialogInput) {
+            dialogInput.setSelectionRange(0, 9999);
+            dialogInput.onkeyup = (e: KeyboardEvent) => {
+                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                if (charCode === core.ENTER_KEY || charCode === core.SPACE_KEY) {
+                    e.preventDefault();
+                    (document.getElementsByClassName("approve positive").item(0) as HTMLElement).click();
+                }
+            }
+        }
+    }
+
+    renderCore() {
+        const { visible } = this.state;
+        const { projectName } = this.props.parent.state;
+        const setFileName = (name: string) => {
+            this.props.parent.updateHeaderName(name);
+        }
+
+        const save = () => {
+            this.props.parent.openHome();
+        }
+        const cancel = () => {
+            this.hide();
+        }
+
+        const actions = [{
+            label: lf("Save"),
+            onClick: save,
+            className: 'positive'
+        },{
+            label: lf("Cancel"),
+            onClick: cancel
+        }]
+
+        return (
+            <sui.Modal open={visible} className="exitandsave" header={lf("Save and Exit?") } size="small"
+                onClose={() => this.hide() } dimmer={true}
+                actions={actions}
+                closeIcon={true}
+                closeOnDimmerClick closeOnDocumentClick closeOnEscape
+                >
+                <div className="ui segment form text">
+                    <sui.Input id={"projectNameInput"} class="focused" label={lf("Project Name") } ariaLabel={lf("Type a name for your project") } value={projectName} onChange={setFileName}/>
+                </div>
+            </sui.Modal>
+        )
     }
 }

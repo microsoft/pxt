@@ -19,9 +19,9 @@ export type Component<S, T> = data.Component<S, T>;
 
 let dimmerInitialized = false;
 
-export const tabKey = 9;
-export const enterKey = 13;
-export const spaceKey = 32;
+export const TAB_KEY = 9;
+export const ENTER_KEY = 13;
+export const SPACE_KEY = 32;
 
 export function isLoading() {
     return !!$('.ui.loading.dimmer .loadingcontent')[0];
@@ -189,6 +189,7 @@ export interface DialogOptions {
     onLoaded?: (_: JQuery) => void;
     buttons?: ButtonConfig[];
     timeout?: number;
+    modalContext?: string;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
@@ -247,7 +248,8 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         ip.on('change', e => options.inputValue = ip.val())
     }
     let done = false
-    $('#root').append(modal)
+    let modalContext = options.modalContext || '#root';
+    $(modalContext).append(modal)
     if (options.onLoaded) options.onLoaded(modal)
 
     modal.find('img').on('load', () => {
@@ -279,7 +281,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         mo = modal.modal({
             observeChanges: true,
             closeable: !options.hideCancel,
-            context: "#root",
+            context: modalContext,
             onHidden: () => {
                 modal.remove();
                 mo.remove();
@@ -380,7 +382,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
             dialogInput.setSelectionRange(0, 9999);
             dialogInput.onkeyup = (e: KeyboardEvent) => {
                 let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-                if (charCode === enterKey || charCode === spaceKey) {
+                if (charCode === ENTER_KEY || charCode === SPACE_KEY) {
                     e.preventDefault();
                     (document.getElementsByClassName("approve positive").item(0) as HTMLElement).click();
                 }
@@ -516,7 +518,7 @@ function unregisterFocusTracking(data: FocusDataEventInfo): void {
 
 function giveFocusToFirstTag(e: KeyboardEvent) {
     let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-    if (charCode === tabKey && !e.shiftKey) {
+    if (charCode === TAB_KEY && !e.shiftKey) {
         e.preventDefault();
         unregisterFocusTracking(this);
         initializeFocusTabIndex(this.targetArea, true);
@@ -528,7 +530,7 @@ function giveFocusToFirstTag(e: KeyboardEvent) {
 
 function giveFocusToLastTag(e: KeyboardEvent) {
     let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-    if (charCode === tabKey && e.shiftKey) {
+    if (charCode === TAB_KEY && e.shiftKey) {
         e.preventDefault();
         unregisterFocusTracking(this);
         initializeFocusTabIndex(this.targetArea, true, false);
