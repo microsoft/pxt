@@ -211,7 +211,7 @@ namespace pxtblockly {
                     searchBar.focus();
                     searchBar.setSelectionRange(0, searchBar.value.length);
                 });
-                searchBar.addEventListener("keyup", () => {
+                searchBar.addEventListener("keyup", Util.debounce(() => {
                     let text = searchBar.value;
                     let re = new RegExp(text, "i");
                     let filteredOptions = options.filter((block) => {
@@ -221,7 +221,7 @@ namespace pxtblockly {
                     })
                     this.populateTableContainer.bind(this)(filteredOptions, tableContainer);
                     this.createTooltips(filteredOptions, tableContainer);
-                });
+                }, 300, false));
                 searchBarDiv.appendChild(searchBar);
                 searchBarDiv.appendChild(searchIcon);
                 paddingContainerDom.insertBefore(searchBarDiv, paddingContainerDom.childNodes[0]);
