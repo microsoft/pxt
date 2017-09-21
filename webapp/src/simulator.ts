@@ -111,7 +111,8 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                             body: msg.body,
                             size: "large",
                             copyable: msg.copyable,
-                            disagreeLbl: lf("Close")
+                            disagreeLbl: lf("Close"),
+                            modalContext: msg.modalContext
                         };
                         const trustedSimUrls = pxt.appTarget.simulator.trustedUrls;
                         const hasTrustedLink = msg.linkButtonHref && trustedSimUrls && trustedSimUrls.indexOf(msg.linkButtonHref) !== -1;
