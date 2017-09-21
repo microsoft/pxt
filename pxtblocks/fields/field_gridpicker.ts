@@ -163,6 +163,19 @@ namespace pxtblockly {
             return !this.hideRect_ ? !this.sourceBlock_.isShadow() : false;
         }
 
+        private selectItem(item: goog.ui.MenuItem) {
+            if (this.menu_) {
+                this.onItemSelected(this.menu_, item)
+                Blockly.WidgetDiv.hideIfOwner(this);
+                Blockly.Events.setGroup(false);
+                this.disposeTooltips();
+            }
+        }
+
+        private getFirstItem() {
+            return this.firstItem_
+        }
+
         /**
          * Create a dropdown menu under the text.
          * @private
@@ -227,23 +240,15 @@ namespace pxtblockly {
                         return alt ? re.test(alt) : re.test(value);
                     })
                     this.populateTableContainer.bind(this)(filteredOptions, tableContainer);
-                    this.createTooltips(filteredOptions, tableContainer);
-<<<<<<< Updated upstream
+                    this.createTooltips(filteredOptions, tableContainer)
                 }, 300, false));
-=======
-                });
-                const thisField = this;
+
                 searchBar.addEventListener("keyup", (e) => {
-                    if (e.keyCode == 13) {
-                        if (thisField.menu_ && thisField.firstItem_) {
-                            thisField.onItemSelected(thisField.menu_, thisField.firstItem_)
-                            Blockly.WidgetDiv.hideIfOwner(thisField);
-                            Blockly.Events.setGroup(false);
-                            thisField.disposeTooltips();
-                        }
+                    let firstItem = this.getFirstItem.bind(this)()
+                    if (e.keyCode == 13 && firstItem) {
+                        this.selectItem.bind(this)(firstItem)
                     }
                 })
->>>>>>> Stashed changes
                 searchBarDiv.appendChild(searchBar);
                 searchBarDiv.appendChild(searchIcon);
                 paddingContainerDom.insertBefore(searchBarDiv, paddingContainerDom.childNodes[0]);
@@ -361,20 +366,6 @@ namespace pxtblockly {
         private createRow(row: number, options: (Object | string[])[]): goog.ui.Menu {
             const columns = this.columns_;
 
-            const thisField = this;
-            function callback(e: any) {
-                const menu = this;
-                const menuItem = e.target;
-
-                if (menuItem) {
-                    thisField.onItemSelected(menu, menuItem);
-                }
-
-                Blockly.WidgetDiv.hideIfOwner(thisField);
-                Blockly.Events.setGroup(false);
-                thisField.disposeTooltips();
-            }
-
             const menu = new goog.ui.Menu();
             menu.setRightToLeft(this.sourceBlock_.RTL);
 
@@ -402,7 +393,12 @@ namespace pxtblockly {
             }
 
             // Listen for mouse/keyboard events.
-            goog.events.listen(menu, goog.ui.Component.EventType.ACTION, callback);
+            goog.events.listen(menu, goog.ui.Component.EventType.ACTION, (e: any) => {
+                const menuItem = e.target;
+                if (menuItem) {
+                    this.selectItem.bind(this)(menuItem)
+                }
+            });
 
             // Listen for touch events (why doesn't Closure handle this already?).
             function callbackTouchStart(e: any) {
