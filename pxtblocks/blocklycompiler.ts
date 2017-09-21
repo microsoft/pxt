@@ -1435,8 +1435,8 @@ namespace pxt.blocks {
                 let foundIt = false;
                 stdFunc.handlerArgs.forEach(arg => {
                     if (foundIt) return;
-                    let varName = escapeVarName(b.getFieldValue("HANDLER_" + arg.name), e);
-                    if (name === varName) {
+                    let varName = b.getFieldValue("HANDLER_" + arg.name);
+                    if (varName != null && escapeVarName(varName, e) === name) {
                         foundIt = true;
                     }
                 });
@@ -1484,7 +1484,9 @@ namespace pxt.blocks {
             if (stdFunc && stdFunc.handlerArgs.length) {
                 stdFunc.handlerArgs.forEach(arg => {
                     let varName = b.getFieldValue("HANDLER_" + arg.name)
-                    trackLocalDeclaration(escapeVarName(varName, e), arg.type);
+                    if (varName != null) {
+                        trackLocalDeclaration(escapeVarName(varName, e), arg.type);
+                    }
                 });
             }
         });
