@@ -87,13 +87,11 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
 
     private initDragSurface() {
         let down = (event: MouseEvent | TouchEvent | PointerEvent) => {
-            console.log("down");
             this.definitelyDragging = false;
             this.dragStart(getX(event));
         };
 
         let up = (event: MouseEvent | TouchEvent | PointerEvent) => {
-            console.log("up");
             if (this.isDragging) {
                 this.dragEnd();
                 if (this.definitelyDragging) {
@@ -104,14 +102,12 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         };
 
         let leave = (event: MouseEvent | TouchEvent | PointerEvent) => {
-            console.log("leave");
             if (this.isDragging) {
                 this.dragEnd();
             }
         };
 
         let move = (event: MouseEvent | TouchEvent | PointerEvent) => {
-            console.log("move");
             if (this.isDragging) {
                 let x = getX(event);
                 if (Math.abs(x - this.dragStartX) > 3) {
@@ -127,7 +123,6 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
 
 
         this.dragSurface.addEventListener("click", event => {
-            console.log("click");
             if (this.definitelyDragging) {
                 event.stopPropagation();
                 event.preventDefault();
