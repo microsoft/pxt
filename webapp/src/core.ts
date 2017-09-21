@@ -189,6 +189,7 @@ export interface DialogOptions {
     onLoaded?: (_: JQuery) => void;
     buttons?: ButtonConfig[];
     timeout?: number;
+    modalContext?: string;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
@@ -247,7 +248,8 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         ip.on('change', e => options.inputValue = ip.val())
     }
     let done = false
-    $('#root').append(modal)
+    let modalContext = options.modalContext || '#root';
+    $(modalContext).append(modal)
     if (options.onLoaded) options.onLoaded(modal)
 
     modal.find('img').on('load', () => {
@@ -279,7 +281,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         mo = modal.modal({
             observeChanges: true,
             closeable: !options.hideCancel,
-            context: "#root",
+            context: modalContext,
             onHidden: () => {
                 modal.remove();
                 mo.remove();
