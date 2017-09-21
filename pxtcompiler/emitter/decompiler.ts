@@ -936,7 +936,7 @@ ${output}</xml>`;
             }
         }
 
-        function getTypeScriptStatementBlock(node: ts.Node): StatementNode {
+        function getTypeScriptStatementBlock(node: ts.Node, prefix?: string): StatementNode {
             const r = mkStmt(pxtc.TS_STATEMENT_TYPE);
             r.mutation = {}
 
@@ -947,6 +947,11 @@ ${output}</xml>`;
             const end = node.getEnd();
 
             text = applyRenamesInRange(text, start, end);
+
+
+            if (prefix) {
+                text = prefix + text;
+            }
 
             const declaredVariables: string[] = [];
             if (node.kind === SK.VariableStatement) {
@@ -1411,7 +1416,7 @@ ${output}</xml>`;
                             // If a variable is referenced inside a "grey" block, we need
                             // to be conservative because our type inference might not work
                             // on the round trip
-                            v = getTypeScriptStatementBlock(node);
+                            v = getTypeScriptStatementBlock(node, "let ");
                         }
                         else {
                             v = getVariableSetOrChangeBlock((node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
