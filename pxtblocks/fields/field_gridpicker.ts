@@ -407,24 +407,6 @@ namespace pxtblockly {
                 }
             });
 
-            // Listen for touch events (why doesn't Closure handle this already?).
-            function callbackTouchStart(e: any) {
-                const control = this.getOwnerControl(/** @type {Node} */(e.target));
-                // Highlight the menu item.
-                control.handleMouseDown(e);
-            }
-
-            function callbackTouchEnd(e: any) {
-                const control = this.getOwnerControl(/** @type {Node} */(e.target));
-                // Activate the menu item.
-                control.performActionInternal(e);
-            }
-
-            menu.getHandler().listen(menu.getElement(), goog.events.EventType.TOUCHSTART,
-                callbackTouchStart);
-            menu.getHandler().listen(menu.getElement(), goog.events.EventType.TOUCHEND,
-                callbackTouchEnd);
-
             this.menu_ = menu;
             return menu;
         }
