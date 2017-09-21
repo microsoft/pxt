@@ -121,8 +121,16 @@ declare namespace pxt {
         yottaBinary?: string; // defaults to "pxt-microbit-app-combined.hex"
         yottaCorePackage?: string; // pxt-microbit-core
         yottaConfig?: any; // additional config
-        githubCorePackage?: string; // microsoft/pxt-microbit-core
+
         platformioIni?: string[];
+
+        codalTarget?: string;
+        codalBinary?: string;
+        codalDefinitions?: any;
+
+        dockerImage?: string;
+
+        githubCorePackage?: string; // microsoft/pxt-microbit-core
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio
@@ -238,6 +246,7 @@ declare namespace ts.pxtc {
         nativeType?: string; // currently only "thumb"
         hasHex: boolean;
         useUF2?: boolean;
+        useELF?: boolean;
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
@@ -289,6 +298,7 @@ declare namespace ts.pxtc {
         extensionFiles: pxt.Map<string>;
         yotta?: pxt.YottaConfig;
         platformio?: pxt.PlatformIOConfig;
+        npmDependencies?: pxt.Map<string>;
         sha: string;
         compileData: string;
         shimsDTS: string;
