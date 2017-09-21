@@ -163,6 +163,10 @@ namespace pxtblockly {
             return !this.hideRect_ ? !this.sourceBlock_.isShadow() : false;
         }
 
+        /**
+         * Selects menu item and closes gridpicker
+         * @param item = the item to select
+         */
         private selectItem(item: goog.ui.MenuItem) {
             if (this.menu_) {
                 this.onItemSelected(this.menu_, item)
@@ -172,6 +176,9 @@ namespace pxtblockly {
             }
         }
 
+        /**
+         * Getter method
+         */
         private getFirstItem() {
             return this.firstItem_
         }
