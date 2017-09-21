@@ -1,41 +1,40 @@
 /* Import all components */
+
 @import 'themes/default/globals/site.variables';
 @import 'themes/pxt/globals/site.variables';
 
 /* Reference import */
-@import (reference) "semantic.less";
 
+@import (reference) "semantic.less";
 @carouselArrowSize: 60px;
 @carouselArrowSizeMobile: 40px;
 
 /* Carousel */
+
 .projectsdialog {
     .getting-started-segment {
+        border: 0;
         margin-top: -2.1rem !important;
         padding: 0;
         border-radius: 0;
         background-repeat: no-repeat;
         background-size: cover;
         height: 350px;
-
         .column {
             padding: 0 !important;
         }
-
         .getting-started {
             padding: @carouselArrowSize;
             margin-top: 100px;
         }
         .getting-started-header {
             font-size: 60px;
-            text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+            text-shadow: -1px 0 rgb(87, 87, 87), 0 1px rgb(87, 87, 87), 1px 0 rgb(87, 87, 87), 0 -1px rgb(87, 87, 87);
         }
     }
-
     .content {
         height: 100%;
     }
-
     .ui.segment.tabsegment {
         padding: 0;
         padding-top: calc(@mainMenuHeight + 2rem) !important;
@@ -44,7 +43,6 @@
         min-height: 100%;
         background: @homeScreenBackground;
     }
-
     .gallerysegment {
         background: none;
         border: none;
@@ -64,7 +62,6 @@
             padding-right: @carouselArrowSize !important;
         }
     }
-
     /* Footer, Privary, Terms of Use */
     .homefooter {
         left: 0;
@@ -72,15 +69,15 @@
         width: 100%;
         text-align: center;
         padding: 5px !important;
-        .item{
+        .item {
             font-size: 0.8rem !important;
         }
     }
-
     .ui.card {
         border-radius: 0px;
     }
 }
+
 
 /* Carousel */
 
@@ -118,7 +115,8 @@
     opacity: 0.7;
     overflow: hidden;
 }
-.carouselarrow:hover, .carouselarrow:focus{
+
+.carouselarrow:hover, .carouselarrow:focus {
     opacity: 1;
     transition: opacity .1s ease-out 0s;
     .icon {
@@ -126,6 +124,7 @@
         transition: transform .1s ease-out 0s;
     }
 }
+
 .carouselarrow .icon {
     top: 40%;
     position: absolute;
@@ -139,13 +138,14 @@
     right: 0rem;
 }
 
+
 /* <= Tablet (Mobile + Tablet) */
+
 @media only screen and (max-width: @largestTabletScreen) {
     /* Carousel */
     .projectsdialog {
         .getting-started-segment {
             height: 250px;
-
             .getting-started {
                 padding: @carouselArrowSizeMobile;
                 margin-top: 40px;
@@ -154,11 +154,9 @@
                 font-size: 40px;
             }
         }
-
         .ui.segment.tabsegment {
             padding-top: calc(@mobileMenuHeight + 2rem) !important;
         }
-
         .gallerysegment {
             .column {
                 padding: 0 !important;
@@ -171,7 +169,6 @@
             }
         }
     }
-
     .carouselcontainer {
         padding: 1rem @carouselArrowSizeMobile !important;
     }
@@ -181,7 +178,9 @@
     }
 }
 
+
 /* Mobile only */
+
 @media only screen and (max-width: @largestMobileScreen) {
     .projectsdialog {
         .getting-started-segment {
@@ -190,10 +189,4 @@
             }
         }
     }
-}
-
-/* Full screen dialog */
-.modals.dimmer .ui.fullscreen.scrolling.modal {
-    margin: 0 !important;
-    padding: 0 !important;
 }

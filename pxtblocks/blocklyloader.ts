@@ -2169,6 +2169,7 @@ namespace pxt.blocks {
                 that.setColour("#717171")
                 that.setPreviousStatement(true);
                 that.setNextStatement(true);
+                that.setInputsInline(false);
 
                 this.domToMutation = (element: Element) => {
                     const n = parseInt(element.getAttribute("numlines"));
