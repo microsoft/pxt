@@ -67,7 +67,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
         const hideEmbed = !!targetTheme.hideShareEmbed;
-        const showSocialIcons = !!targetTheme.socialOptions;        
+        const showSocialIcons = !!targetTheme.socialOptions;
 
         let ready = false;
         let mode = this.state.mode;
@@ -193,12 +193,15 @@ pxt extract ${url}`;
             sui.popupWindow(twitterUrl, lf("Share on Twitter"), 600, 600);
         }
 
-        const actions = [{
-            label: action,
-            onClick: publish,
-            loading: actionLoading,
-            className: 'primary'
-        }]
+        let actions: sui.ModalAction[] = [];
+        if (action) {
+            actions.push({
+                label: action,
+                onClick: publish,
+                loading: actionLoading,
+                className: 'primary'
+            })
+        }
 
         return (
             <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Share Project") } size="small"
@@ -223,7 +226,7 @@ pxt extract ${url}`;
                     { url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
                         <sui.Input id="projectUri" class="focused mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" />
-                        <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
+                        <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.") }</label>
                         {showSocialIcons ? <div className="social-icons">
                             <a className="ui button large icon facebook" tabIndex={0} aria-label="Facebook" onClick={(e) => { showFbPopup(); e.preventDefault(); return false; } }><i className="icon facebook"></i></a>
                             <a className="ui button large icon twitter" tabIndex={0} aria-label="Twitter" onClick={(e) => { showTwtPopup(); e.preventDefault(); return false; } }><i className="icon twitter"></i></a>
@@ -241,7 +244,7 @@ pxt extract ${url}`;
                         { advancedMenu ?
                             <sui.Field>
                                 <sui.Input id="embedCode" class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true}/>
-                                <label htmlFor="embedCode" id="embedCodeLabel" className="accessible-hidden">{lf("This is the read-only code for the selected tab.")}</label>
+                                <label htmlFor="embedCode" id="embedCodeLabel" className="accessible-hidden">{lf("This is the read-only code for the selected tab.") }</label>
                             </sui.Field> : null }
                     </div> : undefined }
                 </div>
