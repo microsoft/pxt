@@ -37,6 +37,8 @@ namespace pxtblockly {
         private tooltipConfig_: FieldGridPickerToolTipConfig;
 
         private tooltips_: goog.ui.Tooltip[] = [];
+        private firstItem_: goog.ui.MenuItem;
+        private menu_: goog.ui.Menu;
 
         private hasSearchBar_: boolean;
         private hideRect_: boolean;
@@ -86,6 +88,11 @@ namespace pxtblockly {
             let tableContainerDom = tableContainer.getElement();
             if (tableContainerDom) {
                 let menuItemsDom = tableContainerDom.childNodes;
+                try {
+                    let firstItem = menuItemsDom[0].childNodes[0] as HTMLElement
+                    firstItem.className += " goog-menuitem-highlight"
+                } catch (e) {
+                }
                 for (let i = 0; i < menuItemsDom.length; ++i) {
                     const elem = menuItemsDom[i] as HTMLElement;
                     elem.className = "blocklyGridPickerRow";
@@ -221,7 +228,22 @@ namespace pxtblockly {
                     })
                     this.populateTableContainer.bind(this)(filteredOptions, tableContainer);
                     this.createTooltips(filteredOptions, tableContainer);
+<<<<<<< Updated upstream
                 }, 300, false));
+=======
+                });
+                const thisField = this;
+                searchBar.addEventListener("keyup", (e) => {
+                    if (e.keyCode == 13) {
+                        if (thisField.menu_ && thisField.firstItem_) {
+                            thisField.onItemSelected(thisField.menu_, thisField.firstItem_)
+                            Blockly.WidgetDiv.hideIfOwner(thisField);
+                            Blockly.Events.setGroup(false);
+                            thisField.disposeTooltips();
+                        }
+                    }
+                })
+>>>>>>> Stashed changes
                 searchBarDiv.appendChild(searchBar);
                 searchBarDiv.appendChild(searchIcon);
                 paddingContainerDom.insertBefore(searchBarDiv, paddingContainerDom.childNodes[0]);
@@ -374,6 +396,9 @@ namespace pxtblockly {
                 menuItem.setCheckable(true);
                 menuItem.setChecked(value == this.value_);
                 menu.addChild(menuItem, true);
+                if (i == 0) {
+                    this.firstItem_ = menuItem;
+                }
             }
 
             // Listen for mouse/keyboard events.
@@ -397,6 +422,7 @@ namespace pxtblockly {
             menu.getHandler().listen(menu.getElement(), goog.events.EventType.TOUCHEND,
                 callbackTouchEnd);
 
+            this.menu_ = menu;
             return menu;
         }
 
