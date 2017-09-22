@@ -37,7 +37,7 @@ export class Editor extends srceditor.Editor {
 
     setVisible(b: boolean) {
         this.isVisible = b
-        this.startRecording()
+        if (b) this.startRecording()
     }
 
     acceptsFile(file: pkg.File) {
@@ -127,24 +127,22 @@ export class Editor extends srceditor.Editor {
                 let newEntry = document.createElement("div")
                 if (lastEntry && lastEntry.lastChild.textContent == this.consoleBuffer) {
                     if (lastEntry.childNodes.length == 2) {
+                        //matches already-collapsed entry
                         let count = parseInt(lastEntry.firstChild.textContent)
                         lastEntry.firstChild.textContent = (count + 1).toString()
                     } else {
+                        //make a new collapsed entry with count = 2
                         let newLabel = document.createElement("a")
                         newLabel.className = "ui horizontal label"
                         newLabel.textContent = "2"
                         lastEntry.insertBefore(newLabel, lastEntry.lastChild)
                     }
                 } else {
+                    //make a new non-collapsed entry
                     newEntry.appendChild(document.createTextNode(this.consoleBuffer))
                     this.consoleRoot.appendChild(newEntry)
                     this.consoleRoot.scrollTop = this.consoleRoot.scrollHeight
                 }
-                //newEntry = document.createElement("div")
-                //newEntry.textContent = this.consoleBuffer
-                //this.consoleRoot.appendChild(newEntry)
-
-
                 if (this.consoleRoot.childElementCount > this.maxConsoleEntries) {
                     this.consoleRoot.removeChild(this.consoleRoot.firstChild)
                 }
@@ -155,13 +153,13 @@ export class Editor extends srceditor.Editor {
 
     pauseRecording() {
         this.active = false
-        if (this.recordIcon) this.recordIcon.className = "pause icon"
+        if (this.recordIcon) this.recordIcon.className = "circle icon"
         this.charts.forEach(s => s.stop())
     }
 
     startRecording() {
         this.active = true
-        if (this.recordIcon) this.recordIcon.className = "circle icon"
+        if (this.recordIcon) this.recordIcon.className = "pause icon"
         this.charts.forEach(s => s.start())
     }
 

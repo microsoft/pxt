@@ -93,11 +93,6 @@ namespace pxsim {
 
             this.serialOutBuffer += s;
             if (/\n/.test(this.serialOutBuffer) || this.serialOutBuffer.length > SERIAL_BUFFER_LENGTH) {
-                /** 
-            if (!/\n/.test(this.serialOutBuffer)) {
-                this.serialOutBuffer += "\n";
-            }
-            **/
                 Runtime.postMessage(<SimulatorSerialMessage>{
                     type: 'serial',
                     data: this.serialOutBuffer,
