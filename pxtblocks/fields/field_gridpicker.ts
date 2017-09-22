@@ -37,6 +37,8 @@ namespace pxtblockly {
         private tooltipConfig_: FieldGridPickerToolTipConfig;
 
         private tooltips_: goog.ui.Tooltip[] = [];
+        private firstItem_: goog.ui.MenuItem;
+        private menu_: goog.ui.Menu;
 
         private hasSearchBar_: boolean;
         private hideRect_: boolean;
@@ -86,6 +88,10 @@ namespace pxtblockly {
             let tableContainerDom = tableContainer.getElement();
             if (tableContainerDom) {
                 let menuItemsDom = tableContainerDom.childNodes;
+                if (menuItemsDom.length && menuItemsDom[0].childNodes) {
+                    let firstItem = menuItemsDom[0].childNodes[0] as HTMLElement
+                    firstItem.className += " goog-menuitem-highlight"
+                }
                 for (let i = 0; i < menuItemsDom.length; ++i) {
                     const elem = menuItemsDom[i] as HTMLElement;
                     elem.className = "blocklyGridPickerRow";
@@ -157,6 +163,26 @@ namespace pxtblockly {
         }
 
         /**
+         * Selects menu item and closes gridpicker
+         * @param item = the item to select
+         */
+        private selectItem(item: goog.ui.MenuItem) {
+            if (this.menu_) {
+                this.onItemSelected(this.menu_, item)
+                Blockly.WidgetDiv.hideIfOwner(this);
+                Blockly.Events.setGroup(false);
+                this.disposeTooltips();
+            }
+        }
+
+        /**
+         * Getter method
+         */
+        private getFirstItem() {
+            return this.firstItem_
+        }
+
+        /**
          * Create a dropdown menu under the text.
          * @private
          */
@@ -220,8 +246,15 @@ namespace pxtblockly {
                         return alt ? re.test(alt) : re.test(value);
                     })
                     this.populateTableContainer.bind(this)(filteredOptions, tableContainer);
-                    this.createTooltips(filteredOptions, tableContainer);
+                    this.createTooltips(filteredOptions, tableContainer)
                 }, 300, false));
+
+                searchBar.addEventListener("keyup", (e) => {
+                    let firstItem = this.getFirstItem.bind(this)()
+                    if (e.keyCode == 13 && firstItem) {
+                        this.selectItem.bind(this)(firstItem)
+                    }
+                })
                 searchBarDiv.appendChild(searchBar);
                 searchBarDiv.appendChild(searchIcon);
                 paddingContainerDom.insertBefore(searchBarDiv, paddingContainerDom.childNodes[0]);
@@ -339,20 +372,6 @@ namespace pxtblockly {
         private createRow(row: number, options: (Object | string[])[]): goog.ui.Menu {
             const columns = this.columns_;
 
-            const thisField = this;
-            function callback(e: any) {
-                const menu = this;
-                const menuItem = e.target;
-
-                if (menuItem) {
-                    thisField.onItemSelected(menu, menuItem);
-                }
-
-                Blockly.WidgetDiv.hideIfOwner(thisField);
-                Blockly.Events.setGroup(false);
-                thisField.disposeTooltips();
-            }
-
             const menu = new goog.ui.Menu();
             menu.setRightToLeft(this.sourceBlock_.RTL);
 
@@ -374,29 +393,20 @@ namespace pxtblockly {
                 menuItem.setCheckable(true);
                 menuItem.setChecked(value == this.value_);
                 menu.addChild(menuItem, true);
+                if (i == 0) {
+                    this.firstItem_ = menuItem;
+                }
             }
 
             // Listen for mouse/keyboard events.
-            goog.events.listen(menu, goog.ui.Component.EventType.ACTION, callback);
+            goog.events.listen(menu, goog.ui.Component.EventType.ACTION, (e: any) => {
+                const menuItem = e.target;
+                if (menuItem) {
+                    this.selectItem.bind(this)(menuItem)
+                }
+            });
 
-            // Listen for touch events (why doesn't Closure handle this already?).
-            function callbackTouchStart(e: any) {
-                const control = this.getOwnerControl(/** @type {Node} */(e.target));
-                // Highlight the menu item.
-                control.handleMouseDown(e);
-            }
-
-            function callbackTouchEnd(e: any) {
-                const control = this.getOwnerControl(/** @type {Node} */(e.target));
-                // Activate the menu item.
-                control.performActionInternal(e);
-            }
-
-            menu.getHandler().listen(menu.getElement(), goog.events.EventType.TOUCHSTART,
-                callbackTouchStart);
-            menu.getHandler().listen(menu.getElement(), goog.events.EventType.TOUCHEND,
-                callbackTouchEnd);
-
+            this.menu_ = menu;
             return menu;
         }
 
