@@ -503,16 +503,18 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     renderCore() {
         const { visible } = this.state;
         const { projectName } = this.props.parent.state;
-        const setFileName = (name: string) => {
-            this.props.parent.updateHeaderName(name);
-        }
+        let newName = projectName;
 
         const save = () => {
+            this.props.parent.updateHeaderName(newName);
             this.props.parent.openHome();
         }
         const cancel = () => {
             this.hide();
         }
+        const onChange = (name : string) => {
+            newName = name;
+        };
 
         const actions = [{
             label: lf("Save"),
@@ -531,9 +533,23 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 >
                 <div className="ui segment form text">
-                    <sui.Input id={"projectNameInput"} class="focused" label={lf("Project Name") } ariaLabel={lf("Type a name for your project") } value={projectName} onChange={setFileName}/>
+                    <ExitAndSaveInput onChange={onChange} initialName={projectName}/>
                 </div>
             </sui.Modal>
         )
+    }
+}
+
+class ExitAndSaveInput extends React.Component<{ onChange: (name: string) => void, initialName: string }, { value: string }> {
+    render() {
+        const onChange = (name: string) => {
+            if (!this.state|| this.state.value !== name) {
+                this.setState({ value: name });
+            }
+            this.props.onChange(name);
+        };
+
+        const value = this.state ? this.state.value : this.props.initialName;
+        return <sui.Input id={"projectNameInput"} class="focused" label={lf("Project Name") } ariaLabel={lf("Type a name for your project") } value={value} onChange={onChange}/>
     }
 }
