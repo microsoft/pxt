@@ -1,7 +1,7 @@
 \section{The CODAL Runtime}
 \label{sec:codal}
 
-\emph{TBALL comment: the main focus on CODAL here is the support for event-based programming with concurrrent handlers,
+\emph{TBALL comment: the main focus on CODAL here is the support for event based programming with concurrrent handlers,
    providing the bridge between scripting languages such as JavaScript and the world of microcontrollers. }
 
 \emph{TBALL comment: a second focus, also important, is how CODAL is architected to support multiple boards}
@@ -20,13 +20,13 @@ concurrently using a non-preemptive fiber scheduler. Each software component abs
 or connected device. \emph{TODO: how CODAL handles responsiveness?}
 
 The CODAL runtime provides higher-level abstractions to the compiler developer, making it
-easy to compile event-based mechanisms, such as found in scripting languages like JavaScript, to the world of the
+easy to compile event based mechanisms, such as found in scripting languages like JavaScript, to the world of the
 microcontroller.   The CODAL runtime has several layers:
 \begin{itemize}
 
 \item \emph{Core Abstractions}:
 \emph{\href{https://www.github.com/lancaster-university/codal-core}{codal-core}} defines the base classes for
-components, eventing, scheduling and processor/platform-independent driver abstractions (for example,
+components, eventing, scheduling and processor/platform independent driver abstractions (for example,
 \emph{LinearAnalogSensor}, given an input range and an output range for an analog pin, automatically scales sampled data 
 from that pin into the given output range);
 

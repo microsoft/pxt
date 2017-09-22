@@ -22,15 +22,15 @@ which leads to monolithic sequential programs;
 \item its IDE lacks any code ``intellisense'' or common interactive features of modern IDEs;
 \item it loads code onto the microcontroller using 1980s era bootloader technology.
 \end{itemize}
-As a result, it is not simple to get started with Arduino-based systems, of which there are many. 
+As a result, it is not simple to get started with Arduino systems, of which there are many. 
 On the other hand, on the web we find many excellent environments for introductory programming. 
-Visual block-based editors such as Scratch (\url{https://scratch.mit.edu/}) and Blockly (\url{https://developers.google.com/blockly/}) 
+Visual block editors such as Scratch (\url{https://scratch.mit.edu/}) and Blockly (\url{https://developers.google.com/blockly/}) 
 allow the creation of programs without the possibility of syntax errors. 
 HTML, CSS and JavaScript allow a complete programming experience to be delivered as an interactive 
 web app, including editing with intellisense, code execution and debugging. (While the Arduino IDE recently 
 has been ported to the web, it lacks many of the above features and requires a web connection to a server which runs 
 a C/C++ compile tool chain to compile user code.) The programming models associated with these environments are 
-event-based, freeing the programmer from the need to poll.
+event based, freeing the programmer from the need to poll.
 
 We have created a new programming platform that bridges the worlds of the microcontroller
 and the web app. The major goals of the platform are to: (1)
@@ -46,7 +46,7 @@ make it simple to program microcontrollers using an interactive web app that als
 
 The platform builds on stack of four novel technologies.
 The entry point of the platform is \emph{MakeCode} (\url{www.makecode.com}),
-a web app that supports both visual block-based programming and text-based programming,
+a web app that supports both visual block programming and text programming,
 via \emph{Static TypeScript}, with conversion 
 between the two program representations. The web app has in-browser execution 
 via a device simulator, as well as compilation to machine code and linking against a 
@@ -86,10 +86,10 @@ paper, we will evaluate quantitative aspects of the platform:
 compilation speed, code size, and runtime performance.  In particular, we evaluate:
 \begin{itemize}
 \item the compile time of Static TypeScript compile/link of user code (to machine code) with respect 
-      to the GCC-based C/C++ toolchain, as well as the size of the resulting executable;
+      to the GCC C/C++ toolchain, as well as the size of the resulting executable;
 \item the time to load code onto a microcontroller using UF2, compared to standard bootloaders; 
 \item The performance of a set of small benchmarks, written in both Static TypeScript and C++,
-      compiled with the MakeCode and GCC-based toolchains, as well as the performance of device drivers
+      compiled with the MakeCode and GCC toolchains, as well as the performance of device drivers
       written in Static TypeScript compared to their C++ counterparts;
 \item \emph{energy consumption: CODAL vs. Arduino}
 [evaluate with respect to the popular Arduino toolset, for boards with 8-bit (AVR) and 32-bit (Cortex-M0) microcontrollers. 
@@ -114,9 +114,9 @@ for the three previously mentioned boards are at:
 ~\emph{\href{https://github.com/microsoft/pxt-microbit}{pxt-microbit}}, 
 ~\emph{\href{https://github.com/microsoft/pxt-adafruit}{pxt-adafruit}}, and
 ~\emph{\href{https://github.com/microsoft/pxt-arduino-uno}{pxt-arduino-uno}}.
-The latter two targets make use of a common set of MakeCode libraries (packages) at
+The latter two targets make use of a common set of libraries (packages) at
 \emph{\href{https://github.com/microsoft/pxt-common-packages}{pxt-common-packages}},
-which build upon CODAL's microcontroller-independent core abstractions at
+which build upon CODAL's microcontroller independent core abstractions at
 ~\emph{\href{https://github.com/lancaster-university/codal-core}{codal-core}}.  
 Platform- and microcontroller-dependent specialization and optimizations for ARM's Mbed platform, 
 and SAMD21 and Atmega328 microcontrollers can be found at
@@ -126,7 +126,7 @@ and SAMD21 and Atmega328 microcontrollers can be found at
 The repo \emph{\href{https://github.com/lancaster-university/codal}{codal}} provides the
 build tooling for compiling a CODAL target.  As can be seen in Figure~\ref{fig:repos}, 
 CODAL (the blue boxes) abstracts over platform and microcontroller specific
-implementations (for example, MBED), while MakeCode abstracts over programming editors
+implementations (for example, MBED), while MakeCode/PXT abstracts over programming editors
 and languages (Blockly, Monaco, and TypeScript).
 The UF2 specification is at~\emph{\href{https://github.com/microsoft/uf2}{uf2}},
 with implementations at~\emph{\href{https://github.com/microsoft/uf2-samd21}{uf2-samd21}}
