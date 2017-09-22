@@ -1,4 +1,5 @@
 /// <reference path="../localtypings/pxtparts.d.ts"/>
+/// <reference path="../built/pxtlib.d.ts"/>
 
 namespace pxsim {
     export interface SimulatorRunMessage extends SimulatorMessage {
@@ -14,6 +15,7 @@ namespace pxsim {
         mute?: boolean;
         highContrast?: boolean;
         cdnUrl?: string;
+        localizedStrings?: pxt.Map<string>;
     }
 
     export interface SimulatorMuteMessage extends SimulatorMessage {
@@ -120,7 +122,7 @@ namespace pxsim {
         subtype: "loaded";
         showCategories?: boolean;
         stepInfo: TutorialStepInfo[];
-        toolboxSubset?: {[index: string]: number };
+        toolboxSubset?: { [index: string]: number };
     }
 
     export interface TutorialStepChangeMessage extends TutorialMessage {
@@ -177,6 +179,9 @@ namespace pxsim {
 
             if (msg.mute) mute(msg.mute);
 
+            if (msg.localizedStrings) {
+                pxt.Util.setLocalizedStrings(msg.localizedStrings);
+            }
             runtime = new Runtime(msg.code);
             runtime.id = msg.id;
             runtime.board.initAsync(msg)
@@ -184,8 +189,8 @@ namespace pxsim {
                     runtime.run((v) => {
                         pxsim.dumpLivePointers();
                         Runtime.postMessage({ type: "toplevelcodefinished" })
-                    })
-                })
+                    });
+                });
         }
 
         function mute(mute: boolean) {

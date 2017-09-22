@@ -2294,7 +2294,21 @@ $(document).ready(() => {
                 useLang,
                 pxt.appTarget.versions.pxtCrowdinBranch,
                 pxt.appTarget.versions.branch,
-                live);
+                live)
+                // Download sim translations and save them in the sim
+                .then(() => Util.downloadTranslationsAsync(
+                    pxt.appTarget.id,
+                    true,
+                    config.commitCdnUrl,
+                    useLang,
+                    pxt.appTarget.versions.pxtCrowdinBranch,
+                    pxt.appTarget.versions.branch,
+                    live
+                )).then((simStrings) => {
+                    if (simStrings) {
+                        simulator.simTranslations = simStrings;
+                    }
+                });
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())

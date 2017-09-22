@@ -687,6 +687,7 @@ namespace ts.pxtc.Util {
 
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
+    let _translationsCache: pxt.Map<pxt.Map<string>> = {};
     export var localizeLive = false;
 
     /**
@@ -740,37 +741,75 @@ namespace ts.pxtc.Util {
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0]
 
+        if (code === _localizeLang) {
+            return Promise.resolve();
+        }
+
+        return downloadTranslationsAsync(targetId, simulator, baseUrl, code, pxtBranch, targetBranch, live)
+            .then((translations) => {
+                if (translations) {
+                    _localizeLang = code;
+                    _localizeStrings = translations;
+                    if (live) {
+                        localizeLive = true;
+                    }
+                }
+                return Promise.resolve();
+            });
+    }
+
+    export function downloadTranslationsAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
+        // normalize code (keep synched with localized files)
+        if (!/^(es|pt|si|sv|zh)/i.test(code))
+            code = code.split("-")[0]
+
+        let translationsCacheId = `${code}/${live}/${simulator}`;
+        if (_translationsCache[translationsCacheId]) {
+            return Promise.resolve(_translationsCache[translationsCacheId]);
+        }
+
         const stringFiles: { branch: string, path: string }[] = simulator
             ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" }]
             : [
                 { branch: pxtBranch, path: "strings.json" },
                 { branch: targetBranch, path: targetId + "/target-strings.json" }
             ];
+        let translations: pxt.Map<string>;
 
-        if (_localizeLang != code && live) {
-            _localizeStrings = {};
-            _localizeLang = code;
-            localizeLive = true;
+        if (live) {
+            let hadError = false;
             return Promise.mapSeries(stringFiles, (file) => {
                 return downloadLiveTranslationsAsync(code, file.path, file.branch)
-                    .then((tr) => Object.keys(tr)
-                        .filter(k => !!tr[k])
-                        .forEach(k => _localizeStrings[k] = tr[k])
-                    , e => console.log(`failed to load localizations for file ${file}`));
-            });
+                    .then((tr) => {
+                        if (!translations) {
+                            translations = {};
+                        }
+                        Object.keys(tr)
+                            .filter(k => !!tr[k])
+                            .forEach(k => translations[k] = tr[k])
+                    }, e => {
+                        console.log(`failed to load localizations for file ${file}`);
+                        hadError = true;
+                    });
+            })
+                .then(() => {
+                    // Cache translations unless there was an error for one of the files
+                    if (!hadError) {
+                        _translationsCache[translationsCacheId] = translations;
+                    }
+                    return Promise.resolve(translations);
+                });
         }
-
-        if (_localizeLang != code) {
-            return Util.httpGetJsonAsync(baseUrl + "locales/" + code + "/strings.json")
-                .then(tr => {
-                    _localizeStrings = tr || {};
-                    _localizeLang = code;
-                }, e => {
-                    console.error('failed to load localizations')
-                })
-        }
-        //
-        return Promise.resolve(undefined);
+        return Util.httpGetJsonAsync(baseUrl + "locales/" + code + "/strings.json")
+            .then(tr => {
+                if (tr) {
+                    translations = tr;
+                    _translationsCache[translationsCacheId] = translations;
+                }
+            }, e => {
+                console.error('failed to load localizations')
+            })
+            .then(() => translations);
     }
 
     export function htmlEscape(_input: string) {
