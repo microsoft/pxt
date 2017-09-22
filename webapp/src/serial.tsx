@@ -25,7 +25,11 @@ export class Editor extends srceditor.Editor {
     rawDataBuffer: string = ""
     //TODO reasonable buffer size?
     maxBufferLength: number = 5000
+
+    //refs
     recordIcon: HTMLElement
+    consoleRoot: HTMLElement
+    chartRoot: HTMLElement
 
     getId() {
         return "serialEditor"
@@ -118,12 +122,30 @@ export class Editor extends srceditor.Editor {
             let ch = data[i]
             this.consoleBuffer += ch
             if (ch === "\n" || this.consoleBuffer.length > this.maxConsoleLineLength) {
+ 
+                let lastEntry = this.consoleRoot.lastChild
                 let newEntry = document.createElement("div")
-                newEntry.textContent = this.consoleBuffer
-                let consoleRoot = document.getElementById("serialConsole")
-                consoleRoot.appendChild(newEntry)
-                if (consoleRoot.childElementCount > this.maxConsoleEntries) {
-                    consoleRoot.removeChild(consoleRoot.firstChild)
+                if (lastEntry && lastEntry.lastChild.textContent == this.consoleBuffer) {
+                    if (lastEntry.childNodes.length == 2) {
+                        let count = parseInt(lastEntry.firstChild.textContent)
+                        lastEntry.firstChild.textContent = (count + 1).toString()
+                    } else {
+                        let newLabel = document.createElement("a")
+                        newLabel.className = "ui horizontal label"
+                        newLabel.textContent = "2"
+                        lastEntry.insertBefore(newLabel, lastEntry.lastChild)
+                    }
+                } else {
+                    newEntry.appendChild(document.createTextNode(this.consoleBuffer))
+                    this.consoleRoot.appendChild(newEntry)
+                }
+                //newEntry = document.createElement("div")
+                //newEntry.textContent = this.consoleBuffer
+                //this.consoleRoot.appendChild(newEntry)
+
+
+                if (this.consoleRoot.childElementCount > this.maxConsoleEntries) {
+                    this.consoleRoot.removeChild(this.consoleRoot.firstChild)
                 }
                 this.consoleBuffer = ""
             }
@@ -154,6 +176,7 @@ export class Editor extends srceditor.Editor {
     }
 
     clear() {
+        //TODO use refs
         let chartRoot = document.getElementById("serialCharts")
         let consoleRoot = document.getElementById("serialConsole")
         this.clearNode(chartRoot)
@@ -225,9 +248,9 @@ export class Editor extends srceditor.Editor {
                         <i ref={e => this.recordIcon = e} className={this.active ? "pause icon" : "circle icon"}></i>
                     </button>
                 </div>
-                <div id="serialCharts"></div>
+                <div id="serialCharts" ref={e => this.chartRoot = e}></div>
                 <div className="ui fitted divider"></div>
-                <div id="serialConsole"></div>
+                <div id="serialConsole" ref={e => this.consoleRoot = e}></div>
             </div>
         )
     }
