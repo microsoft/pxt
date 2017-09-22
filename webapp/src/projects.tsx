@@ -533,23 +533,9 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 >
                 <div className="ui segment form text">
-                    <ExitAndSaveInput onChange={onChange} initialName={projectName}/>
+                    <sui.Input id={"projectNameInput"} class="focused" label={lf("Project Name") } ariaLabel={lf("Type a name for your project") } value={projectName} onChange={onChange}/>
                 </div>
             </sui.Modal>
         )
-    }
-}
-
-class ExitAndSaveInput extends React.Component<{ onChange: (name: string) => void, initialName: string }, { value: string }> {
-    render() {
-        const onChange = (name: string) => {
-            if (!this.state|| this.state.value !== name) {
-                this.setState({ value: name });
-            }
-            this.props.onChange(name);
-        };
-
-        const value = this.state ? this.state.value : this.props.initialName;
-        return <sui.Input id={"projectNameInput"} class="focused" label={lf("Project Name") } ariaLabel={lf("Type a name for your project") } value={value} onChange={onChange}/>
     }
 }

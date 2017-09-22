@@ -333,7 +333,7 @@ export class Input extends data.Component<{
     selectOnClick?: boolean;
     id?: string;
     ariaLabel?: string;
-}, {}> {
+}, { value: string }> {
 
     copy() {
         const p = this.props
@@ -362,6 +362,17 @@ export class Input extends data.Component<{
             ? <Button class="ui right labeled primary icon button" text={lf("Copy") } icon="copy" onClick={() => this.copy() } />
             : null;
 
+        let value = (this.state && this.state.value) ? this.state.value : p.value;
+
+        const onChange = (newValue: string) => {
+            if (!p.readOnly && (!this.state || this.state.value !== newValue)) {
+                this.setState({ value: newValue })
+            }
+            if (p.onChange) {
+                p.onChange(newValue);
+            }
+        };
+
         return (
             <Field ariaLabel={p.ariaLabel} htmlFor={p.id} label={p.label}>
                 <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "") }>
@@ -370,19 +381,19 @@ export class Input extends data.Component<{
                         id={p.id}
                         className={p.class || ""}
                         type={p.type || "text"}
-                        placeholder={p.placeholder} value={p.value}
+                        placeholder={p.placeholder} value={value}
                         readOnly={!!p.readOnly}
                         onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
-                        onChange={v => p.onChange((v.target as any).value) }/>
+                        onChange={v => onChange((v.target as any).value)}/>
                         : <textarea
                             id={p.id}
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "") }
                             rows={p.lines}
                             placeholder={p.placeholder}
-                            value={p.value}
+                            value={value}
                             readOnly={!!p.readOnly}
                             onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
-                            onChange={v => p.onChange((v.target as any).value) }>
+                            onChange={v => onChange((v.target as any).value)}>
                         </textarea>}
                     {copyBtn}
                 </div>
