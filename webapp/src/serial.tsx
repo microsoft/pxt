@@ -138,6 +138,7 @@ export class Editor extends srceditor.Editor {
                 } else {
                     newEntry.appendChild(document.createTextNode(this.consoleBuffer))
                     this.consoleRoot.appendChild(newEntry)
+                    this.consoleRoot.scrollTop = this.consoleRoot.scrollHeight
                 }
                 //newEntry = document.createElement("div")
                 //newEntry.textContent = this.consoleBuffer
