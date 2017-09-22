@@ -25,9 +25,15 @@ export class Editor extends srceditor.Editor {
     rawDataBuffer: string = ""
     //TODO reasonable buffer size?
     maxBufferLength: number = 5000
+    recordIcon: HTMLElement
 
     getId() {
         return "serialEditor"
+    }
+
+    setVisible(b: boolean) {
+        this.isVisible = b
+        this.startRecording()
     }
 
     acceptsFile(file: pkg.File) {
@@ -125,24 +131,20 @@ export class Editor extends srceditor.Editor {
     }
 
     pauseRecording() {
+        this.active = false
+        if (this.recordIcon) this.recordIcon.className = "pause icon"
         this.charts.forEach(s => s.stop())
     }
 
     startRecording() {
+        this.active = true
+        if (this.recordIcon) this.recordIcon.className = "circle icon"
         this.charts.forEach(s => s.start())
     }
 
     toggleRecording() {
-        if (this.active) {
-            this.active = false
-            this.pauseRecording()
-            //TODO nooooo
-            document.getElementById("serialRecordButton").className = "record icon"
-        } else {
-            this.active = true
-            this.startRecording()
-            document.getElementById("serialRecordButton").className = "pause icon"
-        }
+        if (this.active) this.pauseRecording()
+        else this.startRecording()
     }
 
     clearNode(e: HTMLElement) {
@@ -220,7 +222,7 @@ export class Editor extends srceditor.Editor {
                         <i className="download icon"></i>
                     </button>
                     <button className="ui right floated icon button" onClick ={this.toggleRecording.bind(this)}>
-                        <i id="serialRecordButton" className={this.active ? "pause icon" : "record icon"}></i>
+                        <i ref={e => this.recordIcon = e} className={this.active ? "pause icon" : "circle icon"}></i>
                     </button>
                 </div>
                 <div id="serialCharts"></div>
