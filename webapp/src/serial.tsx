@@ -85,7 +85,7 @@ export class Editor extends srceditor.Editor {
 
     appendRawData(data: string) {
         this.rawDataBuffer += data
-        let excessChars = this.rawDataBuffer.length - this.maxBufferLength 
+        let excessChars = this.rawDataBuffer.length - this.maxBufferLength
         if (excessChars > 0) {
             this.rawDataBuffer = this.rawDataBuffer.slice(excessChars)
         }
@@ -122,7 +122,7 @@ export class Editor extends srceditor.Editor {
             let ch = data[i]
             this.consoleBuffer += ch
             if (ch === "\n" || this.consoleBuffer.length > this.maxConsoleLineLength) {
- 
+
                 let lastEntry = this.consoleRoot.lastChild
                 let newEntry = document.createElement("div")
                 if (lastEntry && lastEntry.lastChild.textContent == this.consoleBuffer) {
@@ -221,7 +221,7 @@ export class Editor extends srceditor.Editor {
                         <div id="datasavelocalfile" class="ui bottom attached button">
                             <i class="download icon"></i>
                             ${lf("Download data")}
-                        </div>        
+                        </div>
                     </div>
                 </div>`
         }).done()
@@ -283,7 +283,7 @@ class Chart {
         this.rootElement.className = "ui segment"
         this.source = source
         this.variable = variable
-        this.chart.addTimeSeries(this.line, this.lineConfigs[chartIdx%4])
+        this.chart.addTimeSeries(this.line, this.lineConfigs[chartIdx % 4])
 
         let canvas = this.makeCanvas()
         let label = this.makeLabel()
