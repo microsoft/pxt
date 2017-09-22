@@ -6,7 +6,6 @@ import * as core from "./core"
 import * as srceditor from "./srceditor"
 import * as sui from "./sui"
 import * as codecard from "./codecard"
-import * as canvaschart from "./canvaschart"
 
 import Cloud = pxt.Cloud
 import Util = pxt.Util
