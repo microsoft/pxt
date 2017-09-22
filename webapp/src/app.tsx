@@ -1209,8 +1209,8 @@ export class ProjectView
         this.serialEditor.clear()
         let simLogs = this.refs["simLogs"] as logview.LogView
         let devLogs = this.refs["devLogs"] as logview.LogView
-        simLogs.clear()
-        devLogs.clear()
+        if (simLogs) simLogs.clear()
+        if (devLogs) devLogs.clear()
     }
 
     hwDebug() {

@@ -168,7 +168,7 @@ function hf2Async() {
 }
 
 let initPromise: Promise<pxt.HF2.Wrapper>
-export function initAsync(force=false) {
+export function initAsync(force = false) {
     let isFirstInit = false;
     if (!initPromise) {
         isFirstInit = true;
