@@ -15,12 +15,14 @@ const OUT_OF_BOUND_MARGIN = 300;
 export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     private dragSurface: HTMLDivElement;
     private container: HTMLDivElement;
+    private arrows: HTMLSpanElement[] = [];
     private isDragging = false;
     private definitelyDragging = false;
     private cancelClick = false;
 
     private childWidth: number;
     private containerWidth: number;
+    private arrowWidth: number;
     private actualPageLength: number;
 
     private currentOffset = 0;
@@ -37,9 +39,10 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
 
     public render() {
         this.childrenElements = [];
+        this.arrows = [];
         const { rightDisabled, leftDisabled } = this.state || {} as any;
         return <div className="ui carouselouter">
-            <span className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")} tabIndex={0} onClick={() => this.onArrowClick(true)}>
+            <span className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")} tabIndex={0} onClick={() => this.onArrowClick(true)} ref={r => this.arrows.push(r)}>
                 <i className="icon circle angle left"/>
             </span>
             <div className="carouselcontainer" ref={r => this.container = r}>
@@ -51,7 +54,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
                 }
                 </div>
             </div>
-            <span className={"carouselarrow right aligned" + (rightDisabled ? " arrowdisabled" : "")} tabIndex={0} onClick={() => this.onArrowClick(false)}>
+            <span className={"carouselarrow right aligned" + (rightDisabled ? " arrowdisabled" : "")} tabIndex={0} onClick={() => this.onArrowClick(false)} ref={r => this.arrows.push(r)}>
                 <i className="icon circle angle right"/>
             </span>
         </div>
@@ -75,13 +78,28 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
 
     public updateDimensions() {
         if (this.container) {
+            let shouldReposition = false;
             this.containerWidth = this.container.getBoundingClientRect().width;
+            this.getArrowWidth();
             if (this.childrenElements.length) {
-                this.childWidth = this.childrenElements[0].getBoundingClientRect().width;
+                const newWidth = this.childrenElements[0].getBoundingClientRect().width;
+                if (newWidth !== this.childWidth) {
+                    this.childWidth = newWidth;
+                    shouldReposition = true;
+                }
                 this.actualPageLength = Math.floor(this.containerWidth / this.childWidth)
             }
             this.dragSurface.style.width = this.totalLength() + "px";
             this.updateArrows();
+
+            if (this.index >= this.maxIndex()) {
+                shouldReposition = true;
+                this.index = this.maxIndex();
+            }
+
+            if (shouldReposition) {
+                this.setPosition(this.indexToOffset(this.index));
+            }
         }
     }
 
@@ -229,11 +247,25 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         if (index <= 0) {
             return 0;
         }
+        if (index === this.maxIndex()) {
+            return -1 * (this.totalLength() - this.containerWidth - OUT_OF_BOUND_MARGIN + this.arrowWidth * 2)
+        }
         return -1 * (index * this.childWidth - this.childWidth * this.props.bleedPercent / 100);
     }
 
     private totalLength() {
         return React.Children.count(this.props.children) * this.childWidth  + OUT_OF_BOUND_MARGIN;
+    }
+
+    private getArrowWidth() {
+        if (this.arrows.length) {
+            this.arrowWidth = 0;
+            this.arrows.forEach(a => {
+                if (a) {
+                    this.arrowWidth = Math.max(a.getBoundingClientRect().width, this.arrowWidth)
+                }
+            });
+        }
     }
 
     private maxScrollOffset() {
