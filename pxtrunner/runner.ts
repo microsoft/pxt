@@ -266,7 +266,8 @@ namespace pxt.runner {
                         boardDefinition: board,
                         parts: parts,
                         fnArgs: fnArgs,
-                        cdnUrl: pxt.webConfig.commitCdnUrl
+                        cdnUrl: pxt.webConfig.commitCdnUrl,
+                        localizedStrings: Util.getLocalizedStrings()
                     };
                     if (pxt.appTarget.simulator)
                         runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
@@ -592,7 +593,7 @@ ${files["main.ts"]}
                 let steps = tutorialmd.split(/^##[^#].*$/gmi);
                 let newAuthoring = true;
                 if (steps.length <= 1) {
-                    // try again, using old logic. 
+                    // try again, using old logic.
                     steps = tutorialmd.split(/^###[^#].*$/gmi);
                     newAuthoring = false;
                 }

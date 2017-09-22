@@ -20,6 +20,7 @@ let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
 let tutorialMode: boolean;
 let displayedModals: pxt.Map<boolean> = {};
+export let simTranslations: pxt.Map<string>;
 
 let $debugger: JQuery;
 
@@ -190,7 +191,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
         highContrast,
         aspectRatio: parts.length ? pxt.appTarget.simulator.partsAspectRatio : pxt.appTarget.simulator.aspectRatio,
         partDefinitions: pkg.computePartDefinitions(parts),
-        cdnUrl: pxt.webConfig.commitCdnUrl
+        cdnUrl: pxt.webConfig.commitCdnUrl,
+        localizedStrings: simTranslations
     }
     postSimEditorEvent("started");
 
