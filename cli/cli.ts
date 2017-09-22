@@ -3386,7 +3386,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
             });
 
             reportDiagnostics(res.diagnostics);
-            if (!res.success) {
+            if (!res.success && buildOpts.mode != BuildOption.GenDocs) {
                 process.exit(1)
             }
 
