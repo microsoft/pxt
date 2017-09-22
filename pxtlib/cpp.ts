@@ -647,7 +647,7 @@ namespace pxt.cpp {
                 "pxt_gittag": cs.gittag,
             }
             U.iterMap(U.jsonFlatten(configJson), (k, v) => {
-                k = k.toUpperCase().replace(/\./g, "_").replace("CODAL_", "DEVICE_")
+                k = k.toUpperCase().replace(/[\.\-]/g, "_").replace("CODAL_", "DEVICE_")
                 codalJson.definitions[k] = v
             })
             res.generatedFiles["/codal.json"] = JSON.stringify(codalJson, null, 4) + "\n"
