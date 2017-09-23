@@ -65,9 +65,12 @@ function getOpenOcdPath() {
 }
 
 export function startAsync(c: commandParser.ParsedCommand) {
-    let binTrg = pxt.appTarget.compileService.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "")
-    let f = "built/yt/build/" + pxt.appTarget.compileService.yottaTarget
-        + "/source/" + binTrg;
+    let cs = pxt.appTarget.compileService
+
+    let f =
+        cs.codalBinary ?
+            "built/codal/build/" + cs.codalBinary :
+            "built/yt/build/" + cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "");
 
     if (!fs.existsSync(f))
         fatal("compiled file not found: " + f)

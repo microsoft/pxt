@@ -2047,8 +2047,14 @@ class Host
             }
         }
         check(p)
+
         if (U.endsWith(filename, ".uf2"))
             fs.writeFileSync(p, contents, "base64")
+        else if (U.endsWith(filename, ".elf"))
+            fs.writeFileSync(p, contents, {
+                encoding: "base64",
+                mode: 0o777
+            })
         else
             fs.writeFileSync(p, contents, "utf8")
     }
@@ -3406,7 +3412,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOption
                 }));
             }
 
-            console.log("Package built; hexsize=" + (res.outfiles[pxtc.BINARY_HEX] || "").length)
+            console.log(`Package built; written to ${pxt.outputName()}; size: ${(res.outfiles[pxt.outputName()] || "").length}`)
 
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:

@@ -193,6 +193,7 @@ namespace pxt.runner {
             const js = $('<code class="lang-typescript highlight"/>').text(c.text().trim());
             if (options.snippetReplaceParent) c = c.parent();
             const compiled = r.compileJS && r.compileJS.success;
+            // TODO should this use pxt.outputName() and not pxtc.BINARY_HEX
             const hex = options.hex && compiled && r.compileJS.outfiles[pxtc.BINARY_HEX]
                 ? r.compileJS.outfiles[pxtc.BINARY_HEX] : undefined;
             const hexname = `${appTarget.nickname || appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
