@@ -198,6 +198,7 @@ pxt extract ${url}`;
             actions.push({
                 label: action,
                 onClick: publish,
+                icon: 'share alternate',
                 loading: actionLoading,
                 className: 'primary'
             })

@@ -14,6 +14,7 @@ export interface UiProps {
     title?: string;
     ariaLabel?: string;
     tabIndex?: number;
+    rightIcon?: boolean;
 }
 
 export interface WithPopupProps extends UiProps {
@@ -40,10 +41,12 @@ function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = fal
 }
 
 function genericContent(props: UiProps) {
-    return [
+    let retVal = [
         props.icon ? (<i key='iconkey' aria-hidden="true" role="presentation" className={props.icon + " icon " + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '') }></i>) : null,
         props.text ? (<span key='textkey' className={'ui text' + (props.textClass ? ' ' + props.textClass : '') }>{props.text}</span>) : null,
     ]
+    if (props.icon && props.rightIcon) retVal = retVal.reverse();
+    return retVal;
 }
 
 export function popupWindow(url: string, title: string, width: number, height: number) {
@@ -384,7 +387,7 @@ export class Input extends data.Component<{
                         placeholder={p.placeholder} value={value}
                         readOnly={!!p.readOnly}
                         onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
-                        onChange={v => onChange((v.target as any).value)}/>
+                        onChange={v => onChange((v.target as any).value) }/>
                         : <textarea
                             id={p.id}
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "") }
@@ -393,7 +396,7 @@ export class Input extends data.Component<{
                             value={value}
                             readOnly={!!p.readOnly}
                             onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
-                            onChange={v => onChange((v.target as any).value)}>
+                            onChange={v => onChange((v.target as any).value) }>
                         </textarea>}
                     {copyBtn}
                 </div>
@@ -728,6 +731,7 @@ export interface ModalAction {
     onClick: () => void;
     className?: string;
     loading?: boolean;
+    icon?: string;
 }
 
 export interface ModalProps {
@@ -912,7 +916,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                         <a className={`ui huge icon clear focused`} href={this.props.helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", this.props.header) }>
                             <i className="help icon"></i>
                         </a>
-                        : undefined}
+                        : undefined }
                 </div> : undefined }
                 {this.props.description ? <label id={this.id + 'description'} className="accessible-hidden">{this.props.description}</label> : undefined}
                 <div id={this.id + 'desc'} className="content">
@@ -923,11 +927,13 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                         {this.props.actions.map(action =>
                             <Button
                                 key={`action_${action.label}`}
+                                icon={action.icon}
                                 text={action.label}
-                                class={`approve ${action.className || ''} ${action.loading ? "loading disabled" : ""} focused`}
+                                class={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} focused`}
                                 onClick={() => {
                                     action.onClick();
-                                } } />
+                                } }
+                                onKeyDown={fireClickOnEnter} />
                         ) }
                     </div> : undefined }
                 {closeIcon ? <Button

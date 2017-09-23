@@ -126,15 +126,20 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         // TODO: Use step name instead of tutorial Name in full screen mode.
         const header = tutorialFullscreen ? tutorialName : lf("Hint");
 
+        const hide = () => this.setState({ visible: false });
+
+        const actions = [{
+            label: lf("Ok"),
+            onClick: hide,
+            icon: 'check',
+            className: 'green'
+        }]
+
         return <sui.Modal open={visible} className="hintdialog" size="small" header={header} closeIcon={true}
                 onClose={() => this.setState({ visible: false })} dimmer={true}
+                actions={actions}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
-                    <div className="content">
-                        <div dangerouslySetInnerHTML={{__html: tutorialHint}} />
-                    </div>
-                    <div className="actions" style={{textAlign: "right"}}>
-                        <sui.Button class="green focused" icon={`check`} text={lf("Ok") } onClick={() => this.setState({ visible: false }) } onKeyDown={sui.fireClickOnEnter} />
-                    </div>
+                    <div dangerouslySetInnerHTML={{__html: tutorialHint}} />
             </sui.Modal>;
     }
 }
