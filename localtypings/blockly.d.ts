@@ -1094,6 +1094,11 @@ declare namespace Blockly {
         numPadBorder: string;
     }
 
+    namespace Extensions {
+        function register(name: string, initFn: Function): void;
+        function apply(name: string, block: Blockly.Block, isMutator: boolean): void;
+    }
+
     /* PXT Blockly */
 
     class PXTUtils {
