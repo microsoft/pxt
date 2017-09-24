@@ -145,7 +145,15 @@ namespace ts.pxtc {
     in r28, 0x3d
     in r29, 0x3e`
         }
-
+        push_locals(n: number) {
+            return `
+    in	r28, 0x3d
+    in	r29, 0x3e
+    sbiw	r28, #2*${n}
+    out	0x3d, r28
+    out	0x3e, r29
+    @dummystack ${n}`
+        }
         pop_locals(n: number) {
             return `
     in	r28, 0x3d
@@ -155,7 +163,6 @@ namespace ts.pxtc {
     out	0x3e, r29
     @dummystack -${n}`
         }
-
         unconditional_branch(lbl: string) { return "jmp " + lbl }
         beq(lbl: string) { return "breq " + lbl }
         bne(lbl: string) { return "brne " + lbl }
