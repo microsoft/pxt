@@ -3,7 +3,7 @@
 Insert an element into an array at some position.
 
 ```sig
-[""].insertAt(0, 0)
+[0].insertAt(0, 0)
 ```
 
 The size of the array grows by one. The element is added to the array at the position you want. If there's
@@ -35,4 +35,4 @@ for (let item of jumbled) {
 
 ## See also
 
-[remove at](/blocks/arrays/remove-at)
+[remove at](/reference/arrays/remove-at)

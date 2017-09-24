@@ -90,17 +90,6 @@ npm install -g svgo
 svgo svgicons/myicon.svg
 ```
 
-## Versions
-
-Current serviced versions of PXT:
-
-| Module          | Version       | Label |
-| ------------- | ------------- | --- |
-| pxt-core      | v1.8.*        | mainline PXT |
-| pxt-core      | v2.0.*        | freshcoat PXT (New rendering of blocks) |
-| pxt-core      | v0.12.*       | v0 PXT |
-| pxt-core      | v0.13.*       | v0 PXT with accessibility |
-
 ## Tests
 
 The tests are located in the `tests/` subdirectory and are a combination of node and

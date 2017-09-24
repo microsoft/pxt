@@ -40,6 +40,7 @@ namespace pxt.editor {
         | "stopsimulator" // EditorMessageStopRequest
         | "hidesimulator"
         | "showsimulator"
+        | "closeflyout"
         | "newproject"
         | "importproject"
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
@@ -108,6 +109,8 @@ namespace pxt.editor {
     export interface EditorSyncState {
         // (optional) filtering argument
         filters?: pxt.editor.ProjectFilters;
+        // (optional) show or hide the search bar
+        searchBar?: boolean;
     }
 
     export interface EditorWorkspaceSyncResponse extends EditorMessageResponse {
@@ -133,6 +136,7 @@ namespace pxt.editor {
         project: pxt.workspace.Project;
         // (optional) filtering argument
         filters?: pxt.editor.ProjectFilters;
+        searchBar?: boolean;
     }
 
     export interface EditorMessageRenderBlocksRequest extends EditorMessageRequest {
@@ -201,6 +205,7 @@ namespace pxt.editor {
                     case "restartsimulator": p = p.then(() => projectView.restartSimulator()); break;
                     case "hidesimulator": p = p.then(() => projectView.collapseSimulator()); break;
                     case "showsimulator": p = p.then(() => projectView.expandSimulator()); break;
+                    case "closeflyout": p = p.then(() => projectView.closeFlyout()); break;
                     case "redo": p = p.then(() => {
                         const editor = projectView.editor;
                         if (editor && editor.hasRedo())
@@ -223,7 +228,10 @@ namespace pxt.editor {
                     }
                     case "importproject": {
                         const load = data as EditorMessageImportProjectRequest;
-                        p = p.then(() => projectView.importProjectAsync(load.project, load.filters));
+                        p = p.then(() => projectView.importProjectAsync(load.project, {
+                            filters: load.filters,
+                            searchBar: load.searchBar
+                        }));
                         break;
                     }
                     case "proxytosim": {

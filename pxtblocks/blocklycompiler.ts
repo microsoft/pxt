@@ -1,4 +1,4 @@
-///<reference path='../localtypings/blockly.d.ts'/>
+///<reference path='../localtypings/pxtblockly.d.ts'/>
 /// <reference path="../built/pxtlib.d.ts" />
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -291,7 +291,7 @@ namespace pxt.blocks {
     }
 
     function infer(e: Environment, w: B.Workspace) {
-        w.getAllBlocks().filter(b => !b.disabled).forEach((b: B.Block) => {
+        if (w) w.getAllBlocks().filter(b => !b.disabled).forEach((b: B.Block) => {
             try {
                 switch (b.type) {
                     case "math_op2":
@@ -510,13 +510,13 @@ namespace pxt.blocks {
     function extractNumber(b: B.Block): number {
         let v = b.getFieldValue(b.type === "math_number_minmax" ? "SLIDER" : "NUM");
         const parsed = parseFloat(v);
-        checkNumber(parsed);
+        checkNumber(parsed, b);
         return parsed;
     }
 
-    function checkNumber(n: number) {
+    function checkNumber(n: number, b: B.Block) {
         if (n === Infinity || isNaN(n)) {
-            U.userError(lf("Number entered is either too large or too small"));
+            throwBlockError(lf("Number entered is either too large or too small"), b);
         }
     }
 
@@ -666,7 +666,7 @@ namespace pxt.blocks {
     }
 
     function compileProcedure(e: Environment, b: B.Block, comments: string[]): JsNode[] {
-        const name = escapeVarName(b.getFieldValue("NAME"), e);
+        const name = escapeVarName(b.getFieldValue("NAME"), e, true);
         const stmts = getInputTargetBlock(b, "STACK");
         return [
             mkText("function " + name + "() "),
@@ -675,7 +675,7 @@ namespace pxt.blocks {
     }
 
     function compileProcedureCall(e: Environment, b: B.Block, comments: string[]): JsNode {
-        const name = escapeVarName(b.getFieldValue("NAME"), e);
+        const name = escapeVarName(b.getFieldValue("NAME"), e, true);
         return mkStmt(mkText(name + "()"));
     }
 
@@ -799,6 +799,7 @@ namespace pxt.blocks {
     export interface RenameMap {
         oldToNew: Map<string>;
         takenNames: Map<boolean>;
+        oldToNewFunctions: Map<string>;
     }
 
     export enum VarUsage {
@@ -854,7 +855,8 @@ namespace pxt.blocks {
             errors: [],
             renames: {
                 oldToNew: {},
-                takenNames: {}
+                takenNames: {},
+                oldToNewFunctions: {}
             },
             stats: {}
         }
@@ -965,10 +967,15 @@ namespace pxt.blocks {
     }
 
     // convert to javascript friendly name
-    export function escapeVarName(name: string, e: Environment): string {
+    export function escapeVarName(name: string, e: Environment, isFunction = false): string {
         if (!name) return '_';
 
-        if (e.renames.oldToNew[name]) {
+        if (isFunction) {
+            if (e.renames.oldToNewFunctions[name]) {
+                return e.renames.oldToNewFunctions[name];
+            }
+        }
+        else if (e.renames.oldToNew[name]) {
             return e.renames.oldToNew[name];
         }
 
@@ -984,7 +991,12 @@ namespace pxt.blocks {
             n += i;
         }
 
-        e.renames.oldToNew[name] = n;
+        if (isFunction) {
+            e.renames.oldToNewFunctions[name] = n;
+        }
+        else {
+            e.renames.oldToNew[name] = n;
+        }
         e.renames.takenNames[n] = true;
         return n;
     }
@@ -1048,8 +1060,12 @@ namespace pxt.blocks {
         if (lit)
             return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
         let f = b.getFieldValue(p.field);
-        if (f != null)
+        if (f != null) {
+            if (b.getField(p.field) instanceof pxtblockly.FieldTextInput) {
+                return H.mkStringLiteral(f);
+            }
             return mkText(f);
+        }
         else {
             attachPlaceholderIf(e, b, p.field);
             const target = getInputTargetBlock(b, p.field);
@@ -1124,6 +1140,7 @@ namespace pxt.blocks {
         // b.getFieldValue may be string, numbers
         const argb = getInputTargetBlock(b, arg);
         if (argb) return compileExpression(e, argb, comments);
+        if (b.getField(arg) instanceof pxtblockly.FieldTextInput) return H.mkStringLiteral(b.getFieldValue(arg));
         return mkText(b.getFieldValue(arg))
     }
 
@@ -1151,6 +1168,20 @@ namespace pxt.blocks {
 
         if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.ObjectDestructuringMutator) {
             argumentDeclaration = b.mutation.compileMutation(e, comments);
+        }
+        else if (stdfun.handlerArgs.length) {
+            let handlerArgs: string[] = []; // = stdfun.handlerArgs.map(arg => escapeVarName(b.getFieldValue("HANDLER_" + arg.name), e));
+            for (let i = 0; i < stdfun.handlerArgs.length; i++) {
+                const arg = stdfun.handlerArgs[i];
+                const varName = b.getFieldValue("HANDLER_" + arg.name);
+                if (varName !== null) {
+                    handlerArgs.push(escapeVarName(varName, e));
+                }
+                else {
+                    break;
+                }
+            }
+            argumentDeclaration = mkText(`function (${handlerArgs.join(", ")})`)
         }
 
         return mkCallWithCallback(e, ns, stdfun.f, compiledArgs, body, argumentDeclaration, stdfun.isExtensionMethod);
@@ -1202,6 +1233,7 @@ namespace pxt.blocks {
         f: string;
         args: StdArg[];
         attrs: ts.pxtc.CommentAttrs;
+        handlerArgs?: HandlerArg[];
         isExtensionMethod?: boolean;
         isExpression?: boolean;
         imageLiteral?: number;
@@ -1357,16 +1389,16 @@ namespace pxt.blocks {
                         return;
                     }
                     e.renames.takenNames[fn.namespace] = true;
-                    let fieldMap = pxt.blocks.parameterNames(fn);
+                    let { attrNames, handlerArgs } = pxt.blocks.parameterNames(fn);
                     let instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
                     let args = (fn.parameters || []).map(p => {
-                        if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };
+                        if (attrNames[p.name] && attrNames[p.name].name) return { field: attrNames[p.name].name };
                         else return null;
                     }).filter(a => !!a);
 
                     if (instance && !fn.attributes.defaultInstance) {
                         args.unshift({
-                            field: fieldMap["this"].name
+                            field: attrNames["this"].name
                         });
                     }
 
@@ -1375,10 +1407,11 @@ namespace pxt.blocks {
                         f: fn.name,
                         args: args,
                         attrs: fn.attributes,
+                        handlerArgs,
                         isExtensionMethod: instance,
                         isExpression: fn.retType && fn.retType !== "void",
                         imageLiteral: fn.attributes.imageLiteral,
-                        hasHandler: fn.parameters && fn.parameters.some(p => (p.type == "() => void" || !!p.properties)),
+                        hasHandler: !!handlerArgs.length || fn.parameters && fn.parameters.some(p => (p.type == "() => void" || !!p.properties)),
                         property: !fn.parameters,
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
@@ -1395,8 +1428,24 @@ namespace pxt.blocks {
                 return true;
             else if (isMutatingBlock(b) && b.mutation.isDeclaredByMutation(name))
                 return true;
-            else
-                return variableIsScoped(b.getSurroundParent(), name);
+
+            let stdFunc = e.stdCallTable[b.type];
+
+            if (stdFunc && stdFunc.handlerArgs.length) {
+                let foundIt = false;
+                stdFunc.handlerArgs.forEach(arg => {
+                    if (foundIt) return;
+                    let varName = b.getFieldValue("HANDLER_" + arg.name);
+                    if (varName != null && escapeVarName(varName, e) === name) {
+                        foundIt = true;
+                    }
+                });
+                if (foundIt) {
+                    return true;
+                }
+            }
+
+            return variableIsScoped(b.getSurroundParent(), name);
         };
 
         function trackLocalDeclaration(name: string, type: string) {
@@ -1412,7 +1461,7 @@ namespace pxt.blocks {
         }
 
         // collect local variables.
-        w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
+        if (w) w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
             if (b.type == "controls_for" || b.type == "controls_simple_for" || b.type == "controls_for_of") {
                 let x = escapeVarName(b.getFieldValue("VAR"), e);
                 if (b.type == "controls_for_of") {
@@ -1430,11 +1479,21 @@ namespace pxt.blocks {
                     }
                 }
             }
+
+            let stdFunc = e.stdCallTable[b.type];
+            if (stdFunc && stdFunc.handlerArgs.length) {
+                stdFunc.handlerArgs.forEach(arg => {
+                    let varName = b.getFieldValue("HANDLER_" + arg.name)
+                    if (varName != null) {
+                        trackLocalDeclaration(escapeVarName(varName, e), arg.type);
+                    }
+                });
+            }
         });
 
         // determine for-loop compatibility: for each get or
         // set block, 1) make sure that the variable is bound, then 2) mark the variable if needed.
-        w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
+        if (w) w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
             if (b.type == "variables_get" || b.type == "variables_set" || b.type == "variables_change") {
                 let x = escapeVarName(b.getFieldValue("VAR"), e);
                 if (lookup(e, x) == null)
@@ -1459,15 +1518,28 @@ namespace pxt.blocks {
         return tdASTtoTS(e, compiled);
     }
 
+    function eventWeight(b: B.Block, e: Environment) {
+        if (b.type === ts.pxtc.ON_START_TYPE) {
+            return 0;
+        }
+        const api = e.stdCallTable[b.type];
+        if (api && api.attrs.afterOnStart) {
+            return 1;
+        }
+        else {
+            return -1;
+        }
+    }
+
     function compileWorkspace(e: Environment, w: B.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
         try {
             infer(e, w);
 
             const stmtsMain: JsNode[] = [];
 
-            // all compiled top level blocks are event, move on start to bottom
+            // all compiled top level blocks are events
             const topblocks = w.getTopBlocks(true).sort((a, b) => {
-                return (a.type == ts.pxtc.ON_START_TYPE ? 1 : 0) - (b.type == ts.pxtc.ON_START_TYPE ? 1 : 0);
+                return eventWeight(a, e) - eventWeight(b, e)
             });
 
             updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
@@ -1514,6 +1586,15 @@ namespace pxt.blocks {
                 });
 
             return stmtsVariables.concat(stmtsMain)
+        } catch (err) {
+            let be: B.Block = (err as any).block;
+            if (be) {
+                be.setWarningText(err + "");
+                e.errors.push(be);
+            }
+            else {
+                throw err;
+            }
         } finally {
             removeAllPlaceholders();
         }

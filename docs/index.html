@@ -12,6 +12,17 @@
 	<link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/4.1.0/css/fabric.min.css">
 
 	<style>
+		@media not all and (pointer:coarse) {
+			*:not([tabindex='-1']):focus {
+				outline: auto !important; /* initial or inherit has no render on Chrome */
+			}
+
+			.ui.inverted:not(#makecode-resources-container) .ui.card:not([tabindex='-1']):focus,
+			.ui.button.green:focus {
+				outline: 2px solid white !important;
+			}
+		}
+
 		#makecode-fixed-menu {
 			background: #2D404F;
 			background: rgba(45, 64, 79, 0.9);
@@ -328,16 +339,29 @@
 					e.stopPropagation();
 				}
 			})
+			// Enable telemetry
+			var ai = window.appInsights;
+			tickEvent = function (id, data) {
+				if (!ai) return;
+				if (!data) ai.trackEvent(id);
+				else {
+					var props = {};
+					var measures = {};
+					for (const k in data)
+						if (typeof data[k] == "string") props[k] = data[k];
+						else measures[k] = data[k];
+					ai.trackEvent(id, props, measures);
+				}
+			}
 		});
 
 		var fireClickOnEnter = function (e) {
 			var charCode = (typeof e.which == "number") ? e.which : e.keyCode
-			if (charCode === 13 || charCode === 32) {
+			if (charCode === 13 || charCode === 32) { // Enter or Space key
 				e.preventDefault();
 				e.currentTarget.click();
 			}
 		}
-
 	</script>
 	<script type="application/ld+json">
 		{
@@ -353,7 +377,8 @@
 				"makecode.chibitronics.com",
 				"makecode.sparkfun.com",
 				"https://twitter.com/MSMakeCode",
-				"https://www.instagram.com/makecode/"
+				"https://www.instagram.com/makecode/",
+				"https://www.youtube.com/channel/UCye7YlvFUUQ1dSy0WZZ1T_Q"
 			]
 		}
 	</script>
@@ -376,10 +401,10 @@
 		<a href="#resources" class="item ms-font-m" role="menuitem">
 			Resources
 		</a>
-		<a href="https://makecode.com/blog" target="_blank" class="item ms-font-m" role="menuitem">
+		<a href="https://makecode.com/blog" target="_blank" onclick="tickEvent('makecode.menu.blog')" class="item ms-font-m" role="menuitem">
 			Blog
 		</a>
-		<a id="sidenav-contact" href="mailto:makecode@microsoft.com" class="item ms-font-m" role="menuitem">
+		<a id="sidenav-contact" href="mailto:makecode@microsoft.com" onclick="tickEvent('makecode.menu.contact')" class="item ms-font-m" role="menuitem">
 			Contact
 		</a>
 	</div>
@@ -398,7 +423,7 @@
 
 			<div id="makecode-mobile-menu" class="ui fixed accent borderless inverted menu">
 				<div class="ui container fluid ">
-					<a id="nav-button" class="launch icon item" aria-controls="sidenav" aria-haspopup="true" tabindex="2" onkeypress="fireClickOnEnter(event);">
+					<a id="nav-button" class="launch icon item" aria-controls="makecode-sidebar" aria-haspopup="true" tabindex="2" onkeypress="fireClickOnEnter(event);">
 						<i class="ms-Icon ms-Icon--GlobalNavButton" aria-hidden="true"></i>
 					</a>
 					<div class="item ms-font-xl ms-fontWeight-light">
@@ -424,10 +449,10 @@
 					<a href="#resources" class="item ms-font-m" role="menuitem">
 				Resources
 				</a>
-					<a href="https://makecode.com/blog" target="_blank" class="item ms-font-m" role="menuitem">
+					<a href="https://makecode.com/blog" target="_blank" onclick="tickEvent('makecode.menu.blog')" class="item ms-font-m" role="menuitem">
 				Blog
 				</a>
-					<a href="mailto:makecode@microsoft.com" class="item ms-font-m" role="menuitem">
+					<a href="mailto:makecode@microsoft.com" onclick="tickEvent('makecode.menu.contact')" class="item ms-font-m" role="menuitem">
 				Contact
 				</a>
 				</div>
@@ -435,10 +460,10 @@
 
 		</header>
 
-		<main role="main">
+		<main>
 
+			<section id="document-main" aria-label="main content">
 
-			<section id="document-main">
 				<div id="makecode-targets" class="ui inverted vertical center aligned segment targets">
 
 					<h2 class="ms-font-xxl ms-fontWeight-semilight">Hands-on computing education</h2>
@@ -450,321 +475,335 @@
 						<!-- @include editorcards.html -->
 					</div>
 				</div>
-				<section id="about">
 
-					<section id="about">
-						<div id="makecode-about-container" class="ui vertical masthead center aligned segment">
-							<div class="ui text container">
-								<h2 class="ui ms-font-su ms-fontWeight-light">About Microsoft MakeCode</h2>
-								<p class="ms-font-l">
-									Microsoft MakeCode brings computer science to life for all students with fun projects, immediate results, and both block
-									and text editors for learners at different levels.
-								</p>
-							</div>
+				<section id="about" aria-label="About Microsoft MakeCode">
+					<div id="makecode-about-container" class="ui vertical masthead center aligned segment">
+						<div class="ui text container">
+							<h2 class="ui ms-font-su ms-fontWeight-light">About Microsoft MakeCode</h2>
+							<p class="ms-font-l">
+								Microsoft MakeCode brings computer science to life for all students with fun projects, immediate results, and both block
+								and text editors for learners at different levels.
+							</p>
 						</div>
-						<div class="ui vertical stripe quote segment">
-							<div class="ui equal width stackable internally celled grid">
-								<div class="center aligned row">
-									<div class="column">
-										<img src="/static/images/simulator.gif" class="editor-image" alt="The micro:bit simulator simulating some code">
-										<h3 class="ms-font-xxl ms-fontWeight-semibold">Simulator</h3>
-										<p class="ms-font-l">An interactive simulator provides students with instant feedback on how their program is running, and allows them
-											to debug their code.</p>
-									</div>
-									<div class="column">
-										<img src="/static/images/blocks.gif" class="editor-image" alt="Coding using the block editor">
-										<h3 class="ms-font-xxl ms-fontWeight-semibold">Block Editor</h3>
-										<p class="ms-font-l">Students new to coding can start with colored blocks that they can drag and drop onto their workspace to construct
-											their programs.</p>
-									</div>
-									<div class="column">
-										<img src="/static/images/ts.gif" class="editor-image" alt="Coding using the Javascript editor">
-										<h3 class="ms-font-xxl ms-fontWeight-semibold">JavaScript Editor</h3>
-										<p class="ms-font-l">When they are ready, students can move into a full-featured JavaScript editor with code snippets, tooltips, and
-											error detection to help them.</p>
-									</div>
+					</div>
+					<div class="ui vertical stripe quote segment">
+						<div class="ui equal width stackable internally celled grid">
+							<div class="center aligned row">
+								<div class="column">
+									<img src="/static/images/simulator.gif" class="editor-image" alt="The micro:bit simulator simulating some code">
+									<h3 class="ms-font-xxl ms-fontWeight-semibold">Simulator</h3>
+									<p class="ms-font-l">An interactive simulator provides students with instant feedback on how their program is running, and allows them
+										to debug their code.</p>
 								</div>
-							</div>
-						</div>
-					</section>
-
-					<section id="get-inspired">
-						<div id="makecode-getinspired-container" class="ui vertical masthead inverted center aligned segment">
-							<div class="ui grid container">
-								<div class="row">
-									<div class="ui text container">
-										<h2 class="ui ms-font-su ms-fontWeight-light">Get Inspired</h2>
-										<p class="ms-font-l ms-fontWeight-regular">
-											Get inspired by these project ideas to bring Making and Coding to your classroom.
-										</p>
-									</div>
+								<div class="column">
+									<img src="/static/images/blocks.gif" class="editor-image" alt="Coding using the block editor">
+									<h3 class="ms-font-xxl ms-fontWeight-semibold">Block Editor</h3>
+									<p class="ms-font-l">Students new to coding can start with colored blocks that they can drag and drop onto their workspace to construct
+										their programs.</p>
 								</div>
-								<div class="row">
-									<div class="ui link three cards stackable padded">
-										<a class="ui card" href="https://makecode.microbit.org/projects/guitar" target="_blank" aria-label="Air Guitar project">
-											<div class="image">
-												<iframe width="100%" height="200" src="https://www.youtube.com/embed/GYmdTFvxz80?html5=1" frameborder="0" allowfullscreen></iframe>
-											</div>
-											<div class="content">
-												<div class="header">Air Guitar</div>
-												<div class="meta">
-													<span class="ms-fontWeight-semibold">micro:bit</span>
-												</div>
-												<div class="description">
-													Use the light sensor and accelerometer to make sounds for a homemade cardboard air guitar.
-												</div>
-											</div>
-										</a>
-										<a class="ui card" href="https://youtu.be/VLdWm7LBGjs" target="_blank" aria-label="Mega Jump video">
-											<div class="image">
-												<iframe width="100%" height="200" src="https://www.youtube.com/embed/VLdWm7LBGjs?html5=1" frameborder="0" allowfullscreen></iframe>
-											</div>
-											<div class="content">
-												<div class="header">Mega Jump!</div>
-												<div class="meta">
-													<span class="ms-fontWeight-semibold">Minecraft</span>
-												</div>
-												<div class="description">
-													Code a mod that lets you jump super high in Minecraft.
-												</div>
-											</div>
-										</a>
-										<a class="ui card" href="https://makecode.adafruit.com/projects/magic-wand" target="_blank" aria-label="Magic Wand project">
-											<div class="image">
-												<iframe width="100%" height="200" src="https://www.youtube.com/embed/Us-tH3SP8XE?html5=1" frameborder="0" allowfullscreen></iframe>
-											</div>
-											<div class="content">
-												<div class="header">Magic Wand</div>
-												<div class="meta">
-													<span class="ms-fontWeight-semibold">Circuit Playground Express</span>
-												</div>
-												<div class="description">
-													A colorful wand that plays a tune when shaken.
-												</div>
-											</div>
-										</a>
-										<a class="ui card" href="https://makecode.microbit.org/projects/wallet" target="_blank" aria-label="Duct Tape Wallet project">
-											<div class="image">
-												<img src="https://pxt.azureedge.net/blob/714618d6fa1f3befe697c55125e0d4a3b082e326/static/mb/projects/wallet/wallet.jpg" alt="A micro:bit on a wallet made from duct tape">
-											</div>
-											<div class="content">
-												<div class="header">Duct Tape Wallet</div>
-												<div class="meta">
-													<span class="ms-fontWeight-semibold">micro:bit</span>
-												</div>
-												<div class="description">
-													Put a micro:bit on a wallet made from duct tape to count your money.
-												</div>
-											</div>
-										</a>
-										<a class="ui card" href="https://makecode.microbit.org/projects/milk-carton-robot" target="_blank" aria-label="Milk Carton Robot project">
-											<div class="image">
-												<iframe width="100%" height="200" src="https://www.youtube.com/embed/Ah4fEbJtklU?html5=1" frameborder="0" allowfullscreen></iframe>
-											</div>
-											<div class="content">
-												<div class="header">Milk Carton Robot</div>
-												<div class="meta">
-													<span class="ms-fontWeight-semibold">micro:bit</span>
-												</div>
-												<div class="description">
-													Build a little robot out of a milk carton that moves based on light sensor input.
-												</div>
-											</div>
-										</a>
-										<a class="ui card" href="https://learn.adafruit.com/circuit-playground-express-laser-tag" target="_blank" aria-label="Laser Tag for Circuit Playground">
-											<div class="image">
-												<img src="https://cdn-learn.adafruit.com/assets/assets/000/043/502/large1024/circuit_playground_laserTag_IMG_0486_2k.jpg"
-												 alt="A CircuitPlayground laser tag">
-											</div>
-											<div class="content">
-												<div class="header">Laser Tag</div>
-												<div class="meta">
-													<span class="ms-fontWeight-semibold">Circuit Playground Express</span>
-												</div>
-												<div class="description">
-													Use infrared IR transmission to blast your targets!
-												</div>
-											</div>
-										</a>
-									</div>
+								<div class="column">
+									<img src="/static/images/ts.gif" class="editor-image" alt="Coding using the Javascript editor">
+									<h3 class="ms-font-xxl ms-fontWeight-semibold">JavaScript Editor</h3>
+									<p class="ms-font-l">When they are ready, students can move into a full-featured JavaScript editor with code snippets, tooltips, and
+										error detection to help them.</p>
 								</div>
 							</div>
 						</div>
-					</section>
+					</div>
+				</section>
 
-					<section id="learn">
-						<div id="makecode-docs-container" class="ui vertical masthead center aligned segment">
-							<div class="ui grid container">
-								<div class="row">
-									<div class="ui text container">
-										<h2 class="ui ms-font-su ms-fontWeight-light">Learn and Teach</h2>
-										<p class="ms-font-l">
-											Courses, books and guides
-										</p>
-									</div>
-								</div>
-								<div class="row">
-									<div class="ui link three cards stackable padded">
-										<a class="ui card" href="https://makecode.microbit.org/courses/csintro" target="_blank" aria-label="Introduction to Computer Science curriculum">
-											<div class="image">
-												<img src="https://pxt.azureedge.net/blob/ce157b871e8d7330375d8dc8ade57d7426259ef4/static/courses/csintro.jpg" alt="A micro:bit on a space race game">
-											</div>
-											<div class="content">
-												<div class="header">Introduction to Computer Science</div>
-												<div class="meta">
-													<span>micro:bit</span>
-												</div>
-												<div class="description">
-													A 14 week introductory course for middle school grades using the micro:bit.
-												</div>
-											</div>
-										</a>
-										<a class="ui card" href="https://www.amazon.com/Little-Book-Griefs-Minecraft-Education-ebook/dp/B073ZKZW57/" target="_blank"
-										 aria-label="Milk Carton Robot project">
-											<div class="image">
-												<img src="https://pxt.azureedge.net/blob/9fd4a03447363ddd27fc605bdf962832cbceb31f/static/mods/sand-storm.png" alt="Little Book of Griefs guide">
-											</div>
-											<div class="content">
-												<div class="header">Little Book of Griefs</div>
-												<div class="meta">
-													<span>Minecraft</span>
-												</div>
-												<div class="description">
-													A kid's book with tips for modding in Minecraft with MakeCode.
-												</div>
-											</div>
-										</a>
-										<a class="ui card" href="https://learn.adafruit.com/makecode" target="_blank" aria-label="Learn the Circuit Playground guide">
-											<div class="image">
-												<img src="https://s3.amazonaws.com/learn-production/guides/images/000/001/667/medium800/cpwithblocks.jpg?1496852715" alt="A Circuit Playground Express board with blocks">
-											</div>
-											<div class="content">
-												<div class="header">Learn the Circuit Playground</div>
-												<div class="meta">
-													<span>Circuit Playground</span>
-												</div>
-												<div class="description">
-													A learning guide for the Adafruit Circuit Playground Express.
-												</div>
-											</div>
-										</a>
-									</div>
+				<section id="get-inspired" aria-label="Get Inspired">
+					<div id="makecode-getinspired-container" class="ui vertical masthead inverted center aligned segment">
+						<div class="ui grid container">
+							<div class="row">
+								<div class="ui text container">
+									<h2 class="ui ms-font-su ms-fontWeight-light">Get Inspired</h2>
+									<p class="ms-font-l ms-fontWeight-regular">
+										Get inspired by these project ideas to bring Making and Coding to your classroom.
+									</p>
 								</div>
 							</div>
-						</div>
-					</section>
-
-					<section id="hardware">
-						<div id="makecode-hardware-container" class="ui vertical stripe segment">
-							<div class="ui middle aligned stackable grid container">
-								<div class="row">
-									<div class="ui container">
-										<h2 class="ui ms-font-su ms-fontWeight-light">Hardware</h2>
-										<p class="ms-font-l">
-											Purchase hardware, accessories and kits from our partners
-										</p>
-									</div>
-								</div>
-								<div class="row">
-									<div class="eight wide column">
-										<h3 class="ui ms-font-xxl ms-fontWeight-light">micro:bit</h3>
-										<p class="ms-font-l">Purchase micro:bit and accessories</p>
-										<div class="col">
-											<a class="ui button green" href="https://www.adafruit.com/products/3362" target="_blank" aria-label="Purchase a micro:bit from Adafruit">Buy@Adafruit</a>
-											<a class="ui button green" href="https://www.sparkfun.com/products/14208" target="_blank" aria-label="Purchase a micro:bit from Sparkfun">Buy@Sparkfun</a>
-											<a class="ui button green" href="https://www.microbit.org/resellers/" target="_blank" aria-label="Purchase a micro:bit from Worldwide resellers">Buy@Worldwide Resellers</a>
+							<div class="row">
+								<div class="ui link three cards stackable padded">
+									<a class="ui card" href="https://makecode.microbit.org/projects/guitar" target="_blank" onclick="tickEvent('makecode.getinspired.click', {'card': 'air guitar'})"
+									 aria-label="Air Guitar project">
+										<div class="image">
+											<iframe style="width:100%;border:0;" height="200" src="https://www.youtube.com/embed/GYmdTFvxz80?html5=1" allowfullscreen></iframe>
 										</div>
-										<h3 class="ui ms-font-xxl ms-fontWeight-light">Circuit Playground Express</h3>
-										<p class="ms-font-l">Purchase Circuit Playground Express (Developer Edition) and accessories</p>
-										<div class="col">
-											<a class="ui button green" href="https://www.adafruit.com/products/3333" target="_blank" aria-label="Purchase a Circuit Playground Express from Adafruit">Buy@Adafruit</a>
+										<div class="content">
+											<div class="header">Air Guitar</div>
+											<div class="meta">
+												<span class="ms-fontWeight-semibold">micro:bit</span>
+											</div>
+											<div class="description">
+												Use the light sensor and accelerometer to make sounds for a homemade cardboard air guitar.
+											</div>
 										</div>
-										<h3 class="ui ms-font-xxl ms-fontWeight-light">Chibi Chip</h3>
-										<p class="ms-font-l">Purchase Chibi Chip and accessories</p>
-										<div class="col">
-											<a class="ui button green" href="https://chibitronics.com/shop/love-to-code-chibi-chip-cable/" target="_blank" aria-label="Purchase a Chibi Chip from Chibitronics">Buy@Chibitronics</a>
+									</a>
+									<a class="ui card" href="https://youtu.be/VLdWm7LBGjs" target="_blank" onclick="tickEvent('makecode.getinspired.click', {'card': 'mega jump'})"
+									 aria-label="Mega Jump video">
+										<div class="image">
+											<iframe style="width:100%;border:0;" height="200" src="https://www.youtube.com/embed/VLdWm7LBGjs?html5=1" allowfullscreen></iframe>
 										</div>
-									</div>
-									<div class="six wide right floated column">
-									</div>
+										<div class="content">
+											<div class="header">Mega Jump!</div>
+											<div class="meta">
+												<span class="ms-fontWeight-semibold">Minecraft</span>
+											</div>
+											<div class="description">
+												Code a mod that lets you jump super high in Minecraft.
+											</div>
+										</div>
+									</a>
+									<a class="ui card" href="https://makecode.adafruit.com/projects/magic-wand" target="_blank" onclick="tickEvent('makecode.getinspired.click', {'card': 'magic wand'})"
+									 aria-label="Magic Wand project">
+										<div class="image">
+											<iframe style="width:100%;border:0;" height="200" src="https://www.youtube.com/embed/Us-tH3SP8XE?html5=1" allowfullscreen></iframe>
+										</div>
+										<div class="content">
+											<div class="header">Magic Wand</div>
+											<div class="meta">
+												<span class="ms-fontWeight-semibold">Circuit Playground Express</span>
+											</div>
+											<div class="description">
+												A colorful wand that plays a tune when shaken.
+											</div>
+										</div>
+									</a>
+									<a class="ui card" href="https://makecode.microbit.org/projects/wallet" target="_blank" onclick="tickEvent('makecode.getinspired.click', {'card': 'duct tape wallet'})"
+									 aria-label="Duct Tape Wallet project">
+										<div class="image">
+											<img src="https://pxt.azureedge.net/blob/714618d6fa1f3befe697c55125e0d4a3b082e326/static/mb/projects/wallet/wallet.jpg" alt="A micro:bit on a wallet made from duct tape">
+										</div>
+										<div class="content">
+											<div class="header">Duct Tape Wallet</div>
+											<div class="meta">
+												<span class="ms-fontWeight-semibold">micro:bit</span>
+											</div>
+											<div class="description">
+												Put a micro:bit on a wallet made from duct tape to count your money.
+											</div>
+										</div>
+									</a>
+									<a class="ui card" href="https://makecode.microbit.org/projects/milk-carton-robot" target="_blank" onclick="tickEvent('makecode.getinspired.click', {'card': 'milk carton'})"
+									 aria-label="Milk Carton Robot project">
+										<div class="image">
+											<iframe style="width:100%;border:0;" height="200" src="https://www.youtube.com/embed/Ah4fEbJtklU?html5=1" allowfullscreen></iframe>
+										</div>
+										<div class="content">
+											<div class="header">Milk Carton Robot</div>
+											<div class="meta">
+												<span class="ms-fontWeight-semibold">micro:bit</span>
+											</div>
+											<div class="description">
+												Build a little robot out of a milk carton that moves based on light sensor input.
+											</div>
+										</div>
+									</a>
+									<a class="ui card" href="https://learn.adafruit.com/circuit-playground-express-laser-tag" target="_blank" onclick="tickEvent('makecode.getinspired.click', {'card': 'laser tag'})"
+									 aria-label="Laser Tag for Circuit Playground">
+										<div class="image">
+											<img src="/static/images/circuit_playground_laserTag_IMG_0486_2k.jpg"
+											 alt="A CircuitPlayground laser tag">
+										</div>
+										<div class="content">
+											<div class="header">Laser Tag</div>
+											<div class="meta">
+												<span class="ms-fontWeight-semibold">Circuit Playground Express</span>
+											</div>
+											<div class="description">
+												Use infrared IR transmission to blast your targets!
+											</div>
+										</div>
+									</a>
 								</div>
 							</div>
 						</div>
-					</section>
+					</div>
+				</section>
 
-					<section id="resources">
-						<div id="makecode-resources-container" class="ui vertical masthead inverted center aligned segment">
-
-							<div class="ui grid container">
-								<div class="row">
-									<div class="ui text container">
-										<h2 class="ui ms-font-su ms-fontWeight-light" style="color: black;">Resources</h2>
-									</div>
-								</div>
-								<div class="row">
-
-									<div class="ui container cards stackable four centered link doubling">
-										<a class="ui card" href="https://makecode.com/docs" target="_blank" aria-label="Developer documentation">
-											<div class="image">
-												<i class="ms-Icon ms-Icon--Documentation ms-fontColor-themePrimary" aria-hidden="true" style="font-size:72px;padding:20px;"></i>
-											</div>
-											<div class="content">
-												<span class="header">Developer documentation</span>
-												<div class="description">
-													Read the developer documentation
-												</div>
-											</div>
-										</a>
-										<!--
-						<div class="ui card" onclick="window.open('mailto:makecode@microsoft.com');">
-							<div class="image">
-								<i class="icon settings grey huge"></i>
-							</div>
-							<div class="content">
-								<span class="header">Extend MakeCode</span>
-								<div class="description">
-									Interested in using Microsoft MakeCode for your product?
-									<a href="mailto:makecode@microsoft.com">Contact Us</a>
+				<section id="learn" aria-label="Learn and Teach">
+					<div id="makecode-docs-container" class="ui vertical masthead center aligned segment">
+						<div class="ui grid container">
+							<div class="row">
+								<div class="ui text container">
+									<h2 class="ui ms-font-su ms-fontWeight-light">Learn and Teach</h2>
+									<p class="ms-font-l">
+										Courses, books and guides
+									</p>
 								</div>
 							</div>
-						</div> -->
-
-										<a class="ui card" href="https://github.com/Microsoft/pxt" target="_blank" aria-label="PXT Github repository">
-											<div class="image">
-												<img src="/static/images/GitHub_Logo.png" alt="Github logo">
+							<div class="row">
+								<div class="ui link three cards stackable padded">
+									<a class="ui card" href="https://makecode.microbit.org/courses/csintro" target="_blank" onclick="tickEvent('makecode.learn.click', {'card': 'microbit intro cs curriculum'})"
+									 aria-label="Introduction to Computer Science curriculum">
+										<div class="image">
+											<img src="https://pxt.azureedge.net/blob/ce157b871e8d7330375d8dc8ade57d7426259ef4/static/courses/csintro.jpg" alt="A micro:bit on a space race game">
+										</div>
+										<div class="content">
+											<div class="header">Introduction to Computer Science</div>
+											<div class="meta">
+												<span>micro:bit</span>
 											</div>
-											<div class="content">
-												<span class="header">Contribute</span>
-												<div class="description">
-													Contribute to the Microsoft MakeCode project on GitHub
-												</div>
+											<div class="description">
+												A 14 week introductory course for middle school grades using the micro:bit.
 											</div>
-										</a>
-
-										<a class="ui card" href="https://crowdin.com/project/kindscript" target="_blank" aria-label="Help translate Makecode on Crowdin">
-											<div class="image">
-												<img src="/static/images/crowdin-logo.png" alt="Crowdin logo">
+										</div>
+									</a>
+									<a class="ui card" href="https://www.amazon.com/Little-Book-Griefs-Minecraft-Education-ebook/dp/B073ZKZW57/" target="_blank"
+									 onclick="tickEvent('makecode.learn.click', {'card': 'minecraft book of griefs'})" aria-label="Little Book of Griefs guide">
+										<div class="image">
+											<img src="https://pxt.azureedge.net/blob/9fd4a03447363ddd27fc605bdf962832cbceb31f/static/mods/sand-storm.png" alt="Minecraft blocks">
+										</div>
+										<div class="content">
+											<div class="header">Little Book of Griefs</div>
+											<div class="meta">
+												<span>Minecraft</span>
 											</div>
-											<div class="content">
-												<span class="header">Translate</span>
-												<div class="description">
-													Help us translate Microsoft MakeCode in your language on Crowdin
-												</div>
+											<div class="description">
+												A kid's book with tips for modding in Minecraft with MakeCode.
 											</div>
-										</a>
-									</div>
+										</div>
+									</a>
+									<a class="ui card" href="https://learn.adafruit.com/makecode" target="_blank" onclick="tickEvent('makecode.learn.click', {'card': 'circuit playground guide'})"
+									 aria-label="Learn the Circuit Playground guide">
+										<div class="image">
+											<img src="https://s3.amazonaws.com/learn-production/guides/images/000/001/667/medium800/cpwithblocks.jpg?1496852715" alt="A Circuit Playground Express board with blocks">
+										</div>
+										<div class="content">
+											<div class="header">Learn the Circuit Playground</div>
+											<div class="meta">
+												<span>Circuit Playground</span>
+											</div>
+											<div class="description">
+												A learning guide for the Adafruit Circuit Playground Express.
+											</div>
+										</div>
+									</a>
 								</div>
 							</div>
 						</div>
-					</section>
+					</div>
+				</section>
 
+				<section id="hardware" aria-label="Hardware">
+					<div id="makecode-hardware-container" class="ui vertical stripe segment">
+						<div class="ui middle aligned stackable grid container">
+							<div class="row">
+								<div class="ui container">
+									<h2 class="ui ms-font-su ms-fontWeight-light">Hardware</h2>
+									<p class="ms-font-l">
+										Purchase hardware, accessories and kits from our partners
+									</p>
+								</div>
+							</div>
+							<div class="row">
+								<div class="eight wide column">
+									<h3 class="ui ms-font-xxl ms-fontWeight-light">micro:bit</h3>
+									<p class="ms-font-l">Purchase micro:bit and accessories</p>
+									<div class="col">
+										<a class="ui button green" href="https://www.adafruit.com/products/3362" target="_blank" onclick="tickEvent('makecode.hardware.buy', {'target': 'microbit', 'from': 'adafruit'})"
+										 aria-label="Purchase a micro:bit from Adafruit">Buy@Adafruit</a>
+										<a class="ui button green" href="https://www.sparkfun.com/products/14208" target="_blank" onclick="tickEvent('makecode.hardware.buy', {'target': 'microbit', 'from': 'sparkfun'})"
+										 aria-label="Purchase a micro:bit from Sparkfun">Buy@Sparkfun</a>
+										<a class="ui button green" href="https://www.microbit.org/resellers/" target="_blank" onclick="tickEvent('makecode.hardware.buy', {'target': 'microbit', 'from': 'worldwide'})"
+										 aria-label="Purchase a micro:bit from Worldwide resellers">Buy@Worldwide Resellers</a>
+									</div>
+									<h3 class="ui ms-font-xxl ms-fontWeight-light">Circuit Playground Express</h3>
+									<p class="ms-font-l">Purchase Circuit Playground Express (Developer Edition) and accessories</p>
+									<div class="col">
+										<a class="ui button green" href="https://www.adafruit.com/products/3333" target="_blank" onclick="tickEvent('makecode.hardware.buy', {'target': 'circuitplayground', 'from': 'adafruit'})"
+										 aria-label="Purchase a Circuit Playground Express from Adafruit">Buy@Adafruit</a>
+									</div>
+									<h3 class="ui ms-font-xxl ms-fontWeight-light">Chibi Chip</h3>
+									<p class="ms-font-l">Purchase Chibi Chip and accessories</p>
+									<div class="col">
+										<a class="ui button green" href="https://chibitronics.com/shop/love-to-code-chibi-chip-cable/" target="_blank" onclick="tickEvent('makecode.hardware.buy', {'target': 'chibichip', 'from': 'chibitronics'})"
+										 aria-label="Purchase a Chibi Chip from Chibitronics">Buy@Chibitronics</a>
+									</div>
+								</div>
+								<div class="six wide right floated column">
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
 
+				<section id="resources" aria-label="Resources">
+					<div id="makecode-resources-container" class="ui vertical masthead inverted center aligned segment">
+
+						<div class="ui grid container">
+							<div class="row">
+								<div class="ui text container">
+									<h2 class="ui ms-font-su ms-fontWeight-light" style="color: black;">Resources</h2>
+								</div>
+							</div>
+							<div class="row">
+
+								<div class="ui container cards stackable four centered link doubling">
+									<a class="ui card" href="https://makecode.com/docs" target="_blank" onclick="tickEvent('makecode.resources.devdocs')" aria-label="Developer documentation">
+										<div class="image">
+											<i class="ms-Icon ms-Icon--Documentation ms-fontColor-themePrimary" aria-hidden="true" style="font-size:72px;padding:20px;"></i>
+										</div>
+										<div class="content">
+											<span class="header">Developer documentation</span>
+											<div class="description">
+												Read the developer documentation
+											</div>
+										</div>
+									</a>
+									<!--
+					<div class="ui card" onclick="window.open('mailto:makecode@microsoft.com');">
+						<div class="image">
+							<i class="icon settings grey huge"></i>
+						</div>
+						<div class="content">
+							<span class="header">Extend MakeCode</span>
+							<div class="description">
+								Interested in using Microsoft MakeCode for your product?
+								<a href="mailto:makecode@microsoft.com">Contact Us</a>
+							</div>
+						</div>
+					</div> -->
+
+									<a class="ui card" href="https://github.com/Microsoft/pxt" target="_blank" onclick="tickEvent('makecode.resources.github')"
+									 aria-label="PXT Github repository">
+										<div class="image">
+											<img src="/static/images/GitHub_Logo.png" alt="Github logo">
+										</div>
+										<div class="content">
+											<span class="header">Contribute</span>
+											<div class="description">
+												Contribute to the Microsoft MakeCode project on GitHub
+											</div>
+										</div>
+									</a>
+
+									<a class="ui card" href="https://crowdin.com/project/kindscript" target="_blank" onclick="tickEvent('makecode.resources.translate')"
+									 aria-label="Help translate Makecode on Crowdin">
+										<div class="image">
+											<img src="/static/images/crowdin-logo.png" alt="Crowdin logo">
+										</div>
+										<div class="content">
+											<span class="header">Translate</span>
+											<div class="description">
+												Help us translate Microsoft MakeCode in your language on Crowdin
+											</div>
+										</div>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+			</section>
+
+		</main>
+
+		<!-- @include footer.html -->
+		<!-- @include tracking.html -->
 	</div>
-	</main>
-
-	<!-- @include footer.html -->
-	<!-- @include tracking.html -->
-
 </body>
 
 </html>

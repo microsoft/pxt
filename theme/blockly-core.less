@@ -3,6 +3,7 @@
 @import 'themes/default/globals/site.variables';
 @import 'themes/pxt/globals/site.variables';
 
+@import 'fieldeditors';
 
 /*******************************
              Blockly
@@ -11,14 +12,6 @@
 /* Lower Z index for BlocklyWidgetDiv and grid picker tooltips */
 .blocklyWidgetDiv {
     z-index: 105;
-}
-
-.blocklyGridPickerTooltip {
-    z-index: 106;
-}
-
-.blocklyGridPickerPadder {
-    box-shadow: 0px 0px 8px 1px;
 }
 
 /* Set Z index of the Blockly scrollbars to be beneath the BlocklyWidgetDiv */
@@ -51,6 +44,9 @@
 
 svg.blocklySvg {
     background-color: @blocklySvgColor !important;
+}
+.hc svg.blocklySvg {
+    background-color: black !important;
 }
 #blocksEditor .injectionDiv svg {
     overflow: visible;
@@ -133,11 +129,6 @@ div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
     z-index: 100;
     font-size:5rem;
     color: @trashIconColor;
-}
-
-.rtl #blocklyTrashIcon {
-    right: 0;
-    left: auto;
 }
 
 /* Blockly / Monaco Toolbox Buttons */
@@ -257,6 +248,10 @@ text.blocklyCheckbox {
     font-size: 17pt !important;
 }
 
+div.blocklyTreeRow {
+    height: 100%;
+}
+
 /*******************************
         Media Adjustments
 *******************************/
@@ -270,6 +265,7 @@ text.blocklyCheckbox {
     }
     span.blocklyTreeIcon {
         line-height: @blocklyRowHeightWide;
+        min-height: @blocklyRowHeightWide;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthWide;
@@ -285,6 +281,7 @@ text.blocklyCheckbox {
     }
     span.blocklyTreeIcon {
         line-height: @blocklyRowHeightComputer;
+        min-height: @blocklyRowHeightComputer;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthComputer;
@@ -301,6 +298,7 @@ text.blocklyCheckbox {
     }
     span.blocklyTreeIcon {
         line-height: @blocklyRowHeightTablet;
+        min-height: @blocklyRowHeightTablet;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthTablet;
@@ -319,6 +317,7 @@ text.blocklyCheckbox {
     }
     span.blocklyTreeIcon {
         line-height: @blocklyRowHeightMobile;
+        min-height: @blocklyRowHeightMobile;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthMobile;

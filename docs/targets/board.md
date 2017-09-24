@@ -1,8 +1,9 @@
 #  Board Definition
 
-TBD
+The simulator "board" contains the current state of the simulated system. 
+It is important to store all the state within the board instance as PXT will reuse the same simulator IFrame for multiple runs.vc0
 
-```typescript
+```typescript-ignore
     interface BoardDefinition {
         visual: BoardImageDefinition | string,
         gpioPinBlocks?: string[][],

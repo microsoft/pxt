@@ -26,6 +26,10 @@ If the language service knows possible completions, the IntelliSense suggestions
 
 ![](/static/images/monaco-auto-suggest.png)
 
+You can get additional information if you click the **'i'** symbol in the current suggestion.
+
+![](/static/images/monaco-auto-suggest-info.png)
+
 ### Auto completion
 
 Pressing ```Enter``` to any of the functions suggested by IntelliSense will automatically insert a snippet of the function declaration prefilling default values for each of the function parameters.

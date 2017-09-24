@@ -6,3 +6,96 @@
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
 }
+
+
+/* File card for the Home screen */
+
+.ui.card.file {
+    .fileimage {
+        position: absolute;
+        top: 0.7rem;
+        left: 0.7rem;
+        width: 4rem;
+        height: 3rem;
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-image: @fileLogoUrl;
+        border-right: 1px solid @solidBorderColor;
+    }
+    .content {
+        margin-left: 4rem;
+        min-width: 5rem;
+        padding-left: 1.5rem;
+        height: 8rem;
+        .header {
+            word-wrap: break-word;
+        }
+    }
+    .meta {
+        height: 4rem;
+        padding: 1rem;
+        text-align: right;
+    }
+}
+
+
+/* New project card */
+
+.ui.card.link.newprojectcard {
+    background: fade(@primaryColor, 50%) !important;
+    border: 2px solid @solidBorderColor;
+    text-align: center;
+    color: @white;
+    font-size: 18pt;
+    .content {
+        height: 12rem;
+    }
+    .header {
+        color: @white;
+        font-size: 14pt !important;
+        margin-top: 1rem !important;
+    }
+}
+
+.ui.card.newprojectcard:hover {
+    border: @linkHoverBorder;
+}
+
+
+/* Example card */
+
+.ui.card.example {
+    .ui.image {
+        height: 9rem;
+    }
+    .content {
+        height: 3rem;
+    }
+}
+
+
+/* Hover animation on home screen cards */
+
+.ui.card.file:hover, .ui.card.newprojectcard:hover, .ui.card.example:hover {
+    transform: scale(1.1);
+}
+
+
+/* Project code cards */
+
+.ui.cardimage {
+    background-color: @secondaryColor;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 12rem;
+}
+
+
+/* <= Tablet (Mobile + Tablet) */
+
+@media only screen and (max-width: @largestTabletScreen) {
+    .ui.card, .ui.cards>.card {
+        width: 200px;
+    }
+}

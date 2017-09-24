@@ -21,6 +21,8 @@
     "tslint.enable": true,
     "tslint.rulesDirectory": "node_modules/tslint-microsoft-contrib",
     "files.associations": {
-        "*.blocks": "html"
+        "*.blocks": "html",
+        "*.overrides": "less",
+        "*.variables": "less"
     }
 }

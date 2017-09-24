@@ -68,7 +68,10 @@ declare namespace pxt {
         name?: string;
         shortName?: string;
         title?: string;
+        role?: string;
+        ariaLabel?: string;
         label?: string;
+        tabIndex?: number
 
         color?: string; // one of semantic ui colors
         description?: string;
@@ -79,7 +82,7 @@ declare namespace pxt {
         time?: number;
         url?: string;
         responsive?: boolean;
-        cardType?: "example" | "codeExample" | "tutorial" | "project";
+        cardType?: "file" | "example" | "codeExample" | "tutorial" | "project";
 
         header?: string;
         any?: number;

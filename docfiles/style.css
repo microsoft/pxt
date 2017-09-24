@@ -194,6 +194,14 @@ svg {
     padding-bottom: 3em;
 }
 
+#accessibleMenu .ui.item.link {
+    height: 4em;
+    line-height: 4em;
+    font-size: 1em;
+    text-align: center;
+    color: white;
+}
+
 /* Styling the table of contents much like the Semantic UI documentation site: http://semantic-ui.com/introduction/getting-started.html */
 .pusher > .full.height {
   display: -webkit-box;
@@ -301,8 +309,22 @@ svg {
 .ui.menu.tocmenu {
     left: 0px;
     top: -5px;
-    min-height: 1200px !important;
+    height: 100%;
     overflow: visible !important
+}
+
+.ui.menu.tocmenu .menuContainer {
+    margin-bottom: 45px;
+}
+
+.ui.menu .header.item.bottom {
+    bottom: 0px;
+    position: absolute;
+    width: inherit;
+}
+
+.cc-banner {
+    display: none;
 }
 
 @media only screen and (max-width: 1272px) {
@@ -402,5 +424,9 @@ print only stuff
         background: none !important;
         color: black !important;
         box-shadow: none !important;
+    }
+    /* images */
+    .ui.image {
+        max-width: 60%;
     }
 }

@@ -8,11 +8,11 @@
 
 ////// Note Editor Field ////////
 
-.blocklyWidgetDiv .blocklyPianoDiv {
+.blocklyDropDownContent .blocklyPianoDiv {
     position: relative
 }
 
-.blocklyWidgetDiv .blocklyNote {
+.blocklyDropDownContent .blocklyNote {
 border: solid 0.5px;
 cursor: pointer;
 display: inline-block;
@@ -22,11 +22,11 @@ border-bottom-left-radius: 3px;
 border-bottom-right-radius: 3px;
 }
 
-.blocklyWidgetDiv .blocklyNote:hover {
+.blocklyDropDownContent .blocklyNote:hover {
 background-color: yellow !important
 }
 
-.blocklyWidgetDiv .blocklyNoteLabel {
+.blocklyDropDownContent .blocklyNoteLabel {
 border: solid 0.5px;
 color: white;
 display: inline-block;
@@ -35,8 +35,9 @@ position: absolute;
 text-align: center;
 }
 
-.blocklyWidgetDiv .blocklyNotePrevNext {
+.blocklyDropDownContent .blocklyNotePrevNext {
 border: solid 0.5px;
+border-top: 0;
 cursor: pointer;
 color: white;
 display: inline-block;
@@ -47,6 +48,14 @@ text-align: center;
 }
 
 ////// Grid Picker Editor Field ////////
+
+.blocklyGridPickerTooltip {
+    z-index: 106;
+}
+
+.blocklyGridPickerPadder {
+    box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3)
+}
 
 .blocklyWidgetDiv .blocklyGridPickerMenu {
 display: table;

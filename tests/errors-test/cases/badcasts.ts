@@ -15,6 +15,14 @@ interface Foo {
     b?: number
 }
 
+class Blap {
+    bar(a: BazParent) { }
+}
+
+class Blap2 extends Blap {   // TS9263
+    bar(a: UnrelatedToBaz) { }
+}
+
 // an interface can't extend a class in STS
 interface Foo2 extends Baz {    // TS9262
     c: string;
@@ -34,12 +42,12 @@ z = v  // TS9263
 
 v = z // this is OK
 
-// STS doesn't permit casts between unrelated casts
+// STS doesn't permit casts between unrelated classes
 let z2 : UnrelatedToBaz = v // TS9263
 
 // can't cast primitive to objects (yet)
 
-let z3 : Object = 3 // TS9263
+let z3: Object = 3 // TS9263
 
 interface Foo2 {
     b: Baz;

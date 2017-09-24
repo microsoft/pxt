@@ -29,7 +29,7 @@ namespace pxt.editor {
     export interface IAppState {
         active?: boolean; // is this tab visible at all
         header?: pxt.workspace.Header;
-        filters?: pxt.editor.ProjectFilters;
+        editorState?: EditorState;
         currFile?: IFile;
         fileState?: string;
         showFiles?: boolean;
@@ -41,6 +41,7 @@ namespace pxt.editor {
         hintShown?: boolean;
 
         running?: boolean;
+        resumeOnVisibility?: boolean;
         compiling?: boolean;
         isSaving?: boolean;
         publishing?: boolean;
@@ -54,6 +55,12 @@ namespace pxt.editor {
         tracing?: boolean;
 
         highContrast?: boolean;
+        hideExperimentalBanner?: boolean;
+    }
+
+    export interface EditorState {
+        filters?: pxt.editor.ProjectFilters;
+        searchBar?: boolean; // show the search bar in editor
     }
 
     export interface ProjectCreationOptions {
@@ -83,12 +90,12 @@ namespace pxt.editor {
         hasHint?: boolean;
         content?: string;
         headerContent?: string;
+        ariaLabel?: string;
     }
 
     export interface TutorialOptions {
         tutorial?: string; // tutorial
         tutorialName?: string; // tutorial title
-        tutorialSteps?: string[]; // tutorial steps
         tutorialStepInfo?: TutorialStepInfo[];
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
@@ -110,7 +117,7 @@ namespace pxt.editor {
         saveFileAsync(): Promise<void>;
         loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;
         reloadHeaderAsync(): Promise<void>;
-        importProjectAsync(prj: pxt.workspace.Project, filters?: pxt.editor.ProjectFilters): Promise<void>;
+        importProjectAsync(prj: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void>;
         overrideTypescriptFile(text: string): void;
 
         exportAsync(): Promise<string>;
@@ -118,6 +125,7 @@ namespace pxt.editor {
         newEmptyProject(name?: string, documentation?: string): void;
         newProject(options?: ProjectCreationOptions): void;
         createProjectAsync(options: ProjectCreationOptions): Promise<void>;
+        importProjectDialog(): void;
         importFileDialog(): void;
         importUrlDialog(): void;
         removeProject(): void;
@@ -135,7 +143,7 @@ namespace pxt.editor {
         removeFile(fn: IFile, skipConfirm?: boolean): void;
         updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
 
-        openTutorials(): void;
+        openHome(): void;
         setTutorialStep(step: number): void;
         exitTutorial(keep?: boolean): void;
         completeTutorial(): void;
@@ -154,13 +162,15 @@ namespace pxt.editor {
         toggleSimulatorCollapse(): void;
         proxySimulatorMessage(content: string): void;
         toggleTrace(intervalSpeed?: number): void;
+        closeFlyout(): void;
 
-        startTutorial(tutorialId: string): void;
+        startTutorial(tutorialId: string, tutorialTitle?: string): void;
 
         addPackage(): void;
         typecheckNow(): void;
 
         fireResize(): void;
+        updateEditorLogo(left: number, rgba?: string): void;
 
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;

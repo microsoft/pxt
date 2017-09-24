@@ -8,6 +8,16 @@ namespace pxt.blocks {
         shadowValue?: string;
     }
 
+    export interface HandlerArg {
+        name: string,
+        type: string
+    }
+
+    export interface BlockParameters {
+        attrNames: Map<BlockParameter>;
+        handlerArgs: HandlerArg[];
+    }
+
     export function normalizeBlock(b: string): string {
         if (!b) return b;
         // normalize and validate common errors
@@ -21,17 +31,23 @@ namespace pxt.blocks {
         return nb;
     }
 
-    export function parameterNames(fn: pxtc.SymbolInfo): Map<BlockParameter> {
+    export function parameterNames(fn: pxtc.SymbolInfo): BlockParameters {
         // collect blockly parameter name mapping
         const instance = (fn.kind == ts.pxtc.SymbolKind.Method || fn.kind == ts.pxtc.SymbolKind.Property) && !fn.attributes.defaultInstance;
         let attrNames: Map<BlockParameter> = {};
+        let handlerArgs: HandlerArg[] = [];
 
         if (instance) attrNames["this"] = { name: "this", type: fn.namespace };
         if (fn.parameters)
-            fn.parameters.forEach(pr => attrNames[pr.name] = {
-                name: pr.name,
-                type: pr.type,
-                shadowValue: pr.default || undefined
+            fn.parameters.forEach(pr => {
+                attrNames[pr.name] = {
+                    name: pr.name,
+                    type: pr.type,
+                    shadowValue: pr.default || undefined
+                };
+                if (pr.handlerParameters) {
+                    pr.handlerParameters.forEach(arg => handlerArgs.push(arg))
+                }
             });
         if (fn.attributes.block) {
             Object.keys(attrNames).forEach(k => attrNames[k].name = "");
@@ -50,7 +66,10 @@ namespace pxt.blocks {
                 if (m[3]) at.shadowType = m[3];
             }
         }
-        return attrNames;
+        return {
+            attrNames,
+            handlerArgs
+        };
     }
 
 
@@ -81,6 +100,7 @@ namespace pxt.blocks {
         tooltip?: string | Map<string>;
         operators?: Map<string[]>;
         block?: Map<string>;
+        outputShape?: number;
         blockTextSearch?: string; // Which block text to use for searching; if undefined, search uses all texts in BlockDefinition.block, joined with space
         tooltipSearch?: string; // Which tooltip to use for searching; if undefined, search uses all tooltips in BlockDefinition.tooltip, joined with space
     }
@@ -141,16 +161,18 @@ namespace pxt.blocks {
                 operators: {
                     'op': ["min", "max"]
                 },
-                category: 'math'
+                category: 'math',
+                outputShape: Blockly.OUTPUT_SHAPE_ROUND
             },
             'math_op3': {
                 name: Util.lf("absolute number"),
                 tooltip: Util.lf("absolute value of a number"),
-                url: '/blocks/math/abs',
+                url: '/reference/math',
                 category: 'math',
                 block: {
                     message0: Util.lf("absolute of %1")
-                }
+                },
+                outputShape: Blockly.OUTPUT_SHAPE_ROUND
             },
             'math_number': {
                 name: Util.lf("{id:block}number"),
@@ -348,7 +370,7 @@ namespace pxt.blocks {
             'text_length': {
                 name: Util.lf("number of characters in the string"),
                 tooltip: Util.lf("Returns the number of letters (including spaces) in the provided text."),
-                url: 'types/string/length',
+                url: 'reference/text/length',
                 category: 'text',
                 block: {
                     TEXT_LENGTH_TITLE: Util.lf("length of text %1")
@@ -357,7 +379,7 @@ namespace pxt.blocks {
             'text_join': {
                 name: Util.lf("join items to create text"),
                 tooltip: Util.lf("Create a piece of text by joining together any number of items."),
-                url: 'types/string/join',
+                url: 'reference/text/join',
                 category: 'text',
                 block: {
                     TEXT_JOIN_TITLE_CREATEWITH: Util.lf("join")

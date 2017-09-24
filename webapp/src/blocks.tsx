@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="../../localtypings/pxtblockly.d.ts" />
 /// <reference path="../../typings/globals/jquery/index.d.ts" />
 
 import * as React from "react";
@@ -32,6 +32,7 @@ export class Editor extends srceditor.Editor {
     showToolboxCategories: CategoryMode = CategoryMode.Basic;
     cachedToolbox: string;
     filters: pxt.editor.ProjectFilters;
+    showSearch: boolean;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -47,6 +48,7 @@ export class Editor extends srceditor.Editor {
 
     saveToTypeScript(): Promise<string> {
         if (!this.typeScriptSaveable) return Promise.resolve('');
+        this.clearHighlightedStatements();
         try {
             return pxt.blocks.compileAsync(this.editor, this.blockInfo)
                 .then((compilationResult) => {
@@ -81,7 +83,7 @@ export class Editor extends srceditor.Editor {
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
-                    let showSearch = true;
+                    let showSearch = this.showSearch;
                     let toolbox = this.getDefaultToolbox(this.showToolboxCategories);
 
                     // Search needs a toolbox with ALL blocks
@@ -97,6 +99,8 @@ export class Editor extends srceditor.Editor {
                             searchFor => compiler.apiSearchAsync(searchFor)
                                 .then((fns: pxtc.service.SearchInfo[]) => fns),
                             searchTb => this.updateToolbox(searchTb, this.showToolboxCategories, true));
+                    } else {
+                        pxt.blocks.removeSearch();
                     }
                     pxt.blocks.initFlyouts(this.editor);
 
@@ -209,9 +213,12 @@ export class Editor extends srceditor.Editor {
          * @param {function()=} opt_callback The callback when the alert is dismissed.
          */
         Blockly.alert = function (message, opt_callback) {
-            return core.dialogAsync({
+            return core.confirmAsync({
                 hideCancel: true,
                 header: lf("Alert"),
+                agreeLbl: lf("Ok"),
+                agreeClass: "positive",
+                agreeIcon: "checkmark",
                 body: message,
                 size: "small"
             }).then(() => {
@@ -388,6 +395,10 @@ export class Editor extends srceditor.Editor {
         let blocklyOptions = this.getBlocklyOptions(showCategories);
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
+        // set Blockly Colors
+        let blocklyColors = (Blockly as any).Colours;
+        Util.jsonMergeFrom(blocklyColors, pxt.appTarget.appTheme.blocklyColors || {});
+        (Blockly as any).Colours = blocklyColors;
         this.editor.addChangeListener((ev) => {
             Blockly.Events.disableOrphans(ev);
             if (ev.type != 'ui') {
@@ -463,13 +474,15 @@ export class Editor extends srceditor.Editor {
     }
 
     resize(e?: Event) {
-        let blocklyArea = document.getElementById('blocksArea');
-        let blocklyDiv = document.getElementById('blocksEditor');
+        const blocklyArea = document.getElementById('blocksArea');
+        const blocklyDiv = document.getElementById('blocksEditor');
         // Position blocklyDiv over blocklyArea.
         if (blocklyArea && this.editor) {
             blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
             blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
             Blockly.svgResize(this.editor);
+            const blocklyToolbox = document.getElementsByClassName('blocklyToolboxDiv')[0];
+            if (blocklyToolbox) this.parent.updateEditorLogo(blocklyToolbox.clientWidth);
         }
     }
 
@@ -501,6 +514,11 @@ export class Editor extends srceditor.Editor {
     zoomOut() {
         if (!this.editor) return;
         this.editor.zoomCenter(-1);
+    }
+
+    closeFlyout () {
+        if (!this.editor) return;
+        Blockly.hideChaff();
     }
 
     getId() {
@@ -540,10 +558,15 @@ export class Editor extends srceditor.Editor {
         if (this.currFile && this.currFile != file) {
             this.filterToolbox(null);
         }
-        if (this.parent.state.filters) {
-            this.filterToolbox(this.parent.state.filters);
+        if (this.parent.state.editorState && this.parent.state.editorState.filters) {
+            this.filterToolbox(this.parent.state.editorState.filters);
         } else {
             this.filters = null;
+        }
+        if (this.parent.state.editorState && this.parent.state.editorState.searchBar != undefined) {
+            this.showSearch = this.parent.state.editorState.searchBar;
+        } else {
+            this.showSearch = true;
         }
         this.currFile = file;
         // Clear the search field if a value exists
@@ -636,7 +659,7 @@ export class Editor extends srceditor.Editor {
                 maxScale: 2.5,
                 minScale: .2,
                 scaleSpeed: 1.05,
-                startScale: pxt.BrowserUtils.isMobile() ? 1.2 : 1.0
+                startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.9
             },
             rtl: Util.isUserLanguageRtl()
         };

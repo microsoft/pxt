@@ -43,4 +43,4 @@ while (parts.length > 0) {
 
 ## Sea also
 
-[shift](/blocks/arrays/shift), [push](/blocks/arrays/push)
+[shift](/reference/arrays/shift), [push](/reference/arrays/push)
