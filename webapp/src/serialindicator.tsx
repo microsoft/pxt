@@ -40,11 +40,11 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
 
     render() {
         return(!this.state.active ? (<div></div>) : (
-            <div className="ui left labeled button">
+            <div className="ui left labeled button"  onClick={this.props.onClick}>
                 <a className="ui basic label">
                     {this.props.isSim ? lf("Simulator serial") : lf("Device serial")}
                 </a>
-                <div className="ui button" onClick={this.props.onClick}>
+                <div className="ui button">
                     <i className="external icon"></i>
                 </div>
             </div>
