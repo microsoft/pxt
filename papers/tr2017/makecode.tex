@@ -33,13 +33,20 @@ enumerations, functions, and basic type mappings. MakeCode uses top-level namesp
 TypeScript) to organize sets of related functions.  Preceding a C++ namespace, enumeration, or function
 with \emph{//\%} indicates that MakeCode should map the C++ construct to TypeScript.
 Within the \emph{//\%} comment, attributes are used to define the visual appearance for that
-language construct, such as for the led namespace in the micro:bit target:
+language construct, such as for the LED namespace in the micro:bit target:
 
 \begin{lstlisting}
 //% color=#5C2D91 weight=97 icon="\uf205"
 namespace led { 
 ...
 \end{lstlisting}
+
+Figure~\ref{fig:led} shows the visual appearance of the LED namespace in the MakeCode web app.
+
+\begin{figure}[t]
+    \includegraphics[width=2.5in]{ledNamespace.pdf}
+\caption{\label{fig:led}Visual toolbox of API categories.}
+\end{figure}
 
 Here is the C++ file defining the micro:bit's led namespace and its functions:
 ~\href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/led.cpp}{pxt-microbit/libs/core/led.cpp}.
