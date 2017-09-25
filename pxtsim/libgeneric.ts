@@ -117,7 +117,7 @@ namespace pxsim {
         export function pop(c: RefCollection, x: any) {
             pxtrt.nullCheck(c)
             let ret = c.pop();
-            decr(ret);
+            // no decr() since we're returning it
             return ret;
         }
 
@@ -132,8 +132,7 @@ namespace pxsim {
             pxtrt.nullCheck(c)
             if (!c.isValidIndex(x))
                 return;
-
-            decr(c.getAt(x));
+            // no decr() since we're returning it
             return c.removeAt(x);
         }
 
