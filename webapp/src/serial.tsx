@@ -277,7 +277,7 @@ class Chart {
         interpolation: 'step',
         responsive: true,
         fps: 30,
-        millisPerPixel: 20,
+        millisPerPixel: 1,
         grid: { strokeStyle: '#000'}
     }
     chart: SmoothieChart = new SmoothieChart(this.chartConfig)
@@ -292,6 +292,10 @@ class Chart {
         this.rootElement.className = "ui segment"
         this.source = source
         this.variable = variable
+        //TODO remove!!
+        setInterval(() => {
+            this.line.append(new Date().getTime(), Math.random())
+        }, 1)
         this.chart.addTimeSeries(this.line, this.lineConfigs[chartIdx % 4])
 
         let canvas = this.makeCanvas()
@@ -304,7 +308,7 @@ class Chart {
 
     makeLabel() {
         let label = document.createElement("div")
-        label.className = "ui top left huge attached label"
+        label.className = "ui bottom left attached label"
         label.innerText = this.variable
         return label
     }
@@ -329,7 +333,8 @@ class Chart {
     }
 
     addPoint(value: number) {
-        this.line.append(new Date().getTime(), value)
+        //TODO remove!!
+        //this.line.append(new Date().getTime(), value)
     }
 
     start() {
