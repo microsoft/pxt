@@ -2,7 +2,7 @@
 \label{sec:makecode}
 
 The MakeCode web app encapsulates all the components needed to deliver a programming experience 
-for microcontroller-based devices, free of the need for a C++ compiler for the compilation of user 
+for microcontroller based devices, free of the need for a C++ compiler for the compilation of user 
 code, as shown in Figure~\ref{fig:makecode}. 
 The web app is written in TypeScript. The web app also incorporates the TypeScript compiler and 
 language service, used in several ways, as detailed below. 
@@ -119,8 +119,8 @@ the Blockly framework.
 
 \subsection{Editors and Code Conversion}
 
-MakeCode uses the Blockly (\url{https://github.com/google/blockly}) and Monaco 
-(\url{https://github.com/Microsoft/monaco-editor}) editors to allow the user to code with
+MakeCode uses the Blockly (\emph{\href{https://github.com/google/blockly}{blockly}}) and Monaco 
+(\emph{\href{https://github.com/Microsoft/monaco-editor}{monaco-editor}}) editors to allow the user to code with
 visual blocks or TypeScript. The editing experience is parameterized by the full-typed device
 runtime, which provides a set of categorized APIs to the end-user, based on namespaces, as
 previously described. These APIs are visible in both editors via a toolbox to the immediate
@@ -129,16 +129,16 @@ help in transition from coding with blocks to coding with JavaScript. More advan
 APIs can be discovered in Monaco via code intellisense.
 
 The Blockly program representation is compiled to Static TypeScript in a syntax-directed manner
-(see \url{https://github.com/Microsoft/pxt/tree/master/pxtblocks}). A key issue is the need for
+(see \emph{\url{https://github.com/Microsoft/pxt/tree/master/pxtblocks}{pxtblocks}}). A key issue is the need for
 type inference on the Blockly representation, as variables generally are defined and used without
-being declared in Blockly. MakeCode uses a simple unification-based type inference to assign a
+being declared in Blockly. MakeCode uses a simple unification type inference to assign a
 unique type to each variable.  In the future, we expect to use TypeScript's type inference instead
 and eliminate the need for separate type inference over the Blockly representation. 
 TypeScript supports programming constructs that are not available in Blockly, such as classes.
 Such constructs are converted into grey uneditable blocks in Blockly, with the construct's program
 text intact. This means MakeCode always can decompile a TypeScript program to Blockly and then recover
 the program text of the grey blocks when converting from Blockly back to TypeScript
- (see \url{https://github.com/Microsoft/pxt/blob/master/pxtcompiler/emitter/decompiler.ts}). 
+ (see \emph{\href{https://github.com/Microsoft/pxt/blob/master/pxtcompiler/emitter/decompiler.ts}{decompiler.ts}}). 
 
 \subsection{Compilation Pipeline}
 
@@ -157,10 +157,11 @@ processor description.  Currently supported processors include ARM's Cortex clas
 and Atmel's Atmega class (AVR instructions). A separate assembler, also parameterized by an instruction
 encoder/decoder, generates machine code. Finally, a linker completes the compile chain by resolving
 references to the driver runtime in the user's program, producing a binary executable. The compiler chain
-can be found at \url{https://github.com/Microsoft/pxt/tree/master/pxtcompiler/emitter} and 
-\url{https://github.com/Microsoft/pxt/tree/master/pxtlib/emitter}.
+can be found at \emph{\href{https://github.com/Microsoft/pxt/tree/master/pxtcompiler/emitter}{pxtcompiler/emitter}} and 
+\emph{\href{https://github.com/Microsoft/pxt/tree/master/pxtlib/emitter}{pxtlib/emitter}}.
 
-TODO: in fact it's the assembler that resolves runtime references; linker only injects a binary blob into the runtime; maybe it's not worth talking about it though
+\emph{TODO: in fact it's the assembler that resolves runtime references;
+linker only injects a binary blob into the runtime; maybe it's not worth talking about it though}
 
 \subsubsection{Asynchronous Functions}
 
@@ -169,21 +170,21 @@ the \emph{//\% async} annotation) as if they were regular (blocking) functions. 
 compiling each function so that it can be suspended (at the return of a call) and later resumed (at the same point). 
 The default behavior at a suspension point is to immediately resume execution.  If a call is to an async function then
 the default behavior is overridden by the compiler, which suspends execution of the current function. Upon completion
-of the async function call, the current function then is resumed.    This feature greatly simplifies the JavaScript-based
+of the async function call, the current function then is resumed. This feature greatly simplifies the JavaScript
 programming model which relies on promises to achieve asynchronous execution, breaking up sequential (blocking) code into
-a series of event handlers.  The JavaScript-based simulator runtime uses promises to achieve asynchronous execution in a
-single-threaded context, but these promises are hidden from the end user.    The CODAL C++ device runtime supports fibers
+a series of event handlers.  The JavaScript simulator runtime uses promises to achieve asynchronous execution in a
+single-threaded context, but these promises are hidden from the end user. sThe CODAL C++ device runtime supports fibers
 with the ability to pause, so for compilation to a device, the compiler simply emits a call to pause at a suspension point. 
 
-TODO: The async annotation is only relevant for the JS code. In ARM/AVR it doesn't do anything.
+\emph{TODO: The async annotation is only relevant for the JS code. In ARM/AVR it doesn't do anything.
 One way to say it is to say it's there to simulate cooperative multi-threading in JS, since
-it is already implemented in C++ by CODAL.
+it is already implemented in C++ by CODAL.}
 
 \subsubsection{Untagged and Tagged Strategies}
 
 The MakeCode compiler supports the Static TypeScript language subset described in Section X, with two compilation
 strategies: untagged and tagged. 
-\emph{TODO}
+\emph{TODO
 Untagged compilation strategy
 No support for doubles. 32-bit integers (signed only). Use static type system to distinguish between integers and references.
 No runtime support.  Not fully compatible with JavaScript semantics. Null = Undefined = 0 = default integer value.  Support for
@@ -191,7 +192,7 @@ different integer sizes using type aliases (this is used for AVR).
 Tagged compilation strategy
 In the tagged strategy, numbers are either tagged 31-bit signed integers, or if they do not fit, boxed doubles. Code generation
 to check tag bit. Special constants like false, null and undefined are given special values and can be distinguished. Fully
-compatible with JavaScript semantics (number, null, undefined).   Can accommodate a richer type system. 
+compatible with JavaScript semantics (number, null, undefined).   Can accommodate a richer type system.}
 
 \subsection{Simulator}
 
@@ -206,7 +207,7 @@ and is far from a complete device emulation.   For example, it is not possible f
 inputs to the simulated device, while it is possible with the actual device (i.e., shaking it to change the accelerometer
 reading while pushing one of the device's buttons).
 
-MakeCode provides various components to make device-based simulators easier to build: board, parts, wiring, etc.
+MakeCode provides various components to make device simulators easier to build: board, parts, wiring, etc.
 
 \subsection{Packages and Custom Editors}
 
