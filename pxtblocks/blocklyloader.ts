@@ -887,15 +887,18 @@ namespace pxt.blocks {
                 }
             }
 
+            if (currentlyVisible >= handlerArgs.length) {
+                i.removeField("_HANDLER_ADD");
+            }
+            else if (actuallyVisible >= handlerArgs.length) {
+                addPlusButton();
+            }
+
             actuallyVisible = currentlyVisible;
         };
 
         Blockly.Extensions.apply('inline-svgs', b, false);
-
-        i.appendField(new Blockly.FieldImage((b as any).ADD_IMAGE_DATAURI, 24, 24, false, lf("Add argument"), () => {
-            currentlyVisible = Math.min(currentlyVisible + 1, handlerArgs.length);
-            updateShape();
-        }));
+        addPlusButton();
 
         (b as MutatingBlock).domToMutation = element => {
             let numArgs = parseInt(element.getAttribute("numargs"));
@@ -920,6 +923,14 @@ namespace pxt.blocks {
 
             return mut;
         };
+
+        function addPlusButton() {
+            i.appendField(new Blockly.FieldImage((b as any).ADD_IMAGE_DATAURI, 24, 24, false, lf("Add argument"),
+                () => {
+                    currentlyVisible = Math.min(currentlyVisible + 1, handlerArgs.length);
+                    updateShape();
+                }), "_HANDLER_ADD");
+        }
     }
 
     export interface BlockFilters {
