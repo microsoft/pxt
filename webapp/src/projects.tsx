@@ -347,7 +347,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             {this.hasFetchErrors ?
                 <div className="ui carouselouter">
                     <div className="carouselcontainer">
-                        <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
+                        <p className="ui inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
                     </div>
                 </div>
                 :
