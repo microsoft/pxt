@@ -285,6 +285,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
 
     if (!args[0]) throw new Error("filename missing");
     switch (cmd.toLowerCase()) {
+        case "clean": return cleanCrowdinAsync(branch, prj, key, args[0] || "docs");
         case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
         case "download": {
             if (!args[1]) throw new Error("output path missing");
@@ -308,6 +309,16 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
         default: throw new Error("unknown command");
     }
 }
+
+function cleanCrowdinAsync(branch: string, prj: string, key: string, dir: string): Promise<void> {
+    const p = pxt.appTarget.id + "/" + dir;
+    return pxt.crowdin.listFilesAsync(branch, prj, key, p)
+        .then(files => {
+            files.filter(f => !nodeutil.fileExistsSync(f.fullName.substring(pxt.appTarget.id.length + 1)))
+                .forEach(f => pxt.log(`crowdin: dead file: ${branch ? branch + "/" : ""}${f.fullName}`));
+        })
+}
+
 
 function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string, dir?: string): Promise<void> {
     let fn = path.basename(p);
@@ -4542,7 +4553,7 @@ function initCommands() {
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
-    advancedCommand("crowdin", "upload, download files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")
+    advancedCommand("crowdin", "upload, download, clean files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
