@@ -887,10 +887,10 @@ namespace pxt.blocks {
                 }
             }
 
-            if (currentlyVisible === handlerArgs.length) {
+            if (currentlyVisible >= handlerArgs.length) {
                 i.removeField("_HANDLER_ADD");
             }
-            else if (actuallyVisible === handlerArgs.length) {
+            else if (actuallyVisible >= handlerArgs.length) {
                 addPlusButton();
             }
 
