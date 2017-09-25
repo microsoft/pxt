@@ -819,6 +819,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
 
     setPosition = () => {
         if (this.ref) {
+            const { dimmer } = this.props;
             const mountNode = this.getMountNode();
             let height: number;
 
@@ -828,6 +829,11 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             }
             else {
                 height = 0;
+            }
+
+            if (dimmer) {
+                mountNode.classList.add('dimmable')
+                mountNode.classList.add('dimmed')
             }
 
             const marginTop = -Math.round(height / 2);
@@ -868,14 +874,17 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             }
         }
 
-        this.setPosition()
+        this.setPosition();
     }
 
     handleRef = (c: any) => (this.ref = c);
 
     handlePortalUnmount = () => {
         const mountNode = this.getMountNode();
-        mountNode.classList.remove('blurring', 'dimmable', 'dimmed', 'scrollable');
+        mountNode.classList.remove('blurring');
+        mountNode.classList.remove('dimmable');
+        mountNode.classList.remove('dimmed');
+        mountNode.classList.remove('scrolling');
 
         if (this.animationId) cancelAnimationFrame(this.animationId);
     }

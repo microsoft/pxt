@@ -512,6 +512,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         let newName = projectName;
 
         const save = () => {
+            this.hide();
             this.props.parent.updateHeaderName(newName);
             this.props.parent.openHome();
         }
