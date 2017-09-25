@@ -274,18 +274,17 @@ class Chart {
     source: string
     variable: string
     chartConfig = {
-        interpolation: 'step',
         responsive: true,
         fps: 30,
         millisPerPixel: 1,
-        grid: { strokeStyle: '#000'}
+        grid: { strokeStyle: '#9E9E9E', fillStyle: '#9E9E9E'}
     }
     chart: SmoothieChart = new SmoothieChart(this.chartConfig)
     lineConfigs = [
-        { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 5 },
-        { strokeStyle: 'rgba(0, 0, 255, 1)', fillStyle: 'rgba(0, 0, 255, 0.2)', lineWidth: 5 },
-        { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 5 },
-        { strokeStyle: 'rgba(255, 255, 0, 1)', fillStyle: 'rgba(255, 255, 0, 0.2)', lineWidth: 5 }
+        { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.5)', lineWidth: 5 },
+        { strokeStyle: 'rgba(0, 0, 255, 1)', fillStyle: 'rgba(0, 0, 255, 0.5)', lineWidth: 5 },
+        { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.5)', lineWidth: 5 },
+        { strokeStyle: 'rgba(255, 255, 0, 1)', fillStyle: 'rgba(255, 255, 0, 0.5)', lineWidth: 5 }
     ]
 
     constructor(source: string, variable: string, value: number, chartIdx: number) {
