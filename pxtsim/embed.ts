@@ -1,5 +1,4 @@
 /// <reference path="../localtypings/pxtparts.d.ts"/>
-/// <reference path="../built/pxtlib.d.ts"/>
 
 namespace pxsim {
     export interface SimulatorRunMessage extends SimulatorMessage {
@@ -15,7 +14,7 @@ namespace pxsim {
         mute?: boolean;
         highContrast?: boolean;
         cdnUrl?: string;
-        localizedStrings?: pxt.Map<string>;
+        localizedStrings?: Map<string>;
     }
 
     export interface SimulatorMuteMessage extends SimulatorMessage {
@@ -179,8 +178,8 @@ namespace pxsim {
 
             if (msg.mute) mute(msg.mute);
 
-            if (msg.localizedStrings && pxt && pxt.Util) {
-                pxt.Util.setLocalizedStrings(msg.localizedStrings);
+            if (msg.localizedStrings) {
+                pxsim.localization.setLocalizedStrings(msg.localizedStrings);
             }
             runtime = new Runtime(msg.code);
             runtime.id = msg.id;
