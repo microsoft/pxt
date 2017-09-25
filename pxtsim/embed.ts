@@ -183,8 +183,13 @@ namespace pxsim {
 
             if (msg.mute) mute(msg.mute);
 
+<<<<<<< HEAD
             if (msg.localizedStrings) {
                 pxsim.localization.setLocalizedStrings(msg.localizedStrings);
+=======
+            if (msg.localizedStrings && pxt && pxt.Util) {
+                pxt.Util.setLocalizedStrings(msg.localizedStrings);
+>>>>>>> Horizontal wrap instead of scroll in console
             }
             runtime = new Runtime(msg.code);
             runtime.id = msg.id;
