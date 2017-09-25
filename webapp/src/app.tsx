@@ -1724,12 +1724,12 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu") }>
                             {!sandbox ? <div className="left menu">
-                                <span className="ui item logo brand">
+                                <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName) } role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={() => pxt.tickEvent("menu.brand") }>
                                     {targetTheme.logo || targetTheme.portraitLogo
-                                        ? <a className="ui image landscape only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`} /></a>
-                                        : <span className="name">{targetTheme.name}</span>}
-                                    {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`} /></a>) : null}
-                                </span>
+                                        ? <img className={`ui logo ${targetTheme.logo ? " portrait hide" : ''}`}  src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />
+                                        : <span className="name">{targetTheme.boardName}</span>}
+                                    {targetTheme.portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />) : null}
+                                </a>
                                 {betaUrl ? <a href={`${betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta") }</a> : undefined}
                                 {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen") } text={lf("Home") } onClick={() => this.exitAndSave() } /> : null}
                                 {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project") } text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
@@ -1777,9 +1777,9 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
                                 {!sandbox ? <a href={targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization) } role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={() => pxt.tickEvent("menu.org") }>
                                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`} />
+                                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization) } />
                                         : <span className="name">{targetTheme.organization}</span>}
-                                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`} />) : null}
+                                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization) } />) : null}
                                 </a> : undefined}
                             </div>
                         </div>

@@ -890,7 +890,9 @@ namespace pxt.blocks {
             actuallyVisible = currentlyVisible;
         };
 
-        i.appendField(new Blockly.FieldImage(Util.pathJoin(pxt.webConfig.commitCdnUrl, "blockly/media/add.svg"), 24, 24, false, lf("Add argument"), () => {
+        Blockly.Extensions.apply('inline-svgs', b, false);
+
+        i.appendField(new Blockly.FieldImage((b as any).ADD_IMAGE_DATAURI, 24, 24, false, lf("Add argument"), () => {
             currentlyVisible = Math.min(currentlyVisible + 1, handlerArgs.length);
             updateShape();
         }));
