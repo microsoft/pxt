@@ -11,21 +11,43 @@
 
 #serialArea {
     height: 100%;
+    padding: 1rem;
 }
 
 #serialArea .ui.segment {
     border: none;
-    padding: 0;
     box-shadow: none;
 }
 
 #serialHeader {
-    height: 10%;
+    padding: 0;
+    margin: 0 0 1rem 0;
+    display: flex;
+}
+
+#serialHeader .leftHeaderWrapper {
+    display: block;
+}
+
+#serialHeader .leftHeader .ui.header {
     margin: 0;
 }
 
+#serialHeader .leftHeader {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+#serialHeader .rightHeader {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: row-reverse;
+    align-items: center;
+}
+
 #serialConsole {
-    height: 35%;
+    height: 25%;
     overflow-y: auto;
 }
 
@@ -34,7 +56,7 @@
 }
 
 #serialCharts {
-    height: 55%;
+    height: 65%;
     overflow-y: auto;
 }
 
@@ -45,10 +67,11 @@
 
 #serialCharts .ui.segment {
     padding: 0;
-    height: 10rem;
+    height: 12rem;
 }
 
 #serialCharts canvas {
+    border-radius: 0.5rem;
     width: 100%;
     height: 100%;
     margin: 0 !important;

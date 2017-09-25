@@ -239,16 +239,22 @@ export class Editor extends srceditor.Editor {
         return (
             <div id="serialArea">
                 <div id="serialHeader" className="ui segment">
-                <button className="ui left floated icon button" onClick={this.goBack.bind(this)}>
-                        <i className="arrow left icon"></i>
-                    </button>
-                    <span className="ui huge header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
-                    <button className="ui right floated icon button" onClick={this.showExportDialog.bind(this)}>
-                        <i className="download icon"></i>
-                    </button>
-                    <button className="ui right floated icon button" onClick ={this.toggleRecording.bind(this)}>
-                        <i ref={e => this.recordIcon = e} className={this.active ? "pause icon" : "circle icon"}></i>
-                    </button>
+                    <div className="leftHeaderWrapper">
+                        <div className="leftHeader">
+                            <button className="ui left floated large icon button" onClick ={this.toggleRecording.bind(this)}>
+                                <i ref={e => this.recordIcon = e} className={this.active ? "pause icon" : "circle icon"}></i>
+                            </button>
+                            <span className="ui large header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
+                        </div>
+                    </div>
+                    <div className="rightHeader">
+                        <button className="ui icon button" onClick={this.showExportDialog.bind(this)}>
+                            <i className="download icon"></i> Export data
+                        </button>
+                        <button className="ui icon button" onClick={this.goBack.bind(this)}>
+                            <i className="reply icon"></i>
+                        </button>
+                    </div>
                 </div>
                 <div id="serialCharts" ref={e => this.chartRoot = e}></div>
                 <div className="ui fitted divider"></div>
@@ -268,18 +274,18 @@ class Chart {
     source: string
     variable: string
     chartConfig = {
+        interpolation: 'step',
         responsive: true,
-        interpolation: "linear",
         fps: 30,
         millisPerPixel: 20,
-        grid: { strokeStyle: '#555555', lineWidth: 1, millisPerLine: 1000, verticalSections: 4}
+        grid: { strokeStyle: '#000'}
     }
     chart: SmoothieChart = new SmoothieChart(this.chartConfig)
     lineConfigs = [
-        { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 4 },
-        { strokeStyle: 'rgba(0, 0, 255, 1)', fillStyle: 'rgba(0, 0, 255, 0.2)', lineWidth: 4 },
-        { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4 },
-        { strokeStyle: 'rgba(255, 255, 0, 1)', fillStyle: 'rgba(255, 255, 0, 0.2)', lineWidth: 4 }
+        { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 5 },
+        { strokeStyle: 'rgba(0, 0, 255, 1)', fillStyle: 'rgba(0, 0, 255, 0.2)', lineWidth: 5 },
+        { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 5 },
+        { strokeStyle: 'rgba(255, 255, 0, 1)', fillStyle: 'rgba(255, 255, 0, 0.2)', lineWidth: 5 }
     ]
 
     constructor(source: string, variable: string, value: number, chartIdx: number) {
