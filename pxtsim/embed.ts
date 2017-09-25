@@ -179,7 +179,7 @@ namespace pxsim {
 
             if (msg.mute) mute(msg.mute);
 
-            if (msg.localizedStrings) {
+            if (msg.localizedStrings && pxt && pxt.Util) {
                 pxt.Util.setLocalizedStrings(msg.localizedStrings);
             }
             runtime = new Runtime(msg.code);
