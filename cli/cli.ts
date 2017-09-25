@@ -283,6 +283,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
 
     if (!args[0]) throw new Error("filename missing");
     switch (cmd.toLowerCase()) {
+        case "clean": return cleanCrowdinAsync(branch, prj, key, args[0] || "docs");
         case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
         case "download": {
             if (!args[1]) throw new Error("output path missing");
@@ -306,6 +307,16 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
         default: throw new Error("unknown command");
     }
 }
+
+function cleanCrowdinAsync(branch: string, prj: string, key: string, dir: string): Promise<void> {
+    const p = pxt.appTarget.id + "/" + dir;
+    return pxt.crowdin.listFilesAsync(branch, prj, key, p)
+        .then(files => {
+            files.filter(f => !nodeutil.fileExistsSync(f.fullName.substring(pxt.appTarget.id.length + 1)))
+                .forEach(f => pxt.log(`crowdin: dead file: ${branch ? branch + "/" : ""}${f.fullName}`));
+        })
+}
+
 
 function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string, dir?: string): Promise<void> {
     let fn = path.basename(p);
@@ -1242,17 +1253,17 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
     })
-    .then(() => {
-        if (tsConfig.prepend) {
-            let files: string[] = tsConfig.prepend
-            files.push(tsConfig.compilerOptions.out)
-            let s = ""
-            for (let f of files) {
-                s += fs.readFileSync(path.resolve(p, f), "utf8") + "\n"
+        .then(() => {
+            if (tsConfig.prepend) {
+                let files: string[] = tsConfig.prepend
+                files.push(tsConfig.compilerOptions.out)
+                let s = ""
+                for (let f of files) {
+                    s += fs.readFileSync(path.resolve(p, f), "utf8") + "\n"
+                }
+                fs.writeFileSync(path.resolve(p, tsConfig.compilerOptions.out), s)
             }
-            fs.writeFileSync(path.resolve(p, tsConfig.compilerOptions.out), s)
-        }
-    })
+        })
 }
 
 function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
@@ -1447,22 +1458,22 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
             "FirefoxAndroid >= 55"
         ]
         const cssnano = require('cssnano')({
-            autoprefixer: {browsers: browserList, add: true}
+            autoprefixer: { browsers: browserList, add: true }
         });
         const rtlcss = require('rtlcss');
         const files = ['semantic.css', 'blockly.css']
         files.forEach(cssFile => {
             fs.readFile(`built/web/${cssFile}`, "utf8", (err, css) => {
-            postcss([cssnano])
-                .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` }).then((result: any) => {
-                    fs.writeFile(`built/web/${cssFile}`, result.css, (err2, css2) => {
-                        // process rtl css
-                        postcss([rtlcss])
-                            .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                fs.writeFile(`built/web/rtl${cssFile}`, result2.css);
-                            });
+                postcss([cssnano])
+                    .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` }).then((result: any) => {
+                        fs.writeFile(`built/web/${cssFile}`, result.css, (err2, css2) => {
+                            // process rtl css
+                            postcss([rtlcss])
+                                .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
+                                    fs.writeFile(`built/web/rtl${cssFile}`, result2.css);
+                                });
+                        });
                     });
-                });
             })
         });
     })
@@ -4498,7 +4509,7 @@ function initCommands() {
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
-    advancedCommand("crowdin", "upload, download files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")
+    advancedCommand("crowdin", "upload, download, clean files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
