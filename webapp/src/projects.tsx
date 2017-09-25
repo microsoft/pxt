@@ -200,20 +200,20 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         <div className="left menu">
-                            <span className="ui item logo brand">
+                            <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName) } role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={() => pxt.tickEvent("menu.brand") }>
                                 {targetTheme.logo || targetTheme.portraitLogo
-                                    ? <a className="ui image landscape only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`} /></a>
-                                    : <span className="name">{targetTheme.name}</span>}
-                                {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`} /></a>) : null}
-                            </span>
+                                    ? <img className={`ui logo ${targetTheme.logo ? " portrait hide" : ''}`}  src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />
+                                    : <span className="name">{targetTheme.boardName}</span>}
+                                {targetTheme.portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />) : null}
+                            </a>
                         </div>
                         <div className="ui item">{tabIcon ? <i className={`icon ${tabIcon}`} aria-hidden={true}/> : undefined} {tabName}</div>
                         <div className="right menu">
                             <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={() => pxt.tickEvent("menu.org") }>
                                 {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                                    ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`} />
+                                    ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization) } />
                                     : <span className="name">{targetTheme.organization}</span>}
-                                {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`} />) : null}
+                                {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization) } />) : null}
                             </a>
                         </div>
                     </div>
@@ -225,7 +225,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                 <div className="column right aligned">
                                     <div className="getting-started">
                                         <h2 className="getting-started-header">{lf("First time here?") }</h2>
-                                        <div className="ui huge primary button" onClick={gettingStarted}>{lf("Get Started") }<i className="right arrow icon"></i></div>
+                                        <sui.Button icon="right arrow" rightIcon class="huge primary focused" text={lf("Get Started") } title={lf("Getting started tutorial") } onClick={gettingStarted} />
                                     </div>
                                 </div>
                             </div>
@@ -253,9 +253,9 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         </div>
                     ) }
                     {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl ? <div className="ui horizontal small divided link list homefooter">
-                        {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                        {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use") }</a> : undefined }
-                        {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy") }</a> : undefined }
+                        {targetTheme.organizationUrl && targetTheme.organization ? <a className="item focused" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
+                        {targetTheme.termsOfUseUrl ? <a target="_blank" className="item focused" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use") }</a> : undefined }
+                        {targetTheme.privacyUrl ? <a target="_blank" className="item focused" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy") }</a> : undefined }
                     </div> : undefined }
                 </div> : undefined }
             </sui.Modal >
@@ -290,11 +290,11 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     }
 
     componentDidMount() {
-       if (this.props.parent.state.header) {
-           if (this.latestProject && this.latestProject.element) {
-               this.latestProject.element.focus()
-           }
-       }
+        if (this.props.parent.state.header) {
+            if (this.latestProject && this.latestProject.element) {
+                this.latestProject.element.focus()
+            }
+        }
     }
 
     fetchGallery(path: string): pxt.CodeCard[] {
@@ -345,7 +345,11 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
         return <div className="ui dimmable">
             {this.hasFetchErrors ?
-                <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
+                <div className="ui carouselouter">
+                    <div className="carouselcontainer">
+                        <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
+                    </div>
+                </div>
                 :
                 <carousel.Carousel bleedPercent={20}>
                     {cards ? cards.map((scr, index) =>
@@ -363,7 +367,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     ) : headers.map((scr, index) =>
                         <div key={'local' + scr.id}>
                             {scr.id == 'new' ?
-                                <div className="ui card link newprojectcard" tabIndex={0} title={lf("Creates a new empty project") } onClick={() => this.newProject() }>
+                                <div className="ui card link newprojectcard" tabIndex={0} title={lf("Creates a new empty project") } onClick={() => this.newProject() } onKeyDown={sui.fireClickOnEnter} >
                                     <div className="content">
                                         <i className="icon huge add circle"></i>
                                         <span className="header">{scr.name}</span>
@@ -371,7 +375,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 </div>
                                 :
                                 <codecard.CodeCardView
-                                    ref={(view) => {if (index === 1) this.latestProject = view }}
+                                    ref={(view) => { if (index === 1) this.latestProject = view } }
                                     cardType="file"
                                     className="file"
                                     key={'local' + scr.id}
@@ -438,6 +442,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                     {pxt.appTarget.compile ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer") }
+                            className="focused"
                             role="button"
                             key={'import'}
                             icon="upload"
@@ -449,6 +454,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                     {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Open a shared project URL") }
+                            className="focused"
                             role="button"
                             key={'importurl'}
                             icon="cloud download"
@@ -512,18 +518,20 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         const cancel = () => {
             this.hide();
         }
-        const onChange = (name : string) => {
+        const onChange = (name: string) => {
             newName = name;
         };
 
         const actions = [{
             label: lf("Save"),
             onClick: save,
+            icon: 'check',
             className: 'positive'
-        },{
-            label: lf("Cancel"),
-            onClick: cancel
-        }]
+        }, {
+                label: lf("Cancel"),
+                icon: 'cancel',
+                onClick: cancel
+            }]
 
         return (
             <sui.Modal open={visible} className="exitandsave" header={lf("Save and Exit?") } size="small"
@@ -532,7 +540,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 closeIcon={true}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 >
-                <div className="ui segment form text">
+                <div className="ui form">
                     <sui.Input id={"projectNameInput"} class="focused" label={lf("Project Name") } ariaLabel={lf("Type a name for your project") } value={projectName} onChange={onChange}/>
                 </div>
             </sui.Modal>

@@ -897,6 +897,7 @@ namespace pxt.blocks {
             actuallyVisible = currentlyVisible;
         };
 
+        Blockly.Extensions.apply('inline-svgs', b, false);
         addPlusButton();
 
         (b as MutatingBlock).domToMutation = element => {
@@ -924,7 +925,7 @@ namespace pxt.blocks {
         };
 
         function addPlusButton() {
-            i.appendField(new Blockly.FieldImage(Util.pathJoin(pxt.webConfig.commitCdnUrl, "blockly/media/add.svg"), 24, 24, false, lf("Add argument"),
+            i.appendField(new Blockly.FieldImage((b as any).ADD_IMAGE_DATAURI, 24, 24, false, lf("Add argument"),
                 () => {
                     currentlyVisible = Math.min(currentlyVisible + 1, handlerArgs.length);
                     updateShape();
