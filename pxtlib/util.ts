@@ -685,6 +685,7 @@ namespace ts.pxtc.Util {
         return f() + f() + "-" + f() + "-4" + f().slice(-3) + "-" + f() + "-" + f() + f() + f();
     }
 
+    // Localization functions. Please port any modifications over to pxtsim/localization.ts
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
     let _translationsCache: pxt.Map<pxt.Map<string>> = {};
