@@ -163,6 +163,7 @@ export class Editor extends srceditor.Editor {
     }
 
     toggleRecording() {
+        pxt.tickEvent("serial.toggleRecording")
         if (this.active) this.pauseRecording()
         else this.startRecording()
     }
@@ -188,6 +189,7 @@ export class Editor extends srceditor.Editor {
     }
 
     showExportDialog() {
+        pxt.tickEvent("serial.showExportDialog")
         const targetTheme = pxt.appTarget.appTheme
         let rootUrl = targetTheme.embedUrl
         if (!rootUrl) {
@@ -203,6 +205,7 @@ export class Editor extends srceditor.Editor {
             disagreeLbl: lf("Close"),
             onLoaded: (_) => {
                 _.find('#datasavelocalfile').click(() => {
+                    pxt.tickEvent("serial.dataExported")
                     _.modal('hide');
                     pxt.commands.browserDownloadAsync(this.entriesToPlaintext(), "data.txt", "text/plain")
                 })
@@ -228,6 +231,7 @@ export class Editor extends srceditor.Editor {
 
     goBack() {
         //TODO tight coupling
+        pxt.tickEvent("serial.backButton")
         this.parent.openPreviousEditor()
     }
 
