@@ -38,7 +38,7 @@ import * as pxtjson from "./pxtjson"
 import * as serial from "./serial"
 import * as blocks from "./blocks"
 import * as codecard from "./codecard"
-import * as logview from "./logview"
+import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as electron from "./electron";
 
@@ -1207,10 +1207,10 @@ export class ProjectView
 
     clearSerial() {
         this.serialEditor.clear()
-        let simLogs = this.refs["simLogs"] as logview.LogView
-        let devLogs = this.refs["devLogs"] as logview.LogView
-        if (simLogs) simLogs.clear()
-        if (devLogs) devLogs.clear()
+        let simIndicator = this.refs["simIndicator"] as serialindicator.SerialIndicator
+        let devIndicator = this.refs["devIndicator"] as serialindicator.SerialIndicator
+        if (simIndicator) simIndicator.clear()
+        if (devIndicator) devIndicator.clear()
     }
 
     hwDebug() {
@@ -1825,8 +1825,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
                         </div>
                         <div id="serialPreview" className="ui editorFloat portrait hide">
-                            <logview.LogView ref="simLogs" isSim={true} onClick={() => this.openSerial(true)} />
-                            <logview.LogView ref="devLogs" isSim={false} onClick={() => this.openSerial(false)} />
+                            <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={() => this.openSerial(true)} />
+                            <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={() => this.openSerial(false)} />
                         </div>
                         {sandbox || isBlocks || this.editor == this.serialEditor ? undefined : <filelist.FileList parent={this} />}
                     </aside>

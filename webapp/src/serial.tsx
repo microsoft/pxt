@@ -44,7 +44,7 @@ export class Editor extends srceditor.Editor {
     }
 
     isGraphable(v: string) {
-        return /[a-z]*:[0-9.]*/.test(v)
+        return /[a-z]+:-?[0-9.]+/.test(v)
     }
 
     setSim(b: boolean) {
