@@ -365,7 +365,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 />
                         </div>
                     ) : headers.map((scr, index) =>
-                        <div key={'local' + scr.id}>
+                        <div key={'local' + scr.id + scr.recentUse}>
                             {scr.id == 'new' ?
                                 <div className="ui card link newprojectcard" tabIndex={0} title={lf("Creates a new empty project") } onClick={() => this.newProject() } onKeyDown={sui.fireClickOnEnter} >
                                     <div className="content">
