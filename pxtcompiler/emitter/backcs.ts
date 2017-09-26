@@ -111,10 +111,9 @@ static async Task ${proc.label()}(${ctxTp} s) {
             }
         }
 
-        write(`return leave(s, r0)`)
+        write(`s.Leave(r0);`)
 
-        writeRaw(`  default: oops()`)
-        writeRaw(`} } }`)
+        writeRaw(`}`)
         let info = nodeLocationInfo(proc.action) as FunctionLocationInfo
         info.functionName = proc.getName()
         writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
@@ -128,43 +127,43 @@ static async Task ${proc.label()}(${ctxTp} s) {
             write(`s.lastBrkId = ${id};`)
             if (bin.options.trace) {
                 lbl = ++lblIdx
-                write(`return trace(${id}, s, ${lbl}, ${proc.label()}.info);`)
+                write(`s.Trace(${id}, ${lbl}, ${proc.label()}_info);`)
             }
             else {
                 if (!bin.options.breakpoints)
                     return;
                 lbl = ++lblIdx
-                let brkCall = `return breakpoint(s, ${lbl}, ${id}, r0);`
+                let brkCall = `s.Breakpoint(${lbl}, ${id}, r0);`
                 if (s.breakpointInfo.isDebuggerStmt)
                     write(brkCall)
                 else
-                    write(`if ((breakAlways && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
+                    write(`if ((breakAlways && s.IsBreakFrame()) || breakpoints[${id}]) ${brkCall}`)
             }
-            writeRaw(`  case ${lbl}:`)
+            writeRaw(`B${lbl}:`)
         }
 
         function locref(cell: ir.Cell) {
             if (cell.isGlobal())
-                return "globals." + cell.uniqueName()
+                return "g_" + cell.uniqueName()
             else if (cell.iscap)
                 return `s.caps[${cell.index}]`
-            return "s." + cell.uniqueName()
+            return cell.uniqueName()
         }
 
         function emitJmp(jmp: ir.Stmt) {
-            let trg = `{ step = ${jmp.lbl.lblId}; continue; }`
+            let trg = `goto L${jmp.lbl.lblId};`
             if (jmp.jmpMode == ir.JmpMode.Always) {
                 if (jmp.expr)
                     emitExpr(jmp.expr)
                 write(trg)
             } else if (jmp.jmpMode == ir.JmpMode.IfJmpValEq) {
-                write(`if (r0 == (${emitExprInto(jmp.expr)})) ${trg}`)
+                write(`if (r0.Eq(${emitExprInto(jmp.expr)})) ${trg}`)
             } else {
                 emitExpr(jmp.expr)
                 if (jmp.jmpMode == ir.JmpMode.IfNotZero) {
-                    write(`if (r0) ${trg}`)
+                    write(`if (r0.ToBool()) ${trg}`)
                 } else {
-                    write(`if (!r0) ${trg}`)
+                    write(`if (!r0.ToBool()) ${trg}`)
                 }
             }
         }
@@ -176,11 +175,11 @@ static async Task ${proc.label()}(${ctxTp} s) {
         function emitExprInto(e: ir.Expr): string {
             switch (e.exprKind) {
                 case EK.NumberLiteral:
-                    if (e.data === true) return "true"
-                    else if (e.data === false) return "false"
-                    else if (e.data === null) return "null"
-                    else if (e.data === undefined) return "undefined"
-                    else if (typeof e.data == "number") return e.data + ""
+                    if (e.data === true) return "TValue.True"
+                    else if (e.data === false) return "TValue.False"
+                    else if (e.data === null) return "TValue.Null"
+                    else if (e.data === undefined) return "TValue.Undefined"
+                    else if (typeof e.data == "number") return "new TValue(" + e.data + ")"
                     else throw oops("invalid data: " + typeof e.data);
                 case EK.PointerLiteral:
                     return e.jsInfo;
