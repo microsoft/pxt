@@ -179,7 +179,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
             this.props.parent.importProjectDialog();
         }
         const gettingStarted = () => {
-            pxt.tickEvent("projects.welcome.gettingstarted");
+            pxt.tickEvent("projects.gettingstarted");
             this.hide();
             this.props.parent.gettingStarted();
         }
@@ -518,6 +518,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             this.props.parent.openHome();
         }
         const cancel = () => {
+            pxt.tickEvent("exitandsave.cancel");
             this.hide();
         }
         const onChange = (name: string) => {
