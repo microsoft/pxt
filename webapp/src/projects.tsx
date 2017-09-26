@@ -220,7 +220,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                 </div>
                 {tab == HOME ? <div className={tabClasses}>
                     {hasGettingStarted ?
-                        <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }}>
+                        <div className="ui segment getting-started-segment" style={targetTheme.homeScreenHero ? { backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` } : {}}>
                             <div className="ui grid equal width padded">
                                 <div className="column right aligned">
                                     <div className="getting-started">
