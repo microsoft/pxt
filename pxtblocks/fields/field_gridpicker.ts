@@ -262,11 +262,11 @@ namespace pxtblockly {
                 searchBar.addEventListener("keyup", (e) => {
                     if (e.keyCode == 13) {
                         let text = searchBar.value;
-                        let firstItem = this.getFirstItem.bind(this)()
+                        let firstItem = this.getFirstItem()
                         if (text && firstItem) {
-                            this.selectItem.bind(this)(firstItem)
+                            this.selectItem(firstItem)
                         } else {
-                            this.close.bind(this)()
+                            this.close()
                         }
                     }
                        
