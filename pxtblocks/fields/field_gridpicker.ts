@@ -81,6 +81,9 @@ namespace pxtblockly {
         private populateTableContainer(options: (Object | String[])[], tableContainer: goog.ui.Control) {
             this.disposeTooltips();
             tableContainer.removeChildren(true);
+            if (options.length == 0) {
+                this.firstItem_ = undefined
+            }
             for (let i = 0; i < options.length / this.columns_; i++) {
                 let row = this.createRow(i, options);
                 tableContainer.addChild(row, true);
@@ -168,7 +171,9 @@ namespace pxtblockly {
          */
         private selectItem(item: goog.ui.MenuItem) {
             if (this.menu_) {
-                this.onItemSelected(this.menu_, item)
+                if (item) {
+                    this.onItemSelected(this.menu_, item)
+                }
                 Blockly.WidgetDiv.hideIfOwner(this);
                 Blockly.Events.setGroup(false);
                 this.disposeTooltips();
@@ -251,7 +256,7 @@ namespace pxtblockly {
 
                 searchBar.addEventListener("keyup", (e) => {
                     let firstItem = this.getFirstItem.bind(this)()
-                    if (e.keyCode == 13 && firstItem) {
+                    if (e.keyCode == 13) {
                         this.selectItem.bind(this)(firstItem)
                     }
                 })
