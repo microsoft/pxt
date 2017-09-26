@@ -832,7 +832,12 @@ export class ProjectView
 
     exitAndSave() {
         pxt.tickEvent("menu.exitAndSave");
-        this.exitAndSaveDialog.show();
+        if (this.state.projectName !== lf("Untitled")) {
+            this.openHome();
+        }
+        else {
+            this.exitAndSaveDialog.show();
+        }
     }
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
