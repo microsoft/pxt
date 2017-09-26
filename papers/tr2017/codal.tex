@@ -20,29 +20,26 @@ Although platforms like Arduino and mbed OS are widely used by C/C++ developers,
 
 \subsection{Codal}
 
-The component-oriented device abstraction layer (CODAL) provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that removes the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem common to all CODAL Components that enables the decoupling of system and user code. A CODAL component represents software or hardware drivers (an I2C device, a GPIO pin, a Message Bus, a Bluetooth device); any component can generate or consume events. CODAL supports both polling and asynchronous (event-driven) programming models, which enables higher level languages to map straight onto native C/C++ APIs.
+The component-oriented device abstraction layer (CODAL) provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that minimises the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem common to all CODAL Components that enables the decoupling of system and user code. A CODAL component represents software or hardware drivers (an I2C device, a GPIO pin, a Message Bus, a Bluetooth device); any component can generate or consume events. CODAL supports both polling and asynchronous (event-driven) programming models, which enables higher level languages to map straight onto native C/C++ APIs.
 
 Doesn't try to take everything down to the lowest common denominator like mbed... enables customisation for each component. e.g. Pin, extends and implements additional cool functionality.
 
 \subsubsection{Structural Overview}
 
-* support multiple platforms and targets.
-* maintain a consistent core
-* provide mechanisms for the addition of supporting libraries
-* simple builds
+* a nice diagram
+* an object model that factors out common code, but pushes platform specific code.
+* why it's reequired:
+    - platform independence
+    - extensibility
+    - platform specialisation
+* explanation
 
 \subsubsection{Message Bus and Events}
 
 * Decouples user and system code.
 * The scratch model translated to C++
 * Provides a similar mechanism seen in higher level languages
-
-\subsubsection{Memory Management}
-
-* provides an interrupt safe environment for memory allocation
-* flexible implementation
-    - multiple heaps
-    - reconfigurable, repurposeable
+* Timer and queues?
 
 \subsubsection{Fiber Scheduler}
 
@@ -52,6 +49,7 @@ Doesn't try to take everything down to the lowest common denominator like mbed..
 
 \subsubsection{Drivers}
 
+* worked example
 * one component per piece of hardware or software
 * Provides a common interface
 * uses events to decouple from interrupt context.
@@ -60,11 +58,23 @@ Doesn't try to take everything down to the lowest common denominator like mbed..
 
 * Pull and Push model
 * Adopted by all stream capable interfaces, from Serial to I2C
-* Worked example?
+* Worked example, audio recog, playback
+
+\subsubsection{Memory Management}
+
+* provides an interrupt safe environment for memory allocation
+* flexible implementation
+    - multiple heaps
+    - reconfigurable, repurposeable
+* optimisations for common sizes and repeated patterns
+* edu
+* couple of sentences on types
+    - ref counted, malloced types.
 
 \subsubsection{A code sample}
 
 * That says this is awesome!
+* how it fits together...
 
 \subsubsection{Organisation}
 
@@ -77,24 +87,20 @@ Worked example of how everything fits together, short, only a few sentences.
 
 \subsection{Evaluation}
 
-* Comparison between Codal and other platforms will not work due to the uniqueness of the solution that codal provides. We could compare it to similar (ish) things, but there isn't really a similar thing
-
-* Metrics to evaluate codal on:
-
-    - Profile fibers, how much do they actually use? are they any better?
-    - Compare memory allocator to lib c?
-    - the measure of how much it glue it takes for TypeScript to use codal?
-    - benefits of componentisation?
-        - reusability, extensibility
-    - How well does codal perform on each device? (SAMD, ATMEGA, NRF52)
-        - cost benefit analysis of each.
-        - memory (flash and RAM) consumption
-        - CPU cycles
-            - context switch
-            - cost of events
-            - code gen, compare against micropython / espruino
-        - energy efficiency
-            - environmental sensing across 3 different platforms, mbed, espruino, codal
-        - how much code does MakeCode add? How efficient is it?
-
-
+- Profile fibers, how much do they actually use? are they any better?
+    - average RAM consumption for X
+    - Stack is typically small...
+    - types aid the stack size (heap allocated)
+- Compare memory allocator to lib c? (probably not that interesting)
+- benefits of componentisation?
+    - reusability, extensibility
+- How well does MakeCode + codal perform on each device? (SAMD, ATMEGA, NRF52)
+    - MakeCode + codal, native codal, mbed.
+    - cost benefit analysis of each.
+    - memory (flash and RAM) consumption
+    - CPU cycles
+        - context switch
+        - cost of events
+        - code gen, compare against micropython / espruino
+    - energy efficiency
+        - environmental sensing across 3 different platforms, mbed, espruino, codal
