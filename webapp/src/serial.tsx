@@ -34,6 +34,10 @@ export class Editor extends srceditor.Editor {
         return "serialEditor"
     }
 
+    hasEditorToolbar() {
+        return false
+    }
+
     setVisible(b: boolean) {
         this.isVisible = b
         if (b) this.startRecording()

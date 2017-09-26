@@ -23,6 +23,10 @@ export class Editor extends srceditor.Editor {
         return "pxtJsonEditor"
     }
 
+    hasEditorToolbar() {
+        return false
+    }
+
     display() {
         const c = this.config
         const save = () => {
