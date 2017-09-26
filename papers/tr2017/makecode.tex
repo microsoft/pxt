@@ -1,14 +1,23 @@
 \section{MakeCode: Design and Implementation}
 \label{sec:makecode}
 
+Figure~\ref{fig:screenSnap} shows a screen snapshot of the MakeCode web app for the micro:bit. 
+\emph{[TODO: describe the basic parts]}
+
 The MakeCode web app encapsulates all the components needed to deliver a programming experience 
 for microcontroller based devices, free of the need for a C++ compiler for the compilation of user 
-code, as shown in Figure~\ref{fig:makecode}. 
+code.
 The web app is written in TypeScript. The web app also incorporates the TypeScript compiler and 
 language service, used in several ways, as detailed below. 
 The web app is built from a target (e.g., \emph{\href{https://github.com/microsoft/pxt-microbit}{pxt-microbit}})
 which extends the core framework (\emph{\href{https://github.com/microsoft/pxt}{pxt}}).
-The remaining subsections describe the parts of Figure~\ref{fig:makecode}.
+The remaining subsections describe the parts of Figure~\ref{fig:makecode}, 
+which shows the high-level components of the web app.
+
+\begin{figure*}[t]
+    \includegraphics[width=5.5in]{makecodeFig.pdf}
+\caption{\label{fig:makecode}MakeCode Architecture}
+\end{figure*}
 
 \subsection{Device Runtime and Shim Generation}
 
@@ -41,14 +50,9 @@ namespace led {
 ...
 \end{lstlisting}
 
-Figure~\ref{fig:screenSnap} shows a screen snapshot of the MakeCode web app for the micro:bit. 
-The section labelled C is the toolbox of API and language categories, where the LED
+Figure!\ref{fig:screenSnap}(C) is the toolbox of API and language categories, where the LED
 namespace can been seen. 
 
-\begin{figure*}[t]
-    \includegraphics[width=5in]{screenSnapFig.pdf}
-\caption{\label{fig:screenSnap}Screen snapshot of MakeCode web app.}
-\end{figure*}
 
 Here is the C++ file defining the micro:bit's led namespace and its functions:
 ~\href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/led.cpp}{pxt-microbit/libs/core/led.cpp}.
