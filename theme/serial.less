@@ -5,7 +5,13 @@
 /* Reference import */
 @import (reference) "semantic.less";
 
-@serialBackgroundColor: #383838;
+/*-------------------
+   Serial
+--------------------*/
+
+@serialBackgroundColor: lighten(@simulatorBackground, 2);
+@serialTextColor: #fff;
+@serialGraphBackground: #fefefe;
 
 #serialEditor {
     background-color: @serialBackgroundColor;
@@ -38,6 +44,8 @@
 
 #serialHeader .leftHeader .ui.header {
     margin: 0;
+    margin-left: 1rem;
+    color: @serialTextColor;
 }
 
 #serialHeader .leftHeader {
@@ -51,6 +59,10 @@
     flex-grow: 1;
     flex-direction: row-reverse;
     align-items: center;
+}
+
+#serialHeader .toggleRecord {
+    transition: border-radius 1s ease-in-out;
 }
 
 #serialConsole {
@@ -67,18 +79,20 @@
     overflow-y: auto;
 }
 
-#serialCharts .ui.label {
+#serialCharts .seriallabel {
     padding: 5px 10px 5px 10px;
     border: 1px solid black;
     color: #000;
     width: auto;
-    border-radius: 5px;
+    border-radius: 20px;
     margin: 5px;
 }
 
 #serialCharts .ui.segment {
-    padding: 0;
+    padding: 0.4rem;
     height: 12rem;
+    background-color: @serialGraphBackground;
+    border: 1px solid lighten(@serialGraphBackground, 10.0);
 }
 
 #serialCharts canvas {
@@ -96,4 +110,11 @@
 #serialPreview .label {
     width: 100%;
     background-color: @serialBackgroundColor;
+}
+
+#serialToolbox {
+    bottom: 0;
+    right: 0;
+    height: 5rem;
+    position: absolute;
 }

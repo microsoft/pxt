@@ -26,6 +26,7 @@ export class Editor extends srceditor.Editor {
     maxBufferLength: number = 5000
 
     //refs
+    recordButton: HTMLElement;
     recordIcon: HTMLElement
     consoleRoot: HTMLElement
     chartRoot: HTMLElement
@@ -157,12 +158,22 @@ export class Editor extends srceditor.Editor {
     pauseRecording() {
         this.active = false
         if (this.recordIcon) this.recordIcon.className = "circle icon"
+        if (this.recordButton) {
+            this.recordButton.classList.remove("green")
+            this.recordButton.classList.add("circular")
+            this.recordButton.classList.add("red")
+        }
         this.charts.forEach(s => s.stop())
     }
 
     startRecording() {
         this.active = true
         if (this.recordIcon) this.recordIcon.className = "pause icon"
+        if (this.recordButton) {
+            this.recordButton.classList.remove("red")
+            this.recordButton.classList.remove("circular")
+            this.recordButton.classList.add("green")
+        }
         this.charts.forEach(s => s.start())
     }
 
@@ -242,27 +253,33 @@ export class Editor extends srceditor.Editor {
     display() {
         return (
             <div id="serialArea">
-                <div id="serialHeader" className="ui segment">
+                <div id="serialHeader" className="ui">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <button className="ui left floated large icon button" onClick ={this.toggleRecording.bind(this)}>
+                            <button ref={e => this.recordButton = e} className={`ui left floated icon button ${this.active ? "green" : "red circular"} toggleRecord`} onClick={this.toggleRecording.bind(this)}>
                                 <i ref={e => this.recordIcon = e} className={this.active ? "pause icon" : "circle icon"}></i>
                             </button>
-                            <span className="ui large header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
+                            <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <button className="ui icon button" onClick={this.showExportDialog.bind(this)}>
-                            <i className="download icon"></i> Export data
-                        </button>
-                        <button className="ui icon button" onClick={this.goBack.bind(this)}>
-                            <i className="reply icon"></i>
+                        <button className="ui icon circular small inverted button" onClick={this.goBack.bind(this)}>
+                            <i className="close icon"></i>
                         </button>
                     </div>
                 </div>
                 <div id="serialCharts" ref={e => this.chartRoot = e}></div>
                 <div className="ui fitted divider"></div>
                 <div id="serialConsole" ref={e => this.consoleRoot = e}></div>
+                <div id="serialToolbox">
+                    <div className="ui grid right aligned padded">
+                        <div className="column">
+                            <button className="ui small basic blue button" onClick={this.showExportDialog.bind(this)}>
+                                <i className="download icon"></i> Export data
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         )
     }
@@ -277,13 +294,7 @@ class Chart {
     line: TimeSeries = new TimeSeries()
     source: string
     variable: string
-    chartConfig = {
-        responsive: true,
-        fps: 30,
-        millisPerPixel: 1,
-        grid: { strokeStyle: '#9E9E9E', fillStyle: '#9E9E9E'}
-    }
-    chart: SmoothieChart = new SmoothieChart(this.chartConfig)
+    chart: SmoothieChart
     lineConfigs = [
         { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.5)', lineWidth: 5 },
         { strokeStyle: 'rgba(0, 0, 255, 1)', fillStyle: 'rgba(0, 0, 255, 0.5)', lineWidth: 5 },
@@ -292,6 +303,20 @@ class Chart {
     ]
 
     constructor(source: string, variable: string, value: number, chartIdx: number) {
+        const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme;
+        // Initialize chart
+        const chartConfig = {
+            interpolation: 'bezier',
+            responsive: true,
+            fps: 30,
+            millisPerPixel: 1,
+            grid: {
+                verticalSections: 0,
+                borderVisible: false,
+                fillStyle: serialTheme && serialTheme.backgroundColor || '#fff'
+            }
+        }
+        this.chart = new SmoothieChart(chartConfig);
         this.rootElement.className = "ui segment"
         this.source = source
         this.variable = variable
@@ -311,7 +336,7 @@ class Chart {
 
     makeLabel() {
         let label = document.createElement("div")
-        label.className = "ui bottom left attached label"
+        label.className = "ui orange bottom left attached label seriallabel"
         label.innerText = this.variable
         return label
     }
