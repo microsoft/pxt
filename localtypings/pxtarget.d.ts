@@ -81,6 +81,12 @@ declare namespace pxt {
         rawHID?: boolean;
         log?: boolean; // pipe messages to log
         chromeExtension?: string; // unique identifier of the chrome extension
+        editorTheme?: SerialTheme;
+    }
+
+    interface SerialTheme {
+        backgroundColor?: string;
+        strokeColor?: string;
     }
 
     interface AppCloud {
