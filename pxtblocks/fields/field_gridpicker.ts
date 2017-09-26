@@ -265,8 +265,6 @@ namespace pxtblockly {
                         let firstItem = this.getFirstItem()
                         if (text && firstItem) {
                             this.selectItem(firstItem)
-                        } else {
-                            this.close()
                         }
                     }
                        
