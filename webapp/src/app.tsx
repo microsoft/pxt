@@ -1328,7 +1328,7 @@ export class ProjectView
                         })
                         .catch(e => {
                             if (e.statusCode == 404)
-                                core.warningNotification("Oops, we could not find this script.")
+                                core.warningNotification(lf("Oops, we could not find this script."))
                             else
                                 core.handleNetworkError(e)
                         });
