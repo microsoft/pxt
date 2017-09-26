@@ -237,7 +237,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                             </div>
                             <div className="column right aligned">
                                 {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing) ?
-                                    <sui.Button key="import" icon="upload" class="secondary tiny" textClass="landscape only" text={lf("Import") } title={lf("Import a project") } onClick={() => importProject() } /> : undefined}
+                                    <sui.Button key="import" icon="upload" class="secondary tiny focused" textClass="landscape only" text={lf("Import") } title={lf("Import a project") } onClick={() => importProject() } /> : undefined}
                             </div>
                         </div>
                         <div className="content">
@@ -367,7 +367,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     ) : headers.map((scr, index) =>
                         <div key={'local' + scr.id + scr.recentUse}>
                             {scr.id == 'new' ?
-                                <div className="ui card link newprojectcard" tabIndex={0} title={lf("Creates a new empty project") } onClick={() => this.newProject() } onKeyDown={sui.fireClickOnEnter} >
+                                <div className="ui card link newprojectcard focused" tabIndex={0} title={lf("Creates a new empty project") } onClick={() => this.newProject() } onKeyDown={sui.fireClickOnEnter} >
                                     <div className="content">
                                         <i className="icon huge add circle"></i>
                                         <span className="header">{scr.name}</span>
