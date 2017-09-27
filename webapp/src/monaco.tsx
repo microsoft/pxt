@@ -512,7 +512,7 @@ export class Editor extends srceditor.Editor {
                     this.domNode.className = 'monacoFlyout';
                     // Hide by default
                     this.domNode.style.display = 'none';
-                    this.domNode.innerText = 'Flyout';
+                    this.domNode.textContent = 'Flyout';
                 }
                 return this.domNode;
             },
@@ -747,7 +747,7 @@ export class Editor extends srceditor.Editor {
                     monacoEditor.selectedCategoryBackgroundColor = color;
                 } else {
                     monacoEditor.selectedCategoryColor = color;
-                    monacoEditor.selectedCategoryBackgroundColor = 'none';
+                    monacoEditor.selectedCategoryBackgroundColor = '';
                 }
             }
 
@@ -876,7 +876,7 @@ export class Editor extends srceditor.Editor {
             pxt.blocks.appendToolboxIconCss(iconClass, icon);
         }
         treerow.style.paddingLeft = '0px';
-        label.innerText = category ? category : `${Util.capitalize(ns)}`;
+        label.textContent = category ? category : `${Util.capitalize(ns)}`;
 
         return treeitem;
     }
@@ -946,7 +946,7 @@ export class Editor extends srceditor.Editor {
                 sigToken.className = 'sig';
             }
             // completion is a bit busted but looks better
-            sigToken.innerText = snippet
+            sigToken.textContent = snippet
                 .replace(/^[^(]*\(/, '(')
                 .replace(/^\s*\{\{\}\}\n/gm, '')
                 .replace(/\{\n\}/g, '{}')
@@ -1011,7 +1011,7 @@ export class Editor extends srceditor.Editor {
 
             if (!fn.snippetOnly) {
                 let methodToken = document.createElement('span');
-                methodToken.innerText = fn.name;
+                methodToken.textContent = fn.name;
                 monacoBlock.appendChild(methodToken);
             }
             monacoBlock.appendChild(sigToken);

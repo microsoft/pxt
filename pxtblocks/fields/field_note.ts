@@ -516,7 +516,7 @@ namespace pxtblockly {
                     goog.events.EventType.MOUSEOVER,
                     function () {
                         let script = showNoteLabel.getContent() as HTMLElement;
-                        script.innerText = this.getId();
+                        script.textContent = this.getId();
                     }, false, key
                 );
 
@@ -533,7 +533,7 @@ namespace pxtblockly {
             showNoteLabel.setContent(showNoteStyle);
             showNoteLabel.render(pianoDiv);
             let scriptLabel = showNoteLabel.getContent() as HTMLElement;
-            scriptLabel.innerText = "-";
+            scriptLabel.textContent = "-";
 
             // create next and previous CustomButtons for pagination
             let prevButton = new goog.ui.CustomButton();
@@ -541,20 +541,20 @@ namespace pxtblockly {
             let prevButtonStyle = getNextPrevStyle(topPosition, leftPosition, true, mobile);
             let nextButtonStyle = getNextPrevStyle(topPosition, leftPosition, false, mobile);
             if (pagination) {
-                scriptLabel.innerText = "Octave #1";
+                scriptLabel.textContent = "Octave #1";
                 //  render previous button
                 let script: HTMLElement;
                 prevButton.setContent(prevButtonStyle);
                 prevButton.render(pianoDiv);
                 script = prevButton.getContent() as HTMLElement;
                 //  left arrow - previous button
-                script.innerText = "<";
+                script.textContent = "<";
                 //  render next button
                 nextButton.setContent(nextButtonStyle);
                 nextButton.render(pianoDiv);
                 script = nextButton.getContent() as HTMLElement;
                 //  right arrow - next button
-                script.innerText = ">";
+                script.textContent = ">";
 
                 let Npages = this.nKeys_ / 12;
                 let currentPage = 0;
@@ -562,7 +562,7 @@ namespace pxtblockly {
                     goog.events.EventType.MOUSEDOWN,
                     function () {
                         if (currentPage == 0) {
-                            scriptLabel.innerText = "Octave #" + (currentPage + 1);
+                            scriptLabel.textContent = "Octave #" + (currentPage + 1);
                             return;
                         }
                         let curFirstKey = currentPage * 12;
@@ -574,14 +574,14 @@ namespace pxtblockly {
                         for (let i = 0; i < 12; i++)
                             piano[i + newFirstKey].setVisible(true);
                         currentPage--;
-                        scriptLabel.innerText = "Octave #" + (currentPage + 1);
+                        scriptLabel.textContent = "Octave #" + (currentPage + 1);
                     }, false, prevButton
                 );
                 goog.events.listen(nextButton.getElement(),
                     goog.events.EventType.MOUSEDOWN,
                     function () {
                         if (currentPage == Npages - 1) {
-                            scriptLabel.innerText = "Octave #" + (currentPage + 1);
+                            scriptLabel.textContent = "Octave #" + (currentPage + 1);
                             return;
                         }
                         let curFirstKey = currentPage * 12;
@@ -593,7 +593,7 @@ namespace pxtblockly {
                         for (let i = 0; i < 12; i++)
                             piano[i + newFirstKey].setVisible(true);
                         currentPage++;
-                        scriptLabel.innerText = "Octave #" + (currentPage + 1);
+                        scriptLabel.textContent = "Octave #" + (currentPage + 1);
                     }, false, nextButton
                 );
             }

@@ -52,8 +52,8 @@ svg.blocklySvg {
     overflow: visible;
 }
 
-span.blocklyTreeLabel, text.blocklyText, input.blocklyHtmlInput {
-    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
+span.blocklyTreeLabel, text.blocklyText, input.blocklyHtmlInput, .blocklyDropDownDiv .goog-menuitem {
+    font-family: @blocklyFont !important;
 }
 
 /* Using 1rem creates font size issues in Edge
@@ -257,8 +257,8 @@ div.blocklyTreeRow {
 }
 
 /* Transulcent blocks when dragging */
-.blocklyDraggable.blocklyDragging {
-   opacity: 0.7;
+.blocklyDragging>.blocklyPath {
+   fill-opacity: 0.7;
 }  
 
 /*******************************
