@@ -2279,10 +2279,10 @@ $(document).ready(() => {
         try {
             // On embedded pages, preserve the loaded project
             if (pxt.BrowserUtils.isIFrame() && hash.cmd === "pub")
-                location.replace(location.origin + `/#pub:${hash.arg}`)
+                location.replace(location.origin + location.search + `#pub:${hash.arg}`)
             // if in editor, reload project
             else if (theEditor && theEditor.state && theEditor.state.header && !theEditor.state.header.isDeleted)
-                location.replace(location.origin + `/#reload`)
+                location.replace(location.origin + location.search + `#reload`)
             else
                 location.reload();
         } catch (e) {
