@@ -91,10 +91,6 @@ namespace pxtblockly {
             let tableContainerDom = tableContainer.getElement();
             if (tableContainerDom) {
                 let menuItemsDom = tableContainerDom.childNodes;
-                if (menuItemsDom.length && menuItemsDom[0].childNodes) {
-                    let firstItem = menuItemsDom[0].childNodes[0] as HTMLElement
-                    firstItem.className += " goog-menuitem-highlight"
-                }
                 for (let i = 0; i < menuItemsDom.length; ++i) {
                     const elem = menuItemsDom[i] as HTMLElement;
                     elem.className = "blocklyGridPickerRow";
@@ -257,6 +253,37 @@ namespace pxtblockly {
                     })
                     this.populateTableContainer.bind(this)(filteredOptions, tableContainer);
                     this.createTooltips(filteredOptions, tableContainer)
+
+                    //let selectedItemDom = tableContainerDom.childNodes[tableContainerDom.childNodes.length-1].childNodes[0] as HTMLElement
+                    if (text) {
+
+                    } else {
+                        const rowCount = tableContainer.getChildCount();
+                        let selectedItemDom: any;
+                        for (let row = 0; row < rowCount; ++row) {
+                            for (let col = 0; col < this.columns_; ++col) {
+                                const val = (tableContainer.getChildAt(row).getChildAt(col) as goog.ui.MenuItem).getValue();
+                                if (this.value_ === val) {
+                                    selectedItemDom = (tableContainerDom.children[row] as HTMLElement).children[col];
+                                    break;
+                                }
+                            }
+    
+                            if (selectedItemDom) {
+                                goog.style.scrollIntoContainerView(selectedItemDom, scrollContainerDom, true);
+                                break;
+                            }
+                        }
+                    }
+                    //TODO sandbox
+                    /**
+                    let menuItemsDom = tableContainerDom.childNodes
+                    if (menuItemsDom.length && menuItemsDom[0].childNodes) {
+                        let firstItem = menuItemsDom[0].childNodes[0] as HTMLElement
+                        firstItem.className += " goog-menuitem-highlight"
+                    }
+                    goog.style.scrollIntoContainerView(selectedItemDom, scrollContainerDom, true);
+                    **/
                 }, 300, false));
 
                 searchBar.addEventListener("keyup", (e) => {
