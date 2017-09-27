@@ -40,12 +40,12 @@ make it simple to program microcontrollers using an interactive web app that als
 
 \begin{figure*}[t]
   \includegraphics[width=5.5in]{reposFig.pdf}
-  \caption{\label{fig:repos}Relationships between platform components/repos. Yellow boxes represent the MakeCode (PXT) components; blue
+  \caption{\label{fig:repos}Relationships between platform components/repos. Yellow boxes represent the \MC (PXT) components; blue
   boxes represent the CODAL components; green boxes represent external components.}
 \end{figure*}
 
 The platform builds on stack of four novel technologies.
-The entry point of the platform is \emph{MakeCode} (\url{www.makecode.com}),
+The entry point of the platform is \emph{\MC} (\url{www.makecode.com}),
 a web app that supports both visual block programming and text programming,
 via \emph{Static TypeScript}, with conversion 
 between the two program representations. The web app has in-browser execution 
@@ -75,7 +75,7 @@ all the above functionality works offline (i.e., if the host machine loses its c
 to the internet).
 All of the above components are open source under the MIT/Apache licenses, as detailed below. 
 
-Platform targets can be seen at \url{www.makecode.com}, where the MakeCode web app for a variety of boards is available, 
+Platform targets can be seen at \url{www.makecode.com}, where the \MC web app for a variety of boards is available, 
 including the micro:bit (a Nordic nRF51822 microcontroller with Cortex-M0 processor, 16K RAM), Adafruit's Circuit 
 Playground Express (CPX: an Atmel SAMD21 microcontroller with Cortex-M0+ processor, 32K RAM), and the Arduino Uno 
 (Uno: an Atmel ATmega328 microcontroller with AVR processor, 2K RAM). 
@@ -89,7 +89,7 @@ compilation speed, code size, and runtime performance.  In particular, we evalua
       to the GCC C/C++ toolchain, as well as the size of the resulting executable;
 \item the time to load code onto a microcontroller using UF2, compared to standard bootloaders; 
 \item The performance of a set of small benchmarks, written in both Static TypeScript and C++,
-      compiled with the MakeCode and GCC toolchains, as well as the performance of device drivers
+      compiled with the \MC and GCC toolchains, as well as the performance of device drivers
       written in Static TypeScript compared to their C++ counterparts;
 \item \emph{energy consumption: CODAL vs. Arduino}
 [evaluate with respect to the popular Arduino toolset, for boards with 8-bit (AVR) and 32-bit (Cortex-M0) microcontrollers. 
@@ -104,11 +104,11 @@ boxes represent repos external to the platform.
 
 \begin{figure*}[t]
       \includegraphics[width=5in]{screenSnapFig.pdf}
-  \caption{\label{fig:screenSnap}Screen snapshot of MakeCode web app.}
+  \caption{\label{fig:screenSnap}Screen snapshot of the \MC web app.}
 \end{figure*}
 
-The MakeCode framework 
-is at \emph{\href{https://github.com/microsoft/pxt}{pxt}} (PXT is the previous codename of MakeCode). 
+The \MC framework 
+is at \emph{\href{https://github.com/microsoft/pxt}{pxt}} (PXT is the previous codename of \MC). 
 A PXT \emph{target} extends the framework to create an environment for a specific board. Targets
 for the three previously mentioned boards are at: 
 ~\emph{\href{https://github.com/microsoft/pxt-microbit}{pxt-microbit}}, 
@@ -126,7 +126,7 @@ and SAMD21 and Atmega328 microcontrollers can be found at
 The repo \emph{\href{https://github.com/lancaster-university/codal}{codal}} provides the
 build tooling for compiling a CODAL target.  As can be seen in Figure~\ref{fig:repos}, 
 CODAL (the blue boxes) abstracts over platform and microcontroller specific
-implementations (for example, MBED), while MakeCode/PXT abstracts over programming editors
+implementations (for example, MBED), while \MC/PXT abstracts over programming editors
 and languages (Blockly, Monaco, and TypeScript).
 The UF2 specification is at~\emph{\href{https://github.com/microsoft/uf2}{uf2}},
 with implementations at~\emph{\href{https://github.com/microsoft/uf2-samd21}{uf2-samd21}}
@@ -136,7 +136,7 @@ shown in the Figure.
 The pxt-microbit target uses a predecessor of the CODAL called the DAL (at
 ~\emph{\href{https://github.com/lancaster-university/microbit-dal}{microbit-dal}}).
 
-The rest of this paper is organized as follows. Section~\ref{sec:makecode} presents the design and implementation of the MakeCode framework. 
+The rest of this paper is organized as follows. Section~\ref{sec:makecode} presents the design and implementation of the \MC framework. 
 Sections~\ref{sec:sts},~\ref{sec:codal} and~\ref{sec:uf2} describe Static TypeScript, the CODAL C++ runtime, and the UF2 flashing format,
 respectively.  Section~\ref{sec:evaluate} evaluates the performance of the platform and
 Section~\ref{sec:related} discusses related work. Finally, Section~\ref{sec:conclude} concludes and speculates about future directions. 
