@@ -1549,7 +1549,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
     startTutorial(tutorialId: string, tutorialTitle?: string) {
         pxt.tickEvent("tutorial.start");
         // Check for Internet access
-        if (!Cloud.isOnline()) {
+        if (!pxt.Cloud.isNavigatorOnline()) {
             core.errorNotification(lf("No Internet access, please connect and try again."));
             this.home.showHome();
         } else {
