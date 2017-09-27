@@ -57,6 +57,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
     }
 
     showHome() {
+        this.props.parent.stopSimulator();
         this.setState({
             visible: true,
             tab: HOME,
