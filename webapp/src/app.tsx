@@ -607,10 +607,6 @@ export class ProjectView
                 if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName()) {
                     if (!file.content) // empty blocks file, open javascript editor
                         file = main.lookupFile("this/" + file.getVirtualFileName()) || file
-                    else this.textEditor.decompileAsync(file.getVirtualFileName()).then(resp => {
-                        if (!resp.success)
-                            file = main.lookupFile("this/" + file.getVirtualFileName()) || file
-                    });
                 }
                 this.setState({
                     header: h,
