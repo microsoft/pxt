@@ -2096,7 +2096,7 @@ function parseHash(): { cmd: string; arg: string } {
     return { cmd: '', arg: '' };
 }
 
-function handleHash(hash: { cmd: string; arg: string }): boolean {
+function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boolean {
     if (!hash) return false;
     let editor = theEditor;
     if (!editor) return false;
@@ -2157,7 +2157,7 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
                 .done(() => core.hideLoading());
             return true;
         case "reload": // need to reload last project - handled later in the load process
-            window.location.hash = "";
+            if (loading) window.location.hash = "";
             return false;
     }
 
@@ -2202,7 +2202,7 @@ function loadHeaderBySharedId(id: string) {
 
 function initHashchange() {
     window.addEventListener("hashchange", e => {
-        handleHash(parseHash());
+        handleHash(parseHash(), false);
     });
 }
 
@@ -2278,13 +2278,16 @@ $(document).ready(() => {
     const appCacheUpdated = () => {
         try {
             // On embedded pages, preserve the loaded project
-            if (pxt.BrowserUtils.isIFrame() && hash.cmd === "pub")
-                location.replace(location.origin + location.search + `#pub:${hash.arg}`)
+            if (pxt.BrowserUtils.isIFrame() && hash.cmd === "pub") {
+                location.hash = `#pub:${hash.arg}`;
+            }
             // if in editor, reload project
-            else if (theEditor && theEditor.state && theEditor.state.header && !theEditor.state.header.isDeleted)
-                location.replace(location.origin + location.search + `#reload`)
-            else
-                location.reload();
+            else if (theEditor
+                && !theEditor.home.state.visible
+                && theEditor.state && theEditor.state.header && !theEditor.state.header.isDeleted) {
+                location.hash = "#reload"
+            }
+            location.reload();
         } catch (e) {
             pxt.reportException(e);
             location.reload();
@@ -2376,7 +2379,7 @@ $(document).ready(() => {
                 theEditor.home.showHome();
                 return Promise.resolve();
             }
-            if (hash.cmd && handleHash(hash)) {
+            if (hash.cmd && handleHash(hash, true)) {
                 return Promise.resolve();
             }
             if (hasWinRTProject) {
