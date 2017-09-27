@@ -292,7 +292,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     componentDidMount() {
         if (this.props.parent.state.header) {
             if (this.latestProject && this.latestProject.element) {
-                this.latestProject.element.focus()
+                this.latestProject.element.className += " latest"
             }
         }
     }
