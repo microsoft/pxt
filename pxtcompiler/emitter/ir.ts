@@ -20,10 +20,16 @@ namespace ts.pxtc.ir {
         Nop,
     }
 
+    let currExprId = 0
     export class Node {
-        _id: number;
+        private _id: number;
         isExpr(): this is Expr { return false }
         isStmt(): this is Stmt { return false }
+        getId() {
+            if (!this._id)
+                this._id = ++currExprId
+            return this._id
+        }
     }
 
     export class Expr extends Node {
@@ -152,14 +158,9 @@ namespace ts.pxtc.ir {
         }
     }
 
-    let currExprId = 0
     function nodeToString(n: Node) {
         return str(n)
-        function addId(n: Node) {
-            if (!n._id) n._id = ++currExprId
-        }
         function str(n: Node): string {
-            addId(n)
             if (n.isExpr()) {
                 let e = n as Expr
                 let a0 = e.args ? e.args[0] : null
@@ -176,12 +177,10 @@ namespace ts.pxtc.ir {
                         return "NOP"
 
                     case EK.SharedRef:
-                        addId(a0)
-                        return `SHARED_REF(#${a0._id})`
+                        return `SHARED_REF(#${a0.getId()})`
 
                     case EK.SharedDef:
-                        addId(a0)
-                        return `SHARED_DEF(#${a0._id}: ${str(a0)})`
+                        return `SHARED_DEF(#${a0.getId()}: ${str(a0)})`
 
                     case EK.Incr:
                         return `INCR(${str(a0)})`

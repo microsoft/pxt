@@ -1,5 +1,5 @@
 namespace ts.pxtc {
-   
+
     function shimToCs(shimName: string) {
         shimName = shimName.replace(/::/g, ".")
         //if (shimName.slice(0, 4) == "pxt.")
@@ -54,13 +54,15 @@ namespace ts.pxtc {
         if (bin.procs[0] == proc) {
             writeRaw(`
 
-public static void Main() { ${proc.label()}(new ${ctxTp}()); }
+public static void Main() { ${proc.label()}(new CTX(), null); }
 `)
         }
 
         writeRaw(`
-static async Task ${proc.label()}(${ctxTp} s) {
-    TValue r0 = TValue.Undefined;
+static async Task ${proc.label()}(CTX parent, TValue[] args) {
+    var r0 = TValue.Undefined;
+    var s = new ${ctxTp}();
+    s.parent = parent;
 `)
 
         //console.log(proc.toString())
@@ -73,9 +75,9 @@ static async Task ${proc.label()}(${ctxTp} s) {
 
         if (proc.args.length) {
             proc.args.forEach((l, i) => {
-                write(`TValue ${locref(l)} = s.lambdaArgs[${i}];`)
+                write(`TValue ${locref(l)} = ${i} >= args.Length ? TValue.Undefined : args[${i}];`)
             })
-            write(`s.lambdaArgs = null;`)
+            write(`args = null;`)
         }
 
         let exprStack: ir.Expr[] = []
@@ -116,9 +118,9 @@ static async Task ${proc.label()}(${ctxTp} s) {
         writeRaw(`}`)
         let info = nodeLocationInfo(proc.action) as FunctionLocationInfo
         info.functionName = proc.getName()
-        writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
-        if (proc.isRoot)
-            writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)
+        writeRaw(`// ${proc.label()}.info = ${JSON.stringify(info)}`)
+        //if (proc.isRoot)
+        //    writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)
         return resText
 
         function emitBreakpoint(s: ir.Stmt) {
@@ -139,7 +141,7 @@ static async Task ${proc.label()}(${ctxTp} s) {
                 else
                     write(`if ((breakAlways && s.IsBreakFrame()) || breakpoints[${id}]) ${brkCall}`)
             }
-            writeRaw(`B${lbl}:`)
+            writeRaw(`L${lbl}:`)
         }
 
         function locref(cell: ir.Cell) {
@@ -190,7 +192,7 @@ static async Task ${proc.label()}(${ctxTp} s) {
                     arg.currUses++
                     let idx = exprStack.indexOf(arg)
                     U.assert(idx >= 0)
-                    return "s.tmp_" + idx
+                    return "tmp_" + arg.getId()
                 case EK.CellRef:
                     let cell = e.data as ir.Cell;
                     return locref(cell)
@@ -246,9 +248,9 @@ static async Task ${proc.label()}(${ctxTp} s) {
                 return emitExpr(arg)
             else {
                 emitExpr(arg)
-                let idx = exprStack.length
                 exprStack.push(arg)
-                write(`s.tmp_${idx} = r0;`)
+                let idx = arg.getId()
+                write(`TValue tmp_${idx} = r0;`)
             }
         }
 
@@ -265,73 +267,49 @@ static async Task ${proc.label()}(${ctxTp} s) {
                 text = `${args[0]}${name}(${args.slice(1).join(", ")})`
             else if (U.startsWith(name, "new "))
                 text = `new ${shimToCs(name.slice(4))}(${args.join(", ")})`
-            else if (args.length == 2 && bin.target.floatingPoint && U.lookup(jsOpMap, name))
-                text = `(${args[0]} ${U.lookup(jsOpMap, name)} ${args[1]})`
             else
                 text = `${shimToCs(name)}(${args.join(", ")})`
 
-            if (topExpr.callingConvention == ir.CallingConvention.Plain) {
-                write(`r0 = ${text};`)
-            } else {
-                let loc = ++lblIdx
-                asyncContinuations.push(loc)
-                if (topExpr.callingConvention == ir.CallingConvention.Promise) {
-                    write(`(function(cb) { ${text}.done(cb) })(buildResume(s, ${loc}));`)
-                } else {
-                    write(`setupResume(s, ${loc});`)
-                    write(`${text};`)
-                }
-                write(`checkResumeConsumed();`)
-                write(`return;`)
-                writeRaw(`  case ${loc}:`)
-                write(`r0 = s.retval;`)
-            }
+            write(`r0 = ${text};`)
         }
 
         function emitProcCall(topExpr: ir.Expr) {
-            let frameExpr = ir.rtcall("<frame>", [])
-            frameExpr.totalUses = 1
-            frameExpr.currUses = 0
-            let frameIdx = exprStack.length
-            exprStack.push(frameExpr)
-
             let procid = topExpr.data as ir.ProcId
             let proc = procid.proc
-            let frameRef = `s.tmp_${frameIdx}`
             let lblId = ++lblIdx
-            write(`${frameRef} = { fn: ${proc ? proc.label() : null}, parent: s };`)
+            let argsArray = `callargs_${lblId}`
+            write(`var ${argsArray} = new TValue[${topExpr.args.length}];`)
 
             //console.log("PROCCALL", topExpr.toString())
             topExpr.args.forEach((a, i) => {
                 emitExpr(a)
-                write(`${frameRef}.arg${i} = r0;`)
+                write(`${argsArray}[${i}] = r0;`)
             })
 
-            write(`s.pc = ${lblId};`)
+            // write(`s.pc = ${lblId};`)
             if (procid.ifaceIndex != null) {
                 if (procid.mapMethod) {
-                    write(`if (${frameRef}.arg0.vtable === 42) {`)
-                    let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)
+                    write(`if (${argsArray}.arg0.vtable == null) {`)
+                    let args = topExpr.args.map((a, i) => `${argsArray}.arg${i}`)
                     args.splice(1, 0, procid.mapIdx.toString())
                     write(`  s.retval = ${shimToCs(procid.mapMethod)}(${args.join(", ")});`)
-                    write(`  ${frameRef}.fn = doNothing;`)
+                    write(`  goto L${lblId};`)
                     write(`} else {`)
                 }
-                write(`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)
-                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface[${procid.ifaceIndex}];`)
+                write(`PXT.Util.check(${argsArray}[0].IsUserObject, "Can't access property of null/undefined.")`)
+                write(`await ${argsArray}[0].AsUserObject.vtable.iface[${procid.ifaceIndex}](s, ${argsArray});`)
                 if (procid.mapMethod) {
                     write(`}`)
                 }
             } else if (procid.virtualIndex != null) {
                 assert(procid.virtualIndex >= 0)
-                write(`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)
-                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
+                write(`PXT.Util.check(${argsArray}[0].IsUserObject, "Can't access property of null/undefined.")`)
+                write(`await ${argsArray}[0].AsUserObject.vtable.methods[${procid.virtualIndex}](s, ${argsArray});`)
+            } else {
+                write(`await ${proc.label()}(s, ${argsArray});`)
             }
-            write(`return actionCall(${frameRef})`)
-            writeRaw(`  case ${lblId}:`)
+            writeRaw(`L${lblId}:`)
             write(`r0 = s.retval;`)
-
-            frameExpr.currUses = 1
         }
 
         function bitSizeConverter(b: BitSize) {
