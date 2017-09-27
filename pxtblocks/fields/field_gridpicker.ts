@@ -81,6 +81,9 @@ namespace pxtblockly {
         private populateTableContainer(options: (Object | String[])[], tableContainer: goog.ui.Control) {
             this.disposeTooltips();
             tableContainer.removeChildren(true);
+            if (options.length == 0) {
+                this.firstItem_ = undefined
+            }
             for (let i = 0; i < options.length / this.columns_; i++) {
                 let row = this.createRow(i, options);
                 tableContainer.addChild(row, true);
@@ -169,10 +172,17 @@ namespace pxtblockly {
         private selectItem(item: goog.ui.MenuItem) {
             if (this.menu_) {
                 this.onItemSelected(this.menu_, item)
-                Blockly.WidgetDiv.hideIfOwner(this);
-                Blockly.Events.setGroup(false);
-                this.disposeTooltips();
+                this.close()
             }
+        }
+
+        /**
+         * Closes the gridpicker.
+         */
+        private close() {
+            Blockly.WidgetDiv.hideIfOwner(this);
+            Blockly.Events.setGroup(false);
+            this.disposeTooltips();
         }
 
         /**
@@ -250,10 +260,14 @@ namespace pxtblockly {
                 }, 300, false));
 
                 searchBar.addEventListener("keyup", (e) => {
-                    let firstItem = this.getFirstItem.bind(this)()
-                    if (e.keyCode == 13 && firstItem) {
-                        this.selectItem.bind(this)(firstItem)
+                    if (e.keyCode == 13) {
+                        let text = searchBar.value;
+                        let firstItem = this.getFirstItem()
+                        if (text && firstItem) {
+                            this.selectItem(firstItem)
+                        }
                     }
+                       
                 })
                 searchBarDiv.appendChild(searchBar);
                 searchBarDiv.appendChild(searchIcon);
