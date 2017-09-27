@@ -1547,6 +1547,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
             "FirefoxAndroid >= 55"
         ]
         const cssnano = require('cssnano')({
+            zindex: false,
             autoprefixer: { browsers: browserList, add: true }
         });
         const rtlcss = require('rtlcss');
