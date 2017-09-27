@@ -597,6 +597,10 @@ ${files["main.ts"]}
                     steps = tutorialmd.split(/^###[^#].*$/gmi);
                     newAuthoring = false;
                 }
+                if (steps[0].indexOf("# Not found") == 0) {
+                    pxt.log(`Tutorial not found: ${tutorialid}`);
+                    throw new Error(`Tutorial not found: ${tutorialid}`);
+                }
                 let stepInfo: editor.TutorialStepInfo[] = [];
                 tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
                     let info: editor.TutorialStepInfo = {
@@ -639,6 +643,9 @@ ${files["main.ts"]}
                                         toolboxSubset[blk.type] = 1;
                                     }
                                 }
+                            }).catch(() => {
+                                pxt.log(`Failed to decompile tutorial: ${tutorialid}`);
+                                throw new Error(`Failed to decompile tutorial: ${tutorialid}`);
                             })
                         }
                         return Promise.resolve();
@@ -664,6 +671,16 @@ ${files["main.ts"]}
                             toolboxSubset: toolboxSubset
                         }, "*");
                     });
+            })
+            .catch((e: Error) => {
+                pxt.log(`Failed to load tutorial: ${tutorialid}`);
+                pxt.log(e.message);
+                // return the result
+                window.parent.postMessage(<pxsim.TutorialFailedMessage>{
+                    type: "tutorial",
+                    tutorial: tutorialid,
+                    subtype: "error"
+                }, "*");
             })
     }
 

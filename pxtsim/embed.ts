@@ -129,6 +129,11 @@ namespace pxsim {
         step: number;
     }
 
+    export interface TutorialFailedMessage extends TutorialMessage {
+        subtype: "error";
+        message?: string;
+    }
+
     export namespace Embed {
         export function start() {
             window.addEventListener("message", receiveMessage, false);

@@ -155,7 +155,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         }
 
         const chgCode = (scr: pxt.CodeCard, loadBlocks?: boolean) => {
-            core.showLoading(lf("Loading..."));
+            core.showLoading("changingcode", lf("Loading..."));
             gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
                 .done(opts => {
                     if (opts) {
@@ -171,6 +171,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                             this.props.parent.newProject(opts);
                         }
                     }
+                    core.hideLoading("changingcode");
                 });
         }
         const importProject = () => {

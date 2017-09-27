@@ -20,6 +20,10 @@ namespace pxt.BrowserUtils {
         return hasNavigator() && /mobi/i.test(navigator.userAgent);
     }
 
+    export function isOnline(): boolean {
+        return navigator.onLine;;
+    }
+
     //MacIntel on modern Macs
     export function isMac(): boolean {
         return hasNavigator() && /Mac/i.test(navigator.platform);

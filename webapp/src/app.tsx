@@ -569,7 +569,22 @@ export class ProjectView
                         const fullscreen = tutorialOptions.tutorialStepInfo[0].fullscreen;
                         if (fullscreen) this.showTutorialHint();
                         else tutorial.TutorialContent.refresh();
-                        core.hideLoading();
+                        core.hideLoading("tutorial");
+                        break;
+                    case 'error':
+                        let te = msg as pxsim.TutorialFailedMessage;
+                        pxt.reportException(te.message);
+                        core.errorNotification(lf("We're having trouble loading this tutorial, please try again later."));
+                        this.setState({ tutorialOptions: undefined });
+                        // Delete the project created for this tutorial
+                        let curr = pkg.mainEditorPkg().header
+                        curr.isDeleted = true
+                        workspace.saveAsync(curr, {})
+                            .then(() => {
+                                this.home.showHome();
+                            }).finally(() => {
+                                core.hideLoading("tutorial")
+                            });
                         break;
                 }
                 break;
@@ -636,10 +651,10 @@ export class ProjectView
                                 class: "pink", // don't make them red and scary
                                 icon: "trash",
                                 onclick: () => {
-                                    core.showLoading(lf("Removing {0}...", lib.id))
+                                    core.showLoading("removedep", lf("Removing {0}...", lib.id))
                                     pkg.mainEditorPkg().removeDepAsync(lib.id)
                                         .then(() => this.reloadHeaderAsync())
-                                        .done(() => core.hideLoading());
+                                        .done(() => core.hideLoading("removedep"));
                                 }
                             })
                             core.dialogAsync({
@@ -748,11 +763,11 @@ export class ProjectView
         const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
         if (importer) {
             pxt.tickEvent("import." + importer.id);
-            core.showLoading(lf("loading project..."))
+            core.showLoading("importhex", lf("loading project..."))
             importer.importAsync(this, data)
-                .done(() => core.hideLoading(), e => {
+                .done(() => core.hideLoading("importhex"), e => {
                     pxt.reportException(e, { importer: importer.id });
-                    core.hideLoading();
+                    core.hideLoading("importhex");
                     core.errorNotification(lf("Oops, something went wrong when importing your project"));
                     if (createNewIfFailed) this.newProject();
                 });
@@ -891,10 +906,10 @@ export class ProjectView
 
     newProject(options: ProjectCreationOptions = {}) {
         pxt.tickEvent("menu.newproject");
-        core.showLoading(lf("creating new project..."));
+        core.showLoading("newproject", lf("creating new project..."));
         this.createProjectAsync(options)
             .then(() => Promise.delay(500))
-            .done(() => core.hideLoading());
+            .done(() => core.hideLoading("newproject"));
     }
 
     createProjectAsync(options: ProjectCreationOptions): Promise<void> {
@@ -954,7 +969,7 @@ export class ProjectView
         });
 
         if (open) {
-            return core.showLoadingAsync(lf("switching to JavaScript..."), promise, 0);
+            return core.showLoadingAsync("switchtojs", lf("switching to JavaScript..."), promise, 0);
         } else {
             return promise;
         }
@@ -1533,9 +1548,15 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
     startTutorial(tutorialId: string, tutorialTitle?: string) {
         pxt.tickEvent("tutorial.start");
-        core.showLoading(lf("starting tutorial..."));
-        this.startTutorialAsync(tutorialId, tutorialTitle)
-            .then(() => Promise.delay(500));
+        // Check for Internet access
+        if (!pxt.BrowserUtils.isOnline()) {
+            core.errorNotification(lf("No Internet access, please connect and try again."));
+            this.home.showHome();
+        } else {
+            core.showLoading("tutorial", lf("starting tutorial..."));
+            this.startTutorialAsync(tutorialId, tutorialTitle)
+                .then(() => Promise.delay(500));
+        }
     }
 
     startTutorialAsync(tutorialId: string, tutorialTitle?: string): Promise<void> {
@@ -1558,18 +1579,18 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
             tc.setPath(tutorialId);
         }).catch((e) => {
-            core.hideLoading();
+            core.hideLoading("tutorial");
             core.handleNetworkError(e);
         });
     }
 
     exitTutorial(keep?: boolean) {
         pxt.tickEvent("tutorial.exit");
-        core.showLoading(lf("leaving tutorial..."));
+        core.showLoading("leavingtutorial", lf("leaving tutorial..."));
         this.exitTutorialAsync(keep)
             .then(() => Promise.delay(500))
             .done(() => {
-                core.hideLoading();
+                core.hideLoading("leavingtutorial");
                 this.openHome();
             })
     }
@@ -1594,7 +1615,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 }
             })
             .finally(() => {
-                core.hideLoading()
                 this.setState({ active: true, tutorialOptions: undefined, tracing: undefined });
                 core.resetFocus();
             });
@@ -2152,9 +2172,9 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
             pxt.tickEvent("hash." + hash.cmd);
             const fileContents = Util.stringToUint8Array(atob(hash.arg));
             window.location.hash = "";
-            core.showLoading(lf("loading project..."));
+            core.showLoading("loadingproject", lf("loading project..."));
             theEditor.importProjectFromFileAsync(fileContents)
-                .done(() => core.hideLoading());
+                .done(() => core.hideLoading("loadingheader"));
             return true;
     }
 
@@ -2187,13 +2207,13 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
 function loadHeaderBySharedId(id: string) {
     const existing = workspace.getHeaders()
         .filter(h => h.pubCurrent && h.pubId == id)[0]
-    core.showLoading(lf("loading project..."));
+    core.showLoading("loadingheader", lf("loading project..."));
     (existing
         ? theEditor.loadHeaderAsync(existing, null)
         : workspace.installByIdAsync(id)
             .then(hd => theEditor.loadHeaderAsync(hd, null)))
         .catch(core.handleNetworkError)
-        .finally(() => core.hideLoading());
+        .finally(() => core.hideLoading("loadingheader"));
 }
 
 function initHashchange() {
@@ -2265,7 +2285,7 @@ $(document).ready(() => {
     if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
         pxt.tickEvent("unsupported");
         window.location.href = "/browsers";
-        core.showLoading(lf("Sorry, this browser is not supported."));
+        core.showLoading("browsernotsupported", lf("Sorry, this browser is not supported."));
         return;
     }
 
