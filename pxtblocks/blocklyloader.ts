@@ -287,7 +287,7 @@ namespace pxt.blocks {
                 const handlerArgs = pnames.handlerArgs;
                 const mutationValues = fn.attributes.toolboxVariableArgs.split(";")
                     .map(v => parseInt(v))
-                    .filter(v => v <= handlerArgs.length);
+                    .filter(v => v <= handlerArgs.length && v >= 0);
 
                 mutationValues.forEach(v => {
                     const mutatedBlock = block.cloneNode(true) as HTMLElement;
