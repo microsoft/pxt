@@ -75,8 +75,8 @@ namespace pxtblockly {
 
         /**
          * Create blocklyGridPickerRows and add them to table container
-         * @param options 
-         * @param tableContainer 
+         * @param options
+         * @param tableContainer
          */
         private populateTableContainer(options: (Object | String[])[], tableContainer: goog.ui.Control) {
             this.disposeTooltips();
@@ -100,8 +100,8 @@ namespace pxtblockly {
 
         /**
          * Add the tooltips and style the items
-         * @param options 
-         * @param tableContainer 
+         * @param options
+         * @param tableContainer
          */
         private createTooltips(options: (Object | String[])[], tableContainer: goog.ui.Control) {
             let needToFloatLeft = (options.length < this.columns_);
@@ -256,8 +256,22 @@ namespace pxtblockly {
 
                     //let selectedItemDom = tableContainerDom.childNodes[tableContainerDom.childNodes.length-1].childNodes[0] as HTMLElement
                     if (text) {
-
+                        //this.highlightFirstItem(tableContainerDom)
+                        let menuItemsDom = tableContainerDom.childNodes;
+                        if (menuItemsDom.length && menuItemsDom[0].childNodes) {
+                            for (let row = 0; row < menuItemsDom.length; ++row) {
+                                let rowLength = menuItemsDom[row].childNodes.length
+                                for (let col = 0; col < rowLength; ++col) {
+                                    const menuItem = menuItemsDom[row].childNodes[col] as HTMLElement
+                                    menuItem.classList.remove("goog-menuitem-highlight")
+                                    menuItem.classList.remove("goog-option-selected")
+                                }
+                            }
+                            let firstItem = menuItemsDom[0].childNodes[0] as HTMLElement;
+                            firstItem.className += " goog-menuitem-highlight"
+                        }
                     } else {
+                        //this.scrollLastSelected(tableContainerDom, scrollContainerDom)
                         const rowCount = tableContainer.getChildCount();
                         let selectedItemDom: any;
                         for (let row = 0; row < rowCount; ++row) {
@@ -268,7 +282,7 @@ namespace pxtblockly {
                                     break;
                                 }
                             }
-    
+
                             if (selectedItemDom) {
                                 goog.style.scrollIntoContainerView(selectedItemDom, scrollContainerDom, true);
                                 break;
