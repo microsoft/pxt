@@ -499,7 +499,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             dialogInput.setSelectionRange(0, 9999);
             dialogInput.onkeyup = (e: KeyboardEvent) => {
                 let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-                if (charCode === core.ENTER_KEY || charCode === core.SPACE_KEY) {
+                if (charCode === core.ENTER_KEY) {
                     e.preventDefault();
                     (document.getElementsByClassName("approve positive").item(0) as HTMLElement).click();
                 }
