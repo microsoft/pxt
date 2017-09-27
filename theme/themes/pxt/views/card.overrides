@@ -20,7 +20,6 @@
         background-repeat: no-repeat;
         background-size: contain;
         background-image: @fileLogoUrl;
-        border-right: 1px solid @solidBorderColor;
     }
     .content {
         margin-left: 4rem;
