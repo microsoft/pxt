@@ -105,8 +105,6 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                     cfg.restartSimulator();
                     break;
                 case "modal":
-                    break;
-                    /**
                     stop();
                     if (!pxt.shell.isSandboxMode() && (!msg.displayOnceId || !displayedModals[msg.displayOnceId])) {
                         const modalOpts: core.ConfirmOptions = {
@@ -136,7 +134,6 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                             .done();
                     }
                     break;
-                    **/
             }
         },
         onTopLevelCodeEnd: () => {

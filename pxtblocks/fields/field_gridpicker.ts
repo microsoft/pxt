@@ -189,6 +189,48 @@ namespace pxtblockly {
         }
 
         /**
+         * Highlight first item in menu, de-select and de-highlight all others
+         */
+        private highlightFirstItem(tableContainerDom: HTMLElement) {
+            let menuItemsDom = tableContainerDom.childNodes;
+            if (menuItemsDom.length && menuItemsDom[0].childNodes) {
+                for (let row = 0; row < menuItemsDom.length; ++row) {
+                    let rowLength = menuItemsDom[row].childNodes.length
+                    for (let col = 0; col < rowLength; ++col) {
+                        const menuItem = menuItemsDom[row].childNodes[col] as HTMLElement
+                        menuItem.classList.remove("goog-menuitem-highlight")
+                        menuItem.classList.remove("goog-option-selected")
+                    }
+                }
+                let firstItem = menuItemsDom[0].childNodes[0] as HTMLElement;
+                firstItem.className += " goog-menuitem-highlight"
+            }
+        }
+
+        /**
+         * Scroll menu to item that equals current value of gridpicker
+         */
+        private highlightAndScrollSelected(tableContainer: goog.ui.Control, scrollContainerDom: HTMLElement) {
+            let tableContainerDom = tableContainer.getElement() as HTMLElement
+            const rowCount = tableContainer.getChildCount();
+            let selectedItemDom: any;
+            for (let row = 0; row < rowCount; ++row) {
+                for (let col = 0; col < this.columns_; ++col) {
+                    const val = (tableContainer.getChildAt(row).getChildAt(col) as goog.ui.MenuItem).getValue();
+                    if (this.value_ === val) {
+                        selectedItemDom = (tableContainerDom.children[row] as HTMLElement).children[col];
+                        break;
+                    }
+                }
+                if (selectedItemDom) {
+                    goog.style.scrollIntoContainerView(selectedItemDom, scrollContainerDom, true);
+                    break;
+                }
+            }
+
+        }
+
+        /**
          * Create a dropdown menu under the text.
          * @private
          */
@@ -253,51 +295,11 @@ namespace pxtblockly {
                     })
                     this.populateTableContainer.bind(this)(filteredOptions, tableContainer);
                     this.createTooltips(filteredOptions, tableContainer)
-
-                    //let selectedItemDom = tableContainerDom.childNodes[tableContainerDom.childNodes.length-1].childNodes[0] as HTMLElement
                     if (text) {
-                        //this.highlightFirstItem(tableContainerDom)
-                        let menuItemsDom = tableContainerDom.childNodes;
-                        if (menuItemsDom.length && menuItemsDom[0].childNodes) {
-                            for (let row = 0; row < menuItemsDom.length; ++row) {
-                                let rowLength = menuItemsDom[row].childNodes.length
-                                for (let col = 0; col < rowLength; ++col) {
-                                    const menuItem = menuItemsDom[row].childNodes[col] as HTMLElement
-                                    menuItem.classList.remove("goog-menuitem-highlight")
-                                    menuItem.classList.remove("goog-option-selected")
-                                }
-                            }
-                            let firstItem = menuItemsDom[0].childNodes[0] as HTMLElement;
-                            firstItem.className += " goog-menuitem-highlight"
-                        }
+                        this.highlightFirstItem(tableContainerDom)
                     } else {
-                        //this.scrollLastSelected(tableContainerDom, scrollContainerDom)
-                        const rowCount = tableContainer.getChildCount();
-                        let selectedItemDom: any;
-                        for (let row = 0; row < rowCount; ++row) {
-                            for (let col = 0; col < this.columns_; ++col) {
-                                const val = (tableContainer.getChildAt(row).getChildAt(col) as goog.ui.MenuItem).getValue();
-                                if (this.value_ === val) {
-                                    selectedItemDom = (tableContainerDom.children[row] as HTMLElement).children[col];
-                                    break;
-                                }
-                            }
-
-                            if (selectedItemDom) {
-                                goog.style.scrollIntoContainerView(selectedItemDom, scrollContainerDom, true);
-                                break;
-                            }
-                        }
+                        this.highlightAndScrollSelected(tableContainer, scrollContainerDom)
                     }
-                    //TODO sandbox
-                    /**
-                    let menuItemsDom = tableContainerDom.childNodes
-                    if (menuItemsDom.length && menuItemsDom[0].childNodes) {
-                        let firstItem = menuItemsDom[0].childNodes[0] as HTMLElement
-                        firstItem.className += " goog-menuitem-highlight"
-                    }
-                    goog.style.scrollIntoContainerView(selectedItemDom, scrollContainerDom, true);
-                    **/
                 }, 300, false));
 
                 searchBar.addEventListener("keyup", (e) => {
@@ -308,7 +310,6 @@ namespace pxtblockly {
                             this.selectItem(firstItem)
                         }
                     }
-                       
                 })
                 searchBarDiv.appendChild(searchBar);
                 searchBarDiv.appendChild(searchIcon);
@@ -375,22 +376,7 @@ namespace pxtblockly {
                     paddingContainerSize.width = paddingContainerDom.scrollWidth;
 
                     // Scroll the currently selected item into view
-                    const rowCount = tableContainer.getChildCount();
-                    let selectedItemDom: any;
-                    for (let row = 0; row < rowCount; ++row) {
-                        for (let col = 0; col < this.columns_; ++col) {
-                            const val = (tableContainer.getChildAt(row).getChildAt(col) as goog.ui.MenuItem).getValue();
-                            if (this.value_ === val) {
-                                selectedItemDom = (tableContainerDom.children[row] as HTMLElement).children[col];
-                                break;
-                            }
-                        }
-
-                        if (selectedItemDom) {
-                            goog.style.scrollIntoContainerView(selectedItemDom, scrollContainerDom, true);
-                            break;
-                        }
-                    }
+                    this.highlightAndScrollSelected(tableContainer, scrollContainerDom);
                 }
             }
 
