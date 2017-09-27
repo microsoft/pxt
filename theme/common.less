@@ -537,11 +537,14 @@ div.simframe > iframe {
 }
 .monacoFlyoutHeading .monacoFlyoutHeadingText {
     color: white;
+    vertical-align: middle !important;
+}
+.monacoFlyoutHeadingText {
+    font-family: @pageFont;
 }
 .monacoFlyoutHeadingIcon {
-    vertical-align: middle !important;
     font-size: 1.5rem !important;
-    margin: -0.7em 0.2em 0em 0.5em !important;
+    vertical-align: middle !important;
 }
 .monacoFlyoutLabelLine {
     border: none;
@@ -575,6 +578,11 @@ div.simframe > iframe {
 
 .monacoDraggableBlock:hover {
     border: solid 3px #fc3 !important;
+}
+
+/* Limit color interferences with semantic anchor element */
+.monaco-action-bar .action-label {
+    color: inherit !important;
 }
 
 /******************************

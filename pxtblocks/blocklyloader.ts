@@ -1427,7 +1427,7 @@ namespace pxt.blocks {
             let searchFor = searchField.value.toLowerCase();
             let blocklyHiddenSearchLabel = document.getElementById('blocklySearchLabel') as HTMLElement;
 
-            blocklyHiddenSearchLabel.innerText = "";
+            blocklyHiddenSearchLabel.textContent = "";
 
             if (searchFor != '') {
                 blocklySearchInput.className += ' loading';
@@ -1468,9 +1468,9 @@ namespace pxt.blocks {
                     if (!blocks) return;
 
                     if (blocks.length == 0) {
-                        blocklyHiddenSearchLabel.innerText = lf("No search results...");
+                        blocklyHiddenSearchLabel.textContent = lf("No search results...");
                     } else {
-                        blocklyHiddenSearchLabel.innerText = lf("{0} result matching '{1}'", blocks.length, blocklySearchInputField.value.toLowerCase());
+                        blocklyHiddenSearchLabel.textContent = lf("{0} result matching '{1}'", blocks.length, blocklySearchInputField.value.toLowerCase());
                     }
 
                     if (blocks.length == 0) {

@@ -59,7 +59,7 @@ namespace pxt.docs.codeCard {
         if (card.label) {
             let lbl = document.createElement("label");
             lbl.className = "ui orange right ribbon label";
-            lbl.innerText = card.label;
+            lbl.textContent = card.label;
             img.appendChild(lbl);
         }
 

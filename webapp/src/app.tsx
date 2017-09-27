@@ -1276,7 +1276,7 @@ export class ProjectView
             htmlBody: `<div class="ui form">
   <div class="ui field">
     <label id="selectFileToOpenLabel">${lf("Select a {0} file to open.", ext)}</label>
-    <input type="file" tabindex="0" autofocus aria-describedby="selectFileToOpenLabel" class="ui button blue fluid focused"></input>
+    <input type="file" tabindex="0" autofocus aria-describedby="selectFileToOpenLabel" class="ui blue fluid focused"></input>
   </div>
 </div>`,
         }).done(res => {
@@ -1365,7 +1365,7 @@ export class ProjectView
 </div>
   <div class="ui field">
     <label id="selectUrlToOpenLabel">${lf("Copy the URL of the project.")}</label>
-    <input type="url" tabindex="0" autofocus aria-describedby="selectUrlToOpenLabel" placeholder="${shareUrl}..." class="ui button blue fluid"></input>
+    <input type="url" tabindex="0" autofocus aria-describedby="selectUrlToOpenLabel" placeholder="${shareUrl}..." class="ui blue fluid"></input>
   </div>
 </div>`,
         }).done(res => {
