@@ -55,6 +55,8 @@ folder (it will sit under `projects`) and use the CLI to build and deploy it.
 You can edit the package using [VSCode](https://code.visualstudio.com/)
 and publish it on GitHub. 
 
+While it is true that you can use any editor for editing TypeScript code, you might consider using VSCode as you are learning the language, as it provides syntax highlighting, linting, and other support that could save you time in debugging your extensions.
+
 ### Creating a new project
 
 Open a shell to your ``microbit`` folder.
