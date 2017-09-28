@@ -622,10 +622,6 @@ export class ProjectView
                 if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName()) {
                     if (!file.content) // empty blocks file, open javascript editor
                         file = main.lookupFile("this/" + file.getVirtualFileName()) || file
-                    else this.textEditor.decompileAsync(file.getVirtualFileName()).then(resp => {
-                        if (!resp.success)
-                            file = main.lookupFile("this/" + file.getVirtualFileName()) || file
-                    });
                 }
                 this.setState({
                     header: h,
@@ -1678,7 +1674,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
-        const gettingStarted = !sandbox && targetTheme && targetTheme.sideDoc && !this.state.sideDocsLoadUrl;
+        const gettingStarted = !sandbox && targetTheme && !!targetTheme.sideDoc;
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
         const trace = run && simOpts.enableTrace;
@@ -2116,7 +2112,7 @@ function parseHash(): { cmd: string; arg: string } {
     return { cmd: '', arg: '' };
 }
 
-function handleHash(hash: { cmd: string; arg: string }): boolean {
+function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boolean {
     if (!hash) return false;
     let editor = theEditor;
     if (!editor) return false;
@@ -2176,6 +2172,9 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
             theEditor.importProjectFromFileAsync(fileContents)
                 .done(() => core.hideLoading("loadingheader"));
             return true;
+        case "reload": // need to reload last project - handled later in the load process
+            if (loading) window.location.hash = "";
+            return false;
     }
 
     return false;
@@ -2198,6 +2197,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "edit":
         case "sandboxproject":
         case "project":
+        case "reload":
             return true;
         default:
             return false;
@@ -2218,7 +2218,7 @@ function loadHeaderBySharedId(id: string) {
 
 function initHashchange() {
     window.addEventListener("hashchange", e => {
-        handleHash(parseHash());
+        handleHash(parseHash(), false);
     });
 }
 
@@ -2291,7 +2291,25 @@ $(document).ready(() => {
 
     initLogin();
     const hash = parseHash();
-    appcache.init(hash);
+    const appCacheUpdated = () => {
+        try {
+            // On embedded pages, preserve the loaded project
+            if (pxt.BrowserUtils.isIFrame() && hash.cmd === "pub") {
+                location.hash = `#pub:${hash.arg}`;
+            }
+            // if in editor, reload project
+            else if (theEditor
+                && !theEditor.home.state.visible
+                && theEditor.state && theEditor.state.header && !theEditor.state.header.isDeleted) {
+                location.hash = "#reload"
+            }
+            location.reload();
+        } catch (e) {
+            pxt.reportException(e);
+            location.reload();
+        }
+    };
+    appcache.init(appCacheUpdated);
 
     pxt.docs.requireMarked = () => require("marked");
     const importHex = (hex: pxt.cpp.HexFile, createNewIfFailed = false) => theEditor.importHex(hex, createNewIfFailed);
@@ -2370,13 +2388,14 @@ $(document).ready(() => {
 
             // Only show the start screen if there are no initial projects requested
             // (e.g. from the URL hash or from WinRT activation arguments)
-            const skipStartScreen = pxt.appTarget.appTheme.allowParentController || !pxt.appTarget.appTheme.showHomeScreen || /skipHomeScreen=1/i.test(window.location.href);
+            const skipStartScreen = pxt.appTarget.appTheme.allowParentController
+                || !pxt.appTarget.appTheme.showHomeScreen || /skipHomeScreen=1/i.test(window.location.href);
             const shouldShowHomeScreen = !isSandbox && !skipStartScreen && !hasWinRTProject && !isProjectRelatedHash(hash);
             if (shouldShowHomeScreen) {
                 theEditor.home.showHome();
                 return Promise.resolve();
             }
-            if (hash.cmd && handleHash(hash)) {
+            if (hash.cmd && handleHash(hash, true)) {
                 return Promise.resolve();
             }
             if (hasWinRTProject) {

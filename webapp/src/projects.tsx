@@ -57,6 +57,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
     }
 
     showHome() {
+        this.props.parent.stopSimulator();
         this.setState({
             visible: true,
             tab: HOME,
@@ -161,11 +162,14 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     if (opts) {
                         if (loadBlocks) {
                             const ts = opts.filesOverride["main.ts"]
-                            compiler.getBlocksAsync()
-                                .then(blocksInfo => compiler.decompileSnippetAsync(ts, blocksInfo))
-                                .then(resp => {
-                                    opts.filesOverride["main.blocks"] = resp
-                                    this.props.parent.newProject(opts);
+                            this.props.parent.createProjectAsync(opts)
+                                .then(() => {
+                                    return compiler.getBlocksAsync()
+                                        .then(blocksInfo => compiler.decompileSnippetAsync(ts, blocksInfo))
+                                        .then(resp => this.props.parent.updateFileAsync("main.blocks", resp, true))
+                                    })
+                                .done(() => {
+                                    core.hideLoading();
                                 })
                         } else {
                             this.props.parent.newProject(opts);
@@ -499,7 +503,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             dialogInput.setSelectionRange(0, 9999);
             dialogInput.onkeyup = (e: KeyboardEvent) => {
                 let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-                if (charCode === core.ENTER_KEY || charCode === core.SPACE_KEY) {
+                if (charCode === core.ENTER_KEY) {
                     e.preventDefault();
                     (document.getElementsByClassName("approve positive").item(0) as HTMLElement).click();
                 }
