@@ -1580,10 +1580,19 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         });
     }
 
-    exitTutorial(keep?: boolean) {
+    completeTutorial() {
+        pxt.tickEvent("tutorial.complete");
+        this.leaveTutorial();
+    }
+
+    exitTutorial() {
         pxt.tickEvent("tutorial.exit");
+        this.leaveTutorial();
+    }
+
+    leaveTutorial() {
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
-        this.exitTutorialAsync(keep)
+        this.exitTutorialAsync()
             .then(() => Promise.delay(500))
             .done(() => {
                 core.hideLoading("leavingtutorial");
@@ -1591,27 +1600,13 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             })
     }
 
-    exitTutorialAsync(keep?: boolean) {
+    exitTutorialAsync() {
         // tutorial project is temporary, no need to delete
         let curr = pkg.mainEditorPkg().header;
-        let files = pkg.mainEditorPkg().getAllFiles();
-        if (!keep) {
-            curr.isDeleted = true;
-        } else {
-            curr.temporary = false;
-        }
-        this.setState({ active: false, editorState: undefined });
+        curr.temporary = false;
         return workspace.saveAsync(curr, {})
-            .then(() => { return keep ? workspace.installAsync(curr, files) : Promise.resolve(null); })
-            .then(() => {
-                if (workspace.getHeaders().length > 0) {
-                    return this.loadHeaderAsync(workspace.getHeaders()[0], null);
-                } else {
-                    return this.newProject();
-                }
-            })
             .finally(() => {
-                this.setState({ active: true, tutorialOptions: undefined, tracing: undefined });
+                this.setState({ tutorialOptions: undefined, tracing: undefined, editorState: undefined });
                 core.resetFocus();
             });
     }
@@ -1624,11 +1619,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         if (this.editor && this.editor.isReady) {
             this.editor.setHighContrast(highContrastOn);
         }
-    }
-
-    completeTutorial() {
-        pxt.tickEvent("tutorial.complete");
-        this.openHome();
     }
 
     showTutorialHint() {
@@ -1799,7 +1789,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                     </sui.DropdownMenuItem>}
 
                                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={() => this.launchFullEditor()} /> : undefined}
-                                {inTutorial ? <sui.ButtonMenuItem class="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={() => this.exitTutorial(true)} /> : undefined}
+                                {inTutorial ? <sui.ButtonMenuItem class="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={() => this.exitTutorial()} /> : undefined}
 
                                 {!sandbox ? <a href={targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={() => pxt.tickEvent("menu.org")}>
                                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
