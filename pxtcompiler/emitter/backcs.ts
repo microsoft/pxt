@@ -1,6 +1,17 @@
 namespace ts.pxtc {
+    // TODO consider that taggedInts is going to be false!
+    
+    const csOpMap: pxt.Map<string> = {
+        "numops::toBoolDecr": "numops::toBool",
+        "pxtrt::ldfldRef": "pxtrt::ldfld",
+        "pxtrt::stfldRef": "pxtrt::stfld",
+        "pxtrt::ldlocRef": "pxtrt::ldloc",
+        "pxtrt::stlocRef": "pxtrt::stloc",
+        "pxtrt::mklocRef": "pxtrt::mkloc",
+    }
 
     function shimToCs(shimName: string) {
+        shimName = U.lookup(csOpMap, shimName) || shimName
         shimName = shimName.replace(/::/g, ".")
         //if (shimName.slice(0, 4) == "pxt.")
         //    shimName = "pxtcore." + shimName.slice(4)
@@ -72,12 +83,12 @@ static async Task ${proc.label()}(CTX parent, TValue[] args) {
         //console.log("OPT", proc.toString())
 
         proc.locals.forEach(l => {
-            write(`TValue ${locref(l)} = TValue.Undefined;`)
+            write(`object ${locref(l)} = TValue.Undefined;`)
         })
 
         if (proc.args.length) {
             proc.args.forEach((l, i) => {
-                write(`TValue ${locref(l)} = ${i} >= args.Length ? TValue.Undefined : args[${i}];`)
+                write(`object ${locref(l)} = ${i} >= args.Length ? TValue.Undefined : args[${i}];`)
             })
             write(`args = null;`)
         }
@@ -183,7 +194,7 @@ static async Task ${proc.label()}(CTX parent, TValue[] args) {
                     else if (e.data === false) return "TValue.False"
                     else if (e.data === null) return "TValue.Null"
                     else if (e.data === undefined) return "TValue.Undefined"
-                    else if (typeof e.data == "number") return "new TValue(" + e.data + ")"
+                    else if (typeof e.data == "number") return e.data
                     else throw oops("invalid data: " + typeof e.data);
                 case EK.PointerLiteral:
                     return e.jsInfo;
@@ -252,7 +263,7 @@ static async Task ${proc.label()}(CTX parent, TValue[] args) {
                 emitExpr(arg)
                 exprStack.push(arg)
                 let idx = arg.getId()
-                write(`TValue tmp_${idx} = r0;`)
+                write(`object tmp_${idx} = r0;`)
             }
         }
 
@@ -300,15 +311,13 @@ static async Task ${proc.label()}(CTX parent, TValue[] args) {
                     write(`  goto L${lblId};`)
                     write(`} else {`)
                 }
-                write(`PXT.Util.check(${argsArray}[0].IsUserObject, "Can't access property of null/undefined.")`)
-                write(`await ${argsArray}[0].AsUserObject.vtable.iface[${procid.ifaceIndex}](s, ${argsArray});`)
+                write(`await PXT.pxtrt.toUserObject(${argsArray}[0]).vtable.iface[${procid.ifaceIndex}](s, ${argsArray});`)
                 if (procid.mapMethod) {
                     write(`}`)
                 }
             } else if (procid.virtualIndex != null) {
                 assert(procid.virtualIndex >= 0)
-                write(`PXT.Util.check(${argsArray}[0].IsUserObject, "Can't access property of null/undefined.")`)
-                write(`await ${argsArray}[0].AsUserObject.vtable.methods[${procid.virtualIndex}](s, ${argsArray});`)
+                write(`await PXT.pxtrt.toUserObject(${argsArray}[0]).vtable.methods[${procid.virtualIndex}](s, ${argsArray});`)
             } else {
                 write(`await ${proc.label()}(s, ${argsArray});`)
             }
