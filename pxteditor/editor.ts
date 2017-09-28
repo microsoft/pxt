@@ -135,6 +135,7 @@ namespace pxt.editor {
         getPreferredEditor(): string;
         saveAndCompile(): void;
         updateHeaderName(name: string): void;
+        updateHeaderNameAsync(name: string): Promise<void>;
         compile(): void;
 
         setFile(fn: IFile): void;
