@@ -85,7 +85,7 @@ The title is on the first line and uses a _level 1_ heading, like:
 
 ### Steps
 
-A tutorial follows a sequence of simple steps. The runner builds an interaction from each _step_ section. A step begins with a _level 3_ heading (``###``) and can have any text. It's common, though, to use the _Step 1, Step 2,...Step n_ sequence for each heading. Something like:
+A tutorial follows a sequence of simple steps. The runner builds an interaction from each _step_ section. A step begins with a _level 2_ heading (``###``) and can have any text. It's common, though, to use the _Step 1, Step 2,...Step n_ sequence for each heading. Something like:
 
 ```text
 ## Step 1
