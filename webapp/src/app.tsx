@@ -1593,7 +1593,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
     leaveTutorial() {
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
         this.exitTutorialAsync()
-            .then(() => Promise.delay(500))
             .done(() => {
                 core.hideLoading("leavingtutorial");
                 this.openHome();
