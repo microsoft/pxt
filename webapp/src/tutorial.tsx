@@ -248,8 +248,8 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
                     </div>
                     <sui.Button id="tutorialOkButton" class="large green okbutton showlightbox focused" text={lf("Ok") } onClick={() => this.closeLightbox() } onKeyDown={sui.fireClickOnEnter} />
                 </div>
-                {hasNext ? <sui.Button icon="right chevron" class={`ui right icon button nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next") } ariaLabel={lf("Go to the next step of the tutorial.")} onClick={() => this.nextTutorialStep() } onKeyDown={sui.fireClickOnEnter} /> : undefined }
-                {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : 'focused'}`} text={lf("Finish") } ariaLabel={lf("Finish the tutorial.")} onClick={() => this.finishTutorial() } onKeyDown={sui.fireClickOnEnter} /> : undefined }
+                {hasNext ? <sui.Button icon="right chevron" rightIcon class={`nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next") } ariaLabel={lf("Go to the next step of the tutorial.")} onClick={() => this.nextTutorialStep() } onKeyDown={sui.fireClickOnEnter} /> : undefined }
+                {hasFinish ? <sui.Button icon="left checkmark" class={`orange right attached ${!tutorialReady ? 'disabled' : 'focused'}`} text={lf("Finish") } ariaLabel={lf("Finish the tutorial.")} onClick={() => this.finishTutorial() } onKeyDown={sui.fireClickOnEnter} /> : undefined }
             </div>
         </div>;
     }
