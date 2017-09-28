@@ -205,7 +205,7 @@ namespace pxt.blocks {
         return result;
     }
 
-    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement, showCategories = CategoryMode.Basic) {
+    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement, showCategories = CategoryMode.Basic, pnames: pxt.blocks.BlockParameters) {
         // identity function are just a trick to get an enum drop down in the block
         // while allowing the parameter to be a number
         if (fn.attributes.blockHidden)
@@ -283,7 +283,29 @@ namespace pxt.blocks {
                 usedBlocks[type] = true;
             }
 
-            if (fn.attributes.mutateDefaults) {
+            if (fn.attributes.optionalVariableArgs && fn.attributes.toolboxVariableArgs) {
+                const handlerArgs = pnames.handlerArgs;
+                const mutationValues = fn.attributes.toolboxVariableArgs.split(";")
+                    .map(v => parseInt(v))
+                    .filter(v => v <= handlerArgs.length && v >= 0);
+
+                mutationValues.forEach(v => {
+                    const mutatedBlock = block.cloneNode(true) as HTMLElement;
+                    const mutation = document.createElement("mutation");
+                    mutation.setAttribute("numargs", v.toString());
+                    for (let i = 0; i < v; i++) {
+                        mutation.setAttribute("arg" + i, handlerArgs[i].name)
+                    }
+                    mutatedBlock.appendChild(mutation);
+
+                    if (showCategories !== CategoryMode.None) {
+                        insertBlock(mutatedBlock, category, fn.attributes.weight);
+                    } else {
+                        tb.appendChild(mutatedBlock);
+                    }
+                });
+            }
+            else if (fn.attributes.mutateDefaults) {
                 const mutationValues = fn.attributes.mutateDefaults.split(";");
                 mutationValues.forEach(mutation => {
                     const mutatedBlock = block.cloneNode(true) as HTMLElement;
@@ -982,7 +1004,7 @@ namespace pxt.blocks {
                     let block = createToolboxBlock(blockInfo, fn, pnames);
                     if (injectBlockDefinition(blockInfo, fn, pnames, block)) {
                         if (tb && (!fn.attributes.debug || dbg))
-                            injectToolbox(tb, blockInfo, fn, block, showCategories);
+                            injectToolbox(tb, blockInfo, fn, block, showCategories, pnames);
                         currentBlocks[fn.attributes.blockId] = 1;
                         if (!showAdvanced && !fn.attributes.blockHidden && !fn.attributes.deprecated) {
                             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];

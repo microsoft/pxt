@@ -152,6 +152,7 @@ namespace ts.pxtc {
         inlineInputMode?: string; // can be inline, external, or auto
 
         optionalVariableArgs?: boolean;
+        toolboxVariableArgs?: string;
 
         _name?: string;
         _source?: string;
