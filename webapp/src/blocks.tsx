@@ -508,12 +508,12 @@ export class Editor extends srceditor.Editor {
 
     zoomIn() {
         if (!this.editor) return;
-        this.editor.zoomCenter(1);
+        this.editor.zoomCenter(2);
     }
 
     zoomOut() {
         if (!this.editor) return;
-        this.editor.zoomCenter(-1);
+        this.editor.zoomCenter(-2);
     }
 
     closeFlyout () {
