@@ -7,23 +7,24 @@ namespace ts.pxtc {
         return "PXT." + shimName
     }
 
+    function qs(s: string) {
+        return JSON.stringify(s)
+    }
+
     function vtableToCS(info: ClassInfo) {
-        let s = `var ${info.id}_VT = {\n` +
-            `  name: ${JSON.stringify(getName(info.decl))},\n` +
-            `  refmask: ${JSON.stringify(info.refmask)},\n` +
-            `  methods: [\n`
+        let s = `static readonly VTable ${info.id}_VT = new VTable(${qs(getName(info.decl))}, ` +
+            `  ${info.refmask.length}, new FnPtr[] {\n`
         for (let m of info.vtable) {
             s += `    ${m.label()},\n`
         }
-        s += "  ],\n"
-        s += "  iface: [\n"
+        s += "  },\n"
+        s += "  new FnPtr[] {\n"
         let i = 0
         for (let m of info.itable) {
             s += `    ${m ? m.label() : "null"},  // ${info.itableInfo[i] || "."}\n`
             i++
         }
-        s += "  ],\n"
-        s += "};\n"
+        s += "});\n"
         return s
     }
 
@@ -62,6 +63,7 @@ public static void Main() { ${proc.label()}(new CTX(), null); }
 static async Task ${proc.label()}(CTX parent, TValue[] args) {
     var r0 = TValue.Undefined;
     var s = new ${ctxTp}();
+    var caps = parent.caps;
     s.parent = parent;
 `)
 
@@ -148,7 +150,7 @@ static async Task ${proc.label()}(CTX parent, TValue[] args) {
             if (cell.isGlobal())
                 return "g_" + cell.uniqueName()
             else if (cell.iscap)
-                return `s.caps[${cell.index}]`
+                return `caps[${cell.index}]`
             return cell.uniqueName()
         }
 
@@ -269,6 +271,8 @@ static async Task ${proc.label()}(CTX parent, TValue[] args) {
                 text = `new ${shimToCs(name.slice(4))}(${args.join(", ")})`
             else
                 text = `${shimToCs(name)}(${args.join(", ")})`
+            
+            // TODO we may need await
 
             write(`r0 = ${text};`)
         }
