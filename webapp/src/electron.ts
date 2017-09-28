@@ -28,7 +28,9 @@ interface ElectronMessage {
 
 let electronSocket: WebSocket = null;
 
-export const isElectron = /[?&]electron=1/.test(window.location.href);
+export const isPxtElectron = /[?&]electron=1/.test(window.location.href);
+export const isIpcRenderer = !!(window as any).ipcRenderer;
+export const isElectron = isPxtElectron || isIpcRenderer;
 
 export function init() {
     if (!isElectron || !Cloud.isLocalHost() || !Cloud.localToken) {
