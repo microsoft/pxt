@@ -5,10 +5,10 @@ Over the last decade, microcontrollers, the workhorses of embedded systems, have
 central to efforts in making and education. For example, the Arduino project (\url{www.arduino.cc}), 
 started in 2003, created the Uno using an 8-bit Atmel 
 AVR microcontroller. The Uno makes most of its microcontrollers I/O pins available via headers;
-external hardware modules (shields) may be connected to Uno's printed circuit board to extend 
+external hardware modules (shields) may be connected to the Uno's headers to extend 
 its capability.    The Arduino ecosystem has grown tremendously in the past 15 years, 
 with the support of companies such as Adafruit Industries (\url{www.adafruit.com}) and 
-Sparkfun Electronics (\url{www.sparkfun.com}), to name a few.
+Sparkfun Electronics (\url{www.sparkfun.com}).
 
 What has not changed much is the way microcontrollers are programmed,
 which is with the C and C++ programming languages, as well as assembly.   
@@ -34,7 +34,7 @@ event based, freeing the programmer from the need to poll.
 
 We have created a new programming platform that bridges the worlds of the microcontroller
 and the web app. The major goals of the platform are to: (1)
-make it simple to program microcontrollers using an interactive web app that also functions offline;
+make it simple to program microcontrollers using nothing more than a web app;
 (2) allow a user's compiled program to be easily installed on a microcontroller;
 (3) enable the safe addition of new of software/hardware components to a microcontroller.
 
@@ -44,16 +44,16 @@ make it simple to program microcontrollers using an interactive web app that als
   boxes represent the CODAL components; green boxes represent external components.}
 \end{figure*}
 
-The platform builds on stack of four novel technologies.
-The entry point of the platform is \emph{\MC} (\url{www.makecode.com}),
+The platform builds on stack of four novel technologies that are the subject of
+this paper. The entry point of the platform is \emph{\MC} (\href{https://makecode.com}{makecode.com}),
 a web app that supports both visual block programming and text programming,
 via \emph{Static TypeScript}, with conversion 
 between the two program representations. The web app has in-browser execution 
 via a device simulator, as well as compilation to machine code and linking against a 
 pre-compiled C++ runtime (\emph{CODAL}). No C/C++ compiler is invoked to compile user code. 
 The result of compilation is a binary file that is ``downloaded'' from the web app to the user's 
-computer and then flashed to the microcontroller, with the aid of the \emph{UF2} file format.
-The other three major technologies in the stack are:
+computer and then flashed to the microcontroller, with the aid of the \emph{UF2} file format and
+supporting firmware. The other three major technologies in the stack are:
 \begin{itemize}
 
 \item \emph{Static TypeScript} is a statically-typed subset of TypeScript (\url{www.typescriptlang.org}), 
@@ -66,7 +66,7 @@ schedule event handlers to run non-preemptively on fibers.
 
 \item \emph{USB Flashing Format} (UF2) is a new file format designed for flashing microcontrollers over the Mass Storage
 Class (removable USB pen drive) protocol.  This new file format greatly speeds the installation of user programs
-and is robust to difference in operating systems.
+and is robust to difference in operating systems.  UF2 is realized in firmware for various USB-capable microcontrollers. 
 \end{itemize}
 These advances enable beginners to get started programming microcontrollers from any modern web browser, and enable
 hardware vendors to innovate and safely add new components to the mix using Static TypeScript, leveraging its
