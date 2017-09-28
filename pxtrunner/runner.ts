@@ -351,6 +351,7 @@ namespace pxt.runner {
                         case "tutorial":
                             let body = $('body');
                             body.addClass('tutorial');
+                            $(loading).hide();
                             return renderTutorialAsync(content, src);
                         case "book":
                             return renderBookAsync(content, src);
@@ -617,6 +618,7 @@ ${files["main.ts"]}
                 // Extract toolbox block ids
                 let toolboxSubset: { [index: string]: number } = {};
                 return Promise.resolve()
+                    .then(() => renderMarkdownAsync(content, tutorialmd, { tutorial: true }))
                     .then(() => {
                         let uptoSteps = steps.join();
                         uptoSteps = uptoSteps.replace(/((?!.)\s)+/g, "\n");
@@ -650,7 +652,6 @@ ${files["main.ts"]}
                         }
                         return Promise.resolve();
                     })
-                    .then(() => renderMarkdownAsync(content, tutorialmd, { tutorial: true }))
                     .then(() => {
                         // Split the steps
                         let stepcontent = content.innerHTML.split(newAuthoring ? /<h2.*\/h2>/gi : /<h3.*\/h3>/gi);
