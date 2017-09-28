@@ -558,7 +558,7 @@ namespace pxtblockly {
                 // Image option is selected.
                 this.imageElement_ = Blockly.utils.createSvgElement('image',
                     {'y': 5, 'x': 8, 'height': this.imageJson_.height + 'px',
-                    'width': this.imageJson_.width + 'px'});
+                    'width': this.imageJson_.width + 'px', cursor: 'pointer'});
                 this.imageElement_.setAttributeNS('http://www.w3.org/1999/xlink',
                                                 'xlink:href', this.imageJson_.src);
                 this.size_.height = Number(this.imageJson_.height) + 10;
