@@ -59,6 +59,7 @@ export class Editor extends srceditor.Editor {
 
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
+        //TODO take out the .bind(this)?
         window.addEventListener("message", this.processMessage.bind(this), false)
     }
 
