@@ -69,6 +69,19 @@
     }
     .content {
         height: 3rem;
+        z-index: 1;
+        padding-bottom: 0;
+        width: 100%;
+        .header {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+    }
+    .ui.image ~ .content {
+        .header {
+            color: white;
+        }
     }
 }
 
