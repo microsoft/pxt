@@ -380,7 +380,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
             dialogInput.setSelectionRange(0, 9999);
             dialogInput.onkeyup = (e: KeyboardEvent) => {
                 let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-                if (charCode === enterKey || charCode === spaceKey) {
+                if (charCode === enterKey) {
                     e.preventDefault();
                     (document.getElementsByClassName("approve positive").item(0) as HTMLElement).click();
                 }
