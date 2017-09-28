@@ -44,7 +44,7 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
                 <a className="ui basic label">
                     {this.props.isSim ? lf("Simulator serial") : lf("Device serial")}
                 </a>
-                <AnimationPill />
+                <AnimationPill isSim={true} />
                 <div className="ui button">
                     <i className="external icon"></i>
                 </div>
@@ -53,8 +53,13 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
     }
 }
 
-class AnimationPill extends React.Component<{}, {}> {
-    animation: any
+interface AnimationPillProps {
+    isSim: boolean
+}
+
+class AnimationPill extends React.Component<AnimationPillProps, {}> {
+    animationStarter: any
+    animationStopper: any
     buffer: number[]
     active: boolean
     canvas: HTMLCanvasElement = undefined
@@ -109,24 +114,45 @@ class AnimationPill extends React.Component<{}, {}> {
         this.renderWave(this.buffer)
     }
 
-    constructor(props: any) {
+    constructor(props: AnimationPillProps) {
         super(props)
         this.buffer = this.randomBuffer()
-        this.active = true
-        window.addEventListener("message", (e) => {
-            //TODO
-        })
+        this.active = false
+    }
+
+    startAnimation() {
+        clearTimeout(this.animationStopper)
+        this.animationStopper = setTimeout(this.stopAnimation.bind(this), 2000)
+        if (!this.active) {
+            this.animationStarter = setInterval(this.animate.bind(this), 100)
+            this.active = true
+        }
+    }
+
+    stopAnimation() {
+        if (this.active) {
+            clearInterval(this.animationStarter)
+            this.active = false
+        }
+    }
+
+    handleMessage(e: MessageEvent) {
+        let msg = e.data
+        if (msg.type == "serial") {
+            if (msg.sim == this.props.isSim) {
+                this.startAnimation()
+            }
+        }
     }
 
     componentDidMount() {
-        this.animation = setInterval(this.animate.bind(this), 100)
+        //this.animation = setInterval(this.animate.bind(this), 100)
+        window.addEventListener("message", this.handleMessage.bind(this))
         this.canvas.setAttribute("style", "background-color:red;")
     }
 
     render() {
         //TODO width/height
-        return <canvas height={30} ref={(c) => {
-            this.canvas = c;}
-        } id="modulatorWavStrip"></canvas>
+        return <canvas ref={c => this.canvas = c} id="modulatorWavStrip"></canvas>
     }
 }
