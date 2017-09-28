@@ -169,7 +169,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                         .then(resp => this.props.parent.updateFileAsync("main.blocks", resp, true))
                                     })
                                 .done(() => {
-                                    core.hideLoading();
+                                    core.hideLoading("changingcode");
                                 })
                         } else {
                             this.props.parent.newProject(opts);
