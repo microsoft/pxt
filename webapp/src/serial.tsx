@@ -26,7 +26,7 @@ export class Editor extends srceditor.Editor {
     maxBufferLength: number = 5000
 
     //refs
-    recordButton: HTMLElement;
+    recordButton: HTMLElement
     recordIcon: HTMLElement
     consoleRoot: HTMLElement
     chartRoot: HTMLElement
@@ -210,9 +210,9 @@ export class Editor extends srceditor.Editor {
         let rootUrl = targetTheme.embedUrl
         if (!rootUrl) {
             pxt.commands.browserDownloadAsync(this.entriesToPlaintext(), "data.txt", "text/plain")
-            return;
+            return
         }
-        if (!/\/$/.test(rootUrl)) rootUrl += '/';
+        if (!/\/$/.test(rootUrl)) rootUrl += '/'
 
         core.confirmAsync({
             logos: undefined,
@@ -222,7 +222,7 @@ export class Editor extends srceditor.Editor {
             onLoaded: (_) => {
                 _.find('#datasavelocalfile').click(() => {
                     pxt.tickEvent("serial.dataExported")
-                    _.modal('hide');
+                    _.modal('hide')
                     pxt.commands.browserDownloadAsync(this.entriesToPlaintext(), "data.txt", "text/plain")
                 })
             },
@@ -304,7 +304,7 @@ class Chart {
     ]
 
     constructor(source: string, variable: string, value: number, chartIdx: number) {
-        const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme;
+        const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme
         // Initialize chart
         const chartConfig = {
             interpolation: 'bezier',
@@ -317,7 +317,7 @@ class Chart {
                 fillStyle: serialTheme && serialTheme.backgroundColor || '#fff'
             }
         }
-        this.chart = new SmoothieChart(chartConfig);
+        this.chart = new SmoothieChart(chartConfig)
         this.rootElement.className = "ui segment"
         this.source = source
         this.variable = variable

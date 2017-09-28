@@ -11,6 +11,7 @@
 
 @serialBackgroundColor: lighten(@simulatorBackground, 2);
 @serialTextColor: #fff;
+@serialDark: #000;
 @serialGraphBackground: #fefefe;
 
 #serialEditor {
@@ -26,10 +27,6 @@
     border: none;
     box-shadow: none;
     background-color: @serialBackgroundColor;
-}
-
-#serialArea .ui.divider {
-    border-width: 5px;
 }
 
 #serialHeader {
@@ -68,10 +65,12 @@
 #serialConsole {
     height: 25%;
     overflow-y: auto;
+    background-color: @serialTextColor;
 }
 
 #serialConsole div {
     word-wrap: break-word;
+    color: @serialDark;
 }
 
 #serialCharts {
@@ -102,15 +101,26 @@
     margin: 0 !important;
 }
 
+/** TODO hardcoded height??? **/
 #serialPreview .ui.left.labeled.button {
     margin: 1px;
     width: 100%;
     border: 2px solid lighten(@serialGraphBackground, 10.0) !important;
+    height: 45px;
+    background-color: lighten(@serialGraphBackground, 10.0) !important;
 }
 
 #serialPreview .label {
     width: 100%;
-    background-color: @serialBackgroundColor;
+    background-color: lighten(@serialGraphBackground, 10.0);
+    font-size: 0.85em;
+    color: @serialDark;
+    border: none;
+}
+
+#serialPreview canvas {
+    background-color: lighten(@serialGraphBackground, 10.0);
+    padding: 0 5px 0 0;
 }
 
 #serialToolbox {
