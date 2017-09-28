@@ -65,8 +65,8 @@ each hardware component of a device to one or more software components that comm
 schedule event handlers to run non-preemptively on fibers. 
 
 \item \emph{USB Flashing Format} (UF2) is a new file format designed for flashing microcontrollers over the Mass Storage
-Class (removable USB pen drive) protocol.  This new file format greatly speeds the installation of user programs
-and is robust to difference in operating systems.  UF2 is realized in firmware for various USB-capable microcontrollers. 
+Class (removable USB pen drive) protocol; the format and its supporting firmware greatly speeds the installation of user 
+programs and is robust to difference in operating systems. 
 \end{itemize}
 These advances enable beginners to get started programming microcontrollers from any modern web browser, and enable
 hardware vendors to innovate and safely add new components to the mix using Static TypeScript, leveraging its
@@ -76,13 +76,16 @@ to the internet).
 All of the above components are open source under the MIT/Apache licenses, as detailed below. 
 
 Platform targets can be seen at \url{www.makecode.com}, where the \MC web app for a variety of boards is available, 
-including the micro:bit (a Nordic nRF51822 microcontroller with Cortex-M0 processor, 16K RAM), Adafruit's Circuit 
-Playground Express (CPX: an Atmel SAMD21 microcontroller with Cortex-M0+ processor, 32K RAM), and the Arduino Uno 
-(Uno: an Atmel ATmega328 microcontroller with AVR processor, 2K RAM). 
+including:
+\begin{itemize}
+\item the \emph{\href{https://microbit.org}{micro:bit}}, a Nordic nRF51822 microcontroller with Cortex-M0 processor, 16K RAM 
+\item Adafruit's \emph{\href{https:/adafruit.com/products/3333}{Circuit Playground Express}}, an Atmel SAMD21 microcontroller with Cortex-M0 processor, 32K RAM;
+\item the \emph{\href{https://store.arduino.cc/usa/arduino-uno-rev3}{Arduino Uno}}, an Atmel ATmega328 microcontroller with AVR processor, 2K RAM.
+\end{itemize}
 
-We encourage the reader to choose a board and experiment with programming it, using the simulator to explore many 
-of each board's features, to appreciate the qualitative aspects of the platform: its simplicity and ease of use.  In this 
-paper, we will evaluate quantitative aspects of the platform: 
+We encourage the reader to choose a board and experiment with programming it, to appreciate the 
+qualitative aspects of the platform: its simplicity and ease of use.  In this 
+paper, we evaluate quantitative aspects of the platform: 
 compilation speed, code size, and runtime performance.  In particular, we evaluate:
 \begin{itemize}
 \item the compile time of Static TypeScript compile/link of user code (to machine code) with respect 
