@@ -58,7 +58,7 @@ In order to test your package, you need to create a new project, and manually ad
 }
 ```
 
-* Reload the editor and the new blocks you developed in `pxt-banana` will be loaded into the project *Just Look At It*.
+* Reload the editor and the new blocks you developed in `pxt-banana` will be loaded into the project "Just Look At It."
 
 ### Step 4: Publishing your package
 
