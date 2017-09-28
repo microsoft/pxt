@@ -1833,7 +1833,7 @@ ${lbl}: .short 0xffff
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let nm = attrs.shim
 
-            if (opts.target.taggedInts)
+            if (opts.target.needsUnboxing)
                 switch (nm) {
                     case "Number_::toString":
                     case "Boolean_::toString":
@@ -2843,7 +2843,7 @@ ${lbl}: .short 0xffff
 
             let args2 = args.map((a, i) => {
                 let r = emitExpr(a)
-                if (!opts.target.taggedInts)
+                if (!opts.target.needsUnboxing)
                     return r
                 let f = fmt.charAt(i + 1)
                 let isNumber = isNumberLike(a)
@@ -3102,7 +3102,7 @@ ${lbl}: .short 0xffff
                     case SK.EqualsEqualsEqualsToken:
                     case SK.ExclamationEqualsEqualsToken:
                     case SK.ExclamationEqualsToken:
-                        if (opts.target.taggedInts)
+                        if (opts.target.needsUnboxing)
                             break; // let the generic case handle this
                     case SK.LessThanEqualsToken:
                     case SK.LessThanToken:
@@ -3377,7 +3377,7 @@ ${lbl}: .short 0xffff
 
             // TODO this should be changed to use standard indexer lookup and int handling
             let toInt = (e: ir.Expr) => {
-                if (opts.target.taggedInts)
+                if (opts.target.needsUnboxing)
                     return ir.rtcall("pxt::toInt", [e])
                 else return e
             }
@@ -3466,7 +3466,7 @@ ${lbl}: .short 0xffff
                 if (cl.kind == SK.CaseClause) {
                     let cc = cl as CaseClause
                     let cmpExpr = emitExpr(cc.expression)
-                    if (opts.target.taggedInts) {
+                    if (opts.target.needsUnboxing) {
                         // we assume the value we're switching over will stay alive
                         // so, the mask only applies to the case expression if needed
                         let cmpCall = ir.rtcallMask(mapIntOpName("pxt::switch_eq"),
@@ -3488,7 +3488,7 @@ ${lbl}: .short 0xffff
                         proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                     } else {
                         // TODO re-enable this opt for small non-zero number literals
-                        if (!opts.target.taggedInts && cmpExpr.exprKind == EK.NumberLiteral) {
+                        if (!opts.target.needsUnboxing && cmpExpr.exprKind == EK.NumberLiteral) {
                             if (!quickCmpMode) {
                                 emitInJmpValue(expr)
                                 quickCmpMode = true
