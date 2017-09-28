@@ -31,14 +31,14 @@ let loadingQueue: string[] = [];
 let loadingQueueMsg: pxt.Map<string> = {};
 
 export function hideLoading(id: string) {
-    pxt.log("hideloading: " + id);
+    pxt.debug("hideloading: " + id);
     if (loadingQueueMsg[id] != undefined) {
         // loading exists, remove from queue
         const index = loadingQueue.indexOf(id);
         if (index > -1) loadingQueue.splice(index, 1);
         delete loadingQueueMsg[id];
     } else {
-        pxt.log("Loading not in queue, disregard: " + id);
+        pxt.debug("Loading not in queue, disregard: " + id);
     }
     if (loadingQueue.length > 0) {
         // Show the next loading message
@@ -57,7 +57,7 @@ export function hideLoading(id: string) {
 }
 
 export function showLoading(id: string, msg: string) {
-    pxt.log("showloading: " + id);
+    pxt.debug("showloading: " + id);
     initializeDimmer();
     $('.ui.dimmer.loading').dimmer('show');
     $('.ui.dimmer.loading').html(`

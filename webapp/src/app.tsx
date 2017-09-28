@@ -595,7 +595,7 @@ export class ProjectView
         return this.loadHeaderAsync(this.state.header, this.state.editorState)
     }
 
-    loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
+    loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState, inTutorial?: boolean): Promise<void> {
         if (!h)
             return Promise.resolve()
 
@@ -606,7 +606,7 @@ export class ProjectView
         this.setState({
             showFiles: false,
             editorState: editorState,
-            tutorialOptions: undefined
+            tutorialOptions: inTutorial ? this.state.tutorialOptions : undefined
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
@@ -893,7 +893,6 @@ export class ProjectView
     }
 
     newEmptyProject(name?: string, documentation?: string) {
-        this.setState({ tutorialOptions: {} });
         this.newProject({
             filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>` },
             name, documentation
@@ -926,7 +925,7 @@ export class ProjectView
             pubCurrent: false,
             target: pxt.appTarget.id,
             temporary: options.temporary
-        }, files).then(hd => this.loadHeaderAsync(hd, { filters: options.filters }))
+        }, files).then(hd => this.loadHeaderAsync(hd, { filters: options.filters}, options.inTutorial))
     }
 
     switchTypeScript() {
@@ -1560,20 +1559,21 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         let result: string[] = [];
 
         sounds.initTutorial(); // pre load sounds
-        return Promise.resolve().then(() => {
-            return this.createProjectAsync({
-                name: title
-            });
-        }).then(() => {
+        return Promise.resolve()
+        .then(() => {
             let tutorialOptions: pxt.editor.TutorialOptions = {
                 tutorial: tutorialId,
                 tutorialName: title,
                 tutorialStep: 0
             };
             this.setState({ tutorialOptions: tutorialOptions, editorState: { searchBar: false }, tracing: undefined })
-
             let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
             tc.setPath(tutorialId);
+        }).then(() => {
+            return this.createProjectAsync({
+                name: title,
+                inTutorial: true
+            });
         }).catch((e) => {
             core.hideLoading("tutorial");
             core.handleNetworkError(e);
