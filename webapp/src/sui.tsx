@@ -365,7 +365,7 @@ export class Input extends data.Component<{
             ? <Button class="ui right labeled primary icon button" text={lf("Copy") } icon="copy" onClick={() => this.copy() } />
             : null;
 
-        let value = (this.state && this.state.value) ? this.state.value : p.value;
+        let value = (this.state && this.state.value !== undefined) ? this.state.value : p.value;
 
         const onChange = (newValue: string) => {
             if (!p.readOnly && (!this.state || this.state.value !== newValue)) {
