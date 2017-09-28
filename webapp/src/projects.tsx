@@ -540,7 +540,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         };
 
         const actions = [{
-            label: lf("Save"),
+            label: lf("Done"),
             onClick: save,
             icon: 'check',
             className: 'positive'
@@ -551,7 +551,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             }]
 
         return (
-            <sui.Modal open={visible} className="exitandsave" header={lf("Save and Exit?") } size="small"
+            <sui.Modal open={visible} className="exitandsave" header={lf("Exit Project") } size="small"
                 onClose={() => this.hide() } dimmer={true}
                 actions={actions}
                 closeIcon={true}
