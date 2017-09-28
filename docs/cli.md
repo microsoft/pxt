@@ -47,13 +47,15 @@ the target and PXT.
 ## Using the CLI
 
 If you have created a PXT project from the web browser, you can go to its
-folder (it will sit under `myworkspace/projects` but feel free to move it up one level)
-and use the CLI to build and deploy it. 
+folder (it will sit under `projects`) and use the CLI to build and deploy it. 
+
 * start with `pxt install`, which will install all required PXT packages
 * use `pxt deploy` (or just `pxt`) to build and deploy the package to the device
 
 You can edit the package using [VSCode](https://code.visualstudio.com/)
-and publish it on GitHub.
+and publish it on GitHub. 
+
+While it is true that you can use any editor for editing TypeScript code, you might consider using VSCode as you are learning the language, as it provides syntax highlighting, linting, and other support that could save you time in debugging your extensions.
 
 ### Creating a new project
 
@@ -66,7 +68,7 @@ mkdir blink
 cd blink
 # start the project set
 pxt init
-# open code
+# open VSCode
 code .
 ```
 
