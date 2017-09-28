@@ -44,7 +44,7 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
                 <a className="ui basic label">
                     {this.props.isSim ? lf("Simulator serial") : lf("Device serial")}
                 </a>
-                <AnimationPill isSim={true} />
+                <AnimationPill isSim={this.props.isSim} />
                 <div className="ui button">
                     <i className="external icon"></i>
                 </div>
@@ -88,7 +88,7 @@ class AnimationPill extends React.Component<AnimationPillProps, {}> {
         let h = strip.canvas.height
         let w = strip.canvas.width
         strip.clearRect(0, 0, w, h)
-        strip.strokeStyle = "#fff"
+        strip.strokeStyle = "#676767"
         //TODO themeable
         strip.lineWidth = 1.0
         let b = 0
@@ -146,13 +146,10 @@ class AnimationPill extends React.Component<AnimationPillProps, {}> {
     }
 
     componentDidMount() {
-        //this.animation = setInterval(this.animate.bind(this), 100)
         window.addEventListener("message", this.handleMessage.bind(this))
-        this.canvas.setAttribute("style", "background-color:red;")
     }
 
     render() {
-        //TODO width/height
         return <canvas ref={c => this.canvas = c} id="modulatorWavStrip"></canvas>
     }
 }
