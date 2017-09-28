@@ -171,7 +171,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                     return compiler.getBlocksAsync()
                                         .then(blocksInfo => compiler.decompileSnippetAsync(ts, blocksInfo))
                                         .then(resp => this.props.parent.updateFileAsync("main.blocks", resp, true))
-                                    })
+                                })
                                 .done(() => {
                                     core.hideLoading("changingcode");
                                 })
@@ -355,7 +355,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         return <div className="ui dimmable">
             {this.hasFetchErrors ?
                 <div className="ui carouselouter">
-                    <div className="carouselcontainer" tabIndex={0} onClick={() => this.setState({})}>
+                    <div className="carouselcontainer" tabIndex={0} onClick={() => this.setState({}) }>
                         <p className="ui grey inverted segment">{lf("Oops, please connect to the Internet and try again.") }</p>
                     </div>
                 </div>
@@ -374,7 +374,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 />
                         </div>
                     ) : headers.map((scr, index) =>
-                        <div key={'local' + scr.id + scr.recentUse}>
+                        <div key={'local' + scr.id + scr.recentUse }>
                             {scr.id == 'new' ?
                                 <div className="ui card link newprojectcard focused" tabIndex={0} title={lf("Creates a new empty project") } onClick={() => this.newProject() } onKeyDown={sui.fireClickOnEnter} >
                                     <div className="content">
@@ -387,7 +387,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                     ref={(view) => { if (index === 1) this.latestProject = view } }
                                     cardType="file"
                                     className="file"
-                                    key={'local' + scr.id}
                                     name={scr.name}
                                     time={scr.recentUse}
                                     url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
@@ -523,8 +522,10 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         const save = () => {
             this.hide();
             if (this.props.parent.state.projectName != newName) pxt.tickEvent("exitandsave.projectrename");
-            this.props.parent.updateHeaderName(newName);
-            this.props.parent.openHome();
+            this.props.parent.updateHeaderNameAsync(newName)
+                .done(() => {
+                    this.props.parent.openHome();
+                })
         }
         const cancel = () => {
             pxt.tickEvent("exitandsave.cancel");

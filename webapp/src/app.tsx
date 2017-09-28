@@ -1460,29 +1460,33 @@ export class ProjectView
         if (!this.state.projectName || !this.state.header) return Promise.resolve();
 
         try {
-            // nothing to do?
-            if (pkg.mainPkg.config.name == this.state.projectName)
-                return Promise.resolve();
-
-            //Save the name in the target MainPackage as well
-            pkg.mainPkg.config.name = this.state.projectName;
-
-            pxt.debug('saving project name to ' + this.state.projectName);
-            let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
-            let config = JSON.parse(f.content) as pxt.PackageConfig;
-            config.name = this.state.projectName;
-            return f.setContentAsync(JSON.stringify(config, null, 4) + "\n")
-                .then(() => {
-                    if (this.state.header)
-                        this.setState({
-                            projectName: this.state.header.name
-                        })
-                });
+            return this.updateHeaderNameAsync(this.state.projectName);
         }
         catch (e) {
             pxt.reportException(e);
             return Promise.resolve();
         }
+    }
+
+    updateHeaderNameAsync(name: string): Promise<void> {
+        // nothing to do?
+        if (pkg.mainPkg.config.name == name)
+            return Promise.resolve();
+
+        //Save the name in the target MainPackage as well
+        pkg.mainPkg.config.name = name;
+
+        pxt.debug('saving project name to ' + name);
+        let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
+        let config = JSON.parse(f.content) as pxt.PackageConfig;
+        config.name = name;
+        return f.setContentAsync(JSON.stringify(config, null, 4) + "\n")
+                .then(() => {
+                    if (this.state.header)
+                        this.setState({
+                            projectName: name
+                        })
+                });
     }
 
     isTextEditor(): boolean {
@@ -1549,8 +1553,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             this.home.showHome();
         } else {
             core.showLoading("tutorial", lf("starting tutorial..."));
-            this.startTutorialAsync(tutorialId, tutorialTitle)
-                .then(() => Promise.delay(500));
+            this.startTutorialAsync(tutorialId, tutorialTitle);
         }
     }
 
@@ -1600,12 +1603,10 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
     }
 
     exitTutorialAsync() {
-        // tutorial project is temporary, no need to delete
         let curr = pkg.mainEditorPkg().header;
         let files = pkg.mainEditorPkg().getAllFiles();
-        curr.temporary = false;
-        return workspace.saveAsync(curr, {})
-            .then(() => { workspace.installAsync(curr, files) })
+        return workspace.saveAsync(curr, files)
+            .then(() => Promise.delay(500))
             .finally(() => {
                 this.setState({ tutorialOptions: undefined, tracing: undefined, editorState: undefined });
                 core.resetFocus();
