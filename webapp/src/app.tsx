@@ -1603,8 +1603,10 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
     exitTutorialAsync() {
         // tutorial project is temporary, no need to delete
         let curr = pkg.mainEditorPkg().header;
+        let files = pkg.mainEditorPkg().getAllFiles();
         curr.temporary = false;
         return workspace.saveAsync(curr, {})
+            .then(() => { workspace.installAsync(curr, files) })
             .finally(() => {
                 this.setState({ tutorialOptions: undefined, tracing: undefined, editorState: undefined });
                 core.resetFocus();
