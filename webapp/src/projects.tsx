@@ -134,8 +134,12 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
 
         const chgHeader = (hdr: pxt.workspace.Header) => {
             pxt.tickEvent("projects.header");
+            core.showLoading("changeheader", lf("Loading..."));
             this.hide();
             this.props.parent.loadHeaderAsync(hdr)
+                .done(() => {
+                    core.hideLoading("changeheader");
+                })
         }
         const chgGallery = (scr: pxt.CodeCard) => {
             pxt.tickEvent("projects.gallery", { name: scr.name });
@@ -156,25 +160,26 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         }
 
         const chgCode = (scr: pxt.CodeCard, loadBlocks?: boolean) => {
-            core.showLoading(lf("Loading..."));
+            core.showLoading("changingcode", lf("Loading..."));
             gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
                 .done(opts => {
                     if (opts) {
                         if (loadBlocks) {
                             const ts = opts.filesOverride["main.ts"]
-                            this.props.parent.createProjectAsync(opts)
+                            return this.props.parent.createProjectAsync(opts)
                                 .then(() => {
                                     return compiler.getBlocksAsync()
                                         .then(blocksInfo => compiler.decompileSnippetAsync(ts, blocksInfo))
                                         .then(resp => this.props.parent.updateFileAsync("main.blocks", resp, true))
                                     })
                                 .done(() => {
-                                    core.hideLoading();
+                                    core.hideLoading("changingcode");
                                 })
                         } else {
-                            this.props.parent.newProject(opts);
+                            return this.props.parent.newProject(opts);
                         }
                     }
+                    core.hideLoading("changingcode");
                 });
         }
         const importProject = () => {

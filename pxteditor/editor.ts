@@ -70,6 +70,7 @@ namespace pxt.editor {
         filesOverride?: pxt.Map<string>;
         filters?: ProjectFilters;
         temporary?: boolean;
+        inTutorial?: boolean;
     }
 
     export interface ProjectFilters {
@@ -145,7 +146,7 @@ namespace pxt.editor {
 
         openHome(): void;
         setTutorialStep(step: number): void;
-        exitTutorial(keep?: boolean): void;
+        exitTutorial(): void;
         completeTutorial(): void;
         showTutorialHint(): void;
         gettingStarted(): void;

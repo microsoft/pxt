@@ -27,18 +27,37 @@ export function isLoading() {
     return !!$('.ui.loading.dimmer .loadingcontent')[0];
 }
 
-export function hideLoading() {
-    $('.ui.dimmer.loading .loadingcontent').remove();
-    $('.ui.dimmer.loading').dimmer('hide');
-    if (!dimmerInitialized) {
-        initializeDimmer();
+let loadingQueue: string[] = [];
+let loadingQueueMsg: pxt.Map<string> = {};
+
+export function hideLoading(id: string) {
+    pxt.debug("hideloading: " + id);
+    if (loadingQueueMsg[id] != undefined) {
+        // loading exists, remove from queue
+        const index = loadingQueue.indexOf(id);
+        if (index > -1) loadingQueue.splice(index, 1);
+        delete loadingQueueMsg[id];
+    } else {
+        pxt.debug("Loading not in queue, disregard: " + id);
     }
-    setTimeout(function () {
+    if (loadingQueue.length > 0) {
+        // Show the next loading message
+        displayNextLoading();
+    } else {
+        // Hide loading
+        $('.ui.dimmer.loading .loadingcontent').remove();
         $('.ui.dimmer.loading').dimmer('hide');
-    }, 200);
+        if (!dimmerInitialized) {
+            initializeDimmer();
+        }
+        setTimeout(function () {
+            $('.ui.dimmer.loading').dimmer('hide');
+        }, 200);
+    }
 }
 
-export function showLoading(msg: string) {
+export function showLoading(id: string, msg: string) {
+    pxt.debug("showloading: " + id);
     initializeDimmer();
     $('.ui.dimmer.loading').dimmer('show');
     $('.ui.dimmer.loading').html(`
@@ -46,6 +65,15 @@ export function showLoading(msg: string) {
     <div class="ui text large loader msg" aria-live="assertive">${lf("Please wait")}</div>
   </div>
 `)
+    loadingQueue.push(id);
+    loadingQueueMsg[id] = msg;
+    displayNextLoading();
+}
+
+function displayNextLoading() {
+    if (!loadingQueue.length) return;
+    const id = loadingQueue[loadingQueue.length - 1]; // get last item
+    const msg = loadingQueueMsg[id];
     $('.ui.dimmer.loading .msg').text(msg);
 }
 
@@ -56,22 +84,22 @@ function initializeDimmer() {
     dimmerInitialized = true;
 }
 
-let asyncLoadingTimeout: number;
+let asyncLoadingTimeout: pxt.Map<number> = {};
 
-export function showLoadingAsync(msg: string, operation: Promise<any>, delay: number = 700) {
-    clearTimeout(asyncLoadingTimeout);
-    asyncLoadingTimeout = setTimeout(function () {
-        showLoading(msg);
+export function showLoadingAsync(id: string, msg: string, operation: Promise<any>, delay: number = 700) {
+    clearTimeout(asyncLoadingTimeout[id]);
+    asyncLoadingTimeout[id] = setTimeout(function () {
+        showLoading(id, msg);
     }, delay);
 
     return operation.finally(() => {
-        cancelAsyncLoading();
+        cancelAsyncLoading(id);
     });
 }
 
-export function cancelAsyncLoading() {
-    clearTimeout(asyncLoadingTimeout);
-    hideLoading();
+export function cancelAsyncLoading(id: string) {
+    clearTimeout(asyncLoadingTimeout[id]);
+    hideLoading(id);
 }
 
 export function navigateInWindow(url: string) {

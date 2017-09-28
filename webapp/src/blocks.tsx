@@ -80,7 +80,6 @@ export class Editor extends srceditor.Editor {
             editorDiv.appendChild(loading);
 
             this.loadingXmlPromise = compiler.getBlocksAsync()
-                .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
                     let showSearch = this.showSearch;
@@ -112,11 +111,13 @@ export class Editor extends srceditor.Editor {
                     Blockly.svgResize(this.editor);
                     this.isFirstBlocklyLoad = false;
                 }).finally(() => {
+                    this.loadingXml = false
                     editorDiv.removeChild(loading);
+                    core.hideLoading("loadingblocks");
                 });
 
             if (this.isFirstBlocklyLoad) {
-                core.showLoadingAsync(lf("loading..."), this.loadingXmlPromise).done();
+                core.showLoadingAsync("loadingblocks",lf("loading..."), this.loadingXmlPromise).done();
             } else {
                 this.loadingXmlPromise.done();
             }

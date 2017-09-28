@@ -92,7 +92,7 @@ export class Editor extends srceditor.Editor {
             }
 
             const failedAsync = (file: string, programTooLarge = false) => {
-                core.cancelAsyncLoading();
+                core.cancelAsyncLoading("switchtoblocks");
                 this.forceDiagnosticsUpdate();
                 return this.showConversionFailedDialog(file, programTooLarge);
             }
@@ -154,7 +154,7 @@ export class Editor extends srceditor.Editor {
                 });
         });
 
-        core.showLoadingAsync(lf("switching to blocks..."), promise).done();
+        core.showLoadingAsync("switchtoblocks", lf("switching to blocks..."), promise).done();
     }
 
     public showConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {

@@ -351,6 +351,7 @@ namespace pxt.runner {
                         case "tutorial":
                             let body = $('body');
                             body.addClass('tutorial');
+                            $(loading).hide();
                             return renderTutorialAsync(content, src);
                         case "book":
                             return renderBookAsync(content, src);
@@ -597,6 +598,10 @@ ${files["main.ts"]}
                     steps = tutorialmd.split(/^###[^#].*$/gmi);
                     newAuthoring = false;
                 }
+                if (steps[0].indexOf("# Not found") == 0) {
+                    pxt.log(`Tutorial not found: ${tutorialid}`);
+                    throw new Error(`Tutorial not found: ${tutorialid}`);
+                }
                 let stepInfo: editor.TutorialStepInfo[] = [];
                 tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
                     let info: editor.TutorialStepInfo = {
@@ -613,6 +618,7 @@ ${files["main.ts"]}
                 // Extract toolbox block ids
                 let toolboxSubset: { [index: string]: number } = {};
                 return Promise.resolve()
+                    .then(() => renderMarkdownAsync(content, tutorialmd, { tutorial: true }))
                     .then(() => {
                         let uptoSteps = steps.join();
                         uptoSteps = uptoSteps.replace(/((?!.)\s)+/g, "\n");
@@ -639,11 +645,13 @@ ${files["main.ts"]}
                                         toolboxSubset[blk.type] = 1;
                                     }
                                 }
+                            }).catch(() => {
+                                pxt.log(`Failed to decompile tutorial: ${tutorialid}`);
+                                throw new Error(`Failed to decompile tutorial: ${tutorialid}`);
                             })
                         }
                         return Promise.resolve();
                     })
-                    .then(() => renderMarkdownAsync(content, tutorialmd, { tutorial: true }))
                     .then(() => {
                         // Split the steps
                         let stepcontent = content.innerHTML.split(newAuthoring ? /<h2.*\/h2>/gi : /<h3.*\/h3>/gi);
@@ -664,6 +672,16 @@ ${files["main.ts"]}
                             toolboxSubset: toolboxSubset
                         }, "*");
                     });
+            })
+            .catch((e: Error) => {
+                pxt.log(`Failed to load tutorial: ${tutorialid}`);
+                pxt.log(e.message);
+                // return the result
+                window.parent.postMessage(<pxsim.TutorialFailedMessage>{
+                    type: "tutorial",
+                    tutorial: tutorialid,
+                    subtype: "error"
+                }, "*");
             })
     }
 
