@@ -857,7 +857,6 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             }
 
             if (Object.keys(newState).length > 0) {
-                if (Object.keys(newState).length > 0) this.setState(newState);
                 this.setState(newState);
                 if (this.props.onPositionChanged) this.props.onPositionChanged(this.props);
             }
