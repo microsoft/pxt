@@ -614,6 +614,9 @@ declare namespace Blockly {
     }
 
     class FieldSlider extends FieldNumber {
+        min_: number;
+        max_: number;
+        labelText_: string;
         slider_: goog.ui.Slider;
         constructor(value_: any, opt_min?: string, opt_max?: string, opt_precision?: string, opt_step?: string, opt_labelText?: string, opt_validator?: () => void);
         updateDom_(): void;
