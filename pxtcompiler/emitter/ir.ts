@@ -37,6 +37,7 @@ namespace ts.pxtc.ir {
         public totalUses: number; // how many references this expression has; only for the only child of Shared
         public currUses: number;
         public callingConvention = CallingConvention.Plain;
+        public argsFmt: string;
 
         constructor(
             public exprKind: EK,

@@ -2846,7 +2846,7 @@ ${lbl}: .short 0xffff
 
             let args2 = args.map((a, i) => {
                 let r = emitExpr(a)
-                if (!opts.target.needsUnboxing)
+                if (!opts.target.taggedInts)
                     return r
                 let f = fmt.charAt(i + 1)
                 let isNumber = isNumberLike(a)
@@ -2879,6 +2879,7 @@ ${lbl}: .short 0xffff
                 }
             })
             let r = ir.rtcallMask(name, mask, attrs.callingConvention, args2)
+            r.argsFmt = fmt
             if (opts.target.taggedInts) {
                 if (fmt.charAt(0) == "I")
                     r = fromInt(r)

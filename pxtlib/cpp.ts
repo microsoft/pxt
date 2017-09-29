@@ -714,8 +714,24 @@ namespace pxt.cpp {
                     let retTp = m[2]
                     let funName = m[3]
                     let origArgs = m[4]
+                    let isAsync = false
                     currAttrs = currAttrs.trim().replace(/ \w+\.defl=\w+/g, "")
+                    if (retTp == "Task") {
+                        retTp = "void"
+                        isAsync = true
+                    } else {
+                        let mm = /^Task<(.*)>$/.exec(retTp)
+                        if (mm) {
+                            isAsync = true
+                            retTp = mm[1]
+                        }
+                    }
                     let argsFmt = mapRunTimeType(retTp)
+
+                    if (isAsync) {
+                        argsFmt = "async;" + argsFmt
+                        currAttrs += " async"
+                    }
 
                     let args = origArgs.split(/,/).filter(s => !!s).map(s => {
                         let r = parseArg(parsedAttrs, s)

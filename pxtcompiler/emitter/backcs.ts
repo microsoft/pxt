@@ -285,6 +285,28 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
 
             let name: string = topExpr.data
             let args = info.flattened.map(emitExprInto)
+            let isAsync = topExpr.callingConvention != ir.CallingConvention.Plain
+
+            let fmt = topExpr.argsFmt
+            if (fmt) {
+                let fmts = fmt.split(';').filter(s => !!s)
+                if (fmts[0] == "async") {
+                    isAsync = true
+                    fmts.shift()
+                }
+                fmts.shift() // return type
+                args = args.map((a, i) => {
+                    let f = fmts[i]
+                    if (f[0] == '#') {
+                        f = f.slice(1)
+                        a = "numops.toDouble(" + a + ")"
+                    }
+                    if (f != "object") {
+                        a = "((" + f + ")(" + a + "))"
+                    }
+                    return a
+                })
+            }
 
             let text = ""
             if (name[0] == ".")
@@ -294,7 +316,8 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
             else
                 text = `${shimToCs(name)}(${args.join(", ")})`
 
-            // TODO we may need await
+            if (isAsync)
+                text = "await " + text
 
             write(`r0 = ${text};`)
         }
