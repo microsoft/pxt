@@ -273,7 +273,7 @@ namespace pxt.blocks {
             'lists_create_with': {
                 name: Util.lf("create an array"),
                 tooltip: Util.lf("Creates a new array."),
-                url: '/blocks/arrays/create',
+                url: '/reference/arrays/create',
                 category: 'arrays',
                 blockTextSearch: "LISTS_CREATE_WITH_INPUT_WITH",
                 block: {
@@ -286,7 +286,7 @@ namespace pxt.blocks {
             'lists_length': {
                 name: Util.lf("array length"),
                 tooltip: Util.lf("Returns the number of items in an array."),
-                url: '/blocks/arrays/length',
+                url: '/reference/arrays/length',
                 category: 'arrays',
                 block: {
                     LISTS_LENGTH_TITLE: Util.lf("length of array %1")
@@ -295,7 +295,7 @@ namespace pxt.blocks {
             'lists_index_get': {
                 name: Util.lf("get a value in an array"),
                 tooltip: Util.lf("Returns the value at the given index in an array."),
-                url: '/blocks/arrays/get',
+                url: '/reference/arrays/get',
                 category: 'arrays',
                 block: {
                     message0: Util.lf("%1 get value at %2")
@@ -304,7 +304,7 @@ namespace pxt.blocks {
             'lists_index_set': {
                 name: Util.lf("set a value in an array"),
                 tooltip: Util.lf("Sets the value at the given index in an array"),
-                url: '/blocks/arrays/set',
+                url: '/reference/arrays/set',
                 category: 'arrays',
                 block: {
                     message0: Util.lf("%1 set value at %2 to %3")
