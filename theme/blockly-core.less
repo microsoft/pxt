@@ -108,6 +108,10 @@ div.blocklyTreeRow, span.blocklyTreeLabel {
     cursor: pointer;
 }
 
+div.blocklyTreeRoot {
+    padding: 0;
+}
+
 /* This horrendous selector and the next are for subcategories in the Blockly toolbox */
 div.blocklyTreeRoot div div div div div.blocklyTreeRow {
     border-left-width: 12px !important;
@@ -251,6 +255,11 @@ text.blocklyCheckbox {
 div.blocklyTreeRow {
     height: 100%;
 }
+
+/* Transulcent blocks when dragging */
+.blocklyDraggable.blocklyDragging {
+   opacity: 0.7;
+}  
 
 /*******************************
         Media Adjustments

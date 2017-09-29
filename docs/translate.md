@@ -20,6 +20,24 @@ Looking to help translate **microbit.org**? Try http://translate.microbit.org/ t
 
 ### ~
 
+## [Tasks](https://crowdin.com/project/kindscript/tasks)
+
+We have create a [tasks for each language and editor](https://crowdin.com/project/kindscript/tasks) to help navigate the translation system.
+
+* **Common / User Interface / Translation**: translating the menu items, buttons and other common UI elements. Available to **translators** for a given language.
+* **Common / User Interface / Proofreading**: proofreading the menu items, buttons and other common UI elements. Available to **proof readers** for a given language.
+
+![UI elements](/static/translationui.png)
+
+* **Minecraft / Blocks+description / Translation**: translating the blocks and block descriptions. Available to **translators** for a given language.
+* **Minecraft / Blocks+description / Proofreading**: proofreading translating the blocks and block descriptions. Available to **proof readers** for a given language.
+
+* **micro:bit / Blocks+description / Translation**: translating the blocks and block descriptions. Available to **translators** for a given language.
+* **micro:bit / Blocks+description / Proofreading**: proofreading translating the blocks and block descriptions. Available to **proof readers** for a given language.
+
+![UI elements](/static/translationblocks.png)
+
+
 ## Live Translations
 
 All translations are "almost" live from the Crowdin project. Our cloud keeps a cache of the translated strings and updates to the **validated** strings will make it to production. Note that there may be a delay of up to 5 minutes before your changes in Crowdin make it into the "live" view.
@@ -44,7 +62,6 @@ Open the developer tools and watch the console, PXT wil validate the localized s
 * Do not translalte ``%variable`` names
 * Do not reorder parameters
 * Maintain the same structure of ``|`` and ``%variables%``
-
 
 ## Translating Target specific strings
 

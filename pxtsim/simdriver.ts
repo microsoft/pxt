@@ -38,7 +38,7 @@ namespace pxsim {
         mute?: boolean;
         highContrast?: boolean;
         cdnUrl?: string;
-        localizedStrings?: pxt.Map<string>
+        localizedStrings?: pxsim.Map<string>
     }
 
     export interface HwDebugger {
