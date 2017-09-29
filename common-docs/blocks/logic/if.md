@@ -79,7 +79,7 @@ if (myScore == perfect) {
 ```
 
 ## ~hint
-Click on the dark blue gear icon to add an *else* or *else if* sections to the current *if* block.
+Click on the plus **(+)** symbol to add *else* or *else if* sections to the current *if* block.
 ## ~
 
 ## #examples

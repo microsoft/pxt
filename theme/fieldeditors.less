@@ -1,53 +1,61 @@
 /* Import all components */
+
 @import 'themes/default/globals/site.variables';
 @import 'themes/pxt/globals/site.variables';
 
 /* Reference import */
+
 @import (reference) "semantic.less";
-
-
 ////// Note Editor Field ////////
-
 .blocklyDropDownContent .blocklyPianoDiv {
     position: relative
 }
 
 .blocklyDropDownContent .blocklyNote {
-border: solid 0.5px;
-cursor: pointer;
-display: inline-block;
-position: absolute;
-top: 0px;
-border-bottom-left-radius: 3px;
-border-bottom-right-radius: 3px;
+    border: solid 0.5px;
+    cursor: pointer;
+    display: inline-block;
+    position: absolute;
+    top: 0px;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
 }
 
 .blocklyDropDownContent .blocklyNote:hover {
-background-color: yellow !important
+    background-color: yellow !important
 }
 
 .blocklyDropDownContent .blocklyNoteLabel {
-border: solid 0.5px;
-color: white;
-display: inline-block;
-line-height: normal;
-position: absolute;
-text-align: center;
+    border: solid 0.5px;
+    color: white;
+    display: inline-block;
+    line-height: normal;
+    position: absolute;
+    text-align: center;
+    font-family: @blocklyFont;
+    font-size: 12pt;
 }
 
 .blocklyDropDownContent .blocklyNotePrevNext {
-border: solid 0.5px;
-border-top: 0;
-cursor: pointer;
-color: white;
-display: inline-block;
-font-weight: bold;
-line-height: normal;
-position: absolute;
-text-align: center;
+    border: solid 0.5px;
+    border-top: 0;
+    cursor: pointer;
+    color: white;
+    display: inline-block;
+    font-weight: bold;
+    line-height: normal;
+    position: absolute;
+    text-align: center;
 }
 
 ////// Grid Picker Editor Field ////////
+.blocklyGridPickerTooltip {
+    z-index: 106;
+}
+
+.blocklyGridPickerPadder {
+    box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3)
+}
 
 .blocklyGridPickerTooltip {
     z-index: 106;
@@ -58,58 +66,59 @@ text-align: center;
 }
 
 .blocklyWidgetDiv .blocklyGridPickerMenu {
-display: table;
-outline: none;
+    display: table;
+    outline: none;
 }
 
 .blocklyGridPickerScroller {
-outline: none;
-padding: 4px;
-border-radius: 10px;
+    outline: none;
+    padding: 4px;
+    border-radius: 10px;
 }
 
 .blocklyGridPickerPadder {
-border-radius: 10px;
-outline: none;
+    border-radius: 10px;
+    outline: none;
 }
 
 .blocklyWidgetDiv .blocklyGridPickerRow {
-display: table-row;
+    display: table-row;
 }
 
 .blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem {
-background: white;
-cursor:pointer;
+    background: white;
+    cursor: pointer;
 }
 
 .blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem-highlight, .blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem-hover {
-background: #d6e9f8;
+    background: #d6e9f8;
 }
 
 .blocklyWidgetDiv .blocklyGridPickerMenu .goog-option {
-border: solid 4px black;
-border-radius: 10px;
-display: table-cell;
-padding: 4px;
-text-align: center;
-vertical-align: top;
+    border: solid 4px black;
+    border-radius: 10px;
+    display: table-cell;
+    padding: 4px;
+    text-align: center;
+    vertical-align: top;
 }
 
 .blocklyWidgetDiv .blocklyGridPickerMenu .floatLeft {
-float: left;
+    float: left;
 }
 
 .blocklyWidgetDiv .blocklyGridPickerMenu .goog-option.goog-option-selected {
-outline: solid 3px #fc3;
-position: relative;
+    outline: solid 3px #fc3;
+    position: relative;
 }
 
 .blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem .goog-menuitem-checkbox {
-display: none;
+    display: none;
 }
 
 .blocklyGridPickerTooltip {
-z-index: 100000; /* big value for bootstrap3 compatibility */
+    z-index: 100000;
+    /* big value for bootstrap3 compatibility */
 }
 
 .ui.input input.blocklyGridPickerSearchBar {

@@ -19,26 +19,45 @@ export type Component<S, T> = data.Component<S, T>;
 
 let dimmerInitialized = false;
 
-export const tabKey = 9;
-export const enterKey = 13;
-export const spaceKey = 32;
+export const TAB_KEY = 9;
+export const ENTER_KEY = 13;
+export const SPACE_KEY = 32;
 
 export function isLoading() {
     return !!$('.ui.loading.dimmer .loadingcontent')[0];
 }
 
-export function hideLoading() {
-    $('.ui.dimmer.loading .loadingcontent').remove();
-    $('.ui.dimmer.loading').dimmer('hide');
-    if (!dimmerInitialized) {
-        initializeDimmer();
+let loadingQueue: string[] = [];
+let loadingQueueMsg: pxt.Map<string> = {};
+
+export function hideLoading(id: string) {
+    pxt.debug("hideloading: " + id);
+    if (loadingQueueMsg[id] != undefined) {
+        // loading exists, remove from queue
+        const index = loadingQueue.indexOf(id);
+        if (index > -1) loadingQueue.splice(index, 1);
+        delete loadingQueueMsg[id];
+    } else {
+        pxt.debug("Loading not in queue, disregard: " + id);
     }
-    setTimeout(function () {
+    if (loadingQueue.length > 0) {
+        // Show the next loading message
+        displayNextLoading();
+    } else {
+        // Hide loading
+        $('.ui.dimmer.loading .loadingcontent').remove();
         $('.ui.dimmer.loading').dimmer('hide');
-    }, 200);
+        if (!dimmerInitialized) {
+            initializeDimmer();
+        }
+        setTimeout(function () {
+            $('.ui.dimmer.loading').dimmer('hide');
+        }, 200);
+    }
 }
 
-export function showLoading(msg: string) {
+export function showLoading(id: string, msg: string) {
+    pxt.debug("showloading: " + id);
     initializeDimmer();
     $('.ui.dimmer.loading').dimmer('show');
     $('.ui.dimmer.loading').html(`
@@ -46,6 +65,15 @@ export function showLoading(msg: string) {
     <div class="ui text large loader msg" aria-live="assertive">${lf("Please wait")}</div>
   </div>
 `)
+    loadingQueue.push(id);
+    loadingQueueMsg[id] = msg;
+    displayNextLoading();
+}
+
+function displayNextLoading() {
+    if (!loadingQueue.length) return;
+    const id = loadingQueue[loadingQueue.length - 1]; // get last item
+    const msg = loadingQueueMsg[id];
     $('.ui.dimmer.loading .msg').text(msg);
 }
 
@@ -56,22 +84,22 @@ function initializeDimmer() {
     dimmerInitialized = true;
 }
 
-let asyncLoadingTimeout: number;
+let asyncLoadingTimeout: pxt.Map<number> = {};
 
-export function showLoadingAsync(msg: string, operation: Promise<any>, delay: number = 700) {
-    clearTimeout(asyncLoadingTimeout);
-    asyncLoadingTimeout = setTimeout(function () {
-        showLoading(msg);
+export function showLoadingAsync(id: string, msg: string, operation: Promise<any>, delay: number = 700) {
+    clearTimeout(asyncLoadingTimeout[id]);
+    asyncLoadingTimeout[id] = setTimeout(function () {
+        showLoading(id, msg);
     }, delay);
 
     return operation.finally(() => {
-        cancelAsyncLoading();
+        cancelAsyncLoading(id);
     });
 }
 
-export function cancelAsyncLoading() {
-    clearTimeout(asyncLoadingTimeout);
-    hideLoading();
+export function cancelAsyncLoading(id: string) {
+    clearTimeout(asyncLoadingTimeout[id]);
+    hideLoading(id);
 }
 
 export function navigateInWindow(url: string) {
@@ -189,6 +217,7 @@ export interface DialogOptions {
     onLoaded?: (_: JQuery) => void;
     buttons?: ButtonConfig[];
     timeout?: number;
+    modalContext?: string;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
@@ -223,7 +252,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     if (!options.hideCancel) {
         buttons.push({
             label: options.disagreeLbl || lf("Cancel"),
-            class: (options.disagreeClass || "cancel") + " focused",
+            class: (options.disagreeClass || "cancel"),
             icon: options.disagreeIcon || "cancel"
         })
     }
@@ -231,7 +260,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     let btnno = 0
     for (let b of buttons) {
         html += `
-      <${b.url ? "a" : "button"} class="ui right labeled icon button approve ${b.class || "positive"}" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} ${b.fileName ? `download="${Util.htmlEscape(b.fileName)}"` : ''} target="_blank">
+      <${b.url ? "a" : "button"} class="ui right labeled icon button approve ${b.class || "positive"} focused" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} ${b.fileName ? `download="${Util.htmlEscape(b.fileName)}"` : ''} target="_blank">
         ${Util.htmlEscape(b.label)}
         <i class="${b.icon || "checkmark"} icon"></i>
       </${b.url ? "a" : "button"}>`
@@ -247,7 +276,8 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         ip.on('change', e => options.inputValue = ip.val())
     }
     let done = false
-    $('#root').append(modal)
+    let modalContext = options.modalContext || '#root';
+    $(modalContext).append(modal)
     if (options.onLoaded) options.onLoaded(modal)
 
     modal.find('img').on('load', () => {
@@ -279,7 +309,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         mo = modal.modal({
             observeChanges: true,
             closeable: !options.hideCancel,
-            context: "#root",
+            context: modalContext,
             onHidden: () => {
                 modal.remove();
                 mo.remove();
@@ -316,7 +346,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
     if (!options.hideAgree) {
         options.buttons.push({
             label: options.agreeLbl || lf("Go ahead!"),
-            class: options.agreeClass + " focused",
+            class: options.agreeClass,
             icon: options.agreeIcon,
             onclick: () => {
                 result = 1
@@ -327,7 +357,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
     if (options.deleteLbl) {
         options.buttons.push({
             label: options.deleteLbl,
-            class: "delete red focused",
+            class: "delete red",
             icon: "trash",
             onclick: () => {
                 result = 2
@@ -344,7 +374,7 @@ export function confirmDelete(what: string, cb: () => Promise<void>) {
         header: lf("Would you like to delete '{0}'?", what),
         body: lf("It will be deleted for good. No undo."),
         agreeLbl: lf("Delete"),
-        agreeClass: "red focused",
+        agreeClass: "red",
         agreeIcon: "trash",
     }).then(res => {
         if (res) {
@@ -380,7 +410,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
             dialogInput.setSelectionRange(0, 9999);
             dialogInput.onkeyup = (e: KeyboardEvent) => {
                 let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-                if (charCode === enterKey || charCode === spaceKey) {
+                if (charCode === ENTER_KEY) {
                     e.preventDefault();
                     (document.getElementsByClassName("approve positive").item(0) as HTMLElement).click();
                 }
@@ -516,7 +546,7 @@ function unregisterFocusTracking(data: FocusDataEventInfo): void {
 
 function giveFocusToFirstTag(e: KeyboardEvent) {
     let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-    if (charCode === tabKey && !e.shiftKey) {
+    if (charCode === TAB_KEY && !e.shiftKey) {
         e.preventDefault();
         unregisterFocusTracking(this);
         initializeFocusTabIndex(this.targetArea, true);
@@ -528,7 +558,7 @@ function giveFocusToFirstTag(e: KeyboardEvent) {
 
 function giveFocusToLastTag(e: KeyboardEvent) {
     let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-    if (charCode === tabKey && e.shiftKey) {
+    if (charCode === TAB_KEY && e.shiftKey) {
         e.preventDefault();
         unregisterFocusTracking(this);
         initializeFocusTabIndex(this.targetArea, true, false);

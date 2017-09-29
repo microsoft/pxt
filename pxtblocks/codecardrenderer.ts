@@ -59,7 +59,7 @@ namespace pxt.docs.codeCard {
         if (card.label) {
             let lbl = document.createElement("label");
             lbl.className = "ui orange right ribbon label";
-            lbl.innerText = card.label;
+            lbl.textContent = card.label;
             img.appendChild(lbl);
         }
 
@@ -96,6 +96,11 @@ namespace pxt.docs.codeCard {
             img.appendChild(screenshot)
         }
 
+        if (card.cardType == "file") {
+            let file = div(r, "ui fileimage");
+            img.appendChild(file)
+        }
+
         if (name || card.description) {
             let ct = div(r, "ui content");
             if (name) {
@@ -103,14 +108,17 @@ namespace pxt.docs.codeCard {
                 if (url && !link) a(ct, url, name, 'header');
                 else div(ct, 'header', 'div', name);
             }
-            if (card.time) {
-                let meta = div(ct, "ui meta");
-                let m = div(meta, "date", "span");
-                m.appendChild(document.createTextNode(pxt.Util.timeSince(card.time)));
-            }
             if (card.description) {
                 let descr = div(ct, 'ui description');
                 descr.appendChild(document.createTextNode(card.description.split('.')[0] + '.'));
+            }
+        }
+
+        if (card.time) {
+            let meta = div(r, "meta");
+            if (card.time) {
+                let m = div(meta, "date", "span");
+                m.appendChild(document.createTextNode(pxt.Util.timeSince(card.time)));
             }
         }
 

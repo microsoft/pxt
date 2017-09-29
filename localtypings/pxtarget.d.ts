@@ -1,6 +1,6 @@
 /// <reference path="pxtpackage.d.ts" />
 /// <reference path="pxtparts.d.ts" />
-/// <reference path="blockly.d.ts" />
+/// <reference path="pxtblockly.d.ts" />
 
 declare namespace pxt {
     // targetconfig.json
@@ -152,7 +152,9 @@ declare namespace pxt {
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
-        sideDoc?: string; // if set: show the getting started button, clicking on getting started button links to that page
+        showHomeScreen?: boolean; // show the home page on editor load
+        homeScreenHero?: string; // home screen hero image
+        sideDoc?: string; // if set: show the getting started button on the home screen, clicking on getting started button links to that page
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
         feedbackUrl?: string; // is set: a feedback link will show in the settings menu
         boardName?: string;
@@ -208,7 +210,6 @@ declare namespace pxt {
         blockColors?: Map<string>; // block namespace colors, used for build in categories
         blocklyColors?: Blockly.Colours; // Blockly workspace, flyout and other colors
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
-        useStartPage?: boolean;
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
         appPathNames?: string[]; // Authorized URL paths in electron or UWP, all other paths will display a warning banner
         defaultBlockGap?: number; // For targets to override block gap

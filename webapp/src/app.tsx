@@ -94,10 +94,11 @@ export class ProjectView
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
-    projects: projects.Projects;
+    home: projects.Projects;
     shareEditor: share.ShareEditor;
     languagePicker: lang.LanguagePicker;
-    tutorialComplete: tutorial.TutorialComplete;
+    importDialog: projects.ImportDialog;
+    exitAndSaveDialog: projects.ExitAndSaveDialog;
     prevEditorId: string;
 
     private lastChangeTime: number;
@@ -123,7 +124,10 @@ export class ProjectView
         pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active })
         if (!active) {
-            this.stopSimulator();
+            if (this.state.running) {
+                this.stopSimulator();
+                this.setState({ resumeOnVisibility: true });
+            }
             this.saveFileAsync().done();
         } else {
             if (workspace.isSessionOutdated()) {
@@ -131,8 +135,10 @@ export class ProjectView
                 let id = this.state.header ? this.state.header.id : '';
                 workspace.initAsync()
                     .done(() => id ? this.loadHeaderAsync(workspace.getHeader(id)) : Promise.resolve());
-            } else if (pxt.appTarget.simulator.autoRun && !this.state.running)
+            } else if (this.state.resumeOnVisibility && !this.state.running) {
+                this.setState({ resumeOnVisibility: false });
                 this.runSimulator();
+            }
         }
     }
 
@@ -563,7 +569,22 @@ export class ProjectView
                         const fullscreen = tutorialOptions.tutorialStepInfo[0].fullscreen;
                         if (fullscreen) this.showTutorialHint();
                         else tutorial.TutorialContent.refresh();
-                        core.hideLoading();
+                        core.hideLoading("tutorial");
+                        break;
+                    case 'error':
+                        let te = msg as pxsim.TutorialFailedMessage;
+                        pxt.reportException(te.message);
+                        core.errorNotification(lf("We're having trouble loading this tutorial, please try again later."));
+                        this.setState({ tutorialOptions: undefined });
+                        // Delete the project created for this tutorial
+                        let curr = pkg.mainEditorPkg().header
+                        curr.isDeleted = true
+                        workspace.saveAsync(curr, {})
+                            .then(() => {
+                                this.home.showHome();
+                            }).finally(() => {
+                                core.hideLoading("tutorial")
+                            });
                         break;
                 }
                 break;
@@ -574,7 +595,7 @@ export class ProjectView
         return this.loadHeaderAsync(this.state.header, this.state.editorState)
     }
 
-    loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
+    loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState, inTutorial?: boolean): Promise<void> {
         if (!h)
             return Promise.resolve()
 
@@ -585,7 +606,11 @@ export class ProjectView
         this.setState({
             showFiles: false,
             editorState: editorState,
+<<<<<<< HEAD
             tutorialOptions: undefined
+=======
+            tutorialOptions: inTutorial ? this.state.tutorialOptions : undefined
+>>>>>>> master
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
@@ -601,10 +626,6 @@ export class ProjectView
                 if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName()) {
                     if (!file.content) // empty blocks file, open javascript editor
                         file = main.lookupFile("this/" + file.getVirtualFileName()) || file
-                    else this.textEditor.decompileAsync(file.getVirtualFileName()).then(resp => {
-                        if (!resp.success)
-                            file = main.lookupFile("this/" + file.getVirtualFileName()) || file
-                    });
                 }
                 this.setState({
                     header: h,
@@ -630,10 +651,10 @@ export class ProjectView
                                 class: "pink", // don't make them red and scary
                                 icon: "trash",
                                 onclick: () => {
-                                    core.showLoading(lf("Removing {0}...", lib.id))
+                                    core.showLoading("removedep", lf("Removing {0}...", lib.id))
                                     pkg.mainEditorPkg().removeDepAsync(lib.id)
                                         .then(() => this.reloadHeaderAsync())
-                                        .done(() => core.hideLoading());
+                                        .done(() => core.hideLoading("removedep"));
                                 }
                             })
                             core.dialogAsync({
@@ -668,7 +689,7 @@ export class ProjectView
             return workspace.saveAsync(curr, {})
                 .then(() => {
                     if (workspace.getHeaders().length > 0) {
-                        this.projects.showOpenProject();
+                        this.home.showHome();
                     } else {
                         this.newProject();
                     }
@@ -742,11 +763,11 @@ export class ProjectView
         const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
         if (importer) {
             pxt.tickEvent("import." + importer.id);
-            core.showLoading(lf("loading project..."))
+            core.showLoading("importhex", lf("loading project..."))
             importer.importAsync(this, data)
-                .done(() => core.hideLoading(), e => {
+                .done(() => core.hideLoading("importhex"), e => {
                     pxt.reportException(e, { importer: importer.id });
-                    core.hideLoading();
+                    core.hideLoading("importhex");
                     core.errorNotification(lf("Oops, something went wrong when importing your project"));
                     if (createNewIfFailed) this.newProject();
                 });
@@ -819,9 +840,19 @@ export class ProjectView
         );
     }
 
-    openProject(tab?: string) {
+    openHome() {
         pxt.tickEvent("menu.open");
-        this.projects.showOpenProject(tab);
+        this.home.showHome();
+    }
+
+    exitAndSave() {
+        pxt.tickEvent("menu.exitAndSave");
+        if (this.state.projectName !== lf("Untitled")) {
+            this.openHome();
+        }
+        else {
+            this.exitAndSaveDialog.show();
+        }
     }
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
@@ -866,7 +897,6 @@ export class ProjectView
     }
 
     newEmptyProject(name?: string, documentation?: string) {
-        this.setState({ tutorialOptions: {} });
         this.newProject({
             filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>` },
             name, documentation
@@ -875,10 +905,10 @@ export class ProjectView
 
     newProject(options: ProjectCreationOptions = {}) {
         pxt.tickEvent("menu.newproject");
-        core.showLoading(lf("creating new project..."));
+        core.showLoading("newproject", lf("creating new project..."));
         this.createProjectAsync(options)
             .then(() => Promise.delay(500))
-            .done(() => core.hideLoading());
+            .done(() => core.hideLoading("newproject"));
     }
 
     createProjectAsync(options: ProjectCreationOptions): Promise<void> {
@@ -899,7 +929,7 @@ export class ProjectView
             pubCurrent: false,
             target: pxt.appTarget.id,
             temporary: options.temporary
-        }, files).then(hd => this.loadHeaderAsync(hd, {filters: options.filters}))
+        }, files).then(hd => this.loadHeaderAsync(hd, { filters: options.filters}, options.inTutorial))
     }
 
     switchTypeScript() {
@@ -938,7 +968,7 @@ export class ProjectView
         });
 
         if (open) {
-            return core.showLoadingAsync(lf("switching to JavaScript..."), promise, 0);
+            return core.showLoadingAsync("switchtojs", lf("switching to JavaScript..."), promise, 0);
         } else {
             return promise;
         }
@@ -1260,15 +1290,21 @@ export class ProjectView
             htmlBody: `<div class="ui form">
   <div class="ui field">
     <label id="selectFileToOpenLabel">${lf("Select a {0} file to open.", ext)}</label>
-    <input type="file" tabindex="0" autofocus aria-describedby="selectFileToOpenLabel" class="ui button blue fluid focused"></input>
+    <input type="file" tabindex="0" autofocus aria-describedby="selectFileToOpenLabel" class="ui blue fluid focused"></input>
   </div>
 </div>`,
         }).done(res => {
             if (res) {
                 pxt.tickEvent("menu.open.file");
                 this.importFile(input.files[0]);
+            } else {
+                this.home.showHome();
             }
         })
+    }
+
+    importProjectDialog() {
+        this.importDialog.show();
     }
 
     showReportAbuse() {
@@ -1309,7 +1345,12 @@ export class ProjectView
                         .then(res => {
                             core.infoNotification(lf("Report sent. Thank you!"))
                         })
-                        .catch(core.handleNetworkError);
+                        .catch(e => {
+                            if (e.statusCode == 404)
+                                core.warningNotification(lf("Oops, we could not find this script."))
+                            else
+                                core.handleNetworkError(e)
+                        });
                 }
             }
         })
@@ -1338,7 +1379,7 @@ export class ProjectView
 </div>
   <div class="ui field">
     <label id="selectUrlToOpenLabel">${lf("Copy the URL of the project.")}</label>
-    <input type="url" tabindex="0" autofocus aria-describedby="selectUrlToOpenLabel" placeholder="${shareUrl}..." class="ui button blue fluid"></input>
+    <input type="url" tabindex="0" autofocus aria-describedby="selectUrlToOpenLabel" placeholder="${shareUrl}..." class="ui blue fluid"></input>
   </div>
 </div>`,
         }).done(res => {
@@ -1350,6 +1391,8 @@ export class ProjectView
                 } else {
                     loadHeaderBySharedId(id);
                 }
+            } else {
+                this.home.showHome();
             }
         })
     }
@@ -1421,29 +1464,33 @@ export class ProjectView
         if (!this.state.projectName || !this.state.header) return Promise.resolve();
 
         try {
-            // nothing to do?
-            if (pkg.mainPkg.config.name == this.state.projectName)
-                return Promise.resolve();
-
-            //Save the name in the target MainPackage as well
-            pkg.mainPkg.config.name = this.state.projectName;
-
-            pxt.debug('saving project name to ' + this.state.projectName);
-            let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
-            let config = JSON.parse(f.content) as pxt.PackageConfig;
-            config.name = this.state.projectName;
-            return f.setContentAsync(JSON.stringify(config, null, 4) + "\n")
-                .then(() => {
-                    if (this.state.header)
-                        this.setState({
-                            projectName: this.state.header.name
-                        })
-                });
+            return this.updateHeaderNameAsync(this.state.projectName);
         }
         catch (e) {
             pxt.reportException(e);
             return Promise.resolve();
         }
+    }
+
+    updateHeaderNameAsync(name: string): Promise<void> {
+        // nothing to do?
+        if (pkg.mainPkg.config.name == name)
+            return Promise.resolve();
+
+        //Save the name in the target MainPackage as well
+        pkg.mainPkg.config.name = name;
+
+        pxt.debug('saving project name to ' + name);
+        let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
+        let config = JSON.parse(f.content) as pxt.PackageConfig;
+        config.name = name;
+        return f.setContentAsync(JSON.stringify(config, null, 4) + "\n")
+                .then(() => {
+                    if (this.state.header)
+                        this.setState({
+                            projectName: name
+                        })
+                });
     }
 
     isTextEditor(): boolean {
@@ -1502,73 +1549,70 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         this.startTutorial(targetTheme.sideDoc);
     }
 
-    openTutorials() {
-        pxt.tickEvent("menu.openTutorials");
-        this.projects.showOpenTutorials();
-    }
-
-    startTutorial(tutorialId: string) {
+    startTutorial(tutorialId: string, tutorialTitle?: string) {
         pxt.tickEvent("tutorial.start");
-        core.showLoading(lf("starting tutorial..."));
-        this.startTutorialAsync(tutorialId)
-            .then(() => Promise.delay(500));
+        // Check for Internet access
+        if (!pxt.Cloud.isNavigatorOnline()) {
+            core.errorNotification(lf("No Internet access, please connect and try again."));
+            this.home.showHome();
+        } else {
+            core.showLoading("tutorial", lf("starting tutorial..."));
+            this.startTutorialAsync(tutorialId, tutorialTitle);
+        }
     }
 
-    startTutorialAsync(tutorialId: string): Promise<void> {
-        let title = tutorialId;
+    startTutorialAsync(tutorialId: string, tutorialTitle?: string): Promise<void> {
+        let title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
         let result: string[] = [];
 
         sounds.initTutorial(); // pre load sounds
-        return Promise.resolve().then(() => {
-                return this.createProjectAsync({
-                    name: title
-                });
-            }).then(() => {
-                let tutorialOptions: pxt.editor.TutorialOptions = {
-                    tutorial: tutorialId,
-                    tutorialName: title,
-                    tutorialStep: 0
-                };
-                this.setState({ tutorialOptions: tutorialOptions, editorState: {searchBar: false}, tracing: undefined })
-
-                let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
-                tc.setPath(tutorialId);
-            }).catch((e) => {
-                core.hideLoading();
-                core.handleNetworkError(e);
+        return Promise.resolve()
+        .then(() => {
+            let tutorialOptions: pxt.editor.TutorialOptions = {
+                tutorial: tutorialId,
+                tutorialName: title,
+                tutorialStep: 0
+            };
+            this.setState({ tutorialOptions: tutorialOptions, editorState: { searchBar: false }, tracing: undefined })
+            let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
+            tc.setPath(tutorialId);
+        }).then(() => {
+            return this.createProjectAsync({
+                name: title,
+                inTutorial: true
             });
+        }).catch((e) => {
+            core.hideLoading("tutorial");
+            core.handleNetworkError(e);
+        });
     }
 
-    exitTutorial(keep?: boolean) {
+    completeTutorial() {
+        pxt.tickEvent("tutorial.complete");
+        this.leaveTutorial();
+    }
+
+    exitTutorial() {
         pxt.tickEvent("tutorial.exit");
-        core.showLoading(lf("leaving tutorial..."));
-        this.exitTutorialAsync(keep)
-            .then(() => Promise.delay(500))
-            .done(() => core.hideLoading());
+        this.leaveTutorial();
     }
 
-    exitTutorialAsync(keep?: boolean) {
-        // tutorial project is temporary, no need to delete
+    leaveTutorial() {
+        core.showLoading("leavingtutorial", lf("leaving tutorial..."));
+        this.exitTutorialAsync()
+            .done(() => {
+                core.hideLoading("leavingtutorial");
+                this.openHome();
+            })
+    }
+
+    exitTutorialAsync() {
         let curr = pkg.mainEditorPkg().header;
         let files = pkg.mainEditorPkg().getAllFiles();
-        if (!keep) {
-            curr.isDeleted = true;
-        } else {
-            curr.temporary = false;
-        }
-        this.setState({ active: false, editorState: undefined });
-        return workspace.saveAsync(curr, {})
-            .then(() => { return keep ? workspace.installAsync(curr, files) : Promise.resolve(null); })
-            .then(() => {
-                if (workspace.getHeaders().length > 0) {
-                    return this.loadHeaderAsync(workspace.getHeaders()[0], null);
-                } else {
-                    return this.newProject();
-                }
-            })
+        return workspace.saveAsync(curr, files)
+            .then(() => Promise.delay(500))
             .finally(() => {
-                core.hideLoading()
-                this.setState({ active: true, tutorialOptions: undefined, tracing: undefined });
+                this.setState({ tutorialOptions: undefined, tracing: undefined, editorState: undefined });
                 core.resetFocus();
             });
     }
@@ -1581,11 +1625,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         if (this.editor && this.editor.isReady) {
             this.editor.setHighContrast(highContrastOn);
         }
-    }
-
-    completeTutorial() {
-        pxt.tickEvent("tutorial.complete");
-        this.tutorialComplete.show();
     }
 
     showTutorialHint() {
@@ -1631,8 +1670,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
-        const gettingStarted = !sandbox && !inTutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks && !targetTheme.useStartPage;
-        const gettingStartedTooltip = lf("Open beginner tutorial");
+        const gettingStarted = !sandbox && targetTheme && !!targetTheme.sideDoc;
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
         const trace = run && simOpts.enableTrace;
@@ -1641,9 +1679,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const useModulator = compile.useModulator;
         const { hideMenuBar, hideEditorToolbar } = targetTheme;
         const isHeadless = simOpts.headless;
-        const cookieKey = "cookieconsent"
-        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey)
-            || sandbox;
         const simActive = this.state.embedSimView;
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
@@ -1651,22 +1686,27 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const selectLanguage = targetTheme.selectLanguage;
         const betaUrl = targetTheme.betaUrl;
 
-        const consentCookie = () => {
-            pxt.storage.setLocal(cookieKey, "1");
-            this.forceUpdate();
-        }
-
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
 
         // For apps, if the user is not on the live website, display a warning banner
-        const isApp = electron.isElectron || pxt.winrt.isWinRT() || !!(window as any).ipcRenderer;
+        const isApp = electron.isElectron || pxt.winrt.isWinRT();
         const isLocalServe = location.hostname === "localhost";
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
         const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
+
+        // cookie concent
+        const cookieKey = "cookieconsent"
+        const cookieConsented = targetTheme.hideCookieNotice || isApp || !!pxt.storage.getLocal(cookieKey)
+            || sandbox;
+
+        const consentCookie = () => {
+            pxt.storage.setLocal(cookieKey, "1");
+            this.forceUpdate();
+        }
 
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
@@ -1692,30 +1732,30 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             <div id='root' className={rootClasses}>
                 {showExperimentalBanner ? <div id="experimentalBanner" className="ui icon top attached fixed negative mini message">
                     <i className="warning circle icon"></i>
-                    <i className="close icon" onClick={() => this.hideBanner() }></i>
+                    <i className="close icon" onClick={() => this.hideBanner()}></i>
                     <div className="content">
-                        <div className="header">{lf("You are viewing an experimental version of the editor") }</div>
-                        <a href={liveUrl}>{lf("Take me back") }</a>
+                        <div className="header">{lf("You are viewing an experimental version of the editor")}</div>
+                        <a href={liveUrl}>{lf("Take me back")}</a>
                     </div>
                 </div> : undefined}
                 {hideMenuBar ? undefined :
                     <header id="menubar" role="banner" className={"ui menu"}>
                         <div id="accessibleMenu" role="menubar">
-                            <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor") } onClick={() => this.openJavaScript() }/>
-                            {selectLanguage ? <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language") } onClick={() => this.selectLang() }/> : undefined }
-                            {targetTheme.highContrast ? <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() }/> : undefined }
+                            <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor")} onClick={() => this.openJavaScript()} />
+                            {selectLanguage ? <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language")} onClick={() => this.selectLang()} /> : undefined}
+                            {targetTheme.highContrast ? <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={() => this.toggleHighContrast()} /> : undefined}
                         </div>
 
-                        <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu") }>
+                        <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
                             {!sandbox ? <div className="left menu">
-                                <span id="logo" className="ui item logo">
+                                <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={() => pxt.tickEvent("menu.brand")}>
                                     {targetTheme.logo || targetTheme.portraitLogo
-                                        ? <a className="ui image landscape only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo)} alt={`${targetTheme.boardName} Logo`} /></a>
-                                        : <span className="name">{targetTheme.name}</span>}
-                                    {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo)} alt={`${targetTheme.boardName} Logo`} /></a>) : null}
-                                </span>
+                                        ? <img className={`ui logo ${targetTheme.logo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo)} alt={lf("{0} Logo", targetTheme.boardName)} />
+                                        : <span className="name">{targetTheme.boardName}</span>}
+                                    {targetTheme.portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo)} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
+                                </a>
                                 {betaUrl ? <a href={`${betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
-                                {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="folder open large" ariaLabel={lf("Create or open recent project")} text={lf("Projects")} onClick={() => this.openProject()} /> : null}
+                                {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={() => this.exitAndSave()} /> : null}
                                 {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={() => this.embed()} /> : null}
                                 {inTutorial ? <sui.Item class="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
                             </div> : <div className="left menu">
@@ -1751,39 +1791,34 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                         {targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies")} target="_blank" tabIndex={-1}>{lf("Privacy & Cookies")}</a> : undefined}
                                         {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use")} target="_blank" tabIndex={-1}>{lf("Terms Of Use")}</a> : undefined}
                                         <sui.Item role="menuitem" text={lf("About...")} onClick={() => this.about()} tabIndex={-1} />
-                                        {electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...")} onClick={() => electron.checkForUpdate()} tabIndex={-1} /> : undefined}
+                                        {electron.isPxtElectron ? <sui.Item role="menuitem" text={lf("Check for updates...")} onClick={() => electron.checkForUpdate()} tabIndex={-1} /> : undefined}
                                         {targetTheme.feedbackUrl ? <div className="ui divider"></div> : undefined}
                                         {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener" tabIndex={-1}>{lf("Give Feedback")}</a> : undefined}
                                     </sui.DropdownMenuItem>}
 
                                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={() => this.launchFullEditor()} /> : undefined}
-                                {inTutorial ? <sui.ButtonMenuItem class="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={() => this.exitTutorial(true)} /> : undefined}
+                                {inTutorial ? <sui.ButtonMenuItem class="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={() => this.exitTutorial()} /> : undefined}
 
-                                {!sandbox ? <a id="organization" href={targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo" onClick={() => pxt.tickEvent("menu.org")}>
+                                {!sandbox ? <a href={targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={() => pxt.tickEvent("menu.org")}>
                                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo)} alt={`${targetTheme.organization} Logo`} />
+                                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo)} alt={lf("{0} Logo", targetTheme.organization)} />
                                         : <span className="name">{targetTheme.organization}</span>}
-                                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo)} alt={`${targetTheme.organization} Logo`} />) : null}
+                                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo)} alt={lf("{0} Logo", targetTheme.organization)} />) : null}
                                 </a> : undefined}
                             </div>
                         </div>
-                    </header> }
+                    </header>}
                 {useModulator ? <audio id="modulatorAudioOutput" controls></audio> : undefined}
                 {useModulator ? <div id="modulatorWrapper"><div id="modulatorBubble"><canvas id="modulatorWavStrip"></canvas></div></div> : undefined}
-                {gettingStarted ?
-                    <div id="getting-started-btn">
-                        <sui.Button class="portrait hide bottom attached small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started")} onClick={() => this.gettingStarted()} />
-                    </div>
-                    : undefined}
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
                 </div>
                 <div id="simulator">
                     <aside id="filelist" className="ui items">
-                        <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden" aria-hidden="true">{lf("Simulator") }</label>
+                        <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden" aria-hidden="true">{lf("Simulator")}</label>
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-labelledby="boardviewLabel">
                         </div>
-                        { !isHeadless ? <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar") }>
+                        {!isHeadless ? <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar")}>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make")} title={makeTooltip} onClick={() => this.openInstructions()} /> : undefined}
                                 {run ? <sui.Button key='runbtn' class={`play-button ${this.state.running ? "stop" : "play"}`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator()} /> : undefined}
@@ -1794,7 +1829,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                 {audio ? <sui.Button key='mutebtn' class={`mute-button ${this.state.mute ? 'red' : ''}`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute()} /> : undefined}
                                 {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen()} /> : undefined}
                             </div>
-                        </aside> : undefined }
+                        </aside> : undefined}
                         <div className="ui item portrait hide">
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true })} /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
@@ -1808,17 +1843,18 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {this.allEditors.map(e => e.displayOuter())}
                 </div>
-                {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined }
-                {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined }
-                {hideEditorToolbar ? undefined : <div id="editortools" role="complementary" aria-label={lf("Editor toolbar") }>
+                {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined}
+                {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined}
+                {hideEditorToolbar ? undefined : <div id="editortools" role="complementary" aria-label={lf("Editor toolbar")}>
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
                 </div>}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
-                {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} hasGettingStarted={gettingStarted} />}
+                {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.home = v} hasGettingStarted={gettingStarted} />}
+                {sandbox ? undefined : <projects.ImportDialog parent={this} ref={v => this.importDialog = v} />}
+                {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={v => this.exitAndSaveDialog = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
-                {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined}
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use")}</a>
@@ -1956,6 +1992,8 @@ function enableAnalytics() {
         stats["screen.height"] = screen.height;
         stats["screen.availwidth"] = screen.availWidth;
         stats["screen.availheight"] = screen.availHeight;
+        stats["screen.innerWidth"] = window.innerWidth;
+        stats["screen.innerHeight"] = window.innerHeight;
         stats["screen.devicepixelratio"] = pxt.BrowserUtils.devicePixelRatio();
     }
     pxt.tickEvent("editor.loaded", stats);
@@ -2049,6 +2087,7 @@ function initTheme() {
 
     theme.appLogo = patchCdn(theme.appLogo)
     theme.cardLogo = patchCdn(theme.cardLogo)
+    theme.homeScreenHero = patchCdn(theme.homeScreenHero)
 
     if (pxt.appTarget.simulator
         && pxt.appTarget.simulator.boardDefinition
@@ -2071,7 +2110,7 @@ function parseHash(): { cmd: string; arg: string } {
     return { cmd: '', arg: '' };
 }
 
-function handleHash(hash: { cmd: string; arg: string }): boolean {
+function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boolean {
     if (!hash) return false;
     let editor = theEditor;
     if (!editor) return false;
@@ -2110,9 +2149,9 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
             editor.startTutorial(hash.arg);
             window.location.hash = "";
             return true;
-        case "projects":
-            pxt.tickEvent("hash.projects");
-            editor.openProject(hash.arg);
+        case "home":
+            pxt.tickEvent("hash.home");
+            editor.openHome();
             window.location.hash = "";
             return true;
         case "sandbox":
@@ -2127,10 +2166,13 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
             pxt.tickEvent("hash." + hash.cmd);
             const fileContents = Util.stringToUint8Array(atob(hash.arg));
             window.location.hash = "";
-            core.showLoading(lf("loading project..."));
+            core.showLoading("loadingproject", lf("loading project..."));
             theEditor.importProjectFromFileAsync(fileContents)
-                .done(() => core.hideLoading());
+                .done(() => core.hideLoading("loadingheader"));
             return true;
+        case "reload": // need to reload last project - handled later in the load process
+            if (loading) window.location.hash = "";
+            return false;
     }
 
     return false;
@@ -2153,6 +2195,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "edit":
         case "sandboxproject":
         case "project":
+        case "reload":
             return true;
         default:
             return false;
@@ -2162,18 +2205,18 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
 function loadHeaderBySharedId(id: string) {
     const existing = workspace.getHeaders()
         .filter(h => h.pubCurrent && h.pubId == id)[0]
-    core.showLoading(lf("loading project..."));
+    core.showLoading("loadingheader", lf("loading project..."));
     (existing
         ? theEditor.loadHeaderAsync(existing, null)
         : workspace.installByIdAsync(id)
             .then(hd => theEditor.loadHeaderAsync(hd, null)))
         .catch(core.handleNetworkError)
-        .finally(() => core.hideLoading());
+        .finally(() => core.hideLoading("loadingheader"));
 }
 
 function initHashchange() {
     window.addEventListener("hashchange", e => {
-        handleHash(parseHash());
+        handleHash(parseHash(), false);
     });
 }
 
@@ -2240,13 +2283,31 @@ $(document).ready(() => {
     if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
         pxt.tickEvent("unsupported");
         window.location.href = "/browsers";
-        core.showLoading(lf("Sorry, this browser is not supported."));
+        core.showLoading("browsernotsupported", lf("Sorry, this browser is not supported."));
         return;
     }
 
     initLogin();
     const hash = parseHash();
-    appcache.init(hash);
+    const appCacheUpdated = () => {
+        try {
+            // On embedded pages, preserve the loaded project
+            if (pxt.BrowserUtils.isIFrame() && hash.cmd === "pub") {
+                location.hash = `#pub:${hash.arg}`;
+            }
+            // if in editor, reload project
+            else if (theEditor
+                && !theEditor.home.state.visible
+                && theEditor.state && theEditor.state.header && !theEditor.state.header.isDeleted) {
+                location.hash = "#reload"
+            }
+            location.reload();
+        } catch (e) {
+            pxt.reportException(e);
+            location.reload();
+        }
+    };
+    appcache.init(appCacheUpdated);
 
     pxt.docs.requireMarked = () => require("marked");
     const importHex = (hex: pxt.cpp.HexFile, createNewIfFailed = false) => theEditor.importHex(hex, createNewIfFailed);
@@ -2279,7 +2340,21 @@ $(document).ready(() => {
                 useLang,
                 pxt.appTarget.versions.pxtCrowdinBranch,
                 pxt.appTarget.versions.branch,
-                live);
+                live)
+                // Download sim translations and save them in the sim
+                .then(() => Util.downloadTranslationsAsync(
+                    pxt.appTarget.id,
+                    true,
+                    config.commitCdnUrl,
+                    useLang,
+                    pxt.appTarget.versions.pxtCrowdinBranch,
+                    pxt.appTarget.versions.branch,
+                    live
+                )).then((simStrings) => {
+                    if (simStrings) {
+                        simulator.simTranslations = simStrings;
+                    }
+                });
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
@@ -2294,7 +2369,7 @@ $(document).ready(() => {
         })
         .then((state) => {
             if (state) {
-                theEditor.setState({editorState: state});
+                theEditor.setState({ editorState: state });
             }
             initSerial();
             initScreenshots();
@@ -2309,14 +2384,16 @@ $(document).ready(() => {
             let hd = workspace.getHeaders()[0];
             if (ent) hd = workspace.getHeader(ent.id);
 
-            // Only show the start page if there are no initial projects requested
+            // Only show the start screen if there are no initial projects requested
             // (e.g. from the URL hash or from WinRT activation arguments)
-            const shouldShowStartPage = !isSandbox && pxt.appTarget.appTheme.useStartPage && !hasWinRTProject && !isProjectRelatedHash(hash);
-            if (shouldShowStartPage) {
-                theEditor.projects.showInitialStartPage(hd);
+            const skipStartScreen = pxt.appTarget.appTheme.allowParentController
+                || !pxt.appTarget.appTheme.showHomeScreen || /skipHomeScreen=1/i.test(window.location.href);
+            const shouldShowHomeScreen = !isSandbox && !skipStartScreen && !hasWinRTProject && !isProjectRelatedHash(hash);
+            if (shouldShowHomeScreen) {
+                theEditor.home.showHome();
                 return Promise.resolve();
             }
-            if (hash.cmd && handleHash(hash)) {
+            if (hash.cmd && handleHash(hash, true)) {
                 return Promise.resolve();
             }
             if (hasWinRTProject) {

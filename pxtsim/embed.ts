@@ -14,6 +14,7 @@ namespace pxsim {
         mute?: boolean;
         highContrast?: boolean;
         cdnUrl?: string;
+        localizedStrings?: Map<string>;
     }
 
     export interface SimulatorMuteMessage extends SimulatorMessage {
@@ -69,6 +70,8 @@ namespace pxsim {
         copyable?: string;
         linkButtonHref?: string;
         linkButtonLabel?: string;
+        displayOnceId?: string; // An id for the modal command, if the sim wants the modal to be displayed only once in the session
+        modalContext?: string; // Modal context of where to show the modal
     }
     export interface SimulatorRadioPacketMessage extends SimulatorMessage {
         type: "radiopacket";
@@ -118,12 +121,17 @@ namespace pxsim {
         subtype: "loaded";
         showCategories?: boolean;
         stepInfo: TutorialStepInfo[];
-        toolboxSubset?: {[index: string]: number };
+        toolboxSubset?: { [index: string]: number };
     }
 
     export interface TutorialStepChangeMessage extends TutorialMessage {
         subtype: "stepchange";
         step: number;
+    }
+
+    export interface TutorialFailedMessage extends TutorialMessage {
+        subtype: "error";
+        message?: string;
     }
 
     export namespace Embed {
@@ -175,6 +183,9 @@ namespace pxsim {
 
             if (msg.mute) mute(msg.mute);
 
+            if (msg.localizedStrings) {
+                pxsim.localization.setLocalizedStrings(msg.localizedStrings);
+            }
             runtime = new Runtime(msg.code);
             runtime.id = msg.id;
             runtime.board.initAsync(msg)
@@ -182,8 +193,8 @@ namespace pxsim {
                     runtime.run((v) => {
                         pxsim.dumpLivePointers();
                         Runtime.postMessage({ type: "toplevelcodefinished" })
-                    })
-                })
+                    });
+                });
         }
 
         function mute(mute: boolean) {

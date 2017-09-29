@@ -41,6 +41,7 @@ namespace pxt.editor {
         hintShown?: boolean;
 
         running?: boolean;
+        resumeOnVisibility?: boolean;
         compiling?: boolean;
         isSaving?: boolean;
         publishing?: boolean;
@@ -69,6 +70,7 @@ namespace pxt.editor {
         filesOverride?: pxt.Map<string>;
         filters?: ProjectFilters;
         temporary?: boolean;
+        inTutorial?: boolean;
     }
 
     export interface ProjectFilters {
@@ -124,6 +126,7 @@ namespace pxt.editor {
         newEmptyProject(name?: string, documentation?: string): void;
         newProject(options?: ProjectCreationOptions): void;
         createProjectAsync(options: ProjectCreationOptions): Promise<void>;
+        importProjectDialog(): void;
         importFileDialog(): void;
         importUrlDialog(): void;
         removeProject(): void;
@@ -132,6 +135,7 @@ namespace pxt.editor {
         getPreferredEditor(): string;
         saveAndCompile(): void;
         updateHeaderName(name: string): void;
+        updateHeaderNameAsync(name: string): Promise<void>;
         compile(): void;
 
         setFile(fn: IFile): void;
@@ -141,9 +145,9 @@ namespace pxt.editor {
         removeFile(fn: IFile, skipConfirm?: boolean): void;
         updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
 
-        openTutorials(): void;
+        openHome(): void;
         setTutorialStep(step: number): void;
-        exitTutorial(keep?: boolean): void;
+        exitTutorial(): void;
         completeTutorial(): void;
         showTutorialHint(): void;
         gettingStarted(): void;
@@ -162,7 +166,7 @@ namespace pxt.editor {
         toggleTrace(intervalSpeed?: number): void;
         closeFlyout(): void;
 
-        startTutorial(tutorialId: string): void;
+        startTutorial(tutorialId: string, tutorialTitle?: string): void;
 
         addPackage(): void;
         typecheckNow(): void;

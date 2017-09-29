@@ -1,4 +1,4 @@
-///<reference path='../localtypings/blockly.d.ts'/>
+///<reference path='../localtypings/pxtblockly.d.ts'/>
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
@@ -168,7 +168,7 @@ namespace pxt.blocks {
         let symbol = blockSymbol(type);
         if (!symbol || !b) return;
 
-        let params = parameterNames(symbol);
+        let params = parameterNames(symbol).attrNames;
         symbol.parameters.forEach((p, i) => {
             let ptype = info.apis.byQName[p.type];
             if (ptype && ptype.kind == pxtc.SymbolKind.Enum) {

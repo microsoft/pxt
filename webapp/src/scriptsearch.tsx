@@ -124,8 +124,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
 
             // Hidden navigation, used to test /beta or other versions inside released Electron and UWP apps
-            // Secret prefix is $@@@, e.g.: $@@@beta
-            const urlPathExec = /^\$@@@(.*)$/.exec(str);
+            // Secret prefix is /@, e.g.: /@beta
+            const urlPathExec = /^\/@(.*)$/.exec(str);
             let urlPath = urlPathExec && urlPathExec[1];
             if (urlPath) {
                 let homeUrl = pxt.appTarget.appTheme.homeUrl;
@@ -146,13 +146,13 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             pxt.tickEvent("packages.github");
             this.hide();
             let p = pkg.mainEditorPkg();
-            core.showLoading(lf("downloading package..."));
+            core.showLoading("downloadingpackage", lf("downloading package..."));
             pxt.packagesConfigAsync()
                 .then(config => pxt.github.latestVersionAsync(scr.fullName, config))
                 .then(tag => pxt.github.pkgConfigAsync(scr.fullName, tag)
                     .then(cfg => addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
                 .catch(core.handleNetworkError)
-                .finally(() => core.hideLoading());
+                .finally(() => core.hideLoading("downloadingpackage"));
         }
         const addDepIfNoConflict = (config: pxt.PackageConfig, version: string) => {
             return pkg.mainPkg.findConflictsAsync(config, version)
@@ -223,7 +223,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 onClose={() => this.setState({ visible: false }) }
                 closeIcon={true}
                 helpUrl="/packages"
-                closeOnDimmerClick
+                closeOnDimmerClick closeOnEscape
                 description={lf("Add a package to the project") }>
                 <div className="ui vertical segment">
                     <div className="ui search">

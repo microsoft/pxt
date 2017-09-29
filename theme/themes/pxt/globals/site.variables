@@ -86,6 +86,10 @@
 *******************************/
 
 @avatarUrl: data-uri("../docs/static/avatar.svg");
+@fileLogoUrl: data-uri("../docs/static/filelogo.svg");
+
+@poweredBySmall: data-uri("../docs/static/logo/Powered-By-Microsoft-logo-small.png");
+@poweredByLarge: data-uri("../docs/static/logo/Powered-By-Microsoft-logo.png");
 
 @poweredBySmall: data-uri("../docs/static/logo/Powered-By-Microsoft-logo-small.png");
 @poweredByLarge: data-uri("../docs/static/logo/Powered-By-Microsoft-logo.png");
@@ -122,6 +126,8 @@
 @editorToolsBackground: @simulatorBackground;
 @blocklySvgColor: #fff;
 
+@homeScreenBackground: #fff;
+
 /*-------------------
    Full screen
 --------------------*/
@@ -157,6 +163,8 @@
 @blocklyRowHeightTablet: 45px;
 @blocklyRowHeightMobile: 50px;
 
+@blocklyFont: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+
 /*-------------------
    Flyout
 --------------------*/
@@ -164,4 +172,4 @@
 @flyoutLabelColor: white;
 @blocklyFlyoutColor: @grey;
 @blocklyFlyoutColorOpacity: 0.9;
-@monacoFlyoutColor: rgba(221,221,221, 0.8);
+@monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);

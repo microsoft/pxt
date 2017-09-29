@@ -936,7 +936,7 @@ ${output}</xml>`;
             }
         }
 
-        function getTypeScriptStatementBlock(node: ts.Node): StatementNode {
+        function getTypeScriptStatementBlock(node: ts.Node, prefix?: string): StatementNode {
             const r = mkStmt(pxtc.TS_STATEMENT_TYPE);
             r.mutation = {}
 
@@ -947,6 +947,11 @@ ${output}</xml>`;
             const end = node.getEnd();
 
             text = applyRenamesInRange(text, start, end);
+
+
+            if (prefix) {
+                text = prefix + text;
+            }
 
             const declaredVariables: string[] = [];
             if (node.kind === SK.VariableStatement) {
@@ -1232,6 +1237,27 @@ ${output}</xml>`;
                         if (m) {
                             r.mutation = m;
                         }
+                        else {
+                            let arrow = e as ArrowFunction;
+                            if (arrow.parameters.length) {
+                                if (info.attrs.optionalVariableArgs) {
+                                    r.mutation = {
+                                        "numargs": arrow.parameters.length.toString()
+                                    };
+                                    arrow.parameters.forEach((parameter, i) => {
+                                        r.mutation["arg" + i] = (parameter.name as ts.Identifier).text;
+                                    });
+                                }
+                                else {
+                                    const sym = blocksInfo.blocksById[info.attrs.blockId];
+                                    const paramDesc = sym.parameters[i];
+                                    arrow.parameters.forEach((parameter, i) => {
+                                        const arg = paramDesc.handlerParameters[i];
+                                        (r.fields || (r.fields = [])).push(getField("HANDLER_" + arg.name, (parameter.name as ts.Identifier).text));
+                                    });
+                                }
+                            }
+                        }
                         (r.handlers || (r.handlers = [])).push({ name: "HANDLER", statement: getStatementBlock(e) });
                         break;
                     case SK.PropertyAccessExpression:
@@ -1330,11 +1356,6 @@ ${output}</xml>`;
         }
 
         function getArrowFunctionStatement(n: ts.ArrowFunction, next: ts.Node[]) {
-            if (n.parameters.length > 0 && !(n.parameters.length === 1 && n.parameters[0].name.kind === SK.ObjectBindingPattern)) {
-                error(n);
-                return;
-            }
-
             return getStatementBlock(n.body, next)
         }
 
@@ -1395,7 +1416,7 @@ ${output}</xml>`;
                             // If a variable is referenced inside a "grey" block, we need
                             // to be conservative because our type inference might not work
                             // on the round trip
-                            v = getTypeScriptStatementBlock(node);
+                            v = getTypeScriptStatementBlock(node, "let ");
                         }
                         else {
                             v = getVariableSetOrChangeBlock((node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
@@ -1640,7 +1661,20 @@ ${output}</xml>`;
         }
 
         function checkArrowFunction(n: ts.ArrowFunction) {
-            if (n.parameters.length > 0 && !(n.parameters.length === 1 && n.parameters[0].name.kind === SK.ObjectBindingPattern)) {
+            let fail = false;
+            if (n.parameters.length) {
+                let parent = getParent(n)[0];
+                if (parent && (parent as any).callInfo) {
+                    let callInfo: pxtc.CallInfo = (parent as any).callInfo;
+                    if (callInfo.attrs.mutate === "objectdestructuring") {
+                        fail = n.parameters[0].name.kind !== SK.ObjectBindingPattern
+                    }
+                    else {
+                        fail = n.parameters.some(param => param.name.kind !== SK.Identifier);
+                    }
+                }
+            }
+            if (fail) {
                 return Util.lf("Unsupported parameters in error function");
             }
             return undefined;
@@ -1768,12 +1802,21 @@ ${output}</xml>`;
                             fail = Util.lf("Field editor does not support literal arguments");
                         }
                     }
-                    else if (e.kind === SK.ArrowFunction && info.attrs.mutate === "objectdestructuring") {
+                    else if (e.kind === SK.ArrowFunction) {
                         const ar = e as ts.ArrowFunction;
                         if (ar.parameters.length) {
-                            const param = unwrapNode(ar.parameters[0]) as ts.ParameterDeclaration;
-                            if (param.kind === SK.Parameter && param.name.kind !== SK.ObjectBindingPattern) {
-                                fail = Util.lf("Object destructuring mutation callbacks can only have destructuring patters as arguments");
+                            if (info.attrs.mutate === "objectdestructuring") {
+                                const param = unwrapNode(ar.parameters[0]) as ts.ParameterDeclaration;
+                                if (param.kind === SK.Parameter && param.name.kind !== SK.ObjectBindingPattern) {
+                                    fail = Util.lf("Object destructuring mutation callbacks can only have destructuring patters as arguments");
+                                }
+                            }
+                            else {
+                                ar.parameters.forEach(param => {
+                                    if (param.name.kind !== SK.Identifier) {
+                                        fail = Util.lf("Only identifiers allowed as function arguments");
+                                    }
+                                })
                             }
                         }
                     }

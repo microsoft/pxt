@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="../../localtypings/pxtblockly.d.ts" />
 /// <reference path="../../typings/globals/jquery/index.d.ts" />
 
 import * as React from "react";
@@ -80,7 +80,6 @@ export class Editor extends srceditor.Editor {
             editorDiv.appendChild(loading);
 
             this.loadingXmlPromise = compiler.getBlocksAsync()
-                .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
                     let showSearch = this.showSearch;
@@ -112,11 +111,13 @@ export class Editor extends srceditor.Editor {
                     Blockly.svgResize(this.editor);
                     this.isFirstBlocklyLoad = false;
                 }).finally(() => {
+                    this.loadingXml = false
                     editorDiv.removeChild(loading);
+                    core.hideLoading("loadingblocks");
                 });
 
             if (this.isFirstBlocklyLoad) {
-                core.showLoadingAsync(lf("loading..."), this.loadingXmlPromise).done();
+                core.showLoadingAsync("loadingblocks",lf("loading..."), this.loadingXmlPromise).done();
             } else {
                 this.loadingXmlPromise.done();
             }
@@ -482,7 +483,7 @@ export class Editor extends srceditor.Editor {
             blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
             Blockly.svgResize(this.editor);
             const blocklyToolbox = document.getElementsByClassName('blocklyToolboxDiv')[0];
-            this.parent.updateEditorLogo(blocklyToolbox.clientWidth);
+            if (blocklyToolbox) this.parent.updateEditorLogo(blocklyToolbox.clientWidth);
         }
     }
 
@@ -508,12 +509,17 @@ export class Editor extends srceditor.Editor {
 
     zoomIn() {
         if (!this.editor) return;
-        this.editor.zoomCenter(1);
+        this.editor.zoomCenter(2);
     }
 
     zoomOut() {
         if (!this.editor) return;
-        this.editor.zoomCenter(-1);
+        this.editor.zoomCenter(-2);
+    }
+
+    closeFlyout () {
+        if (!this.editor) return;
+        Blockly.hideChaff();
     }
 
     closeFlyout () {

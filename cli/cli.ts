@@ -285,6 +285,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
 
     if (!args[0]) throw new Error("filename missing");
     switch (cmd.toLowerCase()) {
+        case "clean": return cleanCrowdinAsync(branch, prj, key, args[0] || "docs");
         case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
         case "download": {
             if (!args[1]) throw new Error("output path missing");
@@ -308,6 +309,16 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
         default: throw new Error("unknown command");
     }
 }
+
+function cleanCrowdinAsync(branch: string, prj: string, key: string, dir: string): Promise<void> {
+    const p = pxt.appTarget.id + "/" + dir;
+    return pxt.crowdin.listFilesAsync(branch, prj, key, p)
+        .then(files => {
+            files.filter(f => !nodeutil.fileExistsSync(f.fullName.substring(pxt.appTarget.id.length + 1)))
+                .forEach(f => pxt.log(`crowdin: dead file: ${branch ? branch + "/" : ""}${f.fullName}`));
+        })
+}
+
 
 function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string, dir?: string): Promise<void> {
     let fn = path.basename(p);
@@ -1536,22 +1547,23 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
             "FirefoxAndroid >= 55"
         ]
         const cssnano = require('cssnano')({
-            autoprefixer: {browsers: browserList, add: true}
+            zindex: false,
+            autoprefixer: { browsers: browserList, add: true }
         });
         const rtlcss = require('rtlcss');
         const files = ['semantic.css', 'blockly.css']
         files.forEach(cssFile => {
             fs.readFile(`built/web/${cssFile}`, "utf8", (err, css) => {
-            postcss([cssnano])
-                .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` }).then((result: any) => {
-                    fs.writeFile(`built/web/${cssFile}`, result.css, (err2, css2) => {
-                        // process rtl css
-                        postcss([rtlcss])
-                            .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                fs.writeFile(`built/web/rtl${cssFile}`, result2.css);
-                            });
+                postcss([cssnano])
+                    .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` }).then((result: any) => {
+                        fs.writeFile(`built/web/${cssFile}`, result.css, (err2, css2) => {
+                            // process rtl css
+                            postcss([rtlcss])
+                                .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
+                                    fs.writeFile(`built/web/rtl${cssFile}`, result2.css);
+                                });
+                        });
                     });
-                });
             })
         });
     })
@@ -1717,7 +1729,9 @@ function buildTargetCoreAsync() {
     nodeutil.mkdirP(hexCachePath);
 
     console.log(`building target.json in ${process.cwd()}...`)
-    return forEachBundledPkgAsync((pkg, dirname) => {
+
+    return buildTargetDocsAsync(false, true)
+        .then(() => forEachBundledPkgAsync((pkg, dirname) => {
         pxt.log(`building ${dirname}`);
         let isPrj = /prj$/.test(dirname);
         const config = JSON.parse(fs.readFileSync(pxt.CONFIG_NAME, "utf8")) as pxt.PackageConfig;
@@ -1752,7 +1766,7 @@ function buildTargetCoreAsync() {
                     }
                 }
             })
-    }, /*includeProjects*/ true)
+    }, /*includeProjects*/ true))
         .then(() => {
             let info = travisInfo()
             cfg.versions = {
@@ -2730,7 +2744,10 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
     }
 
     let simDeclRes = pxtc.compile(opts)
-    reportDiagnostics(simDeclRes.diagnostics);
+
+    // The program we compiled was missing files, so filter out those errors
+    reportDiagnostics(simDeclRes.diagnostics.filter(d => d.code != 5012 /* file not found */ && d.code != 2318/* missing global type */));
+
     let typechecker = simDeclRes.ast.getTypeChecker()
     let doSymbol = (sym: ts.Symbol) => {
         if (sym.getFlags() & ts.SymbolFlags.HasExports) {
@@ -3381,7 +3398,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
             });
 
             reportDiagnostics(res.diagnostics);
-            if (!res.success) {
+            if (!res.success && buildOpts.mode != BuildOption.GenDocs) {
                 process.exit(1)
             }
 
@@ -3670,7 +3687,7 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
     return buildTargetDocsAsync(
         !!parsed.flags["docs"],
-        !!parsed.flags["locs"],
+        !!parsed.flags["loc"],
         parsed.flags["files"] as string,
         !!parsed.flags["create"]
     );
@@ -4537,7 +4554,7 @@ function initCommands() {
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
-    advancedCommand("crowdin", "upload, download files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")
+    advancedCommand("crowdin", "upload, download, clean files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
