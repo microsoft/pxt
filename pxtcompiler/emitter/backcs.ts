@@ -41,7 +41,14 @@ namespace ts.pxtc {
 
     export function csEmit(bin: Binary, opts: CompileOptions) {
         let jssource = opts.hexinfo.hex[0]
-        jssource += "\n\n\n// User code starts\n\npublic static class UserCode {\n"
+        jssource += `
+// User code starts
+
+#pragma warning disable CS0164, CS1998, CS0219
+
+namespace PXT {
+public static class UserCode {
+`
         bin.procs.forEach(p => {
             jssource += "\n" + irToCS(bin, p) + "\n"
         })
@@ -53,7 +60,7 @@ namespace ts.pxtc {
         U.iterMap(bin.hexlits, (k, v) => {
             jssource += `static readonly Buffer ${v} = PXT.BufferMethods.createBufferFromHex("${k}");\n`
         })
-        jssource += "\n} // end UserCode\n"
+        jssource += "\n} } // end UserCode\n"
         bin.writeFile(BINARY_CS, jssource)
     }
 
@@ -68,12 +75,14 @@ namespace ts.pxtc {
         if (bin.procs[0] == proc) {
             writeRaw(`
 
-public static void Main() { ${proc.label()}(new CTX(), null); }
+public static void Main() { ${proc.label()}(new CTX(), null).GetAwaiter().GetResult(); }
 `)
         }
 
         writeRaw(`
-static async Task ${proc.label()}(CTX parent, TValue[] args) {
+class ${ctxTp} : CTX {}
+        
+static async Task ${proc.label()}(CTX parent, object[] args) {
     var r0 = TValue.Undefined;
     var s = new ${ctxTp}();
     var caps = parent.caps;
@@ -295,7 +304,7 @@ static async Task ${proc.label()}(CTX parent, TValue[] args) {
             let proc = procid.proc
             let lblId = ++lblIdx
             let argsArray = `callargs_${lblId}`
-            write(`var ${argsArray} = new TValue[${topExpr.args.length}];`)
+            write(`var ${argsArray} = new object[${topExpr.args.length}];`)
 
             //console.log("PROCCALL", topExpr.toString())
             topExpr.args.forEach((a, i) => {

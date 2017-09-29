@@ -224,6 +224,8 @@ namespace pxt {
 
     export function outputName(trg: CompileTarget = null) {
         if (!trg) trg = appTarget.compile
+        if (trg.nativeType == "C#")
+            return ts.pxtc.BINARY_CS
         if (trg.useUF2)
             return ts.pxtc.BINARY_UF2
         else if (trg.useELF)

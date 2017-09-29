@@ -97,7 +97,7 @@ export const buildEngines: Map<BuildEngine> = {
         prepBuildDirAsync: noopAsync,
         buildPath: "built/cs",
         moduleConfig: "module.json",
-        deployAsync: noopAsync,
+        deployAsync: buildFinalCsAsync,
         appPath: "pxtapp"
     },
 }
@@ -440,6 +440,14 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
 const writeFileAsync: any = Promise.promisify(fs.writeFile)
 const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Promise.promisify(child_process.exec)
 const readDirAsync = Promise.promisify(fs.readdir)
+
+function buildFinalCsAsync(res: ts.pxtc.CompileResult) {
+    return nodeutil.spawnAsync({
+        cmd: "mcs",
+        args: ["-out:pxtapp.exe", "binary.cs"],
+        cwd: "built",
+    })
+}
 
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
     const firmware = pxt.outputName()
