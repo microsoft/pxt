@@ -11,8 +11,20 @@ namespace pxtblockly {
     export class FieldNumberDropdown extends Blockly.FieldNumberDropdown implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
 
+        private menuGenerator_: any;
+
         constructor(value: number | string, options: FieldNumberDropdownOptions, validator?: Function) {
             super(value, options.data, options.min, options.max, options.precision, validator);
+        }
+
+        getOptions() {
+            let newOptions: string[][];
+            if (this.menuGenerator_) {
+                newOptions = JSON.parse(this.menuGenerator_).map((x: number) => {
+                    return (typeof x == 'object') ? x : [String(x), String(x)]
+                });
+            }
+            return newOptions;
         }
     }
 }
