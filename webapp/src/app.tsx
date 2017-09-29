@@ -214,7 +214,7 @@ export class ProjectView
             && this.editorFile && !this.editorFile.isReadonly() && /(\.ts|pxt.json)$/.test(this.editorFile.name);
     }
 
-    openJavaScript(giveFocusOnLoading = true) {
+    openJavaScript(giveFocusOnLoading = false) {
         pxt.tickEvent("menu.javascript");
         if (this.isJavaScriptActive()) {
             if (this.state.embedSimView) {
