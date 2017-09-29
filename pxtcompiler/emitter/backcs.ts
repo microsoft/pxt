@@ -1,6 +1,6 @@
 namespace ts.pxtc {
     // TODO consider that taggedInts is going to be false!
-    
+
     const csOpMap: pxt.Map<string> = {
         "numops::toBoolDecr": "numops::toBool",
         "pxtrt::ldfldRef": "pxtrt::ldfld",
@@ -39,8 +39,9 @@ namespace ts.pxtc {
         return s
     }
 
-    export function csEmit(bin: Binary) {
-        let jssource = ""
+    export function csEmit(bin: Binary, opts: CompileOptions) {
+        let jssource = opts.hexinfo.hex[0]
+        jssource += "\n\n\n// User code starts\n\npublic static class UserCode {\n"
         bin.procs.forEach(p => {
             jssource += "\n" + irToCS(bin, p) + "\n"
         })
@@ -52,6 +53,7 @@ namespace ts.pxtc {
         U.iterMap(bin.hexlits, (k, v) => {
             jssource += `static readonly Buffer ${v} = PXT.BufferMethods.createBufferFromHex("${k}");\n`
         })
+        jssource += "\n} // end UserCode\n"
         bin.writeFile(BINARY_CS, jssource)
     }
 
@@ -282,7 +284,7 @@ static async Task ${proc.label()}(CTX parent, TValue[] args) {
                 text = `new ${shimToCs(name.slice(4))}(${args.join(", ")})`
             else
                 text = `${shimToCs(name)}(${args.join(", ")})`
-            
+
             // TODO we may need await
 
             write(`r0 = ${text};`)

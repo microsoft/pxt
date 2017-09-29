@@ -130,9 +130,9 @@ function patchDockermakeHexInfo(extInfo: pxtc.ExtensionInfo) {
 }
 
 function patchCSharpDll(extInfo: pxtc.ExtensionInfo) {
-    let hexPath = thisBuild.buildPath + "/pxtapp.dll"
+    let hexPath = thisBuild.buildPath + "/lib.cs"
     return {
-        hex: [fs.readFileSync(hexPath, "hex")]
+        hex: [fs.readFileSync(hexPath, "utf8")]
     }
 }
 

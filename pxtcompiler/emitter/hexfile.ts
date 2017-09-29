@@ -155,6 +155,10 @@ namespace ts.pxtc {
 
             patchSegmentHex(hex)
 
+            if (opts.nativeType == "C#") {
+                return
+            }
+
             if (hex.length <= 2) {
                 elfInfo = pxt.elf.parse(U.fromHex(hex[0]))
                 bytecodeStartIdx = -1

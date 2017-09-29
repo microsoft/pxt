@@ -176,7 +176,7 @@ namespace pxt.cpp {
         let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
         let includesInc = `#include "pxt.h"\n`
-        let fullCS = "// Concatenation of all C# files\n"
+        let fullCS = ""
         let thisErrors = ""
         let dTsNamespace = ""
         let err = (s: string) => thisErrors += `   ${fileName}(${lineNo}): ${s}\n`;
@@ -849,7 +849,7 @@ namespace pxt.cpp {
                         if (isCSharp) {
                             pxt.debug("Parse C#: " + fullName)
                             parseCs(src)
-                            fullCS += "\n\n\n// C# FILE " + fullName + "\n\n" + src + "\n"
+                            fullCS += `\n\n\n#line 1 "${fullName}"\n` + src
                         } else {
                             // parseCpp() will remove doc comments, to prevent excessive recompilation
                             pxt.debug("Parse C++: " + fullName)
@@ -875,6 +875,8 @@ namespace pxt.cpp {
 
         if (allErrors)
             U.userError(allErrors)
+
+        fullCS += "\n#line default\n"
 
         // merge optional settings
         U.jsonCopyFrom(optSettings, currSettings);

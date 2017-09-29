@@ -1137,7 +1137,10 @@ namespace ts.pxtc {
                     bin.writeFile("yotta.json", JSON.stringify(opts.extinfo.yotta, null, 2));
                 if (opts.extinfo.platformio)
                     bin.writeFile("platformio.json", JSON.stringify(opts.extinfo.platformio, null, 2));
-                processorEmit(bin, opts, res)
+                if (opts.target.nativeType == "C#")
+                    csEmit(bin, opts)
+                else
+                    processorEmit(bin, opts, res)
             } else {
                 jsEmit(bin)
             }
