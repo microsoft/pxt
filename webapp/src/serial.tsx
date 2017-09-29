@@ -276,7 +276,7 @@ export class Editor extends srceditor.Editor {
                     <div className="ui grid right aligned padded">
                         <div className="column">
                             <button className="ui small basic blue button" onClick={this.showExportDialog.bind(this)}>
-                                <i className="download icon"></i> Export data
+                                <i className="download icon"></i> lf(Export data)
                             </button>
                         </div>
                     </div>
@@ -309,22 +309,18 @@ class Chart {
         const chartConfig = {
             interpolation: 'bezier',
             responsive: true,
-            fps: 30,
-            millisPerPixel: 1,
+            millisPerPixel: 20,
             grid: {
                 verticalSections: 0,
                 borderVisible: false,
-                fillStyle: serialTheme && serialTheme.backgroundColor || '#fff'
+                fillStyle: serialTheme && serialTheme.backgroundColor || '#fff',
+                strokeStyle: serialTheme && serialTheme.backgroundColor || '#fff'
             }
         }
         this.chart = new SmoothieChart(chartConfig)
         this.rootElement.className = "ui segment"
         this.source = source
         this.variable = variable
-        //TODO remove!!
-        setInterval(() => {
-            this.line.append(new Date().getTime(), Math.random())
-        }, 1)
         this.chart.addTimeSeries(this.line, this.lineConfigs[chartIdx % 4])
 
         let canvas = this.makeCanvas()
@@ -362,8 +358,7 @@ class Chart {
     }
 
     addPoint(value: number) {
-        //TODO remove!!
-        //this.line.append(new Date().getTime(), value)
+        this.line.append(new Date().getTime(), value)
     }
 
     start() {
