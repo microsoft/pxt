@@ -32,7 +32,7 @@ import * as extensions from "./extensions";
 import * as sounds from "./sounds";
 import * as make from "./make";
 import * as baseToolbox from "./toolbox";
-import * as monacoToolbox from "./monacoSnippets";
+import * as monacoToolbox from "./monacoSnippets"
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"

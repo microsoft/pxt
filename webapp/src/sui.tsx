@@ -748,7 +748,6 @@ export interface ModalProps {
 
     onClose?: Function;
     onOpen?: Function;
-    onPositionChanged?: Function;
 
     open?: boolean;
     mountNode?: any;
@@ -838,7 +837,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             }
 
             const marginTop = -Math.round(height / 2);
-            const scrolling = this.props.size == 'home' || height >= window.innerHeight;
+            const scrolling = this.props.size == 'fullscreen' || height >= window.innerHeight;
 
             const newState: ModalState = {};
 
@@ -856,10 +855,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 }
             }
 
-            if (Object.keys(newState).length > 0) {
-                this.setState(newState);
-                if (this.props.onPositionChanged) this.props.onPositionChanged(this.props);
-            }
+            if (Object.keys(newState).length > 0) this.setState(newState);
         }
 
         this.animationId = requestAnimationFrame(this.setPosition);
