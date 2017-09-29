@@ -228,7 +228,7 @@ namespace pxt.editor {
                     } else {
                         p = p.then(() => req.resolve(data as EditorMessageResponse));
                     }
-                } else { // request from the host
+                } else if (data.type == "pxteditor") { // request from the editor
                     const req = data as EditorMessageRequest;
                     pxt.debug(`pxteditor: ${req.action}`);
                     switch (req.action.toLowerCase()) {
@@ -238,7 +238,6 @@ namespace pxt.editor {
                         case "restartsimulator": p = p.then(() => projectView.restartSimulator()); break;
                         case "hidesimulator": p = p.then(() => projectView.collapseSimulator()); break;
                         case "showsimulator": p = p.then(() => projectView.expandSimulator()); break;
-                        case "closeflyout": p = p.then(() => projectView.closeFlyout()); break;
                         case "redo": p = p.then(() => {
                             const editor = projectView.editor;
                             if (editor && editor.hasRedo())
@@ -261,10 +260,7 @@ namespace pxt.editor {
                         }
                         case "importproject": {
                             const load = data as EditorMessageImportProjectRequest;
-                            p = p.then(() => projectView.importProjectAsync(load.project, {
-                                filters: load.filters,
-                                searchBar: load.searchBar
-                            }));
+                            p = p.then(() => projectView.importProjectAsync(load.project, load.filters));
                             break;
                         }
                         case "proxytosim": {
@@ -278,142 +274,94 @@ namespace pxt.editor {
                                 .then((img: string) => { resp = img; });
                             break;
                         }
+                        case "toggletrace": {
+                            const togglemsg = data as EditorMessageToggleTraceRequest;
+                            p = p.then(() => projectView.toggleTrace(togglemsg.intervalSpeed));
+                            break;
+                        }
                     }
                 }
-            } else if (data.type == "pxteditor") { // request from the editor
-                const req = data as EditorMessageRequest;
-                pxt.debug(`pxteditor: ${req.action}`);
-                switch (req.action.toLowerCase()) {
-                    case "switchjavascript": p = p.then(() => projectView.openJavaScript()); break;
-                    case "switchblocks": p = p.then(() => projectView.openBlocks()); break;
-                    case "startsimulator": p = p.then(() => projectView.startSimulator()); break;
-                    case "restartsimulator": p = p.then(() => projectView.restartSimulator()); break;
-                    case "hidesimulator": p = p.then(() => projectView.collapseSimulator()); break;
-                    case "showsimulator": p = p.then(() => projectView.expandSimulator()); break;
-                    case "redo": p = p.then(() => {
-                        const editor = projectView.editor;
-                        if (editor && editor.hasRedo())
-                            editor.redo();
-                    }); break;
-                    case "undo": p = p.then(() => {
-                        const editor = projectView.editor;
-                        if (editor && editor.hasUndo())
-                            editor.undo();
-                    }); break;
-                    case "stopsimulator": {
-                        const stop = data as EditorMessageStopRequest;
-                        p = p.then(() => projectView.stopSimulator(stop.unload));
-                        break;
-                    }
-                    case "newproject": {
-                        const create = data as EditorMessageNewProjectRequest;
-                        p = p.then(() => projectView.newProject(create.options));
-                        break;
-                    }
-                    case "importproject": {
-                        const load = data as EditorMessageImportProjectRequest;
-                        p = p.then(() => projectView.importProjectAsync(load.project, load.filters));
-                        break;
-                    }
-                    case "proxytosim": {
-                        const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
-                        p = p.then(() => projectView.proxySimulatorMessage(simmsg.content));
-                        break;
-                    }
-                    case "renderblocks": {
-                        const rendermsg = data as EditorMessageRenderBlocksRequest;
-                        p = p.then(() => projectView.renderBlocksAsync(rendermsg))
-                            .then((img: string) => { resp = img; });
-                        break;
-                    }
-                    case "toggletrace": {
-                        const togglemsg = data as EditorMessageToggleTraceRequest;
-                        p = p.then(() => projectView.toggleTrace(togglemsg.intervalSpeed));
-                        break;
-                    }
-                }
+                p.done(() => sendResponse(data, resp, true, undefined),
+                    (err) => sendResponse(data, resp, false, err))
             }
-            p.done(() => sendResponse(data, resp, true, undefined),
-                (err) => sendResponse(data, resp, false, err))
-        }
 
-                return true;
-    }, false)
-}
-
-/**
- * Sends analytics messages upstream to container if any
- */
-export function enableControllerAnalytics() {
-    if (!pxt.appTarget.appTheme.allowParentController || !pxt.BrowserUtils.isIFrame()) return;
-
-    const te = pxt.tickEvent;
-    pxt.tickEvent = function (id: string, data?: Map<string | number>): void {
-        if (te) te(id, data);
-        postHostMessageAsync(<EditorMessageEventRequest>{
-            type: 'pxthost',
-            action: 'event',
-            tick: id,
-            response: false,
-            data
-        });
+            return true;
+        }, false)
     }
 
-    const rexp = pxt.reportException;
-    pxt.reportException = function (err: any, data: pxt.Map<string>): void {
-        if (rexp) rexp(err, data);
-        try {
+    /**
+     * Sends analytics messages upstream to container if any
+     */
+    export function enableControllerAnalytics() {
+        if (!pxt.appTarget.appTheme.allowParentController || !pxt.BrowserUtils.isIFrame()) return;
+
+        const te = pxt.tickEvent;
+        pxt.tickEvent = function (id: string, data?: Map<string | number>): void {
+            if (te) te(id, data);
+            postHostMessageAsync(<EditorMessageEventRequest>{
+                type: 'pxthost',
+                action: 'event',
+                tick: id,
+                response: false,
+                data
+            });
+        }
+
+        const rexp = pxt.reportException;
+        pxt.reportException = function (err: any, data: pxt.Map<string>): void {
+            if (rexp) rexp(err, data);
+            try {
+                postHostMessageAsync(<EditorMessageEventRequest>{
+                    type: 'pxthost',
+                    action: 'event',
+                    tick: 'error',
+                    message: err.message,
+                    response: false,
+                    data
+                })
+            } catch (e) {
+
+            }
+        };
+
+        const re = pxt.reportError;
+        pxt.reportError = function (cat: string, msg: string, data?: pxt.Map<string>): void {
+            if (re) re(cat, msg, data);
             postHostMessageAsync(<EditorMessageEventRequest>{
                 type: 'pxthost',
                 action: 'event',
                 tick: 'error',
-                message: err.message,
-                response: false,
+                category: cat,
+                message: msg,
                 data
             })
-        } catch (e) {
-
         }
-    };
+    }
 
-    const re = pxt.reportError;
-    pxt.reportError = function (cat: string, msg: string, data?: pxt.Map<string>): void {
-        if (re) re(cat, msg, data);
-        postHostMessageAsync(<EditorMessageEventRequest>{
-            type: 'pxthost',
-            action: 'event',
-            tick: 'error',
-            category: cat,
-            message: msg,
-            data
+    function sendResponse(request: EditorMessage, resp: any, success: boolean, error: any) {
+        if (request.response) {
+            window.parent.postMessage({
+                type: request.type,
+                id: request.id,
+                resp,
+                success,
+                error
+            }, "*");
+        }
+    }
+
+    /**
+     * Posts a message from the editor to the host
+     */
+    export function postHostMessageAsync(msg: EditorMessageRequest): Promise<EditorMessageResponse> {
+        return new Promise<EditorMessageResponse>((resolve, reject) => {
+            const env = Util.clone(msg);
+            env.id = Util.guidGen();
+            if (msg.response)
+                pendingRequests[env.id] = { resolve, reject };
+            window.parent.postMessage(env, "*");
+            if (!msg.response)
+                resolve(undefined)
         })
     }
-}
-
-function sendResponse(request: EditorMessage, resp: any, success: boolean, error: any) {
-    if (request.response) {
-        window.parent.postMessage({
-            type: request.type,
-            id: request.id,
-            resp,
-            success,
-            error
-        }, "*");
-    }
-}
-
-/**
- * Posts a message from the editor to the host
- */
-export function postHostMessageAsync(msg: EditorMessageRequest): Promise<EditorMessageResponse> {
-    return new Promise<EditorMessageResponse>((resolve, reject) => {
-        const env = Util.clone(msg);
-        env.id = Util.guidGen();
-        if (msg.response)
-            pendingRequests[env.id] = { resolve, reject };
-        window.parent.postMessage(env, "*");
-        if (!msg.response)
-            resolve(undefined)
-    })
-}
 }

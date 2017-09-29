@@ -96,6 +96,7 @@ export class ProjectView
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
     home: projects.Projects;
+    extensions: extensions.Extensions;
     shareEditor: share.ShareEditor;
     languagePicker: lang.LanguagePicker;
     importDialog: projects.ImportDialog;
@@ -894,7 +895,7 @@ export class ProjectView
     }
 
     openExtension(extension: string, url: string, consentRequired?: boolean) {
-        pxt.tickEvent("menu.openextension", {extension: extension});
+        pxt.tickEvent("menu.openextension", { extension: extension });
         this.extensions.showExtension(extension, url, consentRequired);
     }
 
@@ -935,7 +936,7 @@ export class ProjectView
             pubCurrent: false,
             target: pxt.appTarget.id,
             temporary: options.temporary
-        }, files).then(hd => this.loadHeaderAsync(hd, { filters: options.filters}, options.inTutorial))
+        }, files).then(hd => this.loadHeaderAsync(hd, { filters: options.filters }, options.inTutorial))
     }
 
     switchTypeScript() {
@@ -1491,12 +1492,12 @@ export class ProjectView
         let config = JSON.parse(f.content) as pxt.PackageConfig;
         config.name = name;
         return f.setContentAsync(JSON.stringify(config, null, 4) + "\n")
-                .then(() => {
-                    if (this.state.header)
-                        this.setState({
-                            projectName: name
-                        })
-                });
+            .then(() => {
+                if (this.state.header)
+                    this.setState({
+                        projectName: name
+                    })
+            });
     }
 
     isTextEditor(): boolean {
@@ -1573,24 +1574,24 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
         sounds.initTutorial(); // pre load sounds
         return Promise.resolve()
-        .then(() => {
-            let tutorialOptions: pxt.editor.TutorialOptions = {
-                tutorial: tutorialId,
-                tutorialName: title,
-                tutorialStep: 0
-            };
-            this.setState({ tutorialOptions: tutorialOptions, editorState: { searchBar: false }, tracing: undefined })
-            let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
-            tc.setPath(tutorialId);
-        }).then(() => {
-            return this.createProjectAsync({
-                name: title,
-                inTutorial: true
+            .then(() => {
+                let tutorialOptions: pxt.editor.TutorialOptions = {
+                    tutorial: tutorialId,
+                    tutorialName: title,
+                    tutorialStep: 0
+                };
+                this.setState({ tutorialOptions: tutorialOptions, editorState: { searchBar: false }, tracing: undefined })
+                let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
+                tc.setPath(tutorialId);
+            }).then(() => {
+                return this.createProjectAsync({
+                    name: title,
+                    inTutorial: true
+                });
+            }).catch((e) => {
+                core.hideLoading("tutorial");
+                core.handleNetworkError(e);
             });
-        }).catch((e) => {
-            core.hideLoading("tutorial");
-            core.handleNetworkError(e);
-        });
     }
 
     completeTutorial() {

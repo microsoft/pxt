@@ -212,8 +212,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         return (
             <sui.Modal open={visible} className={`${needsConsent ? 'extensionconsentdialog' : 'extensiondialog'}`} size="fullscreen" closeIcon={false}
                 onClose={() => this.hide() } dimmer={true}
-                action={action}
-                actionClick={actionClick}
+                actions={[{ label: action, onClick: actionClick }]}
                 onPositionChanged={() => this.updateDimensions()}
                 closeOnDimmerClick>
                 {consent ?
