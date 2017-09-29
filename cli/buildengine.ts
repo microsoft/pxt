@@ -88,6 +88,18 @@ export const buildEngines: Map<BuildEngine> = {
         deployAsync: msdDeployCoreAsync,
         appPath: "pxtapp"
     },
+
+    cs: {
+        updateEngineAsync: noopAsync,
+        buildAsync: () => runBuildCmdAsync("mcs", "-t:library", "-out:pxtapp.dll", "lib.cs"),
+        setPlatformAsync: noopAsync,
+        patchHexInfo: patchCSharpDll,
+        prepBuildDirAsync: noopAsync,
+        buildPath: "built/cs",
+        moduleConfig: "module.json",
+        deployAsync: noopAsync,
+        appPath: "pxtapp"
+    },
 }
 
 // once we have a different build engine, set this appropriately
@@ -114,6 +126,13 @@ function patchDockermakeHexInfo(extInfo: pxtc.ExtensionInfo) {
     let hexPath = thisBuild.buildPath + "/bld/pxt-app.hex"
     return {
         hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
+    }
+}
+
+function patchCSharpDll(extInfo: pxtc.ExtensionInfo) {
+    let hexPath = thisBuild.buildPath + "/pxtapp.dll"
+    return {
+        hex: [fs.readFileSync(hexPath, "hex")]
     }
 }
 

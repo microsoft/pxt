@@ -164,11 +164,10 @@ namespace pxt.cpp {
             }
 
         const isCSharp = compile.nativeType == "C#"
-
         const isPlatformio = !!compileService.platformioIni;
         const isCodal = compileService.buildEngine == "codal"
         const isDockerMake = compileService.buildEngine == "dockermake"
-        const isYotta = !isPlatformio && !isCodal && !isDockerMake
+        const isYotta = !isCSharp && !isPlatformio && !isCodal && !isDockerMake
         if (isPlatformio)
             sourcePath = "/src/"
         else if (isCodal || isDockerMake)
@@ -707,14 +706,14 @@ namespace pxt.cpp {
                 }
 
                 // function definition
-                m = /^\s*public static ([\w\[\]<>]+)\s+(\w+)\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
+                m = /^\s*public static (async\s+)*([\w\[\]<>]+)\s+(\w+)\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
                 if (currAttrs && m) {
                     let parsedAttrs = pxtc.parseCommentString(currAttrs)
                     // top-level functions (outside of a namespace) are not permitted
                     if (!currNs) err("missing namespace declaration");
-                    let retTp = m[1]
-                    let funName = m[2]
-                    let origArgs = m[3]
+                    let retTp = m[2]
+                    let funName = m[3]
+                    let origArgs = m[4]
                     currAttrs = currAttrs.trim().replace(/ \w+\.defl=\w+/g, "")
                     let argsFmt = mapRunTimeType(retTp)
 
@@ -836,7 +835,7 @@ namespace pxt.cpp {
                 }
                 let ext = isCSharp ? ".cs" : ".cpp"
                 for (let fn of pkg.getFiles()) {
-                    let isHeader = U.endsWith(fn, ".h")
+                    let isHeader = !isCSharp && U.endsWith(fn, ".h")
                     if (isHeader || U.endsWith(fn, ext)) {
                         let fullName = pkg.config.name + "/" + fn
                         if ((pkg.config.name == "base" || pkg.config.name == "core") && isHeader)
@@ -848,10 +847,12 @@ namespace pxt.cpp {
                             U.userError(lf("C++ file {0} is missing in package {1}.", fn, pkg.config.name))
                         fileName = fullName
                         if (isCSharp) {
+                            pxt.debug("Parse C#: " + fullName)
                             parseCs(src)
                             fullCS += "\n\n\n// C# FILE " + fullName + "\n\n" + src + "\n"
                         } else {
                             // parseCpp() will remove doc comments, to prevent excessive recompilation
+                            pxt.debug("Parse C++: " + fullName)
                             src = parseCpp(src, isHeader)
                             res.extensionFiles[sourcePath + fullName] = src
                         }
@@ -879,7 +880,8 @@ namespace pxt.cpp {
         U.jsonCopyFrom(optSettings, currSettings);
         const configJson = U.jsonUnFlatten(optSettings)
         if (isCSharp) {
-            res.extensionFiles["/main.cs"] = fullCS
+            res.extensionFiles["/lib.cs"] = fullCS
+            res.generatedFiles["/module.json"] = "{}"
         } else if (isDockerMake) {
             let packageJson = {
                 name: "pxt-app",
