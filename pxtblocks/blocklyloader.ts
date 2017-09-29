@@ -167,6 +167,7 @@ namespace pxt.blocks {
                         container.setAttribute('label', pr.name.charAt(0).toUpperCase() + pr.name.slice(1));
                         if (pr.options['fieldEditorOptions']) {
                             if (pr.options['fieldEditorOptions'].value['step']) container.setAttribute('step', pr.options['fieldEditorOptions'].value['step']);
+                            if (pr.options['fieldEditorOptions'].value['color']) container.setAttribute('color', pr.options['fieldEditorOptions'].value['color']);
                         }
                     } else {
                         shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType);
@@ -685,6 +686,7 @@ namespace pxt.blocks {
                 let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
                 let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances
                 let customField = (fn.attributes.paramFieldEditor && fn.attributes.paramFieldEditor[p]);
+                let fieldLabel = pr.name.charAt(0).toUpperCase() + pr.name.slice(1);
 
                 if (isEnum || isFixed) {
                     const syms = Util.values(info.apis.byQName)
@@ -730,7 +732,8 @@ namespace pxt.blocks {
                         let defl = fn.attributes.paramDefl[pr.name] || "";
                         const options = {
                             data: dd,
-                            colour: color
+                            colour: color,
+                            label: fieldLabel
                         } as Blockly.FieldCustomDropdownOptions;
                         Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[pr.name] || {});
                         i.appendField(createFieldEditor(customField, defl, options), attrNames[n].name);
@@ -742,7 +745,8 @@ namespace pxt.blocks {
                     i = initField(block.appendDummyInput(), field.ni, fn, nsinfo, pre, true);
                     const defl = fn.attributes.paramDefl[pr.name] || "";
                     const options = {
-                        colour: color
+                        colour: color,
+                        label: fieldLabel
                     } as Blockly.FieldCustomOptions;
                     Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[pr.name] || {});
                     i.appendField(createFieldEditor(customField, defl, options), attrNames[n].name);
