@@ -309,7 +309,9 @@ class Chart {
         const chartConfig = {
             interpolation: 'bezier',
             responsive: true,
-            fps: 30,
+            scaleSmoothing: 0.5,
+            limitFPS: 10,
+            maxDataSetLength: 1000,
             millisPerPixel: 1,
             grid: {
                 verticalSections: 0,
@@ -321,10 +323,6 @@ class Chart {
         this.rootElement.className = "ui segment"
         this.source = source
         this.variable = variable
-        //TODO remove!!
-        setInterval(() => {
-            this.line.append(new Date().getTime(), Math.random())
-        }, 1)
         this.chart.addTimeSeries(this.line, this.lineConfigs[chartIdx % 4])
 
         let canvas = this.makeCanvas()
@@ -362,8 +360,7 @@ class Chart {
     }
 
     addPoint(value: number) {
-        //TODO remove!!
-        //this.line.append(new Date().getTime(), value)
+        this.line.append(new Date().getTime(), value)
     }
 
     start() {

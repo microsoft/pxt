@@ -225,7 +225,7 @@
         // We must always keep one expired data point as we need this to draw the
         // line that comes into the chart from the left, but any points prior to that can be removed.
         var removeCount = 0;
-        while (this.data.length - removeCount >= maxDataSetLength && this.data[removeCount + 1][0] < oldestValidTime) {
+        while (this.data.length - removeCount >= maxDataSetLength) {
           removeCount++;
         }
         if (removeCount !== 0) {
@@ -295,8 +295,10 @@
       function SmoothieChart(options) {
         this.options = Util.extend({}, SmoothieChart.defaultChartOptions, options);
         this.seriesSet = [];
-        this.currentValueRange = 1;
-        this.currentVisMinValue = 0;
+        this.currentValueRangeY = 1;
+        this.currentVisMinValueY = 0;
+        this.currentValueRangeX = 1;
+        this.currentVisMinValueX = 0;
         this.lastRenderTimeMillis = 0;
     
         this.mousemove = this.mousemove.bind(this);
@@ -633,11 +635,13 @@
         }
       };
     
-      SmoothieChart.prototype.updateValueRange = function() {
+      SmoothieChart.prototype.updateValueRanges = function() {
         // Calculate the current scale of the chart, from all time series.
         var chartOptions = this.options,
             chartMaxValue = Number.NaN,
-            chartMinValue = Number.NaN;
+            chartMinValue = Number.NaN,
+            chartMaxTime = Number.NaN,
+            chartMinTime = Number.NaN;
     
         for (var d = 0; d < this.seriesSet.length; d++) {
           // TODO(ndunn): We could calculate / track these values as they stream in.
@@ -648,6 +652,15 @@
     
           if (!isNaN(timeSeries.minValue)) {
             chartMinValue = !isNaN(chartMinValue) ? Math.min(chartMinValue, timeSeries.minValue) : timeSeries.minValue;
+          }
+
+          if (!isNaN(timeSeries.data[0][0])) {
+            chartMinTime = !isNaN(chartMinTime) ? Math.min(chartMinTime, timeSeries.data[0][0]) : timeSeries.data[0][0];
+          }
+
+          var lastIdx = timeSeries.data.length-1
+          if (!isNaN(timeSeries.data[lastIdx][0])) {
+            chartMaxTime = !isNaN(chartMaxTime) ? Math.max(chartMaxTime, timeSeries.data[lastIdx][0]) : timeSeries.data[lastIdx][0];
           }
         }
     
@@ -671,17 +684,26 @@
           chartMinValue = range.min;
           chartMaxValue = range.max;
         }
-    
+  
         if (!isNaN(chartMaxValue) && !isNaN(chartMinValue)) {
           var targetValueRange = chartMaxValue - chartMinValue;
-          var valueRangeDiff = (targetValueRange - this.currentValueRange);
-          var minValueDiff = (chartMinValue - this.currentVisMinValue);
+          var valueRangeDiff = (targetValueRange - this.currentValueRangeY);
+          var minValueDiff = (chartMinValue - this.currentVisMinValueY);
           this.isAnimatingScale = Math.abs(valueRangeDiff) > 0.1 || Math.abs(minValueDiff) > 0.1;
-          this.currentValueRange += chartOptions.scaleSmoothing * valueRangeDiff;
-          this.currentVisMinValue += chartOptions.scaleSmoothing * minValueDiff;
+          this.currentValueRangeY += chartOptions.scaleSmoothing * valueRangeDiff;
+          this.currentVisMinValueY += chartOptions.scaleSmoothing * minValueDiff;
         }
     
-        this.valueRange = { min: chartMinValue, max: chartMaxValue };
+        if (!isNaN(chartMaxTime) && !isNaN(chartMinTime)) {
+          var targetValueRange = chartMaxTime - chartMinTime;
+          var valueRangeDiff = (targetValueRange - this.currentValueRangeX);
+          var minValueDiff = (chartMinTime - this.currentVisMinValueX);
+          this.isAnimatingScale = this.isAnimatingScale || Math.abs(valueRangeDiff) > 0.1 || Math.abs(minValueDiff) > 0.1;
+          this.currentValueRangeX += chartOptions.scaleSmoothing * valueRangeDiff;
+          this.currentVisMinValueX += chartOptions.scaleSmoothing * minValueDiff;
+        }
+        this.valueRangeY = { min: chartMinValue, max: chartMaxValue };
+        this.valueRangeX = { min: chartMinTime, max: chartMaxTime };
       };
     
       SmoothieChart.prototype.render = function(canvas, time) {
@@ -721,19 +743,25 @@
             // Calculate the threshold time for the oldest data points.
             oldestValidTime = time - (dimensions.width * chartOptions.millisPerPixel),
             valueToYPixel = function(value) {
-              var offset = value - this.currentVisMinValue;
-              return this.currentValueRange === 0
+              var offset = value - this.currentVisMinValueY;
+              return this.currentValueRangeY === 0
                 ? dimensions.height
-                : dimensions.height - (Math.round((offset / this.currentValueRange) * dimensions.height));
+                : dimensions.height - (Math.round((offset / this.currentValueRangeY) * dimensions.height));
             }.bind(this),
             timeToXPixel = function(t) {
+              var offset = t - this.currentVisMinValueX;
+              return (this.currentValueRangeX === 0 || offset > this.currentValueRangeX)
+              ? dimensions.width
+              : dimensions.width - (Math.round((offset / this.currentValueRangeX) * dimensions.width));
+              /**
               if(chartOptions.scrollBackwards) {
                 return Math.round((time - t) / chartOptions.millisPerPixel);
               }
               return Math.round(dimensions.width - ((time - t) / chartOptions.millisPerPixel));
-            };
+              **/
+            }.bind(this);
     
-        this.updateValueRange();
+        this.updateValueRanges();
     
         context.font = chartOptions.labels.fontSize + 'px ' + chartOptions.labels.fontFamily;
     
@@ -909,9 +937,9 @@
         }
     
         // Draw the axis values on the chart.
-        if (!chartOptions.labels.disabled && !isNaN(this.valueRange.min) && !isNaN(this.valueRange.max)) {
-          var maxValueString = chartOptions.yMaxFormatter(this.valueRange.max, chartOptions.labels.precision),
-              minValueString = chartOptions.yMinFormatter(this.valueRange.min, chartOptions.labels.precision),
+        if (!chartOptions.labels.disabled && !isNaN(this.valueRangeY.min) && !isNaN(this.valueRangeY.max)) {
+          var maxValueString = chartOptions.yMaxFormatter(this.valueRangeY.max, chartOptions.labels.precision),
+              minValueString = chartOptions.yMinFormatter(this.valueRangeY.min, chartOptions.labels.precision),
               maxLabelPos = chartOptions.scrollBackwards ? 0 : dimensions.width - context.measureText(maxValueString).width - 5,
               minLabelPos = chartOptions.scrollBackwards ? 0 : dimensions.width - context.measureText(minValueString).width - 5;
           context.fillStyle = chartOptions.labels.fillStyle;
