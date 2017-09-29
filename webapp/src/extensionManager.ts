@@ -96,10 +96,9 @@ export class ExtensionManager {
                 this.sendResponse(resp);
                 break;
             case "extwritecode":
-                handleWriteCodeRequest(this.extIdToName[request.extId], resp, request.body);
-                this.sendResponse(resp);
+                handleWriteCodeRequestAsync(this.extIdToName[request.extId], resp, request.body)
+                    .done(() => this.sendResponse(resp));
                 break;
-
         }
 
         return Promise.resolve();
@@ -238,35 +237,36 @@ function handleDataStreamRequest(name: string, resp: e.ExtensionResponse) {
 
 function handleReadCodeRequest(name: string, resp: e.ReadCodeResponse) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
-    const extPackage = mainPackage.pkgAndDeps().filter(p => p.getPkgId() === name)[0];
-    if (extPackage) {
-        const files = extPackage.getAllFiles();
-        resp.resp = {
-            json: files["extension.json"],
-            code: files["extension.ts"]
-        };
-    }
-    else {
-        resp.success = false;
-        resp.error = "could not find package";
-    }
+    const fn = ts.pxtc.escapeIdentifier(name);
+    const files = mainPackage.getAllFiles();
+    resp.resp = {
+        json: files[fn + ".json"],
+        code: files[fn + ".ts"]
+    };
 }
 
-function handleWriteCodeRequest(name: string, resp: e.ExtensionResponse, files: e.ExtensionFiles) {
+function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, files: e.ExtensionFiles) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
-    const extPackage = mainPackage.pkgAndDeps().filter(p => p.getPkgId() === name)[0];
-    if (extPackage) {
-        if (files.json !== undefined) {
-            extPackage.setFile("extension.json", files.json);
-        }
-        if (files.code !== undefined) {
-            extPackage.setFile("extension.ts", files.code);
-        }
+    const fn = ts.pxtc.escapeIdentifier(name);
+    let needsUpdate = false;
+    if (files.json !== undefined) {
+        needsUpdate = true;
+        mainPackage.setFile(fn + ".json", files.json);
     }
-    else {
-        resp.success = false;
-        resp.error = "could not find package";
+    if (files.code !== undefined) {
+        needsUpdate = true;
+        mainPackage.setFile(fn + ".ts", files.code);
     }
+
+    return !needsUpdate ? Promise.resolve() : mainPackage.updateConfigAsync(cfg => {
+        if (files.json !== undefined && cfg.files.indexOf(fn + ".json") < 0) {
+            cfg.files.push(fn + ".json")
+        }
+        if (files.code !== undefined && cfg.files.indexOf(fn + ".ts") < 0) {
+            cfg.files.push(fn + ".ts")
+        }
+        return mainPackage.savePkgAsync();
+    });
 }
 
 function mkEvent(event: string): e.ExtensionEvent {
