@@ -567,13 +567,21 @@ declare namespace Blockly {
     }
 
     class FieldCheckbox extends Field {
-        constructor(state: string, opt_validator?: () => void);
+        constructor(state: string, opt_validator?: Function);
         static CHECK_CHAR: string;
+    }
+
+    class FieldColour extends Field {
+        constructor(colour: string, opt_validator?: Function);
+    }
+
+    class FieldColourSlider extends Field {
+        constructor(colour: string, opt_validator?: Function);
     }
 
     class FieldTextInput extends Field {
         text_: string;
-        constructor(text: any, opt_validator?: () => void, opt_restrictor?: () => void);
+        constructor(text: any, opt_validator?: Function, opt_restrictor?: Function);
         static numberValidator: any;
         static htmlInput_: HTMLInputElement;
 
@@ -619,7 +627,7 @@ declare namespace Blockly {
         max_: number;
         labelText_: string;
         slider_: goog.ui.Slider;
-        constructor(value_: any, opt_min?: string, opt_max?: string, opt_precision?: string, opt_step?: string, opt_labelText?: string, opt_validator?: () => void);
+        constructor(value_: any, opt_min?: string, opt_max?: string, opt_precision?: string, opt_step?: string, opt_labelText?: string, opt_validator?: Function);
         updateDom_(): void;
         setBackground_(slider: Element): void;
     }

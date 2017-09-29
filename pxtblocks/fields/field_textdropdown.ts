@@ -9,8 +9,8 @@ namespace pxtblockly {
     export class FieldTextDropdown extends Blockly.FieldTextDropdown implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
 
-        constructor(text: string, options: FieldTextDropdownOptions, validator?: Function) {
-            super(text, options.values, validator);
+        constructor(text: string, options: FieldTextDropdownOptions, opt_validator?: Function) {
+            super(text, options.values, opt_validator);
         }
     }
 }

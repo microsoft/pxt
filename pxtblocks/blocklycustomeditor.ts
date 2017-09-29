@@ -32,6 +32,7 @@ namespace pxt.blocks {
         registerFieldEditor('imagedropdown', pxtblockly.FieldImageDropdown);
         registerFieldEditor('colorwheel', pxtblockly.FieldColorWheel);
         registerFieldEditor('toggle', pxtblockly.FieldToggle);
+        registerFieldEditor('colornumber', pxtblockly.FieldColorNumber);
     }
 
     export function registerFieldEditor(selector: string, field: Blockly.FieldCustomConstructor, validator?: any) {

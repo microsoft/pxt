@@ -17,7 +17,7 @@ namespace pxtblockly {
          * @extends {Blockly.FieldNumber}
          * @constructor
          */
-        constructor(value_: any, params: any, opt_validator?: () => void) {
+        constructor(value_: any, params: any, opt_validator?: Function) {
             super(String(value_), '0', '255', null, '10', 'Color', opt_validator);
             this.params = params;
             if (this.params['min']) this.min_ = parseFloat(this.params['min']);

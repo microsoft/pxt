@@ -15,8 +15,8 @@ namespace pxtblockly {
         public static TOGGLE_ON_COLOR: string = "#4DDc64";
         public static TOGGLE_OFF_COLOR: string = "#95a5a6";
 
-        constructor(state: string, params: any, validator?: () => void) {
-            super(state, validator);
+        constructor(state: string, params: any, opt_validator?: Function) {
+            super(state, opt_validator);
             this.params = params;
             this.setValue(state);
             this.addArgType('toggle');

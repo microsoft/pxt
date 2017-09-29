@@ -13,8 +13,8 @@ namespace pxtblockly {
 
         private menuGenerator_: any;
 
-        constructor(value: number | string, options: FieldNumberDropdownOptions, validator?: Function) {
-            super(value, options.data, options.min, options.max, options.precision, validator);
+        constructor(value: number | string, options: FieldNumberDropdownOptions, opt_validator?: Function) {
+            super(value, options.data, options.min, options.max, options.precision, opt_validator);
         }
 
         getOptions() {
