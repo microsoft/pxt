@@ -967,7 +967,7 @@ namespace pxt.blocks {
         Disabled = 2
     }
 
-    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters): Element {
+    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters, extensions?: pxt.PackageConfig[]): Element {
         init();
 
         // create new toolbox and update block definitions
@@ -1050,6 +1050,53 @@ namespace pxt.blocks {
                     }
                 } else {
                     tb.appendChild(el);
+                }
+            })
+        }
+
+        // Add extension categories
+        if (tb && extensions && extensions.length > 0) {
+            // Add extensions buttons
+            extensions.forEach(config => {
+                const name = config.name;
+                const color = config.extension.color || '#7f8c8d';
+                const label = config.extension.label ? Util.rlf(config.extension.label) : Util.lf("Editor");
+                let button = goog.dom.createDom('button') as Element;
+                button.setAttribute('text', label);
+                button.setAttribute('callbackkey', `EXT${name}_BUTTON`);
+
+                const namespace = config.extension.namespace || name;
+                const isAdvanced = config.extension.advanced || false;
+                let insertButtonAtTop = (button: Element, cat: Element) => {
+                    let first: Element;
+                    for (let i = 0; i < cat.childNodes.length; i++) {
+                        const n = cat.childNodes.item(i) as Element;
+                        if (n.tagName === "block") {
+                            first = n;
+                            break;
+                        }
+                    }
+                    if (first) {
+                        cat.insertBefore(button, first);
+                    } else {
+                        cat.appendChild(button)
+                    }
+                }
+
+                if (showCategories !== CategoryMode.None) {
+                    if (showCategories === CategoryMode.All || showCategories == CategoryMode.Basic && !isAdvanced) {
+                        let cat = categoryElement(tb, namespace);
+                        if (cat) {
+                            insertButtonAtTop(button, cat)
+                        } else {
+                            // Create a new category
+                            const cat = createCategoryElement(Util.rlf(`{id:category}${name}`), name, 55, color, 'blocklyTreeIconextensions');
+                            insertTopLevelCategory(cat, tb, 55, false);
+                            insertButtonAtTop(button, cat);
+                        }
+                    }
+                } else {
+                    tb.appendChild(button);
                 }
             })
         }
@@ -1363,11 +1410,11 @@ namespace pxt.blocks {
         }
     }
 
-    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters): Element {
+    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters, extensions?: pxt.PackageConfig[]): Element {
         init();
         initTooltip(blockInfo);
 
-        let tb = createToolbox(blockInfo, toolbox, showCategories, filters);
+        let tb = createToolbox(blockInfo, toolbox, showCategories, filters, extensions);
 
         // add trash icon to toolbox
         if (!document.getElementById("blocklyTrashIcon")) {
@@ -2525,6 +2572,15 @@ namespace pxt.blocks {
         workspace.registerToolboxCategoryCallback(Blockly.PROCEDURE_CATEGORY_NAME, Blockly.Procedures.flyoutCategory);
     }
 
+    export function initExtensions(workspace: Blockly.Workspace, extensions: pxt.PackageConfig[], callBack?: (name: string) => void) {
+        extensions.forEach(config => {
+            const name = config.name;
+            workspace.registerButtonCallback(`EXT${name}_BUTTON`, function (button) {
+                callBack(name);
+            })
+        })
+    }
+
     function initVariables() {
         let varname = lf("{id:var}item");
         Blockly.Variables.flyoutCategory = function (workspace) {
@@ -2542,7 +2598,7 @@ namespace pxt.blocks {
 
             let button = goog.dom.createDom('button') as HTMLElement;
             button.setAttribute('text', lf("Make a Variable"));
-            button.setAttribute('callbackKey', 'CREATE_VARIABLE');
+            button.setAttribute('callbackkey', 'CREATE_VARIABLE');
 
             workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
                 Blockly.Variables.createVariable(button.getTargetWorkspace());
@@ -2869,7 +2925,7 @@ namespace pxt.blocks {
             // Add the "Make a function" button
             let button = goog.dom.createDom('button');
             button.setAttribute('text', newFunction);
-            button.setAttribute('callbackKey', 'CREATE_FUNCTION');
+            button.setAttribute('callbackkey', 'CREATE_FUNCTION');
 
             let createFunction = (name: string) => {
                 /**

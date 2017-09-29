@@ -14,9 +14,13 @@ To see how this package is surfaced, visit https://makecode.microbit.org/ and se
 
 In this scenario, PXT dynamically loads the neopixel packages directly from GitHub, compiles it and incorporates it into the web app. Packages also can be bundled with a web app (the analog of static linking). For dynamically loaded packages, targets can provide a white list of approved packages (see [pxtarget.json](/targets/pxtarget)).
 
-# Authoring packages
+## Authoring packages
 
 * [Package getting started guide](/packages/getting-started)
-* Pacakge configuration via [pxt.json](/packages/pxtJson) file
+* Package configuration via [pxt.json](/packages/pxtJson) file
 * [Package versioning](/packages/versioning)
 * [Package approval](/packages/approval)
+
+## [Editor extensions](/packages/extensions)
+
+Packages may provide an optional editor extension. An editor extension is an HTML page that gets loaded inside an iFrame by the editor. It allows to interact with the project or access serial data via messages. Package extensions are hosted on [GitHub pages](https://pages.github.com/).
