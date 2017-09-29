@@ -522,11 +522,6 @@ export class Editor extends srceditor.Editor {
         Blockly.hideChaff();
     }
 
-    closeFlyout () {
-        if (!this.editor) return;
-        Blockly.hideChaff();
-    }
-
     getId() {
         return "blocksArea"
     }

@@ -487,10 +487,6 @@ declare namespace Blockly {
     const OUTPUT_SHAPE_ROUND: number;
     const OUTPUT_SHAPE_SQUARE: number;
 
-    const OUTPUT_SHAPE_HEXAGONAL: number;
-    const OUTPUT_SHAPE_ROUND: number;
-    const OUTPUT_SHAPE_SQUARE: number;
-    
     let VARIABLE_CATEGORY_NAME: string;
     let PROCEDURE_CATEGORY_NAME: string;
 
@@ -1107,11 +1103,5 @@ declare namespace Blockly {
 
     class PXTUtils {
         static fadeColour(hex: string, luminosity: number, lighten: boolean): string;
-    }
-
-    interface Colours {
-        textField: string;
-        insertionMarker: string;
-        insertionMarkerOpacity: string;
     }
 }

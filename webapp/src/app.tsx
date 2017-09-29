@@ -606,11 +606,7 @@ export class ProjectView
         this.setState({
             showFiles: false,
             editorState: editorState,
-<<<<<<< HEAD
-            tutorialOptions: undefined
-=======
             tutorialOptions: inTutorial ? this.state.tutorialOptions : undefined
->>>>>>> master
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
