@@ -171,6 +171,9 @@ namespace pxt.editor {
         addPackage(): void;
         typecheckNow(): void;
 
+        openExtension(extension: string, url: string, consentRequired?: boolean): void;
+        handleExtensionRequest(request: ExtensionRequest): void;
+
         fireResize(): void;
         updateEditorLogo(left: number, rgba?: string): void;
 

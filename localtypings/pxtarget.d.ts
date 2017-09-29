@@ -187,6 +187,7 @@ declare namespace pxt {
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
+        allowPackageExtensions?: boolean; // allow packages that include editor extensions
         hideEmbedEdit?: boolean; // hide the edit button in the embedded view
         blocksOnly?: boolean; // blocks only workspace
         hideDocsSimulator?: boolean; // do not show simulator button in docs

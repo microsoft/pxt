@@ -28,10 +28,11 @@ import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
+import * as extensions from "./extensions";
 import * as sounds from "./sounds";
 import * as make from "./make";
 import * as baseToolbox from "./toolbox";
-import * as monacoToolbox from "./monacoSnippets"
+import * as monacoToolbox from "./monacoSnippets";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -95,6 +96,7 @@ export class ProjectView
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
     home: projects.Projects;
+    extensions: extensions.Extensions;
     shareEditor: share.ShareEditor;
     languagePicker: lang.LanguagePicker;
     importDialog: projects.ImportDialog;
@@ -385,7 +387,7 @@ export class ProjectView
             },
             editor: this.state.header ? this.state.header.editor : ''
         })
-        if (pxt.appTarget.appTheme.allowParentController)
+        if (pxt.appTarget.appTheme.allowParentController || pxt.appTarget.appTheme.allowPackageExtensions)
             pxt.editor.bindEditorMessages(this);
         this.forceUpdate(); // we now have editors prepared
     }
@@ -892,6 +894,15 @@ export class ProjectView
         this.scriptSearch.showAddPackages();
     }
 
+    openExtension(extension: string, url: string, consentRequired?: boolean) {
+        pxt.tickEvent("menu.openextension", { extension: extension });
+        this.extensions.showExtension(extension, url, consentRequired);
+    }
+
+    handleExtensionRequest(request: pxt.editor.ExtensionRequest): void {
+        this.extensions.handleExtensionRequest(request);
+    }
+
     newEmptyProject(name?: string, documentation?: string) {
         this.newProject({
             filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>` },
@@ -925,7 +936,7 @@ export class ProjectView
             pubCurrent: false,
             target: pxt.appTarget.id,
             temporary: options.temporary
-        }, files).then(hd => this.loadHeaderAsync(hd, { filters: options.filters}, options.inTutorial))
+        }, files).then(hd => this.loadHeaderAsync(hd, { filters: options.filters }, options.inTutorial))
     }
 
     switchTypeScript() {
@@ -1481,12 +1492,12 @@ export class ProjectView
         let config = JSON.parse(f.content) as pxt.PackageConfig;
         config.name = name;
         return f.setContentAsync(JSON.stringify(config, null, 4) + "\n")
-                .then(() => {
-                    if (this.state.header)
-                        this.setState({
-                            projectName: name
-                        })
-                });
+            .then(() => {
+                if (this.state.header)
+                    this.setState({
+                        projectName: name
+                    })
+            });
     }
 
     isTextEditor(): boolean {
@@ -1563,24 +1574,24 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
         sounds.initTutorial(); // pre load sounds
         return Promise.resolve()
-        .then(() => {
-            let tutorialOptions: pxt.editor.TutorialOptions = {
-                tutorial: tutorialId,
-                tutorialName: title,
-                tutorialStep: 0
-            };
-            this.setState({ tutorialOptions: tutorialOptions, editorState: { searchBar: false }, tracing: undefined })
-            let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
-            tc.setPath(tutorialId);
-        }).then(() => {
-            return this.createProjectAsync({
-                name: title,
-                inTutorial: true
+            .then(() => {
+                let tutorialOptions: pxt.editor.TutorialOptions = {
+                    tutorial: tutorialId,
+                    tutorialName: title,
+                    tutorialStep: 0
+                };
+                this.setState({ tutorialOptions: tutorialOptions, editorState: { searchBar: false }, tracing: undefined })
+                let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
+                tc.setPath(tutorialId);
+            }).then(() => {
+                return this.createProjectAsync({
+                    name: title,
+                    inTutorial: true
+                });
+            }).catch((e) => {
+                core.hideLoading("tutorial");
+                core.handleNetworkError(e);
             });
-        }).catch((e) => {
-            core.hideLoading("tutorial");
-            core.handleNetworkError(e);
-        });
     }
 
     completeTutorial() {
@@ -1847,6 +1858,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.home = v} hasGettingStarted={gettingStarted} />}
+                {sandbox ? undefined : <extensions.Extensions parent={this} ref={v => this.extensions = v} />}
                 {sandbox ? undefined : <projects.ImportDialog parent={this} ref={v => this.importDialog = v} />}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={v => this.exitAndSaveDialog = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}

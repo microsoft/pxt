@@ -25,6 +25,7 @@
     * [pxt.json](/packages/pxtJson)
     * [Package versioning](/packages/versioning)
     * [Package approval](/packages/approval)
+    * [Package extensions](/packages/extensions)
 * [Writing Docs](/writing-docs)
     * [Macros](/writing-docs/macros)
     * [Anchors](/writing-docs/anchors)
