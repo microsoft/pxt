@@ -42,8 +42,8 @@ function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = fal
 
 function genericContent(props: UiProps) {
     let retVal = [
-        props.icon ? (<i key='iconkey' aria-hidden="true" role="presentation" className={props.icon + " icon " + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '') }></i>) : null,
-        props.text ? (<span key='textkey' className={'ui text' + (props.textClass ? ' ' + props.textClass : '') }>{props.text}</span>) : null,
+        props.icon ? (<i key='iconkey' aria-hidden="true" role="presentation" className={props.icon + " icon " + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '')}></i>) : null,
+        props.text ? (<span key='textkey' className={'ui text' + (props.textClass ? ' ' + props.textClass : '')}>{props.text}</span>) : null,
     ]
     if (props.icon && props.rightIcon) retVal = retVal.reverse();
     return retVal;
@@ -177,16 +177,16 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
 
     renderCore() {
         return (
-            <div className={genericClassName("ui dropdown item", this.props) }
+            <div className={genericClassName("ui dropdown item", this.props)}
                 role="menuitem"
                 title={this.props.title}
                 tabIndex={this.props.tabIndex}
                 aria-haspopup="true">
-                {genericContent(this.props) }
+                {genericContent(this.props)}
                 <div className="menu"
                     role="menu"
                     aria-expanded={this.isOpened}
-                    aria-label={lf("Dropdown menu {0}", this.props.title) }
+                    aria-label={lf("Dropdown menu {0}", this.props.title)}
                     aria-hidden={!this.isOpened}>
                     {this.props.children}
                 </div>
@@ -210,7 +210,7 @@ export class Item extends data.Component<ItemProps, {}> {
         } = this.props;
 
         return (
-            <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}` }
+            <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}`}
                 role={this.props.role}
                 aria-label={ariaLabel || title || text}
                 title={title || text}
@@ -219,7 +219,7 @@ export class Item extends data.Component<ItemProps, {}> {
                 data-value={this.props.value}
                 onClick={this.props.onClick}
                 onKeyDown={this.props.onKeyDown || fireClickOnEnter}>
-                {genericContent(this.props) }
+                {genericContent(this.props)}
                 {this.props.children}
             </div>);
     }
@@ -228,7 +228,7 @@ export class Item extends data.Component<ItemProps, {}> {
 export class ButtonMenuItem extends UiElement<ItemProps> {
     renderCore() {
         return (
-            <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}` }
+            <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}`}
                 role={this.props.role}
                 title={this.props.title || this.props.text}
                 tabIndex={this.props.tabIndex || 0}
@@ -236,8 +236,8 @@ export class ButtonMenuItem extends UiElement<ItemProps> {
                 data-value={this.props.value}
                 onClick={this.props.onClick}
                 onKeyDown={this.props.onKeyDown || fireClickOnEnter}>
-                <div className={genericClassName("ui button", this.props) }>
-                    {genericContent(this.props) }
+                <div className={genericClassName("ui button", this.props)}>
+                    {genericContent(this.props)}
                     {this.props.children}
                 </div>
             </div>);
@@ -257,7 +257,7 @@ export interface ButtonProps extends WithPopupProps {
 export class Button extends UiElement<ButtonProps> {
     renderCore() {
         return (
-            <button className={genericClassName("ui button", this.props) + " " + (this.props.disabled ? "disabled" : "") }
+            <button className={genericClassName("ui button", this.props) + " " + (this.props.disabled ? "disabled" : "")}
                 id={this.props.id}
                 role={this.props.role}
                 title={this.props.title}
@@ -266,7 +266,7 @@ export class Button extends UiElement<ButtonProps> {
                 aria-expanded={this.props.ariaExpanded}
                 onClick={this.props.onClick}
                 onKeyDown={this.props.onKeyDown}>
-                {genericContent(this.props) }
+                {genericContent(this.props)}
                 {this.props.children}
             </button>
         );
@@ -293,8 +293,8 @@ export class Popup extends data.Component<UiProps, {}> {
     renderCore() {
         return (
             <div role={this.props.role}>
-                <div className={genericClassName("ui button popup-button", this.props) }>
-                    {genericContent(this.props) }
+                <div className={genericClassName("ui button popup-button", this.props)}>
+                    {genericContent(this.props)}
                 </div>
                 <div className="ui popup transition hidden">
                     {this.props.children}
@@ -362,7 +362,7 @@ export class Input extends data.Component<{
     renderCore() {
         let p = this.props
         let copyBtn = p.copy && document.queryCommandSupported('copy')
-            ? <Button class="ui right labeled primary icon button" text={lf("Copy") } icon="copy" onClick={() => this.copy() } />
+            ? <Button class="ui right labeled primary icon button" text={lf("Copy")} icon="copy" onClick={() => this.copy()} />
             : null;
 
         let value = (this.state && this.state.value !== undefined) ? this.state.value : p.value;
@@ -378,7 +378,7 @@ export class Input extends data.Component<{
 
         return (
             <Field ariaLabel={p.ariaLabel} htmlFor={p.id} label={p.label}>
-                <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "") }>
+                <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "")}>
                     {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
                     {!p.lines || p.lines == 1 ? <input
                         id={p.id}
@@ -387,16 +387,16 @@ export class Input extends data.Component<{
                         placeholder={p.placeholder} value={value}
                         readOnly={!!p.readOnly}
                         onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
-                        onChange={v => onChange((v.target as any).value) }/>
+                        onChange={v => onChange((v.target as any).value)} />
                         : <textarea
                             id={p.id}
-                            className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "") }
+                            className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "")}
                             rows={p.lines}
                             placeholder={p.placeholder}
                             value={value}
                             readOnly={!!p.readOnly}
                             onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
-                            onChange={v => onChange((v.target as any).value) }>
+                            onChange={v => onChange((v.target as any).value)}>
                         </textarea>}
                     {copyBtn}
                 </div>
@@ -418,8 +418,8 @@ export class Checkbox extends data.Component<{
         return <Field label={p.label}>
             <div className={"ui toggle checkbox"}>
                 <input type="checkbox" checked={p.checked}
-                    onChange={v => p.onChange((v.target as any).value) } />
-                {p.inputLabel ? <label>{p.inputLabel}</label> : undefined }
+                    onChange={v => p.onChange((v.target as any).value)} />
+                {p.inputLabel ? <label>{p.inputLabel}</label> : undefined}
             </div>
         </Field>;
     }
@@ -748,6 +748,7 @@ export interface ModalProps {
 
     onClose?: Function;
     onOpen?: Function;
+    onPositionChanged?: Function;
 
     open?: boolean;
     mountNode?: any;
@@ -855,7 +856,11 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 }
             }
 
-            if (Object.keys(newState).length > 0) this.setState(newState);
+            if (Object.keys(newState).length > 0) {
+                if (Object.keys(newState).length > 0) this.setState(newState);
+                this.setState(newState);
+                if (this.props.onPositionChanged) this.props.onPositionChanged(this.props);
+            }
         }
 
         this.animationId = requestAnimationFrame(this.setPosition);
@@ -919,14 +924,14 @@ export class Modal extends data.Component<ModalProps, ModalState> {
 
         const modalJSX = (
             <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.props.header ? this.id + 'title' : undefined} aria-describedby={this.props.description ? this.id + 'description' : this.id + 'desc'} >
-                {this.props.header ? <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
+                {this.props.header ? <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "")}>
                     {this.props.header}
                     {this.props.helpUrl ?
-                        <a className={`ui huge icon clear focused`} href={this.props.helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", this.props.header) }>
+                        <a className={`ui huge icon clear focused`} href={this.props.helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", this.props.header)}>
                             <i className="help icon"></i>
                         </a>
-                        : undefined }
-                </div> : undefined }
+                        : undefined}
+                </div> : undefined}
                 {this.props.description ? <label id={this.id + 'description'} className="accessible-hidden">{this.props.description}</label> : undefined}
                 <div id={this.id + 'desc'} className="content">
                     {children}
@@ -941,16 +946,16 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                                 class={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} focused`}
                                 onClick={() => {
                                     action.onClick();
-                                } }
+                                }}
                                 onKeyDown={fireClickOnEnter} />
-                        ) }
-                    </div> : undefined }
+                        )}
+                    </div> : undefined}
                 {closeIcon ? <Button
                     icon={closeIconName}
                     class={`huge clear right floated closeIcon focused`}
-                    onClick={() => this.handleClose(null) }
+                    onClick={() => this.handleClose(null)}
                     tabIndex={0}
-                    ariaLabel={lf("Close dialog") } /> : undefined }
+                    ariaLabel={lf("Close dialog")} /> : undefined}
             </div>
         )
 
@@ -974,7 +979,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 closeOnDocumentClick={closeOnDocumentClick}
                 closeOnEscape={closeOnEscape}
                 className={dimmerClasses}
-                mountNode={this.getMountNode() }
+                mountNode={this.getMountNode()}
                 onMount={this.handlePortalMount}
                 onUnmount={this.handlePortalUnmount}
                 onClose={this.handleClose}
@@ -1125,7 +1130,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
     }
 
     renderPortal() {
-        const { children, className, open, allowResetFocus} = this.props;
+        const { children, className, open, allowResetFocus } = this.props;
 
         this.mountPortal();
 
