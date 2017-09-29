@@ -238,6 +238,7 @@ namespace pxt.editor {
                         case "restartsimulator": p = p.then(() => projectView.restartSimulator()); break;
                         case "hidesimulator": p = p.then(() => projectView.collapseSimulator()); break;
                         case "showsimulator": p = p.then(() => projectView.expandSimulator()); break;
+                        case "closeflyout": p = p.then(() => projectView.closeFlyout()); break;
                         case "redo": p = p.then(() => {
                             const editor = projectView.editor;
                             if (editor && editor.hasRedo())
@@ -260,7 +261,10 @@ namespace pxt.editor {
                         }
                         case "importproject": {
                             const load = data as EditorMessageImportProjectRequest;
-                            p = p.then(() => projectView.importProjectAsync(load.project, load.filters));
+                            p = p.then(() => projectView.importProjectAsync(load.project, {
+                                filters: load.filters,
+                                searchBar: load.searchBar
+                            }));
                             break;
                         }
                         case "proxytosim": {
