@@ -3,15 +3,16 @@
 *******************************/
 
 
-/* Full screen dialog */
+/* Home screen dialog */
 
-.modals.dimmer .ui.fullscreen.scrolling.modal {
+.modals.dimmer .ui.home.scrolling.modal {
     height: 100% !important;
+    width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
 }
 
-.ui.fullscreen.dimmer {
+.ui.home.dimmer {
     background-color: white;
     transition: none;
 }
