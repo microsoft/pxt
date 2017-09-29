@@ -168,6 +168,7 @@ declare namespace goog {
         function setHeight(element: Element, height: number | string): void;
         function setWidth(element: Element, width: number | string): void;
         function getPageOffset(element: Element): math.Coordinate;
+        function setStyle(element: Element, style: string, value: string): void;
     }
 
     namespace events {
@@ -466,7 +467,7 @@ declare namespace goog {
 declare namespace Blockly {
     let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: (e: any) => void): void;
-    function bindEventWithChecks_(node: any, eventName: string, target: any, fn: (e: any) => void, nocapture?: boolean): void;
+    function bindEventWithChecks_(node: any, eventName: string, target: any, fn: (e: any) => void, nocapture?: boolean): any;
     function unbindEvent_(bindData: any): Function;
     function svgResize(workspace: Blockly.Workspace): void;
     function hueToRgb(hue: number): string;
@@ -566,7 +567,7 @@ declare namespace Blockly {
     }
 
     class FieldCheckbox extends Field {
-        constructor(val: string);
+        constructor(state: string, opt_validator?: () => void);
         static CHECK_CHAR: string;
     }
 
@@ -613,6 +614,10 @@ declare namespace Blockly {
     }
 
     class FieldSlider extends FieldNumber {
+        slider_: goog.ui.Slider;
+        constructor(value_: any, opt_min?: string, opt_max?: string, opt_precision?: string, opt_step?: string, opt_labelText?: string, opt_validator?: () => void);
+        updateDom_(): void;
+        setBackground_(slider: Element): void;
     }
 
     class Block {

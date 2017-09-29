@@ -167,6 +167,7 @@ namespace pxt.blocks {
                         container.setAttribute('label', pr.name.charAt(0).toUpperCase() + pr.name.slice(1));
                         if (pr.options['fieldEditorOptions']) {
                             if (pr.options['fieldEditorOptions'].value['step']) container.setAttribute('step', pr.options['fieldEditorOptions'].value['step']);
+                            if (pr.options['fieldEditorOptions'].value['color']) container.setAttribute('color', pr.options['fieldEditorOptions'].value['color']);
                         }
                     } else {
                         shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType);
