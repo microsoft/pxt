@@ -177,6 +177,7 @@ namespace pxt.cpp {
         let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
         let includesInc = `#include "pxt.h"\n`
+        let fullCS = "// Concatenation of all C# files\n"
         let thisErrors = ""
         let dTsNamespace = ""
         let err = (s: string) => thisErrors += `   ${fileName}(${lineNo}): ${s}\n`;
@@ -833,9 +834,10 @@ namespace pxt.cpp {
                 } else {
                     U.assert(!seenMain)
                 }
+                let ext = isCSharp ? ".cs" : ".cpp"
                 for (let fn of pkg.getFiles()) {
                     let isHeader = U.endsWith(fn, ".h")
-                    if (isHeader || U.endsWith(fn, ".cpp")) {
+                    if (isHeader || U.endsWith(fn, ext)) {
                         let fullName = pkg.config.name + "/" + fn
                         if ((pkg.config.name == "base" || pkg.config.name == "core") && isHeader)
                             fullName = fn
@@ -845,16 +847,21 @@ namespace pxt.cpp {
                         if (src == null)
                             U.userError(lf("C++ file {0} is missing in package {1}.", fn, pkg.config.name))
                         fileName = fullName
-                        // parseCpp() will remove doc comments, to prevent excessive recompilation
-                        src = parseCpp(src, isHeader)
-                        res.extensionFiles[sourcePath + fullName] = src
+                        if (isCSharp) {
+                            parseCs(src)
+                            fullCS += "\n\n\n// C# FILE " + fullName + "\n\n" + src + "\n"
+                        } else {
+                            // parseCpp() will remove doc comments, to prevent excessive recompilation
+                            src = parseCpp(src, isHeader)
+                            res.extensionFiles[sourcePath + fullName] = src
+                        }
 
                         if (pkg.level == 0)
                             res.onlyPublic = false
                         if (pkg.verProtocol() && pkg.verProtocol() != "pub" && pkg.verProtocol() != "embed")
                             res.onlyPublic = false
                     }
-                    if (U.endsWith(fn, ".c") || U.endsWith(fn, ".S") || U.endsWith(fn, ".s")) {
+                    if (!isCSharp && (U.endsWith(fn, ".c") || U.endsWith(fn, ".S") || U.endsWith(fn, ".s"))) {
                         let src = pkg.readFile(fn)
                         res.extensionFiles[sourcePath + pkg.config.name + "/" + fn.replace(/\.S$/, ".s")] = src
                     }
@@ -871,7 +878,9 @@ namespace pxt.cpp {
         // merge optional settings
         U.jsonCopyFrom(optSettings, currSettings);
         const configJson = U.jsonUnFlatten(optSettings)
-        if (isDockerMake) {
+        if (isCSharp) {
+            res.extensionFiles["/main.cs"] = fullCS
+        } else if (isDockerMake) {
             let packageJson = {
                 name: "pxt-app",
                 private: true,
@@ -925,11 +934,12 @@ namespace pxt.cpp {
             pxtConfig += "#define PXT_MEMLEAK_DEBUG 1\n"
         }
 
-        res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
-        res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
-        if (isYotta)
-            res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
-        res.generatedFiles[sourcePath + "main.cpp"] = `
+        if (!isCSharp) {
+            res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
+            res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
+            if (isYotta)
+                res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
+            res.generatedFiles[sourcePath + "main.cpp"] = `
 #include "pxt.h"
 #ifdef PXT_MAIN
 PXT_MAIN
@@ -942,6 +952,7 @@ int main() {
 }
 #endif
 `
+        }
         if (makefile) {
             let allfiles = Object.keys(res.extensionFiles).concat(Object.keys(res.generatedFiles))
             let inc = ""
