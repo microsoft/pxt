@@ -208,11 +208,12 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         const actionClick = () => {
             this.submitConsent();
         };
+        const actions = action ? [{ label: action, onClick: actionClick }] : undefined;
         if (!needsConsent && visible) this.initializeFrame();
         return (
             <sui.Modal open={visible} className={`${needsConsent ? 'extensionconsentdialog' : 'extensiondialog'}`} size="fullscreen" closeIcon={false}
                 onClose={() => this.hide() } dimmer={true}
-                actions={[{ label: action, onClick: actionClick }]}
+                actions={actions}
                 onPositionChanged={() => this.updateDimensions()}
                 closeOnDimmerClick>
                 {consent ?
