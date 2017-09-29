@@ -33,12 +33,12 @@ export class ExtensionManager {
     private pendingRequests: PermissionRequest[] = [];
     private queueLock = false;
 
-    constructor (private host: ExtensionHost) {
+    constructor(private host: ExtensionHost) {
     }
 
     handleExtensionMessage(message: e.ExtensionMessage) {
         this.handleRequestAsync(message as e.ExtensionRequest)
-        .catch(e => {})
+            .catch(e => { })
     }
 
     sendEvent(extId: string, event: string) {
@@ -142,7 +142,7 @@ export class ExtensionManager {
                 permissions: [permission],
                 resolver: resolve
             };
-            
+
             this.pendingRequests.push(req);
             if (!this.queueLock && this.pendingRequests.length === 1) {
                 this.queueLock = true;
@@ -157,13 +157,13 @@ export class ExtensionManager {
 
             // Don't allow duplicate requests to prevent spamming
             current.permissions = current.permissions.filter(p => this.hasNotBeenPrompted(current.extId, p))
-            
+
             if (current.permissions.length) {
                 this.host.promptForPermissionAsync(this.extIdToName[current.extId], current.permissions)
-                .done(approved => {
-                    current.resolver(approved);
-                    this.nextPermissionRequest();
-                })
+                    .done(approved => {
+                        current.resolver(approved);
+                        this.nextPermissionRequest();
+                    })
             }
             else {
                 this.nextPermissionRequest();
