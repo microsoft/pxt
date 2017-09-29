@@ -49,6 +49,9 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
         const frame = Extensions.getFrame(this.state.extension);
         frame.style.display = 'none';
+
+        // reload project to update changes from the editor
+        this.props.parent.reloadHeaderAsync().done();
     }
 
     showExtension(extension: string, url: string, consentRequired: boolean) {
