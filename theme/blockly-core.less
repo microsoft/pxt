@@ -3,6 +3,7 @@
 @import 'themes/default/globals/site.variables';
 @import 'themes/pxt/globals/site.variables';
 
+@import 'fieldeditors';
 
 /*******************************
              Blockly
@@ -44,12 +45,15 @@
 svg.blocklySvg {
     background-color: @blocklySvgColor !important;
 }
+.hc svg.blocklySvg {
+    background-color: black !important;
+}
 #blocksEditor .injectionDiv svg {
     overflow: visible;
 }
 
-span.blocklyTreeLabel, text.blocklyText, input.blocklyHtmlInput {
-    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
+span.blocklyTreeLabel, text.blocklyText, input.blocklyHtmlInput, .blocklyDropDownDiv .goog-menuitem {
+    font-family: @blocklyFont !important;
 }
 
 /* Using 1rem creates font size issues in Edge
@@ -59,11 +63,15 @@ text.blocklyText {
 
 span.blocklyTreeLabel {
     font-size:1.25rem;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
+}
+
+span.blocklyTreeLabel, text.blocklyText {
+    user-drag: none;
     user-select: none;
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }
 
 .blocklyFlyoutButtonShadow {
@@ -98,6 +106,10 @@ line.blocklyFlyoutLine {
 
 div.blocklyTreeRow, span.blocklyTreeLabel {
     cursor: pointer;
+}
+
+div.blocklyTreeRoot {
+    padding: 0;
 }
 
 /* This horrendous selector and the next are for subcategories in the Blockly toolbox */
@@ -135,6 +147,10 @@ div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
     border-radius: 0 !important;
 }
 
+div.blocklyTreeIcon span {
+    vertical-align: middle;
+}
+
 /* Blockly toolbox icons */
 span.blocklyTreeIcon {
     opacity: 1;
@@ -150,7 +166,7 @@ span.blocklyTreeIcon {
     -moz-osx-font-smoothing: grayscale;
     -webkit-font-smoothing: antialiased;
     backface-visibility: hidden;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     height: 100%;
     display: none;
 }
@@ -159,45 +175,58 @@ span.blocklyTreeIcon {
 }
 .blocklyTreeIcon.blocklyTreeIconsearch::before {
     content: "\f002";
+    vertical-align: middle;
 }
 .blocklyTreeIcon.blocklyTreeIconDefault::before {
     content: "\f12e";
+    vertical-align: middle;
 }
 .blocklyTreeIcon.blocklyTreeIconadvancedcollapsed::before {
     content: "\f078";
+    vertical-align: middle;
 }
 .blocklyTreeIcon.blocklyTreeIconadvancedexpanded::before {
     content: "\f077";
+    vertical-align: middle;
 }
 .blocklyTreeIcon.blocklyTreeIconmore::before {
     content: "\f141";
+    vertical-align: middle;
 }
 .blocklyTreeIcon.blocklyTreeIconaddpackage::before {
     content: "\f055";
+    vertical-align: middle;
 }
 .blocklyTreeIcon.blocklyTreeIconloops::before {
     content: "\f01e";
+    vertical-align: middle;
 }
 .blocklyTreeIcon.blocklyTreeIconmath::before {
     content: "\f1ec";
+    vertical-align: middle;
 }
 .blocklyTreeIcon.blocklyTreeIconlogic::before {
     content: "\f074";
+    vertical-align: middle;
 }
 .blocklyTreeIcon.blocklyTreeIconvariables::before {
     content: "\f039";
+    vertical-align: middle;
 }
 .blocklyTreeIcon.blocklyTreeIcontext::before {
     content: "\f035";
+    vertical-align: middle;
 }
 .blocklyTreeIcon.blocklyTreeIconarrays::before {
     content: "\f0cb";
+    vertical-align: middle;
 }
 .blocklyTreeIcon.blocklyTreeIconfunctions {
     font-family: xicon !important;
 }
 .blocklyTreeIcon.blocklyTreeIconfunctions::before {
     content: "\f107";
+    vertical-align: middle;
 }
 .blocklyFlyoutLabelIcon.blocklyFlyoutIconfunctions {
     font-family: xicon !important;
@@ -219,6 +248,22 @@ span.blocklyTreeIcon {
     fill-opacity: 0.5;
 }
 
+/* This is to ensure the leds inside showLeds fill the entire checkbox */
+text.blocklyCheckbox {
+    fill: #ff3030 !important;
+    text-shadow: 0px 0px 6px #f00;
+    font-size: 17pt !important;
+}
+
+div.blocklyTreeRow {
+    height: 100%;
+}
+
+/* Transulcent blocks when dragging */
+.blocklyDragging>.blocklyPath {
+   fill-opacity: 0.7;
+}  
+
 /*******************************
         Media Adjustments
 *******************************/
@@ -229,7 +274,10 @@ span.blocklyTreeIcon {
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthWide;
         min-height: @blocklyRowHeightWide;
+    }
+    span.blocklyTreeIcon {
         line-height: @blocklyRowHeightWide;
+        min-height: @blocklyRowHeightWide;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthWide;
@@ -242,7 +290,10 @@ span.blocklyTreeIcon {
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthComputer;
         min-height: @blocklyRowHeightComputer;
+    }
+    span.blocklyTreeIcon {
         line-height: @blocklyRowHeightComputer;
+        min-height: @blocklyRowHeightComputer;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthComputer;
@@ -255,8 +306,11 @@ span.blocklyTreeIcon {
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthTablet;
         min-height: @blocklyRowHeightTablet;
-        line-height: @blocklyRowHeightTablet;
         border-left-width: 12px !important;
+    }
+    span.blocklyTreeIcon {
+        line-height: @blocklyRowHeightTablet;
+        min-height: @blocklyRowHeightTablet;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthTablet;
@@ -271,11 +325,11 @@ span.blocklyTreeIcon {
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthMobile;
         min-height: @blocklyRowHeightMobile;
-        line-height: @blocklyRowHeightMobile;
         border-left-width: 6px !important;
     }
     span.blocklyTreeIcon {
-        font-size: 1.5rem;
+        line-height: @blocklyRowHeightMobile;
+        min-height: @blocklyRowHeightMobile;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthMobile;

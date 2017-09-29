@@ -10,7 +10,7 @@ npm install -g pxt
 
 ### ~ hint
 
-On Windows, make sure the following are installed:
+If you are building pxt-microbit on Windows, make sure the following are installed:
 
 1. [Yotta (follow manual install for Windows)](http://docs.yottabuild.org/#installing-on-windows)
 2. [SRecord 1.64](https://sourceforge.net/projects/srecord/files/srecord-win32/1.64/) and move it to ``` C:\```
@@ -47,13 +47,15 @@ the target and PXT.
 ## Using the CLI
 
 If you have created a PXT project from the web browser, you can go to its
-folder (it will sit under `myworkspace/projects` but feel free to move it up one level)
-and use the CLI to build and deploy it. 
+folder (it will sit under `projects`) and use the CLI to build and deploy it. 
+
 * start with `pxt install`, which will install all required PXT packages
 * use `pxt deploy` (or just `pxt`) to build and deploy the package to the device
 
 You can edit the package using [VSCode](https://code.visualstudio.com/)
-and publish it on GitHub.
+and publish it on GitHub. 
+
+While it is true that you can use any editor for editing TypeScript code, you might consider using VSCode as you are learning the language, as it provides syntax highlighting, linting, and other support that could save you time in debugging your extensions.
 
 ### Creating a new project
 
@@ -66,7 +68,7 @@ mkdir blink
 cd blink
 # start the project set
 pxt init
-# open code
+# open VSCode
 code .
 ```
 
@@ -89,6 +91,7 @@ Run ``pxt help`` for the list of all commands. The following list of links conta
 * [login](/cli/login), store a GitHub token
 * [bump](/cli/bump), increment the version number
 * [update](/cli/update), updates the ``pxt-core`` dependency and runs installation steps
+* [checkdocs](/cli/checkdocs), validates the documentation links and snippets
 * [staticpkg](/cli/staticpkg), compiles editor into flat file system
 * [cherrypick](/cli/cherrypick), recursive cherry picking
 * [hidserial](/cli/hidserial), monitor `serial.write(...)` from certain boards

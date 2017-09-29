@@ -2,6 +2,7 @@
 
 * [Try it live!](https://makecode.com)
 
+[![Join the chat at https://gitter.im/makecode-community/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/makecode-community/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/Microsoft/pxt.svg?branch=master)](https://travis-ci.org/Microsoft/pxt)
 
 Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/Microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
@@ -88,17 +89,6 @@ If you're having trouble with display of the icon you created, try:
 npm install -g svgo
 svgo svgicons/myicon.svg
 ```
-
-## Versions
-
-Current serviced versions of PXT:
-
-| Module          | Version       | Label |
-| ------------- | ------------- | --- |
-| pxt-core      | v1.8.*        | mainline PXT |
-| pxt-core      | v2.0.*        | freshcoat PXT (New rendering of blocks) |
-| pxt-core      | v0.12.*       | v0 PXT |
-| pxt-core      | v0.13.*       | v0 PXT with accessibility |
 
 ## Tests
 

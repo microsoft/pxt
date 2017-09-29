@@ -13,6 +13,11 @@ html, body {
     min-width: 320px;
 }
 
+* {
+  min-height: 0;
+  min-width: 0;
+}
+
 /* Main Layout */
 #filelist,
 #maineditor,
@@ -148,7 +153,7 @@ html, body {
    bottom: 12rem;
    width: 18rem;
    text-align: left;
-   z-index:1000;
+   z-index:100000;
 }
 
 #cookiemsg > a {
@@ -246,17 +251,6 @@ div.simframe > iframe {
     font-size:0.8rem;
 }
 
-/* Project code cards */
-.ui.cardimage {
-    background-color: @secondaryColor;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    height: 10rem;
-    border-top-left-radius: @defaultBorderRadius;
-    border-top-right-radius: @defaultBorderRadius;
-}
-
 /* Logo */
 .ui.menu .ui.item.logo {
     font-size: 2.2rem;
@@ -279,10 +273,24 @@ div.simframe > iframe {
     margin-right: 1rem;
 }
 
-.modal img.ui.logo {
-    max-width: 10em;
-    max-height: 3em;
-    vertical-align: middle;
+/* Powered by Microsoft logo*/
+#editorlogo {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    height: 42px;
+    background-color: @blocklySvgColor;
+    z-index: 10;
+    display: none;
+}
+#editorlogo > .poweredbylogo {
+    position: absolute;
+    left: 10px;
+    bottom: 5px;
+    width: 100%;
+    height: 32px;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 
 /* Sandbox */
@@ -320,7 +328,7 @@ div.simframe > iframe {
 
 #msg > div {
     display: inline-block;
-    z-index: 100;
+    z-index: 10000;
 }
 
 #msg > div:empty {
@@ -352,16 +360,18 @@ div.simframe > iframe {
 }
 
 /* Icon and text */
-.ui.menu > .menu > .ui.item > .icon-and-text.icon {
-    margin: 0em auto;
-}
-.ui.menu > .menu > .ui.item > .icon-and-text.icon ~ span.ui.text {
-    margin-left: 0.6em;
+.ui.item.icon > .icon-and-text.icon ~ .ui.text, .ui.button.icon > .icon-and-text.icon ~ .ui.text {
+    margin-left: 0.4em !important;
 }
 
 /* Beta */
 .ui.label.betalabel {
     padding: 0.3em;
+}
+
+/* Experimental banner */
+#experimentalBanner {
+    z-index: 1000;
 }
 
 /*******************************
@@ -372,7 +382,7 @@ div.simframe > iframe {
     font-family: @docsPageFont !important;
 }
 
-#docs > h1,h2,h3,h4,h5,h6 {
+#docs > h1, #docs > h2, #docs > h3, #docs > h4, #docs > h5, #docs > h6{
     font-family: @docsHeaderFont !important;
 }
 
@@ -384,7 +394,6 @@ div.simframe > iframe {
 /*******************************
         Projects Modal
 *******************************/
-
 
 .ui.modal.projectsdialog .ui.dividing.header, .ui.modal.projectsdialog .content > .header{
     font-weight: normal !important;
@@ -424,11 +433,30 @@ div.simframe > iframe {
 
 .ui.modal.projectsdialog > .content {
     padding: 0 !important;
+    position: relative;
 }
 
-.ui.modal.projectsdialog .tabsegment {
-    min-height: 450px;
-    background: white !important;
+/*******************************
+        Modal Close Icon
+*******************************/
+
+.ui.modal .closeIcon {
+    position: absolute;
+    top: 0; 
+    right: 0;
+}
+.ui.modal.projectsdialog .closeIcon {
+    top: 0.4rem;
+    right: 0.2rem;
+}
+
+.ui.button.icon.clear {
+    background: transparent;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+.ui.button.icon.inverted.clear:hover, .ui.button.icon.inverted.clear:focus {
+    color: @grey !important;
 }
 
 /*******************************
@@ -506,11 +534,14 @@ div.simframe > iframe {
 }
 .monacoFlyoutHeading .monacoFlyoutHeadingText {
     color: white;
+    vertical-align: middle !important;
+}
+.monacoFlyoutHeadingText {
+    font-family: @pageFont;
 }
 .monacoFlyoutHeadingIcon {
-    vertical-align: middle !important;
     font-size: 1.5rem !important;
-    margin: -0.7em 0.2em 0em 0.5em !important;
+    vertical-align: middle !important;
 }
 .monacoFlyoutLabelLine {
     border: none;
@@ -544,6 +575,11 @@ div.simframe > iframe {
 
 .monacoDraggableBlock:hover {
     border: solid 3px #fc3 !important;
+}
+
+/* Limit color interferences with semantic anchor element */
+.monaco-action-bar .action-label {
+    color: inherit !important;
 }
 
 /******************************
@@ -710,18 +746,40 @@ Field editors
 
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
+    #editorlogo > .poweredbylogo {
+        background-image: @poweredByLarge;
+    }
 }
 
 /* Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+    #editorlogo > .poweredbylogo {
+        background-image: @poweredByLarge;
+    }
 }
 
 /* Tablet */
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
+    #editorlogo {
+        height: 18px;
+    }
+    #editorlogo > .poweredbylogo {
+        height: 12px;
+        bottom: 3px;
+        background-image: @poweredBySmall;
+    }
 }
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
+    #editorlogo {
+        height: 18px;
+    }
+    #editorlogo > .poweredbylogo {
+        height: 13px;
+        bottom: 3px;
+        background-image: @poweredBySmall;
+    }
 }
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
@@ -824,7 +882,7 @@ Field editors
         left:@simulatorWidthSmall;
     }
     /* Logo */
-    #logo .name {
+    .ui.logo.brand .name {
         display: none !important;
     }
     /* Help card */
@@ -838,7 +896,7 @@ Field editors
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
     /* Logo */
-    #logo, #organization {
+    .ui.logo.brand, .ui.logo.organization {
         font-size: 0rem;
         padding-right: 0;
     }

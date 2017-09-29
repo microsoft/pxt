@@ -91,6 +91,14 @@ namespace testNamespace {
     //% block="Callback with optional arg"
     export function optionalArgumentWithCallback(arg1: () => void, arg2?: number) { }
 
+    //% blockId=test_handler_arguments
+    //% block="Handler arguments"
+    export function callbackWithArguments(cb: (a: number, b: number) => void) {}
+
+    //% blockId=test_handler_arguments2 optionalVariableArgs=true
+    //% block="Handler with optioinal arguments"
+    export function callbackWithIgnoredArguments(cb: (c: number, d: number) => void) {}
+
     /**
      * Enum value function
      */
@@ -168,6 +176,11 @@ namespace testNamespace {
     //% value.fieldEditor="note" value.fieldOptions.onParentBlock=true
     //% value.fieldOptions.decompileLiterals=true
     export function customFieldEditorOnParentBlock(value: number): void { }
+
+    //% blockId=test_customTextFieldEditorOnParentBlock block="%text"
+    //% text.fieldEditor="text" text.fieldOptions.onParentBlock=true
+    //% text.fieldOptions.decompileLiterals=true
+    export function customTextFieldEditorOnParentBlock(text: string): void { }
 
     //% blockId=test_customShadowField block="%value"
     //% value.fieldEditor="note" value.fieldOptions.decompileLiterals=true

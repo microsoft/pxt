@@ -117,7 +117,7 @@ namespace pxsim {
         export function pop(c: RefCollection, x: any) {
             pxtrt.nullCheck(c)
             let ret = c.pop();
-            decr(ret);
+            // no decr() since we're returning it
             return ret;
         }
 
@@ -132,8 +132,7 @@ namespace pxsim {
             pxtrt.nullCheck(c)
             if (!c.isValidIndex(x))
                 return;
-
-            decr(c.getAt(x));
+            // no decr() since we're returning it
             return c.removeAt(x);
         }
 
@@ -218,7 +217,13 @@ namespace pxsim {
     // (but the code below doesn't come from there; I wrote it myself)
     // TODO use Math.imul if available
     function intMult(a: number, b: number) {
-        return (((a & 0xffff) * (b >>> 16) + (b & 0xffff) * (a >>> 16)) << 16) + ((a & 0xffff) * (b & 0xffff));
+        const ah = (a >>> 16) & 0xffff;
+        const al = a & 0xffff;
+        const bh = (b >>> 16) & 0xffff;
+        const bl = b & 0xffff;
+        // the shift by 0 fixes the sign on the high part
+        // the final |0 converts the unsigned value into a signed value 
+        return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
     }
 
     export namespace Number_ {

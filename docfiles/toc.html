@@ -1,22 +1,25 @@
 <div class="toc ui accent inverted hideprint">
     <div class="ui vertical accent inverted sticky menu tocmenu">
-        <a href="/" class="header item">
-            @targetlogo@
+        <div class="item">
+            <a href="/" class="header focused" tabindex="0" title="Go to editor">
+                @targetlogo@
+            </a>
             &nbsp; &nbsp;
             Documentation
-        </a>
+        </div>
         <div class="item">
-            <form id="tocsearch2" method="get" target="_blank" action="https://www.bing.com/search">
+            <form id="tocsearch2" role="form" method="get" target="_blank" action="https://www.bing.com/search">
                 <div class="ui fluid icon input">
                     <input type="hidden" name="q1" value="site:@homeurl@" />
-                    <input type="search" name="q" placeholder="Search...">
-                    <i onclick="document.getElementById('tocsearch2').submit();" class="search link icon"></i>
+                    @searchBar2@
                 </div>
             </form>
         </div>
         <!-- TOC Menu -->
-        @TOC@
-        <a href="/" class="header item">
+        <div class="menuContainer">
+            @TOC@
+        </div>
+        <a href="/" class="header item bottom">
             Published by Microsoft
         </a>
     </div>

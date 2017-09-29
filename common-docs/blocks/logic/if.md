@@ -23,7 +23,7 @@ if (myScore == perfect) {
 }
 ```
 
-## Opposite condition: `else`
+## Opposite condition: `else` #oppositecondition
 
 If you want some other code to run when the opposite condition is **true**, you put it in
 an additional block area called **`else`**.
@@ -79,7 +79,7 @@ if (myScore == perfect) {
 ```
 
 ## ~hint
-Click on the dark blue gear icon to add an *else* or *else if* sections to the current *if* block.
+Click on the plus **(+)** symbol to add *else* or *else if* sections to the current *if* block.
 ## ~
 
 ## #examples

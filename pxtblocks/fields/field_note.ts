@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="../../localtypings/pxtblockly.d.ts" />
 
 namespace pxtblockly {
 
@@ -411,7 +411,7 @@ namespace pxtblockly {
             let pianoHeight: number;
             let keyWidth: number = 22;
             let keyHeight: number = 90;
-            let labelHeight: number = 20;
+            let labelHeight: number = 24;
             let prevNextHeight: number = 20;
             let whiteKeyCounter: number = 0;
             let selectedKeyColor: string = "yellowgreen";
@@ -516,7 +516,7 @@ namespace pxtblockly {
                     goog.events.EventType.MOUSEOVER,
                     function () {
                         let script = showNoteLabel.getContent() as HTMLElement;
-                        script.innerText = this.getId();
+                        script.textContent = this.getId();
                     }, false, key
                 );
 
@@ -533,7 +533,7 @@ namespace pxtblockly {
             showNoteLabel.setContent(showNoteStyle);
             showNoteLabel.render(pianoDiv);
             let scriptLabel = showNoteLabel.getContent() as HTMLElement;
-            scriptLabel.innerText = "-";
+            scriptLabel.textContent = "-";
 
             // create next and previous CustomButtons for pagination
             let prevButton = new goog.ui.CustomButton();
@@ -541,20 +541,20 @@ namespace pxtblockly {
             let prevButtonStyle = getNextPrevStyle(topPosition, leftPosition, true, mobile);
             let nextButtonStyle = getNextPrevStyle(topPosition, leftPosition, false, mobile);
             if (pagination) {
-                scriptLabel.innerText = "Octave #1";
+                scriptLabel.textContent = "Octave #1";
                 //  render previous button
                 let script: HTMLElement;
                 prevButton.setContent(prevButtonStyle);
                 prevButton.render(pianoDiv);
                 script = prevButton.getContent() as HTMLElement;
                 //  left arrow - previous button
-                script.innerText = "<";
+                script.textContent = "<";
                 //  render next button
                 nextButton.setContent(nextButtonStyle);
                 nextButton.render(pianoDiv);
                 script = nextButton.getContent() as HTMLElement;
                 //  right arrow - next button
-                script.innerText = ">";
+                script.textContent = ">";
 
                 let Npages = this.nKeys_ / 12;
                 let currentPage = 0;
@@ -562,7 +562,7 @@ namespace pxtblockly {
                     goog.events.EventType.MOUSEDOWN,
                     function () {
                         if (currentPage == 0) {
-                            scriptLabel.innerText = "Octave #" + (currentPage + 1);
+                            scriptLabel.textContent = "Octave #" + (currentPage + 1);
                             return;
                         }
                         let curFirstKey = currentPage * 12;
@@ -574,14 +574,14 @@ namespace pxtblockly {
                         for (let i = 0; i < 12; i++)
                             piano[i + newFirstKey].setVisible(true);
                         currentPage--;
-                        scriptLabel.innerText = "Octave #" + (currentPage + 1);
+                        scriptLabel.textContent = "Octave #" + (currentPage + 1);
                     }, false, prevButton
                 );
                 goog.events.listen(nextButton.getElement(),
                     goog.events.EventType.MOUSEDOWN,
                     function () {
                         if (currentPage == Npages - 1) {
-                            scriptLabel.innerText = "Octave #" + (currentPage + 1);
+                            scriptLabel.textContent = "Octave #" + (currentPage + 1);
                             return;
                         }
                         let curFirstKey = currentPage * 12;
@@ -593,7 +593,7 @@ namespace pxtblockly {
                         for (let i = 0; i < 12; i++)
                             piano[i + newFirstKey].setVisible(true);
                         currentPage++;
-                        scriptLabel.innerText = "Octave #" + (currentPage + 1);
+                        scriptLabel.textContent = "Octave #" + (currentPage + 1);
                     }, false, nextButton
                 );
             }
@@ -673,7 +673,7 @@ namespace pxtblockly {
              * @param {number} leftPosition horizontal position of the label
              * @param {boolean} isMobile true if the device is a mobile
              * @return {goog.dom} DOM with the new css style.
-             * @private 
+             * @private
              */
             function getShowNoteStyle(topPosition: number, leftPosition: number, isMobile: boolean) {
                 topPosition += keyHeight;
@@ -698,7 +698,7 @@ namespace pxtblockly {
              * @param {boolean} isPrev true if is previous button, false otherwise
              * @param {boolean} isMobile true if the device is a mobile
              * @return {goog.dom} DOM with the new css style.
-             * @private 
+             * @private
              */
             function getNextPrevStyle(topPosition: number, leftPosition: number, isPrev: boolean, isMobile: boolean) {
                 //  x position of the prev/next button
@@ -774,7 +774,7 @@ namespace pxtblockly {
 
             pianoDiv.style.width = pianoWidth + "px";
             pianoDiv.style.height = (pianoHeight + 1) + "px";
-            contentDiv.style.width = (pianoWidth + 1) + "px";
+            //contentDiv.style.width = (pianoWidth + 1) + "px";
 
             let primaryColour = ((this.sourceBlock_ as any).isShadow()) ?
                 this.sourceBlock_.parentBlock_.getColour() : this.sourceBlock_.getColour();

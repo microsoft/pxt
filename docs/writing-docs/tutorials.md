@@ -85,23 +85,23 @@ The title is on the first line and uses a _level 1_ heading, like:
 
 ### Steps
 
-A tutorial follows a sequence of simple steps. The runner builds an interaction from each _step_ section. A step begins with a _level 3_ heading (``###``) and can have any text. It's common, though, to use the _Step 1, Step 2,...Step n_ sequence for each heading. Something like:
+A tutorial follows a sequence of simple steps. The runner builds an interaction from each _step_ section. A step begins with a _level 2_ heading (``##``) and can have any text. It's common, though, to use the _Step 1, Step 2,...Step n_ sequence for each heading. Something like:
 
 ```text
-### Step 1
+## Step 1
 
 Instructions for step 1 here...
 
-### Step 2
+## Step 2
 
 Instructions for step 2 here...
 
-### Step 3
+## Step 3
 
 Instructions for step 3 here...
 ```
 
-The text in the heading is shown only when the turtorial is viewed as a help page. It's ok to have additional text in the heading. The word 'Step' can even be left out since the tutorial runner will build the list of steps only from the content under the heading tag, ``###``. These are valid headings:
+The text in the heading is shown only when the turtorial is viewed as a help page. It's ok to have additional text in the heading. The word 'Step' can even be left out since the tutorial runner will build the list of steps only from the content under the heading tag, ``##``. These are valid headings:
 
 ```text
 ### Step 3: Make a new variable
@@ -110,7 +110,7 @@ The text in the heading is shown only when the turtorial is viewed as a help pag
 >--or--
 
 ```text
-### Flash all the LEDs on and off twice
+## Flash all the LEDs on and off twice
 ```
 
 The editor automatically parses the markdown and populates the user interface from each step section.
@@ -125,6 +125,24 @@ During an interaction, the first paragraph of the step description is shown in t
 
 ### ~
 
+### Fullscreen
+
+If you want to include a dramatic introduction or make certain that a special message is seen, you can use the ``@fullscreen`` tag. This is usually placed in the first section of the tutorial document. The section is displayed in an overlay window on top of the tutorial screen and isn't shown in the caption as part of the tutorial flow. You include it in your tutorial like this:
+
+```text
+# Flash-a-rama
+
+## It's time to code! @fullscreen
+
+Let's get real bright. We're going to make all the lights flash on your board!
+
+![Flash lights](/static/tutorials/lights-flashing.gif)
+
+## Step 1: Make a new variable
+
+...
+```
+
 ## Example
 
 The following sample shows a simple 2 step tutorial.
@@ -132,7 +150,7 @@ The following sample shows a simple 2 step tutorial.
 ````
 # Getting started
 
-### Step 1
+## Step 1
 
 Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.
 
@@ -140,7 +158,7 @@ Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||``
 basic.showString("Micro!")
 ```
 
-### Step 2
+## Step 2
 
 Click ``|Download|`` to transfer your code in your @boardname@!
 

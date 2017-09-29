@@ -8,7 +8,7 @@
 
     <!-- @include appmeta.html -->
 
-    <link id="blocklycss" rel="stylesheet" href="/blb/blockly.css" type="text/css">
+    <link id="blocklycss" rel="stylesheet" data-rtl="/blb/rtlblockly.css" href="/blb/blockly.css" type="text/css">
     <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" type="text/css">
     <style type="text/css">
         @import "/blb/custom.css";
@@ -20,14 +20,17 @@
     <div id='loading' class="ui active dimmer">
         <div class="ui large loader"></div>
     </div>
+    
+    <div id='custom-content'>
+    </div>
 
     <div id='custom-content'>
     </div>
 
-    <div id='content'>
+    <div id='content' class="ui dimmable full-abs">
     </div>
 
-    <div id='msg'>
+    <div id='msg' aria-live="polite">
         <div id='errmsg' class="ui red inverted segment"></div>
         <div id='warnmsg' class="ui orange inverted segment"></div>
         <div id='infomsg' class="ui teal inverted segment"></div>

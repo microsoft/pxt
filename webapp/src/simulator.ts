@@ -19,6 +19,8 @@ const themes = ["blue", "red", "green", "yellow"];
 let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
 let tutorialMode: boolean;
+let displayedModals: pxt.Map<boolean> = {};
+export let simTranslations: pxt.Map<string>;
 
 let $debugger: JQuery;
 
@@ -104,13 +106,14 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                     break;
                 case "modal":
                     stop();
-                    if (!tutorialMode && !pxt.shell.isSandboxMode()) {
+                    if (!pxt.shell.isSandboxMode() && (!msg.displayOnceId || !displayedModals[msg.displayOnceId])) {
                         const modalOpts: core.ConfirmOptions = {
                             header: msg.header,
                             body: msg.body,
                             size: "large",
                             copyable: msg.copyable,
-                            disagreeLbl: lf("Close")
+                            disagreeLbl: lf("Close"),
+                            modalContext: msg.modalContext
                         };
                         const trustedSimUrls = pxt.appTarget.simulator.trustedUrls;
                         const hasTrustedLink = msg.linkButtonHref && trustedSimUrls && trustedSimUrls.indexOf(msg.linkButtonHref) !== -1;
@@ -121,6 +124,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                             modalOpts.hideAgree = true;
                         }
 
+                        displayedModals[msg.displayOnceId] = true;
                         core.confirmAsync(modalOpts)
                             .then((selection) => {
                                 if (hasTrustedLink && selection == 1) {
@@ -187,7 +191,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
         highContrast,
         aspectRatio: parts.length ? pxt.appTarget.simulator.partsAspectRatio : pxt.appTarget.simulator.aspectRatio,
         partDefinitions: pkg.computePartDefinitions(parts),
-        cdnUrl: pxt.webConfig.commitCdnUrl
+        cdnUrl: pxt.webConfig.commitCdnUrl,
+        localizedStrings: simTranslations
     }
     postSimEditorEvent("started");
 

@@ -93,6 +93,13 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             || this.state.searchFor != nextState.searchFor;
     }
 
+    componentDidUpdate() {
+        let searchInput = ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement;
+        if (searchInput) {
+            searchInput.focus();
+        }
+    }
+
     renderCore() {
         if (!this.state.visible) return <div></div>;
 
@@ -116,13 +123,17 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const upd = (v: any) => {
             let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
 
-            // Hidden way to navigate to /beta, useful for UWP app testing
-            if (str === "@/beta") {
+            // Hidden navigation, used to test /beta or other versions inside released Electron and UWP apps
+            // Secret prefix is /@, e.g.: /@beta
+            const urlPathExec = /^\/@(.*)$/.exec(str);
+            let urlPath = urlPathExec && urlPathExec[1];
+            if (urlPath) {
                 let homeUrl = pxt.appTarget.appTheme.homeUrl;
                 if (!/\/$/.test(homeUrl)) {
                     homeUrl += "/";
                 }
-                window.location.href = homeUrl + "beta";
+                urlPath = urlPath.replace(/^\//, "");
+                window.location.href = homeUrl + urlPath;
             }
             else {
                 this.setState({ searchFor: str });
@@ -135,13 +146,13 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             pxt.tickEvent("packages.github");
             this.hide();
             let p = pkg.mainEditorPkg();
-            core.showLoading(lf("downloading package..."));
+            core.showLoading("downloadingpackage", lf("downloading package..."));
             pxt.packagesConfigAsync()
                 .then(config => pxt.github.latestVersionAsync(scr.fullName, config))
                 .then(tag => pxt.github.pkgConfigAsync(scr.fullName, tag)
                     .then(cfg => addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
                 .catch(core.handleNetworkError)
-                .finally(() => core.hideLoading());
+                .finally(() => core.hideLoading("downloadingpackage"));
         }
         const addDepIfNoConflict = (config: pxt.PackageConfig, version: string) => {
             return pkg.mainPkg.findConflictsAsync(config, version)
@@ -165,13 +176,13 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             // Single conflict: "Package a is..."
                             lf("Package {0} is incompatible with {1}. Remove {0} and add {1}?", conflicts[0].pkg0.id, config.name) :
                             // 2 conflicts: "Packages A and B are..."; 3+ conflicts: "Packages A, B, C and D are..."
-                            lf("Packages {0} and {1} are incompatible with {2}. Remove them and add {2}?", conflicts.slice(0, -1).map((c) => c.pkg0.id).join(","), conflicts.slice(-1)[0].pkg0.id, config.name);
+                            lf("Packages {0} and {1} are incompatible with {2}. Remove them and add {2}?", conflicts.slice(0, -1).map((c) => c.pkg0.id).join(", "), conflicts.slice(-1)[0].pkg0.id, config.name);
 
                         addDependencyPromise = addDependencyPromise
                             .then(() => core.confirmAsync({
                                 header: lf("Some packages will be removed"),
                                 agreeLbl: lf("Remove package(s) and add {0}", config.name),
-                                agreeClass: "pink",
+                                agreeClass: "pink focused",
                                 body
                             }))
                             .then((buttonPressed) => {
@@ -212,17 +223,19 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 onClose={() => this.setState({ visible: false }) }
                 closeIcon={true}
                 helpUrl="/packages"
-                closeOnDimmerClick>
+                closeOnDimmerClick closeOnEscape
+                description={lf("Add a package to the project") }>
                 <div className="ui vertical segment">
                     <div className="ui search">
                         <div className="ui fluid action input" role="search">
-                            <input ref="searchInput" type="text" placeholder={lf("Search or enter project URL...") } onKeyUp={kupd} />
+                            <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.length + urldata.length, this.state.searchFor)}</div>
+                            <input ref="searchInput" className="focused" type="text" placeholder={lf("Search or enter project URL...") } onKeyUp={kupd} />
                             <button title={lf("Search") } className="ui right icon button" onClick={upd}>
                                 <i className="search icon"></i>
                             </button>
                         </div>
                     </div>
-                    <div className="ui cards">
+                    <div className="ui cards" role="listbox">
                         {urldata.map(scr =>
                             <codecard.CodeCardView
                                 key={'url' + scr.id}
@@ -231,6 +244,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 url={"/" + scr.id}
                                 onClick={() => addUrl(scr) }
                                 color="red"
+                                role="option"
                                 />
                         ) }
                         {bundles.map(scr =>
@@ -241,6 +255,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 url={"/" + scr.installedVersion}
                                 imageUrl={scr.icon}
                                 onClick={() => addBundle(scr) }
+                                role="option"
                                 />
                         ) }
                         {ghdata.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
@@ -253,6 +268,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 color="blue"
                                 imageUrl={pxt.github.repoIconUrl(scr) }
                                 label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
+                                role="option"
                                 />
                         ) }
                         {ghdata.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
@@ -263,6 +279,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 onClick={() => installGh(scr) }
                                 url={'github:' + scr.fullName}
                                 color="red"
+                                role="option"
                                 />
                         ) }
                     </div>
