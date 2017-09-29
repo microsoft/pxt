@@ -209,7 +209,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         const tabIcon = tab == HOME ? "home large" : undefined;
 
         return (
-            <sui.Modal open={visible} className="projectsdialog" size="fullscreen" onClose={() => this.hide(/* closeOnly */ true) } dimmer={true} closeOnDimmerClick>
+            <sui.Modal open={visible} className="projectsdialog" size="home" onClose={() => this.hide(/* closeOnly */ true) } dimmer={true} closeOnDimmerClick>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         <div className="left menu">

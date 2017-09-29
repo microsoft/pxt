@@ -838,7 +838,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             }
 
             const marginTop = -Math.round(height / 2);
-            const scrolling = this.props.size == 'fullscreen' || height >= window.innerHeight;
+            const scrolling = this.props.size == 'home' || height >= window.innerHeight;
 
             const newState: ModalState = {};
 
