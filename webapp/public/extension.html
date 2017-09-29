@@ -18,59 +18,59 @@
     }
 
     #logs img {
-        max-width:18rem;
+        max-width: 18rem;
     }
 </style>
 
 <script>
-var extId = window.location.hash.substr(1);
-var logs;
-var idToType = {};
+    var extId = window.location.hash.substr(1);
+    var logs;
+    var idToType = {};
 
-function receiveMessage(ev) {
-    var msg = ev.data;
-    logs.innerText += formatResponse(msg);
-    delete idToType[msg.id];
-}
+    function receiveMessage(ev) {
+        var msg = ev.data;
+        logs.innerText += formatResponse(msg);
+        delete idToType[msg.id];
+    }
 
-function formatResponse(resp) {
-    var action = idToType[resp.id];
-    return "\n< " + action + " (response) s=" + resp.success + " "
+    function formatResponse(resp) {
+        var action = idToType[resp.id];
+        return "\n< " + action + " (response) s=" + resp.success + " "
             + (resp.error ? resp.error : "") + (resp.resp ? JSON.stringify(resp.resp) : "");
-        }
+    }
 
-        function sendRequest(action) {
-            var msg = mkRequest(action);
-            switch (action) {
-                case "extdatastream":
+    function sendRequest(action) {
+        var msg = mkRequest(action);
+        switch (action) {
+            case "extdatastream":
                 msg.body = {
                     serial: true
                 };
                 break;
-                case "extquerypermission":
-            break;
+            case "extquerypermission":
+                break;
             case "extrequestpermission":
                 msg.body = {
                     serial: true
                 };
                 break;
             case "extusercode":
-            break;
+                break;
             case "extreadcode":
-            break;
+                break;
             case "extwritecode":
-            msg.body = {
-                code: "let x = 0;",
+                msg.body = {
+                    code: "let x = 0;",
                     json: '{ "whatever": "sure" }'
                 }
                 break;
             case "extinit":
-            break;
+                break;
         }
         logs.innerText += "\n> " + msg.action;
         window.parent.postMessage(msg, "*");
     }
-    
+
     function mkRequest(action) {
         var id = Math.random().toString();
         idToType[id] = action;
@@ -83,30 +83,31 @@ function formatResponse(resp) {
         }
     }
 
-function bindButtons() {
-    var elt = document.getElementById("buttons");
+    function bindButtons() {
+        var elt = document.getElementById("buttons");
 
-    for (let i = 0; i < elt.childNodes.length; i++) {
-        var btn = elt.childNodes.item(i);
-            
-        if (btn.nodeType === Node.ELEMENT_NODE) {
-            let action = btn.getAttribute("action");
-            if (action) {
-                btn.addEventListener("click", function() {
-                    sendRequest(action);
-                });
+        for (let i = 0; i < elt.childNodes.length; i++) {
+            var btn = elt.childNodes.item(i);
+
+            if (btn.nodeType === Node.ELEMENT_NODE) {
+                let action = btn.getAttribute("action");
+                if (action) {
+                    btn.addEventListener("click", function () {
+                        sendRequest(action);
+                    });
+                }
             }
         }
     }
-}
 
-window.addEventListener("message", receiveMessage, false);
-window.onload = function() {
-    bindButtons();
-    logs = document.getElementById("logs");
-    this.sendRequest("extinit");
-    logs.innerText += "\n<< got id " + extId;
-}
+    window.addEventListener("message", receiveMessage, false);
+    window.onload = function () {
+        bindButtons();
+        logs = document.getElementById("logs");
+        this.sendRequest("extinit");
+        logs.innerText += "\n<< got id " + extId;
+    }
+
 </script>
 
 <body>
@@ -121,4 +122,5 @@ window.onload = function() {
     </div>
     <pre id="logs" class="ui"></pre>
 </body>
+
 </html>
