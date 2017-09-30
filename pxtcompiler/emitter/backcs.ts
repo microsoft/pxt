@@ -11,7 +11,6 @@ namespace ts.pxtc {
     }
 
     function shimToCs(shimName: string) {
-        shimName = U.lookup(csOpMap, shimName) || shimName
         shimName = shimName.replace(/::/g, ".")
         //if (shimName.slice(0, 4) == "pxt.")
         //    shimName = "pxtcore." + shimName.slice(4)
@@ -287,11 +286,21 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
             info.precomp.forEach(emitExpr)
 
             let name: string = topExpr.data
+            name = U.lookup(csOpMap, name) || name
+
             let args = info.flattened.map(emitExprInto)
+            
+            if (name == "langsupp::ignore")
+                return
+
             let isAsync = topExpr.callingConvention != ir.CallingConvention.Plain
 
             let inf = hex.lookupFunc(name)
             let fmt = inf ? inf.argsFmt : ""
+
+            if (!inf)
+                pxt.debug(`warning, missing //%: ${name}`)
+
             let retTp = "object"
             if (fmt) {
                 let fmts = fmt.split(';').filter(s => !!s)
@@ -322,7 +331,7 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
                 text = `new ${shimToCs(name.slice(4))}(${args.join(", ")})`
             else
                 text = `${shimToCs(name)}(${args.join(", ")})`
-            
+
             if (retTp[0] == '#')
                 text = "(double)(" + text + ")"
 
