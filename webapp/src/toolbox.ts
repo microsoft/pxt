@@ -238,7 +238,7 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
         <block type="text_length">
             <value name="VALUE">
                 <shadow type="text">
-                    <field name="TEXT">abc</field>
+                    <field name="TEXT">${lf("Hello")}</field>
                 </shadow>
             </value>
         </block>
@@ -246,12 +246,12 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
             <mutation items="2"></mutation>
             <value name="ADD0">
                 <shadow type="text">
-                    <field name="TEXT"></field>
+                    <field name="TEXT">${lf("Hello")}</field>
                 </shadow>
             </value>
             <value name="ADD1">
                 <shadow type="text">
-                    <field name="TEXT"></field>
+                    <field name="TEXT">${lf("World")}</field>
                 </shadow>
             </value>
         </block>

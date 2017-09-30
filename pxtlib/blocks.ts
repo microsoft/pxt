@@ -373,7 +373,7 @@ namespace pxt.blocks {
                 url: 'reference/text/length',
                 category: 'text',
                 block: {
-                    TEXT_LENGTH_TITLE: Util.lf("length of text %1")
+                    TEXT_LENGTH_TITLE: Util.lf("length of %1")
                 }
             },
             'text_join': {
