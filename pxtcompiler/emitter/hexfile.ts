@@ -156,6 +156,8 @@ namespace ts.pxtc {
             patchSegmentHex(hex)
 
             if (opts.nativeType == "C#") {
+                for (let inf of funs)
+                    funcInfo[inf.name] = inf;
                 return
             }
 
@@ -301,6 +303,8 @@ namespace ts.pxtc {
             let nm = `${funname}(...) (shim=${shimName})`
             let inf = lookupFunc(shimName)
             if (inf) {
+                if (target.nativeType == "C#")
+                    return
                 if (!hasRet) {
                     if (inf.argsFmt[0] != "V")
                         U.userError("expecting procedure for " + nm);

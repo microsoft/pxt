@@ -56,6 +56,8 @@ namespace ts.pxtc.ir {
                 copy.currUses = e.currUses
             }
             copy.callingConvention = e.callingConvention
+            if (e.argsFmt)
+                copy.argsFmt = e.argsFmt
             return copy
         }
 

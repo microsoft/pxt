@@ -646,6 +646,7 @@ namespace pxt.cpp {
                     case "bool": return "boolean";
                     case "string":
                     case "String": return "string";
+                    case "Action": return "() => void";
                     case "object": return "any";
                     default:
                         return toJs(tp);

@@ -49,6 +49,9 @@ namespace ts.pxtc {
 namespace PXT {
 public static class UserCode {
 `
+        bin.globals.forEach(g => {
+            jssource += `static object ${"g_" + g.uniqueName()};\n`
+        })
         bin.procs.forEach(p => {
             jssource += "\n" + irToCS(bin, p) + "\n"
         })
@@ -187,9 +190,9 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
             } else {
                 emitExpr(jmp.expr)
                 if (jmp.jmpMode == ir.JmpMode.IfNotZero) {
-                    write(`if (r0.ToBool()) ${trg}`)
+                    write(`if (numops.toBool(r0)) ${trg}`)
                 } else {
-                    write(`if (!r0.ToBool()) ${trg}`)
+                    write(`if (!numops.toBool(r0)) ${trg}`)
                 }
             }
         }
@@ -288,13 +291,14 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
             let isAsync = topExpr.callingConvention != ir.CallingConvention.Plain
 
             let fmt = topExpr.argsFmt
+            let retTp = "object"
             if (fmt) {
                 let fmts = fmt.split(';').filter(s => !!s)
                 if (fmts[0] == "async") {
                     isAsync = true
                     fmts.shift()
                 }
-                fmts.shift() // return type
+                retTp = fmts.shift()
                 args = args.map((a, i) => {
                     let f = fmts[i]
                     if (f[0] == '#') {
@@ -308,6 +312,8 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
                 })
             }
 
+            //pxt.debug("name: " + name + " fmt: " + fmt)
+
             let text = ""
             if (name[0] == ".")
                 text = `${args[0]}${name}(${args.slice(1).join(", ")})`
@@ -319,7 +325,10 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
             if (isAsync)
                 text = "await " + text
 
-            write(`r0 = ${text};`)
+            if (retTp == "void")
+                write(`${text};`)
+            else
+                write(`r0 = ${text};`)
         }
 
         function emitProcCall(topExpr: ir.Expr) {
