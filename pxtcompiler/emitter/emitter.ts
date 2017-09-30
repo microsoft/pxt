@@ -2034,7 +2034,6 @@ ${lbl}: .short 0xffff
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
 
                 if (!info.location) {
-                    pxt.debug(`call: ${attrs.shim} ${funcExpr.getStart()} ${getName(decl)}`)
                     if (attrs.shim && !hasShimDummy(decl)) {
                         return emitShim(decl, node, args);
                     }
@@ -2840,7 +2839,6 @@ ${lbl}: .short 0xffff
             let fmt = ""
             let inf = hex.lookupFunc(name)
             if (inf) fmt = inf.argsFmt
-            pxt.debug(`rtcallMask: fmt=${fmt} ${name}`)
             
             if (append) args = args.concat(append)
 
@@ -2881,7 +2879,6 @@ ${lbl}: .short 0xffff
                 }
             })
             let r = ir.rtcallMask(name, mask, attrs.callingConvention, args2)
-            r.argsFmt = fmt
             if (opts.target.taggedInts) {
                 if (fmt.charAt(0) == "I")
                     r = fromInt(r)

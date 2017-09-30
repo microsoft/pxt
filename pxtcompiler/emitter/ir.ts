@@ -37,7 +37,6 @@ namespace ts.pxtc.ir {
         public totalUses: number; // how many references this expression has; only for the only child of Shared
         public currUses: number;
         public callingConvention = CallingConvention.Plain;
-        public argsFmt: string;
 
         constructor(
             public exprKind: EK,
@@ -56,8 +55,6 @@ namespace ts.pxtc.ir {
                 copy.currUses = e.currUses
             }
             copy.callingConvention = e.callingConvention
-            if (e.argsFmt)
-                copy.argsFmt = e.argsFmt
             return copy
         }
 

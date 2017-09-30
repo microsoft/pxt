@@ -44,7 +44,7 @@ namespace ts.pxtc {
         jssource += `
 // User code starts
 
-#pragma warning disable CS0164, CS1998, CS0219
+#pragma warning disable CS0164, CS1998, CS0219, CS0414, CS0162
 
 namespace PXT {
 public static class UserCode {
@@ -208,7 +208,7 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
                     else if (e.data === false) return "TValue.False"
                     else if (e.data === null) return "TValue.Null"
                     else if (e.data === undefined) return "TValue.Undefined"
-                    else if (typeof e.data == "number") return e.data
+                    else if (typeof e.data == "number") return "(double)(" + e.data + ")"
                     else throw oops("invalid data: " + typeof e.data);
                 case EK.PointerLiteral:
                     return e.jsInfo;
@@ -290,7 +290,8 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
             let args = info.flattened.map(emitExprInto)
             let isAsync = topExpr.callingConvention != ir.CallingConvention.Plain
 
-            let fmt = topExpr.argsFmt
+            let inf = hex.lookupFunc(name)
+            let fmt = inf ? inf.argsFmt : ""
             let retTp = "object"
             if (fmt) {
                 let fmts = fmt.split(';').filter(s => !!s)
@@ -321,6 +322,9 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
                 text = `new ${shimToCs(name.slice(4))}(${args.join(", ")})`
             else
                 text = `${shimToCs(name)}(${args.join(", ")})`
+            
+            if (retTp[0] == '#')
+                text = "(double)(" + text + ")"
 
             if (isAsync)
                 text = "await " + text
