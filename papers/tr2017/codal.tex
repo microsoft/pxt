@@ -1,14 +1,14 @@
 \section{The CODAL Runtime}
 \label{sec:codal}
 
-% \emph{TBALL comment: the main focus on CODAL here is the support for event-based programming with concurrrent handlers,
-%    providing the bridge between scripting languages such as JavaScript and the world of microcontrollers. }
-
-% \emph{TBALL comment: a second focus, also important, is how CODAL is architected to support multiple boards}
-
 Typically written in C and/or C++, platforms for microcontroller programming all share a common design goal: to support developers by providing primitives and programming abstractions. Platforms can range from simple C++ classes that control hardware, to real-time operating systems (RTOSs) with scheduling and memory management.
 
-The Arduino ecosystem is an example of a simplistic platform where the developer has little knowledge of the underlying hardware, using only high-level APIs; there is no scheduler, and memory management is discouraged through a heavy emphasis on global variables.  The Arduino programming model is based on polling: an Arduino ``sketch'' is a program template that consists of a setup procedure, for initialization of data structures, and a loop procedure; programmers implement the body of \textit{setup} and \textit{loop}, where they explicitly poll the state of the sensors or the microcontroller's pins.
+\emph{TBALL: I don't understand the point of the following sentence - what does
+``the developer has little knowledge of the underlying hardware, using only high-level APIs''
+mean?
+ }
+ 
+The Arduino ecosystem is an example of a simple platform where the developer has little knowledge of the underlying hardware, using only high-level APIs; there is no scheduler, and memory management is discouraged through a heavy emphasis on global variables.  The Arduino programming model is based on polling: an Arduino ``sketch'' is a program template that consists of a setup procedure, for initialization of data structures, and a loop procedure; programmers implement the body of \textit{setup} and \textit{loop}, where they explicitly poll the state of the sensors or the microcontroller's pins.
 
 At the other end of the spectrum is mbed OS, which is aimed at developers who are familiar with non-preemptive scheduling, memory management, and condition synchronisation; a more complex environment. A number of high-level drivers are provided and the programming model is determined by the developer, commonly event or interrupt driven.
 
