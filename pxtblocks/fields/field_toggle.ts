@@ -13,8 +13,6 @@ namespace pxtblockly {
         private descElement_: any;
 
         public static TOGGLE_WIDTH: number = 40;
-        public static TOGGLE_ON_COLOR: string = "#4DDc64";
-        public static TOGGLE_OFF_COLOR: string = "#95a5a6";
 
         constructor(state: string, params: any, opt_validator?: Function) {
             super(state, opt_validator);
@@ -37,13 +35,12 @@ namespace pxtblockly {
             const size = (this as any).getSize();
             this.checkElement_ = Blockly.utils.createSvgElement('g',
                 {
-                    'class': 'blocklyToggle',
+                    'class': `blocklyToggle ${this.state_ ? 'blocklyToggleOn' : 'blocklyToggleOff'}`,
                     'transform': `translate(8, ${size.height / 2})`,
                 }, this.fieldGroup_)
             this.circleElement_ = Blockly.utils.createSvgElement('circle',
                 {
                     'class': 'blocklyToggleCircle',
-                    'fill': this.state_ ? FieldToggle.TOGGLE_ON_COLOR : FieldToggle.TOGGLE_OFF_COLOR,
                     'cx': 0, 'cy': 0, 'r': 14,
                     'cursor': 'pointer'
                 },
@@ -98,12 +95,14 @@ namespace pxtblockly {
             if (this.checkElement_) {
                 const size = (this as any).getSize();
                 if (newState) {
-                    this.checkElement_.setAttribute('transform', `translate(32, ${size.height / 2})`); //classList.add('toggled')
+                    this.checkElement_.setAttribute('transform', `translate(32, ${size.height / 2})`);
+                    this.checkElement_.classList.add('blocklyToggleOn');
+                    this.checkElement_.classList.remove('blocklyToggleOff');
                 } else {
-                    this.checkElement_.setAttribute('transform', `translate(8, ${size.height / 2})`); //this.checkElement_.classList.remove('toggled')
+                    this.checkElement_.setAttribute('transform', `translate(8, ${size.height / 2})`);
+                    this.checkElement_.classList.add('blocklyToggleOff');
+                    this.checkElement_.classList.remove('blocklyToggleOn');
                 }
-                this.circleElement_.setAttribute('fill', newState ? FieldToggle.TOGGLE_ON_COLOR : FieldToggle.TOGGLE_OFF_COLOR);
-
                 goog.dom.removeChildren(/** @type {!Element} */(this.descElement_));
                 let textNode = document.createTextNode(this.getDescriptionText_(newState));
                 this.descElement_.appendChild(textNode);

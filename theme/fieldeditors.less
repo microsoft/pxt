@@ -6,6 +6,10 @@
 /* Reference import */
 
 @import (reference) "semantic.less";
+
+@blocklyLightTextColor: #fff;
+@blocklyDarkTextColor: #575E75;
+
 ////// Note Editor Field ////////
 .blocklyDropDownContent .blocklyPianoDiv {
     position: relative
@@ -149,10 +153,19 @@
     stroke: grey;
     stroke-opacity: 0.4;
 }
+.blocklyToggle.blocklyToggleOn .blocklyToggleCircle {
+    fill: #4DDc64;
+}
+.blocklyToggle.blocklyToggleOff .blocklyToggleCircle {
+    fill: #95a5a6;
+}
 
 .blocklyToggle .blocklyText.blocklyToggleText {
     font-size: 10pt;
     cursor: pointer;
+}
+.blocklyToggle.blocklyToggleOn .blocklyText.blocklyToggleText {
+    fill: @blocklyDarkTextColor;
 }
 
 ////// RGB Color picker ////////
