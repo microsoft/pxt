@@ -573,6 +573,8 @@ declare namespace Blockly {
 
     class FieldColour extends Field {
         constructor(colour: string, opt_validator?: Function);
+        setColours(colours: string[]): void;
+        setColumns(columns: number): void;
     }
 
     class FieldColourSlider extends Field {

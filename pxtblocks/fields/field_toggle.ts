@@ -10,6 +10,7 @@ namespace pxtblockly {
         private state_: boolean;
         private checkElement_: any;
         private circleElement_: any;
+        private descElement_: any;
 
         public static TOGGLE_WIDTH: number = 40;
         public static TOGGLE_ON_COLOR: string = "#4DDc64";
@@ -47,12 +48,24 @@ namespace pxtblockly {
                     'cursor': 'pointer'
                 },
                 this.checkElement_);
+            this.descElement_ = Blockly.utils.createSvgElement('text',
+                {
+                    'class': 'blocklyText blocklyToggleText', 'y': 5,
+                    'x': this.state_ ? -12 : -8
+                },
+                this.checkElement_);
+            let textNode = document.createTextNode(this.getDescriptionText_(this.state_));
+            this.descElement_.appendChild(textNode);
             this.switchToggle(this.state_);
         };
 
         updateWidth() {
             this.size_.width = FieldToggle.TOGGLE_WIDTH;
             this.arrowWidth_ = 0;
+        }
+
+        getDescriptionText_(newState: boolean) {
+            return newState ? "ON" : "OFF";
         }
 
         /**
@@ -90,6 +103,11 @@ namespace pxtblockly {
                     this.checkElement_.setAttribute('transform', `translate(8, ${size.height / 2})`); //this.checkElement_.classList.remove('toggled')
                 }
                 this.circleElement_.setAttribute('fill', newState ? FieldToggle.TOGGLE_ON_COLOR : FieldToggle.TOGGLE_OFF_COLOR);
+
+                goog.dom.removeChildren(/** @type {!Element} */(this.descElement_));
+                let textNode = document.createTextNode(this.getDescriptionText_(newState));
+                this.descElement_.appendChild(textNode);
+                this.descElement_.setAttribute('x', newState ? -8 : -12);
             }
         }
 
