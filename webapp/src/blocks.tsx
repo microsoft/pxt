@@ -681,7 +681,7 @@ export class Editor extends srceditor.Editor {
                 maxScale: 2.5,
                 minScale: .2,
                 scaleSpeed: 1.05,
-                startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.9
+                startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.8
             },
             rtl: Util.isUserLanguageRtl()
         };
