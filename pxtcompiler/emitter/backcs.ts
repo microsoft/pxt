@@ -73,42 +73,51 @@ public static class UserCode {
         let writeRaw = (s: string) => { resText += s + "\n"; }
         let write = (s: string) => { resText += "    " + s + "\n"; }
         let EK = ir.EK;
+        let maxStack = 0
 
         let ctxTp = proc.label() + "_CTX"
-
-        if (bin.procs[0] == proc) {
-            writeRaw(`
-
-public static void Main() { ${proc.label()}(new CTX(), null).GetAwaiter().GetResult(); }
-`)
-        }
-
-        writeRaw(`
-class ${ctxTp} : CTX {}
-        
-static async Task ${proc.label()}(CTX parent, object[] args) {
-    var r0 = TValue.Undefined;
-    var s = new ${ctxTp}();
-    var caps = parent.caps;
-    s.parent = parent;
-`)
 
         //console.log(proc.toString())
         proc.resolve()
         //console.log("OPT", proc.toString())
 
-        proc.locals.forEach(l => {
-            write(`object ${locref(l)} = TValue.Undefined;`)
-        })
+        if (bin.procs[0] == proc) {
+            writeRaw(`
 
-        if (proc.args.length) {
-            proc.args.forEach((l, i) => {
-                write(`object ${locref(l)} = ${i} >= args.Length ? TValue.Undefined : args[${i}];`)
-            })
-            write(`args = null;`)
+public static void Main() { ${proc.label()}(new CTX(0), null).GetAwaiter().GetResult(); }
+`)
         }
 
+        let storeArgs =
+            proc.args.map((l, i) =>
+                `    ${locref(l)} = ${i} >= args.Length ? TValue.Undefined : args[${i}];\n`)
+                .join("")
+
+        writeRaw(`
+static Action<Task, object> ${proc.label()}_delegate;
+static Task ${proc.label()}(CTX parent, object[] args) {
+    var s = new ${ctxTp}(parent);
+    if (${proc.label()}_delegate == null) {
+        ${proc.label()}_delegate = ${proc.label()}_task;
+    }
+${storeArgs}
+    ${proc.label()}_task(null, s);
+    return s.completion.Task;
+}
+
+static void ${proc.label()}_task(Task prevTask, object s_) {
+    var s = (${ctxTp})s_;
+    var r0 = TValue.Undefined;
+    var step = s.pc;
+    s.pc = -1;
+
+    while (true) {
+    switch (step) {
+    case 0:
+`)
         let exprStack: ir.Expr[] = []
+        let currCallArgsIdx = 0
+        let maxCallArgsIdx = -1
 
         let lblIdx = 0
         let asyncContinuations: number[] = []
@@ -132,7 +141,8 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
                     emitJmp(s);
                     break;
                 case ir.SK.Label:
-                    writeRaw(`L${s.lblId}:`)
+                    write(`goto case ${s.lblId};`)
+                    writeRaw(`case ${s.lblId}:`)
                     break;
                 case ir.SK.Breakpoint:
                     emitBreakpoint(s)
@@ -142,13 +152,27 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
         }
 
         write(`s.Leave(r0);`)
+        write(`return;`)
+        writeRaw(`  default: PXT.Util.check(false, "invalid pc: " + step); return;\n} } }`)
 
-        writeRaw(`}`)
         let info = nodeLocationInfo(proc.action) as FunctionLocationInfo
         info.functionName = proc.getName()
         writeRaw(`// ${proc.label()}.info = ${JSON.stringify(info)}`)
-        //if (proc.isRoot)
-        //    writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)
+
+        writeRaw(`
+class ${ctxTp} : CTX {
+    public ${ctxTp}(CTX parent) : base(parent) {}`)
+        for (let o of proc.locals.concat(proc.args)) {
+            write(`public object ${o.uniqueName()};`)
+        }
+        for (let i = 0; i < maxStack; ++i)
+            write(`public object tmp_${i};`)
+
+        for (let i = 0; i < maxCallArgsIdx; ++i)
+            write(`public object[] callArgs_${i};`)
+
+        writeRaw(`}\n`)
+
         return resText
 
         function emitBreakpoint(s: ir.Stmt) {
@@ -169,19 +193,19 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
                 else
                     write(`if ((breakAlways && s.IsBreakFrame()) || breakpoints[${id}]) ${brkCall}`)
             }
-            writeRaw(`L${lbl}:`)
+            writeRaw(`case ${lbl}: // BRK`)
         }
 
         function locref(cell: ir.Cell) {
             if (cell.isGlobal())
                 return "g_" + cell.uniqueName()
             else if (cell.iscap)
-                return `caps[${cell.index}]`
-            return cell.uniqueName()
+                return `s.mycaps[${cell.index}]`
+            return "s." + cell.uniqueName()
         }
 
         function emitJmp(jmp: ir.Stmt) {
-            let trg = `goto L${jmp.lbl.lblId};`
+            let trg = `goto case ${jmp.lbl.lblId};`
             if (jmp.jmpMode == ir.JmpMode.Always) {
                 if (jmp.expr)
                     emitExpr(jmp.expr)
@@ -220,7 +244,7 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
                     arg.currUses++
                     let idx = exprStack.indexOf(arg)
                     U.assert(idx >= 0)
-                    return "tmp_" + arg.getId()
+                    return "s.tmp_" + idx
                 case EK.CellRef:
                     let cell = e.data as ir.Cell;
                     return locref(cell)
@@ -276,9 +300,10 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
                 return emitExpr(arg)
             else {
                 emitExpr(arg)
+                let idx = exprStack.length
                 exprStack.push(arg)
-                let idx = arg.getId()
-                write(`object tmp_${idx} = r0;`)
+                maxStack = Math.max(maxStack, exprStack.length)
+                write(`s.tmp_${idx} = r0;`)
             }
         }
 
@@ -291,7 +316,7 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
             name = U.lookup(csOpMap, name) || name
 
             let args = info.flattened.map(emitExprInto)
-            
+
             if (name == "langsupp::ignore")
                 return
 
@@ -334,11 +359,24 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
             else
                 text = `${shimToCs(name)}(${args.join(", ")})`
 
+
+
+
+            if (isAsync) {
+                let loc = ++lblIdx
+                asyncContinuations.push(loc)
+                write(`s.pc = ${loc};`)
+                write(`${text}.ContinueWith(${proc.label()}_delegate, (object)s);`)
+                write(`return;`)
+                writeRaw(`  case ${loc}:\n`)
+                if (retTp == "void")
+                    text = "/* void */";
+                else
+                    text = `((Task<${retTp}>)prevTask).Result`
+            }
+
             if (retTp[0] == '#')
                 text = "(double)(" + text + ")"
-
-            if (isAsync)
-                text = "await " + text
 
             if (retTp == "void")
                 write(`${text};`)
@@ -347,11 +385,13 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
         }
 
         function emitProcCall(topExpr: ir.Expr) {
-            let procid = topExpr.data as ir.ProcId
-            let proc = procid.proc
+            let calledProcId = topExpr.data as ir.ProcId
+            let calledProc = calledProcId.proc
             let lblId = ++lblIdx
-            let argsArray = `callargs_${lblId}`
-            write(`var ${argsArray} = new object[${topExpr.args.length}];`)
+            let argsArray = `s.callArgs_${currCallArgsIdx}`
+            write(`${argsArray} = new object[${topExpr.args.length}];`)
+            if (++currCallArgsIdx > maxCallArgsIdx)
+                maxCallArgsIdx = currCallArgsIdx
 
             //console.log("PROCCALL", topExpr.toString())
             topExpr.args.forEach((a, i) => {
@@ -359,29 +399,33 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
                 write(`${argsArray}[${i}] = r0;`)
             })
 
-            // write(`s.pc = ${lblId};`)
-            if (procid.ifaceIndex != null) {
-                if (procid.mapMethod) {
+            write(`s.pc = ${lblId};`)
+            let callIt = `(s, ${argsArray}).ContinueWith(${proc.label()}_delegate, s)`
+            if (calledProcId.ifaceIndex != null) {
+                if (calledProcId.mapMethod) {
                     write(`if (${argsArray}[0] is PXT.RefMap) {`)
                     let args = topExpr.args.map((a, i) => `${argsArray}[${i}]`)
                     args[0] = "(PXT.RefMap)" + args[0]
-                    args.splice(1, 0, procid.mapIdx.toString())
-                    write(`  s.retval = ${shimToCs(procid.mapMethod).replace("Ref", "")}(${args.join(", ")});`)
-                    write(`  goto L${lblId};`)
+                    args.splice(1, 0, calledProcId.mapIdx.toString())
+                    write(`  s.retval = ${shimToCs(calledProcId.mapMethod).replace("Ref", "")}(${args.join(", ")});`)
+                    write(`  goto case ${lblId};`)
                     write(`} else {`)
                 }
-                write(`await PXT.pxtrt.toUserObject(${argsArray}[0]).vtable.iface[${procid.ifaceIndex}](s, ${argsArray});`)
-                if (procid.mapMethod) {
+                write(`PXT.pxtrt.getVT(${argsArray}[0]).iface[${calledProcId.ifaceIndex}]${callIt};`)
+                if (calledProcId.mapMethod) {
                     write(`}`)
                 }
-            } else if (procid.virtualIndex != null) {
-                assert(procid.virtualIndex >= 0)
-                write(`await PXT.pxtrt.toUserObject(${argsArray}[0]).vtable.methods[${procid.virtualIndex}](s, ${argsArray});`)
+            } else if (calledProcId.virtualIndex != null) {
+                assert(calledProcId.virtualIndex >= 0)
+                write(`PXT.pxtrt.getVT(${argsArray}[0]).methods[${calledProcId.virtualIndex}]${callIt};`)
             } else {
-                write(`await ${proc.label()}(s, ${argsArray});`)
+                write(`${calledProc.label()}${callIt};`)
             }
-            writeRaw(`L${lblId}:`)
+            write(`return;`)
+            writeRaw(`  case ${lblId}:`)
             write(`r0 = s.retval;`)
+
+            currCallArgsIdx--
         }
 
         function bitSizeConverter(b: BitSize) {
