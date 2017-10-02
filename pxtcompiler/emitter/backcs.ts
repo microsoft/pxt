@@ -326,9 +326,10 @@ class ${ctxTp} : CTX {
             let fmt = inf ? inf.argsFmt : ""
 
             if (!inf)
-                pxt.debug(`warning, missing //%: ${name}`)
+                pxt.log(`warning, missing //%: ${name}`)
 
             let retTp = "object"
+            let addCTX = false
             if (fmt) {
                 let fmts = fmt.split(';').filter(s => !!s)
                 if (fmts[0] == "async") {
@@ -336,6 +337,10 @@ class ${ctxTp} : CTX {
                     fmts.shift()
                 }
                 retTp = fmts.shift()
+                if (fmts[0] == "CTX") {
+                    addCTX = true
+                    fmts.shift()
+                }
                 args = args.map((a, i) => {
                     let f = fmts[i]
                     if (f[0] == '#') {
@@ -349,6 +354,9 @@ class ${ctxTp} : CTX {
                 })
             }
 
+            if (addCTX)
+                args.unshift("s")
+
             //pxt.debug("name: " + name + " fmt: " + fmt)
 
             let text = ""
@@ -358,8 +366,6 @@ class ${ctxTp} : CTX {
                 text = `new ${shimToCs(name.slice(4))}(${args.join(", ")})`
             else
                 text = `${shimToCs(name)}(${args.join(", ")})`
-
-
 
 
             if (isAsync) {

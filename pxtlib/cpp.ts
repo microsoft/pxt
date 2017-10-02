@@ -734,17 +734,23 @@ namespace pxt.cpp {
                         currAttrs += " async"
                     }
 
-                    let args = origArgs.split(/,/).filter(s => !!s).map(s => {
+                    let args: string[] = []
+
+                    for (let s of origArgs.split(/,/)) {
+                        if (!s) continue
                         let r = parseArg(parsedAttrs, s)
-                        argsFmt += mapRunTimeType(r.type)
-                        return `${r.name}: ${mapType(r.type)}`
-                    })
-                    let numArgs = args.length
+                        let mapped = mapRunTimeType(r.type)
+                        argsFmt += mapped
+                        if (mapped != "CTX;")
+                            args.push(`${r.name}: ${mapType(r.type)}`)
+                    }
+
                     let fi: pxtc.FuncInfo = {
                         name: currNs + "::" + funName,
                         argsFmt,
                         value: null
                     }
+
                     //console.log(`${ln.trim()} : ${argsFmt}`)
                     if (currDocComment) {
                         shimsDTS.setNs(toJs(currNs))
