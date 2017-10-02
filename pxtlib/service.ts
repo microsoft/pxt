@@ -18,6 +18,10 @@ namespace ts.pxtc {
     export const BINARY_UF2 = "binary.uf2";
     export const BINARY_ELF = "binary.elf";
 
+    export const NATIVE_TYPE_THUMB = "thumb";
+    export const NATIVE_TYPE_AVR = "AVR";
+    export const NATIVE_TYPE_CS = "C#";
+
     export interface ParameterDesc {
         name: string;
         description: string;

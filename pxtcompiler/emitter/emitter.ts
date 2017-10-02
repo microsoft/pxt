@@ -96,7 +96,7 @@ namespace ts.pxtc {
     }
 
     function noRefCounting() {
-        return target.nativeType == "C#" || (!target.jsRefCounting && !target.isNative)
+        return target.nativeType == NATIVE_TYPE_CS || (!target.jsRefCounting && !target.isNative)
     }
 
     function isRefType(t: Type) {
@@ -1143,7 +1143,7 @@ namespace ts.pxtc {
                     bin.writeFile("yotta.json", JSON.stringify(opts.extinfo.yotta, null, 2));
                 if (opts.extinfo.platformio)
                     bin.writeFile("platformio.json", JSON.stringify(opts.extinfo.platformio, null, 2));
-                if (opts.target.nativeType == "C#")
+                if (opts.target.nativeType == NATIVE_TYPE_CS)
                     csEmit(bin, opts)
                 else
                     processorEmit(bin, opts, res)
@@ -2375,7 +2375,7 @@ ${lbl}: .short 0xffff
         function emitFunLitCore(node: FunctionLikeDeclaration, raw = false) {
             let lbl = getFunctionLabel(node, getEnclosingTypeBindings(node))
             let jsInfo = lbl
-            if (target.nativeType == "C#") {
+            if (target.nativeType == NATIVE_TYPE_CS) {
                 jsInfo = "(FnPtr)" + jsInfo
                 if (!raw)
                     jsInfo = "PXT.pxt.mkAction(0, 0, " + jsInfo + ")"
@@ -3627,7 +3627,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitClassDeclaration(node: ClassDeclaration) {
-            if (opts.target.isNative && opts.target.nativeType == "AVR") {
+            if (opts.target.isNative && opts.target.nativeType == NATIVE_TYPE_AVR) {
                 throw userError(9266, lf("classes not yet supported on AVR processor"))
             }
             getClassInfo(null, node)

@@ -163,7 +163,7 @@ namespace pxt.cpp {
                 hasHex: false,
             }
 
-        const isCSharp = compile.nativeType == "C#"
+        const isCSharp = compile.nativeType == pxtc.NATIVE_TYPE_CS
         const isPlatformio = !!compileService.platformioIni;
         const isCodal = compileService.buildEngine == "codal"
         const isDockerMake = compileService.buildEngine == "dockermake"

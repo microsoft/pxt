@@ -725,7 +725,7 @@ namespace ts.pxtc.ir {
         let r = op(EK.PointerLiteral, null, lbl)
         r.jsInfo = jsInfo
         if (full) {
-            if (target.nativeType == "AVR")
+            if (target.nativeType == NATIVE_TYPE_AVR)
                 return rtcall("pxt::ptrOfLiteral", [r])
             else
                 r.args = []

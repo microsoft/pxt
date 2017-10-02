@@ -4730,7 +4730,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     if (trg.compileService) {
         compileId = trg.compileService.buildEngine || "yotta"
     }
-    if (trg.compile.nativeType == "C#")
+    if (trg.compile.nativeType == pxtc.NATIVE_TYPE_CS)
         compileId = "cs"
 
     pxt.log(`Using target PXT/${trg.id} with build engine ${compileId}`)
