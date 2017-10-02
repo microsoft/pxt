@@ -8,6 +8,8 @@ namespace ts.pxtc {
         "pxtrt::ldlocRef": "pxtrt::ldloc",
         "pxtrt::stlocRef": "pxtrt::stloc",
         "pxtrt::mklocRef": "pxtrt::mkloc",
+        "pxtrt::mapSetRef": "pxtrt::mapSet",
+        "pxtrt::mapGetRef": "pxtrt::mapGet",
     }
 
     function shimToCs(shimName: string) {
@@ -360,10 +362,11 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
             // write(`s.pc = ${lblId};`)
             if (procid.ifaceIndex != null) {
                 if (procid.mapMethod) {
-                    write(`if (${argsArray}.arg0.vtable == null) {`)
-                    let args = topExpr.args.map((a, i) => `${argsArray}.arg${i}`)
+                    write(`if (${argsArray}[0] is PXT.RefMap) {`)
+                    let args = topExpr.args.map((a, i) => `${argsArray}[${i}]`)
+                    args[0] = "(PXT.RefMap)" + args[0]
                     args.splice(1, 0, procid.mapIdx.toString())
-                    write(`  s.retval = ${shimToCs(procid.mapMethod)}(${args.join(", ")});`)
+                    write(`  s.retval = ${shimToCs(procid.mapMethod).replace("Ref", "")}(${args.join(", ")});`)
                     write(`  goto L${lblId};`)
                     write(`} else {`)
                 }
@@ -399,7 +402,11 @@ static async Task ${proc.label()}(CTX parent, object[] args) {
                 case EK.CellRef:
                     let cell = trg.data as ir.Cell
                     emitExpr(src)
-                    write(`${locref(cell)} = ${bitSizeConverter(cell.bitSize)}(r0);`)
+                    let conv = bitSizeConverter(cell.bitSize)
+                    if (conv)
+                        write(`${locref(cell)} = ${conv}(PXT.numops.toDouble(r0));`)
+                    else
+                        write(`${locref(cell)} = r0;`)
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
