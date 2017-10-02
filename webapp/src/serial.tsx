@@ -276,7 +276,7 @@ export class Editor extends srceditor.Editor {
                     <div className="ui grid right aligned padded">
                         <div className="column">
                             <button className="ui small basic blue button" onClick={this.showExportDialog.bind(this)}>
-                                <i className="download icon"></i> lf(Export data)
+                                <i className="download icon"></i> lf("Export data")
                             </button>
                         </div>
                     </div>
