@@ -95,8 +95,14 @@ namespace ts.pxtc {
         throw e;
     }
 
+    function noRefCounting() {
+        return target.nativeType == "C#" || (!target.jsRefCounting && !target.isNative)
+    }
+
     function isRefType(t: Type) {
         checkType(t);
+        if (noRefCounting())
+            return false
         if (t.flags & TypeFlags.ThisType)
             return true
         if (t.flags & TypeFlags.Null)
