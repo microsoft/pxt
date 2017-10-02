@@ -43,6 +43,7 @@ namespace pxt.editor {
         notification?: pxt.Notification;
 
         running?: boolean;
+        resumeOnVisibility?: boolean;
         compiling?: boolean;
         publishing?: boolean;
         hideEditorFloats?: boolean;

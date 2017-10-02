@@ -63,7 +63,7 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
 
     // https://msdn.microsoft.com/en-us/library/cc848897.aspx
-    // "For security reasons, data URIs are restricted to downloaded resources. 
+    // "For security reasons, data URIs are restricted to downloaded resources.
     // Data URIs cannot be used for navigation, for scripting, or to populate frame or iframe elements"
     const downloadAgain = !pxt.BrowserUtils.isIE() && !pxt.BrowserUtils.isEdge();
     const docUrl = pxt.appTarget.appTheme.usbDocs;
@@ -139,11 +139,30 @@ export function initCommandsAsync(): Promise<void> {
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
     if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
+    } else if (pxt.winrt.isWinRT()) { // windows app
+        const useUf2 = pxt.appTarget.serial && pxt.appTarget.serial.useHF2;
+        const hidSelectors = pxt.appTarget.compile && pxt.appTarget.compile.hidSelectors;
+        if (useUf2 || hidSelectors) {
+            pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
+            pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+        } else {
+            if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID) {
+                pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
+            }
+            pxt.commands.deployCoreAsync = pxt.winrt.driveDeployCoreAsync;
+        }
+        pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
+        pxt.commands.saveOnlyAsync = (resp: pxtc.CompileResult) => {
+            return pxt.winrt.saveOnlyAsync(resp)
+                .then((saved) => {
+                    if (saved) {
+                        core.infoNotification(lf("file saved!"));
+                    }
+                })
+                .catch(() => core.errorNotification(lf("saving file failed...")));
+        };
     } else if (hidbridge.shouldUse() && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
-    } else if (pxt.winrt.isWinRT()) { // window app
-        pxt.commands.deployCoreAsync = pxt.winrt.deployCoreAsync;
-        pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser
