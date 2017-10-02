@@ -2375,8 +2375,11 @@ ${lbl}: .short 0xffff
         function emitFunLitCore(node: FunctionLikeDeclaration, raw = false) {
             let lbl = getFunctionLabel(node, getEnclosingTypeBindings(node))
             let jsInfo = lbl
-            if (target.nativeType == "C#")
+            if (target.nativeType == "C#") {
                 jsInfo = "(FnPtr)" + jsInfo
+                if (!raw)
+                    jsInfo = "PXT.pxt.mkAction(0, 0, " + jsInfo + ")"
+            }
             let r = ir.ptrlit(lbl + "_Lit", jsInfo, !raw)
             return r
         }
