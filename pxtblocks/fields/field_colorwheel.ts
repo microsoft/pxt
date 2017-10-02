@@ -47,6 +47,11 @@ namespace pxtblockly {
                     `${this.params['sliderWidth']}px`)
         };
 
+        setReadout_(readout: Element, value: string) {
+            const hexValue = this.colorWheel(parseInt(value));
+            readout.innerHTML = `<span class="blocklyColorReadout" style="background-color: ${hexValue};"></span>`;
+        }
+
         createColourStops_() {
             let stops: string[] = [];
             for (let n = 0; n <= 255; n += 20) {
