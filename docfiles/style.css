@@ -283,8 +283,8 @@ svg {
     bottom: 0;
     margin: 0;
     padding: 10px;
-    max-width: 150px;
-    min-width: 90px;
+    max-width: 5rem;
+    min-width: 5rem;
     display: flex;
     justify-content: center;
     align-content: center;
@@ -296,6 +296,9 @@ svg {
     -moz-transition: all 350ms ease;
     -o-transition: all 350ms ease;
     transition: all 350ms ease;
+}
+.navigation.icon {
+    width: 100%;
 }
 
 .navigation.navigation-next {
