@@ -2851,7 +2851,7 @@ ${lbl}: .short 0xffff
             let fmt = ""
             let inf = hex.lookupFunc(name)
             if (inf) fmt = inf.argsFmt
-            
+
             if (append) args = args.concat(append)
 
             let mask = getMask(args)
