@@ -345,6 +345,16 @@ class ${ctxTp} : CTX {
                     let f = fmts[i]
                     if (f[0] == '#') {
                         f = f.slice(1)
+                        let d: number = info.flattened[i].data
+                        if (info.flattened[i].exprKind == EK.NumberLiteral &&
+                            typeof d == "number") {
+                            if (f == "double" || f == "float")
+                                return d.toString()
+                            if ((d | 0) == d) {
+                                if (f == "int" || (f == "uint" && d >= 0))
+                                    return d.toString()
+                            }
+                        }
                         a = "numops.toDouble(" + a + ")"
                     }
                     if (f != "object") {
