@@ -269,7 +269,7 @@ export class ProjectView
     }
 
     openSerial(isSim: boolean) {
-        if (pxt.appTarget.serial && pxt.appTarget.serial.useEditor {
+        if (pxt.appTarget.serial && pxt.appTarget.serial.useEditor) {
             let mainEditorPkg = pkg.mainEditorPkg()
             if (mainEditorPkg) {
                 if (!mainEditorPkg.lookupFile("this/" + pxt.SERIAL_EDITOR_FILE)) {
