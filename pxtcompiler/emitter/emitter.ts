@@ -95,8 +95,14 @@ namespace ts.pxtc {
         throw e;
     }
 
+    function noRefCounting() {
+        return target.nativeType == NATIVE_TYPE_CS || (!target.jsRefCounting && !target.isNative)
+    }
+
     function isRefType(t: Type) {
         checkType(t);
+        if (noRefCounting())
+            return false
         if (t.flags & TypeFlags.ThisType)
             return true
         if (t.flags & TypeFlags.Null)
@@ -1137,7 +1143,10 @@ namespace ts.pxtc {
                     bin.writeFile("yotta.json", JSON.stringify(opts.extinfo.yotta, null, 2));
                 if (opts.extinfo.platformio)
                     bin.writeFile("platformio.json", JSON.stringify(opts.extinfo.platformio, null, 2));
-                processorEmit(bin, opts, res)
+                if (opts.target.nativeType == NATIVE_TYPE_CS)
+                    csEmit(bin, opts)
+                else
+                    processorEmit(bin, opts, res)
             } else {
                 jsEmit(bin)
             }
@@ -1833,7 +1842,7 @@ ${lbl}: .short 0xffff
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let nm = attrs.shim
 
-            if (opts.target.taggedInts)
+            if (opts.target.needsUnboxing)
                 switch (nm) {
                     case "Number_::toString":
                     case "Boolean_::toString":
@@ -2365,7 +2374,13 @@ ${lbl}: .short 0xffff
 
         function emitFunLitCore(node: FunctionLikeDeclaration, raw = false) {
             let lbl = getFunctionLabel(node, getEnclosingTypeBindings(node))
-            let r = ir.ptrlit(lbl + "_Lit", lbl, !raw)
+            let jsInfo = lbl
+            if (target.nativeType == NATIVE_TYPE_CS) {
+                jsInfo = "(FnPtr)" + jsInfo
+                if (!raw)
+                    jsInfo = "PXT.pxt.mkAction(0, 0, " + jsInfo + ")"
+            }
+            let r = ir.ptrlit(lbl + "_Lit", jsInfo, !raw)
             return r
         }
 
@@ -3102,7 +3117,7 @@ ${lbl}: .short 0xffff
                     case SK.EqualsEqualsEqualsToken:
                     case SK.ExclamationEqualsEqualsToken:
                     case SK.ExclamationEqualsToken:
-                        if (opts.target.taggedInts)
+                        if (opts.target.needsUnboxing)
                             break; // let the generic case handle this
                     case SK.LessThanEqualsToken:
                     case SK.LessThanToken:
@@ -3377,7 +3392,7 @@ ${lbl}: .short 0xffff
 
             // TODO this should be changed to use standard indexer lookup and int handling
             let toInt = (e: ir.Expr) => {
-                if (opts.target.taggedInts)
+                if (opts.target.needsUnboxing)
                     return ir.rtcall("pxt::toInt", [e])
                 else return e
             }
@@ -3466,7 +3481,7 @@ ${lbl}: .short 0xffff
                 if (cl.kind == SK.CaseClause) {
                     let cc = cl as CaseClause
                     let cmpExpr = emitExpr(cc.expression)
-                    if (opts.target.taggedInts) {
+                    if (opts.target.needsUnboxing) {
                         // we assume the value we're switching over will stay alive
                         // so, the mask only applies to the case expression if needed
                         let cmpCall = ir.rtcallMask(mapIntOpName("pxt::switch_eq"),
@@ -3488,7 +3503,7 @@ ${lbl}: .short 0xffff
                         proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                     } else {
                         // TODO re-enable this opt for small non-zero number literals
-                        if (!opts.target.taggedInts && cmpExpr.exprKind == EK.NumberLiteral) {
+                        if (!opts.target.needsUnboxing && cmpExpr.exprKind == EK.NumberLiteral) {
                             if (!quickCmpMode) {
                                 emitInJmpValue(expr)
                                 quickCmpMode = true
@@ -3612,7 +3627,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitClassDeclaration(node: ClassDeclaration) {
-            if (opts.target.isNative && opts.target.nativeType == "AVR") {
+            if (opts.target.isNative && opts.target.nativeType == NATIVE_TYPE_AVR) {
                 throw userError(9266, lf("classes not yet supported on AVR processor"))
             }
             getClassInfo(null, node)

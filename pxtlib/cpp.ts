@@ -156,10 +156,18 @@ namespace pxt.cpp {
                 serviceId: "nocompile"
             }
 
+        let compile = appTarget.compile
+        if (!compile)
+            compile = {
+                isNative: false,
+                hasHex: false,
+            }
+
+        const isCSharp = compile.nativeType == pxtc.NATIVE_TYPE_CS
         const isPlatformio = !!compileService.platformioIni;
         const isCodal = compileService.buildEngine == "codal"
         const isDockerMake = compileService.buildEngine == "dockermake"
-        const isYotta = !isPlatformio && !isCodal && !isDockerMake
+        const isYotta = !isCSharp && !isPlatformio && !isCodal && !isDockerMake
         if (isPlatformio)
             sourcePath = "/src/"
         else if (isCodal || isDockerMake)
@@ -168,6 +176,7 @@ namespace pxt.cpp {
         let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
         let includesInc = `#include "pxt.h"\n`
+        let fullCS = ""
         let thisErrors = ""
         let dTsNamespace = ""
         let err = (s: string) => thisErrors += `   ${fileName}(${lineNo}): ${s}\n`;
@@ -210,11 +219,166 @@ namespace pxt.cpp {
             }
         }
 
+        function stripComments(ln: string) {
+            return ln.replace(/\/\/.*/, "").replace(/\/\*/, "")
+        }
+
+        let enumVal = 0
+        let inEnum = false
+        let currNs = ""
+        let currDocComment = ""
+        let currAttrs = ""
+        let inDocComment = false
+        let outp = ""
+
+        function handleComments(ln: string) {
+            if (inEnum) {
+                outp += ln + "\n"
+                return true
+            }
+
+            if (/^\s*\/\*\*/.test(ln)) {
+                inDocComment = true
+                currDocComment = ln + "\n"
+                if (/\*\//.test(ln)) inDocComment = false
+                outp += "//\n"
+                return true
+            }
+
+            if (inDocComment) {
+                currDocComment += ln + "\n"
+                if (/\*\//.test(ln)) {
+                    inDocComment = false
+                }
+                outp += "//\n"
+                return true
+            }
+
+            if (/^\s*\/\/%/.test(ln)) {
+                currAttrs += ln + "\n"
+                outp += "//\n"
+                return true
+            }
+
+            outp += ln + "\n"
+            return false
+        }
+
+        function enterEnum(cpname: string, brace: string) {
+            inEnum = true
+            enumVal = -1
+            enumsDTS.write("")
+            enumsDTS.write("")
+            if (currAttrs || currDocComment) {
+                enumsDTS.write(currDocComment)
+                enumsDTS.write(currAttrs)
+                currAttrs = ""
+                currDocComment = ""
+            }
+            enumsDTS.write(`declare const enum ${toJs(cpname)} ${brace}`)
+
+            knownEnums[cpname] = true
+        }
+
+        function processEnumLine(ln: string) {
+            let lnNC = stripComments(ln)
+            if (inEnum && lnNC.indexOf("}") >= 0) {
+                inEnum = false
+                enumsDTS.write("}")
+            }
+
+            if (!inEnum)
+                return
+
+            // parse the enum case, with lots of optional stuff (?)
+            let mm = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(lnNC)
+            if (mm) {
+                let nm = mm[1]
+                let v = mm[3]
+                let opt = ""
+                if (v) {
+                    // user-supplied value
+                    v = v.trim()
+                    let curr = U.lookup(enumVals, v)
+                    if (curr != null) {
+                        opt = "  // " + v
+                        v = curr
+                    }
+                    enumVal = parseCppInt(v)
+                    if (enumVal == null)
+                        err("cannot determine value of " + lnNC)
+                } else {
+                    // no user-supplied value
+                    enumVal++
+                    v = enumVal + ""
+                }
+                enumsDTS.write(`    ${toJs(nm)} = ${v},${opt}`)
+            } else {
+                enumsDTS.write(ln)
+            }
+        }
+
+        function finishNamespace() {
+            shimsDTS.setNs("");
+            shimsDTS.write("")
+            shimsDTS.write("")
+            if (currAttrs || currDocComment) {
+                shimsDTS.write(currDocComment)
+                shimsDTS.write(currAttrs)
+                currAttrs = ""
+                currDocComment = ""
+            }
+        }
+
+        function parseArg(parsedAttrs: pxtc.CommentAttrs, s: string) {
+            s = s.trim()
+            let m = /(.*)=\s*(-?\w+)$/.exec(s)
+            let defl = ""
+            let qm = ""
+            if (m) {
+                defl = m[2]
+                qm = "?"
+                s = m[1].trim()
+            }
+            m = /^(.*?)(\w+)$/.exec(s)
+            if (!m) {
+                err("invalid argument: " + s)
+                return {
+                    name: "???",
+                    type: "int"
+                }
+            }
+
+            let argName = m[2]
+
+            if (parsedAttrs.paramDefl[argName]) {
+                defl = parsedAttrs.paramDefl[argName]
+                qm = "?"
+            }
+
+            let numVal = defl ? U.lookup(enumVals, defl) : null
+            if (numVal != null)
+                defl = numVal
+
+            if (defl) {
+                if (parseCppInt(defl) == null)
+                    err("Invalid default value (non-integer): " + defl)
+                currAttrs += ` ${argName}.defl=${defl}`
+            }
+
+            return {
+                name: argName + qm,
+                type: m[1]
+            }
+        }
+
+
         function parseCpp(src: string, isHeader: boolean) {
-            let currNs = ""
-            let currDocComment = ""
-            let currAttrs = ""
-            let inDocComment = false
+            currNs = ""
+            currDocComment = ""
+            currAttrs = ""
+            inDocComment = false
+
             let indexedInstanceAttrs: pxtc.CommentAttrs
             let indexedInstanceIdx = -1
 
@@ -308,9 +472,9 @@ namespace pxt.cpp {
                 }
             }
 
-            let outp = ""
-            let inEnum = false
-            let enumVal = 0
+            outp = ""
+            inEnum = false
+            enumVal = 0
 
             enumsDTS.setNs("")
             shimsDTS.setNs("")
@@ -319,94 +483,24 @@ namespace pxt.cpp {
                 ++lineNo
 
                 // remove comments (NC = no comments)
-                let lnNC = ln.replace(/\/\/.*/, "").replace(/\/\*/, "")
+                let lnNC = stripComments(ln)
 
-                if (inEnum && lnNC.indexOf("}") >= 0) {
-                    inEnum = false
-                    enumsDTS.write("}")
-                }
+                processEnumLine(ln)
 
-                if (inEnum) {
-                    // parse the enum case, with lots of optional stuff (?)
-                    let mm = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(lnNC)
-                    if (mm) {
-                        let nm = mm[1]
-                        let v = mm[3]
-                        let opt = ""
-                        if (v) {
-                            // user-supplied value
-                            v = v.trim()
-                            let curr = U.lookup(enumVals, v)
-                            if (curr != null) {
-                                opt = "  // " + v
-                                v = curr
-                            }
-                            enumVal = parseCppInt(v)
-                            if (enumVal == null)
-                                err("cannot determine value of " + lnNC)
-                        } else {
-                            // no user-supplied value
-                            enumVal++
-                            v = enumVal + ""
-                        }
-                        enumsDTS.write(`    ${toJs(nm)} = ${v},${opt}`)
-                    } else {
-                        enumsDTS.write(ln)
-                    }
-                }
-
-                // TODO: why do we allow class/struct here?
+                // "enum class" and "enum struct" is C++ syntax to force scoping of
+                // enum members
                 let enM = /^\s*enum\s+(|class\s+|struct\s+)(\w+)\s*({|$)/.exec(lnNC)
                 if (enM) {
-                    inEnum = true
-                    enumVal = -1
-                    enumsDTS.write("")
-                    enumsDTS.write("")
-                    if (currAttrs || currDocComment) {
-                        enumsDTS.write(currDocComment)
-                        enumsDTS.write(currAttrs)
-                        currAttrs = ""
-                        currDocComment = ""
-                    }
-                    enumsDTS.write(`declare const enum ${toJs(enM[2])} ${enM[3]}`)
+                    enterEnum(enM[2], enM[3])
 
                     if (!isHeader) {
                         protos.setNs(currNs)
                         protos.write(`enum ${enM[2]} : int;`)
                     }
-
-                    knownEnums[enM[2]] = true
                 }
 
-                if (inEnum) {
-                    outp += ln + "\n"
+                if (handleComments(ln))
                     return
-                }
-
-                if (/^\s*\/\*\*/.test(ln)) {
-                    inDocComment = true
-                    currDocComment = ln + "\n"
-                    if (/\*\//.test(ln)) inDocComment = false
-                    outp += "//\n"
-                    return
-                }
-
-                if (inDocComment) {
-                    currDocComment += ln + "\n"
-                    if (/\*\//.test(ln)) {
-                        inDocComment = false
-                    }
-                    outp += "//\n"
-                    return
-                }
-
-                if (/^\s*\/\/%/.test(ln)) {
-                    currAttrs += ln + "\n"
-                    outp += "//\n"
-                    return
-                }
-
-                outp += ln + "\n"
 
                 if (/^typedef.*;\s*$/.test(ln)) {
                     protos.setNs(currNs);
@@ -418,29 +512,15 @@ namespace pxt.cpp {
                     //if (currNs) err("more than one namespace declaration not supported")
                     currNs = m[1]
                     if (interfaceName()) {
-                        shimsDTS.setNs("");
-                        shimsDTS.write("")
-                        shimsDTS.write("")
-                        if (currAttrs || currDocComment) {
-                            shimsDTS.write(currDocComment)
-                            shimsDTS.write(currAttrs)
-                            currAttrs = ""
-                            currDocComment = ""
-                        }
+                        finishNamespace()
                         let tpName = interfaceName()
                         shimsDTS.setNs(currNs, `declare interface ${tpName} {`)
                     } else if (currAttrs || currDocComment) {
-                        shimsDTS.setNs("");
-                        shimsDTS.write("")
-                        shimsDTS.write("")
-                        shimsDTS.write(currDocComment)
-                        shimsDTS.write(currAttrs)
+                        finishNamespace()
                         shimsDTS.setNs(toJs(currNs))
                         enumsDTS.setNs(toJs(currNs))
-                        currAttrs = ""
-                        currDocComment = ""
                     }
-                    return;
+                    return
                 }
 
                 // function definition
@@ -456,41 +536,9 @@ namespace pxt.cpp {
                     currAttrs = currAttrs.trim().replace(/ \w+\.defl=\w+/g, "")
                     let argsFmt = mapRunTimeType(retTp)
                     let args = origArgs.split(/,/).filter(s => !!s).map(s => {
-                        s = s.trim()
-                        let m = /(.*)=\s*(-?\w+)$/.exec(s)
-                        let defl = ""
-                        let qm = ""
-                        if (m) {
-                            defl = m[2]
-                            qm = "?"
-                            s = m[1].trim()
-                        }
-                        m = /^(.*?)(\w+)$/.exec(s)
-                        if (!m) {
-                            err("invalid argument: " + s)
-                            return ""
-                        }
-
-                        let argName = m[2]
-
-                        argsFmt += mapRunTimeType(m[1])
-
-                        if (parsedAttrs.paramDefl[argName]) {
-                            defl = parsedAttrs.paramDefl[argName]
-                            qm = "?"
-                        }
-
-                        let numVal = defl ? U.lookup(enumVals, defl) : null
-                        if (numVal != null)
-                            defl = numVal
-
-                        if (defl) {
-                            if (parseCppInt(defl) == null)
-                                err("Invalid default value (non-integer): " + defl)
-                            currAttrs += ` ${argName}.defl=${defl}`
-                        }
-
-                        return `${argName}${qm}: ${mapType(m[1])}`
+                        let r = parseArg(parsedAttrs, s)
+                        argsFmt += mapRunTimeType(r.type)
+                        return `${r.name}: ${mapType(r.type)}`
                     })
                     let numArgs = args.length
                     let fi: pxtc.FuncInfo = {
@@ -572,6 +620,164 @@ namespace pxt.cpp {
             return outp
         }
 
+        function parseCs(src: string) {
+            currNs = ""
+            currDocComment = ""
+            currAttrs = ""
+            inDocComment = false
+
+            // replace #if false .... #endif with newlines
+            src = src.replace(/^\s*#\s*if\s+false\s*$[^]*?^\s*#\s*endif\s*$/mg, f => f.replace(/[^\n]/g, ""))
+
+            lineNo = 0
+
+            // the C# types we can map to TypeScript
+            function mapType(tp: string) {
+                switch (tp.replace(/\s+/g, "")) {
+                    case "void": return "void";
+                    case "int": return "int32";
+                    case "uint": return "uint32";
+                    case "float":
+                    case "double": return "number";
+                    case "ushort": return "uint16";
+                    case "short": return "int16";
+                    case "byte": return "uint8";
+                    case "sbyte": return "int8";
+                    case "bool": return "boolean";
+                    case "string":
+                    case "String": return "string";
+                    case "Function": return "() => void";
+                    case "object": return "any";
+                    default:
+                        return toJs(tp);
+                }
+            }
+
+            function isNumberType(tp: string) {
+                tp = tp.replace(/\s+/g, "")
+
+                if (U.lookup(knownEnums, tp))
+                    return true
+                let mt = mapType(tp)
+                if (mt == "number" || /^u?int\d+$/.test(mt))
+                    return true
+
+                return false
+            }
+
+            function mapRunTimeType(tp: string) {
+                tp = tp.replace(/\s+/g, "")
+                if (isNumberType(tp))
+                    tp = "#" + tp
+                return tp + ";"
+            }
+
+            outp = "" // we don't really care about this one for C#
+            inEnum = false
+            enumVal = 0
+
+            enumsDTS.setNs("")
+            shimsDTS.setNs("")
+
+            src.split(/\r?\n/).forEach(ln => {
+                ++lineNo
+
+                // remove comments (NC = no comments)
+                let lnNC = stripComments(ln)
+
+                processEnumLine(ln)
+
+                let enM = /^\s*(public) enum\s+(\w+)\s*({|$)/.exec(lnNC)
+                if (enM) {
+                    enterEnum(enM[2], enM[3])
+                }
+
+                if (handleComments(ln))
+                    return
+
+                let m = /^\s*public (static\s+|partial\s+)*class\s+(\w+)/.exec(ln)
+                if (m) {
+                    currNs = m[2]
+                    if (currAttrs || currDocComment) {
+                        finishNamespace()
+                        shimsDTS.setNs(toJs(currNs))
+                        enumsDTS.setNs(toJs(currNs))
+                    }
+                    return
+                }
+
+                // function definition
+                m = /^\s*public static (async\s+)*([\w\[\]<>]+)\s+(\w+)\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
+                if (currAttrs && m) {
+                    let parsedAttrs = pxtc.parseCommentString(currAttrs)
+                    // top-level functions (outside of a namespace) are not permitted
+                    if (!currNs) err("missing namespace declaration");
+                    let retTp = m[2]
+                    let funName = m[3]
+                    let origArgs = m[4]
+                    let isAsync = false
+                    currAttrs = currAttrs.trim().replace(/ \w+\.defl=\w+/g, "")
+                    if (retTp == "Task") {
+                        retTp = "void"
+                        isAsync = true
+                    } else {
+                        let mm = /^Task<(.*)>$/.exec(retTp)
+                        if (mm) {
+                            isAsync = true
+                            retTp = mm[1]
+                        }
+                    }
+                    let argsFmt = mapRunTimeType(retTp)
+
+                    if (isAsync) {
+                        argsFmt = "async;" + argsFmt
+                        currAttrs += " async"
+                    }
+
+                    let args: string[] = []
+
+                    for (let s of origArgs.split(/,/)) {
+                        if (!s) continue
+                        let r = parseArg(parsedAttrs, s)
+                        let mapped = mapRunTimeType(r.type)
+                        argsFmt += mapped
+                        if (mapped != "CTX;")
+                            args.push(`${r.name}: ${mapType(r.type)}`)
+                    }
+
+                    let fi: pxtc.FuncInfo = {
+                        name: currNs + "::" + funName,
+                        argsFmt,
+                        value: null
+                    }
+
+                    //console.log(`${ln.trim()} : ${argsFmt}`)
+                    if (currDocComment) {
+                        shimsDTS.setNs(toJs(currNs))
+                        shimsDTS.write("")
+                        shimsDTS.write(currDocComment)
+                        currAttrs += ` shim=${fi.name}`
+                        shimsDTS.write(currAttrs)
+                        funName = toJs(funName)
+                        shimsDTS.write(`function ${funName}(${args.join(", ")}): ${mapType(retTp)};`)
+                    }
+                    currDocComment = ""
+                    currAttrs = ""
+                    res.functions.push(fi)
+                    return;
+                }
+
+                if (currAttrs && ln.trim()) {
+                    err("declaration not understood: " + ln)
+                    currAttrs = ""
+                    currDocComment = ""
+                    return;
+                }
+            })
+
+            return outp
+        }
+
         const currSettings: Map<any> = U.clone(compileService.yottaConfig || {})
         const optSettings: Map<any> = {}
         const settingSrc: Map<Package> = {}
@@ -626,8 +832,8 @@ namespace pxt.cpp {
 
 
         // This is overridden on the build server, but we need it for command line build
-        if (isYotta && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
-            let cs = pxt.appTarget.compileService
+        if (isYotta && compile.hasHex) {
+            let cs = compileService
             U.assert(!!cs.yottaCorePackage);
             U.assert(!!cs.githubCorePackage);
             U.assert(!!cs.gittag);
@@ -650,9 +856,10 @@ namespace pxt.cpp {
                 } else {
                     U.assert(!seenMain)
                 }
+                let ext = isCSharp ? ".cs" : ".cpp"
                 for (let fn of pkg.getFiles()) {
-                    let isHeader = U.endsWith(fn, ".h")
-                    if (isHeader || U.endsWith(fn, ".cpp")) {
+                    let isHeader = !isCSharp && U.endsWith(fn, ".h")
+                    if (isHeader || U.endsWith(fn, ext)) {
                         let fullName = pkg.config.name + "/" + fn
                         if ((pkg.config.name == "base" || pkg.config.name == "core") && isHeader)
                             fullName = fn
@@ -662,16 +869,23 @@ namespace pxt.cpp {
                         if (src == null)
                             U.userError(lf("C++ file {0} is missing in package {1}.", fn, pkg.config.name))
                         fileName = fullName
-                        // parseCpp() will remove doc comments, to prevent excessive recompilation
-                        src = parseCpp(src, isHeader)
-                        res.extensionFiles[sourcePath + fullName] = src
+                        if (isCSharp) {
+                            pxt.debug("Parse C#: " + fullName)
+                            parseCs(src)
+                            fullCS += `\n\n\n#line 1 "${fullName}"\n` + src
+                        } else {
+                            // parseCpp() will remove doc comments, to prevent excessive recompilation
+                            pxt.debug("Parse C++: " + fullName)
+                            src = parseCpp(src, isHeader)
+                            res.extensionFiles[sourcePath + fullName] = src
+                        }
 
                         if (pkg.level == 0)
                             res.onlyPublic = false
                         if (pkg.verProtocol() && pkg.verProtocol() != "pub" && pkg.verProtocol() != "embed")
                             res.onlyPublic = false
                     }
-                    if (U.endsWith(fn, ".c") || U.endsWith(fn, ".S") || U.endsWith(fn, ".s")) {
+                    if (!isCSharp && (U.endsWith(fn, ".c") || U.endsWith(fn, ".S") || U.endsWith(fn, ".s"))) {
                         let src = pkg.readFile(fn)
                         res.extensionFiles[sourcePath + pkg.config.name + "/" + fn.replace(/\.S$/, ".s")] = src
                     }
@@ -685,10 +899,15 @@ namespace pxt.cpp {
         if (allErrors)
             U.userError(allErrors)
 
+        fullCS += "\n#line default\n"
+
         // merge optional settings
         U.jsonCopyFrom(optSettings, currSettings);
         const configJson = U.jsonUnFlatten(optSettings)
-        if (isDockerMake) {
+        if (isCSharp) {
+            res.extensionFiles["/lib.cs"] = fullCS
+            res.generatedFiles["/module.json"] = "{}"
+        } else if (isDockerMake) {
             let packageJson = {
                 name: "pxt-app",
                 private: true,
@@ -696,7 +915,7 @@ namespace pxt.cpp {
             }
             res.generatedFiles["/package.json"] = JSON.stringify(packageJson, null, 4) + "\n"
         } else if (isCodal) {
-            let cs = pxt.appTarget.compileService
+            let cs = compileService
             let codalJson = {
                 "target": cs.codalTarget + ".json",
                 "definitions": U.clone(cs.codalDefinitions) || {},
@@ -712,7 +931,7 @@ namespace pxt.cpp {
             })
             res.generatedFiles["/codal.json"] = JSON.stringify(codalJson, null, 4) + "\n"
         } else if (isPlatformio) {
-            const iniLines = pxt.appTarget.compileService.platformioIni.slice()
+            const iniLines = compileService.platformioIni.slice()
             // TODO merge configjson
             iniLines.push("lib_deps =")
             U.iterMap(res.platformio.dependencies, (pkg, ver) => {
@@ -723,9 +942,8 @@ namespace pxt.cpp {
         } else {
             res.yotta.config = configJson;
             let name = "pxt-app"
-            if (pxt.appTarget.compileService && pxt.appTarget.compileService.yottaBinary)
-                name = pxt.appTarget.compileService.yottaBinary
-                    .replace(/-combined/, "").replace(/\.hex$/, "")
+            if (compileService.yottaBinary)
+                name = compileService.yottaBinary.replace(/-combined/, "").replace(/\.hex$/, "")
             let moduleJson = {
                 "name": name,
                 "version": "0.0.0",
@@ -743,11 +961,12 @@ namespace pxt.cpp {
             pxtConfig += "#define PXT_MEMLEAK_DEBUG 1\n"
         }
 
-        res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
-        res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
-        if (isYotta)
-            res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
-        res.generatedFiles[sourcePath + "main.cpp"] = `
+        if (!isCSharp) {
+            res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
+            res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
+            if (isYotta)
+                res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
+            res.generatedFiles[sourcePath + "main.cpp"] = `
 #include "pxt.h"
 #ifdef PXT_MAIN
 PXT_MAIN
@@ -760,6 +979,7 @@ int main() {
 }
 #endif
 `
+        }
         if (makefile) {
             let allfiles = Object.keys(res.extensionFiles).concat(Object.keys(res.generatedFiles))
             let inc = ""

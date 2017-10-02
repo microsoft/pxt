@@ -88,6 +88,18 @@ export const buildEngines: Map<BuildEngine> = {
         deployAsync: msdDeployCoreAsync,
         appPath: "pxtapp"
     },
+
+    cs: {
+        updateEngineAsync: noopAsync,
+        buildAsync: () => runBuildCmdAsync("mcs", "-t:library", "-out:pxtapp.dll", "lib.cs"),
+        setPlatformAsync: noopAsync,
+        patchHexInfo: patchCSharpDll,
+        prepBuildDirAsync: noopAsync,
+        buildPath: "built/cs",
+        moduleConfig: "module.json",
+        deployAsync: buildFinalCsAsync,
+        appPath: "pxtapp"
+    },
 }
 
 // once we have a different build engine, set this appropriately
@@ -114,6 +126,13 @@ function patchDockermakeHexInfo(extInfo: pxtc.ExtensionInfo) {
     let hexPath = thisBuild.buildPath + "/bld/pxt-app.hex"
     return {
         hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
+    }
+}
+
+function patchCSharpDll(extInfo: pxtc.ExtensionInfo) {
+    let hexPath = thisBuild.buildPath + "/lib.cs"
+    return {
+        hex: [fs.readFileSync(hexPath, "utf8")]
     }
 }
 
@@ -421,6 +440,14 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
 const writeFileAsync: any = Promise.promisify(fs.writeFile)
 const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Promise.promisify(child_process.exec)
 const readDirAsync = Promise.promisify(fs.readdir)
+
+function buildFinalCsAsync(res: ts.pxtc.CompileResult) {
+    return nodeutil.spawnAsync({
+        cmd: "mcs",
+        args: ["-out:pxtapp.exe", "binary.cs"],
+        cwd: "built",
+    })
+}
 
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
     const firmware = pxt.outputName()

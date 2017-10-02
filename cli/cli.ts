@@ -1732,41 +1732,41 @@ function buildTargetCoreAsync() {
 
     return buildTargetDocsAsync(false, true)
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
-        pxt.log(`building ${dirname}`);
-        let isPrj = /prj$/.test(dirname);
-        const config = JSON.parse(fs.readFileSync(pxt.CONFIG_NAME, "utf8")) as pxt.PackageConfig;
-        if (config && config.additionalFilePath) {
-            dirsToWatch.push(path.resolve(config.additionalFilePath));
-        }
+            pxt.log(`building ${dirname}`);
+            let isPrj = /prj$/.test(dirname);
+            const config = JSON.parse(fs.readFileSync(pxt.CONFIG_NAME, "utf8")) as pxt.PackageConfig;
+            if (config && config.additionalFilePath) {
+                dirsToWatch.push(path.resolve(config.additionalFilePath));
+            }
 
-        return pkg.filesToBePublishedAsync(true)
-            .then(res => {
-                if (!isPrj)
-                    cfg.bundledpkgs[path.basename(dirname)] = res
-            })
-            .then(() => testForBuildTargetAsync(isPrj))
-            .then((compileOpts) => {
-                // For the projects, we need to save the base HEX file to the offline HEX cache
-                if (isPrj && pxt.appTarget.compile.hasHex) {
-                    if (!compileOpts) {
-                        console.error(`Failed to extract HEX image for project ${dirname}`);
-                        return;
+            return pkg.filesToBePublishedAsync(true)
+                .then(res => {
+                    if (!isPrj)
+                        cfg.bundledpkgs[path.basename(dirname)] = res
+                })
+                .then(() => testForBuildTargetAsync(isPrj))
+                .then((compileOpts) => {
+                    // For the projects, we need to save the base HEX file to the offline HEX cache
+                    if (isPrj && pxt.appTarget.compile.hasHex) {
+                        if (!compileOpts) {
+                            console.error(`Failed to extract HEX image for project ${dirname}`);
+                            return;
+                        }
+
+                        // Place the base HEX image in the hex cache if necessary
+                        let sha = compileOpts.extinfo.sha;
+                        let hex: string[] = compileOpts.hexinfo.hex;
+                        let hexFile = path.join(hexCachePath, sha + ".hex");
+
+                        if (fs.existsSync(hexFile)) {
+                            pxt.debug(`.hex image already in offline cache for project ${dirname}`);
+                        } else {
+                            fs.writeFileSync(hexFile, hex.join(os.EOL));
+                            pxt.debug(`created .hex image in offline cache for project ${dirname}: ${hexFile}`);
+                        }
                     }
-
-                    // Place the base HEX image in the hex cache if necessary
-                    let sha = compileOpts.extinfo.sha;
-                    let hex: string[] = compileOpts.hexinfo.hex;
-                    let hexFile = path.join(hexCachePath, sha + ".hex");
-
-                    if (fs.existsSync(hexFile)) {
-                        pxt.debug(`.hex image already in offline cache for project ${dirname}`);
-                    } else {
-                        fs.writeFileSync(hexFile, hex.join(os.EOL));
-                        pxt.debug(`created .hex image in offline cache for project ${dirname}: ${hexFile}`);
-                    }
-                }
-            })
-    }, /*includeProjects*/ true))
+                })
+        }, /*includeProjects*/ true))
         .then(() => {
             let info = travisInfo()
             cfg.versions = {
@@ -4731,6 +4731,8 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     if (trg.compileService) {
         compileId = trg.compileService.buildEngine || "yotta"
     }
+    if (trg.compile.nativeType == pxtc.NATIVE_TYPE_CS)
+        compileId = "cs"
 
     pxt.log(`Using target PXT/${trg.id} with build engine ${compileId}`)
     pxt.log(`  Target dir:   ${nodeutil.targetDir}`)

@@ -155,6 +155,12 @@ namespace ts.pxtc {
 
             patchSegmentHex(hex)
 
+            if (opts.nativeType == NATIVE_TYPE_CS) {
+                for (let inf of funs)
+                    funcInfo[inf.name] = inf;
+                return
+            }
+
             if (hex.length <= 2) {
                 elfInfo = pxt.elf.parse(U.fromHex(hex[0]))
                 bytecodeStartIdx = -1
@@ -297,6 +303,8 @@ namespace ts.pxtc {
             let nm = `${funname}(...) (shim=${shimName})`
             let inf = lookupFunc(shimName)
             if (inf) {
+                if (target.nativeType == NATIVE_TYPE_CS)
+                    return
                 if (!hasRet) {
                     if (inf.argsFmt[0] != "V")
                         U.userError("expecting procedure for " + nm);
@@ -612,7 +620,7 @@ ${hex.hexPrelude()}
     .word 0 ; reserved
 `
         let snippets: AssemblerSnippets = null;
-        if (opts.target.nativeType == "AVR")
+        if (opts.target.nativeType == NATIVE_TYPE_AVR)
             snippets = new AVRSnippets()
         else
             snippets = new ThumbSnippets()
@@ -661,7 +669,7 @@ ${hex.hexPrelude()}
 
     function mkProcessorFile(nativeType: string) {
         let processor: assembler.AbstractProcessor = null
-        if (nativeType == "AVR")
+        if (nativeType == NATIVE_TYPE_AVR)
             processor = new avr.AVRProcessor()
         else
             processor = new thumb.ThumbProcessor()

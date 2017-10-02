@@ -22,9 +22,20 @@ namespace pxt {
             comp.jsRefCounting = true
         if (!comp.hasHex && comp.floatingPoint === undefined)
             comp.floatingPoint = true
-        if (comp.nativeType == "AVR") {
+        if (comp.hasHex && !comp.nativeType)
+            comp.nativeType = pxtc.NATIVE_TYPE_THUMB
+        if (comp.nativeType == pxtc.NATIVE_TYPE_AVR) {
             comp.shortPointers = true
             comp.flashCodeAlign = 0x10
+        }
+        if (comp.nativeType == pxtc.NATIVE_TYPE_CS) {
+            comp.floatingPoint = true
+            comp.needsUnboxing = true
+            comp.jsRefCounting = false
+        }
+        if (comp.taggedInts) {
+            comp.floatingPoint = true
+            comp.needsUnboxing = true
         }
         if (!appTarget.appTheme) appTarget.appTheme = {}
         if (!appTarget.appTheme.embedUrl)
@@ -215,6 +226,8 @@ namespace pxt {
 
     export function outputName(trg: CompileTarget = null) {
         if (!trg) trg = appTarget.compile
+        if (trg.nativeType == ts.pxtc.NATIVE_TYPE_CS)
+            return ts.pxtc.BINARY_CS
         if (trg.useUF2)
             return ts.pxtc.BINARY_UF2
         else if (trg.useELF)
