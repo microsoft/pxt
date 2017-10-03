@@ -269,20 +269,21 @@ export class ProjectView
     }
 
     openSerial(isSim: boolean) {
-        if (pxt.appTarget.serial && pxt.appTarget.serial.useEditor) {
-            let mainEditorPkg = pkg.mainEditorPkg()
-            if (mainEditorPkg) {
-                if (!mainEditorPkg.lookupFile("this/" + pxt.SERIAL_EDITOR_FILE)) {
-                    mainEditorPkg.setFile(pxt.SERIAL_EDITOR_FILE, "serial\n")
-                }
-                this.serialEditor.setSim(isSim)
-                let event = "serial." + (isSim ? "simulator" : "device") + "EditorOpened"
-                pxt.tickEvent(event)
-                this.setFile(mainEditorPkg.lookupFile("this/" + pxt.SERIAL_EDITOR_FILE))
-            }
-        } else {
-            return
+        if (!pxt.appTarget.serial || !pxt.appTarget.serial.useEditor)
+            return; // not supported in this editor
+        if (this.editor == this.serialEditor && this.serialEditor.isSim == isSim)
+            return; // already showing
+
+        const mainEditorPkg = pkg.mainEditorPkg()
+        if (!mainEditorPkg) return; // no project loaded
+
+        if (!mainEditorPkg.lookupFile("this/" + pxt.SERIAL_EDITOR_FILE)) {
+            mainEditorPkg.setFile(pxt.SERIAL_EDITOR_FILE, "serial\n")
         }
+        this.serialEditor.setSim(isSim)
+        let event = "serial." + (isSim ? "simulator" : "device") + "EditorOpened"
+        pxt.tickEvent(event)
+        this.setFile(mainEditorPkg.lookupFile("this/" + pxt.SERIAL_EDITOR_FILE))
     }
 
     openPreviousEditor() {
@@ -1242,8 +1243,8 @@ export class ProjectView
 
     clearSerial() {
         this.serialEditor.clear()
-        let simIndicator = this.refs["simIndicator"] as serialindicator.SerialIndicator
-        let devIndicator = this.refs["devIndicator"] as serialindicator.SerialIndicator
+        const simIndicator = this.refs["simIndicator"] as serialindicator.SerialIndicator
+        const devIndicator = this.refs["devIndicator"] as serialindicator.SerialIndicator
         if (simIndicator) simIndicator.clear()
         if (devIndicator) devIndicator.clear()
     }
@@ -1714,6 +1715,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const selectLanguage = targetTheme.selectLanguage;
         const betaUrl = targetTheme.betaUrl;
         const showEditorToolbar = !hideEditorToolbar && this.editor.hasEditorToolbar();
+        const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
@@ -1863,21 +1865,22 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true })} /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
-                        <div id="serialPreview" className="ui editorFloat portrait hide">
-                            <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={() => this.openSerial(true)} />
-                            <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={() => this.openSerial(false)} />
-                        </div>
+                        {useSerialEditor ?
+                            <div id="serialPreview" className="ui editorFloat portrait hide">
+                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={() => this.openSerial(true)} />
+                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={() => this.openSerial(false)} />
+                            </div> : undefined}
                         {sandbox || isBlocks || this.editor == this.serialEditor ? undefined : <filelist.FileList parent={this} />}
                     </aside>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {this.allEditors.map(e => e.displayOuter())}
                 </div>
-                {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined }
-                {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined }
-                {showEditorToolbar ? <div id="editortools" role="complementary" aria-label={lf("Editor toolbar") }>
+                {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined}
+                {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined}
+                {showEditorToolbar ? <div id="editortools" role="complementary" aria-label={lf("Editor toolbar")}>
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
-                </div> : undefined }
+                </div> : undefined}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.home = v} hasGettingStarted={gettingStarted} />}
