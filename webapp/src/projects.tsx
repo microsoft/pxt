@@ -139,13 +139,20 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 .done(opts => {
                     if (opts) {
                         if (loadBlocks) {
-                            const ts = opts.filesOverride["main.ts"]
-                            compiler.getBlocksAsync()
-                                .then(blocksInfo => compiler.decompileSnippetAsync(ts, blocksInfo))
-                                .then(resp => {
-                                    opts.filesOverride["main.blocks"] = resp
-                                    this.props.parent.newProject(opts);
-                                })
+                            return this.props.parent.createProjectAsync(opts)
+                            .then(() => {
+                                return compiler.getBlocksAsync()
+                                    .then(blocksInfo => compiler.decompileAsync("main.ts", blocksInfo))
+                                    .then(resp => {
+                                        if (resp.success) {
+                                            return this.props.parent.updateFileAsync("main.blocks", resp.outfiles["main.blocks"], true)
+                                        }
+                                        return Promise.resolve();
+                                    })
+                            })
+                            .done(() => {
+                                core.hideLoading();
+                            })
                         } else {
                             this.props.parent.newProject(opts);
                         }
