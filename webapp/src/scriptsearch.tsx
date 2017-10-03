@@ -150,7 +150,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             pxt.packagesConfigAsync()
                 .then(config => pxt.github.latestVersionAsync(scr.fullName, config))
                 .then(tag => pxt.github.pkgConfigAsync(scr.fullName, tag)
-                    .then(cfg => addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
+                .then(cfg => {
+                    core.hideLoading("downloadingpackage");
+                    return cfg;
+                })
+                .then(cfg => addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
                 .catch(core.handleNetworkError)
                 .finally(() => core.hideLoading("downloadingpackage"));
         }
