@@ -203,6 +203,18 @@ export class Editor extends srceditor.Editor {
         return this.rawDataBuffer
     }
 
+    entriesToCSV() {
+        let csv = this.charts.map(chart => `time (s), ${chart.variable} (${chart.source})`).join(', ') + '\r\n';
+        const datas = this.charts.map(chart => chart.line.data);
+        const nl = datas.map(data => data.length).reduce((l, c) => Math.max(l, c));
+        const nc = this.charts.length;
+        for (let i = 0; i < nl; ++i) {
+            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ' , ').join(', ');
+            csv += '\r\n';
+        }
+        return csv;
+    }
+
     showExportDialog() {
         pxt.tickEvent("serial.showExportDialog")
         const targetTheme = pxt.appTarget.appTheme
@@ -219,8 +231,13 @@ export class Editor extends srceditor.Editor {
             hideAgree: true,
             disagreeLbl: lf("Close"),
             onLoaded: (_) => {
-                _.find('#datasavelocalfile').click(() => {
-                    pxt.tickEvent("serial.dataExported")
+                _.find('#datasavecsvfile').click(() => {
+                    pxt.tickEvent("serial.dataExported.csv")
+                    _.modal('hide')
+                    pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")
+                })
+                _.find('#datasavetxtfile').click(() => {
+                    pxt.tickEvent("serial.dataExported.txt")
                     _.modal('hide')
                     pxt.commands.browserDownloadAsync(this.entriesToPlaintext(), "data.txt", "text/plain")
                 })
@@ -228,16 +245,28 @@ export class Editor extends srceditor.Editor {
             htmlBody:
             `<div></div>
                 <div class="ui cards" role="listbox">
-                    <div class="ui card">
+                    <div  id="datasavecsvfile" class="ui link card">
                         <div class="content">
-                            <div class="header">${lf("Local File")}</div>
+                            <div class="header">${lf("CSV File")}</div>
                             <div class="description">
-                                ${lf("Save the data to your 'Downloads' folder.")}
+                                ${lf("Save the chart data streams.")}
                             </div>
                         </div>
-                        <div id="datasavelocalfile" class="ui bottom attached button">
+                        <div class="ui bottom attached button">
                             <i class="download icon"></i>
-                            ${lf("Download data")}
+                            ${lf("Download")}
+                        </div>
+                    </div>
+                    <div id="datasavetxtfile" class="ui link card">
+                        <div class="content">
+                            <div class="header">${lf("Text File")}</div>
+                            <div class="description">
+                                ${lf("Save the text output.")}
+                            </div>
+                        </div>
+                        <div class="ui bottom attached button">
+                            <i class="download icon"></i>
+                            ${lf("Download")}
                         </div>
                     </div>
                 </div>`
@@ -373,7 +402,7 @@ class Chart {
         const data = this.line.data;
         if (data.length == 0) return '';
         const t0 = data[0][0];
-        return `time (s), ${this.variable || "y"}, ${lf("Tip: Insert a Scatter Chart to visualize this data.")}\r\n` +
+        return `time (s), ${this.variable}, ${lf("Tip: Insert a Scatter Chart to visualize this data.")}\r\n` +
             data.map(row => ((row[0] - t0) / 1000) + ", " + row[1]).join('\r\n');
     }
 }
