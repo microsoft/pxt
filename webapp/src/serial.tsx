@@ -16,13 +16,11 @@ export class Editor extends srceditor.Editor {
     charts: Chart[] = []
     chartIdx: number = 0
     consoleBuffer: string = ""
-    // TODO pass these values in with props or config
     isSim: boolean = true
     maxConsoleLineLength: number = 500
     maxConsoleEntries: number = 100
     active: boolean = true
     rawDataBuffer: string = ""
-    //TODO reasonable buffer size?
     maxBufferLength: number = 5000
 
     //refs
@@ -56,7 +54,6 @@ export class Editor extends srceditor.Editor {
 
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
-        //TODO take out the .bind(this)?
         window.addEventListener("message", this.processMessage.bind(this), false)
     }
 
@@ -64,17 +61,14 @@ export class Editor extends srceditor.Editor {
         let msg = ev.data
         if (!this.active || msg.type !== "serial") return;
 
-        //TODO y tho
         const smsg = msg as pxsim.SimulatorSerialMessage
         const sim = !!smsg.sim
         if (sim != this.isSim) return;
 
         const data = smsg.data || ""
         const source = smsg.id || "?"
-        //TODO not using theme anymore
         let theme = source.split("-")[0] || "black"
 
-        //TODO incorporate source?
         this.appendRawData(data)
 
         const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
@@ -87,7 +81,6 @@ export class Editor extends srceditor.Editor {
             }
         }
 
-        //TODO incorporate source?
         this.appendConsoleEntry(data)
     }
 
@@ -189,8 +182,8 @@ export class Editor extends srceditor.Editor {
     }
 
     clear() {
-        this.clearNode(this.chartRoot)
-        this.clearNode(this.consoleRoot)
+        if (this.chartRoot) this.clearNode(this.chartRoot)
+        if (this.clearNode) this.clearNode(this.consoleRoot)
         this.charts = []
         this.consoleBuffer = ""
     }
@@ -270,7 +263,6 @@ export class Editor extends srceditor.Editor {
     }
 
     goBack() {
-        //TODO tight coupling
         pxt.tickEvent("serial.backButton")
         this.parent.openPreviousEditor()
     }
