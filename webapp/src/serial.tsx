@@ -116,8 +116,7 @@ export class Editor extends srceditor.Editor {
             let newChart = new Chart(source, variable, nvalue, this.chartIdx)
             this.chartIdx++
             this.charts.push(newChart)
-            let serialChartRoot = document.getElementById("serialCharts")
-            serialChartRoot.appendChild(newChart.getElement())
+            this.chartRoot.appendChild(newChart.getElement())
         }
     }
 
@@ -190,11 +189,8 @@ export class Editor extends srceditor.Editor {
     }
 
     clear() {
-        //TODO use refs
-        let chartRoot = document.getElementById("serialCharts")
-        let consoleRoot = document.getElementById("serialConsole")
-        this.clearNode(chartRoot)
-        this.clearNode(consoleRoot)
+        this.clearNode(this.chartRoot)
+        this.clearNode(this.consoleRoot)
         this.charts = []
         this.consoleBuffer = ""
     }
