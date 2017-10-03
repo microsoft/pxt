@@ -1502,26 +1502,20 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             });
     }
 
-    exitTutorial(keep?: boolean) {
+    exitTutorial() {
         pxt.tickEvent("tutorial.exit");
         core.showLoading(lf("leaving tutorial..."));
-        this.exitTutorialAsync(keep)
+        this.exitTutorialAsync()
             .then(() => Promise.delay(500))
             .done(() => core.hideLoading());
     }
 
-    exitTutorialAsync(keep?: boolean) {
-        // tutorial project is temporary, no need to delete
+    exitTutorialAsync() {
         let curr = pkg.mainEditorPkg().header;
         let files = pkg.mainEditorPkg().getAllFiles();
-        if (!keep) {
-            curr.isDeleted = true;
-        } else {
-            curr.temporary = false;
-        }
+
         this.setState({ active: false, filters: undefined });
-        return workspace.saveAsync(curr, {})
-            .then(() => { return keep ? workspace.installAsync(curr, files) : Promise.resolve(null); })
+        return workspace.saveAsync(curr, files)
             .then(() => {
                 if (workspace.getHeaders().length > 0) {
                     return this.loadHeaderAsync(workspace.getHeaders()[0], null);

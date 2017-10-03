@@ -138,7 +138,7 @@ namespace pxt.editor {
 
         openTutorials(): void;
         setTutorialStep(step: number): void;
-        exitTutorial(keep?: boolean): void;
+        exitTutorial(): void;
         completeTutorial(): void;
         showTutorialHint(): void;
 
