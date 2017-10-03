@@ -1272,17 +1272,15 @@ export class ProjectView
 
         if (!opts.background)
             this.editor.beforeCompile();
-
-        if (this.state.tracing) {
+        if (this.state.tracing)
             opts.trace = true;
-        }
 
         this.stopSimulator();
-        this.clearSerial();
 
-        let state = this.editor.snapshotState()
+        const state = this.editor.snapshotState()
         return compiler.compileAsync(opts)
             .then(resp => {
+                this.clearSerial();
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles[pxtc.BINARY_JS]) {
                     simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast)
