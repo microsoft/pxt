@@ -40,17 +40,14 @@ export class Editor extends srceditor.Editor {
     }
 
     setVisible(b: boolean) {
-        //TODO stop recording when !b?
-        this.isVisible = b
+        this.isVisible = b;
+        this.isVisible
         if (b) this.startRecording()
+        else this.pauseRecording();
     }
 
     acceptsFile(file: pkg.File) {
         return file.name === pxt.SERIAL_EDITOR_FILE
-    }
-
-    isGraphable(v: string) {
-        return /[a-z]+:-?[0-9.]+/.test(v)
     }
 
     setSim(b: boolean) {
@@ -66,27 +63,33 @@ export class Editor extends srceditor.Editor {
 
     processMessage(ev: MessageEvent) {
         let msg = ev.data
-        if (this.active && msg.type === "serial") {
-            //TODO y tho
-            const smsg = msg as pxsim.SimulatorSerialMessage
-            const sim = !!smsg.sim
-            if (sim == this.isSim) {
-                const data = smsg.data || ""
-                const source = smsg.id || "?"
-                //TODO not using theme anymore
-                let theme = source.split("-")[0] || "black"
+        if (!this.active || msg.type !== "serial") return;
 
-                //TODO incorporate source?
-                this.appendRawData(data)
+        //TODO y tho
+        const smsg = msg as pxsim.SimulatorSerialMessage
+        const sim = !!smsg.sim
+        if (sim != this.isSim) return;
 
-                if (this.isGraphable(data)) {
-                    this.appendGraphEntry(source, data, theme, sim)
-                } else {
-                    //TODO incorporate source?
-                    this.appendConsoleEntry(data)
-                }
+        const data = smsg.data || ""
+        const source = smsg.id || "?"
+        //TODO not using theme anymore
+        let theme = source.split("-")[0] || "black"
+
+        //TODO incorporate source?
+        this.appendRawData(data)
+
+        const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
+        if (m) {
+            const variable = m[2] || ' ';
+            const nvalue = parseFloat(m[3]);
+            if (!isNaN(nvalue)) {
+                this.appendGraphEntry(source, theme, sim, variable, nvalue)
+                return;
             }
         }
+
+        //TODO incorporate source?
+        this.appendConsoleEntry(data)
     }
 
     appendRawData(data: string) {
@@ -97,10 +100,7 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    appendGraphEntry(source: string, data: string, theme: string, sim: boolean) {
-        let m = /^\s*(([^:]+):)?\s*(-?\d+)/i.exec(data)
-        let variable = m ? (m[2] || ' ') : undefined
-        let nvalue = m ? parseInt(m[3]) : null
+    appendGraphEntry(source: string, theme: string, sim: boolean, variable: string, nvalue: number) {
 
         //See if there is a "home chart" that this point belongs to -
         //if not, create a new chart
@@ -228,7 +228,7 @@ export class Editor extends srceditor.Editor {
                 })
             },
             htmlBody:
-                `<div></div>
+            `<div></div>
                 <div class="ui cards" role="listbox">
                     <div class="ui card">
                         <div class="content">
@@ -277,7 +277,7 @@ export class Editor extends srceditor.Editor {
                     <div className="ui grid right aligned padded">
                         <div className="column">
                             <button className="ui small basic blue button" onClick={this.showExportDialog.bind(this)}>
-                                <i className="download icon"></i> lf("Export data")
+                                <i className="download icon"></i> {lf("Export data")}
                             </button>
                         </div>
                     </div>
