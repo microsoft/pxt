@@ -135,9 +135,13 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             pxt.packagesConfigAsync()
                 .then(config => pxt.github.latestVersionAsync(scr.fullName, config))
                 .then(tag => pxt.github.pkgConfigAsync(scr.fullName, tag)
-                    .then(cfg => addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
-                .catch(core.handleNetworkError)
-                .finally(() => core.hideLoading());
+                .then(cfg => {
+                    // Done downloading, hide the loading
+                    core.hideLoading();
+                    return cfg;
+                })
+                .then(cfg => addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
+                .catch(core.handleNetworkError);
         }
         const addDepIfNoConflict = (config: pxt.PackageConfig, version: string) => {
             return pkg.mainPkg.findConflictsAsync(config, version)
@@ -164,7 +168,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             lf("Packages {0} and {1} are incompatible with {2}. Remove them and add {2}?", conflicts.slice(0, -1).map((c) => c.pkg0.id).join(", "), conflicts.slice(-1)[0].pkg0.id, config.name);
 
                         addDependencyPromise = addDependencyPromise
-                            .then(() => core.hideLoading())
                             .then(() => core.confirmAsync({
                                 header: lf("Some packages will be removed"),
                                 agreeLbl: lf("Remove package(s) and add {0}", config.name),
