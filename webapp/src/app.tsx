@@ -483,6 +483,17 @@ export class ProjectView
         })
     }
 
+    updateFileAsync(name: string, content: string, open?: boolean): Promise<void> {
+        const p = pkg.mainEditorPkg();
+        p.setFile(name, content);
+        return p.updateConfigAsync(cfg => cfg.files.indexOf(name) < 0 ? cfg.files.push(name) : 0)
+            .then(() => {
+                if (open) this.setFile(p.lookupFile("this/" + name));
+                return p.savePkgAsync();
+            })
+            .then(() => this.reloadHeaderAsync())
+    }
+
     setSideMarkdown(md: string) {
         let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
