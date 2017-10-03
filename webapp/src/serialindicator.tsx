@@ -5,11 +5,9 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 import * as core from "./core";
 
-//TODO change name of this module
-//TODO fix type of onclick
 export interface SerialIndicatorProps {
     isSim: boolean,
-    onClick: any
+    onClick: () => any
 }
 
 export interface SerialIndicatorState {
@@ -48,7 +46,7 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
                 <div className="detail">
                     <sui.Icon icon="bar graph"/>
                 </div>
-                {lf("Data Viewer")}
+                {lf("Data Viewer") }
                 <div className="detail">
                     {this.props.isSim ? lf("Simulator") : lf("Device") }
                 </div>
