@@ -46,7 +46,7 @@ export class Editor extends srceditor.Editor {
     }
 
     acceptsFile(file: pkg.File) {
-        return file.name === pxt.SERIAL_EDITOR_FILE
+        return file.name === pxt.SERIAL_EDITOR_FILE;
     }
 
     setSim(b: boolean) {
@@ -79,7 +79,7 @@ export class Editor extends srceditor.Editor {
 
         const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
         if (m) {
-            const variable = m[2] || ' ';
+            const variable = m[2] || '';
             const nvalue = parseFloat(m[3]);
             if (!isNaN(nvalue)) {
                 this.appendGraphEntry(source, theme, sim, variable, nvalue)
@@ -100,7 +100,6 @@ export class Editor extends srceditor.Editor {
     }
 
     appendGraphEntry(source: string, theme: string, sim: boolean, variable: string, nvalue: number) {
-
         //See if there is a "home chart" that this point belongs to -
         //if not, create a new chart
         let homeChart: Chart = undefined
@@ -292,10 +291,10 @@ export class Editor extends srceditor.Editor {
 class Chart {
     rootElement: HTMLElement = document.createElement("div")
     canvas: HTMLCanvasElement = undefined
-    line: TimeSeries = new TimeSeries()
-    source: string
-    variable: string
-    chart: SmoothieChart
+    line: TimeSeries = new TimeSeries();
+    source: string;
+    variable: string;
+    chart: SmoothieChart;
     lineConfigs = [
         { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.5)', lineWidth: 5 },
         { strokeStyle: 'rgba(0, 0, 255, 1)', fillStyle: 'rgba(0, 0, 255, 0.5)', lineWidth: 5 },
@@ -323,11 +322,9 @@ class Chart {
         this.variable = variable
         this.chart.addTimeSeries(this.line, this.lineConfigs[chartIdx % 4])
 
-        let canvas = this.makeCanvas()
-        let label = this.makeLabel()
-        this.rootElement.appendChild(label)
-        this.rootElement.appendChild(canvas)
-
+        if (this.variable)
+            this.rootElement.appendChild(this.makeLabel())
+        this.rootElement.appendChild(this.makeCanvas())
         this.addPoint(value)
     }
 
@@ -339,9 +336,12 @@ class Chart {
     }
 
     makeCanvas() {
-        let canvas = document.createElement("canvas")
-        this.chart.streamTo(canvas)
-        this.canvas = canvas
+        let canvas = document.createElement("canvas");
+        this.chart.streamTo(canvas);
+        this.canvas = canvas;
+        this.canvas.addEventListener("click", ev => {
+            pxt.commands.browserDownloadAsync(this.toCSV(), "data.csv", "text/csv")
+        }, false);
         return canvas
     }
 
@@ -358,7 +358,7 @@ class Chart {
     }
 
     addPoint(value: number) {
-        this.line.append(new Date().getTime(), value)
+        this.line.append(Util.now(), value)
     }
 
     start() {
@@ -367,5 +367,13 @@ class Chart {
 
     stop() {
         this.chart.stop()
+    }
+
+    toCSV(): string {
+        const data = this.line.data;
+        if (data.length == 0) return '';
+        const t0 = data[0][0];
+        return `time (s), ${this.variable || "y"}, ${lf("Tip: Insert a Scatter Chart to visualize this data.")}\r\n` +
+            data.map(row => ((row[0] - t0) / 1000) + ", " + row[1]).join('\r\n');
     }
 }
