@@ -42,7 +42,7 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
         if (!this.state.active) return <div />;
         return <div className="ui segment inverted serialindicator" tabIndex={0} onClick={this.props.onClick} onKeyDown={sui.fireClickOnEnter}>
             <div className="ui label circular">
-                <div className="detail">
+                <div className="detail indicator">
                     <span className="ui green empty circular label" />
                 </div>
                 <div className="detail">
