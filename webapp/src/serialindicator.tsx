@@ -5,11 +5,9 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 import * as core from "./core";
 
-//TODO change name of this module
-//TODO fix type of onclick
 export interface SerialIndicatorProps {
     isSim: boolean,
-    onClick: any
+    onClick: () => any
 }
 
 export interface SerialIndicatorState {
@@ -72,7 +70,6 @@ class AnimationPill extends React.Component<AnimationPillProps, {}> {
 
     randomBuffer() {
         let arr: number[] = []
-        //TODO no hardcoded 1000
         for (let i = 0; i < 1000; i++) {
             arr.push(this.randomNumber())
         }
@@ -89,7 +86,6 @@ class AnimationPill extends React.Component<AnimationPillProps, {}> {
         let w = strip.canvas.width
         strip.clearRect(0, 0, w, h)
         strip.strokeStyle = "#676767"
-        //TODO themeable
         strip.lineWidth = 1.0
         let b = 0
         let lastSample = (buffer[b++] + 32768) / 65536.0
