@@ -323,6 +323,22 @@ namespace ts.pxtc {
             return this.reg_gets_imm(reg, v)
         }
 
+        string_literal(lbl: string, s: string) {
+            return `
+.balign 2
+${lbl}meta: .short ${s.length}
+${lbl}: .string ${asmStringLiteral(s)}
+`
+        }
+
+        hex_literal(lbl: string, data: string) {
+            return `
+.balign 2
+${lbl}: .short ${data.length >> 1}
+        .hex ${data}${data.length % 4 == 0 ? "" : "00"}
+`
+        }
+
         // mapping from virtual registers to AVR registers
         rmap_lo: pxt.Map<string> = {
             "r0": "r24",

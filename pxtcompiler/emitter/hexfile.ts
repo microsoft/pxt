@@ -518,35 +518,10 @@ namespace ts.pxtc {
         return s + "\n"
     }
 
-    function stringLiteral(s: string) {
-        let r = "\""
-        for (let i = 0; i < s.length; ++i) {
-            // TODO generate warning when seeing high character ?
-            let c = s.charCodeAt(i) & 0xff
-            let cc = String.fromCharCode(c)
-            if (cc == "\\" || cc == "\"")
-                r += "\\" + cc
-            else if (cc == "\n")
-                r += "\\n"
-            else if (c <= 0xf)
-                r += "\\x0" + c.toString(16)
-            else if (c < 32 || c > 127)
-                r += "\\x" + c.toString(16)
-            else
-                r += cc;
-        }
-        return r + "\""
-    }
-
-    function emitStrings(bin: Binary) {
+    function emitStrings(snippets: AssemblerSnippets, bin: Binary) {
         for (let s of Object.keys(bin.strings)) {
-            let lbl = bin.strings[s]
             // string representation of DAL - 0xffff in general for ref-counted objects means it's static and shouldn't be incr/decred
-            bin.otherLiterals.push(`
-.balign 4
-${lbl}meta: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_STRING + "," : ""} ${s.length}
-${lbl}: .string ${stringLiteral(s)}
-`)
+            bin.otherLiterals.push(snippets.string_literal(bin.strings[s], s))
         }
 
         for (let data of Object.keys(bin.doubles)) {
@@ -559,12 +534,8 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_NUMBER}
         }
 
         for (let data of Object.keys(bin.hexlits)) {
-            let lbl = bin.hexlits[data]
-            bin.otherLiterals.push(`
-.balign 4
-${lbl}: .short 0xffff, ${pxt.REF_TAG_BUFFER}, ${data.length >> 1}
-        .hex ${data}${data.length % 4 == 0 ? "" : "00"}
-`)
+            bin.otherLiterals.push(snippets.hex_literal(bin.hexlits[data], data))
+            bin.otherLiterals.push()
         }
     }
 
@@ -641,7 +612,7 @@ ${hex.hexPrelude()}
         asmsource += hex.asmTotalSource
 
         asmsource += "_js_end:\n"
-        emitStrings(bin)
+        emitStrings(snippets, bin)
         asmsource += bin.otherLiterals.join("")
         asmsource += "_program_end:\n"
 

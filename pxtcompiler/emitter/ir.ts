@@ -726,7 +726,8 @@ namespace ts.pxtc.ir {
         r.jsInfo = jsInfo
         if (full) {
             if (target.nativeType == NATIVE_TYPE_AVR)
-                return rtcall("pxt::ptrOfLiteral", [r])
+                // this works for string and hex literals
+                return rtcall("pxt::stringLiteral", [r])
             else
                 r.args = []
         }

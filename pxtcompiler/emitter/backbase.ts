@@ -9,6 +9,27 @@ namespace ts.pxtc {
         immLimit: number;
     }
 
+
+    export function asmStringLiteral(s: string) {
+        let r = "\""
+        for (let i = 0; i < s.length; ++i) {
+            // TODO generate warning when seeing high character ?
+            let c = s.charCodeAt(i) & 0xff
+            let cc = String.fromCharCode(c)
+            if (cc == "\\" || cc == "\"")
+                r += "\\" + cc
+            else if (cc == "\n")
+                r += "\\n"
+            else if (c <= 0xf)
+                r += "\\x0" + c.toString(16)
+            else if (c < 32 || c > 127)
+                r += "\\x" + c.toString(16)
+            else
+                r += cc;
+        }
+        return r + "\""
+    }
+
     // this class defines the interface between the IR
     // and a particular assembler (Thumb, AVR). Thus,
     // the registers mentioned below are VIRTUAL registers
@@ -55,8 +76,8 @@ namespace ts.pxtc {
         // str?  - true=Store/false=Load
         // src - can range over
         load_reg_src_off(reg: string, src: string, off: string, word?: boolean,
-                         store?: boolean, inf?: BitSizeInfo) {
-                             return "TBD(load_reg_src_off)";
+            store?: boolean, inf?: BitSizeInfo) {
+            return "TBD(load_reg_src_off)";
         }
         rt_call(name: string, r0: string, r1: string) { return "TBD(rt_call)"; }
         call_lbl(lbl: string) { return "TBD(call_lbl)" }
@@ -72,6 +93,23 @@ namespace ts.pxtc {
         load_ptr(lbl: string, reg: string) { return "TBD(load_ptr)" }
         load_ptr_full(lbl: string, reg: string) { return "TBD(load_ptr_full)" }
         emit_int(v: number, reg: string) { return "TBD(emit_int)" }
+
+        string_literal(lbl: string, s: string) {
+            return `
+.balign 4
+${lbl}meta: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_STRING + "," : ""} ${s.length}
+${lbl}: .string ${asmStringLiteral(s)}
+`
+        }
+
+
+        hex_literal(lbl: string, data: string) {
+            return `
+.balign 4
+${lbl}: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_BUFFER + "," : ""} ${data.length >> 1}
+        .hex ${data}${data.length % 4 == 0 ? "" : "00"}
+`
+        }
     }
 
     // helper for emit_int

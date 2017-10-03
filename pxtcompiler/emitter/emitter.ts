@@ -1550,7 +1550,8 @@ ${lbl}: .short 0xffff
                 return ir.rtcall("String_::mkEmpty", [])
             } else {
                 let lbl = bin.emitString(str)
-                return ir.ptrlit(lbl + "meta", JSON.stringify(str), true)
+                let res = ir.ptrlit(lbl + "meta", JSON.stringify(str), true)
+                return res
             }
         }
         function emitLiteral(node: LiteralExpression) {
@@ -1822,8 +1823,8 @@ ${lbl}: .short 0xffff
             // we also generate a fake numeric literal for image literals
             if (e.kind == SK.NullKeyword || e.kind == SK.NumericLiteral)
                 return !!(e as any).isRefOverride
-            // no point doing the incr/decr for these - they are statically allocated anyways
-            if (isStringLiteral(e))
+            // no point doing the incr/decr for these - they are statically allocated anyways (unless on AVR)
+            if (target.nativeType != NATIVE_TYPE_AVR && isStringLiteral(e))
                 return false
             return isRefType(typeOf(e))
         }
