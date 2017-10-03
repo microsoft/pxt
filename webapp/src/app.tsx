@@ -36,9 +36,10 @@ import * as monacoToolbox from "./monacoSnippets"
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
+import * as serial from "./serial"
 import * as blocks from "./blocks"
 import * as codecard from "./codecard"
-import * as logview from "./logview"
+import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as electron from "./electron";
 
@@ -91,6 +92,7 @@ export class ProjectView
     editorFile: pkg.File;
     textEditor: monaco.Editor;
     pxtJsonEditor: pxtjson.Editor;
+    serialEditor: serial.Editor;
     blocksEditor: blocks.Editor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
@@ -266,6 +268,23 @@ export class ProjectView
         this.shouldTryDecompile = false;
     }
 
+    openSerial(isSim: boolean) {
+        if (pxt.appTarget.serial && pxt.appTarget.serial.useEditor) {
+            let mainEditorPkg = pkg.mainEditorPkg()
+            if (mainEditorPkg) {
+                if (!mainEditorPkg.lookupFile("this/" + pxt.SERIAL_EDITOR_FILE)) {
+                    mainEditorPkg.setFile(pxt.SERIAL_EDITOR_FILE, "serial\n")
+                }
+                this.serialEditor.setSim(isSim)
+                let event = "serial." + (isSim ? "simulator" : "device") + "EditorOpened"
+                pxt.tickEvent(event)
+                this.setFile(mainEditorPkg.lookupFile("this/" + pxt.SERIAL_EDITOR_FILE))
+            }
+        } else {
+            return
+        }
+    }
+
     openPreviousEditor() {
         if (this.prevEditorId == "monacoEditor") {
             this.openJavaScript(false);
@@ -351,6 +370,7 @@ export class ProjectView
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
+        this.serialEditor = new serial.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
 
         let changeHandler = () => {
@@ -365,7 +385,7 @@ export class ProjectView
                 this.stopSimulator();
             this.editorChangeHandler();
         }
-        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.serialEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -603,8 +623,7 @@ export class ProjectView
 
         this.stopSimulator(true);
         pxt.blocks.cleanBlocks();
-        let logs = this.refs["logs"] as logview.LogView;
-        logs.clear();
+        this.clearSerial()
         this.setState({
             showFiles: false,
             editorState: editorState,
@@ -1060,7 +1079,7 @@ export class ProjectView
         }
         const simRestart = this.state.running;
         this.setState({ compiling: true });
-        this.clearLog();
+        this.clearSerial();
         this.editor.beforeCompile();
         if (simRestart) this.stopSimulator();
         let state = this.editor.snapshotState()
@@ -1220,9 +1239,12 @@ export class ProjectView
             })
     }
 
-    clearLog() {
-        let logs = this.refs["logs"] as logview.LogView;
-        logs.clear();
+    clearSerial() {
+        this.serialEditor.clear()
+        let simIndicator = this.refs["simIndicator"] as serialindicator.SerialIndicator
+        let devIndicator = this.refs["devIndicator"] as serialindicator.SerialIndicator
+        if (simIndicator) simIndicator.clear()
+        if (devIndicator) devIndicator.clear()
     }
 
     hwDebug() {
@@ -1256,7 +1278,7 @@ export class ProjectView
         }
 
         this.stopSimulator();
-        this.clearLog();
+        this.clearSerial();
 
         let state = this.editor.snapshotState()
         return compiler.compileAsync(opts)
@@ -1692,6 +1714,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const traceTooltip = this.state.tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo");
         const selectLanguage = targetTheme.selectLanguage;
         const betaUrl = targetTheme.betaUrl;
+        const showEditorToolbar = !hideEditorToolbar && this.editor.hasEditorToolbar();
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
@@ -1729,7 +1752,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             hideMenuBar ? 'hideMenuBar' : '',
-            hideEditorToolbar ? 'hideEditorToolbar' : '',
+            !showEditorToolbar ? 'hideEditorToolbar' : '',
             sandbox && simActive ? 'simView' : '',
             'full-abs',
             'dimmable'
@@ -1841,20 +1864,21 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true })} /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
-                        <div className="ui editorFloat portrait hide">
-                            <logview.LogView ref="logs" />
+                        <div id="serialPreview" className="ui editorFloat portrait hide">
+                            <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={() => this.openSerial(true)} />
+                            <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={() => this.openSerial(false)} />
                         </div>
-                        {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
+                        {sandbox || isBlocks || this.editor == this.serialEditor ? undefined : <filelist.FileList parent={this} />}
                     </aside>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {this.allEditors.map(e => e.displayOuter())}
                 </div>
-                {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined}
-                {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined}
-                {hideEditorToolbar ? undefined : <div id="editortools" role="complementary" aria-label={lf("Editor toolbar")}>
+                {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined }
+                {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined }
+                {showEditorToolbar ? <div id="editortools" role="complementary" aria-label={lf("Editor toolbar") }>
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
-                </div>}
+                </div> : undefined }
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.home = v} hasGettingStarted={gettingStarted} />}
@@ -1931,14 +1955,28 @@ function initLogin() {
     }
 }
 
+let hidConnectionPoller: number;
+let hidPollerDelay: number;
+
+function startHidConnectionPoller() {
+    hidConnectionPoller = window.setInterval(initSerial, 5000);
+}
+
+function setHidPollerDelay() {
+    clearTimeout(hidPollerDelay);
+    clearInterval(hidConnectionPoller);
+    hidPollerDelay = window.setTimeout(startHidConnectionPoller, 5000);
+}
+
 function initSerial() {
     if (!pxt.appTarget.serial || !pxt.winrt.isWinRT() && (!Cloud.isLocalHost() || !Cloud.localToken))
         return;
 
     if (hidbridge.shouldUse()) {
-        hidbridge.initAsync()
+        hidbridge.initAsync(true)
             .then(dev => {
                 dev.onSerial = (buf, isErr) => {
+                    setHidPollerDelay();
                     window.postMessage({
                         type: 'serial',
                         id: 'n/a', // TODO
@@ -2379,7 +2417,7 @@ $(document).ready(() => {
             if (state) {
                 theEditor.setState({ editorState: state });
             }
-            initSerial();
+            startHidConnectionPoller();
             initScreenshots();
             initHashchange();
             electron.init();

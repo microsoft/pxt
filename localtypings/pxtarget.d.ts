@@ -74,12 +74,19 @@ declare namespace pxt {
 
     interface AppSerial {
         useHF2?: boolean;
+        useEditor?: boolean;
         vendorId?: string; // used by node-serial
         productId?: string; // used by node-serial
         nameFilter?: string; // regex to match devices
         rawHID?: boolean;
         log?: boolean; // pipe messages to log
         chromeExtension?: string; // unique identifier of the chrome extension
+        editorTheme?: SerialTheme;
+    }
+
+    interface SerialTheme {
+        backgroundColor?: string;
+        strokeColor?: string;
     }
 
     interface AppCloud {
