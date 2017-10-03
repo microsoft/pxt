@@ -34,6 +34,7 @@ export function listAsync() {
 export function serialAsync() {
     return initAsync()
         .then(d => {
+            d.autoReconnect = true
             connectSerial(d)
         })
 }
