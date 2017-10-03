@@ -45,7 +45,7 @@ namespace pxt.winrt {
         const fileTypes = useUf2 ? [".uf2"] : [".hex"];
         const savePicker = new Windows.Storage.Pickers.FileSavePicker();
         savePicker.suggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.documentsLibrary;
-        savePicker.fileTypeChoices.insert("MakeCode binary file", <any>fileTypes);
+        savePicker.fileTypeChoices.insert(Util.lf("MakeCode binary file"), <any>fileTypes);
         savePicker.suggestedFileName = res.downloadFileBaseName;
         return pxt.winrt.promisify(savePicker.pickSaveFileAsync()
             .then((file) => {
