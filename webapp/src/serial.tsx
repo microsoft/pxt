@@ -40,6 +40,7 @@ export class Editor extends srceditor.Editor {
     }
 
     setVisible(b: boolean) {
+        //TODO stop recording when !b?
         this.isVisible = b
         if (b) this.startRecording()
     }
