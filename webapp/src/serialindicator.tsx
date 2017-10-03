@@ -20,7 +20,7 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
 
     constructor(props: any) {
         super(props)
-        this.state = {active: false}
+        this.state = { active: false }
         window.addEventListener("message", this.setActive.bind(this))
     }
 
@@ -29,23 +29,30 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
         if (!this.state.active && msg.type === "serial") {
             const sim = !!msg.sim
             if (sim === this.props.isSim) {
-                this.setState({active: true})
+                this.setState({ active: true })
             }
         }
     }
 
     clear() {
-        this.setState({active: false})
+        this.setState({ active: false })
     }
 
     render() {
         if (!this.state.active) return <div />;
-
-        return <sui.Button
-            title={this.props.isSim ? lf("Simulator serial") : lf("Device serial")}
-            icon="bar graph"
-            onClick={this.props.onClick}
-            onKeyDown={this.props.onClick}
-        />
+        return <div className="ui segment inverted serialindicator" tabIndex={0} onClick={this.props.onClick} onKeyDown={sui.fireClickOnEnter}>
+            <div className="ui label circular">
+                <div className="detail">
+                    <span className="ui green empty circular label" />
+                </div>
+                <div className="detail">
+                    <sui.Icon icon="bar graph"/>
+                </div>
+                {lf("Data Viewer")}
+                <div className="detail">
+                    {this.props.isSim ? lf("Simulator") : lf("Device") }
+                </div>
+            </div>
+        </div>
     }
 }

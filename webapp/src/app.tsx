@@ -1761,8 +1761,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         return (
             <div id='root' className={rootClasses}>
                 {showExperimentalBanner ? <div id="experimentalBanner" className="ui icon top attached fixed negative mini message">
-                    <i className="warning circle icon"></i>
-                    <i className="close icon" onClick={() => this.hideBanner()}></i>
+                    <sui.Icon icon="warning circle" />
+                    <sui.Icon icon="close" onClick={() => this.hideBanner()}/>
                     <div className="content">
                         <div className="header">{lf("You are viewing an experimental version of the editor")}</div>
                         <a href={liveUrl}>{lf("Take me back")}</a>
@@ -1891,11 +1891,11 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use")}</a>
                     <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy")}</a>
-                    <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile()}><i className={`icon ${pxt.appTarget.appTheme.downloadIcon || 'download'}`} />{pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download")}</a></span>
+                    <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile()}><sui.Icon icon={`icon ${pxt.appTarget.appTheme.downloadIcon || 'download'}`} />{pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download")}</a></span>
                 </div> : undefined}
                 {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment" role="alert">
                     <button aria-label={lf("Close")} tabIndex={0} className="ui right floated icon button clear inverted" onClick={consentCookie}>
-                        <i className="remove icon"></i>
+                        <sui.Icon icon="remove" />
                     </button>
                     {lf("By using this site you agree to the use of cookies for analytics.")}
                     <a target="_blank" className="ui link" href={pxt.appTarget.appTheme.privacyUrl} rel="noopener">{lf("Learn more")}</a>

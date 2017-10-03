@@ -35,7 +35,7 @@ export class CardBrowser extends data.Component<IBrowserProps, IBrowserState> {
             <div className="ui content form">
                 <div className="ui fluid icon input">
                     <input type="text" placeholder="Search..." onChange={upd} />
-                    <i className="search icon"/>
+                    <sui.Icon icon="search" />
                 </div>
             </div>
         );

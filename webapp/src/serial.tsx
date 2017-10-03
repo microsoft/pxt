@@ -6,6 +6,7 @@ import * as core from "./core"
 import * as srceditor from "./srceditor"
 import * as sui from "./sui"
 import * as codecard from "./codecard"
+import * as data from "./data";
 
 import Cloud = pxt.Cloud
 import Util = pxt.Util
@@ -26,8 +27,7 @@ export class Editor extends srceditor.Editor {
     maxBufferLength: number = 5000
 
     //refs
-    recordButton: HTMLElement
-    recordIcon: HTMLElement
+    startPauseButton: StartPauseButton
     consoleRoot: HTMLElement
     chartRoot: HTMLElement
 
@@ -158,23 +158,13 @@ export class Editor extends srceditor.Editor {
 
     pauseRecording() {
         this.active = false
-        if (this.recordIcon) this.recordIcon.className = "circle icon"
-        if (this.recordButton) {
-            this.recordButton.classList.remove("green")
-            this.recordButton.classList.add("circular")
-            this.recordButton.classList.add("red")
-        }
+        if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.stop())
     }
 
     startRecording() {
         this.active = true
-        if (this.recordIcon) this.recordIcon.className = "pause icon"
-        if (this.recordButton) {
-            this.recordButton.classList.remove("red")
-            this.recordButton.classList.remove("circular")
-            this.recordButton.classList.add("green")
-        }
+        if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.start())
     }
 
@@ -257,16 +247,14 @@ export class Editor extends srceditor.Editor {
                 <div id="serialHeader" className="ui">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <button ref={e => this.recordButton = e} className={`ui left floated icon button ${this.active ? "green" : "red circular"} toggleRecord`} onClick={this.toggleRecording.bind(this)}>
-                                <i ref={e => this.recordIcon = e} className={this.active ? "pause icon" : "circle icon"}></i>
-                            </button>
-                            <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
+                            <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this) } />
+                            <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device") }</span>
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <button className="ui icon circular small inverted button" onClick={this.goBack.bind(this)}>
-                            <i className="close icon"></i>
-                        </button>
+                        <sui.Button class="ui icon circular small inverted button" onClick={this.goBack.bind(this) }>
+                            <sui.Icon icon="close" />
+                        </sui.Button>
                     </div>
                 </div>
                 <div id="serialCharts" ref={e => this.chartRoot = e}></div>
@@ -275,9 +263,9 @@ export class Editor extends srceditor.Editor {
                 <div id="serialToolbox">
                     <div className="ui grid right aligned padded">
                         <div className="column">
-                            <button className="ui small basic blue button" onClick={this.showExportDialog.bind(this)}>
-                                <i className="download icon"></i> {lf("Export data")}
-                            </button>
+                            <sui.Button class="ui small basic blue button" onClick={this.showExportDialog.bind(this) }>
+                                <sui.Icon icon="download" /> {lf("Export data") }
+                            </sui.Button>
                         </div>
                     </div>
                 </div>
@@ -286,6 +274,33 @@ export class Editor extends srceditor.Editor {
     }
 
     domUpdate() {
+    }
+}
+
+export interface StartPauseButtonProps {
+    active?: boolean;
+    toggle?: () => void;
+}
+
+export interface StartPauseButtonState {
+    active?: boolean;
+}
+
+export class StartPauseButton extends data.Component<StartPauseButtonProps, StartPauseButtonState> {
+    constructor(props: StartPauseButtonProps) {
+        super(props);
+        this.state = {
+            active: this.props.active
+        }
+    }
+
+    renderCore() {
+        const {toggle} = this.props;
+        const {active} = this.state;
+
+        return <sui.Button class={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
+            <sui.Icon icon={active ? "pause icon" : "circle icon"} />
+        </sui.Button>
     }
 }
 
