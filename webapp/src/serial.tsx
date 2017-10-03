@@ -41,8 +41,7 @@ export class Editor extends srceditor.Editor {
 
     setVisible(b: boolean) {
         this.isVisible = b;
-        this.isVisible
-        if (b) this.startRecording()
+        if (this.isVisible) this.startRecording()
         else this.pauseRecording();
     }
 
