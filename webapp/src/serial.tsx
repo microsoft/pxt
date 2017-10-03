@@ -46,7 +46,7 @@ export class Editor extends srceditor.Editor {
     }
 
     acceptsFile(file: pkg.File) {
-        return file.name === pxt.SERIAL_EDITOR_FILE
+        return file.name === pxt.SERIAL_EDITOR_FILE;
     }
 
     setSim(b: boolean) {
@@ -79,7 +79,7 @@ export class Editor extends srceditor.Editor {
 
         const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
         if (m) {
-            const variable = m[2] || ' ';
+            const variable = m[2] || '';
             const nvalue = parseFloat(m[3]);
             if (!isNaN(nvalue)) {
                 this.appendGraphEntry(source, theme, sim, variable, nvalue)
@@ -100,7 +100,6 @@ export class Editor extends srceditor.Editor {
     }
 
     appendGraphEntry(source: string, theme: string, sim: boolean, variable: string, nvalue: number) {
-
         //See if there is a "home chart" that this point belongs to -
         //if not, create a new chart
         let homeChart: Chart = undefined
@@ -117,8 +116,7 @@ export class Editor extends srceditor.Editor {
             let newChart = new Chart(source, variable, nvalue, this.chartIdx)
             this.chartIdx++
             this.charts.push(newChart)
-            let serialChartRoot = document.getElementById("serialCharts")
-            serialChartRoot.appendChild(newChart.getElement())
+            this.chartRoot.appendChild(newChart.getElement())
         }
     }
 
@@ -191,17 +189,26 @@ export class Editor extends srceditor.Editor {
     }
 
     clear() {
-        //TODO use refs
-        let chartRoot = document.getElementById("serialCharts")
-        let consoleRoot = document.getElementById("serialConsole")
-        this.clearNode(chartRoot)
-        this.clearNode(consoleRoot)
+        this.clearNode(this.chartRoot)
+        this.clearNode(this.consoleRoot)
         this.charts = []
         this.consoleBuffer = ""
     }
 
     entriesToPlaintext() {
         return this.rawDataBuffer
+    }
+
+    entriesToCSV() {
+        let csv = this.charts.map(chart => `time (s), ${chart.variable} (${chart.source})`).join(', ') + '\r\n';
+        const datas = this.charts.map(chart => chart.line.data);
+        const nl = datas.map(data => data.length).reduce((l, c) => Math.max(l, c));
+        const nc = this.charts.length;
+        for (let i = 0; i < nl; ++i) {
+            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ' , ').join(', ');
+            csv += '\r\n';
+        }
+        return csv;
     }
 
     showExportDialog() {
@@ -220,8 +227,13 @@ export class Editor extends srceditor.Editor {
             hideAgree: true,
             disagreeLbl: lf("Close"),
             onLoaded: (_) => {
-                _.find('#datasavelocalfile').click(() => {
-                    pxt.tickEvent("serial.dataExported")
+                _.find('#datasavecsvfile').click(() => {
+                    pxt.tickEvent("serial.dataExported.csv")
+                    _.modal('hide')
+                    pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")
+                })
+                _.find('#datasavetxtfile').click(() => {
+                    pxt.tickEvent("serial.dataExported.txt")
                     _.modal('hide')
                     pxt.commands.browserDownloadAsync(this.entriesToPlaintext(), "data.txt", "text/plain")
                 })
@@ -229,16 +241,28 @@ export class Editor extends srceditor.Editor {
             htmlBody:
             `<div></div>
                 <div class="ui cards" role="listbox">
-                    <div class="ui card">
+                    <div  id="datasavecsvfile" class="ui link card">
                         <div class="content">
-                            <div class="header">${lf("Local File")}</div>
+                            <div class="header">${lf("CSV File")}</div>
                             <div class="description">
-                                ${lf("Save the data to your 'Downloads' folder.")}
+                                ${lf("Save the chart data streams.")}
                             </div>
                         </div>
-                        <div id="datasavelocalfile" class="ui bottom attached button">
+                        <div class="ui bottom attached button">
                             <i class="download icon"></i>
-                            ${lf("Download data")}
+                            ${lf("Download")}
+                        </div>
+                    </div>
+                    <div id="datasavetxtfile" class="ui link card">
+                        <div class="content">
+                            <div class="header">${lf("Text File")}</div>
+                            <div class="description">
+                                ${lf("Save the text output.")}
+                            </div>
+                        </div>
+                        <div class="ui bottom attached button">
+                            <i class="download icon"></i>
+                            ${lf("Download")}
                         </div>
                     </div>
                 </div>`
@@ -292,10 +316,10 @@ export class Editor extends srceditor.Editor {
 class Chart {
     rootElement: HTMLElement = document.createElement("div")
     canvas: HTMLCanvasElement = undefined
-    line: TimeSeries = new TimeSeries()
-    source: string
-    variable: string
-    chart: SmoothieChart
+    line: TimeSeries = new TimeSeries();
+    source: string;
+    variable: string;
+    chart: SmoothieChart;
     lineConfigs = [
         { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.5)', lineWidth: 5 },
         { strokeStyle: 'rgba(0, 0, 255, 1)', fillStyle: 'rgba(0, 0, 255, 0.5)', lineWidth: 5 },
@@ -323,11 +347,9 @@ class Chart {
         this.variable = variable
         this.chart.addTimeSeries(this.line, this.lineConfigs[chartIdx % 4])
 
-        let canvas = this.makeCanvas()
-        let label = this.makeLabel()
-        this.rootElement.appendChild(label)
-        this.rootElement.appendChild(canvas)
-
+        if (this.variable)
+            this.rootElement.appendChild(this.makeLabel())
+        this.rootElement.appendChild(this.makeCanvas())
         this.addPoint(value)
     }
 
@@ -339,9 +361,12 @@ class Chart {
     }
 
     makeCanvas() {
-        let canvas = document.createElement("canvas")
-        this.chart.streamTo(canvas)
-        this.canvas = canvas
+        let canvas = document.createElement("canvas");
+        this.chart.streamTo(canvas);
+        this.canvas = canvas;
+        this.canvas.addEventListener("click", ev => {
+            pxt.commands.browserDownloadAsync(this.toCSV(), "data.csv", "text/csv")
+        }, false);
         return canvas
     }
 
@@ -358,7 +383,7 @@ class Chart {
     }
 
     addPoint(value: number) {
-        this.line.append(new Date().getTime(), value)
+        this.line.append(Util.now(), value)
     }
 
     start() {
@@ -367,5 +392,13 @@ class Chart {
 
     stop() {
         this.chart.stop()
+    }
+
+    toCSV(): string {
+        const data = this.line.data;
+        if (data.length == 0) return '';
+        const t0 = data[0][0];
+        return `time (s), ${this.variable}, ${lf("Tip: Insert a Scatter Chart to visualize this data.")}\r\n` +
+            data.map(row => ((row[0] - t0) / 1000) + ", " + row[1]).join('\r\n');
     }
 }
