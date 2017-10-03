@@ -164,6 +164,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             lf("Packages {0} and {1} are incompatible with {2}. Remove them and add {2}?", conflicts.slice(0, -1).map((c) => c.pkg0.id).join(", "), conflicts.slice(-1)[0].pkg0.id, config.name);
 
                         addDependencyPromise = addDependencyPromise
+                            .then(() => core.hideLoading())
                             .then(() => core.confirmAsync({
                                 header: lf("Some packages will be removed"),
                                 agreeLbl: lf("Remove package(s) and add {0}", config.name),
