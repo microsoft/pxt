@@ -220,7 +220,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                 {targetTheme.portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />) : null}
                             </a>
                         </div>
-                        <div className="ui item">{tabIcon ? <i className={`icon ${tabIcon}`} aria-hidden={true}/> : undefined} {tabName}</div>
+                        <div className="ui item">{tabIcon ? <sui.Icon icon={`icon ${tabIcon}`}/> : undefined} {tabName}</div>
                         <div className="right menu">
                             <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={() => pxt.tickEvent("menu.org") }>
                                 {targetTheme.organizationWideLogo || targetTheme.organizationLogo
@@ -382,7 +382,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             {scr.id == 'new' ?
                                 <div className="ui card link newprojectcard focused" tabIndex={0} title={lf("Creates a new empty project") } onClick={() => this.newProject() } onKeyDown={sui.fireClickOnEnter} >
                                     <div className="content">
-                                        <i className="icon huge add circle"></i>
+                                        <sui.Icon icon="huge add circle" />
                                         <span className="header">{scr.name}</span>
                                     </div>
                                 </div>

@@ -233,7 +233,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                                 <div className="ui inverted list">
                                     {permissionRequest.map(permission => 
                                     <div className="item">
-                                        <i className={`${this.getIconForPermission(permission)} icon`}/>
+                                        <sui.Icon icon={`${this.getIconForPermission(permission)} icon`} />
                                         <div className="content">
                                             <div className="header">{this.getDisplayNameForPermission(permission)}</div>
                                             <div className="description">{this.getDescriptionForPermission(permission)}</div>
@@ -255,7 +255,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 :   <div>
                         <div className="ui form">
                             <div className="ui icon violet message">
-                                <i className="user icon"></i>
+                                <sui.Icon icon="user" />
                                 <div className="content">
                                     <h3 className="header">
                                         User-provided content

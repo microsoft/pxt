@@ -42,11 +42,11 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
             {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
                 <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "") }>
                     <div className="right floated meta">
-                        {card.any ? (<i key="costany" className="ui grey circular label tiny">{card.any > 0 ? card.any : null}</i>) : null}
-                        {repeat(card.blocks, (k) => <i key={"costblocks" + k} className="puzzle orange icon" ></i>) }
-                        {repeat(card.javascript, (k) => <i key={"costjs" + k} className="align left blue icon" ></i>) }
-                        {repeat(card.hardware, (k) => <i key={"costhardware" + k} className="certificate black icon" ></i>) }
-                        {repeat(card.software, (k) => <i key={"costsoftware" + k} className="square teal icon" ></i>) }
+                        {card.any ? (<sui.Icon key="costany" icon="ui grey circular label tiny">{card.any > 0 ? card.any : null} </sui.Icon>) : null}
+                        {repeat(card.blocks, (k) => <sui.Icon key={"costblocks" + k} icon="puzzle orange" />) }
+                        {repeat(card.javascript, (k) => <sui.Icon key={"costjs" + k} icon="align left blue" />) }
+                        {repeat(card.hardware, (k) => <sui.Icon key={"costhardware" + k} icon="certificate black" />) }
+                        {repeat(card.software, (k) => <sui.Icon key={"costsoftware" + k} icon="square teal" />) }
                     </div>
                     {card.header}
                 </div> : null }
@@ -59,7 +59,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
             </div> : undefined }
             {card.icon || card.iconContent ?
                 <div className="ui"><div className={`ui button massive fluid ${card.iconColor} ${card.iconContent ? "iconcontent" : ""}`}>
-                    { card.icon ? <i className={`${'icon ' + card.icon}`}></i> : undefined }
+                    { card.icon ? <sui.Icon icon={`${'icon ' + card.icon}`} /> : undefined }
                     { card.iconContent || undefined }
                 </div></div> : undefined }
             {card.shortName || card.name || card.description ?
