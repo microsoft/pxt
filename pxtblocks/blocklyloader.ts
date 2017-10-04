@@ -415,28 +415,6 @@ namespace pxt.blocks {
         `;
     }
 
-    let iconCanvasCache: Map<string> = {};
-    function iconToFieldImage(c: string): Blockly.FieldImage {
-        let url = iconCanvasCache[c];
-        if (!url) {
-            if (c.length === 1) {
-                let canvas = document.createElement('canvas');
-                canvas.width = 64;
-                canvas.height = 64;
-                let ctx = canvas.getContext('2d');
-                ctx.fillStyle = 'white';
-                ctx.font = "56px Icons";
-                ctx.textAlign = "center";
-                ctx.fillText(c, canvas.width / 2, 56);
-                url = iconCanvasCache[c] = canvas.toDataURL();
-            }
-            else {
-                url = Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(c));
-            }
-        }
-        return new Blockly.FieldImage(url, 16, 16, false, '');
-    }
-
     function getChildCategories(parent: Element) {
         const elements = parent.getElementsByTagName("category");
         const result: Element[] = [];
@@ -593,11 +571,6 @@ namespace pxt.blocks {
     }
 
     function initField(i: any, ni: number, fn: pxtc.SymbolInfo, ns: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string, nsinfo?: pxtc.SymbolInfo): any {
-        if (ni == 0 && !pxt.appTarget.appTheme.disableBlockIcons) {
-            const icon = ns && ns.attributes.icon ? ns.attributes.icon : null;
-            if (icon)
-                i.appendField(iconToFieldImage(icon));
-        }
         if (pre)
             i.appendField(pre);
         if (right)
