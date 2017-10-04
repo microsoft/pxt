@@ -103,7 +103,6 @@ interface AppTheme {
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
-        disableBlockIcons?: boolean; // Disable icons in blocks
         blockHats?: boolean; // if true, event blocks have hats
         hideBlocklyJavascriptHint?: boolean; // hide javascript preview in blockly hint menu
 
