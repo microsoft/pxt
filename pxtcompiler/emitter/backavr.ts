@@ -155,13 +155,22 @@ namespace ts.pxtc {
     @dummystack ${n}`
         }
         pop_locals(n: number) {
-            return `
+            let n0 = n
+            let r = `
     in	r28, 0x3d
     in	r29, 0x3e
-    adiw	r28, #2*${n}
+`
+            while (n > 0) {
+                // adiw maxes out at #63
+                let k = Math.min(n, 31)
+                r += `    adiw	r28, #2*${k}\n`
+                n -= k
+            }
+            r += `
     out	0x3d, r28
     out	0x3e, r29
-    @dummystack -${n}`
+    @dummystack -${n0}`
+            return r
         }
         unconditional_branch(lbl: string) { return "jmp " + lbl }
         beq(lbl: string) { return "breq " + lbl }
@@ -254,10 +263,10 @@ namespace ts.pxtc {
                 }
                 */
             }
-            let [off_lo,off_hi] = [ "TBD", "TBD" ]
-            if (off.indexOf("@") == -1 ) {
+            let [off_lo, off_hi] = ["TBD", "TBD"]
+            if (off.indexOf("@") == -1) {
                 // in AVR, SP/FP points to next available slot, so need to bump 
-                [off_lo, off_hi] = (tgt_reg == "Y") ? [(parseInt(off) + 2).toString(),(parseInt(off) + 1).toString()] : [off,off + "|1"]
+                [off_lo, off_hi] = (tgt_reg == "Y") ? [(parseInt(off) + 2).toString(), (parseInt(off) + 1).toString()] : [off, off + "|1"]
             } else {
                 // locals@offset and args@offset used in stack context, so also need to handle
                 [off_lo, off_hi] = [off, off + "-1"]
@@ -296,6 +305,29 @@ namespace ts.pxtc {
         // no virtuals for now
         vcall(mapMethod: string, isSet: boolean, vtableShift: number) { assert(false); return "" }
         prologue_vtable(arg_index: number, vtableShift: number) { assert(false); return "" }
+
+        method_call(procid: ir.ProcId, topExpr: ir.Expr) {
+            let res = this.load_reg_src_off("r0", "sp", "#2*" + (topExpr.args.length - 1)) + "\n"
+            let isIface = false
+            let methodIdx = 0
+
+            if (procid.mapMethod) {
+                let isSet = /Set/.test(procid.mapMethod)
+                isIface = true
+                methodIdx = isSet ? procid.ifaceIndex : procid.mapIdx
+            } else {
+                methodIdx = procid.virtualIndex + 4
+                if (procid.ifaceIndex != null) {
+                    isIface = true
+                    methodIdx = procid.ifaceIndex
+                }
+            }
+            res += this.emit_int(methodIdx, "r1") + "\n"
+            res += this.call_lbl("pxtrt::fetchMethod" + (isIface ? "Iface" : "")) + "\n"
+            res += this.call_reg("r0") + "\n"
+            
+            return res
+        }
 
         lambda_prologue() {
             return `

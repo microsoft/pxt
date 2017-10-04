@@ -110,6 +110,10 @@ ${lbl}: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_BUFFER + "," : ""} ${da
         .hex ${data}${data.length % 4 == 0 ? "" : "00"}
 `
         }
+
+        method_call(procid: ir.ProcId, topExpr: ir.Expr) {
+            return ""
+        }
     }
 
     // helper for emit_int
@@ -568,7 +572,11 @@ ${baseLabel}:
             let procid = topExpr.data as ir.ProcId
             let procIdx = -1
             if (procid.virtualIndex != null || procid.ifaceIndex != null) {
-                if (procid.mapMethod) {
+                let custom = this.t.method_call(procid, topExpr)
+                if (custom) {
+                    this.write(custom)
+                    this.write(lbl + ":")
+                } else if (procid.mapMethod) {
                     let isSet = /Set/.test(procid.mapMethod)
                     assert(isSet == (topExpr.args.length == 2))
                     assert(!isSet == (topExpr.args.length == 1))
@@ -658,14 +666,21 @@ ${baseLabel}:
             let node = this.proc.action
             this.write("")
             this.write(".section code");
-            if (isMain)
-                this.write(this.t.unconditional_branch(".themain"))
-            this.write(".balign 4");
-            this.write(this.proc.label() + "_Lit:");
-            this.write(`.short 0xffff, ${pxt.REF_TAG_ACTION}   ; action literal`);
+
+            if (target.nativeType == NATIVE_TYPE_AVR) {
+                this.write(this.proc.label() + "_Lit:");
+            } else {
+                if (isMain)
+                    this.write(this.t.unconditional_branch(".themain"))
+                this.write(".balign 4");
+                this.write(this.proc.label() + "_Lit:");
+                this.write(`.short 0xffff, ${pxt.REF_TAG_ACTION}   ; action literal`);
+                if (isMain)
+                    this.write(".themain:")
+            }
+
             this.write("@stackmark litfunc");
-            if (isMain)
-                this.write(".themain:")
+
             let parms = this.proc.args.map(a => a.def)
             this.write(this.t.proc_setup())
 

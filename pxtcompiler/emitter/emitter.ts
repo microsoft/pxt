@@ -2382,6 +2382,10 @@ ${lbl}: .short 0xffff
                     jsInfo = "PXT.pxt.mkAction(0, 0, " + jsInfo + ")"
             }
             let r = ir.ptrlit(lbl + "_Lit", jsInfo, !raw)
+
+            if (!raw && target.nativeType == NATIVE_TYPE_AVR)
+                r = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(0), ir.numlit(0), r]))
+
             return r
         }
 
@@ -2433,8 +2437,6 @@ ${lbl}: .short 0xffff
                 }
             } else {
                 if (isExpression) {
-                    // lit = ir.shared(ir.rtcall("pxt::mkAction",
-                    //                [ir.numlit(0), ir.numlit(0), emitFunLitCore(node, true)]))
                     lit = emitFunLitCore(node)
                 }
             }
@@ -3628,9 +3630,6 @@ ${lbl}: .short 0xffff
         }
 
         function emitClassDeclaration(node: ClassDeclaration) {
-            if (opts.target.isNative && opts.target.nativeType == NATIVE_TYPE_AVR) {
-                throw userError(9266, lf("classes not yet supported on AVR processor"))
-            }
             getClassInfo(null, node)
             node.members.forEach(emit)
         }
