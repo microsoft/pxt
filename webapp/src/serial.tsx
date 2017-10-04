@@ -6,6 +6,7 @@ import * as core from "./core"
 import * as srceditor from "./srceditor"
 import * as sui from "./sui"
 import * as codecard from "./codecard"
+import * as data from "./data";
 
 import Cloud = pxt.Cloud
 import Util = pxt.Util
@@ -16,18 +17,15 @@ export class Editor extends srceditor.Editor {
     charts: Chart[] = []
     chartIdx: number = 0
     consoleBuffer: string = ""
-    // TODO pass these values in with props or config
     isSim: boolean = true
     maxConsoleLineLength: number = 500
     maxConsoleEntries: number = 100
     active: boolean = true
     rawDataBuffer: string = ""
-    //TODO reasonable buffer size?
     maxBufferLength: number = 5000
 
     //refs
-    recordButton: HTMLElement
-    recordIcon: HTMLElement
+    startPauseButton: StartPauseButton
     consoleRoot: HTMLElement
     chartRoot: HTMLElement
 
@@ -46,7 +44,7 @@ export class Editor extends srceditor.Editor {
     }
 
     acceptsFile(file: pkg.File) {
-        return file.name === pxt.SERIAL_EDITOR_FILE
+        return file.name === pxt.SERIAL_EDITOR_FILE;
     }
 
     setSim(b: boolean) {
@@ -56,7 +54,6 @@ export class Editor extends srceditor.Editor {
 
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
-        //TODO take out the .bind(this)?
         window.addEventListener("message", this.processMessage.bind(this), false)
     }
 
@@ -64,22 +61,19 @@ export class Editor extends srceditor.Editor {
         let msg = ev.data
         if (!this.active || msg.type !== "serial") return;
 
-        //TODO y tho
         const smsg = msg as pxsim.SimulatorSerialMessage
         const sim = !!smsg.sim
         if (sim != this.isSim) return;
 
         const data = smsg.data || ""
         const source = smsg.id || "?"
-        //TODO not using theme anymore
         let theme = source.split("-")[0] || "black"
 
-        //TODO incorporate source?
         this.appendRawData(data)
 
         const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
         if (m) {
-            const variable = m[2] || ' ';
+            const variable = m[2] || '';
             const nvalue = parseFloat(m[3]);
             if (!isNaN(nvalue)) {
                 this.appendGraphEntry(source, theme, sim, variable, nvalue)
@@ -87,7 +81,6 @@ export class Editor extends srceditor.Editor {
             }
         }
 
-        //TODO incorporate source?
         this.appendConsoleEntry(data)
     }
 
@@ -100,7 +93,6 @@ export class Editor extends srceditor.Editor {
     }
 
     appendGraphEntry(source: string, theme: string, sim: boolean, variable: string, nvalue: number) {
-
         //See if there is a "home chart" that this point belongs to -
         //if not, create a new chart
         let homeChart: Chart = undefined
@@ -117,8 +109,7 @@ export class Editor extends srceditor.Editor {
             let newChart = new Chart(source, variable, nvalue, this.chartIdx)
             this.chartIdx++
             this.charts.push(newChart)
-            let serialChartRoot = document.getElementById("serialCharts")
-            serialChartRoot.appendChild(newChart.getElement())
+            this.chartRoot.appendChild(newChart.getElement())
         }
     }
 
@@ -158,23 +149,13 @@ export class Editor extends srceditor.Editor {
 
     pauseRecording() {
         this.active = false
-        if (this.recordIcon) this.recordIcon.className = "circle icon"
-        if (this.recordButton) {
-            this.recordButton.classList.remove("green")
-            this.recordButton.classList.add("circular")
-            this.recordButton.classList.add("red")
-        }
+        if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.stop())
     }
 
     startRecording() {
         this.active = true
-        if (this.recordIcon) this.recordIcon.className = "pause icon"
-        if (this.recordButton) {
-            this.recordButton.classList.remove("red")
-            this.recordButton.classList.remove("circular")
-            this.recordButton.classList.add("green")
-        }
+        if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.start())
     }
 
@@ -191,17 +172,26 @@ export class Editor extends srceditor.Editor {
     }
 
     clear() {
-        //TODO use refs
-        let chartRoot = document.getElementById("serialCharts")
-        let consoleRoot = document.getElementById("serialConsole")
-        this.clearNode(chartRoot)
-        this.clearNode(consoleRoot)
+        if (this.chartRoot) this.clearNode(this.chartRoot)
+        if (this.clearNode) this.clearNode(this.consoleRoot)
         this.charts = []
         this.consoleBuffer = ""
     }
 
     entriesToPlaintext() {
         return this.rawDataBuffer
+    }
+
+    entriesToCSV() {
+        let csv = this.charts.map(chart => `time (s), ${chart.variable} (${chart.source})`).join(', ') + '\r\n';
+        const datas = this.charts.map(chart => chart.line.data);
+        const nl = datas.map(data => data.length).reduce((l, c) => Math.max(l, c));
+        const nc = this.charts.length;
+        for (let i = 0; i < nl; ++i) {
+            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ' , ').join(', ');
+            csv += '\r\n';
+        }
+        return csv;
     }
 
     showExportDialog() {
@@ -220,8 +210,13 @@ export class Editor extends srceditor.Editor {
             hideAgree: true,
             disagreeLbl: lf("Close"),
             onLoaded: (_) => {
-                _.find('#datasavelocalfile').click(() => {
-                    pxt.tickEvent("serial.dataExported")
+                _.find('#datasavecsvfile').click(() => {
+                    pxt.tickEvent("serial.dataExported.csv")
+                    _.modal('hide')
+                    pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")
+                })
+                _.find('#datasavetxtfile').click(() => {
+                    pxt.tickEvent("serial.dataExported.txt")
                     _.modal('hide')
                     pxt.commands.browserDownloadAsync(this.entriesToPlaintext(), "data.txt", "text/plain")
                 })
@@ -229,16 +224,28 @@ export class Editor extends srceditor.Editor {
             htmlBody:
             `<div></div>
                 <div class="ui cards" role="listbox">
-                    <div class="ui card">
+                    <div  id="datasavecsvfile" class="ui link card">
                         <div class="content">
-                            <div class="header">${lf("Local File")}</div>
+                            <div class="header">${lf("CSV File")}</div>
                             <div class="description">
-                                ${lf("Save the data to your 'Downloads' folder.")}
+                                ${lf("Save the chart data streams.")}
                             </div>
                         </div>
-                        <div id="datasavelocalfile" class="ui bottom attached button">
+                        <div class="ui bottom attached button">
                             <i class="download icon"></i>
-                            ${lf("Download data")}
+                            ${lf("Download")}
+                        </div>
+                    </div>
+                    <div id="datasavetxtfile" class="ui link card">
+                        <div class="content">
+                            <div class="header">${lf("Text File")}</div>
+                            <div class="description">
+                                ${lf("Save the text output.")}
+                            </div>
+                        </div>
+                        <div class="ui bottom attached button">
+                            <i class="download icon"></i>
+                            ${lf("Download")}
                         </div>
                     </div>
                 </div>`
@@ -246,7 +253,6 @@ export class Editor extends srceditor.Editor {
     }
 
     goBack() {
-        //TODO tight coupling
         pxt.tickEvent("serial.backButton")
         this.parent.openPreviousEditor()
     }
@@ -257,16 +263,14 @@ export class Editor extends srceditor.Editor {
                 <div id="serialHeader" className="ui">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <button ref={e => this.recordButton = e} className={`ui left floated icon button ${this.active ? "green" : "red circular"} toggleRecord`} onClick={this.toggleRecording.bind(this)}>
-                                <i ref={e => this.recordIcon = e} className={this.active ? "pause icon" : "circle icon"}></i>
-                            </button>
-                            <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
+                            <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this) } />
+                            <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device") }</span>
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <button className="ui icon circular small inverted button" onClick={this.goBack.bind(this)}>
-                            <i className="close icon"></i>
-                        </button>
+                        <sui.Button class="ui icon circular small inverted button" onClick={this.goBack.bind(this) }>
+                            <sui.Icon icon="close" />
+                        </sui.Button>
                     </div>
                 </div>
                 <div id="serialCharts" ref={e => this.chartRoot = e}></div>
@@ -275,9 +279,9 @@ export class Editor extends srceditor.Editor {
                 <div id="serialToolbox">
                     <div className="ui grid right aligned padded">
                         <div className="column">
-                            <button className="ui small basic blue button" onClick={this.showExportDialog.bind(this)}>
-                                <i className="download icon"></i> {lf("Export data")}
-                            </button>
+                            <sui.Button class="ui small basic blue button" onClick={this.showExportDialog.bind(this) }>
+                                <sui.Icon icon="download" /> {lf("Export data") }
+                            </sui.Button>
                         </div>
                     </div>
                 </div>
@@ -289,13 +293,40 @@ export class Editor extends srceditor.Editor {
     }
 }
 
+export interface StartPauseButtonProps {
+    active?: boolean;
+    toggle?: () => void;
+}
+
+export interface StartPauseButtonState {
+    active?: boolean;
+}
+
+export class StartPauseButton extends data.Component<StartPauseButtonProps, StartPauseButtonState> {
+    constructor(props: StartPauseButtonProps) {
+        super(props);
+        this.state = {
+            active: this.props.active
+        }
+    }
+
+    renderCore() {
+        const {toggle} = this.props;
+        const {active} = this.state;
+
+        return <sui.Button class={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
+            <sui.Icon icon={active ? "pause icon" : "circle icon"} />
+        </sui.Button>
+    }
+}
+
 class Chart {
     rootElement: HTMLElement = document.createElement("div")
     canvas: HTMLCanvasElement = undefined
-    line: TimeSeries = new TimeSeries()
-    source: string
-    variable: string
-    chart: SmoothieChart
+    line: TimeSeries = new TimeSeries();
+    source: string;
+    variable: string;
+    chart: SmoothieChart;
     lineConfigs = [
         { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.5)', lineWidth: 5 },
         { strokeStyle: 'rgba(0, 0, 255, 1)', fillStyle: 'rgba(0, 0, 255, 0.5)', lineWidth: 5 },
@@ -323,11 +354,9 @@ class Chart {
         this.variable = variable
         this.chart.addTimeSeries(this.line, this.lineConfigs[chartIdx % 4])
 
-        let canvas = this.makeCanvas()
-        let label = this.makeLabel()
-        this.rootElement.appendChild(label)
-        this.rootElement.appendChild(canvas)
-
+        if (this.variable)
+            this.rootElement.appendChild(this.makeLabel())
+        this.rootElement.appendChild(this.makeCanvas())
         this.addPoint(value)
     }
 
@@ -339,9 +368,12 @@ class Chart {
     }
 
     makeCanvas() {
-        let canvas = document.createElement("canvas")
-        this.chart.streamTo(canvas)
-        this.canvas = canvas
+        let canvas = document.createElement("canvas");
+        this.chart.streamTo(canvas);
+        this.canvas = canvas;
+        this.canvas.addEventListener("click", ev => {
+            pxt.commands.browserDownloadAsync(this.toCSV(), "data.csv", "text/csv")
+        }, false);
         return canvas
     }
 
@@ -358,7 +390,7 @@ class Chart {
     }
 
     addPoint(value: number) {
-        this.line.append(new Date().getTime(), value)
+        this.line.append(Util.now(), value)
     }
 
     start() {
@@ -367,5 +399,13 @@ class Chart {
 
     stop() {
         this.chart.stop()
+    }
+
+    toCSV(): string {
+        const data = this.line.data;
+        if (data.length == 0) return '';
+        const t0 = data[0][0];
+        return `time (s), ${this.variable}, ${lf("Tip: Insert a Scatter Chart to visualize this data.")}\r\n` +
+            data.map(row => ((row[0] - t0) / 1000) + ", " + row[1]).join('\r\n');
     }
 }

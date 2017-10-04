@@ -65,6 +65,9 @@ declare class TimeSeries {
     append(timestamp: number, value: number, sumRepeatedTimeStampValues?: boolean): void;
 
     dropOldData(oldestValidTime: number, maxDataSetLength: number): void;
+
+    /* extra */
+    data: number[][];
 }
 
 declare interface IGridOptions {
