@@ -122,7 +122,10 @@ export class ProjectView
         pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active })
         if (!active) {
-            this.stopSimulator();
+            if (this.state.running) {
+                this.stopSimulator();
+                this.setState({ resumeOnVisibility: true });
+            }
             this.saveFileAsync().done();
         } else {
             if (workspace.isSessionOutdated()) {
@@ -130,8 +133,10 @@ export class ProjectView
                 let id = this.state.header ? this.state.header.id : '';
                 workspace.initAsync()
                     .done(() => id ? this.loadHeaderAsync(workspace.getHeader(id)) : Promise.resolve());
-            } else if (pxt.appTarget.simulator.autoRun && !this.state.running)
+            } else if (this.state.resumeOnVisibility && !this.state.running) {
+                this.setState({ resumeOnVisibility: false });
                 this.runSimulator();
+            }
         }
     }
 
@@ -703,10 +708,11 @@ export class ProjectView
         }
     }];
 
-    importHex(data: pxt.cpp.HexFile) {
+    importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
         const targetId = pxt.appTarget.id;
         if (!data || !data.meta) {
             core.warningNotification(lf("Sorry, we could not recognize this file."))
+            if (createNewIfFailed) this.newProject();
             return;
         }
 
@@ -721,12 +727,13 @@ export class ProjectView
                     pxt.reportException(e, { importer: importer.id });
                     core.hideLoading();
                     core.errorNotification(lf("Oops, something went wrong when importing your project"));
-                }
-                );
+                    if (createNewIfFailed) this.newProject();
+                });
         }
         else {
             core.warningNotification(lf("Sorry, we could not import this project."))
             pxt.tickEvent("warning.importfailed");
+            if (createNewIfFailed) this.newProject();
         }
     }
 
@@ -995,6 +1002,7 @@ export class ProjectView
                 }
                 resp.saveOnly = saveOnly
                 resp.userContextWindow = userContextWindow;
+                resp.downloadFileBaseName = pkg.genFileName("");
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf(".hex file upload failed, please try again."));
@@ -1594,7 +1602,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const { hideMenuBar, hideEditorToolbar} = targetTheme;
         const isHeadless = simOpts.headless;
         const cookieKey = "cookieconsent"
-        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey) 
+        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey)
                                 || sandbox;
         const simActive = this.state.embedSimView;
         const blockActive = this.isBlocksActive();
@@ -2139,6 +2147,7 @@ function initExtensionsAsync(): Promise<void> {
         });
 }
 
+pxt.winrt.captureInitialActivation();
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
@@ -2167,7 +2176,7 @@ $(document).ready(() => {
     appcache.init(hash);
 
     pxt.docs.requireMarked = () => require("marked");
-    const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
+    const importHex = (hex: pxt.cpp.HexFile, createNewIfFailed = false) => theEditor.importHex(hex, createNewIfFailed);
 
     const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
@@ -2201,31 +2210,40 @@ $(document).ready(() => {
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
-        .then(() => compiler.init())
-        .then(() => workspace.initAsync())
-        .then(state => {
+        .then(() => {
+            compiler.init();
+            return workspace.initAsync();
+        })
+        .then(() => {
             $("#loading").remove();
-            render()
+            render();
             return workspace.syncAsync();
         })
-        .then(state => state ? theEditor.setState(state) : undefined)
-        .then(() => {
+        .then((state) => {
+            if (state) {
+                theEditor.setState(state);
+            }
             initSerial();
             initScreenshots();
             initHashchange();
-        })
-        .then(() => pxt.winrt.initAsync(ih))
-        .then(() => initExtensionsAsync())
-        .then(() => {
             electron.init();
-            if (hash.cmd && handleHash(hash))
+            return initExtensionsAsync();
+        })
+        .then(() => pxt.winrt.initAsync(importHex))
+        .then(() => pxt.winrt.hasActivationProjectAsync())
+        .then((hasWinRTProject) => {
+            if (hash.cmd && handleHash(hash)) {
                 return Promise.resolve();
+            }
+            if (hasWinRTProject) {
+                return pxt.winrt.loadActivationProject();
+            }
 
             // default handlers
-            let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
-            let hd = workspace.getHeaders()[0]
-            if (ent) hd = workspace.getHeader(ent.id)
-            if (hd) return theEditor.loadHeaderAsync(hd, null)
+            const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
+            let hd = workspace.getHeaders()[0];
+            if (ent) hd = workspace.getHeader(ent.id);
+            if (hd) return theEditor.loadHeaderAsync(hd, null);
             else theEditor.newProject();
             return Promise.resolve();
         })

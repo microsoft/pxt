@@ -1,4 +1,4 @@
-/// <reference path="../typings/globals/winrt/index.d.ts"/>
+/// <reference path="./winrtrefs.d.ts"/>
 
 namespace pxt.winrt {
     let watcher: any;
