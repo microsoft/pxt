@@ -836,13 +836,16 @@ namespace ts.pxtc.assembler {
         }
 
 
-        public getSource(clean: boolean, numStmts = 1) {
+        public getSource(clean: boolean, numStmts = 1, flashSize = 128 * 1024) {
             let lenTotal = this.buf ? this.buf.length * 2 : 0
             let lenThumb = this.labels["_program_end"] || lenTotal;
             let lenFrag = this.labels["_frag_start"] || 0
             if (lenFrag) lenFrag = this.labels["_js_end"] - lenFrag
             let lenLit = this.labels["_program_end"]
             if (lenLit) lenLit -= this.labels["_js_end"]
+            let totalSize = lenTotal + this.baseOffset
+            let totalInfo = lf("; total bytes: {0} ({1}% of {2}k flash)",
+                totalSize, (100 * totalSize / flashSize).toFixed(1), (flashSize / 1024).toFixed(1))
             let res =
                 // ARM-specific
                 lf("; code sizes (bytes): {0} (incl. {1} frags, and {2} lits); src size {3}\n",
@@ -850,6 +853,7 @@ namespace ts.pxtc.assembler {
                 lf("; assembly: {0} lines; density: {1} bytes/stmt\n",
                     this.lines.length,
                     Math.round(100 * (lenThumb - lenLit) / numStmts) / 100) +
+                totalInfo + "\n"
                 this.stats + "\n\n"
 
             let skipOne = false

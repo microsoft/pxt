@@ -281,6 +281,7 @@ declare namespace ts.pxtc {
         deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers
         flashCodeAlign?: number; // defaults to 1k
+        flashEnd?: number;
         upgrades?: UpgradePolicy[];
         openocdScript?: string;
         flashChecksumAddr?: number;

@@ -689,7 +689,7 @@ ${hex.hexPrelude()}
         let b = mkProcessorFile(nativeType)
         b.emit(src);
 
-        src = b.getSource(!peepDbg, bin.numStmts);
+        src = b.getSource(!peepDbg, bin.numStmts, target.flashEnd);
 
         throwAssemblerErrors(b)
 
