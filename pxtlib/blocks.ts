@@ -105,6 +105,12 @@ namespace pxt.blocks {
         tooltipSearch?: string; // Which tooltip to use for searching; if undefined, search uses all tooltips in BlockDefinition.tooltip, joined with space
     }
 
+    export enum OutputShape {
+        HEXAGON = 1, // Blockly.OUTPUT_SHAPE_HEXAGONAL
+        ROUND = 2, // Blockly.OUTPUT_SHAPE_ROUND
+        SQUARE = 3 // Blockly.OUTPUT_SHAPE_SQUARE
+    }
+
     let _blockDefinitions: Map<BlockDefinition>;
     export function blockDefinitions(): Map<BlockDefinition> {
         if (!_blockDefinitions) cacheBlockDefinitions();
@@ -162,7 +168,7 @@ namespace pxt.blocks {
                     'op': ["min", "max"]
                 },
                 category: 'math',
-                outputShape: Blockly.OUTPUT_SHAPE_ROUND
+                outputShape: OutputShape.ROUND
             },
             'math_op3': {
                 name: Util.lf("absolute number"),
@@ -172,7 +178,7 @@ namespace pxt.blocks {
                 block: {
                     message0: Util.lf("absolute of %1")
                 },
-                outputShape: Blockly.OUTPUT_SHAPE_ROUND
+                outputShape: OutputShape.ROUND
             },
             'math_number': {
                 name: Util.lf("{id:block}number"),

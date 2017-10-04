@@ -1764,7 +1764,7 @@ namespace pxt.blocks {
                     }
                 ],
                 "output": 'Number',
-                "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+                "outputShape": OutputShape.ROUND
             });
         }
 
@@ -3108,7 +3108,7 @@ namespace pxt.blocks {
                     }
                 ],
                 "output": 'Number',
-                "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+                "outputShape": OutputShape.ROUND
             });
         }
         installBuiltinHelpInfo(textLengthId);
