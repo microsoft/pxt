@@ -2381,7 +2381,7 @@ ${lbl}: .short 0xffff
                 if (!raw)
                     jsInfo = "PXT.pxt.mkAction(0, 0, " + jsInfo + ")"
             }
-            let r = ir.ptrlit(lbl + "_Lit", jsInfo, !raw)
+            let r = ir.ptrlit(lbl + "_Lit", jsInfo, false)
 
             if (!raw && target.nativeType == NATIVE_TYPE_AVR)
                 r = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(0), ir.numlit(0), r]))

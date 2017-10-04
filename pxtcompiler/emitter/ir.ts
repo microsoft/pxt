@@ -725,7 +725,7 @@ namespace ts.pxtc.ir {
         let r = op(EK.PointerLiteral, null, lbl)
         r.jsInfo = jsInfo
         if (full) {
-            if (target.nativeType == NATIVE_TYPE_AVR)
+            if (target.isNative && target.nativeType == NATIVE_TYPE_AVR)
                 // this works for string and hex literals
                 return rtcall("pxt::stringLiteral", [r])
             else
