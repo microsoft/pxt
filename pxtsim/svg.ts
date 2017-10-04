@@ -152,9 +152,9 @@ namespace pxsim.svg {
         });
     }
 
-    export function mkLinearGradient(id: string, vertical = true): SVGLinearGradientElement {
+    export function mkLinearGradient(id: string, horizontal = false): SVGLinearGradientElement {
         let gradient = <SVGLinearGradientElement>svg.elt("linearGradient");
-        svg.hydrate(gradient, { id: id, x1: "0%", y1: "0%", x2: vertical ? "0%" : "100%", y2: vertical ? "100%" : "0%" });
+        svg.hydrate(gradient, { id: id, x1: "0%", y1: "0%", x2: horizontal ? "100%" : "0%", y2: horizontal ? "0%" : "100%"});
         let stop1 = svg.child(gradient, "stop", { offset: "0%" })
         let stop2 = svg.child(gradient, "stop", { offset: "100%" })
         let stop3 = svg.child(gradient, "stop", { offset: "100%" })
@@ -162,8 +162,8 @@ namespace pxsim.svg {
         return gradient;
     }
 
-    export function linearGradient(defs: SVGDefsElement, id: string, vertical = true): SVGLinearGradientElement {
-        let lg = mkLinearGradient(id, vertical);
+    export function linearGradient(defs: SVGDefsElement, id: string, horizontal = false): SVGLinearGradientElement {
+        let lg = mkLinearGradient(id, horizontal);
         defs.appendChild(lg);
         return lg;
     }
