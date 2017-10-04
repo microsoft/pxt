@@ -110,38 +110,13 @@
             , "input.onButtonPressed(Button.A, () => {}); input.onButtonPressed(Button.B, () => {});" 
             */
            ];
-        function next() {
-            var p = ps.pop();
-            if (!p) return;
-            console.log('rendering:')
-            console.log(p)
-            pxt.runner.decompileToBlocksAsync(p, { emPixels:14, layout: pxt.blocks.BlockLayout.Shuffle }).done(function(r) {
-                let svg = r.blocksSvg;
-                $('#loading').remove();
-                if (svg) {
-                    $(svg).removeClass('blocklyPreview')
-                    var div = $("<div/>").append(svg)                
-                    $(document.body).append(div)                                      
-                } else {
-                    $(document.body).append($('<pre/>').text('failed to render ' + p))
-                    if (r.compileBlocks && r.compileBlocks.diagnostics) {
-                        r.compileBlocks.diagnostics.forEach(function(an) {                            
-                            $(document.body).append($('<div/>').text(an.messageText))                        
-                        })
-                    }
-                }
-                next();
-            })
-        }
             
         ksRunnerReady(function() {
             pxt.docs.requireMarked = function() { return marked; }
-            next();
             pxt.runner.renderAsync({
                 snippetClass: 'lang-blocks',
                 signatureClass: 'lang-sig',
                 blocksClass:'lang-block',
-                shuffleClass: 'lang-shuffle',
                 simulatorClass:'lang-sim',
                 linksClass: 'lang-links',
                 projectClass: 'lang-project',
