@@ -1763,8 +1763,7 @@ namespace pxt.blocks {
                         "check": ['Array']
                     }
                 ],
-                "output": 'Number',
-                "outputShape": OutputShape.ROUND
+                "output": 'Number'
             });
         }
 
@@ -2468,7 +2467,6 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "outputShape": mathOp2Def.outputShape,
                     "colour": getNamespaceColor('math')
                 });
 
@@ -2501,7 +2499,6 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "outputShape": mathOp3Def.outputShape,
                     "colour": getNamespaceColor('math')
                 });
 
@@ -3107,8 +3104,7 @@ namespace pxt.blocks {
                         "check": ['String']
                     }
                 ],
-                "output": 'Number',
-                "outputShape": OutputShape.ROUND
+                "output": 'Number'
             });
         }
         installBuiltinHelpInfo(textLengthId);
