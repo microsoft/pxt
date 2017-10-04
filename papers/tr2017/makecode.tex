@@ -149,8 +149,10 @@ The Blockly program representation is compiled to Static TypeScript in a syntax-
 (see \emph{\url{https://github.com/Microsoft/pxt/tree/master/pxtblocks}{pxtblocks}}). A key issue is the need for
 type inference on the Blockly representation, as variables generally are defined and used without
 being declared in Blockly. MakeCode uses a simple unification type inference to assign a
-unique type to each variable.  In the future, we expect to use TypeScript's type inference instead
-and eliminate the need for separate type inference over the Blockly representation. 
+unique type to each variable.  
+% this may not be possible:
+%In the future, we expect to use TypeScript's type inference instead
+%and eliminate the need for separate type inference over the Blockly representation. 
 TypeScript supports programming constructs that are not available in Blockly, such as classes.
 Such constructs are converted into grey uneditable blocks in Blockly, with the construct's program
 text intact. This means MakeCode always can decompile a TypeScript program to Blockly and then recover
@@ -172,30 +174,32 @@ There are two backends for code generation from the IR. The first backend simply
 for execution against the simulator runtime.  The other backend generates assembler, parameterized by a
 processor description.  Currently supported processors include ARM's Cortex class (Thumb instructions)
 and Atmel's Atmega class (AVR instructions). A separate assembler, also parameterized by an instruction
-encoder/decoder, generates machine code. Finally, a linker completes the compile chain by resolving
-references to the driver runtime in the user's program, producing a binary executable. The compiler chain
+encoder/decoder, generates machine code and resolves runtime refere3nce3s, producing a binary executable. 
+The compiler chain
 can be found at \emph{\href{https://github.com/Microsoft/pxt/tree/master/pxtcompiler/emitter}{pxtcompiler/emitter}} and 
 \emph{\href{https://github.com/Microsoft/pxt/tree/master/pxtlib/emitter}{pxtlib/emitter}}.
 
-\emph{TODO: in fact it's the assembler that resolves runtime references;
-linker only injects a binary blob into the runtime; maybe it's not worth talking about it though}
-
 \subsubsection{Asynchronous Functions}
 
-A key part of the compilation process is to allow users to call async functions (identified through
-the \emph{//\% async} annotation) as if they were regular (blocking) functions.  This is done by
-compiling each function so that it can be suspended (at the return of a call) and later resumed (at the same point). 
-The default behavior at a suspension point is to immediately resume execution.  If a call is to an async function then
-the default behavior is overridden by the compiler, which suspends execution of the current function. Upon completion
-of the async function call, the current function then is resumed. This feature greatly simplifies the JavaScript
-programming model which relies on promises to achieve asynchronous execution, breaking up sequential (blocking) code into
-a series of event handlers.  The JavaScript simulator runtime uses promises to achieve asynchronous execution in a
-single-threaded context, but these promises are hidden from the end user. sThe CODAL C++ device runtime supports fibers
-with the ability to pause, so for compilation to a device, the compiler simply emits a call to pause at a suspension point. 
+An important part of the compilation process is to allow users to call asynchronous 
+TypeScript functions (identified through the \emph{//\% async} annotation) as if they were blocking functions.  
+For execution in the browser,
+every function is compiled so that it can be suspended (at the return of a call) and later resumed (at the same point). 
+The default behavior at a suspension point is to immediately resume execution.  For a call to an async function,
+the default behavior is overridden by the compiler, which suspends execution of the current function. 
+Upon completion of the async function call, the current function then is resumed. Such async functions are written
+by runtime developers, not end-users, and greatly simplify the JavaScript
+programming model for end-users. For example, although the JavaScript simulator runtime uses promises to 
+achieve asynchronous execution in a single-threaded context, these promises are hidden from the end user. 
+The CODAL device runtime supports fibers with the ability to pause, so for compilation to a device, 
+the compiler simply emits a call to pause at a suspension point. 
 
-\emph{TODO: The async annotation is only relevant for the JS code. In ARM/AVR it doesn't do anything.
-One way to say it is to say it's there to simulate cooperative multi-threading in JS, since
-it is already implemented in C++ by CODAL.}
+\emph{TODO: need a small example to clarify how it all works}
+
+% tball: I added TypeScript above to make it clear 
+%\emph{TODO: The async annotation is only relevant for the JS code. In ARM/AVR it doesn't do anything.
+%One way to say it is to say it's there to simulate cooperative multi-threading in JS, since
+%it is already implemented in C++ by CODAL.}
 
 \subsubsection{Untagged and Tagged Strategies}
 
@@ -237,37 +241,15 @@ named ``Neopixel'' will be added to the editor. In this scenario, PXT dynamicall
 package directly from GitHub, compiles it and incorporates it into the web app. Packages also can be bundled with a web
 app (the analog of static linking).  
 
-Hardware partners already have started to create MakeCode packages for the micro:bit.
-Seeed Studio (\url{https://www.seeedstudio.com/}) has created packages to add its Grove components to a micro:bit.
-Grove components are accessed via the I2C serial protocol, supported by the micro:bit device runtime.
-All micro:bit packages for the Grove components are authored in Static TypeScript (gesture, ultrasonic-ranger,
-4-digital-display, two-led-matrix). These packages can be found under GitHub user ``Tinkertanker'', prefixed with
-``pxt-''. Sparkfun has created MakeCode packages for its micro:bit shields (GitHub user ``sparkfun'').
-
-% https://github.com/Tinkertanker/pxt-ssd1306-microbit
-% https://github.com/Tinkertanker/pxt-ir-microbit 
-% https://github.com/Tinkertanker/pxt-ky040-microbit
-% https://github.com/Tinkertanker/pxt-ds1307-microbit
-% Sparkfun
-% •	https://github.com/sparkfun/pxt-weather-bit
-% •	https://github.com/sparkfun/pxt-moto-bit 
-% •	https://github.com/sparkfun/pxt-gamer-bit 
-% Common packages
-% •	https://github.com/Microsoft/pxt-common-packages
-% •	Structure:
-% o	Libs/package/
-% [talk about C++] Various examples.
-% [more about customer editor associated with a package]
-
 For packages containing C++ files, a new C++ runtime has to be compiled in the cloud.
-This is achieved by collecting all C++ files (all packages plus MakeCode core runtime),
-computing a hash, checking in local in-browser cache if such a runtime was retrieved
-before, otherwise checking and otherwise asking the cloud service to compile it.
+This is achieved by collecting all C++ files (in all packages plus the CODAL runtime),
+computing a hash, checking in the local in-browser cache if such a runtime was retrieved
+before, and otherwise asking the cloud service to compile it.
 Of course, the cloud service will return a cached copy, if the same set of C++
-files is to be compiled again. The cache hit ratio in both the browser cache,
+files was compiled before. The cache hit ratio in both the browser cache,
 and the cloud cache are very high. 
 The first hit ratio is high because the cloud needs to be consulted
 only when a new package is added to the project, and this particular combination 
 of packages was never used before on current machine.
 The second is high because people rarely combine many packages (due to
-hardware and memory constraints), and there is only so many of them.
+hardware and memory constraints), and there are only so many of them.
