@@ -185,7 +185,7 @@ namespace ts.pxtc {
 
     export function sizeOfBitSize(b: BitSize) {
         switch (b) {
-            case BitSize.None: return 4
+            case BitSize.None: return target.shortPointers ? 2 : 4
             case BitSize.Int8: return 1
             case BitSize.Int16: return 2
             case BitSize.Int32: return 4
