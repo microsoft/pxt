@@ -12,22 +12,23 @@ export interface SerialIndicatorProps {
 
 export interface SerialIndicatorState {
     active?: boolean
+    receivingData?: boolean
 }
 
 export class SerialIndicator extends React.Component<SerialIndicatorProps, SerialIndicatorState>{
 
     constructor(props: any) {
         super(props)
-        this.state = { active: false }
-        window.addEventListener("message", this.setActive.bind(this))
+        this.state = { active: false, receivingData: false }
+        window.addEventListener("message", this.handleMessage.bind(this))
     }
 
-    setActive(ev: MessageEvent) {
+    handleMessage(ev: MessageEvent) {
         let msg = ev.data
         if (!this.state.active && msg.type === "serial") {
             const sim = !!msg.sim
             if (sim === this.props.isSim) {
-                this.setState({ active: true })
+                this.setState({ active: true, receivingData: true})
             }
         }
     }
@@ -41,7 +42,7 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
         return <div className="ui segment inverted serialindicator" tabIndex={0} onClick={this.props.onClick} onKeyDown={sui.fireClickOnEnter}>
             <div className="ui label circular">
                 <div className="detail indicator">
-                    <span className="ui green empty circular label" />
+                    <span className={` ${this.state.receivingData ? "blink" : ""} ui green empty circular label`} />
                 </div>
                 <div className="detail">
                     <sui.Icon icon="bar graph"/>
