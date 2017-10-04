@@ -9,10 +9,12 @@ namespace pxtblockly {
 
         private state_: boolean;
         private checkElement_: any;
-        private circleElement_: any;
         private descElement_: any;
 
         public static TOGGLE_WIDTH: number = 40;
+        public static TOGGLE_WIDTH_RECT: number = 60;
+
+        private CURSOR = 'pointer';
 
         constructor(state: string, params: any, opt_validator?: Function) {
             super(state, opt_validator);
@@ -38,13 +40,24 @@ namespace pxtblockly {
                     'class': `blocklyToggle ${this.state_ ? 'blocklyToggleOn' : 'blocklyToggleOff'}`,
                     'transform': `translate(8, ${size.height / 2})`,
                 }, this.fieldGroup_)
-            this.circleElement_ = Blockly.utils.createSvgElement('circle',
+            if (this.isCircle()) {
+                const circleElement = Blockly.utils.createSvgElement('circle',
                 {
                     'class': 'blocklyToggleCircle',
                     'cx': 0, 'cy': 0, 'r': 14,
                     'cursor': 'pointer'
                 },
                 this.checkElement_);
+            } else {
+                const rectElement = Blockly.utils.createSvgElement('rect',
+                {
+                    'class': 'blocklyToggleRect',
+                    'x': -14, 'y': -14, 'height': 28,
+                    'width': 28, 'rx': 3, 'ry': 3,
+                    'cursor': 'pointer'
+                },
+                this.checkElement_);
+            }
             this.descElement_ = Blockly.utils.createSvgElement('text',
                 {
                     'class': 'blocklyText blocklyToggleText', 'y': 5,
@@ -57,8 +70,12 @@ namespace pxtblockly {
         };
 
         updateWidth() {
-            this.size_.width = FieldToggle.TOGGLE_WIDTH;
+            this.size_.width = this.isCircle() ? FieldToggle.TOGGLE_WIDTH : FieldToggle.TOGGLE_WIDTH_RECT;
             this.arrowWidth_ = 0;
+        }
+
+        private isCircle() {
+            return this.sourceBlock_.isShadow();
         }
 
         getDescriptionText_(newState: boolean) {
@@ -95,11 +112,11 @@ namespace pxtblockly {
             if (this.checkElement_) {
                 const size = (this as any).getSize();
                 if (newState) {
-                    this.checkElement_.setAttribute('transform', `translate(32, ${size.height / 2})`);
+                    this.checkElement_.setAttribute('transform', `translate(${this.isCircle() ? 32 : 44}, ${size.height / 2})`);
                     this.checkElement_.classList.add('blocklyToggleOn');
                     this.checkElement_.classList.remove('blocklyToggleOff');
                 } else {
-                    this.checkElement_.setAttribute('transform', `translate(8, ${size.height / 2})`);
+                    this.checkElement_.setAttribute('transform', `translate(${this.isCircle() ? 8 : 16}, ${size.height / 2})`);
                     this.checkElement_.classList.add('blocklyToggleOff');
                     this.checkElement_.classList.remove('blocklyToggleOn');
                 }
