@@ -63,14 +63,14 @@ namespace pxtblockly {
         colorWheel(wheelPos: number): string {
             wheelPos = 255 - wheelPos;
             if (wheelPos < 85) {
-                return this.hex(255 - wheelPos * 3, 0, wheelPos * 3);
+                return this.hex(wheelPos * 3, 255, 255 - wheelPos * 3);
             }
             if (wheelPos < 170) {
                 wheelPos -= 85;
-                return this.hex(0, wheelPos * 3, 255 - wheelPos * 3);
+                return this.hex(255, 255 - wheelPos * 3, wheelPos * 3);
             }
             wheelPos -= 170;
-            return this.hex(wheelPos * 3, 255 - wheelPos * 3, 0);
+            return this.hex(255 - wheelPos * 3, wheelPos * 3, 255);
         }
 
         private hex(red: number, green: number, blue: number): string {
