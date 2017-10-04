@@ -547,12 +547,19 @@ ${info.id}_VT:
         .byte ${info.vtable.length + 2}, 0  ; num. methods
 `;
 
-        s += `        .word ${info.id}_IfaceVT\n`
-        s += `        .word pxt::RefRecord_destroy|1\n`
-        s += `        .word pxt::RefRecord_print|1\n`
+        let ptrSz = target.shortPointers ? ".short" : ".word"
+        let addPtr = (n: string) => {
+            if (n != "0") n += "@fn"
+            s += `        ${ptrSz} ${n}\n`
+        }
+
+        s += `        ${ptrSz} ${info.id}_IfaceVT\n`
+
+        addPtr("pxt::RefRecord_destroy")
+        addPtr("pxt::RefRecord_print")
 
         for (let m of info.vtable) {
-            s += `        .word ${m.label()}|1\n`
+            addPtr(m.label())
         }
 
         let refmask = info.refmask.map(v => v ? "1" : "0")
@@ -566,11 +573,11 @@ ${info.id}_VT:
         // of (iface-member-id, function-addr) pairs and binary search.
         // See https://makecode.microbit.org/15593-01779-41046-40599 for Thumb binary search.
         s += `
-        .balign 4
+        .balign ${target.shortPointers ? 2 : 4}
 ${info.id}_IfaceVT:
 `
         for (let m of info.itable) {
-            s += `        .word ${m ? m.label() + "|1" : "0"}\n`
+            addPtr(m ? m.label() : "0")
         }
 
         s += "\n"

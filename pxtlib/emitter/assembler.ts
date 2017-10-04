@@ -311,6 +311,10 @@ namespace ts.pxtc.assembler {
             if (U.endsWith(s, "-1")) {
                 return this.parseOneInt(s.slice(0, s.length - 2)) - 1
             }
+            // allow adding 1 too
+            if (U.endsWith(s, "+1")) {
+                return this.parseOneInt(s.slice(0, s.length - 2)) + 1
+            }
 
 
 
@@ -346,21 +350,25 @@ namespace ts.pxtc.assembler {
                         this.directiveError(lf("saved stack not found"))
                 }
 
-                m = /^(.*)@(hi|lo)$/.exec(s)
+                m = /^(.*)@(hi|lo|fn)$/.exec(s)
                 if (m && this.looksLikeLabel(m[1])) {
                     v = this.lookupLabel(m[1], true)
                     if (v != null) {
-                        v >>= 1;
-                        if (0 <= v && v <= 0xffff) {
-                            if (m[2] == "hi")
-                                v = (v >> 8) & 0xff
-                            else if (m[2] == "lo")
-                                v = v & 0xff
-                            else
-                                oops()
-                        } else {
-                            this.directiveError(lf("@hi/lo out of range"))
-                            v = null
+                        if (m[2] == "fn")
+                            v = this.ei.toFnPtr(v)
+                        else {
+                            v >>= 1;
+                            if (0 <= v && v <= 0xffff) {
+                                if (m[2] == "hi")
+                                    v = (v >> 8) & 0xff
+                                else if (m[2] == "lo")
+                                    v = v & 0xff
+                                else
+                                    oops()
+                            } else {
+                                this.directiveError(lf("@hi/lo out of range"))
+                                v = null
+                            }
                         }
                     }
                 }
@@ -854,7 +862,7 @@ namespace ts.pxtc.assembler {
                     this.lines.length,
                     Math.round(100 * (lenThumb - lenLit) / numStmts) / 100) +
                 totalInfo + "\n"
-                this.stats + "\n\n"
+            this.stats + "\n\n"
 
             let skipOne = false
 
@@ -990,6 +998,10 @@ namespace ts.pxtc.assembler {
         constructor() {
             this.encoders = {};
             this.instructions = {}
+        }
+
+        public toFnPtr(v: number) {
+            return v;
         }
 
         public wordSize() {

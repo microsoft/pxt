@@ -85,20 +85,24 @@ namespace ts.pxtc.avr {
         }
 
         public peephole(ln: pxtc.assembler.Line, lnNext: pxtc.assembler.Line, lnNext2: pxtc.assembler.Line) {
-                /*
-                let ld = this.encoders["$ld"]
-                let lnop = ln.getOp()
+            /*
+            let ld = this.encoders["$ld"]
+            let lnop = ln.getOp()
 
-                // replace 32-bit with 16-bit when branch distance is within bounds
-                if ((lnop == "call" || lnop == "jmp") && ln.numArgs[0] != null) {
-                    let offset = ln.numArgs[0] - (this.file.baseOffset + ln.location + 2) >> 1
-                    if (ld.encode(offset)) {
-                        // RULE: call/jmp .somewhere -> rcall/rjmp .somewhere (if fits)
-                        if (lnop == "call")
-                        ln.update((lnop == "call" ? "rcall " : "rjmp ") + ln.words[1])
-                    }
+            // replace 32-bit with 16-bit when branch distance is within bounds
+            if ((lnop == "call" || lnop == "jmp") && ln.numArgs[0] != null) {
+                let offset = ln.numArgs[0] - (this.file.baseOffset + ln.location + 2) >> 1
+                if (ld.encode(offset)) {
+                    // RULE: call/jmp .somewhere -> rcall/rjmp .somewhere (if fits)
+                    if (lnop == "call")
+                    ln.update((lnop == "call" ? "rcall " : "rjmp ") + ln.words[1])
                 }
-                */
+            }
+            */
+        }
+
+        public toFnPtr(v: number) {
+            return v >> 1;
         }
 
         constructor() {
