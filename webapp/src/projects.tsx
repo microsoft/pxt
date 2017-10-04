@@ -253,7 +253,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                             <div className="ui grid centered padded">
                                 <sui.Button icon="plus" class="huge primary focused" text={lf("New project") } title={lf("Creates a new empty project") } onClick={newProject} />
                                 {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing) ?
-                                    <sui.Button key="import" icon="upload" class="huge secondary focused" textClass="landscape only" text={lf("Import") } title={lf("Import a project") } onClick={() => importProject() } /> : undefined}
+                                    <sui.Button key="import" icon="upload" class="huge focused" textClass="landscape only" text={lf("Import") } title={lf("Import a project") } onClick={() => importProject() } /> : undefined}
                             </div>
                         </div>
                     </div>
