@@ -161,8 +161,7 @@ namespace pxt.blocks {
                 operators: {
                     'op': ["min", "max"]
                 },
-                category: 'math',
-                outputShape: Blockly.OUTPUT_SHAPE_ROUND
+                category: 'math'
             },
             'math_op3': {
                 name: Util.lf("absolute number"),
@@ -171,8 +170,7 @@ namespace pxt.blocks {
                 category: 'math',
                 block: {
                     message0: Util.lf("absolute of %1")
-                },
-                outputShape: Blockly.OUTPUT_SHAPE_ROUND
+                }
             },
             'math_number': {
                 name: Util.lf("{id:block}number"),
