@@ -3179,16 +3179,11 @@ namespace pxt.blocks {
                 Blockly.Tooltip.DIV.style.left = anchorX + 'px';
             }
             if (card) {
-                pxt.blocks.compileBlockAsync(Blockly.Tooltip.element_, blockInfo).then((compileResult) => {
-                    const cardEl = pxt.docs.codeCard.render({
-                        header: renderTip(Blockly.Tooltip.element_),
-                        typeScript: Blockly.Tooltip.element_.disabled || pxt.appTarget.appTheme.hideBlocklyJavascriptHint
-                            ? undefined
-                            : compileResult.source
-                    })
-                    Blockly.Tooltip.DIV.appendChild(cardEl);
-                    render();
+                const cardEl = pxt.docs.codeCard.render({
+                    header: renderTip(Blockly.Tooltip.element_)
                 })
+                Blockly.Tooltip.DIV.appendChild(cardEl);
+                render();
             } else {
                 let tip = renderTip(Blockly.Tooltip.element_);
                 tip = Blockly.utils.wrap(tip, Blockly.Tooltip.LIMIT);
