@@ -128,8 +128,6 @@ namespace ts.pxtc {
             return `
     pop r29
     pop r28
-    in r28, 0x3d
-    in r29, 0x3e
     @dummystack -1
     ret`
         }
