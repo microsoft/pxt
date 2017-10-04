@@ -15,20 +15,23 @@
     .getting-started-segment {
         border: 0;
         margin-top: -2.1rem !important;
+        margin-bottom: 0;
         padding: 0;
         border-radius: 0;
         background-repeat: no-repeat;
         background-size: cover;
-        height: 350px;
+        .ui.grid {
+            height: 300px;
+        }
         .column {
             padding: 0 !important;
         }
         .getting-started {
             padding: @carouselArrowSize;
-            margin-top: 100px;
+            margin-top: 70px;
         }
         .getting-started-header {
-            font-size: 60px;
+            font-size: 50px;
             text-shadow: -1px 0 rgb(87, 87, 87), 0 1px rgb(87, 87, 87), 1px 0 rgb(87, 87, 87), 0 -1px rgb(87, 87, 87);
         }
     }
@@ -62,6 +65,9 @@
         .column.right.aligned {
             padding-right: @carouselArrowSize !important;
         }
+    }
+    .gallerysegment.mystuff-segment .carouselarrow .icon {
+        top: 30%;
     }
     /* Footer, Privary, Terms of Use */
     .homefooter {
@@ -154,7 +160,9 @@
     /* Carousel */
     .projectsdialog {
         .getting-started-segment {
-            height: 250px;
+            .ui.grid {
+                height: 250px;
+            }
             .getting-started {
                 padding: @carouselArrowSizeMobile;
                 margin-top: 40px;

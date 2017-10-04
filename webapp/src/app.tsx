@@ -1618,15 +1618,18 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
     completeTutorial() {
         pxt.tickEvent("tutorial.complete");
-        this.leaveTutorial();
+        core.showLoading("leavingtutorial", lf("leaving tutorial..."));
+        this.exitTutorialAsync()
+            .then(() => {
+                let curr = pkg.mainEditorPkg().header;
+                this.loadHeaderAsync(curr);
+            }).done(() => {
+                core.hideLoading("leavingtutorial");
+            })
     }
 
     exitTutorial() {
         pxt.tickEvent("tutorial.exit");
-        this.leaveTutorial();
-    }
-
-    leaveTutorial() {
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
         this.exitTutorialAsync()
             .done(() => {

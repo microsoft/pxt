@@ -196,6 +196,11 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
             this.hide();
             this.props.parent.gettingStarted();
         }
+        const newProject = () => {
+            pxt.tickEvent("projects.new");
+            this.hide();
+            this.props.parent.newProject();
+        }
 
         const hadFetchError = this.galleryFetchErrors[tab];
         const isLoading = tab != HOME && !hadFetchError && !gals[tab].length;
@@ -238,19 +243,24 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                 <div className="column right aligned">
                                     <div className="getting-started">
                                         <h2 className="getting-started-header">{lf("First time here?") }</h2>
-                                        <sui.Button icon="right arrow" rightIcon class="huge primary focused" text={lf("Get Started") } title={lf("Getting started tutorial") } onClick={gettingStarted} />
+                                        <sui.Button icon="right arrow" rightIcon class="large secondary focused" text={lf("Start tutorial") } title={lf("Getting started tutorial") } onClick={gettingStarted} />
                                     </div>
                                 </div>
                             </div>
                         </div> : undefined }
-                    <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment">
+                    <div key={`newproject_gallerysegment`} className="ui segment gallerysegment">
+                        <div className="content">
+                            <div className="ui grid centered padded">
+                                <sui.Button icon="plus" class="huge primary focused" text={lf("New project") } title={lf("Creates a new empty project") } onClick={newProject} />
+                                {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing) ?
+                                    <sui.Button key="import" icon="upload" class="huge secondary focused" textClass="landscape only" text={lf("Import") } title={lf("Import a project") } onClick={() => importProject() } /> : undefined}
+                            </div>
+                        </div>
+                    </div>
+                    <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
                         <div className="ui grid equal width padded">
                             <div className="column">
-                                <h2 className="ui header">{lf("My Stuff") } </h2>
-                            </div>
-                            <div className="column right aligned">
-                                {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing) ?
-                                    <sui.Button key="import" icon="upload" class="secondary tiny focused" textClass="landscape only" text={lf("Import") } title={lf("Import a project") } onClick={() => importProject() } /> : undefined}
+                                <h2 className="ui header">{lf("My Projects") } </h2>
                             </div>
                         </div>
                         <div className="content">
@@ -328,44 +338,29 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         return headers;
     }
 
-    newProject() {
-        pxt.tickEvent("projects.new");
-        this.props.hide();
-        this.props.parent.newProject();
-    }
-
     renderCore() {
         const {name, path} = this.props;
         const theme = pxt.appTarget.appTheme;
-
-        // Fetch the gallery
-        this.hasFetchErrors = false;
-        let cards: pxt.CodeCard[];
-        let headers: pxt.workspace.Header[];
-        if (path) {
-            cards = this.fetchGallery(path);
-        } else {
-            headers = this.fetchLocalData();
-            headers.unshift({
-                id: 'new',
-                name: lf("New Project")
-            } as any)
-        }
 
         const onClick = (scr: any) => {
             this.props.onClick(scr);
         }
 
-        return <div className="ui dimmable">
-            {this.hasFetchErrors ?
-                <div className="ui carouselouter">
+        let carouselJSX: JSX.Element;
+        if (path) {
+            // Fetch the gallery
+            this.hasFetchErrors = false;
+
+            const cards = this.fetchGallery(path);
+            if (this.hasFetchErrors) {
+                carouselJSX = <div className="ui carouselouter">
                     <div className="carouselcontainer" tabIndex={0} onClick={() => this.setState({}) }>
                         <p className="ui grey inverted segment">{lf("Oops, please connect to the Internet and try again.") }</p>
                     </div>
                 </div>
-                :
-                <carousel.Carousel bleedPercent={20}>
-                    {cards ? cards.map((scr, index) =>
+            } else {
+                carouselJSX = <carousel.Carousel bleedPercent={20}>
+                    {cards.map((scr, index) =>
                         <div key={path + scr.name}>
                             <codecard.CodeCardView
                                 className="example"
@@ -377,31 +372,37 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 onClick={() => onClick(scr) }
                                 />
                         </div>
-                    ) : headers.map((scr, index) =>
+                    ) }
+                </carousel.Carousel>
+            }
+        } else {
+            const headers = this.fetchLocalData();
+            if (headers.length == 0) {
+                carouselJSX = <div className="ui carouselouter">
+                    <div className="carouselcontainer">
+                        <p>{lf("This is where you will you find your code.") }</p>
+                    </div>
+                </div>
+            } else {
+                carouselJSX = <carousel.Carousel bleedPercent={20}>
+                    {headers.map((scr, index) =>
                         <div key={'local' + scr.id + scr.recentUse }>
-                            {scr.id == 'new' ?
-                                <div className="ui card link newprojectcard focused" tabIndex={0} title={lf("Creates a new empty project") } onClick={() => this.newProject() } onKeyDown={sui.fireClickOnEnter} >
-                                    <div className="content">
-                                        <sui.Icon icon="huge add circle" />
-                                        <span className="header">{scr.name}</span>
-                                    </div>
-                                </div>
-                                :
-                                <codecard.CodeCardView
-                                    ref={(view) => { if (index === 1) this.latestProject = view } }
-                                    cardType="file"
-                                    className="file"
-                                    name={scr.name}
-                                    time={scr.recentUse}
-                                    url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                                    onClick={() => onClick(scr) }
-                                    />
-                            }
+                            <codecard.CodeCardView
+                                ref={(view) => { if (index === 1) this.latestProject = view } }
+                                cardType="file"
+                                className="file"
+                                name={scr.name}
+                                time={scr.recentUse}
+                                url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
+                                onClick={() => onClick(scr) }
+                                />
                         </div>
                     ) }
                 </carousel.Carousel>
             }
-        </div>;
+        }
+
+        return carouselJSX;
     }
 }
 
