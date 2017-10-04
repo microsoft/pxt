@@ -14,6 +14,8 @@ namespace pxtblockly {
         public static TOGGLE_WIDTH: number = 40;
         public static TOGGLE_WIDTH_RECT: number = 60;
 
+        private CURSOR = 'pointer';
+
         constructor(state: string, params: any, opt_validator?: Function) {
             super(state, opt_validator);
             this.params = params;
