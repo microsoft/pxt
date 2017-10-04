@@ -104,7 +104,6 @@ interface AppTheme {
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         blockHats?: boolean; // if true, event blocks have hats
-        hideBlocklyJavascriptHint?: boolean; // hide javascript preview in blockly hint menu
 
         // monaco theming
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
