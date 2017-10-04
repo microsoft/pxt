@@ -1708,7 +1708,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const trace = run && simOpts.enableTrace;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
-        const useModulator = compile.useModulator;
         const { hideMenuBar, hideEditorToolbar } = targetTheme;
         const isHeadless = simOpts.headless;
         const simActive = this.state.embedSimView;
@@ -1842,8 +1841,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             </div>
                         </div>
                     </header>}
-                {useModulator ? <audio id="modulatorAudioOutput" controls></audio> : undefined}
-                {useModulator ? <div id="modulatorWrapper"><div id="modulatorBubble"><canvas id="modulatorWavStrip"></canvas></div></div> : undefined}
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
                 </div>
