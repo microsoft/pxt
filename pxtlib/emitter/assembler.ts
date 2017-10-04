@@ -844,7 +844,7 @@ namespace ts.pxtc.assembler {
         }
 
 
-        public getSource(clean: boolean, numStmts = 1, flashSize = 128 * 1024) {
+        public getSource(clean: boolean, numStmts = 1, flashSize = 0) {
             let lenTotal = this.buf ? this.buf.length * 2 : 0
             let lenThumb = this.labels["_program_end"] || lenTotal;
             let lenFrag = this.labels["_frag_start"] || 0
@@ -852,6 +852,9 @@ namespace ts.pxtc.assembler {
             let lenLit = this.labels["_program_end"]
             if (lenLit) lenLit -= this.labels["_js_end"]
             let totalSize = lenTotal + this.baseOffset
+            if (flashSize && totalSize > flashSize)
+                U.userError(lf("program too big by {0} bytes!", totalSize - flashSize))
+            flashSize = flashSize || 128 * 1024
             let totalInfo = lf("; total bytes: {0} ({1}% of {2}k flash)",
                 totalSize, (100 * totalSize / flashSize).toFixed(1), (flashSize / 1024).toFixed(1))
             let res =
