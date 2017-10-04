@@ -707,7 +707,7 @@ namespace pxt.blocks {
     ///////////////////////////////////////////////////////////////////////////////
 
     function extractNumber(b: B.Block): number {
-        let v = b.getFieldValue(b.type === "math_number_minmax" ? "SLIDER" : "NUM");
+        let v = b.getFieldValue("NUM");
         const parsed = parseFloat(v);
         checkNumber(parsed, b);
         return parsed;
