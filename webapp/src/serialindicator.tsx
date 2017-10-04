@@ -16,6 +16,7 @@ export interface SerialIndicatorState {
 }
 
 export class SerialIndicator extends React.Component<SerialIndicatorProps, SerialIndicatorState>{
+    animationStopper: number
 
     constructor(props: any) {
         super(props)
@@ -25,16 +26,21 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
 
     handleMessage(ev: MessageEvent) {
         let msg = ev.data
-        if (!this.state.active && msg.type === "serial") {
+        if (msg.type === "serial") {
             const sim = !!msg.sim
             if (sim === this.props.isSim) {
-                this.setState({ active: true, receivingData: true})
+                if (!this.state.active) {
+                    this.setState({ active: true, receivingData: true })
+                } else {
+                    clearTimeout(this.animationStopper)
+                }
+                this.animationStopper = setTimeout(() => {this.setState({receivingData: false})}, 1000)
             }
         }
     }
 
     clear() {
-        this.setState({ active: false })
+        this.setState({ active: false, receivingData: false})
     }
 
     render() {
