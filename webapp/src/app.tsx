@@ -1622,7 +1622,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         this.exitTutorialAsync()
             .then(() => {
                 let curr = pkg.mainEditorPkg().header;
-                this.loadHeaderAsync(curr);
+                return this.loadHeaderAsync(curr);
             }).done(() => {
                 core.hideLoading("leavingtutorial");
             })

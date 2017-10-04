@@ -346,20 +346,19 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             this.props.onClick(scr);
         }
 
-        let carouselJSX: JSX.Element;
         if (path) {
             // Fetch the gallery
             this.hasFetchErrors = false;
 
             const cards = this.fetchGallery(path);
             if (this.hasFetchErrors) {
-                carouselJSX = <div className="ui carouselouter">
+                return <div className="ui carouselouter">
                     <div className="carouselcontainer" tabIndex={0} onClick={() => this.setState({}) }>
                         <p className="ui grey inverted segment">{lf("Oops, please connect to the Internet and try again.") }</p>
                     </div>
                 </div>
             } else {
-                carouselJSX = <carousel.Carousel bleedPercent={20}>
+                return <carousel.Carousel bleedPercent={20}>
                     {cards.map((scr, index) =>
                         <div key={path + scr.name}>
                             <codecard.CodeCardView
@@ -378,13 +377,13 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         } else {
             const headers = this.fetchLocalData();
             if (headers.length == 0) {
-                carouselJSX = <div className="ui carouselouter">
+                return <div className="ui carouselouter">
                     <div className="carouselcontainer">
                         <p>{lf("This is where you will you find your code.") }</p>
                     </div>
                 </div>
             } else {
-                carouselJSX = <carousel.Carousel bleedPercent={20}>
+                return <carousel.Carousel bleedPercent={20}>
                     {headers.map((scr, index) =>
                         <div key={'local' + scr.id + scr.recentUse }>
                             <codecard.CodeCardView
@@ -401,8 +400,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 </carousel.Carousel>
             }
         }
-
-        return carouselJSX;
     }
 }
 
