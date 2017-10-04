@@ -128,14 +128,6 @@ If you need a rendering of typescript, javascript code, specify the language as 
     let x = 0;
     ```
 
-### shuffle
-
-The **shuffle** macro shuffles the blocks from a program which makes for a great student activity.
-
-    ```shuffle
-    basic.showNumber(5)
-    ```
-
 See [basic namespace docs](https://makecode.com/reference/basic) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic.md).
 

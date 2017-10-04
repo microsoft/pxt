@@ -45,7 +45,7 @@ Test the following on various browsers:
 
 ### Context Menu
 
-* Right click anywhere in the workspace, make sure our custom context menu appears with options to Delete, Shuffle and Download a screenshot.
+* Right click anywhere in the workspace, make sure our custom context menu appears with options to Delete and Download a screenshot.
 * Check that downloading a screenshot works.
 * Check that deleting / shuffling works.
 
