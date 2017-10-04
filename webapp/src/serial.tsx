@@ -23,6 +23,7 @@ export class Editor extends srceditor.Editor {
     active: boolean = true
     rawDataBuffer: string = ""
     maxBufferLength: number = 5000
+    maxChartTime: number = 18000
 
     //refs
     startPauseButton: StartPauseButton
@@ -54,6 +55,7 @@ export class Editor extends srceditor.Editor {
 
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
+        setInterval(this.dropStaleCharts.bind(this), 5000)
         window.addEventListener("message", this.processMessage.bind(this), false)
     }
 
@@ -145,6 +147,18 @@ export class Editor extends srceditor.Editor {
                 this.consoleBuffer = ""
             }
         }
+    }
+
+    dropStaleCharts() {
+        let now = Util.now()
+        for (let i = 0; i < this.charts.length; ++i) {
+            let chart = this.charts[i]
+            if (now - chart.lastUpdatedTime > this.maxChartTime) {
+                this.chartRoot.removeChild(chart.rootElement)
+                chart.isStale = true
+            }
+        }
+        this.charts = this.charts.filter(c => !c.isStale)
     }
 
     pauseRecording() {
@@ -327,6 +341,8 @@ class Chart {
     source: string;
     variable: string;
     chart: SmoothieChart;
+    isStale: boolean = false;
+    lastUpdatedTime: number = 0;
     lineConfigs = [
         { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.5)', lineWidth: 5 },
         { strokeStyle: 'rgba(0, 0, 255, 1)', fillStyle: 'rgba(0, 0, 255, 0.5)', lineWidth: 5 },
@@ -391,6 +407,7 @@ class Chart {
 
     addPoint(value: number) {
         this.line.append(Util.now(), value)
+        this.lastUpdatedTime = Util.now()
     }
 
     start() {
