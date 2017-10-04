@@ -153,6 +153,9 @@ namespace ts.pxtc {
     @dummystack ${n}`
         }
         pop_locals(n: number) {
+            if (n * 2 <= 5) {
+                return Util.range(n * 2).map(k => "pop r0").join("\n") + `\n@dummystack -${n}`
+            }
             let n0 = n
             let r = `
     in	r28, 0x3d
@@ -186,6 +189,7 @@ namespace ts.pxtc {
 
         cmp_zero(reg: string) {
             let reg_lo = this.rmap_lo[reg]
+            // TODO shouldn't this compare also regHI?
             return `
     cp ${reg_lo}, r1`
         }
