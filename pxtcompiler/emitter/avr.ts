@@ -122,7 +122,7 @@ namespace ts.pxtc.avr {
                 })
             this.addEnc("$r3", "R0-16-31", v => this.inminmax(16, 31, v, (v - 16) << 4))
             this.addEnc("$r4", "R0-7", v => this.inrange(7, v, v << 4))
-            this.addEnc("$r6", "R0-31", v => this.inrange(31, v, v << 5 | v))
+            this.addEnc("$r6", "R0-31", v => this.inrange(31, v, (v << 4) | (v & 15) | ((v & 16) << 5)))
             this.addEnc("$r7", "R0-31", v => this.inrange(31, v, v << 3))
             this.addEnc("$r8", "Reven", (v: number) => v & 0x1 ? null : (v >> 1) << 4)
             this.addEnc("$r9", "Reven", (v: number) => v & 0x1 ? null : (v >> 1))

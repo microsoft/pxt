@@ -109,7 +109,7 @@ namespace ts.pxtc {
         }
 
         proc_setup(numlocals: number, main?: boolean) {
-            let r = main ? "eor r1, r1" : ""
+            let r = main ? "clr r1" : ""
             r += `
     push r29
     push r28`
@@ -293,6 +293,30 @@ namespace ts.pxtc {
                 assert(new_off >= 0)
                 maybe_spill_it(new_off)
             }
+
+            if (inf && inf.size == 1) {
+                if (store) {
+                    return `
+    ${prelude}
+    std ${tgt_reg}, ${off}, ${this.rmap_lo[reg]}`
+                } else {
+                    if (inf.needsSignExt)
+                        return `
+    ${prelude}
+    ldd ${this.rmap_lo[reg]}, ${tgt_reg}, ${off}
+    clr ${this.rmap_hi[reg]}
+    sbrc ${this.rmap_lo[reg]}, 7
+    com ${this.rmap_hi[reg]}`
+                    else
+                        return `
+    ${prelude}
+    ldd ${this.rmap_lo[reg]}, ${tgt_reg}, ${off}
+    clr ${this.rmap_hi[reg]}
+    `
+                }
+            }
+
+
             if (store) {
                 return `
     ${prelude}
