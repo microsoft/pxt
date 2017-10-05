@@ -1,4 +1,4 @@
-@inproceedings{SafeTypeScript15,
+@inproceedings{SafeTypeScriptPOPL15,
   author    = {A. Rastogi and
                N. Swamy and
                C. Fournet and
@@ -10,4 +10,67 @@
   pages     = {167--180},
   year      = {2015},
   url       = {http://doi.acm.org/10.1145/2676726.2676971}
+}
+
+% Current proposals for adding gradual typing to JavaScript, such as Closure, TypeScript and Dart, forgo soundness to deal with 
+% issues of scale, code reuse, and popular programming patterns. We show how to address these issues in practice while retaining 
+% soundness. We design and implement a new gradual type system, prototyped for expediency as a 'Safe' compilation mode for 
+% TypeScript. Our compiler achieves soundness by enforcing stricter static checks and embedding residual runtime checks in compiled 
+% code. It emits plain JavaScript that runs on stock virtual machines. Our main theorem is a simulation that ensures that the 
+% checks introduced by Safe TypeScript (1) catch any dynamic type error, and (2) do not alter the semantics of type-safe TypeScript 
+% code.
+%
+% Safe TypeScript is carefully designed to minimize the performance overhead of runtime checks. At its core, we rely on two new 
+% ideas: differential subtyping, a new form of coercive subtyping that computes the minimum amount of runtime type information that 
+% must be added to each object; and an erasure modality, which we use to safely and selectively erase type information. This allows 
+% us to scale our design to full-fledged TypeScript, including arrays, maps, classes, inheritance, overloading, and generic types.
+%
+% We validate the usability and performance of Safe TypeScript empirically by type-checking and compiling around 120,000 lines of 
+% existing TypeScript source code. Although runtime checks can be expensive, the end-to-end overhead is small for code bases that 
+% already have type annotations. For instance, we bootstrap the Safe TypeScript compiler (90,000 lines including the base 
+% TypeScript compiler): we measure a 15% runtime overhead for type safety, and also uncover programming errors as type safety 
+% violations. We conclude that, at least during development and testing, subjecting JavaScript/TypeScript programs to safe gradual 
+% typing adds significant value to source type annotations at a modest cost.
+
+@inproceedings{StrongScriptECOOP15,
+  author    = {G. Richards and
+               F. Z. Nardelli and
+               J. Vitek},
+  title     = {Concrete Types for TypeScript},
+  booktitle = {29th European Conference on Object-Oriented Programming, {ECOOP} 2015},
+  pages     = {76--100},
+  year      = {2015},
+  url       = {https://doi.org/10.4230/LIPIcs.ECOOP.2015.76},
+  doi       = {10.4230/LIPIcs.ECOOP.2015.76}
+}
+
+% Typescript extends JavaScript with optional type annotations that are, by design, unsound and, that the Typescript compiler
+% discards as it emits code. This design point preserves programming idioms developers are familiar with, and allows them to leave
+% their legacy code unchanged, while offering a measure of static error checking in parts of the program that have type 
+% annotations. We present an alternative design for TypeScript, one where it is possible to support the same degree of dynamism, 
+% but where types can be strengthened to provide hard guarantees. We report on an implementation, called StrongScript, that 
+% improves runtime performance of typed programs when run on a modified version of the V8 JavaScript engine.
+
+
+% other TypeScript reading:
+
+% Gavin Bierman, Martin Abadi, and Mads Torgersen. Understanding TypeScript. ECOOP, 2014.
+% Arjun Guha, Claudiu Saftoiu, and Shriram Krishnamurthi. The essence of JavaScript. In ECOOP, 2010
+% Jeremy Siek and Walid Taha. Gradual typing for objects. In ECOOP, 2007.
+
+
+@inproceedings{microbitICSE2016,
+  author    = {T. Ball and
+               J. Protzenko and
+               J. Bishop and
+               M. Moskal and
+               J. de Halleux and
+               M. Braun and
+               S. Hodges and
+               C. Riley},
+  title     = {Microsoft Touch Develop and the {BBC} micro: bit},
+  booktitle = {Proceedings of the 38th International Conference on Software Engineering},
+  pages     = {637--640},
+  year      = {2016},
+  url       = {http://doi.acm.org/10.1145/2889160.2889179}
 }

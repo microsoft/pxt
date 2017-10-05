@@ -27,13 +27,14 @@ Type systems with soundness guarantees for JavaScript are numerous.
 Safe TypeScript~\cite{SafeTypeScript15}: distinguishes dynamic from Any type - dynamic means
 one of the known static types, where as Any denotes types coming
 from raw JavaScript.
+StrongScript~\cite{StrongScriptECOOP15}.
 
-StrongScript XYZ.
-Static TypeScript differs from these efforts by XYZ. 
+Static TypeScript differs from these efforts by outlawing untyped or optionally typed
+code.  In this sense, it can be seen to be StrongScript where every variable and 
+expression has a concrete (!) type.   As in StrongScript, classes are nominally typed,
+which permits a more efficient and traditional property lookup for class instances. 
+Static TypeScript goes further by outlawing downcasts (for untagged implementation).
 
-% Other ways to restrict JavaScript/TypeScript
-% •	Safe TypeScript
-% •	StrongScript
 % •	Quite a few others…
 % MicroPython
 
