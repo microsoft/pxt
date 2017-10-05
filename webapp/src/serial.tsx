@@ -287,7 +287,7 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button class="ui icon circular small inverted button" onClick={this.goBack.bind(this) }>
+                        <sui.Button title="Exit the data editor" class="ui icon circular small inverted button" onClick={this.goBack.bind(this) }>
                             <sui.Icon icon="close" />
                         </sui.Button>
                     </div>
@@ -298,7 +298,7 @@ export class Editor extends srceditor.Editor {
                 <div id="serialToolbox">
                     <div className="ui grid right aligned padded">
                         <div className="column">
-                            <sui.Button class="ui small basic blue button" onClick={this.showExportDialog.bind(this) }>
+                            <sui.Button title="Download a file of your data" class="ui small basic blue button" onClick={this.showExportDialog.bind(this) }>
                                 <sui.Icon icon="download" /> {lf("Export data") }
                             </sui.Button>
                         </div>
@@ -333,7 +333,8 @@ export class StartPauseButton extends data.Component<StartPauseButtonProps, Star
         const {toggle} = this.props;
         const {active} = this.state;
 
-        return <sui.Button class={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
+        return <sui.Button title={active ? "Stop recording data" : "Start recording data"}
+                class={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
             <sui.Icon icon={active ? "pause icon" : "circle icon"} />
         </sui.Button>
     }
