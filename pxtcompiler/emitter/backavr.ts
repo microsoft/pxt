@@ -329,7 +329,7 @@ namespace ts.pxtc {
         prologue_vtable(arg_index: number, vtableShift: number) { assert(false); return "" }
 
         method_call(procid: ir.ProcId, topExpr: ir.Expr) {
-            let res = this.load_reg_src_off("r0", "sp", "#2*" + (topExpr.args.length - 1)) + "\n"
+            let res = this.load_reg_src_off("r0", "sp", "#" + 2 * (topExpr.args.length - 1)) + "\n"
             let isIface = false
             let methodIdx = 0
 
@@ -338,7 +338,7 @@ namespace ts.pxtc {
                 isIface = true
                 methodIdx = isSet ? procid.ifaceIndex : procid.mapIdx
             } else {
-                methodIdx = procid.virtualIndex + 4
+                methodIdx = procid.virtualIndex + 2
                 if (procid.ifaceIndex != null) {
                     isIface = true
                     methodIdx = procid.ifaceIndex
