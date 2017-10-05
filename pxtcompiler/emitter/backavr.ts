@@ -92,7 +92,7 @@ namespace ts.pxtc {
         push_fixed(regs: string[]) {
             let res = ""
             regs.forEach(r => {
-                res = res + `\npush ${this.rmap_lo[r]}\npush ${this.rmap_hi[r]}`
+                res = res + `\npush ${this.rmap_hi[r]}\npush ${this.rmap_lo[r]}`
             });
             res += `
     @dummystack ${regs.length}`
@@ -101,7 +101,7 @@ namespace ts.pxtc {
         pop_fixed(regs: string[]) {
             let res = ""
             regs.forEach(r => {
-                res = res + `\npop ${this.rmap_hi[r]}\npop ${this.rmap_lo[r]}`
+                res = res + `\npop ${this.rmap_lo[r]}\npop ${this.rmap_hi[r]}`
             });
             res += `
     @dummystack -${regs.length}`
@@ -111,8 +111,8 @@ namespace ts.pxtc {
         proc_setup(numlocals: number, main?: boolean) {
             let r = main ? "eor r1, r1" : ""
             r += `
-    push r28
-    push r29`
+    push r29
+    push r28`
             for (let i = 0; i < numlocals; ++i)
                 r += `
     push r1
@@ -132,8 +132,8 @@ namespace ts.pxtc {
         proc_return() {
             // pop frame pointer and return
             return `
-    pop r29
     pop r28
+    pop r29
     @dummystack -1
     ret`
         }
@@ -143,8 +143,8 @@ namespace ts.pxtc {
 
         push_local(reg: string) {
             return `
-    push ${this.rmap_lo[reg]}
     push ${this.rmap_hi[reg]}
+    push ${this.rmap_lo[reg]}
     @dummystack 1`
         }
         push_locals(n: number) {
@@ -295,13 +295,13 @@ namespace ts.pxtc {
             if (store) {
                 return `
     ${prelude}
-    std ${tgt_reg}, ${off}+1, ${this.rmap_lo[reg]}
-    std ${tgt_reg}, ${off}, ${this.rmap_hi[reg]}`
+    std ${tgt_reg}, ${off}, ${this.rmap_lo[reg]}
+    std ${tgt_reg}, ${off}+1, ${this.rmap_hi[reg]}`
             } else {
                 return `
     ${prelude}
-    ldd ${this.rmap_lo[reg]}, ${tgt_reg}, ${off}+1
-    ldd ${this.rmap_hi[reg]}, ${tgt_reg}, ${off}`
+    ldd ${this.rmap_lo[reg]}, ${tgt_reg}, ${off}
+    ldd ${this.rmap_hi[reg]}, ${tgt_reg}, ${off}+1`
             }
         }
 
