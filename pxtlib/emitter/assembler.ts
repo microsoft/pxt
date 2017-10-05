@@ -376,7 +376,10 @@ namespace ts.pxtc.assembler {
 
             if (v == null && this.looksLikeLabel(s)) {
                 v = this.lookupLabel(s, true);
-                if (v != null) v += this.baseOffset
+                if (v != null) {
+                    if (this.ei.postProcessAbsAddress(this, 1) == 1)
+                        v += this.baseOffset
+                }
             }
 
             if (v == null || isNaN(v)) return null;
