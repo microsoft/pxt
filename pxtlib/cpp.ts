@@ -428,7 +428,10 @@ namespace pxt.cpp {
                     case "int8_t":
                     case "sbyte": return "int8";
 
-                    case "bool": return "boolean";
+                    case "bool":
+                        if (compile.shortPointers)
+                            err("use 'boolean' not 'bool' on 8 bit targets")
+                        return "boolean";
                     case "StringData*": return "string";
                     case "String": return "string";
                     case "ImageLiteral": return "string";
