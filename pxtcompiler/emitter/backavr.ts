@@ -262,6 +262,7 @@ namespace ts.pxtc {
                     prelude += `
     in  r30, 0x3d
     in  r31, 0x3e`
+                    tgt_reg = "Z"
                 }
                 maybe_spill_it(new_off)
             } else if (off[0] == "r") {
@@ -353,7 +354,6 @@ namespace ts.pxtc {
         helper_prologue() {
             return `
     @stackmark args
-    ${this.proc_setup(0)}
     movw r4, r24` // store captured vars pointer
         }
 
@@ -361,7 +361,7 @@ namespace ts.pxtc {
             return `
     call pxtrt::getGlobalsPtr
     movw r2, r24
-    ${this.proc_return()}
+    ret
     @stackempty args`
         }
 
