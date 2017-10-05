@@ -288,6 +288,30 @@ export class Button extends UiElement<ButtonProps> {
     }
 }
 
+export interface LinkProps extends ButtonProps {
+    href?: string;
+}
+
+export class Link extends UiElement<LinkProps> {
+    renderCore() {
+        return (
+            <a className={genericClassName("ui label", this.props) + " " + (this.props.disabled ? "disabled" : "") }
+                id={this.props.id}
+                href={this.props.href}
+                role={this.props.role}
+                title={this.props.title}
+                tabIndex={this.props.tabIndex || 0}
+                aria-label={this.props.ariaLabel}
+                aria-expanded={this.props.ariaExpanded}
+                onClick={this.props.onClick}
+                onKeyDown={this.props.onKeyDown}>
+                {genericContent(this.props) }
+                {this.props.children}
+            </a>
+        );
+    }
+}
+
 export class Popup extends data.Component<UiProps, {}> {
     componentDidMount() {
         this.child(".popup-button").popup({
