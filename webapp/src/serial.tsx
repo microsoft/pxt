@@ -24,6 +24,7 @@ export class Editor extends srceditor.Editor {
     rawDataBuffer: string = ""
     maxBufferLength: number = 5000
     maxChartTime: number = 18000
+    chartDropper: number
 
     //refs
     startPauseButton: StartPauseButton
@@ -40,8 +41,14 @@ export class Editor extends srceditor.Editor {
 
     setVisible(b: boolean) {
         this.isVisible = b;
-        if (this.isVisible) this.startRecording()
-        else this.pauseRecording();
+        if (this.isVisible) {
+            this.startRecording()
+            this.chartDropper = setInterval(this.dropStaleCharts.bind(this), 5000)
+        }
+        else {
+            this.pauseRecording()
+            clearInterval(this.chartDropper)
+        }
     }
 
     acceptsFile(file: pkg.File) {
@@ -55,7 +62,6 @@ export class Editor extends srceditor.Editor {
 
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
-        setInterval(this.dropStaleCharts.bind(this), 5000)
         window.addEventListener("message", this.processMessage.bind(this), false)
     }
 
@@ -151,13 +157,12 @@ export class Editor extends srceditor.Editor {
 
     dropStaleCharts() {
         let now = Util.now()
-        for (let i = 0; i < this.charts.length; ++i) {
-            let chart = this.charts[i]
+        this.charts.forEach((chart) => {
             if (now - chart.lastUpdatedTime > this.maxChartTime) {
                 this.chartRoot.removeChild(chart.rootElement)
                 chart.isStale = true
             }
-        }
+        })
         this.charts = this.charts.filter(c => !c.isStale)
     }
 
