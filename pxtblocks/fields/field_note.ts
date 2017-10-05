@@ -62,7 +62,7 @@ namespace pxtblockly {
     let regex: RegExp = /^Note\.(.+)$/;
 
     export interface FieldNoteOptions extends Blockly.FieldCustomOptions {
-        editorColor?: string;
+        editorColour?: string;
     }
 
     //  Class for a note input field.
@@ -110,8 +110,8 @@ namespace pxtblockly {
             FieldNote.superClass_.constructor.call(this, text, validator);
             this.note_ = text;
 
-            if (params.editorColor) {
-                this.colour_ = pxtblockly.parseColour(params.editorColor);
+            if (params.editorColour) {
+                this.colour_ = pxtblockly.parseColour(params.editorColour);
                 this.colourBorder_ = goog.color.rgbArrayToHex(goog.color.darken(goog.color.hexToRgb(this.colour_), 0.2));
             }
         }
