@@ -161,7 +161,7 @@ declare namespace pxt {
         hideSideDocs?: boolean;
         showHomeScreen?: boolean; // show the home page on editor load
         homeScreenHero?: string; // home screen hero image
-        sideDoc?: string; // if set: show the getting started button on the home screen, clicking on getting started button links to that page
+        sideDoc?: string; // deprecated
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
         feedbackUrl?: string; // is set: a feedback link will show in the settings menu
         boardName?: string;

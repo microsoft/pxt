@@ -25,13 +25,13 @@
         margin-left: 4rem;
         min-width: 5rem;
         padding-left: 1.5rem;
-        height: 4rem;
+        height: 8rem;
         .header {
             word-wrap: break-word;
         }
     }
     .meta {
-        height: 3rem;
+        height: 4rem;
         padding: 1rem;
         text-align: right;
     }
@@ -41,7 +41,7 @@
 /* New project card */
 
 .ui.card.link.newprojectcard {
-    background: fade(@primaryColor, 50%) !important;
+    background: fade(@primaryColor, 90%) !important;
     border: 2px solid @solidBorderColor;
     text-align: center;
     color: @white;
