@@ -372,7 +372,10 @@ class Chart {
         this.chart = new SmoothieChart(chartConfig)
         this.rootElement.className = "ui segment"
         this.rootElement.tabIndex = 0
-        //this.rootElement.onkeydown = sui.fireClickOnEnter
+        this.rootElement.onkeydown = sui.fireClickOnEnter
+        this.rootElement.addEventListener("click", ev => {
+            pxt.commands.browserDownloadAsync(this.toCSV(), "data.csv", "text/csv")
+        }, false);
         this.source = source
         this.variable = variable
         this.chart.addTimeSeries(this.line, this.lineConfigs[chartIdx % 4])
@@ -394,9 +397,6 @@ class Chart {
         let canvas = document.createElement("canvas");
         this.chart.streamTo(canvas);
         this.canvas = canvas;
-        this.canvas.addEventListener("click", ev => {
-            pxt.commands.browserDownloadAsync(this.toCSV(), "data.csv", "text/csv")
-        }, false);
         return canvas
     }
 

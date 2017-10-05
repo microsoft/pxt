@@ -59,7 +59,7 @@ function removeClass(el: HTMLElement, cls: string) {
     else if (el.className.indexOf(cls) >= 0) el.className.replace(new RegExp(`(?:^|\\s)${cls}(?:\\s|$)`), ' ');
 }
 
-export function fireClickOnEnter(e: React.KeyboardEvent): void {
+export function fireClickOnEnter(e: React.KeyboardEvent | KeyboardEvent): void {
     let charCode = (typeof e.which == "number") ? e.which : e.keyCode
     if (charCode === core.ENTER_KEY || charCode === core.SPACE_KEY) {
         e.preventDefault();
