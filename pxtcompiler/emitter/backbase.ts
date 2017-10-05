@@ -387,7 +387,8 @@ ${baseLabel}:
                         this.exprStack.shift()
                         this.clearStack()
                     } else {
-                        this.write(this.t.load_reg_src_off(reg, "sp", idx.toString(), true) + ` ; tmpref @${this.exprStack.length - idx}`)
+                        let idx0 = idx.toString() + ":" + this.exprStack.length
+                        this.write(this.t.load_reg_src_off(reg, "sp", idx0, true) + ` ; tmpref @${this.exprStack.length - idx}`)
                     }
                     break;
                 case ir.EK.CellRef:
