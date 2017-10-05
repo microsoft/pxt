@@ -371,6 +371,8 @@ class Chart {
         }
         this.chart = new SmoothieChart(chartConfig)
         this.rootElement.className = "ui segment"
+        this.rootElement.tabIndex = 0
+        //this.rootElement.onkeydown = sui.fireClickOnEnter
         this.source = source
         this.variable = variable
         this.chart.addTimeSeries(this.line, this.lineConfigs[chartIdx % 4])
