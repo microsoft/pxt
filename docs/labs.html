@@ -56,6 +56,7 @@
 		#makecode-targets .ui.targetlogo {
 			padding: 1.5rem;
 			height: 5rem;
+			color:white;
 		}
 		/* Target image */
 
@@ -67,6 +68,7 @@
 		#makecode-targets>.ui.cards>.card>.image>img,
 		.ui.card>.image>img {
 			height: 150px;
+			color:white;
 		}
 
 		#makecode-targets .image {
@@ -75,7 +77,7 @@
 		/* Bottom action segment */
 
 		#makecode-targets .ui.labelsegment {
-			background: #035089;
+			background: #006000;
 			padding: 1rem;
 			margin: 0;
 			height: 3.5rem;
@@ -83,7 +85,7 @@
 		}
 
 		#makecode-targets .ui.actionsegment {
-			background: #035089;
+			background: #006000;
 			margin: 0;
 			padding-top: 0;
 			height: 4rem;
@@ -117,16 +119,6 @@
 
 		.editor-image {
 			max-height: 250px;
-		}
-		/* Get Inpired section */
-
-		#makecode-getinspired-container {
-			background: #0072c6;
-		}
-
-		#makecode-getinspired-container .image,
-		#makecode-getinspired-container .image img {
-			min-height: 200px;
 		}
 		/* Docs section */
 
@@ -213,8 +205,7 @@
 		}
 
 		#makecode-targets {
-			background: #0072c6;
-			/*#0072c6; */
+			background: #00ff00;
 		}
 
 		.ui.button.green {
@@ -377,7 +368,7 @@
 			<a href="#resources" class="item ms-font-m" role="menuitem">
 			Resources
 		</a>
-		<a href="mailto:makecode@microsoft.com" onclick="tickEvent('makecode.menu.contact', {'target': 'makecode'})" class="item ms-font-m"
+		<a href="mailto:makecode@microsoft.com" onclick="tickEvent('makecodelabs.menu.contact', {'target': 'makecode'})" class="item ms-font-m"
 		 role="menuitem">
 			Contact
 			</a>
@@ -419,7 +410,7 @@
 							<a href="#resources" class="item ms-font-m" role="menuitem">
 				Resources
 				</a>
-					<a href="mailto:makecode@microsoft.com" onclick="tickEvent('makecode.menu.contact', {'target': 'makecode'})" class="item ms-font-m"
+					<a href="mailto:makecode@microsoft.com" onclick="tickEvent('makecodelabs.menu.contact', {'target': 'makecode'})" class="item ms-font-m"
 					 role="menuitem">
 				Contact
 				</a>
@@ -471,7 +462,7 @@
 							<div class="row">
 
 								<div class="ui container cards stackable four centered link doubling">
-									<a class="ui card" href="https://makecode.com/docs" target="_blank" onclick="tickEvent('makecode.resources.devdocs', {'target': 'makecode'})"
+									<a class="ui card" href="https://makecode.com/target-creation" target="_blank" onclick="tickEvent('makecodelabs.resources.devdocs', {'target': 'makecode'})"
 									 aria-label="Developer documentation">
 										<div class="image">
 											<i class="ms-Icon ms-Icon--Documentation ms-fontColor-themePrimary" aria-hidden="true" style="font-size:72px;padding:20px;"></i>
@@ -484,7 +475,7 @@
 										</div>
 									</a>
 
-									<a class="ui card" href="https://github.com/Microsoft/pxt" target="_blank" onclick="tickEvent('makecode.resources.github', {'target': 'makecode'})"
+									<a class="ui card" href="https://github.com/Microsoft/pxt" target="_blank" onclick="tickEvent('makecodelabs.resources.github', {'target': 'makecode'})"
 									 aria-label="PXT Github repository">
 										<div class="image">
 											<img src="/static/images/GitHub_Logo.png" alt="Github logo">
@@ -497,15 +488,15 @@
 										</div>
 									</a>
 
-									<a class="ui card" href="https://crowdin.com/project/kindscript" target="_blank" onclick="tickEvent('makecode.resources.translate', {'target': 'makecode'})"
-									 aria-label="Help translate Makecode on Crowdin">
+									<a class="ui card" href="https://gitter.im/makecode-community/Lobby" target="_blank" onclick="tickEvent('makecodelabs.resources.gitter', {'target': 'makecode'})"
+									 aria-label="Join community on Gitter">
 										<div class="image">
-											<img src="/static/images/crowdin-logo.png" alt="Crowdin logo">
+											<img src="/static/images/gitter-logo.png" alt="Gitter logo">
 										</div>
 										<div class="content">
-											<span class="header">Translate</span>
+											<span class="header">Chat with us</span>
 											<div class="description">
-												Help us translate Microsoft MakeCode in your language on Crowdin
+												Join the community on Gitter
 											</div>
 										</div>
 									</a>
