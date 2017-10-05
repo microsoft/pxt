@@ -246,10 +246,10 @@ This is achieved by collecting all C++ files (in all packages plus the CODAL run
 computing a hash, checking in the local in-browser cache if such a runtime was retrieved
 before, and otherwise asking the cloud service to compile it.
 Of course, the cloud service will return a cached copy, if the same set of C++
-files was compiled before. The cache hit ratio in both the browser cache,
-and the cloud cache are very high. 
-The first hit ratio is high because the cloud needs to be consulted
+files was compiled before. The cache hit rates, in both the browser cache
+and the cloud cache, are very high. 
+The first hit rate is high because the cloud needs to be consulted
 only when a new package is added to the project, and this particular combination 
 of packages was never used before on current machine.
-The second is high because people rarely combine many packages (due to
+The second hit rate is high because people rarely combine many packages (due to
 hardware and memory constraints), and there are only so many of them.

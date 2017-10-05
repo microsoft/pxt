@@ -2,17 +2,11 @@
 \label{sec:sts}
 
 TypeScript is a typed superset of JavaScript designed to enable JavaScript developers to take advantage of code 
-intellisense, static checking and refactoring made possible by types [].  You can edit and run simple TypeScript 
-programs at \url{http://www.typescriptlang.org/play}. As a starting point, every JavaScript program is a TypeScript
-program.  Types can be added gradually to such programs, supported by type inference. In TypeScript, the Any type 
+intellisense, static checking and refactoring made possible by types (\url{http://www.typescriptlang.org/}). 
+As a starting point, every JavaScript program is a TypeScript program.  Types can be added gradually to such programs, 
+supported by type inference. In TypeScript, the Any type 
 represents any JavaScript value with no constraints. Type inference may assign the Any type to expressions for which 
 no more specific type can be inferred.
-
-In TypeScript, object types are used to describe dictionaries, functions, arrays, as well as class instances. Object 
-types also describe objects that take on multiple of the above roles, as is common in JavaScript. Object types are
-related to one another by structural subtyping [].  Interface declarations name object types; classes add implementation
-and the ability to statically inherit implementation from super classes. TypeScript also supports generics, as well as
-union and intersection types.
 
 While TypeScript provides programming abstractions (classes and interfaces) with syntax like Java/C\#, their semantics
 are quite different, as they are based on JavaScript.  Classes are simply syntactic sugar for creating objects that
@@ -20,13 +14,13 @@ have code associated with them, but these objects are JavaScript objects with al
 is not surprising, as TypeScript was designed to accommodate the dynamic nature of JavaScript and programming patterns
 familiar to the JavaScript programmer. 
 
-TypeScript has enough types to allow us to approach it from the viewpoint of the microcontroller programmer, who is 
+We approach TypeScript from the viewpoint of the microcontroller programmer, who is 
 familiar with the static (though unsound) type systems of C and C++. Our realization is that TypeScript contains a
 statically-typed sound subset (Static TypeScript: STS, for short) that closely resembles Java and C\# in its semantics.
 STS arises from TypeScript by:
 \begin{itemize}
 \item \emph{eliminating} the Any type from the type system, as well as JavaScript constructs that only can be typed with Any;
-\item \emph{partitioning} the space of object types into functions, records, constructor functions, and arrays, with no casts 
+\item \emph{partitioning} TypeScript's space of object types into functions, records, constructor functions, and arrays, with no casts 
     possible between the partitions (and eliminating all other object types) - structural subtyping is used to relate records 
     to each other, as in TypeScript;
 \item typing of classes \emph{nominally} rather than structurally, as in TypeScript, and using traditional function (contravariant 
@@ -52,11 +46,14 @@ whenever it makes an (implicit) assignment of the Any type.  STS also checks for
 the program and raises an error. Many JavaScript constructs can only be typed with the Any type, including: prototype lookup,
 the eval statement, the with statement, a this reference outside of class context, an index access on non-array object, and
 reflection on Function/Object objects. Therefore, these constructs are not in STS.
-STS also excludes TypeScript’s union and intersection types.
+STS also excludes TypeScript's union and intersection types.
 
 \subsection{Partitioning of Object Types}
 
-Key to TypeScript are the definitions of object types and interfaces. Per the TypeScript specification~\cite{XYZ}:
+In TypeScript, object types are used to describe dictionaries, functions, arrays, as well as class instances. Object 
+types also describe objects that take on multiple of the above roles, as is common in JavaScript. Object types are
+related to one another by structural subtyping [].  Interface declarations name object types; classes add implementation
+and the ability to statically inherit implementation from super classes. Per the TypeScript specification~\cite{XYZ}:
 \begin{itemize}
 \item ``object types are composed from properties, call signatures, construct signatures, and index signatures, collectively called members'';
 \item ``interfaces provide the ability to name and parameterize object types and to compose existing named object types into new ones.''.
