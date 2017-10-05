@@ -54,7 +54,7 @@ namespace ts.pxtc {
         nop() { return "TBD(nop)" }
         reg_gets_imm(reg: string, imm: number) { return "TBD(reg_gets_imm)" }
         // Registers are stored on the stack in numerical order 
-        proc_setup(main?: boolean) { return "TBD(proc_setup)" }
+        proc_setup(numlocals: number, main?: boolean) { return "TBD(proc_setup)" }
         push_fixed(reg: string[]) { return "TBD(push_fixed)" }
         push_local(reg: string) { return "TBD(push_local)" }
         push_locals(n: number) { return "TBD(push_locals)" }
@@ -88,8 +88,8 @@ namespace ts.pxtc {
         prologue_vtable(arg_index: number, vtableShift: number) {
             return "TBD(prologue_vtable"
         }
-        lambda_prologue() { return "TBD(lambda_prologue)" }
-        lambda_epilogue() { return "TBD(lambda_epilogue)" }
+        helper_prologue() { return "TBD(lambda_prologue)" }
+        helper_epilogue() { return "TBD(lambda_epilogue)" }
         load_ptr(lbl: string, reg: string) { return "TBD(load_ptr)" }
         load_ptr_full(lbl: string, reg: string) { return "TBD(load_ptr_full)" }
         emit_int(v: number, reg: string) { return "TBD(emit_int)" }
@@ -225,15 +225,10 @@ ${baseLabel}:
                 this.write(this.t.debugger_proc(bkptLabel))
             }
             this.baseStackSize = 1 // push {lr}
-            this.write(this.t.proc_setup(true))
-            // initialize the locals
             let numlocals = this.proc.locals.length
-            if (numlocals > 0)
-                this.write(this.t.reg_gets_imm("r0", 0));
-            this.proc.locals.forEach(l => {
-                this.write(this.t.push_local("r0") + " ;loc")
-                this.baseStackSize++
-            })
+            this.write(this.t.proc_setup(numlocals))
+            this.baseStackSize += numlocals
+            
 
             this.write("@stackmark locals")
             this.write(`${locLabel}:`)
@@ -656,7 +651,7 @@ ${baseLabel}:
                 return ["r5", cell.index.toString(), true]
             } else if (cell.isarg) {
                 let idx = this.proc.args.length - cell.index - 1
-                return ["sp", "args@" + idx.toString(), false]
+                return ["sp", "args@" + idx.toString() + ":" + this.baseStackSize, false]
             } else {
                 return ["sp", "locals@" + cell.index, false]
             }
@@ -682,7 +677,7 @@ ${baseLabel}:
             this.write("@stackmark litfunc");
 
             let parms = this.proc.args.map(a => a.def)
-            this.write(this.t.proc_setup())
+            this.write(this.t.proc_setup(0, true))
 
             if (this.t.hasCommonalize())
                 this.write(this.t.push_fixed(["r5", "r6", "r7"]))
@@ -705,7 +700,7 @@ ${baseLabel}:
                 this.write(this.t.push_local(`r${i + 1}`))
             })
 
-            let asm = this.t.lambda_prologue()
+            let asm = this.t.helper_prologue()
 
             this.proc.args.forEach((p, i) => {
                 if (p.isRef()) {
@@ -715,7 +710,7 @@ ${baseLabel}:
                 }
             })
 
-            asm += this.t.lambda_epilogue()
+            asm += this.t.helper_epilogue()
 
             this.emitHelper(asm) // using shared helper saves about 3% of binary size
             this.write(this.t.call_lbl(this.proc.label()))

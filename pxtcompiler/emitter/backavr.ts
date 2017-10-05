@@ -95,9 +95,7 @@ namespace ts.pxtc {
                 res = res + `\npush ${this.rmap_lo[r]}\npush ${this.rmap_hi[r]}`
             });
             res += `
-    @dummystack ${regs.length}
-    in r28, 0x3d
-    in r29, 0x3e`
+    @dummystack ${regs.length}`
             return res
         }
         pop_fixed(regs: string[]) {
@@ -106,21 +104,27 @@ namespace ts.pxtc {
                 res = res + `\npop ${this.rmap_hi[r]}\npop ${this.rmap_lo[r]}`
             });
             res += `
-    in r28, 0x3d
-    in r29, 0x3e
     @dummystack -${regs.length}`
             return res
         }
-        proc_setup(main?: boolean) {
-            let set_r1_zero = main ? "eor r1, r1" : ""
-            // push the frame pointer
-            return `
-    ${set_r1_zero}
+
+        proc_setup(numlocals: number, main?: boolean) {
+            let r = main ? "eor r1, r1" : ""
+            r += `
     push r28
-    push r29
-    @dummystack 1
-    in r28, 0x3d
+    push r29`
+            for (let i = 0; i < numlocals; ++i)
+                r += `
+    push r1
+    push r1`
+
+            // setup frame pointer        
+            r += `
+    @dummystack ${numlocals + 1}
+    in r28, 0x3d  ;  Y := SP
     in r29, 0x3e`
+
+            return r
         }
 
         proc_return() {
@@ -139,18 +143,10 @@ namespace ts.pxtc {
             return `
     push ${this.rmap_lo[reg]}
     push ${this.rmap_hi[reg]}
-    @dummystack 1
-    in r28, 0x3d
-    in r29, 0x3e`
+    @dummystack 1`
         }
         push_locals(n: number) {
-            return `
-    in	r28, 0x3d
-    in	r29, 0x3e
-    sbiw	r28, #2*${n}
-    out	0x3d, r28
-    out	0x3e, r29
-    @dummystack ${n}`
+            return `no stack alignment on AVR`
         }
         pop_locals(n: number) {
             if (n * 2 <= 5) {
@@ -158,18 +154,18 @@ namespace ts.pxtc {
             }
             let n0 = n
             let r = `
-    in	r28, 0x3d
-    in	r29, 0x3e
+    in	r30, 0x3d
+    in	r31, 0x3e
 `
             while (n > 0) {
                 // adiw maxes out at #63
                 let k = Math.min(n, 31)
-                r += `    adiw	r28, #2*${k}\n`
+                r += `    adiw	r30, #2*${k}\n`
                 n -= k
             }
             r += `
-    out	0x3d, r28
-    out	0x3e, r29
+    out	0x3d, r30
+    out	0x3e, r31
     @dummystack -${n0}`
             return r
         }
@@ -188,10 +184,9 @@ namespace ts.pxtc {
         }
 
         cmp_zero(reg: string) {
-            let reg_lo = this.rmap_lo[reg]
-            // TODO shouldn't this compare also regHI?
             return `
-    cp ${reg_lo}, r1`
+    cp ${this.rmap_lo[reg]}, r1
+    cpc ${this.rmap_hi[reg]}, r1`
         }
 
         // load_reg_src_off is load/store indirect
@@ -221,7 +216,7 @@ namespace ts.pxtc {
             }
 
             // different possibilities for src: r0, r5, sp, r6
-            // any indirection we want to do using Y+C, Z+C (recall Y=sp, r6 -> Z)
+            // any indirection we want to do using Y+C, Z+C (recall Y=FP)
             if (src != "sp") {
                 prelude = `
     movw r30, ${this.rmap_lo[src]}`
@@ -327,18 +322,18 @@ namespace ts.pxtc {
             res += this.emit_int(methodIdx, "r1") + "\n"
             res += this.call_lbl("pxtrt::fetchMethod" + (isIface ? "Iface" : "")) + "\n"
             res += this.call_reg("r0") + "\n"
-            
+
             return res
         }
 
-        lambda_prologue() {
+        helper_prologue() {
             return `
     @stackmark args
-    ${this.proc_setup()}
+    ${this.proc_setup(0)}
     movw r26, r24`
         }
 
-        lambda_epilogue() {
+        helper_epilogue() {
             return `
     call pxtrt::getGlobalsPtr
     movw r2, r24
@@ -379,8 +374,8 @@ ${lbl}: .short ${data.length >> 1}
             "r1": "r22",
             "r2": "r20",
             "r3": "r18",
-            "r5": "r26",  // X
-            "r6": "r2"   // Z - we really mean r2 YES, because r30 is used as Z
+            "r5": "r4",
+            "r6": "r2"
         }
 
         rmap_hi: pxt.Map<string> = {
@@ -388,7 +383,7 @@ ${lbl}: .short ${data.length >> 1}
             "r1": "r23",
             "r2": "r21",
             "r3": "r19",
-            "r5": "r27",
+            "r5": "r5",
             "r6": "r3"
         }
 
