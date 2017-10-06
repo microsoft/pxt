@@ -228,7 +228,7 @@ ${baseLabel}:
             let numlocals = this.proc.locals.length
             this.write(this.t.proc_setup(numlocals))
             this.baseStackSize += numlocals
-            
+
 
             this.write("@stackmark locals")
             this.write(`${locLabel}:`)
