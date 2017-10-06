@@ -737,14 +737,16 @@ namespace ts.pxtc.Util {
         _localizeStrings = strs;
     }
 
-    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<any> {
-        // normalize code (keep synched with localized files)
+    function normalizeLanguageCode(code: string): string {
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0]
+        return code;
+    }
 
-        if (code === _localizeLang) {
+    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<void> {
+        code = normalizeLanguageCode(code);
+        if (code === _localizeLang)
             return Promise.resolve();
-        }
 
         return downloadTranslationsAsync(targetId, simulator, baseUrl, code, pxtBranch, targetBranch, live)
             .then((translations) => {
@@ -759,11 +761,16 @@ namespace ts.pxtc.Util {
             });
     }
 
-    export function downloadTranslationsAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
-        // normalize code (keep synched with localized files)
-        if (!/^(es|pt|si|sv|zh)/i.test(code))
-            code = code.split("-")[0]
+    export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
+        code = normalizeLanguageCode(code);
+        if (code === _localizeLang)
+            return Promise.resolve<pxt.Map<string>>(undefined);
 
+        return downloadTranslationsAsync(targetId, true, baseUrl, code, pxtBranch, targetBranch, live)
+    }
+
+    export function downloadTranslationsAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
+        code = normalizeLanguageCode(code);
         let translationsCacheId = `${code}/${live}/${simulator}`;
         if (_translationsCache[translationsCacheId]) {
             return Promise.resolve(_translationsCache[translationsCacheId]);
