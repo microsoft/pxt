@@ -115,7 +115,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         const {visible, tab} = this.state;
 
         const targetTheme = pxt.appTarget.appTheme;
-        const galleries = targetTheme.galleries || {};
+        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
+        const galleries = (targetConfig ? targetConfig.galleries : undefined) || {};
 
         // lf("Make")
         // lf("Code")

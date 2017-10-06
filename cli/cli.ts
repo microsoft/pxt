@@ -4059,12 +4059,17 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     // push entries from pxtarget
     const theme = pxt.appTarget.appTheme;
     if (theme) {
-        if (theme.galleries)
-            Object.keys(theme.galleries).forEach(gallery => todo.push(theme.galleries[gallery]));
         if (theme.sideDoc)
             todo.push(theme.sideDoc);
         if (theme.usbDocs)
             todo.push(theme.usbDocs);
+    }
+
+    // push galleries for targetconfig
+    if (fs.existsSync("targetconfig.json")) {
+        const targeConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
+        if (targeConfig.galleries)
+            Object.keys(targeConfig.galleries).forEach(gallery => todo.push(targeConfig.galleries[gallery]));
     }
 
     while (todo.length) {
