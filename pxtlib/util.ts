@@ -746,7 +746,7 @@ namespace ts.pxtc.Util {
     export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<void> {
         code = normalizeLanguageCode(code);
         if (code === _localizeLang)
-            return Promise.resolve(undefined);
+            return Promise.resolve();
 
         return downloadTranslationsAsync(targetId, simulator, baseUrl, code, pxtBranch, targetBranch, live)
             .then((translations) => {
@@ -764,7 +764,7 @@ namespace ts.pxtc.Util {
     export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
         code = normalizeLanguageCode(code);
         if (code === _localizeLang)
-            return Promise.resolve(undefined);
+            return Promise.resolve<pxt.Map<string>>(undefined);
 
         return downloadTranslationsAsync(targetId, true, baseUrl, code, pxtBranch, targetBranch, live)
     }
