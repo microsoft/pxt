@@ -177,10 +177,17 @@
 		/* Fixed header */
 
 		#makecode-header {
-			position: relative;
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
 			padding: 0 40px 0 40px;
 			z-index: 100;
 			color: #00ff00;
+		}
+
+		#about {
+			padding-top: 12rem;
 		}
 
 		#makecode-header .menuButton {
@@ -237,13 +244,11 @@
 				-webkit-transition: font-size 167ms cubic-bezier(.1, .9, .2, 1);
 				transition: font-size 167ms cubic-bezier(.1, .9, .2, 1);
 			}
-			#makecode-header.fix-top {
-				position: fixed;
-				top: 0;
-				left: 0;
-				right: 0;
+			.fix-top #makecode-header {
+				-webkit-box-shadow: 0 10px 30px -10px rgba(0,0,0,0.2);
+				box-shadow: 0 10px 30px -10px rgba(0,0,0,0.2);
 			}
-			#makecode-header.fix-top h1 {
+			.fix-top #makecode-header h1 {
 				font-size: 24px;
 				padding-top: 12px;
 			}
@@ -301,9 +306,9 @@
 		$(document).ready(function () {
 			$(window).bind('scroll', function () {
 				if ($(window).scrollTop() > 50) {
-					$('#makecode-header').addClass('fix-top');
+					$('#root').addClass('fix-top');
 				} else {
-					$('#makecode-header').removeClass('fix-top');
+					$('#root').removeClass('fix-top');
 				}
 			});
 			$('a.launch.icon').click(function () {
