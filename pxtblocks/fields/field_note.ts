@@ -791,7 +791,6 @@ namespace pxtblockly {
 
             pianoDiv.style.width = pianoWidth + "px";
             pianoDiv.style.height = (pianoHeight + 1) + "px";
-            //contentDiv.style.width = (pianoWidth + 1) + "px";
 
             (Blockly.DropDownDiv as any).setColour(this.colour_, this.colourBorder_);
 
