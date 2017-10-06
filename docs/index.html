@@ -142,7 +142,8 @@
 		#makecode-resources-container .image {
 			background: white;
 			padding: 2rem;
-			height: 120px;
+			max-height: 120px;
+			min-height: 120px;
 		}
 
 		.targets .welcomeheader {
@@ -185,7 +186,10 @@
 		/* Fixed header */
 
 		#makecode-header {
-			position: relative;
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
 			padding: 0 40px 0 40px;
 			z-index: 100;
 			color: white;
@@ -238,7 +242,6 @@
 			#makecode-hardware-container {
 				padding: 6rem;
 			}
-
 			#makecode-header h1 {
 				font-size: 62px;
 				padding-top: 34px;
@@ -246,15 +249,17 @@
 				-webkit-transition: font-size 167ms cubic-bezier(.1, .9, .2, 1);
 				transition: font-size 167ms cubic-bezier(.1, .9, .2, 1);
 			}
-			#makecode-header.fix-top {
-				position: fixed;
-				top: 0;
-				left: 0;
-				right: 0;
+			.fix-top #makecode-header {
+				-webkit-box-shadow: 0 10px 30px -10px rgba(0,0,0,0.2);
+				box-shadow: 0 10px 30px -10px rgba(0,0,0,0.2);
 			}
-			#makecode-header.fix-top h1 {
+			.fix-top #makecode-header h1 {
 				font-size: 24px;
 				padding-top: 12px;
+			}
+
+			#makecode-targets {
+				padding-top: 15rem;
 			}
 		}
 
@@ -268,6 +273,9 @@
 			}
 			#makecode-mobile-menu {
 				display: block;
+			}
+			#makecode-targets {
+				padding-top: 7rem;
 			}
 		}
 		/* Header menu */
@@ -310,9 +318,9 @@
 		$(document).ready(function () {
 			$(window).bind('scroll', function () {
 				if ($(window).scrollTop() > 50) {
-					$('#makecode-header').addClass('fix-top');
+					$('#root').addClass('fix-top');
 				} else {
-					$('#makecode-header').removeClass('fix-top');
+					$('#root').removeClass('fix-top');
 				}
 			});
 			$('a.launch.icon').click(function () {
@@ -404,6 +412,9 @@
 		<a href="https://makecode.com/blog" target="_blank" onclick="tickEvent('makecode.menu.blog', {'target': 'makecode'})" class="item ms-font-m" role="menuitem">
 			Blog
 		</a>
+		<a href="https://makecode.com/labs" target="_blank" onclick="tickEvent('makecode.menu.labs', {'target': 'makecode'})" class="item ms-font-m" role="menuitem">
+			Labs
+		</a>
 		<a id="sidenav-contact" href="mailto:makecode@microsoft.com" onclick="tickEvent('makecode.menu.contact', {'target': 'makecode'})" class="item ms-font-m" role="menuitem">
 			Contact
 		</a>
@@ -451,6 +462,9 @@
 				</a>
 					<a href="https://makecode.com/blog" target="_blank" onclick="tickEvent('makecode.menu.blog', {'target': 'makecode'})" class="item ms-font-m" role="menuitem">
 				Blog
+				</a>
+					<a href="https://makecode.com/labs" target="_blank" onclick="tickEvent('makecode.menu.labs', {'target': 'makecode'})" class="item ms-font-m" role="menuitem">
+				Labs
 				</a>
 					<a href="mailto:makecode@microsoft.com" onclick="tickEvent('makecode.menu.contact', {'target': 'makecode'})" class="item ms-font-m" role="menuitem">
 				Contact
@@ -744,7 +758,7 @@
 
 								<div class="ui container cards stackable four centered link doubling">
 									<a class="ui card" href="https://makecode.com/docs" target="_blank" onclick="tickEvent('makecode.resources.devdocs', {'target': 'makecode'})" aria-label="Developer documentation">
-										<div class="image">
+										<div class="ui medium image centered">
 											<i class="ms-Icon ms-Icon--Documentation ms-fontColor-themePrimary" aria-hidden="true" style="font-size:72px;padding:20px;"></i>
 										</div>
 										<div class="content">
@@ -770,7 +784,7 @@
 
 									<a class="ui card" href="https://github.com/Microsoft/pxt" target="_blank" onclick="tickEvent('makecode.resources.github', {'target': 'makecode'})"
 									 aria-label="PXT Github repository">
-										<div class="image">
+										<div class="ui medium image centered">
 											<img src="/static/images/GitHub_Logo.png" alt="Github logo">
 										</div>
 										<div class="content">
@@ -783,7 +797,7 @@
 
 									<a class="ui card" href="https://crowdin.com/project/kindscript" target="_blank" onclick="tickEvent('makecode.resources.translate', {'target': 'makecode'})"
 									 aria-label="Help translate Makecode on Crowdin">
-										<div class="image">
+										<div class="ui medium image centered">
 											<img src="/static/images/crowdin-logo.png" alt="Crowdin logo">
 										</div>
 										<div class="content">

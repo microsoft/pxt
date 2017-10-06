@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as sui from "./sui";
 
 export interface ICarouselProps extends React.Props<Carousel> {
     // Percentage of child width to bleed over either edge of the page
@@ -43,7 +44,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         const { rightDisabled, leftDisabled } = this.state || {} as any;
         return <div className="ui carouselouter">
             <span className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")} tabIndex={leftDisabled ? -1 : 0} onClick={() => this.onArrowClick(true)} ref={r => this.arrows.push(r)}>
-                <i className="icon circle angle left"/>
+                <sui.Icon icon="circle angle left"/>
             </span>
             <div className="carouselcontainer" ref={r => this.container = r}>
                 <div className="carouselbody" ref={r => this.dragSurface = r}>
@@ -55,7 +56,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
                 </div>
             </div>
             <span className={"carouselarrow right aligned" + (rightDisabled ? " arrowdisabled" : "")} tabIndex={rightDisabled ? -1 : 0} onClick={() => this.onArrowClick(false)} ref={r => this.arrows.push(r)}>
-                <i className="icon circle angle right"/>
+                <sui.Icon icon="circle angle right"/>
             </span>
         </div>
     }

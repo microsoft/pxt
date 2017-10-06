@@ -5,7 +5,7 @@
 @solidBorderColor: #e9eef2;
 @hoverBorderColor: white;
 
-@borderWidth: 3px;
+@borderWidth: 5px;
 
 @border: @borderWidth solid @solidBorderColor;
 @linkHoverBorder: @borderWidth solid @hoverBorderColor;

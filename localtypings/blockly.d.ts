@@ -64,6 +64,13 @@ declare namespace goog {
         function clamp(n: number, min: number, max: number): void;
     }
 
+    namespace color { 
+        class Rgb { }
+        function rgbArrayToHex(rgb: goog.color.Rgb): string;
+        function darken(rgb: goog.color.Rgb, factor: number): goog.color.Rgb;
+        function hexToRgb(hexColor: string): goog.color.Rgb;
+    }
+
     namespace ui {
         class Control extends Component {
             getChildCount(): number;

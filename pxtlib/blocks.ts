@@ -100,7 +100,6 @@ namespace pxt.blocks {
         tooltip?: string | Map<string>;
         operators?: Map<string[]>;
         block?: Map<string>;
-        outputShape?: number;
         blockTextSearch?: string; // Which block text to use for searching; if undefined, search uses all texts in BlockDefinition.block, joined with space
         tooltipSearch?: string; // Which tooltip to use for searching; if undefined, search uses all tooltips in BlockDefinition.tooltip, joined with space
     }
@@ -161,8 +160,7 @@ namespace pxt.blocks {
                 operators: {
                     'op': ["min", "max"]
                 },
-                category: 'math',
-                outputShape: Blockly.OUTPUT_SHAPE_ROUND
+                category: 'math'
             },
             'math_op3': {
                 name: Util.lf("absolute number"),
@@ -171,8 +169,7 @@ namespace pxt.blocks {
                 category: 'math',
                 block: {
                     message0: Util.lf("absolute of %1")
-                },
-                outputShape: Blockly.OUTPUT_SHAPE_ROUND
+                }
             },
             'math_number': {
                 name: Util.lf("{id:block}number"),

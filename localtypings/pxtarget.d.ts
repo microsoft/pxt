@@ -162,7 +162,7 @@ declare namespace pxt {
         hideSideDocs?: boolean;
         showHomeScreen?: boolean; // show the home page on editor load
         homeScreenHero?: string; // home screen hero image
-        sideDoc?: string; // if set: show the getting started button on the home screen, clicking on getting started button links to that page
+        sideDoc?: string; // deprecated
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
         feedbackUrl?: string; // is set: a feedback link will show in the settings menu
         boardName?: string;
@@ -182,10 +182,8 @@ declare namespace pxt {
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
-        disableBlockIcons?: boolean; // Disable icons in blocks
         hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.
         monacoColors?: pxt.Map<string>; // Monaco theme colors, see https://code.visualstudio.com/docs/getstarted/theme-color-reference
-        hideBlocklyJavascriptHint?: boolean; // hide javascript preview in blockly hint menu
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.

@@ -229,8 +229,8 @@ pxt extract ${url}`;
                         <sui.Input id="projectUri" class="focused mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" />
                         <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.") }</label>
                         {showSocialIcons ? <div className="social-icons">
-                            <a className="ui button large icon facebook" tabIndex={0} aria-label="Facebook" onClick={(e) => { showFbPopup(); e.preventDefault(); return false; } }><i className="icon facebook"></i></a>
-                            <a className="ui button large icon twitter" tabIndex={0} aria-label="Twitter" onClick={(e) => { showTwtPopup(); e.preventDefault(); return false; } }><i className="icon twitter"></i></a>
+                            <a className="ui button large icon facebook" tabIndex={0} aria-label="Facebook" onClick={(e) => { showFbPopup(); e.preventDefault(); return false; } }><sui.Icon icon="facebook" /></a>
+                            <a className="ui button large icon twitter" tabIndex={0} aria-label="Twitter" onClick={(e) => { showTwtPopup(); e.preventDefault(); return false; } }><sui.Icon icon="twitter" /></a>
                         </div> : undefined}
                     </div>
                         : undefined }

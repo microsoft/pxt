@@ -41,7 +41,7 @@
 /* New project card */
 
 .ui.card.link.newprojectcard {
-    background: fade(@primaryColor, 50%) !important;
+    background: fade(@primaryColor, 90%) !important;
     border: 2px solid @solidBorderColor;
     text-align: center;
     color: @white;

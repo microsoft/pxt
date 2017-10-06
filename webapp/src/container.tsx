@@ -43,9 +43,9 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         return <sui.DropdownMenuItem icon="help circle large" class="help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help") }>
             {targetTheme.docMenu.map(m =>
-                m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class="" onClick={() => this.openTutorial(m.path) } />
-                : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} className="ui item link" href={m.path} target="docs">{Util.rlf(m.name)}</a>
-                : <sui.Item key={"docsmenu" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class="" onClick={() => this.openDocs(m.path) } />
+                m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name) } class="" onClick={() => this.openTutorial(m.path) } />
+                    : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} className="ui item link" href={m.path} target="docs">{Util.rlf(m.name) }</a>
+                        : <sui.Item key={"docsmenu" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name) } class="" onClick={() => this.openDocs(m.path) } />
             ) }
         </sui.DropdownMenuItem>
     }
@@ -120,17 +120,17 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         if (!docsUrl) return null;
 
         return <div>
-            <button id="sidedocstoggle" role="button" aria-label={state.sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button" onClick={() => this.toggleVisibility() }>
-                <i className={`icon large inverted ${state.sideDocsCollapsed ? 'book' : 'chevron right'}`}></i>
-                {state.sideDocsCollapsed ? <i className={`icon large inverted chevron left hover`}></i> : undefined }
+            <button id="sidedocstoggle" role="button" aria-label={state.sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation") } className="ui icon button" onClick={() => this.toggleVisibility() }>
+                <sui.Icon icon={`icon large inverted ${state.sideDocsCollapsed ? 'book' : 'chevron right'}`} />
+                {state.sideDocsCollapsed ? <sui.Icon icon={`large inverted chevron left hover`} /> : undefined }
             </button>
             <div id="sidedocs">
                 <div id="sidedocsframe-wrapper">
-                    <iframe id="sidedocsframe" src={docsUrl} title={lf("Documentation")} aria-atomic="true" aria-live="assertive" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
+                    <iframe id="sidedocsframe" src={docsUrl} title={lf("Documentation") } aria-atomic="true" aria-live="assertive" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
                 </div>
                 <div id="sidedocsbar">
                     <a className="ui icon link" role="link" tabIndex={0} data-content={lf("Open documentation in new tab") } aria-label={lf("Open documentation in new tab") } onClick={() => this.popOut() } onKeyDown={sui.fireClickOnEnter} >
-                        <i className="external icon"></i>
+                        <sui.Icon icon="external" />
                     </a>
                 </div>
             </div>

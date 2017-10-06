@@ -33,6 +33,11 @@
     background: @invertedBackground;
 }
 
+
+#root #menubar .menu > .ui.item:hover .icon {
+    transform: scale(1.2);
+}
+
 @media only screen and (max-width: @largestTabletScreen) {
     #menubar .ui.menu {
         height: @mobileMenuHeight !important;

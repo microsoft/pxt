@@ -157,8 +157,7 @@ Here is the appTheme from pxt-sample with some comments:
         "monacoToolbox": true,
         "invertedMenu": true,
         "simAnimationEnter": "rotate in",
-        "simAnimationExit": "rotate out",
-        "disableBlockIcons": true
+        "simAnimationExit": "rotate out"
     }
 ```
 

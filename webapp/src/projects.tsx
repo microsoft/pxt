@@ -19,10 +19,6 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 import Cloud = pxt.Cloud;
 
-interface ProjectsProps extends ISettingsProps {
-    hasGettingStarted: boolean;
-}
-
 interface ProjectsState {
     searchFor?: string;
     visible?: boolean;
@@ -33,12 +29,12 @@ interface ProjectsState {
 
 const HOME = "__welcome";
 
-export class Projects extends data.Component<ProjectsProps, ProjectsState> {
+export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     private prevUrlData: Cloud.JsonScript[] = [];
     private prevGalleries: pxt.Map<pxt.CodeCard[]> = {};
     private galleryFetchErrors: { [tab: string]: boolean } = {};
 
-    constructor(props: ProjectsProps) {
+    constructor(props: ISettingsProps) {
         super(props)
         this.state = {
             visible: false,
@@ -57,6 +53,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
     }
 
     showHome() {
+        pxt.tickEvent("projects.show");
         this.props.parent.stopSimulator();
         this.setState({
             visible: true,
@@ -116,7 +113,6 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
 
     renderCore() {
         const {visible, tab} = this.state;
-        const {hasGettingStarted} = this.props;
 
         const targetTheme = pxt.appTarget.appTheme;
         const galleries = targetTheme.galleries || {};
@@ -180,7 +176,9 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                     core.hideLoading("changingcode");
                                 })
                         } else {
-                            return this.props.parent.newProject(opts);
+                            return this.props.parent.createProjectAsync(opts)
+                                .then(() => Promise.delay(500))
+                                .done(() => core.hideLoading("changingcode"));
                         }
                     }
                     core.hideLoading("changingcode");
@@ -199,6 +197,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
 
         const hadFetchError = this.galleryFetchErrors[tab];
         const isLoading = tab != HOME && !hadFetchError && !gals[tab].length;
+        const showHeroBanner = !!targetTheme.homeScreenHero;
 
         const tabClasses = sui.cx([
             isLoading ? 'loading' : '',
@@ -213,16 +212,16 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         <div className="left menu">
-                            <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName) } role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={() => pxt.tickEvent("menu.brand") }>
+                            <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName) } role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={() => pxt.tickEvent("projects.brand") }>
                                 {targetTheme.logo || targetTheme.portraitLogo
                                     ? <img className={`ui logo ${targetTheme.logo ? " portrait hide" : ''}`}  src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />
                                     : <span className="name">{targetTheme.boardName}</span>}
                                 {targetTheme.portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />) : null}
                             </a>
                         </div>
-                        <div className="ui item">{tabIcon ? <i className={`icon ${tabIcon}`} aria-hidden={true}/> : undefined} {tabName}</div>
+                        <div className="ui item">{tabIcon ? <sui.Icon icon={`icon ${tabIcon}`}/> : undefined} {tabName}</div>
                         <div className="right menu">
-                            <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={() => pxt.tickEvent("menu.org") }>
+                            <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={() => pxt.tickEvent("projects.org") }>
                                 {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                                     ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization) } />
                                     : <span className="name">{targetTheme.organization}</span>}
@@ -232,25 +231,16 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     </div>
                 </div>
                 {tab == HOME ? <div className={tabClasses}>
-                    {hasGettingStarted ?
-                        <div className="ui segment getting-started-segment" style={targetTheme.homeScreenHero ? { backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` } : {}}>
-                            <div className="ui grid equal width padded">
-                                <div className="column right aligned">
-                                    <div className="getting-started">
-                                        <h2 className="getting-started-header">{lf("First time here?") }</h2>
-                                        <sui.Button icon="right arrow" rightIcon class="huge primary focused" text={lf("Get Started") } title={lf("Getting started tutorial") } onClick={gettingStarted} />
-                                    </div>
-                                </div>
-                            </div>
-                        </div> : undefined }
-                    <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment">
+                    {showHeroBanner ?
+                        <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined }
+                    <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
                         <div className="ui grid equal width padded">
                             <div className="column">
-                                <h2 className="ui header">{lf("My Stuff") } </h2>
+                                <h2 className="ui header">{lf("My Projects") } </h2>
                             </div>
                             <div className="column right aligned">
                                 {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing) ?
-                                    <sui.Button key="import" icon="upload" class="secondary tiny focused" textClass="landscape only" text={lf("Import") } title={lf("Import a project") } onClick={() => importProject() } /> : undefined}
+                                    <sui.Link key="import" icon="upload" class="basic import-dialog-btn" textClass="landscape only" text={lf("Import") } title={lf("Import a project") } onClick={() => importProject() } /> : undefined}
                             </div>
                         </div>
                         <div className="content">
@@ -338,34 +328,24 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         const {name, path} = this.props;
         const theme = pxt.appTarget.appTheme;
 
-        // Fetch the gallery
-        this.hasFetchErrors = false;
-        let cards: pxt.CodeCard[];
-        let headers: pxt.workspace.Header[];
-        if (path) {
-            cards = this.fetchGallery(path);
-        } else {
-            headers = this.fetchLocalData();
-            headers.unshift({
-                id: 'new',
-                name: lf("New Project")
-            } as any)
-        }
-
         const onClick = (scr: any) => {
             this.props.onClick(scr);
         }
 
-        return <div className="ui dimmable">
-            {this.hasFetchErrors ?
-                <div className="ui carouselouter">
+        if (path) {
+            // Fetch the gallery
+            this.hasFetchErrors = false;
+
+            const cards = this.fetchGallery(path);
+            if (this.hasFetchErrors) {
+                return <div className="ui carouselouter">
                     <div className="carouselcontainer" tabIndex={0} onClick={() => this.setState({}) }>
                         <p className="ui grey inverted segment">{lf("Oops, please connect to the Internet and try again.") }</p>
                     </div>
                 </div>
-                :
-                <carousel.Carousel bleedPercent={20}>
-                    {cards ? cards.map((scr, index) =>
+            } else {
+                return <carousel.Carousel bleedPercent={20}>
+                    {cards.map((scr, index) =>
                         <div key={path + scr.name}>
                             <codecard.CodeCardView
                                 className="example"
@@ -374,15 +354,34 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 url={scr.url}
                                 imageUrl={scr.imageUrl}
                                 youTubeId={scr.youTubeId}
+                                label={scr.label}
+                                labelClass={scr.labelClass}
                                 onClick={() => onClick(scr) }
                                 />
                         </div>
-                    ) : headers.map((scr, index) =>
+                    ) }
+                </carousel.Carousel>
+            }
+        } else {
+            let headers = this.fetchLocalData();
+            headers.unshift({
+                id: 'new',
+                name: lf("New Project")
+            } as any);
+            if (headers.length == 0) {
+                return <div className="ui carouselouter">
+                    <div className="carouselcontainer">
+                        <p>{lf("This is where you will you find your code.") }</p>
+                    </div>
+                </div>
+            } else {
+                return <carousel.Carousel bleedPercent={20}>
+                    {headers.map((scr, index) =>
                         <div key={'local' + scr.id + scr.recentUse }>
                             {scr.id == 'new' ?
                                 <div className="ui card link newprojectcard focused" tabIndex={0} title={lf("Creates a new empty project") } onClick={() => this.newProject() } onKeyDown={sui.fireClickOnEnter} >
                                     <div className="content">
-                                        <i className="icon huge add circle"></i>
+                                        <sui.Icon icon="huge add circle" />
                                         <span className="header">{scr.name}</span>
                                     </div>
                                 </div>
@@ -395,13 +394,12 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                     time={scr.recentUse}
                                     url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                                     onClick={() => onClick(scr) }
-                                    />
-                            }
+                                    /> }
                         </div>
                     ) }
                 </carousel.Carousel>
             }
-        </div>;
+        }
     }
 }
 

@@ -61,14 +61,20 @@ namespace pxtblockly {
 
     let regex: RegExp = /^Note\.(.+)$/;
 
+    export interface FieldNoteOptions extends Blockly.FieldCustomOptions {
+        editorColour?: string;
+    }
+
     //  Class for a note input field.
     export class FieldNote extends Blockly.FieldNumber implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
         //  value of the field
         private note_: string;
 
-        //  colour of the block
+        //  colour of the dropdown
         private colour_: string;
+        //  colour of the dropdown border
+        private colourBorder_: string;
 
         /**
          * default number of piano keys
@@ -98,12 +104,16 @@ namespace pxtblockly {
         private noteName_: Array<string> = [];
 
 
-        constructor(text: string, options: Blockly.FieldCustomOptions, validator?: Function) {
+        constructor(text: string, params: FieldNoteOptions, validator?: Function) {
             super(text);
 
             FieldNote.superClass_.constructor.call(this, text, validator);
             this.note_ = text;
-            this.colour_ = pxtblockly.parseColour(options.colour);
+
+            if (params.editorColour) {
+                this.colour_ = pxtblockly.parseColour(params.editorColour);
+                this.colourBorder_ = goog.color.rgbArrayToHex(goog.color.darken(goog.color.hexToRgb(this.colour_), 0.2));
+            }
         }
 
         /**
@@ -396,6 +406,13 @@ namespace pxtblockly {
          * Create a piano under the note field.
          */
         showEditor_(opt_quietInput?: boolean): void {
+            if (!this.colour_) {
+                this.colour_ = ((this.sourceBlock_ as any).isShadow()) ?
+                    this.sourceBlock_.parentBlock_.getColour() : this.sourceBlock_.getColour();
+                this.colourBorder_ = ((this.sourceBlock_ as any).isShadow()) ?
+                    this.sourceBlock_.parentBlock_.getColourTertiary() : this.sourceBlock_.getColourTertiary();
+            }
+
             // If there is an existing drop-down someone else owns, hide it immediately and clear it.
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.DropDownDiv.clearContent();
@@ -774,12 +791,8 @@ namespace pxtblockly {
 
             pianoDiv.style.width = pianoWidth + "px";
             pianoDiv.style.height = (pianoHeight + 1) + "px";
-            //contentDiv.style.width = (pianoWidth + 1) + "px";
 
-            let primaryColour = ((this.sourceBlock_ as any).isShadow()) ?
-                this.sourceBlock_.parentBlock_.getColour() : this.sourceBlock_.getColour();
-
-            (Blockly.DropDownDiv as any).setColour(primaryColour, (this.sourceBlock_ as any).getColourTertiary());
+            (Blockly.DropDownDiv as any).setColour(this.colour_, this.colourBorder_);
 
             // Calculate positioning based on the field position.
             let scale = (this.sourceBlock_.workspace as any).scale;

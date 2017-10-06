@@ -18,7 +18,7 @@ namespace pxt.blocks {
 
     export enum BlockLayout {
         Align = 1,
-        Shuffle = 2,
+        // Shuffle deprecated
         Clean = 3,
         Flow = 4
     }
@@ -61,8 +61,6 @@ namespace pxt.blocks {
             switch (options.layout) {
                 case BlockLayout.Align:
                     pxt.blocks.layout.verticalAlign(workspace, options.emPixels); break;
-                case BlockLayout.Shuffle:
-                    pxt.blocks.layout.shuffle(workspace, options.aspectRatio); break;
                 case BlockLayout.Flow:
                     pxt.blocks.layout.flow(workspace, { ratio: options.aspectRatio, useViewWidth: options.useViewWidth }); break;
                 case BlockLayout.Clean:

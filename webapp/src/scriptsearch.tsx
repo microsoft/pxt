@@ -150,7 +150,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             pxt.packagesConfigAsync()
                 .then(config => pxt.github.latestVersionAsync(scr.fullName, config))
                 .then(tag => pxt.github.pkgConfigAsync(scr.fullName, tag)
-                    .then(cfg => addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
+                .then(cfg => {
+                    core.hideLoading("downloadingpackage");
+                    return cfg;
+                })
+                .then(cfg => addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
                 .catch(core.handleNetworkError)
                 .finally(() => core.hideLoading("downloadingpackage"));
         }
@@ -231,7 +235,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.length + urldata.length, this.state.searchFor)}</div>
                             <input ref="searchInput" className="focused" type="text" placeholder={lf("Search or enter project URL...") } onKeyUp={kupd} />
                             <button title={lf("Search") } className="ui right icon button" onClick={upd}>
-                                <i className="search icon"></i>
+                                <sui.Icon icon="search" />
                             </button>
                         </div>
                     </div>

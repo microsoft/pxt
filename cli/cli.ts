@@ -4215,7 +4215,6 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
         "sig": "ts",
         "namespaces": "ts",
         "cards": "ts",
-        "shuffle": "ts",
         "sim": "ts",
         "codecard": "json"
     }
