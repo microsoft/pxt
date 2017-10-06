@@ -772,10 +772,14 @@ export class ProjectView
     resourceImporters: pxt.editor.IResourceImporter[] = [];
 
     importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
+        function loadFailed () {
+            pxt.appTarget.appTheme.showHomeScreen ? this.home.showHome() : this.newProject();
+        }
+
         const targetId = pxt.appTarget.id;
         if (!data || !data.meta) {
             core.warningNotification(lf("Sorry, we could not recognize this file."))
-            if (createNewIfFailed) this.newProject();
+            if (createNewIfFailed) loadFailed();
             return;
         }
 
@@ -788,13 +792,13 @@ export class ProjectView
                     pxt.reportException(e, { importer: importer.id });
                     core.hideLoading("importhex");
                     core.errorNotification(lf("Oops, something went wrong when importing your project"));
-                    if (createNewIfFailed) this.newProject();
+                    if (createNewIfFailed) loadFailed();
                 });
         }
         else {
             core.warningNotification(lf("Sorry, we could not import this project."))
             pxt.tickEvent("warning.importfailed");
-            if (createNewIfFailed) this.newProject();
+            if (createNewIfFailed) loadFailed();
         }
     }
 
@@ -803,11 +807,12 @@ export class ProjectView
 
         ts.pxtc.Util.fileReadAsBufferAsync(file)
             .then(buf => pxt.lzmaDecompressAsync(buf))
-            .done(contents => {
+            .then(contents => {
                 let data = JSON.parse(contents) as pxt.cpp.HexFile;
                 this.importHex(data);
-            }, e => {
+            }).catch(e => {
                 core.warningNotification(lf("Sorry, we could not import this project."))
+                pxt.appTarget.appTheme.showHomeScreen ? this.home.showHome() : this.newProject();
             });
     }
 
@@ -853,6 +858,7 @@ export class ProjectView
             files => {
                 if (files) {
                     pxt.tickEvent("dragandrop.open")
+                    this.home.hide();
                     this.importFile(files[0]);
                 }
             }
@@ -1769,7 +1775,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             <div id='root' className={rootClasses}>
                 {showExperimentalBanner ? <div id="experimentalBanner" className="ui icon top attached fixed negative mini message">
                     <sui.Icon icon="warning circle" />
-                    <sui.Icon icon="close" onClick={() => this.hideBanner()}/>
+                    <sui.Icon icon="close" onClick={() => this.hideBanner()} />
                     <div className="content">
                         <div className="header">{lf("You are viewing an experimental version of the editor")}</div>
                         <a href={liveUrl}>{lf("Take me back")}</a>
