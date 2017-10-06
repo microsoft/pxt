@@ -176,7 +176,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                     core.hideLoading("changingcode");
                                 })
                         } else {
-                            return this.props.parent.newProject(opts);
+                            return this.props.parent.createProjectAsync(opts)
+                                .then(() => Promise.delay(500))
+                                .done(() => core.hideLoading("changingcode"));
                         }
                     }
                     core.hideLoading("changingcode");
