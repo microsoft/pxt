@@ -79,6 +79,7 @@ declare namespace pxt {
         role?: string;
         ariaLabel?: string;
         label?: string;
+        labelClass?: string;
         tabIndex?: number
 
         color?: string; // one of semantic ui colors

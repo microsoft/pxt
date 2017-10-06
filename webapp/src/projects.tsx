@@ -352,6 +352,8 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 url={scr.url}
                                 imageUrl={scr.imageUrl}
                                 youTubeId={scr.youTubeId}
+                                label={scr.label}
+                                labelClass={scr.labelClass}
                                 onClick={() => onClick(scr) }
                                 />
                         </div>
