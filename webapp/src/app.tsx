@@ -772,7 +772,7 @@ export class ProjectView
     resourceImporters: pxt.editor.IResourceImporter[] = [];
 
     importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
-        function loadFailed () {
+        function loadFailed() {
             pxt.appTarget.appTheme.showHomeScreen ? this.home.showHome() : this.newProject();
         }
 
@@ -2400,18 +2400,16 @@ $(document).ready(() => {
                 pxt.appTarget.versions.branch,
                 live)
                 // Download sim translations and save them in the sim
-                .then(() => Util.downloadTranslationsAsync(
+                .then(() => Util.updateSimulatorLocalizationAsync(
                     pxt.appTarget.id,
-                    true,
                     config.commitCdnUrl,
                     useLang,
                     pxt.appTarget.versions.pxtCrowdinBranch,
                     pxt.appTarget.versions.branch,
                     live
                 )).then((simStrings) => {
-                    if (simStrings) {
+                    if (simStrings)
                         simulator.simTranslations = simStrings;
-                    }
                 });
         })
         .then(() => initTheme())
