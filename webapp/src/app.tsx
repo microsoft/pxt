@@ -1228,6 +1228,7 @@ export class ProjectView
         } else {
             document.removeEventListener('keydown', this.closeOnEscape);
         }
+        this.closeFlyout();
 
         this.setState({ fullscreen: !this.state.fullscreen });
     }

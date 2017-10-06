@@ -199,6 +199,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         const hadFetchError = this.galleryFetchErrors[tab];
         const isLoading = tab != HOME && !hadFetchError && !gals[tab].length;
         const showHeroBanner = !!targetTheme.homeScreenHero;
+        const betaUrl = targetTheme.betaUrl;
 
         const tabClasses = sui.cx([
             isLoading ? 'loading' : '',
@@ -229,6 +230,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                 {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization) } />) : null}
                             </a>
                         </div>
+                        {betaUrl ? <a href={`${betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
                     </div>
                 </div>
                 {tab == HOME ? <div className={tabClasses}>
