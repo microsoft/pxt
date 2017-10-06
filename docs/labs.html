@@ -134,7 +134,8 @@
 		#makecode-resources-container .image {
 			background: white;
 			padding: 2rem;
-			height: 120px;
+			max-height: 120px;
+			min-height: 120px;
 		}
 
 		.targets .welcomeheader {
@@ -184,10 +185,6 @@
 			padding: 0 40px 0 40px;
 			z-index: 100;
 			color: #00ff00;
-		}
-
-		#about {
-			padding-top: 12rem;
 		}
 
 		#makecode-header .menuButton {
@@ -252,6 +249,9 @@
 				font-size: 24px;
 				padding-top: 12px;
 			}
+			#about {
+				padding-top: 12rem;
+			}
 		}
 
 		#makecode-mobile-menu {
@@ -264,6 +264,9 @@
 			}
 			#makecode-mobile-menu {
 				display: block;
+			}
+			#about {
+				padding-top: 4rem;
 			}
 		}
 		/* Header menu */
@@ -465,7 +468,7 @@
 								<div class="ui container cards stackable four centered link doubling">
 									<a class="ui card" href="https://makecode.com/target-creation" target="_blank" onclick="tickEvent('makecodelabs.resources.devdocs', {'target': 'makecode'})"
 									 aria-label="Developer documentation">
-										<div class="image">
+										<div class="ui medium image centered">
 											<i class="ms-Icon ms-Icon--Documentation ms-fontColor-themePrimary" aria-hidden="true" style="font-size:72px;padding:20px;"></i>
 										</div>
 										<div class="content">
@@ -478,7 +481,7 @@
 
 									<a class="ui card" href="https://github.com/Microsoft/pxt" target="_blank" onclick="tickEvent('makecodelabs.resources.github', {'target': 'makecode'})"
 									 aria-label="PXT Github repository">
-										<div class="image">
+										<div class="ui medium image centered">
 											<img src="/static/images/GitHub_Logo.png" alt="Github logo">
 										</div>
 										<div class="content">
@@ -491,7 +494,7 @@
 
 									<a class="ui card" href="https://gitter.im/makecode-community/Lobby" target="_blank" onclick="tickEvent('makecodelabs.resources.gitter', {'target': 'makecode'})"
 									 aria-label="Join community on Gitter">
-										<div class="image">
+										<div class="ui medium image centered">
 											<img src="/static/images/gitter-logo.png" alt="Gitter logo">
 										</div>
 										<div class="content">

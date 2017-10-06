@@ -34,7 +34,7 @@
 		}
 
 		#makecode-targets {
-			padding-top: 15rem;
+			padding-top: 3rem;
 			padding-bottom: 3rem;
 		}
 
@@ -142,7 +142,8 @@
 		#makecode-resources-container .image {
 			background: white;
 			padding: 2rem;
-			height: 120px;
+			max-height: 120px;
+			min-height: 120px;
 		}
 
 		.targets .welcomeheader {
@@ -256,6 +257,10 @@
 				font-size: 24px;
 				padding-top: 12px;
 			}
+
+			#makecode-targets {
+				padding-top: 15rem;
+			}
 		}
 
 		#makecode-mobile-menu {
@@ -268,6 +273,9 @@
 			}
 			#makecode-mobile-menu {
 				display: block;
+			}
+			#makecode-targets {
+				padding-top: 7rem;
 			}
 		}
 		/* Header menu */
@@ -750,7 +758,7 @@
 
 								<div class="ui container cards stackable four centered link doubling">
 									<a class="ui card" href="https://makecode.com/docs" target="_blank" onclick="tickEvent('makecode.resources.devdocs', {'target': 'makecode'})" aria-label="Developer documentation">
-										<div class="image">
+										<div class="ui medium image centered">
 											<i class="ms-Icon ms-Icon--Documentation ms-fontColor-themePrimary" aria-hidden="true" style="font-size:72px;padding:20px;"></i>
 										</div>
 										<div class="content">
@@ -776,7 +784,7 @@
 
 									<a class="ui card" href="https://github.com/Microsoft/pxt" target="_blank" onclick="tickEvent('makecode.resources.github', {'target': 'makecode'})"
 									 aria-label="PXT Github repository">
-										<div class="image">
+										<div class="ui medium image centered">
 											<img src="/static/images/GitHub_Logo.png" alt="Github logo">
 										</div>
 										<div class="content">
@@ -789,7 +797,7 @@
 
 									<a class="ui card" href="https://crowdin.com/project/kindscript" target="_blank" onclick="tickEvent('makecode.resources.translate', {'target': 'makecode'})"
 									 aria-label="Help translate Makecode on Crowdin">
-										<div class="image">
+										<div class="ui medium image centered">
 											<img src="/static/images/crowdin-logo.png" alt="Crowdin logo">
 										</div>
 										<div class="content">
