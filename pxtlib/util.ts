@@ -761,7 +761,7 @@ namespace ts.pxtc.Util {
             });
     }
 
-    export function updateSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
+    export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
         code = normalizeLanguageCode(code);
         if (code === _localizeLang)
             return Promise.resolve(undefined);

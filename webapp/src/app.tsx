@@ -2400,7 +2400,7 @@ $(document).ready(() => {
                 pxt.appTarget.versions.branch,
                 live)
                 // Download sim translations and save them in the sim
-                .then(() => Util.updateSimulatorLocalizationAsync(
+                .then(() => Util.downloadSimulatorLocalizationAsync(
                     pxt.appTarget.id,
                     config.commitCdnUrl,
                     useLang,
