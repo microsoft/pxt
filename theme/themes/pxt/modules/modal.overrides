@@ -13,6 +13,5 @@
 }
 
 .ui.home.dimmer {
-    background-color: white;
     transition: none;
 }

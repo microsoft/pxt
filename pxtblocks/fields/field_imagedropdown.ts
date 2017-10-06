@@ -114,7 +114,6 @@ namespace pxtblockly {
                 button.appendChild(buttonImg);
                 contentDiv.appendChild(button);
             }
-            contentDiv.style.width = this.width_ + 'px';
 
             Blockly.DropDownDiv.setColour(this.backgroundColour_, this.borderColour_);
 
