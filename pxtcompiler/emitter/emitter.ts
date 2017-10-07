@@ -99,6 +99,14 @@ namespace ts.pxtc {
         return target.nativeType == NATIVE_TYPE_CS || (!target.jsRefCounting && !target.isNative)
     }
 
+    export function isStackMachine() {
+        return target.nativeType == NATIVE_TYPE_AVRVM
+    }
+
+    export function isAVR() {
+        return target.nativeType == NATIVE_TYPE_AVRVM || target.nativeType == NATIVE_TYPE_AVR
+    }
+
     function isRefType(t: Type) {
         checkType(t);
         if (noRefCounting())
@@ -1145,6 +1153,8 @@ namespace ts.pxtc {
                     bin.writeFile("platformio.json", JSON.stringify(opts.extinfo.platformio, null, 2));
                 if (opts.target.nativeType == NATIVE_TYPE_CS)
                     csEmit(bin, opts)
+                else if (opts.target.nativeType == NATIVE_TYPE_AVRVM)
+                    vmEmit(bin, opts)
                 else
                     processorEmit(bin, opts, res)
             } else {
@@ -1824,7 +1834,7 @@ ${lbl}: .short 0xffff
             if (e.kind == SK.NullKeyword || e.kind == SK.NumericLiteral)
                 return !!(e as any).isRefOverride
             // no point doing the incr/decr for these - they are statically allocated anyways (unless on AVR)
-            if (target.nativeType != NATIVE_TYPE_AVR && isStringLiteral(e))
+            if (isAVR() && isStringLiteral(e))
                 return false
             return isRefType(typeOf(e))
         }
@@ -2383,7 +2393,7 @@ ${lbl}: .short 0xffff
             }
             let r = ir.ptrlit(lbl + "_Lit", jsInfo, false)
 
-            if (!raw && target.nativeType == NATIVE_TYPE_AVR)
+            if (!raw && isAVR())
                 r = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(0), ir.numlit(0), r]))
 
             return r

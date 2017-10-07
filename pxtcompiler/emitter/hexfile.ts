@@ -539,7 +539,7 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_NUMBER}
         }
     }
 
-    function vtableToAsm(info: ClassInfo) {
+    export function vtableToAsm(info: ClassInfo) {
         let s = `
         .balign ${1 << vtableShift}
 ${info.id}_VT:
