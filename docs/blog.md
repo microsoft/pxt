@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [Chibitronics Editor v0.1.40 (Scratch blocks)](/blog/chibitronics/v0.1.40)
+
+October 8th, 2017
+
+A big release for our Chibitronics editor!
+**[Read more](/blog/chibitronics/v0.1.40)**
+
 ## [Microbit Editor v0.13.20 (Accessibility)](/blog/microbit/v0.13.20)
 
 September 8th, 2017
