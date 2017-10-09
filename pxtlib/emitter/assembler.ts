@@ -867,8 +867,8 @@ namespace ts.pxtc.assembler {
                 lf("; assembly: {0} lines; density: {1} bytes/stmt\n",
                     this.lines.length,
                     Math.round(100 * (lenThumb - lenLit) / numStmts) / 100) +
-                totalInfo + "\n"
-            this.stats + "\n\n"
+                totalInfo + "\n" +
+                this.stats + "\n\n"
 
             let skipOne = false
 
@@ -972,6 +972,7 @@ namespace ts.pxtc.assembler {
 
             let maxPasses = 5
             for (let i = 0; i < maxPasses; ++i) {
+                pxt.debug(`Peephole OPT, pass ${i}`)
                 this.peepPass(i == maxPasses);
                 if (this.peepOps == 0) break;
             }
