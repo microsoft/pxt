@@ -42,7 +42,7 @@
 
 .ui.card.link.newprojectcard {
     background: fade(@primaryColor, 90%) !important;
-    border: 2px solid @solidBorderColor;
+    border: @borderWidth solid @solidBorderColor;
     text-align: center;
     color: @white;
     font-size: 18pt;

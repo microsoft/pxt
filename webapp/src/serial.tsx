@@ -348,12 +348,6 @@ class Chart {
     chart: SmoothieChart;
     isStale: boolean = false;
     lastUpdatedTime: number = 0;
-    lineConfigs = [
-        { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.5)', lineWidth: 5 },
-        { strokeStyle: 'rgba(0, 0, 255, 1)', fillStyle: 'rgba(0, 0, 255, 0.5)', lineWidth: 5 },
-        { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.5)', lineWidth: 5 },
-        { strokeStyle: 'rgba(255, 255, 0, 1)', fillStyle: 'rgba(255, 255, 0, 0.5)', lineWidth: 5 }
-    ]
 
     constructor(source: string, variable: string, value: number, chartIdx: number) {
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme
@@ -365,20 +359,36 @@ class Chart {
             grid: {
                 verticalSections: 0,
                 borderVisible: false,
-                fillStyle: serialTheme && serialTheme.backgroundColor || '#fff',
-                strokeStyle: serialTheme && serialTheme.backgroundColor || '#fff'
+                fillStyle: serialTheme && serialTheme.graphBackground || '#fff',
+                strokeStyle: serialTheme && serialTheme.graphBackground || '#fff'
             }
         }
         this.chart = new SmoothieChart(chartConfig)
+        const lineColors = serialTheme && serialTheme.lineColors || ["#f00", "#00f", "#0f0", "#ff0"]
+        let lineColor = lineColors[chartIdx % (lineColors.length)]
         this.rootElement.className = "ui segment"
         this.source = source
         this.variable = variable
-        this.chart.addTimeSeries(this.line, this.lineConfigs[chartIdx % 4])
+        this.chart.addTimeSeries(this.line, {strokeStyle: lineColor, fillStyle: this.hexToHalfOpacityRgba(lineColor), lineWidth: 3})
 
         if (this.variable)
             this.rootElement.appendChild(this.makeLabel())
         this.rootElement.appendChild(this.makeCanvas())
         this.addPoint(value)
+    }
+
+    hexToHalfOpacityRgba(hex: string) {
+        let shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i
+        hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+            return r + r + g + g + b + b;
+        })
+        let m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+        if (!m) {
+            return hex
+        }
+        let nums = m.slice(1, 4).map(n => parseInt(n, 16))
+        nums.push(0.7)
+        return "rgba(" + nums.join(",") + ")"
     }
 
     makeLabel() {

@@ -7,6 +7,7 @@ declare namespace pxt {
     interface TargetConfig {
         packages?: PackagesConfig;
         languages?: string[];
+        galleries?: pxt.Map<string>;
     }
 
     interface PackagesConfig {
@@ -86,8 +87,9 @@ declare namespace pxt {
     }
 
     interface SerialTheme {
-        backgroundColor?: string;
+        graphBackground?: string;
         strokeColor?: string;
+        lineColors?: string[];
     }
 
     interface AppCloud {
@@ -187,7 +189,6 @@ declare namespace pxt {
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
-        galleries?: pxt.Map<string>; // list of galleries to display in projects dialog
         crowdinProject?: string;
         crowdinBranch?: string; // optional branch specification for pxt
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor

@@ -325,8 +325,11 @@ function runBuildCmdAsync(cmd: string, ...args: string[]) {
 function updateCodalBuildAsync() {
     let cs = pxt.appTarget.compileService
     return codalGitAsync("checkout", cs.gittag)
-        .then(() => { }, e => { })
-        .then(() => codalGitAsync("pull"))
+        .then(
+        () => /^v\d+/.test(cs.gittag) ? Promise.resolve() : codalGitAsync("pull"),
+        e =>
+            codalGitAsync("checkout", "master")
+                .then(() => codalGitAsync("pull")))
         .then(() => codalGitAsync("checkout", cs.gittag))
 }
 

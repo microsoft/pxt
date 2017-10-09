@@ -601,6 +601,7 @@ export class Editor extends srceditor.Editor {
 
     public switchToTypeScript() {
         pxt.tickEvent("blocks.switchjavascript");
+        this.parent.closeFlyout();
         this.parent.switchTypeScript();
     }
 
