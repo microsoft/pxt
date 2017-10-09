@@ -44,8 +44,8 @@ By default, the TypeScript compiler assigns the Any type to an expression/declar
 infer a more precise type. STS uses the \emph{--noImplicitAny} option to direct the TypeScript compiler to raise an error 
 whenever it makes an (implicit) assignment of the Any type.  STS also checks for an explicit use of the Any type in
 the program and raises an error. Many JavaScript constructs can only be typed with the Any type, including: prototype lookup,
-the eval statement, the with statement, a this reference outside of class context, an index access on non-array object, and
-reflection on Function/Object objects. Therefore, these constructs are not in STS.
+the \bf{eval} and \bf{with} statements, a \bf{this} reference outside of class context, an index access on non-array object, and
+reflection on Function/Object objects. Therefore, these constructs are not in STS. For good measure,
 STS also excludes TypeScript's union and intersection types.
 
 \subsection{Partitioning of Object Types}
@@ -75,12 +75,14 @@ STS partitions the space of object types as follows:
 \item[4.] an \emph{array} type has a numeric index signature and no other signatures;
 \item[5.] an \emph{other} type: object type not covered by the previous four categories.
 \end{itemize}
-STS excludes all ``other'' types, leaving us with a set of classic types XYZ.             
-
-[Interfaces describe all of the above, help to access class and record uniformly, as they support arbitrary subsetting of properties.
-
+STS excludes all ``other'' types, leaving us with a set of classic types, as found in Java or C\#.
+The partitioning is further reflected in STS' subtype relation, which does cross
+partitions. That is types $T$ and $U$ from different partitions above are not related 
+by STS' subtype relation. 
 
 \subsection{Nominal Typing of Classes}
+
+To the above four partitions, STS adds a parition to represent class type.
 
 TypeScript introduces two (object) types for each class declaration: a constructor function type by which instances of a class are
 created (using new) and static properties accessed; a class type describing the instances of the class (records, as defined above). 
