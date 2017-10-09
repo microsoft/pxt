@@ -563,9 +563,9 @@ function justBumpPkgAsync() {
         .then(() => nodeutil.runGitAsync("tag", "v" + mainPkg.config.version))
 }
 
-function bumpAsync(parsed: commandParser.ParsedCommand) {
-    const bumpPxt = parsed.flags["update"];
-    const upload = parsed.flags["upload"];
+function bumpAsync(parsed?: commandParser.ParsedCommand) {
+    const bumpPxt = parsed && parsed.flags["update"];
+    const upload = parsed && parsed.flags["upload"];
     if (fs.existsSync(pxt.CONFIG_NAME)) {
         if (upload) throw U.userError("upload only supported on packages");
 
@@ -3641,10 +3641,12 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const ghpages = parsed.flags["githubpages"];
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
     const minify = !!parsed.flags["minify"];
+    const bump = !!parsed.flags["bump"];
 
     pxt.log(`packaging editor to ${builtPackaged}`)
 
     let p = rimrafAsync(builtPackaged, {})
+        .then(() => bump ? bumpAsync() : Promise.resolve())
         .then(() => buildTargetAsync());
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
     else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify));
@@ -4399,6 +4401,9 @@ function initCommands() {
             "minify": {
                 description: "minify all generated js files",
                 aliases: ["m", "uglify"]
+            },
+            "bump": {
+                description: "bump version number prior to package"
             }
         }
     }, staticpkgAsync);
