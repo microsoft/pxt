@@ -113,12 +113,12 @@ namespace pxtblockly {
                 const size = (this as any).getSize();
                 if (newState) {
                     this.checkElement_.setAttribute('transform', `translate(${this.isCircle() ? 32 : 44}, ${size.height / 2})`);
-                    this.checkElement_.classList.add('blocklyToggleOn');
-                    this.checkElement_.classList.remove('blocklyToggleOff');
+                    pxtblockly.svg.addClass(this.checkElement_, 'blocklyToggleOn');
+                    pxtblockly.svg.removeClass(this.checkElement_, 'blocklyToggleOff');
                 } else {
                     this.checkElement_.setAttribute('transform', `translate(${this.isCircle() ? 8 : 16}, ${size.height / 2})`);
-                    this.checkElement_.classList.add('blocklyToggleOff');
-                    this.checkElement_.classList.remove('blocklyToggleOn');
+                    pxtblockly.svg.addClass(this.checkElement_, 'blocklyToggleOff');
+                    pxtblockly.svg.removeClass(this.checkElement_, 'blocklyToggleOn');
                 }
                 goog.dom.removeChildren(/** @type {!Element} */(this.descElement_));
                 let textNode = document.createTextNode(this.getDescriptionText_(newState));
