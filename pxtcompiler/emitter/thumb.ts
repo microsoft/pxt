@@ -181,8 +181,8 @@ namespace ts.pxtc.thumb {
             this.addInst("ldlit   $r5, $i32", 0x4800, 0xf800);
         }
 
-        public toFnPtr(v: number) {
-            return v | 1;
+        public toFnPtr(v: number, baseOff: number) {
+            return (v + baseOff) | 1;
         }
 
         public wordSize() {

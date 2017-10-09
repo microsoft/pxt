@@ -355,7 +355,7 @@ namespace ts.pxtc.assembler {
                     v = this.lookupLabel(m[1], true)
                     if (v != null) {
                         if (m[2] == "fn")
-                            v = this.ei.toFnPtr(v)
+                            v = this.ei.toFnPtr(v, this.baseOffset)
                         else {
                             v >>= 1;
                             if (0 <= v && v <= 0xffff) {
@@ -377,7 +377,7 @@ namespace ts.pxtc.assembler {
             if (v == null && this.looksLikeLabel(s)) {
                 v = this.lookupLabel(s, true);
                 if (v != null) {
-                    if (this.ei.postProcessAbsAddress(this, 1) == 1)
+                    if (this.ei.postProcessRelAddress(this, 1) == 1)
                         v += this.baseOffset
                 }
             }
@@ -1007,7 +1007,7 @@ namespace ts.pxtc.assembler {
             this.instructions = {}
         }
 
-        public toFnPtr(v: number) {
+        public toFnPtr(v: number, baseOff: number) {
             return v;
         }
 
