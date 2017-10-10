@@ -75,6 +75,7 @@ declare namespace pxt {
 
     interface AppSerial {
         useHF2?: boolean;
+        noDeploy?: boolean;
         useEditor?: boolean;
         vendorId?: string; // used by node-serial
         productId?: string; // used by node-serial
@@ -279,6 +280,7 @@ declare namespace ts.pxtc {
         deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers
         flashCodeAlign?: number; // defaults to 1k
+        flashEnd?: number;
         upgrades?: UpgradePolicy[];
         openocdScript?: string;
         flashChecksumAddr?: number;

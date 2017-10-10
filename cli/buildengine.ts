@@ -325,8 +325,11 @@ function runBuildCmdAsync(cmd: string, ...args: string[]) {
 function updateCodalBuildAsync() {
     let cs = pxt.appTarget.compileService
     return codalGitAsync("checkout", cs.gittag)
-        .then(() => { }, e => { })
-        .then(() => codalGitAsync("pull"))
+        .then(
+        () => /^v\d+/.test(cs.gittag) ? Promise.resolve() : codalGitAsync("pull"),
+        e =>
+            codalGitAsync("checkout", "master")
+                .then(() => codalGitAsync("pull")))
         .then(() => codalGitAsync("checkout", cs.gittag))
 }
 
@@ -335,6 +338,22 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     let constName = "dal.d.ts"
     let vals: Map<string> = {}
     let done: Map<string> = {}
+
+    function expandInt(s: string): number {
+        s = s.trim()
+        let existing = U.lookup(vals, s)
+        if (existing != null && existing != "?")
+            s = existing
+        let m = /^\((\w+)\s*\+\s*(\d+)\)$/.exec(s)
+        if (m) {
+            let k = expandInt(m[1])
+            if (k != null)
+                return k + parseInt(m[2])
+        }
+        let pp = parseCppInt(s)
+        if (pp != null) return pp
+        return null
+    }
 
     function isValidInt(v: string) {
         return /^-?(\d+|0[xX][0-9a-fA-F]+)$/.test(v)
@@ -347,8 +366,9 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         let inEnum = false
         let enumVal = 0
         let defineVal = (n: string, v: string) => {
-            v = v.trim()
-            if (parseCppInt(v) != null) {
+            let parsed = expandInt(v)
+            if (parsed != null) {
+                v = parsed.toString()
                 let curr = U.lookup(vals, n)
                 if (curr == null || curr == v) {
                     vals[n] = v
@@ -362,8 +382,6 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                     if (dogenerate && !/^MICROBIT_DISPLAY_(ROW|COLUMN)_COUNT$/.test(n))
                         pxt.log(`${fileName}(${lineNo}): #define conflict, ${n}`)
                 }
-            } else {
-                vals[n] = "?" // just in case there's another more valid entry
             }
         }
         src.split(/\r?\n/).forEach(ln => {
@@ -418,11 +436,16 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         for (let fn of files) {
             if (U.endsWith(fn, "Config.h")) continue
             if (fn.indexOf("/mbed-classic/") >= 0) continue
+            if (fn.indexOf("/mbed-os/") >= 0) continue
             fc[fn] = fs.readFileSync(fn, "utf8")
         }
         files = Object.keys(fc)
 
         // pre-pass - detect conflicts
+        for (let fn of files) {
+            extractConstants(fn, fc[fn])
+        }
+        // stabilize
         for (let fn of files) {
             extractConstants(fn, fc[fn])
         }
@@ -453,7 +476,7 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
     const firmware = pxt.outputName()
     const encoding = pxt.isOutputText() ? "utf8" : "base64";
 
-    if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
+    if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && !pxt.appTarget.serial.noDeploy) {
         let f = res.outfiles[pxtc.BINARY_UF2]
         let blocks = pxtc.UF2.parseFile(U.stringToUint8Array(atob(f)))
         return hid.initAsync()

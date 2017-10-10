@@ -185,7 +185,7 @@ namespace ts.pxtc {
 
     export function sizeOfBitSize(b: BitSize) {
         switch (b) {
-            case BitSize.None: return 4
+            case BitSize.None: return target.shortPointers ? 2 : 4
             case BitSize.Int8: return 1
             case BitSize.Int16: return 2
             case BitSize.Int32: return 4
@@ -1550,7 +1550,8 @@ ${lbl}: .short 0xffff
                 return ir.rtcall("String_::mkEmpty", [])
             } else {
                 let lbl = bin.emitString(str)
-                return ir.ptrlit(lbl + "meta", JSON.stringify(str), true)
+                let res = ir.ptrlit(lbl + "meta", JSON.stringify(str), true)
+                return res
             }
         }
         function emitLiteral(node: LiteralExpression) {
@@ -1822,8 +1823,8 @@ ${lbl}: .short 0xffff
             // we also generate a fake numeric literal for image literals
             if (e.kind == SK.NullKeyword || e.kind == SK.NumericLiteral)
                 return !!(e as any).isRefOverride
-            // no point doing the incr/decr for these - they are statically allocated anyways
-            if (isStringLiteral(e))
+            // no point doing the incr/decr for these - they are statically allocated anyways (unless on AVR)
+            if (target.nativeType != NATIVE_TYPE_AVR && isStringLiteral(e))
                 return false
             return isRefType(typeOf(e))
         }
@@ -2380,7 +2381,11 @@ ${lbl}: .short 0xffff
                 if (!raw)
                     jsInfo = "PXT.pxt.mkAction(0, 0, " + jsInfo + ")"
             }
-            let r = ir.ptrlit(lbl + "_Lit", jsInfo, !raw)
+            let r = ir.ptrlit(lbl + "_Lit", jsInfo, target.nativeType == NATIVE_TYPE_AVR ? false : !raw)
+
+            if (!raw && target.nativeType == NATIVE_TYPE_AVR)
+                r = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(0), ir.numlit(0), r]))
+
             return r
         }
 
@@ -2432,8 +2437,6 @@ ${lbl}: .short 0xffff
                 }
             } else {
                 if (isExpression) {
-                    // lit = ir.shared(ir.rtcall("pxt::mkAction",
-                    //                [ir.numlit(0), ir.numlit(0), emitFunLitCore(node, true)]))
                     lit = emitFunLitCore(node)
                 }
             }
@@ -3627,9 +3630,6 @@ ${lbl}: .short 0xffff
         }
 
         function emitClassDeclaration(node: ClassDeclaration) {
-            if (opts.target.isNative && opts.target.nativeType == NATIVE_TYPE_AVR) {
-                throw userError(9266, lf("classes not yet supported on AVR processor"))
-            }
             getClassInfo(null, node)
             node.members.forEach(emit)
         }

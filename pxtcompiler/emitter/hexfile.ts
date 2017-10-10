@@ -281,7 +281,7 @@ namespace ts.pxtc {
                     if (!value) {
                         U.oops("No value for " + inf.name + " / " + hexb)
                     }
-                    if (!(value & 1)) {
+                    if (opts.nativeType == NATIVE_TYPE_THUMB && !(value & 1)) {
                         U.oops("Non-thumb addr for " + inf.name + " / " + hexb)
                     }
                     inf.value = value
@@ -518,35 +518,10 @@ namespace ts.pxtc {
         return s + "\n"
     }
 
-    function stringLiteral(s: string) {
-        let r = "\""
-        for (let i = 0; i < s.length; ++i) {
-            // TODO generate warning when seeing high character ?
-            let c = s.charCodeAt(i) & 0xff
-            let cc = String.fromCharCode(c)
-            if (cc == "\\" || cc == "\"")
-                r += "\\" + cc
-            else if (cc == "\n")
-                r += "\\n"
-            else if (c <= 0xf)
-                r += "\\x0" + c.toString(16)
-            else if (c < 32 || c > 127)
-                r += "\\x" + c.toString(16)
-            else
-                r += cc;
-        }
-        return r + "\""
-    }
-
-    function emitStrings(bin: Binary) {
+    function emitStrings(snippets: AssemblerSnippets, bin: Binary) {
         for (let s of Object.keys(bin.strings)) {
-            let lbl = bin.strings[s]
             // string representation of DAL - 0xffff in general for ref-counted objects means it's static and shouldn't be incr/decred
-            bin.otherLiterals.push(`
-.balign 4
-${lbl}meta: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_STRING + "," : ""} ${s.length}
-${lbl}: .string ${stringLiteral(s)}
-`)
+            bin.otherLiterals.push(snippets.string_literal(bin.strings[s], s))
         }
 
         for (let data of Object.keys(bin.doubles)) {
@@ -559,12 +534,8 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_NUMBER}
         }
 
         for (let data of Object.keys(bin.hexlits)) {
-            let lbl = bin.hexlits[data]
-            bin.otherLiterals.push(`
-.balign 4
-${lbl}: .short 0xffff, ${pxt.REF_TAG_BUFFER}, ${data.length >> 1}
-        .hex ${data}${data.length % 4 == 0 ? "" : "00"}
-`)
+            bin.otherLiterals.push(snippets.hex_literal(bin.hexlits[data], data))
+            bin.otherLiterals.push()
         }
     }
 
@@ -576,12 +547,19 @@ ${info.id}_VT:
         .byte ${info.vtable.length + 2}, 0  ; num. methods
 `;
 
-        s += `        .word ${info.id}_IfaceVT\n`
-        s += `        .word pxt::RefRecord_destroy|1\n`
-        s += `        .word pxt::RefRecord_print|1\n`
+        let ptrSz = target.shortPointers ? ".short" : ".word"
+        let addPtr = (n: string) => {
+            if (n != "0") n += "@fn"
+            s += `        ${ptrSz} ${n}\n`
+        }
+
+        s += `        ${ptrSz} ${info.id}_IfaceVT\n`
+
+        addPtr("pxt::RefRecord_destroy")
+        addPtr("pxt::RefRecord_print")
 
         for (let m of info.vtable) {
-            s += `        .word ${m.label()}|1\n`
+            addPtr(m.label())
         }
 
         let refmask = info.refmask.map(v => v ? "1" : "0")
@@ -595,11 +573,11 @@ ${info.id}_VT:
         // of (iface-member-id, function-addr) pairs and binary search.
         // See https://makecode.microbit.org/15593-01779-41046-40599 for Thumb binary search.
         s += `
-        .balign 4
+        .balign ${target.shortPointers ? 2 : 4}
 ${info.id}_IfaceVT:
 `
         for (let m of info.itable) {
-            s += `        .word ${m ? m.label() + "|1" : "0"}\n`
+            addPtr(m ? m.label() : "0")
         }
 
         s += "\n"
@@ -641,7 +619,7 @@ ${hex.hexPrelude()}
         asmsource += hex.asmTotalSource
 
         asmsource += "_js_end:\n"
-        emitStrings(bin)
+        emitStrings(snippets, bin)
         asmsource += bin.otherLiterals.join("")
         asmsource += "_program_end:\n"
 
@@ -718,7 +696,7 @@ ${hex.hexPrelude()}
         let b = mkProcessorFile(nativeType)
         b.emit(src);
 
-        src = b.getSource(!peepDbg, bin.numStmts);
+        src = b.getSource(!peepDbg, bin.numStmts, target.flashEnd);
 
         throwAssemblerErrors(b)
 

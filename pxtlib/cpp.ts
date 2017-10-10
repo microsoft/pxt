@@ -428,7 +428,10 @@ namespace pxt.cpp {
                     case "int8_t":
                     case "sbyte": return "int8";
 
-                    case "bool": return "boolean";
+                    case "bool":
+                        if (compile.shortPointers)
+                            err("use 'boolean' not 'bool' on 8 bit targets")
+                        return "boolean";
                     case "StringData*": return "string";
                     case "String": return "string";
                     case "ImageLiteral": return "string";
@@ -916,9 +919,11 @@ namespace pxt.cpp {
             res.generatedFiles["/package.json"] = JSON.stringify(packageJson, null, 4) + "\n"
         } else if (isCodal) {
             let cs = compileService
+            let cfg = U.clone(cs.codalDefinitions) || {}
             let codalJson = {
                 "target": cs.codalTarget + ".json",
-                "definitions": U.clone(cs.codalDefinitions) || {},
+                "definitions": cfg,
+                "config": cfg,
                 "application": "pxtapp",
                 "output_folder": "build",
                 // include these, because we use hash of this file to see if anything changed
@@ -926,8 +931,8 @@ namespace pxt.cpp {
                 "pxt_gittag": cs.gittag,
             }
             U.iterMap(U.jsonFlatten(configJson), (k, v) => {
-                k = k.toUpperCase().replace(/\./g, "_").replace("CODAL_", "DEVICE_")
-                codalJson.definitions[k] = v
+                k = k.replace(/^codal\./, "device.").toUpperCase().replace(/\./g, "_")
+                cfg[k] = v
             })
             res.generatedFiles["/codal.json"] = JSON.stringify(codalJson, null, 4) + "\n"
         } else if (isPlatformio) {

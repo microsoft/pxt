@@ -311,6 +311,10 @@ namespace ts.pxtc.assembler {
             if (U.endsWith(s, "-1")) {
                 return this.parseOneInt(s.slice(0, s.length - 2)) - 1
             }
+            // allow adding 1 too
+            if (U.endsWith(s, "+1")) {
+                return this.parseOneInt(s.slice(0, s.length - 2)) + 1
+            }
 
 
 
@@ -346,21 +350,25 @@ namespace ts.pxtc.assembler {
                         this.directiveError(lf("saved stack not found"))
                 }
 
-                m = /^(.*)@(hi|lo)$/.exec(s)
+                m = /^(.*)@(hi|lo|fn)$/.exec(s)
                 if (m && this.looksLikeLabel(m[1])) {
                     v = this.lookupLabel(m[1], true)
                     if (v != null) {
-                        v >>= 1;
-                        if (0 <= v && v <= 0xffff) {
-                            if (m[2] == "hi")
-                                v = (v >> 8) & 0xff
-                            else if (m[2] == "lo")
-                                v = v & 0xff
-                            else
-                                oops()
-                        } else {
-                            this.directiveError(lf("@hi/lo out of range"))
-                            v = null
+                        if (m[2] == "fn")
+                            v = this.ei.toFnPtr(v, this.baseOffset)
+                        else {
+                            v >>= 1;
+                            if (0 <= v && v <= 0xffff) {
+                                if (m[2] == "hi")
+                                    v = (v >> 8) & 0xff
+                                else if (m[2] == "lo")
+                                    v = v & 0xff
+                                else
+                                    oops()
+                            } else {
+                                this.directiveError(lf("@hi/lo out of range"))
+                                v = null
+                            }
                         }
                     }
                 }
@@ -368,7 +376,10 @@ namespace ts.pxtc.assembler {
 
             if (v == null && this.looksLikeLabel(s)) {
                 v = this.lookupLabel(s, true);
-                if (v != null) v += this.baseOffset
+                if (v != null) {
+                    if (this.ei.postProcessRelAddress(this, 1) == 1)
+                        v += this.baseOffset
+                }
             }
 
             if (v == null || isNaN(v)) return null;
@@ -836,13 +847,19 @@ namespace ts.pxtc.assembler {
         }
 
 
-        public getSource(clean: boolean, numStmts = 1) {
+        public getSource(clean: boolean, numStmts = 1, flashSize = 0) {
             let lenTotal = this.buf ? this.buf.length * 2 : 0
             let lenThumb = this.labels["_program_end"] || lenTotal;
             let lenFrag = this.labels["_frag_start"] || 0
             if (lenFrag) lenFrag = this.labels["_js_end"] - lenFrag
             let lenLit = this.labels["_program_end"]
             if (lenLit) lenLit -= this.labels["_js_end"]
+            let totalSize = lenTotal + this.baseOffset
+            if (flashSize && totalSize > flashSize)
+                U.userError(lf("program too big by {0} bytes!", totalSize - flashSize))
+            flashSize = flashSize || 128 * 1024
+            let totalInfo = lf("; total bytes: {0} ({1}% of {2}k flash)",
+                totalSize, (100 * totalSize / flashSize).toFixed(1), (flashSize / 1024).toFixed(1))
             let res =
                 // ARM-specific
                 lf("; code sizes (bytes): {0} (incl. {1} frags, and {2} lits); src size {3}\n",
@@ -850,6 +867,7 @@ namespace ts.pxtc.assembler {
                 lf("; assembly: {0} lines; density: {1} bytes/stmt\n",
                     this.lines.length,
                     Math.round(100 * (lenThumb - lenLit) / numStmts) / 100) +
+                totalInfo + "\n" +
                 this.stats + "\n\n"
 
             let skipOne = false
@@ -954,6 +972,7 @@ namespace ts.pxtc.assembler {
 
             let maxPasses = 5
             for (let i = 0; i < maxPasses; ++i) {
+                pxt.debug(`Peephole OPT, pass ${i}`)
                 this.peepPass(i == maxPasses);
                 if (this.peepOps == 0) break;
             }
@@ -986,6 +1005,10 @@ namespace ts.pxtc.assembler {
         constructor() {
             this.encoders = {};
             this.instructions = {}
+        }
+
+        public toFnPtr(v: number, baseOff: number) {
+            return v;
         }
 
         public wordSize() {
