@@ -1,5 +1,9 @@
 # Microsoft MakeCode Blog
 
+## [Microsoft MakeCode for Minecraft Windows 10](/blog/minecraft/10-11-2017)
+
+October 11th, 2017
+
 ## [Chibitronics Editor v0.1.40 (Scratch blocks)](/blog/chibitronics/v0.1.40)
 
 October 8th, 2017
