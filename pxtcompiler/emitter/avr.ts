@@ -101,7 +101,7 @@ namespace ts.pxtc.avr {
             */
         }
 
-        public toFnPtr(v: number) {
+        public toFnPtr(v: number, baseOff: number) {
             return v >> 1;
         }
 

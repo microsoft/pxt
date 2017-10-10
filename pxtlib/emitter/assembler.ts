@@ -355,7 +355,7 @@ namespace ts.pxtc.assembler {
                     v = this.lookupLabel(m[1], true)
                     if (v != null) {
                         if (m[2] == "fn")
-                            v = this.ei.toFnPtr(v)
+                            v = this.ei.toFnPtr(v, this.baseOffset)
                         else {
                             v >>= 1;
                             if (0 <= v && v <= 0xffff) {
@@ -377,7 +377,7 @@ namespace ts.pxtc.assembler {
             if (v == null && this.looksLikeLabel(s)) {
                 v = this.lookupLabel(s, true);
                 if (v != null) {
-                    if (this.ei.postProcessAbsAddress(this, 1) == 1)
+                    if (this.ei.postProcessRelAddress(this, 1) == 1)
                         v += this.baseOffset
                 }
             }
@@ -867,8 +867,8 @@ namespace ts.pxtc.assembler {
                 lf("; assembly: {0} lines; density: {1} bytes/stmt\n",
                     this.lines.length,
                     Math.round(100 * (lenThumb - lenLit) / numStmts) / 100) +
-                totalInfo + "\n"
-            this.stats + "\n\n"
+                totalInfo + "\n" +
+                this.stats + "\n\n"
 
             let skipOne = false
 
@@ -972,6 +972,7 @@ namespace ts.pxtc.assembler {
 
             let maxPasses = 5
             for (let i = 0; i < maxPasses; ++i) {
+                pxt.debug(`Peephole OPT, pass ${i}`)
                 this.peepPass(i == maxPasses);
                 if (this.peepOps == 0) break;
             }
@@ -1006,7 +1007,7 @@ namespace ts.pxtc.assembler {
             this.instructions = {}
         }
 
-        public toFnPtr(v: number) {
+        public toFnPtr(v: number, baseOff: number) {
             return v;
         }
 
