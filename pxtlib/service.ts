@@ -21,6 +21,7 @@ namespace ts.pxtc {
     export const NATIVE_TYPE_THUMB = "thumb";
     export const NATIVE_TYPE_AVR = "AVR";
     export const NATIVE_TYPE_CS = "C#";
+    export const NATIVE_TYPE_AVRVM = "AVRVM";
 
     export interface ParameterDesc {
         name: string;

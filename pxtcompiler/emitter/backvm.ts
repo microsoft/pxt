@@ -1,0 +1,361 @@
+namespace ts.pxtc {
+    const vmSpecOpcodes: pxt.Map<string> = {
+        "pxt::stringLiteral": "stringlit",
+        "Number_::eq": "eq",
+        "Number_::adds": "add",
+        "Number_::subs": "sub",
+    }
+
+    const vmCallMap: pxt.Map<string> = {
+    }
+
+    function shimToVM(shimName: string) {
+        return shimName
+    }
+
+    function qs(s: string) {
+        return JSON.stringify(s)
+    }
+
+    function vtableToVM(info: ClassInfo) {
+        return vtableToAsm(info)
+    }
+
+    export function vmEmit(bin: Binary, opts: CompileOptions) {
+        let vmsource = `; VM start
+${hex.hexPrelude()}        
+    .hex 708E3B92C615A841C49866C975EE5197 ; magic number
+    .hex ${hex.hexTemplateHash()} ; hex template hash
+    .hex 0000000000000000 ; @SRCHASH@
+    .short ${bin.globalsWords}   ; num. globals
+    .short 0 ; patched with number of words resulting from assembly
+    .word 0 ; reserved
+    .word 0 ; reserved
+    .word 0 ; reserved
+`
+        let snip = new AVRSnippets()
+
+        bin.procs.forEach(p => {
+            vmsource += "\n" + irToVM(bin, p) + "\n"
+        })
+        bin.usedClassInfos.forEach(info => {
+            vmsource += vtableToVM(info).replace(/\./g, "")
+        })
+        U.iterMap(bin.hexlits, (k, v) => {
+            vmsource += snip.hex_literal(v, k)
+        })
+        U.iterMap(bin.strings, (k, v) => {
+            vmsource += snip.string_literal(v, k)
+        })
+        vmsource += "\n; The end.\n"
+        bin.writeFile(BINARY_ASM, vmsource)
+
+        let res = assemble(opts.target.nativeType, bin, vmsource)
+        if (res.src)
+            bin.writeFile(pxtc.BINARY_ASM, res.src)
+
+        if (res.buf) {
+            let newBuf: number[] = []
+            for (let i = 0; i < res.buf.length; i += 2)
+                newBuf.push(res.buf[i] | (res.buf[i + 1] << 8))
+            const myhex = btoa(hex.patchHex(bin, newBuf, false, true)[0])
+            bin.writeFile(pxt.outputName(target), myhex)
+        }
+    }
+
+    function irToVM(bin: Binary, proc: ir.Procedure): string {
+        let resText = ""
+        let writeRaw = (s: string) => { resText += s + "\n"; }
+        let write = (s: string) => { resText += "    " + s + "\n"; }
+        let EK = ir.EK;
+        let wordSize = 2
+        let alltmps: ir.Expr[] = []
+        let currTmps: ir.Expr[] = []
+        let final = false
+        let numBrk = 0
+        let numLoc = 0
+
+        //console.log(proc.toString())
+        proc.resolve()
+        // console.log("OPT", proc.toString())
+
+        emitAll()
+        bin.numStmts = numBrk
+        resText = ""
+        for (let t of alltmps) t.currUses = 0
+        final = true
+        emitAll()
+
+        return resText
+
+        function emitAll() {
+            if (bin.procs[0] == proc) {
+                writeRaw(`; main`)
+            }
+
+            writeRaw(`${proc.label()}:`)
+            numLoc = proc.locals.length + currTmps.length
+            if (numLoc == 0)
+                write(`locals0`)
+            else
+                write(`locals ${numLoc * wordSize} ; incl. ${currTmps.length} tmps`)
+
+            for (let s of proc.body) {
+                switch (s.stmtKind) {
+                    case ir.SK.Expr:
+                        emitExpr(s.expr)
+                        break;
+                    case ir.SK.StackEmpty:
+                        clearStack()
+                        for (let e of currTmps) {
+                            if (e) {
+                                oops(`uses: ${e.currUses}/${e.totalUses} ${e.toString()}`);
+                            }
+                        }
+                        break;
+                    case ir.SK.Jmp:
+                        emitJmp(s);
+                        break;
+                    case ir.SK.Label:
+                        writeRaw(`${s.lblName}:`)
+                        break;
+                    case ir.SK.Breakpoint:
+                        numBrk++
+                        break;
+                    default: oops();
+                }
+            }
+
+            write(`ret ${numLoc * wordSize}`)
+        }
+
+        function emitJmp(jmp: ir.Stmt) {
+            let trg = jmp.lbl.lblName
+            if (jmp.jmpMode == ir.JmpMode.Always) {
+                if (jmp.expr)
+                    emitExpr(jmp.expr)
+                write(`jmp ${trg}`)
+            } else if (jmp.jmpMode == ir.JmpMode.IfJmpValEq) {
+                write(`push`)
+                emitExpr(jmp.expr)
+                write(`eq`)
+                write(`jmpnz ${trg}`)
+            } else {
+                emitExpr(jmp.expr)
+                if (jmp.jmpMode == ir.JmpMode.IfNotZero) {
+                    write(`jmpnz ${trg}`)
+                } else {
+                    write(`jmpz ${trg}`)
+                }
+            }
+        }
+
+        function withRef(name: string, isRef: boolean) {
+            return name + (isRef ? "Ref" : "")
+        }
+
+        function cellref(cell: ir.Cell) {
+            if (cell.isGlobal())
+                return (`glb ` + cell.index)
+            else if (cell.iscap)
+                return (`cap ` + (cell.index * wordSize))
+            else if (cell.isarg) {
+                let idx = proc.args.length - cell.index - 1
+                return (`tmp ${(numLoc + 2 + idx) * wordSize}`)
+            }
+            else
+                return (`tmp ${(cell.index + currTmps.length) * wordSize}`)
+        }
+
+        function emitExprInto(e: ir.Expr) {
+            switch (e.exprKind) {
+                case EK.NumberLiteral:
+                    if (e.data === 0)
+                        write(`ldzero`)
+                    else if (e.data === 1)
+                        write(`ldone`)
+                    else
+                        write(`ldconst ${e.data}`)
+                    return
+                case EK.PointerLiteral:
+                    write(`ldconst ${e.data}`)
+                    return
+                case EK.SharedRef:
+                    let arg = e.args[0]
+                    U.assert(!!arg.currUses) // not first use
+                    U.assert(arg.currUses < arg.totalUses)
+                    arg.currUses++
+                    let idx = currTmps.indexOf(arg)
+                    write(`ldtmp ${idx * wordSize}`)
+                    clearStack()
+                    return
+                case EK.CellRef:
+                    write("ld" + cellref(e.data))
+                    return
+
+                default: throw oops();
+            }
+        }
+
+        // result in R0
+        function emitExpr(e: ir.Expr): void {
+            //console.log(`EMITEXPR ${e.sharingInfo()} E: ${e.toString()}`)
+
+            switch (e.exprKind) {
+                case EK.JmpValue:
+                    write("; jmp value (already in r0)")
+                    break;
+                case EK.Nop:
+                    write("; nop")
+                    break
+                case EK.Incr:
+                    emitExpr(e.args[0])
+                    write("incr")
+                    break;
+                case EK.Decr:
+                    emitExpr(e.args[0])
+                    write("decr")
+                    break;
+                case EK.FieldAccess:
+                    let info = e.data as FieldAccessInfo
+                    // it does the decr itself, no mask
+                    return emitExpr(ir.rtcall(withRef("pxtrt::ldfld", info.isRef), [e.args[0], ir.numlit(info.idx)]))
+                case EK.Store:
+                    return emitStore(e.args[0], e.args[1])
+                case EK.RuntimeCall:
+                    return emitRtCall(e);
+                case EK.ProcCall:
+                    return emitProcCall(e)
+                case EK.SharedDef:
+                    return emitSharedDef(e)
+                case EK.Sequence:
+                    return e.args.forEach(emitExpr)
+                default:
+                    return emitExprInto(e)
+            }
+        }
+
+        function emitSharedDef(e: ir.Expr) {
+            let arg = e.args[0]
+            U.assert(arg.totalUses >= 1)
+            U.assert(arg.currUses === 0)
+            arg.currUses = 1
+            currTmps.push(arg)
+            if (arg.totalUses == 1)
+                return emitExpr(arg)
+            else {
+                emitExpr(arg)
+                let idx = -1
+                for (let i = 0; i < currTmps.length; ++i)
+                    if (currTmps[i] == null) {
+                        idx = i
+                        break
+                    }
+                if (idx < 0) {
+                    assert(!final)
+                    idx = currTmps.length
+                }
+                write(`sttmp ${idx * wordSize}`)
+            }
+        }
+
+        function emitRtCall(topExpr: ir.Expr) {
+            let info = ir.flattenArgs(topExpr)
+
+            info.precomp.forEach(emitExpr)
+
+            clearStack()
+
+            let name: string = topExpr.data
+            let m = /^(.*)\^(\d+)$/.exec(name)
+            let mask = 0
+            if (m) {
+                name = m[1]
+                mask = parseInt(m[2])
+            }
+            name = U.lookup(vmCallMap, name) || name
+            assert(mask <= 0xf)
+            assert(info.flattened.length <= 4)
+            let maskStr = "0x" + (mask + info.flattened.length * 16).toString(16)
+
+            name = name.replace(/^thumb::/, "Number_::")
+
+            let spec = U.lookup(vmSpecOpcodes, name)
+            assert(!spec || mask == 0)
+
+            for (let i = 0; i < info.flattened.length; ++i) {
+                emitExpr(info.flattened[i])
+                if (!spec || i < info.flattened.length - 1)
+                    write(`push`)
+            }
+
+            //let inf = hex.lookupFunc(name)
+
+            if (spec)
+                write(spec)
+            else
+                write(`call ${maskStr}, ${name}`)
+        }
+
+
+        function clearStack() {
+            for (let i = 0; i < currTmps.length; ++i) {
+                let e = currTmps[i]
+                if (e && e.currUses == e.totalUses) {
+                    if (!final)
+                        alltmps.push(e)
+                    currTmps[i] = null
+                }
+            }
+        }
+
+
+        function emitProcCall(topExpr: ir.Expr) {
+            let calledProcId = topExpr.data as ir.ProcId
+            let calledProc = calledProcId.proc
+
+            for (let e of topExpr.args) {
+                emitExpr(e)
+                write(`push`)
+            }
+
+            let methIdx = -1
+            let fetchAddr = ""
+
+            if (calledProcId.ifaceIndex != null) {
+                methIdx = calledProcId.ifaceIndex
+                fetchAddr = "pxtrt::getIfaceMethod"
+            } else if (calledProcId.virtualIndex != null) {
+                methIdx = calledProcId.virtualIndex
+                fetchAddr = "pxtrt::getVirtualMethod"
+            }
+
+            if (fetchAddr) {
+                write(`ldstack ${topExpr.args.length * wordSize - 1}`)
+                write(`push`)
+                write(`ldconst ${calledProcId.ifaceIndex}`)
+                write(`push`)
+                write(`call 0x20, ${fetchAddr}`)
+                write(`callind`)
+            } else {
+                write(`callproc ${calledProc.label()}`)
+            }
+        }
+
+        function emitStore(trg: ir.Expr, src: ir.Expr) {
+            switch (trg.exprKind) {
+                case EK.CellRef:
+                    emitExpr(src)
+                    // TODO cell.bitSize
+                    write("st" + cellref(trg.data))
+                    break;
+                case EK.FieldAccess:
+                    let info = trg.data as FieldAccessInfo
+                    // it does the decr itself, no mask
+                    emitExpr(ir.rtcall(withRef("pxtrt::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
+                    break;
+                default: oops();
+            }
+        }
+    }
+}
