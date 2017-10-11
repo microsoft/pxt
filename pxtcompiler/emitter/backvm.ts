@@ -89,6 +89,7 @@ ${hex.hexPrelude()}
         return resText
 
         function emitAll() {
+            writeRaw(`\n\n; Proc: ${proc.getName()}`)
             if (bin.procs[0] == proc) {
                 writeRaw(`; main`)
             }
@@ -161,10 +162,16 @@ ${hex.hexPrelude()}
                 return (`cap ` + (cell.index * wordSize))
             else if (cell.isarg) {
                 let idx = proc.args.length - cell.index - 1
+                assert(idx >= 0, "arg#" + idx)
                 return (`tmp ${(numLoc + 2 + idx) * wordSize}`)
             }
-            else
-                return (`tmp ${(cell.index + currTmps.length) * wordSize}`)
+            else {
+                let idx = cell.index + currTmps.length
+                //console.log(proc.locals.length, currTmps.length, cell.index)
+                assert(!final || idx < numLoc, "cell#" + idx)
+                assert(idx >= 0, "cell#" + idx)
+                return (`tmp ${idx * wordSize}`)
+            }
         }
 
         function emitExprInto(e: ir.Expr) {
@@ -186,6 +193,10 @@ ${hex.hexPrelude()}
                     U.assert(arg.currUses < arg.totalUses)
                     arg.currUses++
                     let idx = currTmps.indexOf(arg)
+                    if (idx < 0) {
+                        console.log(currTmps, arg)
+                        assert(false)
+                    }
                     write(`ldtmp ${idx * wordSize}`)
                     clearStack()
                     return
@@ -240,7 +251,7 @@ ${hex.hexPrelude()}
             U.assert(arg.totalUses >= 1)
             U.assert(arg.currUses === 0)
             arg.currUses = 1
-            currTmps.push(arg)
+            alltmps.push(arg)
             if (arg.totalUses == 1)
                 return emitExpr(arg)
             else {
@@ -252,8 +263,14 @@ ${hex.hexPrelude()}
                         break
                     }
                 if (idx < 0) {
-                    assert(!final)
+                    if (final) {
+                        console.log(arg, currTmps)
+                        assert(false, "missed tmp")
+                    }
                     idx = currTmps.length
+                    currTmps.push(arg)
+                } else {
+                    currTmps[idx] = arg
                 }
                 write(`sttmp ${idx * wordSize}`)
             }
