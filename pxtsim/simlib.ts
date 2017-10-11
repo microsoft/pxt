@@ -32,7 +32,7 @@ namespace pxsim {
     export class EventBus {
         private queues: Map<EventQueue<number>> = {};
         private lastEventValue: string | number;
-        private lastEventTimestamp: number;
+        private lastEventTimestampUs: number;
 
         constructor(private runtime: Runtime) { }
 
@@ -51,7 +51,7 @@ namespace pxsim {
             let queue = this.queues[k];
             if (queue) {
                 this.lastEventValue = evid;
-                this.lastEventTimestamp = U.perfNow();
+                this.lastEventTimestampUs = U.perfNowUs();
                 queue.push(value);
             }
         }
@@ -61,7 +61,7 @@ namespace pxsim {
         }
 
         getLastEventTime() {
-            return Math.floor(this.lastEventTimestamp - runtime.startTimeUs) * 1000;
+            return 0xffffffff & (this.lastEventTimestampUs - runtime.startTimeUs);
         }
     }
 
