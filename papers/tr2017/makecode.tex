@@ -54,11 +54,8 @@ namespace led {
 ...
 \end{lstlisting}
 
-Figure!\ref{fig:screenSnap}(C) is the toolbox of API and language categories, where the LED
-namespace can been seen. 
-
-
-Here is the C++ file defining the micro:bit's led namespace and its functions:
+Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories, where the LED
+namespace can been seen. Here is the C++ file defining the micro:bit's led namespace and its functions:
 ~\href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/led.cpp}{pxt-microbit/libs/core/led.cpp}.
 
 Mapping of functions and enumerations between C++ and TypeScript is straightforward. 
@@ -91,7 +88,7 @@ Here is the shim file generated from C++ micro:bit device runtime:
 \href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/shims.d.ts}{pxt-microbit/libs/core/shims.d.ts}.
 
 To support the foreign function interface, MakeCode defines a mapping between C++ and TypeScript types.
-Boolean and void have straightforward mappings from C++ to TypeScript (bool → boolean, void → void). 
+Boolean and void have straightforward mappings from C++ to TypeScript (bool $\rightarrow$ boolean, void $\rightarrow$ void). 
 As JavaScript only supports number, which is a C++ float/double, MakeCode uses TypeScript's support
 for type aliases to name the various C++ integer types commonly used for microcontroller programming
 (int32, uint32, int16, uint16, int8, uint8). 
@@ -101,17 +98,14 @@ This is particularly useful for saving space on 8-bit architectures such as the 
 MakeCode supports both untagged and tagged integers (described more later).  Under the untagged strategy,
 a JavaScript number is interpreted as a C++ int by default, while the tagged strategy allows both
 interpretation as integer and double (with an optimization to convert from integer to double, as required).  
-MakeCode includes reference counted C++ types for strings (StringData*) and parameterless lambdas (Action).
-TODO we also support lambdas with up to 3 parameters and a return type
+MakeCode includes reference counted C++ types for strings and lambdas (with
+up to three arguments and a return type).
 
-These C++ types are mapped to the TypeScript types string and ()=>void, respectively.
 MakeCode allows a set of C++ functions with the same first parameter (of type Foo) to be
 exposed as a TypeScript interface Foo as follows: this set of C++ functions must be grouped
 inside a namespace of the name FooMethods.  See, for example, how a C++ buffer abstraction is exposed:
 \href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp}{pxt-microbit/libs/core/buffer.cpp}.
-
-You can find the resulting TypeScript Buffer interface in the shim file for the micro:bit
-(already referenced above). 
+You can find the resulting TypeScript Buffer interface in the previously referenced shim file for the micro:bit.
 
 \subsection{Block Metadata Generation}
 
@@ -228,7 +222,7 @@ and is far from a complete device emulation.   For example, it is not possible f
 inputs to the simulated device, while it is possible with the actual device (i.e., shaking it to change the accelerometer
 reading while pushing one of the device's buttons).
 
-MakeCode provides various components to make device simulators easier to build: board, parts, wiring, etc.
+%MakeCode provides various components to make device simulators easier to build: board, parts, wiring, etc.
 
 \subsection{Packages and Custom Editors}
 

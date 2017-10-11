@@ -44,7 +44,7 @@ By default, the TypeScript compiler assigns the Any type to an expression/declar
 infer a more precise type. STS uses the \emph{--noImplicitAny} option to direct the TypeScript compiler to raise an error 
 whenever it makes an (implicit) assignment of the Any type.  STS also checks for an explicit use of the Any type in
 the program and raises an error. Many JavaScript constructs can only be typed with the Any type, including: prototype lookup,
-the \bf{eval} and \bf{with} statements, a \bf{this} reference outside of class context, an index access on non-array object, and
+the \emph{eval} and \emph{with} statements, a \emph{this} reference outside of class context, an index access on non-array object, and
 reflection on Function/Object objects. Therefore, these constructs are not in STS. For good measure,
 STS also excludes TypeScript's union and intersection types.
 
@@ -76,23 +76,35 @@ STS partitions the space of object types as follows:
 \item[5.] an \emph{other} type: object type not covered by the previous four categories.
 \end{itemize}
 STS excludes all ``other'' types, leaving us with a set of classic types, as found in Java or C\#.
-The partitioning is further reflected in STS' subtype relation, which does cross
-partitions. That is types $T$ and $U$ from different partitions above are not related 
-by STS' subtype relation. 
+The partitioning is further reflected in STS's subtype relation: 
+types $T$ and $U$ from different partitions (record, function, constructor function, and array) 
+are not related by STS's subtype relation.  We define STS's subtype relation in a later section.
 
-\subsection{Nominal Typing of Classes}
+\subsection{Treatment of Classes}
 
-To the above four partitions, STS adds a parition to represent class type.
+TypeScript introduces two (object) types for each class declaration: 
+(1) a constructor function type by which instances of a class
+are created (and static properties accessed), as seen in the previous section; 
+(2) a class type describing the instances of the class, which is essentially a record type. 
+TypeScript's treatment of class types as record types
+means that it is possible to assign to a property representing a method, 
+destroying the class abstraction that ties together code and data. This also means
+that a shared vtable for classes is not possible. 
 
-TypeScript introduces two (object) types for each class declaration: a constructor function type by which instances of a class are
-created (using new) and static properties accessed; a class type describing the instances of the class (records, as defined above). 
-[but the class type contains a link back to the class declaration;  STS treatment of classes using a nominal interpretation, names 
-and extends for subtyping]
+STS adds a partition to represent class types, separate from record types, describing the instances of classes.
+Classic nominal subtyping is applied to class types. Furthermore, STS permits a cast from a class type
+to a compatible record type, but does not allow a cast from a record type to a class type. This means
+it is possible to use interfaces to abstract over classes, as in Java and C\#. 
+Finally, STS enforces that a function may not
+be assigned to a property of a record type, 
+though it is possible to construct records with function properties using object literals. 
+
+\subsectiong{Typing of STS}
+
+\subsection{Compilation of STS}
 
 % Subtyping and type compatibility: program first must pass all the TypeScript checks (to catch errors); we then perform subtyping and type compatibility checks again.  
 % “The primitive types are the Number, Boolean, String, Symbol, Void, Null, and Undefined types and all user defined enum types.”
 % Disallowed casts.
-
-\subsection{Compilation of STS}
 
 Classic vtable for classes (prefix); classic interface table for classes and records
