@@ -95,6 +95,7 @@ ${hex.hexPrelude()}
             }
 
             writeRaw(`${proc.label()}:`)
+            writeRaw(`${proc.label()}_Lit:`)
             numLoc = proc.locals.length + currTmps.length
             if (numLoc == 0)
                 write(`locals0`)
