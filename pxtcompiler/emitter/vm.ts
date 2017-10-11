@@ -1,40 +1,4 @@
 namespace ts.pxtc.vm {
-
-    // this will normally come from a target definition
-    const vmopcodes: Map<number> =
-        {
-            "stop_0": 0,
-            "ldzero_0": 1,
-            "ldone_0": 4,
-            "push_0": 7,
-            "incr_0": 10,
-            "decr_0": 13,
-            "stringlit_0": 16,
-            "locals0_0": 19,
-            "eq_0": 24,
-            "add_0": 31,
-            "sub_0": 36,
-            "ldconst_1": 42,
-            "ldglb_1": 44,
-            "stglb_1": 46,
-            "ldtmp_1": 48,
-            "sttmp_1": 50,
-            "ldcap_1": 52,
-            "stcap_1": 54,
-            "locals_1": 56,
-            "ldstack_1": 61,
-            "ret_1": 65,
-            "jmp_2": 76,
-            "jmpz_2": 78,
-            "jmpnz_2": 82,
-            "ldconst_2": 86,
-            "ldglb_2": 87,
-            "stglb_2": 88,
-            "callind_2": 89,
-            "callproc_2": 93,
-            "call_2": 99
-        }
-
     const emitErr = assembler.emitErr
     const badNameError = emitErr("opcode name doesn't match", "<name>")
 
@@ -80,7 +44,7 @@ namespace ts.pxtc.vm {
                         opcode2 = v
                     } else if (formal == "$i2") {
                         opcode2 = v & 0xff
-                        opcode3 = (v >> 16) & 0xff
+                        opcode3 = (v >> 8) & 0xff
                     } else {
                         oops()
                     }
@@ -116,7 +80,7 @@ namespace ts.pxtc.vm {
             this.addEnc("$i1", "#0-255", v => this.inrange(255, v, v))
             this.addEnc("$i2", "#0-65535", v => this.inrange(65535, v, v))
 
-            U.iterMap(vmopcodes, (opnamefull, opcode) => {
+            U.iterMap(pxt.appTarget.compile.vmOpCodes, (opnamefull, opcode) => {
                 let m = /(.*)_(\d+)/.exec(opnamefull)
                 let fmt = ""
                 if (m[1] == "call") fmt = "call $i1, $i2"

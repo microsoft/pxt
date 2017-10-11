@@ -841,6 +841,7 @@ namespace ts.pxtc.assembler {
                             this.labels[lblname] = this.location();
                         }
                     }
+                    l.location = this.location()
                 } else if (l.type == "directive") {
                     this.handleDirective(l);
                 } else if (l.type == "instruction") {
@@ -899,6 +900,9 @@ namespace ts.pxtc.assembler {
                     text = text.replace(/; WAS: .*/, "")
                     if (!text.trim()) return;
                 }
+                if (this.location() == this.buf.length)
+                    if (ln.type == "label" || ln.type == "instruction")
+                        text += ` \t; 0x${(ln.location + this.baseOffset).toString(16)}`
                 res += text + "\n"
             })
 
