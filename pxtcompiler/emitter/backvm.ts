@@ -89,7 +89,7 @@ ${hex.hexPrelude()}
         return resText
 
         function emitAll() {
-            writeRaw(`\n\n; Proc: ${proc.getName()}`)
+            writeRaw(`;\n; Proc: ${proc.getName()}\n;`)
             if (bin.procs[0] == proc) {
                 writeRaw(`; main`)
             }
@@ -127,7 +127,8 @@ ${hex.hexPrelude()}
                 }
             }
 
-            write(`ret ${numLoc * wordSize}`)
+            let retArg = (numLoc * wordSize) | (proc.args.length << 8)
+            write(`ret 0x${retArg.toString(16)}`)
         }
 
         function emitJmp(jmp: ir.Stmt) {

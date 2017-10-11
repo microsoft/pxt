@@ -1834,7 +1834,7 @@ ${lbl}: .short 0xffff
             if (e.kind == SK.NullKeyword || e.kind == SK.NumericLiteral)
                 return !!(e as any).isRefOverride
             // no point doing the incr/decr for these - they are statically allocated anyways (unless on AVR)
-            if (isAVR() && isStringLiteral(e))
+            if (!isAVR() && isStringLiteral(e))
                 return false
             return isRefType(typeOf(e))
         }
