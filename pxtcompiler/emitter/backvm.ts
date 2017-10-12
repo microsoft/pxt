@@ -53,12 +53,14 @@ ${hex.hexPrelude()}
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
 
+        /*
         let pc = res.thumbFile.peepCounts
         let keys = Object.keys(pc)
         keys.sort((a, b) => pc[b] - pc[a])
         for (let k of keys.slice(0, 50)) {
             console.log(`${k}  ${pc[k]}`)
         }
+        */
 
         if (res.buf) {
             let newBuf: number[] = []
