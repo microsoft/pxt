@@ -212,6 +212,14 @@ ${hex.hexPrelude()}
                     return
                 case EK.CellRef:
                     write("ld" + cellref(e.data))
+                    let cell = e.data as ir.Cell
+                    if (cell.isGlobal()) {
+                        if (cell.bitSize == BitSize.Int8) {
+                            write(`sgnext`)
+                        } else if (cell.bitSize == BitSize.UInt8) {
+                            write(`clrhi`)
+                        }
+                    }
                     return
 
                 default: throw oops();
@@ -374,8 +382,13 @@ ${hex.hexPrelude()}
             switch (trg.exprKind) {
                 case EK.CellRef:
                     emitExpr(src)
-                    // TODO cell.bitSize
-                    write("st" + cellref(trg.data))
+                    let cell = trg.data as ir.Cell
+                    let instr = "st" + cellref(cell)
+                    if (cell.isGlobal() &&
+                        (cell.bitSize == BitSize.Int8 || cell.bitSize == BitSize.UInt8)) {
+                        instr = instr.replace("stglb", "stglb1")
+                    }
+                    write(instr)
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
