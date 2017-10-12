@@ -25,6 +25,8 @@ namespace ts.pxtc.vm {
                     let enc = this.ei.encoders[formal]
                     let v: number = null
                     if (enc.isImmediate) {
+                        if (!actual)
+                            return emitErr("expecting number", actual)
                         actual = actual.replace(/^#/, "")
                         v = ln.bin.parseOneInt(actual);
                         if (v == null)
@@ -120,7 +122,7 @@ namespace ts.pxtc.vm {
 
 
         public toFnPtr(v: number, baseOff: number) {
-            return (v + baseOff)
+            return v
         }
 
         public wordSize() {

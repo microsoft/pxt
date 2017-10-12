@@ -352,16 +352,16 @@ ${hex.hexPrelude()}
 
             if (calledProcId.ifaceIndex != null) {
                 methIdx = calledProcId.ifaceIndex
-                fetchAddr = "pxtrt::getIfaceMethod"
+                fetchAddr = "pxtrt::fetchMethodIface"
             } else if (calledProcId.virtualIndex != null) {
-                methIdx = calledProcId.virtualIndex
-                fetchAddr = "pxtrt::getVirtualMethod"
+                methIdx = calledProcId.virtualIndex + 2
+                fetchAddr = "pxtrt::fetchMethod"
             }
 
             if (fetchAddr) {
                 write(`ldstack ${topExpr.args.length * wordSize - 1}`)
                 write(`push`)
-                write(`ldconst ${calledProcId.ifaceIndex}`)
+                write(`ldconst ${methIdx}`)
                 write(`push`)
                 write(`call 0x20, ${fetchAddr}`)
                 write(`callind`)

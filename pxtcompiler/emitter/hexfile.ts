@@ -549,7 +549,7 @@ ${info.id}_VT:
 
         let ptrSz = target.shortPointers ? ".short" : ".word"
         let addPtr = (n: string) => {
-            if (n != "0") n += "@fn"
+            if (n != "0" && (!isStackMachine() || n.indexOf("::") >= 0)) n += "@fn"
             s += `        ${ptrSz} ${n}\n`
         }
 
