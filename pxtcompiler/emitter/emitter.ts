@@ -2524,16 +2524,16 @@ ${lbl}: .short 0xffff
 
             proc.stackEmpty();
 
+            let lbl = proc.mkLabel("final")
             if (funcHasReturn(proc.action)) {
                 let v = ir.shared(ir.op(EK.JmpValue, []))
                 proc.emitExpr(v) // make sure we save it
-                proc.emitClrs();
-                let lbl = proc.mkLabel("final")
+                proc.emitClrs(lbl, v);
                 proc.emitJmp(lbl, v, ir.JmpMode.Always)
-                proc.emitLbl(lbl)
             } else {
-                proc.emitClrs();
+                proc.emitClrs(lbl, null);
             }
+            proc.emitLbl(lbl)
 
             // once we have emitted code for this function,
             // we should emit code for all decls that are used

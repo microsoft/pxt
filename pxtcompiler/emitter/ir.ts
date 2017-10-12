@@ -131,6 +131,7 @@ namespace ts.pxtc.ir {
         IfZero,
         IfNotZero,
         IfJmpValEq,
+        IfLambda
     }
 
     export class Stmt extends Node {
@@ -229,6 +230,8 @@ namespace ts.pxtc.ir {
                                 return `    if (${inner}) ${fin}`
                             case JmpMode.IfJmpValEq:
                                 return `    if (r0 == ${inner}) ${fin}`
+                            case JmpMode.IfLambda:
+                                return `    if (LAMBDA) return ${inner}`
                             default: throw oops();
                         }
                     case ir.SK.StackEmpty:
@@ -529,10 +532,12 @@ namespace ts.pxtc.ir {
             }
         }
 
-        emitClrs() {
+        emitClrs(finlbl: ir.Stmt, retval: ir.Expr) {
             if (this.isRoot) return;
-            let lst = this.locals.concat(this.args)
-            lst.forEach(p => this.emitClrIfRef(p))
+            this.locals.forEach(p => this.emitClrIfRef(p))
+            if (isStackMachine() && this.args.some(p => p.isRef() || p.isByRefLocal()))
+                this.emitJmp(finlbl, retval, ir.JmpMode.IfLambda)
+            this.args.forEach(p => this.emitClrIfRef(p))
         }
 
         emitJmpZ(trg: string | Stmt, expr: Expr) {

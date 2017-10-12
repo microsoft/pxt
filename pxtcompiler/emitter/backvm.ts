@@ -139,6 +139,10 @@ ${hex.hexPrelude()}
                 if (jmp.expr)
                     emitExpr(jmp.expr)
                 write(`jmp ${trg}`)
+            } else if (jmp.jmpMode == ir.JmpMode.IfLambda) {
+                if (jmp.expr)
+                    emitExpr(jmp.expr)
+                write(`retlmb ${numLoc * wordSize}`)
             } else if (jmp.jmpMode == ir.JmpMode.IfJmpValEq) {
                 write(`push`)
                 emitExpr(jmp.expr)
@@ -148,8 +152,11 @@ ${hex.hexPrelude()}
                 emitExpr(jmp.expr)
                 if (jmp.jmpMode == ir.JmpMode.IfNotZero) {
                     write(`jmpnz ${trg}`)
-                } else {
+                } else if (jmp.jmpMode == ir.JmpMode.IfZero) {
                     write(`jmpz ${trg}`)
+
+                } else {
+                    oops()
                 }
             }
         }
