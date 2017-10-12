@@ -334,7 +334,7 @@ ${hex.hexPrelude()}
 
             for (let i = 0; i < info.flattened.length; ++i) {
                 emitExpr(info.flattened[i])
-                if (!spec || i < info.flattened.length - 1)
+                if (i < info.flattened.length - 1)
                     write(`push`)
             }
 
@@ -383,7 +383,6 @@ ${hex.hexPrelude()}
                 write(`ldstack ${topExpr.args.length * wordSize - 1}`)
                 write(`push`)
                 write(`ldconst ${methIdx}`)
-                write(`push`)
                 write(`call 0x20, ${fetchAddr}`)
                 write(`callind`)
             } else {

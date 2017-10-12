@@ -129,11 +129,13 @@ namespace ts.pxtc.vm {
             return 2
         }
 
-        public peephole(ln: pxtc.assembler.Line, lnNext: pxtc.assembler.Line, lnNext2: pxtc.assembler.Line) {
+        public peephole(ln: assembler.Line, lnNext: assembler.Line, lnNext2: assembler.Line) {
             let lnop = ln.getOp()
+            let lnop2 = ""
 
             if (lnNext) {
-                let key = lnop + ";" + lnNext.getOp()
+                lnop2 = lnNext.getOp()
+                let key = lnop + ";" + lnop2
                 let pc = this.file.peepCounts
                 pc[key] = (pc[key] || 0) + 1
             }
@@ -141,12 +143,17 @@ namespace ts.pxtc.vm {
             if (lnop == "jmp" && ln.numArgs[0] == this.file.baseOffset + lnNext.location) {
                 // RULE: jmp .somewhere; .somewhere: -> .somewhere:
                 ln.update("")
-            } else if (lnop == "push" && lnNext.getOp() == "callproc") {
+            } else if (lnop == "push" && (
+                lnop2 == "callproc" || lnop2 == "ldconst" ||
+                lnop2 == "stringlit" || lnop2 == "ldtmp")) {
                 ln.update("")
-                lnNext.update("push_callproc " + lnNext.words[1])
-            } else if (lnop == "push" && lnNext.getOp() == "ldconst") {
+                lnNext.update("push_" + lnop2 + " " + lnNext.words[1])
+            } else if (lnop == "push" && (lnop2 == "ldzero" || lnop2 == "ldone")) {
                 ln.update("")
-                lnNext.update("push_ldconst " + lnNext.words[1])
+                lnNext.update("push_" + lnop2)
+            } else if (lnop == "ldtmp" && (lnop2 == "incr" || lnop2 == "decr")) {
+                ln.update("ldtmp_" + lnop2 + " " + ln.words[1])
+                lnNext.update("")
             }
         }
 
