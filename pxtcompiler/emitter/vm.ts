@@ -128,6 +128,29 @@ namespace ts.pxtc.vm {
         public wordSize() {
             return 2
         }
+
+        public peephole(ln: pxtc.assembler.Line, lnNext: pxtc.assembler.Line, lnNext2: pxtc.assembler.Line) {
+            let lnop = ln.getOp()
+
+            if (lnNext) {
+                let key = lnop + ";" + lnNext.getOp()
+                let pc = this.file.peepCounts
+                pc[key] = (pc[key] || 0) + 1
+            }
+
+            if (lnop == "jmp" && ln.numArgs[0] == this.file.baseOffset + lnNext.location) {
+                // RULE: jmp .somewhere; .somewhere: -> .somewhere:
+                ln.update("")
+            } else if (lnop == "push" && lnNext.getOp() == "callproc") {
+                ln.update("")
+                lnNext.update("push_callproc " + lnNext.words[1])
+            } else if (lnop == "push" && lnNext.getOp() == "ldconst") {
+                ln.update("")
+                lnNext.update("push_ldconst " + lnNext.words[1])
+            }
+        }
+
+
     }
 
 

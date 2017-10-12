@@ -254,6 +254,7 @@ namespace ts.pxtc.assembler {
         private stack = 0;
         public peepOps = 0;
         public peepDel = 0;
+        public peepCounts: pxt.Map<number> = {}
         private stats = "";
         public throwOnError = false;
         public disablePeepHole = false;
@@ -867,8 +868,9 @@ namespace ts.pxtc.assembler {
             if (flashSize && totalSize > flashSize)
                 U.userError(lf("program too big by {0} bytes!", totalSize - flashSize))
             flashSize = flashSize || 128 * 1024
-            let totalInfo = lf("; total bytes: {0} ({1}% of {2}k flash)",
-                totalSize, (100 * totalSize / flashSize).toFixed(1), (flashSize / 1024).toFixed(1))
+            let totalInfo = lf("; total bytes: {0} ({1}% of {2}k flash with {3} free)",
+                totalSize, (100 * totalSize / flashSize).toFixed(1), (flashSize / 1024).toFixed(1),
+                flashSize - totalSize)
             let res =
                 // ARM-specific
                 lf("; code sizes (bytes): {0} (incl. {1} frags, and {2} lits); src size {3}\n",
@@ -932,6 +934,7 @@ namespace ts.pxtc.assembler {
 
             this.peepOps = 0;
             this.peepDel = 0;
+            this.peepCounts = {}
             this.peepHole();
 
             this.throwOnError = true;

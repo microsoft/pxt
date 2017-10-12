@@ -1,6 +1,5 @@
 namespace ts.pxtc {
     const vmSpecOpcodes: pxt.Map<string> = {
-        "pxt::stringLiteral": "stringlit",
         "Number_::eq": "eq",
         "Number_::adds": "add",
         "Number_::subs": "sub",
@@ -53,6 +52,13 @@ ${hex.hexPrelude()}
         let res = assemble(opts.target.nativeType, bin, vmsource)
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
+
+        let pc = res.thumbFile.peepCounts
+        let keys = Object.keys(pc)
+        keys.sort((a, b) => pc[b] - pc[a])
+        for (let k of keys.slice(0, 50)) {
+            console.log(`${k}  ${pc[k]}`)
+        }
 
         if (res.buf) {
             let newBuf: number[] = []
@@ -295,12 +301,6 @@ ${hex.hexPrelude()}
         }
 
         function emitRtCall(topExpr: ir.Expr) {
-            let info = ir.flattenArgs(topExpr)
-
-            info.precomp.forEach(emitExpr)
-
-            clearStack()
-
             let name: string = topExpr.data
             let m = /^(.*)\^(\d+)$/.exec(name)
             let mask = 0
@@ -310,6 +310,19 @@ ${hex.hexPrelude()}
             }
             name = U.lookup(vmCallMap, name) || name
             assert(mask <= 0xf)
+
+            let info = ir.flattenArgs(topExpr)
+            assert(info.precomp.length == 0)
+            //info.precomp.forEach(emitExpr)
+            clearStack()
+
+            if (name == "pxt::stringLiteral" &&
+                info.flattened.length == 1 &&
+                info.flattened[0].exprKind == EK.PointerLiteral) {
+                write(`stringlit ${info.flattened[0].data}`)
+                return
+            }
+
             assert(info.flattened.length <= 4)
             let maskStr = "0x" + (mask + info.flattened.length * 16).toString(16)
 
