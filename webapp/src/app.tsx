@@ -2418,7 +2418,6 @@ $(document).ready(() => {
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
         .then(() => {
-            compiler.init();
             return workspace.initAsync();
         })
         .then(() => {
