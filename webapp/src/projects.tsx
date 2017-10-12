@@ -167,10 +167,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                     return compiler.getBlocksAsync()
                                         .then(blocksInfo => compiler.decompileAsync("main.ts", blocksInfo))
                                         .then(resp => {
+                                            pxt.debug(`example decompilation: ${resp.success}`)
                                             if (resp.success) {
-                                                const p = pkg.mainEditorPkg();
-                                                p.setFile("main.blocks", resp.outfiles["main.blocks"]);
-                                                this.props.parent.setFile(p.lookupFile("this/main.blocks"));
+                                                this.props.parent.overrideBlocksFile(resp.outfiles["main.blocks"])
                                             }
                                         })
                                 })
