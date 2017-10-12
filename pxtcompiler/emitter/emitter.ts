@@ -2165,7 +2165,7 @@ ${lbl}: .short 0xffff
             }
 
             // otherwise we assume a lambda
-            if (args.length > 3)
+            if (args.length > (isStackMachine() ? 2 : 3))
                 userError(9217, lf("lambda functions with more than 3 arguments not supported"))
 
             let suff = args.length + ""
@@ -3516,7 +3516,7 @@ ${lbl}: .short 0xffff
                         proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                     } else {
                         // TODO re-enable this opt for small non-zero number literals
-                        if (!opts.target.needsUnboxing && cmpExpr.exprKind == EK.NumberLiteral) {
+                        if (!isStackMachine() && !opts.target.needsUnboxing && cmpExpr.exprKind == EK.NumberLiteral) {
                             if (!quickCmpMode) {
                                 emitInJmpValue(expr)
                                 quickCmpMode = true

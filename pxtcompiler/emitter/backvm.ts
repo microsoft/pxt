@@ -39,7 +39,7 @@ ${hex.hexPrelude()}
             vmsource += "\n" + irToVM(bin, p) + "\n"
         })
         bin.usedClassInfos.forEach(info => {
-            vmsource += vtableToVM(info).replace(/\./g, "")
+            vmsource += vtableToVM(info)
         })
         U.iterMap(bin.hexlits, (k, v) => {
             vmsource += snip.hex_literal(v, k)
@@ -90,6 +90,7 @@ ${hex.hexPrelude()}
 
         function emitAll() {
             writeRaw(`;\n; Proc: ${proc.getName()}\n;`)
+            write(".section code")
             if (bin.procs[0] == proc) {
                 writeRaw(`; main`)
             }
@@ -300,7 +301,8 @@ ${hex.hexPrelude()}
             name = name.replace(/^thumb::/, "Number_::")
 
             let spec = U.lookup(vmSpecOpcodes, name)
-            assert(!spec || mask == 0)
+
+            if (mask) spec = null
 
             for (let i = 0; i < info.flattened.length; ++i) {
                 emitExpr(info.flattened[i])
