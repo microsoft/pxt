@@ -1139,6 +1139,10 @@ export class ProjectView
         if (this.textEditor) this.textEditor.overrideFile(text);
     }
 
+    overrideBlocksFile(text: string) {
+        if (this.blocksEditor) this.blocksEditor.overrideFile(text);
+    }
+
     startStopSimulator() {
         if (this.state.running) {
             pxt.tickEvent('simulator.stop')
@@ -2418,7 +2422,6 @@ $(document).ready(() => {
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
         .then(() => {
-            compiler.init();
             return workspace.initAsync();
         })
         .then(() => {

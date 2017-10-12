@@ -120,6 +120,7 @@ namespace pxt.editor {
         reloadHeaderAsync(): Promise<void>;
         importProjectAsync(prj: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void>;
         overrideTypescriptFile(text: string): void;
+        overrideBlocksFile(text: string): void;
 
         exportAsync(): Promise<string>;
 
