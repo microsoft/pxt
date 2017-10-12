@@ -920,8 +920,10 @@ namespace pxt.cpp {
         } else if (isCodal) {
             let cs = compileService
             let cfg = U.clone(cs.codalDefinitions) || {}
+            let trg = cs.codalTarget
+            if (typeof trg == "string") trg = trg + ".json"
             let codalJson = {
-                "target": cs.codalTarget + ".json",
+                "target": trg,
                 "definitions": cfg,
                 "config": cfg,
                 "application": "pxtapp",

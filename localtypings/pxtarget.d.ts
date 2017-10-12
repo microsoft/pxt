@@ -126,7 +126,12 @@ declare namespace pxt {
 
         platformioIni?: string[];
 
-        codalTarget?: string;
+        codalTarget?: string | {
+            name: string; // "codal-arduino-uno",
+            url: string; // "https://github.com/lancaster-university/codal-arduino-uno",
+            branch: string; // "master",
+            type: string; // "git"
+        };
         codalBinary?: string;
         codalDefinitions?: any;
 
