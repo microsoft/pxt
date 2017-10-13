@@ -130,7 +130,6 @@ html {
 }
 
 #blocksEditor > div.loading {
-    background:#fff;
     position: absolute;
     left: 0;
     top: 0;
@@ -222,9 +221,6 @@ div.blocklyWidgetDiv {
 }
 .monacoToolboxDiv.hide {
     display: none;
-}
-.monaco-editor-hover {
-    z-index:1000 !important;
 }
 
 #monacoEditorInner {

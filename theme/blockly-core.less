@@ -11,12 +11,11 @@
 
 /* Lower Z index for BlocklyWidgetDiv and grid picker tooltips */
 .blocklyWidgetDiv {
-    z-index: 105;
+    z-index: @blocklyWidgetDivZIndex;
 }
-
-/* Blockly z-index: */
-/* blocklyFlyout: 20 */
-/* blocklyFlyoutScrollbar: 30 */
+.blocklyDropdownDiv {
+    z-index: @blocklyDropdownDivZIndex;
+}
 
 .blocklyTooltipDiv {
     border:none !important;
@@ -29,7 +28,7 @@
 
 .blocklyToolboxDiv, .monacoToolboxDiv {
     background: @blocklyToolboxColor !important;
-    z-index: 1;
+    z-index: @blocklyToolboxZIndex;
     -webkit-transition: width 1s, background 0.3s; /* Safari */
     -moz-transition: width 1s, background 0.3s; /* Mozilla */
     -webkit-transition-timing-function: ease-in; /* Mozilla */
@@ -47,6 +46,9 @@ svg.blocklySvg {
 .hc svg.blocklySvg {
     background-color: black !important;
 }
+#maineditor, #blocksEditor > div.loading {
+    background: @blocklySvgColor;
+}
 #blocksEditor .injectionDiv svg {
     overflow: visible;
 }
@@ -55,13 +57,11 @@ span.blocklyTreeLabel, text.blocklyText, input.blocklyHtmlInput, .blocklyDropDow
     font-family: @blocklyFont !important;
 }
 
-/* Using 1rem creates font size issues in Edge
-text.blocklyText {
-    font-size:1rem !important;
-} */
-
+/* Blockly toolbox font size same as the page font */
 span.blocklyTreeLabel {
-    font-size:1.25rem;
+    font-family: @pageFont !important;
+    font-weight: 200;
+    font-size: 1.15rem;
 }
 
 span.blocklyTreeLabel, text.blocklyText {
@@ -129,7 +129,7 @@ div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
     text-align: center;
     width: 100px;
     height: 80px;
-    z-index: 100;
+    z-index: @blocklyTrashIconZIndex;
     font-size:5rem;
     color: @trashIconColor;
 }
@@ -258,7 +258,21 @@ div.blocklyTreeRow {
 /* Transulcent blocks when dragging */
 .blocklyDragging>.blocklyPath {
    fill-opacity: 0.7;
-}  
+}
+
+/* Scrollbars */
+.blocklyScrollbarBackground {
+    fill: @blocklyScrollbarBackgroundColor;
+}
+.blocklyScrollbarHandle {
+    fill: @blocklyScrollbarColor;
+    opacity: @blocklyScrollbarOpacity;
+}
+.blocklyScrollbarBackground:hover+.blocklyScrollbarHandle, .blocklyScrollbarHandle:hover,
+.blocklyScrollbarBackground:active+.blocklyScrollbarHandle, .blocklyScrollbarHandle:active {
+    stroke-width: 3;
+    stroke: @blocklyScrollbarColor;
+}
 
 /*******************************
         Media Adjustments
@@ -383,4 +397,16 @@ div.blocklyTreeRow {
     #blocklySearchArea {
         display: none !important;
     }
+}
+
+
+/*******************************
+    Blockly Accessibility
+*******************************/
+
+.blocklyTreeRow:focus {
+    outline: none;
+}
+.blocklyTreeRow:not(.blocklyTreeSelected):focus {
+    background-color: #e4e4e4;
 }

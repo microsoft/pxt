@@ -7,7 +7,7 @@
 
 iframe.extension-frame {
     position: fixed;
-    z-index: 1001; /* So it shows up above the modal dimmer */
+    z-index: @extensionFrameZIndex;
 }
 
 /*******************************
@@ -37,7 +37,7 @@ iframe.extension-frame {
 }
 
 .modals.dimmer.permissiondimmer {
-    z-index: 1002; /* So it shows up above the extension iframe */
+    z-index: @extensionPermissionZIndex;
 }
 
 .ui.modal .actions > .button.deny {
