@@ -25,6 +25,7 @@
 
 .blocklyToolboxDiv, .monacoToolboxDiv {
     background: @blocklyToolboxColor !important;
+    z-index: @blocklyToolboxZIndex;
     -webkit-transition: width 1s, background 0.3s; /* Safari */
     -moz-transition: width 1s, background 0.3s; /* Mozilla */
     -webkit-transition-timing-function: ease-in; /* Mozilla */
@@ -41,6 +42,9 @@ svg.blocklySvg {
 }
 .hc svg.blocklySvg {
     background-color: black !important;
+}
+#maineditor, #blocksEditor > div.loading {
+    background: @blocklySvgColor;
 }
 #blocksEditor .injectionDiv svg {
     overflow: visible;
@@ -255,7 +259,11 @@ div.blocklyTreeRow {
 
 /* Scrollbars */
 .blocklyScrollbarBackground {
+    fill: @blocklyScrollbarBackgroundColor;
+}
+.blocklyScrollbarHandle {
     fill: @blocklyScrollbarColor;
+    opacity: @blocklyScrollbarOpacity;
 }
 .blocklyScrollbarBackground:hover+.blocklyScrollbarHandle, .blocklyScrollbarHandle:hover,
 .blocklyScrollbarBackground:active+.blocklyScrollbarHandle, .blocklyScrollbarHandle:active {

@@ -328,14 +328,14 @@ div.simframe > iframe {
     -moz-appearance: none;
     -webkit-appearance: none;
     appearance: none;
-    width: 10px;
-    height: 10px;
+    width: @customScrollbarWidth;
+    height: @customScrollbarWidth;
 }
 ::-webkit-scrollbar-thumb {
     border-radius: 4px;
-    background-color: #ccc;
-    box-shadow: 0 0 1px #ccc;
-    -webkit-box-shadow: 0 0 1px #ccc;
+    background-color: @thumbBackground;
+    box-shadow: 0 0 1px @thumbBackground;
+    -webkit-box-shadow: 0 0 1px @thumbBackground;
 }
 
 /* Button Colors */

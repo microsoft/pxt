@@ -89,7 +89,9 @@
 
 @useCustomScrollbars: true;
 @customScrollbarWidth: 6px;
-@thumbBackground: rgba(0, 0, 0, 0.20);
+
+@thumbBackground: rgba(0, 0, 0, 0.25);
+@thumbInvertedBackground: rgba(255, 255, 255, 0.25);
 
 /*******************************
      PXT Variables
@@ -172,7 +174,9 @@
 
 @blocklyFont: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
 
+@blocklyScrollbarBackgroundColor: none;
 @blocklyScrollbarColor: #CECDCE;
+@blocklyScrollbarOpacity: 1;
 
 /*-------------------
    Flyout
