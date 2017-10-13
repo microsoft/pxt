@@ -408,7 +408,7 @@ export class ProjectView
             },
             editor: this.state.header ? this.state.header.editor : ''
         })
-        if (pxt.appTarget.appTheme.allowParentController || pxt.appTarget.appTheme.allowPackageExtensions)
+        if (pxt.appTarget.appTheme.allowParentController || pxt.appTarget.appTheme.allowPackageExtensions || pxt.appTarget.appTheme.allowSimulatorTelemetry)
             pxt.editor.bindEditorMessages(this);
         this.forceUpdate(); // we now have editors prepared
     }
