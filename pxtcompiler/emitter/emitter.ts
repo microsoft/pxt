@@ -2525,7 +2525,8 @@ ${lbl}: .short 0xffff
             proc.stackEmpty();
 
             let lbl = proc.mkLabel("final")
-            if (funcHasReturn(proc.action)) {
+            let hasRet = funcHasReturn(proc.action)
+            if (hasRet) {
                 let v = ir.shared(ir.op(EK.JmpValue, []))
                 proc.emitExpr(v) // make sure we save it
                 proc.emitClrs(lbl, v);
@@ -2533,7 +2534,8 @@ ${lbl}: .short 0xffff
             } else {
                 proc.emitClrs(lbl, null);
             }
-            proc.emitLbl(lbl)
+            if (hasRet || isStackMachine())
+                proc.emitLbl(lbl)
 
             // once we have emitted code for this function,
             // we should emit code for all decls that are used
