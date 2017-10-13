@@ -971,7 +971,7 @@ namespace pxt.cpp {
         if (compile.nativeType == pxtc.NATIVE_TYPE_AVRVM) {
             pxtConfig += "#define PXT_VM 1\n"
         } else {
-            pxtConfig += "#define PXT_VM 0\n"            
+            pxtConfig += "#define PXT_VM 0\n"
         }
 
         if (!isCSharp) {
