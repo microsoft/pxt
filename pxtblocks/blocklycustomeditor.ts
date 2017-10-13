@@ -32,6 +32,8 @@ namespace pxt.blocks {
         registerFieldEditor('imagedropdown', pxtblockly.FieldImageDropdown);
         registerFieldEditor('colorwheel', pxtblockly.FieldColorWheel);
         registerFieldEditor('toggle', pxtblockly.FieldToggle);
+        registerFieldEditor('toggleonoff', pxtblockly.FieldToggleOnOff);
+        registerFieldEditor('toggleyesno', pxtblockly.FieldToggleYesNo);
         registerFieldEditor('colornumber', pxtblockly.FieldColorNumber);
     }
 

@@ -1486,6 +1486,11 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
         })
     }
     walkDocs(theme.docMenu);
+    if (nodeutil.fileExistsSync("targetconfig.json")) {
+        const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
+        if (targetConfig && targetConfig.galleries)
+            Object.keys(targetConfig.galleries).forEach(k => targetStrings[k] = k);
+    }
     let targetStringsSorted: pxt.Map<string> = {};
     Object.keys(targetStrings).sort().map(k => targetStringsSorted[k] = k);
 
