@@ -293,7 +293,7 @@ declare namespace ts.pxtc {
         stackAlign?: number; // 1 word (default), or 2
         hidSelectors?: HidSelector[];
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
-        vmOpCodes?: Map<number>;
+        vmOpCodes?: pxt.Map<number>;
     }
 
     interface CompileOptions {
