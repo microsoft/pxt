@@ -449,10 +449,10 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
-                    if (ev.newValue == lf("{id:category}Extensions")) {
+                    if (ev.newValue == pxt.blocks.addPackageTitle) {
                         this.addPackage();
                     }
-                    else if (ev.newValue == lf("{id:category}Advanced")) {
+                    else if (ev.newValue == pxt.blocks.advancedTitle) {
                         if (this.showToolboxCategories === CategoryMode.All) {
                             this.showToolboxCategories = CategoryMode.Basic;
                         }
