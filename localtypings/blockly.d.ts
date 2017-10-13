@@ -733,6 +733,7 @@ declare namespace Blockly {
         select(): void;
         getRelativeToSurfaceXY(): goog.math.Coordinate;
         getOutputShape(): number;
+        getSvgRoot(): Element;
     }
 
     class Comment extends Icon {

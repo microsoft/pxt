@@ -660,6 +660,7 @@ namespace pxt.blocks {
                 let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances
                 let customField = (fn.attributes.paramFieldEditor && fn.attributes.paramFieldEditor[p]);
                 let fieldLabel = pr.name.charAt(0).toUpperCase() + pr.name.slice(1);
+                let fieldType = pr.type;
 
                 if (isEnum || isFixed) {
                     const syms = Util.values(info.apis.byQName)
@@ -706,7 +707,8 @@ namespace pxt.blocks {
                         const options = {
                             data: dd,
                             colour: color,
-                            label: fieldLabel
+                            label: fieldLabel,
+                            type: fieldType
                         } as Blockly.FieldCustomDropdownOptions;
                         Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[pr.name] || {});
                         i.appendField(createFieldEditor(customField, defl, options), attrNames[n].name);
@@ -719,7 +721,8 @@ namespace pxt.blocks {
                     const defl = fn.attributes.paramDefl[pr.name] || "";
                     const options = {
                         colour: color,
-                        label: fieldLabel
+                        label: fieldLabel,
+                        type: fieldType
                     } as Blockly.FieldCustomOptions;
                     Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[pr.name] || {});
                     i.appendField(createFieldEditor(customField, defl, options), attrNames[n].name);
