@@ -79,9 +79,9 @@ to the internet).
 Platform targets can be seen at \url{www.makecode.com}, where the \MC web app for a variety of boards is available, 
 including:
 \begin{itemize}
-\item the \emph{\href{https://microbit.org}{micro:bit}}, a Nordic nRF51822 microcontroller with Cortex-M0 processor, 16K RAM~\cite{microbitICSE2016};
-\item Adafruit's \emph{\href{https:/adafruit.com/products/3333}{Circuit Playground Express}}, an Atmel SAMD21 microcontroller with Cortex-M0 processor, 32K RAM;
-\item the \emph{\href{https://store.arduino.cc/usa/arduino-uno-rev3}{Arduino Uno}}, an Atmel ATmega328 microcontroller with AVR processor, 2K RAM.
+\item the \emph{\href{https://microbit.org}{micro:bit}}, a Nordic nRF51822 microcontroller with Cortex-M0 processor, 256KB flash and 16KB RAM~\cite{microbitICSE2016};
+\item Adafruit's \emph{\href{https:/adafruit.com/products/3333}{Circuit Playground Express}}, an Atmel SAMD21 microcontroller with Cortex-M0 processor, 256KB flash and 32KB RAM;
+\item the \emph{\href{https://store.arduino.cc/usa/arduino-uno-rev3}{Arduino Uno}}, an Atmel ATmega328 microcontroller with AVR processor, 32KB fLash and 2KB RAM.
 \end{itemize}
 
 We encourage the reader to choose a board and experiment with programming it, to appreciate the 
@@ -106,9 +106,10 @@ Summary of evaluation]
   \caption{\label{fig:screenSnap}Screen snapshot of the \MC web app.}
 \end{figure*}
 
-All of the platform's components are open source on GitHub under MIT/Apache licenses. 
-Figure~\ref{fig:repos} lists the GitHub repos and the dependences between them. Green
-boxes represent repos external to the platform.
+All of the platform's components are open source on GitHub
+under MIT/Apache licenses. 
+Figure~\ref{fig:repos} lists the GitHub repos and the dependences between them. Green boxes represent repos external to the platform (note: not all
+repos are represented in the figure).
 
 The \MC framework 
 is at \emph{\href{https://github.com/microsoft/pxt}{pxt}} (PXT is the previous codename of \MC). 
@@ -122,17 +123,18 @@ The latter two targets make use of a common set of libraries,
 which build upon CODAL's microcontroller independent core abstractions at
 ~\emph{\href{https://github.com/lancaster-university/codal-core}{codal-core}}.  
 
-Platform- and microcontroller-dependent specialization and optimizations for ARM's Mbed platform, 
-and SAMD21 and Atmega328 microcontrollers can be found at
-~\emph{\href{https://github.com/lancaster-university/codal-mbed}{codal-mbed}},
-\linebreak
-~\emph{\href{https://github.com/lancaster-university/codal-samd21-mbed}{codal-samd21-mbed}}, 
+Platform- and microcontroller-dependent specialization and optimizations for 
+SAMD21 and Atmega328 microcontrollers can be found at
+~\emph{\href{https://github.com/lancaster-university/codal-samd21}{codal-samd21}}, 
 and
 ~\emph{\href{https://github.com/lancaster-university/codal-atmega328p}{codal-atmega328p}}.
+Not shown in the figure, the SAMD21 repo uses another repo for
+MBED-specific optimizations for the Cortex-M0 processor: \emph{\href{https://github.com/lancaster-university/codal-mbed}{codal-mbed}}.
+
 The repo \emph{\href{https://github.com/lancaster-university/codal}{codal}} provides the
 build tooling for compiling a CODAL target.  As can be seen in Figure~\ref{fig:repos}, 
 CODAL (the blue boxes) abstracts over platform and microcontroller specific
-implementations (for example, MBED), while PXT abstracts over programming editors
+implementations, while PXT abstracts over programming editors
 and languages (Blockly, Monaco, and TypeScript).
 The UF2 specification is at~\emph{\href{https://github.com/microsoft/uf2}{uf2}},
 with implementations at~\emph{\href{https://github.com/microsoft/uf2-samd21}{uf2-samd21}}
