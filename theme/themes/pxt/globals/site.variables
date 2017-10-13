@@ -1,3 +1,6 @@
+
+@import 'zindex.variables';
+
 /*******************************
      User Global Variables
 *******************************/
@@ -70,7 +73,6 @@
  
 @invertedLightTextColor      : rgba(255, 255, 255, 0.9);
 
-
 /*******************************
              States
 *******************************/
@@ -80,6 +82,14 @@
 --------------------*/
 
 @disabledOpacity: 0.80;
+
+/*-------------------
+    Scroll Bars
+--------------------*/
+
+@useCustomScrollbars: true;
+@customScrollbarWidth: 6px;
+@thumbBackground: rgba(0, 0, 0, 0.20);
 
 /*******************************
      PXT Variables
@@ -161,6 +171,8 @@
 @blocklyRowHeightMobile: 50px;
 
 @blocklyFont: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+
+@blocklyScrollbarColor: #CECDCE;
 
 /*-------------------
    Flyout

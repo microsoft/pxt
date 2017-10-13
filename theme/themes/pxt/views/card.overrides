@@ -69,7 +69,7 @@
     }
     .content {
         height: 3rem;
-        z-index: 1;
+        z-index: 1; /* Show the text above the image */
         padding-bottom: 0;
         width: 100%;
         .header {

@@ -2,8 +2,11 @@
     User Variable Overrides
 *******************************/
 
+@invertedHoverBackground: @strongTransparentBlack;
+@invertedActiveBackground: @strongTransparentBlack;
 /* PXT Variables */
 
 @background: @mainMenuBackground;
 @invertedBackground: @mainMenuInvertedBackground;
 @mainMenuMinHeight: @mainMenuHeight;
+
