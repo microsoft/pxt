@@ -627,7 +627,7 @@ export class Editor extends srceditor.Editor {
         }
 
         // Organize and rearrange methods into groups
-        let blockGroups: { [group: string]: MonacoBlockDefinition[] } = {}
+        let blockGroups: pxt.Map<MonacoBlockDefinition[]> = {}
         let sortedGroups: string[] = [];
         if (groups) sortedGroups = groups;
 
@@ -1221,6 +1221,8 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
     private rootElement: HTMLElement;
 
     private selectedItem: CategoryItem;
+    private selectedIndex: number;
+    private items: TreeRowProperties[];
 
     constructor(props: MonacoToolboxProps) {
         super(props);
@@ -1247,13 +1249,28 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
 
     clearSelection() {
         this.setState({ selectedNs: undefined })
+        this.selectedIndex = 0;
     }
 
     setSelectedItem(item: CategoryItem) {
         this.selectedItem = item;
     }
 
-    setSelection(treeRow: TreeRowProperties) {
+    setPreviousItem() {
+        if (this.selectedIndex > 0) {
+            const newIndex = --this.selectedIndex;
+            this.setSelection(this.items[newIndex], newIndex);
+        }
+    }
+
+    setNextItem() {
+        if (this.items.length - 1 > this.selectedIndex) {
+            const newIndex = ++this.selectedIndex;
+            this.setSelection(this.items[newIndex], newIndex);
+        }
+    }
+
+    setSelection(treeRow: TreeRowProperties, index: number) {
         const {parent} = this.props;
         const {ns, icon, color, category, groups, labelLineWidth} = treeRow;
         pxt.tickEvent("monaco.toolbox.click");
@@ -1264,7 +1281,9 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
             // Hide flyout
             parent.closeFlyout();
         } else {
-            this.setState({ selectedNs: ns })
+            this.setState({ selectedNs: ns})
+            this.selectedIndex = index;
+            if (treeRow.advanced && !this.state.showAdvanced) this.showAdvanced();
 
             // Show flyout
             parent.showFlyout(ns, color, icon, category, groups, labelLineWidth);
@@ -1304,6 +1323,11 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
     }
 
     advancedClicked() {
+        pxt.tickEvent("monaco.advanced");
+        this.showAdvanced();
+    }
+
+    showAdvanced() {
         const {parent} = this.props;
         this.setState({ showAdvanced: !this.state.showAdvanced });
         parent.resize();
@@ -1331,7 +1355,8 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
             return true;
         }
 
-        function createCategories(names: [string, pxtc.CommentAttrs][]): TreeRowProperties[] {
+        let index = 0;
+        function createCategories(names: [string, pxtc.CommentAttrs][], isAdvanced?: boolean): TreeRowProperties[] {
             return names
                 .sort(([, md1], [, md2]) => {
                     // sort by fn weight
@@ -1350,7 +1375,9 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
                             icon: md.icon,
                             groups: md.groups,
                             labelLineWidth: md.labelLineWidth,
-                            injectIconClass: true
+                            injectIconClass: true,
+                            advanced: isAdvanced,
+                            index: index++
                         }
                     }
                     else {
@@ -1367,7 +1394,9 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
                             color: md.color,
                             icon: md.icon,
                             groups: md.groups,
-                            labelLineWidth: md.labelLineWidth
+                            labelLineWidth: md.labelLineWidth,
+                            advanced: isAdvanced,
+                            index: index++
                         }
                     }
                 });
@@ -1377,35 +1406,21 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
         const hasPackages = !pxt.shell.isReadOnly() && pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
 
         let nonAdvancedCategories = createCategories(namespaces.filter(([, md]) => !(md.advanced)));
-        let advancedCategories = showAdvanced && hasAdvanced ? createCategories(namespaces.filter(([, md]) => md.advanced)) : [];
+        let advancedCategories = hasAdvanced ? createCategories(namespaces.filter(([, md]) => md.advanced), true) : [];
 
-        function stitchCategories(categories: TreeRowProperties[]): TreeRowProperties[] {
-            // Setup previous and next pointers for keyboard navigation between elements
-            for (let i = 0; i < categories.length; i++) {
-                const categoryInfo = categories[i];
-                if (i > 0) {
-                    (categories[i] as any).previousTreeRow = categories[i - 1];;
-                }
-                if (i < categories.length - 1) {
-                    (categories[i] as any).nextTreeRow = categories[i + 1];
-                }
-            }
-            return categories;
-        }
-        nonAdvancedCategories = stitchCategories(nonAdvancedCategories);
-        advancedCategories = stitchCategories(advancedCategories);
+        this.items = nonAdvancedCategories.concat(advancedCategories);
 
         return <div ref={e => this.rootElement = e} id='monacoEditorToolbox' className='monacoToolboxDiv'>
             <div className="blocklyTreeRoot">
                 <div role="tree">
                     {nonAdvancedCategories.map((treeRow) => (
-                        <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} previousTreeRow={(treeRow as any).previousTreeRow} nextTreeRow={(treeRow as any).nextTreeRow} onCategoryClick={this.setSelection.bind(this) } />
+                        <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
                     )) }
                     {hasAdvanced ? <TreeSeparator key="advancedseparator" /> : undefined}
                     {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ ns: "", category: pxt.blocks.advancedTitle, color: pxt.blocks.getNamespaceColor('advanced'), icon: showAdvanced ? 'advancedexpanded' : 'advancedcollapsed' }} onCategoryClick={this.advancedClicked.bind(this) }/> : undefined}
-                    {advancedCategories.map((treeRow) => (
-                        <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} previousTreeRow={(treeRow as any).previousTreeRow} nextTreeRow={(treeRow as any).nextTreeRow} onCategoryClick={this.setSelection.bind(this) } />
-                    )) }
+                    {showAdvanced ? advancedCategories.map((treeRow) => (
+                        <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
+                    )) : undefined}
                     {hasPackages && showAdvanced ? <TreeRow treeRow={{ ns: "", category: pxt.blocks.addPackageTitle, color: '#717171', icon: "addpackage" }} onClick={this.addPackage.bind(this) } /> : undefined }
                 </div>
             </div>
@@ -1415,9 +1430,7 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
 
 export interface CategoryItemProps extends TreeRowProps {
     toolbox: MonacoToolbox;
-    previousTreeRow?: TreeRowProperties;
-    nextTreeRow?: TreeRowProperties;
-    onCategoryClick?: (treeRow: TreeRowProperties) => void;
+    onCategoryClick?: (treeRow: TreeRowProperties, index: number) => void;
 }
 
 export interface CategoryItemState {
@@ -1454,18 +1467,20 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
     }
 
     handleClick = () => {
-        if (this.props.onCategoryClick) this.props.onCategoryClick(this.props.treeRow);
+        if (this.props.onCategoryClick) this.props.onCategoryClick(this.props.treeRow, this.props.treeRow.index);
     }
 
     renderCore() {
-        const {toolbox, previousTreeRow, nextTreeRow} = this.props;
+        const {toolbox} = this.props;
         const {selected} = this.state;
 
         const previousItem = () => {
-            if (previousTreeRow) toolbox.setSelection(previousTreeRow);
+            pxt.tickEvent("monaco.toolbox.keyboard.prev");
+            toolbox.setPreviousItem();
         }
         const nextItem = () => {
-            if (nextTreeRow) toolbox.setSelection(nextTreeRow);
+            pxt.tickEvent("monaco.toolbox.keyboard.next");
+            toolbox.setNextItem();
         }
         const isRtl = Util.isUserLanguageRtl();
         const onKeyDown = (e: React.KeyboardEvent) => {
@@ -1499,6 +1514,8 @@ export interface TreeRowProperties {
     groups?: string[];
     labelLineWidth?: string;
     injectIconClass?: boolean;
+    advanced?: boolean; /*@internal*/
+    index?: number; /*@internal*/
 }
 
 export interface TreeRowProps {
