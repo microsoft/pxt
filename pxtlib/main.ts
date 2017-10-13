@@ -24,7 +24,7 @@ namespace pxt {
             comp.floatingPoint = true
         if (comp.hasHex && !comp.nativeType)
             comp.nativeType = pxtc.NATIVE_TYPE_THUMB
-        if (comp.nativeType == pxtc.NATIVE_TYPE_AVR) {
+        if (comp.nativeType == pxtc.NATIVE_TYPE_AVR || comp.nativeType == pxtc.NATIVE_TYPE_AVRVM) {
             comp.shortPointers = true
             comp.flashCodeAlign = 0x10
         }

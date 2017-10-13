@@ -663,7 +663,7 @@ ${baseLabel}:
             this.write("")
             this.write(".section code");
 
-            if (target.nativeType == NATIVE_TYPE_AVR) {
+            if (isAVR()) {
                 this.write(this.proc.label() + "_Lit:");
             } else {
                 if (isMain)

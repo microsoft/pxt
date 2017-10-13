@@ -15,6 +15,7 @@ namespace ts.pxtc.assembler {
         stack: number;
         opcode: number;
         opcode2?: number;    // in case of a 32-bit instruction
+        opcode3?: number;    // really, for the VM, where opcodes are 8 bit
         numArgs?: number[];
         error?: string;
         errorAt?: string;
@@ -38,7 +39,7 @@ namespace ts.pxtc.assembler {
         public args: string[];
         public friendlyFmt: string;
         public code: string;
-        private ei: AbstractProcessor;
+        protected ei: AbstractProcessor;
         public canBeShared = false;
 
         constructor(ei: AbstractProcessor, format: string, public opcode: number, public mask: number, public is32bit: boolean) {
@@ -238,7 +239,7 @@ namespace ts.pxtc.assembler {
         public inlineMode = false;
         public lookupExternalLabel: (name: string) => number;
         public normalizeExternalLabel = (n: string) => n;
-        private ei: AbstractProcessor;
+        public ei: AbstractProcessor;
         public lines: Line[];
         private currLineNo: number = 0;
         private realCurrLineNo: number;
@@ -253,15 +254,20 @@ namespace ts.pxtc.assembler {
         private stack = 0;
         public peepOps = 0;
         public peepDel = 0;
+        public peepCounts: pxt.Map<number> = {}
         private stats = "";
         public throwOnError = false;
         public disablePeepHole = false;
         public stackAtLabel: pxt.Map<number> = {};
         private prevLabel: string;
 
-        private emitShort(op: number) {
+        protected emitShort(op: number) {
             assert(0 <= op && op <= 0xffff);
             this.buf.push(op);
+        }
+
+        protected emitOpCode(op: number) {
+            this.emitShort(op)
         }
 
         public location() {
@@ -416,7 +422,8 @@ namespace ts.pxtc.assembler {
                 if (this.finalEmit)
                     this.directiveError(lf("unknown label: {0}", name));
                 else
-                    v = 42;
+                    // use a number over 1 byte
+                    v = 33333;
             }
             return v;
         }
@@ -424,7 +431,7 @@ namespace ts.pxtc.assembler {
         private align(n: number) {
             assert(n == 2 || n == 4 || n == 8 || n == 16)
             while (this.location() % n != 0)
-                this.emitShort(0);
+                this.emitOpCode(0);
         }
 
         public pushError(msg: string, hints: string = "") {
@@ -699,9 +706,11 @@ namespace ts.pxtc.assembler {
                 ln.location = this.location()
                 ln.opcode = op.opcode
                 ln.stack = op.stack
-                this.emitShort(op.opcode);
+                this.emitOpCode(op.opcode);
                 if (op.opcode2 != null)
-                    this.emitShort(op.opcode2);
+                    this.emitOpCode(op.opcode2);
+                if (op.opcode3 != null)
+                    this.emitOpCode(op.opcode3);
                 ln.instruction = instr;
                 ln.numArgs = op.numArgs;
 
@@ -833,6 +842,7 @@ namespace ts.pxtc.assembler {
                             this.labels[lblname] = this.location();
                         }
                     }
+                    l.location = this.location()
                 } else if (l.type == "directive") {
                     this.handleDirective(l);
                 } else if (l.type == "instruction") {
@@ -848,7 +858,7 @@ namespace ts.pxtc.assembler {
 
 
         public getSource(clean: boolean, numStmts = 1, flashSize = 0) {
-            let lenTotal = this.buf ? this.buf.length * 2 : 0
+            let lenTotal = this.buf ? this.location() : 0
             let lenThumb = this.labels["_program_end"] || lenTotal;
             let lenFrag = this.labels["_frag_start"] || 0
             if (lenFrag) lenFrag = this.labels["_js_end"] - lenFrag
@@ -858,8 +868,9 @@ namespace ts.pxtc.assembler {
             if (flashSize && totalSize > flashSize)
                 U.userError(lf("program too big by {0} bytes!", totalSize - flashSize))
             flashSize = flashSize || 128 * 1024
-            let totalInfo = lf("; total bytes: {0} ({1}% of {2}k flash)",
-                totalSize, (100 * totalSize / flashSize).toFixed(1), (flashSize / 1024).toFixed(1))
+            let totalInfo = lf("; total bytes: {0} ({1}% of {2}k flash with {3} free)",
+                totalSize, (100 * totalSize / flashSize).toFixed(1), (flashSize / 1024).toFixed(1),
+                flashSize - totalSize)
             let res =
                 // ARM-specific
                 lf("; code sizes (bytes): {0} (incl. {1} frags, and {2} lits); src size {3}\n",
@@ -891,6 +902,9 @@ namespace ts.pxtc.assembler {
                     text = text.replace(/; WAS: .*/, "")
                     if (!text.trim()) return;
                 }
+                if (this.location() == this.buf.length)
+                    if (ln.type == "label" || ln.type == "instruction")
+                        text += ` \t; 0x${(ln.location + this.baseOffset).toString(16)}`
                 res += text + "\n"
             })
 
@@ -920,6 +934,7 @@ namespace ts.pxtc.assembler {
 
             this.peepOps = 0;
             this.peepDel = 0;
+            this.peepCounts = {}
             this.peepHole();
 
             this.throwOnError = true;
@@ -977,6 +992,29 @@ namespace ts.pxtc.assembler {
                 if (this.peepOps == 0) break;
             }
         }
+    }
+
+    export class VMFile extends File {
+        constructor(ei: AbstractProcessor) {
+            super(ei)
+        }
+
+        public location() {
+            // the this.buf stores bytes here
+            return this.buf.length
+        }
+
+        protected emitShort(op: number) {
+            assert(0 <= op && op <= 0xffff);
+            this.buf.push(op & 0xff);
+            this.buf.push(op >> 8);
+        }
+
+        protected emitOpCode(op: number) {
+            assert(0 <= op && op <= 0xff);
+            this.buf.push(op);
+        }
+
     }
 
     // describes the encodings of various parts of an instruction

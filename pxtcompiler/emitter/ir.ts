@@ -131,6 +131,7 @@ namespace ts.pxtc.ir {
         IfZero,
         IfNotZero,
         IfJmpValEq,
+        IfLambda
     }
 
     export class Stmt extends Node {
@@ -229,6 +230,8 @@ namespace ts.pxtc.ir {
                                 return `    if (${inner}) ${fin}`
                             case JmpMode.IfJmpValEq:
                                 return `    if (r0 == ${inner}) ${fin}`
+                            case JmpMode.IfLambda:
+                                return `    if (LAMBDA) return ${inner}`
                             default: throw oops();
                         }
                     case ir.SK.StackEmpty:
@@ -529,10 +532,12 @@ namespace ts.pxtc.ir {
             }
         }
 
-        emitClrs() {
+        emitClrs(finlbl: ir.Stmt, retval: ir.Expr) {
             if (this.isRoot) return;
-            let lst = this.locals.concat(this.args)
-            lst.forEach(p => this.emitClrIfRef(p))
+            this.locals.forEach(p => this.emitClrIfRef(p))
+            if (isStackMachine() && this.args.some(p => p.isRef() || p.isByRefLocal()))
+                this.emitJmp(finlbl, retval, ir.JmpMode.IfLambda)
+            this.args.forEach(p => this.emitClrIfRef(p))
         }
 
         emitJmpZ(trg: string | Stmt, expr: Expr) {
@@ -725,7 +730,7 @@ namespace ts.pxtc.ir {
         let r = op(EK.PointerLiteral, null, lbl)
         r.jsInfo = jsInfo
         if (full) {
-            if (target.isNative && target.nativeType == NATIVE_TYPE_AVR)
+            if (target.isNative && isAVR())
                 // this works for string and hex literals
                 return rtcall("pxt::stringLiteral", [r])
             else
@@ -740,13 +745,16 @@ namespace ts.pxtc.ir {
 
     export function rtcallMask(name: string, mask: number, callingConv: CallingConvention, args: Expr[]) {
         let decrs: ir.Expr[] = []
-        args = args.map((a, i) => {
-            if (mask & (1 << i)) {
-                a = shared(a)
-                decrs.push(op(EK.Decr, [a]))
-                return a;
-            } else return a;
-        })
+        if (isStackMachine())
+            name += "^" + mask
+        else
+            args = args.map((a, i) => {
+                if (mask & (1 << i)) {
+                    a = shared(a)
+                    decrs.push(op(EK.Decr, [a]))
+                    return a;
+                } else return a;
+            })
         let r = op(EK.RuntimeCall, args, name)
         r.callingConvention = callingConv
 
@@ -770,6 +778,8 @@ namespace ts.pxtc.ir {
             complexArgs.push(a)
         }
         complexArgs.reverse()
+        if (isStackMachine())
+            complexArgs = []
         let precomp: ir.Expr[] = []
         let flattened = topExpr.args.map(a => {
             let idx = complexArgs.indexOf(a)

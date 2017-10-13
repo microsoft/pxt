@@ -539,7 +539,7 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_NUMBER}
         }
     }
 
-    function vtableToAsm(info: ClassInfo) {
+    export function vtableToAsm(info: ClassInfo) {
         let s = `
         .balign ${1 << vtableShift}
 ${info.id}_VT:
@@ -549,7 +549,7 @@ ${info.id}_VT:
 
         let ptrSz = target.shortPointers ? ".short" : ".word"
         let addPtr = (n: string) => {
-            if (n != "0") n += "@fn"
+            if (n != "0" && (!isStackMachine() || n.indexOf("::") >= 0)) n += "@fn"
             s += `        ${ptrSz} ${n}\n`
         }
 
@@ -646,15 +646,17 @@ ${hex.hexPrelude()}
     }
 
     function mkProcessorFile(nativeType: string) {
-        let processor: assembler.AbstractProcessor = null
+        let b: assembler.File
+
         if (nativeType == NATIVE_TYPE_AVR)
-            processor = new avr.AVRProcessor()
+            b = new assembler.File(new avr.AVRProcessor())
+        else if (nativeType == NATIVE_TYPE_AVRVM)
+            b = new assembler.VMFile(new vm.VmProcessor())
         else
-            processor = new thumb.ThumbProcessor()
+            b = new assembler.File(new thumb.ThumbProcessor())
 
-        processor.testAssembler(); // just in case
+        b.ei.testAssembler(); // just in case
 
-        let b = new assembler.File(processor);
         b.lookupExternalLabel = hex.lookupFunctionAddr;
         b.normalizeExternalLabel = s => {
             let inf = hex.lookupFunc(s)
@@ -692,7 +694,7 @@ ${hex.hexPrelude()}
     }
 
     let peepDbg = false
-    function assemble(nativeType: string, bin: Binary, src: string) {
+    export function assemble(nativeType: string, bin: Binary, src: string) {
         let b = mkProcessorFile(nativeType)
         b.emit(src);
 

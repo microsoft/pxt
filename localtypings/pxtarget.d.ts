@@ -126,7 +126,12 @@ declare namespace pxt {
 
         platformioIni?: string[];
 
-        codalTarget?: string;
+        codalTarget?: string | {
+            name: string; // "codal-arduino-uno",
+            url: string; // "https://github.com/lancaster-university/codal-arduino-uno",
+            branch: string; // "master",
+            type: string; // "git"
+        };
         codalBinary?: string;
         codalDefinitions?: any;
 
@@ -288,6 +293,7 @@ declare namespace ts.pxtc {
         stackAlign?: number; // 1 word (default), or 2
         hidSelectors?: HidSelector[];
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
+        vmOpCodes?: pxt.Map<number>;
     }
 
     interface CompileOptions {
