@@ -74,12 +74,11 @@ STS partitions the space of object types as follows:
 \item[4.] an \emph{array} type has a numeric index signature and no other signatures;
 \item[5.] an \emph{other} type: object type not covered by the previous four categories.
 \end{itemize}
-STS excludes all ``other'' types, leaving us with a set of classic types, as found in Java or C\#.
+STS excludes all ``other'' types, leaving us with the four kinds of types, as found in Java or C\#.
 The partitioning is further reflected in STS's subtype relation: 
-types $T$ and $U$ from different partitions (record, function, constructor function, and array) 
-are not related by STS's subtype relation.  We define STS's subtype relation in a later section.
+types $T$ and $U$ from the first four partitions are not related by STS's subtype relation.
 
-\subsection{Treatment of Classes}
+\subsection{Treatment of Classes and Methods}
 
 TypeScript introduces two (object) types for each class declaration: 
 (1) a constructor function type by which instances of a class
@@ -90,17 +89,18 @@ means that it is possible to assign to a property representing a method,
 destroying the class abstraction that ties together code and data. This also means
 that a shared vtable for classes is not possible. 
 
-STS adds a partition to represent class types, separate from record types, describing the instances of classes.
-Classic nominal subtyping is applied to class types. Furthermore, STS permits a cast from a class type
+STS adds a new partition to represent class types, separate from record types, describing the instances of classes.
+Classic nominal subtyping is applied to class types, with function subtyping used to relate methods with 
+the same name in subclass and superclass, per TypeScript. 
+Furthermore, STS permits a cast from a class type
 to a compatible record type, but does not allow a cast from a record type to a class type. This means
 it is possible to use interfaces to abstract over classes, as in Java and C\#. 
+
 Finally, STS enforces that a function may not
 be assigned to a property of a record type, 
 though it is possible to construct records with function properties using object literals. 
 
-\emph{TODO: Checking of methods follows function subtyping, per TypeSCript.}
-
-\subsectiong{Typing Checking of STS}
+\subsection{Type Checking of STS}
 
 % type inference and type checking is first done by TypeScript (must pass), under noImplicitAny
 % then we rule out cases
