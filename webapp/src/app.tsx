@@ -119,7 +119,7 @@ export class ProjectView
             active: document.visibilityState == 'visible',
             collapseEditorTools: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile()
         };
-        if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 20;
+        if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
     }
 
@@ -921,8 +921,12 @@ export class ProjectView
             })
     }
 
-    addPackage() {
+    menuAddPackage() {
         pxt.tickEvent("menu.addpackage");
+        this.addPackage();
+    }
+
+    addPackage() {
         this.scriptSearch.showAddPackages();
     }
 
@@ -1827,7 +1831,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                 {sandbox || inTutorial ? undefined :
                                     <sui.DropdownMenuItem icon='setting large' title={lf("More...")} class="more-dropdown-menuitem">
                                         {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json"))} tabIndex={-1} /> : undefined}
-                                        {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...")} onClick={() => this.addPackage()} tabIndex={-1} /> : undefined}
+                                        {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={() => this.menuAddPackage()} tabIndex={-1} /> : undefined}
                                         {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={() => this.removeProject()} tabIndex={-1} /> : undefined}
                                         {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={() => this.showReportAbuse()} tabIndex={-1} /> : undefined}
                                         <div className="ui divider"></div>
