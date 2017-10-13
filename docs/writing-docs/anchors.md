@@ -31,7 +31,7 @@ This will result in:
 ...
 ```
 
-The section span ends when header with the same or smaller number
+The section span ends when a header with the same or smaller number
 of `#` in front is found. This isn't relevant for plain HTML, but
 matters when overriding sections (see below).
 
