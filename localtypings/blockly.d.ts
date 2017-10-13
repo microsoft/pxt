@@ -563,6 +563,8 @@ declare namespace Blockly {
         static getCachedWidth(textElement: Element): number;
         addArgType(argType: string): void;
         updateTextNode_(): void;
+        getSize(): goog.math.Size;
+        getSvgRoot(): Element;
     }
 
     class FieldVariable extends Field {
@@ -730,6 +732,8 @@ declare namespace Blockly {
         bumpNeighbours_(): void;
         select(): void;
         getRelativeToSurfaceXY(): goog.math.Coordinate;
+        getOutputShape(): number;
+        getSvgRoot(): Element;
     }
 
     class Comment extends Icon {
