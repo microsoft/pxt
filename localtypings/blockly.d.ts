@@ -64,11 +64,11 @@ declare namespace goog {
         function clamp(n: number, min: number, max: number): void;
     }
 
-    namespace color { 
-        class Rgb { }
-        function rgbArrayToHex(rgb: goog.color.Rgb): string;
-        function darken(rgb: goog.color.Rgb, factor: number): goog.color.Rgb;
-        function hexToRgb(hexColor: string): goog.color.Rgb;
+    namespace color {
+        function darken(rgb: number[], factor: number): number[];
+        function rgbArrayToHex(rgb: number[]): string;
+        function hexToRgb(hex: string): number[];
+        function hsvToHex(hue: number, sat: number, val: number): string;
     }
 
     namespace ui {
