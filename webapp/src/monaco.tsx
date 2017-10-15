@@ -1014,6 +1014,7 @@ export class Editor extends srceditor.Editor {
                 if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(file.getName()), mode, monaco.Uri.parse(proto));
                 if (model) this.editor.setModel(model);
 
+                this.defineEditorTheme(hc);
                 if (mode == "typescript") {
                     this.beginLoadToolbox(file, hc);
                 }
@@ -1076,14 +1077,13 @@ export class Editor extends srceditor.Editor {
     }
 
     private beginLoadToolbox(file: pkg.File, hc?: boolean) {
-        this.defineEditorTheme(hc);
         compiler.getBlocksAsync().then(bi => {
             this.blockInfo = bi
             this.nsMap = this.partitionBlocks();
             this.updateToolbox();
+            this.resize();
             pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
             this.defineEditorTheme(hc, true);
-            this.resize();
         });
     }
 
