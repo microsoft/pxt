@@ -295,7 +295,7 @@ export interface LinkProps extends ButtonProps {
 export class Link extends UiElement<LinkProps> {
     renderCore() {
         return (
-            <a className={genericClassName("ui label", this.props) + " " + (this.props.disabled ? "disabled" : "") }
+            <a className={genericClassName("ui", this.props) + " " + (this.props.disabled ? "disabled" : "") }
                 id={this.props.id}
                 href={this.props.href}
                 role={this.props.role}
@@ -974,7 +974,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 <div id={this.id + 'desc'} className="content">
                     {children}
                 </div>
-                {this.props.actions ?
+                {this.props.actions && this.props.actions.length > 0 ?
                     <div className="actions">
                         {this.props.actions.map(action =>
                             <Button
