@@ -15,7 +15,7 @@
 @menuBarZIndex: 101; /* From semantic */
 
 /* Editor */
-@aboveEditorZIndex: 100;
+@aboveEditorZIndex: 90;
 
 /* Blockly */
 @blocklyToolboxZIndex: 40;
