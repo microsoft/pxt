@@ -20,6 +20,8 @@ Although platforms like Arduino and mbed OS are widely used by C/C++ developers,
 
 \subsection{Codal}
 
+% potentially enumerate
+
 The component-oriented device abstraction layer (CODAL) provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that minimises the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem common to all CODAL Components that enables the decoupling of system and user code. A CODAL component represents software or hardware drivers (an I2C device, a GPIO pin, a Message Bus, a Bluetooth device); any component can generate or consume events. CODAL supports both polling and asynchronous (event-driven) programming models, which enables higher level languages to map straight onto native C/C++ APIs.
 
 Doesn't try to take everything down to the lowest common denominator like mbed... enables customisation for each component. e.g. Pin, extends and implements additional cool functionality.
@@ -33,32 +35,37 @@ Doesn't try to take everything down to the lowest common denominator like mbed..
     - extensibility
     - platform specialisation
 * explanation
+Worked example of how everything fits together, short, only a few sentences.
+
+* the core
+* the targets
+* supporting library
 
 \subsubsection{Message Bus and Events}
 
+* motivation
+* example
 * Decouples user and system code.
 * The scratch model translated to C++
 * Provides a similar mechanism seen in higher level languages
 * Timer and queues?
+* message passing microkernel
 
 \subsubsection{Fiber Scheduler}
 
+* motivation
+* example
 * ram efficient
 * per thread stack size, stack dupe
 * fibers can block and wait on events
 
 \subsubsection{Drivers}
 
-* worked example
+* motivation
+* example - I2C, microphone (DMA)
 * one component per piece of hardware or software
 * Provides a common interface
 * uses events to decouple from interrupt context.
-
-\subsubsection{Streams}
-
-* Pull and Push model
-* Adopted by all stream capable interfaces, from Serial to I2C
-* Worked example, audio recog, playback
 
 \subsubsection{Memory Management}
 
@@ -71,19 +78,18 @@ Doesn't try to take everything down to the lowest common denominator like mbed..
 * couple of sentences on types
     - ref counted, malloced types.
 
+\subsubsection{Streams}
+
+* motivation
+* example
+* Pull and Push model
+* Adopted by all stream capable interfaces, from Serial to I2C
+* Worked example, audio recog, playback
+
 \subsubsection{A code sample}
 
 * That says this is awesome!
 * how it fits together...
-
-\subsubsection{Organisation}
-
-Worked example of how everything fits together, short, only a few sentences.
-
-* the core
-* the targets
-* supporting library
-
 
 \subsection{Evaluation}
 
