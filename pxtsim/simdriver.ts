@@ -11,6 +11,7 @@ namespace pxsim {
         onSimulatorCommand?: (msg: pxsim.SimulatorCommandMessage) => void;
         onTopLevelCodeEnd?: () => void;
         simUrl?: string;
+        stoppedClass?: string;
     }
 
     export enum SimulatorState {
@@ -146,8 +147,7 @@ namespace pxsim {
                 let frames = this.container.getElementsByTagName("iframe");
                 for (let i = 0; i < frames.length; ++i) {
                     let frame = frames[i] as HTMLIFrameElement
-                    if (!/grayscale/.test(frame.className))
-                        U.addClass(frame, "grayscale");
+                    U.addClass(frame, this.getStoppedClass());
                 }
                 this.scheduleFrameCleanup();
             }
@@ -268,7 +268,7 @@ namespace pxsim {
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.dataset['runid'] = this.runId;
             frame.contentWindow.postMessage(msg, "*");
-            U.removeClass(frame, "grayscale");
+            U.removeClass(frame, this.getStoppedClass());
         }
 
         private removeEventListeners() {
@@ -398,6 +398,13 @@ namespace pxsim {
 
         private nextId(): string {
             return this.nextFrameId++ + (Math.random() + '' + Math.random()).replace(/[^\d]/, '')
+        }
+
+        private getStoppedClass() {
+            if (this.options && this.options.stoppedClass) {
+                return this.options.stoppedClass;
+            }
+            return "grayscale";
         }
     }
 }
