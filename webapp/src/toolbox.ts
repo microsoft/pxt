@@ -214,7 +214,7 @@ export default function() {
             <block type="lists_index_get">
                 <value name="LIST">
                     <block type="variables_get">
-                        <field name="VAR">list</field>
+                        <field name="VAR">${lf("list")}</field>
                     </block>
                 </value>
                 <value name="INDEX">
@@ -226,7 +226,7 @@ export default function() {
             <block type="lists_index_set">
                 <value name="LIST">
                     <block type="variables_get">
-                        <field name="VAR">list</field>
+                        <field name="VAR">${lf("list")}</field>
                     </block>
                 </value>
                 <value name="INDEX">
