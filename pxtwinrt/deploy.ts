@@ -50,15 +50,18 @@ namespace pxt.winrt {
         return pxt.winrt.promisify(savePicker.pickSaveFileAsync()
             .then((file) => {
                 if (file) {
-                    const fileContent = useUf2 ? res.outfiles[pxtc.BINARY_UF2] : res.outfiles[pxtc.BINARY_HEX];
+                    const fileContent = useUf2 ? atob(res.outfiles[pxtc.BINARY_UF2]) : res.outfiles[pxtc.BINARY_HEX];
                     const ar: number[] = [];
-                    const bytes = Util.stringToUint8Array(atob(fileContent));
+                    const bytes = Util.stringToUint8Array(fileContent);
                     bytes.forEach((b) => ar.push(b));
                     return Windows.Storage.FileIO.writeBytesAsync(file, ar)
                         .then(() => true);
                 }
                 // Save cancelled
                 return Promise.resolve(false);
-            }));
+            })
+        ).catch(e => {
+            console.log(e);
+        });
     }
 }
