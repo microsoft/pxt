@@ -675,7 +675,8 @@ namespace ts.pxtc.Util {
             code = code.split("-")[0]
 
         const stringFiles: { branch: string, path: string }[] = simulator
-            ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" }]
+            ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" },
+            { branch: pxtBranch, path: "strings.json" }]
             : [
                 { branch: pxtBranch, path: "strings.json" },
                 { branch: targetBranch, path: targetId + "/target-strings.json" }
