@@ -211,7 +211,7 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
         <block type="lists_index_get">
             <value name="LIST">
                 <block type="variables_get">
-                    <field name="VAR">list</field>
+                    <field name="VAR">${lf("{id:var}list")}</field>
                 </block>
             </value>
             <value name="INDEX">
@@ -223,7 +223,7 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
         <block type="lists_index_set">
             <value name="LIST">
                 <block type="variables_get">
-                    <field name="VAR">list</field>
+                    <field name="VAR">${lf("{id:var}list")}</field>
                 </block>
             </value>
             <value name="INDEX">
