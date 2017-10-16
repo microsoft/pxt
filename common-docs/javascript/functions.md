@@ -63,7 +63,7 @@ forever(() => { // arrow function!
 
 In TypeScript, the number of arguments given to a function has to match the number of parameters the function expects.
 
-```typescript-ignore
+```typescript
 function buildName(firstName: string, lastName: string) {
     return firstName + " " + lastName;
 }
@@ -78,7 +78,7 @@ When they do, their value is `undefined`.
 We can get this functionality in TypeScript by adding a `?` to the end of parameters we want to be optional.
 For example, let's say we want the last name parameter from above to be optional:
 
-```typescript-ignore
+```typescript
 function buildName(firstName: string, lastName?: string) {
     if (lastName)
         return firstName + " " + lastName;
@@ -98,7 +98,7 @@ In TypeScript, we can also set a value that a parameter will be assigned if the 
 These are called default-initialized parameters.
 Let's take the previous example and default the last name to `"Smith"`.
 
-```typescript-ignore
+```typescript
 function buildName(firstName: string, lastName = "Smith") {
     return firstName + " " + lastName;
 }
@@ -133,7 +133,7 @@ Unlike plain optional parameters, default-initialized parameters don't *need* to
 If a default-initialized parameter comes before a required parameter, users need to explicitly pass `undefined` to get the default initialized value.
 For example, we could write our last example with only a default initializer on `firstName`:
 
-```typescript-ignore
+```typescript
 function buildName(firstName = "Will", lastName: string) {
     return firstName + " " + lastName;
 }
