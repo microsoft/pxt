@@ -139,7 +139,7 @@ export default function() {
             <block type="math_number" gap="8">
                 <field name="NUM">0</field>
             </block>
-            <category colour="#712672" name="${Util.rlf('More')}" nameid="more" iconclass="blocklyTreeIconmore" expandedclass="blocklyTreeIconmore">
+            <category colour="#712672" name="${Util.lf("More")}" nameid="more" iconclass="blocklyTreeIconmore" expandedclass="blocklyTreeIconmore">
                 <block type="math_modulo">
                     <value name="DIVIDEND">
                         <shadow type="math_number">
