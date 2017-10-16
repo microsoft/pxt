@@ -7,11 +7,20 @@ for microcontrollers, and techniques for code loading.
 
 \subsection{Programming microcontrollers}
 
+There are four basic paradigms for programming microcontrollers:
 \begin{itemize}
-\item binary compiled on host computer and loaded; this is the common paradigm for Arduino;
-\item command and control via host computer (Firmata, Bluetooth)
-\item complete VM on microcontroller (MicroPython: \url{http://micropython.org/})
+\item a binary for the microcontroller is compiled on a host computer and loaded onto the microcontroller -
+this is the common paradigm for Arduino;
+\item bytecode for interpretation on the microcontoller is compiled on host and loaded onto microcontroller - 
+this is the common paradigm for Java for embedded systems~cite{XYZ};
+\item a complete REPL and compiler are put on microcontroller (MicroPython: \url{http://micropython.org/})
+\item a program executing on a host computer sends commands to a fixed program loaded onto the
+microcontroller, either over a wired connection (USB serial, for example) or a radio network
+(Bluetooth, for example) - this paradigm is used by Scratch~\cite{};
 \end{itemize}
+
+\emph{\MC supports both native compilation and bytecode generation.}
+
 
 Web-based programming
 
