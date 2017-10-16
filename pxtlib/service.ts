@@ -369,7 +369,7 @@ namespace ts.pxtc {
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
-    const booleanAttributes = ["advanced", "handlerStatement", "afterOnStart", "optionalVariableArgs"]
+    const booleanAttributes = ["advanced", "handlerStatement", "afterOnStart", "optionalVariableArgs", "blockHidden"]
 
     export function parseCommentString(cmt: string): CommentAttrs {
         let res: CommentAttrs = {
