@@ -654,11 +654,16 @@ namespace ts.pxtc.Util {
         return _localizeStrings[s] || s;
     }
 
+    // should be also cached locally
+    let _cachedTranslations: pxt.Map<pxt.Map<string>> = {};
     export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string): Promise<pxt.Map<string>> {
         // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
         let url = `https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
         if (branch) url += '&branch=' + encodeURIComponent(branch);
-        return Util.httpGetJsonAsync(url);
+
+        if (_cachedTranslations[url]) return Promise.resolve<pxt.Map<string>>(_cachedTranslations[url]);
+
+        return Util.httpGetJsonAsync(url).then((r: pxt.Map<string>) => _cachedTranslations[url] = r);
     }
 
     export function getLocalizedStrings() {
@@ -675,7 +680,8 @@ namespace ts.pxtc.Util {
             code = code.split("-")[0]
 
         const stringFiles: { branch: string, path: string }[] = simulator
-            ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" }]
+            ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" },
+            { branch: pxtBranch, path: "strings.json" }]
             : [
                 { branch: pxtBranch, path: "strings.json" },
                 { branch: targetBranch, path: targetId + "/target-strings.json" }
