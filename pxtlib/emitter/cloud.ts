@@ -57,6 +57,22 @@ namespace pxt.Cloud {
         return privateRequestAsync({ url: path }).then(resp => resp.json)
     }
 
+    export function downloadTargetConfigAsync(): Promise<pxt.TargetConfig> {
+        if (!Cloud.isOnline()) // offline
+            return Promise.resolve(undefined);
+
+        const url = `config/${pxt.appTarget.id}/targetconfig`;
+        if (Cloud.isLocalHost())
+            return Util.requestAsync({
+                url: "/api/" + url,
+                headers: { "Authorization": Cloud.localToken },
+                method: "GET",
+                allowHttpErrors: true
+            }).then(resp => resp.json);
+        else
+            return Cloud.privateGetAsync(url);
+    }
+
     export function downloadScriptFilesAsync(id: string) {
         return privateRequestAsync({ url: id + "/text" }).then(resp => {
             return JSON.parse(resp.text)
