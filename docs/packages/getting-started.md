@@ -17,7 +17,7 @@ Let's say you want to create a package called `banana` for target `TARGET`.
 * edit `pxt.json` and `README.md` with the right descriptions
 * commit files to git: `git add .`, and commit them: `git commit -m "Initial"`
 
-> **Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target id) in `README.md`. Otherwise the package will not show up in search.**
+> **Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target id) in `README.md`. Otherwise, the package will not show up in search.**
 
 ### Step 2: Developing package
 
@@ -47,7 +47,7 @@ In order to test your package, you need to create a new project, and manually ad
 * Click on ``Edit Settings As Text``
 * Add an entry under ``dependencies`` that points to your package folder:
 
-```
+```typescript-ignore
 {
     "name": "banana test",
     "dependencies": {
@@ -94,4 +94,4 @@ Read more an [defining-blocks](https://makecode.com/defining-blocks) to learn ho
 
 The editor will automatically use any ``icon.png`` file when displaying the package in the editor. **This feature only works for approved packages.**
 
-The icon should be sized with a 16:9 ratio and of at least ``184`` pixel wide.
+The icon should be sized with a 16:9 ratio and of at least ``184`` pixels wide.
