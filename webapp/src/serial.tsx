@@ -225,7 +225,7 @@ export class Editor extends srceditor.Editor {
 
         core.confirmAsync({
             logos: undefined,
-            header: lf("Analyze Data"),
+            header: lf("Export data"),
             hideAgree: true,
             disagreeLbl: lf("Close"),
             onLoaded: (_) => {
@@ -341,7 +341,8 @@ export class StartPauseButton extends data.Component<StartPauseButtonProps, Star
 
 class Chart {
     rootElement: HTMLElement = document.createElement("div")
-    canvas: HTMLCanvasElement = undefined
+    canvas: HTMLCanvasElement;
+    label: HTMLDivElement;
     line: TimeSeries = new TimeSeries();
     source: string;
     variable: string;
@@ -352,7 +353,7 @@ class Chart {
     constructor(source: string, variable: string, value: number, chartIdx: number) {
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme
         // Initialize chart
-        const chartConfig = {
+        const chartConfig: IChartOptions = {
             interpolation: 'bezier',
             responsive: true,
             millisPerPixel: 20,
@@ -371,8 +372,7 @@ class Chart {
         this.variable = variable
         this.chart.addTimeSeries(this.line, {strokeStyle: lineColor, fillStyle: this.hexToHalfOpacityRgba(lineColor), lineWidth: 3})
 
-        if (this.variable)
-            this.rootElement.appendChild(this.makeLabel())
+        this.rootElement.appendChild(this.makeLabel())
         this.rootElement.appendChild(this.makeCanvas())
         this.addPoint(value)
     }
@@ -392,10 +392,10 @@ class Chart {
     }
 
     makeLabel() {
-        let label = document.createElement("div")
-        label.className = "ui orange bottom left attached label seriallabel"
-        label.innerText = this.variable
-        return label
+        this.label = document.createElement("div")
+        this.label.className = "ui orange bottom left attached label seriallabel"
+        this.label.innerText = this.variable || "...";
+        return this.label;
     }
 
     makeCanvas() {
@@ -422,7 +422,10 @@ class Chart {
 
     addPoint(value: number) {
         this.line.append(Util.now(), value)
-        this.lastUpdatedTime = Util.now()
+        this.lastUpdatedTime = Util.now();
+        // update label with last value
+        const valueText = Number(Math.round(Number(value + "e+2"))  + "e-2").toString();
+        this.label.innerText = this.variable ? `${this.variable}: ${valueText}` : valueText;
     }
 
     start() {
