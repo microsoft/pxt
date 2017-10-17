@@ -93,8 +93,9 @@ declare namespace pxt {
     }
 
     interface SerialTheme {
-        backgroundColor?: string;
+        graphBackground?: string;
         strokeColor?: string;
+        lineColors?: string[];
     }
 
     interface AppCloud {
