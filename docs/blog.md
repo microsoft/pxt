@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [Bootloader with a fork](/blog/uf2-for-arduino-uno)
+
+October 17th, 2017 by [mmoskal](https://github.com/mmoskal)
+
+UF2 bootloader for Arduino UNO allows for driver-less flashing of the vintage board.
+**[Read more](/blog/uf2-for-arduino-uno)**
+
+
 ## [Chibitronics Editor v0.1.40 (Scratch blocks)](/blog/chibitronics/v0.1.40)
 
 October 8th, 2017
