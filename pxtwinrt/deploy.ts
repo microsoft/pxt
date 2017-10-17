@@ -61,7 +61,7 @@ namespace pxt.winrt {
                 return Promise.resolve(false);
             })
         ).catch(e => {
-            console.log(e);
+            pxt.reportException(e);
         });
     }
 }
