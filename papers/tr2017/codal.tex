@@ -36,70 +36,140 @@ Worked example of how everything fits together, short, only a few sentences.
 
 \subsubsection{Message Bus and Events}
 
-* motivation
-* example
-* Decouples user and system code.
-* The scratch model translated to C++
-* Provides a similar mechanism seen in higher level languages
-* Timer and queues?
-* message passing microkernel
+Message passing using events is a common technique and is the foundation of many operating systems --- yet in most systems events are static used only to notify users of key events within the system (e.g. SIGKILL on UNIX).
+
+In CODAL, we offer extensible events where the data contained in an event can be arbitrary, commonly application specific. Application developers can then ``listen'' to events, specifying an id (namespace), a value (unique within a namespace), and a function to be invoked when an event is raised. Events pass through the message bus, if a corresponding listener is in place, the function indicated by the listener is invoked. The eventing model aligns well to languages like JavaScript as well as educational languages like Scratch: ``on button pressed''. An example is given below:
+
+\begin{lstlisting}
+#include "CircuitPlayground.h"
+
+CircuitPlayground cplay;
+
+void a_listener()
+{
+    // do something interesting
+}
+
+int main()
+{
+    cplay.messageBus.listen(100,100,a_listener);
+    Event(100,100);
+}
+\end{lstlisting}
+
+Not only do Events enable easy modularisation of code, but it also safeguards the application programmer from situations where incorrect code could cause unexpected behaviour. Take for example an application to detect a button press, there are usually two solutions: (1) poll the state of a pin; or (2) configure an interrupt to fire when the state of a pin changes. Taking the latter approach, it could look something like this:
+
+\begin{lstlisting}
+int state = 0;
+
+void buttonClicked()
+{
+    int gpioState = PIN0;
+
+    // button released, blink LED!
+    if(state == 1 && gpioState == 0)
+    {
+        set_state(LED, 1)
+        wait_ms(1000);
+        set_state(LED, 0)
+    }
+
+    state = gpioState;
+}
+
+int main()
+{
+    configure_interrupt(PIN0, buttonClicked);
+    while(1);
+}
+\end{lstlisting}
+
+The above code sample is considered bad practice as it prevents other interrupts (like Timers) from firing for at least a second when a button is released, however, this is often the first application that a user will create. Existing code bases advise users to avoid blocking functions and waiting in interrupt context sidestepping the problem by punting responsibility to the user --- CODAL uses the message bus abstraction to shield users from such scenarios:
+
+\begin{lstlisting}
+#include "CircuitPlayground.h"
+
+CircuitPlayground cplay;
+
+void buttonClicked()
+{
+    cplay.io.led.setDigitalValue(1);
+    cplay.sleep(1000);
+    cplay.io.led.setDigitalValue(0);
+}
+
+int main()
+{
+    cplay.messageBus.listen(ID_BUTTON_A,DEVICE_BUTTON_EVT_CLICK,buttonClicked);
+
+    while(1)
+        cplay.sleep(100);
+}
+\end{lstlisting}
+
+Note that the user doesn't have to configure any interrupts, as it is handled by pre-existing drivers.
+
+% Stuff to add (it's already quite long):
+% * Provides a similar mechanism seen in higher level languages
+% * Timer and queues?
+% * message passing microkernel
 
 \subsubsection{Fiber Scheduler}
 
-* motivation
-* example
-* ram efficient
-* per thread stack size, stack dupe
-* fibers can block and wait on events
+% * motivation
+% * example
+% * ram efficient
+% * per thread stack size, stack dupe
+% * fibers can block and wait on events
 
 \subsubsection{Drivers}
 
-* motivation
-* example - I2C, microphone (DMA)
-* one component per piece of hardware or software
-* Provides a common interface
-* uses events to decouple from interrupt context.
+% * motivation
+% * example - I2C, microphone (DMA)
+% * one component per piece of hardware or software
+% * Provides a common interface
+% * uses events to decouple from interrupt context.
 
 \subsubsection{Memory Management}
 
-* provides an interrupt safe environment for memory allocation
-* flexible implementation
-    - multiple heaps
-    - reconfigurable, repurposeable
-* optimisations for common sizes and repeated patterns
-* edu
-* couple of sentences on types
-    - ref counted, malloced types.
+% * provides an interrupt safe environment for memory allocation
+% * flexible implementation
+%     - multiple heaps
+%     - reconfigurable, repurposeable
+% * optimisations for common sizes and repeated patterns
+% * edu
+% * couple of sentences on types
+%     - ref counted, malloced types.
 
 \subsubsection{Streams}
 
-* motivation
-* example
-* Pull and Push model
-* Adopted by all stream capable interfaces, from Serial to I2C
-* Worked example, audio recog, playback
+% * motivation
+% * example
+% * Pull and Push model
+% * Adopted by all stream capable interfaces, from Serial to I2C
+% * Worked example, audio recog, playback
 
 \subsubsection{A code sample}
 
-* That says this is awesome!
-* how it fits together...
+% * That says this is awesome!
+% * how it fits together...
 
 \subsection{Evaluation}
 
-- Profile fibers, how much do they actually use? are they any better?
-    - average RAM consumption for X
-    - Stack is typically small...
-    - types aid the stack size (heap allocated)
-- Compare memory allocator to lib c? (probably not that interesting)
-- benefits of componentisation?
-    - reusability, extensibility
-- How well does \MC + codal perform on each device? (SAMD, ATMEGA, NRF52)
-    - \MC + codal, native codal, mbed.
-    - cost benefit analysis of each.
-    - memory (flash and RAM) consumption
-    - CPU cycles
-        - context switch
-        - cost of events
-        - code gen, compare against micropython / espruino
-    - energy efficiency
-        - environmental sensing across 3 different platforms, mbed, espruino, codal
+% - Profile fibers, how much do they actually use? are they any better?
+%     - average RAM consumption for X
+%     - Stack is typically small...
+%     - types aid the stack size (heap allocated)
+% - Compare memory allocator to lib c? (probably not that interesting)
+% - benefits of componentisation?
+%     - reusability, extensibility
+% - How well does \MC + codal perform on each device? (SAMD, ATMEGA, NRF52)
+%     - \MC + codal, native codal, mbed.
+%     - cost benefit analysis of each.
+%     - memory (flash and RAM) consumption
+%     - CPU cycles
+%         - context switch
+%         - cost of events
+%         - code gen, compare against micropython / espruino
+%     - energy efficiency
+%         - environmental sensing across 3 different platforms, mbed, espruino, codal
