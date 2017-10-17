@@ -3,34 +3,27 @@
 
 Typically written in C and/or C++, platforms for microcontroller programming all share a common design goal: to support developers by providing primitives and programming abstractions. Platforms can range from simple C++ classes that control hardware, to real-time operating systems (RTOSs) with scheduling and memory management.
 
-\emph{TBALL: I don't understand the point of the following sentence - what does
-``the developer has little knowledge of the underlying hardware, using only high-level APIs''
-mean?
- }
- 
-The Arduino ecosystem is an example of a simple platform where the developer has little knowledge of the underlying hardware, using only high-level APIs; there is no scheduler, and memory management is discouraged through a heavy emphasis on global variables.  The Arduino programming model is based on polling: an Arduino ``sketch'' is a program template that consists of a setup procedure, for initialization of data structures, and a loop procedure; programmers implement the body of \textit{setup} and \textit{loop}, where they explicitly poll the state of the sensors or the microcontroller's pins.
+The Arduino ecosystem is an example of a simple platform where the developer uses high-level APIs to control hardware; there is no scheduler, and memory management is discouraged through a heavy emphasis on global variables.  The Arduino programming model is based on polling: an Arduino ``sketch'' is a program template that consists of a setup procedure, for initialization of data structures, and a loop procedure; programmers implement the body of \textit{setup} and \textit{loop}, where they explicitly poll the state of the sensors or the microcontroller's pins.
 
 At the other end of the spectrum is mbed OS, which is aimed at developers who are familiar with non-preemptive scheduling, memory management, and condition synchronisation; a more complex environment. A number of high-level drivers are provided and the programming model is determined by the developer, commonly event or interrupt driven.
 
 Although platforms like Arduino and mbed OS are widely used by C/C++ developers, higher-level languages opt for virtual machines to execute on microcontrollers as neither extreme aligns with the programming models seen in higher level languages: mbed OS is pre-emptive, JavaScript is not; Arduino is too simplistic. There is therefore a need to develop a layer that: (1) bridges the semantic gap between the higher-level language and the hardware; (2) does so in a memory, energy and instruction efficient way; and (3) supports a number of platforms with various resource contraints and capabilities.
 
-% Goals, aims, ambitions:
-
-% want to support multiple platforms, bare metal, unrestricted, async sync, power efficient, flash and memory efficient, good experience for native C and higher level languages.
-
 \subsection{Codal}
 
-% potentially enumerate
+The component-oriented device abstraction layer (CODAL) aims to provide a layer that is multi-platform, makes efficient use of memory and energy, provides both synchronous and asynchronous API variants, and offers a good experience for native C and higher level languages.
 
-The component-oriented device abstraction layer (CODAL) provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that minimises the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem common to all CODAL Components that enables the decoupling of system and user code. A CODAL component represents software or hardware drivers (an I2C device, a GPIO pin, a Message Bus, a Bluetooth device); any component can generate or consume events. CODAL supports both polling and asynchronous (event-driven) programming models, which enables higher level languages to map straight onto native C/C++ APIs.
+CODAL provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that minimises the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem common to all CODAL Components that enables the decoupling of system and user code. A CODAL component represents software or hardware drivers (an I2C device, a GPIO pin, a Message Bus, a Bluetooth device); any component can generate or consume events. CODAL supports both polling and asynchronous (event-driven) programming models, which enables higher level languages to map straight onto native C/C++ APIs.
 
-Doesn't try to take everything down to the lowest common denominator like mbed... enables customisation for each component. e.g. Pin, extends and implements additional cool functionality.
+Unlike mbed, which is designed to make all devices look programmatically alike, CODAL enables devices with additional on-chip hardware to specialise device drivers with APIs that can then be used by the end application developer.
+
+% more required here, needs to be reflowed...
 
 \subsubsection{Structural Overview}
 
 * a nice diagram
 * an object model that factors out common code, but pushes platform specific code.
-* why it's reequired:
+* why it's required:
     - platform independence
     - extensibility
     - platform specialisation
