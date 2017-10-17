@@ -14,6 +14,7 @@ export interface UiProps {
     title?: string;
     ariaLabel?: string;
     tabIndex?: number;
+    rightIcon?: boolean;
 }
 
 export interface WithPopupProps extends UiProps {
@@ -40,10 +41,12 @@ function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = fal
 }
 
 function genericContent(props: UiProps) {
-    return [
-        props.icon ? (<i key='iconkey' aria-hidden="true" role="presentation" className={props.icon + " icon " + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '') }></i>) : null,
+    let retVal = [
+        props.icon ? (<Icon key='iconkey' icon={props.icon + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '') } />) : null,
         props.text ? (<span key='textkey' className={'ui text' + (props.textClass ? ' ' + props.textClass : '') }>{props.text}</span>) : null,
     ]
+    if (props.icon && props.rightIcon) retVal = retVal.reverse();
+    return retVal;
 }
 
 function addClass(el: HTMLElement, cls: string) {
@@ -188,6 +191,21 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
                     {this.props.children}
                 </div>
             </div>);
+    }
+}
+
+export interface IconProps extends UiProps {
+    icon?: string;
+    onClick?: () => void;
+}
+
+export class Icon extends data.Component<IconProps, {}> {
+    renderCore() {
+        return <i className={`icon ${this.props.icon}`}
+            onClick={this.props.onClick}
+            aria-hidden={true} role="presentation">
+                {this.props.children}
+            </i>
     }
 }
 
@@ -588,7 +606,7 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
 
         return (
             <div id={id} tabIndex={active ? 0 : -1} className={classes} onClick={this.handleClick} role="tab" aria-controls={ariaControls} aria-selected={active} aria-label={content || name}>
-                {icon ? <i className={`icon ${icon}`} ></i> : undefined}
+                {icon ? <Icon icon={icon} /> : undefined}
                 {content || name}
             </div>
         )
@@ -893,7 +911,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                     {this.props.header}
                     {this.props.helpUrl ?
                     <a className={`ui huge icon clear focused`} href={this.props.helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", this.props.header)}>
-                        <i className="help icon"></i>
+                        <Icon icon="help" />
                     </a>
                     : undefined}
                 </div> : undefined }
