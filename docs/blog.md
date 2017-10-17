@@ -4,7 +4,7 @@
 
 October 17th, 2017 by [mmoskal](https://github.com/mmoskal)
 
-UF2 bootloader for Arduino UNO allows for driver-less flashing of an antique board.
+UF2 bootloader for Arduino UNO allows for driver-less flashing of the vintage board.
 **[Read more](/blog/uf2-for-arduino-uno)**
 
 
