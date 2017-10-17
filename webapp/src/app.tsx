@@ -1003,7 +1003,7 @@ export class ProjectView
                 resp.saveOnly = saveOnly
                 resp.userContextWindow = userContextWindow;
                 resp.downloadFileBaseName = pkg.genFileName("");
-                return pxt.commands.deployCoreAsync(resp)
+                return pxt.commands.deployCoreAsync(resp, {reportError: (e) => core.errorNotification(e)})
                     .catch(e => {
                         core.warningNotification(lf(".hex file upload failed, please try again."));
                         pxt.reportException(e);
