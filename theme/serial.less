@@ -12,9 +12,11 @@
 @serialBackgroundColor: lighten(@simulatorBackground, 2);
 @serialTextColor: #fff;
 @serialGraphBackground: #fefefe;
+@serialLeftBorder: @serialGraphBackground;
 
 #serialEditor {
     background-color: @serialBackgroundColor;
+    border-left: 1px solid @serialLeftBorder;
 }
 
 #serialArea {
