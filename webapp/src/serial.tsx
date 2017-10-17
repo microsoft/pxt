@@ -225,7 +225,7 @@ export class Editor extends srceditor.Editor {
 
         core.confirmAsync({
             logos: undefined,
-            header: lf("Analyze Data"),
+            header: lf("Export data"),
             hideAgree: true,
             disagreeLbl: lf("Close"),
             onLoaded: (_) => {
