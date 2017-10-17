@@ -76,7 +76,8 @@ STS partitions the space of object types as follows:
 \end{itemize}
 STS excludes all ``other'' types, leaving us with the four kinds of types, as found in Java or C\#.
 The partitioning is further reflected in STS's subtype relation: 
-types $T$ and $U$ from the first four partitions are not related by STS's subtype relation.
+types $T$ and $U$ from different partitions (in the first four partitions above)
+are not related by STS's subtype relation.
 
 \subsection{Treatment of Classes and Methods}
 
@@ -91,7 +92,7 @@ that a shared vtable for classes is not possible.
 
 STS adds a new partition to represent class types, separate from record types, describing the instances of classes.
 Classic nominal subtyping is applied to class types, with function subtyping used to relate methods with 
-the same name in subclass and superclass, per TypeScript. 
+the same name in subclass and superclass, per TypeScript, just as record types are treated.
 Furthermore, STS permits a cast from a class type
 to a compatible record type, but does not allow a cast from a record type to a class type. This means
 it is possible to use interfaces to abstract over classes, as in Java and C\#. 
@@ -100,17 +101,10 @@ Finally, STS enforces that a function may not
 be assigned to a property of a record type, 
 though it is possible to construct records with function properties using object literals. 
 
-\subsection{Type Checking of STS}
-
-% type inference and type checking is first done by TypeScript (must pass), under noImplicitAny
-% then we rule out cases
+\subsection{Subtyping}
 
 
+\subsection{Compilation}
 
-\subsection{Compilation of STS}
-
-% Subtyping and type compatibility: program first must pass all the TypeScript checks (to catch errors); we then perform subtyping and type compatibility checks again.  
-% “The primitive types are the Number, Boolean, String, Symbol, Void, Null, and Undefined types and all user defined enum types.”
-% Disallowed casts.
-
-Classic vtable for classes (prefix); classic interface table for classes and records
+% Classic vtable for classes (prefix); classic interface table 
+% for classes and records

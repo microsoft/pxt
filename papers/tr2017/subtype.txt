@@ -1,26 +1,27 @@
-$S$ is a subtype of a type $T$ ($T$ is a supertype of $S$) if one of the following is true:
+$S$ is a subtype of a type $T$ ($T$ is a supertype of $S$) 
+if one of the following is true:
 \begin{itemize}
 \item $S$ and $T$ are identical types;
 \item $S$ is the Undefined type;
 \item $S$ is the Null type and $T$ is not the Undefined type;
 \item $S$ is an enum type and $T$ is the primitive type Number;
 \item $S$ is a string literal type and $T$ is the primitive type String;
-\item $S$ and $T$ are class types and
+\item $S$ and $T$ are class types and all the following are true:
 \begin{itemize}
   \item $S$ is a subclass of $T$ (via inheritance chain);
-  \item checkMembers(S,T)
+  \item checkMembers($S$,$T$) holds.
 \end{itemize}
-\item $S$ and $T$ are function types such that
+\item $S$ and $T$ are function types such that all the following hold:
 \begin{itemize}
-  \item 
+  \item $S$ has at least as many parameters as $T$;
+  \item each parameter type in $S$ is a supertype of the corresponding paramter type in $T$;
+  \item the result type of $S$ is Void, or the result type of N is a subtype of that of M.
 \end{itemize}
 
-// each parameter type in N is a subtype or supertype of the corresponding parameter type in M, and
-the result type of M is Void, or the result type of N is a subtype of that of M.
+%
 
 S is a record type and T is a record/class type
 - checkMembers(S,T)
-
 
 S and T are constructor function types
 
