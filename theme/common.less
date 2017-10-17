@@ -61,13 +61,14 @@ html, body {
     background-color: @editorToolsBackground;
 }
 
-#blocksArea, #monacoEditor, #pxtJsonEditor, #filelist {
+#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
     bottom: @editorToolsCollapsedHeight;
 }
 
 .hideEditorToolbar #blocksArea,
     .hideEditorToolbar #monacoEditor,
     .hideEditorToolbar #pxtJsonEditor,
+    .hideEditorToolbar #serialEditor,
     .hideEditorToolbar #filelist {
     bottom: 0rem !important;
 }
@@ -804,7 +805,7 @@ Avatar
     #editortools {
         height: 10rem;
     }
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #msg {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #msg {
         bottom: 10rem;
     }
     #tutorialcard.bottom {
@@ -901,6 +902,7 @@ Avatar
     .sandbox #blocksArea,
         .sandbox #monacoEditor,
         .sandbox #pxtJsonEditor,
+        .sandbox #serialEditor,
         .sandbox #editortools,
         .sandbox #msg {
         bottom: 1.5rem !important;
