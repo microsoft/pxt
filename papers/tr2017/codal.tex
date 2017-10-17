@@ -116,6 +116,33 @@ Note that the user doesn't have to configure any interrupts, as it is handled by
 
 \subsubsection{Fiber Scheduler}
 
+Novice users often want to perform multiple operations at the same time,to do this, threads are required. Threading can be a confusing concept, where users traditionally have to learn about locks and semaphores, and they can consume a large number of resources depending on the model that is adopted by the runtime environment.
+
+In CODAL, we take a non-preemptive scheduling approach which reduces the need for resource locking primitives. Due to our scheduling model, Fibers (a lightweight thread) are RAM efficient and are only paged out when a user explicitly calls ``sleep'', meaning that the stack depth at the point where a fiber is paged out is small. Fibers have a variable stack size, and when paged out the entire stack is duplicated to the heap --- this would normally be ill-advised, but due to a usually small stack size, this is more efficient than approaches where there is a mandated stack size.
+
+Events and the message bus are integral to CODAL even extending to fibers, which can block and wait on events to complete:
+
+\begin{lstlisting}
+#include "CircuitPlayground.h"
+
+CircuitPlayground cplay;
+
+void block()
+{
+    // block the calling thread until the user clicks button a!
+    fiber_wake_on_event(ID_BUTTON_A,DEVICE_BUTTON_EVT_CLICK,buttonClicked);
+    cplay.io.led.setDigitalValue(1);
+}
+
+int main()
+{
+    create_fiber(block);
+    // wait until the button
+    fiber_wait_for_event(ID_BUTTON_A,DEVICE_BUTTON_EVT_CLICK,buttonClicked);
+    cplay.io.led.setDigitalValue(0);
+}
+\end{lstlisting}
+
 % * motivation
 % * example
 % * ram efficient
