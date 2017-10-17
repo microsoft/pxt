@@ -2151,7 +2151,7 @@ class Host
     fileOverrides: Map<string> = {}
 
     resolve(module: pxt.Package, filename: string) {
-        pxt.debug(`resolving ${module.level}:${module.id} -- ${filename} in ${path.resolve(".")}`)
+        //pxt.debug(`resolving ${module.level}:${module.id} -- ${filename} in ${path.resolve(".")}`)
         if (module.level == 0) {
             return "./" + filename
         } else if (module.verProtocol() == "file") {
@@ -2173,7 +2173,7 @@ class Host
 
         const resolved = this.resolve(module, filename)
         try {
-            pxt.debug(`reading ${path.resolve(resolved)}`)
+            // pxt.debug(`reading ${path.resolve(resolved)}`)
             return fs.readFileSync(resolved, "utf8")
         } catch (e) {
             if (module.config) {
@@ -3426,7 +3426,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                         if (info.pkg &&
                             info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
                     }
-                    const md = pxtc.genMarkdown(mainPkg.config.name, apiInfo, {
+                    const md = pxtc.genDocs(mainPkg.config.name, apiInfo, {
                         package: mainPkg.config.name != pxt.appTarget.corepkg,
                         locs: buildOpts.locs,
                         docs: buildOpts.docs
@@ -4652,8 +4652,8 @@ function initCommands() {
         name: "gendocs",
         help: "build current package and its docs",
         flags: {
-            docs: { description: "produce docs files" },
-            loc: { description: "produce localization files" },
+            docs: { description: "produce docs files", aliases: ["doc"] },
+            locs: { description: "produce localization files", aliases: ["loc"] },
             files: { description: "file name filter (regex)", type: "string", argument: "files" },
             create: { description: "only write new files" }
         },
