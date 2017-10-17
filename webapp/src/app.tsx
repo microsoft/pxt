@@ -421,8 +421,9 @@ export class ProjectView
             .then(() => { return this.editor.loadFileAsync(this.editorFile, hc); })
             .then(() => {
                 this.saveFileAsync().done(); // make sure state is up to date
-                this.typecheck();
-
+                if (this.editor == this.textEditor || this.editor == this.blocksEditor) {
+                    this.typecheck();
+                }
                 let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
                 if (e)
                     this.editor.setViewState(e.pos)
@@ -1209,7 +1210,7 @@ export class ProjectView
         this.stopSimulator();
         this.clearSerial();
 
-        let state = this.editor.snapshotState()
+        const state = this.editor.snapshotState()
         return compiler.compileAsync(opts)
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
@@ -1633,6 +1634,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const traceTooltip = this.state.tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo");
         const selectLanguage = targetTheme.selectLanguage;
         const showEditorToolbar = !hideEditorToolbar && this.editor.hasEditorToolbar();
+        const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
 
         const consentCookie = () => {
             pxt.storage.setLocal(cookieKey, "1");
