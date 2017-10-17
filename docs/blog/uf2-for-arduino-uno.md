@@ -32,7 +32,7 @@ to do the actual flashing when an UF2 file is written.
 This was refreshingly easy thanks to the [LUFA library](http://www.fourwalledcubicle.com/LUFA.php) and of course
 the benefit of experience.
 
-First task was trying to flash something to the 16u2. This requires rebooting it
+My first task was to flash something to the 16u2. This requires rebooting it
 in DFU mode. To do that, locate the six pin header next to the USB plug
 and short for half second or so the two pins closest to the plug. I have typically
 used a fork to short them, which worked really well. Do not use plastic fork though,
