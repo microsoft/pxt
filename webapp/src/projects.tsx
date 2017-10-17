@@ -243,7 +243,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             </div>
                             <div className="column right aligned">
                                 {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing) ?
-                                    <sui.Link key="import" icon="upload" class="basic import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={() => importProject()} /> : undefined}
+                                    <sui.Link key="import" icon="upload" class="label basic import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={() => importProject()} /> : undefined}
                             </div>
                         </div>
                         <div className="content">

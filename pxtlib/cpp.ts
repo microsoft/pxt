@@ -920,8 +920,10 @@ namespace pxt.cpp {
         } else if (isCodal) {
             let cs = compileService
             let cfg = U.clone(cs.codalDefinitions) || {}
+            let trg = cs.codalTarget
+            if (typeof trg == "string") trg = trg + ".json"
             let codalJson = {
-                "target": cs.codalTarget + ".json",
+                "target": trg,
                 "definitions": cfg,
                 "config": cfg,
                 "application": "pxtapp",
@@ -961,9 +963,15 @@ namespace pxt.cpp {
             res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
         }
 
-        if (pxt.appTarget.compile && pxt.appTarget.compile.boxDebug) {
+        if (compile.boxDebug) {
             pxtConfig += "#define PXT_BOX_DEBUG 1\n"
             pxtConfig += "#define PXT_MEMLEAK_DEBUG 1\n"
+        }
+
+        if (compile.nativeType == pxtc.NATIVE_TYPE_AVRVM) {
+            pxtConfig += "#define PXT_VM 1\n"
+        } else {
+            pxtConfig += "#define PXT_VM 0\n"
         }
 
         if (!isCSharp) {

@@ -209,6 +209,43 @@ namespace pxsim {
         }
 
     }
+
+    /**
+     * Log an event to the parent editor (allowSimTelemetry must be enabled in target)
+     * @param id The id of the event
+     * @param data Any custom values associated with this event
+     */
+    export function tickEvent(id: string, data?: Map<string | number>) {
+        postMessageToEditor({
+            type: "pxtsim",
+            action: "event",
+            tick: id,
+            data
+        });
+    }
+
+    /**
+     * Log an error to the parent editor (allowSimTelemetry must be enabled in target)
+     * @param cat The category of the error
+     * @param msg The error message
+     * @param data Any custom values associated with this event
+     */
+    export function reportError(cat: string, msg: string, data?: Map<string>) {
+        postMessageToEditor({
+            type: "pxtsim",
+            action: "event",
+            tick: "error",
+            category: cat,
+            message: msg,
+            data
+        });
+    }
+
+    function postMessageToEditor(message: any) {
+        if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+            window.parent.postMessage(message, "*");
+        }
+    }
 }
 
 pxsim.util.injectPolyphils();

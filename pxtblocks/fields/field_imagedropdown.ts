@@ -114,6 +114,7 @@ namespace pxtblockly {
                 button.appendChild(buttonImg);
                 contentDiv.appendChild(button);
             }
+            contentDiv.style.width = this.width_ + 'px';
 
             Blockly.DropDownDiv.setColour(this.backgroundColour_, this.borderColour_);
 
@@ -145,6 +146,9 @@ namespace pxtblockly {
             Blockly.DropDownDiv.content_.removeAttribute('role');
             Blockly.DropDownDiv.content_.removeAttribute('aria-haspopup');
             Blockly.DropDownDiv.content_.removeAttribute('aria-activedescendant');
+            setTimeout(function () {
+                Blockly.DropDownDiv.getContentDiv().style.width = '';
+            }, 500);
         };
 
         /**

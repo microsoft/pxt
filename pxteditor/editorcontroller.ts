@@ -3,7 +3,7 @@ namespace pxt.editor {
         /**
          * Constant identifier
          */
-        type: "pxteditor" | "pxthost" | "pxtpkgext",
+        type: "pxteditor" | "pxthost" | "pxtpkgext" | "pxtsim",
         /**
          * Original request id
          */
@@ -190,6 +190,10 @@ namespace pxt.editor {
         package: string;
     }
 
+    export interface EditorSimulatorTickEvent extends EditorMessageEventRequest {
+        type: "pxtsim";
+    }
+
     const pendingRequests: pxt.Map<{
         resolve: (res?: EditorMessageResponse | PromiseLike<EditorMessageResponse>) => void;
         reject: (err: any) => void;
@@ -206,16 +210,28 @@ namespace pxt.editor {
     export function bindEditorMessages(projectView: IProjectView) {
         const allowEditorMessages = pxt.appTarget.appTheme.allowParentController && pxt.BrowserUtils.isIFrame();
         const allowExtensionMessages = pxt.appTarget.appTheme.allowPackageExtensions;
+        const allowSimTelemetry = pxt.appTarget.appTheme.allowSimulatorTelemetry;
 
-        if (!allowEditorMessages && !allowExtensionMessages) return;
+        if (!allowEditorMessages && !allowExtensionMessages && !allowSimTelemetry) return;
 
         window.addEventListener("message", (msg: MessageEvent) => {
             const data = msg.data as EditorMessage;
-            if (!data || !/^pxt(host|editor|pkgext)$/.test(data.type)) return false;
+            if (!data || !/^pxt(host|editor|pkgext|sim)$/.test(data.type)) return false;
 
             if (data.type === "pxtpkgext" && allowExtensionMessages) {
                 // Messages sent to the editor iframe from a child iframe containing an extension
                 projectView.handleExtensionRequest(data as ExtensionRequest);
+            }
+            else if (data.type === "pxtsim" && allowSimTelemetry) {
+                const event = data as EditorMessageEventRequest;
+                if (event.action === "event") {
+                    if (event.category || event.message) {
+                        pxt.reportError(event.category, event.message, event.data as Map<string>)
+                    }
+                    else {
+                        pxt.tickEvent(event.tick, event.data);
+                    }
+                }
             }
             else if (allowEditorMessages) {
                 // Messages sent to the editor from the parent frame

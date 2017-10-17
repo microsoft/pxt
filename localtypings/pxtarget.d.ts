@@ -116,6 +116,8 @@ declare namespace pxt {
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
         headless?: boolean; // whether simulator should still run while collapsed
         trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
+        invalidatedClass?: string; // CSS class to be applied to the sim iFrame when it needs to be updated (defaults to sepia filter)
+        stoppedClass?: string; // CSS class to be applied to the sim iFrame when it isn't running (defaults to grayscale filter)
     }
 
     interface TargetCompileService {
@@ -126,7 +128,12 @@ declare namespace pxt {
 
         platformioIni?: string[];
 
-        codalTarget?: string;
+        codalTarget?: string | {
+            name: string; // "codal-arduino-uno",
+            url: string; // "https://github.com/lancaster-university/codal-arduino-uno",
+            branch: string; // "master",
+            type: string; // "git"
+        };
         codalBinary?: string;
         codalDefinitions?: any;
 
@@ -195,6 +202,7 @@ declare namespace pxt {
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
         allowPackageExtensions?: boolean; // allow packages that include editor extensions
+        allowSimulatorTelemetry?: boolean; // allow the simulator to send telemetry messages
         hideEmbedEdit?: boolean; // hide the edit button in the embedded view
         blocksOnly?: boolean; // blocks only workspace
         hideDocsSimulator?: boolean; // do not show simulator button in docs
@@ -288,6 +296,7 @@ declare namespace ts.pxtc {
         stackAlign?: number; // 1 word (default), or 2
         hidSelectors?: HidSelector[];
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
+        vmOpCodes?: pxt.Map<number>;
     }
 
     interface CompileOptions {

@@ -16,7 +16,7 @@
 
 namespace ts.pxtc.thumb {
 
-    export class ThumbProcessor extends pxtc.assembler.AbstractProcessor {
+export class ThumbProcessor extends pxtc.assembler.AbstractProcessor {
 
         constructor() {
             super();
