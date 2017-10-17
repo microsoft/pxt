@@ -122,3 +122,5 @@ In high speed USB one can go up to 1024 bytes.
 One thing that could be added is flashing over HID, and also reading memory over HID,
 as is already done for SAMD21.  It wouldn't be too difficult I think.
 
+You can find the bootloader, including a binary release for you to try, 
+[on github](https://github.com/mmoskal/uf2-uno).
