@@ -65,9 +65,9 @@ void buttonClicked() {
 
     // button released, blink LED!
     if(state == 1 && gpioState == 0) {
-        set_state(LED, 1)
+        set_state(LED, 1);
         wait_ms(1000);
-        set_state(LED, 0)
+        set_state(LED, 0);
     }
 
     state = gpioState;
@@ -79,7 +79,7 @@ int main() {
 }
 \end{lstlisting}
 
-The above code sample is considered bad practice as it prevents other interrupts (like Timers) from firing for at least a second when a button is released, however, this is often the first application that a user will create. Existing code bases advise users to avoid blocking functions and waiting in interrupt context sidestepping the problem by punting responsibility to the user --- CODAL uses the message bus abstraction to shield users from such scenarios:
+The above code sample is considered bad practice as it prevents other interrupts (like Timers) from firing for at least a second when a button is released, however, this is often the first application that a user will create. Such frameworks advise users to avoid blocking functions and waiting in interrupt context, thus sidestepping the problem by punting responsibility to the user --- CODAL uses the message bus abstraction to shield users from such scenarios:
 
 \begin{lstlisting}
 #include "CircuitPlayground.h"
@@ -95,12 +95,11 @@ void buttonClicked() {
 int main() {
     cplay.messageBus.listen(ID_BUTTON_A,DEVICE_BUTTON_EVT_CLICK,buttonClicked);
 
-    while(1)
-        cplay.sleep(100);
+    while(1) cplay.sleep(100);
 }
 \end{lstlisting}
 
-Note that the user doesn't have to configure any interrupts, as it is handled by pre-existing drivers.
+Note that the user doesn't have to configure any interrupts, as they are handled by pre-existing drivers.
 
 % Stuff to add (it's already quite long):
 % * Provides a similar mechanism seen in higher level languages
@@ -109,9 +108,9 @@ Note that the user doesn't have to configure any interrupts, as it is handled by
 
 \subsubsection{Fiber Scheduler}
 
-Novice users often want to perform multiple operations concurrently,to do this, threads are required. Threading is a confusing concept: users have to learn about locks, semaphores, and preemption, to prevent race conditions. Threads can also consume a large number of resources depending on the model that is adopted by the runtime environment.
+Novice users often want to perform multiple operations concurrently, generally requiring threads. Threading is a confusing concept: users have to learn about locks, semaphores, and preemption, to prevent race conditions. Threads can also consume a large number of resources depending on the model that is adopted by the runtime environment.
 
-In CODAL, we take a non-preemptive scheduling approach which reduces the need for resource locking primitives. Due to our scheduling model, Fibers (a lightweight thread) are RAM efficient and are only paged out when a user explicitly calls ``sleep'', meaning that the stack depth at the point where a fiber is paged out is small. Fibers have a variable stack size, and when paged out the entire stack is duplicated to the heap --- this would normally be ill-advised, but due to a usually small stack size, this is more efficient than approaches where there is a mandated stack size.
+CODAL takes a non-preemptive scheduling approach which reduces the need for resource locking primitives. In CODAL's scheduling model, fibers (a lightweight thread) are RAM efficient and are only paged out when a user explicitly calls ``sleep'', meaning that the stack depth at the point where a fiber is paged out is small. Fibers have a variable stack size, and when paged out the entire stack is duplicated to the heap --- this would normally be ill-advised, but due to a usually small stack size, this is more efficient than approaches where there is a mandated stack size.
 
 Events and the message bus are integral to CODAL even extending to fibers, which can block and wait on events to complete:
 
@@ -120,15 +119,13 @@ Events and the message bus are integral to CODAL even extending to fibers, which
 
 CircuitPlayground cplay;
 
-void block()
-{
+void block() {
     // block the calling thread until the user clicks button a!
     fiber_wake_on_event(ID_BUTTON_A,DEVICE_BUTTON_EVT_CLICK,buttonClicked);
     cplay.io.led.setDigitalValue(1);
 }
 
-int main()
-{
+int main() {
     create_fiber(block);
     // wait until the button
     fiber_wait_for_event(ID_BUTTON_A,DEVICE_BUTTON_EVT_CLICK,buttonClicked);
@@ -138,11 +135,11 @@ int main()
 
 \subsubsection{Drivers}
 
-Drivers are commonly low level interfaces that control external or integrated hardware on a device. For embedded developers, creating and using drivers involves translating datasheets into program code, normally not extending beyond primitive interfaces, alienating novice programmers.
+Drivers are commonly low level interfaces that control external or integrated hardware on a device. For embedded developers, creating and using drivers involves translating datasheets into program code and using low-level interface, which can alienate novice programmers.
 
 In CODAL, drivers abstract away the complexities of the underlying hardware into reusable, extensible, easy-to-use components; for every hardware component there is a software component. There are three types of drivers in CODAL: (1) an abstract specification of a driver model common to most devices (e.g. I2C, Serial); (2) a driver that relies only on the interfaces specified in a driver model  (e.g. an I2C based device); and (3) the concrete implementation of the abstract driver model, which may be platform specific or platform agnostic. Not all devices are the same, and by generalising the interface devices can introduce platform specific optimisations and specialisations.
 
-Interrupts are integral to drivers: in Serial communications it is useful to know when a byte has been sent or received. As illustrated in the button example, performing operations in interrupt context can be detrimental to the device. CODAL drivers use events to decouple computational tasks - that may take a variable length of time - from interrupt context.
+Interrupts are integral to drivers: in Serial communications it is useful to know when a byte has been sent or received. As illustrated in the button example, performing operations in interrupt context can be detrimental to the device. CODAL drivers use events to decouple computational tasks, that may take a variable length of time, from interrupt context.
 
 % * motivation
 % * example - I2C, microphone (DMA)
