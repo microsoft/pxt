@@ -21,6 +21,7 @@ let lastCompileResult: pxtc.CompileResult;
 let tutorialMode: boolean;
 let displayedModals: pxt.Map<boolean> = {};
 export let simTranslations: pxt.Map<string>;
+let dirty = false;
 
 let $debugger: JQuery;
 
@@ -138,7 +139,8 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         onTopLevelCodeEnd: () => {
             postSimEditorEvent("toplevelfinished");
-        }
+        },
+        stoppedClass: getStoppedClass()
     };
     driver = new pxsim.SimulatorDriver($('#simulators')[0], options);
     config = cfg
@@ -167,15 +169,16 @@ export function setState(editor: string, tutMode?: boolean) {
 }
 
 export function makeDirty() { // running outdated code
-    pxsim.U.addClass(driver.container, "sepia");
+    pxsim.U.addClass(driver.container, getInvalidatedClass());
+    dirty = true;
 }
 
 export function isDirty(): boolean { // in need of a restart?
-    return /sepia/.test(driver.container.className);
+    return dirty;
 }
 
 export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult, mute?: boolean, highContrast?: boolean) {
-    pxsim.U.removeClass(driver.container, "sepia");
+    makeClean();
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
     const parts = pxtc.computeUsedParts(res, true);
@@ -207,14 +210,14 @@ export function mute(mute: boolean) {
 export function stop(unload?: boolean) {
     if (!driver) return;
 
-    pxsim.U.removeClass(driver.container, "sepia");
+    makeClean();
     driver.stop(unload);
     $debugger.empty();
 }
 
 export function hide(completeHandler?: () => void) {
     if (!pxt.appTarget.simulator.headless) {
-        pxsim.U.addClass(driver.container, "sepia");
+        makeDirty();
     }
     driver.hide(completeHandler);
     $debugger.empty();
@@ -233,6 +236,25 @@ export function proxy(message: pxsim.SimulatorCustomMessage) {
 
     driver.postMessage(message);
     $debugger.empty();
+}
+
+function makeClean() {
+    pxsim.U.removeClass(driver.container, getInvalidatedClass());
+    dirty = false;
+}
+
+function getInvalidatedClass() {
+    if (pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass) {
+        return pxt.appTarget.simulator.invalidatedClass;
+    }
+    return "sepia";
+}
+
+function getStoppedClass() {
+    if (pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass) {
+        return pxt.appTarget.simulator.stoppedClass;
+    }
+    return undefined;
 }
 
 function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {

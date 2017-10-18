@@ -10,15 +10,8 @@ import B = Blockly;
 let iface: pxt.worker.Iface
 
 namespace pxt.blocks {
-    export function initWorker() {
-        if (!iface) {
-            iface = pxt.worker.makeWebWorker(pxt.webConfig.workerjs)
-        }
-    }
-
     export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
-        initWorker()
-        return iface.opAsync(op, arg)
+        return pxt.worker.getWorker(pxt.webConfig.workerjs).opAsync(op, arg)
     }
 
     let placeholders: Map<Map<any>> = {};

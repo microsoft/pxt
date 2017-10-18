@@ -20,8 +20,8 @@ Use ``* [ ]`` to create a bullet point with a square and ``* [x]`` for a checked
 ### ~
 ```
     
-See [blink lesson](https://makecode.com/lessons/blink/activity) 
-and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/lessons/blink/activity.md).
+**Example:** the [blink lesson](https://makecode.microbit.org/lessons/blink/activity) 
+and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/lessons/blink/activity.md) source.
 
 ## Inline button rendering
 
@@ -30,7 +30,7 @@ Use ``` ``|primary button|`` ``` or ``` ``||secondary button||`` ``` to render a
 
 ## Inline code snippets
 
-If an inline code snippet start with `[` and ends with `]`, the doc engine will try to render it as a block. It must contains a value API call 
+If an inline code snippet start with `[` and ends with `]`, the doc engine will try to render it as a block. It must contain a valid API call 
 to the desired block.
 
 To change the inline code snippet color to reflect the namespace color, use this format: 
@@ -61,12 +61,12 @@ The **blocks** language renders a JavaScript snippet into blocks and provide a s
     basic.showNumber(5)
     ```
 
-See [forever docs](https://makecode.microbit.org/reference/basic/show-string) 
-and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic/forever.md).
+**Example:** the [forever](https://makecode.microbit.org/reference/basic/forever) reference doc
+and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic/forever.md) source.
 
 ### project
 
-The **project** language is similar to blocks but render a published project.
+The **project** language is similar to blocks but renders a published project.
 
     ```project
     twejlyucio
@@ -80,8 +80,8 @@ The **sig** displays a signature of the first function call in the snippet.
     basic.showNumber(5)
     ```
 
-See [forever docs](https://makecode.com/reference/basic/show-string) 
-and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic/forever.md).
+**Example:** the [forever](https://makecode.microbit.org/reference/basic/forever) reference doc
+and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic/forever.md) source.
 
 ### cards
 
@@ -99,6 +99,9 @@ The **cards** language displays a code card for each function call.
     basic.showString("Hello!");
     basic.clearScreen();
     ```
+
+**Example:** the [basic](https://makecode.micorbit.org/reference/basic) reference doc
+and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic.md) source.
     
 ### namespaces
 
@@ -109,8 +112,8 @@ The **namespaces** language display a code card for the first symbol of each nam
     input.onButtonPressed(() => {});
     ```
 
-See [basic namespace docs](https://makecode.microbit.org/reference) 
-and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference.md).
+**Example:** the [reference](https://makecode.microbit.org/reference) namespaces doc
+and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference.md) source.
 
 ### block
 
@@ -127,9 +130,6 @@ If you need a rendering of typescript, javascript code, specify the language as 
     ```typescript
     let x = 0;
     ```
-
-See [basic namespace docs](https://makecode.com/reference/basic) 
-and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic.md).
 
 ### codecard
 

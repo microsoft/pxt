@@ -24,7 +24,7 @@ namespace pxt {
             comp.floatingPoint = true
         if (comp.hasHex && !comp.nativeType)
             comp.nativeType = pxtc.NATIVE_TYPE_THUMB
-        if (comp.nativeType == pxtc.NATIVE_TYPE_AVR) {
+        if (comp.nativeType == pxtc.NATIVE_TYPE_AVR || comp.nativeType == pxtc.NATIVE_TYPE_AVRVM) {
             comp.shortPointers = true
             comp.flashCodeAlign = 0x10
         }
@@ -207,10 +207,8 @@ namespace pxt {
 
     let _targetConfig: pxt.TargetConfig = undefined;
     export function targetConfigAsync(): Promise<pxt.TargetConfig> {
-        if (!_targetConfig && !Cloud.isOnline()) // offline
-            return Promise.resolve(undefined);
         return _targetConfig ? Promise.resolve(_targetConfig)
-            : Cloud.privateGetAsync(`config/${pxt.appTarget.id}/targetconfig`)
+            : Cloud.downloadTargetConfigAsync()
                 .then(
                 js => { _targetConfig = js; return _targetConfig; },
                 err => { _targetConfig = undefined; return undefined; });

@@ -236,7 +236,7 @@ pxt extract ${url}`;
                         : undefined }
                     { ready && !hideEmbed ? <div>
                         <div className="ui divider"></div>
-                        <sui.Button class="labeled focused" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } ariaExpanded={advancedMenu} onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
+                        <sui.Link class="focused" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } ariaExpanded={advancedMenu} onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
                         { advancedMenu ?
                             <sui.Menu pointing secondary>
                                 {formats.map(f =>

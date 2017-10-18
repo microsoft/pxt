@@ -99,6 +99,14 @@ namespace ts.pxtc {
         return target.nativeType == NATIVE_TYPE_CS || (!target.jsRefCounting && !target.isNative)
     }
 
+    export function isStackMachine() {
+        return target.nativeType == NATIVE_TYPE_AVRVM
+    }
+
+    export function isAVR() {
+        return target.nativeType == NATIVE_TYPE_AVRVM || target.nativeType == NATIVE_TYPE_AVR
+    }
+
     function isRefType(t: Type) {
         checkType(t);
         if (noRefCounting())
@@ -185,7 +193,7 @@ namespace ts.pxtc {
 
     export function sizeOfBitSize(b: BitSize) {
         switch (b) {
-            case BitSize.None: return 4
+            case BitSize.None: return target.shortPointers ? 2 : 4
             case BitSize.Int8: return 1
             case BitSize.Int16: return 2
             case BitSize.Int32: return 4
@@ -1145,6 +1153,8 @@ namespace ts.pxtc {
                     bin.writeFile("platformio.json", JSON.stringify(opts.extinfo.platformio, null, 2));
                 if (opts.target.nativeType == NATIVE_TYPE_CS)
                     csEmit(bin, opts)
+                else if (opts.target.nativeType == NATIVE_TYPE_AVRVM)
+                    vmEmit(bin, opts)
                 else
                     processorEmit(bin, opts, res)
             } else {
@@ -1550,7 +1560,8 @@ ${lbl}: .short 0xffff
                 return ir.rtcall("String_::mkEmpty", [])
             } else {
                 let lbl = bin.emitString(str)
-                return ir.ptrlit(lbl + "meta", JSON.stringify(str), true)
+                let res = ir.ptrlit(lbl + "meta", JSON.stringify(str), true)
+                return res
             }
         }
         function emitLiteral(node: LiteralExpression) {
@@ -1822,8 +1833,8 @@ ${lbl}: .short 0xffff
             // we also generate a fake numeric literal for image literals
             if (e.kind == SK.NullKeyword || e.kind == SK.NumericLiteral)
                 return !!(e as any).isRefOverride
-            // no point doing the incr/decr for these - they are statically allocated anyways
-            if (isStringLiteral(e))
+            // no point doing the incr/decr for these - they are statically allocated anyways (unless on AVR)
+            if (!isAVR() && isStringLiteral(e))
                 return false
             return isRefType(typeOf(e))
         }
@@ -2154,7 +2165,7 @@ ${lbl}: .short 0xffff
             }
 
             // otherwise we assume a lambda
-            if (args.length > 3)
+            if (args.length > (isStackMachine() ? 2 : 3))
                 userError(9217, lf("lambda functions with more than 3 arguments not supported"))
 
             let suff = args.length + ""
@@ -2380,7 +2391,11 @@ ${lbl}: .short 0xffff
                 if (!raw)
                     jsInfo = "PXT.pxt.mkAction(0, 0, " + jsInfo + ")"
             }
-            let r = ir.ptrlit(lbl + "_Lit", jsInfo, !raw)
+            let r = ir.ptrlit(lbl + "_Lit", jsInfo, isAVR() ? false : !raw)
+
+            if (!raw && isAVR())
+                r = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(0), ir.numlit(0), r]))
+
             return r
         }
 
@@ -2432,8 +2447,6 @@ ${lbl}: .short 0xffff
                 }
             } else {
                 if (isExpression) {
-                    // lit = ir.shared(ir.rtcall("pxt::mkAction",
-                    //                [ir.numlit(0), ir.numlit(0), emitFunLitCore(node, true)]))
                     lit = emitFunLitCore(node)
                 }
             }
@@ -2511,16 +2524,18 @@ ${lbl}: .short 0xffff
 
             proc.stackEmpty();
 
-            if (funcHasReturn(proc.action)) {
+            let lbl = proc.mkLabel("final")
+            let hasRet = funcHasReturn(proc.action)
+            if (hasRet) {
                 let v = ir.shared(ir.op(EK.JmpValue, []))
                 proc.emitExpr(v) // make sure we save it
-                proc.emitClrs();
-                let lbl = proc.mkLabel("final")
+                proc.emitClrs(lbl, v);
                 proc.emitJmp(lbl, v, ir.JmpMode.Always)
-                proc.emitLbl(lbl)
             } else {
-                proc.emitClrs();
+                proc.emitClrs(lbl, null);
             }
+            if (hasRet || isStackMachine())
+                proc.emitLbl(lbl)
 
             // once we have emitted code for this function,
             // we should emit code for all decls that are used
@@ -3503,7 +3518,7 @@ ${lbl}: .short 0xffff
                         proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                     } else {
                         // TODO re-enable this opt for small non-zero number literals
-                        if (!opts.target.needsUnboxing && cmpExpr.exprKind == EK.NumberLiteral) {
+                        if (!isStackMachine() && !opts.target.needsUnboxing && cmpExpr.exprKind == EK.NumberLiteral) {
                             if (!quickCmpMode) {
                                 emitInJmpValue(expr)
                                 quickCmpMode = true
@@ -3627,9 +3642,6 @@ ${lbl}: .short 0xffff
         }
 
         function emitClassDeclaration(node: ClassDeclaration) {
-            if (opts.target.isNative && opts.target.nativeType == NATIVE_TYPE_AVR) {
-                throw userError(9266, lf("classes not yet supported on AVR processor"))
-            }
             getClassInfo(null, node)
             node.members.forEach(emit)
         }

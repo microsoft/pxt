@@ -93,10 +93,12 @@ namespace pxt.blocks {
             return field;
         }
 
+        const isVariable = shadowType == "variables_get";
+
         const value = document.createElement("value");
         value.setAttribute("name", name);
 
-        const shadow = document.createElement(shadowType == "variables_get" ? "block" : "shadow");
+        const shadow = document.createElement(isVariable ? "block" : "shadow");
         value.appendChild(shadow);
 
         const typeInfo = typeDefaults[type];
@@ -129,6 +131,12 @@ namespace pxt.blocks {
             }
 
             field.appendChild(value);
+        }
+        else if (isVariable && v) {
+            const field = document.createElement("field");
+            shadow.appendChild(field);
+            field.setAttribute("name", "VAR");
+            field.textContent = v;
         }
 
         return value;
@@ -660,6 +668,7 @@ namespace pxt.blocks {
                 let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances
                 let customField = (fn.attributes.paramFieldEditor && fn.attributes.paramFieldEditor[p]);
                 let fieldLabel = pr.name.charAt(0).toUpperCase() + pr.name.slice(1);
+                let fieldType = pr.type;
 
                 if (isEnum || isFixed) {
                     const syms = Util.values(info.apis.byQName)
@@ -706,7 +715,8 @@ namespace pxt.blocks {
                         const options = {
                             data: dd,
                             colour: color,
-                            label: fieldLabel
+                            label: fieldLabel,
+                            type: fieldType
                         } as Blockly.FieldCustomDropdownOptions;
                         Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[pr.name] || {});
                         i.appendField(createFieldEditor(customField, defl, options), attrNames[n].name);
@@ -719,7 +729,8 @@ namespace pxt.blocks {
                     const defl = fn.attributes.paramDefl[pr.name] || "";
                     const options = {
                         colour: color,
-                        label: fieldLabel
+                        label: fieldLabel,
+                        type: fieldType
                     } as Blockly.FieldCustomOptions;
                     Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[pr.name] || {});
                     i.appendField(createFieldEditor(customField, defl, options), attrNames[n].name);
@@ -1183,8 +1194,8 @@ namespace pxt.blocks {
             if (!showAdvanced) {
                 insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             }
-            // Add the "Add package" category
-            getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
+            // Add the "Extensions" category
+            getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Extensions"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
         if (tb) {

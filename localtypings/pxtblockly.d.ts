@@ -4,6 +4,8 @@ declare namespace Blockly {
 
     interface FieldCustomOptions {
         colour?: string | number;
+        label?: string;
+        type?: string;
     }
 
     interface FieldCustomDropdownOptions extends FieldCustomOptions {

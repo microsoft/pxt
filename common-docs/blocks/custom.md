@@ -39,9 +39,9 @@ In order to add ``custom.ts`` to your project,
 
 If you already have added this file to your project, simply navigate to it using the **Explorer** view.
 
-## Using a shared project in **Add Packages...**
+## Using a shared project in **Extensions**
 
-You can add a share project as a dependent package... and re-use all the blocks from that project. Simply click on the **Add Package...**
+You can add a share project as a dependent package... and re-use all the blocks from that project. Simply click on the **Extensions**
 button, paste the shared project url and search.
 
 ## Development cycle

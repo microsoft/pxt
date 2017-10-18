@@ -13,7 +13,7 @@
 #sidedocs {
   height:100%;
   top: 0;
-  z-index: 10;
+  z-index: @sidedocZIndex;
   visibility: hidden;
   opacity: 0;
   right: 0;
@@ -41,7 +41,7 @@
   top: 40%;
   bottom: 40%;
   height: 20%;
-  z-index: 10;
+  z-index: @sidedocZIndex;
   padding: 0;
   margin: 0;
   background: grey;
@@ -74,7 +74,7 @@
     box-shadow: 0px 0px 20px 0px rgba(0,0,0,0.41);
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
-    z-index: 10;
+    z-index: @sidedocZIndex;
 }
 
 .sideDocs #sidedocsframe {
@@ -102,7 +102,7 @@
 
 .sideDocs #sidedocsbar {
     top: 1rem;
-    z-index: 11;
+    z-index: @sidedocZIndex+1;
 }
 
 #sidedocsbar .ui.link .icon {

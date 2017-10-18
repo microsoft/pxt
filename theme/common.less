@@ -26,14 +26,13 @@ html, body {
   bottom: 0rem;
 }
 
-#filelist, #maineditor, #sidedocs, #getting-started-btn {
+#filelist, #maineditor, #sidedocs {
     top:@mainMenuHeight;
 }
 
 .hideMenuBar #filelist,
     .hideMenuBar #maineditor,
-    .hideMenuBar #sidedocs,
-    .hideMenuBar #getting-started-btn {
+    .hideMenuBar #sidedocs {
     top: 0 !important;
 }
 
@@ -61,7 +60,7 @@ html, body {
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 12;
+    z-index: @editorToolsZIndex;
     height: @editorToolsCollapsedHeight;
     background-color: @editorToolsBackground;
 }
@@ -96,6 +95,7 @@ html, body {
     margin-bottom: 0;
     width: 100%;
     background-color: @simulatorBackground;
+    z-index: @simulatorZIndex;
 }
 
 #filelist .simtoolbar {
@@ -133,20 +133,6 @@ html, body {
     text-align: center;
 }
 
-/* Getting started button */
-#getting-started-btn {
-    display:none;
-    z-index:9;
-    position: absolute;
-    right: 2rem;
-}
-#getting-started-btn:not(.sideDocs) {
-    display: block;
-}
-.ui.button.getting-started-btn .ui.text {
-    font-weight: 100 !important;
-}
-
 /* Cookie Message */
 #cookiemsg {
    position: absolute;
@@ -154,7 +140,7 @@ html, body {
    bottom: 12rem;
    width: 18rem;
    text-align: left;
-   z-index:100000;
+   z-index: @aboveEverythingZIndex;
 }
 
 #cookiemsg > a {
@@ -248,7 +234,7 @@ div.simframe > iframe {
     right: 7rem;
     bottom: 2.2rem;
     margin: 0;
-    z-index: 5;
+    z-index: @helpCardZIndex;
     font-size:0.8rem;
 }
 
@@ -281,7 +267,7 @@ div.simframe > iframe {
     right: 0;
     height: 42px;
     background-color: @blocklySvgColor;
-    z-index: 10;
+    z-index: @editorLogoZIndex;
     display: none;
 }
 #editorlogo > .poweredbylogo {
@@ -299,7 +285,7 @@ div.simframe > iframe {
     position:absolute;
     bottom:0rem;
     right:0rem;
-    z-index:100;
+    z-index: @sandboxFooterZIndex;
     margin-bottom: 0.2rem !important;
 }
 .sandboxfooter .item{
@@ -329,7 +315,7 @@ div.simframe > iframe {
 
 #msg > div {
     display: inline-block;
-    z-index: 10000;
+    z-index: @editorMessageZIndex;
 }
 
 #msg > div:empty {
@@ -342,22 +328,19 @@ div.simframe > iframe {
     -moz-appearance: none;
     -webkit-appearance: none;
     appearance: none;
-    width: 10px;
-    height: 10px;
+    width: @customScrollbarWidth;
+    height: @customScrollbarWidth;
 }
 ::-webkit-scrollbar-thumb {
     border-radius: 4px;
-    background-color: #ccc;
-    box-shadow: 0 0 1px #ccc;
-    -webkit-box-shadow: 0 0 1px #ccc;
+    background-color: @thumbBackground;
+    box-shadow: 0 0 1px @thumbBackground;
+    -webkit-box-shadow: 0 0 1px @thumbBackground;
 }
 
 /* Button Colors */
 .ui.button.editortools-btn {
     &:extend(.ui.grey.button all);
-}
-.ui.button.getting-started-btn {
-    &:extend(.ui.green.button all);
 }
 
 /* Icon and text */
@@ -633,8 +616,12 @@ Avatar
     width: 0;
 }
 
-/* Modulator */
+/* Json editor */
+#pxtJsonEditor .ui.content {
+    padding: 1rem;
+}
 
+/* Modulator */
 #modulatorWrapper, #modulatorAudioOutput {
     display: none;
 }
@@ -802,7 +789,7 @@ Field editors
     /* Full screen */
     .fullscreensim #filelist {
         position: fixed;
-        z-index:100;
+        z-index: @fullscreenZIndex;
         top:0;
         left:0;
         bottom:0;
@@ -833,10 +820,10 @@ Field editors
         .fullscreensim #maineditor,
         .fullscreensim #editortools {
         display: none !important;
-        z-index: -10;
+        z-index: -10 !important;
     }
     .fullscreensim .sandboxfooter {
-        z-index:100;
+        z-index: @sandboxFooterZIndex;
         bottom: 1rem;
     }
     .fullscreensim .ui.menu {
@@ -844,7 +831,7 @@ Field editors
     }
     .fullscreensim #filelist .simtoolbar {
         position: fixed;
-        bottom: 2rem;
+        bottom: 1rem;
         left:auto;
         right:auto;
     }
@@ -913,7 +900,6 @@ Field editors
         position:absolute;
         padding: 0;
         margin: 1em;
-        z-index: 15;
         bottom:0rem !important;
         left:4rem !important;
         top:auto;
@@ -1053,7 +1039,7 @@ Field editors
     }
     .simView #filelist {
         position: fixed;
-        z-index:100;
+        z-index: @fullscreenZIndex;
         top:0 !important;
         left:0 !important;
         bottom:0 !important;
@@ -1083,7 +1069,7 @@ Field editors
     .simView #simulator .ui.item,
         .simView #maineditor {
         display: none !important;
-        z-index: -10;
+        z-index: -10 !important;
     }
     .sandboxfooter {
         left: 0.5em !important;
@@ -1096,7 +1082,7 @@ Field editors
         font-size: 0.7rem !important;
     }
     .simView .sandboxfooter {
-        z-index:100;
+        z-index: @sandboxFooterZIndex;
     }
     .simView .ui.menu {
         background: transparent !important;

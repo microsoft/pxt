@@ -72,6 +72,7 @@ export class Editor extends srceditor.Editor {
     domUpdate() {
         if (this.delayLoadXml) {
             if (this.loadingXml) return
+            pxt.debug(`loading blockly`)
             this.loadingXml = true
 
             let loading = document.createElement("div");
@@ -117,6 +118,7 @@ export class Editor extends srceditor.Editor {
                             });
                     })
 
+                    pxt.debug(`loading block workspace`)
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
                     this.loadBlockly(xml);
@@ -131,7 +133,7 @@ export class Editor extends srceditor.Editor {
                 });
 
             if (this.isFirstBlocklyLoad) {
-                core.showLoadingAsync("loadingblocks",lf("loading..."), this.loadingXmlPromise).done();
+                core.showLoadingAsync("loadingblocks", lf("loading..."), this.loadingXmlPromise).done();
             } else {
                 this.loadingXmlPromise.done();
             }
@@ -435,7 +437,7 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
-                    if (ev.newValue == lf("{id:category}Add Package")) {
+                    if (ev.newValue == lf("{id:category}Extensions")) {
                         (this.editor as any).toolbox_.clearSelection();
                         this.parent.addPackage();
                     }
@@ -531,7 +533,7 @@ export class Editor extends srceditor.Editor {
         this.editor.zoomCenter(-2);
     }
 
-    closeFlyout () {
+    closeFlyout() {
         if (!this.editor) return;
         Blockly.hideChaff();
     }
@@ -563,7 +565,19 @@ export class Editor extends srceditor.Editor {
         return file.getExtension() == "blocks"
     }
 
+    overrideFile(content: string) {
+        if (this.delayLoadXml) {
+            this.delayLoadXml = content;
+            this.currSource = content;
+        } else {
+            this.loadBlockly(content);
+        }
+    }
+
     loadFileAsync(file: pkg.File): Promise<void> {
+        Util.assert(!this.delayLoadXml);
+        Util.assert(!this.loadingXmlPromise);
+
         this.currSource = file.content;
         this.typeScriptSaveable = false;
         this.setDiagnostics(file)

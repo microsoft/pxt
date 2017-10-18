@@ -54,7 +54,7 @@
 
 ////// Grid Picker Editor Field ////////
 .blocklyGridPickerTooltip {
-    z-index: 106;
+    z-index: @gridPickerZIndex;
 }
 
 .blocklyGridPickerPadder {
@@ -113,8 +113,7 @@
 }
 
 .blocklyGridPickerTooltip {
-    z-index: 100000;
-    /* big value for bootstrap3 compatibility */
+    z-index: @gridPickerTooltipZIndex;
 }
 
 .ui.input input.blocklyGridPickerSearchBar {
@@ -160,12 +159,12 @@
     fill: #95a5a6;
 }
 
-.blocklyToggle .blocklyText.blocklyToggleText {
+.blocklyToggle ~ .blocklyText.blocklyToggleText {
     font-size: 10pt;
     cursor: pointer;
 }
-.blocklyToggle.blocklyToggleOn .blocklyText.blocklyToggleText {
-    fill: @blocklyDarkTextColor;
+.blocklyToggle.blocklyToggleOff ~ .blocklyText.blocklyToggleText {
+    fill: white;
 }
 
 ////// RGB Color picker ////////
