@@ -1194,8 +1194,8 @@ namespace pxt.blocks {
             if (!showAdvanced) {
                 insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             }
-            // Add the "Add package" category
-            getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
+            // Add the "Extensions" category
+            getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Extensions"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
         if (tb) {

@@ -603,7 +603,7 @@ export class Editor extends srceditor.Editor {
             group.appendChild(this.createCategoryElement("", "#717171", "addpackage", false, null, () => {
                 this.resetFlyout();
                 this.parent.addPackage();
-            }, lf("{id:category}Add Package")));
+            }, lf("{id:category}Extensions")));
         }
 
         // Inject toolbox icon css

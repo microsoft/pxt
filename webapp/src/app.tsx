@@ -1827,7 +1827,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                 {sandbox || inTutorial ? undefined :
                                     <sui.DropdownMenuItem icon='setting large' title={lf("More...")} class="more-dropdown-menuitem">
                                         {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json"))} tabIndex={-1} /> : undefined}
-                                        {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...")} onClick={() => this.addPackage()} tabIndex={-1} /> : undefined}
+                                        {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={() => this.addPackage()} tabIndex={-1} /> : undefined}
                                         {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={() => this.removeProject()} tabIndex={-1} /> : undefined}
                                         {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={() => this.showReportAbuse()} tabIndex={-1} /> : undefined}
                                         <div className="ui divider"></div>
