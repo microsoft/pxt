@@ -599,7 +599,7 @@ export class Editor extends srceditor.Editor {
                 group.appendChild(Editor.createTreeSeperator());
             }
 
-            // Add package button
+            // Extensions button
             group.appendChild(this.createCategoryElement("", "#717171", "addpackage", false, null, () => {
                 this.resetFlyout();
                 this.parent.addPackage();

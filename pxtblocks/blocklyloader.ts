@@ -284,6 +284,9 @@ namespace pxt.blocks {
                         // If no weight is specified, insert alphabetically after the weighted subcategories but above "More"
                         category = getOrAddSubcategoryByName(category, sub, sub, category.getAttribute("colour"), 'blocklyTreeIconmore')
                     }
+                    if (nsn && nsn.attributes.groups) {
+                        category.setAttribute("groups", nsn.attributes.groups.join(', '));
+                    }
                 }
             }
 
@@ -1123,10 +1126,10 @@ namespace pxt.blocks {
                 const nsColor = getNamespaceColor(topCats[i].getAttribute('nameid'));
                 if (nsColor && nsColor != "") {
                     topCats[i].setAttribute('colour', nsColor);
-                    // update children colors
-                    const childCats = topCats[i].getElementsByTagName('category');
-                    for (let j = 0; j < childCats.length; j++) {
-                        childCats[j].setAttribute('colour', nsColor);
+                    // Update subcategory colours
+                    const subCats = getChildCategories(topCats[i]);
+                    for (let j = 0; j < subCats.length; j++) {
+                        subCats[j].setAttribute('colour', nsColor);
                     }
                 }
                 if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
@@ -1157,6 +1160,23 @@ namespace pxt.blocks {
                         }
                     }
                     topCats[i].insertBefore(headingLabel, topCats[i].firstChild);
+                    // Add subcategory labels
+                    const subCats = getChildCategories(topCats[i]);
+                    for (let j = 0; j < subCats.length; j++) {
+                        let subHeadingLabel = goog.dom.createDom('label');
+                        subHeadingLabel.setAttribute('text', `${topCats[i].getAttribute('name')} > ${subCats[j].getAttribute('name')}`);
+                        subHeadingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
+                        subHeadingLabel.setAttribute('web-icon-color', topCats[i].getAttribute('colour'));
+                        subCats[i].insertBefore(subHeadingLabel, subCats[i].firstChild);
+                        if (icon) {
+                            if (icon.length == 1) {
+                                subHeadingLabel.setAttribute('web-icon', icon);
+                                if (iconClass) subHeadingLabel.setAttribute('web-icon-class', iconClass);
+                            } else {
+                                subHeadingLabel.setAttribute('web-icon-class', `blocklyFlyoutIcon${topCats[i].getAttribute('name')}`);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1195,7 +1215,7 @@ namespace pxt.blocks {
                 insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             }
             // Add the "Extensions" category
-            getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Extensions"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
+            getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Extensions"), "Extensions", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
         if (tb) {
@@ -1341,6 +1361,9 @@ namespace pxt.blocks {
                     let xmlList: Element[] = [];
                     for (let bg = 0; bg < sortedGroups.length; ++bg) {
                         let group = sortedGroups[bg];
+                        // Check if there are any blocks in that group
+                        if (!blockGroups[group] || !blockGroups[group].length) continue;
+
                         // Add the group label
                         if (group != 'other') {
                             let groupLabel = goog.dom.createDom('label');
