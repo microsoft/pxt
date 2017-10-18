@@ -285,6 +285,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
 
     if (!args[0]) throw new Error("filename missing");
     switch (cmd.toLowerCase()) {
+        case "stats": return statsCrowdinAsync(branch, prj, key, args[0]);
         case "clean": return cleanCrowdinAsync(branch, prj, key, args[0] || "docs");
         case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
         case "download": {
@@ -316,6 +317,13 @@ function cleanCrowdinAsync(branch: string, prj: string, key: string, dir: string
         .then(files => {
             files.filter(f => !nodeutil.fileExistsSync(f.fullName.substring(pxt.appTarget.id.length + 1)))
                 .forEach(f => pxt.log(`crowdin: dead file: ${branch ? branch + "/" : ""}${f.fullName}`));
+        })
+}
+
+function statsCrowdinAsync(branch: string, prj: string, key: string, lang: string): Promise<void> {
+    return pxt.crowdin.languageStatsAsync(branch, prj, key, lang)
+        .then(stats => {
+            console.log(JSON.stringify(stats, null, 2))
         })
 }
 

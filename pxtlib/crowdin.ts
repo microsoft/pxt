@@ -157,6 +157,40 @@ namespace pxt.crowdin {
         return startAsync();
     }
 
+    function flatten(allFiles: CrowdinFileInfo[], files: CrowdinFileInfo, parentDir: string) {
+        const n = files.name;
+        const d = parentDir ? parentDir + "/" + n : n;
+        files.fullName = d;
+        switch (files.node_type) {
+            case "file":
+                allFiles.push(files);
+                break;
+            case "directory":
+                (files.files || []).forEach(f => flatten(allFiles, f, d));
+                break;
+            case "branch":
+                (files.files || []).forEach(f => flatten(allFiles, f, parentDir));
+                break;
+        }
+    }
+
+    function filterFiles(files: CrowdinFileInfo[], branch?: string, crowdinPath?: string): CrowdinFileInfo[] {
+        let allFiles: CrowdinFileInfo[] = [];
+
+        // if branch, filter out
+        if (branch)
+            files = files.filter(f => f.node_type == "branch" && f.name == branch);
+
+        // flatten the files
+        files.forEach(f => flatten(allFiles, f, ""));
+
+        if (crowdinPath) {
+            // filter out crowdin folder
+            allFiles = allFiles.filter(f => f.fullName.indexOf(crowdinPath) == 0);
+        }
+        return allFiles;
+    }
+
     /**
      * Scans files in crowdin and report files that are not on disk anymore
      */
@@ -164,43 +198,14 @@ namespace pxt.crowdin {
         const q: Map<string> = { json: "true" }
         const infoUri = apiUri(branch, prj, key, "info", q);
 
-        function flatten(allFiles: CrowdinFileInfo[], files: CrowdinFileInfo, parentDir: string) {
-            const n = files.name;
-            const d = parentDir ? parentDir + "/" + n : n;
-            files.fullName = d;
-            switch (files.node_type) {
-                case "file":
-                    allFiles.push(files);
-                    break;
-                case "directory":
-                    (files.files || []).forEach(f => flatten(allFiles, f, d));
-                    break;
-                case "branch":
-                    (files.files || []).forEach(f => flatten(allFiles, f, parentDir));
-                    break;
-            }
-        }
-
         pxt.log(`crowdin: listing files under ${crowdinPath} in branch ${branch}`);
-        pxt.debug(`ur: ${infoUri}`);
+        pxt.debug(`uri: ${infoUri}`);
 
         return Util.httpGetTextAsync(infoUri).then(respText => {
             const info = JSON.parse(respText) as CrowdinProjectInfo;
             if (!info) throw new Error("info failed")
 
-            let files = info.files;
-            let allFiles: CrowdinFileInfo[] = [];
-
-            // if branch, filter out
-            if (branch)
-                files = files.filter(f => f.node_type == "branch" && f.name == branch);
-
-            // flatten the files
-            files.forEach(f => flatten(allFiles, f, ""));
-
-            // filter out crowdin folder
-            allFiles = allFiles.filter(f => f.fullName.indexOf(crowdinPath) == 0);
-
+            const allFiles = filterFiles(info.files, branch, crowdinPath);
             pxt.log(`crowdin: found ${allFiles.length} under ${crowdinPath}`)
 
             return allFiles.map(f => {
@@ -209,5 +214,16 @@ namespace pxt.crowdin {
                 };
             })
         });
+    }
+
+    export function languageStatsAsync(branch: string, prj: string, key: string, lang: string): Promise<any> {
+        const uri = apiUri(branch, prj, key, "language-status", { language: lang, json: "true" });
+
+        return Util.httpGetJsonAsync(uri)
+            .then(info => {
+                const allFiles = filterFiles(info.files, branch);
+
+                return allFiles;
+            });
     }
 }
