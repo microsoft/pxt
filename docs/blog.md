@@ -1,6 +1,6 @@
 # Microsoft MakeCode Blog
 
-## [Microsoft MakeCode for Minecraft on Windows 10](/blog/minecraft/10-11-2017)
+## [Microsoft MakeCode for Minecraft on Windows 10](/blog/minecraft/10-18-2017)
 
 October 18th, 2017
 
