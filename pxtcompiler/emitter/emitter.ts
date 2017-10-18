@@ -3291,7 +3291,8 @@ ${lbl}: .short 0xffff
                         if (/^[AD]\d+$/.test(nm)) continue
                         let m = /getPin\((\d+)\)/.exec(attrs.shim)
                         if (m) {
-                            let key = lookupDalConst(node, "CFG_PIN_" + nm)
+                            nm = "PIN_" + nm
+                            let key = lookupDalConst(node, "CFG_" + nm)
                             if (key) {
                                 addConfigEntry({ name: nm, key: key, value: parseInt(m[1]) })
                             }
