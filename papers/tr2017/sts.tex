@@ -116,21 +116,23 @@ follows the subtyping for function types and record types.}
 \item $S$ and $T$ are class types and all the following are true:
 \begin{itemize}
   \item $S$ is derived from $T$ (via \emph{extends} clauses);
-  \item checkMemb($S$,$T$) holds.
+  \item checkMemb($S$,$T$) holds;
 \end{itemize}
 \item $S$ is a class/record type and $T$ is a record type and
 \begin{itemize}
-    \item checkMemb($S$,$T$) holds.
+  \item checkMemb($S$,$T$) holds;
 \end{itemize}
 \item $S$ and $T$ are function types such that all the following hold:
 \begin{itemize}
   \item $S$ has at least as many parameters as $T$;
   \item each parameter type in $T$ is a subtype of the corresponding parameter type in $S$;
-  \item the result type of $T$ is Void, or the result type of $S$ is a subtype of that of $T$.
+  \item the result type of $T$ is Void, or the result type of $S$ is a subtype of that of $T$;
 \end{itemize}
 \item $S$ and $T$ are array types and all the following hold:
 \begin{itemize}
-\item $T$ has a numeric index signature with element type $U$, and $S$ has a numeric index signature with element type $V$ such that $V$ is a subtype of $U$;
+\item $T$ has a numeric index signature with element type $U$, 
+    and $S$ has a numeric index signature with element type $V$
+    such that $V$ is a subtype of $U$;
 \item checkMemb($S$,$T$) holds.
 \end{itemize}
 \end{itemize}
@@ -140,7 +142,10 @@ $M$ is a property and $S$ has a property $N$ where all of the following are true
 \begin{itemize}
 \item $M$ and $N$ have the same name;
 \item the type of $N$ is a subtype of the type of $M$;
-\item $M$ and $N$ are both public, or $M$ and $N$ are both private (protected) and originate in the same declaration, or $M$ is protected and $N$ is declared in a class derived from the class in which M is declared;
+\item $M$ and $N$ are both public, or $M$ and $N$ are both 
+      private (protected) and originate in the same declaration, 
+      or $M$ is protected and $N$ is declared in a class derived from 
+      the class in which M is declared.
 \end{itemize}
 
 \subsection{Compilation}
