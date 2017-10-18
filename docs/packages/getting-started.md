@@ -73,7 +73,7 @@ pxt bump
 The `pxt bump` will make sure there are no uncommited changes, bump the version number,
 create a git tag, and push everything to github.
 
-In the editor, paste the full URL to your repo after selecting `More -> Add package...`. Your package should show up.
+In the editor, paste the full URL to your repo after selecting `Settings -> Extensions`. Your package should show up.
 
 ### Step 5: Approval
 

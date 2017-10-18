@@ -437,7 +437,7 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
-                    if (ev.newValue == lf("{id:category}Add Package")) {
+                    if (ev.newValue == lf("{id:category}Extensions")) {
                         (this.editor as any).toolbox_.clearSelection();
                         this.parent.addPackage();
                     }

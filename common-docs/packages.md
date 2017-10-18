@@ -4,7 +4,7 @@
 
 ## Using packages
 
-In the web editor, click on ``More`` then ``Add Package`` to search and add packages to the project.
+In the web editor, click on ``Settings`` then ``Extensions`` to search and add extensions to the project.
 The Blocks and JavaScript definitions will be automatically loaded in the editor.
 
 ## Custom packages
