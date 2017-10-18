@@ -62,14 +62,12 @@ int state = 0;
 
 void buttonClicked() {
     int gpioState = PIN0;
-
     // button released, blink LED!
     if(state == 1 && gpioState == 0) {
         set_state(LED, 1);
         wait_ms(1000);
         set_state(LED, 0);
     }
-
     state = gpioState;
 }
 
@@ -83,7 +81,6 @@ The above code sample is considered bad practice as it prevents other interrupts
 
 \begin{lstlisting}
 #include "CircuitPlayground.h"
-
 CircuitPlayground cplay;
 
 void buttonClicked() {
@@ -116,7 +113,6 @@ Events and the message bus are integral to CODAL even extending to fibers, which
 
 \begin{lstlisting}
 #include "CircuitPlayground.h"
-
 CircuitPlayground cplay;
 
 void block() {
