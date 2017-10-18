@@ -7,7 +7,7 @@ The Arduino ecosystem is an example of a simple platform where the developer use
 
 At the other end of the spectrum is mbed OS, which is aimed at developers who are familiar with non-preemptive scheduling, memory management, and condition synchronisation; a more complex environment. A number of high-level drivers are provided and the programming model is determined by the developer, commonly event or interrupt driven.
 
-Although platforms like Arduino and mbed OS are widely used by C/C++ developers, higher-level languages opt for virtual machines to execute on microcontrollers as neither extreme aligns with the programming models seen in higher level languages: mbed OS is pre-emptive, JavaScript is not; Arduino is too simplistic. There is therefore a need to develop a layer that: (1) bridges the semantic gap between the higher-level language and the hardware; (2) does so in a memory, energy and instruction efficient way; and (3) supports a number of platforms with various resource contraints and capabilities.
+Although platforms like Arduino and mbed OS are widely used by C/C++ developers, higher-level languages opt for virtual machines to execute on microcontrollers as neither extreme aligns with the programming models seen in higher level languages: mbed OS is pre-emptive, JavaScript is not; Arduino is based on monolithic polling. There is therefore a need to develop a layer that: (1) bridges the semantic gap between the higher-level language and the hardware; (2) does so in a memory, energy and instruction efficient way; and (3) supports a number of platforms with various resource contraints and capabilities.
 
 \subsection{Codal}
 
@@ -36,39 +36,35 @@ Worked example of how everything fits together, short, only a few sentences.
 
 \subsubsection{Message Bus and Events}
 
-Message passing using events is a common technique and is the foundation of many operating systems --- yet in most systems events are static used only to notify users of key events within the system (e.g. SIGKILL on UNIX).
+Message passing via events is a common technique and is the foundation of many operating systems --- yet in most systems events are static used only to notify users of key events within the system (e.g. SIGKILL on UNIX).
 
-In CODAL, we offer extensible events where the data contained in an event can be arbitrary, commonly application specific. Application developers can then ``listen'' to events, specifying an id (namespace), a value (unique within a namespace), and a function to be invoked when an event is raised. Events pass through the message bus, if a corresponding listener is in place, the function indicated by the listener is invoked. The eventing model aligns well to languages like JavaScript as well as educational languages like Scratch: ``on button pressed''. An example is given below:
+In CODAL, we offer extensible events where the data contained in an event can be arbitrary, commonly application specific. Application developers can then ``listen'' to events, specifying an id (namespace), a value (unique within a namespace), and a function to be invoked when an event is raised. Events pass through the message bus, if a corresponding listener is in place, the function indicated by the listener is invoked. The eventing model aligns well to languages like JavaScript as well as Scratch blocks such as ``on button pressed''. An example is given below:
 
 \begin{lstlisting}
 #include "CircuitPlayground.h"
 
 CircuitPlayground cplay;
 
-void a_listener()
-{
+void a_listener() {
     // do something interesting
 }
 
-int main()
-{
+int main() {
     cplay.messageBus.listen(100,100,a_listener);
     Event(100,100);
 }
 \end{lstlisting}
 
-Not only do Events enable easy modularisation of code, but it also safeguards the application programmer from situations where incorrect code could cause unexpected behaviour. Take for example an application to detect a button press, there are usually two solutions: (1) poll the state of a pin; or (2) configure an interrupt to fire when the state of a pin changes. Taking the latter approach, it could look something like this:
+Not only do events enable easy modularisation of code, but they also safeguard the application programmer from situations where incorrect code could cause unexpected behaviour. Take for example an application to detect a button press, there are usually two solutions: (1) poll the state of a pin; or (2) configure an interrupt to fire when the state of a pin changes. Taking the latter approach, it could look something like this:
 
 \begin{lstlisting}
 int state = 0;
 
-void buttonClicked()
-{
+void buttonClicked() {
     int gpioState = PIN0;
 
     // button released, blink LED!
-    if(state == 1 && gpioState == 0)
-    {
+    if(state == 1 && gpioState == 0) {
         set_state(LED, 1)
         wait_ms(1000);
         set_state(LED, 0)
@@ -77,8 +73,7 @@ void buttonClicked()
     state = gpioState;
 }
 
-int main()
-{
+int main() {
     configure_interrupt(PIN0, buttonClicked);
     while(1);
 }
@@ -91,15 +86,13 @@ The above code sample is considered bad practice as it prevents other interrupts
 
 CircuitPlayground cplay;
 
-void buttonClicked()
-{
+void buttonClicked() {
     cplay.io.led.setDigitalValue(1);
     cplay.sleep(1000);
     cplay.io.led.setDigitalValue(0);
 }
 
-int main()
-{
+int main() {
     cplay.messageBus.listen(ID_BUTTON_A,DEVICE_BUTTON_EVT_CLICK,buttonClicked);
 
     while(1)
