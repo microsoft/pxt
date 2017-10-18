@@ -1927,20 +1927,18 @@ function initSerial() {
             if (msg && msg.type == 'serial') {
                 const data = msg.data || ""
                 const source = msg.id || "?"
-                let lastWrittenIdx = 0
-                while (lastWrittenIdx < data.length) {
-                    let dataToWrite = data.slice(lastWrittenIdx, lastWrittenIdx + maxBufferLength)
-                    serialBuffers[source] = serialBuffers[source] ? serialBuffers[source] + dataToWrite : dataToWrite
+                for (let i = 0; i < data.length; ++i) {
+                    const char = data[i]
+                    serialBuffers[source] = serialBuffers[source] ? serialBuffers[source] + char : char
                     if (/.*\n/.test(serialBuffers[source]) || serialBuffers[source].length > maxBufferLength) {
-                        let data = serialBuffers[source]
+                        let buffer = serialBuffers[source]
                         serialBuffers[source] = ""
                         window.postMessage({
                             type: "serial",
                             id: source,
-                            data: data
+                            data: buffer
                         }, "*")
                     }
-                    lastWrittenIdx += maxBufferLength
                 }
             }
         }

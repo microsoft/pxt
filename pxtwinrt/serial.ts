@@ -56,13 +56,25 @@ namespace pxt.winrt {
         port.device.baudRate = 115200;
         let stream = port.device.inputStream;
         let reader = new Windows.Storage.Streams.DataReader(stream);
+        let serialBuffers: {[source: string]: string} = {};
+        const maxBufferLength = 255;
         let readMore = () => reader.loadAsync(32).done((bytesRead) => {
             let msg = reader.readString(Math.floor(bytesRead / 4) * 4);
-            window.postMessage({
-                type: 'serial',
-                data: msg,
-                id: id
-            }, "*");
+            const data = msg || ""
+            const source = id || "?"
+            for (let i = 0; i < data.length; ++i) {
+                const char = data[i]
+                serialBuffers[source] = serialBuffers[source] ? serialBuffers[source] + char : char
+                if (/.*\n/.test(serialBuffers[source]) || serialBuffers[source].length > maxBufferLength) {
+                    let buffer = serialBuffers[source]
+                    serialBuffers[source] = ""
+                    window.postMessage({
+                        type: "serial",
+                        id: source,
+                        data: buffer
+                    }, "*")
+                }
+            }
             readMore();
         }, (e) => {
             setTimeout(() => startDevice(id), 1000);
