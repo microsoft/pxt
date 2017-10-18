@@ -1913,6 +1913,8 @@ function initSerial() {
 
     pxt.debug('initializing serial pipe');
     let ws = new WebSocket(`ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/serial`);
+    let serialBuffers: {[source: string]: string} = {}
+    const maxBufferLength = 255
     ws.onopen = (ev) => {
         pxt.debug('serial: socket opened');
     }
@@ -1921,9 +1923,26 @@ function initSerial() {
     }
     ws.onmessage = (ev) => {
         try {
-            let msg = JSON.parse(ev.data) as pxsim.SimulatorMessage;
-            if (msg && msg.type == 'serial')
-                window.postMessage(msg, "*")
+            let msg = JSON.parse(ev.data) as pxsim.SimulatorSerialMessage;
+            if (msg && msg.type == 'serial') {
+                const data = msg.data || ""
+                const source = msg.id || "?"
+                let lastWrittenIdx = 0
+                while (lastWrittenIdx < data.length) {
+                    let dataToWrite = data.slice(lastWrittenIdx, lastWrittenIdx + maxBufferLength)
+                    serialBuffers[source] = serialBuffers[source] ? serialBuffers[source] + dataToWrite : dataToWrite
+                    if (/.*\n/.test(serialBuffers[source]) || serialBuffers[source].length > maxBufferLength) {
+                        let data = serialBuffers[source]
+                        serialBuffers[source] = ""
+                        window.postMessage({
+                            type: "serial",
+                            id: source,
+                            data: data
+                        }, "*")
+                    }
+                    lastWrittenIdx += maxBufferLength
+                }
+            }
         }
         catch (e) {
             pxt.debug('unknown message: ' + ev.data);
