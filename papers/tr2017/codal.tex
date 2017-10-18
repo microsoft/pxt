@@ -116,7 +116,7 @@ Note that the user doesn't have to configure any interrupts, as it is handled by
 
 \subsubsection{Fiber Scheduler}
 
-Novice users often want to perform multiple operations at the same time,to do this, threads are required. Threading can be a confusing concept, where users traditionally have to learn about locks and semaphores, and they can consume a large number of resources depending on the model that is adopted by the runtime environment.
+Novice users often want to perform multiple operations concurrently,to do this, threads are required. Threading is a confusing concept: users have to learn about locks, semaphores, and preemption, to prevent race conditions. Threads can also consume a large number of resources depending on the model that is adopted by the runtime environment.
 
 In CODAL, we take a non-preemptive scheduling approach which reduces the need for resource locking primitives. Due to our scheduling model, Fibers (a lightweight thread) are RAM efficient and are only paged out when a user explicitly calls ``sleep'', meaning that the stack depth at the point where a fiber is paged out is small. Fibers have a variable stack size, and when paged out the entire stack is duplicated to the heap --- this would normally be ill-advised, but due to a usually small stack size, this is more efficient than approaches where there is a mandated stack size.
 
@@ -143,13 +143,13 @@ int main()
 }
 \end{lstlisting}
 
-% * motivation
-% * example
-% * ram efficient
-% * per thread stack size, stack dupe
-% * fibers can block and wait on events
-
 \subsubsection{Drivers}
+
+Drivers are commonly low level interfaces that control external or integrated hardware on a device. For embedded developers, creating and using drivers involves translating datasheets into program code, normally not extending beyond primitive interfaces, alienating novice programmers.
+
+In CODAL, drivers abstract away the complexities of the underlying hardware into reusable, extensible, easy-to-use components; for every hardware component there is a software component. There are three types of drivers in CODAL: (1) an abstract specification of a driver model common to most devices (e.g. I2C, Serial); (2) a driver that relies only on the interfaces specified in a driver model  (e.g. an I2C based device); and (3) the concrete implementation of the abstract driver model, which may be platform specific or platform agnostic. Not all devices are the same, and by generalising the interface devices can introduce platform specific optimisations and specialisations.
+
+Interrupts are integral to drivers: in Serial communications it is useful to know when a byte has been sent or received. As illustrated in the button example, performing operations in interrupt context can be detrimental to the device. CODAL drivers use events to decouple computational tasks - that may take a variable length of time - from interrupt context.
 
 % * motivation
 % * example - I2C, microphone (DMA)
