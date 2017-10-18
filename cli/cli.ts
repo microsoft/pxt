@@ -1667,7 +1667,7 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                 }
 
                 if (fileName === "pxt.json") {
-                    newProject.config = nodeutil.readJson(f);
+                    newProject.config = nodeutil.readPkgConfig(projectPath)
                     U.iterMap(newProject.config.dependencies, (k, v) => {
                         if (/^file:/.test(v)) {
                             newProject.config.dependencies[k] = "*";
@@ -1739,8 +1739,8 @@ function buildTargetCoreAsync() {
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
             let isPrj = /prj$/.test(dirname);
-            const config = JSON.parse(fs.readFileSync(pxt.CONFIG_NAME, "utf8")) as pxt.PackageConfig;
-            if (config && config.additionalFilePath) {
+            const config = nodeutil.readPkgConfig(".")
+            if (config.additionalFilePath) {
                 dirsToWatch.push(path.resolve(config.additionalFilePath));
             }
 
@@ -2172,6 +2172,10 @@ class Host
         }
 
         const resolved = this.resolve(module, filename)
+        const dir = path.dirname(resolved)
+        if (filename == pxt.CONFIG_NAME)
+            return JSON.stringify(nodeutil.readPkgConfig(dir), null, 4)
+
         try {
             // pxt.debug(`reading ${path.resolve(resolved)}`)
             return fs.readFileSync(resolved, "utf8")
@@ -2180,7 +2184,7 @@ class Host
                 let addPath = module.config.additionalFilePath
                 if (addPath) {
                     try {
-                        return fs.readFileSync(path.join(addPath, resolved), "utf8")
+                        return fs.readFileSync(path.join(dir, addPath, filename), "utf8")
                     } catch (e) {
                         return null
                     }
@@ -2858,7 +2862,7 @@ function simshimAsync() {
         cont = "// Auto-generated from simulator. Do not edit.\n" + cont +
             "\n// Auto-generated. Do not edit. Really.\n"
         let cfgname = "libs/" + s + "/" + pxt.CONFIG_NAME
-        let cfg: pxt.PackageConfig = readJson(cfgname)
+        let cfg = nodeutil.readPkgConfig("libs/" + s)
         if (cfg.files.indexOf(filename) == -1)
             U.userError(U.lf("please add \"{0}\" to {1}", filename, cfgname))
         let fn = "libs/" + s + "/" + filename
@@ -3616,14 +3620,16 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                         locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
                     })
                 // update pxt.json
-                const pxtJsonf = path.join(projectdir, "pxt.json");
-                const pxtJsons = fs.readFileSync(pxtJsonf, "utf8");
-                const pxtJson = JSON.parse(pxtJsons) as pxt.PackageConfig;
-                Object.keys(locFiles).filter(f => pxtJson.files.indexOf(f) < 0).forEach(f => pxtJson.files.push(f));
-                const pxtJsonn = JSON.stringify(pxtJson, null, 4);
-                if (pxtJsons != pxtJsonn) {
+                const pxtJson = nodeutil.readPkgConfig(projectdir)
+                const missingFiles = Object.keys(locFiles).filter(f => pxtJson.files.indexOf(f) < 0)
+                if (missingFiles.length) {
+                    U.pushRange(pxtJson.files, missingFiles)
+                    // note that pxtJson might result from additionalFilePath, so we read the local file again
+                    const pxtJsonf = path.join(projectdir, "pxt.json");
+                    let local: pxt.PackageConfig = nodeutil.readJson(pxtJsonf)
+                    local.files = pxtJson.files
                     pxt.log(`writing ${pxtJsonf}`);
-                    fs.writeFileSync(pxtJsonf, pxtJsonn, "utf8");
+                    fs.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), "utf8");
                 }
                 return nextFileAsync()
             });
