@@ -215,6 +215,7 @@ A MakeCode target can provide an alternate TypeScript implementation for each AP
 simulator. As this code runs in the web browser (not on the actual device) and manipulates the DOM, the developer is free to
 use all of TypeScript/JavaScript's features. (As an aside, MakeCode also support ``simulator-only'' targets that have no 
 associated device; in these cases, the ``device runtime'' is defined solely by the simulator APIs.) 
+
 The simulator allows the user to experience the basic functions of the device in the browser and to test their code
 before deploying it to the actual device. The simulator has proxy widgets for sensors such as accelerometer (mouse motion),
 temperature and light, allowing the user to control the sensor's value.  The simulator only provides basic functionality
@@ -228,7 +229,9 @@ reading while pushing one of the device's buttons).
 
 Packages are MakeCode's dynamic/static library mechanism for extending a target (by adding new code/data to the device
 and simulator runtimes, as well as accompanying documentation). The following package extends the micro:bit target so
-that the micro:bit can drive a NeoPixel strip of RGB LEDs: \url{https://github.com/Microsoft/pxt-neopixel}. To see how this
+that the micro:bit can drive a NeoPixel strip of RGB LEDs: \url{https://github.com/Microsoft/pxt-neopixel}. 
+
+To see how this
 package is surfaced to the end-user, visit \url{http://makecode.microbit.org/} and select the ``Add Package'' option from the
 gear menu; you will see the package ``neopixel'' listed in the available options. If you click on it, a new block category
 named ``Neopixel'' will be added to the editor. In this scenario, PXT dynamically loads the (white listed) neopixel 

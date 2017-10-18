@@ -42,12 +42,9 @@ In CODAL, we offer extensible events where the data contained in an event can be
 
 \begin{lstlisting}
 #include "CircuitPlayground.h"
-
 CircuitPlayground cplay;
 
-void a_listener() {
-    // do something interesting
-}
+void a_listener() { // do something }
 
 int main() {
     cplay.messageBus.listen(100,100,a_listener);

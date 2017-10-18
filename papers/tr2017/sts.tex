@@ -19,7 +19,8 @@ familiar with the static (though unsound) type systems of C and C++. Our realiza
 statically-typed sound subset (Static TypeScript: STS, for short) that closely resembles Java and C\# in its semantics.
 STS arises from TypeScript by:
 \begin{itemize}
-\item \emph{eliminating} the Any type from the type system, as well as JavaScript constructs that only can be typed with Any;
+\item \emph{eliminating} the Any type from the type system, as well as JavaScript statements
+and expressions that only can be typed with Any;
 \item \emph{partitioning} TypeScript's space of object types into functions, records, constructor functions, and arrays, with no casts 
     possible between the partitions (and eliminating all other object types) - structural subtyping is used to relate records 
     to each other, as in TypeScript;
@@ -68,7 +69,7 @@ interface Bar {
 \end{lstlisting}
 STS partitions the space of object types as follows:
 \begin{itemize}
-\item[1.] a \emph{record} type has only member properties and optionally, a string index signature;
+\item[1.] a \emph{record} type has only member properties;
 \item[2.] a \emph{function} type has exactly one member, a call signature;
 \item[3.] a \emph{constructor function} type: has at least one constructor signature and no other signature kind;
 \item[4.] an \emph{array} type has a numeric index signature and no other signatures;
@@ -103,7 +104,9 @@ though it is possible to construct records with function properties using object
 
 \subsection{Subtyping}
 
-In STS, $S$ is a subtype of a type $T$ if one of the following is true:
+In STS, $S$ is a subtype of a type $T$ if one of the following is true:\footnote{
+For brevity, we have omitted the subtype rule for constructor function types, which
+follows the subtyping for function types and record types.}
 \begin{itemize}
 \item $S$ and $T$ are identical types;
 \item $S$ is the Undefined type;
@@ -125,21 +128,20 @@ In STS, $S$ is a subtype of a type $T$ if one of the following is true:
   \item each parameter type in $T$ is a subtype of the corresponding parameter type in $S$;
   \item the result type of $T$ is Void, or the result type of $S$ is a subtype of that of $T$.
 \end{itemize}
-\item $S$ and $T$ are constructor function types and XYZ;
-\item $S$ and $T$ are array types and XYZ;
+\item $S$ and $T$ are array types and all the following hold:
+\begin{itemize}
+\item $T$ has a numeric index signature with element type $U$, and $S$ has a numeric index signature with element type $V$ such that $V$ is a subtype of $U$;
+\item checkMemb($S$,$T$) holds.
+\end{itemize}
 \end{itemize}
 
-Given types $S$ and $T$, checkMemb($S$,$T$) holds if for each member $M$ in $T$, one of the following is true:
-\begin{itemize}
-\item $M$ is a property and $S$ has a property $N$ where all of the following are true:
+Given types $S$ and $T$, checkMemb($S$,$T$) holds if for each member $M$ in $T$, 
+$M$ is a property and $S$ has a property $N$ where all of the following are true:
 \begin{itemize}
 \item $M$ and $N$ have the same name;
 \item the type of $N$ is a subtype of the type of $M$;
 \item $M$ and $N$ are both public, or $M$ and $N$ are both private (protected) and originate in the same declaration, or $M$ is protected and $N$ is declared in a class derived from the class in which M is declared;
 \end{itemize}
-\item $M$ is a string index signature of type $U$, and $S$ has an string index signature of a type that is a subtype of $U$.
-\end{itemize}
-
 
 \subsection{Compilation}
 
