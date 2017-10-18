@@ -93,10 +93,12 @@ namespace pxt.blocks {
             return field;
         }
 
+        const isVariable = shadowType == "variables_get";
+
         const value = document.createElement("value");
         value.setAttribute("name", name);
 
-        const shadow = document.createElement(shadowType == "variables_get" ? "block" : "shadow");
+        const shadow = document.createElement(isVariable ? "block" : "shadow");
         value.appendChild(shadow);
 
         const typeInfo = typeDefaults[type];
@@ -129,6 +131,12 @@ namespace pxt.blocks {
             }
 
             field.appendChild(value);
+        }
+        else if (isVariable && v) {
+            const field = document.createElement("field");
+            shadow.appendChild(field);
+            field.setAttribute("name", "VAR");
+            field.textContent = v;
         }
 
         return value;
