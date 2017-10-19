@@ -39,6 +39,14 @@ declare namespace pxt {
         card?: CodeCard;
         additionalFilePath?: string;
         gistId?: string;
+        extension?: PackageExtension; // describe the associated extension if any
+    }
+
+    interface PackageExtension {
+        namespace?: string; // Namespace to add the button under, defaults to package name
+        label?: string; // Label for the flyout button, defaults to `Editor`
+        color?: string; // for new category, category color
+        advanced?: boolean; // for new category, is category advanced
     }
 
     interface PlatformIOConfig {
@@ -68,7 +76,11 @@ declare namespace pxt {
         name?: string;
         shortName?: string;
         title?: string;
+        role?: string;
+        ariaLabel?: string;
         label?: string;
+        labelClass?: string;
+        tabIndex?: number
 
         color?: string; // one of semantic ui colors
         description?: string;
@@ -79,7 +91,7 @@ declare namespace pxt {
         time?: number;
         url?: string;
         responsive?: boolean;
-        cardType?: "example" | "codeExample" | "tutorial" | "project";
+        cardType?: "file" | "example" | "codeExample" | "tutorial" | "project";
 
         header?: string;
         any?: number;

@@ -5,7 +5,6 @@ namespace pxt.runner {
         snippetClass?: string;
         signatureClass?: string;
         blocksClass?: string;
-        shuffleClass?: string;
         projectClass?: string;
         blocksAspectRatio?: number;
         simulatorClass?: string;
@@ -238,18 +237,6 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(options, c, js, s, r, { showJs: true, hideGutter: true });
         }, { package: options.package, snippetMode: true });
-    }
-
-    function renderShuffleAsync(options: ClientRenderOptions): Promise<void> {
-        return renderNextSnippetAsync(options.shuffleClass, (c, r) => {
-            let s = r.blocksSvg;
-            if (options.snippetReplaceParent) c = c.parent();
-            let segment = $('<div class="ui segment"/>').append(s);
-            c.replaceWith(segment);
-        }, {
-                emPixels: 14, layout: pxt.blocks.BlockLayout.Shuffle, aspectRatio: options.blocksAspectRatio,
-                package: options.package
-            });
     }
 
     function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
@@ -621,7 +608,6 @@ namespace pxt.runner {
         return Promise.resolve()
             .then(() => renderNamespaces(options))
             .then(() => renderInlineBlocksAsync(options))
-            .then(() => renderShuffleAsync(options))
             .then(() => renderLinksAsync(options, options.linksClass, options.snippetReplaceParent, false))
             .then(() => renderLinksAsync(options, options.namespacesClass, options.snippetReplaceParent, true))
             .then(() => renderSignaturesAsync(options))

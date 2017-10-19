@@ -16,7 +16,7 @@
 
 namespace ts.pxtc.thumb {
 
-    export class ThumbProcessor extends pxtc.assembler.AbstractProcessor {
+export class ThumbProcessor extends pxtc.assembler.AbstractProcessor {
 
         constructor() {
             super();
@@ -181,6 +181,9 @@ namespace ts.pxtc.thumb {
             this.addInst("ldlit   $r5, $i32", 0x4800, 0xf800);
         }
 
+        public toFnPtr(v: number, baseOff: number) {
+            return (v + baseOff) | 1;
+        }
 
         public wordSize() {
             return 4

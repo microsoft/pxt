@@ -75,8 +75,6 @@ class CompileHost extends TestHost {
                         "files": [
                             "lang-test0.ts",
                             this.basename,
-                            "pxt-core.d.ts",
-                            "pxt-helpers.ts"
                         ]
                     })
             }

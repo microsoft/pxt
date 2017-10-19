@@ -211,8 +211,13 @@ namespace pxt.docs {
                 mparams["EXPANDED"] = 'false';
             }
             if (m.subitems && m.subitems.length > 0) {
-                if (lev == 0) templ = toc["top-dropdown"]
-                else if (lev == 1) templ = toc["inner-dropdown"]
+                if (lev == 0) {
+                    if (m.name !== "") {
+                        templ = toc["top-dropdown"]
+                    } else {
+                        templ = toc["top-dropdown-noHeading"]
+                    }
+                } else if (lev == 1) templ = toc["inner-dropdown"]
                 else templ = toc["nested-dropdown"]
                 mparams["ITEMS"] = m.subitems.map(e => recTOC(e, lev + 1)).join("\n")
             } else {
@@ -418,7 +423,7 @@ namespace pxt.docs {
             marked = requireMarked();
             let renderer = new marked.Renderer()
             renderer.image = function (href: string, title: string, text: string) {
-                let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
+                let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
                 if (title) {
                     out += ' title="' + title + '"';
                 }
@@ -541,7 +546,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
 
         // try getting a better custom image for twitter
         const imgM = /<div class="ui embed mdvid"[^<>]+?data-placeholder="([^"]+)"[^>]*\/?>/i.exec(html)
-            || /<img class="ui image" src="([^"]+)"[^>]*\/?>/i.exec(html);
+            || /<img class="ui [^"]*image" src="([^"]+)"[^>]*\/?>/i.exec(html);
         if (imgM)
             pubinfo["cardLogo"] = html2Quote(imgM[1]);
 

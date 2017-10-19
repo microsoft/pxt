@@ -120,7 +120,6 @@ code.lang-block::before,
 code.lang-blocks::before,
 code.lang-sig::before,
 code.lang-block::before,
-code.lang-shuffle::before,
 code.lang-sim::before,
 code.lang-cards::before,
 code.lang-namespaces::before,
@@ -135,7 +134,6 @@ code.lang-block,
 code.lang-blocks,
 code.lang-sig,
 code.lang-block,
-code.lang-shuffle,
 code.lang-sim,
 code.lang-cards,
 code.lang-namespaces,
@@ -283,8 +281,8 @@ svg {
     bottom: 0;
     margin: 0;
     padding: 10px;
-    max-width: 150px;
-    min-width: 90px;
+    max-width: 5rem;
+    min-width: 5rem;
     display: flex;
     justify-content: center;
     align-content: center;
@@ -296,6 +294,9 @@ svg {
     -moz-transition: all 350ms ease;
     -o-transition: all 350ms ease;
     transition: all 350ms ease;
+}
+.navigation.icon {
+    width: 100%;
 }
 
 .navigation.navigation-next {
@@ -321,6 +322,10 @@ svg {
     bottom: 0px;
     position: absolute;
     width: inherit;
+}
+
+.cc-banner {
+    display: none;
 }
 
 @media only screen and (max-width: 1272px) {
@@ -420,5 +425,9 @@ print only stuff
         background: none !important;
         color: black !important;
         box-shadow: none !important;
+    }
+    /* images */
+    .ui.image {
+        max-width: 60%;
     }
 }

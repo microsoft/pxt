@@ -115,11 +115,11 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
         const input = fs.readFileSync(f, "utf8")
         const pkg = new pxt.MainPackage(new TestHost("decompile-pkg", input, dependency ? [dependency] : [], true));
-        debugger;
 
         pkg.getCompileOptionsAsync()
             .then(opts => {
                 opts.ast = true;
+                opts.ignoreFileResolutionErrors = true;
                 const decompiled = pxtc.decompile(opts, "main.ts");
                 if (decompiled.success) {
                     resolve(decompiled.outfiles["main.blocks"]);

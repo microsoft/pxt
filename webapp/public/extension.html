@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en" data-manifest="" data-framework="typescript">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+</head>
+<style type="text/css">
+    @import "/blb/semantic.css";
+</style>
+<style>
+    #logs {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        border: 0;
+        font-size: 0.6rem;
+    }
+
+    #logs img {
+        max-width: 18rem;
+    }
+</style>
+
+<script>
+    var extId = window.location.hash.substr(1);
+    var logs;
+    var idToType = {};
+
+    function receiveMessage(ev) {
+        var msg = ev.data;
+        logs.innerText += formatResponse(msg);
+        delete idToType[msg.id];
+    }
+
+    function formatResponse(resp) {
+        var action = idToType[resp.id];
+        return "\n< " + action + " (response) s=" + resp.success + " "
+            + (resp.error ? resp.error : "") + (resp.resp ? JSON.stringify(resp.resp) : "");
+    }
+
+    function sendRequest(action) {
+        var msg = mkRequest(action);
+        switch (action) {
+            case "extdatastream":
+                msg.body = {
+                    serial: true
+                };
+                break;
+            case "extquerypermission":
+                break;
+            case "extrequestpermission":
+                msg.body = {
+                    serial: true
+                };
+                break;
+            case "extusercode":
+                break;
+            case "extreadcode":
+                break;
+            case "extwritecode":
+                msg.body = {
+                    code: "let x = 0;",
+                    json: '{ "whatever": "sure" }'
+                }
+                break;
+            case "extinit":
+                break;
+        }
+        logs.innerText += "\n> " + msg.action;
+        window.parent.postMessage(msg, "*");
+    }
+
+    function mkRequest(action) {
+        var id = Math.random().toString();
+        idToType[id] = action;
+        return {
+            type: "pxtpkgext",
+            action: action,
+            extId: extId,
+            response: true,
+            id: id
+        }
+    }
+
+    function bindButtons() {
+        var elt = document.getElementById("buttons");
+
+        for (let i = 0; i < elt.childNodes.length; i++) {
+            var btn = elt.childNodes.item(i);
+
+            if (btn.nodeType === Node.ELEMENT_NODE) {
+                let action = btn.getAttribute("action");
+                if (action) {
+                    btn.addEventListener("click", function () {
+                        sendRequest(action);
+                    });
+                }
+            }
+        }
+    }
+
+    window.addEventListener("message", receiveMessage, false);
+    window.onload = function () {
+        bindButtons();
+        logs = document.getElementById("logs");
+        this.sendRequest("extinit");
+        logs.innerText += "\n<< got id " + extId;
+    }
+
+</script>
+
+<body>
+    <h1>Test Extension</h1>
+    <div id="buttons" class="ui buttons">
+        <button class="ui button" action="extrequestpermission">ask permission</button>
+        <button class="ui button" action="extquerypermission">query permissions</button>
+        <button class="ui button" action="extreadcode">read code</button>
+        <button class="ui button" action="extwritecode">write code</button>
+        <button class="ui button" action="extdatastream">serial</button>
+        <button class="ui button" action="extusercode">user code</button>
+    </div>
+    <pre id="logs" class="ui"></pre>
+</body>
+
+</html>

@@ -4,8 +4,7 @@
     "files": [
         "basic.ts",
         "mb.ts",
-        "cp.ts",
-        "core.ts"
+        "cp.ts"
     ],
     "public": true,
     "dependencies": {},

@@ -1,3 +1,17 @@
 /*******************************
          Site Overrides
 *******************************/
+
+
+/* Full screen dialog */
+
+.modals.dimmer .ui.home.scrolling.modal {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.ui.home.dimmer {
+    transition: none;
+}

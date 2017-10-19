@@ -34,6 +34,7 @@ export function listAsync() {
 export function serialAsync() {
     return initAsync()
         .then(d => {
+            d.autoReconnect = true
             connectSerial(d)
         })
 }
@@ -59,6 +60,9 @@ export function getHF2Devices() {
     const hid = getHID();
     if (!hid) return [];
     let devices = hid.devices() as HidDevice[]
+    for (let d of devices) {
+        pxt.debug(JSON.stringify(d))
+    }
     let serial = pxt.appTarget.serial
     return devices.filter(d =>
         (serial && parseInt(serial.productId) == d.productId && parseInt(serial.vendorId) == d.vendorId) ||

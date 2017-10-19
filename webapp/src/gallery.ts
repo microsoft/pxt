@@ -14,7 +14,7 @@ function parseExampleMarkdown(name: string, md: string): pxt.editor.ProjectCreat
     return {
         name,
         filesOverride: {
-            "main.blocks": "",
+            "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`,
             "main.ts": m[2]
         }
     };

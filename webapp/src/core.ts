@@ -11,35 +11,69 @@ import * as pkg from "./package";
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
+export let highContrast: boolean;
+
 const lf = Util.lf;
 
 export type Component<S, T> = data.Component<S, T>;
 
 let dimmerInitialized = false;
 
+export const TAB_KEY = 9;
+export const ENTER_KEY = 13;
+export const SPACE_KEY = 32;
+
 export function isLoading() {
     return !!$('.ui.loading.dimmer .loadingcontent')[0];
 }
 
-export function hideLoading() {
-    $('.ui.dimmer.loading .loadingcontent').remove();
-    $('.ui.dimmer.loading').dimmer('hide');
-    if (!dimmerInitialized) {
-        initializeDimmer();
+let loadingQueue: string[] = [];
+let loadingQueueMsg: pxt.Map<string> = {};
+
+export function hideLoading(id: string) {
+    pxt.debug("hideloading: " + id);
+    if (loadingQueueMsg[id] != undefined) {
+        // loading exists, remove from queue
+        const index = loadingQueue.indexOf(id);
+        if (index > -1) loadingQueue.splice(index, 1);
+        delete loadingQueueMsg[id];
+    } else {
+        pxt.debug("Loading not in queue, disregard: " + id);
     }
-    setTimeout(function () {
+    if (loadingQueue.length > 0) {
+        // Show the next loading message
+        displayNextLoading();
+    } else {
+        // Hide loading
+        $('.ui.dimmer.loading .loadingcontent').remove();
         $('.ui.dimmer.loading').dimmer('hide');
-    }, 200);
+        if (!dimmerInitialized) {
+            initializeDimmer();
+        }
+        setTimeout(function () {
+            $('.ui.dimmer.loading').dimmer('hide');
+        }, 200);
+    }
 }
 
-export function showLoading(msg: string) {
+export function showLoading(id: string, msg: string) {
+    pxt.debug("showloading: " + id);
     initializeDimmer();
     $('.ui.dimmer.loading').dimmer('show');
     $('.ui.dimmer.loading').html(`
   <div class="content loadingcontent">
-    <div class="ui text large loader msg">${lf("Please wait")}</div>
+    <div class="ui text large loader msg" aria-live="assertive">${lf("Please wait")}</div>
   </div>
 `)
+    loadingQueue.push(id);
+    loadingQueueMsg[id] = msg;
+    displayNextLoading();
+}
+
+function displayNextLoading() {
+    if (!loadingQueue.length) return;
+    const id = loadingQueue[loadingQueue.length - 1]; // get last item
+    const msg = loadingQueueMsg[id];
     $('.ui.dimmer.loading .msg').text(msg);
 }
 
@@ -50,22 +84,22 @@ function initializeDimmer() {
     dimmerInitialized = true;
 }
 
-let asyncLoadingTimeout: number;
+let asyncLoadingTimeout: pxt.Map<number> = {};
 
-export function showLoadingAsync(msg: string, operation: Promise<any>, delay: number = 700) {
-    clearTimeout(asyncLoadingTimeout);
-    asyncLoadingTimeout = setTimeout(function () {
-        showLoading(msg);
+export function showLoadingAsync(id: string, msg: string, operation: Promise<any>, delay: number = 700) {
+    clearTimeout(asyncLoadingTimeout[id]);
+    asyncLoadingTimeout[id] = setTimeout(function () {
+        showLoading(id, msg);
     }, delay);
 
     return operation.finally(() => {
-        cancelAsyncLoading();
+        cancelAsyncLoading(id);
     });
 }
 
-export function cancelAsyncLoading() {
-    clearTimeout(asyncLoadingTimeout);
-    hideLoading();
+export function cancelAsyncLoading(id: string) {
+    clearTimeout(asyncLoadingTimeout[id]);
+    hideLoading(id);
 }
 
 export function navigateInWindow(url: string) {
@@ -92,6 +126,22 @@ let lastTime: any = {}
 function htmlmsg(kind: string, msg: string) {
     let now = Date.now()
     let prev = lastTime[kind] || 0
+
+    let msgTag = $('#msg');
+    if (highContrast) {
+        msgTag.children().each((index: number, elem: Element) => {
+            if (!elem.classList.contains('hc')) {
+                elem.classList.add('hc')
+            }
+        });
+    } else {
+        msgTag.children().each((index: number, elem: Element) => {
+            if (elem.classList.contains('hc')) {
+                elem.classList.remove('hc')
+            }
+        });
+    }
+
     if (now - prev < 100)
         $('#' + kind + 'msg').text(msg);
     else {
@@ -167,6 +217,7 @@ export interface DialogOptions {
     onLoaded?: (_: JQuery) => void;
     buttons?: ButtonConfig[];
     timeout?: number;
+    modalContext?: string;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
@@ -177,18 +228,18 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         .map(logo => `<img class="ui logo" src="${Util.toDataUri(logo)}" />`)
         .join(' ');
     let html = `
-  <div class="ui ${options.size || "small"} modal">
-    <div class="header">
+  <div role="dialog" class="ui ${options.size || "small"} modal">
+    <div role="heading" class="header">
         ${Util.htmlEscape(options.header)}
     </div>
     <div class="content">
       ${options.body ? "<p>" + Util.htmlEscape(options.body) + "</p>" : ""}
       ${options.htmlBody || ""}
       ${options.input ? `<div class="ui fluid action input">
-         <input class="userinput" spellcheck="false" placeholder="${Util.htmlEscape(options.input)}" type="text">
+         <input class="userinput focused" spellcheck="false" placeholder="${Util.htmlEscape(options.input)}" type="text">
          </div>` : ""}
       ${options.copyable ? `<div class="ui fluid action input">
-         <input class="linkinput" readonly spellcheck="false" type="text" value="${Util.htmlEscape(options.copyable)}">
+         <input class="linkinput focused" readonly spellcheck="false" type="text" value="${Util.htmlEscape(options.copyable)}">
          <button class="ui teal right labeled icon button copybtn" data-content="${lf("Copied!")}">
             ${lf("Copy")}
             <i class="copy icon"></i>
@@ -201,7 +252,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     if (!options.hideCancel) {
         buttons.push({
             label: options.disagreeLbl || lf("Cancel"),
-            class: options.disagreeClass || "cancel",
+            class: (options.disagreeClass || "cancel"),
             icon: options.disagreeIcon || "cancel"
         })
     }
@@ -209,7 +260,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     let btnno = 0
     for (let b of buttons) {
         html += `
-      <${b.url ? "a" : "button"} class="ui right labeled icon button approve ${b.class || "positive"}" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} ${b.fileName ? `download="${Util.htmlEscape(b.fileName)}"` : ''} target="_blank">
+      <${b.url ? "a" : "button"} class="ui right labeled icon button approve ${b.class || "positive"} focused" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} ${b.fileName ? `download="${Util.htmlEscape(b.fileName)}"` : ''} target="_blank">
         ${Util.htmlEscape(b.label)}
         <i class="${b.icon || "checkmark"} icon"></i>
       </${b.url ? "a" : "button"}>`
@@ -225,7 +276,8 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         ip.on('change', e => options.inputValue = ip.val())
     }
     let done = false
-    $('#root').append(modal)
+    let modalContext = options.modalContext || '#root';
+    $(modalContext).append(modal)
     if (options.onLoaded) options.onLoaded(modal)
 
     modal.find('img').on('load', () => {
@@ -234,6 +286,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     (modal.find(".ui.accordion") as any).accordion()
 
     return new Promise<void>((resolve, reject) => {
+        let focusedNodeBeforeOpening = document.activeElement as HTMLElement;
         let mo: JQuery;
         let timer = options.timeout ? setTimeout(() => {
             timer = 0;
@@ -256,10 +309,13 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         mo = modal.modal({
             observeChanges: true,
             closeable: !options.hideCancel,
-            context: "#root",
+            context: modalContext,
             onHidden: () => {
                 modal.remove();
                 mo.remove();
+                if (focusedNodeBeforeOpening != null) {
+                    focusedNodeBeforeOpening.focus();
+                }
             },
             onApprove: onfinish,
             onDeny: onfinish,
@@ -270,6 +326,9 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
                     resolve()
                 }
             },
+            onVisible: () => {
+                initializeFocusTabIndex(mo.get(0), true);
+            }
         });
         mo.modal("show")
     })
@@ -342,7 +401,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     }
 
     options.htmlBody = `<div class="ui fluid icon input">
-                            <input type="text" id="promptDialogInput" value="${options.defaultValue}">
+                            <input class="focused" type="text" id="promptDialogInput" value="${options.defaultValue}">
                         </div>`;
 
     options.onLoaded = () => {
@@ -351,7 +410,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
             dialogInput.setSelectionRange(0, 9999);
             dialogInput.onkeyup = (e: KeyboardEvent) => {
                 let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-                if (charCode === 13 || charCode === 32) {
+                if (charCode === ENTER_KEY) {
                     e.preventDefault();
                     (document.getElementsByClassName("approve positive").item(0) as HTMLElement).click();
                 }
@@ -453,6 +512,96 @@ export function scrollIntoView(item: JQuery, margin = 0) {
     if (newTop != selfTop) {
         parent.scrollTop(newTop)
         //parent.animate({ 'scrollTop': newTop }, 'fast');
+    }
+}
+
+export function resetFocus() {
+    let content = document.getElementById('content');
+    content.tabIndex = 0;
+    content.focus();
+    content.blur();
+    content.tabIndex = -1;
+}
+
+interface FocusDataEventInfo {
+    firstTag: HTMLElement;
+    lastTag: HTMLElement;
+    targetArea: any;
+    giveFocusToLastTagBinding: (e: UIEvent) => any;
+    giveFocusToFirstTagBinding: (e: UIEvent) => any
+}
+
+function unregisterFocusTracking(data: FocusDataEventInfo): void {
+    if (!data) {
+        return;
+    }
+
+    data.firstTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToLastTagBinding);
+    data.lastTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToFirstTagBinding);
+    if (data.firstTag === data.lastTag) {
+        data.firstTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToFirstTagBinding);
+        data.lastTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToLastTagBinding);
+    }
+}
+
+function giveFocusToFirstTag(e: KeyboardEvent) {
+    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+    if (charCode === TAB_KEY && !e.shiftKey) {
+        e.preventDefault();
+        unregisterFocusTracking(this);
+        initializeFocusTabIndex(this.targetArea, true);
+    } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
+        unregisterFocusTracking(this);
+        initializeFocusTabIndex(this.targetArea, true, false);
+    }
+}
+
+function giveFocusToLastTag(e: KeyboardEvent) {
+    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+    if (charCode === TAB_KEY && e.shiftKey) {
+        e.preventDefault();
+        unregisterFocusTracking(this);
+        initializeFocusTabIndex(this.targetArea, true, false);
+        this.lastTag.focus();
+    } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
+        unregisterFocusTracking(this);
+        initializeFocusTabIndex(this.targetArea, true, false);
+    }
+}
+
+export function initializeFocusTabIndex(element: Element, allowResetFocus = false, giveFocusToFirstElement = true, unregisterOnly = false) {
+    if (!allowResetFocus && element !== document.activeElement && element.contains(document.activeElement)) {
+        return;
+    }
+
+    unregisterFocusTracking((element as any).focusDataInfo);
+    if (unregisterOnly) {
+        return;
+    }
+
+    const focused = element.getElementsByClassName("focused");
+    if (focused.length == 0) {
+        return;
+    }
+
+    const firstTag = focused[0] as HTMLElement;
+    const lastTag = focused.length > 1 ? focused[focused.length - 1] as HTMLElement : firstTag;
+
+    let data = <FocusDataEventInfo>{};
+    data.firstTag = firstTag;
+    data.lastTag = lastTag;
+    data.targetArea = element;
+    data.giveFocusToLastTagBinding = giveFocusToLastTag.bind(data);
+    data.giveFocusToFirstTagBinding = giveFocusToFirstTag.bind(data);
+    (element as any).focusDataInfo = data;
+
+    if (firstTag !== lastTag) {
+        firstTag.addEventListener('keydown', data.giveFocusToLastTagBinding);
+    }
+    lastTag.addEventListener('keydown', data.giveFocusToFirstTagBinding);
+
+    if (giveFocusToFirstElement) {
+        firstTag.focus();
     }
 }
 

@@ -8,14 +8,6 @@ import * as srceditor from "./srceditor"
 import Cloud = pxt.Cloud;
 import U = pxt.Util;
 
-let iface: pxt.worker.Iface
-
-export function init() {
-    if (!iface) {
-        iface = pxt.worker.makeWebWorker(pxt.webConfig.workerjs)
-    }
-}
-
 function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
     let mainPkg = pkg.mainEditorPkg();
 
@@ -177,8 +169,7 @@ function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promis
 }
 
 export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
-    init()
-    return iface.opAsync(op, arg)
+    return pxt.worker.getWorker(pxt.webConfig.workerjs).opAsync(op, arg)
 }
 
 let firstTypecheck: Promise<void>;

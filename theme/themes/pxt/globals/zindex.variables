@@ -1,0 +1,66 @@
+
+
+/*-------------------
+   Z Index
+--------------------*/
+
+/* Above everything */
+@aboveEverythingZIndex: 100000;
+@editorMessageZIndex: 10000;
+
+/* Dimmer */
+@dimmerZIndex: 1000; /* From semantic */
+
+/* Menu bar */
+@menuBarZIndex: 101; /* From semantic */
+
+/* Editor */
+@aboveEditorZIndex: 90;
+
+/* Blockly */
+@blocklyToolboxZIndex: 40;
+@blocklyWidgetDivZIndex: (@gridPickerTooltipZIndex)-2; /* Just below grid picker tooltip */
+@blocklyDropdownDivZIndex: @blocklyWidgetDivZIndex+1;
+@blocklyFlyoutZIndex: 20;
+/* From Blockly css.js */
+/* blocklyFlyout: 20 */
+/* blocklyMainWorkspaceScrollbar: 20 */
+/* blocklyFlyoutScrollbar: 30 */
+/* blocklyBlockDragSurface: 50 */
+/* blocklyToolboxDiv: 40 -- so blocks go over toolbox when dragging */
+
+@blocklyTrashIconZIndex: @blocklyToolboxZIndex+1; /* Above toolbox */
+@blocklyAddPackgeZIndex: @blocklyToolboxZIndex+1; /* Above toolbox */
+
+/* Grid picker */
+@gridPickerZIndex: @blocklyWidgetDivZIndex+1; /* Needs to be above the @blocklyWidgetDivZIndex */
+@gridPickerTooltipZIndex: (@dimmerZIndex)-1; /* Just below dimmer */
+
+/* Monaco */
+@monacoFlyoutZIndex: @blocklyFlyoutZIndex; /* Same as blockly Flyout */
+@monacoInnerZIndex: @menuBarZIndex+1; /* Above menu bar */
+
+/* Editor toolbar */
+@editorToolsZIndex: @blocklyToolboxZIndex+1; /* Above the blockly toolbox but under the drag surface */
+@simulatorZIndex: @editorToolsZIndex+1; /* Needs to be on top of @editorToolsZIndex for mobile/tablet view */
+@editorLogoZIndex: ((@blocklyFlyoutZIndex)-1); /* Should be below the flyouts blocklyFlyout and @monacoFlyoutZIndex */
+
+/* Extension frames */
+@extensionFrameZIndex: @dimmerZIndex+1;
+@extensionPermissionZIndex: @extensionFrameZIndex+1;
+
+/* Tutorial */
+@tutorialLightboxCardZIndex: @dimmerZIndex+1;
+
+/* Home screen */
+@homeCarouselArrowZIndex: 10; /* Above the carousel cards */
+
+/* Side doc */
+@sidedocZIndex: @aboveEditorZIndex+5; /* Above the editor and its components */
+
+/* Full screen */
+@fullscreenZIndex: ((@menuBarZIndex)-1); /* Just below the menu bar */
+@helpCardZIndex: 5;
+
+/* Sandbox mode */
+@sandboxFooterZIndex: @aboveEditorZIndex+1;
