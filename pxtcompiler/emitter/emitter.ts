@@ -1885,7 +1885,7 @@ ${lbl}: .short 0xffff
                     }
                     nm = parse[1]
                     if (opts.target.isNative) {
-                        hex.validateShim(getDeclName(decl), nm, attrs, true, [true])
+                        hex.validateShim(getDeclName(decl), nm, attrs, true, litargs.map(v => true))
                     }
                     return ir.rtcallMask(nm, 0, attrs.callingConvention, litargs)
                 }
