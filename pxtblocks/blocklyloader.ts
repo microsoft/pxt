@@ -95,10 +95,12 @@ namespace pxt.blocks {
             return field;
         }
 
+        const isVariable = shadowType == "variables_get";
+
         const value = document.createElement("value");
         value.setAttribute("name", name);
 
-        const shadow = document.createElement(shadowType == "variables_get" ? "block" : "shadow");
+        const shadow = document.createElement(isVariable ? "block" : "shadow");
         value.appendChild(shadow);
 
         const typeInfo = typeDefaults[type];
@@ -131,6 +133,12 @@ namespace pxt.blocks {
             }
 
             field.appendChild(value);
+        }
+        else if (isVariable && v) {
+            const field = document.createElement("field");
+            shadow.appendChild(field);
+            field.setAttribute("name", "VAR");
+            field.textContent = v;
         }
 
         return value;
@@ -277,6 +285,9 @@ namespace pxt.blocks {
                     else {
                         // If no weight is specified, insert alphabetically after the weighted subcategories but above "More"
                         category = getOrAddSubcategoryByName(category, sub, sub, category.getAttribute("colour"), 'blocklyTreeIconmore')
+                    }
+                    if (nsn && nsn.attributes.groups) {
+                        category.setAttribute("groups", nsn.attributes.groups.join(', '));
                     }
                 }
             }
@@ -1117,10 +1128,10 @@ namespace pxt.blocks {
                 const nsColor = getNamespaceColor(topCats[i].getAttribute('nameid'));
                 if (nsColor && nsColor != "") {
                     topCats[i].setAttribute('colour', nsColor);
-                    // update children colors
-                    const childCats = topCats[i].getElementsByTagName('category');
-                    for (let j = 0; j < childCats.length; j++) {
-                        childCats[j].setAttribute('colour', nsColor);
+                    // Update subcategory colours
+                    const subCats = getChildCategories(topCats[i]);
+                    for (let j = 0; j < subCats.length; j++) {
+                        subCats[j].setAttribute('colour', nsColor);
                     }
                 }
                 if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
@@ -1151,6 +1162,23 @@ namespace pxt.blocks {
                         }
                     }
                     topCats[i].insertBefore(headingLabel, topCats[i].firstChild);
+                    // Add subcategory labels
+                    const subCats = getChildCategories(topCats[i]);
+                    for (let j = 0; j < subCats.length; j++) {
+                        let subHeadingLabel = goog.dom.createDom('label');
+                        subHeadingLabel.setAttribute('text', `${topCats[i].getAttribute('name')} > ${subCats[j].getAttribute('name')}`);
+                        subHeadingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
+                        subHeadingLabel.setAttribute('web-icon-color', topCats[i].getAttribute('colour'));
+                        subCats[i].insertBefore(subHeadingLabel, subCats[i].firstChild);
+                        if (icon) {
+                            if (icon.length == 1) {
+                                subHeadingLabel.setAttribute('web-icon', icon);
+                                if (iconClass) subHeadingLabel.setAttribute('web-icon-class', iconClass);
+                            } else {
+                                subHeadingLabel.setAttribute('web-icon-class', `blocklyFlyoutIcon${topCats[i].getAttribute('name')}`);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1335,6 +1363,9 @@ namespace pxt.blocks {
                     let xmlList: Element[] = [];
                     for (let bg = 0; bg < sortedGroups.length; ++bg) {
                         let group = sortedGroups[bg];
+                        // Check if there are any blocks in that group
+                        if (!blockGroups[group] || !blockGroups[group].length) continue;
+
                         // Add the group label
                         if (group != 'other') {
                             let groupLabel = goog.dom.createDom('label');

@@ -153,6 +153,11 @@ export class Editor extends srceditor.Editor {
                 this.consoleBuffer = ""
             }
         }
+
+        if (this.consoleRoot && this.consoleRoot.childElementCount > 0) {
+            if (this.chartRoot) this.chartRoot.classList.remove("noconsole");
+            if (this.consoleRoot) this.consoleRoot.classList.remove("noconsole");
+        }
     }
 
     dropStaleCharts() {
@@ -191,8 +196,14 @@ export class Editor extends srceditor.Editor {
     }
 
     clear() {
-        if (this.chartRoot) this.clearNode(this.chartRoot)
-        if (this.clearNode) this.clearNode(this.consoleRoot)
+        if (this.chartRoot) {
+            this.clearNode(this.chartRoot);
+            this.chartRoot.classList.add("noconsole")
+        }
+        if (this.consoleRoot) {
+            this.clearNode(this.consoleRoot);
+            this.consoleRoot.classList.add("noconsole")
+        }
         this.charts = []
         this.consoleBuffer = ""
     }
@@ -225,7 +236,7 @@ export class Editor extends srceditor.Editor {
 
         core.confirmAsync({
             logos: undefined,
-            header: lf("Analyze Data"),
+            header: lf("Export data"),
             hideAgree: true,
             disagreeLbl: lf("Close"),
             onLoaded: (_) => {
@@ -282,28 +293,21 @@ export class Editor extends srceditor.Editor {
                 <div id="serialHeader" className="ui">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this) } />
-                            <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device") }</span>
+                            <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
+                            <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button class="ui icon circular small inverted button" onClick={this.goBack.bind(this) }>
+                        <sui.Button class="ui icon circular small inverted button" ariaLabel={lf("Close")} onClick={this.goBack.bind(this)}>
                             <sui.Icon icon="close" />
+                        </sui.Button>
+                        <sui.Button class="ui icon circular small inverted button" ariaLabel={lf("Export data")} onClick={this.showExportDialog.bind(this)}>
+                            <sui.Icon icon="download" />
                         </sui.Button>
                     </div>
                 </div>
-                <div id="serialCharts" ref={e => this.chartRoot = e}></div>
-                <div className="ui fitted divider"></div>
-                <div id="serialConsole" ref={e => this.consoleRoot = e}></div>
-                <div id="serialToolbox">
-                    <div className="ui grid right aligned padded">
-                        <div className="column">
-                            <sui.Button class="ui small basic blue button" onClick={this.showExportDialog.bind(this) }>
-                                <sui.Icon icon="download" /> {lf("Export data") }
-                            </sui.Button>
-                        </div>
-                    </div>
-                </div>
+                <div id="serialCharts" className="noconsole" ref={e => this.chartRoot = e}></div>
+                <div id="serialConsole" className="noconsole" ref={e => this.consoleRoot = e}></div>
             </div>
         )
     }
@@ -330,8 +334,8 @@ export class StartPauseButton extends data.Component<StartPauseButtonProps, Star
     }
 
     renderCore() {
-        const {toggle} = this.props;
-        const {active} = this.state;
+        const { toggle } = this.props;
+        const { active } = this.state;
 
         return <sui.Button class={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
             <sui.Icon icon={active ? "pause icon" : "circle icon"} />
@@ -341,7 +345,8 @@ export class StartPauseButton extends data.Component<StartPauseButtonProps, Star
 
 class Chart {
     rootElement: HTMLElement = document.createElement("div")
-    canvas: HTMLCanvasElement = undefined
+    canvas: HTMLCanvasElement;
+    label: HTMLDivElement;
     line: TimeSeries = new TimeSeries();
     source: string;
     variable: string;
@@ -352,7 +357,7 @@ class Chart {
     constructor(source: string, variable: string, value: number, chartIdx: number) {
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme
         // Initialize chart
-        const chartConfig = {
+        const chartConfig: IChartOptions = {
             interpolation: 'bezier',
             responsive: true,
             millisPerPixel: 20,
@@ -369,17 +374,16 @@ class Chart {
         this.rootElement.className = "ui segment"
         this.source = source
         this.variable = variable
-        this.chart.addTimeSeries(this.line, {strokeStyle: lineColor, fillStyle: this.hexToHalfOpacityRgba(lineColor), lineWidth: 3})
+        this.chart.addTimeSeries(this.line, { strokeStyle: lineColor, fillStyle: this.hexToHalfOpacityRgba(lineColor), lineWidth: 3 })
 
-        if (this.variable)
-            this.rootElement.appendChild(this.makeLabel())
+        this.rootElement.appendChild(this.makeLabel())
         this.rootElement.appendChild(this.makeCanvas())
         this.addPoint(value)
     }
 
     hexToHalfOpacityRgba(hex: string) {
         let shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i
-        hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+        hex = hex.replace(shorthandRegex, function (m, r, g, b) {
             return r + r + g + g + b + b;
         })
         let m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
@@ -392,10 +396,10 @@ class Chart {
     }
 
     makeLabel() {
-        let label = document.createElement("div")
-        label.className = "ui orange bottom left attached label seriallabel"
-        label.innerText = this.variable
-        return label
+        this.label = document.createElement("div")
+        this.label.className = "ui orange bottom left attached label seriallabel"
+        this.label.innerText = this.variable || "...";
+        return this.label;
     }
 
     makeCanvas() {
@@ -422,7 +426,10 @@ class Chart {
 
     addPoint(value: number) {
         this.line.append(Util.now(), value)
-        this.lastUpdatedTime = Util.now()
+        this.lastUpdatedTime = Util.now();
+        // update label with last value
+        const valueText = Number(Math.round(Number(value + "e+2")) + "e-2").toString();
+        this.label.innerText = this.variable ? `${this.variable}: ${valueText}` : valueText;
     }
 
     start() {

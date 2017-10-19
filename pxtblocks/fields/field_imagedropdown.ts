@@ -49,7 +49,8 @@ namespace pxtblockly {
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.DropDownDiv.clearContent();
             // Populate the drop-down with the icons for this field.
-            let contentDiv = Blockly.DropDownDiv.getContentDiv();
+            let dropdownDiv = Blockly.DropDownDiv.getContentDiv();
+            let contentDiv = document.createElement('div');
             // Accessibility properties
             contentDiv.setAttribute('role', 'menu');
             contentDiv.setAttribute('aria-haspopup', 'true');
@@ -115,6 +116,7 @@ namespace pxtblockly {
                 contentDiv.appendChild(button);
             }
             contentDiv.style.width = this.width_ + 'px';
+            dropdownDiv.appendChild(contentDiv);
 
             Blockly.DropDownDiv.setColour(this.backgroundColour_, this.borderColour_);
 
@@ -146,9 +148,6 @@ namespace pxtblockly {
             Blockly.DropDownDiv.content_.removeAttribute('role');
             Blockly.DropDownDiv.content_.removeAttribute('aria-haspopup');
             Blockly.DropDownDiv.content_.removeAttribute('aria-activedescendant');
-            setTimeout(function () {
-                Blockly.DropDownDiv.getContentDiv().style.width = '';
-            }, 500);
         };
 
         /**
