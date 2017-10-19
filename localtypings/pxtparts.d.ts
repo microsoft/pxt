@@ -16,7 +16,7 @@ declare namespace pxsim {
     }
     interface BoardDefinition {
         visual: BoardImageDefinition | string,
-        gpioPinBlocks?: string[][],
+        gpioPinBlocks?: string[][], // not used
         gpioPinMap: { [pin: string]: string },
         groundPins: string[],
         threeVoltPins: string[],

@@ -1876,6 +1876,8 @@ ${lbl}: .short 0xffff
                             if (isNaN(v)) {
                                 v = lookupDalConst(node, a)
                                 if (v == null)
+                                    v = lookupConfigConst(node, a)
+                                if (v == null)
                                     U.userError("invalid argument: " + a + " in " + nm)
                             }
                             litargs.push(ir.numlit(v))
@@ -2838,6 +2840,24 @@ ${lbl}: .short 0xffff
             return v
         }
 
+        function lookupConfigConst(ctx: Node, name: string) {
+            let syms = checker.getSymbolsInScope(ctx, SymbolFlags.Module)
+            let dalEnm = syms.filter(s => s.name == "config" && !!s.valueDeclaration)[0]
+            if (!dalEnm)
+                return null
+            for (let stmt of ((dalEnm.valueDeclaration as ModuleDeclaration).body as ModuleBlock).statements) {
+                if (stmt.kind == SK.VariableStatement) {
+                    let v = stmt as VariableStatement
+                    for (let d of v.declarationList.declarations) {
+                        if (d.symbol.name == name) {
+                            return emitAsInt(d.initializer)
+                        }
+                    }
+                }
+            }
+            return null
+        }
+
         function lookupDalConst(ctx: Node, name: string) {
             let syms = checker.getSymbolsInScope(ctx, SymbolFlags.Enum)
             let dalEnm = syms.filter(s => s.name == "DAL" && !!s.valueDeclaration)[0]
@@ -3301,17 +3321,6 @@ ${lbl}: .short 0xffff
                         if (key == null || key == 0) // key cannot be 0
                             throw userError(9268, lf("can't find DAL.CFG_{0}", nm))
                         addConfigEntry({ name: nm, key: key, value: val })
-                    } else if (parname == "pins") {
-                        let attrs = parseComments(decl)
-                        if (/^[AD]\d+$/.test(nm)) continue
-                        let m = /getPin\((\d+)\)/.exec(attrs.shim)
-                        if (m) {
-                            nm = "PIN_" + nm
-                            let key = lookupDalConst(node, "CFG_" + nm)
-                            if (key) {
-                                addConfigEntry({ name: nm, key: key, value: parseInt(m[1]) })
-                            }
-                        }
                     }
                 }
             if (node.flags & NodeFlags.Ambient)
