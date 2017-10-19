@@ -45,6 +45,8 @@ namespace pxt.blocks {
             defaultValue: "list"
         }
     }
+    export const advancedTitle = Util.lf("{id:category}Advanced");
+    export const addPackageTitle = Util.lf("{id:category}Extensions");
 
     // Matches arrays and tuple types
     const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
@@ -1205,7 +1207,7 @@ namespace pxt.blocks {
 
         // Add the "Advanced" category
         if (showAdvanced && tb && showCategories !== CategoryMode.None) {
-            const cat = createCategoryElement(Util.lf("{id:category}Advanced"), "Advanced", 1, getNamespaceColor('advanced'), showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
+            const cat = createCategoryElement(advancedTitle, "Advanced", 1, getNamespaceColor('advanced'), showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
             insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             insertTopLevelCategory(cat, tb, 1, false);
         }
@@ -1214,8 +1216,8 @@ namespace pxt.blocks {
             if (!showAdvanced) {
                 insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             }
-            // Add the "Extensions" category
-            getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Extensions"), "Extensions", 1, "#717171", 'blocklyTreeIconaddpackage')
+            // Add the "Add package" category
+            getOrAddSubcategoryByWeight(tb, addPackageTitle, "Extensions", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
         if (tb) {

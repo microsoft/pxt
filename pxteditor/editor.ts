@@ -319,6 +319,11 @@ namespace pxt.editor {
          * dynamically added to the category (eg. loops.forever())
          */
         weight?: number;
+
+        /**
+         * The return type of the block. This is used to determine the shape of the block rendered.
+         */
+        retType?: string;
     }
 
     export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;

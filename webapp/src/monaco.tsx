@@ -39,6 +39,7 @@ export interface MonacoBlockDefinition {
         group?: string;
     };
     noNamespace?: boolean;
+    retType?: string;
 }
 
 export interface BuiltinCategoryDefinition {
@@ -47,6 +48,7 @@ export interface BuiltinCategoryDefinition {
     nameid: string;
     attributes: pxtc.CommentAttrs;
     removed?: boolean;
+    custom?: boolean; // Only add blocks defined in .blocks and don't query nsMap for more
 }
 
 export class Editor extends srceditor.Editor {
@@ -55,10 +57,12 @@ export class Editor extends srceditor.Editor {
     fileType: FileType = FileType.Unknown;
     extraLibs: pxt.Map<monaco.IDisposable>;
     blockInfo: pxtc.BlocksInfo;
-    nsMap: pxt.Map<MonacoBlockDefinition[]>;
+    public nsMap: pxt.Map<MonacoBlockDefinition[]>;
     loadingMonaco: boolean;
     showAdvanced: boolean;
     giveFocusOnLoading: boolean = false;
+
+    private monacoToolbox: MonacoToolbox;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -195,18 +199,24 @@ export class Editor extends srceditor.Editor {
 
     display() {
         return (
-            <div className='full-abs' id="monacoEditorArea">
-                <div id='monacoEditorToolbox' className='injectionDiv' />
+            <div id="monacoEditorArea" className="full-abs">
+                <MonacoToolbox ref={e => this.monacoToolbox = e} parent={this} />
                 <div id='monacoEditorInner' />
             </div>
         )
     }
 
-    private defineEditorTheme(hc?: boolean) {
+    addPackage() {
+        pxt.tickEvent("monaco.addpackage");
+        this.hideFlyout();
+        this.parent.addPackage();
+    }
+
+    private defineEditorTheme(hc?: boolean, withNamespaces?: boolean) {
         const inverted = pxt.appTarget.appTheme.invertedMonaco;
         const invertedColorluminosityMultipler = 0.6;
         let rules: monaco.editor.ITokenThemeRule[] = [];
-        if (!hc) {
+        if (!hc && withNamespaces) {
             this.getNamespaces().forEach((ns) => {
                 const metaData = this.getNamespaceAttrs(ns);
                 const blocks = snippets.isBuiltin(ns) ? snippets.getBuiltinCategory(ns).blocks : this.nsMap[ns];
@@ -269,13 +279,17 @@ export class Editor extends srceditor.Editor {
 
     resize(e?: Event) {
         let monacoArea = document.getElementById('monacoEditorArea');
-        let monacoToolbox = document.getElementById('monacoEditorToolbox');
+        let monacoToolbox = this.monacoToolbox && this.monacoToolbox.getElement();
 
-        if (monacoArea && monacoToolbox && this.editor) {
-            this.editor.layout({ width: monacoArea.offsetWidth - monacoToolbox.clientWidth, height: monacoArea.offsetHeight });
+        if (monacoArea && this.editor) {
+            const toolboxWidth = monacoToolbox && monacoToolbox.offsetWidth || 0;
+            this.editor.layout({ width: monacoArea.offsetWidth - toolboxWidth, height: monacoArea.offsetHeight });
 
             const rgba = (this.editor as any)._themeService._theme.colors['editor.background'].rgba;
-            this.parent.updateEditorLogo(monacoToolbox.clientWidth, `rgba(${rgba.r},${rgba.g},${rgba.b},${rgba.a})`);
+            this.parent.updateEditorLogo(toolboxWidth, `rgba(${rgba.r},${rgba.g},${rgba.b},${rgba.a})`);
+
+            let toolboxHeight = this.editor ? this.editor.getLayoutInfo().contentHeight : 0;
+            if (this.monacoToolbox) this.monacoToolbox.setToolboxHeight(toolboxHeight);
         }
     }
 
@@ -368,6 +382,17 @@ export class Editor extends srceditor.Editor {
                 })
             }
 
+            // Accessibility shortcut, add a way to quickly jump to the monaco toolbox
+            const arrow = Util.isUserLanguageRtl() ? monaco.KeyCode.RightArrow : monaco.KeyCode.LeftArrow;
+            this.editor.addAction({
+                id: "jumptoolbox",
+                label: lf("Jump to Toolbox"),
+                keybindings: [monaco.KeyMod.CtrlCmd | arrow],
+                keybindingContext: "!editorReadonly",
+                precondition: "!editorReadonly",
+                run: () => Promise.resolve(this.moveFocusToToolbox())
+            });
+
             this.editor.onDidLayoutChange((e: monaco.editor.EditorLayoutInfo) => {
                 // Update editor font size in settings after a ctrl+scroll zoom
                 let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
@@ -376,10 +401,10 @@ export class Editor extends srceditor.Editor {
                     this.forceDiagnosticsUpdate();
                 }
                 // Update widgets
-                let toolbox = document.getElementById('monacoEditorToolbox');
-                toolbox.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
-                let flyout = document.getElementById('monacoFlyoutWidget');
-                flyout.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
+                const toolbox = document.getElementById('monacoEditorToolbox');
+                if (toolbox) toolbox.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
+                const flyout = document.getElementById('monacoFlyoutWidget');
+                if (flyout) flyout.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
             })
 
             const monacoEditorInner = document.getElementById('monacoEditorInner');
@@ -390,11 +415,11 @@ export class Editor extends srceditor.Editor {
             monacoEditorInner.ondragover = ((ev: DragEvent) => {
                 ev.preventDefault();
                 ev.stopPropagation();
-                let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
-                let position = mouseTarget.position;
-                if (position && this.editor.getPosition() != position)
-                    this.editor.setPosition(position);
-                this.editor.focus();
+                this.dragCurrentPos = {
+                    x: ev.clientX,
+                    y: ev.clientY
+                }
+                this.onDragBlockThrottled(ev);
             });
             monacoEditorInner.ondrop = ((ev: DragEvent) => {
                 let insertText = ev.dataTransfer.getData('text'); // IE11 only support "text"
@@ -440,7 +465,7 @@ export class Editor extends srceditor.Editor {
 
 
             this.editor.onDidFocusEditorText(() => {
-                this.resetFlyout(true);
+                this.hideFlyout();
             })
 
             this.editorViewZones = [];
@@ -448,6 +473,16 @@ export class Editor extends srceditor.Editor {
             this.setupToolbox(editorArea);
         })
     }
+
+    protected dragCurrentPos = { x: 0, y: 0 };
+    protected onDragBlockThrottled = Util.throttle(() => {
+        const {x, y} = this.dragCurrentPos;
+        let mouseTarget = this.editor.getTargetAtClientPoint(x, y);
+        let position = mouseTarget.position;
+        if (position && this.editor.getPosition() != position)
+            this.editor.setPosition(position);
+        this.editor.focus();
+    }, 200);
 
     undo() {
         if (!this.editor) return;
@@ -475,11 +510,6 @@ export class Editor extends srceditor.Editor {
         this.parent.settings.editorFontSize = currentFont - 1;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
-    }
-
-    closeFlyout() {
-        if (!this.editor) return;
-        this.resetFlyout(true);
     }
 
     private loadReference() {
@@ -523,124 +553,157 @@ export class Editor extends srceditor.Editor {
         this.editor.addOverlayWidget(flyoutWidget);
     }
 
-    private selectedCategoryRow: HTMLElement;
-    private selectedCategoryColor: string;
-    private selectedCategoryBackgroundColor: string;
+    public closeFlyout() {
+        if (!this.editor) return;
+        this.hideFlyout();
+    }
 
-    private resetFlyout(clear?: boolean) {
+    private hideFlyout() {
         // Hide the flyout
         let flyout = document.getElementById('monacoFlyoutWidget');
         flyout.innerHTML = '';
         flyout.style.display = 'none';
 
-        // Hide the currnet toolbox category
-        if (this.selectedCategoryRow) {
-            this.selectedCategoryRow.style.background = `${this.selectedCategoryBackgroundColor}`;
-            this.selectedCategoryRow.style.color = `${this.selectedCategoryColor}`;
-            this.selectedCategoryRow.className = 'blocklyTreeRow';
+        // Hide the current toolbox category
+        this.monacoToolbox.clearSelection();
+
+        // Clear editor floats
+        this.parent.setState({ hideEditorFloats: false });
+    }
+
+    public showFlyout(ns: string,
+        color: string, icon: string,
+        category: string,
+        groups?: string[],
+        labelLineWidth?: string) {
+        if (!this.editor) return;
+        let monacoFlyout = document.getElementById('monacoFlyoutWidget');
+        const fontSize = this.parent.settings.editorFontSize;
+
+        monacoFlyout.style.left = `${this.editor.getLayoutInfo().lineNumbersLeft}px`;
+        monacoFlyout.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
+        monacoFlyout.style.display = 'block';
+        monacoFlyout.className = 'monacoFlyout';
+        monacoFlyout.style.transform = 'none';
+        monacoFlyout.innerHTML = '';
+
+        let fns: MonacoBlockDefinition[];
+
+        if (!snippets.isBuiltin(ns)) {
+            fns = this.nsMap[ns].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated));
+        }
+        else {
+            let cat = snippets.getBuiltinCategory(ns);
+            let blocks = cat.blocks || [];
+            let categoryName = cat.name;
+            blocks.forEach(b => { b.noNamespace = true })
+            if (!cat.custom && this.nsMap[ns.toLowerCase()]) blocks = blocks.concat(this.nsMap[ns.toLowerCase()].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
+            if (!blocks || !blocks.length) return;
+            fns = blocks;
         }
 
-        this.parent.setState({ hideEditorFloats: !clear });
+        // Create a flyout and add the category methods in there
 
-        if (clear) {
-            this.selectedCategoryRow = null;
+        // Add the heading label
+        if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
+            let monacoHeadingLabel = document.createElement('div');
+            monacoHeadingLabel.className = 'monacoFlyoutLabel monacoFlyoutHeading';
+            let monacoHeadingIcon = document.createElement('span');
+            let iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
+            monacoHeadingIcon.className = `monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`;
+            monacoHeadingIcon.setAttribute('role', 'presentation');
+            monacoHeadingIcon.style.display = 'inline-block';
+            monacoHeadingIcon.style.color = `${color}`;
+
+            let monacoHeadingText = document.createElement('div');
+            monacoHeadingText.className = `monacoFlyoutHeadingText`;
+            monacoHeadingText.style.display = 'inline-block';
+            monacoHeadingText.style.fontSize = `${fontSize + 5}px`;
+            monacoHeadingText.textContent = category ? category : `${Util.capitalize(ns)}`;
+
+            monacoHeadingLabel.appendChild(monacoHeadingIcon);
+            monacoHeadingLabel.appendChild(monacoHeadingText);
+            monacoFlyout.appendChild(monacoHeadingLabel);
         }
+
+        // Organize and rearrange methods into groups
+        let blockGroups: pxt.Map<MonacoBlockDefinition[]> = {}
+        let sortedGroups: string[] = [];
+        if (groups) sortedGroups = groups;
+
+        // Organize the blocks into the different groups
+        for (let bi = 0; bi < fns.length; ++bi) {
+            let blk = fns[bi];
+            let group = blk.attributes.group || 'other';
+            if (!blockGroups[group]) blockGroups[group] = [];
+            blockGroups[group].push(blk);
+        }
+
+        // Add any missing groups to the sorted groups list
+        Object.keys(blockGroups).sort().forEach(group => {
+            if (sortedGroups.indexOf(group) == -1) {
+                sortedGroups.push(group);
+            }
+        })
+
+        // Add labels and insert the blocks into the flyout
+        for (let bg = 0; bg < sortedGroups.length; ++bg) {
+            let group = sortedGroups[bg];
+            // Add the group label
+            if (group != 'other') {
+                let groupLabel = document.createElement('div');
+                groupLabel.className = 'monacoFlyoutLabel blocklyFlyoutGroup';
+                let groupLabelText = document.createElement('div');
+                groupLabelText.className = 'monacoFlyoutLabelText';
+                groupLabelText.style.display = 'inline-block';
+                groupLabelText.style.fontSize = `${fontSize}px`;
+                groupLabelText.textContent = pxt.Util.rlf(`{id:group}${group}`);
+                groupLabel.appendChild(groupLabelText);
+                monacoFlyout.appendChild(groupLabel);
+
+                let groupLabelLine = document.createElement('hr');
+                groupLabelLine.className = 'monacoFlyoutLabelLine';
+                groupLabelLine.align = 'left';
+                groupLabelLine.style.width = `${Math.min(parseInt(labelLineWidth) || groupLabelText.offsetWidth, 350)}px`;
+                groupLabel.appendChild(groupLabelLine);
+            }
+
+            // Add the blocks in that group
+            if (blockGroups[group]) {
+                const filters = this.parent.state.editorState ? this.parent.state.editorState.filters : undefined;
+                const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
+                this.createMonacoBlocks(this, monacoFlyout, ns, blockGroups[group], color, filters, categoryState);
+            }
+        }
+
+        // Hide editor floats
+        this.parent.setState({ hideEditorFloats: true });
+    }
+
+    public moveFocusToToolbox() {
+        // Set focus in toolbox
+        if (this.monacoToolbox) this.monacoToolbox.focus();
+    }
+
+    public moveFocusToFlyout() {
+        // Set focus in the flyout
+        const monacoFlyout = document.getElementById('monacoFlyoutWidget');
+        const topBlock = monacoFlyout.getElementsByClassName("monacoDraggableBlock")[0] as HTMLElement;
+        if (topBlock) topBlock.focus();
     }
 
     private updateToolbox() {
         let appTheme = pxt.appTarget.appTheme;
         if (!appTheme.monacoToolbox || pxt.shell.isReadOnly()) return;
-        // Toolbox div
-        let toolbox = document.getElementById('monacoEditorToolbox');
         // Move the monaco editor to make room for the toolbox div
         this.editor.getLayoutInfo().glyphMarginLeft = 200;
         this.editor.layout();
-        let monacoEditor = this;
-        // clear the toolbox
-        toolbox.innerHTML = '';
-
-        // Add an overlay widget for the toolbox
-        toolbox.style.height = `${monacoEditor.editor.getLayoutInfo().contentHeight}px`;
-        let root = document.createElement('div');
-        root.className = 'blocklyTreeRoot';
-        toolbox.appendChild(root);
-        let group = document.createElement('div');
-        group.setAttribute('role', 'tree');
-        root.appendChild(group);
 
         const namespaces = this.getNamespaces().map(ns => [ns, this.getNamespaceAttrs(ns)] as [string, pxtc.CommentAttrs]);
-        const hasAdvanced = namespaces.some(([, md]) => md.advanced);
-
-
-        // Non-advanced categories
-        appendCategories(group, namespaces.filter(([, md]) => !(md.advanced)));
-
-        if (hasAdvanced) {
-            // Advanced seperator
-            group.appendChild(Editor.createTreeSeperator());
-
-            // Advanced toggle
-            group.appendChild(this.createCategoryElement("", pxt.blocks.getNamespaceColor('advanced'), this.showAdvanced ? 'advancedexpanded' : 'advancedcollapsed',
-            false, null, () => {
-                this.showAdvanced = !this.showAdvanced;
-                this.updateToolbox();
-                this.parent.setState({ hideEditorFloats: false });
-                this.resize();
-            }, lf("{id:category}Advanced")))
-        }
-
-        if (this.showAdvanced) {
-            appendCategories(group, namespaces.filter(([, md]) => md.advanced));
-        }
-
-        if ((!hasAdvanced || this.showAdvanced) && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
-            if (!hasAdvanced) {
-                // Add a seperator
-                group.appendChild(Editor.createTreeSeperator());
-            }
-
-            // Extensions button
-            group.appendChild(this.createCategoryElement("", "#717171", "addpackage", false, null, () => {
-                this.resetFlyout();
-                this.parent.addPackage();
-            }, lf("{id:category}Extensions")));
-        }
-
-        // Inject toolbox icon css
-        pxt.blocks.injectToolboxIconCss();
-
-        function appendCategories(group: Element, names: [string, pxtc.CommentAttrs][]) {
-            return names
-            .sort(([, md1], [, md2]) => {
-                // sort by fn weight
-                const w2 = (md2 ? md2.weight || 50 : 50);
-                const w1 = (md1 ? md1.weight || 50 : 50);
-                return w2 - w1;
-            }).forEach(([ns, md]) => {
-
-                let el: Element;
-
-                if (!snippets.isBuiltin(ns)) {
-                    const blocks = monacoEditor.nsMap[ns].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated));
-                    let categoryName = md.block ? md.block : undefined
-                    el = monacoEditor.createCategoryElement(ns, md.color, md.icon, true, blocks, undefined, categoryName, md.groups, md.labelLineWidth);
-                }
-                else {
-                    let cat = snippets.getBuiltinCategory(ns);
-                    let blocks = cat.blocks;
-                    let name = cat.name;
-
-                    if (!blocks || !blocks.length) {
-                        return;
-                    }
-
-                    blocks.forEach(b => { b.noNamespace = true })
-                    if (monacoEditor.nsMap[ns.toLowerCase()]) blocks = blocks.concat(monacoEditor.nsMap[ns.toLowerCase()].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
-                    el = monacoEditor.createCategoryElement(ns, md.color, md.icon, false, blocks, null, name);
-                }
-                if (el) group.appendChild(el);
-            });
-        }
+        this.monacoToolbox.setState({
+            namespaces: namespaces,
+            showAdvanced: this.showAdvanced
+        })
     }
 
     getNamespaceAttrs(ns: string) {
@@ -673,214 +736,6 @@ export class Editor extends srceditor.Editor {
         return namespaces;
     }
 
-    static createTreeSeperator() {
-        const treeitem = Editor.createTreeItem();
-        const treeSeperator = document.createElement("div");
-        treeSeperator.setAttribute("class", "blocklyTreeSeparator");
-        treeitem.appendChild(treeSeperator);
-        return treeitem;
-    }
-
-    static createTreeItem() {
-        const treeitem = document.createElement('div');
-        treeitem.setAttribute('role', 'treeitem');
-        return treeitem;
-    }
-
-    private createCategoryElement(
-        ns: string,
-        metaColor: string,
-        icon: string,
-        injectIconClass: boolean = true,
-        fns?: MonacoBlockDefinition[],
-        onClick?: () => void,
-        category?: string,
-        groups?: string[],
-        labelLineWidth?: string) {
-        // Filter the toolbox
-        let filters = this.parent.state.editorState ? this.parent.state.editorState.filters : undefined;
-        const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
-        let hasChild = false;
-        if (filters && categoryState !== undefined && fns) {
-            Object.keys(fns).forEach((fn) => {
-                const fnState = filters.fns && filters.fns[fn] != undefined ? filters.fns[fn] : (categoryState != undefined ? categoryState : filters.defaultState);
-                if (fnState == pxt.editor.FilterState.Disabled || fnState == pxt.editor.FilterState.Visible) hasChild = true;
-            })
-        } else {
-            hasChild = true;
-        }
-        if (!hasChild) return;
-
-        let appTheme = pxt.appTarget.appTheme;
-        let monacoEditor = this;
-        // Create a tree item
-        let treeitem = Editor.createTreeItem();
-        let treerow = document.createElement('div');
-        let color = pxt.blocks.convertColour(metaColor);
-
-        treeitem.onclick = (ev: MouseEvent) => {
-            pxt.tickEvent("monaco.toolbox.click");
-
-            let monacoFlyout = document.getElementById('monacoFlyoutWidget');
-            monacoEditor.resetFlyout(false);
-
-            // Hide the toolbox if the current category is clicked twice
-            if (monacoEditor.selectedCategoryRow == treerow) {
-                monacoEditor.selectedCategoryRow = null;
-                monacoFlyout.style.display = 'none';
-
-                treerow.className = 'blocklyTreeRow';
-
-                this.parent.setState({ hideEditorFloats: false });
-                return;
-            } else {
-                // Selected category
-                treerow.style.background = appTheme.invertedToolbox ?
-                    `${Blockly.PXTUtils.fadeColour(color, (Blockly as any).Options.invertedMultiplier, false)}` :
-                    `${color}`;
-                treerow.style.color = '#fff';
-                treerow.className += ' blocklyTreeSelected';
-                monacoEditor.selectedCategoryRow = treerow;
-                if (appTheme.invertedToolbox) {
-                    // Inverted toolbox
-                    monacoEditor.selectedCategoryColor = '#fff';
-                    monacoEditor.selectedCategoryBackgroundColor = color;
-                } else {
-                    monacoEditor.selectedCategoryColor = color;
-                    monacoEditor.selectedCategoryBackgroundColor = '';
-                }
-            }
-
-            monacoFlyout.style.left = `${monacoEditor.editor.getLayoutInfo().lineNumbersLeft}px`;
-            monacoFlyout.style.height = `${monacoEditor.editor.getLayoutInfo().contentHeight}px`;
-            monacoFlyout.style.display = 'block';
-            monacoFlyout.className = 'monacoFlyout';
-            monacoFlyout.style.transform = 'none';
-
-            if (onClick) {
-                // No flyout
-                onClick();
-            } else {
-                // Create a flyout and add the category methods in there
-
-                // Add the heading label
-                if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
-                    let monacoHeadingLabel = document.createElement('div');
-                    monacoHeadingLabel.className = 'monacoFlyoutLabel monacoFlyoutHeading';
-                    let monacoHeadingIcon = document.createElement('span');
-                    let iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
-                    monacoHeadingIcon.className = `monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`;
-                    monacoHeadingIcon.setAttribute('role', 'presentation');
-                    monacoHeadingIcon.style.display = 'inline-block';
-                    monacoHeadingIcon.style.color = `${color}`;
-
-                    let monacoHeadingText = document.createElement('div');
-                    monacoHeadingText.className = `monacoFlyoutHeadingText`;
-                    monacoHeadingText.style.display = 'inline-block';
-                    monacoHeadingText.style.fontSize = `${monacoEditor.parent.settings.editorFontSize + 5}px`;
-                    monacoHeadingText.textContent = category ? category : `${Util.capitalize(ns)}`;
-
-                    monacoHeadingLabel.appendChild(monacoHeadingIcon);
-                    monacoHeadingLabel.appendChild(monacoHeadingText);
-                    monacoFlyout.appendChild(monacoHeadingLabel);
-                }
-
-                // Organize and rearrange methods into groups
-                let blockGroups: {[group: string]: MonacoBlockDefinition[]} = {}
-                let sortedGroups: string[] = [];
-                if (groups) sortedGroups = groups;
-
-                // Organize the blocks into the different groups
-                for (let bi = 0; bi < fns.length; ++bi) {
-                    let blk = fns[bi];
-                    let group = blk.attributes.group || 'other';
-                    if (!blockGroups[group]) blockGroups[group] = [];
-                    blockGroups[group].push(blk);
-                }
-
-                // Add any missing groups to the sorted groups list
-                Object.keys(blockGroups).sort().forEach(group => {
-                    if (sortedGroups.indexOf(group) == -1) {
-                        sortedGroups.push(group);
-                    }
-                })
-
-                // Add labels and insert the blocks into the flyout
-                for (let bg = 0; bg < sortedGroups.length; ++bg) {
-                    let group = sortedGroups[bg];
-                    // Add the group label
-                    if (group != 'other') {
-                        let groupLabel = document.createElement('div');
-                        groupLabel.className = 'monacoFlyoutLabel blocklyFlyoutGroup';
-                        let groupLabelText = document.createElement('div');
-                        groupLabelText.className = 'monacoFlyoutLabelText';
-                        groupLabelText.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
-                        groupLabelText.textContent = pxt.Util.rlf(`{id:group}${group}`);
-                        groupLabel.appendChild(groupLabelText);
-                        monacoFlyout.appendChild(groupLabel);
-
-                        let groupLabelLine = document.createElement('hr');
-                        groupLabelLine.className = 'monacoFlyoutLabelLine';
-                        groupLabelLine.align = 'left';
-                        groupLabelLine.style.width = `${labelLineWidth || groupLabelText.offsetWidth}px`;
-                        groupLabel.appendChild(groupLabelLine);
-                    }
-
-                    // Add the blocks in that group
-                    if (blockGroups[group])
-                        this.createMonacoBlocks(monacoEditor, monacoFlyout, ns, blockGroups[group], color, filters, categoryState);
-                }
-            }
-        };
-        treerow.className = 'blocklyTreeRow';
-        treeitem.appendChild(treerow);
-        let iconBlank = document.createElement('span');
-        let iconNone = document.createElement('span');
-        let label = document.createElement('span');
-
-        let iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
-        iconBlank.className = 'blocklyTreeIcon';
-        iconBlank.setAttribute('role', 'presentation');
-        iconNone.className = `blocklyTreeIcon ${iconClass}`;
-        iconNone.setAttribute('role', 'presentation');
-        iconNone.style.display = 'inline-block';
-
-        label.className = 'blocklyTreeLabel';
-        treerow.appendChild(iconBlank);
-        treerow.appendChild(iconNone);
-        treerow.appendChild(label);
-
-        if (appTheme.coloredToolbox) {
-            // Colored toolbox
-            treerow.style.color = `${color}`;
-            treerow.style.borderLeft = `8px solid ${color}`;
-        } else if (appTheme.invertedToolbox) {
-            // Inverted toolbox
-            treerow.style.color = '#fff';
-            treerow.style.background = (color || '#ddd');
-            treerow.onmouseenter = () => {
-                if (treerow != monacoEditor.selectedCategoryRow) {
-                    treerow.style.background = Blockly.PXTUtils.fadeColour(color || '#ddd', (Blockly as any).Options.invertedMultiplier, false);
-                }
-            }
-            treerow.onmouseleave = () => {
-                if (treerow != monacoEditor.selectedCategoryRow) {
-                    treerow.style.background = (color || '#ddd');
-                }
-            }
-        } else {
-            // Standard toolbox
-            treerow.style.borderLeft = `8px solid ${color}`;
-        }
-        if (icon && injectIconClass) {
-            pxt.blocks.appendToolboxIconCss(iconClass, icon);
-        }
-        treerow.style.paddingLeft = '0px';
-        label.textContent = category ? category : `${Util.capitalize(ns)}`;
-
-        return treeitem;
-    }
-
     private createMonacoBlocks(
         monacoEditor: Editor,
         monacoFlyout: HTMLElement,
@@ -890,28 +745,26 @@ export class Editor extends srceditor.Editor {
         filters: pxt.editor.ProjectFilters,
         categoryState: pxt.editor.FilterState
     ) {
+        let uniqueBlockId = 0; // Used for hex blocks
         // Render the method blocks
-        fns.sort((f1, f2) => {
+        const monacoBlocks = fns.sort((f1, f2) => {
             // sort by fn weight
             const w2 = (f2.attributes.weight || 50) + (f2.attributes.advanced ? 0 : 1000);
-            const w1 = (f1.attributes.weight || 50 ) + (f1.attributes.advanced ? 0 : 1000);
+            const w1 = (f1.attributes.weight || 50) + (f1.attributes.advanced ? 0 : 1000);
             return w2 - w1;
-        })
-        .forEach(fn => {
+        }).map(fn => {
             let monacoBlockDisabled = false;
             const fnState = filters ? (filters.fns && filters.fns[fn.name] != undefined ? filters.fns[fn.name] : (categoryState != undefined ? categoryState : filters.defaultState)) : undefined;
             monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
             if (fnState == pxt.editor.FilterState.Hidden) return;
 
             let monacoBlockArea = document.createElement('div');
+            monacoBlockArea.className = `monacoBlock ${monacoBlockDisabled ? 'monacoDisabledBlock' : ''}`;
+            monacoFlyout.appendChild(monacoBlockArea);
             let monacoBlock = document.createElement('div');
             monacoBlock.className = 'monacoDraggableBlock';
-
-            monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
-            monacoBlock.style.backgroundColor = monacoBlockDisabled ?
-                    `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.8, false)}` :
-                    `${color}`;
-            monacoBlock.style.borderColor = `${color}`;
+            monacoBlock.tabIndex = 0;
+            monacoBlockArea.appendChild(monacoBlock);
 
             const snippet = fn.snippet;
             const comment = fn.attributes.jsDoc;
@@ -923,7 +776,7 @@ export class Editor extends srceditor.Editor {
                 if (element.attributes.defaultInstance) {
                     snippetPrefix = element.attributes.defaultInstance;
                 }
-                else {
+                else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                     const nsInfo = this.blockInfo.apis.byQName[element.namespace];
                     if (nsInfo.kind === pxtc.SymbolKind.Class) {
                         return;
@@ -956,10 +809,9 @@ export class Editor extends srceditor.Editor {
 
             if (!monacoBlockDisabled) {
                 monacoBlock.draggable = true;
-                monacoBlock.onclick = (ev2: MouseEvent) => {
+                monacoBlock.onclick = (e: MouseEvent) => {
                     pxt.tickEvent("monaco.toolbox.itemclick");
-
-                    monacoEditor.resetFlyout(true);
+                    monacoEditor.hideFlyout();
 
                     let model = monacoEditor.editor.getModel();
                     let currPos = monacoEditor.editor.getPosition();
@@ -992,7 +844,7 @@ export class Editor extends srceditor.Editor {
                     monacoEditor.editor.focus();
                     //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
                 };
-                monacoBlock.ondragstart = (ev2: DragEvent) => {
+                monacoBlock.ondragstart = (e: DragEvent) => {
                     pxt.tickEvent("monaco.toolbox.itemdrag");
                     let clone = monacoBlock.cloneNode(true) as HTMLDivElement;
 
@@ -1001,11 +853,34 @@ export class Editor extends srceditor.Editor {
                     });
 
                     let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
-                    ev2.dataTransfer.setData('text', insertText); // IE11 only supports text
+                    e.dataTransfer.setData('text', insertText); // IE11 only supports text
                 }
-                monacoBlock.ondragend = (ev2: DragEvent) => {
+                monacoBlock.ondragend = (e: DragEvent) => {
                     monacoFlyout.style.transform = "none";
-                    monacoEditor.resetFlyout(true);
+                    monacoEditor.hideFlyout();
+                }
+                // Highlight on hover
+                const highlightBlock = () => {
+                    monacoBlock.style.backgroundColor = monacoBlockDisabled ?
+                        `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.8, false)}` :
+                        `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.1, false)}`;
+                }
+                const unhighlightBlock = () => {
+                    monacoBlock.style.backgroundColor = monacoBlockDisabled ?
+                        `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.8, false)}` :
+                        `${color}`;
+                }
+                monacoBlock.onmouseenter = (e: MouseEvent) => {
+                    highlightBlock();
+                }
+                monacoBlock.onmouseleave = (e: MouseEvent) => {
+                    unhighlightBlock();
+                }
+                monacoBlock.onfocus = (e: FocusEvent) => {
+                    highlightBlock();
+                }
+                monacoBlock.onblur = (e: FocusEvent) => {
+                    unhighlightBlock();
                 }
             }
 
@@ -1015,10 +890,67 @@ export class Editor extends srceditor.Editor {
                 monacoBlock.appendChild(methodToken);
             }
             monacoBlock.appendChild(sigToken);
-            monacoBlockArea.appendChild(monacoBlock);
 
-            monacoFlyout.appendChild(monacoBlockArea);
+            // Draw the shape of the block
+            monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
+            monacoBlock.style.backgroundColor = monacoBlockDisabled ?
+                `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.8, false)}` :
+                `${color}`;
+            monacoBlock.style.borderColor = `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.2, false)}`;
+            if (fn.retType && fn.retType == "boolean") {
+                // Show a hexagonal shape
+                monacoBlock.style.borderRadius = "0px";
+                const monacoBlockHeight = monacoBlock.offsetHeight - 2; /* Take 2 off to account for the missing border */
+                const monacoHexBlockId = uniqueBlockId++;
+                monacoBlock.id = `monacoHexBlock${monacoHexBlockId}`;
+                monacoBlock.className += ' monacoHexBlock';
+                const styleBlock = document.createElement('style') as HTMLStyleElement;
+                styleBlock.innerHTML = `
+                        #monacoHexBlock${monacoHexBlockId}:before, 
+                        #monacoHexBlock${monacoHexBlockId}:after {
+                            border-top: ${monacoBlockHeight / 2}px solid transparent;
+                            border-bottom: ${monacoBlockHeight / 2}px solid transparent;
+                        }
+                        #monacoHexBlock${monacoHexBlockId}:before {
+                            border-right: 17px solid ${color};
+                        }
+                        #monacoHexBlock${monacoHexBlockId}:after {
+                            border-left: 17px solid ${color};
+                        }
+                    `;
+                monacoBlockArea.insertBefore(styleBlock, monacoBlock);
+            } else if (fn.retType && fn.retType != "void") {
+                // Show a round shape
+                monacoBlock.style.borderRadius = "40px";
+            } else {
+                // Show a normal shape
+                monacoBlock.style.borderRadius = "3px";
+            }
+            return monacoBlock;
         })
+        monacoBlocks.forEach((monacoBlock, index) => {
+            // Accessibility
+            const isRtl = Util.isUserLanguageRtl();
+            monacoBlock.onkeydown = (e: KeyboardEvent) => {
+                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                if (charCode == 40) { //  DOWN
+                    // Next item
+                    if (index < monacoBlocks.length - 1) monacoBlocks[index + 1].focus();
+                } else if (charCode == 38) { // UP
+                    // Previous item
+                    if (index > 0) monacoBlocks[index - 1].focus();
+                } else if ((charCode == 37 && !isRtl) || (charCode == 38 && isRtl)) { // (LEFT & LTR) or (RIGHT & RTL)
+                    // Focus back to toolbox
+                    monacoEditor.moveFocusToToolbox();
+                } else if (charCode == 27) { // ESCAPE
+                    // Focus back to toolbox and close Flyout
+                    monacoEditor.hideFlyout();
+                    monacoEditor.moveFocusToToolbox();
+                } else {
+                    sui.fireClickOnEnter.call(this, e);
+                }
+            }
+        });
     }
 
     getId() {
@@ -1059,7 +991,6 @@ export class Editor extends srceditor.Editor {
         return this.loadMonacoAsync()
             .then(() => {
                 if (!this.editor) return;
-                let toolbox = document.getElementById('monacoEditorToolbox');
 
                 let ext = file.getExtension()
                 let modeMap: any = {
@@ -1083,8 +1014,8 @@ export class Editor extends srceditor.Editor {
                 if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(file.getName()), mode, monaco.Uri.parse(proto));
                 if (model) this.editor.setModel(model);
 
+                this.defineEditorTheme(hc);
                 if (mode == "typescript") {
-                    toolbox.innerHTML = '';
                     this.beginLoadToolbox(file, hc);
                 }
 
@@ -1129,13 +1060,13 @@ export class Editor extends srceditor.Editor {
                 }
 
                 if (mode == "typescript" && !file.isReadonly()) {
-                    toolbox.className = 'monacoToolboxDiv';
+                    this.monacoToolbox.show();
                 } else {
-                    toolbox.className = 'monacoToolboxDiv hide';
+                    this.monacoToolbox.hide();
                 }
 
                 this.resize();
-                this.resetFlyout(true);
+                this.hideFlyout();
 
                 if (this.giveFocusOnLoading) {
                     this.editor.focus();
@@ -1149,10 +1080,10 @@ export class Editor extends srceditor.Editor {
         compiler.getBlocksAsync().then(bi => {
             this.blockInfo = bi
             this.nsMap = this.partitionBlocks();
-            pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
-            this.defineEditorTheme(hc);
             this.updateToolbox();
             this.resize();
+            pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
+            this.defineEditorTheme(hc, true);
         });
     }
 
@@ -1269,5 +1200,425 @@ export class Editor extends srceditor.Editor {
         });
 
         return res;
+    }
+}
+
+
+export interface MonacoToolboxProps {
+    parent: Editor;
+}
+
+export interface MonacoToolboxState {
+    showAdvanced?: boolean;
+    namespaces?: [string, pxtc.CommentAttrs][];
+    visible?: boolean;
+    selectedNs?: string;
+    height?: number;
+}
+
+export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoToolboxState> {
+
+    private rootElement: HTMLElement;
+
+    private selectedItem: CategoryItem;
+    private selectedIndex: number;
+    private items: TreeRowProperties[];
+
+    constructor(props: MonacoToolboxProps) {
+        super(props);
+        this.state = {
+            showAdvanced: false
+        }
+    }
+
+    getElement() {
+        return this.rootElement;
+    }
+
+    hide() {
+        this.setState({ visible: false })
+    }
+
+    show() {
+        this.setState({ visible: true })
+    }
+
+    setToolboxHeight(height: number) {
+        if (this.rootElement) this.rootElement.style.height = `${height}px`;
+    }
+
+    clearSelection() {
+        this.setState({ selectedNs: undefined })
+        this.selectedIndex = 0;
+    }
+
+    setSelectedItem(item: CategoryItem) {
+        this.selectedItem = item;
+    }
+
+    setPreviousItem() {
+        if (this.selectedIndex > 0) {
+            const newIndex = --this.selectedIndex;
+            this.setSelection(this.items[newIndex], newIndex);
+        }
+    }
+
+    setNextItem() {
+        if (this.items.length - 1 > this.selectedIndex) {
+            const newIndex = ++this.selectedIndex;
+            this.setSelection(this.items[newIndex], newIndex);
+        }
+    }
+
+    setSelection(treeRow: TreeRowProperties, index: number) {
+        const {parent} = this.props;
+        const {ns, icon, color, category, groups, labelLineWidth} = treeRow;
+        pxt.tickEvent("monaco.toolbox.click");
+
+        if (this.state.selectedNs == ns) {
+            this.clearSelection();
+
+            // Hide flyout
+            parent.closeFlyout();
+        } else {
+            this.setState({ selectedNs: ns})
+            this.selectedIndex = index;
+            if (treeRow.advanced && !this.state.showAdvanced) this.showAdvanced();
+
+            // Show flyout
+            parent.showFlyout(ns, color, icon, category, groups, labelLineWidth);
+        }
+    }
+
+    focus() {
+        if (!this.rootElement) return;
+        if (this.selectedItem && this.selectedItem.getTreeRow()) {
+            // Focus the selected item
+            this.selectedItem.getTreeRow().focus();
+        } else {
+            // Focus first item in the toolbox
+            const topCategory = this.rootElement.getElementsByClassName('blocklyTreeRow')[0] as HTMLDivElement;
+            if (topCategory) topCategory.focus();
+        }
+    }
+
+    moveFocusToFlyout() {
+        const {parent} = this.props;
+        parent.moveFocusToFlyout();
+    }
+
+    closeFlyout() {
+        const {parent} = this.props;
+        parent.closeFlyout();
+    }
+
+    addPackage() {
+        const {parent} = this.props;
+        parent.addPackage();
+    }
+
+    componentDidUpdate(prevProps: MonacoToolboxProps, prevState: MonacoToolboxState) {
+        // Inject toolbox icon css
+        pxt.blocks.injectToolboxIconCss();
+    }
+
+    advancedClicked() {
+        pxt.tickEvent("monaco.advanced");
+        this.showAdvanced();
+    }
+
+    showAdvanced() {
+        const {parent} = this.props;
+        this.setState({ showAdvanced: !this.state.showAdvanced });
+        parent.resize();
+    }
+
+    renderCore() {
+        const {parent} = this.props;
+        const {namespaces, showAdvanced, visible, selectedNs} = this.state;
+        if (!namespaces || !visible) return <div style={{ display: 'none' }} />
+
+        // Filter toolbox categories
+        const filters = parent.parent.state.editorState && parent.parent.state.editorState.filters;
+        function filterCategory(ns: string, fns: MonacoBlockDefinition[]): boolean {
+            const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
+            let hasChild = false;
+            if (filters && categoryState !== undefined && fns) {
+                Object.keys(fns).forEach((fn) => {
+                    const fnState = filters.fns && filters.fns[fn] != undefined ? filters.fns[fn] : (categoryState != undefined ? categoryState : filters.defaultState);
+                    if (fnState == pxt.editor.FilterState.Disabled || fnState == pxt.editor.FilterState.Visible) hasChild = true;
+                })
+            } else {
+                hasChild = true;
+            }
+            if (!hasChild) return false;
+            return true;
+        }
+
+        let index = 0;
+        function createCategories(names: [string, pxtc.CommentAttrs][], isAdvanced?: boolean): TreeRowProperties[] {
+            return names
+                .sort(([, md1], [, md2]) => {
+                    // sort by fn weight
+                    const w2 = (md2 ? md2.weight || 50 : 50);
+                    const w1 = (md1 ? md1.weight || 50 : 50);
+                    return w2 - w1;
+                }).map(([ns, md]) => {
+                    if (!snippets.isBuiltin(ns)) {
+                        const blocks = parent.nsMap[ns].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated));
+                        if (!filterCategory(ns, blocks)) return;
+                        const categoryName = md.block ? md.block : undefined;
+                        return {
+                            ns: ns,
+                            category: categoryName,
+                            color: md.color,
+                            icon: md.icon,
+                            groups: md.groups,
+                            labelLineWidth: md.labelLineWidth,
+                            injectIconClass: true,
+                            advanced: isAdvanced,
+                            index: index++
+                        }
+                    }
+                    else {
+                        const cat = snippets.getBuiltinCategory(ns);
+                        let blocks = cat.blocks || [];
+                        const categoryName = cat.name;
+                        blocks.forEach(b => { b.noNamespace = true })
+                        if (!cat.custom && parent.nsMap[ns.toLowerCase()]) blocks = blocks.concat(parent.nsMap[ns.toLowerCase()].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
+                        if (!blocks || !blocks.length) return;
+                        if (!filterCategory(ns, blocks)) return;
+                        return {
+                            ns: ns,
+                            category: categoryName,
+                            color: md.color,
+                            icon: md.icon,
+                            groups: md.groups,
+                            labelLineWidth: md.labelLineWidth,
+                            advanced: isAdvanced,
+                            index: index++
+                        }
+                    }
+                });
+        }
+
+        const hasAdvanced = namespaces.some(([, md]) => md.advanced);
+        const hasPackages = !pxt.shell.isReadOnly() && pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
+
+        let nonAdvancedCategories = createCategories(namespaces.filter(([, md]) => !(md.advanced)));
+        let advancedCategories = hasAdvanced ? createCategories(namespaces.filter(([, md]) => md.advanced), true) : [];
+
+        this.items = nonAdvancedCategories.concat(advancedCategories);
+
+        return <div ref={e => this.rootElement = e} id='monacoEditorToolbox' className='monacoToolboxDiv'>
+            <div className="blocklyTreeRoot">
+                <div role="tree">
+                    {nonAdvancedCategories.map((treeRow) => (
+                        <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
+                    )) }
+                    {hasAdvanced ? <TreeSeparator key="advancedseparator" /> : undefined}
+                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ ns: "", category: pxt.blocks.advancedTitle, color: pxt.blocks.getNamespaceColor('advanced'), icon: showAdvanced ? 'advancedexpanded' : 'advancedcollapsed' }} onCategoryClick={this.advancedClicked.bind(this) }/> : undefined}
+                    {showAdvanced ? advancedCategories.map((treeRow) => (
+                        <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
+                    )) : undefined}
+                    {hasPackages && showAdvanced ? <TreeRow treeRow={{ ns: "", category: pxt.blocks.addPackageTitle, color: '#717171', icon: "addpackage" }} onClick={this.addPackage.bind(this) } /> : undefined }
+                </div>
+            </div>
+        </div>
+    }
+}
+
+export interface CategoryItemProps extends TreeRowProps {
+    toolbox: MonacoToolbox;
+    onCategoryClick?: (treeRow: TreeRowProperties, index: number) => void;
+}
+
+export interface CategoryItemState {
+    selected?: boolean;
+}
+
+export class CategoryItem extends data.Component<CategoryItemProps, CategoryItemState> {
+    private treeRowElement: TreeRow;
+
+    constructor(props: CategoryItemProps) {
+        super(props);
+        this.state = {
+            selected: props.selected
+        }
+    }
+
+    getTreeRow() {
+        return this.treeRowElement;
+    }
+
+    componentWillReceiveProps(nextProps: CategoryItemProps) {
+        const newState: CategoryItemState = {};
+        if (nextProps.selected != undefined) {
+            newState.selected = nextProps.selected;
+        }
+        if (Object.keys(newState).length > 0) this.setState(newState)
+    }
+
+    componentDidUpdate(prevProps: CategoryItemProps, prevState: CategoryItemState) {
+        if (this.state.selected) {
+            this.props.toolbox.setSelectedItem(this);
+            this.treeRowElement.focus();
+        }
+    }
+
+    handleClick = () => {
+        if (this.props.onCategoryClick) this.props.onCategoryClick(this.props.treeRow, this.props.treeRow.index);
+    }
+
+    renderCore() {
+        const {toolbox} = this.props;
+        const {selected} = this.state;
+
+        const previousItem = () => {
+            pxt.tickEvent("monaco.toolbox.keyboard.prev");
+            toolbox.setPreviousItem();
+        }
+        const nextItem = () => {
+            pxt.tickEvent("monaco.toolbox.keyboard.next");
+            toolbox.setNextItem();
+        }
+        const isRtl = Util.isUserLanguageRtl();
+        const onKeyDown = (e: React.KeyboardEvent) => {
+            let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+            if (charCode == 40) { //  DOWN
+                nextItem();
+            } else if (charCode == 38) { // UP
+                previousItem();
+            } else if ((charCode == 39 && !isRtl) || (charCode == 37 && isRtl)) { // (LEFT & LTR) || (RIGHT & RTL)
+                // Focus inside flyout 
+                toolbox.moveFocusToFlyout();
+            } else if (charCode == 27) { // ESCAPE
+                // Close the flyout
+                toolbox.closeFlyout();
+            } else {
+                sui.fireClickOnEnter.call(this, e);
+            }
+        }
+
+        return <TreeItem>
+            <TreeRow ref={e => this.treeRowElement = e} {...this.props} selected={selected} onClick={this.handleClick} onKeyDown={onKeyDown.bind(this) }/>
+        </TreeItem>
+    }
+}
+
+export interface TreeRowProperties {
+    ns: string;
+    color: string;
+    icon: string;
+    category?: string;
+    groups?: string[];
+    labelLineWidth?: string;
+    injectIconClass?: boolean;
+    advanced?: boolean; /*@internal*/
+    index?: number; /*@internal*/
+}
+
+export interface TreeRowProps {
+    treeRow: TreeRowProperties;
+    onClick?: () => void;
+    onKeyDown?: () => void;
+    selected?: boolean;
+}
+
+export class TreeRow extends data.Component<TreeRowProps, {}> {
+
+    private treeRow: HTMLElement;
+
+    focus() {
+        this.treeRow.focus();
+    }
+
+    getProperties() {
+        const {treeRow} = this.props;
+        return treeRow;
+    }
+
+    renderCore() {
+        const {selected, onClick, onKeyDown} = this.props;
+        const {ns, icon, color, category, injectIconClass} = this.props.treeRow;
+        const appTheme = pxt.appTarget.appTheme;
+        let metaColor = pxt.blocks.convertColour(color);
+
+        const invertedMultipler = appTheme.blocklyOptions
+            && (appTheme.blocklyOptions as B.ExtendedOptions).toolboxOptions
+            && (appTheme.blocklyOptions as B.ExtendedOptions).toolboxOptions.invertedMultiplier || 0.3;
+
+        let onmouseenter = () => {
+            if (appTheme.invertedToolbox) {
+                this.treeRow.style.backgroundColor = Blockly.PXTUtils.fadeColour(metaColor || '#ddd', invertedMultipler, false);
+            }
+        }
+        let onmouseleave = () => {
+            if (appTheme.invertedToolbox) {
+                this.treeRow.style.backgroundColor = (metaColor || '#ddd');
+            }
+        }
+        let treeRowStyle: React.CSSProperties = {
+            paddingLeft: '0px'
+        }
+        let treeRowClass = 'blocklyTreeRow';
+        if (appTheme.coloredToolbox) {
+            // Colored toolbox
+            treeRowStyle.color = `${metaColor}`;
+            treeRowStyle.borderLeft = `8px solid ${metaColor}`;
+        } else if (appTheme.invertedToolbox) {
+            // Inverted toolbox
+            treeRowStyle.backgroundColor = (metaColor || '#ddd');
+            treeRowStyle.color = '#fff';
+        } else {
+            // Standard toolbox
+            treeRowStyle.borderLeft = `8px solid ${metaColor}`;
+        }
+
+        // Selected
+        if (selected) {
+            treeRowClass += ' blocklyTreeSelected';
+            if (appTheme.invertedToolbox) {
+                treeRowStyle.backgroundColor = `${Blockly.PXTUtils.fadeColour(color, (Blockly as any).Options.invertedMultiplier, false)}`;
+            } else {
+                treeRowStyle.backgroundColor = (metaColor || '#ddd');
+            }
+            treeRowStyle.color = '#fff';
+        }
+
+        // Icon
+        const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
+        if (icon && injectIconClass) {
+            pxt.blocks.appendToolboxIconCss(iconClass, icon);
+        }
+
+        return <div ref={e => this.treeRow = e} className={treeRowClass}
+            style={treeRowStyle} tabIndex={0}
+            onMouseEnter={onmouseenter} onMouseLeave={onmouseleave}
+            onClick={onClick} onKeyDown={onKeyDown ? onKeyDown : sui.fireClickOnEnter}>
+            <span className="blocklyTreeIcon" role="presentation"></span>
+            <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass}`} role="presentation"></span>
+            <span className="blocklyTreeLabel">{category ? category : `${Util.capitalize(ns)}`}</span>
+        </div>
+    }
+}
+
+export class TreeSeparator extends data.Component<{}, {}> {
+    renderCore() {
+        return <TreeItem>
+            <div className="blocklyTreeSeparator"></div>
+        </TreeItem>
+    }
+}
+
+export interface TreeItemProps {
+    children?: any;
+}
+
+export class TreeItem extends data.Component<TreeItemProps, {}> {
+    renderCore() {
+        return <div role="treeitem">
+            {this.props.children}
+        </div>
     }
 }
