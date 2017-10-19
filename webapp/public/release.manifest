@@ -47,6 +47,9 @@ CACHE:
 /blb/vs/language/typescript/src/mode.js
 /blb/vs/language/typescript/src/worker.js
 
+# charts
+/blb/smoothie/smoothie_compressed.js
+
 # ai
 https://az416426.vo.msecnd.net/scripts/a/ai.0.js
 

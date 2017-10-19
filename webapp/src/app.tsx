@@ -33,9 +33,10 @@ import * as sounds from "./sounds";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
+import * as serial from "./serial"
 import * as blocks from "./blocks"
 import * as codecard from "./codecard"
-import * as logview from "./logview"
+import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as hwdbg from "./hwdbg"
 import * as electron from "./electron";
@@ -89,6 +90,7 @@ export class ProjectView
     editorFile: pkg.File;
     textEditor: monaco.Editor;
     pxtJsonEditor: pxtjson.Editor;
+    serialEditor: serial.Editor;
     blocksEditor: blocks.Editor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
@@ -249,6 +251,24 @@ export class ProjectView
         } else this.setFile(pkg.mainEditorPkg().files["main.blocks"]);
     }
 
+    openSerial(isSim: boolean) {
+        if (!pxt.appTarget.serial || !pxt.appTarget.serial.useEditor)
+            return; // not supported in this editor
+        if (this.editor == this.serialEditor && this.serialEditor.isSim == isSim)
+            return; // already showing
+
+        const mainEditorPkg = pkg.mainEditorPkg()
+        if (!mainEditorPkg) return; // no project loaded
+
+        if (!mainEditorPkg.lookupFile("this/" + pxt.SERIAL_EDITOR_FILE)) {
+            mainEditorPkg.setFile(pxt.SERIAL_EDITOR_FILE, "serial\n")
+        }
+        this.serialEditor.setSim(isSim)
+        let event = "serial." + (isSim ? "simulator" : "device") + "EditorOpened"
+        pxt.tickEvent(event)
+        this.setFile(mainEditorPkg.lookupFile("this/" + pxt.SERIAL_EDITOR_FILE))
+    }
+
     openPreviousEditor() {
         if (this.prevEditorId == "monacoEditor") {
             this.openJavaScript(false);
@@ -334,6 +354,7 @@ export class ProjectView
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
+        this.serialEditor = new serial.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
 
         let changeHandler = () => {
@@ -348,7 +369,7 @@ export class ProjectView
                 this.stopSimulator();
             this.editorChangeHandler();
         }
-        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.serialEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -400,8 +421,9 @@ export class ProjectView
             .then(() => { return this.editor.loadFileAsync(this.editorFile, hc); })
             .then(() => {
                 this.saveFileAsync().done(); // make sure state is up to date
-                this.typecheck();
-
+                if (this.editor == this.textEditor || this.editor == this.blocksEditor) {
+                    this.typecheck();
+                }
                 let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
                 if (e)
                     this.editor.setViewState(e.pos)
@@ -564,8 +586,7 @@ export class ProjectView
 
         this.stopSimulator(true);
         pxt.blocks.cleanBlocks();
-        let logs = this.refs["logs"] as logview.LogView;
-        logs.clear();
+        this.clearSerial();
         this.setState({
             showFiles: false,
             filters: filters,
@@ -987,7 +1008,7 @@ export class ProjectView
         }
         const simRestart = this.state.running;
         this.setState({ compiling: true });
-        this.clearLog();
+        this.clearSerial();
         this.editor.beforeCompile();
         if (simRestart) this.stopSimulator();
         let state = this.editor.snapshotState()
@@ -1151,9 +1172,12 @@ export class ProjectView
             });
     }
 
-    clearLog() {
-        let logs = this.refs["logs"] as logview.LogView;
-        logs.clear();
+    clearSerial() {
+        this.serialEditor.clear()
+        const simIndicator = this.refs["simIndicator"] as serialindicator.SerialIndicator
+        const devIndicator = this.refs["devIndicator"] as serialindicator.SerialIndicator
+        if (simIndicator) simIndicator.clear()
+        if (devIndicator) devIndicator.clear()
     }
 
     hwDebug() {
@@ -1184,9 +1208,9 @@ export class ProjectView
         }
 
         this.stopSimulator();
-        this.clearLog();
+        this.clearSerial();
 
-        let state = this.editor.snapshotState()
+        const state = this.editor.snapshotState()
         return compiler.compileAsync(opts)
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
@@ -1609,6 +1633,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const javascriptActive = this.isJavaScriptActive();
         const traceTooltip = this.state.tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo");
         const selectLanguage = targetTheme.selectLanguage;
+        const showEditorToolbar = !hideEditorToolbar && this.editor.hasEditorToolbar();
+        const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
 
         const consentCookie = () => {
             pxt.storage.setLocal(cookieKey, "1");
@@ -1631,7 +1657,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             hideMenuBar ? 'hideMenuBar' : '',
-            hideEditorToolbar ? 'hideEditorToolbar' : '',
+            !showEditorToolbar ? 'hideEditorToolbar' : '',
             sandbox && simActive ? 'simView' : '',
             'full-abs',
             'dimmable'
@@ -1734,10 +1760,12 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
                         </div>
-                        <div className="ui editorFloat portrait hide">
-                            <logview.LogView ref="logs" />
-                        </div>
-                        {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
+                        {useSerialEditor ?
+                            <div id="serialPreview" className="ui editorFloat portrait hide">
+                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={() => this.openSerial(true)} />
+                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={() => this.openSerial(false)} />
+                            </div> : undefined}
+                        {sandbox || isBlocks || this.editor == this.serialEditor ? undefined : <filelist.FileList parent={this} />}
                     </aside>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
@@ -1745,9 +1773,9 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 </div>
                 {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined }
                 {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined }
-                {hideEditorToolbar ? undefined : <div id="editortools" role="complementary" aria-label={lf("Editor toolbar") }>
+                {showEditorToolbar ? <div id="editortools" role="complementary" aria-label={lf("Editor toolbar") }>
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
-                </div>}
+                </div> : undefined}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
@@ -1848,14 +1876,28 @@ function initLogin() {
     }
 }
 
+let hidConnectionPoller: number;
+let hidPollerDelay: number;
+
+function startHidConnectionPoller() {
+    hidConnectionPoller = window.setInterval(initSerial, 5000);
+}
+
+function setHidPollerDelay() {
+    clearTimeout(hidPollerDelay);
+    clearInterval(hidConnectionPoller);
+    hidPollerDelay = window.setTimeout(startHidConnectionPoller, 5000);
+}
+
 function initSerial() {
     if (!pxt.appTarget.serial || !Cloud.isLocalHost() || !Cloud.localToken)
         return;
 
     if (hidbridge.shouldUse()) {
-        hidbridge.initAsync()
+        hidbridge.initAsync(true)
             .then(dev => {
                 dev.onSerial = (buf, isErr) => {
+                    setHidPollerDelay();
                     window.postMessage({
                         type: 'serial',
                         id: 'n/a', // TODO
@@ -2223,7 +2265,7 @@ $(document).ready(() => {
             if (state) {
                 theEditor.setState(state);
             }
-            initSerial();
+            startHidConnectionPoller();
             initScreenshots();
             initHashchange();
             electron.init();

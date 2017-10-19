@@ -114,4 +114,8 @@ export class Editor implements pxt.editor.IEditor {
     }
 
     setHighContrast(hc: boolean) {}
+
+    hasEditorToolbar() {
+        return true
+    }
 }
