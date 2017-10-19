@@ -1864,15 +1864,30 @@ ${lbl}: .short 0xffff
                 }
 
             if (nm.indexOf('(') >= 0) {
-                let parse = /(.*)\((\d+)\)$/.exec(nm)
+                let parse = /(.*)\((.*)\)$/.exec(nm)
                 if (parse) {
                     if (args.length)
                         U.userError("no arguments expected")
+                    let litargs: ir.Expr[] = []
+                    let strargs = parse[2].replace(/\s/g, "")
+                    if (strargs) {
+                        for (let a of parse[2].split(/,/)) {
+                            let v = parseInt(a)
+                            if (isNaN(v)) {
+                                v = lookupDalConst(node, a)
+                                if (v == null)
+                                    U.userError("invalid argument: " + a + " in " + nm)
+                            }
+                            litargs.push(ir.numlit(v))
+                        }
+                        if (litargs.length > 4)
+                            U.userError("too many args")
+                    }
                     nm = parse[1]
                     if (opts.target.isNative) {
                         hex.validateShim(getDeclName(decl), nm, attrs, true, [true])
                     }
-                    return ir.rtcallMask(nm, 0, attrs.callingConvention, [ir.numlit(parseInt(parse[2]))])
+                    return ir.rtcallMask(nm, 0, attrs.callingConvention, litargs)
                 }
             }
 
