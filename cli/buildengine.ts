@@ -338,17 +338,22 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     let constName = "dal.d.ts"
     let vals: Map<string> = {}
     let done: Map<string> = {}
+    let excludeSyms: string[] = []
 
     function expandInt(s: string): number {
         s = s.trim()
         let existing = U.lookup(vals, s)
         if (existing != null && existing != "?")
             s = existing
-        let m = /^\((\w+)\s*\+\s*(\d+)\)$/.exec(s)
+
+        let mm = /^\((.*)\)/.exec(s)
+        if (mm) s = mm[1]
+
+        let m = /^(\w+)\s*([\+\|])\s*(.*)$/.exec(s)
         if (m) {
             let k = expandInt(m[1])
             if (k != null)
-                return k + parseInt(m[2])
+                return m[2] == "+" ? k + expandInt(m[3]) : k | expandInt(m[3])
         }
         let pp = parseCppInt(s)
         if (pp != null) return pp
@@ -366,6 +371,8 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         let inEnum = false
         let enumVal = 0
         let defineVal = (n: string, v: string) => {
+            if (excludeSyms.some(s => U.startsWith(n, s)))
+                return
             let parsed = expandInt(v)
             if (parsed != null) {
                 v = parsed.toString()
@@ -403,7 +410,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
             if (inEnum && (m = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(ln))) {
                 let v = m[3]
                 if (v) {
-                    enumVal = parseCppInt(v)
+                    enumVal = expandInt(v)
                     if (enumVal == null) {
                         pxt.log(`${fileName}(${lineNo}): invalid enum initializer, ${ln}`)
                         inEnum = false
@@ -422,21 +429,36 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     if (mainPkg && mainPkg.getFiles().indexOf(constName) >= 0 &&
         (force || !fs.existsSync(constName))) {
         pxt.log(`rebuilding ${constName}...`)
-        // TODO: DAL-specific code
-        let incPath = buildEngine.buildPath + "/yotta_modules/microbit-dal/inc/"
-        if (!fs.existsSync(incPath))
-            incPath = buildEngine.buildPath + "/yotta_modules/codal/inc/";
-        if (!fs.existsSync(incPath))
-            incPath = buildEngine.buildPath
-        if (!fs.existsSync(incPath))
-            U.userError("cannot find " + incPath);
-        let files = nodeutil.allFiles(incPath, 20).filter(fn => U.endsWith(fn, ".h"))
+        let files: string[] = []
+
+        if (mainPkg.config.dalDTS) {
+            for (let dn of mainPkg.config.dalDTS.includeDirs) {
+                dn = buildEngine.buildPath + "/" + dn
+                if (U.endsWith(dn, ".h")) files.push(dn)
+                else {
+                    let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
+                    U.pushRange(files, here)
+                }
+            }
+            excludeSyms = mainPkg.config.dalDTS.excludePrefix || excludeSyms
+        } else {
+            let incPath = buildEngine.buildPath + "/yotta_modules/microbit-dal/inc/"
+            if (!fs.existsSync(incPath))
+                incPath = buildEngine.buildPath + "/yotta_modules/codal/inc/";
+            if (!fs.existsSync(incPath))
+                incPath = buildEngine.buildPath
+            if (!fs.existsSync(incPath))
+                U.userError("cannot find " + incPath);
+            files = nodeutil.allFiles(incPath, 20)
+                .filter(fn => U.endsWith(fn, ".h"))
+                .filter(fn => fn.indexOf("/mbed-classic/") < 0)
+                .filter(fn => fn.indexOf("/mbed-os/") < 0)
+        }
+
         files.sort(U.strcmp)
         let fc: Map<string> = {}
         for (let fn of files) {
             if (U.endsWith(fn, "Config.h")) continue
-            if (fn.indexOf("/mbed-classic/") >= 0) continue
-            if (fn.indexOf("/mbed-os/") >= 0) continue
             fc[fn] = fs.readFileSync(fn, "utf8")
         }
         files = Object.keys(fc)
@@ -452,8 +474,11 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
 
         let consts = "// Auto-generated. Do not edit.\ndeclare const enum DAL {\n"
         for (let fn of files) {
-            consts += "    // " + fn.replace(/\\/g, "/") + "\n"
-            consts += extractConstants(fn, fc[fn], true)
+            let v = extractConstants(fn, fc[fn], true)
+            if (v) {
+                consts += "    // " + fn.replace(/\\/g, "/") + "\n"
+                consts += v
+            }
         }
         consts += "}\n"
         fs.writeFileSync(constName, consts)

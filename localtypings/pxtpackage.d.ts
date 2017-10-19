@@ -40,6 +40,10 @@ declare namespace pxt {
         additionalFilePath?: string;
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
+        dalDTS?: {
+            includeDirs: string[];
+            excludePrefix?: string[];
+        };
     }
 
     interface PackageExtension {
