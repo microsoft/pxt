@@ -102,7 +102,7 @@ Finally, STS enforces that a function may not
 be assigned to a property of a record type, 
 though it is possible to construct records with function properties using object literals. 
 
-\subsection{Subtyping}
+\subsection{Subtyping and Type Checking}
 
 In STS, $S$ is a subtype of a type $T$ if one of the following is true:\footnote{
 For brevity, we have omitted the subtype rule for constructor function types, which
@@ -147,6 +147,10 @@ $M$ is a property and $S$ has a property $N$ where all of the following are true
       or $M$ is protected and $N$ is declared in a class derived from 
       the class in which M is declared.
 \end{itemize}
+
+\emph{TODO: type compatibility and type checking}
+
+\emph{TODO: theorems???}
 
 \subsection{Compilation}
 
