@@ -153,6 +153,11 @@ export class Editor extends srceditor.Editor {
                 this.consoleBuffer = ""
             }
         }
+
+        if (this.consoleRoot && this.consoleRoot.childElementCount > 0) {
+            if (this.chartRoot) this.chartRoot.classList.remove("noconsole");
+            if (this.consoleRoot) this.consoleRoot.classList.remove("noconsole");
+        }
     }
 
     dropStaleCharts() {
@@ -193,6 +198,14 @@ export class Editor extends srceditor.Editor {
     clear() {
         if (this.chartRoot) this.clearNode(this.chartRoot)
         if (this.clearNode) this.clearNode(this.consoleRoot)
+        if (this.chartRoot) {
+            this.clearNode(this.chartRoot);
+            this.chartRoot.classList.add("noconsole")
+        }
+        if (this.consoleRoot) {
+            this.clearNode(this.consoleRoot);
+            this.consoleRoot.classList.add("noconsole")
+        }
         this.charts = []
         this.consoleBuffer = ""
     }
@@ -283,27 +296,20 @@ export class Editor extends srceditor.Editor {
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
                             <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this) } />
-                            <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device") }</span>
+                            <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button class="ui icon circular small inverted button" onClick={this.goBack.bind(this) }>
+                        <sui.Button class="ui icon circular small inverted button" ariaLabel={lf("Close")} onClick={this.goBack.bind(this) }>
                             <sui.Icon icon="close" />
+                        </sui.Button>
+                        <sui.Button class="ui icon circular small inverted button" ariaLabel={lf("Export data")} onClick={this.showExportDialog.bind(this)}>
+                            <sui.Icon icon="download" />
                         </sui.Button>
                     </div>
                 </div>
-                <div id="serialCharts" ref={e => this.chartRoot = e}></div>
-                <div className="ui fitted divider"></div>
-                <div id="serialConsole" ref={e => this.consoleRoot = e}></div>
-                <div id="serialToolbox">
-                    <div className="ui grid right aligned padded">
-                        <div className="column">
-                            <sui.Button class="ui small basic blue button" onClick={this.showExportDialog.bind(this) }>
-                                <sui.Icon icon="download" /> {lf("Export data") }
-                            </sui.Button>
-                        </div>
-                    </div>
-                </div>
+                <div id="serialCharts" className="noconsole" ref={e => this.chartRoot = e}></div>
+                <div id="serialConsole" className="noconsole" ref={e => this.consoleRoot = e}></div>
             </div>
         )
     }
