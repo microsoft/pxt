@@ -1913,7 +1913,7 @@ function initSerial() {
 
     pxt.debug('initializing serial pipe');
     let ws = new WebSocket(`ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/serial`);
-    let serialBuffers: {[source: string]: string} = {}
+    let serialBuffers: pxt.Map<string> = {};
     const maxBufferLength = 255
     ws.onopen = (ev) => {
         pxt.debug('serial: socket opened');

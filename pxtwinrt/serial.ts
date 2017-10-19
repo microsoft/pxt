@@ -56,7 +56,7 @@ namespace pxt.winrt {
         port.device.baudRate = 115200;
         let stream = port.device.inputStream;
         let reader = new Windows.Storage.Streams.DataReader(stream);
-        let serialBuffers: {[source: string]: string} = {};
+        let serialBuffers: pxt.Map<string> = {};
         const maxBufferLength = 255;
         let readMore = () => reader.loadAsync(32).done((bytesRead) => {
             let msg = reader.readString(Math.floor(bytesRead / 4) * 4);
