@@ -10,44 +10,41 @@ for microcontrollers, and techniques for code loading.
 There are four basic paradigms for programming microcontrollers:
 \begin{itemize}
 \item a binary for the microcontroller is compiled on a host computer and loaded onto the microcontroller -
-this is the common paradigm for Arduino;
+this is the common paradigm for Arduino~\cite{buildingArduino2014};
 \item bytecode for interpretation on the microcontoller is compiled on host and loaded onto microcontroller - 
-this is the common paradigm for Java for embedded systems~cite{XYZ};
-\item a complete REPL and compiler are put on microcontroller (MicroPython: \url{http://micropython.org/})
+this is the common paradigm for Java for embedded systems~\cite{ClausenTOPLAS};
+\item a complete REPL, compiler and runtime are put on microcontroller, as 
+with MicroPython~\cite{MicroPython};
 \item a program executing on a host computer sends commands to a fixed program loaded onto the
 microcontroller, either over a wired connection (USB serial, for example) or a radio network
-(Bluetooth, for example) - this paradigm is used by Scratch~\cite{};
+(Bluetooth, for example) - this paradigm is used by Scratch~\cite{ScratchCACM2009};
 \end{itemize}
 
 \emph{\MC supports both native compilation and bytecode generation.}
-
-
-Web-based programming
 
 \begin{itemize}
 \item While the Arduino IDE recently 
 has been ported to the web, it lacks basic features of modern IDEs (such as intellisense) 
 and needs a connection to a server to invoke a C/C++ compiler on user code;
 \item scratch and scratch extensions (provide tethered mode for microcontrollers)
-\item 
 \end{itemize}
 
 \subsection{Types for JavaScript}
 
-Type systems with soundness guarantees for JavaScript are numerous. 
+By design, TypeScript does not provide a soundness guarantee (though see Conjecture XYZ)~\cite{BiermanAT14}.
+Type systems with soundness guarantees for JavaScript have as their
+goals: (1) handling arbitrary JavaScript programs; (2) XYZ.
 Safe TypeScript~\cite{SafeTypeScript15}: distinguishes dynamic from Any type - dynamic means
 one of the known static types, where as Any denotes types coming
 from raw JavaScript.
 StrongScript~\cite{StrongScriptECOOP15}.
 
 Static TypeScript differs from these efforts by outlawing untyped or optionally typed
-code.  In this sense, it can be seen to be StrongScript where every variable and 
+code; \emph{it is non-goal to support arbitrary JavaScript programs}.
+In this sense, it can be seen to be StrongScript where every variable and 
 expression has a concrete (!) type.   As in StrongScript, classes are nominally typed,
 which permits a more efficient and traditional property lookup for class instances. 
 Static TypeScript goes further by outlawing downcasts (for untagged implementation).
-
-% •	Quite a few others…
-% MicroPython
 
 \subsection{Operating systems}
 
