@@ -51,6 +51,38 @@ Static TypeScript goes further by outlawing downcasts (for untagged implementati
 
 \subsection{Operating systems}
 
+Typically written in C and/or C++, platforms for microcontroller programming all share 
+a common design goal: to support developers by providing primitives and programming 
+abstractions. Platforms can range from simple C++ classes that control hardware, 
+to real-time operating systems (RTOSs) with scheduling and memory management.
+
+The Arduino ecosystem is an example of a simple platform where the developer uses 
+high-level APIs to control hardware; there is no scheduler, and memory management 
+is discouraged through a heavy emphasis on global variables.  The Arduino programming 
+model is based on polling: an Arduino ``sketch'' is a program template that consists 
+of a setup procedure, for initialization of data structures, and a loop procedure; 
+programmers implement the body of \textit{setup} and \textit{loop}, where they explicitly 
+poll the state of the sensors or the microcontroller's pins.
+
+At the other end of the spectrum is mbed OS, which is aimed at developers who are familiar 
+with non-preemptive scheduling, memory management, and condition synchronisation; a more 
+complex environment. A number of high-level drivers are provided and the programming model 
+is determined by the developer, commonly event or interrupt driven.
+
+Although platforms like Arduino and mbed OS are widely used by C/C++ developers, 
+higher-level languages opt for virtual machines to execute on microcontrollers 
+as neither extreme aligns with the programming models seen in higher level languages: 
+mbed OS is pre-emptive, JavaScript is not; Arduino is based on monolithic polling. 
+
+The goals of CODAL are to: (1) bridge the semantic gap between 
+higher-level languages and the hardware in a memory, energy and instruction 
+efficient way; and (2) support a number of platforms with various
+resource contraints and capabilities.
+
+Unlike mbed, which is designed to make all devices look programmatically alike,
+CODAL enables devices with additional on-chip hardware to specialise device drivers 
+with APIs that can then be used by the end application developer.
+
 % https://state-machine.com/arduino/ 
 % http://tinyos.stanford.edu/tinyos-wiki/index.php/TinyOS_Overview 
 

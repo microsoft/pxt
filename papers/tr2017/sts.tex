@@ -8,7 +8,7 @@ supported by type inference. In TypeScript, the Any type
 represents any JavaScript value with no constraints. Type inference may assign the Any type to expressions for which 
 no more specific type can be inferred.
 
-While TypeScript provides programming abstractions (classes and interfaces) with syntax like Java/C\#, their semantics
+While TypeScript provides classes and interfaces with syntax like Java/C\#, their semantics
 are quite different, as they are based on JavaScript.  Classes are simply syntactic sugar for creating objects that
 have code associated with them, but these objects are JavaScript objects with all their dynamic semantics intact. This
 is not surprising, as TypeScript was designed to accommodate the dynamic nature of JavaScript and programming patterns
@@ -36,7 +36,7 @@ is a subset of relation $R$. Every STS program is a TypeScript program.
 STS guarantees the absence of runtime type errors, including downcasts.
 The major class of runtime errors still possible is dereference of null/undefined values. 
 STS can be supported by a simple runtime model, like that for C++, using classic vtables and interface tables,
-rather than the prototype-based runtime model used for full TypeScript/JavaScript.
+rather than the prototype-based runtime model used for JavaScript.
 
 \subsection{Eliminating Types: Any, Union, Intersection}
 
@@ -50,10 +50,10 @@ STS also excludes TypeScript's union and intersection types.
 
 \subsection{Partitioning of Object Types}
 
-In TypeScript, object types are used to describe dictionaries, functions, arrays, as well as class instances. Object 
-types also describe objects that take on multiple of the above roles, as is common in JavaScript. Object types are
-related to one another by structural subtyping [].  Interface declarations name object types; classes add implementation
-and the ability to statically inherit implementation from super classes. Per the TypeScript specification~\cite{XYZ}:
+In TypeScript, object types are used to describe dictionaries, functions, arrays, class instances,
+as well as objects that take on multiple of the above roles, as is common in JavaScript. Object types are
+related to one another by structural subtyping.  Interface declarations name object types; classes add implementation
+and the ability to statically inherit implementation from super classes. Per the TypeScript specification~\cite{TSspec2016}:
 \begin{itemize}
 \item ``object types are composed from properties, call signatures, construct signatures, and index signatures, collectively called members'';
 \item ``interfaces provide the ability to name and parameterize object types and to compose existing named object types into new ones.''.
@@ -69,7 +69,7 @@ interface Bar {
 \end{lstlisting}
 STS partitions the space of object types as follows:
 \begin{itemize}
-\item[1.] a \emph{record} type has only member properties;
+\item[1.] a \emph{record} type has only (member) properties;
 \item[2.] a \emph{function} type has exactly one member, a call signature;
 \item[3.] a \emph{constructor function} type: has at least one constructor signature and no other signature kind;
 \item[4.] an \emph{array} type has a numeric index signature and no other signatures;
@@ -88,8 +88,8 @@ are created (and static properties accessed), as seen in the previous section;
 (2) a class type describing the instances of the class, which is essentially a record type. 
 TypeScript's treatment of class types as record types
 means that it is possible to assign to a property representing a method, 
-destroying the class abstraction that ties together code and data. This also means
-that a shared vtable for classes is not possible. 
+destroying the class abstraction that ties together code and data. This also 
+eliminates the possibility of using a shared vtable implementation for classes.
 
 STS adds a new partition to represent class types, separate from record types, describing the instances of classes.
 Classic nominal subtyping is applied to class types, with function subtyping used to relate methods with 
