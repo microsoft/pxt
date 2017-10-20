@@ -1930,7 +1930,7 @@ function initSerial() {
                 for (let i = 0; i < data.length; ++i) {
                     const char = data[i]
                     serialBuffers[source] = serialBuffers[source] ? serialBuffers[source] + char : char
-                    if (/.*\n/.test(serialBuffers[source]) || serialBuffers[source].length > maxBufferLength) {
+                    if (char === "\n" || serialBuffers[source].length > maxBufferLength) {
                         let buffer = serialBuffers[source]
                         serialBuffers[source] = ""
                         window.postMessage({

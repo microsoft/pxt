@@ -209,47 +209,6 @@ export class Editor extends srceditor.Editor {
         return csv;
     }
 
-    showExportDialog() {
-        pxt.tickEvent("serial.showExportDialog")
-        const targetTheme = pxt.appTarget.appTheme
-        let rootUrl = targetTheme.embedUrl
-        if (!rootUrl) {
-            pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")
-            return
-        }
-        if (!/\/$/.test(rootUrl)) rootUrl += '/'
-
-        core.confirmAsync({
-            logos: undefined,
-            header: lf("Export data"),
-            hideAgree: true,
-            disagreeLbl: lf("Close"),
-            onLoaded: (_) => {
-                _.find('#datasavecsvfile').click(() => {
-                    pxt.tickEvent("serial.dataExported.csv")
-                    _.modal('hide')
-                    pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")
-                })
-            },
-            htmlBody:
-            `<div></div>
-                <div class="ui cards" role="listbox">
-                    <div  id="datasavecsvfile" class="ui link card">
-                        <div class="content">
-                            <div class="header">${lf("CSV File")}</div>
-                            <div class="description">
-                                ${lf("Save the chart data streams.")}
-                            </div>
-                        </div>
-                        <div class="ui bottom attached button">
-                            <i class="download icon"></i>
-                            ${lf("Download")}
-                        </div>
-                    </div>
-                </div>`
-        }).done()
-    }
-
     goBack() {
         pxt.tickEvent("serial.backButton")
         this.parent.openPreviousEditor()
@@ -269,7 +228,7 @@ export class Editor extends srceditor.Editor {
                         <sui.Button class="ui icon circular small inverted button" ariaLabel={lf("Close")} onClick={this.goBack.bind(this) }>
                             <sui.Icon icon="close" />
                         </sui.Button>
-                        <sui.Button class="ui icon circular small inverted button" ariaLabel={lf("Export data")} onClick={this.showExportDialog.bind(this)}>
+                        <sui.Button class="ui icon circular small inverted button" ariaLabel={lf("Export data")} onClick={() => pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")}>
                             <sui.Icon icon="download" />
                         </sui.Button>
                     </div>
