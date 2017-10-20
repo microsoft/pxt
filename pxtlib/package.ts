@@ -342,6 +342,29 @@ namespace pxt {
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
 
+            if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
+                initPromise = initPromise.then(() => {
+                    if (this.config.files.indexOf("board.json") < 0) return
+                    appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json"))
+                    let expandPkg = (v: string) => {
+                        let m = /^pkg:\/\/(.*)/.exec(v)
+                        if (m) {
+                            let fn = m[1]
+                            let content = this.readFile(fn)
+                            return U.toDataUri(content, U.getMime(fn))
+                        } else {
+                            return v
+                        }
+                    }
+                    let bd = appTarget.simulator.boardDefinition
+                    if (typeof bd.visual == "object") {
+                        let vis = bd.visual as pxsim.BoardImageDefinition
+                        vis.image = expandPkg(vis.image)
+                        vis.outlineImage = expandPkg(vis.outlineImage)
+                    }
+                })
+            }
+
             const loadDepsRecursive = (dependencies: Map<string>) => {
                 return U.mapStringMapAsync(dependencies, (id, ver) => {
                     let mod = this.resolveDep(id)
