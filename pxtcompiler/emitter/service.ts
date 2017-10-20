@@ -247,6 +247,8 @@ namespace ts.pxtc {
             if (!options.locs || !si.qName) {
                 return;
             }
+            if (si.attributes.deprecated || /^__/.test(si.name))
+                return; // skip deprecated or function starting with __
             pxt.debug(`loc: ${si.qName}`)
             // must match blockly loader
             if (si.kind != SymbolKind.EnumMember) {
