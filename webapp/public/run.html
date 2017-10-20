@@ -101,6 +101,13 @@
             return;
         }
 
+        function initAppCache() {
+            window.applicationCache.addEventListener('updateready', () => {
+                window.location.reload();
+            });
+        }
+        initAppCache();
+
         ksRunnerReady(function() {
             var theme = pxt.appTarget.appTheme;
             document.title = theme.title;
