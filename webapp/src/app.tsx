@@ -1914,7 +1914,6 @@ function initSerial() {
     pxt.debug('initializing serial pipe');
     let ws = new WebSocket(`ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/serial`);
     let serialBuffers: pxt.Map<string> = {};
-    const maxBufferLength = 255
     ws.onopen = (ev) => {
         pxt.debug('serial: socket opened');
     }
@@ -1925,21 +1924,7 @@ function initSerial() {
         try {
             let msg = JSON.parse(ev.data) as pxsim.SimulatorSerialMessage;
             if (msg && msg.type == 'serial') {
-                const data = msg.data || ""
-                const source = msg.id || "?"
-                for (let i = 0; i < data.length; ++i) {
-                    const char = data[i]
-                    serialBuffers[source] = serialBuffers[source] ? serialBuffers[source] + char : char
-                    if (char === "\n" || serialBuffers[source].length > maxBufferLength) {
-                        let buffer = serialBuffers[source]
-                        serialBuffers[source] = ""
-                        window.postMessage({
-                            type: "serial",
-                            id: source,
-                            data: buffer
-                        }, "*")
-                    }
-                }
+                pxt.Util.bufferSerial(serialBuffers, msg.data, msg.id)
             }
         }
         catch (e) {
