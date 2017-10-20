@@ -37,6 +37,7 @@ declare namespace pxt {
         appTheme: AppTheme;
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
+        windowsStoreInfo?: WindowsStoreInfo;
     }
 
     interface ProjectTemplate {
@@ -259,6 +260,11 @@ declare namespace pxt {
         nextPath?: string;
 
         markdown?: string;
+    }
+    
+    interface WindowsStoreInfo {
+        link: string,
+        thumbnail: string
     }
 
     interface TargetBundle extends AppTarget {

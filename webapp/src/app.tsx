@@ -1755,7 +1755,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
-        const showWindowsStoreBanner = !this.state.hideWindowsStoreBanner && isWindows10;
+        const showWindowsStoreBanner = !this.state.hideWindowsStoreBanner && isWindows10 && pxt.appTarget.windowsStoreInfo;
         const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
         // cookie concent
@@ -1802,8 +1802,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {showWindowsStoreBanner ? <div id="windowsStoreBanner" className="ui icon blue attached message">
                     <sui.Icon icon="close" onClick={() => this.hideWindowsStoreBanner()} />
                     <div className="content">
-                        <a href="https://www.microsoft.com/store/apps/9PGZHWSK0PGD?ocid=badge">
-                            <img src="https://assets.windowsphone.com/f2f77ec7-9ba9-4850-9ebe-77e366d08adc/English_Get_it_Win_10_InvariantCulture_Default.png" alt="Get it on Windows 10" />
+                        <a href={pxt.appTarget.windowsStoreInfo.link}>
+                            <img src={pxt.appTarget.windowsStoreInfo.thumbnail} />
                         </a>
                     </div>
                 </div> : undefined}
