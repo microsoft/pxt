@@ -33,8 +33,8 @@
 
 @importGoogleFonts: false;
 
-@docsHeaderFont: @headerFont;
-@docsPageFont: @pageFont;
+@docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
+@docsPageFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
 
 @emSize      : 14px;
 @fontSize    : 12pt;
@@ -43,7 +43,8 @@
    Links
 --------------------*/
 
-@linkColor           : #004d99;
+@linkColor           : #4183c4;
+@linkHoverUnderline  : underline;
 
 /*-------------------
    Breakpoints
@@ -186,3 +187,29 @@
 @blocklyFlyoutColor: @grey;
 @blocklyFlyoutColorOpacity: 0.9;
 @monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);
+
+
+/*-------------------
+   Home
+--------------------*/
+
+@homeHeaderColor: @textColor;
+@homeCardBorderRadius: 0px;
+@homeCardBorderSize: 5px;
+@homeCardBorderColor: #e9eef2;
+@homeCardHoverBorderColor: white;
+@homeCardColor: @textColor;
+@homeCardMetaColor: @homeCardColor;
+@homeCardHeaderColor: @homeCardColor;
+
+@homeCardImageBorderRadius: 0;
+@homeCardBackgroundColor: white;
+@homeCardHoverBackgroundColor: darken(@homeCardBackgroundColor, 5%);
+
+
+/*-------------------
+   Tutorial
+--------------------*/
+
+@tutorialSegmentBackground: #f8f8f9;
+@tutorialSegmentColor: @textColor;
