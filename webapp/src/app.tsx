@@ -1799,12 +1799,18 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                         <a href={liveUrl}>{lf("Take me back")}</a>
                     </div>
                 </div> : undefined}
-                {showWindowsStoreBanner ? <div id="windowsStoreBanner" className="ui icon blue attached message">
-                    <sui.Icon icon="close" onClick={() => this.hideWindowsStoreBanner()} />
-                    <div className="content">
+                {showWindowsStoreBanner ? <div id="windowsStoreBanner" className="ui blue attached message">
+                    <div className="leftBannerContent">
                         <a href={pxt.appTarget.windowsStoreInfo.link}>
                             <img src={pxt.appTarget.windowsStoreInfo.thumbnail} />
                         </a>
+                    </div>
+                    <div className="rightBannerContent">
+                        <sui.Icon icon="close" onClick={() => this.hideWindowsStoreBanner()} />
+                    </div>
+                    <div className="centerBannerContent">
+                        {pxt.appTarget.windowsStoreInfo.appName}<br />
+                        FREE - on the Windows Store
                     </div>
                 </div> : undefined}
                 {hideMenuBar ? undefined :
