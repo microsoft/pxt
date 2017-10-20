@@ -74,7 +74,7 @@
     color: @serialTextColor;
 }
 
-#serialConsole div {
+#serialConsole span {
     word-wrap: break-word;
 }
 
@@ -112,6 +112,10 @@
 
 #serialConsole.noconsole {
     display: none !important;
+}
+
+#serialConsole span {
+    word-wrap: break-word;
 }
 
 #serialPreview .ui.left.labeled.button {

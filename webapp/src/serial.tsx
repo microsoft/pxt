@@ -21,8 +21,6 @@ export class Editor extends srceditor.Editor {
     maxConsoleLineLength: number = 500
     maxConsoleEntries: number = 100
     active: boolean = true
-    rawDataBuffer: string = ""
-    maxBufferLength: number = 5000
     maxChartTime: number = 18000
     chartDropper: number
 
@@ -75,16 +73,13 @@ export class Editor extends srceditor.Editor {
 
         const data = smsg.data || ""
         const source = smsg.id || "?"
-        let theme = source.split("-")[0] || "black"
-
-        this.appendRawData(data)
 
         const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
         if (m) {
             const variable = m[2] || '';
             const nvalue = parseFloat(m[3]);
             if (!isNaN(nvalue)) {
-                this.appendGraphEntry(source, theme, sim, variable, nvalue)
+                this.appendGraphEntry(source, variable, nvalue)
                 return;
             }
         }
@@ -92,15 +87,7 @@ export class Editor extends srceditor.Editor {
         this.appendConsoleEntry(data)
     }
 
-    appendRawData(data: string) {
-        this.rawDataBuffer += data
-        let excessChars = this.rawDataBuffer.length - this.maxBufferLength
-        if (excessChars > 0) {
-            this.rawDataBuffer = this.rawDataBuffer.slice(excessChars)
-        }
-    }
-
-    appendGraphEntry(source: string, theme: string, sim: boolean, variable: string, nvalue: number) {
+    appendGraphEntry(source: string, variable: string, nvalue: number) {
         //See if there is a "home chart" that this point belongs to -
         //if not, create a new chart
         let homeChart: Chart = undefined
@@ -128,7 +115,7 @@ export class Editor extends srceditor.Editor {
             if (ch === "\n" || this.consoleBuffer.length > this.maxConsoleLineLength) {
 
                 let lastEntry = this.consoleRoot.lastChild
-                let newEntry = document.createElement("div")
+                let newEntry = document.createElement("span")
                 if (lastEntry && lastEntry.lastChild.textContent == this.consoleBuffer) {
                     if (lastEntry.childNodes.length == 2) {
                         //matches already-collapsed entry
@@ -210,10 +197,6 @@ export class Editor extends srceditor.Editor {
         this.consoleBuffer = ""
     }
 
-    entriesToPlaintext() {
-        return this.rawDataBuffer
-    }
-
     entriesToCSV() {
         let csv = this.charts.map(chart => `time (s), ${chart.variable} (${chart.source})`).join(', ') + '\r\n';
         const datas = this.charts.map(chart => chart.line.data);
@@ -224,64 +207,6 @@ export class Editor extends srceditor.Editor {
             csv += '\r\n';
         }
         return csv;
-    }
-
-    showExportDialog() {
-        pxt.tickEvent("serial.showExportDialog")
-        const targetTheme = pxt.appTarget.appTheme
-        let rootUrl = targetTheme.embedUrl
-        if (!rootUrl) {
-            pxt.commands.browserDownloadAsync(this.entriesToPlaintext(), "data.txt", "text/plain")
-            return
-        }
-        if (!/\/$/.test(rootUrl)) rootUrl += '/'
-
-        core.confirmAsync({
-            logos: undefined,
-            header: lf("Export data"),
-            hideAgree: true,
-            disagreeLbl: lf("Close"),
-            onLoaded: (_) => {
-                _.find('#datasavecsvfile').click(() => {
-                    pxt.tickEvent("serial.dataExported.csv")
-                    _.modal('hide')
-                    pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")
-                })
-                _.find('#datasavetxtfile').click(() => {
-                    pxt.tickEvent("serial.dataExported.txt")
-                    _.modal('hide')
-                    pxt.commands.browserDownloadAsync(this.entriesToPlaintext(), "data.txt", "text/plain")
-                })
-            },
-            htmlBody:
-            `<div></div>
-                <div class="ui cards" role="listbox">
-                    <div  id="datasavecsvfile" class="ui link card">
-                        <div class="content">
-                            <div class="header">${lf("CSV File")}</div>
-                            <div class="description">
-                                ${lf("Save the chart data streams.")}
-                            </div>
-                        </div>
-                        <div class="ui bottom attached button">
-                            <i class="download icon"></i>
-                            ${lf("Download")}
-                        </div>
-                    </div>
-                    <div id="datasavetxtfile" class="ui link card">
-                        <div class="content">
-                            <div class="header">${lf("Text File")}</div>
-                            <div class="description">
-                                ${lf("Save the text output.")}
-                            </div>
-                        </div>
-                        <div class="ui bottom attached button">
-                            <i class="download icon"></i>
-                            ${lf("Download")}
-                        </div>
-                    </div>
-                </div>`
-        }).done()
     }
 
     goBack() {
@@ -303,7 +228,7 @@ export class Editor extends srceditor.Editor {
                         <sui.Button class="ui icon circular small inverted button" ariaLabel={lf("Close")} onClick={this.goBack.bind(this) }>
                             <sui.Icon icon="close" />
                         </sui.Button>
-                        <sui.Button class="ui icon circular small inverted button" ariaLabel={lf("Export data")} onClick={this.showExportDialog.bind(this)}>
+                        <sui.Button class="ui icon circular small inverted button" ariaLabel={lf("Export data")} onClick={() => pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")}>
                             <sui.Icon icon="download" />
                         </sui.Button>
                     </div>
