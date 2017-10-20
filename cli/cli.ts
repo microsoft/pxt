@@ -2703,7 +2703,10 @@ function runCoreAsync(res: pxtc.CompileResult) {
     if (f) {
         // TODO: non-microbit specific load
         pxsim.initCurrentRuntime = pxsim.initBareRuntime
-        let r = new pxsim.Runtime(f)
+        let r = new pxsim.Runtime({
+            type: "run",
+            code: f
+        })
         pxsim.Runtime.messagePosted = (msg) => {
             if (msg.type == "serial") {
                 let d = (msg as any).data

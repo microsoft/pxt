@@ -186,8 +186,7 @@ namespace pxsim {
             if (msg.localizedStrings) {
                 pxsim.localization.setLocalizedStrings(msg.localizedStrings);
             }
-            runtime = new Runtime(msg.code);
-            runtime.id = msg.id;
+            runtime = new Runtime(msg);
             runtime.board.initAsync(msg)
                 .done(() => {
                     runtime.run((v) => {
