@@ -1169,7 +1169,7 @@ namespace pxt.blocks {
                         subHeadingLabel.setAttribute('text', `${topCats[i].getAttribute('name')} > ${subCats[j].getAttribute('name')}`);
                         subHeadingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
                         subHeadingLabel.setAttribute('web-icon-color', topCats[i].getAttribute('colour'));
-                        subCats[i].insertBefore(subHeadingLabel, subCats[i].firstChild);
+                        subCats[j].insertBefore(subHeadingLabel, subCats[j].firstChild);
                         if (icon) {
                             if (icon.length == 1) {
                                 subHeadingLabel.setAttribute('web-icon', icon);
