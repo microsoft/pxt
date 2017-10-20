@@ -6,6 +6,14 @@ declare namespace pxsim {
         labelPosition: "above" | "below";
         labels: string[]
     }
+    interface LEDDefinition {
+        x: number;
+        y: number;
+        w?: number;
+        h?: number;
+        color: string;
+        label: string;
+    }
     interface BoardImageDefinition {
         image: string,
         outlineImage?: string,
@@ -13,6 +21,7 @@ declare namespace pxsim {
         height: number,
         pinDist: number,
         pinBlocks: PinBlockDefinition[],
+        leds?: LEDDefinition[]
     }
     interface BoardDefinition {
         visual: BoardImageDefinition | string,
