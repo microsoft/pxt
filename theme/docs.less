@@ -25,6 +25,8 @@
 @docsCardBorderColor: #e9eef2;
 @docsCardHoverBorderColor: #1dacf4;
 
+@docsAvatarUrl: none;
+
 #docs {
     background-color: @docsBackgroundColor;
     font-family: @docsPageFont !important;
@@ -94,8 +96,21 @@
     .tocmenu .menu {
         padding-left: 20px;
     }
+    /* Buttons */
+    .ui.primary.button p {
+        color: white;
+    }
 }
 
 .sideDocs #sidedocsbar a {
     color: @docsLinkColor;
 }
+
+.replaceDocsAvatar() when not (@docsAvatarUrl = none) {
+    #docs {
+        .avatar .avatar-image {
+            background-image: @docsAvatarUrl;
+        }
+    }
+}
+.replaceDocsAvatar();
