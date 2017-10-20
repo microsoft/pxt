@@ -1735,7 +1735,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
-        const showWindowsStoreBanner = !this.state.hideWindowsStoreBanner && isWindows10 && pxt.appTarget.windowsStoreInfo;
+        const showWindowsStoreBanner = !this.state.hideWindowsStoreBanner && !pxt.winrt.isWinRT() && isWindows10 && pxt.appTarget.windowsStoreInfo;
         const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
         // cookie consent
