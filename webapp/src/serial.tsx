@@ -213,13 +213,14 @@ export class Editor extends srceditor.Editor {
 
     entriesToCSV() {
         let csv = this.charts.map(chart => `time (s), ${chart.variable} (${chart.source})`).join(', ') + '\r\n';
-        const datas = this.charts.map(chart => chart.line.data);
-        const nl = datas.map(data => data.length).reduce((l, c) => Math.max(l, c));
-        const nc = this.charts.length;
-        for (let i = 0; i < nl; ++i) {
-            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ' , ').join(', ');
-            csv += '\r\n';
-        }
+        //TODO
+        //const datas = this.charts.map(chart => chart.line.data);
+        //const nl = datas.map(data => data.length).reduce((l, c) => Math.max(l, c));
+        //const nc = this.charts.length;
+        //for (let i = 0; i < nl; ++i) {
+        //    csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ' , ').join(', ');
+        //    csv += '\r\n';
+       // }
         return csv;
     }
 
@@ -386,7 +387,7 @@ class Chart {
     }
 
     tooltip(timestamp: number, data: { series: TimeSeries, index: number, value: number }[]): string {
-        return data.map(n => `<span>${(n.series as any).__name}: ${n.value}</span>`).join('');
+        return data.map(n => `<span>${(n.series as any).timeSeries.__name}: ${n.value}</span>`).join('<br/>');
     }
 
     getLine(name: string): TimeSeries {
@@ -414,7 +415,7 @@ class Chart {
             return hex
         }
         let nums = m.slice(1, 4).map(n => parseInt(n, 16))
-        nums.push(0.7)
+        nums.push(0.3)
         return "rgba(" + nums.join(",") + ")"
     }
 
