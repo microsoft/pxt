@@ -135,7 +135,7 @@ int main() {
 
 Drivers are commonly low level interfaces that control external or integrated hardware on a device. For embedded developers, creating and using drivers involves translating datasheets into program code and using low-level interface, which can alienate novice programmers.
 
-In CODAL, drivers abstract away the complexities of the underlying hardware into reusable, extensible, easy-to-use components; for every hardware component there is a software component. There are three types of drivers in CODAL: (1) an abstract specification of a driver model common to most devices (e.g. I2C, Serial); (2) a driver that relies only on the interfaces specified in a driver model  (e.g. an I2C based device); and (3) the concrete implementation of the abstract driver model, which may be platform specific or platform agnostic. Not all devices are the same, and by generalising the interface devices can introduce platform specific optimisations and specialisations.
+In CODAL, drivers abstract away the complexities of the underlying hardware into reusable, extensible, easy-to-use components; for every hardware component there is a software component. There are three types of drivers in CODAL: (1) an abstract specification of a driver model common to most devices (e.g. I2C, Serial); (2) a driver that relies only on the interfaces specified in a driver model  (e.g. an I2C based driver); and (3) the concrete implementation of the abstract driver model, which may be platform specific or platform agnostic. Not all devices are the same, and by generalising the interface, devices can introduce platform specific optimisations and specialisations.
 
 Interrupts are integral to drivers: in Serial communications it is useful to know when a byte has been sent or received. As illustrated in the button example, performing operations in interrupt context can be detrimental to the device. CODAL drivers use events to decouple computational tasks, that may take a variable length of time, from interrupt context.
 
@@ -147,6 +147,11 @@ Interrupts are integral to drivers: in Serial communications it is useful to kno
 
 \subsubsection{Memory Management}
 
+Standard libraries in C++ do not offer reentrant versions of memory allocation calls like ``malloc'' and ``new'', critically this forbids the allocation of memory in interrupt context.
+
+CODAL implements its own heap allocater that is designed to safeguard users from the scenario above, introducing reentrant versions of malloc. The heap allocater is flexible, reconfigurable, and repurposable, allowing the specification of multiple heaps across memory and it is optimised for common sizes and repeat allocations.
+
+CODAL has a number of managed types that use reference counting to determine when memory should be freed. Internally, managed types use malloc to copy stack allocated data to the heap --- the reentrant behaviour of malloc and free are key here, as references can be created and destroyed regardless of processor context.
 % * provides an interrupt safe environment for memory allocation
 % * flexible implementation
 %     - multiple heaps
