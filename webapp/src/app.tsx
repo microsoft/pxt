@@ -1692,6 +1692,10 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         this.setState({ hideExperimentalBanner: true });
     }
 
+    hideWindowsStoreBanner() {
+        this.setState({ hideWindowsStoreBanner: true })
+    }
+
     renderCore() {
         theEditor = this;
 
@@ -1750,6 +1754,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
+        const isWindows10 = true;
+        const showWindowsStoreBanner = !this.state.hideWindowsStoreBanner && isWindows10;
         const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
         // cookie concent
@@ -1776,6 +1782,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             hideMenuBar ? 'hideMenuBar' : '',
+            showWindowsStoreBanner ? "showWindowsStoreBanner" : "",
             !showEditorToolbar ? 'hideEditorToolbar' : '',
             sandbox && simActive ? 'simView' : '',
             'full-abs',
@@ -1790,6 +1797,14 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     <div className="content">
                         <div className="header">{lf("You are viewing an experimental version of the editor")}</div>
                         <a href={liveUrl}>{lf("Take me back")}</a>
+                    </div>
+                </div> : undefined}
+                {showWindowsStoreBanner ? <div id="windowsStoreBanner" className="ui icon attached blue message">
+                    <sui.Icon icon="close" onClick={() => this.hideWindowsStoreBanner()} />
+                    <div className="content">
+                        <a href="https://www.microsoft.com/store/apps/9PGZHWSK0PGD?ocid=badge">
+                            <img src="https://assets.windowsphone.com/f2f77ec7-9ba9-4850-9ebe-77e366d08adc/English_Get_it_Win_10_InvariantCulture_Default.png" alt="Get it on Windows 10" />
+                        </a>
                     </div>
                 </div> : undefined}
                 {hideMenuBar ? undefined :
