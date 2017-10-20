@@ -1734,7 +1734,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
-        const isWindows10 = true;
+        const isWindows10 = pxt.BrowserUtils.isWindows10();
         const showWindowsStoreBanner = !this.state.hideWindowsStoreBanner && isWindows10;
         const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
@@ -1775,7 +1775,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                         <a href={liveUrl}>{lf("Take me back")}</a>
                     </div>
                 </div> : undefined}
-                {showWindowsStoreBanner ? <div id="windowsStoreBanner" className="ui icon attached blue message">
+                {showWindowsStoreBanner ? <div id="windowsStoreBanner" className="ui icon blue attached message">
                     <sui.Icon icon="close" onClick={() => this.hideWindowsStoreBanner()} />
                     <div className="content">
                         <a href="https://www.microsoft.com/store/apps/9PGZHWSK0PGD?ocid=badge">

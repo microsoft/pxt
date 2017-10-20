@@ -27,7 +27,18 @@ html, body {
 }
 
 #filelist, #maineditor, #sidedocs {
-    top:@mainMenuHeight;
+    top: @mainMenuHeight;
+}
+
+.showWindowsStoreBanner #filelist,
+    .showWindowsStoreBanner #maineditor,
+    .showWindowsStoreBanner #sidedocs {
+    top: calc(@mainMenuHeight + @bannerHeight);
+}
+
+.showWindowsStoreBanner #menubar {
+    top: @bannerHeight;
+    margin: 0;
 }
 
 .hideMenuBar #filelist,
@@ -367,11 +378,11 @@ div.simframe > iframe {
 }
 
 #windowsStoreBanner {
-    height: 6rem;
+    height: @bannerHeight;
 }
 
 #windowsStoreBanner img {
-    height: 5rem;
+    height: calc(@bannerHeight - 1rem);
 }
 
 /*******************************
