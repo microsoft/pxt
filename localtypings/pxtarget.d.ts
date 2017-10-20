@@ -261,8 +261,9 @@ declare namespace pxt {
 
         markdown?: string;
     }
-    
+
     interface WindowsStoreInfo {
+        appName: string,
         link: string,
         thumbnail: string
     }
