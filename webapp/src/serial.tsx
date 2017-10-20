@@ -111,14 +111,13 @@ export class Editor extends srceditor.Editor {
                 break
             }
         }
-        if (homeChart) {
-            homeChart.addPoint(nvalue)
-        } else {
-            let newChart = new Chart(source, variable, nvalue, this.chartIdx)
-            this.chartIdx++
-            this.charts.push(newChart)
-            this.chartRoot.appendChild(newChart.getElement())
+        if (!homeChart) {
+            homeChart = new Chart(source, variable, this.chartIdx)
+            this.chartIdx++;
+            this.charts.push(homeChart)
+            this.chartRoot.appendChild(homeChart.getElement());
         }
+        homeChart.addPoint(variable, nvalue)
     }
 
     appendConsoleEntry(data: string) {
@@ -345,16 +344,18 @@ export class StartPauseButton extends data.Component<StartPauseButtonProps, Star
 
 class Chart {
     rootElement: HTMLElement = document.createElement("div")
+    lineColors: string[];
+    chartIdx: number;
     canvas: HTMLCanvasElement;
     label: HTMLDivElement;
-    line: TimeSeries = new TimeSeries();
+    lines: pxt.Map<TimeSeries> = {};
     source: string;
     variable: string;
     chart: SmoothieChart;
     isStale: boolean = false;
     lastUpdatedTime: number = 0;
 
-    constructor(source: string, variable: string, value: number, chartIdx: number) {
+    constructor(source: string, variable: string, chartIdx: number) {
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme
         // Initialize chart
         const chartConfig: IChartOptions = {
@@ -366,19 +367,41 @@ class Chart {
                 borderVisible: false,
                 fillStyle: serialTheme && serialTheme.graphBackground || '#fff',
                 strokeStyle: serialTheme && serialTheme.graphBackground || '#fff'
-            }
+            },
+            labels: {
+                fontSize: 12
+            },
+            tooltip: true,
+            tooltipFormatter: (ts, data) => this.tooltip(ts, data)
         }
-        this.chart = new SmoothieChart(chartConfig)
-        const lineColors = serialTheme && serialTheme.lineColors || ["#f00", "#00f", "#0f0", "#ff0"]
-        let lineColor = lineColors[chartIdx % (lineColors.length)]
-        this.rootElement.className = "ui segment"
-        this.source = source
-        this.variable = variable
-        this.chart.addTimeSeries(this.line, { strokeStyle: lineColor, fillStyle: this.hexToHalfOpacityRgba(lineColor), lineWidth: 3 })
+        this.lineColors = serialTheme && serialTheme.lineColors || ["#f00", "#00f", "#0f0", "#ff0"]
+        this.chartIdx = chartIdx;
+        this.chart = new SmoothieChart(chartConfig);
+        this.rootElement.className = "ui segment";
+        this.source = source;
+        this.variable = variable.replace(/\..*$/, ''); // keep prefix only
 
         this.rootElement.appendChild(this.makeLabel())
         this.rootElement.appendChild(this.makeCanvas())
-        this.addPoint(value)
+    }
+
+    tooltip(timestamp: number, data: { series: TimeSeries, index: number, value: number }[]): string {
+        return data.map(n => `<span>${(n.series as any).__name}: ${n.value}</span>`).join('');
+    }
+
+    getLine(name: string): TimeSeries {
+        let line = this.lines[name];
+        if (!line) {
+            const lineColor = this.lineColors[this.chartIdx++ % this.lineColors.length]
+            this.lines[name] = line = new TimeSeries();
+            (line as any).__name = Util.htmlEscape(name.substring(this.variable.length + 1));
+            this.chart.addTimeSeries(line, {
+                strokeStyle: lineColor,
+                fillStyle: this.hexToHalfOpacityRgba(lineColor),
+                lineWidth: 3
+            })
+        }
+        return line;
     }
 
     hexToHalfOpacityRgba(hex: string) {
@@ -421,15 +444,21 @@ class Chart {
     }
 
     shouldContain(source: string, variable: string) {
-        return this.source == source && this.variable == variable
+        return this.source == source 
+            && this.variable == variable.replace(/\..*$/, '');
     }
 
-    addPoint(value: number) {
-        this.line.append(Util.now(), value)
+    addPoint(name: string, value: number) {
+        const line = this.getLine(name);
+        line.append(Util.now(), value)
         this.lastUpdatedTime = Util.now();
-        // update label with last value
-        const valueText = Number(Math.round(Number(value + "e+2")) + "e-2").toString();
-        this.label.innerText = this.variable ? `${this.variable}: ${valueText}` : valueText;
+        if (Object.keys(this.lines).length == 1) {
+            // update label with last value
+            const valueText = Number(Math.round(Number(value + "e+2")) + "e-2").toString();
+            this.label.innerText = this.variable ? `${this.variable}: ${valueText}` : valueText;
+        } else {
+            this.label.innerText = this.variable || '';
+        }
     }
 
     start() {
@@ -441,10 +470,11 @@ class Chart {
     }
 
     toCSV(): string {
-        const data = this.line.data;
-        if (data.length == 0) return '';
-        const t0 = data[0][0];
-        return `time (s), ${this.variable}, ${lf("Tip: Insert a Scatter Chart to visualize this data.")}\r\n` +
-            data.map(row => ((row[0] - t0) / 1000) + ", " + row[1]).join('\r\n');
+        return '';
+        //const data = this.line.data;
+        //if (data.length == 0) return '';
+        //const t0 = data[0][0];
+        //return `time (s), ${this.variable}, ${lf("Tip: Insert a Scatter Chart to visualize this data.")}\r\n` +
+        //    data.map(row => ((row[0] - t0) / 1000) + ", " + row[1]).join('\r\n');
     }
 }
