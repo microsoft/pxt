@@ -31,10 +31,14 @@ This will result in:
 ...
 ```
 
-Sections stretch until a header with the same or smaller number
+The section span ends when a header with the same or smaller number
 of `#` in front is found. This isn't relevant for plain HTML, but
 matters when overriding sections (see below).
 
 Thus, the section named `ex` contains Examples 1, 2, and 3.
 Section `ex2` contains only Example 2,
 and section `also` contains the See also paragraph.
+
+## Accessible sections
+
+In order to assist navigation into and out of subsections (using assistive technologies like screen readers), keep the section levels in sequenece. This means that a section immediatlely following a `#` begins with a `##` and not a `###`. The same sequencing applies to down level sections too.

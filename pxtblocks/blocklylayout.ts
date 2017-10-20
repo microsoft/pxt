@@ -60,17 +60,6 @@ namespace pxt.blocks.layout {
         })
     };
 
-    export function shuffle(ws: B.Workspace, ratio?: number) {
-        let blocks = ws.getAllBlocks().filter(b => !b.isShadow_);
-        // unplug all blocks
-        blocks.forEach(b => b.unplug());
-        // TODO: better layout
-        // randomize order
-        fisherYates(blocks);
-        // apply layout
-        flowBlocks(blocks, ratio);
-    }
-
     export function flow(ws: B.Workspace, opts?: FlowOptions) {
         if (opts) {
             if (opts.useViewWidth) {
@@ -169,14 +158,16 @@ namespace pxt.blocks.layout {
         return pxt.BrowserUtils.loadAjaxAsync(customCssHref)
             .then((customCss) => {
 
-            // CSS may contain <, > which need to be stored in CDATA section
-            cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
-            xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
+                const blocklySvg = Util.toArray(document.head.querySelectorAll("style"))
+                    .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
+                // CSS may contain <, > which need to be stored in CDATA section
+                cssLink.appendChild(xsg.createCDATASection((blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss + '\n\n'));
+                xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 
-            return expandImagesAsync(xsg)
-                .then(() => {
-                    return { width: width, height: height, xml: documentToSvg(xsg) };
-                });
+                return expandImagesAsync(xsg)
+                    .then(() => {
+                        return { width: width, height: height, xml: documentToSvg(xsg) };
+                    });
             })
     }
 
@@ -248,35 +239,6 @@ namespace pxt.blocks.layout {
                 insertx = marginx;
                 inserty = endy;
             }
-        }
-    }
-
-    function robertJenkins(): () => number {
-        let seed = 0x2F6E2B1;
-        return function () {
-            // https://gist.github.com/mathiasbynens/5670917
-            // Robert Jenkins’ 32 bit integer hash function
-            seed = ((seed + 0x7ED55D16) + (seed << 12)) & 0xFFFFFFFF;
-            seed = ((seed ^ 0xC761C23C) ^ (seed >>> 19)) & 0xFFFFFFFF;
-            seed = ((seed + 0x165667B1) + (seed << 5)) & 0xFFFFFFFF;
-            seed = ((seed + 0xD3A2646C) ^ (seed << 9)) & 0xFFFFFFFF;
-            seed = ((seed + 0xFD7046C5) + (seed << 3)) & 0xFFFFFFFF;
-            seed = ((seed ^ 0xB55A4F09) ^ (seed >>> 16)) & 0xFFFFFFFF;
-            return (seed & 0xFFFFFFF) / 0x10000000;
-        }
-    }
-
-    function fisherYates<T>(myArray: T[]): void {
-        let i = myArray.length;
-        if (i == 0) return;
-        // TODO: seeded random
-        let rnd = robertJenkins();
-        while (--i) {
-            let j = Math.floor(rnd() * (i + 1));
-            let tempi = myArray[i];
-            let tempj = myArray[j];
-            myArray[i] = tempj;
-            myArray[j] = tempi;
         }
     }
 }

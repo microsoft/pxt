@@ -81,6 +81,8 @@ export class Editor implements pxt.editor.IEditor {
     zoomIn() { }
     zoomOut() { }
 
+    closeFlyout() { }
+
     /*******************************
      loadFile
     *******************************/
@@ -114,4 +116,8 @@ export class Editor implements pxt.editor.IEditor {
     }
 
     setHighContrast(hc: boolean) {}
+
+    hasEditorToolbar() {
+        return true
+    }
 }

@@ -15,7 +15,7 @@ if (true){}
 let x = 0;
 ```
 
-## Built-in objects
+## Built-in objects #builtins
 
 ```namespaces
 Math.randomRange(0,5);

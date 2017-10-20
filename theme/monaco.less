@@ -1,0 +1,167 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+/*******************************
+        Monaco Editor
+*******************************/
+
+.monaco-editor .monaco-scrollable-element.editor-scrollable {
+    margin-left: .5rem;
+}
+
+/* Monaco Editor Line number colors, changed from the default light theme */
+.monaco-editor.vs .line-numbers {
+    color: #2c3e50 !important;
+}
+
+/* Monaco Editor Line number background, changed from the default light theme */
+.monaco-editor.vs .margin-view-overlays.monaco-editor-background {
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Monaco Editor Current line highlighting, only needed for the light theme */
+.monaco-editor.vs .current-line {
+	background: rgba(0, 0, 255, 0.1) !important;
+}
+
+/* Monaco Editor Suggest Widget, styling */
+.monaco-editor .suggest-widget {
+    border-radius:5px;
+}
+.monaco-list-row.focused {
+    background-color:#0078D7 !important;
+    color: #fff !important;
+}
+.monaco-editor.vs .suggest-widget:not(.frozen) .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
+    color: #0078D7 !important;
+}
+.monaco-editor.vs .suggest-widget:not(.frozen) .monaco-list .monaco-list-row.focused .monaco-highlighted-label .highlight {
+    color: #fff !important;
+}
+.monaco-editor.vs .suggest-widget .details > .monaco-scrollable-element > .body > .type, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .type-label {
+    color: #FFB900 !important;
+}
+
+/* Monaco Editor Main tokens */
+.monaco-editor .highlight-statement {
+    background-color: #FF8B27;
+}
+
+/* Monaco Toolbox */
+.monacoToolboxDiv {
+    z-index: @blocklyToolboxZIndex;
+}
+// Hover elements
+.monaco-editor-hover {
+    z-index: @menuBarZIndex+1 !important;
+}
+
+.monacoFlyout {
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    background: @monacoFlyoutColor;
+    overflow-x: visible;
+    overflow-y: auto;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    z-index: @monacoFlyoutZIndex;
+}
+
+.monacoFlyout > div:not(.monacoFlyoutHeading) {
+    margin: 1rem;
+}
+.monacoFlyout > div:not(.monacoFlyoutHeading), .monacoFlyout .monacoDraggableBlock {
+    max-width: 350px;
+}
+
+.monacoFlyoutLabel {
+    vertical-align: middle;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    color: white;
+    font-size: 15px;
+}
+
+.monacoFlyoutHeading {
+    margin: .3rem;
+    padding-left: .8rem;
+}
+.monacoFlyoutHeading .monacoFlyoutHeadingText {
+    color: white;
+    vertical-align: middle !important;
+}
+.monacoFlyoutHeadingText {
+    font-family: @pageFont;
+}
+.monacoFlyoutHeadingIcon {
+    font-size: 1.5rem !important;
+    vertical-align: middle !important;
+}
+.monacoFlyoutLabelLine {
+    border: none;
+    border-top: 1px dotted white;
+    height:1px;
+}
+
+.monacoDraggableBlock {
+    color: @white;
+    padding: 0.6rem;
+    border-radius: 8px;
+    border: solid 1px @white;
+    cursor: pointer;
+    display: inline-block;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    position: relative;
+}
+
+.monacoDraggableBlock.monacoHexBlock {
+    margin-left: 17px;
+    margin-right: 17px;
+}
+.monacoDraggableBlock.monacoHexBlock:before,
+.monacoDraggableBlock.monacoHexBlock:after {
+    content: '';
+    position:absolute;
+    width: 0;
+    top: 0;
+}
+.monacoDraggableBlock.monacoHexBlock:before {
+    left: -17px;
+}
+.monacoDraggableBlock.monacoHexBlock:after {
+    left: 100%;
+}
+
+.monacoDraggableBlock span.sig {
+    opacity: 0.6;
+    margin-left: 10px;
+    word-wrap: break-word;
+}
+
+.monacoDraggableBlock span.docs {
+    display: block; /* enable as needed */
+    color: @white;
+    font-size:70%;
+    max-width: 22rem;
+}
+
+/* Limit color interferences with semantic anchor element */
+.monaco-action-bar .action-label {
+    color: inherit !important;
+}
+
+/*******************************
+        Monaco Accessibility
+*******************************/
+
+.monacoDraggableBlock:focus {
+    outline: none; /* We highlight the focused item in the toolbox, no need to outline */
+}

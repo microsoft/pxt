@@ -26,6 +26,10 @@ Generate a web site compatiable with GitHub pages.
 
 Directory for generated files. 
 
+### bump (option)
+
+Bump version number generating pages
+
 ### ~ hint
 
 This directory is cleaned before starting the process.

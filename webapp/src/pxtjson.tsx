@@ -1,8 +1,8 @@
 import * as React from "react";
 import * as pkg from "./package";
-import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as sui from "./sui";
+import * as core from "./core";
 import * as codecard from "./codecard"
 
 import Cloud = pxt.Cloud;
@@ -23,6 +23,10 @@ export class Editor extends srceditor.Editor {
         return "pxtJsonEditor"
     }
 
+    hasEditorToolbar() {
+        return false
+    }
+
     display() {
         const c = this.config
         const save = () => {
@@ -30,13 +34,14 @@ export class Editor extends srceditor.Editor {
             const f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
             f.setContentAsync(JSON.stringify(this.config, null, 4) + "\n").then(() => {
                 pkg.mainPkg.config.name = c.name;
-                this.parent.setState({projectName: c.name});
+                this.parent.setState({ projectName: c.name });
                 this.parent.forceUpdate()
                 Util.nextTick(this.changeCallback)
                 this.isSaving = false;
                 this.changeMade = true;
                 // switch to previous coding experience
                 this.parent.openPreviousEditor();
+                core.resetFocus();
             })
         }
         const setFileName = (v: string) => {
@@ -85,8 +90,13 @@ export class Editor extends srceditor.Editor {
         }
         return (
             <div className="ui content">
-                <div className="ui segment form text" style={{ backgroundColor: "white" }}>
-                    <sui.Input label={lf("Name")} value={c.name} onChange={setFileName}/>
+                <h3 className="ui small header">
+                    <div className="content">
+                        {lf("Project Settings")}
+                    </div>
+                </h3>
+                <div className="ui segment form text">
+                    <sui.Input id={"fileNameInput"} label={lf("Name") } ariaLabel={lf("Type a name for your project") } value={c.name} onChange={setFileName}/>
                     {userConfigs.map(uc =>
                         <sui.Checkbox
                             key={`userconfig-${uc.description}`}
@@ -95,7 +105,7 @@ export class Editor extends srceditor.Editor {
                             onChange={() => applyUserConfig(uc) } />
                     ) }
                     <sui.Field>
-                        <sui.Button text={lf("Save")} class={`green ${this.isSaving ? 'disabled' : ''}`} onClick={() => save()} />
+                        <sui.Button text={lf("Save") } class={`green ${this.isSaving ? 'disabled' : ''}`} onClick={() => save() } />
                         <sui.Button text={lf("Edit Settings As text") } onClick={() => this.editSettingsText() } />
                     </sui.Field>
                 </div>

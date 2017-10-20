@@ -26,7 +26,6 @@ export class File implements pxt.editor.IFile {
     inSyncWithDisk = true;
     diagnostics: pxtc.KsDiagnostic[];
     numDiagnosticsOverride: number;
-    virtualSource: File;
     filters: pxt.editor.ProjectFilters;
     forceChangeCallback: ((from: string, to: string) => void);
 

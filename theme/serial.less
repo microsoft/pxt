@@ -1,0 +1,141 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+/*-------------------
+   Serial
+--------------------*/
+
+@serialBackgroundColor: lighten(@simulatorBackground, 2);
+@serialTextColor: #fff;
+@serialGraphBackground: #fefefe;
+
+#serialEditor {
+    background-color: @serialBackgroundColor;
+}
+
+#serialArea {
+    height: 90%;
+    padding: 1rem;
+}
+
+#serialArea .ui.divider {
+    margin-bottom: 5px;
+}
+
+#serialArea .ui.segment {
+    border: none;
+    box-shadow: none;
+    background-color: @serialBackgroundColor;
+}
+
+#serialHeader {
+    padding: 0;
+    margin: 0 0 1rem 0;
+    display: flex;
+}
+
+#serialHeader .leftHeaderWrapper {
+    display: block;
+}
+
+#serialHeader .leftHeader .ui.header {
+    margin: 0;
+    margin-left: 1rem;
+    color: @serialTextColor;
+}
+
+#serialHeader .leftHeader {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+#serialHeader .rightHeader {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: row-reverse;
+    align-items: center;
+}
+
+#serialHeader .toggleRecord {
+    transition: border-radius 1s ease-in-out;
+}
+
+#serialConsole {
+    margin-top: 0.5rem;
+    height: calc(25% - 0.5rem);
+    overflow-y: auto;
+    color: @serialTextColor;
+}
+
+#serialConsole div {
+    word-wrap: break-word;
+}
+
+#serialCharts {
+    height: 65%;
+    overflow-y: auto;
+}
+
+#serialCharts .seriallabel {
+    padding: 5px 10px 5px 10px;
+    border: 1px solid black;
+    color: #000;
+    width: auto;
+    border-radius: 20px;
+    margin: 5px;
+}
+
+#serialCharts .ui.segment {
+    padding: 0.4rem;
+    height: 12rem;
+    background-color: @serialGraphBackground;
+    border: 1px solid lighten(@serialGraphBackground, 10.0);
+}
+
+#serialCharts canvas {
+    border-radius: 5px;
+    width: 100%;
+    height: 100%;
+    margin: 0 !important;
+}
+
+#serialCharts.noconsole {
+    height:calc(100% - 0.5rem) !important;
+}
+
+#serialConsole.noconsole {
+    display: none !important;
+}
+
+#serialPreview .ui.left.labeled.button {
+    margin: 1px;
+    width: 100%;
+    border: 2px solid lighten(@serialGraphBackground, 10.0) !important;
+    height: 45px;
+    background-color: lighten(@serialGraphBackground, 10.0) !important;
+}
+
+#serialPreview .label {
+    width: 100%;
+    background-color: lighten(@serialGraphBackground, 10.0);
+    font-size: 0.85em;
+    border: none;
+}
+
+#serialPreview .indicator {
+    margin-left: 0;
+}
+
+#serialPreview canvas {
+    background-color: lighten(@serialGraphBackground, 10.0);
+    padding: 0 5px 0 0;
+}
+
+.serialindicator {
+    cursor:pointer;
+}

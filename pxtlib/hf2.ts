@@ -220,6 +220,15 @@ namespace pxt.HF2 {
             }
             io.onError = err => {
                 log("recv error: " + err.message)
+                if (this.autoReconnect) {
+                    this.autoReconnect = false
+                    this.reconnectAsync()
+                        .then(() => {
+                            this.autoReconnect = true
+                        }, err => {
+                            log("reconnect error: " + err.message)
+                        })
+                }
                 //this.msgs.pushError(err)
             }
         }
@@ -233,6 +242,7 @@ namespace pxt.HF2 {
         maxMsgSize: number = 63; // when running in forwarding mode, we do not really know
         bootloaderMode = false;
         reconnectTries = 0;
+        autoReconnect = false;
         msgs = new U.PromiseBuffer<Uint8Array>()
         eventHandlers: pxt.Map<(buf: Uint8Array) => void> = {}
 

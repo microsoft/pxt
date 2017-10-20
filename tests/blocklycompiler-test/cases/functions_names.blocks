@@ -1,0 +1,36 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+    <variables>
+        <variable type="" id="b)wQg)E?4BUVMXnl+YQ=">item</variable>
+        <variable type="" id="wl~aEx^,JfC+Lb,)im!w">index</variable>
+    </variables>
+    <block type="pxt-on-start" id="[XKC}3fVE|rx^z|RCzYW" x="0" y="0">
+        <statement name="HANDLER">
+        <block type="procedures_callnoreturn" id="I(DWp,IUJU9q)aXp/P9z">
+            <mutation name="item"></mutation>
+            <field name="NAME">item</field>
+            <next>
+            <block type="procedures_callnoreturn" id="ARf7hYyxPdjkA:wnfme}">
+                <mutation name="Math"></mutation>
+                <field name="NAME">Math</field>
+            </block>
+            </next>
+        </block>
+        </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="jFnoDGL_]l1Lw}qbT(7*" x="330" y="70">
+        <field name="NAME">item</field>
+        <statement name="STACK">
+        <block type="variables_set" id="Oe)}=lykOz}zHbZ4H_rI">
+            <field name="VAR" id="b)wQg)E?4BUVMXnl+YQ=" variabletype="">item</field>
+            <value name="VALUE">
+            <shadow type="math_number" id="7%g;:W:1Z/O]KHRZF):E">
+                <field name="NUM">0</field>
+            </shadow>
+            </value>
+        </block>
+        </statement>
+    </block>
+    <block type="procedures_defnoreturn" id="u`R*dMO4v-:Z}_^ELf+`" x="20" y="200">
+        <field name="NAME">Math</field>
+    </block>
+</xml>

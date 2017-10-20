@@ -1,3 +1,6 @@
+
+@import 'zindex.variables';
+
 /*******************************
      User Global Variables
 *******************************/
@@ -17,8 +20,12 @@
 @brown:#00BCF2;
 @grey:#505050;
 
-@pageBackground: #ffffff;
+@greenTextColor: darken(@green, 5);
 
+@lightTextColor              : rgba(0, 0, 0, 0.68);
+@invertedUnselectedTextColor : rgba(255, 255, 255, 0.8); 
+
+@pageBackground: #ffffff;
 
 /*-------------------
      Fonts
@@ -31,6 +38,12 @@
 
 @emSize      : 14px;
 @fontSize    : 12pt;
+
+/*-------------------
+   Links
+--------------------*/
+
+@linkColor           : #004d99;
 
 /*-------------------
    Breakpoints
@@ -47,11 +60,48 @@
 @tallEditorBreakpoint: 44rem;
 @thinEditorBreakpoint: 24rem;
 
+/*--------------
+   Form Input
+---------------*/
+
+@inputPlaceholderColor: lighten(@inputColor, 25);
+@inputPlaceholderFocusColor: lighten(@inputColor, 10);
+
+/*-------------------
+     Neutral Text
+--------------------*/
+ 
+@invertedLightTextColor      : rgba(255, 255, 255, 0.9);
+
+/*******************************
+             States
+*******************************/
+
+/*-------------------
+      Disabled
+--------------------*/
+
+@disabledOpacity: 0.80;
+
+/*-------------------
+    Scroll Bars
+--------------------*/
+
+@useCustomScrollbars: true;
+@customScrollbarWidth: 6px;
+
+@thumbBackground: rgba(0, 0, 0, 0.25);
+@thumbInvertedBackground: rgba(255, 255, 255, 0.25);
+
 /*******************************
      PXT Variables
 *******************************/
 
 @avatarUrl: data-uri("../docs/static/avatar.svg");
+@fileLogoUrl: data-uri("../docs/static/filelogo.svg");
+
+@poweredBySmall: data-uri("../docs/static/logo/Powered-By-Microsoft-logo-small.png");
+@poweredByLarge: data-uri("../docs/static/logo/Powered-By-Microsoft-logo.png");
 
 /*-------------------
    Menu
@@ -84,6 +134,8 @@
 @simulatorBackground: #fff;
 @editorToolsBackground: @simulatorBackground;
 @blocklySvgColor: #fff;
+
+@homeScreenBackground: #ecf0f1;
 
 /*-------------------
    Full screen
@@ -120,6 +172,12 @@
 @blocklyRowHeightTablet: 45px;
 @blocklyRowHeightMobile: 50px;
 
+@blocklyFont: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+
+@blocklyScrollbarBackgroundColor: none;
+@blocklyScrollbarColor: #CECDCE;
+@blocklyScrollbarOpacity: 1;
+
 /*-------------------
    Flyout
 --------------------*/
@@ -127,4 +185,4 @@
 @flyoutLabelColor: white;
 @blocklyFlyoutColor: @grey;
 @blocklyFlyoutColorOpacity: 0.9;
-@monacoFlyoutColor: rgba(221,221,221, 0.8);
+@monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);

@@ -14,6 +14,7 @@ namespace ts.pxtc {
 
     // snippets for ARM Thumb assembly
     export class ThumbSnippets extends AssemblerSnippets {
+        hasCommonalize() { return true }
         stackAligned() {
             return target.stackAlign && target.stackAlign > 1
         }
@@ -31,7 +32,15 @@ namespace ts.pxtc {
         }
         push_fixed(regs: string[]) { return "push {" + regs.join(", ") + "}" }
         pop_fixed(regs: string[]) { return "pop {" + regs.join(", ") + "}" }
-        proc_setup(main?: boolean) { return "push {lr}" }
+        proc_setup(numlocals: number, main?: boolean) {
+            let r = "push {lr}\n"
+            if (numlocals > 0) {
+                r += "    movs r0, #0\n"
+                for (let i = 0; i < numlocals; ++i)
+                    r += "    push {r0} ;loc\n"
+            }
+            return r
+        }
         proc_return() { return "pop {pc}" }
 
         debugger_stmt(lbl: string) {
@@ -69,6 +78,7 @@ ${lbl}:`
         cmp(reg1: string, reg2: string) { return "cmp " + reg1 + ", " + reg2 }
         cmp_zero(reg1: string) { return "cmp " + reg1 + ", #0" }
         load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) {
+            off = off.replace(/:\d+$/, "")
             if (word) {
                 off = `#4*${off}`
             }
@@ -130,14 +140,14 @@ ${lbl}:`
     lsls r0, r0, #${vtableShift}
     `;
         }
-        lambda_prologue() {
+        helper_prologue() {
             return `
     @stackmark args
     ${this.pushLR()}
     mov r5, r0
 `;
         }
-        lambda_epilogue() {
+        helper_epilogue() {
             return `
     bl pxtrt::getGlobalsPtr
     mov r6, r0

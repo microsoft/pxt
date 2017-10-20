@@ -31,13 +31,11 @@ and stored in the cloud. The C++ runtime binary is cached in the HTML5 applicati
 other assets) so that the web app can function when the browser is offline. Additional runtime
 components may be authored in STS, which allows the device runtime to be updated without the need
 for any C++ programming, and permits components of the device runtime to be shared by both the device
-and simulator runtimes.  We will describe later how elements of the C++ runtime are exposed to STS
-(via automated shim generation). The ability to author the device runtime in both STS and C++ is
+and simulator runtimes. The ability to author the device runtime in both STS and C++ is
 a unique aspect of MakeCode's design.
 
 Whether runtime components are authored in C++ or STS, all runtime APIs are exposed as fully-typed
-TypeScript definitions (for runtime components written in TypeScript) or declarations (for runtime
-components written in C++). A full-typed runtime improves the end-user experience by making it easier
+TypeScript definitions, via preprocessing of the runtime implementation by MakeCode. A full-typed runtime improves the end-user experience by making it easier
 to discover APIs; it also enables the type inference provided by the TypeScript compiler to infer types
 for (unannotated) user code.
 
@@ -71,7 +69,7 @@ void plot(int x, int y) {
 \end{lstlisting}
 
 We'll describe the attribute definitions in the \emph{//\%} comment in the next section. 
-MakeCode uses a  TypeScript declaration file to describe the TypeScript elements corresponding
+MakeCode uses a TypeScript declaration file to describe the TypeScript elements corresponding
 to C++ namespaces, enumerations and functions.  We call such files shim files.
 Since the C++ plot function is preceded by a \emph{//\%} comment, 
 MakeCode adds the following TypeScript declaration to the shim file (shims.d.ts) and copies
@@ -95,17 +93,16 @@ for type aliases to name the various C++ integer types commonly used for microco
 % don't use int, unsigned etc. they are actually different sizes on different compilers for AVR
 This is particularly useful for saving space on 8-bit architectures such as the AVR. 
 
-MakeCode supports both untagged and tagged integers (described more later).  Under the untagged strategy,
-a JavaScript number is interpreted as a C++ int by default, while the tagged strategy allows both
-interpretation as integer and double (with an optimization to convert from integer to double, as required).  
-MakeCode includes reference counted C++ types for strings and lambdas (with
-up to three arguments and a return type).
-
 MakeCode allows a set of C++ functions with the same first parameter (of type Foo) to be
 exposed as a TypeScript interface Foo as follows: this set of C++ functions must be grouped
 inside a namespace of the name FooMethods.  See, for example, how a C++ buffer abstraction is exposed:
 \href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp}{pxt-microbit/libs/core/buffer.cpp}.
 You can find the resulting TypeScript Buffer interface in the previously referenced shim file for the micro:bit.
+
+MakeCode includes reference counted C++ types for strings, lambdas (with
+up to three arguments and a return type) and collections.  
+MakeCode does not yet include garbage collection, so advanced users who create cyclic
+data structures must be careful to break cycles in order to ensure complete deallocation. 
 
 \subsection{Block Metadata Generation}
 
@@ -164,19 +161,22 @@ device runtime to an intermediate representation (IR) that makes explicit: label
 sequence of instructions with conditional and unconditional jumps; heap cells; field accesses; store operations,
 and reference counting.
 
-There are two backends for code generation from the IR. The first backend simply generates JavaScript,
-for execution against the simulator runtime.  The other backend generates assembler, parameterized by a
+There are four backends for code generation from the IR. The first backend simply generates JavaScript,
+for execution against the simulator runtime.  A second backend generates assembler, parameterized by a
 processor description.  Currently supported processors include ARM's Cortex class (Thumb instructions)
 and Atmel's Atmega class (AVR instructions). A separate assembler, also parameterized by an instruction
-encoder/decoder, generates machine code and resolves runtime refere3nce3s, producing a binary executable. 
+encoder/decoder, generates machine code and resolves runtime references, producing a binary executable.
+A third backend generates bytecode instructions and a fourth backend targets C\#. 
 The compiler chain
 can be found at \emph{\href{https://github.com/Microsoft/pxt/tree/master/pxtcompiler/emitter}{pxtcompiler/emitter}} and 
 \emph{\href{https://github.com/Microsoft/pxt/tree/master/pxtlib/emitter}{pxtlib/emitter}}.
 
+
 \subsubsection{Asynchronous Functions}
 
 An important part of the compilation process is to allow users to call asynchronous 
-TypeScript functions (identified through the \emph{//\% async} annotation) as if they were blocking functions.  
+TypeScript functions (identified through the \emph{//\% async} annotation) 
+as if they were blocking functions.  
 For execution in the browser,
 every function is compiled so that it can be suspended (at the return of a call) and later resumed (at the same point). 
 The default behavior at a suspension point is to immediately resume execution.  For a call to an async function,
@@ -197,17 +197,18 @@ the compiler simply emits a call to pause at a suspension point.
 
 \subsubsection{Untagged and Tagged Strategies}
 
-The MakeCode compiler supports the Static TypeScript language subset described in Section X, with two compilation
-strategies: untagged and tagged. 
-\emph{TODO
-Untagged compilation strategy
-No support for doubles. 32-bit integers (signed only). Use static type system to distinguish between integers and references.
-No runtime support.  Not fully compatible with JavaScript semantics. Null = Undefined = 0 = default integer value.  Support for
-different integer sizes using type aliases (this is used for AVR). 
-Tagged compilation strategy
-In the tagged strategy, numbers are either tagged 31-bit signed integers, or if they do not fit, boxed doubles. Code generation
-to check tag bit. Special constants like false, null and undefined are given special values and can be distinguished. Fully
-compatible with JavaScript semantics (number, null, undefined).   Can accommodate a richer type system.}
+The MakeCode compiler supports the Static TypeScript language subset described in Section~\ref{sec:sts},
+with two compilation strategies: untagged and tagged. Under the untagged strategy,
+a JavaScript number is interpreted as a C++ int by default and the type system is used
+to statically distinguish primitive values from boxed values. As a result, the untagged
+strategy is not fully faithful to JavaScript semantics: there is no support for floating
+point and the Null and Undefined types are represented by the default integer value of zero.
+This strategy is used for the micro:bit and Arduino Uno targets. 
+
+In the tagged strategy, numbers are either tagged 31-bit signed integers, or if they do not fit, 
+boxed doubles. Special constants like false, null and undefined are given special values 
+and can be distinguished. The tagged execution strategy has the capability to fully support
+JavaScript semantics. This strategy is used for all SAMD21 targets.
 
 \subsection{Simulator}
 

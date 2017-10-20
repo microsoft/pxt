@@ -1,8 +1,8 @@
-# Package Approval
+# Extension Approval
 
-Only approved packages may be surfaced in search results in the ``Add Packages`` dialog.
+Only approved extensions may be surfaced in search results in the ``Extensions`` dialog.
 GitHub Organizations or GitHub repos can be approved.
 
-Banned packages are not allowed to be loaded.
+Banned extensions are not allowed to be loaded.
 
 ## #approval

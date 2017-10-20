@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="../../localtypings/pxtblockly.d.ts" />
 /// <reference path="../../typings/globals/jquery/index.d.ts" />
 
 import * as React from "react";
@@ -32,11 +32,13 @@ export class Editor extends srceditor.Editor {
     showToolboxCategories: CategoryMode = CategoryMode.Basic;
     cachedToolbox: string;
     filters: pxt.editor.ProjectFilters;
+    extensions: pxt.PackageConfig[];
+    showSearch: boolean;
 
     setVisible(v: boolean) {
         super.setVisible(v);
         this.isVisible = v;
-        let classes = '.blocklyToolboxDiv, .blocklyWidgetDiv, .blocklyToolboxDiv';
+        let classes = '#blocksEditor .blocklyToolboxDiv, #blocksEditor .blocklyWidgetDiv, #blocksEditor .blocklyToolboxDiv';
         if (this.isVisible) {
             $(classes).show();
             // Fire a resize event since the toolbox may have changed width and height.
@@ -70,6 +72,7 @@ export class Editor extends srceditor.Editor {
     domUpdate() {
         if (this.delayLoadXml) {
             if (this.loadingXml) return
+            pxt.debug(`loading blockly`)
             this.loadingXml = true
 
             let loading = document.createElement("div");
@@ -79,28 +82,43 @@ export class Editor extends srceditor.Editor {
             editorDiv.appendChild(loading);
 
             this.loadingXmlPromise = compiler.getBlocksAsync()
-                .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
-                    let showSearch = true;
+                    let showSearch = this.showSearch;
                     let toolbox = this.getDefaultToolbox(this.showToolboxCategories);
 
                     // Search needs a toolbox with ALL blocks
                     let tbAll: Element;
                     if (this.showToolboxCategories !== CategoryMode.All) {
-                        tbAll = pxt.blocks.initBlocks(this.blockInfo, toolbox, CategoryMode.All, this.filters);
+                        tbAll = pxt.blocks.initBlocks(this.blockInfo, toolbox, CategoryMode.All, this.filters, this.extensions);
                     }
 
-                    let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, this.showToolboxCategories, this.filters);
+                    let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, this.showToolboxCategories, this.filters, this.extensions);
                     this.updateToolbox(tb, this.showToolboxCategories);
                     if (this.showToolboxCategories !== CategoryMode.None && showSearch) {
                         pxt.blocks.initSearch(this.editor, tb, tbAll || tb,
                             searchFor => compiler.apiSearchAsync(searchFor)
                                 .then((fns: pxtc.service.SearchInfo[]) => fns),
                             searchTb => this.updateToolbox(searchTb, this.showToolboxCategories, true));
+                    } else {
+                        pxt.blocks.removeSearch();
                     }
                     pxt.blocks.initFlyouts(this.editor);
+                    // Register extension callbacks
+                    pxt.blocks.initExtensions(this.editor, this.extensions, (extensionName) => {
+                        const extension = this.extensions.filter(c => c.name == extensionName)[0];
+                        const parsedRepo = pxt.github.parseRepoId(extension.installedVersion);
+                        const debug = pxt.Cloud.isLocalHost() && /debugExtensions/i.test(window.location.href);
+                        pxt.packagesConfigAsync()
+                            .then((config) => {
+                                const repoStatus = pxt.github.repoStatus(parsedRepo, config);
+                                const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
+                                const url = debug ? "http://localhost:3232/extension.html" : `https://${parsedRepo.owner}.github.io/${repoName}/`;
+                                this.parent.openExtension(extension.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
+                            });
+                    })
 
+                    pxt.debug(`loading block workspace`)
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
                     this.loadBlockly(xml);
@@ -109,11 +127,13 @@ export class Editor extends srceditor.Editor {
                     Blockly.svgResize(this.editor);
                     this.isFirstBlocklyLoad = false;
                 }).finally(() => {
+                    this.loadingXml = false
                     editorDiv.removeChild(loading);
+                    core.hideLoading("loadingblocks");
                 });
 
             if (this.isFirstBlocklyLoad) {
-                core.showLoadingAsync(lf("loading..."), this.loadingXmlPromise).done();
+                core.showLoadingAsync("loadingblocks", lf("loading..."), this.loadingXmlPromise).done();
             } else {
                 this.loadingXmlPromise.done();
             }
@@ -269,6 +289,18 @@ export class Editor extends srceditor.Editor {
         };
     }
 
+    private initToolboxPosition() {
+        let editor = this;
+        /**
+         * Move the toolbox to the edge.
+         */
+        const oldToolboxPosition = (Blockly as any).Toolbox.prototype.position;
+        (Blockly as any).Toolbox.prototype.position = function () {
+            oldToolboxPosition.call(this);
+            editor.resizeToolbox();
+        }
+    }
+
     private reportDeprecatedBlocks() {
         const deprecatedMap: pxt.Map<number> = {};
         let deprecatedBlocksFound = false;
@@ -392,6 +424,10 @@ export class Editor extends srceditor.Editor {
         let blocklyOptions = this.getBlocklyOptions(showCategories);
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
+        // set Blockly Colors
+        let blocklyColors = (Blockly as any).Colours;
+        Util.jsonMergeFrom(blocklyColors, pxt.appTarget.appTheme.blocklyColors || {});
+        (Blockly as any).Colours = blocklyColors;
         this.editor.addChangeListener((ev) => {
             Blockly.Events.disableOrphans(ev);
             if (ev.type != 'ui') {
@@ -413,11 +449,10 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
-                    if (ev.newValue == lf("{id:category}Add Package")) {
-                        (this.editor as any).toolbox_.clearSelection();
-                        this.parent.addPackage();
+                    if (ev.newValue == pxt.blocks.addPackageTitle) {
+                        this.addPackage();
                     }
-                    else if (ev.newValue == lf("{id:category}Advanced")) {
+                    else if (ev.newValue == pxt.blocks.advancedTitle) {
                         if (this.showToolboxCategories === CategoryMode.All) {
                             this.showToolboxCategories = CategoryMode.Basic;
                         }
@@ -463,18 +498,31 @@ export class Editor extends srceditor.Editor {
             }
         })
         this.initPrompts();
+        this.initToolboxPosition();
         this.resize();
     }
 
     resize(e?: Event) {
-        let blocklyArea = document.getElementById('blocksArea');
-        let blocklyDiv = document.getElementById('blocksEditor');
+        const blocklyArea = document.getElementById('blocksArea');
+        const blocklyDiv = document.getElementById('blocksEditor');
         // Position blocklyDiv over blocklyArea.
-        if (blocklyArea && this.editor) {
+        if (blocklyArea && blocklyDiv && this.editor) {
             blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
             blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
             Blockly.svgResize(this.editor);
+            this.resizeToolbox();
         }
+    }
+
+    resizeToolbox() {
+        const blocklyDiv = document.getElementById('blocksEditor');
+        if (!blocklyDiv) return;
+        const blocklyToolbox = blocklyDiv.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLDivElement;
+        if (!blocklyToolbox) return;
+        this.parent.updateEditorLogo(blocklyToolbox.clientWidth);
+
+        let toolboxHeight = blocklyDiv.offsetHeight;
+        blocklyToolbox.style.height = `${toolboxHeight}px`;
     }
 
     hasUndo() {
@@ -499,12 +547,17 @@ export class Editor extends srceditor.Editor {
 
     zoomIn() {
         if (!this.editor) return;
-        this.editor.zoomCenter(1);
+        this.editor.zoomCenter(2);
     }
 
     zoomOut() {
         if (!this.editor) return;
-        this.editor.zoomCenter(-1);
+        this.editor.zoomCenter(-2);
+    }
+
+    closeFlyout() {
+        if (!this.editor) return;
+        Blockly.hideChaff();
     }
 
     getId() {
@@ -517,6 +570,12 @@ export class Editor extends srceditor.Editor {
                 <div id="blocksEditor"></div>
             </div>
         )
+    }
+
+    addPackage() {
+        pxt.tickEvent("blocks.addpackage");
+        (this.editor as any).toolbox_.clearSelection();
+        this.parent.addPackage();
     }
 
     getViewState() {
@@ -534,7 +593,19 @@ export class Editor extends srceditor.Editor {
         return file.getExtension() == "blocks"
     }
 
+    overrideFile(content: string) {
+        if (this.delayLoadXml) {
+            this.delayLoadXml = content;
+            this.currSource = content;
+        } else {
+            this.loadBlockly(content);
+        }
+    }
+
     loadFileAsync(file: pkg.File): Promise<void> {
+        Util.assert(!this.delayLoadXml);
+        Util.assert(!this.loadingXmlPromise);
+
         this.currSource = file.content;
         this.typeScriptSaveable = false;
         this.setDiagnostics(file)
@@ -544,10 +615,15 @@ export class Editor extends srceditor.Editor {
         if (this.currFile && this.currFile != file) {
             this.filterToolbox(null);
         }
-        if (this.parent.state.filters) {
-            this.filterToolbox(this.parent.state.filters);
+        if (this.parent.state.editorState && this.parent.state.editorState.filters) {
+            this.filterToolbox(this.parent.state.editorState.filters);
         } else {
             this.filters = null;
+        }
+        if (this.parent.state.editorState && this.parent.state.editorState.searchBar != undefined) {
+            this.showSearch = this.parent.state.editorState.searchBar;
+        } else {
+            this.showSearch = true;
         }
         this.currFile = file;
         // Clear the search field if a value exists
@@ -555,11 +631,19 @@ export class Editor extends srceditor.Editor {
         if (searchField && searchField.value) {
             searchField.value = '';
         }
+        // Get extension packages
+        this.extensions = pkg.allEditorPkgs()
+            .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
+            // Make sure the package has extensions enabled, and is a github package.
+            // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
+            .filter(config => !!config && !!config.extension && config.installedVersion.indexOf('github') == 0);
+
         return Promise.resolve();
     }
 
     public switchToTypeScript() {
         pxt.tickEvent("blocks.switchjavascript");
+        this.parent.closeFlyout();
         this.parent.switchTypeScript();
     }
 
@@ -606,6 +690,7 @@ export class Editor extends srceditor.Editor {
 
     openTypeScript() {
         pxt.tickEvent("blocks.showjavascript");
+        this.parent.closeFlyout();
         this.parent.openTypeScriptAsync().done();
     }
 
@@ -640,7 +725,7 @@ export class Editor extends srceditor.Editor {
                 maxScale: 2.5,
                 minScale: .2,
                 scaleSpeed: 1.05,
-                startScale: pxt.BrowserUtils.isMobile() ? 1.2 : 1.0
+                startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.8
             },
             rtl: Util.isUserLanguageRtl()
         };
@@ -666,9 +751,9 @@ export class Editor extends srceditor.Editor {
         let tbAll: Element;
 
         if (this.showToolboxCategories !== CategoryMode.All) {
-            tbAll = pxt.blocks.createToolbox(this.blockInfo, toolbox, CategoryMode.All, this.filters);
+            tbAll = pxt.blocks.createToolbox(this.blockInfo, toolbox, CategoryMode.All, this.filters, this.extensions);
         }
-        let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, this.showToolboxCategories, this.filters);
+        let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, this.showToolboxCategories, this.filters, this.extensions);
         this.updateToolbox(tb, this.showToolboxCategories);
 
         pxt.blocks.cachedSearchTb = tb;

@@ -166,20 +166,31 @@ namespace ts.pxtc {
                 pkg,
                 extendsTypes,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
-                parameters: !hasParams ? null : (decl.parameters || []).map((p, i) => {
+                parameters: !hasParams ? null : (decl.parameters as ParameterDeclaration[] || []).map((p, i) => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
                     let minVal = attributes.paramMin && attributes.paramMin[n];
                     let maxVal = attributes.paramMax && attributes.paramMax[n];
                     let m = /\beg\.?:\s*(.+)/.exec(desc)
                     let props: PropertyDesc[];
-                    if (attributes.mutate && p.type.kind === SK.FunctionType) {
+                    let parameters: PropertyDesc[];
+                    if (p.type && p.type.kind === SK.FunctionType) {
                         const callBackSignature = typechecker.getSignatureFromDeclaration(p.type as FunctionTypeNode);
                         const callbackParameters = callBackSignature.getParameters();
-                        assert(callbackParameters.length > 0);
-                        props = typechecker.getTypeAtLocation(callbackParameters[0].valueDeclaration).getProperties().map(prop => {
-                            return { name: prop.getName(), type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(prop, callbackParameters[0].valueDeclaration)) }
-                        });
+                        if (attributes.mutate === "objectdestructuring") {
+                            assert(callbackParameters.length > 0);
+                            props = typechecker.getTypeAtLocation(callbackParameters[0].valueDeclaration).getProperties().map(prop => {
+                                return { name: prop.getName(), type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(prop, callbackParameters[0].valueDeclaration)) }
+                            });
+                        }
+                        else {
+                           parameters = callbackParameters.map((sym, i) => {
+                               return {
+                                   name: sym.getName(),
+                                   type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(sym, p))
+                               };
+                           });
+                        }
                     }
                     let options: Map<PropertyOption> = {};
                     const paramType = typechecker.getTypeAtLocation(p);
@@ -204,6 +215,7 @@ namespace ts.pxtc {
                         initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
                         default: attributes.paramDefl[n],
                         properties: props,
+                        handlerParameters: parameters,
                         options: options,
                         isEnum
                     }
@@ -214,37 +226,34 @@ namespace ts.pxtc {
         return null;
     }
 
-    export interface GenMarkdownOptions {
+    export interface GenDocsOptions {
         package?: boolean;
         locs?: boolean;
         docs?: boolean;
     }
 
-    export function genMarkdown(pkg: string, apiInfo: ApisInfo, options: GenMarkdownOptions = {}): pxt.Map<string> {
+    export function genDocs(pkg: string, apiInfo: ApisInfo, options: GenDocsOptions = {}): pxt.Map<string> {
+        pxt.debug(`generating docs for ${pkg}`)
+        pxt.debug(JSON.stringify(Object.keys(apiInfo.byQName), null, 2))
+
         const files: pxt.Map<string> = {};
         const infos = Util.values(apiInfo.byQName);
-        const namespaces = infos.filter(si => si.kind == SymbolKind.Module).sort(compareSymbol);
         const enumMembers = infos.filter(si => si.kind == SymbolKind.EnumMember).sort(compareSymbol);
-
-        const calls: pxt.Map<string> = {};
-        infos.filter(si => !!si.qName).forEach(si => calls[si.qName] = renderCall(apiInfo, si));
 
         const locStrings: pxt.Map<string> = {};
         const jsdocStrings: pxt.Map<string> = {};
-        const helpPages: pxt.Map<string> = {};
-        let reference = ""
         const nameToFilename = (n: string) => n.replace(/([A-Z])/g, function (m) { return '-' + m.toLowerCase(); });
-        const writeRef = (s: string) => reference += s + "\n"
         const writeLoc = (si: SymbolInfo) => {
             if (!options.locs || !si.qName) {
                 return;
             }
+            pxt.debug(`loc: ${si.qName}`)
             // must match blockly loader
-            const ns = ts.pxtc.blocksCategory(si);
-            if (ns)
-                locStrings[`{id:category}${ns}`] = ns;
-            if (si.attributes.subcategory)
-                locStrings[`{id:category}${si.attributes.subcategory}`] = si.attributes.subcategory;
+            if (si.kind != SymbolKind.EnumMember) {
+                const ns = ts.pxtc.blocksCategory(si);
+                if (ns)
+                    locStrings[`{id:category}${ns}`] = ns;
+            }
             if (si.attributes.jsDoc)
                 jsdocStrings[si.qName] = si.attributes.jsDoc;
             if (si.attributes.block)
@@ -256,115 +265,26 @@ namespace ts.pxtc {
                     jsdocStrings[`${si.qName}|param|${pi.name}`] = pi.description;
                 })
         }
-        const sipkg = pkg && pkg != "core" ? `\`\`\`package
-${pkg}
-\`\`\`
-` : '';
-        const writeApi = (ns: SymbolInfo, si: SymbolInfo, call: string) => {
-            if (!options.docs || !si.qName) return;
-            let api =
-                `# ${si.name.replace(/[A-Z]/g, function (m) { return ' ' + m; })}
-
-${si.attributes.jsDoc.split(/\n\./)[0]}
-
-\`\`\`sig
-${call}
-\`\`\`
-
-## Parameters
-${(si.parameters || []).map(p => `
-* **${p.name}**: [${p.type}](/reference/blocks/${p.type}), ${p.description}`)}
-
-## Example
-
-\`\`\`blocks
-${call}
-\`\`\`
-
-## See Also
-
-${ns.namespace ? `[${ns.namespace}](/reference/${nameToFilename(ns.namespace)})` : ``}
-${sipkg}
-`;
-            files[`reference/${nameToFilename(ns.name)}/${nameToFilename(si.name)}.md`] = api;
-        }
         const mapLocs = (m: pxt.Map<string>, name: string) => {
             if (!options.locs) return;
             const locs: pxt.Map<string> = {};
             Object.keys(m).sort().forEach(l => locs[l] = m[l]);
             files[pkg + name + "-strings.json"] = JSON.stringify(locs, null, 2);
         }
-        const writePackage = (w: (s: string) => void) => {
-            if (options.package) {
-                w("");
-                w("```package");
-                w(pkg);
-                w("```");
+        for (const info of infos) {
+            const isNamespace = info.kind == SymbolKind.Module;
+            if (isNamespace) {
+                if (!infos.filter(si => si.namespace == info.name && !!si.attributes.jsDoc)[0])
+                    continue; // nothing in namespace
+                if (!info.attributes.block) info.attributes.block = info.name; // reusing this field to store localized namespace name
             }
-        }
-        const writeHelpPages = (h: pxt.Map<string>, w: (s: string) => void) => {
-            w("");
-            w("### See Also");
-            w("")
-            w(Object.keys(h).map(k => `[${k}](/reference/${h[k]})`).join(', '))
-        }
-
-        writeRef(`# ${pkg} Reference`)
-        writeRef('')
-        writeRef('```namespaces')
-        for (const ns of namespaces) {
-            const nsHelpPages: pxt.Map<string> = {};
-            const syms = infos
-                .filter(si => si.namespace == ns.name && !!si.attributes.jsDoc)
-                .sort(compareSymbol)
-            if (!syms.length) continue;
-
-            if (!ns.attributes.block) ns.attributes.block = ns.name; // reusing this field to store localized namespace name
-            writeLoc(ns);
-            helpPages[ns.name] = ns.name.replace(`\s+`, `-`);
-
-            let nsmd = "";
-            const writeNs = (s: string) => {
-                nsmd += s + "\n"
-            }
-
-            writeNs(`# ${capitalize(ns.name)}`)
-            writeNs('')
-
-            if (ns.attributes.jsDoc) {
-                writeNs(`${ns.attributes.jsDoc}`)
-                writeNs('')
-            }
-
-            writeNs('```cards')
-            syms.forEach((si, i) => {
-                writeLoc(si);
-                if (si.attributes.help)
-                    nsHelpPages[si.name] = si.attributes.help;
-                const call = calls[si.qName];
-                if (i == 0)
-                    writeRef(call);
-                writeNs(call)
-                if (!si.attributes.help)
-                    writeApi(ns, si, call)
-            })
-            writeNs('```')
-            writePackage(writeNs);
-            writeHelpPages(nsHelpPages, writeNs);
-            if (options.docs)
-                files["reference/" + nameToFilename(ns.name) + '.md'] = nsmd;
+            writeLoc(info);
         }
         if (options.locs)
             enumMembers.forEach(em => {
                 if (em.attributes.block) locStrings[`${em.qName}|block`] = em.attributes.block;
                 if (em.attributes.jsDoc) locStrings[em.qName] = em.attributes.jsDoc;
             });
-        writeRef('```');
-        writePackage(writeRef);
-        writeHelpPages(helpPages, writeRef);
-
-        if (options.docs)
-            files[pkg + "-reference.md"] = reference;
         mapLocs(locStrings, "");
         mapLocs(jsdocStrings, "-jsdoc");
         return files;
@@ -375,10 +295,6 @@ ${sipkg}
 
         function capitalize(name: string) {
             return name[0].toUpperCase() + name.slice(1);
-        }
-
-        function urlify(name: string) {
-            return name.replace(/[A-Z]/g, '-$&').toLowerCase();
         }
 
         function compareSymbol(l: SymbolInfo, r: SymbolInfo): number {

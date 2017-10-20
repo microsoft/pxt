@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="../../localtypings/pxtblockly.d.ts" />
 
 namespace pxtblockly {
 
@@ -61,14 +61,20 @@ namespace pxtblockly {
 
     let regex: RegExp = /^Note\.(.+)$/;
 
+    export interface FieldNoteOptions extends Blockly.FieldCustomOptions {
+        editorColour?: string;
+    }
+
     //  Class for a note input field.
     export class FieldNote extends Blockly.FieldNumber implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
         //  value of the field
         private note_: string;
 
-        //  colour of the block
+        //  colour of the dropdown
         private colour_: string;
+        //  colour of the dropdown border
+        private colourBorder_: string;
 
         /**
          * default number of piano keys
@@ -98,12 +104,16 @@ namespace pxtblockly {
         private noteName_: Array<string> = [];
 
 
-        constructor(text: string, options: Blockly.FieldCustomOptions, validator?: Function) {
+        constructor(text: string, params: FieldNoteOptions, validator?: Function) {
             super(text);
 
             FieldNote.superClass_.constructor.call(this, text, validator);
             this.note_ = text;
-            this.colour_ = pxtblockly.parseColour(options.colour);
+
+            if (params.editorColour) {
+                this.colour_ = pxtblockly.parseColour(params.editorColour);
+                this.colourBorder_ = goog.color.rgbArrayToHex(goog.color.darken(goog.color.hexToRgb(this.colour_), 0.2));
+            }
         }
 
         /**
@@ -387,10 +397,28 @@ namespace pxtblockly {
             return this;
         }
 
+        onHtmlInputChange_(e: any) {
+            super.onHtmlInputChange_(e);
+            Blockly.DropDownDiv.hideWithoutAnimation();
+        }
+
         /**
          * Create a piano under the note field.
          */
         showEditor_(opt_quietInput?: boolean): void {
+            if (!this.colour_) {
+                this.colour_ = ((this.sourceBlock_ as any).isShadow()) ?
+                    this.sourceBlock_.parentBlock_.getColour() : this.sourceBlock_.getColour();
+                this.colourBorder_ = ((this.sourceBlock_ as any).isShadow()) ?
+                    this.sourceBlock_.parentBlock_.getColourTertiary() : this.sourceBlock_.getColourTertiary();
+            }
+
+            // If there is an existing drop-down someone else owns, hide it immediately and clear it.
+            Blockly.DropDownDiv.hideWithoutAnimation();
+            Blockly.DropDownDiv.clearContent();
+
+            let contentDiv = Blockly.DropDownDiv.getContentDiv();
+
             //  change Note name to number frequency
             Blockly.FieldNumber.prototype.setText.call(this, this.getText());
 
@@ -400,8 +428,8 @@ namespace pxtblockly {
             let pianoHeight: number;
             let keyWidth: number = 22;
             let keyHeight: number = 90;
-            let labelHeight: number;
-            let prevNextHeight: number;
+            let labelHeight: number = 24;
+            let prevNextHeight: number = 20;
             let whiteKeyCounter: number = 0;
             let selectedKeyColor: string = "yellowgreen";
             let soundingKeys: number = 0;
@@ -414,7 +442,7 @@ namespace pxtblockly {
             let piano: Array<goog.ui.CustomButton> = [];
             //  initializate
             pianoWidth = keyWidth * (this.nKeys_ - (this.nKeys_ / 12 * 5));
-            pianoHeight = keyHeight;
+            pianoHeight = keyHeight + labelHeight;
 
             //  Create the piano using Closure (CustomButton).
             for (let i = 0; i < this.nKeys_; i++) {
@@ -424,56 +452,31 @@ namespace pxtblockly {
             if (editorWidth < pianoWidth) {
                 pagination = true;
                 pianoWidth = 7 * keyWidth;
+                pianoHeight = keyHeight + labelHeight + prevNextHeight;
             }
             //  Check if Mobile, pagination -> true
             let quietInput = opt_quietInput || false;
             if (!quietInput && (goog.userAgent.MOBILE || goog.userAgent.ANDROID)) {
                 pagination = true;
                 mobile = true;
-                let r = keyWidth / keyHeight;
-                keyWidth = Math.ceil(windowSize.width / 7);
-                keyHeight = Math.ceil(keyWidth / r);
+                keyWidth = keyWidth * 2;
+                keyHeight = keyHeight * 2;
                 pianoWidth = 7 * keyWidth;
-                pianoHeight = keyHeight;
-                labelHeight = keyWidth / 1.5;
-                prevNextHeight = keyWidth / 1.5;
+                labelHeight = labelHeight * 1.2;
+                prevNextHeight = prevNextHeight * 2;
+                pianoHeight = keyHeight + labelHeight + prevNextHeight;
             }
 
             //  create piano div
-            let div = Blockly.WidgetDiv.DIV;
-            let pianoDiv = goog.dom.createDom("div", {});
+            let pianoDiv = goog.dom.createDom("div", {}) as HTMLElement;
             pianoDiv.className = "blocklyPianoDiv";
-            div.appendChild(pianoDiv);
+            contentDiv.appendChild(pianoDiv);
             let scrollOffset = goog.style.getViewportPageOffset(document);
-            //let pianoHeight = keyHeight + div.scrollHeight + 5;
             let xy = this.getAbsoluteXY_();
             let borderBBox = this.getScaledBBox_();
-            let topPosition: number = 0, leftPosition: number = 0;
-            //  Flip the piano vertically if off the bottom (only in web view).
-            if (!mobile) {
-                if (xy.y + pianoHeight + borderBBox.height >=
-                    windowSize.height + scrollOffset.y) {
-                    topPosition = -(pianoHeight + borderBBox.height);
-                }
-                if (this.sourceBlock_.RTL) {
-                    xy.x += borderBBox.width;
-                    xy.x -= pianoWidth;
-                    leftPosition += borderBBox.width;
-                    leftPosition -= pianoWidth;
-                    // Don't go offscreen left.
-                    if (xy.x < scrollOffset.x) {
-                        leftPosition = scrollOffset.x - xy.x;
-                    }
-                } else {
-                    // Don't go offscreen right.
-                    if (xy.x > windowSize.width + scrollOffset.x - pianoWidth) {
-                        leftPosition -= xy.x - (windowSize.width + scrollOffset.x - pianoWidth);
-                    }
-                }
-            } else {
-                leftPosition = -(<HTMLElement>document.getElementsByClassName("blocklyWidgetDiv")[0]).offsetLeft;   //+ ((windowSize.width - this.pianoWidth_) / 2);
-                topPosition = windowSize.height - (keyHeight + labelHeight + prevNextHeight) - (<HTMLElement>document.getElementsByClassName("blocklyWidgetDiv")[0]).offsetTop - borderBBox.height;
-            }
+
+            let leftPosition = 0; //-(<HTMLElement>document.getElementsByClassName("blocklyDropdownDiv")[0]).offsetLeft;   //+ ((windowSize.width - this.pianoWidth_) / 2);
+            let topPosition = 0; //(keyHeight + labelHeight + prevNextHeight);
 
             //  save all changes in the same group of events
             Blockly.Events.setGroup(true);
@@ -530,8 +533,7 @@ namespace pxtblockly {
                     goog.events.EventType.MOUSEOVER,
                     function () {
                         let script = showNoteLabel.getContent() as HTMLElement;
-                        script.innerText = this.getId();
-                        this.labelHeight_ = (<HTMLElement>document.getElementsByClassName("blocklyNoteLabel")[0]).offsetHeight;
+                        script.textContent = this.getId();
                     }, false, key
                 );
 
@@ -548,8 +550,7 @@ namespace pxtblockly {
             showNoteLabel.setContent(showNoteStyle);
             showNoteLabel.render(pianoDiv);
             let scriptLabel = showNoteLabel.getContent() as HTMLElement;
-            scriptLabel.innerText = "-";
-            labelHeight = (<HTMLElement>document.getElementsByClassName("blocklyNoteLabel")[0]).offsetHeight;
+            scriptLabel.textContent = "-";
 
             // create next and previous CustomButtons for pagination
             let prevButton = new goog.ui.CustomButton();
@@ -557,21 +558,20 @@ namespace pxtblockly {
             let prevButtonStyle = getNextPrevStyle(topPosition, leftPosition, true, mobile);
             let nextButtonStyle = getNextPrevStyle(topPosition, leftPosition, false, mobile);
             if (pagination) {
-                scriptLabel.innerText = "Octave #1";
-                labelHeight = (<HTMLElement>document.getElementsByClassName("blocklyNoteLabel")[0]).offsetHeight;
+                scriptLabel.textContent = "Octave #1";
                 //  render previous button
                 let script: HTMLElement;
                 prevButton.setContent(prevButtonStyle);
                 prevButton.render(pianoDiv);
                 script = prevButton.getContent() as HTMLElement;
                 //  left arrow - previous button
-                script.innerText = "<";
+                script.textContent = "<";
                 //  render next button
                 nextButton.setContent(nextButtonStyle);
                 nextButton.render(pianoDiv);
                 script = nextButton.getContent() as HTMLElement;
                 //  right arrow - next button
-                script.innerText = ">";
+                script.textContent = ">";
 
                 let Npages = this.nKeys_ / 12;
                 let currentPage = 0;
@@ -579,7 +579,7 @@ namespace pxtblockly {
                     goog.events.EventType.MOUSEDOWN,
                     function () {
                         if (currentPage == 0) {
-                            scriptLabel.innerText = "Octave #" + (currentPage + 1);
+                            scriptLabel.textContent = "Octave #" + (currentPage + 1);
                             return;
                         }
                         let curFirstKey = currentPage * 12;
@@ -591,15 +591,14 @@ namespace pxtblockly {
                         for (let i = 0; i < 12; i++)
                             piano[i + newFirstKey].setVisible(true);
                         currentPage--;
-                        scriptLabel.innerText = "Octave #" + (currentPage + 1);
-                        this.labelHeight_ = (<HTMLElement>document.getElementsByClassName("blocklyNoteLabel")[0]).offsetHeight;
+                        scriptLabel.textContent = "Octave #" + (currentPage + 1);
                     }, false, prevButton
                 );
                 goog.events.listen(nextButton.getElement(),
                     goog.events.EventType.MOUSEDOWN,
                     function () {
                         if (currentPage == Npages - 1) {
-                            scriptLabel.innerText = "Octave #" + (currentPage + 1);
+                            scriptLabel.textContent = "Octave #" + (currentPage + 1);
                             return;
                         }
                         let curFirstKey = currentPage * 12;
@@ -611,8 +610,7 @@ namespace pxtblockly {
                         for (let i = 0; i < 12; i++)
                             piano[i + newFirstKey].setVisible(true);
                         currentPage++;
-                        scriptLabel.innerText = "Octave #" + (currentPage + 1);
-                        this.labelHeight_ = (<HTMLElement>document.getElementsByClassName("blocklyNoteLabel")[0]).offsetHeight;
+                        scriptLabel.textContent = "Octave #" + (currentPage + 1);
                     }, false, nextButton
                 );
             }
@@ -692,7 +690,7 @@ namespace pxtblockly {
              * @param {number} leftPosition horizontal position of the label
              * @param {boolean} isMobile true if the device is a mobile
              * @return {goog.dom} DOM with the new css style.
-             * @private 
+             * @private
              */
             function getShowNoteStyle(topPosition: number, leftPosition: number, isMobile: boolean) {
                 topPosition += keyHeight;
@@ -717,7 +715,7 @@ namespace pxtblockly {
              * @param {boolean} isPrev true if is previous button, false otherwise
              * @param {boolean} isMobile true if the device is a mobile
              * @return {goog.dom} DOM with the new css style.
-             * @private 
+             * @private
              */
             function getNextPrevStyle(topPosition: number, leftPosition: number, isPrev: boolean, isMobile: boolean) {
                 //  x position of the prev/next button
@@ -791,13 +789,38 @@ namespace pxtblockly {
                 return pos - (keyWidth / 4);
             }
 
+            pianoDiv.style.width = pianoWidth + "px";
+            pianoDiv.style.height = (pianoHeight + 1) + "px";
 
+            (Blockly.DropDownDiv as any).setColour(this.colour_, this.colourBorder_);
+
+            // Calculate positioning based on the field position.
+            let scale = (this.sourceBlock_.workspace as any).scale;
+            let bBox = {width: this.size_.width, height: this.size_.height};
+            bBox.width *= scale;
+            bBox.height *= scale;
+            let position = this.fieldGroup_.getBoundingClientRect();
+            let primaryX = position.left + bBox.width / 2;
+            let primaryY = position.top + bBox.height;
+            let secondaryX = primaryX;
+            let secondaryY = position.top;
+            // Set bounds to workspace; show the drop-down.
+            (Blockly.DropDownDiv as any).setBoundsElement(this.sourceBlock_.workspace.getParentSvg().parentNode);
+            (Blockly.DropDownDiv as any).show(this, primaryX, primaryY, secondaryX, secondaryY,
+                this.onHide.bind(this));
         }
+
+        /**
+         * Callback for when the drop-down is hidden.
+         */
+        private onHide() {
+        };
+
         /**
          * Close the note picker if this input is being deleted.
          */
         dispose() {
-            Blockly.WidgetDiv.hideIfOwner(this);
+            (Blockly.DropDownDiv as any).hideIfOwner(this);
             Blockly.FieldTextInput.superClass_.dispose.call(this);
         }
     }

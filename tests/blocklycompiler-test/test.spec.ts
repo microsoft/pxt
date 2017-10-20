@@ -1,6 +1,6 @@
 /// <reference path="..\..\typings\globals\mocha\index.d.ts" />
 /// <reference path="..\..\localtypings\chai.d.ts" />
-/// <reference path="..\..\localtypings\blockly.d.ts" />
+/// <reference path="..\..\localtypings\pxtblockly.d.ts" />
 /// <reference path="..\..\built\pxtblocks.d.ts" />
 /// <reference path="..\..\built\pxtcompiler.d.ts" />
 
@@ -175,6 +175,7 @@ function blockTestAsync(name: string) {
         }, err => fail(`Unable to get ${name}.ts: ` + JSON.stringify(err)))
         .then(blocksInfo => {
             const workspace = new Blockly.Workspace();
+            (Blockly as any).mainWorkspace = workspace;
             const xml = Blockly.Xml.textToDom(blocksFile);
             Blockly.Xml.domToWorkspace(xml, workspace);
 
@@ -300,4 +301,10 @@ describe("blockly compiler", function() {
             blockTestAsync("variables_reserved_names").then(done, done);
         });
     });
+
+    describe("compiling functions", () => {
+        it("should handle name collisions", done => {
+            blockTestAsync("functions_names").then(done, done);
+        });
+    })
 });

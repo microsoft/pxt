@@ -81,6 +81,7 @@ function setupSidebar() {
                 trigger: '.title .icon'
             }
         });
+
     var accordions = document.getElementsByClassName("ui accordion");
     for (var i = 0; i < accordions.length; i++) {
         var nodes = accordions.item(i).getElementsByClassName("title");

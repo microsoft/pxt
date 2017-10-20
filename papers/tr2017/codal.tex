@@ -6,25 +6,17 @@
 \section{The CODAL Runtime}
 \label{sec:codal}
 
-Typically written in C and/or C++, platforms for microcontroller programming all share a common design goal: to support developers by providing primitives and programming abstractions. Platforms can range from simple C++ classes that control hardware, to real-time operating systems (RTOSs) with scheduling and memory management.
-
-The Arduino ecosystem is an example of a simple platform where the developer uses high-level APIs to control hardware; there is no scheduler, and memory management is discouraged through a heavy emphasis on global variables.  The Arduino programming model is based on polling: an Arduino ``sketch'' is a program template that consists of a setup procedure, for initialization of data structures, and a loop procedure; programmers implement the body of \textit{setup} and \textit{loop}, where they explicitly poll the state of the sensors or the microcontroller's pins.
-
-At the other end of the spectrum is mbed OS, which is aimed at developers who are familiar with non-preemptive scheduling, memory management, and condition synchronisation; a more complex environment. A number of high-level drivers are provided and the programming model is determined by the developer, commonly event or interrupt driven.
-
-Although platforms like Arduino and mbed OS are widely used by C/C++ developers, higher-level languages opt for virtual machines to execute on microcontrollers as neither extreme aligns with the programming models seen in higher level languages: mbed OS is pre-emptive, JavaScript is not; Arduino is based on monolithic polling. There is therefore a need to develop a layer that: (1) bridges the semantic gap between the higher-level language and the hardware; (2) does so in a memory, energy and instruction efficient way; and (3) supports a number of platforms with various resource contraints and capabilities.
-
-\subsection{Codal}
-
-The component-oriented device abstraction layer (CODAL) aims to provide a layer that is multi-platform, makes efficient use of memory and energy, provides both synchronous and asynchronous API variants, and offers a good experience for native C and higher level languages.
+The component-oriented device abstraction layer (CODAL) aims to provide a layer that is multi-platform, makes efficient use of memory and energy, provides both synchronous and asynchronous API variants, and provide a reasonable target for higher level languages
+such as JavaScript.
 
 CODAL provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that minimises the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem common to all CODAL Components that enables the decoupling of system and user code. A CODAL component represents software or hardware drivers (an I2C device, a GPIO pin, a Message Bus, a Bluetooth device); any component can generate or consume events. CODAL supports both polling and asynchronous (event-driven) programming models, which enables higher level languages to map straight onto native C/C++ APIs.
 
-Unlike mbed, which is designed to make all devices look programmatically alike, CODAL enables devices with additional on-chip hardware to specialise device drivers with APIs that can then be used by the end application developer.
+Section~\ref{sec:related}
+provides a comparison of CODAL with other runtimes and operating systems for microcontrollers.
 
 % more required here, needs to be reflowed...
 
-\subsubsection{Structural Overview}
+\subsection{Structural Overview}
 
 * a nice diagram
 * an object model that factors out common code, but pushes platform specific code.
@@ -39,7 +31,7 @@ Worked example of how everything fits together, short, only a few sentences.
 * the targets
 * supporting library
 
-\subsubsection{Message Bus and Events}
+\subsection{Message Bus and Events}
 
 Message passing via events is a common technique and is the foundation of many operating systems --- yet in most systems events are static used only to notify users of key events within the system (e.g. SIGKILL on UNIX).
 
@@ -105,7 +97,7 @@ Note that the user doesn't have to configure any interrupts, as they are handled
 % * Timer and queues?
 % * message passing microkernel
 
-\subsubsection{Fiber Scheduler}
+\subsection{Fiber Scheduler}
 
 Novice users often want to perform multiple operations concurrently, generally requiring threads. Threading is a confusing concept: users have to learn about locks, semaphores, and preemption, to prevent race conditions. Threads can also consume a large number of resources depending on the model that is adopted by the runtime environment.
 
@@ -131,7 +123,7 @@ int main() {
 }
 \end{lstlisting}
 
-\subsubsection{Drivers}
+\subsection{Drivers}
 
 Drivers are commonly low level interfaces that control external or integrated hardware on a device. For embedded developers, creating and using drivers involves translating datasheets into program code and using low-level interface, which can alienate novice programmers.
 
@@ -145,7 +137,7 @@ Interrupts are integral to drivers: in Serial communications it is useful to kno
 % * Provides a common interface
 % * uses events to decouple from interrupt context.
 
-\subsubsection{Memory Management}
+\subsection{Memory Management}
 
 Standard libraries in C++ do not offer reentrant versions of memory allocation calls like ``malloc'' and ``new'', critically this forbids the allocation of memory in interrupt context.
 
@@ -161,7 +153,7 @@ CODAL has a number of managed types that use reference counting to determine whe
 % * couple of sentences on types
 %     - ref counted, malloced types.
 
-\subsubsection{Streams}
+\subsection{Streams}
 
 % * motivation
 % * example
@@ -169,7 +161,7 @@ CODAL has a number of managed types that use reference counting to determine whe
 % * Adopted by all stream capable interfaces, from Serial to I2C
 % * Worked example, audio recog, playback
 
-\subsubsection{A code sample}
+\subsection{A code sample}
 
 % * That says this is awesome!
 % * how it fits together...
