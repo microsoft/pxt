@@ -7,6 +7,22 @@ namespace ts.pxtc {
 import pxtc = ts.pxtc
 
 namespace ts.pxtc.Util {
+    export function bufferSerial(buffers: pxt.Map<string>, data: string = "", source: string = "?", maxBufLen: number = 255) {
+        for (let i = 0; i < data.length; ++i) {
+            const char = data[i]
+            buffers[source] = buffers[source] ? buffers[source] + char : char
+            if (char === "\n" || buffers[source].length > maxBufLen) {
+                let buffer = buffers[source]
+                buffers[source] = ""
+                window.postMessage({
+                    type: "serial",
+                    id: source,
+                    data: buffer
+                }, "*")
+            }
+        }
+    }
+
     export function assert(cond: boolean, msg = "Assertion failed") {
         if (!cond) {
             debugger
