@@ -12,6 +12,7 @@
 @serialBackgroundColor: lighten(@simulatorBackground, 2);
 @serialTextColor: #fff;
 @serialGraphBackground: #fefefe;
+@serialGraphColor: black;
 
 #serialEditor {
     background-color: @serialBackgroundColor;
@@ -112,6 +113,10 @@
     display: none !important;
 }
 
+#serialPreview {
+    cursor: pointer;
+}
+
 #serialPreview .ui.left.labeled.button {
     margin: 1px;
     width: 100%;
@@ -125,6 +130,10 @@
     background-color: lighten(@serialGraphBackground, 10.0);
     font-size: 0.85em;
     border: none;
+    color: @serialGraphColor;
+    .detail {
+        vertical-align: middle;
+    }
 }
 
 #serialPreview .indicator {
