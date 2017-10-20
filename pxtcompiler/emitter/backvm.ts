@@ -49,7 +49,7 @@ ${hex.hexPrelude()}
         vmsource += "\n; The end.\n"
         bin.writeFile(BINARY_ASM, vmsource)
 
-        let res = assemble(opts.target.nativeType, bin, vmsource)
+        let res = assemble(opts.target, bin, vmsource)
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
 

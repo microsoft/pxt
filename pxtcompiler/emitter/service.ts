@@ -600,7 +600,7 @@ namespace ts.pxtc.service {
 
         assemble: v => {
             return {
-                words: processorInlineAssemble(host.opts.target.nativeType, v.fileContent)
+                words: processorInlineAssemble(host.opts.target, v.fileContent)
             }
         },
 
