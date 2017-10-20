@@ -1,4 +1,4 @@
-\section{\MC: Design and Implementation}
+\section{\MCN: Design and Implementation}
 \label{sec:makecode}
 
 Figure~\ref{fig:screenSnap} shows a screen snapshot of the \MC web app for the micro:bit
@@ -123,7 +123,7 @@ characteristics of the block.  \MC uses the types of function parameters to sele
 Blockly widgets.  For example, an enumeration is represented by a dropdown menu in blocks.
 For more information on the block-specific annotations, see 
 \url{https://makecode.com/defining-blocks}. 
-\MC's support for Blockly means that for the common case, the target developer doesn't need
+\MCN's support for Blockly means that for the common case, the target developer doesn't need
 to know anything about the Blockly framework.  For more sophisticated needs, one can directly access
 the Blockly framework. 
 
@@ -230,7 +230,7 @@ reading while pushing one of the device's buttons).
 
 \subsection{Packages and Custom Editors}
 
-Packages are \MC's dynamic/static library mechanism for extending a target (by adding new code/data to the device
+Packages are \MCN's dynamic/static library mechanism for extending a target (by adding new code/data to the device
 and simulator runtimes, as well as accompanying documentation). The following package extends the micro:bit target so
 that the micro:bit can drive a NeoPixel strip of RGB LEDs: \url{https://github.com/Microsoft/pxt-neopixel}. 
 
