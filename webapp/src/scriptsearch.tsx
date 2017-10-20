@@ -128,7 +128,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             if (ev.keyCode == 13) upd(ev);
         }
         const installGh = (scr: pxt.github.GitRepo) => {
-            pxt.tickEvent("packages.github");
+            pxt.tickEvent("packages.github", { name: scr.fullName });
             this.hide();
             let p = pkg.mainEditorPkg();
             core.showLoading(lf("downloading package..."));
