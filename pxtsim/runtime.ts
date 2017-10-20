@@ -604,10 +604,3 @@ namespace pxsim {
         }
     }
 }
-
-function initAppCache() {
-    window.applicationCache.addEventListener('updateready', () => {
-        window.location.reload();
-    });
-}
-initAppCache();
