@@ -1691,6 +1691,14 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
+    hideBanner() {
+        this.setState({ hideExperimentalBanner: true });
+    }
+
+    hideWindowsStoreBanner() {
+        this.setState({ hideWindowsStoreBanner: true })
+    }
+
     renderCore() {
         theEditor = this;
 
@@ -1725,7 +1733,10 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const isLocalServe = location.hostname === "localhost";
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
-        const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
+        const showExperimentalBanner = !isLocalServe && isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
+        const isWindows10 = true;
+        const showWindowsStoreBanner = !this.state.hideWindowsStoreBanner && isWindows10;
+        const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
         // cookie consent
         const cookieKey = "cookieconsent"
@@ -1747,6 +1758,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             hideMenuBar ? 'hideMenuBar' : '',
+            showWindowsStoreBanner ? "showWindowsStoreBanner" : "",
             !showEditorToolbar ? 'hideEditorToolbar' : '',
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
             'full-abs',
@@ -1755,7 +1767,22 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
         return (
             <div id='root' className={rootClasses}>
-                {showExperimentalBanner ? <container.ExperimentalBanner parent={this} /> : undefined}
+                {showExperimentalBanner ? <div id="experimentalBanner" className="ui icon top attached fixed negative mini message">
+                    <sui.Icon icon="warning circle" />
+                    <sui.Icon icon="close" onClick={() => this.hideBanner()} />
+                    <div className="content">
+                        <div className="header">{lf("You are viewing an experimental version of the editor")}</div>
+                        <a href={liveUrl}>{lf("Take me back")}</a>
+                    </div>
+                </div> : undefined}
+                {showWindowsStoreBanner ? <div id="windowsStoreBanner" className="ui icon attached blue message">
+                    <sui.Icon icon="close" onClick={() => this.hideWindowsStoreBanner()} />
+                    <div className="content">
+                        <a href="https://www.microsoft.com/store/apps/9PGZHWSK0PGD?ocid=badge">
+                            <img src="https://assets.windowsphone.com/f2f77ec7-9ba9-4850-9ebe-77e366d08adc/English_Get_it_Win_10_InvariantCulture_Default.png" alt="Get it on Windows 10" />
+                        </a>
+                    </div>
+                </div> : undefined}
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
