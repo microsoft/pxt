@@ -86,6 +86,7 @@ including:
 We encourage the reader to choose a target
 and experiment with programming it, to appreciate the 
 qualitative aspects of the platform, namely its simplicity and ease of use.  
+
 This paper evaluates quantitative aspects of the platform: 
 compilation speed, code size, and runtime performance.  In particular, we 
 consider:
@@ -94,14 +95,12 @@ consider:
       to the GCC C/C++ toolchain, as well as the size of the resulting executable;
 \item the time to load code onto a microcontroller using UF2, compared to standard bootloaders
       such as Arduino and ARM's DAPlink; 
-\item The performance of a set of small benchmarks, written in both Static TypeScript and C++,
-      compiled with the \MC and GCC toolchains, as well as the performance of device drivers
-      written in Static TypeScript compared to their C++ counterparts;
+\item the performance of a set of small benchmarks, written in both Static TypeScript and C++,
+      compiled with the \MC and GCC toolchains;
 \item \emph{energy consumption: CODAL vs. Arduino}
-[evaluate with respect to the popular Arduino toolset, for boards with 8-bit (AVR) and 32-bit (Cortex-M0) microcontrollers. 
-Summary of evaluation]
-\item \emph{native code vs. bytecode} For the Arduino Uno, which has the most constrained flash (32KB) and RAM (2KB) of the microcontrollers evaluated, we also
-evaluate memory consumption and code performance for our native code generation vs. bytecode generation and interpretation. 
+\item \emph{native code vs. bytecode} we
+      evaluate memory consumption and code performance for native code generation 
+      vs. bytecode generation and interpretation on the Uno.
 \end{itemize}
 
 
@@ -110,11 +109,10 @@ evaluate memory consumption and code performance for our native code generation 
   \caption{\label{fig:screenSnap}Screen snapshot of the \MC web app.}
 \end{figure*}
 
-All of the platform's components are open source on GitHub
-under MIT/Apache licenses. 
+All of the platform's components are open source on GitHub.
 Figure~\ref{fig:repos} lists the major GitHub repos of the platform
-and the dependences between them. Green boxes represent repos external to the platform (note: not all
-repos are represented in the figure).
+and the dependences between them. Green boxes represent repos external to the platform
+(note: not all repos are represented in the figure).
 
 The \MC framework 
 is at \emph{\href{https://github.com/microsoft/pxt}{pxt}} (PXT is the previous codename of \MC). 
@@ -139,8 +137,7 @@ MBED-specific optimizations for the Cortex-M0 processor: \emph{\href{https://git
 The repo \emph{\href{https://github.com/lancaster-university/codal}{codal}} provides the
 tools for compiling a CODAL target.  As can be seen in Figure~\ref{fig:repos}, 
 CODAL abstracts over platform and microcontroller specific
-implementations, while PXT abstracts over programming editors
-and languages (Blockly, Monaco, and TypeScript).
+implementations, while PXT abstracts over programming editors and languages.
 The UF2 specification is at~\emph{\href{https://github.com/microsoft/uf2}{uf2}},
 with implementations at~\emph{\href{https://github.com/microsoft/uf2-samd21}{uf2-samd21}}
 and~\emph{\href{https://github.com/mmoskal/uf2-uno}{uf2-uno}}. These repos are not
@@ -148,7 +145,10 @@ shown in the Figure.
 The pxt-microbit target uses a predecessor of the CODAL called the DAL (at
 ~\emph{\href{https://github.com/lancaster-university/microbit-dal}{microbit-dal}}).
 
-The rest of this paper is organized as follows. Section~\ref{sec:makecode} presents the design and implementation of the \MC framework. 
-Sections~\ref{sec:sts},~\ref{sec:codal} and~\ref{sec:uf2} describe Static TypeScript, the CODAL C++ runtime, and the UF2 flashing format,
-respectively.  Section~\ref{sec:evaluate} evaluates the performance of the platform and
-Section~\ref{sec:related} discusses related work. Finally, Section~\ref{sec:conclude} concludes and speculates about future directions. 
+The rest of this paper is organized as follows. Section~\ref{sec:makecode} presents the design 
+and implementation of the \MC framework. 
+Sections~\ref{sec:sts},~\ref{sec:codal} and~\ref{sec:uf2} describe Static TypeScript,
+the CODAL C++ runtime, and the UF2 flashing format,
+respectively.  Section~\ref{sec:evaluate} evaluates the performance of the platform,
+section~\ref{sec:related} discusses related work, and section~\ref{sec:conclude}
+concludes.
