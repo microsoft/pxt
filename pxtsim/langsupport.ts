@@ -34,6 +34,10 @@ namespace pxsim {
         return null
     }
 
+    export function getAllConfigKeys() {
+        return Object.keys(cfgKey)
+    }
+
     export function setConfig(id: number, val: number) {
         cfg[id] = val
     }
