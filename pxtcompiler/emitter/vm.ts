@@ -76,13 +76,13 @@ namespace ts.pxtc.vm {
 
     export class VmProcessor extends pxtc.assembler.AbstractProcessor {
 
-        constructor() {
+        constructor(target: CompileTarget) {
             super();
 
             this.addEnc("$i1", "#0-255", v => this.inrange(255, v, v))
             this.addEnc("$i2", "#0-65535", v => this.inrange(65535, v, v))
 
-            U.iterMap(pxt.appTarget.compile.vmOpCodes, (opnamefull, opcode) => {
+            U.iterMap(target.vmOpCodes, (opnamefull, opcode) => {
                 let m = /(.*)_(\d+)/.exec(opnamefull)
                 let fmt = ""
                 if (m[1] == "call") fmt = "call $i1, $i2"
