@@ -119,7 +119,7 @@ export class ProjectView
             active: document.visibilityState == 'visible',
             collapseEditorTools: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile()
         };
-        if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 20;
+        if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
     }
 
@@ -921,8 +921,12 @@ export class ProjectView
             })
     }
 
-    addPackage() {
+    menuAddPackage() {
         pxt.tickEvent("menu.addpackage");
+        this.addPackage();
+    }
+
+    addPackage() {
         this.scriptSearch.showAddPackages();
     }
 
@@ -1795,10 +1799,9 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                             {selectLanguage ? <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language")} onClick={() => this.selectLang()} /> : undefined}
                             {targetTheme.highContrast ? <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={() => this.toggleHighContrast()} /> : undefined}
                         </div>
-
-                        <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
+                        <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
                             {!sandbox ? <div className="left menu">
-                                <a aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={() => this.brandIconClick()} onKeyDown={sui.fireClickOnEnter}>
+                                <a aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={() => this.brandIconClick()} onKeyDown={sui.fireClickOnEnter}>
                                     {targetTheme.logo || targetTheme.portraitLogo
                                         ? <img className={`ui logo ${targetTheme.logo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo)} alt={lf("{0} Logo", targetTheme.boardName)} />
                                         : <span className="name">{targetTheme.boardName}</span>}
@@ -1827,7 +1830,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                 {sandbox || inTutorial ? undefined :
                                     <sui.DropdownMenuItem icon='setting large' title={lf("More...")} class="more-dropdown-menuitem">
                                         {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json"))} tabIndex={-1} /> : undefined}
-                                        {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...")} onClick={() => this.addPackage()} tabIndex={-1} /> : undefined}
+                                        {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={() => this.menuAddPackage()} tabIndex={-1} /> : undefined}
                                         {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={() => this.removeProject()} tabIndex={-1} /> : undefined}
                                         {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={() => this.showReportAbuse()} tabIndex={-1} /> : undefined}
                                         <div className="ui divider"></div>
@@ -2011,6 +2014,7 @@ function initSerial() {
 
     pxt.debug('initializing serial pipe');
     let ws = new WebSocket(`ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/serial`);
+    let serialBuffers: pxt.Map<string> = {};
     ws.onopen = (ev) => {
         pxt.debug('serial: socket opened');
     }
@@ -2019,9 +2023,10 @@ function initSerial() {
     }
     ws.onmessage = (ev) => {
         try {
-            let msg = JSON.parse(ev.data) as pxsim.SimulatorMessage;
-            if (msg && msg.type == 'serial')
-                window.postMessage(msg, "*")
+            let msg = JSON.parse(ev.data) as pxsim.SimulatorSerialMessage;
+            if (msg && msg.type == "serial") {
+                pxt.Util.bufferSerial(serialBuffers, msg.data, msg.id);
+            }
         }
         catch (e) {
             pxt.debug('unknown message: ' + ev.data);

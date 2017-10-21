@@ -113,7 +113,8 @@ export const maths: BuiltinCategoryDefinition = {
             snippetOnly: true,
             attributes: {
                 jsDoc: lf("Adds two numbers together")
-            }
+            },
+            retType: "number"
         },
         {
             name: "minus",
@@ -121,7 +122,8 @@ export const maths: BuiltinCategoryDefinition = {
             snippetOnly: true,
             attributes: {
                 jsDoc: lf("Subtracts the value of one number from another")
-            }
+            },
+            retType: "number"
         },
         {
             name: "multiply",
@@ -129,7 +131,8 @@ export const maths: BuiltinCategoryDefinition = {
             snippetOnly: true,
             attributes: {
                 jsDoc: lf("Multiplies two numbers together")
-            }
+            },
+            retType: "number"
         },
         {
             name: "divide",
@@ -137,7 +140,8 @@ export const maths: BuiltinCategoryDefinition = {
             snippetOnly: true,
             attributes: {
                 jsDoc: lf("Returns the quotient of one number divided by another")
-            }
+            },
+            retType: "number"
         },
         {
             name: "remainder",
@@ -145,42 +149,48 @@ export const maths: BuiltinCategoryDefinition = {
             snippetOnly: true,
             attributes: {
                 jsDoc: lf("Returns the remainder of one number divided by another")
-            }
+            },
+            retType: "number"
         },
         {
             name: "max",
             snippet: `Math.max(1, 2)`,
             attributes: {
                 jsDoc: lf("Returns the largest of two numbers")
-            }
+            },
+            retType: "number"
         },
         {
             name: "min",
             snippet: `Math.min(1, 2)`,
             attributes: {
                 jsDoc: lf("Returns the smallest of two numbers")
-            }
+            },
+            retType: "number"
         },
         {
             name: "abs",
             snippet: `Math.abs(-1)`,
             attributes: {
                 jsDoc: lf("Returns the absolute value of a number")
-            }
+            },
+            retType: "number"
         },
         {
             name: "randomRange",
             snippet: `Math.randomRange(0, 10)`,
             attributes: {
                 jsDoc: lf("Returns a random number between min and max")
-            }
+            },
+            retType: "number"
         },
         {
             name: "randomBoolean",
             snippet: `Math.randomBoolean()`,
             attributes: {
                 jsDoc: lf("Randomly returns either true or false")
-            }
+            },
+            retType: "boolean"
         },
     ],
     attributes: {
@@ -194,6 +204,7 @@ export const maths: BuiltinCategoryDefinition = {
 export const text: BuiltinCategoryDefinition = {
     name: lf("{id:category}Text"),
     nameid: 'text',
+    custom: true,
     blocks: [
         {
             name: "length",
@@ -201,7 +212,8 @@ export const text: BuiltinCategoryDefinition = {
             snippetOnly: true,
             attributes: {
                 jsDoc: lf("Returns the number of characters in a string")
-            }
+            },
+            retType: "number"
         },
         {
             name: "concat",
@@ -209,35 +221,40 @@ export const text: BuiltinCategoryDefinition = {
             snippetOnly: true,
             attributes: {
                 jsDoc: lf("Combines a string with a number, boolean, string, or other object into one string")
-            }
+            },
+            retType: "string"
         },
         {
             name: "compare",
             snippet: `"".compare("")`,
             attributes: {
                 jsDoc: lf("Compares one string against another alphabetically and returns a number")
-            }
+            },
+            retType: "number"
         },
         {
             name: "parseInt",
             snippet: `parseInt("5")`,
             attributes: {
                 jsDoc: lf("Converts a number written as text into a number")
-            }
+            },
+            retType: "number"
         },
         {
             name: "substr",
             snippet: `"".substr(0, 0)`,
             attributes: {
                 jsDoc: lf("Returns the part of a string starting at a given index with the given length")
-            }
+            },
+            retType: "string"
         },
         {
             name: "charAt",
             snippet: `"".charAt(0)`,
             attributes: {
                 jsDoc: lf("Returns the character at the given index")
-            }
+            },
+            retType: "string"
         },
     ],
     attributes: {
@@ -251,6 +268,7 @@ export const text: BuiltinCategoryDefinition = {
 export const arrays: BuiltinCategoryDefinition = {
     name: lf("{id:category}Arrays"),
     nameid: "arrays",
+    custom: true,
     blocks: [
         {
             name: "create",
@@ -259,7 +277,8 @@ export const arrays: BuiltinCategoryDefinition = {
             attributes: {
                 weight: 100,
                 jsDoc: lf("Creates a new Array")
-            }
+            },
+            retType: "array"
         },
         {
             name: "length",
@@ -268,7 +287,8 @@ export const arrays: BuiltinCategoryDefinition = {
             attributes: {
                 weight: 99,
                 jsDoc: lf("Returns the number of values in an Array")
-            }
+            },
+            retType: "number"
         },
         {
             name: "get",
@@ -302,7 +322,8 @@ export const arrays: BuiltinCategoryDefinition = {
             attributes: {
                 weight: 95,
                 jsDoc: lf("Removes and returns the value at the end of an Array")
-            }
+            },
+            retType: "object"
         },
         {
             name: "insertAt",
@@ -320,7 +341,8 @@ export const arrays: BuiltinCategoryDefinition = {
                 weight: 49,
                 jsDoc: lf("Removes a value from the Array at the given index and returns it"),
                 advanced: true
-            }
+            },
+            retType: "object"
         },
         {
             name: "shift",
@@ -347,7 +369,8 @@ export const arrays: BuiltinCategoryDefinition = {
                 weight: 46,
                 jsDoc: lf("Returns the first index in the Array that contains the given value or -1 if it does not exist in the Array"),
                 advanced: true
-            }
+            },
+            retType: "number"
         },
         {
             name: "reverse",
@@ -464,7 +487,8 @@ export function overrideCategory(ns: string, def: pxt.editor.MonacoToolboxCatego
                             jsDoc: b.jsDoc,
                             group: b.group,
                         },
-                        noNamespace: true
+                        noNamespace: true,
+                        retType: b.retType
                     }
                     cat.blocks.push(blk);
                 });
@@ -487,7 +511,8 @@ export function overrideCategory(ns: string, def: pxt.editor.MonacoToolboxCatego
                             jsDoc: b.jsDoc,
                             group: b.group,
                         },
-                        noNamespace: true
+                        noNamespace: true,
+                        retType: b.retType
                     }
                 });
             }

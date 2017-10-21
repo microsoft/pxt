@@ -45,6 +45,8 @@ namespace pxt.blocks {
             defaultValue: "list"
         }
     }
+    export const advancedTitle = Util.lf("{id:category}Advanced");
+    export const addPackageTitle = Util.lf("{id:category}Extensions");
 
     // Matches arrays and tuple types
     const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
@@ -283,6 +285,9 @@ namespace pxt.blocks {
                     else {
                         // If no weight is specified, insert alphabetically after the weighted subcategories but above "More"
                         category = getOrAddSubcategoryByName(category, sub, sub, category.getAttribute("colour"), 'blocklyTreeIconmore')
+                    }
+                    if (nsn && nsn.attributes.groups) {
+                        category.setAttribute("groups", nsn.attributes.groups.join(', '));
                     }
                 }
             }
@@ -1123,10 +1128,10 @@ namespace pxt.blocks {
                 const nsColor = getNamespaceColor(topCats[i].getAttribute('nameid'));
                 if (nsColor && nsColor != "") {
                     topCats[i].setAttribute('colour', nsColor);
-                    // update children colors
-                    const childCats = topCats[i].getElementsByTagName('category');
-                    for (let j = 0; j < childCats.length; j++) {
-                        childCats[j].setAttribute('colour', nsColor);
+                    // Update subcategory colours
+                    const subCats = getChildCategories(topCats[i]);
+                    for (let j = 0; j < subCats.length; j++) {
+                        subCats[j].setAttribute('colour', nsColor);
                     }
                 }
                 if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
@@ -1157,6 +1162,23 @@ namespace pxt.blocks {
                         }
                     }
                     topCats[i].insertBefore(headingLabel, topCats[i].firstChild);
+                    // Add subcategory labels
+                    const subCats = getChildCategories(topCats[i]);
+                    for (let j = 0; j < subCats.length; j++) {
+                        let subHeadingLabel = goog.dom.createDom('label');
+                        subHeadingLabel.setAttribute('text', `${topCats[i].getAttribute('name')} > ${subCats[j].getAttribute('name')}`);
+                        subHeadingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
+                        subHeadingLabel.setAttribute('web-icon-color', topCats[i].getAttribute('colour'));
+                        subCats[j].insertBefore(subHeadingLabel, subCats[j].firstChild);
+                        if (icon) {
+                            if (icon.length == 1) {
+                                subHeadingLabel.setAttribute('web-icon', icon);
+                                if (iconClass) subHeadingLabel.setAttribute('web-icon-class', iconClass);
+                            } else {
+                                subHeadingLabel.setAttribute('web-icon-class', `blocklyFlyoutIcon${topCats[i].getAttribute('name')}`);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1185,7 +1207,7 @@ namespace pxt.blocks {
 
         // Add the "Advanced" category
         if (showAdvanced && tb && showCategories !== CategoryMode.None) {
-            const cat = createCategoryElement(Util.lf("{id:category}Advanced"), "Advanced", 1, getNamespaceColor('advanced'), showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
+            const cat = createCategoryElement(advancedTitle, "Advanced", 1, getNamespaceColor('advanced'), showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
             insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             insertTopLevelCategory(cat, tb, 1, false);
         }
@@ -1195,7 +1217,7 @@ namespace pxt.blocks {
                 insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             }
             // Add the "Add package" category
-            getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
+            getOrAddSubcategoryByWeight(tb, addPackageTitle, "Extensions", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
         if (tb) {
@@ -1341,6 +1363,9 @@ namespace pxt.blocks {
                     let xmlList: Element[] = [];
                     for (let bg = 0; bg < sortedGroups.length; ++bg) {
                         let group = sortedGroups[bg];
+                        // Check if there are any blocks in that group
+                        if (!blockGroups[group] || !blockGroups[group].length) continue;
+
                         // Add the group label
                         if (group != 'other') {
                             let groupLabel = goog.dom.createDom('label');

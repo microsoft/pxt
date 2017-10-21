@@ -247,6 +247,8 @@ namespace ts.pxtc {
             if (!options.locs || !si.qName) {
                 return;
             }
+            if (si.attributes.deprecated || /^__/.test(si.name))
+                return; // skip deprecated or function starting with __
             pxt.debug(`loc: ${si.qName}`)
             // must match blockly loader
             if (si.kind != SymbolKind.EnumMember) {
@@ -598,7 +600,7 @@ namespace ts.pxtc.service {
 
         assemble: v => {
             return {
-                words: processorInlineAssemble(host.opts.target.nativeType, v.fileContent)
+                words: processorInlineAssemble(host.opts.target, v.fileContent)
             }
         },
 

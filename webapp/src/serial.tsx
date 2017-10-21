@@ -21,8 +21,6 @@ export class Editor extends srceditor.Editor {
     maxConsoleLineLength: number = 500
     maxConsoleEntries: number = 100
     active: boolean = true
-    rawDataBuffer: string = ""
-    maxBufferLength: number = 5000
     maxChartTime: number = 18000
     chartDropper: number
 
@@ -75,16 +73,13 @@ export class Editor extends srceditor.Editor {
 
         const data = smsg.data || ""
         const source = smsg.id || "?"
-        let theme = source.split("-")[0] || "black"
-
-        this.appendRawData(data)
 
         const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
         if (m) {
             const variable = m[2] || '';
             const nvalue = parseFloat(m[3]);
             if (!isNaN(nvalue)) {
-                this.appendGraphEntry(source, theme, sim, variable, nvalue)
+                this.appendGraphEntry(source, variable, nvalue)
                 return;
             }
         }
@@ -92,15 +87,7 @@ export class Editor extends srceditor.Editor {
         this.appendConsoleEntry(data)
     }
 
-    appendRawData(data: string) {
-        this.rawDataBuffer += data
-        let excessChars = this.rawDataBuffer.length - this.maxBufferLength
-        if (excessChars > 0) {
-            this.rawDataBuffer = this.rawDataBuffer.slice(excessChars)
-        }
-    }
-
-    appendGraphEntry(source: string, theme: string, sim: boolean, variable: string, nvalue: number) {
+    appendGraphEntry(source: string, variable: string, nvalue: number) {
         //See if there is a "home chart" that this point belongs to -
         //if not, create a new chart
         let homeChart: Chart = undefined
@@ -128,7 +115,7 @@ export class Editor extends srceditor.Editor {
             if (ch === "\n" || this.consoleBuffer.length > this.maxConsoleLineLength) {
 
                 let lastEntry = this.consoleRoot.lastChild
-                let newEntry = document.createElement("div")
+                let newEntry = document.createElement("span")
                 if (lastEntry && lastEntry.lastChild.textContent == this.consoleBuffer) {
                     if (lastEntry.childNodes.length == 2) {
                         //matches already-collapsed entry
@@ -152,6 +139,11 @@ export class Editor extends srceditor.Editor {
                 }
                 this.consoleBuffer = ""
             }
+        }
+
+        if (this.consoleRoot && this.consoleRoot.childElementCount > 0) {
+            if (this.chartRoot) this.chartRoot.classList.remove("noconsole");
+            if (this.consoleRoot) this.consoleRoot.classList.remove("noconsole");
         }
     }
 
@@ -191,14 +183,16 @@ export class Editor extends srceditor.Editor {
     }
 
     clear() {
-        if (this.chartRoot) this.clearNode(this.chartRoot)
-        if (this.clearNode) this.clearNode(this.consoleRoot)
+        if (this.chartRoot) {
+            this.clearNode(this.chartRoot);
+            this.chartRoot.classList.add("noconsole")
+        }
+        if (this.consoleRoot) {
+            this.clearNode(this.consoleRoot);
+            this.consoleRoot.classList.add("noconsole")
+        }
         this.charts = []
         this.consoleBuffer = ""
-    }
-
-    entriesToPlaintext() {
-        return this.rawDataBuffer
     }
 
     entriesToCSV() {
@@ -213,64 +207,6 @@ export class Editor extends srceditor.Editor {
         return csv;
     }
 
-    showExportDialog() {
-        pxt.tickEvent("serial.showExportDialog")
-        const targetTheme = pxt.appTarget.appTheme
-        let rootUrl = targetTheme.embedUrl
-        if (!rootUrl) {
-            pxt.commands.browserDownloadAsync(this.entriesToPlaintext(), "data.txt", "text/plain")
-            return
-        }
-        if (!/\/$/.test(rootUrl)) rootUrl += '/'
-
-        core.confirmAsync({
-            logos: undefined,
-            header: lf("Export data"),
-            hideAgree: true,
-            disagreeLbl: lf("Close"),
-            onLoaded: (_) => {
-                _.find('#datasavecsvfile').click(() => {
-                    pxt.tickEvent("serial.dataExported.csv")
-                    _.modal('hide')
-                    pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")
-                })
-                _.find('#datasavetxtfile').click(() => {
-                    pxt.tickEvent("serial.dataExported.txt")
-                    _.modal('hide')
-                    pxt.commands.browserDownloadAsync(this.entriesToPlaintext(), "data.txt", "text/plain")
-                })
-            },
-            htmlBody:
-            `<div></div>
-                <div class="ui cards" role="listbox">
-                    <div  id="datasavecsvfile" class="ui link card">
-                        <div class="content">
-                            <div class="header">${lf("CSV File")}</div>
-                            <div class="description">
-                                ${lf("Save the chart data streams.")}
-                            </div>
-                        </div>
-                        <div class="ui bottom attached button">
-                            <i class="download icon"></i>
-                            ${lf("Download")}
-                        </div>
-                    </div>
-                    <div id="datasavetxtfile" class="ui link card">
-                        <div class="content">
-                            <div class="header">${lf("Text File")}</div>
-                            <div class="description">
-                                ${lf("Save the text output.")}
-                            </div>
-                        </div>
-                        <div class="ui bottom attached button">
-                            <i class="download icon"></i>
-                            ${lf("Download")}
-                        </div>
-                    </div>
-                </div>`
-        }).done()
-    }
-
     goBack() {
         pxt.tickEvent("serial.backButton")
         this.parent.openPreviousEditor()
@@ -282,28 +218,21 @@ export class Editor extends srceditor.Editor {
                 <div id="serialHeader" className="ui">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this) } />
-                            <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device") }</span>
+                            <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
+                            <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button class="ui icon circular small inverted button" onClick={this.goBack.bind(this) }>
+                        <sui.Button class="ui icon circular small inverted button" ariaLabel={lf("Close")} onClick={this.goBack.bind(this)}>
                             <sui.Icon icon="close" />
+                        </sui.Button>
+                        <sui.Button class="ui icon circular small inverted button" ariaLabel={lf("Export data")} onClick={() => pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")}>
+                            <sui.Icon icon="download" />
                         </sui.Button>
                     </div>
                 </div>
-                <div id="serialCharts" ref={e => this.chartRoot = e}></div>
-                <div className="ui fitted divider"></div>
-                <div id="serialConsole" ref={e => this.consoleRoot = e}></div>
-                <div id="serialToolbox">
-                    <div className="ui grid right aligned padded">
-                        <div className="column">
-                            <sui.Button class="ui small basic blue button" onClick={this.showExportDialog.bind(this) }>
-                                <sui.Icon icon="download" /> {lf("Export data") }
-                            </sui.Button>
-                        </div>
-                    </div>
-                </div>
+                <div id="serialCharts" className="noconsole" ref={e => this.chartRoot = e}></div>
+                <div id="serialConsole" className="noconsole" ref={e => this.consoleRoot = e}></div>
             </div>
         )
     }
@@ -330,8 +259,8 @@ export class StartPauseButton extends data.Component<StartPauseButtonProps, Star
     }
 
     renderCore() {
-        const {toggle} = this.props;
-        const {active} = this.state;
+        const { toggle } = this.props;
+        const { active } = this.state;
 
         return <sui.Button class={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
             <sui.Icon icon={active ? "pause icon" : "circle icon"} />
@@ -370,7 +299,7 @@ class Chart {
         this.rootElement.className = "ui segment"
         this.source = source
         this.variable = variable
-        this.chart.addTimeSeries(this.line, {strokeStyle: lineColor, fillStyle: this.hexToHalfOpacityRgba(lineColor), lineWidth: 3})
+        this.chart.addTimeSeries(this.line, { strokeStyle: lineColor, fillStyle: this.hexToHalfOpacityRgba(lineColor), lineWidth: 3 })
 
         this.rootElement.appendChild(this.makeLabel())
         this.rootElement.appendChild(this.makeCanvas())
@@ -379,7 +308,7 @@ class Chart {
 
     hexToHalfOpacityRgba(hex: string) {
         let shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i
-        hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+        hex = hex.replace(shorthandRegex, function (m, r, g, b) {
             return r + r + g + g + b + b;
         })
         let m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
@@ -424,7 +353,7 @@ class Chart {
         this.line.append(Util.now(), value)
         this.lastUpdatedTime = Util.now();
         // update label with last value
-        const valueText = Number(Math.round(Number(value + "e+2"))  + "e-2").toString();
+        const valueText = Number(Math.round(Number(value + "e+2")) + "e-2").toString();
         this.label.innerText = this.variable ? `${this.variable}: ${valueText}` : valueText;
     }
 

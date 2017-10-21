@@ -38,7 +38,7 @@ export class Editor extends srceditor.Editor {
     setVisible(v: boolean) {
         super.setVisible(v);
         this.isVisible = v;
-        let classes = '.blocklyToolboxDiv, .blocklyWidgetDiv, .blocklyToolboxDiv';
+        let classes = '#blocksEditor .blocklyToolboxDiv, #blocksEditor .blocklyWidgetDiv, #blocksEditor .blocklyToolboxDiv';
         if (this.isVisible) {
             $(classes).show();
             // Fire a resize event since the toolbox may have changed width and height.
@@ -289,6 +289,18 @@ export class Editor extends srceditor.Editor {
         };
     }
 
+    private initToolboxPosition() {
+        let editor = this;
+        /**
+         * Move the toolbox to the edge.
+         */
+        const oldToolboxPosition = (Blockly as any).Toolbox.prototype.position;
+        (Blockly as any).Toolbox.prototype.position = function () {
+            oldToolboxPosition.call(this);
+            editor.resizeToolbox();
+        }
+    }
+
     private reportDeprecatedBlocks() {
         const deprecatedMap: pxt.Map<number> = {};
         let deprecatedBlocksFound = false;
@@ -437,11 +449,10 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
-                    if (ev.newValue == lf("{id:category}Add Package")) {
-                        (this.editor as any).toolbox_.clearSelection();
-                        this.parent.addPackage();
+                    if (ev.newValue == pxt.blocks.addPackageTitle) {
+                        this.addPackage();
                     }
-                    else if (ev.newValue == lf("{id:category}Advanced")) {
+                    else if (ev.newValue == pxt.blocks.advancedTitle) {
                         if (this.showToolboxCategories === CategoryMode.All) {
                             this.showToolboxCategories = CategoryMode.Basic;
                         }
@@ -487,6 +498,7 @@ export class Editor extends srceditor.Editor {
             }
         })
         this.initPrompts();
+        this.initToolboxPosition();
         this.resize();
     }
 
@@ -494,13 +506,23 @@ export class Editor extends srceditor.Editor {
         const blocklyArea = document.getElementById('blocksArea');
         const blocklyDiv = document.getElementById('blocksEditor');
         // Position blocklyDiv over blocklyArea.
-        if (blocklyArea && this.editor) {
+        if (blocklyArea && blocklyDiv && this.editor) {
             blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
             blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
             Blockly.svgResize(this.editor);
-            const blocklyToolbox = document.getElementsByClassName('blocklyToolboxDiv')[0];
-            if (blocklyToolbox) this.parent.updateEditorLogo(blocklyToolbox.clientWidth);
+            this.resizeToolbox();
         }
+    }
+
+    resizeToolbox() {
+        const blocklyDiv = document.getElementById('blocksEditor');
+        if (!blocklyDiv) return;
+        const blocklyToolbox = blocklyDiv.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLDivElement;
+        if (!blocklyToolbox) return;
+        this.parent.updateEditorLogo(blocklyToolbox.clientWidth);
+
+        let toolboxHeight = blocklyDiv.offsetHeight;
+        blocklyToolbox.style.height = `${toolboxHeight}px`;
     }
 
     hasUndo() {
@@ -548,6 +570,12 @@ export class Editor extends srceditor.Editor {
                 <div id="blocksEditor"></div>
             </div>
         )
+    }
+
+    addPackage() {
+        pxt.tickEvent("blocks.addpackage");
+        (this.editor as any).toolbox_.clearSelection();
+        this.parent.addPackage();
     }
 
     getViewState() {
@@ -662,6 +690,7 @@ export class Editor extends srceditor.Editor {
 
     openTypeScript() {
         pxt.tickEvent("blocks.showjavascript");
+        this.parent.closeFlyout();
         this.parent.openTypeScriptAsync().done();
     }
 

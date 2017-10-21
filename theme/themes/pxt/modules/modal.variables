@@ -1,3 +1,9 @@
 /*******************************
          Site Overrides
 *******************************/
+
+@contentColor: none;
+
+
+@closeColor: @black;
+@closeColorHover: darken(@closeColor, 25%);

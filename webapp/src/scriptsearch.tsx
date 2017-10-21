@@ -143,7 +143,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             if (ev.keyCode == 13) upd(ev);
         }
         const installGh = (scr: pxt.github.GitRepo) => {
-            pxt.tickEvent("packages.github");
+            pxt.tickEvent("packages.github", { name: scr.fullName });
             this.hide();
             let p = pkg.mainEditorPkg();
             core.showLoading("downloadingpackage", lf("downloading package..."));
@@ -221,7 +221,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             return false;
         }
 
-        const headerText = lf("Add Package...");
+        const headerText = lf("Extensions");
         return (
             <sui.Modal open={this.state.visible} dimmer={true} header={headerText} className="searchdialog" size="large"
                 onClose={() => this.setState({ visible: false }) }
