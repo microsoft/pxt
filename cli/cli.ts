@@ -3434,7 +3434,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                             info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
                     }
                     const md = pxtc.genDocs(mainPkg.config.name, apiInfo, {
-                        package: mainPkg.config.name != pxt.appTarget.corepkg,
+                        package: mainPkg.config.name != pxt.appTarget.corepkg && !mainPkg.config.core,
                         locs: buildOpts.locs,
                         docs: buildOpts.docs
                     })

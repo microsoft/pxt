@@ -38,6 +38,7 @@ declare namespace pxt {
         npmDependencies?: Map<string>;
         card?: CodeCard;
         additionalFilePath?: string;
+        core?: boolean;
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
         dalDTS?: {

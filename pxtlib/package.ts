@@ -48,8 +48,8 @@ namespace pxt {
         private resolvedVersion: string;
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
-            if (parent) {
-                this.level = this.parent.level + 1
+            if (addedBy) {
+                this.level = addedBy.level + 1
             }
 
             this.addedBy = [addedBy];
@@ -216,6 +216,12 @@ namespace pxt {
                     if (pkgCfg) {
                         const yottaCfg = pkgCfg.yotta ? U.jsonFlatten(pkgCfg.yotta.config) : null;
                         this.parent.sortedDeps().forEach((depPkg) => {
+                            if (pkgCfg.core && depPkg.config.core) {
+                                const conflict = new cpp.PkgConflictError(lf("conflict between core packages {0} and {1}", pkgCfg.name, depPkg.id));
+                                conflict.pkg0 = depPkg;
+                                conflicts.push(conflict);
+                                return;
+                            }
                             let foundYottaConflict = false;
                             if (yottaCfg) {
                                 const depConfig = depPkg.config || JSON.parse(depPkg.readFile(CONFIG_NAME)) as PackageConfig;

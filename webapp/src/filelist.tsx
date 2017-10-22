@@ -82,7 +82,9 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         const expands = this.state.expands;
         let del = p.getPkgId() != pxt.appTarget.id
             && p.getPkgId() != "built"
-            && p.getPkgId() != pxt.appTarget.corepkg;
+            && p.getPkgId() != pxt.appTarget.corepkg
+            && !p.getKsPkg().config.core
+            && p.getKsPkg().level <= 1;
         let upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
         return [<div key={"hd-" + p.getPkgId() } className="header link item" role="treeitem" aria-expanded={expands[p.getPkgId()]} aria-label={lf("{0}, {1}", p.getPkgId(), expands[p.getPkgId()] ? lf("expanded") : lf("collapsed"))} onClick={() => this.togglePkg(p) } tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
             <sui.Icon icon={`chevron ${expands[p.getPkgId()] ? "down" : "right"} icon`} />
