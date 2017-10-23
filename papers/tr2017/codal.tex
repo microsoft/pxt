@@ -6,18 +6,16 @@
 \section{The \CO Runtime}
 \label{sec:codal}
 
-The component-oriented device abstraction layer (\CO) aims to provide a layer that is multi-platform, makes efficient use of memory and energy, provides both synchronous and asynchronous API variants, and forms a reasonable target for higher level languages
+The component-oriented device abstraction layer (\CO) is a multi-platform runtime designed to make efficient use of memory and energy, provide both synchronous and asynchronous API variants, and form a reasonable target for higher level languages
 such as JavaScript.
 
-\CO provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that minimises the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem common to all \CO Components that enables the decoupling of system and user code. A \CO component represents software or hardware drivers (an I2C device, a GPIO pin, a Message Bus, a Bluetooth device); any component can generate or consume events. \CO supports both polling and asynchronous (event-driven) programming models, which enables higher level languages to map straight onto native C/C++ APIs.
-
-Section~\ref{sec:related} discusses where \CO resides with respect to other runtimes and operating systems for microcontrollers.
+\CO provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that minimises the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem (common to all components) that enables the decoupling of system and user code. \CO components represent software or hardware drivers (an I2C device, a GPIO pin, a Message Bus, a Bluetooth device); any component can generate or consume events. \CO supports both polling and asynchronous (event-driven) programming models, which enables higher level languages to map straight onto native C/C++ APIs. Section~\ref{sec:related} compares \CO to other runtimes and operating systems for microcontrollers.
 
 % more required here, needs to be reflowed...
 
 \subsection{Structural Overview}
 
-Figure~\ref{fig:codal} shows the repository architecture for two \CO devices, the Adafruit CircuitPlayground, built on top of mbed, and the Arduino Uno, built without any supporting libraries. codal-core sits at the base of both device trees and provides the high level driver models which are implemented in the layer above. Each target library (codal-arduino-uno, codal-circuit-playground) builds on top of a processor library containing processor specific files, and the target library at the top of the tree contains files specific to a device --- commonly the linker script and the model for a device. A model is a C++ class that brings together components defined further down the tree as a single software representation of the device:
+Figure~\ref{fig:codal} shows the repository architecture for two \CO devices, the Adafruit CircuitPlayground, built on top of ARM's mbed, and the Arduino Uno, built without any supporting libraries. The \COLN-core repo sits at the base of both device trees and provides the high level driver models which are implemented in the layer above. Each target library (\COLN-arduino-uno, \COLN-circuit-playground) builds on top of a processor library containing processor specific files, and the target library at the top of the tree contains files specific to a device --- commonly the linker script and the model for a device. A model is a C++ class that brings together components defined further down the tree as a single software representation of the device:
 
 \begin{lstlisting}
 class ArduinoUno : public CodalDevice
@@ -36,13 +34,14 @@ class ArduinoUno : public CodalDevice
 };
 \end{lstlisting}
 
-This architecture enables platform independent code to run extensibly across multiple processors and devices, whilst allowing for specialisation.
+This architecture enables platform independent code to run across multiple processors and devices, while
+allow for extensibility and specialisation.
 
 \subsection{Message Bus and Events}
 
 Message passing via events is a common technique and is the foundation of many operating systems --- yet in most systems events are static, used only to notify users of key events within the system (e.g. SIGKILL on UNIX).
 
-In \CO, we offer extensible events where the data contained in an event can be arbitrary, and commonly application specific. Application developers can then ``listen'' to events, specifying an id (namespace), a value (unique within a namespace), and a function to be invoked when an event is raised. All events pass through the message bus, if a corresponding listener is in place, the function indicated by the listener is invoked. The eventing model aligns well to JavaScript and even more abstract languages like Scratch, which use ``on button pressed'' semantics.
+In \CON, we offer extensible events where the data contained in an event can be arbitrary, and commonly application specific. Application developers can then ``listen'' to events, specifying an id (namespace), a value (unique within a namespace), and a function to be invoked when an event is raised. All events pass through the message bus, if a corresponding listener is in place, the function indicated by the listener is invoked. The eventing model aligns well to JavaScript and languages with event-based programming models. 
 
 Not only do events enable easy modularisation of code, but they also safeguard the application programmer from situations where incorrect code could cause unexpected behaviour. Take for example an application to detect a button press, there are usually two solutions: (1) poll the state of a pin; or (2) configure an interrupt to fire when the state of a pin changes. Taking the latter approach, it could look something like this:
 
@@ -102,7 +101,7 @@ Events and the message bus are integral to \CO even extending to fibers, which c
 
 \subsection{Drivers}
 
-Drivers are commonly low level interfaces that control external or integrated hardware on a device. For embedded developers, creating and using drivers involves translating datasheets into program code and using low-level interface, which can alienate novice programmers.
+Drivers are commonly low level interfaces that control external or integrated hardware on a device. For embedded developers, creating and using drivers involves translating datasheets into program code and using low-level interfaces, which can confuse novice programmers.
 
 In \CON, drivers abstract away the complexities of the underlying hardware into reusable, extensible, easy-to-use components; for every hardware component there is a software component. There are three types of drivers in \CON: (1) an abstract specification of a driver model common to most devices (e.g. I2C, Serial); (2) a driver that relies only on the interfaces specified in a driver model  (e.g. an I2C based driver); and (3) the concrete implementation of the abstract driver model, which may be platform specific or platform agnostic. Not all devices are the same, and by generalising the interface, devices can introduce platform specific optimisations and specialisations.
 
