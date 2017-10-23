@@ -51,14 +51,14 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                     {card.header}
                 </div> : null }
             {card.label || card.blocksXml || card.typeScript || imageUrl || cardType == "file" ? <div className={"ui image"}>
-                {card.label ? <label className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon" } label`}>{card.label}</label> : undefined }
+                {card.label ? <label className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon"} label`}>{card.label}</label> : undefined }
                 {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
-                {imageUrl ? <div className="ui cardimage" style={ { backgroundImage: `url("${imageUrl}")`}} /> : undefined}
+                {imageUrl ? <div className="ui imagewrapper"><div className="ui cardimage" style={ { backgroundImage: `url("${imageUrl}")` }} /> </div> : undefined}
                 {card.cardType == "file" ? <div className="ui fileimage" /> : undefined}
             </div> : undefined }
             {card.icon || card.iconContent ?
-                <div className="ui"><div className={`ui button massive fluid ${card.iconColor} ${card.iconContent ? "iconcontent" : ""}`}>
+                <div className="ui imagewrapper"><div className={`ui button massive fluid ${card.iconColor} ${card.iconContent ? "iconcontent" : ""}`}>
                     { card.icon ? <sui.Icon icon={`${'icon ' + card.icon}`} /> : undefined }
                     { card.iconContent || undefined }
                 </div></div> : undefined }
@@ -67,9 +67,10 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                     {card.shortName || card.name ? <div className="header">{card.shortName || card.name}</div> : null}
                     {card.description ? <div className="description tall">{renderMd(card.description) }</div> : null}
                 </div> : undefined }
-                {card.time ? <div className="meta">
-                    {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : null}
-                </div> : undefined}
+            {card.time ? <div className="meta">
+                {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : null}
+            </div> : undefined}
+            {card.extracontent ? <div className="extra content"> {card.extracontent} </div> : undefined}
         </div>;
 
         if (!card.onClick && url) {

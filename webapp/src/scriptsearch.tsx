@@ -232,7 +232,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
         const headerText = lf("Extensions");
         return (
-            <sui.Modal open={this.state.visible} dimmer={true} header={headerText} className="searchdialog" size="large"
+            <sui.Modal open={this.state.visible} dimmer={true} header={headerText} className="searchdialog" longer={true} size="fullscreen"
                 onClose={() => this.setState({ visible: false }) }
                 closeIcon={true}
                 helpUrl="/packages"
@@ -287,10 +287,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         {ghdata.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
                             <codecard.CodeCardView
                                 name={scr.name.replace(/^pxt-/, "") }
-                                description={lf("User provided package, not endorsed by Microsoft.")
-                                    + " " + (scr.description || "") }
+                                description={(scr.description || "") }
+                                extracontent={lf("User provided package, not endorsed by Microsoft.")}
                                 key={'ghd' + scr.fullName}
                                 onClick={() => installGh(scr) }
+                                imageUrl={pxt.github.repoIconUrl(scr) }
                                 url={'github:' + scr.fullName}
                                 color="red"
                                 role="option"

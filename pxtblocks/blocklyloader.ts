@@ -2172,13 +2172,11 @@ namespace pxt.blocks {
             if (a == that.selectedItem_ || a == toolbox.tree_) {
                 return;
             }
-
-            if (a === null) {
-                collapseSubcategories(that.selectedItem_);
-                editor.lastInvertedCategory = that.selectedItem_;
-            }
-
+            let oldSelectedItem = that.selectedItem_;
             oldSetSelectedItem.call(that, a);
+            if (a === null) {
+                collapseSubcategories(oldSelectedItem);
+            }
         };
 
         // TODO: look into porting this code over to pxt-blockly
@@ -2923,7 +2921,7 @@ namespace pxt.blocks {
                 let headingLabel = goog.dom.createDom('label');
                 headingLabel.setAttribute('text', lf("Functions"));
                 headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
-                headingLabel.setAttribute('web-icon', '\uf107');
+                headingLabel.setAttribute('web-icon', '\uf109');
                 headingLabel.setAttribute('web-icon-class', 'blocklyFlyoutIconfunctions');
                 headingLabel.setAttribute('web-icon-color', getNamespaceColor('functions'));
                 xmlList.push(headingLabel as HTMLElement);

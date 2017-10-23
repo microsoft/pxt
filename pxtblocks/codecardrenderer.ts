@@ -122,6 +122,11 @@ namespace pxt.docs.codeCard {
             }
         }
 
+        if (card.extracontent) {
+            let extracontent = div(r, "extra content", "div");
+            extracontent.appendChild(document.createTextNode(card.extracontent));
+        }
+
         return r;
     }
 }

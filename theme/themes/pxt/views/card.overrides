@@ -110,7 +110,11 @@
 
 
 /* Project code cards */
-
+.ui.card .ui.imagewrapper {
+    overflow: hidden;
+    border-top-left-radius: @borderRadius;
+    border-top-right-radius: @borderRadius;
+}
 .ui.cardimage {
     background-color: @secondaryColor;
     background-size: cover;
