@@ -151,7 +151,10 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     else {
                         if (scr.youTubeId && !scr.url)
                             window.open('https://youtu.be/' + scr.youTubeId, 'yt');
-                        else this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
+                        else if (/^https:\/\//i.test(scr.url))
+                            window.open(scr.url, '_blank');
+                        else
+                            this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
                     }
             }
         }
