@@ -294,7 +294,7 @@ declare namespace Math {
 
     /**
      * Return a pseudorandom number between 0 and `limit`.
-     * @param limit the upper bound of the number generated, eg: 4.
+     * @param limit the upper bound of the number generated, eg: 4
      */
     //% blockId="device_random" block="pick random 0 to %limit" blockGap=8
     //% help=math/random
