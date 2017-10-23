@@ -138,6 +138,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             opts.ast = true;
+            opts.testMode = true;
             return decompileCoreAsync(opts, fileName)
         })
         .then(resp => {
