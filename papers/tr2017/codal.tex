@@ -33,21 +33,9 @@ Worked example of how everything fits together, short, only a few sentences.
 
 \subsection{Message Bus and Events}
 
-Message passing via events is a common technique and is the foundation of many operating systems --- yet in most systems events are static used only to notify users of key events within the system (e.g. SIGKILL on UNIX).
+Message passing via events is a common technique and is the foundation of many operating systems --- yet in most systems events are static, used only to notify users of key events within the system (e.g. SIGKILL on UNIX).
 
-In CODAL, we offer extensible events where the data contained in an event can be arbitrary, commonly application specific. Application developers can then ``listen'' to events, specifying an id (namespace), a value (unique within a namespace), and a function to be invoked when an event is raised. Events pass through the message bus, if a corresponding listener is in place, the function indicated by the listener is invoked. The eventing model aligns well to languages like JavaScript as well as Scratch blocks such as ``on button pressed''. An example is given below:
-
-\begin{lstlisting}
-#include "CircuitPlayground.h"
-CircuitPlayground cplay;
-
-void a_listener() { // do something }
-
-int main() {
-    cplay.messageBus.listen(100,100,a_listener);
-    Event(100,100);
-}
-\end{lstlisting}
+In CODAL, we offer extensible events where the data contained in an event can be arbitrary, and commonly application specific. Application developers can then ``listen'' to events, specifying an id (namespace), a value (unique within a namespace), and a function to be invoked when an event is raised. All events pass through the message bus, if a corresponding listener is in place, the function indicated by the listener is invoked. The eventing model aligns well to JavaScript and even more abstract languages like Scratch, which use ``on button pressed'' semantics.
 
 Not only do events enable easy modularisation of code, but they also safeguard the application programmer from situations where incorrect code could cause unexpected behaviour. Take for example an application to detect a button press, there are usually two solutions: (1) poll the state of a pin; or (2) configure an interrupt to fire when the state of a pin changes. Taking the latter approach, it could look something like this:
 
@@ -101,27 +89,9 @@ Note that the user doesn't have to configure any interrupts, as they are handled
 
 Novice users often want to perform multiple operations concurrently, generally requiring threads. Threading is a confusing concept: users have to learn about locks, semaphores, and preemption, to prevent race conditions. Threads can also consume a large number of resources depending on the model that is adopted by the runtime environment.
 
-CODAL takes a non-preemptive scheduling approach which reduces the need for resource locking primitives. In CODAL's scheduling model, fibers (a lightweight thread) are RAM efficient and are only paged out when a user explicitly calls ``sleep'', meaning that the stack depth at the point where a fiber is paged out is small. Fibers have a variable stack size, and when paged out the entire stack is duplicated to the heap --- this would normally be ill-advised, but due to a usually small stack size, this is more efficient than approaches where there is a mandated stack size.
+CODAL takes a non-preemptive scheduling approach which reduces the need for resource locking primitives. In CODAL's scheduling model, fibers (a lightweight thread) are RAM efficient and have a variable stack size. As we adopt a non-preemptive scheduling model, user or driver code must call ``sleep'' to swap context to another thread, this means that usually at an invoke of sleep, the stack depth is small. When a fiber is paged out the entire stack is duplicated to the heap. This would normally be ill-advised, but due to a usually small stack size, this is more efficient than approaches where there is a mandated stack size.
 
-Events and the message bus are integral to CODAL even extending to fibers, which can block and wait on events to complete:
-
-\begin{lstlisting}
-#include "CircuitPlayground.h"
-CircuitPlayground cplay;
-
-void block() {
-    // block the calling thread until the user clicks button a!
-    fiber_wake_on_event(ID_BUTTON_A,DEVICE_BUTTON_EVT_CLICK,buttonClicked);
-    cplay.io.led.setDigitalValue(1);
-}
-
-int main() {
-    create_fiber(block);
-    // wait until the button
-    fiber_wait_for_event(ID_BUTTON_A,DEVICE_BUTTON_EVT_CLICK,buttonClicked);
-    cplay.io.led.setDigitalValue(0);
-}
-\end{lstlisting}
+Events and the message bus are integral to CODAL even extending to fibers, which can block and wait on events to complete.
 
 \subsection{Drivers}
 
@@ -139,11 +109,11 @@ Interrupts are integral to drivers: in Serial communications it is useful to kno
 
 \subsection{Memory Management}
 
-Standard libraries in C++ do not offer reentrant versions of memory allocation calls like ``malloc'' and ``new'', critically this forbids the allocation of memory in interrupt context.
+Standard libraries in C++ do not offer reentrant versions of memory allocation calls like ``malloc'' and ``new'', forbidding the allocation of memory in interrupt context.
 
 CODAL implements its own heap allocater that is designed to safeguard users from the scenario above, introducing reentrant versions of malloc. The heap allocater is flexible, reconfigurable, and repurposable, allowing the specification of multiple heaps across memory and it is optimised for common sizes and repeat allocations.
 
-CODAL has a number of managed types that use reference counting to determine when memory should be freed. Internally, managed types use malloc to copy stack allocated data to the heap --- the reentrant behaviour of malloc and free are key here, as references can be created and destroyed regardless of processor context.
+CODAL has a number of managed types that use reference counting to determine when memory should be freed. Internally, managed types use malloc to copy stack allocated data to the heap creating a safer environment for the user --- the reentrant behaviour of malloc and free are key here, as references can be created and destroyed regardless of processor context.
 % * provides an interrupt safe environment for memory allocation
 % * flexible implementation
 %     - multiple heaps
@@ -154,34 +124,25 @@ CODAL has a number of managed types that use reference counting to determine whe
 %     - ref counted, malloced types.
 
 \subsection{Streams}
+There are very few scenarios where a processor alone is used to accomplish a task, hence the growth in packaged devices where sensors are distributed alongside a main processing unit. With sensors on boarded, scenarios are centered on the processing, handling, and piping of information generated by sensors.
 
-% * motivation
-% * example
-% * Pull and Push model
-% * Adopted by all stream capable interfaces, from Serial to I2C
-% * Worked example, audio recog, playback
+One scenario is the generation of audio data for a speaker, which has a specific clock rate at which buffers are consumed. Rate pacing the passing of audio buffers to the speaker is challenging --- should it be the users' responsibility to ensure buffers are delivered at the correct time?
 
-\subsection{A code sample}
+In CODAL, a Stream interface removes the complexity of these scenarios from user applications. Streams are formed of one source node (where data is generated), one sink node (where data is consumed), and 0 or more intermediate data streams which have knowledge of both upstream and downstream interfaces, forming a chain of filters and/or data processing units. Source nodes can push data into the stream, a sink node can pull data down the stream, and a data stream can do either (a Pull/Push model). This means that autonomous tasks can happen in the background, only requiring user intervention if the user application demands it.
+The following code snippet will play a SawtoothTone whilst the device is powered on:
+\begin{lstlisting}
+CircuitPlayground cplay;
+SAMD21DMAC dmac;
+Synthesizer synth;
+SAMD21DAC dac(cplay.io.speaker, dmac, synth.output, 44100);
 
-% * That says this is awesome!
-% * how it fits together...
+int main()
+{
+    // Align sample rate to speaker DAC.
+    synth.setSampleRate(dac.getSampleRate());
+    synth.setTone(Synthesizer::SawtoothTone);
+    synth.setFrequency(300);
 
-\subsection{Evaluation}
-
-% - Profile fibers, how much do they actually use? are they any better?
-%     - average RAM consumption for X
-%     - Stack is typically small...
-%     - types aid the stack size (heap allocated)
-% - Compare memory allocator to lib c? (probably not that interesting)
-% - benefits of componentisation?
-%     - reusability, extensibility
-% - How well does \MC + codal perform on each device? (SAMD, ATMEGA, NRF52)
-%     - \MC + codal, native codal, mbed.
-%     - cost benefit analysis of each.
-%     - memory (flash and RAM) consumption
-%     - CPU cycles
-%         - context switch
-%         - cost of events
-%         - code gen, compare against micropython / espruino
-%     - energy efficiency
-%         - environmental sensing across 3 different platforms, mbed, espruino, codal
+    while(1) cplay.sleep(100);
+}
+\end{lstlisting}
