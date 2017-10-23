@@ -19,6 +19,7 @@
 @pink:#E2008C;
 @brown:#00BCF2;
 @grey:#505050;
+@lightGrey: #fefefe;
 
 @greenTextColor: darken(@green, 5);
 
@@ -158,6 +159,17 @@
 
 @blocklyToolboxColor: rgba(0, 0, 0, 0.05);
 @trashIconColor: @primaryColor;
+
+/*-------------------
+   Serial editor
+--------------------*/
+@serialBackgroundColor: lighten(@simulatorBackground, 2);
+@serialTextColor: white;
+@serialGraphBackground: @lightGrey;
+@serialGraphColor: black;
+@closeColor: black;
+@closeColorHover: darken(@closeColor, 25%);
+@borderSize: 2px;
 
 /*-------------------
    Blockly

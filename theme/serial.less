@@ -9,11 +9,6 @@
    Serial
 --------------------*/
 
-@serialBackgroundColor: lighten(@simulatorBackground, 2);
-@serialTextColor: #fff;
-@serialGraphBackground: #fefefe;
-@serialGraphColor: black;
-
 #serialEditor {
     background-color: @serialBackgroundColor;
 }
@@ -147,4 +142,16 @@
 
 .serialindicator {
     cursor:pointer;
+}
+
+.ui.circular.icon.button.closeEditor {
+    color: @closeColor;
+    background: transparent none;
+    box-shadow: 0px 0px 0px @borderSize @closeColor inset !important;
+    text-shadow: none !important;
+}
+
+.ui.button.icon.closeEditor:hover, .ui.button.icon.closeEditor:focus {
+    color: @closeColorHover !important;
+    box-shadow: 0px 0px 0px @borderSize @closeColorHover !important;
 }
