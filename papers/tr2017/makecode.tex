@@ -1,8 +1,7 @@
 \section{\MCN: Design and Implementation}
 \label{sec:makecode}
 
-Figure~\ref{fig:screenSnap} shows a screen snapshot of the \MC web app for the micro:bit
-with the main parts labelled: 
+Figure~\ref{fig:screenSnap} shows a screen snapshot of the \MC web app for the micro:bit: 
 (A) the menu bar allows switching between views of blocks and JavaScript;
 (B) the simulator provides feedback on user code executed in the browser;
 (C) the toolbar provides access to device-specific APIs and programming elements;
@@ -12,7 +11,7 @@ with the main parts labelled:
 The \MC web app encapsulates all the components needed to deliver a programming experience 
 for microcontroller based devices, free of the need for a C++ compiler for the compilation of user 
 code.
-The web app is written in TypeScript and also incorporates the TypeScript compiler and 
+The web app is written in TypeScript and incorporates the TypeScript compiler and 
 language service as well. 
 The app is built from a target (e.g., \emph{\href{https://github.com/microsoft/pxt-microbit}{pxt-microbit}})
 which extends the core framework (\emph{\href{https://github.com/microsoft/pxt}{pxt}}).
@@ -26,7 +25,7 @@ which shows the high-level components of the web app.
 
 \subsection{Device Runtime and Shim Generation}
 
-An \MC target is defined, in part, by its device runtime, which can be a combination of C++ 
+A \MC target is defined, in part, by its device runtime, which can be a combination of C++ 
 and Static TypeScript (STS) code. The C++ runtime for the target microcontroller is precompiled 
 and stored in the cloud. The runtime binary also is stored in the HTML5 application cache (with 
 other assets) so that the web app can function when the browser is offline. Additional runtime
