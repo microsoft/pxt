@@ -2174,8 +2174,12 @@ class Host
         const resolved = this.resolve(module, filename)
         const dir = path.dirname(resolved)
         if (filename == pxt.CONFIG_NAME)
-            return JSON.stringify(nodeutil.readPkgConfig(dir), null, 4)
-
+            try {
+                return JSON.stringify(nodeutil.readPkgConfig(dir), null, 4)
+            } catch (e) {
+                return null
+            }
+            
         try {
             // pxt.debug(`reading ${path.resolve(resolved)}`)
             return fs.readFileSync(resolved, "utf8")

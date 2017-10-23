@@ -638,6 +638,7 @@ namespace pxt {
                         U.userError('Only packages with "public":true can be published')
                     let cfg = U.clone(this.config)
                     delete cfg.installedVersion
+                    delete cfg.additionalFilePath
                     U.iterMap(cfg.dependencies, (k, v) => {
                         if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {
                             cfg.dependencies[k] = "*"
