@@ -186,7 +186,7 @@ Upon completion of the async function call, the current function then is resumed
 by runtime developers, not end-users, and greatly simplify the JavaScript
 programming model for end-users. For example, although the JavaScript simulator runtime uses promises to 
 achieve asynchronous execution in a single-threaded context, these promises are hidden from the end user. 
-The CODAL device runtime supports fibers with the ability to pause, so for compilation to a device, 
+The \CO device runtime supports fibers with the ability to pause, so for compilation to a device, 
 the compiler simply emits a call to pause at a suspension point. 
 
 \emph{TODO: need a small example to clarify how it all works}
@@ -194,7 +194,7 @@ the compiler simply emits a call to pause at a suspension point.
 % tball: I added TypeScript above to make it clear 
 %\emph{TODO: The async annotation is only relevant for the JS code. In ARM/AVR it doesn't do anything.
 %One way to say it is to say it's there to simulate cooperative multi-threading in JS, since
-%it is already implemented in C++ by CODAL.}
+%it is already implemented in C++ by \CO.}
 
 \subsubsection{Untagged and Tagged Strategies}
 
@@ -241,7 +241,7 @@ package directly from GitHub, compiles it and incorporates it into the web app. 
 app (the analog of static linking).  
 
 For packages containing C++ files, a new C++ runtime has to be compiled in the cloud.
-This is achieved by collecting all C++ files (in all packages plus the CODAL runtime),
+This is achieved by collecting all C++ files (in all packages plus the \CO runtime),
 computing a hash, checking in the local in-browser cache if such a runtime was retrieved
 before, and otherwise asking the cloud service to compile it.
 Of course, the cloud service will return a cached copy, if the same set of C++

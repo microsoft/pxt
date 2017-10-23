@@ -1,23 +1,23 @@
 \begin{figure}[t]
     \includegraphics[width=4.5in]{codalFig.pdf}
-    \caption{\label{fig:codal}Detailed relationships between CODAL repos.}
+    \caption{\label{fig:codal}Detailed relationships between \CO repos.}
 \end{figure}
 
-\section{The CODAL Runtime}
+\section{The \CO Runtime}
 \label{sec:codal}
 
-The component-oriented device abstraction layer (CODAL) aims to provide a layer that is multi-platform, makes efficient use of memory and energy, provides both synchronous and asynchronous API variants, and forms a reasonable target for higher level languages
+The component-oriented device abstraction layer (\CO) aims to provide a layer that is multi-platform, makes efficient use of memory and energy, provides both synchronous and asynchronous API variants, and forms a reasonable target for higher level languages
 such as JavaScript.
 
-CODAL provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that minimises the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem common to all CODAL Components that enables the decoupling of system and user code. A CODAL component represents software or hardware drivers (an I2C device, a GPIO pin, a Message Bus, a Bluetooth device); any component can generate or consume events. CODAL supports both polling and asynchronous (event-driven) programming models, which enables higher level languages to map straight onto native C/C++ APIs.
+\CO provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that minimises the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem common to all \CO Components that enables the decoupling of system and user code. A \CO component represents software or hardware drivers (an I2C device, a GPIO pin, a Message Bus, a Bluetooth device); any component can generate or consume events. \CO supports both polling and asynchronous (event-driven) programming models, which enables higher level languages to map straight onto native C/C++ APIs.
 
-Section~\ref{sec:related} discusses where CODAL resides with respect to other runtimes and operating systems for microcontrollers.
+Section~\ref{sec:related} discusses where \CO resides with respect to other runtimes and operating systems for microcontrollers.
 
 % more required here, needs to be reflowed...
 
 \subsection{Structural Overview}
 
-Figure~\ref{fig:codal} shows the repository architecture for two CODAL devices, the Adafruit CircuitPlayground, built on top of mbed, and the Arduino Uno, built without any supporting libraries. codal-core sits at the base of both device trees and provides the high level driver models which are implemented in the layer above. Each target library (codal-arduino-uno, codal-circuit-playground) builds on top of a processor library containing processor specific files, and the target library at the top of the tree contains files specific to a device --- commonly the linker script and the model for a device. A model is a C++ class that brings together components defined further down the tree as a single software representation of the device:
+Figure~\ref{fig:codal} shows the repository architecture for two \CO devices, the Adafruit CircuitPlayground, built on top of mbed, and the Arduino Uno, built without any supporting libraries. codal-core sits at the base of both device trees and provides the high level driver models which are implemented in the layer above. Each target library (codal-arduino-uno, codal-circuit-playground) builds on top of a processor library containing processor specific files, and the target library at the top of the tree contains files specific to a device --- commonly the linker script and the model for a device. A model is a C++ class that brings together components defined further down the tree as a single software representation of the device:
 
 \begin{lstlisting}
 class ArduinoUno : public CodalDevice
@@ -42,7 +42,7 @@ This architecture enables platform independent code to run extensibly across mul
 
 Message passing via events is a common technique and is the foundation of many operating systems --- yet in most systems events are static, used only to notify users of key events within the system (e.g. SIGKILL on UNIX).
 
-In CODAL, we offer extensible events where the data contained in an event can be arbitrary, and commonly application specific. Application developers can then ``listen'' to events, specifying an id (namespace), a value (unique within a namespace), and a function to be invoked when an event is raised. All events pass through the message bus, if a corresponding listener is in place, the function indicated by the listener is invoked. The eventing model aligns well to JavaScript and even more abstract languages like Scratch, which use ``on button pressed'' semantics.
+In \CO, we offer extensible events where the data contained in an event can be arbitrary, and commonly application specific. Application developers can then ``listen'' to events, specifying an id (namespace), a value (unique within a namespace), and a function to be invoked when an event is raised. All events pass through the message bus, if a corresponding listener is in place, the function indicated by the listener is invoked. The eventing model aligns well to JavaScript and even more abstract languages like Scratch, which use ``on button pressed'' semantics.
 
 Not only do events enable easy modularisation of code, but they also safeguard the application programmer from situations where incorrect code could cause unexpected behaviour. Take for example an application to detect a button press, there are usually two solutions: (1) poll the state of a pin; or (2) configure an interrupt to fire when the state of a pin changes. Taking the latter approach, it could look something like this:
 
@@ -66,7 +66,7 @@ int main() {
 }
 \end{lstlisting}
 
-The above code sample is considered bad practice as it prevents other interrupts (like Timers) from firing for at least a second when a button is released, however, this is often the first application that a user will create. Such frameworks advise users to avoid blocking functions and waiting in interrupt context, thus sidestepping the problem by punting responsibility to the user --- CODAL uses the message bus abstraction to shield users from such scenarios:
+The above code sample is considered bad practice as it prevents other interrupts (like Timers) from firing for at least a second when a button is released, however, this is often the first application that a user will create. Such frameworks advise users to avoid blocking functions and waiting in interrupt context, thus sidestepping the problem by punting responsibility to the user --- \CO uses the message bus abstraction to shield users from such scenarios:
 
 \begin{lstlisting}
 #include "CircuitPlayground.h"
@@ -96,17 +96,17 @@ Note that the user doesn't have to configure any interrupts, as they are handled
 
 Novice users often want to perform multiple operations concurrently, generally requiring threads. Threading is a confusing concept: users have to learn about locks, semaphores, and preemption, to prevent race conditions. Threads can also consume a large number of resources depending on the model that is adopted by the runtime environment.
 
-CODAL takes a non-preemptive scheduling approach which reduces the need for resource locking primitives. In CODAL's scheduling model, fibers (a lightweight thread) are RAM efficient and have a variable stack size. As we adopt a non-preemptive scheduling model, user or driver code must call ``sleep'' to swap context to another thread, this means that at an invoke of sleep, the stack depth is small. When a fiber is paged out the entire stack is duplicated to the heap. This would normally be ill-advised, but due to a usually small stack size, this is more efficient than approaches where there is a mandated stack size.
+\CO takes a non-preemptive scheduling approach which reduces the need for resource locking primitives. In \CON's scheduling model, fibers (a lightweight thread) are RAM efficient and have a variable stack size. As we adopt a non-preemptive scheduling model, user or driver code must call ``sleep'' to swap context to another thread, this means that at an invoke of sleep, the stack depth is small. When a fiber is paged out the entire stack is duplicated to the heap. This would normally be ill-advised, but due to a usually small stack size, this is more efficient than approaches where there is a mandated stack size.
 
-Events and the message bus are integral to CODAL even extending to fibers, which can block and wait on events to complete.
+Events and the message bus are integral to \CO even extending to fibers, which can block and wait on events to complete.
 
 \subsection{Drivers}
 
 Drivers are commonly low level interfaces that control external or integrated hardware on a device. For embedded developers, creating and using drivers involves translating datasheets into program code and using low-level interface, which can alienate novice programmers.
 
-In CODAL, drivers abstract away the complexities of the underlying hardware into reusable, extensible, easy-to-use components; for every hardware component there is a software component. There are three types of drivers in CODAL: (1) an abstract specification of a driver model common to most devices (e.g. I2C, Serial); (2) a driver that relies only on the interfaces specified in a driver model  (e.g. an I2C based driver); and (3) the concrete implementation of the abstract driver model, which may be platform specific or platform agnostic. Not all devices are the same, and by generalising the interface, devices can introduce platform specific optimisations and specialisations.
+In \CON, drivers abstract away the complexities of the underlying hardware into reusable, extensible, easy-to-use components; for every hardware component there is a software component. There are three types of drivers in \CON: (1) an abstract specification of a driver model common to most devices (e.g. I2C, Serial); (2) a driver that relies only on the interfaces specified in a driver model  (e.g. an I2C based driver); and (3) the concrete implementation of the abstract driver model, which may be platform specific or platform agnostic. Not all devices are the same, and by generalising the interface, devices can introduce platform specific optimisations and specialisations.
 
-Interrupts are integral to drivers: in Serial communications it is useful to know when a byte has been sent or received. As illustrated in the button example, performing operations in interrupt context can be detrimental to the device. CODAL drivers use events to decouple computational tasks, that may take a variable length of time, from interrupt context.
+Interrupts are integral to drivers: in Serial communications it is useful to know when a byte has been sent or received. As illustrated in the button example, performing operations in interrupt context can be detrimental to the device. \CO drivers use events to decouple computational tasks, that may take a variable length of time, from interrupt context.
 
 % * motivation
 % * example - I2C, microphone (DMA)
@@ -118,9 +118,9 @@ Interrupts are integral to drivers: in Serial communications it is useful to kno
 
 Standard libraries in C++ do not offer reentrant versions of memory allocation calls like ``malloc'' and ``new'', forbidding the allocation of memory in interrupt context.
 
-CODAL implements its own heap allocater that is designed to safeguard users from the scenario above, introducing reentrant versions of malloc. The heap allocater is flexible, reconfigurable, and repurposable, allowing the specification of multiple heaps across memory and it is optimised for common sizes and repeat allocations.
+\CO implements its own heap allocater that is designed to safeguard users from the scenario above, introducing reentrant versions of malloc. The heap allocater is flexible, reconfigurable, and repurposable, allowing the specification of multiple heaps across memory and it is optimised for common sizes and repeat allocations.
 
-CODAL has a number of managed types that use reference counting to determine when memory should be freed. Internally, managed types use malloc to copy stack allocated data to the heap creating a safer environment for the user --- the reentrant behaviour of malloc and free are key here, as references can be created and destroyed regardless of processor context.
+\CO has a number of managed types that use reference counting to determine when memory should be freed. Internally, managed types use malloc to copy stack allocated data to the heap creating a safer environment for the user --- the reentrant behaviour of malloc and free are key here, as references can be created and destroyed regardless of processor context.
 % * provides an interrupt safe environment for memory allocation
 % * flexible implementation
 %     - multiple heaps
@@ -135,7 +135,7 @@ There are very few scenarios where a processor alone is used to accomplish a tas
 
 One scenario is the generation of audio data for a speaker, which has a specific clock rate at which buffers are consumed. Rate pacing the passing of audio buffers to the speaker is challenging --- should it be the users' responsibility to ensure buffers are delivered at the correct time?
 
-In CODAL, a Stream interface removes the complexity of these scenarios from user applications. Streams are formed of one source node (where data is generated), one sink node (where data is consumed), and 0 or more intermediate data streams which have knowledge of both upstream and downstream interfaces, forming a chain of filters and/or data processing units. Source nodes can push data into the stream, a sink node can pull data down the stream, and a data stream can do either (a Pull/Push model). This means that autonomous tasks can happen in the background, only requiring user intervention if the user application demands it.
+In \CO, a Stream interface removes the complexity of these scenarios from user applications. Streams are formed of one source node (where data is generated), one sink node (where data is consumed), and 0 or more intermediate data streams which have knowledge of both upstream and downstream interfaces, forming a chain of filters and/or data processing units. Source nodes can push data into the stream, a sink node can pull data down the stream, and a data stream can do either (a Pull/Push model). This means that autonomous tasks can happen in the background, only requiring user intervention if the user application demands it.
 The following code snippet will play a SawtoothTone whilst the device is powered on:
 \begin{lstlisting}
 CircuitPlayground cplay;
