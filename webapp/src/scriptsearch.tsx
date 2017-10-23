@@ -115,7 +115,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
 
         bundles.sort(coresFirst)
-        
+
         const addUrl = (scr: pxt.Cloud.JsonScript) => {
             this.hide();
             let p = pkg.mainEditorPkg();
@@ -287,7 +287,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         {ghdata.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
                             <codecard.CodeCardView
                                 name={scr.name.replace(/^pxt-/, "") }
-                                description={lf("User provided package, not endorsed by Microsoft.") 
+                                description={lf("User provided package, not endorsed by Microsoft.")
                                     + " " + (scr.description || "") }
                                 key={'ghd' + scr.fullName}
                                 onClick={() => installGh(scr) }
