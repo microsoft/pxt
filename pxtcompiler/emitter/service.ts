@@ -158,6 +158,25 @@ namespace ts.pxtc {
                     }
             }
 
+            // collect all constants exported by a namespace
+            let constants: ConstantDesc[];
+            if (kind == SymbolKind.Module) {
+                constants = [];
+                const ml = (stmt as ModuleDeclaration);
+                if (ml.symbol) {
+                    const nsExports = typechecker.getExportsOfModule(ml.symbol);
+                    for (let s of nsExports) {
+                        if (s.flags & SymbolKind.Property) {
+                            constants.push({
+                                name: s.name,
+                                type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(s, s.valueDeclaration)),
+                                attrs: parseComments(s.valueDeclaration)
+                            })
+                        }
+                    }
+                }
+            }
+
             return {
                 kind,
                 namespace: m ? m[1] : "",
@@ -166,6 +185,7 @@ namespace ts.pxtc {
                 pkg,
                 extendsTypes,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
+                constants: constants,
                 parameters: !hasParams ? null : (decl.parameters as ParameterDeclaration[] || []).map((p, i) => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
@@ -344,6 +364,9 @@ namespace ts.pxtc {
                                     si.extendsTypes.push(t);
                                 }
                             })
+                        }
+                        if (existing.constants) {
+                            si.constants = existing.constants.concat(si.constants)
                         }
                     }
                     res.byQName[qName] = si
