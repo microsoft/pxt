@@ -231,7 +231,7 @@ namespace pxsim {
     }
 
     // overriden at loadtime by specific implementation
-    export let initCurrentRuntime: () => void = undefined;
+    export let initCurrentRuntime: (msg: SimulatorRunMessage) => void = undefined;
     export let handleCustomMessage: (message: pxsim.SimulatorCustomMessage) => void = undefined;
 
     export class Runtime {
@@ -316,8 +316,10 @@ namespace pxsim {
             }
         }
 
-        constructor(code: string) {
+        constructor(msg: SimulatorRunMessage) {
             U.assert(!!initCurrentRuntime);
+
+            this.id = msg.id
 
             let yieldMaxSteps = 100
 
@@ -580,7 +582,7 @@ namespace pxsim {
             }
 
             // tslint:disable-next-line
-            eval(code)
+            eval(msg.code)
 
             this.run = (cb) => topCall(entryPoint, cb)
             this.getResume = () => {
@@ -600,7 +602,7 @@ namespace pxsim {
             }
             runtime = this;
 
-            initCurrentRuntime();
+            initCurrentRuntime(msg);
         }
     }
 }

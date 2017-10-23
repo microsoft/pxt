@@ -15,9 +15,37 @@ namespace pxsim {
     let stringRefCounts: any = {};
     let refCounting = true;
     let floatingPoint = false;
+    let cfgKey: Map<number> = {}
+    let cfg: Map<number> = {}
 
     export function noRefCounting() {
         refCounting = false;
+    }
+
+    export function getConfig(id: number) {
+        if (cfg.hasOwnProperty(id + ""))
+            return cfg[id + ""]
+        return null
+    }
+
+    export function getConfigKey(id: string) {
+        if (cfgKey.hasOwnProperty(id))
+            return cfgKey[id]
+        return null
+    }
+
+    export function getAllConfigKeys() {
+        return Object.keys(cfgKey)
+    }
+
+    export function setConfig(id: number, val: number) {
+        cfg[id] = val
+    }
+
+
+    export function setConfigData(cfg_: Map<number>, cfgKey_: Map<number>) {
+        cfg = cfg_
+        cfgKey = cfgKey_
     }
 
     export function enableFloatingPoint() {
@@ -299,6 +327,12 @@ namespace pxsim {
 
         export function afterProgramPage() {
             return 0;
+        }
+
+        export function getConfig(key: number, defl: number) {
+            let r = pxsim.getConfig(key)
+            if (r == null) return defl
+            return r
         }
 
         // these shouldn't generally be called when compiled for simulator

@@ -327,7 +327,7 @@ namespace ts.pxtc {
                     }
                 }
                 if (argIsNumber.length != inf.argsFmt.length - 1)
-                    U.userError("not enough arguments for " + nm)
+                    U.userError(`not enough arguments for ${nm} (got ${argIsNumber.length}; fmt=${inf.argsFmt})`)
             } else {
                 U.userError("function not found: " + nm)
             }
@@ -593,7 +593,7 @@ ${hex.hexPrelude()}
     .hex 0000000000000000 ; @SRCHASH@
     .short ${bin.globalsWords}   ; num. globals
     .short 0 ; patched with number of words resulting from assembly
-    .word 0 ; reserved
+    .word _pxt_config_data
     .word 0 ; reserved
     .word 0 ; reserved
 `
@@ -615,6 +615,12 @@ ${hex.hexPrelude()}
             asmsource += `    .section code\n${lbl}:\n${code}\n`
         })
         asmsource += snippets.arithmetic()
+
+        asmsource += `\n.balign 4\n_pxt_config_data:\n`
+        for (let d of bin.res.configData || []) {
+            asmsource += `    .word ${d.key}, ${d.value}  ; ${d.name}=${d.value}\n`
+        }
+        asmsource += `    .word 0\n\n`
 
         asmsource += hex.asmTotalSource
 

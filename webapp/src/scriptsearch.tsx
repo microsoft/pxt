@@ -108,6 +108,14 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
 
+        const coresFirst = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
+            if (a.core != b.core)
+                return a.core ? -1 : 1;
+            return Util.strcmp(a.name, b.name)
+        }
+
+        bundles.sort(coresFirst)
+
         const addUrl = (scr: pxt.Cloud.JsonScript) => {
             this.hide();
             let p = pkg.mainEditorPkg();
@@ -150,18 +158,19 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             pxt.packagesConfigAsync()
                 .then(config => pxt.github.latestVersionAsync(scr.fullName, config))
                 .then(tag => pxt.github.pkgConfigAsync(scr.fullName, tag)
-                .then(cfg => {
-                    core.hideLoading("downloadingpackage");
-                    return cfg;
-                })
-                .then(cfg => addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
+                    .then(cfg => {
+                        core.hideLoading("downloadingpackage");
+                        return cfg;
+                    })
+                    .then(cfg => addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
                 .catch(core.handleNetworkError)
                 .finally(() => core.hideLoading("downloadingpackage"));
         }
         const addDepIfNoConflict = (config: pxt.PackageConfig, version: string) => {
             return pkg.mainPkg.findConflictsAsync(config, version)
                 .then((conflicts) => {
-                    let inUse = conflicts.filter((c) => pkg.mainPkg.isPackageInUse(c.pkg0.id));
+                    let inUse = config.core ? [] // skip conflict checking for a new core package
+                        : conflicts.filter((c) => pkg.mainPkg.isPackageInUse(c.pkg0.id));
                     let addDependencyPromise = Promise.resolve(true);
 
                     if (inUse.length) {
@@ -232,7 +241,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 <div className="ui vertical segment">
                     <div className="ui search">
                         <div className="ui fluid action input" role="search">
-                            <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.length + urldata.length, this.state.searchFor)}</div>
+                            <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.length + urldata.length, this.state.searchFor) }</div>
                             <input ref="searchInput" className="focused" type="text" placeholder={lf("Search or enter project URL...") } onKeyUp={kupd} />
                             <button title={lf("Search") } className="ui right icon button" onClick={upd}>
                                 <sui.Icon icon="search" />
@@ -278,7 +287,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         {ghdata.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
                             <codecard.CodeCardView
                                 name={scr.name.replace(/^pxt-/, "") }
-                                description={lf("User provided package, not endorsed by Microsoft.") + (scr.description || "") }
+                                description={lf("User provided package, not endorsed by Microsoft.")
+                                    + " " + (scr.description || "") }
                                 key={'ghd' + scr.fullName}
                                 onClick={() => installGh(scr) }
                                 url={'github:' + scr.fullName}

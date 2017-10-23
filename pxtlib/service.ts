@@ -197,6 +197,12 @@ namespace ts.pxtc {
         messageText: string | DiagnosticMessageChain;
     }
 
+    export interface ConfigEntry {
+        name: string;
+        key: number;
+        value: number;
+    }
+
     export interface CompileResult {
         outfiles: pxt.Map<string>;
         diagnostics: KsDiagnostic[];
@@ -213,6 +219,7 @@ namespace ts.pxtc {
         userContextWindow?: Window;
         downloadFileBaseName?: string;
         confirmAsync?: (confirmOptions: {}) => Promise<number>;
+        configData?: ConfigEntry[];
     }
 
     export interface Breakpoint extends LocationInfo {

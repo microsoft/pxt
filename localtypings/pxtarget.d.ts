@@ -111,6 +111,7 @@ declare namespace pxt {
         streams?: boolean;
         aspectRatio?: number; // width / height
         boardDefinition?: pxsim.BoardDefinition;
+        dynamicBoardDefinition?: boolean; // if true, boardDefinition comes from board package
         parts?: boolean; // parts enabled?
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed

@@ -227,7 +227,9 @@ export class EditorPackage {
     }
 
     getAllFiles() {
-        return Util.mapMap(this.files, (k, f) => f.content)
+        let r = Util.mapMap(this.files, (k, f) => f.content)
+        delete r[pxt.SERIAL_EDITOR_FILE]
+        return r
     }
 
     saveFilesAsync(immediate?: boolean) {
