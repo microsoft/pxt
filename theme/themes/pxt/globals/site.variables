@@ -164,11 +164,11 @@
    Serial editor
 --------------------*/
 @serialBackgroundColor: lighten(@simulatorBackground, 2);
-@serialTextColor: white;
+@serialTextColor: @darkTextColor;
 @serialGraphBackground: @lightGrey;
 @serialGraphColor: black;
-@closeColor: black;
-@closeColorHover: darken(@closeColor, 25%);
+@editorCloseColor: black;
+@editorCloseColorHover: darken(@editorCloseColor, 25%);
 @borderSize: 2px;
 
 /*-------------------
