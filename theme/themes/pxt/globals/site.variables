@@ -164,7 +164,7 @@
    Serial editor
 --------------------*/
 @serialBackgroundColor: lighten(@simulatorBackground, 2);
-@serialTextColor: @invertedTextColor;
+@serialTextColor: @darkTextColor;
 @serialGraphBackground: @lightGrey;
 @serialGraphColor: black;
 @editorCloseColor: black;
