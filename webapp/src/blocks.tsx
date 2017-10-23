@@ -237,7 +237,7 @@ export class Editor extends srceditor.Editor {
                 agreeClass: "positive",
                 agreeIcon: "checkmark",
                 body: message,
-                size: "small"
+                size: "tiny"
             }).then(() => {
                 if (opt_callback) {
                     opt_callback();
@@ -261,7 +261,7 @@ export class Editor extends srceditor.Editor {
                 disagreeLbl: lf("No"),
                 disagreeClass: "positive",
                 disagreeIcon: "checkmark",
-                size: "small"
+                size: "tiny"
             }).then(b => {
                 callback(b == 1);
             })
@@ -282,7 +282,7 @@ export class Editor extends srceditor.Editor {
                 defaultValue: defaultValue,
                 agreeLbl: lf("Ok"),
                 disagreeLbl: lf("Cancel"),
-                size: "small"
+                size: "tiny"
             }).then(value => {
                 callback(value);
             })

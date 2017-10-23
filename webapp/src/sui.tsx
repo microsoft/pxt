@@ -792,6 +792,7 @@ export interface ModalProps {
     open?: boolean;
     mountNode?: any;
     size?: string;
+    longer?: boolean;
     allowResetFocus?: boolean;
 
     headerClass?: string;
@@ -945,6 +946,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             dimmer,
             dimmerClassName,
             size,
+            longer,
             allowResetFocus
         } = this.props
 
@@ -952,6 +954,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const classes = cx([
             'ui',
             size,
+            longer ? 'longer' : '',
             basic ? 'basic' : '',
             scrolling ? 'scrolling' : '',
             'modal transition visible active',
@@ -971,7 +974,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                         : undefined}
                 </div> : undefined}
                 {this.props.description ? <label id={this.id + 'description'} className="accessible-hidden">{this.props.description}</label> : undefined}
-                <div id={this.id + 'desc'} className="content">
+                <div id={this.id + 'desc'} className={`${longer ? 'scrolling' : ''} content`}>
                     {children}
                 </div>
                 {this.props.actions && this.props.actions.length > 0 ?
