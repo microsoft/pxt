@@ -141,15 +141,15 @@
 @trashIconColor: @primaryColor;
 
 /*-------------------
-    Serial editor
- --------------------*/
- @serialBackgroundColor: lighten(@simulatorBackground, 2);
- @serialTextColor: @darkTextColor;
- @serialGraphBackground: @lightGrey;
- @serialGraphColor: black;
- @editorCloseColor: black;
- @editorCloseColorHover: darken(@editorCloseColor, 25%);
- @borderSize: 2px;
+   Serial editor
+--------------------*/
+@serialBackgroundColor: lighten(@simulatorBackground, 2);
+@serialTextColor: @darkTextColor;
+@serialGraphBackground: @lightGrey;
+@serialGraphColor: black;
+@editorCloseColor: black;
+@editorCloseColorHover: darken(@editorCloseColor, 25%);
+@editorCloseBorderSize: 2px;
  
 /*-------------------
    Blockly

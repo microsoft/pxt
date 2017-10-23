@@ -220,15 +220,15 @@ export class Editor extends srceditor.Editor {
                 <div id="serialHeader" className="ui">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this) } />
+                            <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
                             <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button class="ui icon circular small button closeEditor" ariaLabel={lf("Close")} onClick={this.goBack.bind(this) }>
+                        <sui.Button class="ui icon circular small button backButton" ariaLabel={lf("Close")} onClick={this.goBack.bind(this)}>
                             <sui.Icon icon="arrow left" />
                         </sui.Button>
-                        <sui.Button class="ui icon circular small button closeEditor" ariaLabel={lf("Export data")} onClick={() => pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")}>
+                        <sui.Button class="ui icon circular small button downloadButton" ariaLabel={lf("Export data")} onClick={() => pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")}>
                             <sui.Icon icon="download" />
                         </sui.Button>
                     </div>
