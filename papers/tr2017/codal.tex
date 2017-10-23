@@ -6,7 +6,7 @@
 \section{The CODAL Runtime}
 \label{sec:codal}
 
-The component-oriented device abstraction layer (CODAL) aims to provide a layer that is multi-platform, makes efficient use of memory and energy, provides both synchronous and asynchronous API variants, and provide a reasonable target for higher level languages
+The component-oriented device abstraction layer (CODAL) aims to provide a layer that is multi-platform, makes efficient use of memory and energy, provides both synchronous and asynchronous API variants, and forms a reasonable target for higher level languages
 such as JavaScript.
 
 CODAL provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that minimises the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem common to all CODAL Components that enables the decoupling of system and user code. A CODAL component represents software or hardware drivers (an I2C device, a GPIO pin, a Message Bus, a Bluetooth device); any component can generate or consume events. CODAL supports both polling and asynchronous (event-driven) programming models, which enables higher level languages to map straight onto native C/C++ APIs.
@@ -17,7 +17,7 @@ Section~\ref{sec:related} discusses where CODAL resides with respect to other ru
 
 \subsection{Structural Overview}
 
-Figure~\ref{fig:codal} shows repository architecture for two codal devices, the Adafruit CircuitPlayground, built on top of mbed, and the Arduino Uno, built without any supporting libraries. codal-core sits at the base of both device trees and provides the high level driver models which are implemented in the layer above. Each target library (codal-arduino-uno, codal-circuit-playground) builds on top of a processor library containing processor specific files, and the target library at the top of the tree contains files specific to a device --- commonly the linker script and the model for a device. A model is a C++ class that brings together components defined further down the tree as a single software representation of the device:
+Figure~\ref{fig:codal} shows the repository architecture for two CODAL devices, the Adafruit CircuitPlayground, built on top of mbed, and the Arduino Uno, built without any supporting libraries. codal-core sits at the base of both device trees and provides the high level driver models which are implemented in the layer above. Each target library (codal-arduino-uno, codal-circuit-playground) builds on top of a processor library containing processor specific files, and the target library at the top of the tree contains files specific to a device --- commonly the linker script and the model for a device. A model is a C++ class that brings together components defined further down the tree as a single software representation of the device:
 
 \begin{lstlisting}
 class ArduinoUno : public CodalDevice
