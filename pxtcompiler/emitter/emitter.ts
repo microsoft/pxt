@@ -2664,7 +2664,11 @@ ${lbl}: .short 0xffff
                     case SK.MinusMinusToken:
                         return emitIncrement(node.operand, "numops::subs", false)
                     case SK.MinusToken:
-                        return emitIntOp("numops::subs", emitLit(0), emitExpr(node.operand))
+                        let inner = emitExpr(node.operand)
+                        let v = valueToInt(inner)
+                        if (v != null)
+                            return emitLit(-v)
+                        return emitIntOp("numops::subs", emitLit(0), inner)
                     case SK.PlusToken:
                         return emitExpr(node.operand) // no-op
                     default:
