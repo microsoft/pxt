@@ -2155,7 +2155,10 @@ class Host
         if (module.level == 0) {
             return "./" + filename
         } else if (module.verProtocol() == "file") {
-            return module.verArgument() + "/" + filename
+            let fn = module.verArgument() + "/" + filename
+            if (module.level > 1 && module.addedBy[0])
+                fn = this.resolve(module.addedBy[0], fn)
+            return fn
         } else {
             return "pxt_modules/" + module.id + "/" + filename
         }
@@ -2179,7 +2182,7 @@ class Host
             } catch (e) {
                 return null
             }
-            
+
         try {
             // pxt.debug(`reading ${path.resolve(resolved)}`)
             return fs.readFileSync(resolved, "utf8")
