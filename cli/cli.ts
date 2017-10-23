@@ -3725,7 +3725,7 @@ export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: 
         createOnly
     }).then((compileOpts) => { });
     // from target location?
-    if (fs.existsSync("pxtarget.json"))
+    if (fs.existsSync("pxtarget.json") && !!readJson("pxtarget.json").appTheme)
         return forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building docs in ${dirname}`);
             return build();
