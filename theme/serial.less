@@ -40,7 +40,6 @@
 
 #serialHeader .leftHeader .ui.header {
     margin: 0;
-    margin-left: 1rem;
     color: @serialTextColor;
 }
 
@@ -59,6 +58,7 @@
 
 #serialHeader .toggleRecord {
     transition: border-radius 1s ease-in-out;
+    margin: 0 1rem 0 1rem;
 }
 
 #serialConsole {
@@ -144,14 +144,15 @@
     cursor:pointer;
 }
 
-.ui.circular.icon.button.closeEditor {
+.ui.circular.icon.button.downloadButton {
     color: @editorCloseColor;
     background: transparent none;
-    box-shadow: 0px 0px 0px @borderSize @editorCloseColor inset !important;
+    box-shadow: 0px 0px 0px @editorCloseBorderSize @editorCloseColor inset !important;
     text-shadow: none !important;
 }
 
-.ui.button.icon.closeEditor:hover, .ui.button.icon.closeEditor:focus {
+.ui.button.icon.downloadButton:hover, .ui.button.icon.downloadButton:focus {
     color: @editorCloseColorHover !important;
-    box-shadow: 0px 0px 0px @borderSize @editorCloseColorHover !important;
+    box-shadow: 0px 0px 0px @editorCloseBorderSize @editorCloseColorHover !important;
 }
+

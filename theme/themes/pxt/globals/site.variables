@@ -164,12 +164,12 @@
    Serial editor
 --------------------*/
 @serialBackgroundColor: lighten(@simulatorBackground, 2);
-@serialTextColor: @darkTextColor;
+@serialTextColor: @invertedTextColor;
 @serialGraphBackground: @lightGrey;
 @serialGraphColor: black;
 @editorCloseColor: black;
 @editorCloseColorHover: darken(@editorCloseColor, 25%);
-@borderSize: 2px;
+@editorCloseBorderSize: 2px;
 
 /*-------------------
    Blockly
