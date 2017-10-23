@@ -984,7 +984,17 @@ namespace ts.pxtc {
             bin.finalPass = true
             emit(rootFunction)
 
-            res.configData = U.values(configEntries)
+            res.configData = []
+            for (let k of Object.keys(configEntries)) {
+                if (configEntries["!" + k])
+                    continue
+                res.configData.push({
+                    name: k.replace(/^\!/, ""),
+                    key: configEntries[k].key,
+                    value: configEntries[k].value
+                })
+            }
+
             catchErrors(rootFunction, finalEmit)
         }
 
@@ -2841,11 +2851,18 @@ ${lbl}: .short 0xffff
         }
 
         function lookupConfigConst(ctx: Node, name: string) {
+            let r = lookupConfigConstCore(ctx, name, "userconfig")
+            if (r == null)
+                r = lookupConfigConstCore(ctx, name, "config")
+            return r
+        }
+
+        function lookupConfigConstCore(ctx: Node, name: string, mod: string) {
             let syms = checker.getSymbolsInScope(ctx, SymbolFlags.Module)
-            let dalEnm = syms.filter(s => s.name == "config" && !!s.valueDeclaration)[0]
-            if (!dalEnm)
+            let configMod = syms.filter(s => s.name == mod && !!s.valueDeclaration)[0]
+            if (!configMod)
                 return null
-            for (let stmt of ((dalEnm.valueDeclaration as ModuleDeclaration).body as ModuleBlock).statements) {
+            for (let stmt of ((configMod.valueDeclaration as ModuleDeclaration).body as ModuleBlock).statements) {
                 if (stmt.kind == SK.VariableStatement) {
                     let v = stmt as VariableStatement
                     for (let d of v.declarationList.declarations) {
@@ -3314,12 +3331,14 @@ ${lbl}: .short 0xffff
                     let parname = node.parent && node.parent.kind == SK.ModuleBlock ?
                         getName(node.parent.parent) : "?"
 
-                    if (parname == "config") {
+                    if (parname == "config" || parname == "userconfig") {
                         if (!decl.initializer) continue
                         let val = emitAsInt(decl.initializer)
                         let key = lookupDalConst(node, "CFG_" + nm)
                         if (key == null || key == 0) // key cannot be 0
                             throw userError(9268, lf("can't find DAL.CFG_{0}", nm))
+                        if (parname == "userconfig")
+                            nm = "!" + nm
                         addConfigEntry({ name: nm, key: key, value: val })
                     }
                 }
