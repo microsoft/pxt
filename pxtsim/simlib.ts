@@ -225,18 +225,34 @@ namespace pxsim {
         leave: string
     }
 
-    export const pointerEvents = typeof window != "undefined" && !!(window as any).PointerEvent ? {
-        up: "pointerup",
-        down: "pointerdown",
-        move: "pointermove",
-        leave: "pointerleave"
-    } : {
+    export function isTouchEnabled(): boolean {
+        return typeof window !== "undefined" &&
+                ('ontouchstart' in window                              // works on most browsers
+                || (navigator && navigator.maxTouchPoints > 0));       // works on IE10/11 and Surface);
+    }
+
+    export function hasPointerEvents(): boolean {
+        return typeof window != "undefined" && !!(window as any).PointerEvent;
+    }
+
+    export const pointerEvents = hasPointerEvents() ? {
+            up: "pointerup",
+            down: "pointerdown",
+            move: "pointermove",
+            leave: "pointerleave"
+        } : isTouchEnabled() ?
+        {
+            up: "mouseup",
+            down: "touchstart",
+            move: "touchmove",
+            leave: "touchend"
+        } :
+        {
             up: "mouseup",
             down: "mousedown",
             move: "mousemove",
             leave: "mouseleave"
         };
-
 }
 
 namespace pxsim.visuals {
