@@ -121,7 +121,7 @@ namespace ts.pxtc {
                 if (text == null) {
                     err("File not found: " + fn)
                     text = ""
-                } 
+                }
                 return createSourceFile(fn, text, v, setParentNodes)
             },
             fileExists: fn => {
