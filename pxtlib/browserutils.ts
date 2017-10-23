@@ -101,6 +101,10 @@ namespace pxt.BrowserUtils {
                 || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
     }
 
+    export function hasPointerEvents(): boolean {
+        return typeof window != "undefined" && !!(window as any).PointerEvent;
+    }
+
     export function hasSaveAs(): boolean {
         return isEdge() || isIE() || isFirefox();
     }
