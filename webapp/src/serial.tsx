@@ -225,10 +225,10 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button class="ui icon circular small button backButton" ariaLabel={lf("Close")} onClick={this.goBack.bind(this)}>
+                        <sui.Button class="ui icon circular small button editorBack" ariaLabel={lf("Close")} onClick={this.goBack.bind(this)}>
                             <sui.Icon icon="arrow left" />
                         </sui.Button>
-                        <sui.Button class="ui icon circular small button downloadButton" ariaLabel={lf("Export data")} onClick={() => pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")}>
+                        <sui.Button class="ui icon circular small button editorExport" ariaLabel={lf("Export data")} onClick={() => pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")}>
                             <sui.Icon icon="download" />
                         </sui.Button>
                     </div>
