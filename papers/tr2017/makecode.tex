@@ -1,48 +1,49 @@
-\section{MakeCode: Design and Implementation}
+\section{\MCN: Design and Implementation}
 \label{sec:makecode}
 
-Figure~\ref{fig:screenSnap} shows a screen snapshot of the MakeCode web app for the micro:bit
-with the main parts labelled: (A) the menu bar allows switching between views of visual blocks
-and JavaScript, as well as access to projects and settings; (B) the simulator provides feedback on user code executed in the browser;
-(C) the toolbar provides access to device APIs (runtime) and programming elements;
-(D) the programming canvas; (E) the download button invokes the browser-compile chain that
-produces a binary executable to save and then copy to the device.
+Figure~\ref{fig:screenSnap} shows a screen snapshot of the \MC web app for the micro:bit
+with the main parts labelled: 
+(A) the menu bar allows switching between views of blocks and JavaScript;
+(B) the simulator provides feedback on user code executed in the browser;
+(C) the toolbar provides access to device-specific APIs and programming elements;
+(D) the programming canvas; 
+(E) the download button invokes the compiler to produce a binary executable.
 
-The MakeCode web app encapsulates all the components needed to deliver a programming experience 
+The \MC web app encapsulates all the components needed to deliver a programming experience 
 for microcontroller based devices, free of the need for a C++ compiler for the compilation of user 
 code.
-The web app is written in TypeScript. The web app also incorporates the TypeScript compiler and 
-language service, used in several ways, as detailed below. 
-The web app is built from a target (e.g., \emph{\href{https://github.com/microsoft/pxt-microbit}{pxt-microbit}})
+The web app is written in TypeScript and also incorporates the TypeScript compiler and 
+language service as well. 
+The app is built from a target (e.g., \emph{\href{https://github.com/microsoft/pxt-microbit}{pxt-microbit}})
 which extends the core framework (\emph{\href{https://github.com/microsoft/pxt}{pxt}}).
 The remaining subsections describe the parts of Figure~\ref{fig:makecode}, 
 which shows the high-level components of the web app.
 
 \begin{figure*}[t]
     \includegraphics[width=5.5in]{makecodeFig.pdf}
-\caption{\label{fig:makecode}MakeCode Architecture}
+\caption{\label{fig:makecode}\MC Architecture}
 \end{figure*}
 
 \subsection{Device Runtime and Shim Generation}
 
-A MakeCode target is defined, in part, by its device runtime, which can be a combination of C++ 
+An \MC target is defined, in part, by its device runtime, which can be a combination of C++ 
 and Static TypeScript (STS) code. The C++ runtime for the target microcontroller is precompiled 
-and stored in the cloud. The C++ runtime binary is cached in the HTML5 application cache (with 
+and stored in the cloud. The runtime binary also is stored in the HTML5 application cache (with 
 other assets) so that the web app can function when the browser is offline. Additional runtime
-components may be authored in STS, which allows the device runtime to be updated without the need
-for any C++ programming, and permits components of the device runtime to be shared by both the device
+components may be authored in STS, which allows the device runtime to be updated without the
+use of C++, and permits components of the device runtime to be shared by both the device
 and simulator runtimes. The ability to author the device runtime in both STS and C++ is
-a unique aspect of MakeCode's design.
+a unique aspect of \MC's design.
 
 Whether runtime components are authored in C++ or STS, all runtime APIs are exposed as fully-typed
-TypeScript definitions, via preprocessing of the runtime implementation by MakeCode. A full-typed runtime improves the end-user experience by making it easier
-to discover APIs; it also enables the type inference provided by the TypeScript compiler to infer types
-for (unannotated) user code.
+TypeScript definitions, as described later. A full-typed runtime improves the end-user experience 
+by making it easier to discover APIs; it also enables the type inference provided by the TypeScript 
+compiler to infer types for (unannotated) user JavaScript programs.
 
-MakeCode supports a simple foreign function interface from TypeScript to C++ based on namespaces,
-enumerations, functions, and basic type mappings. MakeCode uses top-level namespaces (in both C++ and
+\MC supports a simple foreign function interface from TypeScript to C++ based on namespaces,
+enumerations, functions, and basic type mappings. \MC uses top-level namespaces (in both C++ and
 TypeScript) to organize sets of related functions.  Preceding a C++ namespace, enumeration, or function
-with \emph{//\%} indicates that MakeCode should map the C++ construct to TypeScript.
+with \emph{//\%} indicates that \MC should map the C++ construct to TypeScript.
 Within the \emph{//\%} comment, attributes are used to define the visual appearance for that
 language construct, such as for the LED namespace in the micro:bit target:
 
@@ -56,7 +57,8 @@ Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories,
 namespace can been seen. Here is the C++ file defining the micro:bit's led namespace and its functions:
 ~\href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/led.cpp}{pxt-microbit/libs/core/led.cpp}.
 
-Mapping of functions and enumerations between C++ and TypeScript is straightforward. 
+Mapping of functions and enumerations between C++ and TypeScript is straightforward
+and performed automatically by \MC. 
 Here's an example of the C++ function plot in the led namespace that wraps a more
 complex function call of the underlying device runtime to set/plot an LED in the micro:bit display:
 
@@ -69,11 +71,11 @@ void plot(int x, int y) {
 \end{lstlisting}
 
 We'll describe the attribute definitions in the \emph{//\%} comment in the next section. 
-MakeCode uses a TypeScript declaration file to describe the TypeScript elements corresponding
+\MC uses a TypeScript declaration file to describe the TypeScript elements corresponding
 to C++ namespaces, enumerations and functions.  We call such files shim files.
 Since the C++ plot function is preceded by a \emph{//\%} comment, 
-MakeCode adds the following TypeScript declaration to the shim file (shims.d.ts) and copies
-over the attribute definitions in the comment. MakeCode also adds an attribute definition mapping
+\MC adds the following TypeScript declaration to the shim file (shims.d.ts) and copies
+over the attribute definitions in the comment. \MC also adds an attribute definition mapping
 the TypeScript shim to its C++ function (shim=led::plot):
 
 \begin{lstlisting}
@@ -85,29 +87,29 @@ function plot(x: number, y: number): void;
 Here is the shim file generated from C++ micro:bit device runtime:
 \href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/shims.d.ts}{pxt-microbit/libs/core/shims.d.ts}.
 
-To support the foreign function interface, MakeCode defines a mapping between C++ and TypeScript types.
+To support the foreign function interface, \MC defines a mapping between C++ and TypeScript types.
 Boolean and void have straightforward mappings from C++ to TypeScript (bool $\rightarrow$ boolean, void $\rightarrow$ void). 
-As JavaScript only supports number, which is a C++ float/double, MakeCode uses TypeScript's support
+As JavaScript only supports number, which is a C++ float/double, \MC uses TypeScript's support
 for type aliases to name the various C++ integer types commonly used for microcontroller programming
 (int32, uint32, int16, uint16, int8, uint8). 
 % don't use int, unsigned etc. they are actually different sizes on different compilers for AVR
 This is particularly useful for saving space on 8-bit architectures such as the AVR. 
 
-MakeCode allows a set of C++ functions with the same first parameter (of type Foo) to be
+\MC allows a set of C++ functions with the same first parameter (of type Foo) to be
 exposed as a TypeScript interface Foo as follows: this set of C++ functions must be grouped
 inside a namespace of the name FooMethods.  See, for example, how a C++ buffer abstraction is exposed:
 \href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp}{pxt-microbit/libs/core/buffer.cpp}.
 You can find the resulting TypeScript Buffer interface in the previously referenced shim file for the micro:bit.
 
-MakeCode includes reference counted C++ types for strings, lambdas (with
+\MC includes reference counted C++ types for strings, lambdas (with
 up to three arguments and a return type) and collections.  
-MakeCode does not yet include garbage collection, so advanced users who create cyclic
+\MC does not yet include garbage collection, so advanced users who create cyclic
 data structures must be careful to break cycles in order to ensure complete deallocation. 
 
 \subsection{Block Metadata Generation}
 
 Both C++ and TypeScript APIs can be specially annotated (minimally via 
-\emph{//\% block}) so that the MakeCode compiler generates the needed
+\emph{//\% block}) so that the \MC compiler generates the needed
 Blockly metadata to expose an API as a visual block. So, to expose the previously
 encountered plot function as a visual block (as well as a TypeScript function), one simply needs:
 \begin{lstlisting}
@@ -117,17 +119,17 @@ void plot(int x, int y) { . . . }
 
 Additional attribute definitions can provide text descriptions for the block, project function
 parameters (thus simplifying the API available via Blockly), and describe other visual/functional
-characteristics of the block.  MakeCode uses the types of function parameters to select appropriate
+characteristics of the block.  \MC uses the types of function parameters to select appropriate
 Blockly widgets.  For example, an enumeration is represented by a dropdown menu in blocks.
 For more information on the block-specific annotations, see 
 \url{https://makecode.com/defining-blocks}. 
-MakeCode's support for Blockly means that for the common case, the target developer doesn't need
+\MCN's support for Blockly means that for the common case, the target developer doesn't need
 to know anything about the Blockly framework.  For more sophisticated needs, one can directly access
 the Blockly framework. 
 
 \subsection{Editors and Code Conversion}
 
-MakeCode uses the Blockly (\emph{\href{https://github.com/google/blockly}{blockly}}) and Monaco 
+\MC uses the Blockly (\emph{\href{https://github.com/google/blockly}{blockly}}) and Monaco 
 (\emph{\href{https://github.com/Microsoft/monaco-editor}{monaco-editor}}) editors to allow the user to code with
 visual blocks or TypeScript. The editing experience is parameterized by the full-typed device
 runtime, which provides a set of categorized APIs to the end-user, based on namespaces, as
@@ -139,24 +141,24 @@ APIs can be discovered in Monaco via code intellisense.
 The Blockly program representation is compiled to Static TypeScript in a syntax-directed manner
 (see \emph{\url{https://github.com/Microsoft/pxt/tree/master/pxtblocks}{pxtblocks}}). A key issue is the need for
 type inference on the Blockly representation, as variables generally are defined and used without
-being declared in Blockly. MakeCode uses a simple unification type inference to assign a
+being declared in Blockly. \MC uses a simple unification type inference to assign a
 unique type to each variable.  
 % this may not be possible:
 %In the future, we expect to use TypeScript's type inference instead
 %and eliminate the need for separate type inference over the Blockly representation. 
 TypeScript supports programming constructs that are not available in Blockly, such as classes.
 Such constructs are converted into grey uneditable blocks in Blockly, with the construct's program
-text intact. This means MakeCode always can decompile a TypeScript program to Blockly and then recover
+text intact. This means \MC always can decompile a TypeScript program to Blockly and then recover
 the program text of the grey blocks when converting from Blockly back to TypeScript
  (see \emph{\href{https://github.com/Microsoft/pxt/blob/master/pxtcompiler/emitter/decompiler.ts}{decompiler.ts}}). 
 
 \subsection{Compilation Pipeline}
 
-MakeCode first invokes the TypeScript language service to perform type inference and type checking on the 
+\MC first invokes the TypeScript language service to perform type inference and type checking on the 
 user's program, using the TypeScript declaration files for the device runtime.   It then checks that the
 user's program is within the STS subset through additional syntactic and type checks over the adorned
 abstract syntax tree (AST) produced by the language service (detailed in Section XYZ).  Assuming all the
-above checks pass, MakeCode then performs tree shaking and compilation of the AST of the user code and
+above checks pass, \MC then performs tree shaking and compilation of the AST of the user code and
 device runtime to an intermediate representation (IR) that makes explicit: labelled control flow among a
 sequence of instructions with conditional and unconditional jumps; heap cells; field accesses; store operations,
 and reference counting.
@@ -197,7 +199,7 @@ the compiler simply emits a call to pause at a suspension point.
 
 \subsubsection{Untagged and Tagged Strategies}
 
-The MakeCode compiler supports the Static TypeScript language subset described in Section~\ref{sec:sts},
+The \MC compiler supports the Static TypeScript language subset described in Section~\ref{sec:sts},
 with two compilation strategies: untagged and tagged. Under the untagged strategy,
 a JavaScript number is interpreted as a C++ int by default and the type system is used
 to statically distinguish primitive values from boxed values. As a result, the untagged
@@ -212,9 +214,9 @@ JavaScript semantics. This strategy is used for all SAMD21 targets.
 
 \subsection{Simulator}
 
-A MakeCode target can provide an alternate TypeScript implementation for each API in the device runtime, for use in the device
+A \MC target can provide an alternate TypeScript implementation for each API in the device runtime, for use in the device
 simulator. As this code runs in the web browser (not on the actual device) and manipulates the DOM, the developer is free to
-use all of TypeScript/JavaScript's features. (As an aside, MakeCode also support ``simulator-only'' targets that have no 
+use all of TypeScript/JavaScript's features. (As an aside, \MC also support ``simulator-only'' targets that have no 
 associated device; in these cases, the ``device runtime'' is defined solely by the simulator APIs.) 
 
 The simulator allows the user to experience the basic functions of the device in the browser and to test their code
@@ -224,11 +226,11 @@ and is far from a complete device emulation.   For example, it is not possible f
 inputs to the simulated device, while it is possible with the actual device (i.e., shaking it to change the accelerometer
 reading while pushing one of the device's buttons).
 
-%MakeCode provides various components to make device simulators easier to build: board, parts, wiring, etc.
+%\MC provides various components to make device simulators easier to build: board, parts, wiring, etc.
 
 \subsection{Packages and Custom Editors}
 
-Packages are MakeCode's dynamic/static library mechanism for extending a target (by adding new code/data to the device
+Packages are \MCN's dynamic/static library mechanism for extending a target (by adding new code/data to the device
 and simulator runtimes, as well as accompanying documentation). The following package extends the micro:bit target so
 that the micro:bit can drive a NeoPixel strip of RGB LEDs: \url{https://github.com/Microsoft/pxt-neopixel}. 
 
