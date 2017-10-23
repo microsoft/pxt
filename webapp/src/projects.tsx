@@ -140,7 +140,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         }
         const chgGallery = (scr: pxt.CodeCard) => {
             pxt.tickEvent("projects.gallery", { name: scr.name });
-            if (!scr.youTubeId || scr.url) this.hide();
+            if (!scr.youTubeId || (scr.url && !/^https:\/\//i.test(scr.url))) this.hide();
             switch (scr.cardType) {
                 case "example": chgCode(scr, true); break;
                 case "codeExample": chgCode(scr, false); break;
