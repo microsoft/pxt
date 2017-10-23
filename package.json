@@ -112,7 +112,6 @@
     "webfonts-generator": "^0.3.3"
   },
   "scripts": {
-    "postinstall": "typings install",
     "test": "jake travis --trace",
     "clean": "jake clean",
     "lint": "jake lint",
