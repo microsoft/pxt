@@ -1980,6 +1980,7 @@ function initLogin() {
 }
 
 let hidConnectionPoller: number;
+let hidPingInterval: number;
 
 function startHidConnectionPoller() {
     if (hidConnectionPoller == null)
@@ -2001,7 +2002,16 @@ function initSerial() {
                 // disable poller when connected; otherwise the forceful reconnecting interferes with
                 // flashing; it may also lead to data loss on serial stream
                 stopHidConnectionPoller()
-                // TODO add dev.onError
+                if (hidPingInterval == null)
+                    hidPingInterval = window.setInterval(() => {
+                        if (hidConnectionPoller == null)
+                            dev.pingAsync()
+                                .then(() => {
+                                }, e => {
+                                    pxt.debug("re-starting connection poller")
+                                    startHidConnectionPoller()
+                                })
+                    }, 4900)
                 dev.onSerial = (buf, isErr) => {
                     let data = Util.fromUTF8(Util.uint8ArrayToString(buf))
                     //pxt.debug('serial: ' + data)
