@@ -194,7 +194,7 @@ export class Editor extends srceditor.Editor {
         this.consoleBuffer = ""
     }
 
-    entriesToCSV() {
+    downloadCSV() {
         const lines: { name: string; line: TimeSeries; }[] = [];
         this.charts.forEach(chart => Object.keys(chart.lines).forEach(k => lines.push({ name: `${k} (${chart.source})`, line: chart.lines[k] })));
         let csv = lines.map(line => `time (s), ${line.name}`).join(', ') + '\r\n';
@@ -206,7 +206,9 @@ export class Editor extends srceditor.Editor {
             csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ' , ').join(', ');
             csv += '\r\n';
         }
-        return csv;
+
+        pxt.commands.browserDownloadAsync(csv, "data.csv", "text/csv")
+        core.infoNotification(lf("Exporting data...."));
     }
 
     goBack() {
@@ -228,7 +230,7 @@ export class Editor extends srceditor.Editor {
                         <sui.Button class="ui icon circular small button backButton" ariaLabel={lf("Close")} onClick={this.goBack.bind(this)}>
                             <sui.Icon icon="arrow left" />
                         </sui.Button>
-                        <sui.Button class="ui icon circular small button downloadButton" ariaLabel={lf("Export data")} onClick={() => pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")}>
+                        <sui.Button class="ui icon circular small button downloadButton" ariaLabel={lf("Export data")} onClick={() => this.downloadCSV()}>
                             <sui.Icon icon="download" />
                         </sui.Button>
                     </div>
