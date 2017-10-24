@@ -1169,7 +1169,7 @@ namespace pxt.blocks {
                         subHeadingLabel.setAttribute('text', `${topCats[i].getAttribute('name')} > ${subCats[j].getAttribute('name')}`);
                         subHeadingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
                         subHeadingLabel.setAttribute('web-icon-color', topCats[i].getAttribute('colour'));
-                        subCats[i].insertBefore(subHeadingLabel, subCats[i].firstChild);
+                        subCats[j].insertBefore(subHeadingLabel, subCats[j].firstChild);
                         if (icon) {
                             if (icon.length == 1) {
                                 subHeadingLabel.setAttribute('web-icon', icon);
@@ -2172,13 +2172,11 @@ namespace pxt.blocks {
             if (a == that.selectedItem_ || a == toolbox.tree_) {
                 return;
             }
-
-            if (a === null) {
-                collapseSubcategories(that.selectedItem_);
-                editor.lastInvertedCategory = that.selectedItem_;
-            }
-
+            let oldSelectedItem = that.selectedItem_;
             oldSetSelectedItem.call(that, a);
+            if (a === null) {
+                collapseSubcategories(oldSelectedItem);
+            }
         };
 
         // TODO: look into porting this code over to pxt-blockly
@@ -2923,7 +2921,7 @@ namespace pxt.blocks {
                 let headingLabel = goog.dom.createDom('label');
                 headingLabel.setAttribute('text', lf("Functions"));
                 headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
-                headingLabel.setAttribute('web-icon', '\uf107');
+                headingLabel.setAttribute('web-icon', '\uf109');
                 headingLabel.setAttribute('web-icon-class', 'blocklyFlyoutIconfunctions');
                 headingLabel.setAttribute('web-icon-color', getNamespaceColor('functions'));
                 xmlList.push(headingLabel as HTMLElement);

@@ -3,9 +3,10 @@
 *******************************/
 
 @solidBorderColor: #e9eef2;
-@hoverBorderColor: white;
+@hoverBorderColor: #1dacf4;
 
-@borderWidth: 5px;
+@borderWidth: 2px;
+@borderRadius: 0.5rem;
 
 @border: @borderWidth solid @solidBorderColor;
 @linkHoverBorder: @borderWidth solid @hoverBorderColor;
@@ -16,3 +17,9 @@
 @linkHoverTransform: none;
 
 @contentDivider: 0rem;
+
+
+/* PXT specific */
+@exampleCardFullHeight: false;
+@exampleCardFullHeightBackground: rgba(0,0,0,.75);
+@exampleCardFullHeightColor: white;

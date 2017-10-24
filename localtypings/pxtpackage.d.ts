@@ -38,8 +38,13 @@ declare namespace pxt {
         npmDependencies?: Map<string>;
         card?: CodeCard;
         additionalFilePath?: string;
+        core?: boolean;
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
+        dalDTS?: {
+            includeDirs: string[];
+            excludePrefix?: string[];
+        };
     }
 
     interface PackageExtension {
@@ -84,6 +89,7 @@ declare namespace pxt {
 
         color?: string; // one of semantic ui colors
         description?: string;
+        extracontent?: string;
         blocksXml?: string;
         typeScript?: string;
         imageUrl?: string;

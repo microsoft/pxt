@@ -61,13 +61,6 @@ div.listing A:hover
   content: "\25CE";
 }
 
-.prodname {
-    font-weight: normal;
-    font-size: 1.8em;
-    margin-left: 0.5em;
-    color: #ff7d00;
-}
-
 #root .editor-image {
     margin: 2em auto;
     display: block;
@@ -295,6 +288,9 @@ svg {
     -o-transition: all 350ms ease;
     transition: all 350ms ease;
 }
+.navigation:hover {
+    text-decoration: none;
+}
 .navigation.icon {
     width: 100%;
 }
@@ -316,12 +312,6 @@ svg {
 
 .ui.menu.tocmenu .menuContainer {
     margin-bottom: 45px;
-}
-
-.ui.menu .header.item.bottom {
-    bottom: 0px;
-    position: absolute;
-    width: inherit;
 }
 
 .cc-banner {

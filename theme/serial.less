@@ -9,10 +9,6 @@
    Serial
 --------------------*/
 
-@serialBackgroundColor: lighten(@simulatorBackground, 2);
-@serialTextColor: #fff;
-@serialGraphBackground: #fefefe;
-
 #serialEditor {
     background-color: @serialBackgroundColor;
 }
@@ -112,6 +108,10 @@
     display: none !important;
 }
 
+#serialPreview {
+    cursor: pointer;
+}
+
 #serialPreview .ui.left.labeled.button {
     margin: 1px;
     width: 100%;
@@ -125,6 +125,10 @@
     background-color: lighten(@serialGraphBackground, 10.0);
     font-size: 0.85em;
     border: none;
+    color: @serialGraphColor;
+    .detail {
+        vertical-align: middle;
+    }
 }
 
 #serialPreview .indicator {
@@ -139,3 +143,20 @@
 .serialindicator {
     cursor:pointer;
 }
+
+.ui.circular.icon.button.downloadButton,
+    .ui.circular.icon.button.backButton {
+    color: @editorCloseColor;
+    background: transparent none;
+    box-shadow: 0px 0px 0px @editorCloseBorderSize @editorCloseColor inset !important;
+    text-shadow: none !important;
+}
+
+.ui.button.icon.downloadButton:hover, 
+    .ui.button.icon.downloadButton:focus,
+    .ui.button.icon.backButton:hover,
+    .ui.button.icon.backButton:focus {
+    color: @editorCloseColorHover !important;
+    box-shadow: 0px 0px 0px @editorCloseBorderSize @editorCloseColorHover !important;
+}
+

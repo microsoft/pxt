@@ -35,13 +35,6 @@ body {
     margin-right: 0.25rem;
 }
 
-.searchdialog .cards {
-    max-height: 20rem;
-    overflow-y: auto;
-    overflow-x: hidden;
-    margin-top:0.5rem;
-}
-
 .ui.card > .content > a.header {
     word-break: break-all;
 }

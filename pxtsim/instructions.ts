@@ -575,11 +575,13 @@ namespace pxsim.instructions {
     }
 
     export function renderParts(options: RenderPartsOptions) {
-
-        const COMP_CODE = "";
-        pxsim.runtime = new Runtime(COMP_CODE);
+        let msg: SimulatorRunMessage = {
+            type: "run",
+            code: "",
+        }
+        pxsim.runtime = new Runtime(msg);
         pxsim.runtime.board = null;
-        pxsim.initCurrentRuntime();
+        pxsim.initCurrentRuntime(msg); // TODO it seems Runtime() ctor already calls this?
 
         let style = document.createElement("style");
         document.head.appendChild(style);

@@ -79,15 +79,16 @@ body#docs.tutorial {
     Tutorial Avatar
 ******************************/
 
-#tutorialcard .ui.message {
+#tutorialcard .ui.tutorialsegment {
     width: 100%;
     position: relative;
     padding: 0;
     border: 0;
     border-radius: 5px 0px 0px 5px;
+    background: @tutorialSegmentBackground;
 }
 
-#tutorialcard .ui.message .avatar-image {
+#tutorialcard .ui.tutorialsegment .avatar-image {
     position: absolute;
     top: 0.7rem;
     left: 0.7rem;
@@ -108,7 +109,7 @@ body#docs.tutorial {
     height: 4.5rem;
 }
 
-#tutorialcard .ui.message {
+#tutorialcard .ui.tutorialsegment {
     width: 100%;
 }
 
@@ -122,6 +123,7 @@ body#docs.tutorial {
 }
 #tutorialcard .tutorialmessage .content p {
     line-height: 27px !important;
+    color: @tutorialSegmentColor;
 }
 
 #tutorialcard .tutorialmessage {
@@ -254,10 +256,7 @@ code.lang-filterblocks {
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    #tutorialcard {
-        
-    }
-    #tutorialcard .ui.message .avatar-image {
+    #tutorialcard .ui.tutorialsegment .avatar-image {
         display: none;
     }
     #tutorialcard .ui.button.hintbutton {
