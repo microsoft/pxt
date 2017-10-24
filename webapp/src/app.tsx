@@ -190,6 +190,7 @@ export class ProjectView
                 let txt = this.editor.getCurrentSource()
                 if (txt != this.editorFile.content)
                     simulator.makeDirty();
+                if (this.editor.isIncomplete()) return Promise.resolve();
                 return this.editorFile.setContentAsync(txt);
             });
     }
@@ -323,6 +324,7 @@ export class ProjectView
 
     private typecheck = pxtc.Util.debounce(
         () => {
+            if (this.editor.isIncomplete()) return;
             let state = this.editor.snapshotState()
             compiler.typecheckAsync()
                 .done(resp => {

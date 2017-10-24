@@ -1803,12 +1803,11 @@ namespace pxt.blocks {
                 return;
             }
 
-            if (a === null) {
-                collapseSubcategories(that.selectedItem_);
-                editor.lastInvertedCategory = that.selectedItem_;
-            }
-
+            let oldSelectedItem = that.selectedItem_;
             oldSetSelectedItem.call(that, a);
+            if (a === null) {
+                collapseSubcategories(oldSelectedItem);
+            }
         };
 
         // Fix highlighting bug in edge
