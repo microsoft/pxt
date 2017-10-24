@@ -253,6 +253,24 @@ namespace pxsim {
         export function ignore(v: any) { return v; }
     }
 
+    export namespace avr {
+        function toInt(v:number) {
+            return (v << 16) >> 16
+        }
+        export function adds(x: number, y: number) { return toInt(x + y); }
+        export function subs(x: number, y: number) { return toInt(x - y); }
+        export function divs(x: number, y: number) { return toInt( Math.floor(x / y)); }
+        export function muls(x: number, y: number) { return toInt(intMult(x, y)); }
+        export function ands(x: number, y: number) { return toInt(x & y); }
+        export function orrs(x: number, y: number) { return toInt(x | y); }
+        export function eors(x: number, y: number) { return toInt(x ^ y); }
+        export function lsls(x: number, y: number) { return toInt(x << y); }
+        export function lsrs(x: number, y: number) { return (x & 0xffff) >>> y; }
+        export function asrs(x: number, y: number) { return toInt(x >> y); }
+
+        export function ignore(v: any) { return v; }
+    }
+
     export namespace String_ {
         export function mkEmpty() {
             return ""
