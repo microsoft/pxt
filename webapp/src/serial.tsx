@@ -225,17 +225,17 @@ export class Editor extends srceditor.Editor {
                 <div id="serialHeader" className="ui">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
-                            <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
+                            <sui.Button title={lf("Go back")} class="ui icon circular small button editorBack" ariaLabel={lf("Go back")} onClick={this.goBack.bind(this)}>
+                                <sui.Icon icon="arrow left" />
+                            </sui.Button>
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button class="ui icon circular small button editorBack" ariaLabel={lf("Close")} onClick={this.goBack.bind(this)}>
-                            <sui.Icon icon="arrow left" />
-                        </sui.Button>
-                        <sui.Button class="ui icon circular small button editorExport" ariaLabel={lf("Export data")} onClick={() => pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")}>
+                        <sui.Button title={lf("Export data")} class="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")}>
                             <sui.Icon icon="download" />
                         </sui.Button>
+                        <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
+                        <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                     </div>
                 </div>
                 <div id="serialCharts" className="noconsole" ref={e => this.chartRoot = e}></div>
@@ -269,7 +269,7 @@ export class StartPauseButton extends data.Component<StartPauseButtonProps, Star
         const { toggle } = this.props;
         const { active } = this.state;
 
-        return <sui.Button class={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
+        return <sui.Button title={active ? lf("Pause recording") : lf("Start recording")} class={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
             <sui.Icon icon={active ? "pause icon" : "circle icon"} />
         </sui.Button>
     }
