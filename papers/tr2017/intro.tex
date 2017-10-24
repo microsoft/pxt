@@ -123,17 +123,17 @@ for the three previously mentioned boards are at:
 The latter two targets make use of a common set of libraries, 
 \emph{\href{https://github.com/microsoft/pxt-common-packages}{pxt-common-packages}},
 which build upon \CON's microcontroller independent core abstractions at
-~\emph{\href{https://github.com/lancaster-university/\CO-core}{codal-core}}.  
+~\emph{\href{https://github.com/lancaster-university/\CO-core}{\COLN-core}}.  
 
 Platform- and microcontroller-dependent specialization and optimizations for 
 the SAMD21 and Atmega328 microcontrollers can be found at
-~\emph{\href{https://github.com/lancaster-university/codal-samd21}{codal-samd21}}, 
+~\emph{\href{https://github.com/lancaster-university/codal-samd21}{\COLN-samd21}}, 
 and
-~\emph{\href{https://github.com/lancaster-university/codal-atmega328p}{codal-atmega328p}}.
+~\emph{\href{https://github.com/lancaster-university/codal-atmega328p}{\COLN-atmega328p}}.
 Not shown in the figure, the SAMD21 repo uses another repo for
-MBED-specific optimizations for the Cortex-M0 processor: \emph{\href{https://github.com/lancaster-university/codal-mbed}{codal-mbed}}.
+MBED-specific optimizations for the Cortex-M0 processor: \emph{\href{https://github.com/lancaster-university/codal-mbed}{\COLN-mbed}}.
 
-The repo \emph{\href{https://github.com/lancaster-university/codal}{\CO}} provides the
+The repo \emph{\href{https://github.com/lancaster-university/codal}{\COLN}} provides the
 tools for compiling a \CO target.  As can be seen in Figure~\ref{fig:repos}, 
 \CO abstracts over platform and microcontroller specific
 implementations, while PXT abstracts over programming editors and languages.
@@ -144,10 +144,11 @@ shown in the Figure.
 The pxt-microbit target uses a predecessor of the \CO called the DAL (at
 ~\emph{\href{https://github.com/lancaster-university/microbit-dal}{microbit-dal}}).
 
-The rest of this paper is organized as follows. Section~\ref{sec:makecode} presents the design 
-and implementation of the \MC framework. 
+The rest of this paper presents the four major components of the platform,
+top-down: Section~\ref{sec:makecode} presents the design 
+and implementation of the \MC framework, while 
 Sections~\ref{sec:sts},~\ref{sec:codal} and~\ref{sec:uf2} describe Static TypeScript,
-the \CO C++ runtime, and the UF2 flashing format,
-respectively.  Section~\ref{sec:evaluate} evaluates the performance of the platform,
-section~\ref{sec:related} discusses related work, and section~\ref{sec:conclude}
+the \CO C++ runtime, and the UF2 flashing format, respectively.  
+Section~\ref{sec:evaluate} evaluates the performance of the platform,
+Section~\ref{sec:related} discusses related work, and Section~\ref{sec:conclude}
 concludes.
