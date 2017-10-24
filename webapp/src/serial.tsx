@@ -195,15 +195,17 @@ export class Editor extends srceditor.Editor {
     }
 
     entriesToCSV() {
-        let csv = this.charts.map(chart => `time (s), ${chart.variable} (${chart.source})`).join(', ') + '\r\n';
-        //TODO
-        //const datas = this.charts.map(chart => chart.line.data);
-        //const nl = datas.map(data => data.length).reduce((l, c) => Math.max(l, c));
-        //const nc = this.charts.length;
-        //for (let i = 0; i < nl; ++i) {
-        //    csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ' , ').join(', ');
-        //    csv += '\r\n';
-       // }
+        const lines: { name: string; line: TimeSeries; }[] = [];
+        this.charts.forEach(chart => Object.keys(chart.lines).forEach(k => lines.push({ name: `${k} (${chart.source})`, line: chart.lines[k] })));
+        let csv = lines.map(line => `time (s), ${line.name}`).join(', ') + '\r\n';
+
+        const datas = lines.map(line => line.line.data);
+        const nl = datas.map(data => data.length).reduce((l, c) => Math.max(l, c));
+        const nc = this.charts.length;
+        for (let i = 0; i < nl; ++i) {
+            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ' , ').join(', ');
+            csv += '\r\n';
+        }
         return csv;
     }
 
@@ -367,7 +369,7 @@ class Chart {
     }
 
     shouldContain(source: string, variable: string) {
-        return this.source == source 
+        return this.source == source
             && this.variable == variable.replace(/\..*$/, '');
     }
 
