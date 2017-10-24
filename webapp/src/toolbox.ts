@@ -26,7 +26,7 @@ export default function() {
             <block type="controls_for_of">
                 <value name="LIST">
                     <shadow type="variables_get">
-                        <field name="VAR">list</field>
+                        <field name="VAR">${lf("{id:var}list")}</field>
                     </shadow>
                 </value>
             </block>
