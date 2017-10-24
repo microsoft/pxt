@@ -1979,17 +1979,17 @@ function initLogin() {
     }
 }
 
-let hidConnectionPoller: number;
+let serialConnectionPoller: number;
 let hidPingInterval: number;
 
-function startHidConnectionPoller() {
-    if (hidConnectionPoller == null)
-        hidConnectionPoller = window.setInterval(initSerial, 5000);
+function startSerialConnectionPoller() {
+    if (serialConnectionPoller == null)
+        serialConnectionPoller = window.setInterval(initSerial, 5000);
 }
 
-function stopHidConnectionPoller() {
-    clearInterval(hidConnectionPoller);
-    hidConnectionPoller = null;
+function stopSerialConnectionPoller() {
+    clearInterval(serialConnectionPoller);
+    serialConnectionPoller = null;
 }
 
 function initSerial() {
@@ -2001,15 +2001,15 @@ function initSerial() {
             .then(dev => {
                 // disable poller when connected; otherwise the forceful reconnecting interferes with
                 // flashing; it may also lead to data loss on serial stream
-                stopHidConnectionPoller()
+                stopSerialConnectionPoller()
                 if (hidPingInterval == null)
                     hidPingInterval = window.setInterval(() => {
-                        if (hidConnectionPoller == null)
+                        if (serialConnectionPoller == null)
                             dev.pingAsync()
                                 .then(() => {
                                 }, e => {
                                     pxt.debug("re-starting connection poller")
-                                    startHidConnectionPoller()
+                                    startSerialConnectionPoller()
                                 })
                     }, 4900)
                 dev.onSerial = (buf, isErr) => {
@@ -2024,7 +2024,7 @@ function initSerial() {
             })
             .catch(e => {
                 pxt.log(`hidbridge failed to load, ${e}`);
-                startHidConnectionPoller();
+                startSerialConnectionPoller();
             })
         return
     }
@@ -2034,15 +2034,15 @@ function initSerial() {
     let serialBuffers: pxt.Map<string> = {};
     ws.onopen = (ev) => {
         pxt.debug('serial: socket opened');
-        stopHidConnectionPoller()
+        stopSerialConnectionPoller()
     }
     ws.onclose = (ev) => {
         pxt.debug('serial: socket closed')
-        startHidConnectionPoller()
+        startSerialConnectionPoller()
     }
     ws.onerror = (ev) => {
         pxt.debug('serial: error')
-        startHidConnectionPoller()
+        startSerialConnectionPoller()
     }
     ws.onmessage = (ev) => {
         try {
@@ -2465,7 +2465,7 @@ $(document).ready(() => {
                 theEditor.setState({ editorState: state });
             }
             initSerial();
-            startHidConnectionPoller();
+            startSerialConnectionPoller();
             initScreenshots();
             initHashchange();
             electron.init();
