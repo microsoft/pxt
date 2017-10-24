@@ -18,7 +18,7 @@ export class Editor extends srceditor.Editor {
     chartIdx: number = 0
     consoleBuffer: string = ""
     isSim: boolean = true
-    maxConsoleLineLength: number = 500
+    maxConsoleLineLength: number = 255
     maxConsoleEntries: number = 100
     active: boolean = true
     maxChartTime: number = 18000
@@ -112,38 +112,45 @@ export class Editor extends srceditor.Editor {
         for (let i = 0; i < data.length; ++i) {
             let ch = data[i]
             this.consoleBuffer += ch
-            if (ch === "\n" || this.consoleBuffer.length > this.maxConsoleLineLength) {
-
+            if (ch !== "\n" && this.consoleBuffer.length < this.maxConsoleLineLength) {
+                continue
+            }
+            if (ch === "\n") {
                 let lastEntry = this.consoleRoot.lastChild
-                let newEntry = document.createElement("span")
+                let newEntry = document.createElement("div")
                 if (lastEntry && lastEntry.lastChild.textContent == this.consoleBuffer) {
                     if (lastEntry.childNodes.length == 2) {
-                        //matches already-collapsed entry
+                        //Matches already-collapsed entry
                         let count = parseInt(lastEntry.firstChild.textContent)
                         lastEntry.firstChild.textContent = (count + 1).toString()
                     } else {
-                        //make a new collapsed entry with count = 2
+                        //Make a new collapsed entry with count = 2
                         let newLabel = document.createElement("a")
                         newLabel.className = "ui horizontal label"
                         newLabel.textContent = "2"
                         lastEntry.insertBefore(newLabel, lastEntry.lastChild)
                     }
                 } else {
-                    //make a new non-collapsed entry
+                    //Make a new non-collapsed entry
                     newEntry.appendChild(document.createTextNode(this.consoleBuffer))
                     this.consoleRoot.appendChild(newEntry)
-                    this.consoleRoot.scrollTop = this.consoleRoot.scrollHeight
                 }
-                if (this.consoleRoot.childElementCount > this.maxConsoleEntries) {
-                    this.consoleRoot.removeChild(this.consoleRoot.firstChild)
-                }
-                this.consoleBuffer = ""
+            } else {
+                //Buffer is full
+                //Make a new entry with <span>, not <div>
+                let newEntry = document.createElement("span")
+                newEntry.appendChild(document.createTextNode(this.consoleBuffer))
+                this.consoleRoot.appendChild(newEntry)
             }
-        }
-
-        if (this.consoleRoot && this.consoleRoot.childElementCount > 0) {
-            if (this.chartRoot) this.chartRoot.classList.remove("noconsole");
-            if (this.consoleRoot) this.consoleRoot.classList.remove("noconsole");
+            this.consoleBuffer = ""
+            this.consoleRoot.scrollTop = this.consoleRoot.scrollHeight
+            if (this.consoleRoot.childElementCount > this.maxConsoleEntries) {
+                this.consoleRoot.removeChild(this.consoleRoot.firstChild)
+            }
+            if (this.consoleRoot && this.consoleRoot.childElementCount > 0) {
+                if (this.chartRoot) this.chartRoot.classList.remove("noconsole");
+                if (this.consoleRoot) this.consoleRoot.classList.remove("noconsole");
+            }
         }
     }
 
