@@ -68,11 +68,11 @@ int main() {
     while(1);
 }
 \end{lstlisting}
-\caption{\label{fig:pollPin}Pseudocode for detecting a pin transition (polling).}
+\caption{\label{fig:pollPin}Pseudocode for detecting a pin transition using interrupts.}
 \end{figure}
 
 Figure~\ref{fig:pollPin} shows an example of polling.
-  This code is considered bad practice as it prevents other interrupts (like Timers) from firing for at least a second when a button is released, however, this is often the first application that a user will create. Such frameworks advise users to avoid blocking functions and waiting in interrupt context, thus sidestepping the problem by punting responsibility to the user --- \CO uses the message bus abstraction to shield users from such scenarios, as shown in Figure~\ref{fig:messageBus}. Note that the user doesn't have to configure any interrupts, as they are handled by pre-existing drivers.
+This code is considered bad practice as it prevents other interrupts (like Timers) from firing for at least a second when a button is released, however, this is often the first application that a user will create. Such frameworks advise users to avoid blocking functions and waiting in interrupt context, thus sidestepping the problem by punting responsibility to the user --- \CO uses the message bus abstraction to shield users from such scenarios, as shown in Figure~\ref{fig:messageBus}. Note that the user doesn't have to configure any interrupts, as they are handled by pre-existing drivers.
 
 \begin{figure}
 \begin{lstlisting}
@@ -94,14 +94,13 @@ int main() {
 \caption{\label{fig:messageBus}Using the message bus.}
 \end{figure}
 
-
 % Stuff to add (it's already quite long):
 % * Provides a similar mechanism seen in higher level languages
 % * Timer and queues?
 % * message passing microkernel
 
 \subsection{Fiber Scheduler}
-
+% TODO: add Fork on block
 Novice users often want to perform multiple operations concurrently, generally requiring threads. \flameon{TBALL: I don't think that it's that they `want` to do it - it's more that the event-based paradigm leads naturally to concurrency, especially in a reactive setting, like that of the microcontroller.}
 Threading is a confusing concept: users have to learn about locks, semaphores, and preemption, to prevent race conditions. Threads can also consume a large number of resources depending on the model that is adopted by the runtime environment.
 
