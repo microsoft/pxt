@@ -2713,6 +2713,7 @@ namespace pxt.blocks {
         // Dropdown menu of variables_get
         msg.RENAME_VARIABLE = lf("Rename variable...");
         msg.DELETE_VARIABLE = lf("Delete the \"%1\" variable");
+        msg.DELETE_VARIABLE_CONFIRMATION = lf("Delete %1 uses of the \"%2\" variable?");
 
         // builtin variables_set
         const variablesSetId = "variables_set";
