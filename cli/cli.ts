@@ -4102,7 +4102,12 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         checked++;
         const entrypath = todo.pop();
         pxt.debug(`checking ${entrypath}`)
-        const md = (urls[entrypath] as string) || nodeutil.resolveMd(docsRoot, entrypath);
+        let md = (urls[entrypath] as string) || nodeutil.resolveMd(docsRoot, entrypath);
+        if (md == null) {
+            pxt.log(`file missing: ${entrypath}`);
+            broken++;
+            md = "";
+        }
         // look for broken urls
         md.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
             let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
