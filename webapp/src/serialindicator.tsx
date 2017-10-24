@@ -46,7 +46,7 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
                 <div className="detail">
                     <sui.Icon icon="bar graph"/>
                 </div>
-                {lf("Data Viewer") }
+                {lf("Show data") }
                 <div className="detail">
                     {this.props.isSim ? lf("Simulator") : lf("Device") }
                 </div>

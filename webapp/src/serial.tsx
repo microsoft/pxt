@@ -291,6 +291,9 @@ class Chart {
         // Initialize chart
         const chartConfig: IChartOptions = {
             interpolation: 'bezier',
+            labels: {
+                disabled: true
+            },
             responsive: true,
             millisPerPixel: 20,
             grid: {
@@ -306,7 +309,7 @@ class Chart {
         this.rootElement.className = "ui segment"
         this.source = source
         this.variable = variable
-        this.chart.addTimeSeries(this.line, { strokeStyle: lineColor, fillStyle: this.hexToHalfOpacityRgba(lineColor), lineWidth: 3 })
+        this.chart.addTimeSeries(this.line, { strokeStyle: lineColor, fillStyle: this.hexToHalfOpacityRgba(lineColor), lineWidth: 1 })
 
         this.rootElement.appendChild(this.makeLabel())
         this.rootElement.appendChild(this.makeCanvas())
