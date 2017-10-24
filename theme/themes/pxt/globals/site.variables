@@ -170,6 +170,7 @@
 @editorCloseColor: black;
 @editorCloseColorHover: darken(@editorCloseColor, 25%);
 @editorCloseBorderSize: 2px;
+@serialConsoleFont: @blocklyFont;
 
 /*-------------------
    Blockly
