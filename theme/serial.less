@@ -13,6 +13,20 @@
     background-color: @serialBackgroundColor;
 }
 
+#serialEditor::-webkit-scrollbar {
+    width: 2rem;
+}
+
+#serialEditor::-webkit-scrollbar-track {
+    color: red;
+    background-color: yellow;
+}
+
+#serialEditor::-webkit-scrollbar-thumb {
+    color: blue;
+    background-color: green;
+}
+
 #serialArea {
     height: 90%;
     padding: 1rem;
@@ -68,7 +82,7 @@
     background-color: @simulatorBackground;
     border-radius: 5px;
     border: 1px solid lighten(@serialGraphBackground, 10.0);
-    padding: 0.4rem;
+    padding: 0 0.4rem 0 0.4rem;
     font-family: @serialConsoleFont;
 }
 
@@ -116,14 +130,6 @@
     cursor: pointer;
 }
 
-#serialPreview .ui.left.labeled.button {
-    margin: 1px;
-    width: 100%;
-    border: 2px solid lighten(@serialGraphBackground, 10.0) !important;
-    height: 45px;
-    background-color: lighten(@serialGraphBackground, 10.0) !important;
-}
-
 #serialPreview .label {
     width: 100%;
     background-color: lighten(@serialGraphBackground, 10.0);
@@ -135,8 +141,13 @@
     }
 }
 
-#serialPreview .indicator {
-    margin-left: 0;
+#serialPreview .label:hover {
+    background-color: @serialGraphBackground;
+    border-color: darken(@primaryColor, 10.0);
+}
+
+#serialPreview .label:focus {
+    outline: none;
 }
 
 #serialPreview canvas {
