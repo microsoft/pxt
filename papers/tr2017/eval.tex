@@ -2,42 +2,21 @@
 \label{sec:evaluate}
 
 \subsection{\CO}
-
-Comparing \CO to other runtime environments like mbed or Arduino is difficult, as each was architected with different design considerations in mind. In the following text, we therefore perform a cost benefit analysis of each solution, showing the benefits or drawbacks of each.
-
-Interesting metrics for CBA:
-
-functionality
-* Multi threaded
-* Higher level types
-
-
-usability
-* Interrupt safe.
-*
-
-
-* RAM consumption
-* Flash consumption
-
-
-% - Profile fibers, how much do they actually use? are they any better?
-%     - average RAM consumption for X
-%     - Stack is typically small...
-%     - types aid the stack size (heap allocated)
-% - Compare memory allocator to lib c? (probably not that interesting)
-% - benefits of componentisation?
-%     - reusability, extensibility
-% - How well does \MC + \CO perform on each device? (SAMD, ATMEGA, NRF52)
-%     - \MC + \CO, native \CO, mbed.
-%     - cost benefit analysis of each.
-%     - memory (flash and RAM) consumption
-%     - CPU cycles
-%         - context switch
-%         - cost of events
-%         - code gen, compare against micropython / espruino
-%     - energy efficiency
-%         - environmental sensing across 3 different platforms, mbed, espruino, codal
+% - cost of runtime for a standard app in terms of flash and RAM
+%     - APP: simple blinky, recursive factorial
+%     - Designed to expose fork on block and other optimisations
+% - event response time
+%     - APP: Fire an event, time how long it takes using GPIO
+%     - Measure the cost of an event
+% - cost of DPC/APC (Delayed/Asynchronous Proc Call)
+%     - APP: ?
+%     - Measure RAM and CPU overhead.
+% - context switch time with known stack size
+%     - APP: simple app that calls sleep, measured using GPIO + scope
+%     - expose stack allocated / managed type memory differences
+% - program benchmarks for C++, compiled MakeCode, interpreted MakeCode
+%     - APP: A simple blinky
+%     - Measures CPU time, RAM, Flash consumption
 
 \subsection{Implementation}
 
