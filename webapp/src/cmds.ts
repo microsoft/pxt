@@ -161,7 +161,7 @@ export function initCommandsAsync(): Promise<void> {
                 })
                 .catch(() => core.errorNotification(lf("saving file failed...")));
         };
-    } else if (hidbridge.shouldUse() && !forceHexDownload) {
+    } else if (hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
