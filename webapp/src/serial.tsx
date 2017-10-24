@@ -355,9 +355,6 @@ class Chart {
         let canvas = document.createElement("canvas");
         this.chart.streamTo(canvas);
         this.canvas = canvas;
-        this.canvas.addEventListener("click", ev => {
-            pxt.commands.browserDownloadAsync(this.toCSV(), "data.csv", "text/csv")
-        }, false);
         return canvas
     }
 
@@ -393,14 +390,5 @@ class Chart {
 
     stop() {
         this.chart.stop()
-    }
-
-    toCSV(): string {
-        return '';
-        //const data = this.line.data;
-        //if (data.length == 0) return '';
-        //const t0 = data[0][0];
-        //return `time (s), ${this.variable}, ${lf("Tip: Insert a Scatter Chart to visualize this data.")}\r\n` +
-        //    data.map(row => ((row[0] - t0) / 1000) + ", " + row[1]).join('\r\n');
     }
 }
