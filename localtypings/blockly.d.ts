@@ -4,7 +4,7 @@
  *
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * https://github.com/Microsoft/pxt-blockly
- * 
+ *
  * See LICENSE file for details.
  */
 
@@ -506,6 +506,7 @@ declare namespace Blockly {
         function createSvgElement(tag: string, options: any, fg?: any): any;
         function noEvent(e: Event): void;
         function addClass(element: Element, className: string): boolean;
+        function removeClass(element: Element, className: string): boolean;
         function createSvgElement(tag: string, options: any, fg?: any): any;
     }
 
@@ -534,6 +535,7 @@ declare namespace Blockly {
     class Field {
         static NBSP: string;
         name: string;
+        protected CURSOR: string;
         EDITABLE: boolean;
         box_: Element;
         sourceBlock_: Block;
