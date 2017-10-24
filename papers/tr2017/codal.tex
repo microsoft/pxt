@@ -8,7 +8,7 @@
 
 The component-oriented device abstraction layer (\CO) is a multi-platform runtime designed to make efficient use of memory and energy, provide both synchronous and asynchronous API variants, and be a reasonable target for higher level languages such as JavaScript.
 
-\CO provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that minimises the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem (common to all components) that enables the decoupling of system and user code. 
+\CO provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that minimises the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem (common to all components) that enables the decoupling of system and user code.
 
 \CO components represent software or hardware drivers (e.g., an I2C device, a GPIO pin, a Message Bus, a Bluetooth device); any component can generate or consume events. \CO supports both polling and asynchronous (event-driven) programming models, which enables higher level languages to map straight onto native C/C++ APIs. Section~\ref{sec:related} compares \CO to other runtimes and operating systems for microcontrollers.
 
@@ -36,17 +36,17 @@ class ArduinoUno : public CodalDevice
 \end{figure}
 
 Figure~\ref{fig:codal} shows the repository architecture for two \CO devices, the Adafruit CircuitPlayground, built on top of ARM's mbed, and the Arduino Uno, built without any supporting libraries. The \COLN-core repo sits at the base of both device trees and provides the high level driver models which are implemented in the layer above. Each target library (\COLN-arduino-uno, \COLN-circuit-playground) builds on top of a processor library containing processor specific files, and the target library at the top of the tree contains files specific to a device --- commonly the linker script and the model for a device. A model is a C++ class that brings together components defined further down the tree as a single software representation of the device,
-as shown in Figure~\ref{fig:codalSingleton}. 
+as shown in Figure~\ref{fig:codalSingleton}.
 This architecture enables platform independent code to run across multiple processors and devices, while allow for extensibility and specialisation.
 
 \subsection{Message Bus and Events}
 
 Message passing via events is a common technique and is the foundation of many operating systems --- yet in most systems events are static, used only to notify users of key events within the system (e.g. SIGKILL on UNIX).
 
-    
-\CO offers extensible events where the data contained in an event can be arbitrary, and application specific. Application developers can then ``listen'' to events, specifying an id (namespace), a value (unique within a namespace), and a function to be invoked when an event is raised. All events pass through the message bus: if a corresponding listener is in place, the function indicated by the listener is invoked. The eventing model aligns well to JavaScript and languages with event-based programming models. 
 
-Not only do events enable easy modularisation of code, but they also safeguard the application programmer from situations where incorrect code could cause unexpected behaviour. Take for example an application to detect a button press, there are usually two solutions: (1) poll the state of a pin; or (2) configure an interrupt to fire when the state of a pin changes. 
+\CO offers extensible events where the data contained in an event can be arbitrary, and application specific. Application developers can then ``listen'' to events, specifying an id (namespace), a value (unique within a namespace), and a function to be invoked when an event is raised. All events pass through the message bus: if a corresponding listener is in place, the function indicated by the listener is invoked. The eventing model aligns well to JavaScript and languages with event-based programming models.
+
+Not only do events enable easy modularisation of code, but they also safeguard the application programmer from situations where incorrect code could cause unexpected behaviour. Take for example an application to detect a button press, there are usually two solutions: (1) poll the state of a pin; or (2) configure an interrupt to fire when the state of a pin changes.
 
 \begin{figure}
 \begin{lstlisting}
@@ -68,9 +68,9 @@ int main() {
     while(1);
 }
 \end{lstlisting}
-\caption{\label{fig:pollPin}Polling for pin transition.}
+\caption{\label{fig:pollPin}Pseudocode for polling for pin transition.}
 \end{figure}
-    
+
 Figure~\ref{fig:pollPin} shows an example of polling.
   This code is considered bad practice as it prevents other interrupts (like Timers) from firing for at least a second when a button is released, however, this is often the first application that a user will create. Such frameworks advise users to avoid blocking functions and waiting in interrupt context, thus sidestepping the problem by punting responsibility to the user --- \CO uses the message bus abstraction to shield users from such scenarios, as shown in Figure~\ref{fig:messageBus}. Note that the user doesn't have to configure any interrupts, as they are handled by pre-existing drivers.
 
@@ -113,11 +113,11 @@ Events and the message bus are integral to \CON, even extending to fibers, which
 
 Drivers are commonly programmed via low-level interfaces that control external or integrated hardware on a device. For embedded developers, creating and using drivers involves translating datasheets into program code and using such interfaces, which can confuse novice programmers.
 
-\CO drivers abstract away the complexities of the underlying hardware into reusable, extensible, easy-to-use components: for every hardware component there is a software component. \CO has three types of drivers: 
+\CO drivers abstract away the complexities of the underlying hardware into reusable, extensible, easy-to-use components: for every hardware component there is a software component. \CO has three types of drivers:
 \begin{itemize}
-    \item[1.] an abstract specification of a driver model common to most devices (e.g. I2C, Serial); 
+    \item[1.] an abstract specification of a driver model common to most devices (e.g. I2C, Serial);
     \item[2.] a driver that relies only on the interfaces specified in a driver model  (e.g. an I2C based driver);
-    \item[3.] the concrete implementation of the abstract driver model, which may be platform specific or platform agnostic. 
+    \item[3.] the concrete implementation of the abstract driver model, which may be platform specific or platform agnostic.
 \end{itemize}
 Not all devices are the same, and by generalising the interface, devices can introduce platform specific optimisations and specialisations.
 
@@ -162,7 +162,7 @@ int main()
     while(1) cplay.sleep(100);
 }
 \end{lstlisting}
-\caption{\label{fig:play}Playing a tone.}
+\caption{\label{fig:play}Playing a tone using Streams.}
 \end{figure}
 
 \subsection{Streams}
