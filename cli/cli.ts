@@ -4103,6 +4103,10 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         const entrypath = todo.pop();
         pxt.debug(`checking ${entrypath}`)
         const md = (urls[entrypath] as string) || nodeutil.resolveMd(docsRoot, entrypath);
+        if (!md) {
+            pxt.log(`unable to resolve ${entrypath}`)
+            broken++;
+        }
         // look for broken urls
         md.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
             let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
