@@ -254,12 +254,12 @@ namespace pxsim {
     }
 
     export namespace avr {
-        function toInt(v:number) {
+        function toInt(v: number) {
             return (v << 16) >> 16
         }
         export function adds(x: number, y: number) { return toInt(x + y); }
         export function subs(x: number, y: number) { return toInt(x - y); }
-        export function divs(x: number, y: number) { return toInt( Math.floor(x / y)); }
+        export function divs(x: number, y: number) { return toInt(Math.floor(x / y)); }
         export function muls(x: number, y: number) { return toInt(intMult(x, y)); }
         export function ands(x: number, y: number) { return toInt(x & y); }
         export function orrs(x: number, y: number) { return toInt(x | y); }
