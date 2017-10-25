@@ -1,6 +1,48 @@
 \section{Evaluation}
 \label{sec:evaluate}
 
+From Joe Finney
+
+\begin{itemize}
+\item Introducing TS and Blocks to this domain brings a range of immediate, 
+    well understood benefits to users (Ease of programming, memory safety, 
+    removal of syntactic errors, simplified event driven programming models). 
+\item Our combination of native C++ and TS also allows for low level optimisations 
+      by users if they need it.
+\item Our software only approach means we have a wide platform base – 
+     we are able to run on a diverse range of small, simple MCUs.
+\item Native compiled approach also promises performance advantages over 
+      an interpreted bytecode VM approach.
+\end{itemize}
+
+But what is the cost of these high level abstractions? Resources and metrics we care about are:
+\begin{itemize}
+\item Core FLASH footprint of the combined runtime codebase -- 
+      split by role (libc, codal-core, MakeCode). PXT test. 
+      Analyse MAP file. (Assuming PXT core is in build, 
+      else Michal to provide size of PXT core libs)?
+\item Core RAM footprint of the combined runtime codebase --
+      split by role (libc, codal-core, MakeCode). Analyse MAP file for static footprint. 
+      Enable HEAP\_DEBUG, and run C++ blinky and PXT blinky.
+\item How RAM footprint scales with number of active fibers (parallel recursive calls in TS. 
+      Should be predictable, but validates we scale linearly and sets some hard figures 
+      for a real device). C++ test.
+\item Context switch time (both in real terms (uS) and CPU instructions). C++ test, 
+      flipping a GPIO or two duting context switch and measuring on scope.
+\item Event handling time (both in real terms (uS) and CPU instructions. 
+      Both IMMEDIATE and THREADED mode). C++ test. flipping a GPIO or two during context 
+      switch sections and measuring on scope.
+\item Async Procedure Call (APC) handling time (both in real terms (uS) and CPU instructions. 
+      C++ test. flipping a GPIO or two during context switch and measuring on scope.
+\item Time taken to compile and link simple program in browser (can we use some existing apps 
+      here as case studies? E.g. Smiley emoji and fireflies?
+\item Tight loop performance of C++, TS, and Blocks e.g. flipping a GPIO. PXT native compile.
+\item Tight loop performance of C++, TS, and Blocks e.g. flipping a GPIO. PXT bytecode interpreted.
+\item UF2 File Size comparisons to HEX and bin. Time taken to complete a UF2 flash operation 
+    (c.f. equivalent DAPLINK flash on micro:bit and avrdude flash on uno?)
+\end{itemize}
+
+
 \subsection{\CO}
 % - cost of runtime for a standard app in terms of flash and RAM
 %     - APP: simple blinky, recursive factorial
