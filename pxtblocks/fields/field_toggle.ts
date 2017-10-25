@@ -12,7 +12,7 @@ namespace pxtblockly {
 
         private toggleThumb_: any;
 
-        private CURSOR = 'pointer';
+        protected CURSOR = 'pointer';
 
         private type_: string;
 

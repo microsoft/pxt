@@ -19,7 +19,7 @@
 @pink:#E2008C;
 @brown:#00BCF2;
 @grey:#505050;
-@lightGrey: #fefefe;
+@lightGrey: #d9d9d9;
 
 @greenTextColor: darken(@green, 5);
 
@@ -169,7 +169,7 @@
 @serialGraphColor: black;
 @editorCloseColor: black;
 @editorCloseColorHover: darken(@editorCloseColor, 25%);
-@editorCloseBorderSize: 2px;
+@serialConsoleFont: @blocklyFont;
 
 /*-------------------
    Blockly
