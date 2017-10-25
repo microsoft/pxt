@@ -1,36 +1,36 @@
 \section{Introduction}
 \label{sec:intro}
 
-Over the last decade, microcontrollers, the workhorses of embedded systems, have become 
-central to efforts in making and education. For example, the Arduino project 
-(\url{www.arduino.cc})~\cite{buildingArduino2014}, 
-started in 2003, created the Uno board using an 8-bit Atmel 
+Over the last decade, microcontrollers, the workhorses of embedded systems, have become
+central to efforts in making and education. For example, the Arduino project
+(\url{www.arduino.cc})~\cite{buildingArduino2014},
+started in 2003, created the Uno board using an 8-bit Atmel
 AVR microcontroller. The Uno makes its microcontroller's I/O pins available via headers;
-external hardware modules (shields) may be connected to these headers to extend 
-the Uno's capability. The Arduino ecosystem has grown tremendously in the past 15 years, 
-with the support of companies such as Adafruit Industries (\url{www.adafruit.com}) and 
+external hardware modules (shields) may be connected to these headers to extend
+the Uno's capability. The Arduino ecosystem has grown tremendously in the past 15 years,
+with the support of companies such as Adafruit Industries (\url{www.adafruit.com}) and
 Sparkfun Electronics (\url{www.sparkfun.com}).
 
 What has not changed much is the way microcontrollers are programmed,
-which is with the C and C++ programming languages, as well as some assembly.   
-This is not a huge surprise, given the low-level nature of microcontroller programming, 
-where direct access to the hardware is needed. There generally is no operating 
-system running on such boards, as they have very little RAM (2Kb on the Uno, for example) and 
+which is with the C and C++ programming languages, as well as some assembly.
+This is not a huge surprise, given the low-level nature of microcontroller programming,
+where direct access to the hardware is needed. There generally is no operating
+system running on such boards, as they have very little RAM (2Kb on the Uno, for example) and
 lack memory protection hardware. What is more surprising about the Arduino platform is that
 it:
 \begin{itemize}
-\item encourages the programmer to poll sensors, 
+\item encourages the programmer to poll sensors,
 leading to monolithic programs;
 \item lacks any code ``intellisense'' or common interactive features of modern IDEs;
 \item loads code onto the microcontroller using 1980's era bootloader technology.
 \end{itemize}
-On the other hand, on the web we find many excellent environments for introductory programming. 
-Visual block editors such as Scratch (\url{https://scratch.mit.edu/})~\cite{ScratchCACM2009,BlocksBeyondCACM2017} 
+On the other hand, on the web we find many excellent environments for introductory programming.
+Visual block editors such as Scratch (\url{https://scratch.mit.edu/})~\cite{ScratchCACM2009,BlocksBeyondCACM2017}
 and Blockly (\url{https://developers.google.com/blockly/})~\cite{Blocky2015}
-allow the creation of programs without the possibility of syntax errors. 
-The programming models associated with Scratch and Blockly generally are 
+allow the creation of programs without the possibility of syntax errors.
+The programming models associated with Scratch and Blockly generally are
 event based, freeing the programmer from the need to poll.
-HTML, CSS and JavaScript allow a complete programming experience to be delivered as an interactive 
+HTML, CSS and JavaScript allow a complete programming experience to be delivered as an interactive
 web app, including editing with intellisense, code execution and debugging~\cite{Monaco}.
 
 We have created a new programming platform that bridges the worlds of the microcontroller
@@ -46,36 +46,33 @@ make it simple to program microcontrollers using nothing more than a web app;
 \end{figure*}
 
 The platform consists of a stack of four novel technologies, the subject of
-this paper. The entry point of the platform is \emph{\MC} (\href{https://makecode.com}{makecode.com}),
-a web app that supports both visual block programming and text programming,
-via \emph{Static TypeScript}, with conversion 
-between the two program representations. The web app has in-browser execution 
-via a device simulator, as well as compilation to machine code and linking against a 
-pre-compiled C++ runtime (\emph{\CON}, the Component-oriented Device Abstraction Layer). No C/C++ compiler is invoked to compile user code. 
-The result of compilation is a binary file that is ``downloaded'' from the web app to the user's 
-computer and then flashed to the microcontroller, with the aid of the \emph{UF2} file format. The other three major technologies in the stack are:
+this paper:
 \begin{itemize}
+\item \emph{\MC (\href{https://makecode.com}{makecode.com})}, a web app that supports both visual block programming and text programming,
+via \emph{Static TypeScript}, with conversion between the two program representations
 
-\item \emph{Static TypeScript}, a statically-typed subset of TypeScript (\url{www.typescriptlang.org}), 
+\item \emph{Static TypeScript}, a statically-typed subset of TypeScript (\url{www.typescriptlang.org}),
 a gradually-typed superset of JavaScript, for fast execution on low-memory devices, with
-a simple model for linking against pre-compiled C++; 
+a simple model for linking against pre-compiled C++;
 
-\item \emph{\CO}, a C++ library that maps 
-each hardware component to one or more software components that communicate via events and
-schedule event handlers to run non-preemptively on fibers. 
+\item \emph{\CO (the Component-oriented Device Abstraction Layer)}, an event driven, multi-threaded, C++ runtime environment that bridges the semantic gap between higher-level languages and the hardware,
+modelling each hardware component as a software component.
 
 \item \emph{USB Flashing Format} (UF2), a new file format designed for flashing microcontrollers over the Mass Storage
-Class protocol; the format greatly speeds the installation of user 
-programs and is robust to differences in operating systems. 
+Class protocol; the format greatly speeds the installation of user
+programs and is robust to differences in operating systems.
 \end{itemize}
+The \MC web app is the entry point of the platform, and has in-browser execution via a device simulator, as well as compilation to machine code and linking against a
+pre-compiled C++ runtime (\emph{\CON}). No C/C++ compiler is invoked to compile user code and the result of compilation is a binary file that is ``downloaded'' from the web app to the user's
+computer and then flashed to the microcontroller, with the aid of the \emph{UF2} file format.
+
 These four advances enable beginners to get started programming microcontrollers from any modern web browser, and enable
 hardware vendors to innovate and safely add new components to the mix using Static TypeScript, leveraging its
-foreign function interface to C++. 
-Once the web app has been loaded, 
-all the above functionality works offline (i.e., if the host machine loses its connection 
+foreign function interface to C++.
+Once the web app has been loaded, all the above functionality works offline (i.e., if the host machine loses its connection
 to the internet).
 
-Platform targets can be seen at \url{www.makecode.com}, where the \MC web app for a variety of boards is available, 
+Platform targets can be seen at \url{www.makecode.com}, where the \MC web app for a variety of boards is available,
 including:
 \begin{itemize}
 \item the \emph{\href{https://microbit.org}{micro:bit}}, a Nordic nRF51822 microcontroller with Cortex-M0 processor, 256KB flash and 16KB RAM~\cite{microbitICSE2016};
@@ -84,21 +81,21 @@ including:
 \end{itemize}
 
 We encourage the reader to choose a target
-and experiment with programming it, to appreciate the 
-qualitative aspects of the platform, namely its simplicity and ease of use.  
-This paper evaluates quantitative aspects of the platform: 
-compilation speed, code size, and runtime performance.  In particular, we 
+and experiment with programming it, to appreciate the
+qualitative aspects of the platform, namely its simplicity and ease of use.
+This paper evaluates quantitative aspects of the platform:
+compilation speed, code size, and runtime performance.  In particular, we
 consider:
 \begin{itemize}
-\item the time to compile Static TypeScript user code (to machine code) with respect 
+\item the time to compile Static TypeScript user code (to machine code) with respect
       to the GCC C/C++ toolchain, as well as the size of the resulting executable;
 \item the time to load code onto a microcontroller using UF2, compared to standard bootloaders
-      such as Arduino and ARM's DAPlink; 
+      such as Arduino and ARM's DAPlink;
 \item the performance of a set of small benchmarks, written in both Static TypeScript and C++,
       compiled with the \MC and GCC toolchains;
 \item \emph{energy consumption: \CO vs. Arduino}
 \item \emph{native code vs. bytecode} we
-      evaluate memory consumption and code performance for native code generation 
+      evaluate memory consumption and code performance for native code generation
       vs. bytecode generation and interpretation on the Uno.
 \end{itemize}
 
@@ -113,42 +110,42 @@ Figure~\ref{fig:repos} lists the major GitHub repos of the platform
 and the dependences between them. Green boxes represent repos external to the platform
 (note: not all repos are represented in the figure).
 
-The \MC framework 
-is at \emph{\href{https://github.com/microsoft/pxt}{pxt}} (PXT is the previous codename of \MCN). 
+The \MC framework
+is at \emph{\href{https://github.com/microsoft/pxt}{pxt}} (PXT is the previous codename of \MCN).
 A \emph{pxt-target} extends the framework to create an environment for a specific board. Targets
-for the three previously mentioned boards are at: 
-~\emph{\href{https://github.com/microsoft/pxt-microbit}{pxt-microbit}}, 
+for the three previously mentioned boards are at:
+~\emph{\href{https://github.com/microsoft/pxt-microbit}{pxt-microbit}},
 ~\emph{\href{https://github.com/microsoft/pxt-adafruit}{pxt-adafruit}}, and
 ~\emph{\href{https://github.com/microsoft/pxt-arduino-uno}{pxt-arduino-uno}}.
-The latter two targets make use of a common set of libraries, 
+The latter two targets make use of a common set of libraries,
 \emph{\href{https://github.com/microsoft/pxt-common-packages}{pxt-common-packages}},
 which build upon \CON's microcontroller independent core abstractions at
-~\emph{\href{https://github.com/lancaster-university/\CO-core}{\COLN-core}}.  
+~\emph{\href{https://github.com/lancaster-university/\CO-core}{\COLN-core}}.
 
-Platform- and microcontroller-dependent specialization and optimizations for 
+Platform- and microcontroller-dependent specialization and optimizations for
 the SAMD21 and Atmega328 microcontrollers can be found at
-~\emph{\href{https://github.com/lancaster-university/codal-samd21}{\COLN-samd21}}, 
+~\emph{\href{https://github.com/lancaster-university/codal-samd21}{\COLN-samd21}},
 and
 ~\emph{\href{https://github.com/lancaster-university/codal-atmega328p}{\COLN-atmega328p}}.
 Not shown in the figure, the SAMD21 repo uses another repo for
 MBED-specific optimizations for the Cortex-M0 processor: \emph{\href{https://github.com/lancaster-university/codal-mbed}{\COLN-mbed}}.
 
 The repo \emph{\href{https://github.com/lancaster-university/codal}{\COLN}} provides the
-tools for compiling a \CO target.  As can be seen in Figure~\ref{fig:repos}, 
+tools for compiling a \CO target.  As can be seen in Figure~\ref{fig:repos},
 \CO abstracts over platform and microcontroller specific
 implementations, while PXT abstracts over programming editors and languages.
 The UF2 specification is at~\emph{\href{https://github.com/microsoft/uf2}{uf2}},
 with implementations at~\emph{\href{https://github.com/microsoft/uf2-samd21}{uf2-samd21}}
 and~\emph{\href{https://github.com/mmoskal/uf2-uno}{uf2-uno}}. These repos are not
-shown in the Figure. 
+shown in the Figure.
 The pxt-microbit target uses a predecessor of the \CO called the DAL (at
 ~\emph{\href{https://github.com/lancaster-university/microbit-dal}{microbit-dal}}).
 
 The rest of this paper presents the four major components of the platform,
-top-down: Section~\ref{sec:makecode} presents the design 
-and implementation of the \MC framework, while 
+top-down: Section~\ref{sec:makecode} presents the design
+and implementation of the \MC framework, while
 Sections~\ref{sec:sts},~\ref{sec:codal} and~\ref{sec:uf2} describe Static TypeScript,
-the \CO C++ runtime, and the UF2 flashing format, respectively.  
+the \CO C++ runtime, and the UF2 flashing format, respectively.
 Section~\ref{sec:evaluate} evaluates the performance of the platform,
 Section~\ref{sec:related} discusses related work, and Section~\ref{sec:conclude}
 concludes.
