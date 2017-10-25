@@ -17,6 +17,10 @@ it:
 \item lacks any code ``intellisense'' or common interactive features of modern IDEs, slowing development;
 \item loads code onto the microcontroller using 1980's era bootloader technology, requiring the installation of local applications.
 \end{itemize}
+
+\flameon{we need more description of why current ways of programming microcontrollers 
+make for a high barrier to entry; also need to take on Java head on here}
+
 On the other hand, on the web we find many excellent environments for introductory programming.
 Visual block editors such as Scratch (\url{https://scratch.mit.edu/})~\cite{ScratchCACM2009,BlocksBeyondCACM2017}
 and Blockly (\url{https://developers.google.com/blockly/})~\cite{Blocky2015}
@@ -113,11 +117,7 @@ consider:
 
 All of the platform's components are open source on GitHub.
   
-The rest of this paper presents the four major components of the platform,
-top-down: Section~\ref{sec:makecode} presents the design
-and implementation of the \MC framework, while
-Sections~\ref{sec:sts},~\ref{sec:codal} and~\ref{sec:uf2} describe Static TypeScript,
-the \CO C++ runtime, and the UF2 flashing format, respectively.
-Section~\ref{sec:evaluate} evaluates the performance of the platform,
+Sections~\ref{sec:makecode} to~\ref{sec:uf2} presents the four major components of the platform, top-down,
+as referenced before. Section~\ref{sec:evaluate} evaluates the performance of the platform,
 Section~\ref{sec:related} discusses related work, and Section~\ref{sec:conclude}
 concludes.
