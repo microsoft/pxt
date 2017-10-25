@@ -1,5 +1,5 @@
 
-% 
+%
 @article{TSspec2016,
   author = {Microsoft},
   title = {TypeScript Language Specification},
@@ -58,24 +58,24 @@
   url       = {http://doi.acm.org/10.1145/2676726.2676971}
 }
 
-% Current proposals for adding gradual typing to JavaScript, such as Closure, TypeScript and Dart, forgo soundness to deal with 
-% issues of scale, code reuse, and popular programming patterns. We show how to address these issues in practice while retaining 
-% soundness. We design and implement a new gradual type system, prototyped for expediency as a 'Safe' compilation mode for 
-% TypeScript. Our compiler achieves soundness by enforcing stricter static checks and embedding residual runtime checks in compiled 
-% code. It emits plain JavaScript that runs on stock virtual machines. Our main theorem is a simulation that ensures that the 
-% checks introduced by Safe TypeScript (1) catch any dynamic type error, and (2) do not alter the semantics of type-safe TypeScript 
+% Current proposals for adding gradual typing to JavaScript, such as Closure, TypeScript and Dart, forgo soundness to deal with
+% issues of scale, code reuse, and popular programming patterns. We show how to address these issues in practice while retaining
+% soundness. We design and implement a new gradual type system, prototyped for expediency as a 'Safe' compilation mode for
+% TypeScript. Our compiler achieves soundness by enforcing stricter static checks and embedding residual runtime checks in compiled
+% code. It emits plain JavaScript that runs on stock virtual machines. Our main theorem is a simulation that ensures that the
+% checks introduced by Safe TypeScript (1) catch any dynamic type error, and (2) do not alter the semantics of type-safe TypeScript
 % code.
 %
-% Safe TypeScript is carefully designed to minimize the performance overhead of runtime checks. At its core, we rely on two new 
-% ideas: differential subtyping, a new form of coercive subtyping that computes the minimum amount of runtime type information that 
-% must be added to each object; and an erasure modality, which we use to safely and selectively erase type information. This allows 
+% Safe TypeScript is carefully designed to minimize the performance overhead of runtime checks. At its core, we rely on two new
+% ideas: differential subtyping, a new form of coercive subtyping that computes the minimum amount of runtime type information that
+% must be added to each object; and an erasure modality, which we use to safely and selectively erase type information. This allows
 % us to scale our design to full-fledged TypeScript, including arrays, maps, classes, inheritance, overloading, and generic types.
 %
-% We validate the usability and performance of Safe TypeScript empirically by type-checking and compiling around 120,000 lines of 
-% existing TypeScript source code. Although runtime checks can be expensive, the end-to-end overhead is small for code bases that 
-% already have type annotations. For instance, we bootstrap the Safe TypeScript compiler (90,000 lines including the base 
-% TypeScript compiler): we measure a 15% runtime overhead for type safety, and also uncover programming errors as type safety 
-% violations. We conclude that, at least during development and testing, subjecting JavaScript/TypeScript programs to safe gradual 
+% We validate the usability and performance of Safe TypeScript empirically by type-checking and compiling around 120,000 lines of
+% existing TypeScript source code. Although runtime checks can be expensive, the end-to-end overhead is small for code bases that
+% already have type annotations. For instance, we bootstrap the Safe TypeScript compiler (90,000 lines including the base
+% TypeScript compiler): we measure a 15% runtime overhead for type safety, and also uncover programming errors as type safety
+% violations. We conclude that, at least during development and testing, subjecting JavaScript/TypeScript programs to safe gradual
 % typing adds significant value to source type annotations at a modest cost.
 
 @inproceedings{StrongScriptECOOP15,
@@ -92,9 +92,9 @@
 
 % Typescript extends JavaScript with optional type annotations that are, by design, unsound and, that the Typescript compiler
 % discards as it emits code. This design point preserves programming idioms developers are familiar with, and allows them to leave
-% their legacy code unchanged, while offering a measure of static error checking in parts of the program that have type 
-% annotations. We present an alternative design for TypeScript, one where it is possible to support the same degree of dynamism, 
-% but where types can be strengthened to provide hard guarantees. We report on an implementation, called StrongScript, that 
+% their legacy code unchanged, while offering a measure of static error checking in parts of the program that have type
+% annotations. We present an alternative design for TypeScript, one where it is possible to support the same degree of dynamism,
+% but where types can be strengthened to provide hard guarantees. We report on an implementation, called StrongScript, that
 % improves runtime performance of typed programs when run on a modified version of the V8 JavaScript engine.
 
 
@@ -173,7 +173,7 @@
  pages = {49--50},
  numpages = {2},
  url = {http://dx.doi.org/10.1109/BLOCKS.2015.7369000}
-} 
+}
 
 @article{buildingArduino2014,
   author    = {Charles R. Severance},
@@ -234,7 +234,7 @@
  url = {http://dl.acm.org/citation.cfm?id=781995.782004},
  acmid = {782004},
  publisher = {IBM Press},
-} 
+}
 
 @inproceedings{Caska:2011:JDS:2043910.2043931,
  author = {Caska, James and Schoeberl, Martin},
@@ -251,7 +251,7 @@
  acmid = {2043931},
  publisher = {ACM},
  address = {New York, NY, USA},
-} 
+}
 
 @inproceedings{Korsholm:2011:FME:2043910.2043930,
  author = {Korsholm, Stephan},
@@ -269,7 +269,7 @@
  publisher = {ACM},
  address = {New York, NY, USA},
  keywords = {Flash memory, Java/C integration, RealTime, embedded systems},
-} 
+}
 
 @inproceedings{Badea:2007:SJB:1289881.1289920,
  author = {Badea, Carmen and Nicolau, Alexandru and Veidenbaum, Alexander V.},
@@ -287,7 +287,7 @@
  publisher = {ACM},
  address = {New York, NY, USA},
  keywords = {adaptive optimization, embedded systems, java virtual machine, profile-guided optimization, superoperators},
-} 
+}
 
 @article{Schultz:2003:CJL:780731.780739,
  author = {Schultz, Ulrik Pagh and Burgaard, Kim and Christensen, Flemming Gram and Knudsen, J{\o}rgen Lindskov},
@@ -307,7 +307,7 @@
  publisher = {ACM},
  address = {New York, NY, USA},
  keywords = {Java, compilers, embedded systems, interfaces},
-} 
+}
 
 
 @inproceedings{Beatty:2003:OJI:952532.952667,
@@ -326,7 +326,7 @@
  publisher = {ACM},
  address = {New York, NY, USA},
  keywords = {Java, embedded system, interpreter},
-} 
+}
 
 @inproceedings{Aslam:2012:RJC:2248418.2248420,
  author = {Aslam, Faisal and Baig, Ghufran and Qureshi, Mubashir Adnan and Uzmi, Zartash Afzal and Fennell, Luminous and Thiemann, Peter and Schindelhauer, Christian and Haussmann, Elmar},
@@ -344,5 +344,16 @@
  publisher = {ACM},
  address = {New York, NY, USA},
  keywords = {JVM, Java Virtual Machine, TakaTuka, call stack, memory management, wireless sensor networks},
+}
+
+@article{dougherty2012maker,
+  title={The maker movement},
+  author={Dougherty, Dale},
+  journal={innovations},
+  volume={7},
+  number={3},
+  pages={11--14},
+  year={2012},
+  publisher={MIT Press}
 }
 
