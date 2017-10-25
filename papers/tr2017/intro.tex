@@ -8,17 +8,21 @@ started in 2003, created the Uno board using an 8-bit Atmel
 AVR microcontroller. The Uno makes its microcontroller's I/O pins available via headers;
 external hardware modules (shields) may be connected to these headers to extend
 the Uno's capability. The Arduino ecosystem has grown tremendously in the past 15 years,
-with the support of companies such as Adafruit Industries (\url{www.adafruit.com}) and
-Sparkfun Electronics (\url{www.sparkfun.com}).
+with the support of companies, such as Adafruit Industries (\url{www.adafruit.com}) and
+Sparkfun Electronics (\url{www.sparkfun.com}). that resell Arduino and make their
+own Arduino-compatible boards. 
 
-The Arduino platform has the following characteristics, common to the programming
-environments for many microcontrollers~\cite{XYZ}, that increase the barrier to entry for beginners:
+The Arduino platform has the following characteristics, common to many programming
+environments for microcontrollers~\cite{XYZ}:
 \begin{itemize}
-\item it encourages the programmer to poll sensors, leading to monolithic programs;
 \item it uses C/C++ as the starting programming language;
-\item it lacks any code ``intellisense'' or common interactive features of modern IDEs;
-\item it loads code onto the microcontroller using 1980's era bootloader technology.
+\item it encourages polling of sensors;
+\item it lacks many interactive features of modern IDEs;
+\item it loads code using 1980's era bootloader technology.
 \end{itemize}
+These characteristics make such systems non-trivial for beginners to work with, 
+and generally require the installation of OS-specific drivers, applications, 
+and toolchains. 
 
 The Java language (among others) held out the promise of a better way forward for 
 programming microcontrollers, but XYZ.  
