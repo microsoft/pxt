@@ -9,19 +9,25 @@ AVR microcontroller. The Uno makes its microcontroller's I/O pins available via 
 external hardware modules (shields) may be connected to these headers to extend
 the Uno's capability. The Arduino ecosystem has grown tremendously in the past 15 years,
 with the support of companies such as Adafruit Industries (\url{www.adafruit.com}) and
-Sparkfun Electronics (\url{www.sparkfun.com}). What is surprising about the Arduino platform is that
-it:
+Sparkfun Electronics (\url{www.sparkfun.com}).
+
+The Arduino platform has the following characteristics, common to the programming
+environments for many microcontrollers~\cite{XYZ}, that increase the barrier to entry for beginners:
 \begin{itemize}
-\item encourages the programmer to poll sensors, leading to monolithic programs;
-\item uses C/C++ as the programming language, increasing the barrier to entry and creating an unsafe environment for users;
-\item lacks any code ``intellisense'' or common interactive features of modern IDEs, slowing development;
-\item loads code onto the microcontroller using 1980's era bootloader technology, requiring the installation of local applications.
+\item it encourages the programmer to poll sensors, leading to monolithic programs;
+\item it uses C/C++ as the starting programming language;
+\item it lacks any code ``intellisense'' or common interactive features of modern IDEs;
+\item it loads code onto the microcontroller using 1980's era bootloader technology.
 \end{itemize}
 
+The Java language (among others) held out the promise of a better way forward for 
+programming microcontrollers, but XYZ.  
 \flameon{we need more description of why current ways of programming microcontrollers 
-make for a high barrier to entry; also need to take on Java head on here}
+make for a high barrier to entry; also need to take on Java head on here, as well as
+RTOS and MicroPython.}
 
-On the other hand, on the web we find many excellent environments for introductory programming.
+In contrast to the situation for microcontrollers programming, 
+on the web we find many excellent environments for introductory programming.
 Visual block editors such as Scratch (\url{https://scratch.mit.edu/})~\cite{ScratchCACM2009,BlocksBeyondCACM2017}
 and Blockly (\url{https://developers.google.com/blockly/})~\cite{Blocky2015}
 allow the creation of programs without the possibility of syntax errors.
