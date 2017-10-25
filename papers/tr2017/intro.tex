@@ -24,25 +24,25 @@ allow the creation of programs without the possibility of syntax errors.
 The programming models associated with Scratch and Blockly generally are
 event based, freeing the programmer from the need to poll.
 HTML, CSS and JavaScript allow a complete programming experience to be delivered as an interactive
-web app, including editing with intellisense, code execution and debugging~\cite{Monaco}. With a surge
-in the demand of microcontroller-based devices for education, there is a need to simplify the programming of such devices so that they suitable for novice users in restricted environments.
+web app, including editing with intellisense, code execution and debugging~\cite{Monaco}. 
 
-Therefore, we have created a new programming platform that bridges the worlds of the microcontroller
-and the web app. The major goals of the platform are to:
+With a surge in the demand of microcontroller-based devices for education~\cite{XYZ}, 
+there is a need to simplify the programming of such devices so that they suitable 
+for novice users in restricted environments.
+Therefore, we have created a new programming platform that bridges the worlds of 
+the microcontroller and the web app. 
+
+The major goals of the platform are to:
 % TypeScript / Blocks + MakeCode
-(1) make it simple to program microcontrollers in a higher-level language, using nothing more than a web app;
+(1) make it simple to program microcontrollers in a higher-level language,
+using nothing more than a web app;
 % TypeScript and Blocks prevent users from making boo boos.
-(3) provide a safe environment for users to develop programs for microcontrollers;
+(2) provide a safe environment for users to develop programs for microcontrollers;
 % simulator, auto completion...
-(2) create a feature rich and extensible development environment that decreases time taken to program a microcontroller (time to awesome);
+(3) create a feature rich and extensible development environment that decreases time taken to program a microcontroller (time to awesome);
 % UF2 is awesome
 (4) allow a users' compiled program to be easily installed on a microcontroller;
 
-\begin{figure*}[t]
-  \includegraphics[width=5.5in]{reposFig.pdf}
-  \caption{\label{fig:repos}Relationships between platform components/repos. Yellow boxes represent the \MC (PXT) components; blue
-  boxes represent the \CO components; green boxes represent external components.}
-\end{figure*}
 
 The platform consists of a stack of four novel technologies, the subject of
 this paper:
@@ -64,6 +64,13 @@ programs and is robust to differences in operating systems (Section~\ref{sec:uf2
 The \MC web app is the entry point of the platform, and has in-browser execution via a device simulator, as well as compilation to machine code and linking against a
 pre-compiled C++ runtime (\emph{\CON}). No C/C++ compiler is invoked to compile user code and the result of compilation is a binary file that is ``downloaded'' from the web app to the user's
 computer and then flashed to the microcontroller, with the aid of the \emph{UF2} file format.
+
+
+\begin{figure*}[t]
+      \includegraphics[width=5in]{screenSnapFig.pdf}
+  \caption{\label{fig:screenSnap}Screen snapshot of the \MC web app. \flameon{TODO:remove the MSFT logo}}
+  \end{figure*}
+
 
 These four advances enable beginners to get started programming microcontrollers from any modern web browser, and enable
 hardware vendors to innovate and safely add new components to the mix using Static TypeScript, leveraging its
@@ -101,48 +108,10 @@ consider:
       vs. bytecode generation and interpretation on the Uno.
 \end{itemize}
 
-
-\begin{figure*}[t]
-      \includegraphics[width=5in]{screenSnapFig.pdf}
-  \caption{\label{fig:screenSnap}Screen snapshot of the \MC web app.}
-\end{figure*}
+\flameon{TODO: we should present some of high-level experimental results here.}
 
 All of the platform's components are open source on GitHub.
-Figure~\ref{fig:repos} lists the major GitHub repos of the platform
-and the dependences between them. Green boxes represent repos external to the platform
-(note: not all repos are represented in the figure).
-
-The \MC framework
-is at \emph{\href{https://github.com/microsoft/pxt}{pxt}} (PXT is the previous codename of \MCN).
-A \emph{pxt-target} extends the framework to create an environment for a specific board. Targets
-for the three previously mentioned boards are at:
-~\emph{\href{https://github.com/microsoft/pxt-microbit}{pxt-microbit}},
-~\emph{\href{https://github.com/microsoft/pxt-adafruit}{pxt-adafruit}}, and
-~\emph{\href{https://github.com/microsoft/pxt-arduino-uno}{pxt-arduino-uno}}.
-The latter two targets make use of a common set of libraries,
-\emph{\href{https://github.com/microsoft/pxt-common-packages}{pxt-common-packages}},
-which build upon \CON's microcontroller independent core abstractions at
-~\emph{\href{https://github.com/lancaster-university/\CO-core}{\COLN-core}}.
-
-Platform- and microcontroller-dependent specialization and optimizations for
-the SAMD21 and Atmega328 microcontrollers can be found at
-~\emph{\href{https://github.com/lancaster-university/codal-samd21}{\COLN-samd21}},
-and
-~\emph{\href{https://github.com/lancaster-university/codal-atmega328p}{\COLN-atmega328p}}.
-Not shown in the figure, the SAMD21 repo uses another repo for
-MBED-specific optimizations for the Cortex-M0 processor: \emph{\href{https://github.com/lancaster-university/codal-mbed}{\COLN-mbed}}.
-
-The repo \emph{\href{https://github.com/lancaster-university/codal}{\COLN}} provides the
-tools for compiling a \CO target.  As can be seen in Figure~\ref{fig:repos},
-\CO abstracts over platform and microcontroller specific
-implementations, while PXT abstracts over programming editors and languages.
-The UF2 specification is at~\emph{\href{https://github.com/microsoft/uf2}{uf2}},
-with implementations at~\emph{\href{https://github.com/microsoft/uf2-samd21}{uf2-samd21}}
-and~\emph{\href{https://github.com/mmoskal/uf2-uno}{uf2-uno}}. These repos are not
-shown in the Figure.
-The pxt-microbit target uses a predecessor of the \CO called the DAL (at
-~\emph{\href{https://github.com/lancaster-university/microbit-dal}{microbit-dal}}).
-
+  
 The rest of this paper presents the four major components of the platform,
 top-down: Section~\ref{sec:makecode} presents the design
 and implementation of the \MC framework, while
