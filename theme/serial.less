@@ -135,6 +135,21 @@
     margin-left: 0;
 }
 
+#serialPreview .blink {
+    animation: blink-animation 500ms steps(5, start) 1;
+    -webkit-animation: blink-animation 500ms steps(5, start) 1;
+}
+@keyframes blink-animation {
+    to {
+        visibility: hidden;
+    }
+}
+@-webkit-keyframes blink-animation {
+    to {
+        visibility: hidden;
+    }
+}
+
 #serialPreview canvas {
     background-color: lighten(@serialGraphBackground, 10.0);
     padding: 0 5px 0 0;

@@ -12,28 +12,42 @@ export interface SerialIndicatorProps {
 
 export interface SerialIndicatorState {
     active?: boolean
+    receivingData?: boolean
 }
 
-export class SerialIndicator extends React.Component<SerialIndicatorProps, SerialIndicatorState>{
+export class SerialIndicator extends React.Component<SerialIndicatorProps, SerialIndicatorState> {
+    indicator: HTMLSpanElement
+    lastFlashTime: number = 0
 
     constructor(props: any) {
         super(props)
-        this.state = { active: false }
-        window.addEventListener("message", this.setActive.bind(this))
+        this.state = {active: false}
     }
 
-    setActive(ev: MessageEvent) {
+    componentDidMount() {
+        window.addEventListener("message", this.handleMessage.bind(this))
+    }
+
+    handleMessage(ev: MessageEvent) {
         let msg = ev.data
-        if (!this.state.active && msg.type === "serial") {
+        if (msg.type === "serial") {
             const sim = !!msg.sim
             if (sim === this.props.isSim) {
-                this.setState({ active: true })
+                if (!this.state.active) {
+                    this.setState({active: true})
+                }
+                let now = Date.now()
+                if (now - this.lastFlashTime > 150) {
+                    this.lastFlashTime = now
+                    this.indicator.classList.remove("blink")
+                    this.indicator.className += " blink"
+                }
             }
         }
     }
 
     clear() {
-        this.setState({ active: false })
+        this.setState({ active: false})
     }
 
     render() {
@@ -41,7 +55,7 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
         return <div className="ui segment inverted serialindicator" tabIndex={0} onClick={this.props.onClick} onKeyDown={sui.fireClickOnEnter}>
             <div className="ui label circular">
                 <div className="detail indicator">
-                    <span className="ui green empty circular label" />
+                    <span ref={e => this.indicator = e} className="ui green empty circular label" />
                 </div>
                 <div className="detail">
                     <sui.Icon icon="bar graph"/>
