@@ -436,11 +436,11 @@ namespace pxt.docs {
                 return '<li>' + text + '</li>\n';
             }
             renderer.heading = function (text: string, level: number, raw: string) {
-                let m = /(.*)#([\w\-]+)\s*$/.exec(text)
+                let m = /(.*)[#@]([\w\-]+)\s*$/.exec(text)
                 let id = ""
                 if (m) {
                     text = m[1]
-                    id = m[2]
+                    id = (m[1] + m[2]).toLowerCase().replace(/[^\w]+/g, '-')
                 } else {
                     id = raw.toLowerCase().replace(/[^\w]+/g, '-')
                 }
