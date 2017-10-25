@@ -48,18 +48,18 @@ The platform consists of a stack of four novel technologies, the subject of
 this paper:
 \begin{itemize}
 \item \emph{\MC (\href{https://makecode.com}{makecode.com})}, a web app that supports both visual block programming and text programming,
-via \emph{Static TypeScript}, with conversion between the two program representations
+via \emph{Static TypeScript}, with conversion between the two program representations (Section~\ref{sec:makecode});
 
 \item \emph{Static TypeScript}, a statically-typed subset of TypeScript (\url{www.typescriptlang.org}),
 a gradually-typed superset of JavaScript, for fast execution on low-memory devices, with
-a simple model for linking against pre-compiled C++;
+a simple model for linking against pre-compiled C++ (Section~\ref{sec:sts});
 
 \item \emph{\CO (the Component-oriented Device Abstraction Layer)}, an event driven, multi-threaded, C++ runtime environment that bridges the semantic gap between higher-level languages and the hardware,
-modelling each hardware component as a software component.
+modelling each hardware component as a software component (Section~\ref{sec:codal});
 
 \item \emph{USB Flashing Format} (UF2), a new file format designed for flashing microcontrollers over the Mass Storage
 Class protocol; the format greatly speeds the installation of user
-programs and is robust to differences in operating systems.
+programs and is robust to differences in operating systems (Section~\ref{sec:uf2}).
 \end{itemize}
 The \MC web app is the entry point of the platform, and has in-browser execution via a device simulator, as well as compilation to machine code and linking against a
 pre-compiled C++ runtime (\emph{\CON}). No C/C++ compiler is invoked to compile user code and the result of compilation is a binary file that is ``downloaded'' from the web app to the user's
