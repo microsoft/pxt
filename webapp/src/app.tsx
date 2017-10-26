@@ -1019,6 +1019,15 @@ export class ProjectView
         }
     }
 
+    resetWorkspace() {
+        this.reload = true;
+        return workspace.resetAsync()
+        .done(
+            () => window.location.reload(),
+            () => window.location.reload()
+        );
+    }
+
     reset() {
         pxt.tickEvent("reset");
         core.confirmAsync({
@@ -1032,20 +1041,9 @@ export class ProjectView
             if (!r) return Promise.resolve();
             if (hf2Connection) {
                 return hf2Connection.disconnectAsync()
-                .then(() => {
-                    this.reload = true; //Indicate we are going to reload next.
-                    workspace.resetAsync()
-                        .done(() => window.location.reload(),
-                        () => window.location.reload())
-                })
+                .then(this.resetWorkspace.bind(this))
             } else {
-                return Promise.resolve()
-                .then(() => {
-                    this.reload = true; //Indicate we are going to reload next.
-                    workspace.resetAsync()
-                        .done(() => window.location.reload(),
-                        () => window.location.reload())
-                })
+                return this.resetWorkspace.bind(this)()
             }
         });
     }
