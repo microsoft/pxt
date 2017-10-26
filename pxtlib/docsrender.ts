@@ -440,7 +440,7 @@ namespace pxt.docs {
                 let id = ""
                 if (m) {
                     text = m[1]
-                    id = (m[1] + m[2]).toLowerCase().replace(/[^\w]+/g, '-')
+                    id = m[2]
                 } else {
                     id = raw.toLowerCase().replace(/[^\w]+/g, '-')
                 }
