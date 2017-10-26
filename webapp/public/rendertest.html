@@ -3,8 +3,10 @@
 <body>
     <pre id="mycode">
     basic.showString("hello!")
-    basic.showIcon(IconNames.Heart)                    
     </pre>
+    <pre id="mycode2">
+            basic.showIcon(IconNames.Heart)                    
+            </pre>
     <div id="status"></div>
     <div id="blocks"></div>
 
@@ -16,7 +18,7 @@
             f.style.left = 0;
             f.style.bottom = 0;
             f.style.width = "1px";
-            f.style.height = "1px";            
+            f.style.height = "1px";
             f.src = "/--docs?render=1"
             document.body.appendChild(f);
         }
@@ -29,7 +31,7 @@
                 code: pre.innerText
             }, "*");
         }
-        
+
         window.addEventListener("message", function (ev) {
             var msg = ev.data;
             if (msg.source != "makecode") return;
@@ -37,6 +39,7 @@
             switch (msg.type) {
                 case "renderready":
                     makeCodeRenderPre(document.getElementById("mycode"))
+                    makeCodeRenderPre(document.getElementById("mycode2"))
                     break;
                 case "renderblocks":
                     var svg = msg.svg;
