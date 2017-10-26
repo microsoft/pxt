@@ -941,7 +941,7 @@ export class ProjectView
 
     resetWorkspace() {
         this.reload = true;
-        return workspace.resetAsync()
+        workspace.resetAsync()
         .done(
             () => window.location.reload(),
             () => window.location.reload()
