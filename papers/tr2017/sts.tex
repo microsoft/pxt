@@ -104,9 +104,7 @@ though it is possible to construct records with function properties using object
 
 \subsection{Subtyping and Type Checking}
 
-In STS, $S$ is a subtype of a type $T$ if one of the following is true:\footnote{
-For brevity, we have omitted the subtype rule for constructor function types, which
-follows the subtyping for function types and record types.}
+In STS, $S$ is a subtype of a type $T$ if one of the following is true:
 \begin{itemize}
 \item $S$ and $T$ are identical types;
 \item $S$ is the Undefined type;
@@ -137,6 +135,8 @@ follows the subtyping for function types and record types.}
 \end{itemize}
 \end{itemize}
 
+% https://www.earthli.com/news/view_article.php?id=3391
+
 Given types $S$ and $T$, checkMemb($S$,$T$) holds if for each member $M$ in $T$, 
 $M$ is a property and $S$ has a property $N$ where all of the following are true:
 \begin{itemize}
@@ -148,7 +148,11 @@ $M$ is a property and $S$ has a property $N$ where all of the following are true
       the class in which M is declared.
 \end{itemize}
 
-\emph{TODO: type compatibility and type checking}
+Type checking for (pure) expressions remains the same as in TypeScript.
+Type checking at assignments, where a value of type $S$ flows (is assigned to) 
+into a location of type $T$ uses the new subtyping relation: $S$
+must be a subtype of $T$.  Downcasts (where a supertype flows to a subtype)
+are not permitted. 
 
 \emph{TODO: theorems???}
 
