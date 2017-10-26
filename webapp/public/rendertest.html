@@ -1,0 +1,50 @@
+<html>
+<head>
+    <style>
+    iframe {
+        width: 1px;
+        height: 1px;
+        position: absolute;
+        left: 0;
+        bottom: 1;
+    }
+    </style>
+</head>
+<body>
+    <div id="status"></div>
+    <div id="blocks"></div>
+
+    <script>
+        var ready = false;
+        var status = document.getElementById("status");
+        status.innerText = 'initializing...'
+
+        window.onmessage = function (ev) {
+            var msg = ev.data;
+            console.log('msg: ' + msg);
+            if (msg.source != "makecode") return;
+            switch (msg.type) {
+                case "ready": 
+                    ready = true;
+                    status.innerText = 'rendering';
+                    f.contentWindow.postMessage({
+                        type: "render",
+                        code: `basic.showString("hello!")`
+                    }, "*") 
+                    break;
+                case "blocks":
+                    document.getElementById('blocks').innerHTML = msg.svg;
+                    break;
+            }
+        }
+
+
+        // inject docs iframe
+        var f = document.createElement("iframe")
+        f.src = "/--docs?render=1"
+        document.body.appendChild(f);
+
+    </script>
+</body>
+
+</html>

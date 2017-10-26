@@ -334,6 +334,31 @@ namespace pxt.runner {
         }
     }
 
+    export function startRenderServer() {
+        // notify parent that render engine is loaded
+        window.addEventListener("message", function (ev) {
+            const msg = ev.data as pxsim.RenderRequestMessage;
+            if (msg.type == "render") {
+                runner.decompileToBlocksAsync(msg.code, msg.options)
+                    .then(result => pxt.blocks.layout.blocklyToSvgAsync(result.blocksSvg, 0, 0, result.blocksSvg.width.baseVal.value, result.blocksSvg.height.baseVal.value))
+                    .then(res => {
+                        window.parent.postMessage({
+                            source: "makecode",
+                            type: "blocks",
+                            id: msg.id,
+                            width: res.width,
+                            height: res.height,
+                            svg: res.xml
+                        }, "*")
+                    })
+            }
+        }, false);
+        window.parent.postMessage({
+            source: "makecode",
+            type: "ready"
+        }, "*");
+    }
+
     export function startDocsServer(loading: HTMLElement, content: HTMLElement) {
         function render(doctype: string, src: string) {
             pxt.debug(`rendering ${doctype}`);

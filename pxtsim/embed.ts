@@ -112,12 +112,22 @@ namespace pxsim {
         subtype: "loaded";
         showCategories?: boolean;
         stepInfo: TutorialStepInfo[];
-        toolboxSubset?: {[index: string]: number };
+        toolboxSubset?: { [index: string]: number };
     }
 
     export interface TutorialStepChangeMessage extends TutorialMessage {
         subtype: "stepchange";
         step: number;
+    }
+
+    export interface RenderRequestMessage extends SimulatorMessage {
+        id: string;
+        type: "render",
+        code: string;
+        options?: {
+            package?: string;
+            snippetMode?: boolean;
+        }
     }
 
     export namespace Embed {
