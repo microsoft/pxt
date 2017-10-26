@@ -1041,9 +1041,9 @@ export class ProjectView
             if (!r) return Promise.resolve();
             if (hf2Connection) {
                 return hf2Connection.disconnectAsync()
-                .then(this.resetWorkspace.bind(this))
+                .then(() => this.resetWorkspace())
             } else {
-                return this.resetWorkspace.bind(this)()
+                return this.resetWorkspace()
             }
         });
     }
