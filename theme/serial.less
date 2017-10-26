@@ -31,7 +31,7 @@
 #serialArea .ui.segment {
     border: none;
     box-shadow: none;
-    background-color: @serialBackgroundColor;
+    background-color: @serialGraphBackground;
 }
 
 #serialHeader {
@@ -44,9 +44,8 @@
     display: block;
 }
 
-#serialHeader .leftHeader .ui.header {
-    margin: 0;
-    margin-left: 1rem;
+#serialHeader .rightHeader .ui.header {
+    margin: 0 1rem 0 1rem;
     color: @serialTextColor;
 }
 
@@ -72,6 +71,11 @@
     height: calc(25% - 0.5rem);
     overflow-y: auto;
     color: @serialTextColor;
+    background-color: @simulatorBackground;
+    border-radius: 5px;
+    border: 1px solid lighten(@serialGraphBackground, 10.0);
+    padding: 0.4rem;
+    font-family: @serialConsoleFont;
 }
 
 #serialConsole span {
@@ -79,7 +83,7 @@
 }
 
 #serialCharts {
-    height: 65%;
+    height: 75%;
     overflow-y: auto;
 }
 
@@ -118,23 +122,20 @@
     word-wrap: break-word;
 }
 
-#serialPreview .ui.left.labeled.button {
-    margin: 1px;
-    width: 100%;
-    border: 2px solid lighten(@serialGraphBackground, 10.0) !important;
-    height: 45px;
-    background-color: lighten(@serialGraphBackground, 10.0) !important;
-}
-
 #serialPreview .label {
     width: 100%;
     background-color: lighten(@serialGraphBackground, 10.0);
     font-size: 0.85em;
-    border: none;
+    border: 1rem solid @primaryColor;
 }
 
-#serialPreview .indicator {
-    margin-left: 0;
+#serialPreview .label:hover {
+    background-color: @serialGraphBackground;
+    border-color: darken(@primaryColor, 10.0);
+}
+
+#serialPreview .label:focus {
+    outline: none;
 }
 
 #serialPreview canvas {
@@ -143,21 +144,15 @@
 }
 
 .serialindicator {
-    cursor:pointer;
+    cursor: pointer;
 }
 
-.ui.button.editorExport,
-    .ui.button.editorBack {
+.ui.button.editorBack {
     color: @editorCloseColor;
     background: transparent none;
-    box-shadow: 0px 0px 0px @editorCloseBorderSize @editorCloseColor inset;
-    text-shadow: none;
 }
 
-.ui.button.editorExport:hover, 
-    .ui.button.editorExport:focus,
-    .ui.button.editorBack:hover,
+.ui.button.editorBack:hover,
     .ui.button.editorBack:focus {
     color: @editorCloseColorHover;
-    box-shadow: 0px 0px 0px @editorCloseBorderSize @editorCloseColorHover;
 }
