@@ -15,6 +15,10 @@
     <div id="blocks"></div>
 
     <script>
+        var code = `
+basic.showString("hello!")
+basic.showIcon(IconNames.Heart)
+`        
         var ready = false;
         var status = document.getElementById("status");
         status.innerText = 'initializing...'
@@ -24,15 +28,15 @@
             console.log('msg: ' + msg);
             if (msg.source != "makecode") return;
             switch (msg.type) {
-                case "ready": 
+                case "renderready": 
                     ready = true;
                     status.innerText = 'rendering';
                     f.contentWindow.postMessage({
-                        type: "render",
-                        code: `basic.showString("hello!")`
+                        type: "renderblocks",
+                        code: code
                     }, "*") 
                     break;
-                case "blocks":
+                case "renderblocks":
                     document.getElementById('blocks').innerHTML = msg.svg;
                     break;
             }

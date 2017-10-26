@@ -133,10 +133,10 @@ namespace pxt.blocks.layout {
     }
 
     export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number): Promise<{
-        width: number; height: number; xml: string;
+        width: number; height: number; svg: string; xml: string;
     }> {
         if (!sg.childNodes[0])
-            return Promise.resolve<{ width: number; height: number; xml: string; }>(undefined);
+            return Promise.resolve<{ width: number; height: number; svg: string; xml: string; }>(undefined);
 
         sg.removeAttribute("width");
         sg.removeAttribute("height");
@@ -157,7 +157,7 @@ namespace pxt.blocks.layout {
 
             return expandImagesAsync(xsg)
                 .then(() => {
-                    return { width: width, height: height, xml: documentToSvg(xsg) };
+                    return { width: width, height: height, svg: new XMLSerializer().serializeToString(xsg), xml: documentToSvg(xsg) };
                 });
             })
     }

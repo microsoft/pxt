@@ -337,25 +337,26 @@ namespace pxt.runner {
     export function startRenderServer() {
         // notify parent that render engine is loaded
         window.addEventListener("message", function (ev) {
-            const msg = ev.data as pxsim.RenderRequestMessage;
-            if (msg.type == "render") {
+            const msg = ev.data as pxsim.RenderBlocksRequestMessage;
+            if (msg.type == "renderblocks") {
                 runner.decompileToBlocksAsync(msg.code, msg.options)
-                    .then(result => pxt.blocks.layout.blocklyToSvgAsync(result.blocksSvg, 0, 0, result.blocksSvg.width.baseVal.value, result.blocksSvg.height.baseVal.value))
+                    .then(result => result.blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(result.blocksSvg, 0, 0, result.blocksSvg.viewBox.baseVal.width, result.blocksSvg.viewBox.baseVal.height) : undefined)
                     .then(res => {
-                        window.parent.postMessage({
+                        window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
                             source: "makecode",
-                            type: "blocks",
+                            type: "renderblocks",
                             id: msg.id,
-                            width: res.width,
-                            height: res.height,
-                            svg: res.xml
+                            width: res ? res.width : undefined,
+                            height: res ? res.height : undefined,
+                            svg: res ? res.svg : undefined,
+                            uri: res ? res.xml : undefined
                         }, "*")
                     })
             }
         }, false);
-        window.parent.postMessage({
+        window.parent.postMessage(<pxsim.RenderReadyResponseMessage>{
             source: "makecode",
-            type: "ready"
+            type: "renderready"
         }, "*");
     }
 
