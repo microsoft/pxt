@@ -53,7 +53,7 @@ export interface RenderBlocksResponseMessage extends SimulatorMessage {
 }
 ```
 
-This snippet registers a message handler.
+This snippet registers a message handler. Feel free to write it using your favorite JS framework.
 
 ```typescript-ignore
 window.addEventListener("message", function (ev) {
@@ -68,7 +68,13 @@ window.addEventListener("message", function (ev) {
             var svg = msg.svg; // this is an string containing SVG
             var id = msg.id; // this is the id you sent
             // replace text with svg
-            document.getElementById(id).innerHTML = svg;
+            var img = document.createElement("img");
+            img.src = msg.uri;
+            img.width = msg.width;
+            img.height = msg.height;
+            var code = document.getElementById(id)
+            code.parentElement.insertBefore(img, code)
+            code.parentElement.removeChild(code);
             break;
     }
 }, false);
