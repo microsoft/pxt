@@ -1,53 +1,53 @@
 <html>
-<head>
-    <style>
-    iframe {
-        width: 1px;
-        height: 1px;
-        position: absolute;
-        left: 0;
-        bottom: 1;
-    }
-    </style>
-</head>
+
 <body>
+    <pre id="mycode">
+    basic.showString("hello!")
+    basic.showIcon(IconNames.Heart)                    
+    </pre>
     <div id="status"></div>
     <div id="blocks"></div>
 
     <script>
-        var code = `
-basic.showString("hello!")
-basic.showIcon(IconNames.Heart)
-`        
-        var ready = false;
-        var status = document.getElementById("status");
-        status.innerText = 'initializing...'
-
-        window.onmessage = function (ev) {
-            var msg = ev.data;
-            console.log('msg: ' + msg);
-            if (msg.source != "makecode") return;
-            switch (msg.type) {
-                case "renderready": 
-                    ready = true;
-                    status.innerText = 'rendering';
-                    f.contentWindow.postMessage({
-                        type: "renderblocks",
-                        code: code
-                    }, "*") 
-                    break;
-                case "renderblocks":
-                    document.getElementById('blocks').innerHTML = msg.svg;
-                    break;
-            }
+        function makeCodeInjectRenderer() {
+            var f = document.createElement("iframe");
+            f.id = "makecoderenderer";
+            f.style.position = "absolute";
+            f.style.left = 0;
+            f.style.bottom = 0;
+            f.style.width = "1px";
+            f.style.height = "1px";            
+            f.src = "/--docs?render=1"
+            document.body.appendChild(f);
         }
 
+        function makeCodeRenderPre(pre) {
+            var f = document.getElementById("makecoderenderer");
+            f.contentWindow.postMessage({
+                type: "renderblocks",
+                id: pre.id,
+                code: pre.innerText
+            }, "*");
+        }
+        
+        window.addEventListener("message", function (ev) {
+            var msg = ev.data;
+            if (msg.source != "makecode") return;
 
-        // inject docs iframe
-        var f = document.createElement("iframe")
-        f.src = "/--docs?render=1"
-        document.body.appendChild(f);
+            switch (msg.type) {
+                case "renderready":
+                    makeCodeRenderPre(document.getElementById("mycode"))
+                    break;
+                case "renderblocks":
+                    var svg = msg.svg;
+                    var id = msg.id;
+                    // replace text with svg
+                    document.getElementById(id).innerHTML = svg;
+                    break;
+            }
+        }, false);
 
+        makeCodeInjectRenderer();
     </script>
 </body>
 
