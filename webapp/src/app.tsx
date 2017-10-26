@@ -939,6 +939,15 @@ export class ProjectView
         }
     }
 
+    resetWorkspace() {
+        this.reload = true;
+        workspace.resetAsync()
+        .done(
+            () => window.location.reload(),
+            () => window.location.reload()
+        );
+    }
+
     reset() {
         pxt.tickEvent("reset");
         core.confirmAsync({
@@ -949,11 +958,13 @@ export class ProjectView
             agreeIcon: "sign out",
             disagreeLbl: lf("Cancel")
         }).then(r => {
-            if (!r) return;
-            this.reload = true; //Indicate we are goint to reload next.
-            workspace.resetAsync()
-                .done(() => window.location.reload(),
-                () => window.location.reload())
+            if (!r) return Promise.resolve();
+            if (hf2Connection) {
+                return hf2Connection.disconnectAsync()
+                .then(() => this.resetWorkspace())
+            } else {
+                return this.resetWorkspace()
+            }
         });
     }
 
@@ -1880,6 +1891,7 @@ function initLogin() {
 
 let hidConnectionPoller: number;
 let hidPollerDelay: number;
+let hf2Connection: pxt.HF2.Wrapper;
 
 function startHidConnectionPoller() {
     hidConnectionPoller = window.setInterval(initSerial, 5000);
@@ -1898,6 +1910,7 @@ function initSerial() {
     if (hidbridge.shouldUse()) {
         hidbridge.initAsync(true)
             .then(dev => {
+                hf2Connection = dev;
                 dev.onSerial = (buf, isErr) => {
                     setHidPollerDelay();
                     window.postMessage({
