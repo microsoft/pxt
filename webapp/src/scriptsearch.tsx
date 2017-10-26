@@ -122,7 +122,22 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
         const upd = (v: any) => {
             let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
-            this.setState({ searchFor: str })
+
+            // Hidden navigation, used to test /beta or other versions inside released Electron and UWP apps
+            // Secret prefix is /@, e.g.: /@beta
+            const urlPathExec = /^\/@(.*)$/.exec(str);
+            let urlPath = urlPathExec && urlPathExec[1];
+            if (urlPath) {
+                let homeUrl = pxt.appTarget.appTheme.homeUrl;
+                if (!/\/$/.test(homeUrl)) {
+                    homeUrl += "/";
+                }
+                urlPath = urlPath.replace(/^\//, "");
+                window.location.href = homeUrl + urlPath;
+            }
+            else {
+                this.setState({ searchFor: str })
+            }
         };
         const kupd = (ev: __React.KeyboardEvent) => {
             if (ev.keyCode == 13) upd(ev);
