@@ -18,9 +18,42 @@ If you're looking for a better solution, carry on reading.
 
 The MakeCode approach to solve this issue is to render the code snippets on the client using the same block rendering engine as the editor. The idea is to load an IFrame from the MakeCode editor that will render the blocks for you.
 
+## Implementation
+
 The first part is to register a message handler that will communicate with the rendering ``IFrame``.
 The renderer sends a ``renderready`` message when it is loaded and ready to receive messages.
+
+```typescript-ignore
+export interface RenderReadyResponseMessage extends SimulatorMessage {
+    source: "makecode",
+    type: "renderready"
+}
+```
+
 It sends back a ``renderblocks`` response message with the rendered blocks.
+
+```typescript-ignore
+export interface RenderBlocksRequestMessage extends SimulatorMessage {
+    type: "renderblocks",
+    id: string;
+    code: string;
+    options?: {
+        package?: string;
+        snippetMode?: boolean;
+    }
+}
+
+export interface RenderBlocksResponseMessage extends SimulatorMessage {
+    source: "makecode",
+    type: "renderblocks",
+    id: string;
+    svg?: string;
+    width?: number;
+    height?: number;
+}
+```
+
+This snippet registers a message handler.
 
 ```typescript-ignore
 window.addEventListener("message", function (ev) {
