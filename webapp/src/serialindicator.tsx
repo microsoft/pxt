@@ -38,19 +38,15 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
 
     render() {
         if (!this.state.active) return <div />;
-        return <div className="ui segment inverted serialindicator" tabIndex={0} onClick={this.props.onClick} onKeyDown={sui.fireClickOnEnter}>
-            <div className="ui label circular">
-                <div className="detail indicator">
-                    <span className="ui green empty circular label" />
-                </div>
+        return(
+            <div title={lf("Open data viewer")} className="ui label circular" tabIndex={0} onClick={this.props.onClick} onKeyDown={sui.fireClickOnEnter}>
                 <div className="detail">
                     <sui.Icon icon="bar graph"/>
                 </div>
-                {lf("Data Viewer") }
+                {lf("Show data") }
                 <div className="detail">
                     {this.props.isSim ? lf("Simulator") : lf("Device") }
                 </div>
-            </div>
-        </div>
+            </div>)
     }
 }
