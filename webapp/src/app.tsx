@@ -2020,57 +2020,6 @@ let myexports: any = {
 
 export var ksVersion: string;
 
-function initTheme() {
-    const theme = pxt.appTarget.appTheme;
-    if (theme.accentColor) {
-        let style = document.createElement('style');
-        style.type = 'text/css';
-        style.innerHTML = `.ui.accent { color: ${theme.accentColor}; }
-        .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${theme.accentColor}; }`;
-        document.getElementsByTagName('head')[0].appendChild(style);
-    }
-    // RTL languages
-    if (Util.isUserLanguageRtl()) {
-        pxt.debug("rtl layout");
-        pxsim.U.addClass(document.body, "rtl");
-        document.body.style.direction = "rtl";
-
-        // replace semantic.css with rtlsemantic.css
-        const links = Util.toArray(document.head.getElementsByTagName("link"));
-        const semanticLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "semantic.css"))[0];
-        const semanticHref = semanticLink.getAttribute("data-rtl");
-        if (semanticHref) {
-            pxt.debug(`swapping to ${semanticHref}`)
-            semanticLink.setAttribute("href", semanticHref);
-        }
-        // replace blockly.css with rtlblockly.css
-        const blocklyLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "blockly.css"))[0];
-        const blocklyHref = blocklyLink.getAttribute("data-rtl");
-        if (blocklyHref) {
-            pxt.debug(`swapping to ${blocklyHref}`)
-            blocklyLink.setAttribute("href", blocklyHref);
-        }
-    }
-
-    function patchCdn(url: string): string {
-        if (!url) return url;
-        return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
-    }
-
-    theme.appLogo = patchCdn(theme.appLogo)
-    theme.cardLogo = patchCdn(theme.cardLogo)
-
-    if (pxt.appTarget.simulator
-        && pxt.appTarget.simulator.boardDefinition
-        && pxt.appTarget.simulator.boardDefinition.visual) {
-        let boardDef = pxt.appTarget.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
-        if (boardDef.image) {
-            boardDef.image = patchCdn(boardDef.image)
-            if (boardDef.outlineImage) boardDef.outlineImage = patchCdn(boardDef.outlineImage)
-        }
-    }
-}
-
 function parseHash(): { cmd: string; arg: string } {
     let hashCmd = ""
     let hashArg = ""
@@ -2254,7 +2203,7 @@ $(document).ready(() => {
                 pxt.appTarget.versions.branch,
                 live);
         })
-        .then(() => initTheme())
+        .then(() => pxt.BrowserUtils.initTheme())
         .then(() => cmds.initCommandsAsync())
         .then(() => {
             compiler.init();
