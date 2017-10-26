@@ -18,7 +18,7 @@ export class Editor extends srceditor.Editor {
     chartIdx: number = 0
     consoleBuffer: string = ""
     isSim: boolean = true
-    maxConsoleLineLength: number = 500
+    maxConsoleLineLength: number = 255
     maxConsoleEntries: number = 100
     active: boolean = true
     maxChartTime: number = 18000
@@ -111,38 +111,45 @@ export class Editor extends srceditor.Editor {
         for (let i = 0; i < data.length; ++i) {
             let ch = data[i]
             this.consoleBuffer += ch
-            if (ch === "\n" || this.consoleBuffer.length > this.maxConsoleLineLength) {
-
+            if (ch !== "\n" && this.consoleBuffer.length < this.maxConsoleLineLength) {
+                continue
+            }
+            if (ch === "\n") {
                 let lastEntry = this.consoleRoot.lastChild
-                let newEntry = document.createElement("span")
+                let newEntry = document.createElement("div")
                 if (lastEntry && lastEntry.lastChild.textContent == this.consoleBuffer) {
                     if (lastEntry.childNodes.length == 2) {
-                        //matches already-collapsed entry
+                        //Matches already-collapsed entry
                         let count = parseInt(lastEntry.firstChild.textContent)
                         lastEntry.firstChild.textContent = (count + 1).toString()
                     } else {
-                        //make a new collapsed entry with count = 2
+                        //Make a new collapsed entry with count = 2
                         let newLabel = document.createElement("a")
                         newLabel.className = "ui horizontal label"
                         newLabel.textContent = "2"
                         lastEntry.insertBefore(newLabel, lastEntry.lastChild)
                     }
                 } else {
-                    //make a new non-collapsed entry
+                    //Make a new non-collapsed entry
                     newEntry.appendChild(document.createTextNode(this.consoleBuffer))
                     this.consoleRoot.appendChild(newEntry)
-                    this.consoleRoot.scrollTop = this.consoleRoot.scrollHeight
                 }
-                if (this.consoleRoot.childElementCount > this.maxConsoleEntries) {
-                    this.consoleRoot.removeChild(this.consoleRoot.firstChild)
-                }
-                this.consoleBuffer = ""
+            } else {
+                //Buffer is full
+                //Make a new entry with <span>, not <div>
+                let newEntry = document.createElement("span")
+                newEntry.appendChild(document.createTextNode(this.consoleBuffer))
+                this.consoleRoot.appendChild(newEntry)
             }
-        }
-
-        if (this.consoleRoot && this.consoleRoot.childElementCount > 0) {
-            if (this.chartRoot) this.chartRoot.classList.remove("noconsole");
-            if (this.consoleRoot) this.consoleRoot.classList.remove("noconsole");
+            this.consoleBuffer = ""
+            this.consoleRoot.scrollTop = this.consoleRoot.scrollHeight
+            if (this.consoleRoot.childElementCount > this.maxConsoleEntries) {
+                this.consoleRoot.removeChild(this.consoleRoot.firstChild)
+            }
+            if (this.consoleRoot && this.consoleRoot.childElementCount > 0) {
+                if (this.chartRoot) this.chartRoot.classList.remove("noconsole");
+                if (this.consoleRoot) this.consoleRoot.classList.remove("noconsole");
+            }
         }
     }
 
@@ -222,17 +229,17 @@ export class Editor extends srceditor.Editor {
                 <div id="serialHeader" className="ui">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
-                            <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
+                            <sui.Button title={lf("Go back")} class="ui icon circular small button editorBack" ariaLabel={lf("Go back")} onClick={this.goBack.bind(this)}>
+                                <sui.Icon icon="arrow left" />
+                            </sui.Button>
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button class="ui icon circular small button backButton" ariaLabel={lf("Close")} onClick={this.goBack.bind(this)}>
-                            <sui.Icon icon="arrow left" />
-                        </sui.Button>
-                        <sui.Button class="ui icon circular small button downloadButton" ariaLabel={lf("Export data")} onClick={() => this.downloadCSV()}>
+                        <sui.Button title={lf("Export data")} class="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")}>
                             <sui.Icon icon="download" />
                         </sui.Button>
+                        <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
+                        <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                     </div>
                 </div>
                 <div id="serialCharts" className="noconsole" ref={e => this.chartRoot = e}></div>
@@ -266,7 +273,7 @@ export class StartPauseButton extends data.Component<StartPauseButtonProps, Star
         const { toggle } = this.props;
         const { active } = this.state;
 
-        return <sui.Button class={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
+        return <sui.Button title={active ? lf("Pause recording") : lf("Start recording")} class={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
             <sui.Icon icon={active ? "pause icon" : "circle icon"} />
         </sui.Button>
     }
@@ -290,6 +297,9 @@ class Chart {
         // Initialize chart
         const chartConfig: IChartOptions = {
             interpolation: 'bezier',
+            labels: {
+                disabled: true
+            },
             responsive: true,
             millisPerPixel: 20,
             grid: {

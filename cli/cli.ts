@@ -2046,25 +2046,28 @@ class SnippetHost implements pxt.Host {
         } else if (pxt.appTarget.bundledpkgs[module.id] && filename === pxt.CONFIG_NAME) {
             return pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME];
         } else {
-            let ps = [
-                path.join(module.id, filename),
-                path.join('libs', module.id, filename),
-                path.join('libs', module.id, 'built', filename),
-            ];
+            const readFile = (filename: string) => {
+                let ps = [
+                    path.join(module.id, filename),
+                    path.join('libs', module.id, filename),
+                    path.join('libs', module.id, 'built', filename),
+                ];
+                for (let p of ps) {
+                    try {
+                        return fs.readFileSync(p, 'utf8')
+                    }
+                    catch (e) {
+                    }
+                }
+                return null
+            }
 
-            let contents: string = null
-            if (!ps.some(p => {
-                try {
-                    contents = fs.readFileSync(p, 'utf8')
-                    return true;
-                }
-                catch (e) {
-                }
-                return false;
-            })) {
+            let contents = readFile(filename)
+            if (contents == null) {
                 // try additional package location
                 if (pxt.appTarget.bundledpkgs[module.id]) {
-                    const modpkg = JSON.parse(pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                    let f = readFile(pxt.CONFIG_NAME)
+                    const modpkg = JSON.parse(f || "{}") as pxt.PackageConfig;
                     if (modpkg.additionalFilePath) {
                         try {
                             const ad = path.join(modpkg.additionalFilePath.replace('../../', ''), filename);
@@ -4100,6 +4103,10 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         const entrypath = todo.pop();
         pxt.debug(`checking ${entrypath}`)
         const md = (urls[entrypath] as string) || nodeutil.resolveMd(docsRoot, entrypath);
+        if (!md) {
+            pxt.log(`unable to resolve ${entrypath}`)
+            broken++;
+        }
         // look for broken urls
         md.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
             let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];

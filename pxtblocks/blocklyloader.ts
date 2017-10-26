@@ -2308,23 +2308,15 @@ namespace pxt.blocks {
 
         Blockly.Blocks[pxtc.TS_OUTPUT_TYPE] = {
             init: function () {
-                this.jsonInit({
-                    "colour": "#717171",
-                    "message0": "%1",
-                    "args0": [
-                        {
-                            "type": "field_input",
-                            "name": "EXPRESSION",
-                            "text": ""
-                        }
-                    ]
-                });
-                this.setPreviousStatement(false);
-                this.setNextStatement(false);
-                this.setOutput(true);
-                this.setEditable(false);
+                let that: Blockly.Block = this;
+                that.setColour("#717171")
+                that.setPreviousStatement(false);
+                that.setNextStatement(false);
+                that.setOutput(true);
+                that.setEditable(false);
+                that.appendDummyInput().appendField(new pxtblockly.FieldTsExpression(""), "EXPRESSION");
 
-                setHelpResources(this,
+                setHelpResources(that,
                     pxtc.TS_OUTPUT_TYPE,
                     lf("JavaScript expression"),
                     lf("A JavaScript expression that could not be converted to blocks"),
@@ -2713,6 +2705,7 @@ namespace pxt.blocks {
         // Dropdown menu of variables_get
         msg.RENAME_VARIABLE = lf("Rename variable...");
         msg.DELETE_VARIABLE = lf("Delete the \"%1\" variable");
+        msg.DELETE_VARIABLE_CONFIRMATION = lf("Delete %1 uses of the \"%2\" variable?");
 
         // builtin variables_set
         const variablesSetId = "variables_set";
