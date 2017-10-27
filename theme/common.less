@@ -13,6 +13,11 @@ html, body {
     min-width: 320px;
 }
 
+* {
+  min-height: 0;
+  min-width: 0;
+}
+
 /* Main Layout */
 #filelist,
 #maineditor,
@@ -21,14 +26,13 @@ html, body {
   bottom: 0rem;
 }
 
-#filelist, #maineditor, #sidedocs, #getting-started-btn {
+#filelist, #maineditor, #sidedocs {
     top:@mainMenuHeight;
 }
 
 .hideMenuBar #filelist,
     .hideMenuBar #maineditor,
-    .hideMenuBar #sidedocs,
-    .hideMenuBar #getting-started-btn {
+    .hideMenuBar #sidedocs {
     top: 0 !important;
 }
 
@@ -56,18 +60,19 @@ html, body {
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 12;
+    z-index: @editorToolsZIndex;
     height: @editorToolsCollapsedHeight;
     background-color: @editorToolsBackground;
 }
 
-#blocksArea, #monacoEditor, #pxtJsonEditor, #filelist {
+#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
     bottom: @editorToolsCollapsedHeight;
 }
 
 .hideEditorToolbar #blocksArea,
     .hideEditorToolbar #monacoEditor,
     .hideEditorToolbar #pxtJsonEditor,
+    .hideEditorToolbar #serialEditor,
     .hideEditorToolbar #filelist {
     bottom: 0rem !important;
 }
@@ -90,6 +95,7 @@ html, body {
     margin-bottom: 0;
     width: 100%;
     background-color: @simulatorBackground;
+    z-index: @simulatorZIndex;
 }
 
 #filelist .simtoolbar {
@@ -103,7 +109,7 @@ html, body {
 
 #downloadArea {
     margin-top: 0 !important;
-    padding-top: 0.7rem;
+    padding-top: 0.55rem;
     background-color: @simulatorBackground;
 }
 
@@ -127,20 +133,6 @@ html, body {
     text-align: center;
 }
 
-/* Getting started button */
-#getting-started-btn {
-    display:none;
-    z-index:9;
-    position: absolute;
-    right: 2rem;
-}
-#getting-started-btn:not(.sideDocs) {
-    display: block;
-}
-.ui.button.getting-started-btn .ui.text {
-    font-weight: 100 !important;
-}
-
 /* Cookie Message */
 #cookiemsg {
    position: absolute;
@@ -148,7 +140,7 @@ html, body {
    bottom: 12rem;
    width: 18rem;
    text-align: left;
-   z-index:1000;
+   z-index: @aboveEverythingZIndex;
 }
 
 #cookiemsg > a {
@@ -242,19 +234,8 @@ div.simframe > iframe {
     right: 7rem;
     bottom: 2.2rem;
     margin: 0;
-    z-index: 5;
+    z-index: @helpCardZIndex;
     font-size:0.8rem;
-}
-
-/* Project code cards */
-.ui.cardimage {
-    background-color: @secondaryColor;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    height: 10rem;
-    border-top-left-radius: @defaultBorderRadius;
-    border-top-right-radius: @defaultBorderRadius;
 }
 
 /* Logo */
@@ -286,7 +267,7 @@ div.simframe > iframe {
     right: 0;
     height: 42px;
     background-color: @blocklySvgColor;
-    z-index: 10;
+    z-index: @editorLogoZIndex;
     display: none;
 }
 #editorlogo > .poweredbylogo {
@@ -304,7 +285,7 @@ div.simframe > iframe {
     position:absolute;
     bottom:0rem;
     right:0rem;
-    z-index:100;
+    z-index: @sandboxFooterZIndex;
     margin-bottom: 0.2rem !important;
 }
 .sandboxfooter .item{
@@ -334,7 +315,7 @@ div.simframe > iframe {
 
 #msg > div {
     display: inline-block;
-    z-index: 100;
+    z-index: @editorMessageZIndex;
 }
 
 #msg > div:empty {
@@ -347,30 +328,25 @@ div.simframe > iframe {
     -moz-appearance: none;
     -webkit-appearance: none;
     appearance: none;
-    width: 10px;
-    height: 10px;
+    width: @customScrollbarWidth;
+    height: @customScrollbarWidth;
 }
 ::-webkit-scrollbar-thumb {
     border-radius: 4px;
-    background-color: #ccc;
-    box-shadow: 0 0 1px #ccc;
-    -webkit-box-shadow: 0 0 1px #ccc;
+    background-color: @thumbBackground;
+    box-shadow: 0 0 1px @thumbBackground;
+    -webkit-box-shadow: 0 0 1px @thumbBackground;
 }
 
 /* Button Colors */
 .ui.button.editortools-btn {
     &:extend(.ui.grey.button all);
 }
-.ui.button.getting-started-btn {
-    &:extend(.ui.green.button all);
-}
 
 /* Icon and text */
-.ui.menu > .menu > .ui.item > .icon-and-text.icon {
-    margin: 0em auto;
-}
-.ui.menu > .menu > .ui.item > .icon-and-text.icon ~ span.ui.text {
-    margin-left: 0.6em;
+.ui.item.icon > .icon-and-text.icon ~ .ui.text,
+.ui.button.icon > .icon-and-text.icon ~ .ui.text {
+    margin-left: 0.5em !important;
 }
 
 /* Beta */
@@ -384,26 +360,8 @@ div.simframe > iframe {
 }
 
 /*******************************
-             Docs
-*******************************/
-
-#docs {
-    font-family: @docsPageFont !important;
-}
-
-#docs > h1,h2,h3,h4,h5,h6 {
-    font-family: @docsHeaderFont !important;
-}
-
-#docs span.block {
-    display:inline-block;
-    vertical-align: middle;
-}
-
-/*******************************
         Projects Modal
 *******************************/
-
 
 .ui.modal.projectsdialog .ui.dividing.header, .ui.modal.projectsdialog .content > .header{
     font-weight: normal !important;
@@ -446,164 +404,12 @@ div.simframe > iframe {
     position: relative;
 }
 
-.ui.modal.projectsdialog .tabsegment {
-    min-height: 450px;
-    background: white !important;
-}
-
-
-/*******************************
-        Modal Close Icon
-*******************************/
-
-.ui.modal .closeIcon {
-    position: absolute;
-    top: 0; 
-    right: 0;
-}
-.ui.modal.projectsdialog .closeIcon {
-    top: 0.4rem;
-    right: 0.2rem;
-}
-
-.ui.button.icon.clear {
-    background: transparent;
-    border: 0 !important;
-    box-shadow: none !important;
-}
-.ui.button.icon.inverted.clear:hover, .ui.button.icon.inverted.clear:focus {
-    color: @grey !important;
-}
-
-/*******************************
-        Monaco Editor
-*******************************/
-
-.monaco-editor .monaco-scrollable-element.editor-scrollable {
-    margin-left: .5rem;
-}
-
-/* Monaco Editor Line number colors, changed from the default light theme */
-.monaco-editor.vs .line-numbers {
-    color: #2c3e50 !important;
-}
-
-/* Monaco Editor Line number background, changed from the default light theme */
-.monaco-editor.vs .margin-view-overlays.monaco-editor-background {
-    background: rgba(0, 0, 0, 0.05) !important;
-}
-
-/* Monaco Editor Current line highlighting, only needed for the light theme */
-.monaco-editor.vs .current-line {
-	background: rgba(0, 0, 255, 0.1) !important;
-}
-
-/* Monaco Editor Suggest Widget, styling */
-.monaco-editor .suggest-widget {
-    border-radius:5px;
-}
-.monaco-list-row.focused {
-    background-color:#0078D7 !important;
-    color: #fff !important;
-}
-.monaco-editor.vs .suggest-widget:not(.frozen) .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
-    color: #0078D7 !important;
-}
-.monaco-editor.vs .suggest-widget:not(.frozen) .monaco-list .monaco-list-row.focused .monaco-highlighted-label .highlight {
-    color: #fff !important;
-}
-.monaco-editor.vs .suggest-widget .details > .monaco-scrollable-element > .body > .type, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .type-label {
-    color: #FFB900 !important;
-}
-
-/* Monaco Editor Main tokens */
-.monaco-editor .highlight-statement {
-    background-color: #FF8B27;
-}
-
-/* Monaco Toolbox */
-.monacoFlyout {
-    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
-    background: @monacoFlyoutColor;
-    overflow-x: visible;
-    overflow-y: auto;
-    border-top-right-radius: 8px;
-    border-bottom-right-radius: 8px;
-}
-
-.monacoFlyout > div {
-    margin: 1rem;
-}
-
-.monacoFlyoutLabel {
-    vertical-align: middle;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    -webkit-user-select: none;
-    user-select: none;
-    color: white;
-    font-size: 15px;
-}
-
-.monacoFlyoutHeading {
-    padding-bottom: 0.4rem;
-}
-.monacoFlyoutHeading .monacoFlyoutHeadingText {
-    color: white;
-}
-.monacoFlyoutHeadingIcon {
-    vertical-align: middle !important;
-    font-size: 1.5rem !important;
-    margin: -0.7em 0.2em 0em 0.5em !important;
-}
-.monacoFlyoutLabelLine {
-    border: none;
-    border-top: 1px dotted white;
-    height:1px;
-}
-
-.monacoDraggableBlock {
-    color: @white;
-    padding: 0.6rem;
-    border-radius: 8px;
-    border: solid 3px @white;
-    cursor: pointer;
-    display: inline-block;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    -webkit-user-select: none;
-    user-select: none;
-}
-
-.monacoDraggableBlock span.sig {
-    opacity: 0.7;
-}
-
-.monacoDraggableBlock span.docs {
-    display: block; /* enable as needed */
-    color: @white;
-    font-size:70%;
-    max-width: 22rem;
-}
-
-.monacoDraggableBlock:hover {
-    border: solid 3px #fc3 !important;
-}
-
 /******************************
 Avatar
 ******************************/
 
 .avatar {
     position: relative;
-}
-
-#docs .avatar .message {
-    margin-left: 4em;
-    margin-bottom: 1em;
-}
-#docs code.lang-typescript {
-    overflow-wrap: break-word;
 }
 
 @media only screen {
@@ -639,8 +445,12 @@ Avatar
     width: 0;
 }
 
-/* Modulator */
+/* Json editor */
+#pxtJsonEditor .ui.content {
+    padding: 1rem;
+}
 
+/* Modulator */
 #modulatorWrapper, #modulatorAudioOutput {
     display: none;
 }
@@ -808,7 +618,7 @@ Field editors
     /* Full screen */
     .fullscreensim #filelist {
         position: fixed;
-        z-index:100;
+        z-index: @fullscreenZIndex;
         top:0;
         left:0;
         bottom:0;
@@ -839,10 +649,10 @@ Field editors
         .fullscreensim #maineditor,
         .fullscreensim #editortools {
         display: none !important;
-        z-index: -10;
+        z-index: -10 !important;
     }
     .fullscreensim .sandboxfooter {
-        z-index:100;
+        z-index: @sandboxFooterZIndex;
         bottom: 1rem;
     }
     .fullscreensim .ui.menu {
@@ -850,7 +660,7 @@ Field editors
     }
     .fullscreensim #filelist .simtoolbar {
         position: fixed;
-        bottom: 2rem;
+        bottom: 1rem;
         left:auto;
         right:auto;
     }
@@ -890,7 +700,7 @@ Field editors
         left:@simulatorWidthSmall;
     }
     /* Logo */
-    #logo .name {
+    .ui.logo.brand .name {
         display: none !important;
     }
     /* Help card */
@@ -904,7 +714,7 @@ Field editors
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
     /* Logo */
-    #logo, #organization {
+    .ui.logo.brand, .ui.logo.organization {
         font-size: 0rem;
         padding-right: 0;
     }
@@ -919,7 +729,6 @@ Field editors
         position:absolute;
         padding: 0;
         margin: 1em;
-        z-index: 15;
         bottom:0rem !important;
         left:4rem !important;
         top:auto;
@@ -938,7 +747,7 @@ Field editors
     #editortools {
         height: 10rem;
     }
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #msg {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #msg {
         bottom: 10rem;
     }
     #tutorialcard.bottom {
@@ -1043,6 +852,7 @@ Field editors
     .sandbox #blocksArea,
         .sandbox #monacoEditor,
         .sandbox #pxtJsonEditor,
+        .sandbox #serialEditor,
         .sandbox #editortools,
         .sandbox #msg {
         bottom: 1.5rem !important;
@@ -1058,7 +868,7 @@ Field editors
     }
     .simView #filelist {
         position: fixed;
-        z-index:100;
+        z-index: @fullscreenZIndex;
         top:0 !important;
         left:0 !important;
         bottom:0 !important;
@@ -1088,7 +898,7 @@ Field editors
     .simView #simulator .ui.item,
         .simView #maineditor {
         display: none !important;
-        z-index: -10;
+        z-index: -10 !important;
     }
     .sandboxfooter {
         left: 0.5em !important;
@@ -1101,7 +911,7 @@ Field editors
         font-size: 0.7rem !important;
     }
     .simView .sandboxfooter {
-        z-index:100;
+        z-index: @sandboxFooterZIndex;
     }
     .simView .ui.menu {
         background: transparent !important;

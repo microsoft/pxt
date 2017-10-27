@@ -7,6 +7,11 @@
     left: 0;
     top: 0;
     right: 0;
+    border: 0;
+}
+
+.ui.menu.fixed {
+    position: absolute;   
 }
 
 #menubar .ui.menu {
@@ -26,6 +31,11 @@
 
 #menubar #accessibleMenu .ui.item.link.inverted:hover {
     background: @invertedBackground;
+}
+
+
+#root #menubar .menu > .ui.item:hover .icon {
+    transform: scale(1.2);
 }
 
 @media only screen and (max-width: @largestTabletScreen) {

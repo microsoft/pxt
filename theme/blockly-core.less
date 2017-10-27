@@ -11,12 +11,10 @@
 
 /* Lower Z index for BlocklyWidgetDiv and grid picker tooltips */
 .blocklyWidgetDiv {
-    z-index: 105;
+    z-index: @blocklyWidgetDivZIndex;
 }
-
-/* Set Z index of the Blockly scrollbars to be beneath the BlocklyWidgetDiv */
-.blocklyScrollbarHorizontal, .blocklyScrollbarVertical {
-    z-index: 8 !important;
+.blocklyDropdownDiv {
+    z-index: @blocklyDropdownDivZIndex;
 }
 
 .blocklyTooltipDiv {
@@ -30,7 +28,7 @@
 
 .blocklyToolboxDiv, .monacoToolboxDiv {
     background: @blocklyToolboxColor !important;
-    z-index: 1;
+    z-index: @blocklyToolboxZIndex;
     -webkit-transition: width 1s, background 0.3s; /* Safari */
     -moz-transition: width 1s, background 0.3s; /* Mozilla */
     -webkit-transition-timing-function: ease-in; /* Mozilla */
@@ -48,21 +46,27 @@ svg.blocklySvg {
 .hc svg.blocklySvg {
     background-color: black !important;
 }
+#maineditor, #blocksEditor > div.loading {
+    background: @blocklySvgColor;
+}
 #blocksEditor .injectionDiv svg {
     overflow: visible;
 }
 
-span.blocklyTreeLabel, text.blocklyText, input.blocklyHtmlInput {
-    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
+span.blocklyTreeLabel, text.blocklyText, input.blocklyHtmlInput, .blocklyDropDownDiv .goog-menuitem {
+    font-family: @blocklyFont !important;
 }
 
-/* Using 1rem creates font size issues in Edge
-text.blocklyText {
-    font-size:1rem !important;
-} */
+/* Used by custom field in grey expression blocks */
+.blocklyGreyExpressionBlockText {
+    color: white;
+}
 
+/* Blockly toolbox font size same as the page font */
 span.blocklyTreeLabel {
-    font-size:1.25rem;
+    font-family: @pageFont !important;
+    font-weight: 200;
+    font-size: 1.15rem;
 }
 
 span.blocklyTreeLabel, text.blocklyText {
@@ -108,6 +112,10 @@ div.blocklyTreeRow, span.blocklyTreeLabel {
     cursor: pointer;
 }
 
+div.blocklyTreeRoot {
+    padding: 0;
+}
+
 /* This horrendous selector and the next are for subcategories in the Blockly toolbox */
 div.blocklyTreeRoot div div div div div.blocklyTreeRow {
     border-left-width: 12px !important;
@@ -126,7 +134,7 @@ div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
     text-align: center;
     width: 100px;
     height: 80px;
-    z-index: 100;
+    z-index: @blocklyTrashIconZIndex;
     font-size:5rem;
     color: @trashIconColor;
 }
@@ -221,7 +229,7 @@ span.blocklyTreeIcon {
     font-family: xicon !important;
 }
 .blocklyTreeIcon.blocklyTreeIconfunctions::before {
-    content: "\f107";
+    content: "\f109";
     vertical-align: middle;
 }
 .blocklyFlyoutLabelIcon.blocklyFlyoutIconfunctions {
@@ -250,6 +258,25 @@ text.blocklyCheckbox {
 
 div.blocklyTreeRow {
     height: 100%;
+}
+
+/* Transulcent blocks when dragging */
+.blocklyDragging>.blocklyPath {
+   fill-opacity: 0.7;
+}
+
+/* Scrollbars */
+.blocklyScrollbarBackground {
+    fill: @blocklyScrollbarBackgroundColor;
+}
+.blocklyScrollbarHandle {
+    fill: @blocklyScrollbarColor;
+    opacity: @blocklyScrollbarOpacity;
+}
+.blocklyScrollbarBackground:hover+.blocklyScrollbarHandle, .blocklyScrollbarHandle:hover,
+.blocklyScrollbarBackground:active+.blocklyScrollbarHandle, .blocklyScrollbarHandle:active {
+    stroke-width: 3;
+    stroke: @blocklyScrollbarColor;
 }
 
 /*******************************
@@ -375,4 +402,16 @@ div.blocklyTreeRow {
     #blocklySearchArea {
         display: none !important;
     }
+}
+
+
+/*******************************
+    Blockly Accessibility
+*******************************/
+
+.blocklyTreeRow:focus {
+    outline: none;
+}
+.blocklyTreeRow:not(.blocklyTreeSelected):focus {
+    background-color: #e4e4e4;
 }

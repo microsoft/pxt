@@ -14,6 +14,7 @@ namespace pxsim {
         mute?: boolean;
         highContrast?: boolean;
         cdnUrl?: string;
+        localizedStrings?: Map<string>;
     }
 
     export interface SimulatorMuteMessage extends SimulatorMessage {
@@ -70,6 +71,7 @@ namespace pxsim {
         linkButtonHref?: string;
         linkButtonLabel?: string;
         displayOnceId?: string; // An id for the modal command, if the sim wants the modal to be displayed only once in the session
+        modalContext?: string; // Modal context of where to show the modal
     }
     export interface SimulatorRadioPacketMessage extends SimulatorMessage {
         type: "radiopacket";
@@ -119,12 +121,17 @@ namespace pxsim {
         subtype: "loaded";
         showCategories?: boolean;
         stepInfo: TutorialStepInfo[];
-        toolboxSubset?: {[index: string]: number };
+        toolboxSubset?: { [index: string]: number };
     }
 
     export interface TutorialStepChangeMessage extends TutorialMessage {
         subtype: "stepchange";
         step: number;
+    }
+
+    export interface TutorialFailedMessage extends TutorialMessage {
+        subtype: "error";
+        message?: string;
     }
 
     export namespace Embed {
@@ -176,15 +183,17 @@ namespace pxsim {
 
             if (msg.mute) mute(msg.mute);
 
-            runtime = new Runtime(msg.code);
-            runtime.id = msg.id;
+            if (msg.localizedStrings) {
+                pxsim.localization.setLocalizedStrings(msg.localizedStrings);
+            }
+            runtime = new Runtime(msg);
             runtime.board.initAsync(msg)
                 .done(() => {
                     runtime.run((v) => {
                         pxsim.dumpLivePointers();
                         Runtime.postMessage({ type: "toplevelcodefinished" })
-                    })
-                })
+                    });
+                });
         }
 
         function mute(mute: boolean) {
@@ -198,6 +207,43 @@ namespace pxsim {
             runtime.board.receiveMessage(msg);
         }
 
+    }
+
+    /**
+     * Log an event to the parent editor (allowSimTelemetry must be enabled in target)
+     * @param id The id of the event
+     * @param data Any custom values associated with this event
+     */
+    export function tickEvent(id: string, data?: Map<string | number>) {
+        postMessageToEditor({
+            type: "pxtsim",
+            action: "event",
+            tick: id,
+            data
+        });
+    }
+
+    /**
+     * Log an error to the parent editor (allowSimTelemetry must be enabled in target)
+     * @param cat The category of the error
+     * @param msg The error message
+     * @param data Any custom values associated with this event
+     */
+    export function reportError(cat: string, msg: string, data?: Map<string>) {
+        postMessageToEditor({
+            type: "pxtsim",
+            action: "event",
+            tick: "error",
+            category: cat,
+            message: msg,
+            data
+        });
+    }
+
+    function postMessageToEditor(message: any) {
+        if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+            window.parent.postMessage(message, "*");
+        }
     }
 }
 

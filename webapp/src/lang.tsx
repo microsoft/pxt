@@ -100,7 +100,8 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
 
         if (langId !== initialLang) {
             pxt.tickEvent(`menu.lang.changelang.${langId}`);
-            window.location.reload();
+            location.hash = "#reload";
+            location.reload();
         } else {
             pxt.tickEvent(`menu.lang.samelang.${langId}`);
             this.hide();
@@ -133,6 +134,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 allowResetFocus={true}
                 closeOnDimmerClick
                 closeOnDocumentClick
+                closeOnEscape
                 >
                 {!fetchedLangs ?
                     <div className="ui message info">{lf("loading...") }</div> : undefined}

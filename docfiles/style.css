@@ -61,13 +61,6 @@ div.listing A:hover
   content: "\25CE";
 }
 
-.prodname {
-    font-weight: normal;
-    font-size: 1.8em;
-    margin-left: 0.5em;
-    color: #ff7d00;
-}
-
 #root .editor-image {
     margin: 2em auto;
     display: block;
@@ -120,7 +113,6 @@ code.lang-block::before,
 code.lang-blocks::before,
 code.lang-sig::before,
 code.lang-block::before,
-code.lang-shuffle::before,
 code.lang-sim::before,
 code.lang-cards::before,
 code.lang-namespaces::before,
@@ -135,7 +127,6 @@ code.lang-block,
 code.lang-blocks,
 code.lang-sig,
 code.lang-block,
-code.lang-shuffle,
 code.lang-sim,
 code.lang-cards,
 code.lang-namespaces,
@@ -283,8 +274,8 @@ svg {
     bottom: 0;
     margin: 0;
     padding: 10px;
-    max-width: 150px;
-    min-width: 90px;
+    max-width: 5rem;
+    min-width: 5rem;
     display: flex;
     justify-content: center;
     align-content: center;
@@ -296,6 +287,12 @@ svg {
     -moz-transition: all 350ms ease;
     -o-transition: all 350ms ease;
     transition: all 350ms ease;
+}
+.navigation:hover {
+    text-decoration: none;
+}
+.navigation.icon {
+    width: 100%;
 }
 
 .navigation.navigation-next {
@@ -315,12 +312,6 @@ svg {
 
 .ui.menu.tocmenu .menuContainer {
     margin-bottom: 45px;
-}
-
-.ui.menu .header.item.bottom {
-    bottom: 0px;
-    position: absolute;
-    width: inherit;
 }
 
 .cc-banner {

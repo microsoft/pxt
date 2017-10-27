@@ -35,7 +35,7 @@ mountVirtualApi("cloud-search", {
 })
 
 mountVirtualApi("gallery", {
-    getAsync: p => gallery.loadGalleryAsync(stripProtocol(p)).catch((e) => {
+    getAsync: p => gallery.loadGalleryAsync(stripProtocol(decodeURIComponent(p))).catch((e) => {
         return Promise.resolve(e);
     }),
     expirationTime: p => 3600 * 1000

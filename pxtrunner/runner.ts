@@ -266,7 +266,8 @@ namespace pxt.runner {
                         boardDefinition: board,
                         parts: parts,
                         fnArgs: fnArgs,
-                        cdnUrl: pxt.webConfig.commitCdnUrl
+                        cdnUrl: pxt.webConfig.commitCdnUrl,
+                        localizedStrings: Util.getLocalizedStrings()
                     };
                     if (pxt.appTarget.simulator)
                         runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
@@ -350,6 +351,7 @@ namespace pxt.runner {
                         case "tutorial":
                             let body = $('body');
                             body.addClass('tutorial');
+                            $(loading).hide();
                             return renderTutorialAsync(content, src);
                         case "book":
                             return renderBookAsync(content, src);
@@ -556,7 +558,6 @@ ${files["main.ts"]}
             snippetClass: 'lang-blocks',
             signatureClass: 'lang-sig',
             blocksClass: 'lang-block',
-            shuffleClass: 'lang-shuffle',
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',
             namespacesClass: 'lang-namespaces',
@@ -590,8 +591,18 @@ ${files["main.ts"]}
         return initPromise.then(() => pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive))
             .then(tutorialmd => {
                 let steps = tutorialmd.split(/^##[^#].*$/gmi);
+                let newAuthoring = true;
+                if (steps.length <= 1) {
+                    // try again, using old logic.
+                    steps = tutorialmd.split(/^###[^#].*$/gmi);
+                    newAuthoring = false;
+                }
+                if (steps[0].indexOf("# Not found") == 0) {
+                    pxt.log(`Tutorial not found: ${tutorialid}`);
+                    throw new Error(`Tutorial not found: ${tutorialid}`);
+                }
                 let stepInfo: editor.TutorialStepInfo[] = [];
-                tutorialmd.replace(/^##[^#](.*)$/gmi, (f, s) => {
+                tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
                     let info: editor.TutorialStepInfo = {
                         fullscreen: s.indexOf('@fullscreen') > -1
                     }
@@ -606,11 +617,12 @@ ${files["main.ts"]}
                 // Extract toolbox block ids
                 let toolboxSubset: { [index: string]: number } = {};
                 return Promise.resolve()
+                    .then(() => renderMarkdownAsync(content, tutorialmd, { tutorial: true }))
                     .then(() => {
                         let uptoSteps = steps.join();
                         uptoSteps = uptoSteps.replace(/((?!.)\s)+/g, "\n");
 
-                        let regex = /```(sim|block|blocks|shuffle|filterblocks)\s*\n([\s\S]*?)\n```/gmi;
+                        let regex = /```(sim|block|blocks|filterblocks)\s*\n([\s\S]*?)\n```/gmi;
                         let match: RegExpExecArray;
                         let code = '';
                         while ((match = regex.exec(uptoSteps)) != null) {
@@ -632,14 +644,16 @@ ${files["main.ts"]}
                                         toolboxSubset[blk.type] = 1;
                                     }
                                 }
+                            }).catch(() => {
+                                pxt.log(`Failed to decompile tutorial: ${tutorialid}`);
+                                throw new Error(`Failed to decompile tutorial: ${tutorialid}`);
                             })
                         }
                         return Promise.resolve();
                     })
-                    .then(() => renderMarkdownAsync(content, tutorialmd, { tutorial: true }))
                     .then(() => {
                         // Split the steps
-                        let stepcontent = content.innerHTML.split(/<h2.*\/h2>/gi);
+                        let stepcontent = content.innerHTML.split(newAuthoring ? /<h2.*\/h2>/gi : /<h3.*\/h3>/gi);
                         for (let i = 0; i < stepcontent.length - 1; i++) {
                             content.innerHTML = stepcontent[i + 1];
                             stepInfo[i].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
@@ -657,6 +671,16 @@ ${files["main.ts"]}
                             toolboxSubset: toolboxSubset
                         }, "*");
                     });
+            })
+            .catch((e: Error) => {
+                pxt.log(`Failed to load tutorial: ${tutorialid}`);
+                pxt.log(e.message);
+                // return the result
+                window.parent.postMessage(<pxsim.TutorialFailedMessage>{
+                    type: "tutorial",
+                    tutorial: tutorialid,
+                    subtype: "error"
+                }, "*");
             })
     }
 

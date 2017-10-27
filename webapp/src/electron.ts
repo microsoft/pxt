@@ -28,7 +28,9 @@ interface ElectronMessage {
 
 let electronSocket: WebSocket = null;
 
-export const isElectron = /[?&]electron=1/.test(window.location.href);
+export const isPxtElectron = /[?&]electron=1/.test(window.location.href);
+export const isIpcRenderer = !!(window as any).ipcRenderer;
+export const isElectron = isPxtElectron || isIpcRenderer;
 
 export function init() {
     if (!isElectron || !Cloud.isLocalHost() || !Cloud.localToken) {
@@ -58,7 +60,7 @@ export function init() {
                 sendMessage("quit");
             } else {
                 pxt.tickEvent("update.acceptedCritical");
-                core.showLoading(lf("Downloading update..."));
+                core.showLoading("downloadingupdate", lf("Downloading update..."));
                 sendMessage("update", {
                     targetVersion: args.targetVersion,
                     type: args.type
@@ -103,7 +105,7 @@ export function init() {
                     }
 
                     if (!isUrl) {
-                        core.showLoading(lf("Downloading update..."));
+                        core.showLoading("downloadingupdate", lf("Downloading update..."));
                     }
 
                     sendMessage("update", {
@@ -131,7 +133,7 @@ export function init() {
     function onUpdateDownloadError(args: UpdateEventInfo) {
         const isCritical = args && args.type === UpdateEventType.Critical;
 
-        core.hideLoading();
+        core.hideLoading("downloadingupdate");
         displayUpdateError(lf("There was an error downloading the update"), isCritical ? lf("Quit") : lf("Ok"))
             .finally(() => {
                 if (isCritical) {

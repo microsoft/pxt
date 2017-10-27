@@ -18,7 +18,7 @@ namespace pxt.winrt {
         const filter = new RegExp(pxt.appTarget.serial.nameFilter);
         const serialDeviceSelector = (Windows.Devices as any).SerialCommunication.SerialDevice.getDeviceSelector();
         // Create a device watcher to look for instances of the Serial device
-        // The createWatcher() takes a string only when you provide it two arguments, so be sure to include an array as a second 
+        // The createWatcher() takes a string only when you provide it two arguments, so be sure to include an array as a second
         // parameter (JavaScript can only recognize overloaded functions with different numbers of parameters).
         watcher = Windows.Devices.Enumeration.DeviceInformation.createWatcher(serialDeviceSelector, [] as any);
         watcher.addEventListener("added", (dis: any) => {
@@ -56,13 +56,10 @@ namespace pxt.winrt {
         port.device.baudRate = 115200;
         let stream = port.device.inputStream;
         let reader = new Windows.Storage.Streams.DataReader(stream);
+        let serialBuffers: pxt.Map<string> = {};
         let readMore = () => reader.loadAsync(32).done((bytesRead) => {
             let msg = reader.readString(Math.floor(bytesRead / 4) * 4);
-            window.postMessage({
-                type: 'serial',
-                data: msg,
-                id: id
-            }, "*");
+            pxt.Util.bufferSerial(serialBuffers, msg, id);
             readMore();
         }, (e) => {
             setTimeout(() => startDevice(id), 1000);

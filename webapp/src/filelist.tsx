@@ -70,8 +70,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                     >
                     {file.name} {meta.isSaved ? "" : "*"}
-                    {/\.ts$/.test(file.name) ? <i className="align left icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
-                    {meta.isReadonly ? <i className="lock icon"></i> : null}
+                    {/\.ts$/.test(file.name) ? <sui.Icon icon="align left" /> : /\.blocks$/.test(file.name) ? <sui.Icon icon="puzzle" /> : undefined }
+                    {meta.isReadonly ? <sui.Icon icon="lock" /> : null}
                     {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
                     {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" title={lf("Delete file {0}", file.name)} onClick={(e) => this.removeFile(e, file) } onKeyDown={(e) => e.stopPropagation()} /> : ''}
                 </a>);
@@ -82,10 +82,12 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         const expands = this.state.expands;
         let del = p.getPkgId() != pxt.appTarget.id
             && p.getPkgId() != "built"
-            && p.getPkgId() != pxt.appTarget.corepkg;
+            && p.getPkgId() != pxt.appTarget.corepkg
+            && !p.getKsPkg().config.core
+            && p.getKsPkg().level <= 1;
         let upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
         return [<div key={"hd-" + p.getPkgId() } className="header link item" role="treeitem" aria-expanded={expands[p.getPkgId()]} aria-label={lf("{0}, {1}", p.getPkgId(), expands[p.getPkgId()] ? lf("expanded") : lf("collapsed"))} onClick={() => this.togglePkg(p) } tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
-            <i className={`chevron ${expands[p.getPkgId()] ? "down" : "right"} icon`}></i>
+            <sui.Icon icon={`chevron ${expands[p.getPkgId()] ? "down" : "right"} icon`} />
             {upd ? <sui.Button class="primary label" icon="refresh" title={lf("Refresh package {0}", p.getPkgId())} onClick={(e) => this.updatePkg(e, p) } onKeyDown={(e) => e.stopPropagation()} /> : ''}
             {del ? <sui.Button class="primary label" icon="trash" title={lf("Delete package {0}", p.getPkgId())} onClick={(e) => this.removePkg(e, p) } onKeyDown={(e) => e.stopPropagation()} /> : ''}
             {p.getPkgId() }
@@ -162,7 +164,7 @@ namespace custom {
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only`}>
             <div role="treeitem" aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={() => this.toggleVisibility() } tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                 {lf("Explorer") }
-                <i className={`chevron ${show ? "down" : "right"} icon`}></i>
+                <sui.Icon icon={`chevron ${show ? "down" : "right"} icon`} />
                 {plus ? <sui.Button class="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={(e) => {this.addCustomBlocksFile(); e.stopPropagation();} } onKeyDown={(e) => e.stopPropagation()} /> : undefined }
             </div>
             {show ? Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined }

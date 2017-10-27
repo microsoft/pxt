@@ -1,0 +1,233 @@
+/* Import all components */
+
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+
+@import (reference) "semantic.less";
+@carouselArrowSize: 60px;
+@carouselArrowSizeMobile: 40px;
+
+/* Carousel */
+
+.projectsdialog {
+    .getting-started-segment {
+        border: 0;
+        margin-top: -2.1rem !important;
+        padding: 0;
+        border-radius: 0;
+        background-repeat: no-repeat;
+        background-size: cover;
+        height: 300px;
+        .column {
+            padding: 0 !important;
+        }
+        .getting-started {
+            padding: @carouselArrowSize;
+            margin-top: 70px;
+        }
+        .getting-started-header {
+            font-size: 50px;
+            text-shadow: -1px 0 rgb(87, 87, 87), 0 1px rgb(87, 87, 87), 1px 0 rgb(87, 87, 87), 0 -1px rgb(87, 87, 87);
+        }
+    }
+    .content {
+        height: 100%;
+    }
+    .ui.segment.tabsegment {
+        padding: 0;
+        padding-top: calc(@mainMenuHeight + 2rem) !important;
+        margin: 0;
+        border: 0;
+        width: 100%;
+        min-height: 100%;
+        background: @homeScreenBackground;
+    }
+    .gallerysegment {
+        background: none;
+        border: none;
+        box-shadow: none;
+        padding: 0rem;
+        margin: 0;
+        padding-top: 1.5rem;
+        .ui.header {
+            margin: 0;
+            padding-left: @carouselArrowSize;
+            font-size: 24px;
+            color: @homeHeaderColor;
+        }
+        .column {
+            padding: 0 !important;
+        }
+        .column.right.aligned {
+            padding-right: @carouselArrowSize !important;
+        }
+    }
+    /* Import button */
+    .ui.import-dialog-btn.label {
+        color: @linkColor;
+    }
+    /* Footer, Privary, Terms of Use */
+    .homefooter {
+        left: 0;
+        right: 0;
+        width: 100%;
+        text-align: center;
+        padding: 5px !important;
+        .item {
+            font-size: 0.8rem !important;
+        }
+    }
+    .ui.card {
+        margin-right: 5px;
+        border-radius: @homeCardBorderRadius;
+        color: @homeCardColor;
+        border: @homeCardBorderSize solid @homeCardBorderColor !important;
+        background-color: @homeCardBackgroundColor;
+        .ui.image, .ui.imagewrapper, .content {
+            border-radius: @homeCardImageBorderRadius !important;
+        }
+        .header {
+            color: @homeCardHeaderColor;
+        }
+        .meta {
+            color: @homeCardMetaColor;
+        }
+    }
+    .ui.card:hover {
+        border: @homeCardBorderSize solid @homeCardHoverBorderColor !important;
+        background-color: @homeCardHoverBackgroundColor;
+    }
+    .header {
+        user-select: none;
+    }
+}
+
+
+/* Carousel */
+
+.carouselouter {
+    position: relative;
+}
+
+.carouselcontainer {
+    overflow-x: hidden;
+    overflow-y: visible;
+    padding: 1rem @carouselArrowSize !important;
+}
+
+.carouselbody {
+    overflow-y: visible;
+    touch-action: pan-y;
+}
+
+.carouselitem {
+    float: left;
+}
+
+.carouselarrow {
+    z-index: @homeCarouselArrowZIndex;
+    position: absolute;
+    display: block;
+    height: 100%;
+    width: @carouselArrowSize;
+    font-size: @carouselArrowSize / 1.18 !important;
+    line-height: 1;
+    cursor: pointer;
+    background: @homeScreenBackground;
+    color: @primaryColor;
+    top: 0;
+    opacity: 0.7;
+    overflow: hidden;
+}
+
+.carouselarrow:hover, .carouselarrow:focus {
+    opacity: 1;
+    transition: opacity .1s ease-out 0s;
+    .icon {
+        transform: scale(1.4);
+        transition: transform .1s ease-out 0s;
+    }
+}
+
+.carouselarrow .icon {
+    top: 40%;
+    position: absolute;
+}
+
+.carouselarrow.left {
+    left: 0rem;
+}
+
+.carouselarrow.right {
+    right: 0rem;
+}
+
+.carouselarrow.arrowdisabled {
+    opacity: 0;
+}
+
+
+/* <= Tablet (Mobile + Tablet) */
+
+@media only screen and (max-width: @largestTabletScreen) {
+    /* Carousel */
+    .projectsdialog {
+        .getting-started-segment {
+            height: 250px;
+            .getting-started {
+                padding: @carouselArrowSizeMobile;
+                margin-top: 40px;
+            }
+            .getting-started-header {
+                font-size: 40px;
+            }
+        }
+        .ui.segment.tabsegment {
+            padding-top: calc(@mobileMenuHeight + 2rem) !important;
+        }
+        .gallerysegment {
+            .column {
+                padding: 0 !important;
+            }
+            .column.right.aligned {
+                padding-right: @carouselArrowSizeMobile !important;
+            }
+            .ui.header {
+                padding-left: @carouselArrowSizeMobile;
+            }
+        }
+    }
+    .carouselcontainer {
+        padding: 1rem @carouselArrowSizeMobile !important;
+    }
+    .carouselarrow {
+        width: @carouselArrowSizeMobile;
+        font-size: @carouselArrowSizeMobile / 1.18 !important;
+    }
+}
+
+
+/* <= Tablet (Mobile + Tablet) */
+
+@media only screen and (max-width: @largestTabletScreen) {
+    .projectsdialog {
+        .ui.card, .ui.cards>.card {
+            width: 200px;
+        }
+    }
+}
+
+
+/* Mobile only */
+
+@media only screen and (max-width: @largestMobileScreen) {
+    .projectsdialog {
+        .getting-started-segment {
+            .getting-started-header {
+                font-size: 30px;
+            }
+        }
+    }
+}

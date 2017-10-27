@@ -2,6 +2,17 @@ namespace pxt.worker {
     import Cloud = pxt.Cloud;
     import U = pxt.Util;
 
+    let workers: pxt.Map<Iface> = {};
+
+    // Gets a cached worker for the given file
+    export function getWorker(workerFile: string): Iface {
+        let w = workers[workerFile];
+        if (!w) {
+            w = workers[workerFile] = makeWebWorker(workerFile);
+        }
+        return w;
+    }
+
     export interface Iface {
         opAsync: (op: string, arg: any) => Promise<any>;
         recvHandler: (v: any) => void;

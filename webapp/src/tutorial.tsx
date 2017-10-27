@@ -126,15 +126,20 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         // TODO: Use step name instead of tutorial Name in full screen mode.
         const header = tutorialFullscreen ? tutorialName : lf("Hint");
 
-        return <sui.Modal open={visible} className="hintdialog" size="small" header={header} closeIcon={true}
+        const hide = () => this.setState({ visible: false });
+
+        const actions = [{
+            label: lf("Ok"),
+            onClick: hide,
+            icon: 'check',
+            className: 'green'
+        }]
+
+        return <sui.Modal open={visible} className="hintdialog" size="" longer={true} header={header} closeIcon={true}
                 onClose={() => this.setState({ visible: false })} dimmer={true}
-                closeOnDimmerClick closeOnDocumentClick>
-                    <div className="content">
-                        <div dangerouslySetInnerHTML={{__html: tutorialHint}} />
-                    </div>
-                    <div className="actions" style={{textAlign: "right"}}>
-                        <sui.Button class="green focused" icon={`check`} text={lf("Ok") } onClick={() => this.setState({ visible: false }) } onKeyDown={sui.fireClickOnEnter} />
-                    </div>
+                actions={actions}
+                closeOnDimmerClick closeOnDocumentClick closeOnEscape>
+                    <div dangerouslySetInnerHTML={{__html: tutorialHint}} />
             </sui.Modal>;
     }
 }
@@ -235,7 +240,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
 
         return <div id="tutorialcard" className={`ui ${tutorialReady ? 'tutorialReady' : ''}`} >
             <div className='ui buttons'>
-                <div className="ui segment attached message">
+                <div className="ui segment attached tutorialsegment">
                     <div className='avatar-image' onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter}></div>
                     {hasHint ? <sui.Button class="mini blue hintbutton hidelightbox" text={lf("Hint") } tabIndex={-1} onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter} /> : undefined }
                     <div className={`tutorialmessage ${hasHint ? 'focused' : undefined}`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1} onClick={() => {if (hasHint) this.showHint();}} onKeyDown={sui.fireClickOnEnter}>
@@ -243,76 +248,9 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
                     </div>
                     <sui.Button id="tutorialOkButton" class="large green okbutton showlightbox focused" text={lf("Ok") } onClick={() => this.closeLightbox() } onKeyDown={sui.fireClickOnEnter} />
                 </div>
-                {hasNext ? <sui.Button icon="right chevron" class={`ui right icon button nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next") } ariaLabel={lf("Go to the next step of the tutorial.")} onClick={() => this.nextTutorialStep() } onKeyDown={sui.fireClickOnEnter} /> : undefined }
-                {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : 'focused'}`} text={lf("Finish") } ariaLabel={lf("Finish the tutorial.")} onClick={() => this.finishTutorial() } onKeyDown={sui.fireClickOnEnter} /> : undefined }
+                {hasNext ? <sui.Button icon="right chevron" rightIcon class={`nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next") } ariaLabel={lf("Go to the next step of the tutorial.")} onClick={() => this.nextTutorialStep() } onKeyDown={sui.fireClickOnEnter} /> : undefined }
+                {hasFinish ? <sui.Button icon="left checkmark" class={`orange right attached ${!tutorialReady ? 'disabled' : 'focused'}`} text={lf("Finish") } ariaLabel={lf("Finish the tutorial.")} onClick={() => this.finishTutorial() } onKeyDown={sui.fireClickOnEnter} /> : undefined }
             </div>
         </div>;
-    }
-}
-
-export interface TutorialCompleteState {
-    visible?: boolean;
-}
-
-export class TutorialComplete extends data.Component<ISettingsProps, TutorialCompleteState> {
-    constructor(props: ISettingsProps) {
-        super(props);
-        this.state = {
-            visible: false
-        }
-    }
-
-    hide() {
-        this.setState({ visible: false });
-    }
-
-    show() {
-        this.setState({ visible: true });
-    }
-
-    moreTutorials() {
-        pxt.tickEvent(`tutorial.completed.more`);
-        this.props.parent.openTutorials();
-    }
-
-    exitTutorial() {
-        pxt.tickEvent(`tutorial.completed.exit`);
-        this.hide();
-        this.props.parent.exitTutorial(true);
-    }
-
-    renderCore() {
-        const { visible } = this.state;
-
-        return (
-            <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Congratulations! What's next?") } size="small"
-                onClose={() => this.setState({ visible: false }) } dimmer={true}
-                closeIcon={true}
-                closeOnDimmerClick closeOnDocumentClick
-                >
-                <div className="ui two stackable cards">
-                    <div className="ui grid centered link card focused" aria-selected="true" aria-label={lf("More Tutorials")} tabIndex={0} onClick={() => this.moreTutorials() } onKeyDown={sui.fireClickOnEnter}>
-                        <div className="content">
-                            <i className="avatar-image icon huge" style={{fontSize: '100px'}}/>
-                        </div>
-                        <div className="content">
-                            <div className="header">
-                                {lf("More Tutorials")}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="ui grid centered link card" aria-selected="true" aria-label={lf("Exit Tutorial")} tabIndex={0} onClick={() => this.exitTutorial() } onKeyDown={sui.fireClickOnEnter}>
-                        <div className="content">
-                            <i className="external icon huge black" style={{fontSize: '100px'}} />
-                        </div>
-                        <div className="content">
-                            <div className="header">
-                                {lf("Exit Tutorial")}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </sui.Modal>
-        )
     }
 }

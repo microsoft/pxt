@@ -97,9 +97,16 @@
 
         if (!id && !code && !debugSim) {
             console.error("missing id or code");
-            loading.innerText = 'Oops, wrong arguments...';
+            loading.textContent = 'Oops, wrong arguments...';
             return;
         }
+
+        function initAppCache() {
+            window.applicationCache.addEventListener('updateready', () => {
+                window.location.reload();
+            });
+        }
+        initAppCache();
 
         ksRunnerReady(function() {
             var theme = pxt.appTarget.appTheme;

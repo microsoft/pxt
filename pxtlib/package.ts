@@ -48,8 +48,8 @@ namespace pxt {
         private resolvedVersion: string;
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
-            if (parent) {
-                this.level = this.parent.level + 1
+            if (addedBy) {
+                this.level = addedBy.level + 1
             }
 
             this.addedBy = [addedBy];
@@ -216,6 +216,12 @@ namespace pxt {
                     if (pkgCfg) {
                         const yottaCfg = pkgCfg.yotta ? U.jsonFlatten(pkgCfg.yotta.config) : null;
                         this.parent.sortedDeps().forEach((depPkg) => {
+                            if (pkgCfg.core && depPkg.config.core) {
+                                const conflict = new cpp.PkgConflictError(lf("conflict between core packages {0} and {1}", pkgCfg.name, depPkg.id));
+                                conflict.pkg0 = depPkg;
+                                conflicts.push(conflict);
+                                return;
+                            }
                             let foundYottaConflict = false;
                             if (yottaCfg) {
                                 const depConfig = depPkg.config || JSON.parse(depPkg.readFile(CONFIG_NAME)) as PackageConfig;
@@ -341,6 +347,29 @@ namespace pxt {
 
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
+
+            if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
+                initPromise = initPromise.then(() => {
+                    if (this.config.files.indexOf("board.json") < 0) return
+                    appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json"))
+                    let expandPkg = (v: string) => {
+                        let m = /^pkg:\/\/(.*)/.exec(v)
+                        if (m) {
+                            let fn = m[1]
+                            let content = this.readFile(fn)
+                            return U.toDataUri(content, U.getMime(fn))
+                        } else {
+                            return v
+                        }
+                    }
+                    let bd = appTarget.simulator.boardDefinition
+                    if (typeof bd.visual == "object") {
+                        let vis = bd.visual as pxsim.BoardImageDefinition
+                        vis.image = expandPkg(vis.image)
+                        vis.outlineImage = expandPkg(vis.outlineImage)
+                    }
+                })
+            }
 
             const loadDepsRecursive = (dependencies: Map<string>) => {
                 return U.mapStringMapAsync(dependencies, (id, ver) => {
@@ -520,7 +549,7 @@ namespace pxt {
                     U.userError(lf("please add '{0}' to \"files\" in {1}", fn, pxt.CONFIG_NAME))
                 cont = "// Auto-generated. Do not edit.\n" + cont + "\n// Auto-generated. Do not edit. Really.\n"
                 if (this.host().readFile(this, fn) !== cont) {
-                    pxt.log(`updating ${fn} (size=${cont.length})...`)
+                    pxt.debug(`updating ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, cont)
                 }
             }
@@ -529,7 +558,7 @@ namespace pxt {
                 let updatedCont = this.upgradeAPI(cont);
                 if (updatedCont != cont) {
                     // save file (force write)
-                    pxt.log(`updating APIs in ${fn} (size=${cont.length})...`)
+                    pxt.debug(`updating APIs in ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, updatedCont, true)
                 }
                 return updatedCont;
@@ -609,6 +638,7 @@ namespace pxt {
                         U.userError('Only packages with "public":true can be published')
                     let cfg = U.clone(this.config)
                     delete cfg.installedVersion
+                    delete cfg.additionalFilePath
                     U.iterMap(cfg.dependencies, (k, v) => {
                         if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {
                             cfg.dependencies[k] = "*"

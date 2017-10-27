@@ -85,20 +85,24 @@ namespace ts.pxtc.avr {
         }
 
         public peephole(ln: pxtc.assembler.Line, lnNext: pxtc.assembler.Line, lnNext2: pxtc.assembler.Line) {
-                /*
-                let ld = this.encoders["$ld"]
-                let lnop = ln.getOp()
+            /*
+            let ld = this.encoders["$ld"]
+            let lnop = ln.getOp()
 
-                // replace 32-bit with 16-bit when branch distance is within bounds
-                if ((lnop == "call" || lnop == "jmp") && ln.numArgs[0] != null) {
-                    let offset = ln.numArgs[0] - (this.file.baseOffset + ln.location + 2) >> 1
-                    if (ld.encode(offset)) {
-                        // RULE: call/jmp .somewhere -> rcall/rjmp .somewhere (if fits)
-                        if (lnop == "call")
-                        ln.update((lnop == "call" ? "rcall " : "rjmp ") + ln.words[1])
-                    }
+            // replace 32-bit with 16-bit when branch distance is within bounds
+            if ((lnop == "call" || lnop == "jmp") && ln.numArgs[0] != null) {
+                let offset = ln.numArgs[0] - (this.file.baseOffset + ln.location + 2) >> 1
+                if (ld.encode(offset)) {
+                    // RULE: call/jmp .somewhere -> rcall/rjmp .somewhere (if fits)
+                    if (lnop == "call")
+                    ln.update((lnop == "call" ? "rcall " : "rjmp ") + ln.words[1])
                 }
-                */
+            }
+            */
+        }
+
+        public toFnPtr(v: number, baseOff: number) {
+            return v >> 1;
         }
 
         constructor() {
@@ -118,7 +122,7 @@ namespace ts.pxtc.avr {
                 })
             this.addEnc("$r3", "R0-16-31", v => this.inminmax(16, 31, v, (v - 16) << 4))
             this.addEnc("$r4", "R0-7", v => this.inrange(7, v, v << 4))
-            this.addEnc("$r6", "R0-31", v => this.inrange(31, v, v << 5 | v))
+            this.addEnc("$r6", "R0-31", v => this.inrange(31, v, (v << 4) | (v & 15) | ((v & 16) << 5)))
             this.addEnc("$r7", "R0-31", v => this.inrange(31, v, v << 3))
             this.addEnc("$r8", "Reven", (v: number) => v & 0x1 ? null : (v >> 1) << 4)
             this.addEnc("$r9", "Reven", (v: number) => v & 0x1 ? null : (v >> 1))

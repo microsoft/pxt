@@ -1,3 +1,62 @@
 /*******************************
          Site Overrides
 *******************************/
+
+
+/* Full screen dialog */
+.modals.dimmer .ui.home.scrolling.modal {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.ui.home.dimmer {
+    transition: none;
+}
+
+/* Fix for a semantic hover issue when hovering over the modal's search box */
+.ui.search .action:hover {
+    background: white !important;
+}
+
+/*******************************
+        Content Color
+*******************************/
+
+/* Mixin to set the content color of a modal */
+.setModalContentColor() when not (@contentColor = none) {
+    .ui.modal > .content {
+        color: @contentColor;
+    }
+
+}
+.setModalContentColor();
+
+
+/*******************************
+        Modal Close Icon
+*******************************/
+
+.ui.modal .closeIcon {
+    position: absolute;
+    top: 0; 
+    right: 0;
+}
+.ui.modal.projectsdialog .closeIcon {
+    top: 0.4rem;
+    right: 0.2rem;
+}
+
+.ui.button.icon.clear {
+    background: transparent;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: @closeColor !important;
+}
+.ui.button.icon.clear:hover, .ui.button.icon.clear:focus {
+    color: @closeColorHover !important;
+}
+.ui.button.icon.inverted.clear:hover, .ui.button.icon.inverted.clear:focus {
+    color: @closeColorHover !important;
+}

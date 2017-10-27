@@ -8,14 +8,6 @@ import * as srceditor from "./srceditor"
 import Cloud = pxt.Cloud;
 import U = pxt.Util;
 
-let iface: pxt.worker.Iface
-
-export function init() {
-    if (!iface) {
-        iface = pxt.worker.makeWebWorker(pxt.webConfig.workerjs)
-    }
-}
-
 function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
     let mainPkg = pkg.mainEditorPkg();
 
@@ -140,6 +132,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             opts.ast = true;
+            opts.testMode = true;
             opts.alwaysDecompileOnStart = pxt.appTarget.runtime && pxt.appTarget.runtime.onStartUnDeletable;
             return decompileCoreAsync(opts, fileName)
         })
@@ -177,8 +170,7 @@ function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promis
 }
 
 export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
-    init()
-    return iface.opAsync(op, arg)
+    return pxt.worker.getWorker(pxt.webConfig.workerjs).opAsync(op, arg)
 }
 
 let firstTypecheck: Promise<void>;

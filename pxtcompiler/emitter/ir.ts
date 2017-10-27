@@ -20,10 +20,16 @@ namespace ts.pxtc.ir {
         Nop,
     }
 
+    let currExprId = 0
     export class Node {
-        _id: number;
+        private _id: number;
         isExpr(): this is Expr { return false }
         isStmt(): this is Stmt { return false }
+        getId() {
+            if (!this._id)
+                this._id = ++currExprId
+            return this._id
+        }
     }
 
     export class Expr extends Node {
@@ -125,6 +131,7 @@ namespace ts.pxtc.ir {
         IfZero,
         IfNotZero,
         IfJmpValEq,
+        IfLambda
     }
 
     export class Stmt extends Node {
@@ -152,14 +159,9 @@ namespace ts.pxtc.ir {
         }
     }
 
-    let currExprId = 0
     function nodeToString(n: Node) {
         return str(n)
-        function addId(n: Node) {
-            if (!n._id) n._id = ++currExprId
-        }
         function str(n: Node): string {
-            addId(n)
             if (n.isExpr()) {
                 let e = n as Expr
                 let a0 = e.args ? e.args[0] : null
@@ -176,12 +178,10 @@ namespace ts.pxtc.ir {
                         return "NOP"
 
                     case EK.SharedRef:
-                        addId(a0)
-                        return `SHARED_REF(#${a0._id})`
+                        return `SHARED_REF(#${a0.getId()})`
 
                     case EK.SharedDef:
-                        addId(a0)
-                        return `SHARED_DEF(#${a0._id}: ${str(a0)})`
+                        return `SHARED_DEF(#${a0.getId()}: ${str(a0)})`
 
                     case EK.Incr:
                         return `INCR(${str(a0)})`
@@ -230,6 +230,8 @@ namespace ts.pxtc.ir {
                                 return `    if (${inner}) ${fin}`
                             case JmpMode.IfJmpValEq:
                                 return `    if (r0 == ${inner}) ${fin}`
+                            case JmpMode.IfLambda:
+                                return `    if (LAMBDA) return ${inner}`
                             default: throw oops();
                         }
                     case ir.SK.StackEmpty:
@@ -530,10 +532,12 @@ namespace ts.pxtc.ir {
             }
         }
 
-        emitClrs() {
+        emitClrs(finlbl: ir.Stmt, retval: ir.Expr) {
             if (this.isRoot) return;
-            let lst = this.locals.concat(this.args)
-            lst.forEach(p => this.emitClrIfRef(p))
+            this.locals.forEach(p => this.emitClrIfRef(p))
+            if (isStackMachine() && this.args.some(p => p.isRef() || p.isByRefLocal()))
+                this.emitJmp(finlbl, retval, ir.JmpMode.IfLambda)
+            this.args.forEach(p => this.emitClrIfRef(p))
         }
 
         emitJmpZ(trg: string | Stmt, expr: Expr) {
@@ -726,8 +730,9 @@ namespace ts.pxtc.ir {
         let r = op(EK.PointerLiteral, null, lbl)
         r.jsInfo = jsInfo
         if (full) {
-            if (target.nativeType == "AVR")
-                return rtcall("pxt::ptrOfLiteral", [r])
+            if (target.isNative && isAVR())
+                // this works for string and hex literals
+                return rtcall("pxt::stringLiteral", [r])
             else
                 r.args = []
         }
@@ -740,13 +745,16 @@ namespace ts.pxtc.ir {
 
     export function rtcallMask(name: string, mask: number, callingConv: CallingConvention, args: Expr[]) {
         let decrs: ir.Expr[] = []
-        args = args.map((a, i) => {
-            if (mask & (1 << i)) {
-                a = shared(a)
-                decrs.push(op(EK.Decr, [a]))
-                return a;
-            } else return a;
-        })
+        if (isStackMachine())
+            name += "^" + mask
+        else
+            args = args.map((a, i) => {
+                if (mask & (1 << i)) {
+                    a = shared(a)
+                    decrs.push(op(EK.Decr, [a]))
+                    return a;
+                } else return a;
+            })
         let r = op(EK.RuntimeCall, args, name)
         r.callingConvention = callingConv
 
@@ -770,6 +778,8 @@ namespace ts.pxtc.ir {
             complexArgs.push(a)
         }
         complexArgs.reverse()
+        if (isStackMachine())
+            complexArgs = []
         let precomp: ir.Expr[] = []
         let flattened = topExpr.args.map(a => {
             let idx = complexArgs.indexOf(a)

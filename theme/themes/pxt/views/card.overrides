@@ -6,3 +6,119 @@
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
 }
+
+/* File card for the Home screen */
+
+.ui.card.file {
+    .fileimage {
+        position: absolute;
+        top: 0.7rem;
+        left: 0.7rem;
+        width: 4rem;
+        height: 3rem;
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-image: @fileLogoUrl;
+    }
+    .content {
+        margin-left: 4rem;
+        min-width: 5rem;
+        padding-left: 1.5rem;
+        height: 8rem;
+        .header {
+            word-wrap: break-word;
+        }
+    }
+    .meta {
+        height: 4rem;
+        padding: 1rem;
+        text-align: right;
+    }
+}
+
+
+/* New project card */
+
+.ui.card.link.newprojectcard {
+    background: fade(@primaryColor, 90%) !important;
+    border: @borderWidth solid @solidBorderColor;
+    text-align: center;
+    color: @white;
+    font-size: 18pt;
+    .content {
+        height: 12rem;
+    }
+    .header {
+        color: @white;
+        font-size: 14pt !important;
+        margin-top: 1rem !important;
+    }
+}
+
+.ui.card.newprojectcard:hover {
+    border: @linkHoverBorder;
+}
+
+
+/* Example card */
+
+.ui.card.example {
+    .ui.label {
+        z-index: 2; /* Show the label above the image */
+    }
+    .content {
+        height: 12rem;
+        z-index: 1; /* Show the text above the image */
+        padding-bottom: 0;
+        width: 100%;
+        .header {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+    }
+    .ui.image {
+        height: 9rem;
+    }
+    .ui.image ~ .content {
+        height: 3rem;
+    }
+}
+
+.setExampleCardFullHeight() when (@exampleCardFullHeight) {
+    .ui.card.example {
+        .ui.image, .ui.cardimage {
+            height: 12rem;
+        }
+        .ui.image ~ .content {
+            background: @exampleCardFullHeightBackground;
+            position: absolute;
+            bottom: 0;
+            .header {
+                color: @exampleCardFullHeightColor;
+            }
+        }
+    }
+}
+.setExampleCardFullHeight();
+
+/* Hover animation on home screen cards */
+
+.ui.card.file:hover, .ui.card.newprojectcard:hover, .ui.card.example:hover {
+    transform: scale(1.1);
+}
+
+
+/* Project code cards */
+.ui.card .ui.imagewrapper {
+    overflow: hidden;
+    border-top-left-radius: @borderRadius;
+    border-top-right-radius: @borderRadius;
+}
+.ui.cardimage {
+    background-color: @secondaryColor;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 9rem;
+}

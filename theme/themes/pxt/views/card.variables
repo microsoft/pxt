@@ -3,14 +3,23 @@
 *******************************/
 
 @solidBorderColor: #e9eef2;
+@hoverBorderColor: #1dacf4;
 
 @borderWidth: 2px;
+@borderRadius: 0.5rem;
 
-@linkBorderShadow: 0px 0px 0px @borderWidth @blue;
+@border: @borderWidth solid @solidBorderColor;
+@linkHoverBorder: @borderWidth solid @hoverBorderColor;
 
-@linkHoverBoxShadow:
-  @shadowHoverBoxShadow,
-  @linkBorderShadow
-;
+@boxShadow: none;
+@linkHoverBoxShadow: @boxShadow;
 
 @linkHoverTransform: none;
+
+@contentDivider: 0rem;
+
+
+/* PXT specific */
+@exampleCardFullHeight: false;
+@exampleCardFullHeightBackground: rgba(0,0,0,.75);
+@exampleCardFullHeightColor: white;

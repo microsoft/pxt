@@ -15,9 +15,37 @@ namespace pxsim {
     let stringRefCounts: any = {};
     let refCounting = true;
     let floatingPoint = false;
+    let cfgKey: Map<number> = {}
+    let cfg: Map<number> = {}
 
     export function noRefCounting() {
         refCounting = false;
+    }
+
+    export function getConfig(id: number) {
+        if (cfg.hasOwnProperty(id + ""))
+            return cfg[id + ""]
+        return null
+    }
+
+    export function getConfigKey(id: string) {
+        if (cfgKey.hasOwnProperty(id))
+            return cfgKey[id]
+        return null
+    }
+
+    export function getAllConfigKeys() {
+        return Object.keys(cfgKey)
+    }
+
+    export function setConfig(id: number, val: number) {
+        cfg[id] = val
+    }
+
+
+    export function setConfigData(cfg_: Map<number>, cfgKey_: Map<number>) {
+        cfg = cfg_
+        cfgKey = cfgKey_
     }
 
     export function enableFloatingPoint() {
@@ -35,7 +63,7 @@ namespace pxsim {
         destroy() { }
 
         print() {
-            console.log(`RefObject id:${this.id} refs:${this.refcnt}`)
+            //console.log(`RefObject id:${this.id} refs:${this.refcnt}`)
         }
     }
 
@@ -77,7 +105,7 @@ namespace pxsim {
         }
 
         print() {
-            console.log(`RefInstance id:${this.id} (${this.vtable.name}) len:${this.fields.length}`)
+            //console.log(`RefInstance id:${this.id} (${this.vtable.name}) len:${this.fields.length}`)
         }
     }
 
@@ -105,7 +133,7 @@ namespace pxsim {
         }
 
         print() {
-            console.log(`RefAction id:${this.id} refs:${this.refcnt} len:${this.fields.length}`)
+            //console.log(`RefAction id:${this.id} refs:${this.refcnt} len:${this.fields.length}`)
         }
     }
 
@@ -150,7 +178,7 @@ namespace pxsim {
         v = 0;
 
         print() {
-            console.log(`RefLocal id:${this.id} refs:${this.refcnt} v:${this.v}`)
+            //console.log(`RefLocal id:${this.id} refs:${this.refcnt} v:${this.v}`)
         }
     }
 
@@ -162,7 +190,7 @@ namespace pxsim {
         }
 
         print() {
-            console.log(`RefRefLocal id:${this.id} refs:${this.refcnt} v:${this.v}`)
+            //console.log(`RefRefLocal id:${this.id} refs:${this.refcnt} v:${this.v}`)
         }
     }
 
@@ -195,7 +223,7 @@ namespace pxsim {
         }
 
         print() {
-            console.log(`RefMap id:${this.id} refs:${this.refcnt} size:${this.data.length}`)
+            //console.log(`RefMap id:${this.id} refs:${this.refcnt} size:${this.data.length}`)
         }
     }
 
@@ -299,6 +327,12 @@ namespace pxsim {
 
         export function afterProgramPage() {
             return 0;
+        }
+
+        export function getConfig(key: number, defl: number) {
+            let r = pxsim.getConfig(key)
+            if (r == null) return defl
+            return r
         }
 
         // these shouldn't generally be called when compiled for simulator
@@ -504,14 +538,6 @@ namespace pxsim {
             decr(map)
         }
 
-        export function switch_eq(a: any, b: any) {
-            if (a == b) {
-                decr(b)
-                return true
-            }
-            return false
-        }
-
         // these are never used in simulator; silence the warnings
         export var getGlobalsPtr: any;
     }
@@ -529,6 +555,14 @@ namespace pxsim {
             return r
         }
 
+        export function switch_eq(a: any, b: any) {
+            if (a == b) {
+                decr(b)
+                return true
+            }
+            return false
+        }
+
         // these are never used in simulator; silence the warnings
         export var getNumGlobals: any;
         export var RefRecord_destroy: any;
@@ -536,7 +570,6 @@ namespace pxsim {
         export var anyPrint: any;
         export var dumpDmesg: any;
         export var getVTable: any;
-        export var switch_eq: any;
         export var valType: any;
         export var typeOf: any;
         export var lookupPin: any;

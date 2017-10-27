@@ -22,9 +22,20 @@ namespace pxt {
             comp.jsRefCounting = true
         if (!comp.hasHex && comp.floatingPoint === undefined)
             comp.floatingPoint = true
-        if (comp.nativeType == "AVR") {
+        if (comp.hasHex && !comp.nativeType)
+            comp.nativeType = pxtc.NATIVE_TYPE_THUMB
+        if (comp.nativeType == pxtc.NATIVE_TYPE_AVR || comp.nativeType == pxtc.NATIVE_TYPE_AVRVM) {
             comp.shortPointers = true
             comp.flashCodeAlign = 0x10
+        }
+        if (comp.nativeType == pxtc.NATIVE_TYPE_CS) {
+            comp.floatingPoint = true
+            comp.needsUnboxing = true
+            comp.jsRefCounting = false
+        }
+        if (comp.taggedInts) {
+            comp.floatingPoint = true
+            comp.needsUnboxing = true
         }
         if (!appTarget.appTheme) appTarget.appTheme = {}
         if (!appTarget.appTheme.embedUrl)
@@ -196,10 +207,8 @@ namespace pxt {
 
     let _targetConfig: pxt.TargetConfig = undefined;
     export function targetConfigAsync(): Promise<pxt.TargetConfig> {
-        if (!_targetConfig && !Cloud.isOnline()) // offline
-            return Promise.resolve(undefined);
         return _targetConfig ? Promise.resolve(_targetConfig)
-            : Cloud.privateGetAsync(`config/${pxt.appTarget.id}/targetconfig`)
+            : Cloud.downloadTargetConfigAsync()
                 .then(
                 js => { _targetConfig = js; return _targetConfig; },
                 err => { _targetConfig = undefined; return undefined; });
@@ -209,12 +218,15 @@ namespace pxt {
     }
 
     export const CONFIG_NAME = "pxt.json"
+    export const SERIAL_EDITOR_FILE = "serial.txt"
     export const CLOUD_ID = "pxt/"
     export const BLOCKS_PROJECT_NAME = "blocksprj";
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";
 
     export function outputName(trg: CompileTarget = null) {
         if (!trg) trg = appTarget.compile
+        if (trg.nativeType == ts.pxtc.NATIVE_TYPE_CS)
+            return ts.pxtc.BINARY_CS
         if (trg.useUF2)
             return ts.pxtc.BINARY_UF2
         else if (trg.useELF)

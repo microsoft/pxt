@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="../../localtypings/pxtblockly.d.ts" />
 
 namespace pxtblockly {
 
@@ -61,14 +61,20 @@ namespace pxtblockly {
 
     let regex: RegExp = /^Note\.(.+)$/;
 
+    export interface FieldNoteOptions extends Blockly.FieldCustomOptions {
+        editorColour?: string;
+    }
+
     //  Class for a note input field.
     export class FieldNote extends Blockly.FieldNumber implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
         //  value of the field
         private note_: string;
 
-        //  colour of the block
+        //  colour of the dropdown
         private colour_: string;
+        //  colour of the dropdown border
+        private colourBorder_: string;
 
         /**
          * default number of piano keys
@@ -98,12 +104,16 @@ namespace pxtblockly {
         private noteName_: Array<string> = [];
 
 
-        constructor(text: string, options: Blockly.FieldCustomOptions, validator?: Function) {
+        constructor(text: string, params: FieldNoteOptions, validator?: Function) {
             super(text);
 
             FieldNote.superClass_.constructor.call(this, text, validator);
             this.note_ = text;
-            this.colour_ = pxtblockly.parseColour(options.colour);
+
+            if (params.editorColour) {
+                this.colour_ = pxtblockly.parseColour(params.editorColour);
+                this.colourBorder_ = goog.color.rgbArrayToHex(goog.color.darken(goog.color.hexToRgb(this.colour_), 0.2));
+            }
         }
 
         /**
@@ -396,6 +406,13 @@ namespace pxtblockly {
          * Create a piano under the note field.
          */
         showEditor_(opt_quietInput?: boolean): void {
+            if (!this.colour_) {
+                this.colour_ = ((this.sourceBlock_ as any).isShadow()) ?
+                    this.sourceBlock_.parentBlock_.getColour() : this.sourceBlock_.getColour();
+                this.colourBorder_ = ((this.sourceBlock_ as any).isShadow()) ?
+                    this.sourceBlock_.parentBlock_.getColourTertiary() : this.sourceBlock_.getColourTertiary();
+            }
+
             // If there is an existing drop-down someone else owns, hide it immediately and clear it.
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.DropDownDiv.clearContent();
@@ -516,7 +533,7 @@ namespace pxtblockly {
                     goog.events.EventType.MOUSEOVER,
                     function () {
                         let script = showNoteLabel.getContent() as HTMLElement;
-                        script.innerText = this.getId();
+                        script.textContent = this.getId();
                     }, false, key
                 );
 
@@ -533,7 +550,7 @@ namespace pxtblockly {
             showNoteLabel.setContent(showNoteStyle);
             showNoteLabel.render(pianoDiv);
             let scriptLabel = showNoteLabel.getContent() as HTMLElement;
-            scriptLabel.innerText = "-";
+            scriptLabel.textContent = "-";
 
             // create next and previous CustomButtons for pagination
             let prevButton = new goog.ui.CustomButton();
@@ -541,20 +558,20 @@ namespace pxtblockly {
             let prevButtonStyle = getNextPrevStyle(topPosition, leftPosition, true, mobile);
             let nextButtonStyle = getNextPrevStyle(topPosition, leftPosition, false, mobile);
             if (pagination) {
-                scriptLabel.innerText = "Octave #1";
+                scriptLabel.textContent = "Octave #1";
                 //  render previous button
                 let script: HTMLElement;
                 prevButton.setContent(prevButtonStyle);
                 prevButton.render(pianoDiv);
                 script = prevButton.getContent() as HTMLElement;
                 //  left arrow - previous button
-                script.innerText = "<";
+                script.textContent = "<";
                 //  render next button
                 nextButton.setContent(nextButtonStyle);
                 nextButton.render(pianoDiv);
                 script = nextButton.getContent() as HTMLElement;
                 //  right arrow - next button
-                script.innerText = ">";
+                script.textContent = ">";
 
                 let Npages = this.nKeys_ / 12;
                 let currentPage = 0;
@@ -562,7 +579,7 @@ namespace pxtblockly {
                     goog.events.EventType.MOUSEDOWN,
                     function () {
                         if (currentPage == 0) {
-                            scriptLabel.innerText = "Octave #" + (currentPage + 1);
+                            scriptLabel.textContent = "Octave #" + (currentPage + 1);
                             return;
                         }
                         let curFirstKey = currentPage * 12;
@@ -574,14 +591,14 @@ namespace pxtblockly {
                         for (let i = 0; i < 12; i++)
                             piano[i + newFirstKey].setVisible(true);
                         currentPage--;
-                        scriptLabel.innerText = "Octave #" + (currentPage + 1);
+                        scriptLabel.textContent = "Octave #" + (currentPage + 1);
                     }, false, prevButton
                 );
                 goog.events.listen(nextButton.getElement(),
                     goog.events.EventType.MOUSEDOWN,
                     function () {
                         if (currentPage == Npages - 1) {
-                            scriptLabel.innerText = "Octave #" + (currentPage + 1);
+                            scriptLabel.textContent = "Octave #" + (currentPage + 1);
                             return;
                         }
                         let curFirstKey = currentPage * 12;
@@ -593,7 +610,7 @@ namespace pxtblockly {
                         for (let i = 0; i < 12; i++)
                             piano[i + newFirstKey].setVisible(true);
                         currentPage++;
-                        scriptLabel.innerText = "Octave #" + (currentPage + 1);
+                        scriptLabel.textContent = "Octave #" + (currentPage + 1);
                     }, false, nextButton
                 );
             }
@@ -774,12 +791,8 @@ namespace pxtblockly {
 
             pianoDiv.style.width = pianoWidth + "px";
             pianoDiv.style.height = (pianoHeight + 1) + "px";
-            //contentDiv.style.width = (pianoWidth + 1) + "px";
 
-            let primaryColour = ((this.sourceBlock_ as any).isShadow()) ?
-                this.sourceBlock_.parentBlock_.getColour() : this.sourceBlock_.getColour();
-
-            (Blockly.DropDownDiv as any).setColour(primaryColour, (this.sourceBlock_ as any).getColourTertiary());
+            (Blockly.DropDownDiv as any).setColour(this.colour_, this.colourBorder_);
 
             // Calculate positioning based on the field position.
             let scale = (this.sourceBlock_.workspace as any).scale;

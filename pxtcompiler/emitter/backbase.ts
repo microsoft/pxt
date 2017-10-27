@@ -9,6 +9,27 @@ namespace ts.pxtc {
         immLimit: number;
     }
 
+
+    export function asmStringLiteral(s: string) {
+        let r = "\""
+        for (let i = 0; i < s.length; ++i) {
+            // TODO generate warning when seeing high character ?
+            let c = s.charCodeAt(i) & 0xff
+            let cc = String.fromCharCode(c)
+            if (cc == "\\" || cc == "\"")
+                r += "\\" + cc
+            else if (cc == "\n")
+                r += "\\n"
+            else if (c <= 0xf)
+                r += "\\x0" + c.toString(16)
+            else if (c < 32 || c > 127)
+                r += "\\x" + c.toString(16)
+            else
+                r += cc;
+        }
+        return r + "\""
+    }
+
     // this class defines the interface between the IR
     // and a particular assembler (Thumb, AVR). Thus,
     // the registers mentioned below are VIRTUAL registers
@@ -29,44 +50,70 @@ namespace ts.pxtc {
     // - for calls to user functions, all arguments passed on stack
 
     export abstract class AssemblerSnippets {
-        nop() { return "TBD " }
-        reg_gets_imm(reg: string, imm: number) { return "TBD" }
+        hasCommonalize(): boolean { return false }
+        nop() { return "TBD(nop)" }
+        reg_gets_imm(reg: string, imm: number) { return "TBD(reg_gets_imm)" }
         // Registers are stored on the stack in numerical order 
-        proc_setup(main?: boolean) { return "TBD" }
-        push_fixed(reg: string[]) { return "TBD" }
-        push_local(reg: string) { return "TBD" }
-        push_locals(n: number) { return "TBD" }
-        proc_setup_end() { return "" }
-        pop_fixed(reg: string[]) { return "TBD" }
-        pop_locals(n: number) { return "TBD" }
-        proc_return() { return "TBD" }
-        debugger_stmt(lbl: string) { return "TBD" }
-        debugger_bkpt(lbl: string) { return "TBD" }
-        debugger_proc(lbl: string) { return "TBD" }
-        unconditional_branch(lbl: string) { return "TBD" }
-        beq(lbl: string) { return "TBD" }
-        bne(lbl: string) { return "TBD" }
-        cmp(reg1: string, reg: string) { return "TBD" }
-        cmp_zero(reg1: string) { return "TBD" }
+        proc_setup(numlocals: number, main?: boolean) { return "TBD(proc_setup)" }
+        push_fixed(reg: string[]) { return "TBD(push_fixed)" }
+        push_local(reg: string) { return "TBD(push_local)" }
+        push_locals(n: number) { return "TBD(push_locals)" }
+        pop_fixed(reg: string[]) { return "TBD(pop_fixed)" }
+        pop_locals(n: number) { return "TBD(pop_locals)" }
+        proc_return() { return "TBD(proc_return)" }
+        debugger_stmt(lbl: string) { return "" }
+        debugger_bkpt(lbl: string) { return "" }
+        debugger_proc(lbl: string) { return "" }
+        unconditional_branch(lbl: string) { return "TBD(unconditional_branch)" }
+        beq(lbl: string) { return "TBD(beq)" }
+        bne(lbl: string) { return "TBD(bne)" }
+        cmp(reg1: string, reg: string) { return "TBD(cmp)" }
+        cmp_zero(reg1: string) { return "TBD(cmp_zero)" }
         arithmetic() { return "" }
         // load_reg_src_off is load/store indirect
         // word? - does offset represent an index that must be multiplied by word size?
         // inf?  - control over size of referenced data
         // str?  - true=Store/false=Load
         // src - can range over
+        load_reg_src_off(reg: string, src: string, off: string, word?: boolean,
+            store?: boolean, inf?: BitSizeInfo) {
+            return "TBD(load_reg_src_off)";
+        }
+        rt_call(name: string, r0: string, r1: string) { return "TBD(rt_call)"; }
+        call_lbl(lbl: string) { return "TBD(call_lbl)" }
+        call_reg(reg: string) { return "TBD(call_reg)" }
+        vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
+            return "TBD(vcall)"
+        }
+        prologue_vtable(arg_index: number, vtableShift: number) {
+            return "TBD(prologue_vtable"
+        }
+        helper_prologue() { return "TBD(lambda_prologue)" }
+        helper_epilogue() { return "TBD(lambda_epilogue)" }
+        load_ptr(lbl: string, reg: string) { return "TBD(load_ptr)" }
+        load_ptr_full(lbl: string, reg: string) { return "TBD(load_ptr_full)" }
+        emit_int(v: number, reg: string) { return "TBD(emit_int)" }
 
-        load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) { return "TBD"; }
-        rt_call(name: string, r0: string, r1: string) { return "TBD"; }
-        call_lbl(lbl: string) { return "TBD" }
-        call_reg(reg: string) { return "TBD" }
-        vcall(mapMethod: string, isSet: boolean, vtableShift: number) { return "TBD" }
-        prologue_vtable(arg_index: number, vtableShift: number) { return "TBD" }
-        lambda_prologue() { return "TBD" }
-        lambda_epilogue() { return "TBD" }
-        load_ptr(lbl: string, reg: string) { return "TBD" }
-        load_ptr_full(lbl: string, reg: string) { return "TBD" }
+        string_literal(lbl: string, s: string) {
+            return `
+.balign 4
+${lbl}meta: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_STRING + "," : ""} ${s.length}
+${lbl}: .string ${asmStringLiteral(s)}
+`
+        }
 
-        emit_int(v: number, reg: string) { return "TBD" }
+
+        hex_literal(lbl: string, data: string) {
+            return `
+.balign 4
+${lbl}: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_BUFFER + "," : ""} ${data.length >> 1}
+        .hex ${data}${data.length % 4 == 0 ? "" : "00"}
+`
+        }
+
+        method_call(procid: ir.ProcId, topExpr: ir.Expr) {
+            return ""
+        }
     }
 
     // helper for emit_int
@@ -178,16 +225,10 @@ ${baseLabel}:
                 this.write(this.t.debugger_proc(bkptLabel))
             }
             this.baseStackSize = 1 // push {lr}
-            this.write(this.t.proc_setup(true))
-            // initialize the locals
             let numlocals = this.proc.locals.length
-            if (numlocals > 0)
-                this.write(this.t.reg_gets_imm("r0", 0));
-            this.proc.locals.forEach(l => {
-                this.write(this.t.push_local("r0") + " ;loc")
-                this.baseStackSize++
-            })
-            this.write(this.t.proc_setup_end())
+            this.write(this.t.proc_setup(numlocals))
+            this.baseStackSize += numlocals
+
 
             this.write("@stackmark locals")
             this.write(`${locLabel}:`)
@@ -346,7 +387,8 @@ ${baseLabel}:
                         this.exprStack.shift()
                         this.clearStack()
                     } else {
-                        this.write(this.t.load_reg_src_off(reg, "sp", idx.toString(), true) + ` ; tmpref @${this.exprStack.length - idx}`)
+                        let idx0 = idx.toString() + ":" + this.exprStack.length
+                        this.write(this.t.load_reg_src_off(reg, "sp", idx0, true) + ` ; tmpref @${this.exprStack.length - idx}`)
                     }
                     break;
                 case ir.EK.CellRef:
@@ -526,7 +568,11 @@ ${baseLabel}:
             let procid = topExpr.data as ir.ProcId
             let procIdx = -1
             if (procid.virtualIndex != null || procid.ifaceIndex != null) {
-                if (procid.mapMethod) {
+                let custom = this.t.method_call(procid, topExpr)
+                if (custom) {
+                    this.write(custom)
+                    this.write(lbl + ":")
+                } else if (procid.mapMethod) {
                     let isSet = /Set/.test(procid.mapMethod)
                     assert(isSet == (topExpr.args.length == 2))
                     assert(!isSet == (topExpr.args.length == 1))
@@ -606,7 +652,7 @@ ${baseLabel}:
                 return ["r5", cell.index.toString(), true]
             } else if (cell.isarg) {
                 let idx = this.proc.args.length - cell.index - 1
-                return ["sp", "args@" + idx.toString(), false]
+                return ["sp", "args@" + idx.toString() + ":" + this.baseStackSize, false]
             } else {
                 return ["sp", "locals@" + cell.index, false]
             }
@@ -616,17 +662,29 @@ ${baseLabel}:
             let node = this.proc.action
             this.write("")
             this.write(".section code");
-            if (isMain)
-                this.write(this.t.unconditional_branch(".themain"))
-            this.write(".balign 4");
-            this.write(this.proc.label() + "_Lit:");
-            this.write(`.short 0xffff, ${pxt.REF_TAG_ACTION}   ; action literal`);
+
+            if (isAVR()) {
+                this.write(this.proc.label() + "_Lit:");
+            } else {
+                if (isMain)
+                    this.write(this.t.unconditional_branch(".themain"))
+                this.write(".balign 4");
+                this.write(this.proc.label() + "_Lit:");
+                this.write(`.short 0xffff, ${pxt.REF_TAG_ACTION}   ; action literal`);
+                if (isMain)
+                    this.write(".themain:")
+            }
+
             this.write("@stackmark litfunc");
-            if (isMain)
-                this.write(".themain:")
+
             let parms = this.proc.args.map(a => a.def)
-            this.write(this.t.proc_setup())
-            this.write(this.t.push_fixed(["r5", "r6", "r7"]))
+            this.write(this.t.proc_setup(0, true))
+
+            if (this.t.hasCommonalize())
+                this.write(this.t.push_fixed(["r5", "r6", "r7"]))
+            else
+                this.write(this.t.push_fixed(["r5", "r6"]))
+
             this.baseStackSize = 4 // above
 
             let numpop = parms.length
@@ -642,9 +700,8 @@ ${baseLabel}:
                     U.userError(U.lf("only up to three parameters supported in lambdas"))
                 this.write(this.t.push_local(`r${i + 1}`))
             })
-            this.write(this.t.proc_setup_end())
 
-            let asm = this.t.lambda_prologue()
+            let asm = this.t.helper_prologue()
 
             this.proc.args.forEach((p, i) => {
                 if (p.isRef()) {
@@ -654,14 +711,18 @@ ${baseLabel}:
                 }
             })
 
-            asm += this.t.lambda_epilogue()
+            asm += this.t.helper_epilogue()
 
             this.emitHelper(asm) // using shared helper saves about 3% of binary size
             this.write(this.t.call_lbl(this.proc.label()))
 
             if (numpop)
                 this.write(this.t.pop_locals(numpop))
-            this.write(this.t.pop_fixed(["r6", "r5", "r7"]))
+            if (this.t.hasCommonalize())
+                this.write(this.t.pop_fixed(["r6", "r5", "r7"]))
+            else
+                this.write(this.t.pop_fixed(["r6", "r5"]))
+
             this.write(this.t.proc_return())
             this.write("@stackempty litfunc");
         }

@@ -195,7 +195,7 @@ declare interface String {
      * @param start first character index; can be negative from counting from the end, eg:0
      * @param length number of characters to extract
      */
-    //% shim=String_::substr length.defl=1000000
+    //% shim=String_::substr length.defl=10
     //% help=text/substr
     //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
     substr(start: number, length?: number): string;
@@ -213,11 +213,12 @@ declare interface String {
 
 /**
   * Convert a string to an integer.
-  * @param s A string to convert into a number.
+  * @param s A string to convert into a number. eg: 123
   */
 //% shim=String_::toNumber
 //% help=text/parse-int
 //% blockId="string_parseint" block="parse to integer %text" blockNamespace="text"
+//% text.defl="123"
 declare function parseInt(text: string): number;
 
 interface Object { }
@@ -250,10 +251,10 @@ declare namespace String {
     /**
      * Make a string from the given ASCII character code.
      */
-    //% help=math/string-from-char-code
+    //% help=math/from-char-code
     //% shim=String_::fromCharCode
     //% weight=0
-    //% blockNamespace="Math" blockId="stringFromCharCode" block="text from char code %code" weight=1
+    //% blockNamespace="Text" blockId="stringFromCharCode" block="text from char code %code" weight=1
     function fromCharCode(code: number): string;
 }
 

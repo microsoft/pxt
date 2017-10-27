@@ -26,7 +26,6 @@ export class File implements pxt.editor.IFile {
     inSyncWithDisk = true;
     diagnostics: pxtc.KsDiagnostic[];
     numDiagnosticsOverride: number;
-    virtualSource: File;
     filters: pxt.editor.ProjectFilters;
     forceChangeCallback: ((from: string, to: string) => void);
 
@@ -228,7 +227,9 @@ export class EditorPackage {
     }
 
     getAllFiles() {
-        return Util.mapMap(this.files, (k, f) => f.content)
+        let r = Util.mapMap(this.files, (k, f) => f.content)
+        delete r[pxt.SERIAL_EDITOR_FILE]
+        return r
     }
 
     saveFilesAsync(immediate?: boolean) {

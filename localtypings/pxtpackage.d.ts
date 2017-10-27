@@ -38,7 +38,20 @@ declare namespace pxt {
         npmDependencies?: Map<string>;
         card?: CodeCard;
         additionalFilePath?: string;
+        core?: boolean;
         gistId?: string;
+        extension?: PackageExtension; // describe the associated extension if any
+        dalDTS?: {
+            includeDirs: string[];
+            excludePrefix?: string[];
+        };
+    }
+
+    interface PackageExtension {
+        namespace?: string; // Namespace to add the button under, defaults to package name
+        label?: string; // Label for the flyout button, defaults to `Editor`
+        color?: string; // for new category, category color
+        advanced?: boolean; // for new category, is category advanced
     }
 
     interface PlatformIOConfig {
@@ -71,10 +84,12 @@ declare namespace pxt {
         role?: string;
         ariaLabel?: string;
         label?: string;
+        labelClass?: string;
         tabIndex?: number
 
         color?: string; // one of semantic ui colors
         description?: string;
+        extracontent?: string;
         blocksXml?: string;
         typeScript?: string;
         imageUrl?: string;
@@ -82,7 +97,7 @@ declare namespace pxt {
         time?: number;
         url?: string;
         responsive?: boolean;
-        cardType?: "example" | "codeExample" | "tutorial" | "project";
+        cardType?: "file" | "example" | "codeExample" | "tutorial" | "project";
 
         header?: string;
         any?: number;

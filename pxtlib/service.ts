@@ -12,10 +12,16 @@ namespace ts.pxtc {
     export const TS_STATEMENT_TYPE = "typescript_statement";
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const BINARY_JS = "binary.js";
+    export const BINARY_CS = "binary.cs";
     export const BINARY_ASM = "binary.asm";
     export const BINARY_HEX = "binary.hex";
     export const BINARY_UF2 = "binary.uf2";
     export const BINARY_ELF = "binary.elf";
+
+    export const NATIVE_TYPE_THUMB = "thumb";
+    export const NATIVE_TYPE_AVR = "AVR";
+    export const NATIVE_TYPE_CS = "C#";
+    export const NATIVE_TYPE_AVRVM = "AVRVM";
 
     export interface ParameterDesc {
         name: string;
@@ -24,6 +30,7 @@ namespace ts.pxtc {
         initializer?: string;
         default?: string;
         properties?: PropertyDesc[];
+        handlerParameters?: PropertyDesc[];
         options?: pxt.Map<PropertyOption>;
         isEnum?: boolean;
     }
@@ -150,6 +157,9 @@ namespace ts.pxtc {
         mutatePropertyEnum?: string;
         inlineInputMode?: string; // can be inline, external, or auto
 
+        optionalVariableArgs?: boolean;
+        toolboxVariableArgs?: string;
+
         _name?: string;
         _source?: string;
         jsDoc?: string;
@@ -187,6 +197,12 @@ namespace ts.pxtc {
         messageText: string | DiagnosticMessageChain;
     }
 
+    export interface ConfigEntry {
+        name: string;
+        key: number;
+        value: number;
+    }
+
     export interface CompileResult {
         outfiles: pxt.Map<string>;
         diagnostics: KsDiagnostic[];
@@ -203,6 +219,7 @@ namespace ts.pxtc {
         userContextWindow?: Window;
         downloadFileBaseName?: string;
         confirmAsync?: (confirmOptions: {}) => Promise<number>;
+        configData?: ConfigEntry[];
     }
 
     export interface Breakpoint extends LocationInfo {
@@ -322,11 +339,11 @@ namespace ts.pxtc {
                     }
                 }
                 else if (fn.attributes.block && locBlock) {
-                    const ps = pxt.blocks.parameterNames(fn);
+                    const ps = pxt.blocks.parameterNames(fn).attrNames;
                     const oldBlock = fn.attributes.block;
                     fn.attributes.block = pxt.blocks.normalizeBlock(locBlock);
                     if (oldBlock != fn.attributes.block) {
-                        const locps = pxt.blocks.parameterNames(fn);
+                        const locps = pxt.blocks.parameterNames(fn).attrNames;
                         if (JSON.stringify(ps) != JSON.stringify(locps)) {
                             pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`)
                             fn.attributes.block = oldBlock;
@@ -359,7 +376,7 @@ namespace ts.pxtc {
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
-    const booleanAttributes = ["advanced", "handlerStatement", "afterOnStart"]
+    const booleanAttributes = ["advanced", "handlerStatement", "afterOnStart", "optionalVariableArgs", "blockHidden"]
 
     export function parseCommentString(cmt: string): CommentAttrs {
         let res: CommentAttrs = {

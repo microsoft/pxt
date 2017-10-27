@@ -1,12 +1,13 @@
 /// <reference path="pxtpackage.d.ts" />
 /// <reference path="pxtparts.d.ts" />
-/// <reference path="blockly.d.ts" />
+/// <reference path="pxtblockly.d.ts" />
 
 declare namespace pxt {
     // targetconfig.json
     interface TargetConfig {
         packages?: PackagesConfig;
         languages?: string[];
+        galleries?: pxt.Map<string>;
     }
 
     interface PackagesConfig {
@@ -74,12 +75,21 @@ declare namespace pxt {
 
     interface AppSerial {
         useHF2?: boolean;
+        noDeploy?: boolean;
+        useEditor?: boolean;
         vendorId?: string; // used by node-serial
         productId?: string; // used by node-serial
         nameFilter?: string; // regex to match devices
         rawHID?: boolean;
         log?: boolean; // pipe messages to log
         chromeExtension?: string; // unique identifier of the chrome extension
+        editorTheme?: SerialTheme;
+    }
+
+    interface SerialTheme {
+        graphBackground?: string;
+        strokeColor?: string;
+        lineColors?: string[];
     }
 
     interface AppCloud {
@@ -101,11 +111,14 @@ declare namespace pxt {
         streams?: boolean;
         aspectRatio?: number; // width / height
         boardDefinition?: pxsim.BoardDefinition;
+        dynamicBoardDefinition?: boolean; // if true, boardDefinition comes from board package
         parts?: boolean; // parts enabled?
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
         headless?: boolean; // whether simulator should still run while collapsed
         trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
+        invalidatedClass?: string; // CSS class to be applied to the sim iFrame when it needs to be updated (defaults to sepia filter)
+        stoppedClass?: string; // CSS class to be applied to the sim iFrame when it isn't running (defaults to grayscale filter)
     }
 
     interface TargetCompileService {
@@ -116,7 +129,12 @@ declare namespace pxt {
 
         platformioIni?: string[];
 
-        codalTarget?: string;
+        codalTarget?: string | {
+            name: string; // "codal-arduino-uno",
+            url: string; // "https://github.com/lancaster-university/codal-arduino-uno",
+            branch: string; // "master",
+            type: string; // "git"
+        };
         codalBinary?: string;
         codalDefinitions?: any;
 
@@ -152,7 +170,9 @@ declare namespace pxt {
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
-        sideDoc?: string; // if set: show the getting started button, clicking on getting started button links to that page
+        showHomeScreen?: boolean; // show the home page on editor load
+        homeScreenHero?: string; // home screen hero image
+        sideDoc?: string; // deprecated
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
         feedbackUrl?: string; // is set: a feedback link will show in the settings menu
         boardName?: string;
@@ -172,19 +192,18 @@ declare namespace pxt {
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
-        disableBlockIcons?: boolean; // Disable icons in blocks
         hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.
         monacoColors?: pxt.Map<string>; // Monaco theme colors, see https://code.visualstudio.com/docs/getstarted/theme-color-reference
-        hideBlocklyJavascriptHint?: boolean; // hide javascript preview in blockly hint menu
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
-        galleries?: pxt.Map<string>; // list of galleries to display in projects dialog
         crowdinProject?: string;
         crowdinBranch?: string; // optional branch specification for pxt
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
+        allowPackageExtensions?: boolean; // allow packages that include editor extensions
+        allowSimulatorTelemetry?: boolean; // allow the simulator to send telemetry messages
         hideEmbedEdit?: boolean; // hide the edit button in the embedded view
         blocksOnly?: boolean; // blocks only workspace
         hideDocsSimulator?: boolean; // do not show simulator button in docs
@@ -208,7 +227,6 @@ declare namespace pxt {
         blockColors?: Map<string>; // block namespace colors, used for build in categories
         blocklyColors?: Blockly.Colours; // Blockly workspace, flyout and other colors
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
-        useStartPage?: boolean;
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
         appPathNames?: string[]; // Authorized URL paths in electron or UWP, all other paths will display a warning banner
         defaultBlockGap?: number; // For targets to override block gap
@@ -264,12 +282,14 @@ declare namespace ts.pxtc {
         driveName?: string;
         jsRefCounting?: boolean;
         floatingPoint?: boolean;
-        taggedInts?: boolean; // implies floatingPoint
+        taggedInts?: boolean; // implies floatingPoint and needsUnboxing
+        needsUnboxing?: boolean;
         boxDebug?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers
         flashCodeAlign?: number; // defaults to 1k
+        flashEnd?: number;
         upgrades?: UpgradePolicy[];
         openocdScript?: string;
         flashChecksumAddr?: number;
@@ -277,6 +297,7 @@ declare namespace ts.pxtc {
         stackAlign?: number; // 1 word (default), or 2
         hidSelectors?: HidSelector[];
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
+        vmOpCodes?: pxt.Map<number>;
     }
 
     interface CompileOptions {
