@@ -127,6 +127,10 @@
     background-color: lighten(@serialGraphBackground, 10.0);
     font-size: 0.85em;
     border: 1rem solid @primaryColor;
+    margin-bottom: 0.4rem;
+    .detail {
+        vertical-align: middle;
+    }
 }
 
 #serialPreview .label:hover {
@@ -136,11 +140,6 @@
 
 #serialPreview .label:focus {
     outline: none;
-}
-
-#serialPreview canvas {
-    background-color: lighten(@serialGraphBackground, 10.0);
-    padding: 0 5px 0 0;
 }
 
 .serialindicator {
