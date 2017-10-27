@@ -174,6 +174,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                             if (resp.success) {
                                                 this.props.parent.overrideBlocksFile(resp.outfiles["main.blocks"])
                                             }
+                                            this.props.parent.setSideDoc(scr.url, loadBlocks);
                                         })
                                 })
                                 .done(() => {
