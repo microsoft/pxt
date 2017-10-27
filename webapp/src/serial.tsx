@@ -298,8 +298,7 @@ class Chart {
         const chartConfig: IChartOptions = {
             interpolation: 'bezier',
             labels: {
-                disabled: true,
-                fontSize: 12
+                disabled: true
             },
             responsive: true,
             millisPerPixel: 20,
@@ -336,7 +335,7 @@ class Chart {
             this.chart.addTimeSeries(line, {
                 strokeStyle: lineColor,
                 fillStyle: this.hexToHalfOpacityRgba(lineColor),
-                lineWidth: 3
+                lineWidth: 1
             })
         }
         return line;
