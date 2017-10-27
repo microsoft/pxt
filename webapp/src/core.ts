@@ -223,7 +223,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     if (!options.hideCancel) {
         buttons.push({
             label: options.disagreeLbl || lf("Cancel"),
-            class: (options.disagreeClass || "cancel") + " focused",
+            class: (options.disagreeClass || "cancel"),
             icon: options.disagreeIcon || "cancel"
         })
     }
@@ -231,7 +231,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     let btnno = 0
     for (let b of buttons) {
         html += `
-      <${b.url ? "a" : "button"} class="ui right labeled icon button approve ${b.class || "positive"}" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} ${b.fileName ? `download="${Util.htmlEscape(b.fileName)}"` : ''} target="_blank">
+      <${b.url ? "a" : "button"} class="ui right labeled icon button approve ${b.class || "positive"} focused" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} ${b.fileName ? `download="${Util.htmlEscape(b.fileName)}"` : ''} target="_blank">
         ${Util.htmlEscape(b.label)}
         <i class="${b.icon || "checkmark"} icon"></i>
       </${b.url ? "a" : "button"}>`
@@ -316,7 +316,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
     if (!options.hideAgree) {
         options.buttons.push({
             label: options.agreeLbl || lf("Go ahead!"),
-            class: options.agreeClass + " focused",
+            class: options.agreeClass,
             icon: options.agreeIcon,
             onclick: () => {
                 result = 1
@@ -327,7 +327,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
     if (options.deleteLbl) {
         options.buttons.push({
             label: options.deleteLbl,
-            class: "delete red focused",
+            class: "delete red",
             icon: "trash",
             onclick: () => {
                 result = 2
@@ -344,7 +344,7 @@ export function confirmDelete(what: string, cb: () => Promise<void>) {
         header: lf("Would you like to delete '{0}'?", what),
         body: lf("It will be deleted for good. No undo."),
         agreeLbl: lf("Delete"),
-        agreeClass: "red focused",
+        agreeClass: "red",
         agreeIcon: "trash",
     }).then(res => {
         if (res) {
