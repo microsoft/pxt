@@ -235,7 +235,7 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button title={lf("Export data")} class="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => pxt.commands.browserDownloadAsync(this.entriesToCSV(), "data.csv", "text/csv")}>
+                        <sui.Button title={lf("Export data")} class="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => this.downloadCSV()}>
                             <sui.Icon icon="download" />
                         </sui.Button>
                         <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
@@ -298,7 +298,8 @@ class Chart {
         const chartConfig: IChartOptions = {
             interpolation: 'bezier',
             labels: {
-                disabled: true
+                disabled: true,
+                fontSize: 12
             },
             responsive: true,
             millisPerPixel: 20,
@@ -307,9 +308,6 @@ class Chart {
                 borderVisible: false,
                 fillStyle: serialTheme && serialTheme.graphBackground || '#fff',
                 strokeStyle: serialTheme && serialTheme.graphBackground || '#fff'
-            },
-            labels: {
-                fontSize: 12
             },
             tooltip: true,
             tooltipFormatter: (ts, data) => this.tooltip(ts, data)
