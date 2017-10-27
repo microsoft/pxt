@@ -24,8 +24,8 @@ and expressions that only can be typed with Any;
 \item \emph{partitioning} TypeScript's space of object types into functions, records, constructor functions, and arrays, with no casts 
     possible between the partitions (and eliminating all other object types) - structural subtyping is used to relate records 
     to each other, as in TypeScript;
-\item typing of classes \emph{nominally} rather than structurally, as in TypeScript, and using traditional function (contravariant 
-    in the argument type, covariant in the return type) subtyping for functions and methods;
+\item typing of classes \emph{nominally} rather than structurally, as in TypeScript, and traditional function subtyping (contravariant 
+    in the argument type, covariant in the return type) for functions as well as methods;
 \item \emph{restricting} casts between records and classes: a class can be cast to a record, but a record cannot be cast to a class.
 \end{itemize}
 STS is a syntactic subset of TypeScript -- there is no change to the syntax of TypeScript.
@@ -75,7 +75,7 @@ STS partitions the space of object types as follows:
 \item[4.] an \emph{array} type has a numeric index signature and no other signatures;
 \item[5.] an \emph{other} type: object type not covered by the previous four categories.
 \end{itemize}
-STS excludes all ``other'' types, leaving us with the four kinds of types, as found in Java or C\#.
+STS excludes all ``other'' types, leaving us with the four kinds of types.
 The partitioning is further reflected in STS's subtype relation: 
 types $T$ and $U$ from different partitions (in the first four partitions above)
 are not related by STS's subtype relation.
@@ -95,11 +95,10 @@ STS adds a new partition to represent class types, separate from record types, d
 Classic nominal subtyping is applied to class types, with function subtyping used to relate methods with 
 the same name in subclass and superclass, per TypeScript, just as record types are treated.
 Furthermore, STS permits a cast from a class type
-to a compatible record type, but does not allow a cast from a record type to a class type. This means
+to a record supertype, but does not allow any casts from record types to class types. This means
 it is possible to use interfaces to abstract over classes, as in Java and C\#. 
 
-Finally, STS enforces that a function may not
-be assigned to a property of a record type, 
+Finally, STS enforces that a function may not be assigned to a property of a record type, 
 though it is possible to construct records with function properties using object literals. 
 
 \subsection{Subtyping and Type Checking}
@@ -152,11 +151,6 @@ Type checking for (pure) expressions remains the same as in TypeScript.
 Type checking at assignments, where a value of type $S$ flows (is assigned to) 
 into a location of type $T$ uses the new subtyping relation: $S$
 must be a subtype of $T$.  Downcasts (where a supertype flows to a subtype)
-are not permitted. 
+are not permitted in STS.
 
-\emph{TODO: theorems???}
-
-\subsection{Compilation}
-
-% Classic vtable for classes (prefix); classic interface table 
-% for classes and records
+\flameon{TODO: what about generics? theorems???}

@@ -17,13 +17,15 @@ From Joe Finney
 
 But what is the cost of these high level abstractions? Resources and metrics we care about are:
 \begin{itemize}
+% FLASH and RAM footprint
 \item Core FLASH footprint of the combined runtime codebase -- 
-      split by role (libc, codal-core, MakeCode). PXT test. 
+      split by role (libc, codal-core, pxt-common-packages, makecode). PXT test. 
       Analyse MAP file. (Assuming PXT core is in build, 
       else Michal to provide size of PXT core libs)?
 \item Core RAM footprint of the combined runtime codebase --
-      split by role (libc, codal-core, MakeCode). Analyse MAP file for static footprint. 
+      split by role (libc, codal-core, pxt-common-packages, makecode). Analyse MAP file for static footprint. 
       Enable HEAP\_DEBUG, and run C++ blinky and PXT blinky.
+% cost of async/fibers/handlers
 \item How RAM footprint scales with number of active fibers (parallel recursive calls in TS. 
       Should be predictable, but validates we scale linearly and sets some hard figures 
       for a real device). C++ test.
@@ -34,10 +36,16 @@ But what is the cost of these high level abstractions? Resources and metrics we 
       switch sections and measuring on scope.
 \item Async Procedure Call (APC) handling time (both in real terms (uS) and CPU instructions. 
       C++ test. flipping a GPIO or two during context switch and measuring on scope.
+% measuring compile time
+% - do this in Node?
+% - do this in browser?
 \item Time taken to compile and link simple program in browser (can we use some existing apps 
       here as case studies? E.g. Smiley emoji and fireflies?
+% microbenchmarks
+% in addition, Arduino "examples"
 \item Tight loop performance of C++, TS, and Blocks e.g. flipping a GPIO. PXT native compile.
 \item Tight loop performance of C++, TS, and Blocks e.g. flipping a GPIO. PXT bytecode interpreted.
+% instrument via node? or shell?
 \item UF2 File Size comparisons to HEX and bin. Time taken to complete a UF2 flash operation 
     (c.f. equivalent DAPLINK flash on micro:bit and avrdude flash on uno?)
 \end{itemize}
