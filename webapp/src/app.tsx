@@ -887,6 +887,7 @@ export class ProjectView
 
     openHome() {
         pxt.tickEvent("menu.open");
+        this.stopSimulator();
         this.setState({ home: true });
         // clear the hash
         window.location.hash = "";

@@ -74,13 +74,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             || this.state.searchFor != nextState.searchFor
     }
 
-    private numDaysOld(d1: number) {
-        let diff = Math.abs((Date.now() / 1000) - d1);
-        return Math.floor(diff / (60 * 60 * 24));
-    }
-
     renderCore() {
-        const { visible, tab } = this.state;
+        const { visible } = this.state;
 
         const targetTheme = pxt.appTarget.appTheme;
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
@@ -211,7 +206,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
                             <h2 className="ui header">{Util.rlf(galleryName) } </h2>
                             <div className="content">
-                                <ProjectsCarousel key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} onClick={(scr: any) => chgGallery(scr) } setSelected={(index) => this.setSelected(galleryName, index) } selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined}/>
+                                <ProjectsCarousel key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} onClick={(scr: any) => chgGallery(scr) } />
                             </div>
                         </div>
                     ) }
@@ -313,10 +308,10 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 youTubeId={scr.youTubeId}
                                 label={scr.label}
                                 labelClass={scr.labelClass}
-                                onClick={() => onClick(scr)}
-                            />
+                                onClick={() => onClick(scr) }
+                                />
                         </div>
-                    )}
+                    ) }
                 </carousel.Carousel>
             }
         } else {
