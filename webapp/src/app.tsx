@@ -642,7 +642,7 @@ export class ProjectView
         if (!h)
             return Promise.resolve()
 
-        window.location.hash = "#editor";
+        pxt.BrowserUtils.changeHash("#editor", true);
         this.stopSimulator(true);
         pxt.blocks.cleanBlocks();
         this.clearSerial()
@@ -889,7 +889,7 @@ export class ProjectView
         this.stopSimulator();
         this.setState({ home: true });
         // clear the hash
-        window.location.hash = "";
+        pxt.BrowserUtils.changeHash("", true);
     }
 
     exitAndSave() {
@@ -2255,7 +2255,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "newproject": // shortcut to create a new blocks proj
             pxt.tickEvent("hash.newproject")
             editor.newProject();
-            window.location.hash = "";
+            pxt.BrowserUtils.changeHash("");
             return true;
         case "newjavascript": // shortcut to create a new JS proj
             pxt.tickEvent("hash.newjavascript");
@@ -2265,36 +2265,41 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                     "main.blocks": ""
                 }
             });
-            window.location.hash = "";
+            pxt.BrowserUtils.changeHash("");
+            return true;
+        case "gettingstarted":
+            pxt.tickEvent("hash.gettingstarted");
+            editor.newProject();
+            pxt.BrowserUtils.changeHash("");
             return true;
         case "tutorial": // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
             pxt.tickEvent("hash.tutorial")
             editor.startTutorial(hash.arg);
-            window.location.hash = "";
+            pxt.BrowserUtils.changeHash("");
             return true;
         case "home": // shortcut to home
             pxt.tickEvent("hash.home");
             editor.openHome();
-            window.location.hash = "";
+            pxt.BrowserUtils.changeHash("");
             return true;
         case "sandbox":
         case "pub":
         case "edit": // load a published proj, eg: #pub:27750-32291-62442-22749
             pxt.tickEvent("hash." + hash.cmd);
-            window.location.hash = "";
+            pxt.BrowserUtils.changeHash("");
             loadHeaderBySharedId(hash.arg);
             return true;
         case "sandboxproject":
         case "project":
             pxt.tickEvent("hash." + hash.cmd);
             const fileContents = Util.stringToUint8Array(atob(hash.arg));
-            window.location.hash = "";
+            pxt.BrowserUtils.changeHash("");
             core.showLoading("loadingproject", lf("loading project..."));
             theEditor.importProjectFromFileAsync(fileContents)
                 .done(() => core.hideLoading("loadingheader"));
             return true;
         case "reload": // need to reload last project - handled later in the load process
-            if (loading) window.location.hash = "";
+            if (loading) pxt.BrowserUtils.changeHash("");
             return false;
     }
 
@@ -2395,7 +2400,7 @@ $(document).ready(() => {
     const wsPortMatch = /wsport=(\d+)/i.exec(window.location.href);
     if (wsPortMatch) {
         pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
-        window.location.hash = window.location.hash.replace(wsPortMatch[0], "");
+        pxt.BrowserUtils.changeHash(window.location.hash.replace(wsPortMatch[0], ""));
     } else {
         pxt.options.wsPort = 3233;
     }
@@ -2450,7 +2455,7 @@ $(document).ready(() => {
             const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
             if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
                 lang.setCookieLang(mlang[2]);
-                window.location.hash = window.location.hash.replace(mlang[0], "");
+                pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
             }
             const useLang = mlang ? mlang[2] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
