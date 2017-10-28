@@ -9,9 +9,16 @@
 @carouselArrowSize: 60px;
 @carouselArrowSizeMobile: 40px;
 
-/* Carousel */
+#homescreen {
+    background: @homeScreenBackground;
+    z-index: @menuBarZIndex+1;
+}
 
 .projectsdialog {
+    position: relative;
+    height: 100%;
+    overflow: auto;
+    z-index: @menuBarZIndex+2;
     .getting-started-segment {
         border: 0;
         margin-top: -2.1rem !important;
