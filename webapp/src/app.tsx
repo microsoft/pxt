@@ -131,8 +131,7 @@ export class ProjectView
         // Only show the start screen if there are no initial projects requested
         // (e.g. from the URL hash or from WinRT activation arguments)
         const skipStartScreen = pxt.appTarget.appTheme.allowParentController
-            || !pxt.appTarget.appTheme.showHomeScreen || /skipHomeScreen=1/i.test(window.location.href)
-            || window.location.hash == "#editor";
+            || !pxt.appTarget.appTheme.showHomeScreen || window.location.hash == "#editor";
         return !isSandbox && !skipStartScreen && !isProjectRelatedHash(hash);
     }
 
