@@ -161,7 +161,7 @@ function runCoreAsync(res: pxtc.CompileResult) {
     return new Promise<void>((resolve, reject) => {
         let f = res.outfiles[pxtc.BINARY_JS]
         if (f) {
-            let r = new pxsim.Runtime(f)
+            let r = new pxsim.Runtime({ type: "run", code: f })
             r.errorHandler = (e) => {
                 reject(e);
             }

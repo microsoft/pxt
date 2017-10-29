@@ -636,7 +636,7 @@ ${output}</xml>`;
         }
 
         function getTypeScriptExpressionBlock(n: ts.Node) {
-            const text = applyRenamesInRange(n.getFullText(), n.getFullStart(), n.getEnd());
+            const text = applyRenamesInRange(n.getFullText(), n.getFullStart(), n.getEnd()).trim();
             trackVariableUsagesInText(n);
             return getFieldBlock(pxtc.TS_OUTPUT_TYPE, "EXPRESSION", text);
         }

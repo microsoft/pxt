@@ -159,7 +159,7 @@ namespace pxsim {
     }
     export function readPin(arg: string): MicrobitPin {
         U.assert(!!arg, "Invalid pin: " + arg);
-        const pin = /^(\w+)\.((P|A|D)\d+)$/.exec(arg);
+        const pin = /^(\w+)\..*((P|A|D)\d+)$/.exec(arg);
         return pin ? <MicrobitPin>pin[2] : undefined;
     }
     function mkReverseMap(map: { [key: string]: string }) {

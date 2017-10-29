@@ -272,6 +272,23 @@ export function readJson(fn: string) {
     return JSON.parse(fs.readFileSync(fn, "utf8"))
 }
 
+export function readPkgConfig(dir: string) {
+    pxt.debug("readPkgConfig in " + dir)
+    const fn = path.join(dir, pxt.CONFIG_NAME)
+    const js: pxt.PackageConfig = readJson(fn)
+    if (js.additionalFilePath) {
+        let addjson = path.join(dir, js.additionalFilePath, pxt.CONFIG_NAME)
+        pxt.debug("additional pxt.json: " + addjson)
+        const js2: any = readJson(addjson)
+        for (let k of Object.keys(js2)) {
+            if (!js.hasOwnProperty(k)) {
+                (js as any)[k] = js2[k]
+            }
+        }
+    }
+    return js
+}
+
 export function getPxtTarget(): pxt.TargetBundle {
     if (fs.existsSync(targetDir + "/built/target.json")) {
         let res: pxt.TargetBundle = readJson(targetDir + "/built/target.json")
@@ -460,7 +477,7 @@ export function resolveMd(root: string, pathname: string): string {
         if (!path.isAbsolute(d)) d = path.join(root, d);
         dirs.push(d)
 
-        let cfg: pxt.PackageConfig = readJson(path.join(d, "..", pxt.CONFIG_NAME))
+        let cfg = readPkgConfig(path.join(d, ".."))
         if (cfg.additionalFilePath)
             dirs.push(path.join(d, "..", cfg.additionalFilePath, "docs"))
     }

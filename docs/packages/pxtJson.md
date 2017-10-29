@@ -76,25 +76,13 @@ in the target [**pxt-adafruit**][adafruit] is defined in terms of the button [pa
 **pxt-common-packages** using the `additionalFilePath` field:
 ```typescript-ignore
 {
-    "name": "buttons",
     "description": "Button A and B drivers",
-    "files": [
-        "README.md",
-        "buttons.cpp",
-        "shims.d.ts",
-        "enums.d.ts"
-    ],
-    "testFiles": [
-        "test.ts"
-    ],
-    "additionalFilePath": "../../node_modules/pxt-common-packages/libs/buttons",
-    "public": true,
-    "dependencies": {
-        "core": "file:../core"
-    }
+    "additionalFilePath": "../../node_modules/pxt-common-packages/libs/buttons"
 }
 ```
 The `additionalFilePath` field refers to the `node_modules` directory of the target.
+The `pxt.json` file need to only specify what's changed (in the example above `description`)
+with respect to the `pxt.json` in `additionalFilePath`.
 
 [adafruit]: https://github.com/Microsoft/pxt-adafruit
 [common-packages]: https://github.com/Microsoft/pxt-common-packages

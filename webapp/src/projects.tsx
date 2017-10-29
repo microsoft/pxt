@@ -140,7 +140,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         }
         const chgGallery = (scr: pxt.CodeCard) => {
             pxt.tickEvent("projects.gallery", { name: scr.name });
-            if (!scr.youTubeId || scr.url) this.hide();
+            if (!scr.youTubeId || (scr.url && !/^https:\/\//i.test(scr.url))) this.hide();
             switch (scr.cardType) {
                 case "example": chgCode(scr, true); break;
                 case "codeExample": chgCode(scr, false); break;
@@ -151,7 +151,10 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     else {
                         if (scr.youTubeId && !scr.url)
                             window.open('https://youtu.be/' + scr.youTubeId, 'yt');
-                        else this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
+                        else if (/^https:\/\//i.test(scr.url))
+                            window.open(scr.url, '_blank');
+                        else
+                            this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
                     }
             }
         }
@@ -171,6 +174,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                             if (resp.success) {
                                                 this.props.parent.overrideBlocksFile(resp.outfiles["main.blocks"])
                                             }
+                                            this.props.parent.setSideDoc(scr.url, loadBlocks);
                                         })
                                 })
                                 .done(() => {
@@ -243,7 +247,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             </div>
                             <div className="column right aligned">
                                 {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing) ?
-                                    <sui.Link key="import" icon="upload" class="basic import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={() => importProject()} /> : undefined}
+                                    <sui.Link key="import" icon="upload" class="label basic import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={() => importProject()} /> : undefined}
                             </div>
                         </div>
                         <div className="content">
@@ -552,7 +556,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         }]
 
         return (
-            <sui.Modal open={visible} className="exitandsave" header={lf("Exit Project")} size="small"
+            <sui.Modal open={visible} className="exitandsave" header={lf("Exit Project")} size="tiny"
                 onClose={() => this.hide()} dimmer={true}
                 actions={actions}
                 closeIcon={true}

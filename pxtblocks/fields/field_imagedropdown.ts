@@ -49,7 +49,8 @@ namespace pxtblockly {
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.DropDownDiv.clearContent();
             // Populate the drop-down with the icons for this field.
-            let contentDiv = Blockly.DropDownDiv.getContentDiv();
+            let dropdownDiv = Blockly.DropDownDiv.getContentDiv();
+            let contentDiv = document.createElement('div');
             // Accessibility properties
             contentDiv.setAttribute('role', 'menu');
             contentDiv.setAttribute('aria-haspopup', 'true');
@@ -114,6 +115,8 @@ namespace pxtblockly {
                 button.appendChild(buttonImg);
                 contentDiv.appendChild(button);
             }
+            contentDiv.style.width = this.width_ + 'px';
+            dropdownDiv.appendChild(contentDiv);
 
             Blockly.DropDownDiv.setColour(this.backgroundColour_, this.borderColour_);
 

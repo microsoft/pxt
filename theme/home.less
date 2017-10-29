@@ -55,6 +55,7 @@
             margin: 0;
             padding-left: @carouselArrowSize;
             font-size: 24px;
+            color: @homeHeaderColor;
         }
         .column {
             padding: 0 !important;
@@ -62,6 +63,10 @@
         .column.right.aligned {
             padding-right: @carouselArrowSize !important;
         }
+    }
+    /* Import button */
+    .ui.import-dialog-btn.label {
+        color: @linkColor;
     }
     /* Footer, Privary, Terms of Use */
     .homefooter {
@@ -76,7 +81,23 @@
     }
     .ui.card {
         margin-right: 5px;
-        border-radius: 0px;
+        border-radius: @homeCardBorderRadius;
+        color: @homeCardColor;
+        border: @homeCardBorderSize solid @homeCardBorderColor !important;
+        background-color: @homeCardBackgroundColor;
+        .ui.image, .ui.imagewrapper, .content {
+            border-radius: @homeCardImageBorderRadius !important;
+        }
+        .header {
+            color: @homeCardHeaderColor;
+        }
+        .meta {
+            color: @homeCardMetaColor;
+        }
+    }
+    .ui.card:hover {
+        border: @homeCardBorderSize solid @homeCardHoverBorderColor !important;
+        background-color: @homeCardHoverBackgroundColor;
     }
     .header {
         user-select: none;

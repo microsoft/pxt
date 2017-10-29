@@ -111,11 +111,14 @@ declare namespace pxt {
         streams?: boolean;
         aspectRatio?: number; // width / height
         boardDefinition?: pxsim.BoardDefinition;
+        dynamicBoardDefinition?: boolean; // if true, boardDefinition comes from board package
         parts?: boolean; // parts enabled?
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
         headless?: boolean; // whether simulator should still run while collapsed
         trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
+        invalidatedClass?: string; // CSS class to be applied to the sim iFrame when it needs to be updated (defaults to sepia filter)
+        stoppedClass?: string; // CSS class to be applied to the sim iFrame when it isn't running (defaults to grayscale filter)
     }
 
     interface TargetCompileService {
