@@ -1,0 +1,63 @@
+<html>
+
+<body>
+    <pre id="mycode">
+    basic.showString("hello!")
+    </pre>
+    <pre id="mycode2">
+            basic.showIcon(IconNames.Heart)                    
+            </pre>
+    <div id="status"></div>
+    <div id="blocks"></div>
+
+    <script>
+        function makeCodeInjectRenderer() {
+            var f = document.createElement("iframe");
+            f.id = "makecoderenderer";
+            f.style.position = "absolute";
+            f.style.left = 0;
+            f.style.bottom = 0;
+            f.style.width = "1px";
+            f.style.height = "1px";
+            f.src = "/--docs?render=1"
+            document.body.appendChild(f);
+        }
+
+        function makeCodeRenderPre(pre) {
+            var f = document.getElementById("makecoderenderer");
+            f.contentWindow.postMessage({
+                type: "renderblocks",
+                id: pre.id,
+                code: pre.innerText
+            }, "*");
+        }
+
+        window.addEventListener("message", function (ev) {
+            var msg = ev.data;
+            if (msg.source != "makecode") return;
+
+            switch (msg.type) {
+                case "renderready":
+                    makeCodeRenderPre(document.getElementById("mycode"))
+                    makeCodeRenderPre(document.getElementById("mycode2"))
+                    break;
+                case "renderblocks":
+                    var svg = msg.svg;
+                    var id = msg.id;
+                    // replace text with svg
+                    var img = document.createElement("img");
+                    img.src = msg.uri;
+                    img.width = msg.width;
+                    img.height = msg.height;
+                    var code = document.getElementById(id)
+                    code.parentElement.insertBefore(img, code)
+                    code.parentElement.removeChild(code);
+                    break;
+            }
+        }, false);
+
+        makeCodeInjectRenderer();
+    </script>
+</body>
+
+</html>

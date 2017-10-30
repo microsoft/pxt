@@ -344,8 +344,8 @@ namespace pxt.BrowserUtils {
     export function loadAjaxAsync(url: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             let httprequest = new XMLHttpRequest();
-            httprequest.onreadystatechange = function() {
-                if (httprequest.readyState == XMLHttpRequest.DONE ) {
+            httprequest.onreadystatechange = function () {
+                if (httprequest.readyState == XMLHttpRequest.DONE) {
                     if (httprequest.status == 200) {
                         resolve(httprequest.responseText);
                     }
@@ -357,5 +357,64 @@ namespace pxt.BrowserUtils {
             httprequest.open("GET", url, true);
             httprequest.send();
         })
+    }
+
+    export function initTheme() {
+        function patchCdn(url: string): string {
+            if (!url) return url;
+            return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
+        }
+
+        const theme = pxt.appTarget.appTheme;
+        if (theme) {
+            if (theme.accentColor) {
+                let style = document.createElement('style');
+                style.type = 'text/css';
+                style.innerHTML = `.ui.accent { color: ${theme.accentColor}; }
+                .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${theme.accentColor}; }`;
+                document.getElementsByTagName('head')[0].appendChild(style);
+
+            }
+            theme.appLogo = patchCdn(theme.appLogo)
+            theme.cardLogo = patchCdn(theme.cardLogo)
+            theme.homeScreenHero = patchCdn(theme.homeScreenHero)
+        }
+        // RTL languages
+        if (Util.isUserLanguageRtl()) {
+            pxt.debug("rtl layout");
+            document.body.classList.add("rtl");
+            document.body.style.direction = "rtl";
+
+            // replace semantic.css with rtlsemantic.css
+            const links = Util.toArray(document.head.getElementsByTagName("link"));
+            const semanticLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "semantic.css"))[0];
+            if (semanticLink) {
+                const semanticHref = semanticLink.getAttribute("data-rtl");
+                if (semanticHref) {
+                    pxt.debug(`swapping to ${semanticHref}`)
+                    semanticLink.setAttribute("href", semanticHref);
+                }
+            }
+            // replace blockly.css with rtlblockly.css
+            const blocklyLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "blockly.css"))[0];
+            if (blocklyLink) {
+                const blocklyHref = blocklyLink.getAttribute("data-rtl");
+                if (blocklyHref) {
+                    pxt.debug(`swapping to ${blocklyHref}`)
+                    blocklyLink.setAttribute("href", blocklyHref);
+                }
+            }
+        }
+
+        const sim = pxt.appTarget.simulator;
+        if (sim
+            && sim.boardDefinition
+            && sim.boardDefinition.visual) {
+            let boardDef = sim.boardDefinition.visual as pxsim.BoardImageDefinition;
+            if (boardDef.image) {
+                boardDef.image = patchCdn(boardDef.image)
+                if (boardDef.outlineImage) boardDef.outlineImage = patchCdn(boardDef.outlineImage)
+            }
+        }
     }
 }
