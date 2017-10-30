@@ -436,7 +436,7 @@ namespace pxt.docs {
                 return '<li>' + text + '</li>\n';
             }
             renderer.heading = function (text: string, level: number, raw: string) {
-                let m = /(.*)#([\w\-]+)\s*$/.exec(text)
+                let m = /(.*)[#@]([\w\-]+)\s*$/.exec(text)
                 let id = ""
                 if (m) {
                     text = m[1]
