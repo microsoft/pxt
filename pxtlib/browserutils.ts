@@ -417,4 +417,17 @@ namespace pxt.BrowserUtils {
             }
         }
     }
+
+    /**
+     * Utility method to change the hash. 
+     * Pass keepHistory to retain an entry of the change in the browser history.
+     */
+    export function changeHash(hash: string, keepHistory?: boolean) {
+        if (hash.charAt(0) != '#') hash = '#' + hash;
+        if (keepHistory) {
+            window.location.hash = hash;
+        } else {
+            window.history.replaceState('', '', hash)
+        }
+    }
 }
