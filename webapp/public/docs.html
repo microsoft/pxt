@@ -64,13 +64,13 @@
             color: transparent;
         }
     </style>
+    <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" type="text/css">
+    <link id="blocklycss" rel="stylesheet" data-rtl="/blb/rtlblockly.css" href="/blb/blockly.css" type="text/css">
 </head>
 
 <body id="docs">
     <style type="text/css">
         @import "/blb/highlight.js/styles/vs.css";
-        @import "/blb/semantic.css";
-        @import "/blb/blockly.css";
         @import "/blb/icons.css";
     </style>
     <div id='loading' class="ui active inverted dimmer">
@@ -92,11 +92,13 @@
         var loading = document.getElementById('loading');
         var content = document.getElementById('content');        
         ksRunnerReady(function() {
+            pxt.BrowserUtils.initTheme();
             pxt.docs.requireMarked = function() { return marked; }
             var projectid = /projectid=([^&?]+)/i.exec(window.location.href); 
             var code = /code=([^&?]+)/i.exec(window.location.href);
             var md = /md=([^&?]+)/i.exec(window.location.href);
             var markdown = code ? "```blocks\n" + decodeURIComponent(code[1]) + "```" : md ? decodeURIComponent(md[1]) : undefined;
+            var embed = /render=1/i.exec(window.location.href);
             if (markdown) {
                 console.log('rendering code:')
                 console.log(markdown);
@@ -110,6 +112,8 @@
                     $(content).show();
                 });
             }
+            else if (embed)
+                pxt.runner.startRenderServer();
             else
                 pxt.runner.startDocsServer(loading, content);
         });
