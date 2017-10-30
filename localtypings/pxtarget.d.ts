@@ -42,7 +42,7 @@ declare namespace pxt {
     interface ProjectTemplate {
         id: string;
         config: PackageConfig;
-        files: Map<string>;
+        files: pxt.Map<string>;
     }
 
     interface BlockToolboxDefinition {
@@ -50,7 +50,7 @@ declare namespace pxt {
         type: string;
         gap?: number;
         weight?: number;
-        fields?: Map<string>;
+        fields?: pxt.Map<string>;
     }
 
     interface RuntimeOptions {
@@ -305,7 +305,7 @@ declare namespace ts.pxtc {
         target: CompileTarget;
         testMode?: boolean;
         sourceFiles?: string[];
-        jres?: Map<pxt.JRes>;
+        jres?: pxt.Map<pxt.JRes>;
         hexinfo: HexInfo;
         extinfo?: ExtensionInfo;
         noEmit?: boolean;
