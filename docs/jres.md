@@ -16,7 +16,7 @@ namespace sfx {
 }
 ```
 
-The `sounds.jres` file contains the data. The file has a special `*` key, specifies
+The `sounds.jres` file contains the data. The file has a special `*` key, which specifies
 default metadata for other keys. The rest of keys specify resources.
 
 ```json
@@ -33,5 +33,31 @@ default metadata for other keys. The rest of keys specify resources.
     "purr": {
         // ...
     }
+}
+```
+
+## Short forms
+
+In case, there's only the `"data"` field present, the file can be shortened:
+
+```json
+{
+    "*": {
+        "namespace": "images",
+        "dataEncoding": "base64",
+        "mimeType": "image/png"
+    },
+    "eyes": "CiAgICAiYnVpbHQvcHh0cGFydHMu...IsCiAgICAic",
+    "smile": "dHMiLAogICAgI...93ZWIvd"
+}
+```
+
+In case where the `jres` name matches the namespace and name of the constant,
+it can be omitted, as in:
+
+```typescript-ignore
+namespace images {
+    //% fixedInstance jres
+    export const eyes = new Image(hex ``) 
 }
 ```

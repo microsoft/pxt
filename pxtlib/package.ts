@@ -111,6 +111,10 @@ namespace pxt {
                     for (let k of Object.keys(js)) {
                         if (k == "*") continue
                         let v = js[k]
+                        if (typeof v == "string") {
+                            // short form
+                            v = { data: v } as any
+                        }
                         let ns = v.namespace || base.namespace || ""
                         if (ns) ns += "."
                         let id = v.id || ns + k

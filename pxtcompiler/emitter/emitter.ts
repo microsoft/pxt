@@ -3738,10 +3738,14 @@ ${lbl}: .short 0xffff
                 emitBrk(node)
                 if (isGlobalVar(node)) {
                     let attrs = parseComments(node)
-                    if (attrs.jres) {
-                        let jr = U.lookup(opts.jres || {}, attrs.jres)
+                    let jrname = attrs.jres
+                    if (jrname) {
+                        if (jrname == "true") {
+                            jrname = getFullName(checker, node.symbol)
+                        }
+                        let jr = U.lookup(opts.jres || {}, jrname)
                         if (!jr)
-                            userError(9270, lf("resource '{0}' not found in any .jres file", attrs.jres))
+                            userError(9270, lf("resource '{0}' not found in any .jres file", jrname))
                         else {
                             currJres = jr
                         }
