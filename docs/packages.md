@@ -1,4 +1,4 @@
-# PXT Packages
+# PXT packages
 
 Packages are PXT's dynamic/static library mechanism for extending a target, such as the
 pxt-micro:bit:
@@ -6,7 +6,7 @@ pxt-micro:bit:
 > [pxt-microbit](https://github.com/microsoft/pxt-microbit)
 
 Here is an example of a simple package that extends the pxt-microbit target 
-so that the micro:bit can drive a NeoPixel strip: 
+so that the micro:bit can drive a NeoPixel strip:
 
 > [pxt-neopixel](https://github.com/Microsoft/pxt-neopixel)
 
