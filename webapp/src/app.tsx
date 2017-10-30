@@ -131,7 +131,7 @@ export class ProjectView
         // Only show the start screen if there are no initial projects requested
         // (e.g. from the URL hash or from WinRT activation arguments)
         const skipStartScreen = pxt.appTarget.appTheme.allowParentController
-            || !pxt.appTarget.appTheme.showHomeScreen || window.location.hash == "#editor";
+            || window.location.hash == "#editor";
         return !isSandbox && !skipStartScreen && !isProjectRelatedHash(hash);
     }
 
@@ -148,9 +148,7 @@ export class ProjectView
         } else {
             if (workspace.isSessionOutdated()) {
                 pxt.debug('workspace changed, reloading...')
-                let id = this.state.header ? this.state.header.id : '';
-                // workspace.initAsync()
-                //     .done(() => id ? this.loadHeaderAsync(workspace.getHeader(id)) : Promise.resolve());
+                this.openHome();
             } else if (this.state.resumeOnVisibility && !this.state.running) {
                 this.setState({ resumeOnVisibility: false });
                 this.runSimulator();
@@ -642,7 +640,6 @@ export class ProjectView
         if (!h)
             return Promise.resolve()
 
-        pxt.BrowserUtils.changeHash("#editor", true);
         this.stopSimulator(true);
         pxt.blocks.cleanBlocks();
         this.clearSerial()
@@ -716,6 +713,10 @@ export class ProjectView
                     this.setSideMarkdown(readme.content);
                 else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
                     this.setSideDoc(pkg.mainPkg.config.documentation, preferredEditor == this.blocksEditor);
+            }).finally(() => {
+                // Editor is loaded
+                pxt.BrowserUtils.changeHash("#editor", true);
+                document.getElementById("root").focus(); // Clear the focus.
             })
     }
 
@@ -792,14 +793,10 @@ export class ProjectView
     resourceImporters: pxt.editor.IResourceImporter[] = [];
 
     importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
-        function loadFailed() {
-            pxt.appTarget.appTheme.showHomeScreen ? this.home.showHome() : this.newProject();
-        }
-
         const targetId = pxt.appTarget.id;
         if (!data || !data.meta) {
             core.warningNotification(lf("Sorry, we could not recognize this file."))
-            if (createNewIfFailed) loadFailed();
+            if (createNewIfFailed) this.openHome();
             return;
         }
 
@@ -812,13 +809,13 @@ export class ProjectView
                     pxt.reportException(e, { importer: importer.id });
                     core.hideLoading("importhex");
                     core.errorNotification(lf("Oops, something went wrong when importing your project"));
-                    if (createNewIfFailed) loadFailed();
+                    if (createNewIfFailed) this.openHome();
                 });
         }
         else {
             core.warningNotification(lf("Sorry, we could not import this project."))
             pxt.tickEvent("warning.importfailed");
-            if (createNewIfFailed) loadFailed();
+            if (createNewIfFailed) this.openHome();
         }
     }
 
@@ -832,7 +829,7 @@ export class ProjectView
                 this.importHex(data);
             }).catch(e => {
                 core.warningNotification(lf("Sorry, we could not import this project."))
-                pxt.appTarget.appTheme.showHomeScreen ? this.openHome() : this.newProject();
+                this.openHome();
             });
     }
 
@@ -1752,13 +1749,13 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const inHome = this.state.home && !sandbox;
-        const inEditor = this.state.header;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
         const trace = run && simOpts.enableTrace;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
+        const inEditor = !!this.state.header;
         const { hideMenuBar, hideEditorToolbar } = targetTheme;
         const isHeadless = simOpts.headless;
         const simActive = this.state.embedSimView;

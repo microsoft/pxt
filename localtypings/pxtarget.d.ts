@@ -170,7 +170,6 @@ declare namespace pxt {
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
-        showHomeScreen?: boolean; // show the home page on editor load
         homeScreenHero?: string; // home screen hero image
         sideDoc?: string; // deprecated
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
