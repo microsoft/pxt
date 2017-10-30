@@ -80,7 +80,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9270
+    // next free error 9272
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -896,6 +896,7 @@ namespace ts.pxtc {
         let nextIfaceMemberId = 0;
         let autoCreateFunctions: pxt.Map<boolean> = {}
         let configEntries: pxt.Map<ConfigEntry> = {}
+        let currJres: pxt.JRes = null
 
         cachedSubtypeQueries = {}
         lastNodeId = 0
@@ -2353,6 +2354,16 @@ ${lbl}: .short 0xffff
                 return /^[0-9a-f]$/i.test(c)
             }
             function parseHexLiteral(s: string) {
+                if (s == "" && currJres) {
+                    if (!currJres.dataEncoding || currJres.dataEncoding == "base64") {
+                        s = U.toHex(U.stringToUint8Array(atob(currJres.data)))
+                    } else if (currJres.dataEncoding == "hex") {
+                        s = currJres.data
+                    } else {
+                        userError(9271, lf("invalid jres encoding '{0}' on '{1}'",
+                            currJres.dataEncoding, currJres.id))
+                    }
+                }
                 let res = ""
                 for (let i = 0; i < s.length; ++i) {
                     let c = s[i]
@@ -3724,10 +3735,21 @@ ${lbl}: .short 0xffff
                 proc.stackEmpty();
             }
             else if (node.initializer) {
-                // TODO: make sure we don't emit code for top-level globals being initialized to zero
                 emitBrk(node)
+                if (isGlobalVar(node)) {
+                    let attrs = parseComments(node)
+                    if (attrs.jres) {
+                        let jr = U.lookup(opts.jres || {}, attrs.jres)
+                        if (!jr)
+                            userError(9270, lf("resource '{0}' not found in any .jres file", attrs.jres))
+                        else {
+                            currJres = jr
+                        }
+                    }
+                }
                 typeCheckSubtoSup(node.initializer, node)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
+                currJres = null
                 proc.stackEmpty();
             }
             return loc;

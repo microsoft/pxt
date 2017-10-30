@@ -305,6 +305,7 @@ declare namespace ts.pxtc {
         target: CompileTarget;
         testMode?: boolean;
         sourceFiles?: string[];
+        jres?: Map<pxt.JRes>;
         hexinfo: HexInfo;
         extinfo?: ExtensionInfo;
         noEmit?: boolean;
