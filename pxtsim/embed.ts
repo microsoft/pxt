@@ -134,6 +134,30 @@ namespace pxsim {
         message?: string;
     }
 
+    export interface RenderReadyResponseMessage extends SimulatorMessage {
+        source: "makecode",
+        type: "renderready"
+    }
+
+    export interface RenderBlocksRequestMessage extends SimulatorMessage {
+        type: "renderblocks",
+        id: string;
+        code: string;
+        options?: {
+            package?: string;
+            snippetMode?: boolean;
+        }
+    }
+
+    export interface RenderBlocksResponseMessage extends SimulatorMessage {
+        source: "makecode",
+        type: "renderblocks",
+        id: string;
+        svg?: string;
+        width?: number;
+        height?: number;
+    }
+
     export namespace Embed {
         export function start() {
             window.addEventListener("message", receiveMessage, false);
