@@ -100,11 +100,11 @@ namespace ts.pxtc {
     }
 
     export function isStackMachine() {
-        return target.nativeType == NATIVE_TYPE_AVRVM
+        return target.isNative && target.nativeType == NATIVE_TYPE_AVRVM
     }
 
     export function isAVR() {
-        return target.nativeType == NATIVE_TYPE_AVRVM || target.nativeType == NATIVE_TYPE_AVR
+        return target.isNative && (target.nativeType == NATIVE_TYPE_AVRVM || target.nativeType == NATIVE_TYPE_AVR)
     }
 
     function isRefType(t: Type) {

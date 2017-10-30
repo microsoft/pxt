@@ -200,7 +200,7 @@ ${hex.hexPrelude()}
                     else if (e.data === 1)
                         write(`ldone`)
                     else
-                        write(`ldconst ${e.data}`)
+                        write(`ldconst ${e.data & 0xffff}`)
                     return
                 case EK.PointerLiteral:
                     write(`ldconst ${e.data}`)
