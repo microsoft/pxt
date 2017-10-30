@@ -2363,6 +2363,10 @@ pxt_modules
         "**/yotta_targets": true,
         "**/pxt_modules/**": true
     },
+    "files.associations": {
+        "*.blocks": "html",
+        "*.jres": "json"
+    },    
     "search.exclude": {
         "**/built": true,
         "**/node_modules": true,
