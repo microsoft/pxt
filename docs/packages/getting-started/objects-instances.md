@@ -1,8 +1,11 @@
+# Objects and instances
+
+## ``|Step 1|`` - TODO
 
 
 ```typescript
 /**
- * Appearance and codition of the banana.
+ * Appearance and condition of the banana.
  */
 enum Peel {
     //% block=green
