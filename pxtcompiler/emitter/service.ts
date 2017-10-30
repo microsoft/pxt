@@ -380,7 +380,7 @@ namespace ts.pxtc {
             si.qName = qName;
             si.attributes._source = null
             if (si.extendsTypes && si.extendsTypes.length) toclose.push(si)
-            
+
             let jrname = si.attributes.jres
             if (jrname) {
                 if (jrname == "true") jrname = qName
