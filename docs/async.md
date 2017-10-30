@@ -83,7 +83,7 @@ export function downloadData(url:string) { return "" }
 In the simulator you return a promise:
 
 ```typescript-ignore
-export function downloadDataAsync(url:string) {
+export function downloadData(url:string) {
     return new Promise<string>((resolve, reject) =>
         $.get(url, (data, status) => {
             resolve(data)
