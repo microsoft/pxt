@@ -119,7 +119,7 @@ declare namespace pxt {
     interface JRes {
         id: string; // something like "sounds.bark"
         data: string;
-        dataEncoding?: string; // "base64" (default) or "hex"
+        dataEncoding?: string; // must be "base64" or missing (meaning the same)
         icon?: string; // URL (usually data-URI) for the icon
         namespace?: string; // used to construct id
         mimeType: string;

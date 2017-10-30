@@ -388,6 +388,9 @@ namespace ts.pxtc {
                 if (jr && !si.attributes.iconURL) {
                     si.attributes.iconURL = jr.icon
                 }
+                if (jr && !si.attributes.jresURL) {
+                    si.attributes.jresURL = "data:" + jr.mimeType + ";base64," + jr.data
+                }
             }
         }
 

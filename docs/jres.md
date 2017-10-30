@@ -36,6 +36,10 @@ default metadata for other keys. The rest of keys specify resources.
 }
 ```
 
+Currently, only `base64` is supported as data encoding. If you skip `dataEncoding` in the `.jres` file,
+it will now and in future default to `base64`.
+
+
 ## Short forms
 
 In case, there's only the `"data"` field present, the file can be shortened:
