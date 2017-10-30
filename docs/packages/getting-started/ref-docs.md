@@ -204,10 +204,10 @@ functions based on signature. The cards show a block from the compiled code of t
 Card pages form the top levels of the reference document tree (usually the second level after the reference page: _reference.md_).
 
 ### ~hint
-The card page isn't automatically added to the top level reference page, _reference.md_,  when a package is added. If a package is included with a target statically, the card page is added manually in a [namespaces](https://makecode.com/writing-docs/macros#namespaces) section.
+The card page isn't automatically added to the top level reference page, _reference.md_,  when a package is added. If a package is included with a target statically, the card page is added manually in a [namespaces](/writing-docs/macros#namespaces) section.
 ### ~
 
-Cards are declared in a [**cards**](https://makecode.com/writing-docs/macros#cards) section in the card markdown page. You have the option of exposing some or all of the available methods from you namespace in the card page. The document for the card page is placed in the _/reference_ folder and has the same name as the namespace folder but with the markdown (md) extension.
+Cards are declared in a [**cards**](/writing-docs/macros#cards) section in the card markdown page. You have the option of exposing some or all of the available methods from you namespace in the card page. The document for the card page is placed in the _/reference_ folder and has the same name as the namespace folder but with the markdown (md) extension.
 
 Here's the card page for the `tropic` namespace package called `tropic.md`:
 

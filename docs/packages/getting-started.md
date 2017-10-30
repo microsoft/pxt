@@ -89,7 +89,7 @@ in `README.md`. Otherwise the package will not show up in search.**
 
 ### ~
 
-Read more an [defining-blocks](https://makecode.com/defining-blocks) to learn how to surface your APIs into blocks and JavaScript.
+Read more on [defining blocks](/defining-blocks) to learn how to surface your APIs into blocks and JavaScript.
 
 ### Icon
 
