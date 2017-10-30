@@ -128,6 +128,7 @@ namespace ts.pxtc {
         colorSecondary?: string;
         colorTertiary?: string;
         icon?: string;
+        iconURL?: string;
         imageLiteral?: number;
         weight?: number;
         parts?: string;

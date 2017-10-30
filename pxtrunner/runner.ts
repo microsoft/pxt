@@ -705,7 +705,7 @@ ${files["main.ts"]}
                     return Promise.resolve<DecompileResult>({ package: mainPkg, compileJS: resp });
 
                 // decompile to blocks
-                let apis = pxtc.getApiInfo(resp.ast);
+                let apis = pxtc.getApiInfo(opts, resp.ast);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);

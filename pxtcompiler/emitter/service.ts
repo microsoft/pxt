@@ -184,12 +184,12 @@ namespace ts.pxtc {
                             });
                         }
                         else {
-                           parameters = callbackParameters.map((sym, i) => {
-                               return {
-                                   name: sym.getName(),
-                                   type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(sym, p))
-                               };
-                           });
+                            parameters = callbackParameters.map((sym, i) => {
+                                return {
+                                    name: sym.getName(),
+                                    type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(sym, p))
+                                };
+                            });
                         }
                     }
                     let options: Map<PropertyOption> = {};
@@ -308,7 +308,7 @@ namespace ts.pxtc {
         }
     }
 
-    export function getApiInfo(program: Program, legacyOnly = false): ApisInfo {
+    export function getApiInfo(opts: CompileOptions, program: Program, legacyOnly = false): ApisInfo {
         let res: ApisInfo = {
             byQName: {}
         }
@@ -380,6 +380,15 @@ namespace ts.pxtc {
             si.qName = qName;
             si.attributes._source = null
             if (si.extendsTypes && si.extendsTypes.length) toclose.push(si)
+            
+            let jrname = si.attributes.jres
+            if (jrname) {
+                if (jrname == "true") jrname = qName
+                let jr = U.lookup(opts.jres || {}, jrname)
+                if (jr && !si.attributes.iconURL) {
+                    si.attributes.iconURL = jr.icon
+                }
+            }
         }
 
         // transitive closure of inheritance
@@ -595,7 +604,7 @@ namespace ts.pxtc.service {
         },
         compileTd: v => {
             let res = compile(v.options);
-            return getApiInfo(res.ast, true);
+            return getApiInfo(host.opts, res.ast, true);
         },
 
         assemble: v => {
@@ -633,7 +642,7 @@ namespace ts.pxtc.service {
         apiInfo: () => {
             lastBlocksInfo = undefined;
             lastFuse = undefined;
-            return lastApiInfo = getApiInfo(service.getProgram());
+            return lastApiInfo = getApiInfo(host.opts, service.getProgram());
         },
         blocksInfo: blocksInfoOp,
         apiSearch: v => {
