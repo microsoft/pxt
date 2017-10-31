@@ -31,6 +31,12 @@ export class Editor extends srceditor.Editor {
         const c = this.config
         const save = () => {
             this.isSaving = true;
+            if (!c.name) {
+                // Error saving no name
+                core.errorNotification(lf("Please choose a project name. It can't be blank."));
+                this.isSaving = false;
+                return;
+            }
             const f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
             f.setContentAsync(JSON.stringify(this.config, null, 4) + "\n").then(() => {
                 pkg.mainPkg.config.name = c.name;
@@ -111,6 +117,10 @@ export class Editor extends srceditor.Editor {
                 </div>
             </div>
         )
+    }
+
+    isIncomplete() {
+        return !this.changeMade;
     }
 
     editSettingsText() {
