@@ -286,7 +286,7 @@
 		}
 		/* Accessible menu */
 
-		.accessibleMenu {
+		#accessibleMenu {
 			width: 100%;
 			position: absolute;
 			top: -20em;
@@ -296,7 +296,7 @@
 			left: 0;
 		}
 
-		.accessibleMenu .ui.item.link {
+		#accessibleMenu .ui.item.link {
 			position: absolute;
 			left: 0;
 			right: 0;
@@ -307,8 +307,8 @@
 			color: #0072c6;
 		}
 
-		.accessibleMenu .ui.item.link:focus,
-		.accessibleMenu .ui.item.link:hover {
+		#accessibleMenu .ui.item.link:focus,
+		#accessibleMenu .ui.item.link:hover {
 			box-shadow: 3px 3px 5px #aaa;
 			top: 20em;
 			text-decoration: none;
@@ -427,7 +427,8 @@
 				Microsoft MakeCode
 			</h1>
 
-			<div class="accessibleMenu" role="menubar">
+
+			<div id="accessibleMenu" role="menubar">
 				<a id="skiptocontent" class="ui item link" role="menuitem" href="#document-main" tabindex="1">Skip to Content</a>
 			</div>
 

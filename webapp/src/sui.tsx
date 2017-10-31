@@ -827,7 +827,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
 
     componentWillMount() {
         const { open } = this.props;
-        this.setState({ open: open });
+        this.state = { open: open }
     }
 
     componentWillReceiveProps(nextProps: ModalProps) {
@@ -1083,7 +1083,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
 
     componentWillMount() {
         const { open } = this.props;
-        this.setState({ open: open });
+        this.state = { open: open }
     }
 
     componentWillReceiveProps(nextProps: ModalProps) {

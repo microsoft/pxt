@@ -210,7 +210,6 @@
 @homeCardBorderSize: 5px;
 @homeCardBorderColor: #e9eef2;
 @homeCardHoverBorderColor: white;
-@homeCardFocusBorderColor: yellow;
 @homeCardColor: @textColor;
 @homeCardMetaColor: @homeCardColor;
 @homeCardHeaderColor: @homeCardColor;
@@ -219,12 +218,6 @@
 @homeCardBackgroundColor: white;
 @homeCardHoverBackgroundColor: darken(@homeCardBackgroundColor, 5%);
 
-/* Detail view */
-@homeSelectedCardBorderSize: @homeCardBorderSize*2;
-@homeSelectedCardBorderColor: white;
-@homeDetailViewBackground: darken(@homeScreenBackground, 10%);
-@homeDetailViewColor: @homeCardColor;
-@homeDetailCloseColor: white;
 
 /*-------------------
    Tutorial

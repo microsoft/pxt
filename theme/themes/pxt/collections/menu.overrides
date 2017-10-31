@@ -2,7 +2,7 @@
          Site Overrides
 *******************************/
 
-.menubar {
+#menubar {
     position: absolute;
     left: 0;
     top: 0;
@@ -14,46 +14,46 @@
     position: absolute;   
 }
 
-.menubar .ui.menu {
+#menubar .ui.menu {
     height: @mainMenuHeight;
     min-height: @mainMenuMinHeight !important;
 }
 
-.menubar .item > .button {
+#menubar .item > .button {
     margin-right: 0.25rem;
     padding: 0.6rem;
 }
 
-.menubar .accessibleMenu .ui.item.link {
+#menubar #accessibleMenu .ui.item.link {
     height: @mainMenuHeight;
     min-height: @mainMenuMinHeight !important;
 }
 
-.menubar .accessibleMenu .ui.item.link.inverted:hover {
+#menubar #accessibleMenu .ui.item.link.inverted:hover {
     background: @invertedBackground;
 }
 
 
-#root .menubar .menu > .ui.item:hover .icon {
+#root #menubar .menu > .ui.item:hover .icon {
     transform: scale(1.2);
 }
 
 @media only screen and (max-width: @largestTabletScreen) {
-    .menubar .ui.menu {
+    #menubar .ui.menu {
         height: @mobileMenuHeight !important;
         min-height: @mobileMenuHeight !important;
     }
-    .menubar .left.menu > .item.icon:not(.logo),  .menubar .right.menu > .item.icon:not(.logo) {
+    #menubar .left.menu > .item.icon:not(.logo),  #menubar .right.menu > .item.icon:not(.logo) {
         width: 48px;
     }
-    .sandbox .menubar .ui.menu {
+    .sandbox #menubar .ui.menu {
         height: @sandboxMobileMenuHeight !important;
         min-height: @sandboxMobileMenuHeight !important;
     }
     .ui.menu .item > i.icon {
         margin: 0;
     }
-    .menubar .accessibleMenu .ui.item.link {
+    #menubar #accessibleMenu .ui.item.link {
         height: @mobileMenuHeight !important;
         min-height: @mobileMenuHeight !important;
     }

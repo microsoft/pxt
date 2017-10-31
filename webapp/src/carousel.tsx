@@ -4,7 +4,6 @@ import * as sui from "./sui";
 export interface ICarouselProps extends React.Props<Carousel> {
     // Percentage of child width to bleed over either edge of the page
     bleedPercent: number;
-    selectedIndex?: number;
 }
 
 export interface ICarouselState {
@@ -39,12 +38,6 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     private animationId: number;
     private childrenElements: HTMLDivElement[] = [];
 
-    componentWillReceiveProps(nextProps: ICarouselProps) {
-        if (nextProps.selectedIndex != undefined) {
-            this.setIndex(nextProps.selectedIndex);
-        }
-    }
-
     public render() {
         this.childrenElements = [];
         this.arrows = [];
@@ -56,7 +49,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
             <div className="carouselcontainer" ref={r => this.container = r}>
                 <div className="carouselbody" ref={r => this.dragSurface = r}>
                 {
-                    React.Children.map(this.props.children, (child, index) => <div className={`carouselitem ${this.props.selectedIndex == index ? 'selected' : ''}`} ref={r => r && this.childrenElements.push(r)}>
+                    React.Children.map(this.props.children, child => <div className="carouselitem" ref={r => r && this.childrenElements.push(r)}>
                         {child}
                     </div>)
                 }

@@ -93,7 +93,6 @@ declare namespace pxt {
         blocksXml?: string;
         typeScript?: string;
         imageUrl?: string;
-        largeImageUrl?: string;
         youTubeId?: string;
         time?: number;
         url?: string;

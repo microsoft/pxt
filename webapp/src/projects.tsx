@@ -9,7 +9,6 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
-import * as accessibility from "./accessibility";
 import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
@@ -23,8 +22,6 @@ import Cloud = pxt.Cloud;
 interface ProjectsState {
     searchFor?: string;
     visible?: boolean;
-    selectedCategory?: string;
-    selectedIndex?: number;
 }
 
 export class Projects extends data.Component<ISettingsProps, ProjectsState> {
@@ -75,20 +72,10 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ProjectsState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
             || this.state.searchFor != nextState.searchFor
-            || this.state.selectedCategory != nextState.selectedCategory
-            || this.state.selectedIndex != nextState.selectedIndex;
-    }
-
-    setSelected(category: string, index: number) {
-        if (index == undefined || this.state.selectedCategory == category && this.state.selectedIndex == index) {
-            this.setState({ selectedCategory: undefined, selectedIndex: undefined });
-        } else {
-            this.setState({ selectedCategory: category, selectedIndex: index });
-        }
     }
 
     renderCore() {
-        const { visible, selectedCategory, selectedIndex } = this.state;
+        const { visible } = this.state;
 
         const targetTheme = pxt.appTarget.appTheme;
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
@@ -168,11 +155,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             this.props.parent.importProjectDialog();
         }
 
-        const selectLang = () => {
-            pxt.tickEvent("projects.langpicker");
-            this.props.parent.selectLang();
-        }
-
         const showHeroBanner = !!targetTheme.homeScreenHero;
         const betaUrl = targetTheme.betaUrl;
 
@@ -180,79 +162,63 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             'ui segment bottom attached tab active tabsegment'
         ]);
 
-        return <div className={tabClasses}>
-            {showHeroBanner ?
-                <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
-            <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
-                <div className="ui grid equal width padded">
-                    <div className="column">
-                        <h2 className="ui header">{lf("My Projects") } </h2>
-                    </div>
-                    <div className="column right aligned">
-                        {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing) ?
-                            <sui.Button key="import" icon="upload" class="mini import-dialog-btn" textClass="landscape only" text={lf("Import") } title={lf("Import a project") } onClick={() => importProject() } /> : undefined}
+        return (
+            <div className="ui home projectsdialog">
+                <div id="menubar" role="banner">
+                    <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
+                        <div className="left menu">
+                            <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName) } role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={() => pxt.tickEvent("projects.brand") }>
+                                {targetTheme.logo || targetTheme.portraitLogo
+                                    ? <img className={`ui logo ${targetTheme.logo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />
+                                    : <span className="name">{targetTheme.boardName}</span>}
+                                {targetTheme.portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />) : null}
+                            </a>
+                        </div>
+                        <div className="ui item"><sui.Icon icon={`icon home large`} /> {lf("Home") }</div>
+                        <div className="right menu">
+                            <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={() => pxt.tickEvent("projects.org") }>
+                                {targetTheme.organizationWideLogo || targetTheme.organizationLogo
+                                    ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization) } />
+                                    : <span className="name">{targetTheme.organization}</span>}
+                                {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization) } />) : null}
+                            </a>
+                        </div>
+                        {betaUrl ? <a href={`${betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta") }</a> : undefined}
                     </div>
                 </div>
-                <div className="content">
-                    <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} onClick={(scr: any) => chgHeader(scr) } />
-                </div>
-            </div>
-            {Object.keys(galleries).map(galleryName =>
-                <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
-                    <h2 className="ui header">{Util.rlf(galleryName) } </h2>
-                    <div className="content">
-                        <ProjectsCarousel key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} onClick={(scr: any) => chgGallery(scr) } setSelected={(index: number) => this.setSelected(galleryName, index) } selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined}/>
+                <div className={tabClasses}>
+                    {showHeroBanner ?
+                        <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
+                    <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
+                        <div className="ui grid equal width padded">
+                            <div className="column">
+                                <h2 className="ui header">{lf("My Projects") } </h2>
+                            </div>
+                            <div className="column right aligned">
+                                {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing) ?
+                                    <sui.Button key="import" icon="upload" class="mini import-dialog-btn" textClass="landscape only" text={lf("Import") } title={lf("Import a project") } onClick={() => importProject() } /> : undefined}
+                            </div>
+                        </div>
+                        <div className="content">
+                            <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} onClick={(scr: any) => chgHeader(scr) } />
+                        </div>
                     </div>
+                    {Object.keys(galleries).map(galleryName =>
+                        <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
+                            <h2 className="ui header">{Util.rlf(galleryName) } </h2>
+                            <div className="content">
+                                <ProjectsCarousel key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} onClick={(scr: any) => chgGallery(scr) } />
+                            </div>
+                        </div>
+                    ) }
+                    {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl ? <div className="ui horizontal small divided link list homefooter">
+                        {targetTheme.organizationUrl && targetTheme.organization ? <a className="item focused" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
+                        {targetTheme.termsOfUseUrl ? <a target="_blank" className="item focused" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use") }</a> : undefined}
+                        {targetTheme.privacyUrl ? <a target="_blank" className="item focused" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy") }</a> : undefined}
+                    </div> : undefined}
                 </div>
-            ) }
-            {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl ? <div className="ui horizontal small divided link list homefooter">
-                {targetTheme.organizationUrl && targetTheme.organization ? <a className="item focused" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                {targetTheme.selectLanguage ? <sui.Link class="item focused" text={lf("Language") } onClick={() => selectLang() } onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                {targetTheme.termsOfUseUrl ? <a target="_blank" className="item focused" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use") }</a> : undefined}
-                {targetTheme.privacyUrl ? <a target="_blank" className="item focused" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy") }</a> : undefined}
-            </div> : undefined}
-        </div>;
-    }
-}
-
-export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
-
-    brandIconClick() {
-        pxt.tickEvent("projects.brand");
-    }
-
-    orgIconClick() {
-        pxt.tickEvent("projects.org");
-    }
-
-    shouldComponentUpdate(nextProps: ISettingsProps, nextState: ProjectsState, nextContext: any): boolean {
-        return false;
-    }
-
-    render() {
-        const targetTheme = pxt.appTarget.appTheme;
-        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
-
-        return <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
-            <div className="left menu">
-                <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName) } role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={() => this.brandIconClick() }>
-                    {targetTheme.logo || targetTheme.portraitLogo
-                        ? <img className={`ui logo ${targetTheme.logo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />
-                        : <span className="name">{targetTheme.boardName}</span>}
-                    {targetTheme.portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />) : null}
-                </a>
             </div>
-            <div className="ui item"><sui.Icon icon={`icon home large`} /> {lf("Home") }</div>
-            <div className="right menu">
-                <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={() => this.orgIconClick() }>
-                    {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization) } />
-                        : <span className="name">{targetTheme.organization}</span>}
-                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization) } />) : null}
-                </a>
-            </div>
-            {targetTheme.betaUrl ? <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta") }</a> : undefined}
-        </div>;
+        );
     }
 }
 
@@ -261,8 +227,6 @@ interface ProjectsCarouselProps extends ISettingsProps {
     path?: string;
     cardWidth?: number;
     onClick: Function;
-    selectedIndex?: number;
-    setSelected?: (index: number) => void;
 }
 
 interface ProjectsCarouselState {
@@ -313,23 +277,12 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.props.parent.newProject();
     }
 
-    closeDetail() {
-        pxt.tickEvent("projects.detail.close");
-        this.props.setSelected(undefined);
-    }
-
     renderCore() {
-        const { name, path, selectedIndex } = this.props;
+        const { name, path } = this.props;
         const theme = pxt.appTarget.appTheme;
 
-        const onClick = (scr: any, index?: number) => {
-            if (this.props.setSelected) {
-                // Set this item as selected
-                pxt.tickEvent("projects.detail.open");
-                this.props.setSelected(index);
-            } else {
-                this.props.onClick(scr);
-            }
+        const onClick = (scr: any) => {
+            this.props.onClick(scr);
         }
 
         if (path) {
@@ -344,42 +297,23 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     </div>
                 </div>
             } else {
-                return <div>
-                    <carousel.Carousel bleedPercent={20} selectedIndex={selectedIndex}>
-                        {cards.map((scr, index) =>
-                            <div key={path + scr.name}>
-                                <codecard.CodeCardView
-                                    className="example"
-                                    key={'gallery' + scr.name}
-                                    name={scr.name}
-                                    url={scr.url}
-                                    imageUrl={scr.imageUrl}
-                                    youTubeId={scr.youTubeId}
-                                    label={scr.label}
-                                    labelClass={scr.labelClass}
-                                    onClick={() => onClick(scr, index) }
-                                    />
-                            </div>
-                        ) }
-                    </carousel.Carousel>
-                    <div className={`detailview ${cards.filter((scr, index) => index == selectedIndex).length > 0 ? 'visible' : ''}`}>
-                        {cards.filter((scr, index) => index == selectedIndex).length > 0 ? <div tabIndex={0} className="close"><sui.Icon icon="remove circle" onClick={() => this.closeDetail() } /> </div> : undefined }
-                        {cards.filter((scr, index) => index == selectedIndex).map(scr =>
-                            <ProjectsDetail parent={this.props.parent}
+                return <carousel.Carousel bleedPercent={20}>
+                    {cards.map((scr, index) =>
+                        <div key={path + scr.name}>
+                            <codecard.CodeCardView
+                                className="example"
+                                key={'gallery' + scr.name}
                                 name={scr.name}
-                                key={'detail' + scr.name}
-                                description={scr.description}
                                 url={scr.url}
                                 imageUrl={scr.imageUrl}
-                                largeImageUrl={scr.largeImageUrl}
                                 youTubeId={scr.youTubeId}
-                                onClick={() => this.props.onClick(scr) }
-                                cardType={scr.cardType}
-                                level={scr.level}
+                                label={scr.label}
+                                labelClass={scr.labelClass}
+                                onClick={() => onClick(scr) }
                                 />
-                        ) }
-                    </div>
-                </div>
+                        </div>
+                    ) }
+                </carousel.Carousel>
             }
         } else {
             let headers = this.fetchLocalData();
@@ -419,70 +353,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 </carousel.Carousel>
             }
         }
-    }
-}
-
-export interface ProjectsDetailProps extends ISettingsProps {
-    name: string;
-    description?: string;
-    url?: string;
-    imageUrl?: string;
-    largeImageUrl?: string;
-    youTubeId?: string;
-    onClick: Function;
-    cardType: string;
-    level?: string;
-}
-
-export interface ProjectsDetailState {
-
-}
-
-export class ProjectsDetail extends data.Component<ProjectsDetailProps, ProjectsDetailState> {
-
-    renderCore() {
-        const { name, description, imageUrl, largeImageUrl, youTubeId, onClick, cardType } = this.props;
-
-        const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/maxresdefault.jpg` : undefined);
-
-        let clickLabel = lf("Instructions");
-        if (cardType == "tutorial") clickLabel = lf("Begin Tutorial");
-        else if (cardType == "codeExample" || cardType == "example") clickLabel = lf("Try Example Code");
-        else if (youTubeId) clickLabel = lf("Watch Video");
-
-        const actions = [{
-            label: clickLabel,
-            onClick: onClick,
-            icon: '',
-            className: 'huge positive'
-        }]
-
-        return <div className="ui grid equal width padded">
-            <div className="column">
-                <div className="segment">
-                    <div className="header"> {name} </div>
-                    <p className="detail">
-                        {description}
-                    </p>
-                    <div className="actions">
-                        {actions.map(action =>
-                            <sui.Button
-                                key={`action_${action.label}`}
-                                icon={action.icon}
-                                text={action.label}
-                                class={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
-                                onClick={() => {
-                                    action.onClick();
-                                } }
-                                onKeyDown={sui.fireClickOnEnter} />
-                        ) }
-                    </div>
-                </div>
-            </div>
-            <div className="column tablet computer only">
-                {image ? <div className="imagewrapper"><div className="image" style={ { backgroundImage: `url("${image}")` }} /></div> : undefined }
-            </div>
-        </div>;
     }
 }
 
@@ -528,7 +398,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
             <sui.Modal open={this.state.visible} className="importdialog" header={lf("Import") } size="small"
                 onClose={() => this.close() } dimmer={true}
                 closeIcon={true}
-                closeOnDimmerClick closeOnDocumentClick closeOnEscape
+                closeOnDimmerClick closeOnDocumentClick
                 >
                 <div className="ui cards">
                     {pxt.appTarget.compile ?
