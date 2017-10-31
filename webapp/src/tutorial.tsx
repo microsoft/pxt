@@ -48,6 +48,7 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
     }
 }
 
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface TutorialContentState {
     tutorialUrl: string;
 }

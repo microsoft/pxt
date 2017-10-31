@@ -80,7 +80,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     render() {
-        const { tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, showParts, compiling, isSaving, running } = this.props.parent.state;
+        const {home, tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, showParts, compiling, isSaving, running } = this.props.parent.state;
+
+        if (home) return <div />; // Don't render if we're in the home screen
 
         const sandbox = pxt.shell.isSandboxMode();
         const readOnly = pxt.shell.isReadOnly();
