@@ -40,6 +40,10 @@ namespace ts.pxtc {
         type: string;
     }
 
+    export interface ConstantDesc extends PropertyDesc {
+        attrs: CommentAttrs;
+    }
+
     export interface PropertyOption {
         value: any;
     }
@@ -69,6 +73,7 @@ namespace ts.pxtc {
         qName?: string;
         pkg?: string;
         snippet?: string;
+        constants?: ConstantDesc[]; // defined on namespaces only
     }
 
     export interface ApisInfo {
@@ -176,6 +181,8 @@ namespace ts.pxtc {
         paramFieldEditor?: pxt.Map<string>; //.fieldEditor
         paramShadowOptions?: pxt.Map<pxt.Map<string>>; //.shadowOptions.
         paramFieldEditorOptions?: pxt.Map<pxt.Map<string>>; //.fieldOptions.
+
+        blockValuesNs?: string; // qualified name of the namespace that provides the dropdown values of this block
     }
 
     export interface LocationInfo {

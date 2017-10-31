@@ -671,38 +671,58 @@ namespace pxt.blocks {
 
                 let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
                 let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances
+                let nsConstants = fn.attributes.blockValuesNs && info.apis.byQName[fn.attributes.blockValuesNs]
+                let constantDropdowns = nsConstants && nsConstants.constants
                 let customField = (fn.attributes.paramFieldEditor && fn.attributes.paramFieldEditor[p]);
                 let fieldLabel = pr.name.charAt(0).toUpperCase() + pr.name.slice(1);
                 let fieldType = pr.type;
 
-                if (isEnum || isFixed) {
-                    const syms = Util.values(info.apis.byQName)
-                        .filter(e =>
-                            isEnum ? e.namespace == pr.type
-                                : (e.kind == pxtc.SymbolKind.Variable
-                                    && e.attributes.fixedInstance
-                                    && isSubtype(info.apis, e.retType, typeInfo.qName)))
-                    if (syms.length == 0) {
-                        console.error(`no instances of ${typeInfo.qName} found`)
+                if (isEnum || isFixed || constantDropdowns) {
+                    let dd: any;
+                    if (constantDropdowns) {
+                        dd = constantDropdowns.map((v: pxtc.ConstantDesc) => {
+                            const k = v.attrs.block || v.attrs.blockId || v.name;
+                            const blockNamespace = fn.attributes.blockValuesNs;
+                            return [
+                                v.attrs.blockImage ? {
+                                    src: Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${blockNamespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
+                                    alt: k,
+                                    width: 36,
+                                    height: 36,
+                                    value: v.name
+                                } : k,
+                                blockNamespace + "." + v.name
+                            ];
+                        });
+                    } else {
+                        const syms = Util.values(info.apis.byQName)
+                            .filter(e =>
+                                isEnum ? e.namespace == pr.type
+                                    : (e.kind == pxtc.SymbolKind.Variable
+                                        && e.attributes.fixedInstance
+                                        && isSubtype(info.apis, e.retType, typeInfo.qName)))
+                        if (syms.length == 0) {
+                            console.error(`no instances of ${typeInfo.qName} found`)
+                        }
+                        dd = syms.map(v => {
+                            const k = v.attributes.block || v.attributes.blockId || v.name;
+                            return [
+                                v.attributes.blockImage ? {
+                                    src: Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
+                                    alt: k,
+                                    width: 36,
+                                    height: 36,
+                                    value: v.name
+                                } : k,
+                                v.namespace + "." + v.name
+                            ];
+                        });
                     }
-                    const dd = syms.map(v => {
-                        const k = v.attributes.block || v.attributes.blockId || v.name;
-                        return [
-                            v.attributes.blockImage ? {
-                                src: Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
-                                alt: k,
-                                width: 36,
-                                height: 36,
-                                value: v.name
-                            } : k,
-                            v.namespace + "." + v.name
-                        ];
-                    });
                     i = initField(block.appendDummyInput(), field.ni, fn, nsinfo, pre, true);
                     // if a value is provided, move it first
                     if (pr.shadowValue) {
                         let shadowValueIndex = -1;
-                        dd.some((v, i) => {
+                        dd.some((v: any, i: number) => {
                             if (v[1] === pr.shadowValue) {
                                 shadowValueIndex = i;
                                 return true;
