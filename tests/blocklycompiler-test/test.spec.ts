@@ -151,7 +151,7 @@ function getBlocksInfoAsync(): Promise<pxtc.BlocksInfo> {
                 return Promise.reject("Could not compile");
 
             // decompile to blocks
-            let apis = pxtc.getApiInfo(resp.ast);
+            let apis = pxtc.getApiInfo(opts, resp.ast);
             let blocksInfo = pxtc.getBlocksInfo(apis);
             pxt.blocks.initBlocks(blocksInfo);
 
