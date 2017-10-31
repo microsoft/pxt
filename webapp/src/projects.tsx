@@ -260,7 +260,7 @@ interface ProjectsCarouselProps extends ISettingsProps {
     name: string;
     path?: string;
     cardWidth?: number;
-    onClick: Function;
+    onClick: () => void;
     selectedIndex?: number;
     setSelected?: (index: number) => void;
 }
@@ -429,7 +429,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     imageUrl?: string;
     largeImageUrl?: string;
     youTubeId?: string;
-    onClick: Function;
+    onClick: () => void;
     cardType: string;
     level?: string;
 }
