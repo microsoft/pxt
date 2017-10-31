@@ -45,6 +45,7 @@ namespace pxt.editor {
         running?: boolean;
         resumeOnVisibility?: boolean;
         compiling?: boolean;
+        isSaving?: boolean;
         publishing?: boolean;
         hideEditorFloats?: boolean;
         collapseEditorTools?: boolean;
