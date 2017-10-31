@@ -43,11 +43,6 @@
     top: 0; 
     right: 0;
 }
-.ui.modal.projectsdialog .closeIcon {
-    top: 0.4rem;
-    right: 0.2rem;
-}
-
 .ui.button.icon.clear {
     background: transparent;
     border: 0 !important;

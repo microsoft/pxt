@@ -110,7 +110,9 @@ namespace pxt.editor {
         forceUpdate(): void;
 
         openBlocks(): void;
-        openJavaScript(): void;
+        openJavaScript(giveFocusOnLoading?: boolean): void;
+        openSettings(): void;
+        openSimView(): void;
         openPreviousEditor(): void;
 
         switchTypeScript(): void;
@@ -153,7 +155,6 @@ namespace pxt.editor {
         exitTutorial(): void;
         completeTutorial(): void;
         showTutorialHint(): void;
-        gettingStarted(): void;
 
         anonymousPublishAsync(): Promise<string>;
 
@@ -165,8 +166,11 @@ namespace pxt.editor {
         expandSimulator(): void;
         collapseSimulator(): void;
         toggleSimulatorCollapse(): void;
+        toggleSimulatorFullscreen(): void;
         proxySimulatorMessage(content: string): void;
         toggleTrace(intervalSpeed?: number): void;
+        toggleMute(): void;
+        openInstructions(): void;
         closeFlyout(): void;
 
         startTutorial(tutorialId: string, tutorialTitle?: string): void;
@@ -187,7 +191,20 @@ namespace pxt.editor {
         // obsolete, may go away
         convertTouchDevelopToTypeScriptAsync(td: string): Promise<string>;
 
+        selectLang(): void;
+        toggleHighContrast(): void;
+        share(): void;
+        about(): void;
+        reset(): void;
+        showReportAbuse(): void;
+        exitAndSave(): void;
+        launchFullEditor(): void;
+
         settings: EditorSettings;
+
+        isEmbedSimActive(): boolean;
+        isBlocksActive(): boolean;
+        isJavaScriptActive(): boolean;
 
         editor: IEditor;
     }

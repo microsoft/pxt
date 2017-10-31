@@ -53,7 +53,7 @@
 @tutorialLightboxCardZIndex: @dimmerZIndex+1;
 
 /* Home screen */
-@homeCarouselArrowZIndex: 10; /* Above the carousel cards */
+@homeScreenZIndex: @menuBarZIndex+1; /* Above the menu bar */
 
 /* Side doc */
 @sidedocZIndex: @aboveEditorZIndex+5; /* Above the editor and its components */
