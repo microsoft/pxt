@@ -376,6 +376,10 @@ export class SandboxFooter extends data.Component<SandboxFooterProps, {}> {
         this.props.parent.compile();
     }
 
+    shouldComponentUpdate(nextProps: SandboxFooterProps, nextState: any, nextContext: any): boolean {
+        return false;
+    }
+
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
 
@@ -395,7 +399,23 @@ export interface CookieMessageProps extends ISettingsProps {
     cookieKey: string;
 }
 
-export class CookieMessage extends data.Component<CookieMessageProps, {}> {
+export interface CookieMessageState {
+    cookieConsented?: boolean;
+}
+
+export class CookieMessage extends data.Component<CookieMessageProps, CookieMessageState> {
+
+    componentWillReceiveProps(nextProps: CookieMessageProps) {
+        const newState: CookieMessageState = {};
+        if (nextProps.cookieConsented != undefined) {
+            newState.cookieConsented = nextProps.cookieConsented;
+        }
+        if (Object.keys(newState).length > 0) this.setState(newState)
+    }
+
+    shouldComponentUpdate(nextProps: CookieMessageProps, nextState: CookieMessageState, nextContext: any): boolean {
+        return this.state.cookieConsented != nextState.cookieConsented;
+    }
 
     renderCore() {
         const {cookieConsented, cookieKey} = this.props;
@@ -422,6 +442,10 @@ export class ExperimentalBanner extends data.Component<ISettingsProps, {}> {
 
     hideBanner() {
         this.props.parent.setState({ hideExperimentalBanner: true });
+    }
+
+    shouldComponentUpdate(nextProps: ISettingsProps, nextState: any, nextContext: any): boolean {
+        return false;
     }
 
     renderCore() {
