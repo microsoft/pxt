@@ -1697,7 +1697,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         if (this.editor && this.editor.isReady) {
             this.updateEditorFile();
         }
-        console.log("Rendered");
 
         //  ${targetTheme.accentColor ? "inverted accent " : ''}
         const settings: Cloud.UserSettings = (Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {}) || {}
