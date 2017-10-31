@@ -10,6 +10,9 @@
           Accessibility
 *******************************/
 
+@accessibleMenuBackground: rgba(255,255,255,.9);
+@accessibleMenuColor: #387894;
+
 /* Main menu focus */
 #mainmenu .ui.item:focus {
     background: rgba(0, 0, 0, 0.1);
@@ -38,28 +41,33 @@
     clip: rect(0 0 0 0);
 }
 
-#accessibleMenu {
-    position: absolute;
-    z-index: 1001;
-    top: -20em;
+.ui.menu.accessibleMenu {
+    z-index: 1001 !important;
+    top: -20em !important;
     padding: 0;
     margin: 0;
     width: 100%;
+    border: 0;
 
     .ui.item.link {
         position: absolute;
         width: 100%;
-        color: rgba(255, 255, 255, 0.9);
+        color: @accessibleMenuColor;
+        background: @accessibleMenuBackground !important;
     }
-
+    .ui.item.link:hover {
+        color: @accessibleMenuColor;
+    }
     .ui.item.link:focus {
-        top:20em;
+        top: 20em !important;
+        box-shadow: 3px 3px 5px #aaa;
+        border-radius: 0px !important;
     }
 }
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
-    #menubar #accessibleMenu {
+    .menubar .ui.menu.accessibleMenu {
         height: @mobileMenuHeight !important;
         min-height: @mobileMenuHeight !important;
     }

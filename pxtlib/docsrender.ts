@@ -320,7 +320,7 @@ namespace pxt.docs {
         if (theme.accentColor) style += `
 .ui.accent { color: ${theme.accentColor}; }
 .ui.inverted.accent { background: ${theme.accentColor}; }
-#accessibleMenu a { background: ${theme.accentColor}; }
+.accessibleMenu a { background: ${theme.accentColor}; }
 `
         params["targetstyle"] = style;
 

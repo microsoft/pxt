@@ -22,8 +22,10 @@ import * as screenshot from "./screenshot";
 import * as hidbridge from "./hidbridge";
 import * as share from "./share";
 import * as lang from "./lang";
+import * as accessibility from "./accessibility";
 import * as tutorial from "./tutorial";
 import * as editortoolbar from "./editortoolbar";
+import * as simtoolbar from "./simtoolbar";
 import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
@@ -220,12 +222,16 @@ export class ProjectView
             });
     }
 
-    private isBlocksActive(): boolean {
+    isEmbedSimActive(): boolean {
+        return this.state.embedSimView;
+    }
+
+    isBlocksActive(): boolean {
         return !this.state.embedSimView && this.editor == this.blocksEditor
             && this.editorFile && this.editorFile.name == "main.blocks";
     }
 
-    private isJavaScriptActive(): boolean {
+    isJavaScriptActive(): boolean {
         return !this.state.embedSimView && this.editor == this.textEditor
             && this.editorFile && this.editorFile.name == "main.ts";
     }
@@ -236,7 +242,6 @@ export class ProjectView
     }
 
     openJavaScript(giveFocusOnLoading = true) {
-        pxt.tickEvent("menu.javascript");
         if (this.isJavaScriptActive()) {
             if (this.state.embedSimView) {
                 this.setState({ embedSimView: false });
@@ -256,7 +261,6 @@ export class ProjectView
     }
 
     openBlocks() {
-        pxt.tickEvent("menu.blocks");
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
             return;
@@ -277,6 +281,10 @@ export class ProjectView
         } else this.setFile(pkg.mainEditorPkg().files["main.blocks"]);
 
         this.shouldTryDecompile = false;
+    }
+
+    openSettings() {
+        this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json"));
     }
 
     openSerial(isSim: boolean) {
@@ -317,7 +325,6 @@ export class ProjectView
     }
 
     openSimView() {
-        pxt.tickActivity("menu.simView");
         if (this.state.embedSimView) {
             this.startStopSimulator();
         } else {
@@ -882,7 +889,6 @@ export class ProjectView
     }
 
     openHome() {
-        pxt.tickEvent("menu.open");
         this.stopSimulator();
         this.setState({ home: true });
         // clear the hash
@@ -890,18 +896,12 @@ export class ProjectView
     }
 
     exitAndSave() {
-        pxt.tickEvent("menu.exitAndSave");
         if (this.state.projectName !== lf("Untitled")) {
             this.openHome();
         }
         else {
             this.exitAndSaveDialog.show();
         }
-    }
-
-    brandIconClick() {
-        pxt.tickEvent("menu.brand");
-        this.exitAndSave();
     }
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
@@ -940,17 +940,12 @@ export class ProjectView
             })
     }
 
-    menuAddPackage() {
-        pxt.tickEvent("menu.addpackage");
-        this.addPackage();
-    }
-
     addPackage() {
         this.scriptSearch.showAddPackages();
     }
 
     openExtension(extension: string, url: string, consentRequired?: boolean) {
-        pxt.tickEvent("menu.openextension", { extension: extension });
+        pxt.tickEvent("app.openextension", { extension: extension });
         this.extensions.showExtension(extension, url, consentRequired);
     }
 
@@ -966,7 +961,7 @@ export class ProjectView
     }
 
     newProject(options: ProjectCreationOptions = {}) {
-        pxt.tickEvent("menu.newproject");
+        pxt.tickEvent("app.newproject");
         core.showLoading("newproject", lf("creating new project..."));
         this.createProjectAsync(options)
             .then(() => Promise.delay(500))
@@ -1039,14 +1034,13 @@ export class ProjectView
     resetWorkspace() {
         this.reload = true;
         return workspace.resetAsync()
-        .done(
+            .done(
             () => window.location.reload(),
             () => window.location.reload()
-        );
+            );
     }
 
     reset() {
-        pxt.tickEvent("reset");
         core.confirmAsync({
             header: lf("Reset"),
             body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),
@@ -1058,7 +1052,7 @@ export class ProjectView
             if (!r) return Promise.resolve();
             if (hf2Connection) {
                 return hf2Connection.disconnectAsync()
-                .then(() => this.resetWorkspace())
+                    .then(() => this.resetWorkspace())
             } else {
                 return this.resetWorkspace()
             }
@@ -1179,16 +1173,13 @@ export class ProjectView
 
     startStopSimulator() {
         if (this.state.running) {
-            pxt.tickEvent('simulator.stop')
             this.stopSimulator()
         } else {
-            pxt.tickEvent('simulator.start')
             this.startSimulator();
         }
     }
 
     restartSimulator() {
-        pxt.tickEvent('simulator.restart')
         this.stopSimulator();
         this.startSimulator();
     }
@@ -1212,6 +1203,7 @@ export class ProjectView
     }
 
     stopSimulator(unload?: boolean) {
+        pxt.tickEvent('simulator.stop')
         simulator.stop(unload)
         this.setState({ running: false })
     }
@@ -1260,7 +1252,6 @@ export class ProjectView
     }
 
     toggleSimulatorFullscreen() {
-        pxt.tickEvent("simulator.fullscreen", { view: 'computer', fullScreenTo: '' + !this.state.fullscreen });
         if (!this.state.fullscreen) {
             document.addEventListener('keydown', this.closeOnEscape);
         } else {
@@ -1276,13 +1267,11 @@ export class ProjectView
     }
 
     toggleMute() {
-        pxt.tickEvent("simulator.mute", { view: 'computer', muteTo: '' + !this.state.mute });
         simulator.mute(!this.state.mute);
         this.setState({ mute: !this.state.mute });
     }
 
     openInstructions() {
-        pxt.tickEvent("simulator.make");
         const running = this.state.running;
         if (running) this.stopSimulator();
         make.makeAsync()
@@ -1374,7 +1363,7 @@ export class ProjectView
 </div>`,
         }).done(res => {
             if (res) {
-                pxt.tickEvent("menu.open.file");
+                pxt.tickEvent("app.open.file");
                 this.importFile(input.files[0]);
             }
         })
@@ -1385,7 +1374,6 @@ export class ProjectView
     }
 
     showReportAbuse() {
-        pxt.tickEvent("menu.reportabuse");
         let urlInput: JQuery;
         let reasonInput: JQuery;
         const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
@@ -1410,7 +1398,7 @@ export class ProjectView
 </div>`,
         }).done(res => {
             if (res) {
-                pxt.tickEvent("menu.reportabuse.send");
+                pxt.tickEvent("app.reportabuse.send");
                 const id = pxt.Cloud.parseScriptId(urlInput.val());
                 if (!id) {
                     core.errorNotification(lf("Sorry, the project url looks invalid."));
@@ -1461,7 +1449,7 @@ export class ProjectView
 </div>`,
         }).done(res => {
             if (res) {
-                pxt.tickEvent("menu.open.url");
+                pxt.tickEvent("app.open.url");
                 const id = pxt.Cloud.parseScriptId(input.value);
                 if (!id) {
                     core.errorNotification(lf("Sorry, the project url looks invalid."));
@@ -1473,7 +1461,6 @@ export class ProjectView
     }
 
     launchFullEditor() {
-        pxt.tickEvent("sandbox.openfulleditor");
         Util.assert(pxt.shell.isSandboxMode());
 
         let editUrl = pxt.appTarget.appTheme.embedUrl;
@@ -1581,7 +1568,6 @@ export class ProjectView
     }
 
     about() {
-        pxt.tickEvent("menu.about");
         const compileService = pxt.appTarget.compileService;
         const description = pxt.appTarget.description || pxt.appTarget.title;
         const githubUrl = pxt.appTarget.appTheme.githubUrl;
@@ -1599,8 +1585,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         }).done();
     }
 
-    embed() {
-        pxt.tickEvent("menu.embed");
+    share() {
         const header = this.state.header;
         this.shareEditor.show(header);
     }
@@ -1617,13 +1602,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
                 return pxt.blocks.layout.blocklyToSvgAsync(svg, viewBox[0], viewBox[1], viewBox[2], viewBox[3]);
             }).then(re => re.xml);
-    }
-
-    gettingStarted() {
-        pxt.tickEvent("btn.gettingstarted");
-        const targetTheme = pxt.appTarget.appTheme;
-        Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
-        this.startTutorial(targetTheme.sideDoc);
     }
 
     startTutorial(tutorialId: string, tutorialTitle?: string) {
@@ -1698,7 +1676,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
     toggleHighContrast() {
         const highContrastOn = !this.state.highContrast;
-        pxt.tickEvent("menu.highcontrast", { on: highContrastOn ? 1 : 0 });
+        pxt.tickEvent("app.highcontrast", { on: highContrastOn ? 1 : 0 });
         this.setState({ highContrast: highContrastOn }, () => this.restartSimulator());
         core.highContrast = highContrastOn;
         if (this.editor && this.editor.isReady) {
@@ -1713,57 +1691,29 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
-    hideBanner() {
-        this.setState({ hideExperimentalBanner: true });
-    }
-
     renderCore() {
         theEditor = this;
 
         if (this.editor && this.editor.isReady) {
             this.updateEditorFile();
         }
+        console.log("Rendered");
 
         //  ${targetTheme.accentColor ? "inverted accent " : ''}
         const settings: Cloud.UserSettings = (Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {}) || {}
         const targetTheme = pxt.appTarget.appTheme;
-        const workspaces = pxt.appTarget.cloud && pxt.appTarget.cloud.workspaces;
-        const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
         const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
-        const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing;
-        const compile = pxt.appTarget.compile;
-        const compileBtn = compile.hasHex;
-        const simOpts = pxt.appTarget.simulator;
         const sandbox = pxt.shell.isSandboxMode();
-        const make = !sandbox && this.state.showParts && simOpts && (simOpts.instructions || (simOpts.parts && pxt.options.debug));
-        const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
-        const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
-        const compileLoading = !!this.state.compiling;
-        const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
-        const makeTooltip = lf("Open assembly instructions");
-        const restartTooltip = lf("Restart the simulator");
-        const fullscreenTooltip = this.state.fullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
-        const muteTooltip = this.state.mute ? lf("Unmute audio") : lf("Mute audio");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || targetTheme.hideSideDocs);
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const inHome = this.state.home && !sandbox;
-        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
-        const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
-        const restart = run && !simOpts.hideRestart;
-        const trace = run && simOpts.enableTrace;
-        const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
-        const audio = run && !inTutorial && targetTheme.hasAudio;
         const inEditor = !!this.state.header;
+
         const { hideMenuBar, hideEditorToolbar } = targetTheme;
-        const isHeadless = simOpts.headless;
-        const simActive = this.state.embedSimView;
-        const blockActive = this.isBlocksActive();
-        const javascriptActive = this.isJavaScriptActive();
-        const traceTooltip = this.state.tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo");
+        const isHeadless = pxt.appTarget.simulator.headless;
         const selectLanguage = targetTheme.selectLanguage;
-        const betaUrl = targetTheme.betaUrl;
         const showEditorToolbar = !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
 
@@ -1777,17 +1727,11 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
-        const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
-        // cookie concent
+        // cookie consent
         const cookieKey = "cookieconsent"
         const cookieConsented = targetTheme.hideCookieNotice || isApp || !!pxt.storage.getLocal(cookieKey)
             || sandbox;
-
-        const consentCookie = () => {
-            pxt.storage.setLocal(cookieKey, "1");
-            this.forceUpdate();
-        }
 
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
@@ -1799,115 +1743,34 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             this.state.highContrast ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
+            inHome ? 'inHome' : '',
             inTutorial ? 'tutorial' : '',
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             hideMenuBar ? 'hideMenuBar' : '',
             !showEditorToolbar ? 'hideEditorToolbar' : '',
-            sandbox && simActive ? 'simView' : '',
+            sandbox && this.isEmbedSimActive() ? 'simView' : '',
             'full-abs',
             'dimmable'
         ]);
 
         return (
             <div id='root' className={rootClasses}>
-                {showExperimentalBanner ? <div id="experimentalBanner" className="ui icon top attached fixed negative mini message">
-                    <sui.Icon icon="warning circle" />
-                    <sui.Icon icon="close" onClick={() => this.hideBanner() } />
-                    <div className="content">
-                        <div className="header">{lf("You are viewing an experimental version of the editor") }</div>
-                        <a href={liveUrl}>{lf("Take me back") }</a>
-                    </div>
-                </div> : undefined}
+                {showExperimentalBanner ? <container.ExperimentalBanner parent={this} /> : undefined}
                 {hideMenuBar ? undefined :
-                    <header id="menubar" role="banner" className={"ui menu"}>
-                        <div id="accessibleMenu" role="menubar">
-                            <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor") } onClick={() => this.openJavaScript() } />
-                            {selectLanguage ? <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language") } onClick={() => this.selectLang() } /> : undefined}
-                            {targetTheme.highContrast ? <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() } /> : undefined}
-                        </div>
-                        <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu") }>
-                            {!sandbox ? <div className="left menu">
-                                <a aria-label={lf("{0} Logo", targetTheme.boardName) } role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={() => this.brandIconClick() } onKeyDown={sui.fireClickOnEnter}>
-                                    {targetTheme.logo || targetTheme.portraitLogo
-                                        ? <img className={`ui logo ${targetTheme.logo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />
-                                        : <span className="name">{targetTheme.boardName}</span>}
-                                    {targetTheme.portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />) : null}
-                                </a>
-                                {betaUrl ? <a href={`${betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta") }</a> : undefined}
-                                {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen") } text={lf("Home") } onClick={() => this.exitAndSave() } /> : null}
-                                {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project") } text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
-                                {inTutorial ? <sui.Item class="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
-                            </div> : <div className="left menu">
-                                    <span id="logo" className="ui item logo">
-                                        <img className="ui mini image" src={Util.toDataUri(rightLogo) } tabIndex={0} onClick={() => this.launchFullEditor() } onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
-                                    </span>
-                                </div>}
-                            {!inTutorial && !targetTheme.blocksOnly ? <div className="ui item link editor-menuitem">
-                                <div className="ui grid padded">
-                                    {sandbox ? <sui.Item class="sim-menuitem thin portrait only" role="menuitem" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined}
-                                    <sui.Item class="blocks-menuitem" role="menuitem" textClass="landscape only" text={lf("Blocks") } icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
-                                    <sui.Item class="javascript-menuitem" role="menuitem" textClass="landscape only" text={lf("JavaScript") } icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript(false) } title={lf("Convert code to JavaScript") } />
-                                    <div className="ui item toggle"></div>
-                                </div>
-                            </div> : undefined}
-                            {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined}
-                            <div className="right menu">
-                                {docMenu ? <container.DocsMenuItem parent={this} /> : undefined}
-                                {sandbox || inTutorial ? undefined :
-                                    <sui.DropdownMenuItem icon='setting large' title={lf("More...") } class="more-dropdown-menuitem">
-                                        {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } tabIndex={-1} /> : undefined}
-                                        {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions") } onClick={() => this.menuAddPackage() } tabIndex={-1} /> : undefined}
-                                        {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } tabIndex={-1} /> : undefined}
-                                        {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...") } onClick={() => this.showReportAbuse() } tabIndex={-1} /> : undefined}
-                                        <div className="ui divider"></div>
-                                        {selectLanguage ? <sui.Item icon="xicon globe" role="menuitem" text={lf("Language") } onClick={() => this.selectLang() } tabIndex={-1} /> : undefined}
-                                        {targetTheme.highContrast ? <sui.Item role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() } tabIndex={-1} /> : undefined}
-                                        {
-                                            // we always need a way to clear local storage, regardless if signed in or not
-                                        }
-                                        <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => this.reset() } tabIndex={-1} />
-                                        <div className="ui divider"></div>
-                                        {targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank" tabIndex={-1}>{lf("Privacy & Cookies") }</a> : undefined}
-                                        {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank" tabIndex={-1}>{lf("Terms Of Use") }</a> : undefined}
-                                        <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } tabIndex={-1} />
-                                        {electron.isPxtElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } tabIndex={-1} /> : undefined}
-                                        {targetTheme.feedbackUrl ? <div className="ui divider"></div> : undefined}
-                                        {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback") } target="_blank" rel="noopener" tabIndex={-1}>{lf("Give Feedback") }</a> : undefined}
-                                    </sui.DropdownMenuItem>}
-
-                                {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
-                                {inTutorial ? <sui.ButtonMenuItem class="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial() } /> : undefined}
-
-                                {!sandbox ? <a href={targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization) } role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={() => pxt.tickEvent("menu.org") }>
-                                    {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization) } />
-                                        : <span className="name">{targetTheme.organization}</span>}
-                                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization) } />) : null}
-                                </a> : undefined}
-                            </div>
-                        </div>
+                    <header className="menubar" role="banner">
+                        {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
+                        <container.MainMenu parent={this} />
                     </header>}
-                <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
-                </div>
+                {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
+                    <tutorial.TutorialCard ref="tutorialcard" parent={this} />
+                </div> : undefined}
                 <div id="simulator">
                     <aside id="filelist" className="ui items">
                         <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden" aria-hidden="true">{lf("Simulator") }</label>
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-labelledby="boardviewLabel">
                         </div>
-                        {!isHeadless ? <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar") }>
-                            <div className={`ui icon tiny buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                                {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
-                                {run ? <sui.Button key='runbtn' class={`play-button ${this.state.running ? "stop" : "play"}`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
-                                {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
-                                {trace ? <sui.Button key='debug' class={`trace-button ${this.state.tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace() } /> : undefined}
-                            </div>
-                            <div className={`ui icon tiny buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                                {audio ? <sui.Button key='mutebtn' class={`mute-button ${this.state.mute ? 'red' : ''}`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
-                                {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`xicon ${this.state.fullscreen ? 'fullscreencollapse' : 'fullscreen'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined}
-                            </div>
-                        </aside> : undefined}
+                        <simtoolbar.SimulatorToolbar parent={this} />
                         <div className="ui item portrait hide">
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
@@ -1924,33 +1787,28 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs" role="main">
-                    <projects.Projects parent={this} ref={v => this.home = v} />
+                    <div className="ui home projectsdialog">
+                        <div className="menubar" role="banner">
+                            <accessibility.HomeAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> }
+                            <projects.ProjectsMenu parent={this} />
+                        </div>
+                        <projects.Projects parent={this} ref={v => this.home = v} />
+                    </div>
                 </div> : undefined }
                 {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined}
                 {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined}
                 {showEditorToolbar ? <div id="editortools" role="complementary" aria-label={lf("Editor toolbar") }>
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
                 </div> : undefined}
-                {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
+                {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl}/> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={v => this.extensions = v} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={v => this.importDialog = v} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={v => this.exitAndSaveDialog = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
-                {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
-                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                    <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use") }</a>
-                    <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy") }</a>
-                    <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><sui.Icon icon={`icon ${pxt.appTarget.appTheme.downloadIcon || 'download'}`} />{pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download") }</a></span>
-                </div> : undefined}
-                {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment" role="alert">
-                    <button aria-label={lf("Close") } tabIndex={0} className="ui right floated icon button clear inverted" onClick={consentCookie}>
-                        <sui.Icon icon="remove" />
-                    </button>
-                    {lf("By using this site you agree to the use of cookies for analytics.") }
-                    <a target="_blank" className="ui link" href={pxt.appTarget.appTheme.privacyUrl} rel="noopener">{lf("Learn more") }</a>
-                </div>}
+                {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
+                {cookieConsented ? undefined : <container.CookieMessage parent={this} cookieConsented={cookieConsented} cookieKey={cookieKey} /> }
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
             </div>
         );

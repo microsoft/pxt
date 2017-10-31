@@ -102,12 +102,6 @@
 }
 .setExampleCardFullHeight();
 
-/* Hover animation on home screen cards */
-
-.ui.card.file:hover, .ui.card.newprojectcard:hover, .ui.card.example:hover {
-    transform: scale(1.1);
-}
-
 
 /* Project code cards */
 .ui.card .ui.imagewrapper {
