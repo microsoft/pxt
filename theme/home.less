@@ -38,6 +38,7 @@
     .getting-started-segment {
         border: 0;
         margin-top: -2.1rem !important;
+        margin-bottom: 2.1rem !important;
         padding: 0;
         border-radius: 0;
         background-repeat: no-repeat;
@@ -73,14 +74,20 @@
         box-shadow: none;
         padding: 0rem;
         margin: 0;
-        padding-top: 1.5rem;
         .ui.header {
             margin: 0;
             padding-left: @carouselArrowSize;
             font-size: 20px;
             color: @homeHeaderColor;
-            margin-bottom: -1rem;
-            margin-top: 1rem;
+        }
+        .ui.padded.grid.heading, .heading {
+            margin-bottom: -1rem !important;
+            margin-top: 1rem !important;
+        }
+        .ui.padded.grid.heading .ui.header {
+            bottom: 0;
+            position: absolute;
+            vertical-align: bottom;
         }
         .column {
             padding: 0 !important;
@@ -163,7 +170,7 @@
         }            
     }
 
-    .detailview {
+    .detailview.visible {
         margin-top: -2rem;
         transition: height 0.5s;
         z-index: @homeDetailViewZIndex;
@@ -240,9 +247,6 @@
 .carouselcontainer {
     overflow: hidden;
     padding: 2rem @carouselArrowSize !important;
-}
-.mystuff-segment .carouselcontainer {
-    padding: 1rem @carouselArrowSize !important;
 }
 
 .carouselbody {
@@ -329,9 +333,6 @@
     }
     .carouselcontainer {
         padding: 2rem @carouselArrowSizeMobile !important;
-    }
-    .mystuff-segment .carouselcontainer {
-        padding: 1rem @carouselArrowSizeMobile !important;
     }
     .carouselarrow {
         width: @carouselArrowSizeMobile;

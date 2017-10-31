@@ -17,6 +17,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 import Cloud = pxt.Cloud;
 
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ScriptSearchState {
     searchFor?: string;
     visible?: boolean;

@@ -13,6 +13,7 @@ export interface EditorAccessibilityMenuProps extends ISettingsProps {
     highContrast: boolean;
 }
 
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface EditorAccessibilityMenuState {
     highContrast?: boolean;
 }
@@ -67,6 +68,7 @@ export interface HomeAccessibilityMenuProps extends ISettingsProps {
     highContrast: boolean;
 }
 
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface HomeAccessibilityMenuState {
     highContrast?: boolean;
 }

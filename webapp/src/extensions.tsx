@@ -19,6 +19,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 const CUSTOM_CONTENT_DIV = 'custom-content';
 
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ExtensionsState {
     visible?: boolean;
     extension?: string;

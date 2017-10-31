@@ -62,6 +62,7 @@ export interface SettingsMenuItemProps extends ISettingsProps {
     highContrast: boolean;
 }
 
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface SettingsMenuItemState {
     highContrast?: boolean;
 }
@@ -263,6 +264,7 @@ export interface SideDocsProps extends ISettingsProps {
     sideDocsCollapsed: boolean;
 }
 
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface SideDocsState {
     docsUrl?: string;
     sideDocsCollapsed?: boolean;
@@ -399,6 +401,7 @@ export interface CookieMessageProps extends ISettingsProps {
     cookieKey: string;
 }
 
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface CookieMessageState {
     cookieConsented?: boolean;
 }

@@ -20,6 +20,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 import Cloud = pxt.Cloud;
 
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ProjectsState {
     searchFor?: string;
     visible?: boolean;
@@ -184,7 +185,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             {showHeroBanner ?
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
-                <div className="ui grid equal width padded">
+                <div className="ui grid equal width padded heading">
                     <div className="column">
                         <h2 className="ui header">{lf("My Projects") } </h2>
                     </div>
@@ -199,7 +200,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             </div>
             {Object.keys(galleries).map(galleryName =>
                 <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
-                    <h2 className="ui header">{Util.rlf(galleryName) } </h2>
+                    <h2 className="ui header heading">{Util.rlf(galleryName) } </h2>
                     <div className="content">
                         <ProjectsCarousel key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} onClick={(scr: any) => chgGallery(scr) } setSelected={(index: number) => this.setSelected(galleryName, index) } selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined}/>
                     </div>
@@ -260,7 +261,7 @@ interface ProjectsCarouselProps extends ISettingsProps {
     name: string;
     path?: string;
     cardWidth?: number;
-    onClick: () => void;
+    onClick: (src: any) => void;
     selectedIndex?: number;
     setSelected?: (index: number) => void;
 }
@@ -375,7 +376,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 youTubeId={scr.youTubeId}
                                 onClick={() => this.props.onClick(scr) }
                                 cardType={scr.cardType}
-                                level={scr.level}
                                 />
                         ) }
                     </div>
@@ -431,7 +431,6 @@ export interface ProjectsDetailProps extends ISettingsProps {
     youTubeId?: string;
     onClick: () => void;
     cardType: string;
-    level?: string;
 }
 
 export interface ProjectsDetailState {
