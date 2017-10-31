@@ -176,9 +176,11 @@
         z-index: @homeDetailViewZIndex;
         position: relative;
         box-shadow: rgba(0, 0, 0, 0.75) 0px 0px 50px 0px;
+        .ui.grid {
+            background: @homeDetailViewBackground;
+        }
         .column {
             height: 400px;
-            background: @homeDetailViewBackground;
         }
         .segment {
             margin: 0;
@@ -186,6 +188,10 @@
             margin-top: 2rem;
         }
         .imagewrapper {
+            position: absolute;
+            top: 0; right: 0;
+            left: 30%; bottom: 0;
+            padding: 0;
             .image {
                 height: 400px;
                 background-size: cover;

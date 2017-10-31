@@ -456,8 +456,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             className: 'huge positive'
         }]
 
-        return <div className="ui grid equal width padded">
-            <div className="column">
+        return <div className="ui grid stackable padded">
+            {image ? <div className="imagewrapper"><div className="image" style={ { backgroundImage: `url("${image}")` }} /></div> : undefined }
+            <div className="column eight wide">
                 <div className="segment">
                     <div className="header"> {name} </div>
                     <p className="detail">
@@ -477,9 +478,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         ) }
                     </div>
                 </div>
-            </div>
-            <div className="column tablet computer only">
-                {image ? <div className="imagewrapper"><div className="image" style={ { backgroundImage: `url("${image}")` }} /></div> : undefined }
             </div>
         </div>;
     }
