@@ -115,4 +115,13 @@ declare namespace pxt {
         target?: string;
         className?: string;
     }
+
+    interface JRes {
+        id: string; // something like "sounds.bark"
+        data: string;
+        dataEncoding?: string; // must be "base64" or missing (meaning the same)
+        icon?: string; // URL (usually data-URI) for the icon
+        namespace?: string; // used to construct id
+        mimeType: string;
+    }
 }

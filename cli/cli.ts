@@ -2363,6 +2363,10 @@ pxt_modules
         "**/yotta_targets": true,
         "**/pxt_modules/**": true
     },
+    "files.associations": {
+        "*.blocks": "html",
+        "*.jres": "json"
+    },    
     "search.exclude": {
         "**/built": true,
         "**/node_modules": true,
@@ -2973,9 +2977,9 @@ function compilesOK(opts: pxtc.CompileOptions, fn: string, content: string) {
 
 function getApiInfoAsync() {
     return prepBuildOptionsAsync(BuildOption.GenDocs)
-        .then(pxtc.compile)
-        .then(res => {
-            return pxtc.getApiInfo(res.ast, true)
+        .then(opts => {
+            let res = pxtc.compile(opts);
+            return pxtc.getApiInfo(opts, res.ast, true)
         })
 }
 
@@ -3303,7 +3307,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                 if (/^block/.test(snippet.type)) {
                     //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
                     const file = resp.ast.getSourceFile('main.ts');
-                    const apis = pxtc.getApiInfo(resp.ast);
+                    const apis = pxtc.getApiInfo(opts, resp.ast);
                     const blocksInfo = pxtc.getBlocksInfo(apis);
                     const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false })
                     const success = !!bresp.outfiles['main.blocks']
@@ -3436,7 +3440,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
 
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:
-                    const apiInfo = pxtc.getApiInfo(res.ast)
+                    const apiInfo = pxtc.getApiInfo(compileOptions, res.ast)
                     // keeps apis from this module only
                     for (const infok in apiInfo.byQName) {
                         const info = apiInfo.byQName[infok];
