@@ -16,6 +16,8 @@ const lf = Util.lf
 export class Editor extends srceditor.Editor {
     charts: Chart[] = []
     chartIdx: number = 0
+    sourceIdx: number = 1
+    sourceMap: pxt.Map<string> = {}
     consoleBuffer: string = ""
     isSim: boolean = true
     maxConsoleLineLength: number = 255
@@ -74,12 +76,17 @@ export class Editor extends srceditor.Editor {
         const data = smsg.data || ""
         const source = smsg.id || "?"
 
+        if (!(source in this.sourceMap)) {
+            this.sourceMap[source] = lf("source") + (this.sourceIdx++).toString()
+        }
+        let niceSource = this.sourceMap[source]
+
         const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
         if (m) {
             const variable = m[2] || '';
             const nvalue = parseFloat(m[3]);
             if (!isNaN(nvalue)) {
-                this.appendGraphEntry(source, variable, nvalue)
+                this.appendGraphEntry(niceSource, variable, nvalue)
                 return;
             }
         }
