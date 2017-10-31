@@ -38,7 +38,6 @@ namespace pxt.editor {
         projectName?: string;
 
         tutorialOptions?: TutorialOptions;
-        hintShown?: boolean;
 
         running?: boolean;
         resumeOnVisibility?: boolean;
@@ -55,7 +54,6 @@ namespace pxt.editor {
         tracing?: boolean;
 
         highContrast?: boolean;
-        hideExperimentalBanner?: boolean;
 
         home?: boolean;
     }

@@ -1725,7 +1725,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const isLocalServe = location.hostname === "localhost";
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
-        const showExperimentalBanner = !isLocalServe && isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
+        const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
 
         // cookie consent
         const cookieKey = "cookieconsent"

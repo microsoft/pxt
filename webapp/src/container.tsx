@@ -198,7 +198,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     }
 
     render() {
-        const {header, highContrast} = this.props.parent.state;
+        const {home, header, highContrast} = this.props.parent.state;
+        if (home) return <div />; // Don't render if we're on the home screen
+
         const targetTheme = pxt.appTarget.appTheme;
         const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
         const sandbox = pxt.shell.isSandboxMode();
@@ -441,17 +443,24 @@ export class CookieMessage extends data.Component<CookieMessageProps, CookieMess
     }
 }
 
-export class ExperimentalBanner extends data.Component<ISettingsProps, {}> {
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
+export class ExperimentalBannerState {
+    hideExperimentalBanner: boolean;
+}
+
+export class ExperimentalBanner extends data.Component<ISettingsProps, ExperimentalBannerState> {
 
     hideBanner() {
-        this.props.parent.setState({ hideExperimentalBanner: true });
+        this.setState({ hideExperimentalBanner: true });
     }
 
-    shouldComponentUpdate(nextProps: ISettingsProps, nextState: any, nextContext: any): boolean {
-        return false;
+    shouldComponentUpdate(nextProps: ISettingsProps, nextState: ExperimentalBannerState, nextContext: any): boolean {
+        return this.state.hideExperimentalBanner != nextState.hideExperimentalBanner;
     }
 
     renderCore() {
+        const {hideExperimentalBanner} = this.state;
+        if (hideExperimentalBanner) return <div />;
         const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
         return <div id="experimentalBanner" className="ui icon top attached fixed negative mini message">
