@@ -989,6 +989,7 @@ export class ProjectView
 
     saveAndCompile() {
         if (!this.state.header) return;
+        this.setState({ isSaving: true });
 
         return (this.state.projectName !== lf("Untitled")
             ? Promise.resolve(true) : this.promptRenameProjectAsync())
@@ -996,7 +997,11 @@ export class ProjectView
             .then(() => this.saveFileAsync())
             .then(() => {
                 if (!pxt.appTarget.compile.hasHex) {
-                    this.saveProjectToFileAsync().done();
+                    this.saveProjectToFileAsync()
+                        .finally(() => {
+                            this.setState({ isSaving: false });
+                        })
+                        .done();
                 }
                 else {
                     this.compile(true);
@@ -1037,6 +1042,9 @@ export class ProjectView
                 resp.saveOnly = saveOnly
                 resp.userContextWindow = userContextWindow;
                 resp.downloadFileBaseName = pkg.genFileName("");
+                if (saveOnly) {
+                    return pxt.commands.saveOnlyAsync(resp);
+                }
                 return pxt.commands.deployCoreAsync(resp, {reportError: (e) => core.errorNotification(e)})
                     .catch(e => {
                         core.warningNotification(lf(".hex file upload failed, please try again."));
@@ -1050,7 +1058,7 @@ export class ProjectView
                 if (userContextWindow)
                     try { userContextWindow.close() } catch (e) { }
             }).finally(() => {
-                this.setState({ compiling: false });
+                this.setState({ compiling: false, isSaving: false });
                 if (simRestart) this.runSimulator();
             })
             .done();
