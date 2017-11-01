@@ -6,6 +6,7 @@ namespace pxsim {
         id?: string;
         boardDefinition?: BoardDefinition;
         frameCounter?: number;
+        refCountingDebug?: boolean;
         options?: any;
         parts?: string[];
         partDefinitions?: Map<PartDefinition>
