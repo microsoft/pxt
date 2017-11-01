@@ -250,10 +250,10 @@ namespace pxsim {
         entry: LabelFn;
 
         public refCountingDebug = false;
+        public refCounting = true;
         private refObjId = 1;
         private liveRefObjs: pxsim.Map<RefObject> = {};
         private stringRefCounts: any = {};
-        private refCounting = true;
 
         overwriteResume: (retPC: number) => void;
         getResume: () => ResumeFn;
@@ -351,6 +351,7 @@ namespace pxsim {
             U.assert(!!initCurrentRuntime);
 
             this.id = msg.id
+            this.refCountingDebug = !!msg.refCountingDebug;
 
             let yieldMaxSteps = 100
 
