@@ -385,10 +385,10 @@ namespace ts.pxtc {
             if (jrname) {
                 if (jrname == "true") jrname = qName
                 let jr = U.lookup(opts.jres || {}, jrname)
-                if (jr && !si.attributes.iconURL) {
+                if (jr && jr.icon && !si.attributes.iconURL) {
                     si.attributes.iconURL = jr.icon
                 }
-                if (jr && !si.attributes.jresURL) {
+                if (jr && jr.data && !si.attributes.jresURL) {
                     si.attributes.jresURL = "data:" + jr.mimeType + ";base64," + jr.data
                 }
             }

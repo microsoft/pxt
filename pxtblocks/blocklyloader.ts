@@ -688,8 +688,8 @@ namespace pxt.blocks {
                     const dd = syms.map(v => {
                         const k = v.attributes.block || v.attributes.blockId || v.name;
                         return [
-                            v.attributes.blockImage ? {
-                                src: Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
+                            v.attributes.iconURL || v.attributes.blockImage ? {
+                                src: v.attributes.iconURL || Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
                                 alt: k,
                                 width: 36,
                                 height: 36,
