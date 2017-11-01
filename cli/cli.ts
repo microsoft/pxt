@@ -3713,6 +3713,7 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
             const dir = path.join('jres', path.basename(f, '.jres'));
             // images or sounds?
             const star = jresources["*"];
+            if (!star.dataEncoding) star.dataEncoding = 'base64';
             Object.keys(jresources).filter(k => k != "*").forEach(k => {
                 const jres = jresources[k];
                 const mime = jres.mimeType || star.mimeType;
@@ -3721,7 +3722,7 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
                 const iconn = path.join(dir, k + '-icon.png');
                 if (nodeutil.fileExistsSync(iconn)) {
                     pxt.log(`importing ${iconn}`);
-                    jres.icon = 'data:image/png,base64:' + fs.readFileSync(iconn, 'base64');
+                    jres.icon = 'data:image/png;base64,' + fs.readFileSync(iconn, 'base64');
                 }
                 // try to find file
                 if (mime) {
