@@ -3,8 +3,9 @@
 \begin{figure}
 \begin{lstlisting}
 let start = 0
+
 input.onButtonPressed(Button.A, () => {
-    if (!(start)) {
+    if (start == 0) {
         start = input.runningTime()
 
     } else {
@@ -17,6 +18,7 @@ input.onButtonPressed(Button.A, () => {
         basic.showString("" + sec + "." + msec)
     }
 })
+
 basic.forever(() => {
     if (start) {
         led.toggle(Math.random(5), Math.random(5))
@@ -27,3 +29,29 @@ basic.forever(() => {
 \end{figure}
 
 \section{Running Example}
+
+Figure~\ref{fig:running} shows a program in the Static
+TypeScript subset that implements a simple ``stopwatch'' timer. 
+The program has three top-level statements:
+the first initializes the global variable \tt{start} (line 1); the
+second registers an event handler (lambda function) to execute
+each time button A of the micro:bit is pressed (line 3); the
+third registers a lambda to run forever on a fiber (line 18),
+to animate the micro:bit's LED whenever the timer is active. 
+
+Note that this program is a JavaScript program, as there are no 
+types mentioned explicitly. However, all the functions called in
+this program are part of the runtime and are explicitly
+typed.  As a result, the static type of every variable and expression
+can be inferred by TypeScript's type inference.
+
+The program also shows off the use of the non-preemptive concurrency
+model supported by both \MC (for JavaScript) and \CO (for C++). 
+The fiber running the forever statement executes the lambda inside a ``while (true)'' 
+loop that yields (via a call to \tt{basic.pause}) after each call to the lambda.
+This gives the button-press event handler a chance to execute
+upon user input (in a separate fiber). Although the global variable \tt{start} is 
+shared by the two fibers, there is no data race due to the non-preemptive 
+scheduling model. 
+
+
