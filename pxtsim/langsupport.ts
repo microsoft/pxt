@@ -10,17 +10,9 @@ namespace pxsim {
         }
     }
 
-    let refObjId = 1;
-    let liveRefObjs: any = {};
-    let stringRefCounts: any = {};
-    let refCounting = true;
     let floatingPoint = false;
     let cfgKey: Map<number> = {}
     let cfg: Map<number> = {}
-
-    export function noRefCounting() {
-        refCounting = false;
-    }
 
     export function getConfig(id: number) {
         if (cfg.hasOwnProperty(id + ""))
@@ -53,22 +45,20 @@ namespace pxsim {
     }
 
     export class RefObject {
-        id: number = refObjId++;
+        id: number = runtime ? runtime.refObjId++ : -1;
         refcnt: number = 1;
 
         constructor() {
-            liveRefObjs[this.id + ""] = this
+            if (runtime)
+                runtime.liveRefObjs[this.id + ""] = this;
         }
 
         destroy() { }
 
         print() {
-            //console.log(`RefObject id:${this.id} refs:${this.refcnt}`)
+            if (runtime && runtime.refCountingDebug)
+                console.log(`RefObject id:${this.id} refs:${this.refcnt}`)
         }
-    }
-
-    export function noLeakTracking(r: RefObject) {
-        delete liveRefObjs[r.id + ""]
     }
 
     export class FnWrapper {
@@ -105,7 +95,8 @@ namespace pxsim {
         }
 
         print() {
-            //console.log(`RefInstance id:${this.id} (${this.vtable.name}) len:${this.fields.length}`)
+            if (runtime && runtime.refCountingDebug)
+                console.log(`RefRecord id:${this.id} (${this.vtable.name}) len:${this.fields.length}`)
         }
     }
 
@@ -133,7 +124,8 @@ namespace pxsim {
         }
 
         print() {
-            //console.log(`RefAction id:${this.id} refs:${this.refcnt} len:${this.fields.length}`)
+            if (runtime && runtime.refCountingDebug)
+                console.log(`RefAction id:${this.id} refs:${this.refcnt} len:${this.fields.length}`)
         }
     }
 
@@ -190,7 +182,8 @@ namespace pxsim {
         }
 
         print() {
-            //console.log(`RefRefLocal id:${this.id} refs:${this.refcnt} v:${this.v}`)
+            if (runtime && runtime.refCountingDebug)
+                console.log(`RefRefLocal id:${this.id} refs:${this.refcnt} v:${this.v}`)
         }
     }
 
@@ -223,7 +216,8 @@ namespace pxsim {
         }
 
         print() {
-            //console.log(`RefMap id:${this.id} refs:${this.refcnt} size:${this.data.length}`)
+            if (runtime && runtime.refCountingDebug)
+                console.log(`RefMap id:${this.id} refs:${this.refcnt} size:${this.data.length}`)
         }
     }
 
@@ -239,12 +233,12 @@ namespace pxsim {
     }
 
     export function decr(v: any): void {
-        if (!refCounting) return
+        if (!runtime || !runtime.refCounting) return
         if (v instanceof RefObject) {
             let o = <RefObject>v
             check(o.refcnt > 0)
             if (--o.refcnt == 0) {
-                delete liveRefObjs[o.id + ""]
+                delete runtime.liveRefObjs[o.id + ""]
                 o.destroy()
             }
         }
@@ -255,7 +249,7 @@ namespace pxsim {
     }
 
     export function incr(v: any) {
-        if (!refCounting) return v
+        if (!runtime || !runtime.refCounting) return v
         if (v instanceof RefObject) {
             let o = <RefObject>v
             check(o.refcnt > 0)
@@ -265,16 +259,8 @@ namespace pxsim {
     }
 
     export function dumpLivePointers() {
-        if (!refCounting) return
-        Object.keys(liveRefObjs).forEach(k => {
-            (<RefObject>liveRefObjs[k]).print()
-        })
-        Object.keys(stringRefCounts).forEach(k => {
-            let n = stringRefCounts[k]
-            console.log("Live String:", JSON.stringify(k), "refcnt=", n)
-        })
+        if (runtime) runtime.dumpLivePointers();
     }
-
     export namespace numops {
         export function toString(v: any) {
             if (v === null) return "null"

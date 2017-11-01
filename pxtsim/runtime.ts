@@ -249,6 +249,12 @@ namespace pxsim {
         currFrame: StackFrame;
         entry: LabelFn;
 
+        refCountingDebug = true;
+        refObjId = 1;
+        liveRefObjs: pxsim.Map<RefObject> = {};
+        stringRefCounts: any = {};
+        refCounting = true;
+
         overwriteResume: (retPC: number) => void;
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
@@ -314,6 +320,21 @@ namespace pxsim {
                 }
                 if (this.stateChanged) this.stateChanged();
             }
+        }
+
+        dumpLivePointers() {
+            if (!this.refCounting || !this.refCountingDebug) return;
+
+            const liveObjectNames = Object.keys(this.liveRefObjs);
+            const stringRefCountNames = Object.keys(this.stringRefCounts);
+            console.log(`Live objects: ${liveObjectNames.length} objects, ${stringRefCountNames.length} strings`)
+            liveObjectNames.forEach(k => {
+                (<RefObject>this.liveRefObjs[k]).print()
+            })
+            stringRefCountNames.forEach(k => {
+                const n = this.stringRefCounts[k]
+                console.log("Live String:", JSON.stringify(k), "refcnt=", n)
+            })
         }
 
         constructor(msg: SimulatorRunMessage) {
