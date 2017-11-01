@@ -1,3 +1,11 @@
+
+\begin{figure*}[t]
+    \includegraphics[width=5in]{screenSnapFig.pdf}
+\caption{\label{fig:screenSnap}Screen snapshot of the \MC web app, showing the Blockly
+view of the JavaScript from Figure~\ref{fig:example}.}
+\end{figure*}
+
+
 \section{\MCN: Design and Implementation}
 \label{sec:makecode}
 
@@ -17,11 +25,6 @@ The app is built from a target (e.g., \emph{\href{https://github.com/microsoft/p
 which extends the core framework (\emph{\href{https://github.com/microsoft/pxt}{pxt}}).
 The remaining subsections describe the parts of Figure~\ref{fig:makecode}, 
 which shows the high-level components of the web app.
-
-\begin{figure*}[t]
-    \includegraphics[width=5.5in]{makecodeFig.pdf}
-\caption{\label{fig:makecode}\MC Architecture}
-\end{figure*}
 
 \subsection{Device Runtime and Shim Generation}
 
@@ -51,6 +54,12 @@ language construct, such as for the LED namespace in the micro:bit target:
 namespace led { 
 ...
 \end{lstlisting}
+
+\begin{figure*}[t]
+    \includegraphics[width=5.5in]{makecodeFig.pdf}
+\caption{\label{fig:makecode}\MC Architecture}
+\end{figure*}
+
 
 Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories, where the LED
 namespace can been seen. Here is the C++ file defining the micro:bit's led namespace and its functions:
@@ -189,7 +198,7 @@ achieve asynchronous execution in a single-threaded context, these promises are 
 The \CO device runtime supports fibers with the ability to pause, so for compilation to a device, 
 the compiler simply emits a call to pause at a suspension point. 
 
-\emph{TODO: need a small example to clarify how it all works}
+\emph{TODO: use the running example to describe it}
 
 % tball: I added TypeScript above to make it clear 
 %\emph{TODO: The async annotation is only relevant for the JS code. In ARM/AVR it doesn't do anything.

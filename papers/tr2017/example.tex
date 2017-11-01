@@ -25,19 +25,20 @@ basic.forever(() => {
     }
 })
 \end{lstlisting}
-\caption{\label{fig:running}Running example.}
+\caption{\label{fig:example}Running example.}
 \end{figure}
 
-\section{Running Example}
+\subsection{Running Example}
 
-Figure~\ref{fig:running} shows a program in the Static
-TypeScript subset that implements a simple ``stopwatch'' timer. 
+Figure~\ref{fig:example} shows a program in the Static
+TypeScript subset that implements a simple ``stopwatch'' timer
+for the micro:bit.
 The program has three top-level statements:
-the first initializes the global variable \tt{start} (line 1); the
+the first initializes the global variable \emph{start} (line 1); the
 second registers an event handler (lambda function) to execute
 each time button A of the micro:bit is pressed (line 3); the
 third registers a lambda to run forever on a fiber (line 18),
-to animate the micro:bit's LED whenever the timer is active. 
+to animate the micro:bit's 5x5 LED screen whenever the timer is active. 
 
 Note that this program is a JavaScript program, as there are no 
 types mentioned explicitly. However, all the functions called in
@@ -48,9 +49,9 @@ can be inferred by TypeScript's type inference.
 The program also shows off the use of the non-preemptive concurrency
 model supported by both \MC (for JavaScript) and \CO (for C++). 
 The fiber running the forever statement executes the lambda inside a ``while (true)'' 
-loop that yields (via a call to \tt{basic.pause}) after each call to the lambda.
+loop that yields (via a call to \emph{basic.pause}) after each call to the lambda.
 This gives the button-press event handler a chance to execute
-upon user input (in a separate fiber). Although the global variable \tt{start} is 
+upon user input (in a separate fiber). Although the global variable \emph{start} is 
 shared by the two fibers, there is no data race due to the non-preemptive 
 scheduling model. 
 

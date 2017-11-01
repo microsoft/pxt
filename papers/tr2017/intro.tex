@@ -80,18 +80,15 @@ pre-compiled C++ runtime (\emph{\CON}). No C/C++ compiler is invoked to compile 
 computer and then flashed to the microcontroller (exposed as a USB pen drive) 
 via a simple file copy operation,  with the aid of the \emph{UF2} file format and supporting firmware. 
 
-
-\begin{figure*}[t]
-      \includegraphics[width=5in]{screenSnapFig.pdf}
-  \caption{\label{fig:screenSnap}Screen snapshot of the \MC web app. \flameon{TODO:remove the MSFT logo}}
-  \end{figure*}
-
-
 These four advances enable beginners to get started programming microcontrollers from any modern web browser, and enable
 hardware vendors to innovate and safely add new components to the mix using Static TypeScript, leveraging its
 foreign function interface to C++.
 Once the web app has been loaded, all the above functionality works offline (i.e., if the host machine loses its connection
 to the internet).
+
+\input{example}
+
+\subsection{Evaluation}
 
 \begin{table}[]
 \centering
@@ -104,10 +101,11 @@ Circuit Playground & 32       & 256        & 32              \\ \hline
 \end{tabular}
 \caption{\label{table:devices}A subset of devices supported by the platform.}
 \end{table}
-Whilst this paper focuses on three devices listed in Table~\ref{table:devices}, we encourage the reader to choose a target
-from \url{www.makecode.com} and experiment with programming it, to appreciate the
-qualitative aspects of the platform, namely its simplicity and ease of use.
-This paper evaluates quantitative aspects of the platform:
+This paper focuses on three devices listed in Table~\ref{table:devices}
+%we encourage the reader to choose a target
+%from \url{www.makecode.com} and experiment with programming it, to appreciate the
+%qualitative aspects of the platform, namely its simplicity and ease of use.
+and evaluates quantitative aspects of the platform:
 compilation speed, code size, and runtime performance.  In particular, we
 consider:
 \begin{itemize}
