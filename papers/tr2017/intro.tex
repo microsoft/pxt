@@ -80,11 +80,32 @@ pre-compiled C++ runtime (\emph{\CON}). No C/C++ compiler is invoked to compile 
 computer and then flashed to the microcontroller (exposed as a USB pen drive) 
 via a simple file copy operation,  with the aid of the \emph{UF2} file format and supporting firmware. 
 
-These four advances enable beginners to get started programming microcontrollers from any modern web browser, and enable
-hardware vendors to innovate and safely add new components to the mix using Static TypeScript, leveraging its
+
+These four advances enable beginners to get started programming microcontrollers from 
+any modern web browser, and enable hardware vendors to innovate and safely add new 
+components to the mix using Static TypeScript, leveraging its
 foreign function interface to C++.
-Once the web app has been loaded, all the above functionality works offline (i.e., if the host machine loses its connection
-to the internet).
+Once the web app has been loaded, all the above functionality works offline 
+(i.e., if the host machine loses its connection
+to the internet). 
+
+\begin{table}[]
+\centering
+\begin{tabular}{|l|r|r|r|r|r|}
+\hline
+            &          &            & \bf{Word} &          &             \\
+\bf{Device} & \bf{RAM} & \bf{Flash} & \bf{Size} & \bf{CPU} & \bf{Chip}   \\ \hline
+Uno         & 2 kB     & 32 kB      & 8         & AVR      & ATmega328P  \\ \hline
+micro:bit   & 16 kB    & 256 kB     & 32        & M0       & nRF52       \\ \hline
+CPX         & 32 kB    & 256 kB     & 32        & M0       & SAMD21      \\ \hline
+\end{tabular}
+\caption{\label{table:devices}A subset of devices supported by the platform. 
+CPX is Adafruit's Circuit Playground Express. M0 denotes Cortex-M0.}
+\end{table}
+      
+Table~\ref{table:devices} lists three of the devices supported by our platform, ranging
+from the highly resource-contrained Arduino Uno to the slightly less constrained space of
+the micro:bit and Adafruit Circuit Playground Express (CPX).
 
 \begin{figure}
 \begin{lstlisting}
@@ -118,9 +139,9 @@ TypeScript subset that implements a simple ``stopwatch'' timer
 for the micro:bit.
 The program has three top-level statements:
 the first initializes the global variable \emph{start} (line 1); the
-second registers an event handler (lambda function) to execute
+second registers an event handler (a lambda function) to execute
 each time button A of the micro:bit is pressed (line 3); the
-third registers a lambda to run forever on a fiber (line 18),
+third registers a lambda function to run forever on a fiber (line 18),
 to animate the micro:bit's 5x5 LED screen whenever the timer is active. 
 
 Note that this program is a JavaScript program, as there are no 
@@ -138,24 +159,15 @@ upon user input (in a separate fiber). Although the global variable \emph{start}
 shared by the two fibers, there is no data race due to the non-preemptive 
 scheduling model. 
 
+\flameon{TODO: event queueing/execution model???}
+
 \subsection{Evaluation}
 
-\begin{table}[]
-\centering
-\begin{tabular}{|l|l|l|l|l|}
-\hline
-Device             & RAM (kB) & Flash (kB) & Word Size        \\ \hline
-Arduino Uno        & 2        & 32         & 8               \\ \hline
-BBC micro:bit      & 16       & 256        & 32              \\ \hline
-Circuit Playground & 32       & 256        & 32              \\ \hline
-\end{tabular}
-\caption{\label{table:devices}A subset of devices supported by the platform.}
-\end{table}
-This paper focuses on three devices listed in Table~\ref{table:devices}
 %we encourage the reader to choose a target
 %from \url{www.makecode.com} and experiment with programming it, to appreciate the
 %qualitative aspects of the platform, namely its simplicity and ease of use.
-and evaluates quantitative aspects of the platform:
+In this paper, we evaluate quantitative aspects of the platform
+with respect to the devices from Table~\ref{table:devices}:
 compilation speed, code size, and runtime performance.  In particular, we
 consider:
 \begin{itemize}
