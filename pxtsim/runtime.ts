@@ -249,7 +249,7 @@ namespace pxsim {
         currFrame: StackFrame;
         entry: LabelFn;
 
-        refCountingDebug = true;
+        refCountingDebug = false;
         refObjId = 1;
         liveRefObjs: pxsim.Map<RefObject> = {};
         stringRefCounts: any = {};
