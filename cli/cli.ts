@@ -3713,23 +3713,24 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
             const dir = path.join('jres', path.basename(f, '.jres'));
             // images or sounds?
             const star = jresources["*"];
+            if (!star.dataEncoding) star.dataEncoding = 'base64';
             Object.keys(jresources).filter(k => k != "*").forEach(k => {
                 const jres = jresources[k];
                 const mime = jres.mimeType || star.mimeType;
                 pxt.log(`expanding ${k}`);
                 // try to slurp icon
                 const iconn = path.join(dir, k + '-icon.png');
-                pxt.log(`importing ${iconn}`);
                 if (nodeutil.fileExistsSync(iconn)) {
-                    jres.icon = 'data:image/png,base64:' + fs.readFileSync(iconn, 'base64');
+                    pxt.log(`importing ${iconn}`);
+                    jres.icon = 'data:image/png;base64,' + fs.readFileSync(iconn, 'base64');
                 }
                 // try to find file
                 if (mime) {
                     const ext = mime.replace(/^.*\//, '');
                     const fn = path.join(dir, k + '-data.' + ext);
-                    pxt.log(`importing ${fn}`);
                     if (nodeutil.fileExistsSync(fn)) {
-                        jres.data = `data:${mime},base64:` + fs.readFileSync(fn, 'base64');
+                        pxt.log(`importing ${fn}`);
+                        jres.data = fs.readFileSync(fn, 'base64');
                     }
                 }
             })
