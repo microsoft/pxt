@@ -249,17 +249,24 @@ namespace pxsim {
         currFrame: StackFrame;
         entry: LabelFn;
 
-        refCountingDebug = false;
-        refObjId = 1;
-        liveRefObjs: pxsim.Map<RefObject> = {};
-        stringRefCounts: any = {};
-        refCounting = true;
+        public refCountingDebug = true;
+        private refObjId = 1;
+        private liveRefObjs: pxsim.Map<RefObject> = {};
+        private stringRefCounts: any = {};
+        private refCounting = true;
 
         overwriteResume: (retPC: number) => void;
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
         setupTop: (cb: ResumeFn) => StackFrame;
         handleDebuggerMsg: (msg: DebuggerMessage) => void;
+
+        registerLiveObject(object: RefObject) {
+            const id = this.refObjId++;
+            if (this.refCounting)
+                this.liveRefObjs[id + ""] = object;
+            return id;
+        }
 
         runningTime(): number {
             return U.now() - this.startTime;

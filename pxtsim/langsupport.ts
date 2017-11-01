@@ -45,12 +45,14 @@ namespace pxsim {
     }
 
     export class RefObject {
-        id: number = runtime ? runtime.refObjId++ : -1;
+        id: number;
         refcnt: number = 1;
 
         constructor() {
             if (runtime)
-                runtime.liveRefObjs[this.id + ""] = this;
+                this.id = runtime.registerLiveObject(this);
+            else
+                this.id = 0;
         }
 
         destroy() { }
