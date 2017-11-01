@@ -1,0 +1,29 @@
+
+% https://makecode.microbit.org/_4fxHHTJhM5yh
+\begin{figure}
+\begin{lstlisting}
+let start = 0
+input.onButtonPressed(Button.A, () => {
+    if (!(start)) {
+        start = input.runningTime()
+
+    } else {
+        let d = input.runningTime() - start
+        start = 0
+        basic.clearScreen()
+        basic.pause(1000)
+        let sec = d / 1000
+        let msec = d % 1000
+        basic.showString("" + sec + "." + msec)
+    }
+})
+basic.forever(() => {
+    if (start) {
+        led.toggle(Math.random(5), Math.random(5))
+    }
+})
+\end{lstlisting}
+\caption{\label{fig:running}Running example.}
+\end{figure}
+
+\section{Running Example}
