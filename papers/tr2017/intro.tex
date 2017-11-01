@@ -107,30 +107,6 @@ Table~\ref{table:devices} lists three of the devices supported by our platform, 
 from the highly resource-contrained Arduino Uno to the slightly less constrained space of
 the micro:bit and Adafruit Circuit Playground Express (CPX).
 
-\begin{figure}
-\begin{lstlisting}
-let start = 0
-
-input.onButtonPressed(Button.A, () => {
-  if (start == 0) {
-    start = input.runningTime()
-  } else {
-    let d = input.runningTime() - start
-    start = 0 
-    basic.clearScreen()
-    basic.pause(1000)
-    basic.showString("" + (d/1000) + "." + (d%1000))
-  }
-})
-
-basic.forever(() => {
-  if (start) {
-    led.toggle(Math.random(5), Math.random(5))
-  }
-})
-\end{lstlisting}
-\caption{\label{fig:example}Running example.}
-\end{figure}
 
 \subsection{Running Example}
 
@@ -160,6 +136,33 @@ shared by the two fibers, there is no data race due to the non-preemptive
 scheduling model. 
 
 \flameon{TODO: event queueing/execution model???}
+
+
+
+\begin{figure}
+\begin{lstlisting}
+let start = 0
+
+input.onButtonPressed(Button.A, () => {
+  if (start == 0) {
+    start = input.runningTime()
+  } else {
+    let d = input.runningTime() - start
+    start = 0 
+    basic.clearScreen()
+    basic.pause(1000)
+    basic.showString(d/1000 + "." + d%1000)
+  }
+})
+
+basic.forever(() => {
+  if (start) {
+    led.toggle(Math.random(5), Math.random(5))
+  }
+})
+\end{lstlisting}
+\caption{\label{fig:example}Running example.}
+\end{figure}
 
 \subsection{Evaluation}
 
