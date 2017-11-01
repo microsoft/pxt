@@ -240,7 +240,7 @@ namespace pxsim {
             let o = <RefObject>v
             check(o.refcnt > 0)
             if (--o.refcnt == 0) {
-                delete runtime.liveRefObjs[o.id + ""]
+                runtime.unregisterLiveObject(o);
                 o.destroy()
             }
         }

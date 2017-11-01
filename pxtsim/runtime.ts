@@ -268,6 +268,11 @@ namespace pxsim {
             return id;
         }
 
+        unregisterLiveObject(object: RefObject) {
+            U.assert(object.refcnt == 0, "ref count is not 0");
+            delete this.liveRefObjs[object.id + ""]
+        }
+
         runningTime(): number {
             return U.now() - this.startTime;
         }
@@ -335,9 +340,7 @@ namespace pxsim {
             const liveObjectNames = Object.keys(this.liveRefObjs);
             const stringRefCountNames = Object.keys(this.stringRefCounts);
             console.log(`Live objects: ${liveObjectNames.length} objects, ${stringRefCountNames.length} strings`)
-            liveObjectNames.forEach(k => {
-                (<RefObject>this.liveRefObjs[k]).print()
-            })
+            liveObjectNames.forEach(k => this.liveRefObjs[k].print());
             stringRefCountNames.forEach(k => {
                 const n = this.stringRefCounts[k]
                 console.log("Live String:", JSON.stringify(k), "refcnt=", n)
