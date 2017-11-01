@@ -3719,17 +3719,17 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
                 pxt.log(`expanding ${k}`);
                 // try to slurp icon
                 const iconn = path.join(dir, k + '-icon.png');
-                pxt.log(`importing ${iconn}`);
                 if (nodeutil.fileExistsSync(iconn)) {
+                    pxt.log(`importing ${iconn}`);
                     jres.icon = 'data:image/png,base64:' + fs.readFileSync(iconn, 'base64');
                 }
                 // try to find file
                 if (mime) {
                     const ext = mime.replace(/^.*\//, '');
                     const fn = path.join(dir, k + '-data.' + ext);
-                    pxt.log(`importing ${fn}`);
                     if (nodeutil.fileExistsSync(fn)) {
-                        jres.data = `data:${mime},base64:` + fs.readFileSync(fn, 'base64');
+                        pxt.log(`importing ${fn}`);
+                        jres.data = fs.readFileSync(fn, 'base64');
                     }
                 }
             })
