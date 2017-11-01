@@ -65,3 +65,24 @@ namespace images {
     export const eyes = new Image(hex ``) 
 }
 ```
+
+## Building JRES files
+
+The [command line](/cli) provides a command, ``buildjres`` that will automatically expand files into a jres resource.
+
+* create a jres file with empty resources
+
+```
+{
+    "*": {
+        "namespace": "sounds",
+        "dataEncoding": "base64",
+        "mimeType": "audio/wav"
+    },
+    "bark": {},
+    "purr": {}
+}
+```
+
+* Under the same project, create a subfolder ``jres/RESOURCENAME`` where ``RESOURCENAME`` is the name of your jres file.
+* Place all the files that need to be included with the names ``RESOURCE-icon.png`` for icons, and ``RESOURCE-data.EXT`` for data, where ``ext`` is determine by the mime type of the resource.

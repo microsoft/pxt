@@ -3702,6 +3702,48 @@ export function cleanAsync(parsed: commandParser.ParsedCommand) {
         .then(() => { });
 }
 
+export function buildJResAsync(parsed: commandParser.ParsedCommand) {
+    ensurePkgDir();
+    nodeutil.allFiles(".")
+        .filter(f => /\.jres$/i.test(f))
+        .forEach(f => {
+            pxt.log(`expanding jres resources in ${f}`);
+            const jresources = nodeutil.readJson(f);
+            const oldjr = JSON.stringify(jresources, null, 2);
+            const dir = path.join('jres', path.basename(f, '.jres'));
+            // images or sounds?
+            const star = jresources["*"];
+            if (!star.dataEncoding) star.dataEncoding = 'base64';
+            Object.keys(jresources).filter(k => k != "*").forEach(k => {
+                const jres = jresources[k];
+                const mime = jres.mimeType || star.mimeType;
+                pxt.log(`expanding ${k}`);
+                // try to slurp icon
+                const iconn = path.join(dir, k + '-icon.png');
+                if (nodeutil.fileExistsSync(iconn)) {
+                    pxt.log(`importing ${iconn}`);
+                    jres.icon = 'data:image/png;base64,' + fs.readFileSync(iconn, 'base64');
+                }
+                // try to find file
+                if (mime) {
+                    const ext = mime.replace(/^.*\//, '');
+                    const fn = path.join(dir, k + '-data.' + ext);
+                    if (nodeutil.fileExistsSync(fn)) {
+                        pxt.log(`importing ${fn}`);
+                        jres.data = fs.readFileSync(fn, 'base64');
+                    }
+                }
+            })
+
+            const newjr = JSON.stringify(jresources, null, 2);
+            if (oldjr != newjr) {
+                pxt.log(`updating ${f}`)
+                fs.writeFileSync(f, newjr);
+            }
+        })
+    return Promise.resolve();
+}
+
 export function buildAsync(parsed: commandParser.ParsedCommand) {
     forceCloudBuild = !!parsed.flags["cloud"];
 
@@ -4498,6 +4540,11 @@ function initCommands() {
             electron: { description: "used to indicate that the server is being started in the context of an electron app" }
         }
     }, serveAsync);
+
+    p.defineCommand({
+        name: "buildjres",
+        help: "embeds resources into jres files"
+    }, buildJResAsync);
 
     p.defineCommand({
         name: "gist",
