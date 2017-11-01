@@ -91,24 +91,21 @@ to the internet).
 let start = 0
 
 input.onButtonPressed(Button.A, () => {
-      if (start == 0) {
-            start = input.runningTime()
-
-      } else {
-            let d = input.runningTime() - start
-            start = 0
-            basic.clearScreen()
-            basic.pause(1000)
-            let sec = d / 1000
-            let msec = d % 1000
-            basic.showString("" + sec + "." + msec)
-      }
+  if (start == 0) {
+    start = input.runningTime()
+  } else {
+    let d = input.runningTime() - start
+    start = 0 
+    basic.clearScreen()
+    basic.pause(1000)
+    basic.showString("" + (d/1000) + "." + (d%1000))
+  }
 })
 
 basic.forever(() => {
-      if (start) {
-            led.toggle(Math.random(5), Math.random(5))
-      }
+  if (start) {
+    led.toggle(Math.random(5), Math.random(5))
+  }
 })
 \end{lstlisting}
 \caption{\label{fig:example}Running example.}
@@ -140,9 +137,6 @@ This gives the button-press event handler a chance to execute
 upon user input (in a separate fiber). Although the global variable \emph{start} is 
 shared by the two fibers, there is no data race due to the non-preemptive 
 scheduling model. 
-
-      
-      
 
 \subsection{Evaluation}
 
