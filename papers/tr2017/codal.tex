@@ -6,7 +6,8 @@
 \section{The \CO Runtime}
 \label{sec:codal}
 
-The component-oriented device abstraction layer (\CO) is a multi-platform runtime designed to make efficient use of memory and energy, provide both synchronous and asynchronous API variants, and be a reasonable target for higher level languages such as JavaScript.
+The component-oriented device abstraction layer (\CO) is a multi-platform runtime designed to make efficient use of memory and energy, provide both synchronous and asynchronous API variants, and be a reasonable target for higher level languages such as JavaScript.  It is the preferred runtime
+for \MC and is supported by a standardized mapping up to TypeScript so that different \MC targets that use \CO share a common API and block vocabulary.
 
 \CO provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that minimises the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem (common to all components) that enables the decoupling of system and user code.
 
@@ -25,7 +26,6 @@ class ArduinoUno : public CodalDevice
     public:
         ATMegaTime       timer;
         ATMegaSerial     serial;
-        ArduinoIO        io;
         ATMegaI2C        i2c;
         MessageBus       messageBus;
 
@@ -42,7 +42,6 @@ This architecture enables platform independent code to run across multiple proce
 \subsection{Message Bus and Events}
 
 Message passing via events is a common technique and is the foundation of many operating systems --- yet in most systems events are static, used only to notify users of key events within the system (e.g. SIGKILL on UNIX).
-
 
 \CO offers extensible events where the data contained in an event can be arbitrary, and application specific. Application developers can then ``listen'' to events, specifying an id (namespace), a value (unique within a namespace), and a function to be invoked when an event is raised. All events pass through the message bus: if a corresponding listener is in place, the function indicated by the listener is invoked. The eventing model aligns well to JavaScript and languages with event-based programming models.
 
