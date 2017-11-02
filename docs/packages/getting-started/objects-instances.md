@@ -8,7 +8,7 @@ Let's add a class to represent a `fruit` object. Also, let's change **pick** to 
 
 Now, it would be nice if the **pick** function was general enough to pick a fruit of any type and return it to you. Something like:
 
-```typescript
+```typescript-ignore
 /**
  * Types of tropical fruit
  */
@@ -69,7 +69,7 @@ namespace tropic {
 
 The **pick** function returns a general `fruit` object and not the specific fruit subclass. Not every fruit opens up the same way so, for `banana`, we would want to call the **peel** method. If we picked a `coconut`, we'd call its **crack** method.
 
-```typescript
+```typescript-ignore
 namespace tropic {
     ...
     export class banana extends fruit {
@@ -91,13 +91,13 @@ namespace tropic {
 }
 ```
 
-MakeCode is limited to using [Static TypeScript](https://makecode.com/language) so we can't cast a `fruit` to a `banana` or a `coconut` in order to get at the **peel** or **crack** methods.
+MakeCode is limited to using [Static typescript](https://makecode.com/language) so we can't cast a `fruit` to a `banana` or a `coconut` in order to get at the **peel** or **crack** methods.
 
 ## Step 2: Make a banana object
 
 Well, for now, we can live with just bananas. If we want other fruit, we can code classes for them explicitly. So, we'll make the fruit picker give just bananas.
 
-```typescript
+```typescript-ignore
 namespace tropic {
     ...
     /**
@@ -111,7 +111,7 @@ namespace tropic {
 
 With bananas, they can ripen, get peeled, be eaten, or be left to rot. Let's add methods for these actions in the `banana` class.
 
-```typescript
+```typescript-ignore
 /**
  * Appearance and condition of the banana.
  */
@@ -179,7 +179,7 @@ namespace tropic {
 
 In the blocks model, class methods aren't available, or don't show up, in the Toolbox until there's an actual object instance related to it. The [block definitions](/defining-blocks#objects-and-instance-methods) for the methods must "tag" them to an instance. Let's take the **peel** method as an example. We've inserted the ``%fruit`` parameter at the beginning of the `block` attribute. This is not a parameter for the method, but an association of the block to an instance variable initially called `fruit`. This will cause the **peel** block to be valid in the workspace as a method of `fruit` even if the value of `fruit` is stil `null` or `undefined`. You can think of it as a placeholder or a default instance name, but without it, the **peel** method has no context.
 
-```typescript
+```typescript-ignore
 /*
  * Peel the skin off of the banana.
  */
@@ -191,7 +191,7 @@ public peel(): void {
 
 Now, lets's add the new `banana` class to the `tropic` namespace created in the simple package tutorial. Take the code from [banana.ts](./sources#banana-ts) in the supplied sources and save it in the tropic package under _/libs/tropic_. Go to the `pxt.json` file and add "banana.ts" to the `files` list.
 
-```typescript
+```typescript-ignore
 "files": [
     "tropic.ts",
     "banana.ts"
@@ -200,7 +200,7 @@ Now, lets's add the new `banana` class to the `tropic` namespace created in the 
 
 Restart your target to build the package with the `banana` class added. In the Toolbox you will now see the `banana` methods in the **Tropic** category tagged with the `fruit` instance. Go to the JavaScript editor and paste in this code to test your class:
 
-```typescript
+```typescript-ignore
 let fruit = tropic.pickBanana()
 if (!(fruit.ripe())) {
     fruit.ripen()
@@ -213,7 +213,7 @@ tropic.compost(fruit)
 
 Delete the test code from the editor workspace. Switch back to the **Blocks** view and drag the **ripen** method block from **Tropic** into an **on start** block. Now, go to the **JavaScript** view and you will see:
 
-```typescript
+```typescript-ignore
 let fruit: tropic.banana = null
 fruit.ripen()
 ```
@@ -222,7 +222,7 @@ Since you have the `%fruit` parameter in the `block` attribute, the `fruit` inst
 
 To have MakeCode automatically create an instance of `fruit` when you first pull out a method from `banana`, use the `//% autoCreate` attribute. It is set in the heading of the class.
 
-```typescript
+```typescript-ignore
 /**
  * The tropical fruit called banana.
  */
@@ -236,7 +236,7 @@ So now, when a **ripen** block is placed onto the workspace, an instance is crea
 
 Add the `autoCreate` attribute as shown and restart the target. Delete any blocks in the workspace and pull out **ripen** as you did before. After swithing to JavaScript, you'll see that `fruit` is now set to an instance of `banana` rather than being just a variable declaration with a `null` value.
 
-```typescript
+```typescript-ignore
 let fruit = tropic.pickBanana()
 fruit.ripen()
 ```
@@ -245,7 +245,7 @@ fruit.ripen()
 
 Maybe you want to have an instance of your class already created when your package is installed. To do this you make a constant and assign it to a new object instance. Here we've added the `fruit` constant as an instance of `banana`.
 
-```typescript
+```typescript-ignore
 namespace tropic {
     /**
      * The tropical fruit called banana.
@@ -267,7 +267,7 @@ namespace tropic {
 ```
 Now, for each method in `banana` you add the `//% defaultInstance` attribute. For the **peel** method (and the others) the default instance attribute is set to `tropic.fruit`. Remove the `%fruit` parameter from the `block` attribute.
 
-```typescript
+```typescript-ignore
 /**
  * Peel the skin off of the banana
  */
@@ -280,7 +280,7 @@ public peel(): void {
 
 Repeat this for the other methods too. Restart your target to build these changes into the `tropic` package. Go to the Toolbox and drag the **peel** block from **Tropic**. You'll see that it has no instance parameter with it and it's usable directly. Delete that block, go into the JavaScript editor and paste in this code:
 
-```typescript
+```typescript-ignore
 if (!(tropic.fruit.ripe())) {
     tropic.fruit.ripen();
 }
@@ -290,7 +290,7 @@ tropic.compost(fruit);
 
 Since there's already a default instance, the use of **pickBanana** isn't needed unless you want to create another `banana`. Add these two lines to at the bottom of the test code:
 
-```typescript
+```typescript-ignore
 let otherFruit = tropic.pickBanana();
 otherFruit.peel();
 ```
