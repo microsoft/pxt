@@ -1148,7 +1148,7 @@ export class ProjectView
                         if (e.notifyUser) {
                             core.warningNotification(e.message);
                         } else {
-                            core.warningNotification(lf("Upload failed, please try again."));
+                            core.warningNotification(lf("Download failed, please try again."));
                         }
                         pxt.reportException(e);
                         if (userContextWindow)
