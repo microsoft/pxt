@@ -16,7 +16,6 @@ const lf = Util.lf
 export class Editor extends srceditor.Editor {
     charts: Chart[] = []
     chartIdx: number = 0
-    sourceIdx: number = 1
     sourceMap: pxt.Map<string> = {}
     consoleBuffer: string = ""
     isSim: boolean = true
@@ -76,8 +75,9 @@ export class Editor extends srceditor.Editor {
         const data = smsg.data || ""
         const source = smsg.id || "?"
 
-        if (!(source in this.sourceMap)) {
-            this.sourceMap[source] = lf("source") + (this.sourceIdx++).toString()
+        if (!this.sourceMap[source]) {
+            let sourceIdx = Object.keys(this.sourceMap).length + 1
+            this.sourceMap[source] = lf("source") + sourceIdx.toString()
         }
         let niceSource = this.sourceMap[source]
 
