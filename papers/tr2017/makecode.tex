@@ -62,7 +62,7 @@ namespace led {
 
 Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories, where the LED
 namespace can been seen. Here is the C++ file defining the micro:bit's led namespace and its functions:
-~\href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/led.cpp}{pxt-microbit/libs/core/led.cpp}.
+~\dbhref{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/led.cpp}{pxt-microbit/libs/core/led.cpp}.
 
 Mapping of functions and enumerations between C++ and TypeScript is straightforward
 and performed automatically by \MC. 
@@ -92,7 +92,7 @@ function plot(x: number, y: number): void;
 \end{lstlisting}
 
 Here is the shim file generated from C++ micro:bit device runtime:
-\href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/shims.d.ts}{pxt-microbit/libs/core/shims.d.ts}.
+\dbhref{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/shims.d.ts}{pxt-microbit/libs/core/shims.d.ts}.
 
 To support the foreign function interface, \MC defines a mapping between C++ and TypeScript types.
 Boolean and void have straightforward mappings from C++ to TypeScript (bool $\rightarrow$ boolean, void $\rightarrow$ void). 
@@ -105,7 +105,7 @@ This is particularly useful for saving space on 8-bit architectures such as the 
 \MC allows a set of C++ functions with the same first parameter (of type Foo) to be
 exposed as a TypeScript interface Foo as follows: this set of C++ functions must be grouped
 inside a namespace of the name FooMethods.  See, for example, how a C++ buffer abstraction is exposed:
-\href{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp}{pxt-microbit/libs/core/buffer.cpp}.
+\dbhref{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp}{pxt-microbit/libs/core/buffer.cpp}.
 You can find the resulting TypeScript Buffer interface in the previously referenced shim file for the micro:bit.
 
 \MC includes reference counted C++ types for strings, lambdas (with
@@ -157,7 +157,7 @@ TypeScript supports programming constructs that are not available in Blockly, su
 Such constructs are converted into grey uneditable blocks in Blockly, with the construct's program
 text intact. This means \MC always can decompile a TypeScript program to Blockly and then recover
 the program text of the grey blocks when converting from Blockly back to TypeScript
- (see \emph{\href{https://github.com/Microsoft/pxt/blob/master/pxtcompiler/emitter/decompiler.ts}{decompiler.ts}}). 
+ (see \emph{\dbhref{https://github.com/Microsoft/pxt/blob/master/pxtcompiler/emitter/decompiler.ts}{decompiler.ts}}). 
 
 \subsection{Compilation Pipeline}
 
@@ -177,8 +177,8 @@ and Atmel's Atmega class (AVR instructions). A separate assembler, also paramete
 encoder/decoder, generates machine code and resolves runtime references, producing a binary executable.
 A third backend generates bytecode instructions and a fourth backend targets C\#. 
 The compiler chain
-can be found at \emph{\href{https://github.com/Microsoft/pxt/tree/master/pxtcompiler/emitter}{pxtcompiler/emitter}} and 
-\emph{\href{https://github.com/Microsoft/pxt/tree/master/pxtlib/emitter}{pxtlib/emitter}}.
+can be found at \emph{\dbhref{https://github.com/Microsoft/pxt/tree/master/pxtcompiler/emitter}{pxtcompiler/emitter}} and 
+\emph{\dbhref{https://github.com/Microsoft/pxt/tree/master/pxtlib/emitter}{pxtlib/emitter}}.
 
 
 \subsubsection{Asynchronous Functions}
