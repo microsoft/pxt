@@ -13,16 +13,15 @@ Figure~\ref{fig:screenSnap} shows a screen snapshot of the \MC web app for the m
 (A) the menu bar allows switching between views of blocks and JavaScript;
 (B) the simulator provides feedback on user code executed in the browser;
 (C) the toolbar provides access to device-specific APIs and programming elements;
-(D) the programming canvas; 
+(D) the programming canvas (showing here the blocks corresponding to the JavaScript from Figure~\ref{fig:example});
 (E) the download button invokes the compiler to produce a binary executable.
 
 The \MC web app encapsulates all the components needed to deliver a programming experience 
-for microcontroller based devices, free of the need for a C++ compiler for the compilation of user 
-code.
+for microcontrollers, free of the need for a C++ compiler for the compilation of user code.
 The web app is written in TypeScript and incorporates the TypeScript compiler and 
 language service as well. 
-The app is built from a target (e.g., \emph{\href{https://github.com/microsoft/pxt-microbit}{pxt-microbit}})
-which extends the core framework (\emph{\href{https://github.com/microsoft/pxt}{pxt}}).
+The app is built from a target (e.g., \emph{\dbhref{https://github.com/microsoft/pxt-microbit}{pxt-microbit}})
+which extends the core framework (\emph{\dbhref{https://github.com/microsoft/pxt}{pxt}}).
 The remaining subsections describe the parts of Figure~\ref{fig:makecode}, 
 which shows the high-level components of the web app.
 
@@ -130,7 +129,7 @@ parameters (thus simplifying the API available via Blockly), and describe other 
 characteristics of the block.  \MC uses the types of function parameters to select appropriate
 Blockly widgets.  For example, an enumeration is represented by a dropdown menu in blocks.
 For more information on the block-specific annotations, see 
-\url{https://makecode.com/defining-blocks}. 
+\dburl{https://makecode.com/defining-blocks}. 
 \MCN's support for Blockly means that for the common case, the target developer doesn't need
 to know anything about the Blockly framework.  For more sophisticated needs, one can directly access
 the Blockly framework. 
@@ -147,7 +146,7 @@ help in transition from coding with blocks to coding with JavaScript. More advan
 APIs can be discovered in Monaco via code intellisense.
 
 The Blockly program representation is compiled to Static TypeScript in a syntax-directed manner
-(see \emph{\url{https://github.com/Microsoft/pxt/tree/master/pxtblocks}{pxtblocks}}). A key issue is the need for
+(see \emph{\dburl{https://github.com/Microsoft/pxt/tree/master/pxtblocks}{pxtblocks}}). A key issue is the need for
 type inference on the Blockly representation, as variables generally are defined and used without
 being declared in Blockly. \MC uses a simple unification type inference to assign a
 unique type to each variable.  
@@ -240,10 +239,10 @@ reading while pushing one of the device's buttons).
 
 Packages are \MCN's dynamic/static library mechanism for extending a target (by adding new code/data to the device
 and simulator runtimes, as well as accompanying documentation). The following package extends the micro:bit target so
-that the micro:bit can drive a NeoPixel strip of RGB LEDs: \url{https://github.com/Microsoft/pxt-neopixel}. 
+that the micro:bit can drive a NeoPixel strip of RGB LEDs: \dburl{https://github.com/Microsoft/pxt-neopixel}. 
 
 To see how this
-package is surfaced to the end-user, visit \url{http://makecode.microbit.org/} and select the ``Add Package'' option from the
+package is surfaced to the end-user, visit \dburl{http://makecode.microbit.org/} and select the ``Add Package'' option from the
 gear menu; you will see the package ``neopixel'' listed in the available options. If you click on it, a new block category
 named ``Neopixel'' will be added to the editor. In this scenario, PXT dynamically loads the (white listed) neopixel 
 package directly from GitHub, compiles it and incorporates it into the web app. Packages also can be bundled with a web
