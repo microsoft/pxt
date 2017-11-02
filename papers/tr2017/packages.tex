@@ -1,0 +1,26 @@
+
+\subsection{Packages and Custom Editors}
+
+Packages are \MCN's dynamic/static library mechanism for extending a target (by adding new code/data to the device
+and simulator runtimes, as well as accompanying documentation). The following package extends the micro:bit target so
+that the micro:bit can drive a NeoPixel strip of RGB LEDs: \dburl{https://github.com/Microsoft/pxt-neopixel}. 
+
+To see how this
+package is surfaced to the end-user, visit \dburl{http://makecode.microbit.org/} and select the ``Add Package'' option from the
+gear menu; you will see the package ``neopixel'' listed in the available options. If you click on it, a new block category
+named ``Neopixel'' will be added to the editor. In this scenario, PXT dynamically loads the (white listed) neopixel 
+package directly from GitHub, compiles it and incorporates it into the web app. Packages also can be bundled with a web
+app (the analog of static linking).  
+
+For packages containing C++ files, a new C++ runtime has to be compiled in the cloud.
+This is achieved by collecting all C++ files (in all packages plus the \CO runtime),
+computing a hash, checking in the local in-browser cache if such a runtime was retrieved
+before, and otherwise asking the cloud service to compile it.
+Of course, the cloud service will return a cached copy, if the same set of C++
+files was compiled before. The cache hit rates, in both the browser cache
+and the cloud cache, are very high. 
+The first hit rate is high because the cloud needs to be consulted
+only when a new package is added to the project, and this particular combination 
+of packages was never used before on current machine.
+The second hit rate is high because people rarely combine many packages (due to
+hardware and memory constraints), and there are only so many of them.

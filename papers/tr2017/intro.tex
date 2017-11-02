@@ -80,14 +80,13 @@ pre-compiled C++ runtime (\emph{\CON}). No C/C++ compiler is invoked to compile 
 computer and then flashed to the microcontroller (exposed as a USB pen drive) 
 via a simple file copy operation,  with the aid of the \emph{UF2} file format and supporting firmware. 
 
-
 These four advances enable beginners to get started programming microcontrollers from 
 any modern web browser, and enable hardware vendors to innovate and safely add new 
 components to the mix using Static TypeScript, leveraging its
 foreign function interface to C++.
 Once the web app has been loaded, all the above functionality works offline 
 (i.e., if the host machine loses its connection
-to the internet). 
+to the internet). All of the platform's components are open source on GitHub. 
 
 \begin{table}[]
 \centering
@@ -137,8 +136,6 @@ scheduling model.
 
 \flameon{TODO: event queueing/execution model???}
 
-
-
 \begin{figure}
 \begin{lstlisting}
 let start = 0
@@ -186,8 +183,6 @@ consider:
 \end{itemize}
 
 \flameon{TODO: we should present some of high-level experimental results here.}
-
-All of the platform's components are open source on GitHub.
   
 Sections~\ref{sec:makecode} to~\ref{sec:uf2} presents the four major components of the platform, top-down,
 as referenced before. Section~\ref{sec:evaluate} evaluates the performance of the platform,

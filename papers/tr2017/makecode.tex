@@ -37,16 +37,16 @@ and simulator runtimes. The ability to author the device runtime in both STS and
 a unique aspect of \MC's design.
 
 Whether runtime components are authored in C++ or STS, all runtime APIs are exposed as fully-typed
-TypeScript definitions, as described later. A full-typed runtime improves the end-user experience 
+TypeScript definitions. A fully-typed runtime improves the end-user experience 
 by making it easier to discover APIs; it also enables the type inference provided by the TypeScript 
-compiler to infer types for (unannotated) user JavaScript programs.
+compiler to infer types for (unannotated) user JavaScript programs, as in Figure~\ref{fig:example}.
 
 \MC supports a simple foreign function interface from TypeScript to C++ based on namespaces,
 enumerations, functions, and basic type mappings. \MC uses top-level namespaces (in both C++ and
 TypeScript) to organize sets of related functions.  Preceding a C++ namespace, enumeration, or function
 with \emph{//\%} indicates that \MC should map the C++ construct to TypeScript.
 Within the \emph{//\%} comment, attributes are used to define the visual appearance for that
-language construct, such as for the LED namespace in the micro:bit target:
+language construct, such as for the LED namespace in the C++ micro:bit target:
 
 \begin{lstlisting}
 //% color=#5C2D91 weight=97 icon="\uf205"
@@ -54,15 +54,15 @@ namespace led {
 ...
 \end{lstlisting}
 
+Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories, where the LED
+namespace can been seen. 
+%Here is the C++ file defining the micro:bit's led namespace and its functions:
+%~\dbhref{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/led.cpp}{pxt-microbit/libs/core/led.cpp}.
+
 \begin{figure*}[t]
     \includegraphics[width=5.5in]{makecodeFig.pdf}
 \caption{\label{fig:makecode}\MC Architecture}
 \end{figure*}
-
-
-Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories, where the LED
-namespace can been seen. Here is the C++ file defining the micro:bit's led namespace and its functions:
-~\dbhref{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/led.cpp}{pxt-microbit/libs/core/led.cpp}.
 
 Mapping of functions and enumerations between C++ and TypeScript is straightforward
 and performed automatically by \MC. 
@@ -78,21 +78,33 @@ void plot(int x, int y) {
 \end{lstlisting}
 
 We'll describe the attribute definitions in the \emph{//\%} comment in the next section. 
-\MC uses a TypeScript declaration file to describe the TypeScript elements corresponding
-to C++ namespaces, enumerations and functions.  We call such files shim files.
+\MC uses a TypeScript declaration file (here called a shim file) to describe the TypeScript elements corresponding
+to C++ namespaces, enumerations and functions.
 Since the C++ plot function is preceded by a \emph{//\%} comment, 
-\MC adds the following TypeScript declaration to the shim file (shims.d.ts) and copies
+\MC adds the following TypeScript declaration to the shim file and copies
 over the attribute definitions in the comment. \MC also adds an attribute definition mapping
 the TypeScript shim to its C++ function (shim=led::plot):
 
 \begin{lstlisting}
-//% blockId=device_plot block="plot|x %x|y %y
-//% x.min=0 x.max=4 y.min=0 y.max=4 shim=led::plot
+//% block="plot|x %x|y %y
+//% shim=led::plot
 function plot(x: number, y: number): void;
 \end{lstlisting}
 
-Here is the shim file generated from C++ micro:bit device runtime:
-\dbhref{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/shims.d.ts}{pxt-microbit/libs/core/shims.d.ts}.
+The following TypeScript code defines a function to toggle the state of a LED
+using three functions (led.point, led.unplot, and led.plot) exposed by the C++ runtime:  
+\begin{lstlisting}
+//% block="toggle|x %x|y %y"
+function toggle(x: number, y: number): void {
+    if (led.point(x, y)) led.unplot(x, y)
+    else led.plot(x, y)
+}
+\end{lstlisting}
+To the end user, the toggle function appears as just another runtime function available
+in the led namespace. 
+
+%Here is the shim file generated from C++ micro:bit device runtime:
+%\dbhref{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/shims.d.ts}{pxt-microbit/libs/core/shims.d.ts}.
 
 To support the foreign function interface, \MC defines a mapping between C++ and TypeScript types.
 Boolean and void have straightforward mappings from C++ to TypeScript (bool $\rightarrow$ boolean, void $\rightarrow$ void). 
@@ -102,14 +114,15 @@ for type aliases to name the various C++ integer types commonly used for microco
 % don't use int, unsigned etc. they are actually different sizes on different compilers for AVR
 This is particularly useful for saving space on 8-bit architectures such as the AVR. 
 
-\MC allows a set of C++ functions with the same first parameter (of type Foo) to be
-exposed as a TypeScript interface Foo as follows: this set of C++ functions must be grouped
-inside a namespace of the name FooMethods.  See, for example, how a C++ buffer abstraction is exposed:
-\dbhref{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp}{pxt-microbit/libs/core/buffer.cpp}.
-You can find the resulting TypeScript Buffer interface in the previously referenced shim file for the micro:bit.
+%\MC allows a set of C++ functions with the same first parameter (of type Foo) to be
+%exposed as a TypeScript interface Foo as follows: this set of C++ functions must be grouped
+%inside a namespace of the name FooMethods.  
+%See, for example, how a C++ buffer abstraction is exposed in TypeScript:
+%\dbhref{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp}{pxt-microbit/libs/core/buffer.cpp}.
+%You can find the resulting TypeScript Buffer interface in the previously referenced shim file for the micro:bit.
 
 \MC includes reference counted C++ types for strings, lambdas (with
-up to three arguments and a return type) and collections.  
+up to three arguments and a return type), collections, and user-defined classes/records.  
 \MC does not yet include garbage collection, so advanced users who create cyclic
 data structures must be careful to break cycles in order to ensure complete deallocation. 
 
@@ -117,22 +130,16 @@ data structures must be careful to break cycles in order to ensure complete deal
 
 Both C++ and TypeScript APIs can be specially annotated (minimally via 
 \emph{//\% block}) so that the \MC compiler generates the needed
-Blockly metadata to expose an API as a visual block. So, to expose the previously
-encountered plot function as a visual block (as well as a TypeScript function), one simply needs:
-\begin{lstlisting}
-//% block
-void plot(int x, int y) { . . . }
-\end{lstlisting}
-
+Blockly metadata to expose an API as a visual block.
 Additional attribute definitions can provide text descriptions for the block, project function
 parameters (thus simplifying the API available via Blockly), and describe other visual/functional
 characteristics of the block.  \MC uses the types of function parameters to select appropriate
 Blockly widgets.  For example, an enumeration is represented by a dropdown menu in blocks.
-For more information on the block-specific annotations, see 
-\dburl{https://makecode.com/defining-blocks}. 
+%For more information on the block-specific annotations, see 
+%\dburl{https://makecode.com/defining-blocks}. 
 \MCN's support for Blockly means that for the common case, the target developer doesn't need
-to know anything about the Blockly framework.  For more sophisticated needs, one can directly access
-the Blockly framework. 
+to know anything about the Blockly framework.
+For more sophisticated needs, one can directly access the Blockly framework. 
 
 \subsection{Editors and Code Conversion}
 
@@ -140,14 +147,15 @@ the Blockly framework.
 (\emph{\href{https://github.com/Microsoft/monaco-editor}{monaco-editor}}) editors to allow the user to code with
 visual blocks or TypeScript. The editing experience is parameterized by the full-typed device
 runtime, which provides a set of categorized APIs to the end-user, based on namespaces, as
-previously described. These APIs are visible in both editors via a toolbox to the immediate
+previously described. These APIs are visible in both editors via a toolbox (Figure~\ref{fig:snapshotFig}(C))
+to the immediate
 left of the programming area. The Blockly and Monaco toolboxes show the same set of APIs, to
 help in transition from coding with blocks to coding with JavaScript. More advanced TypeScript
 APIs can be discovered in Monaco via code intellisense.
 
 The Blockly program representation is compiled to Static TypeScript in a syntax-directed manner
-(see \emph{\dburl{https://github.com/Microsoft/pxt/tree/master/pxtblocks}{pxtblocks}}). A key issue is the need for
-type inference on the Blockly representation, as variables generally are defined and used without
+(see \emph{\dburl{https://github.com/Microsoft/pxt/tree/master/pxtblocks}{pxtblocks}}). A key issue 
+is the need for type inference on the Blockly representation, as variables generally are defined and used without
 being declared in Blockly. \MC uses a simple unification type inference to assign a
 unique type to each variable.  
 % this may not be possible:
@@ -156,8 +164,8 @@ unique type to each variable.
 TypeScript supports programming constructs that are not available in Blockly, such as classes.
 Such constructs are converted into grey uneditable blocks in Blockly, with the construct's program
 text intact. This means \MC always can decompile a TypeScript program to Blockly and then recover
-the program text of the grey blocks when converting from Blockly back to TypeScript
- (see \emph{\dbhref{https://github.com/Microsoft/pxt/blob/master/pxtcompiler/emitter/decompiler.ts}{decompiler.ts}}). 
+the program text of the grey blocks when converting from Blockly back to TypeScript.
+% (see \emph{\dbhref{https://github.com/Microsoft/pxt/blob/master/pxtcompiler/emitter/decompiler.ts}{decompiler.ts}}). 
 
 \subsection{Compilation Pipeline}
 
@@ -176,33 +184,31 @@ processor description.  Currently supported processors include ARM's Cortex clas
 and Atmel's Atmega class (AVR instructions). A separate assembler, also parameterized by an instruction
 encoder/decoder, generates machine code and resolves runtime references, producing a binary executable.
 A third backend generates bytecode instructions and a fourth backend targets C\#. 
-The compiler chain
-can be found at \emph{\dbhref{https://github.com/Microsoft/pxt/tree/master/pxtcompiler/emitter}{pxtcompiler/emitter}} and 
-\emph{\dbhref{https://github.com/Microsoft/pxt/tree/master/pxtlib/emitter}{pxtlib/emitter}}.
+%The compiler chain
+%can be found at \emph{\dbhref{https://github.com/Microsoft/pxt/tree/master/pxtcompiler/emitter}{pxtcompiler/emitter}} and 
+%\emph{\dbhref{https://github.com/Microsoft/pxt/tree/master/pxtlib/emitter}{pxtlib/emitter}}.
 
 
 \subsubsection{Asynchronous Functions}
 
 An important part of the compilation process is to allow users to call asynchronous 
 TypeScript functions (identified through the \emph{//\% async} annotation) 
-as if they were blocking functions.  
-For execution in the browser,
-every function is compiled so that it can be suspended (at the return of a call) and later resumed (at the same point). 
+as if they were blocking functions.  For example, in Figure~\ref{fig:example}, the runtime 
+function \emph{basic.pause} (called at line 10) 
+is an async function that sets a countdown timer and then yields to the scheduler. When the timer 
+reaches zero, the function continuation is queued for execution. 
+
+For execution in the single-threaded context of the JavaScript runtime,
+every TypeScript function is compiled so that it can be suspended (at the return of a call) and later resumed (at the same point). 
 The default behavior at a suspension point is to immediately resume execution.  For a call to an async function,
 the default behavior is overridden by the compiler, which suspends execution of the current function. 
-Upon completion of the async function call, the current function then is resumed. Such async functions are written
-by runtime developers, not end-users, and greatly simplify the JavaScript
+Upon completion of the async function call, the current function then is resumed. 
+The \CO device runtime supports fibers with the ability to yield, so for compilation to a device, 
+the compiler simply emits a call to yield at a suspension point.
+
+Async functions are written by runtime developers, not end-users, and greatly simplify the JavaScript
 programming model for end-users. For example, although the JavaScript simulator runtime uses promises to 
 achieve asynchronous execution in a single-threaded context, these promises are hidden from the end user. 
-The \CO device runtime supports fibers with the ability to pause, so for compilation to a device, 
-the compiler simply emits a call to pause at a suspension point. 
-
-\emph{TODO: use the running example to describe it}
-
-% tball: I added TypeScript above to make it clear 
-%\emph{TODO: The async annotation is only relevant for the JS code. In ARM/AVR it doesn't do anything.
-%One way to say it is to say it's there to simulate cooperative multi-threading in JS, since
-%it is already implemented in C++ by \CO.}
 
 \subsubsection{Untagged and Tagged Strategies}
 
@@ -235,28 +241,3 @@ reading while pushing one of the device's buttons).
 
 %\MC provides various components to make device simulators easier to build: board, parts, wiring, etc.
 
-\subsection{Packages and Custom Editors}
-
-Packages are \MCN's dynamic/static library mechanism for extending a target (by adding new code/data to the device
-and simulator runtimes, as well as accompanying documentation). The following package extends the micro:bit target so
-that the micro:bit can drive a NeoPixel strip of RGB LEDs: \dburl{https://github.com/Microsoft/pxt-neopixel}. 
-
-To see how this
-package is surfaced to the end-user, visit \dburl{http://makecode.microbit.org/} and select the ``Add Package'' option from the
-gear menu; you will see the package ``neopixel'' listed in the available options. If you click on it, a new block category
-named ``Neopixel'' will be added to the editor. In this scenario, PXT dynamically loads the (white listed) neopixel 
-package directly from GitHub, compiles it and incorporates it into the web app. Packages also can be bundled with a web
-app (the analog of static linking).  
-
-For packages containing C++ files, a new C++ runtime has to be compiled in the cloud.
-This is achieved by collecting all C++ files (in all packages plus the \CO runtime),
-computing a hash, checking in the local in-browser cache if such a runtime was retrieved
-before, and otherwise asking the cloud service to compile it.
-Of course, the cloud service will return a cached copy, if the same set of C++
-files was compiled before. The cache hit rates, in both the browser cache
-and the cloud cache, are very high. 
-The first hit rate is high because the cloud needs to be consulted
-only when a new package is added to the project, and this particular combination 
-of packages was never used before on current machine.
-The second hit rate is high because people rarely combine many packages (due to
-hardware and memory constraints), and there are only so many of them.
