@@ -214,6 +214,7 @@
 @homeCardColor: @textColor;
 @homeCardMetaColor: @homeCardColor;
 @homeCardHeaderColor: @homeCardColor;
+@homeFooterColor: @homeCardColor;
 
 @homeCardImageBorderRadius: 0;
 @homeCardBackgroundColor: white;
