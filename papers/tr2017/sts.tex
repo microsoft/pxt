@@ -136,15 +136,14 @@ In STS, $S$ is a subtype of a type $T$ if one of the following is true:
 
 % https://www.earthli.com/news/view_article.php?id=3391
 
-Given types $S$ and $T$, checkMemb($S$,$T$) holds if for each member $M$ in $T$, 
-$M$ is a property and $S$ has a property $N$ where all of the following are true:
+Given types $S$ and $T$, checkMemb($S$,$T$) holds if for each member $N$ in $T$, 
+$N$ is a property and $S$ has a property $M$ where all of the following are true:
 \begin{itemize}
 \item $M$ and $N$ have the same name;
-\item the type of $N$ is a subtype of the type of $M$;
+\item the type of $M$ is a subtype of the type of $N$;
 \item $M$ and $N$ are both public, or $M$ and $N$ are both 
       private (protected) and originate in the same declaration, 
-      or $M$ is protected and $N$ is declared in a class derived from 
-      the class in which M is declared.
+      or $N$ is protected and $S$ is a class derived from class $T$
 \end{itemize}
 
 STS type checking for (pure) expressions remains the same as in TypeScript.
@@ -152,5 +151,3 @@ Type checking at assignments, where a value of type $S$ flows (is assigned to)
 into a location of type $T$ uses the new subtyping relation: $S$
 must be a subtype of $T$.  Downcasts (where a supertype flows to a subtype)
 are not permitted in STS.
-
-\flameon{TODO: what about generics? theorems???}

@@ -25,10 +25,11 @@ which extends the core framework (\emph{\dbhref{https://github.com/microsoft/pxt
 The remaining subsections describe the parts of Figure~\ref{fig:makecode}, 
 which shows the high-level components of the web app.
 
-\subsection{Device Runtime and Shim Generation}
+\subsection{Device runtime and Shim Generation}
 
 A \MC target is defined, in part, by its device runtime, which can be a combination of C++ 
-and Static TypeScript (STS) code. The C++ runtime for the target microcontroller is precompiled 
+and Static TypeScript (STS) code, as shown in the lower-left of Figure~\ref{fig:makecode}.
+The C++ runtime for the target microcontroller is precompiled 
 and stored in the cloud. The runtime binary also is stored in the HTML5 application cache (with 
 other assets) so that the web app can function when the browser is offline. Additional runtime
 components may be authored in STS, which allows the device runtime to be updated without the
@@ -59,10 +60,10 @@ namespace can been seen.
 %Here is the C++ file defining the micro:bit's led namespace and its functions:
 %~\dbhref{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/led.cpp}{pxt-microbit/libs/core/led.cpp}.
 
-\begin{figure*}[t]
-    \includegraphics[width=5.5in]{makecodeFig.pdf}
+\begin{figure}[t]
+    \includegraphics[width=4.5in]{makecodeFig.pdf}
 \caption{\label{fig:makecode}\MC Architecture}
-\end{figure*}
+\end{figure}
 
 Mapping of functions and enumerations between C++ and TypeScript is straightforward
 and performed automatically by \MC. 
@@ -126,7 +127,7 @@ up to three arguments and a return type), collections, and user-defined classes/
 \MC does not yet include garbage collection, so advanced users who create cyclic
 data structures must be careful to break cycles in order to ensure complete deallocation. 
 
-\subsection{Block Metadata Generation}
+\subsection{Metadata generation}
 
 Both C++ and TypeScript APIs can be specially annotated (minimally via 
 \emph{//\% block}) so that the \MC compiler generates the needed
@@ -141,13 +142,14 @@ Blockly widgets.  For example, an enumeration is represented by a dropdown menu 
 to know anything about the Blockly framework.
 For more sophisticated needs, one can directly access the Blockly framework. 
 
-\subsection{Editors and Code Conversion}
+\subsection{Editors}
 
+As shown in the upper-left of Figure~\ref{fig:makecode},
 \MC uses the Blockly (\emph{\href{https://github.com/google/blockly}{blockly}}) and Monaco 
 (\emph{\href{https://github.com/Microsoft/monaco-editor}{monaco-editor}}) editors to allow the user to code with
 visual blocks or TypeScript. The editing experience is parameterized by the full-typed device
 runtime, which provides a set of categorized APIs to the end-user, based on namespaces, as
-previously described. These APIs are visible in both editors via a toolbox (Figure~\ref{fig:snapshotFig}(C))
+previously described. These APIs are visible in both editors via a toolbox (Figure~\ref{fig:screenSnap}(C))
 to the immediate
 left of the programming area. The Blockly and Monaco toolboxes show the same set of APIs, to
 help in transition from coding with blocks to coding with JavaScript. More advanced TypeScript
@@ -167,7 +169,7 @@ text intact. This means \MC always can decompile a TypeScript program to Blockly
 the program text of the grey blocks when converting from Blockly back to TypeScript.
 % (see \emph{\dbhref{https://github.com/Microsoft/pxt/blob/master/pxtcompiler/emitter/decompiler.ts}{decompiler.ts}}). 
 
-\subsection{Compilation Pipeline}
+\subsection{Browser compilation}
 
 \MC first invokes the TypeScript language service to perform type inference and type checking on the 
 user's program, using the TypeScript declaration files for the device runtime.   It then checks that the
@@ -236,7 +238,8 @@ simulator. As this code runs in the web browser (not on the actual device) and m
 use all of TypeScript/JavaScript's features. (As an aside, \MC also support ``simulator-only'' targets that have no 
 associated device; in these cases, the ``device runtime'' is defined solely by the simulator APIs.) 
 
-The simulator allows the user to experience the basic functions of the device in the browser and to test their code
+As shown in Figure~\ref{fig:screenSnap}(B), the simulator allows the user to experience the basic functions of the device 
+in the browser and to test their code
 before deploying it to the actual device. The simulator has proxy widgets for sensors such as accelerometer (mouse motion),
 temperature and light, allowing the user to control the sensor's value.  The simulator only provides basic functionality
 and is far from a complete device emulation.  
