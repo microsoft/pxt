@@ -91,7 +91,7 @@ namespace tropic {
 }
 ```
 
-MakeCode is limited to using [Static typescript](https://makecode.com/language) so we can't cast a `fruit` to a `banana` or a `coconut` in order to get at the **peel** or **crack** methods.
+MakeCode is limited to using [Static TypeScript](https://makecode.com/language) so we can't cast a `fruit` to a `banana` or a `coconut` in order to get at the **peel** or **crack** methods.
 
 ## Step 2: Make a banana object
 
