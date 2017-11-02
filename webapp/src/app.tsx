@@ -150,7 +150,10 @@ export class ProjectView
         } else {
             if (workspace.isSessionOutdated()) {
                 pxt.debug('workspace changed, reloading...')
-                this.openHome();
+                workspace.initAsync()
+                    .done(() => {
+                        this.openHome();
+                    });
             } else if (this.state.resumeOnVisibility && !this.state.running) {
                 this.setState({ resumeOnVisibility: false });
                 this.runSimulator();
@@ -2173,6 +2176,10 @@ function initExtensionsAsync(): Promise<void> {
             if (res.deployCoreAsync) {
                 pxt.debug(`\tadded custom deploy core async`);
                 pxt.commands.deployCoreAsync = res.deployCoreAsync;
+            }
+            if (res.showUploadInstructionsAsync) {
+                pxt.debug(`\tadded custom upload instructions async`);
+                pxt.commands.showUploadInstructionsAsync = res.showUploadInstructionsAsync;
             }
             if (res.beforeCompile) {
                 theEditor.beforeCompile = res.beforeCompile;

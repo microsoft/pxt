@@ -246,6 +246,7 @@ namespace pxt.editor {
         resourceImporters?: IResourceImporter[];
         beforeCompile?: () => void;
         deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
+        showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync?: (options: any) => Promise<number>) => Promise<void>;
         fieldEditors?: IFieldCustomOptions[];
         toolboxOptions?: IToolboxOptions;
     }

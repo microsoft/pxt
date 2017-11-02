@@ -425,10 +425,10 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 export interface ProjectsDetailProps extends ISettingsProps {
     name: string;
     description?: string;
-    url?: string;
     imageUrl?: string;
     largeImageUrl?: string;
     youTubeId?: string;
+    url?: string;
     onClick: () => void;
     cardType: string;
 }
@@ -440,14 +440,15 @@ export interface ProjectsDetailState {
 export class ProjectsDetail extends data.Component<ProjectsDetailProps, ProjectsDetailState> {
 
     renderCore() {
-        const { name, description, imageUrl, largeImageUrl, youTubeId, onClick, cardType } = this.props;
+        const { name, description, imageUrl, largeImageUrl, youTubeId, url, onClick, cardType } = this.props;
 
         const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/maxresdefault.jpg` : undefined);
 
-        let clickLabel = lf("Instructions");
+        let clickLabel = lf("Show Instructions");
         if (cardType == "tutorial") clickLabel = lf("Begin Tutorial");
         else if (cardType == "codeExample" || cardType == "example") clickLabel = lf("Try Example Code");
         else if (youTubeId) clickLabel = lf("Watch Video");
+        else if (url) clickLabel = lf("Launch Website");
 
         const actions = [{
             label: clickLabel,
