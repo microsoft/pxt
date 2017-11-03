@@ -324,7 +324,26 @@ function cleanCrowdinAsync(branch: string, prj: string, key: string, dir: string
 function statsCrowdinAsync(branch: string, prj: string, key: string, lang: string): Promise<void> {
     return pxt.crowdin.languageStatsAsync(branch, prj, key, lang)
         .then(stats => {
-            console.log(JSON.stringify(stats, null, 2))
+            /*
+
+[{
+    "node_type": "file",
+    "id": "2154",
+    "name": "MatrixShowsIcon - Copy (2).md",
+    "phrases": "6",
+    "translated": "1",
+    "approved": "1",
+    "words": "52",
+    "words_translated": "9",
+    "words_approved": "9",
+    "fullName": "grovezero/docs/reference/loops/MatrixShowsIcon - Copy (2).md"
+  }...]             
+             */
+
+             console.log(`file, phrases, translated, approved`);
+             stats.forEach(stat => {
+                 console.log(`${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}`)
+             })
         })
 }
 

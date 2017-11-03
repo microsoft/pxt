@@ -13,15 +13,18 @@ namespace pxt.crowdin {
         return apiRoot + cmd + suff;
     }
 
-    interface CrowdinFileInfo {
+    export interface CrowdinFileInfo {
         name: string;
         fullName?: string;
         id: number;
         node_type: "file" | "directory" | "branch";
+        phrases?: number;
+        translated?: number;
+        approved?: number;        
         files?: CrowdinFileInfo[];
     }
 
-    interface CrowdinProjectInfo {
+    export interface CrowdinProjectInfo {
         languages: { name: string; code: string; }[];
         files: CrowdinFileInfo[];
     }
@@ -174,7 +177,7 @@ namespace pxt.crowdin {
         }
     }
 
-    function filterFiles(files: CrowdinFileInfo[], branch?: string, crowdinPath?: string): CrowdinFileInfo[] {
+    function filterAndFlattenFiles(files: CrowdinFileInfo[], branch?: string, crowdinPath?: string): CrowdinFileInfo[] {
         let allFiles: CrowdinFileInfo[] = [];
 
         // if branch, filter out
@@ -205,7 +208,7 @@ namespace pxt.crowdin {
             const info = JSON.parse(respText) as CrowdinProjectInfo;
             if (!info) throw new Error("info failed")
 
-            const allFiles = filterFiles(info.files, branch, crowdinPath);
+            const allFiles = filterAndFlattenFiles(info.files, branch, crowdinPath);
             pxt.log(`crowdin: found ${allFiles.length} under ${crowdinPath}`)
 
             return allFiles.map(f => {
@@ -216,13 +219,12 @@ namespace pxt.crowdin {
         });
     }
 
-    export function languageStatsAsync(branch: string, prj: string, key: string, lang: string): Promise<any> {
+    export function languageStatsAsync(branch: string, prj: string, key: string, lang: string): Promise<CrowdinFileInfo[]> {
         const uri = apiUri(branch, prj, key, "language-status", { language: lang, json: "true" });
 
         return Util.httpGetJsonAsync(uri)
             .then(info => {
-                const allFiles = filterFiles(info.files, branch);
-
+                const allFiles = filterAndFlattenFiles(info.files, branch);
                 return allFiles;
             });
     }
