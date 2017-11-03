@@ -2102,7 +2102,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             pxt.BrowserUtils.changeHash("");
             core.showLoading("loadingproject", lf("loading project..."));
             theEditor.importProjectFromFileAsync(fileContents)
-                .done(() => core.hideLoading("loadingheader"));
+                .done(() => core.hideLoading("loadingproject"));
             return true;
         case "reload": // need to reload last project - handled later in the load process
             if (loading) pxt.BrowserUtils.changeHash("");
