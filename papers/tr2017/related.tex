@@ -2,7 +2,7 @@
 \label{sec:related}
 
 Related work breaks into four parts, following the
-flow of the paper: the programming of microcontrollers, 
+flow of the paper: the programming of microcontrollers,
 type systems for JavaScript, operating systems
 for microcontrollers, and techniques for code loading.
 
@@ -31,14 +31,24 @@ takes places solely within the web app, which is a unique aspect of our platform
 The platform also supports partial flashing of just user code, 
 when it can be determined that the proper device runtime already is resident in the microcontroller's flash.
 
-\flameon{need to discuss our design with respect to MicroPython and Espruino: they would
-have no chance running on the Uno}
+\flameon{need to discuss our design with respect to MicroPython, Espruino (also microJS and JerryScript): 
+they would have no chance running on the Uno - microJS doesn't support much of the constructs that we do
+- closer to C}
 
-\flameon{talk about our use of JavaScript for programming microcontrollers - makes it easier 
-to support in-browser simulator}
+% https://www.espruino.com/
+% https://github.com/jerryscript-project
+% https://github.com/cesanta/mongoose-os
+% - Supported microcontrollers: CC3220, CC3200, ESP32, ESP8266, STM32F4;
+% https://github.com/cesanta/mjs
 
-% https://www.espruino.com/Quick+Start
+% On 32-bit ARM mJS engine takes about 25k of flash memory, 
+% and less than 1k of RAM (see intro article). mJS is part of MongooseOS,
+% where it enables scripting for IoT devices.
 
+% Restrictions
+% No closures, only lexical scoping (i.e. nested functions are allowed).
+% No new. In order to create an object with a custom prototype, use Object.create(), which is available.
+% No getters, setters, classes, template strings.
 
 \subsection{Types for JavaScript}
 
@@ -56,6 +66,8 @@ In this sense, it can be seen to be StrongScript where every variable and
 expression has a concrete (!) type.   As in StrongScript, classes are nominally typed,
 which permits a more efficient and traditional property lookup for class instances. 
 Static TypeScript goes further by outlawing downcasts (for untagged implementation).
+
+Satish Chandra work on type inference for static compilation of JavaScript~\cite{ChandraOOPSLA2016}
 
 \subsection{Operating systems}
 
