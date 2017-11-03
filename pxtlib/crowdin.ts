@@ -201,7 +201,7 @@ namespace pxt.crowdin {
         const q: Map<string> = { json: "true" }
         const infoUri = apiUri(branch, prj, key, "info", q);
 
-        pxt.log(`crowdin: listing files under ${crowdinPath} in branch ${branch}`);
+        pxt.log(`crowdin: listing files under ${crowdinPath} in branch ${branch || "master"}`);
         pxt.debug(`uri: ${infoUri}`);
 
         return Util.httpGetTextAsync(infoUri).then(respText => {

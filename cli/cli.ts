@@ -284,7 +284,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
     }
 
     cmd = cmd.toLowerCase();
-    if (!args[0]) throw new Error(cmd == "status" ? "language missing" : "filename missing");
+    if (!args[0] && cmd != "clean") throw new Error(cmd == "status" ? "language missing" : "filename missing");
     switch (cmd) {
         case "stats": return statsCrowdinAsync(branch, prj, key, args[0]);
         case "clean": return cleanCrowdinAsync(branch, prj, key, args[0] || "docs");
