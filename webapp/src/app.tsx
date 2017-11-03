@@ -1148,7 +1148,8 @@ export class ProjectView
                         if (e.notifyUser) {
                             core.warningNotification(e.message);
                         } else {
-                            core.warningNotification(lf("Upload failed, please try again."));
+                            const errorText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload failed, please try again.") : lf("Download failed, please try again.");
+                            core.warningNotification(errorText);
                         }
                         pxt.reportException(e);
                         if (userContextWindow)
