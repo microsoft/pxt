@@ -850,6 +850,11 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        if (pathname == "/--serviceworker") {
+            sendFile(path.join(publicDir, 'serviceworker.js'));
+            return
+        }
+
         if (pathname == "/--docs") {
             sendFile(path.join(publicDir, 'docs.html'));
             return

@@ -2189,7 +2189,8 @@ $(document).ready(() => {
 
     initLogin();
     const hash = parseHash();
-    appcache.init(hash);
+    appcache.initAppCache(hash);
+    appcache.initWebWorker();
 
     pxt.docs.requireMarked = () => require("marked");
     const importHex = (hex: pxt.cpp.HexFile, createNewIfFailed = false) => theEditor.importHex(hex, createNewIfFailed);
