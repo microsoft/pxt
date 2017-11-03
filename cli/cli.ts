@@ -324,26 +324,22 @@ function cleanCrowdinAsync(branch: string, prj: string, key: string, dir: string
 function statsCrowdinAsync(branch: string, prj: string, key: string, lang: string): Promise<void> {
     return pxt.crowdin.languageStatsAsync(branch, prj, key, lang)
         .then(stats => {
-            /*
-
-[{
-    "node_type": "file",
-    "id": "2154",
-    "name": "MatrixShowsIcon - Copy (2).md",
-    "phrases": "6",
-    "translated": "1",
-    "approved": "1",
-    "words": "52",
-    "words_translated": "9",
-    "words_approved": "9",
-    "fullName": "grovezero/docs/reference/loops/MatrixShowsIcon - Copy (2).md"
-  }...]             
-             */
-
-             console.log(`file, phrases, translated, approved`);
-             stats.forEach(stat => {
-                 console.log(`${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}`)
-             })
+            console.log('BLOCKS / SIM / TARGET')
+            console.log(`file, phrases, translated, approved`);
+            stats.filter(stat => /strings\.json$/i.test(stat.name))
+                .forEach(stat => {
+                    console.log(`${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}`)
+                })
+            console.log();
+            // dump all in CSV
+            let r = ''
+            r += `file, phrases, translated, approved\r\n`
+            stats.forEach(stat => {
+                r += `${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}\r\n`;
+            })
+            const fn = `crowdinstats-${lang}.csv`;
+            fs.writeFileSync(fn, r, "utf8");
+            console.log(`stats written to ${fn}`)
         })
 }
 
