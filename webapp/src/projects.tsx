@@ -88,6 +88,30 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         }
     }
 
+    componentDidUpdate(prevProps: ISettingsProps, prevState: ProjectsState) {
+        if (this.state.selectedCategory !== prevState.selectedCategory) {
+            this.ensureSelectedItemVisible();
+        }
+    }
+
+    ensureSelectedItemVisible() {
+        let activeCarousel = this.refs['activeCarousel'];
+        if (activeCarousel) {
+            let domNode = (activeCarousel as ProjectsCarousel).getCarouselDOM();
+            this.scrollElementIntoViewIfNeeded(domNode);
+        }
+    }
+
+    scrollElementIntoViewIfNeeded(domNode: Element) {
+        let containerDomNode = ReactDOM.findDOMNode(this.refs['homeContainer']);
+        // Determine if `domNode` fully fits inside `containerDomNode`.
+        // If not, set the container's scrollTop appropriately.
+        const domTop = (domNode as HTMLElement).getBoundingClientRect().top;
+        const delta = domTop;
+        const offset = 30;
+        containerDomNode.parentElement.scrollTop = containerDomNode.parentElement.scrollTop + delta - offset;
+    }
+
     renderCore() {
         const { visible, selectedCategory, selectedIndex } = this.state;
 
@@ -181,7 +205,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             'ui segment bottom attached tab active tabsegment'
         ]);
 
-        return <div className={tabClasses}>
+        return <div ref="homeContainer" className={tabClasses}>
             {showHeroBanner ?
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
@@ -202,7 +226,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
                     <h2 className="ui header heading">{Util.rlf(galleryName) } </h2>
                     <div className="content">
-                        <ProjectsCarousel key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} onClick={(scr: any) => chgGallery(scr) } setSelected={(index: number) => this.setSelected(galleryName, index) } selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined}/>
+                        <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`} key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} onClick={(scr: any) => chgGallery(scr) } setSelected={(index: number) => this.setSelected(galleryName, index) } selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined}/>
                     </div>
                 </div>
             ) }
@@ -319,6 +343,16 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.props.setSelected(undefined);
     }
 
+    getCarouselDOM() {
+        let carouselDom = ReactDOM.findDOMNode(this.refs["carousel"]);
+        return carouselDom;
+    }
+
+    getDetailDOM() {
+        let detailDom = ReactDOM.findDOMNode(this.refs["detailView"]);
+        return detailDom;
+    }
+
     renderCore() {
         const { name, path, selectedIndex } = this.props;
         const theme = pxt.appTarget.appTheme;
@@ -346,7 +380,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 </div>
             } else {
                 return <div>
-                    <carousel.Carousel bleedPercent={20} selectedIndex={selectedIndex}>
+                    <carousel.Carousel ref="carousel" bleedPercent={20} selectedIndex={selectedIndex}>
                         {cards.map((scr, index) =>
                             <div key={path + scr.name}>
                                 <codecard.CodeCardView
@@ -363,7 +397,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             </div>
                         ) }
                     </carousel.Carousel>
-                    <div className={`detailview ${cards.filter((scr, index) => index == selectedIndex).length > 0 ? 'visible' : ''}`}>
+                    <div ref="detailView" className={`detailview ${cards.filter((scr, index) => index == selectedIndex).length > 0 ? 'visible' : ''}`}>
                         {cards.filter((scr, index) => index == selectedIndex).length > 0 ? <div tabIndex={0} className="close"><sui.Icon icon="remove circle" onClick={() => this.closeDetail() } /> </div> : undefined }
                         {cards.filter((scr, index) => index == selectedIndex).map(scr =>
                             <ProjectsDetail parent={this.props.parent}

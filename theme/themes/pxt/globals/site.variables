@@ -99,7 +99,8 @@
      PXT Variables
 *******************************/
 
-@avatarUrl: data-uri("../docs/static/avatar.svg");
+@avatarUrlPath: "../docs/static/avatar.svg";
+@avatarUrl: data-uri(@avatarUrlPath);
 @fileLogoUrl: data-uri("../docs/static/filelogo.svg");
 
 @poweredBySmall: data-uri("../docs/static/logo/Powered-By-Microsoft-logo-small.png");
@@ -214,6 +215,7 @@
 @homeCardColor: @textColor;
 @homeCardMetaColor: @homeCardColor;
 @homeCardHeaderColor: @homeCardColor;
+@homeFooterColor: @homeCardColor;
 
 @homeCardImageBorderRadius: 0;
 @homeCardBackgroundColor: white;
