@@ -71,28 +71,28 @@
     }
 
     /* Menu bar */
-    #menubar .menu > .item:focus > i, 
-    #menubar .menu > .item:focus > span {
+    .menubar .menu > .item:focus > i, 
+    .menubar .menu > .item:focus > span {
         color: @selected !important;
     }
 
-    #menubar #accessibleMenu > .item:focus,
-    #menubar .editor-menuitem > .item:focus:not(.active) {
+    .menubar .accessibleMenu > .item:focus,
+    .menubar .editor-menuitem > .item:focus:not(.active) {
         i, span {
             color: @selected !important;
         }
     }
 
-    #menubar .ui.inverted.menu, #menubar #accessibleMenu .ui.item.link.inverted:hover {
+    .menubar .ui.inverted.menu, .menubar .accessibleMenu .ui.item.link.inverted:hover {
         background: black !important;
         border-bottom: 1px solid white;
     }
 
-    #menubar .ui.menu.inverted.fixed .ui.item.editor-menuitem .active.item {
+    .menubar .ui.menu.inverted.fixed .ui.item.editor-menuitem .active.item {
         color: white !important;
     }
 
-    #menubar #accessibleMenu .ui.item.link {
+    .menubar .accessibleMenu .ui.item.link {
         color: white !important;
     }
 
@@ -196,11 +196,11 @@
     }
 
     /* Editor switch toggle */
-    #menubar .ui.menu .item.editor-menuitem { 
+    .menubar .ui.menu .item.editor-menuitem { 
         border: 1px solid white !important;
     }
 
-    #menubar .ui.menu .item.editor-menuitem .active {
+    .menubar .ui.menu .item.editor-menuitem .active {
         background: @selected !important;
         color: black !important;
     }
@@ -231,7 +231,7 @@
         box-shadow: initial !important;
     }
 
-    .ui.modal.projectsdialog .tabsegment, .ui.modal .ui.inverted.segment, .ui.modal .ui.primary.inverted.segment {
+    .projectsdialog .tabsegment, .ui.modal .ui.inverted.segment, .ui.modal .ui.primary.inverted.segment {
         background: black !important;
         color: white !important;
         border-color: white !important;

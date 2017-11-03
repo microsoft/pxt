@@ -81,12 +81,15 @@ namespace pxt.docs.codeCard {
         }
 
         if (card.imageUrl) {
+            let imageWrapper = document.createElement("div") as HTMLDivElement;
+            imageWrapper.className = "ui imagewrapper";
             let image = document.createElement("img") as HTMLImageElement;
-            image.className = "ui image";
+            image.className = "ui cardimage";
             image.src = card.imageUrl;
             image.alt = name;
             image.setAttribute("role", "presentation");
-            img.appendChild(image)
+            imageWrapper.appendChild(image);
+            img.appendChild(imageWrapper);
         }
 
         if (card.youTubeId) {
@@ -120,6 +123,11 @@ namespace pxt.docs.codeCard {
                 let m = div(meta, "date", "span");
                 m.appendChild(document.createTextNode(pxt.Util.timeSince(card.time)));
             }
+        }
+
+        if (card.extracontent) {
+            let extracontent = div(r, "extra content", "div");
+            extracontent.appendChild(document.createTextNode(card.extracontent));
         }
 
         return r;

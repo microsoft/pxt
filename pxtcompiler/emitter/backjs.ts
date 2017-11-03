@@ -36,6 +36,8 @@ namespace ts.pxtc {
         shimName = shimName.replace(/::/g, ".")
         if (shimName.slice(0, 4) == "pxt.")
             shimName = "pxtcore." + shimName.slice(4)
+        if (target.shortPointers)
+            shimName = shimName.replace(/^thumb\./, "avr.")
         return "pxsim." + shimName
     }
 
@@ -65,6 +67,15 @@ namespace ts.pxtc {
             jssource += "pxsim.noRefCounting();\n"
         if (bin.target.floatingPoint)
             jssource += "pxsim.enableFloatingPoint();\n"
+        let cfg: Map<number> = {}
+        let cfgKey: Map<number> = {}
+        for (let ce of bin.res.configData || []) {
+            cfg[ce.key + ""] = ce.value
+            cfgKey[ce.name] = ce.key
+        }
+        jssource += "pxsim.setConfigData(" +
+            JSON.stringify(cfg, null, 1) + ", " +
+            JSON.stringify(cfgKey, null, 1) + ");\n"
         bin.procs.forEach(p => {
             jssource += "\n" + irToJS(bin, p) + "\n"
         })

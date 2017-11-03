@@ -18,17 +18,17 @@
     top: 0rem;
 }
 /* Tutorial Mode */
-#menubar .ui.menu .item.tutorial-menuitem {
+.menubar .ui.menu .item.tutorial-menuitem {
     background: rgba(27, 28, 29, 0.3) !important;
     margin: calc(0.45rem);
     padding: calc(0.45rem);
     border-radius: 0.5rem !important;
 }
-#menubar .ui.menu .item.tutorial-menuitem > .step-label {
+.menubar .ui.menu .item.tutorial-menuitem > .step-label {
     margin-left: 0.4em;
     margin-right: 0.4em;
 }
-#menubar .ui.menu .item.tutorial-menuitem > .label {
+.menubar .ui.menu .item.tutorial-menuitem > .label {
     background: white;
     margin-left: 0em;
 }
@@ -79,15 +79,16 @@ body#docs.tutorial {
     Tutorial Avatar
 ******************************/
 
-#tutorialcard .ui.message {
+#tutorialcard .ui.tutorialsegment {
     width: 100%;
     position: relative;
     padding: 0;
     border: 0;
     border-radius: 5px 0px 0px 5px;
+    background: @tutorialSegmentBackground;
 }
 
-#tutorialcard .ui.message .avatar-image {
+#tutorialcard .ui.tutorialsegment .avatar-image {
     position: absolute;
     top: 0.7rem;
     left: 0.7rem;
@@ -108,7 +109,7 @@ body#docs.tutorial {
     height: 4.5rem;
 }
 
-#tutorialcard .ui.message {
+#tutorialcard .ui.tutorialsegment {
     width: 100%;
 }
 
@@ -122,6 +123,7 @@ body#docs.tutorial {
 }
 #tutorialcard .tutorialmessage .content p {
     line-height: 27px !important;
+    color: @tutorialSegmentColor;
 }
 
 #tutorialcard .tutorialmessage {
@@ -237,6 +239,18 @@ code.lang-filterblocks {
         Media Adjustments
 *******************************/
 
+
+/* > Small Monitor */
+@media only screen and (min-width: @computerBreakpoint) {
+    /* Hide the editor toolbor in tutorial mode */
+    .tutorial #editortools  {
+        background: transparent;
+    }
+    .tutorial #maineditor > div.full-abs {
+        bottom: 0;
+    }
+}
+
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
 
@@ -254,10 +268,7 @@ code.lang-filterblocks {
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    #tutorialcard {
-        
-    }
-    #tutorialcard .ui.message .avatar-image {
+    #tutorialcard .ui.tutorialsegment .avatar-image {
         display: none;
     }
     #tutorialcard .ui.button.hintbutton {

@@ -13,7 +13,7 @@
 .blocklyWidgetDiv {
     z-index: @blocklyWidgetDivZIndex;
 }
-.blocklyDropdownDiv {
+.blocklyDropDownDiv {
     z-index: @blocklyDropdownDivZIndex;
 }
 
@@ -55,6 +55,11 @@ svg.blocklySvg {
 
 span.blocklyTreeLabel, text.blocklyText, input.blocklyHtmlInput, .blocklyDropDownDiv .goog-menuitem {
     font-family: @blocklyFont !important;
+}
+
+/* Used by custom field in grey expression blocks */
+.blocklyGreyExpressionBlockText {
+    color: white;
 }
 
 /* Blockly toolbox font size same as the page font */

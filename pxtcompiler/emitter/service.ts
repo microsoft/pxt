@@ -184,12 +184,12 @@ namespace ts.pxtc {
                             });
                         }
                         else {
-                           parameters = callbackParameters.map((sym, i) => {
-                               return {
-                                   name: sym.getName(),
-                                   type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(sym, p))
-                               };
-                           });
+                            parameters = callbackParameters.map((sym, i) => {
+                                return {
+                                    name: sym.getName(),
+                                    type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(sym, p))
+                                };
+                            });
                         }
                     }
                     let options: Map<PropertyOption> = {};
@@ -247,6 +247,8 @@ namespace ts.pxtc {
             if (!options.locs || !si.qName) {
                 return;
             }
+            if (si.attributes.deprecated || /^__/.test(si.name))
+                return; // skip deprecated or function starting with __
             pxt.debug(`loc: ${si.qName}`)
             // must match blockly loader
             if (si.kind != SymbolKind.EnumMember) {
@@ -306,7 +308,7 @@ namespace ts.pxtc {
         }
     }
 
-    export function getApiInfo(program: Program, legacyOnly = false): ApisInfo {
+    export function getApiInfo(opts: CompileOptions, program: Program, legacyOnly = false): ApisInfo {
         let res: ApisInfo = {
             byQName: {}
         }
@@ -378,6 +380,18 @@ namespace ts.pxtc {
             si.qName = qName;
             si.attributes._source = null
             if (si.extendsTypes && si.extendsTypes.length) toclose.push(si)
+
+            let jrname = si.attributes.jres
+            if (jrname) {
+                if (jrname == "true") jrname = qName
+                let jr = U.lookup(opts.jres || {}, jrname)
+                if (jr && jr.icon && !si.attributes.iconURL) {
+                    si.attributes.iconURL = jr.icon
+                }
+                if (jr && jr.data && !si.attributes.jresURL) {
+                    si.attributes.jresURL = "data:" + jr.mimeType + ";base64," + jr.data
+                }
+            }
         }
 
         // transitive closure of inheritance
@@ -593,12 +607,12 @@ namespace ts.pxtc.service {
         },
         compileTd: v => {
             let res = compile(v.options);
-            return getApiInfo(res.ast, true);
+            return getApiInfo(host.opts, res.ast, true);
         },
 
         assemble: v => {
             return {
-                words: processorInlineAssemble(host.opts.target.nativeType, v.fileContent)
+                words: processorInlineAssemble(host.opts.target, v.fileContent)
             }
         },
 
@@ -631,7 +645,7 @@ namespace ts.pxtc.service {
         apiInfo: () => {
             lastBlocksInfo = undefined;
             lastFuse = undefined;
-            return lastApiInfo = getApiInfo(service.getProgram());
+            return lastApiInfo = getApiInfo(host.opts, service.getProgram());
         },
         blocksInfo: blocksInfoOp,
         apiSearch: v => {

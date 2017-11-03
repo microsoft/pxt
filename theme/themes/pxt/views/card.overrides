@@ -7,7 +7,6 @@
     border-bottom-right-radius: 0;
 }
 
-
 /* File card for the Home screen */
 
 .ui.card.file {
@@ -64,11 +63,11 @@
 /* Example card */
 
 .ui.card.example {
-    .ui.image {
-        height: 9rem;
+    .ui.label {
+        z-index: 2; /* Show the label above the image */
     }
     .content {
-        height: 3rem;
+        height: 12rem;
         z-index: 1; /* Show the text above the image */
         padding-bottom: 0;
         width: 100%;
@@ -78,27 +77,42 @@
             overflow: hidden;
         }
     }
+    .ui.image {
+        height: 9rem;
+    }
     .ui.image ~ .content {
-        .header {
-            color: white;
-        }
+        height: 3rem;
     }
 }
 
-
-/* Hover animation on home screen cards */
-
-.ui.card.file:hover, .ui.card.newprojectcard:hover, .ui.card.example:hover {
-    transform: scale(1.1);
+.setExampleCardFullHeight() when (@exampleCardFullHeight) {
+    .ui.card.example {
+        .ui.image, .ui.cardimage {
+            height: 12rem;
+        }
+        .ui.image ~ .content {
+            background: @exampleCardFullHeightBackground;
+            position: absolute;
+            bottom: 0;
+            .header {
+                color: @exampleCardFullHeightColor;
+            }
+        }
+    }
 }
+.setExampleCardFullHeight();
 
 
 /* Project code cards */
-
+.ui.card .ui.imagewrapper {
+    overflow: hidden;
+    border-top-left-radius: @borderRadius;
+    border-top-right-radius: @borderRadius;
+}
 .ui.cardimage {
     background-color: @secondaryColor;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
-    height: 12rem;
+    height: 9rem;
 }

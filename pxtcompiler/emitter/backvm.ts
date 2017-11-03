@@ -49,7 +49,7 @@ ${hex.hexPrelude()}
         vmsource += "\n; The end.\n"
         bin.writeFile(BINARY_ASM, vmsource)
 
-        let res = assemble(opts.target.nativeType, bin, vmsource)
+        let res = assemble(opts.target, bin, vmsource)
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
 
@@ -200,7 +200,7 @@ ${hex.hexPrelude()}
                     else if (e.data === 1)
                         write(`ldone`)
                     else
-                        write(`ldconst ${e.data}`)
+                        write(`ldconst ${e.data & 0xffff}`)
                     return
                 case EK.PointerLiteral:
                     write(`ldconst ${e.data}`)

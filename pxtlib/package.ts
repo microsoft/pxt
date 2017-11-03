@@ -48,8 +48,8 @@ namespace pxt {
         private resolvedVersion: string;
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
-            if (parent) {
-                this.level = this.parent.level + 1
+            if (addedBy) {
+                this.level = addedBy.level + 1
             }
 
             this.addedBy = [addedBy];
@@ -101,6 +101,41 @@ namespace pxt {
         saveConfig() {
             const cfg = JSON.stringify(this.config, null, 4) || "\n"
             this.host().writeFile(this, pxt.CONFIG_NAME, cfg)
+        }
+
+        parseJRes(allres: Map<JRes> = {}) {
+            for (const f of this.getFiles()) {
+                if (U.endsWith(f, ".jres")) {
+                    let js: Map<JRes> = JSON.parse(this.readFile(f))
+                    let base = js["*"]
+                    for (let k of Object.keys(js)) {
+                        if (k == "*") continue
+                        let v = js[k]
+                        if (typeof v == "string") {
+                            // short form
+                            v = { data: v } as any
+                        }
+                        let ns = v.namespace || base.namespace || ""
+                        if (ns) ns += "."
+                        let id = v.id || ns + k
+                        let icon = v.icon
+                        let mimeType = v.mimeType || base.mimeType
+                        let dataEncoding = v.dataEncoding || base.dataEncoding || "base64"
+                        if (!icon && dataEncoding == "base64" && (mimeType == "image/png" || mimeType == "image/jpeg")) {
+                            icon = "data:" + mimeType + ";base64," + v.data
+                        }
+                        allres[id] = {
+                            id,
+                            data: v.data,
+                            dataEncoding: v.dataEncoding || base.dataEncoding || "base64",
+                            icon,
+                            namespace: ns,
+                            mimeType
+                        }
+                    }
+                }
+            }
+            return allres
         }
 
         private resolveVersionAsync() {
@@ -216,6 +251,12 @@ namespace pxt {
                     if (pkgCfg) {
                         const yottaCfg = pkgCfg.yotta ? U.jsonFlatten(pkgCfg.yotta.config) : null;
                         this.parent.sortedDeps().forEach((depPkg) => {
+                            if (pkgCfg.core && depPkg.config.core) {
+                                const conflict = new cpp.PkgConflictError(lf("conflict between core packages {0} and {1}", pkgCfg.name, depPkg.id));
+                                conflict.pkg0 = depPkg;
+                                conflicts.push(conflict);
+                                return;
+                            }
                             let foundYottaConflict = false;
                             if (yottaCfg) {
                                 const depConfig = depPkg.config || JSON.parse(depPkg.readFile(CONFIG_NAME)) as PackageConfig;
@@ -342,6 +383,29 @@ namespace pxt {
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
 
+            if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
+                initPromise = initPromise.then(() => {
+                    if (this.config.files.indexOf("board.json") < 0) return
+                    appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json"))
+                    let expandPkg = (v: string) => {
+                        let m = /^pkg:\/\/(.*)/.exec(v)
+                        if (m) {
+                            let fn = m[1]
+                            let content = this.readFile(fn)
+                            return U.toDataUri(content, U.getMime(fn))
+                        } else {
+                            return v
+                        }
+                    }
+                    let bd = appTarget.simulator.boardDefinition
+                    if (typeof bd.visual == "object") {
+                        let vis = bd.visual as pxsim.BoardImageDefinition
+                        vis.image = expandPkg(vis.image)
+                        vis.outlineImage = expandPkg(vis.outlineImage)
+                    }
+                })
+            }
+
             const loadDepsRecursive = (dependencies: Map<string>) => {
                 return U.mapStringMapAsync(dependencies, (id, ver) => {
                     let mod = this.resolveDep(id)
@@ -459,6 +523,7 @@ namespace pxt {
 
     export class MainPackage extends Package {
         public deps: Map<Package> = {};
+        private _jres: Map<JRes>;
 
         constructor(public _host: Host) {
             super("this", "file:.", null, null)
@@ -507,6 +572,16 @@ namespace pxt {
             return res
         }
 
+        getJRes() {
+            if (!this._jres) {
+                this._jres = {}
+                for (const pkg of this.sortedDeps()) {
+                    pkg.parseJRes(this._jres)
+                }
+            }
+            return this._jres
+        }
+
         getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()) {
             let opts: pxtc.CompileOptions = {
                 sourceFiles: [],
@@ -520,7 +595,7 @@ namespace pxt {
                     U.userError(lf("please add '{0}' to \"files\" in {1}", fn, pxt.CONFIG_NAME))
                 cont = "// Auto-generated. Do not edit.\n" + cont + "\n// Auto-generated. Do not edit. Really.\n"
                 if (this.host().readFile(this, fn) !== cont) {
-                    pxt.log(`updating ${fn} (size=${cont.length})...`)
+                    pxt.debug(`updating ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, cont)
                 }
             }
@@ -529,7 +604,7 @@ namespace pxt {
                 let updatedCont = this.upgradeAPI(cont);
                 if (updatedCont != cont) {
                     // save file (force write)
-                    pxt.log(`updating APIs in ${fn} (size=${cont.length})...`)
+                    pxt.debug(`updating APIs in ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, updatedCont, true)
                 }
                 return updatedCont;
@@ -596,6 +671,7 @@ namespace pxt {
                             }
                         }
                     }
+                    opts.jres = this.getJRes()
                     return opts;
                 })
         }
@@ -609,6 +685,7 @@ namespace pxt {
                         U.userError('Only packages with "public":true can be published')
                     let cfg = U.clone(this.config)
                     delete cfg.installedVersion
+                    delete cfg.additionalFilePath
                     U.iterMap(cfg.dependencies, (k, v) => {
                         if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {
                             cfg.dependencies[k] = "*"

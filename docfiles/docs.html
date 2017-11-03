@@ -13,13 +13,13 @@
 
 <body id='root' class='root'>
 
-<div id="accessibleMenu" role="menubar">
+<div class="ui accessibleMenu borderless fixed menu" role="menubar">
     @accMenu@
 </div>
 
 <!-- @include tocheader.html -->
 
-<div class="pusher">
+<div id="docs" class="pusher">
 
 <div class="full height">
 
@@ -29,7 +29,7 @@
         
         <!-- @include header.html -->
 
-        <div id="docs" class="main ui container mainbody">
+        <div class="main ui container mainbody">
             @printBtn@
             @body@
             <div class="hideprint">@github@</div>

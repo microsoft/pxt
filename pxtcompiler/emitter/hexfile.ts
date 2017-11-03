@@ -327,7 +327,7 @@ namespace ts.pxtc {
                     }
                 }
                 if (argIsNumber.length != inf.argsFmt.length - 1)
-                    U.userError("not enough arguments for " + nm)
+                    U.userError(`not enough arguments for ${nm} (got ${argIsNumber.length}; fmt=${inf.argsFmt})`)
             } else {
                 U.userError("function not found: " + nm)
             }
@@ -593,7 +593,7 @@ ${hex.hexPrelude()}
     .hex 0000000000000000 ; @SRCHASH@
     .short ${bin.globalsWords}   ; num. globals
     .short 0 ; patched with number of words resulting from assembly
-    .word 0 ; reserved
+    .word _pxt_config_data
     .word 0 ; reserved
     .word 0 ; reserved
 `
@@ -616,6 +616,12 @@ ${hex.hexPrelude()}
         })
         asmsource += snippets.arithmetic()
 
+        asmsource += `\n.balign 4\n_pxt_config_data:\n`
+        for (let d of bin.res.configData || []) {
+            asmsource += `    .word ${d.key}, ${d.value}  ; ${d.name}=${d.value}\n`
+        }
+        asmsource += `    .word 0\n\n`
+
         asmsource += hex.asmTotalSource
 
         asmsource += "_js_end:\n"
@@ -632,8 +638,8 @@ ${hex.hexPrelude()}
         return src.replace(/\n.*@SRCHASH@\n/, "\n    .hex " + sha.slice(0, 16).toUpperCase() + " ; program hash\n")
     }
 
-    export function processorInlineAssemble(nativeType: string, src: string) {
-        let b = mkProcessorFile(nativeType)
+    export function processorInlineAssemble(target: CompileTarget, src: string) {
+        let b = mkProcessorFile(target)
         b.disablePeepHole = true
         b.emit(src)
         throwAssemblerErrors(b)
@@ -645,13 +651,13 @@ ${hex.hexPrelude()}
         return res
     }
 
-    function mkProcessorFile(nativeType: string) {
+    function mkProcessorFile(target: CompileTarget) {
         let b: assembler.File
 
-        if (nativeType == NATIVE_TYPE_AVR)
+        if (target.nativeType == NATIVE_TYPE_AVR)
             b = new assembler.File(new avr.AVRProcessor())
-        else if (nativeType == NATIVE_TYPE_AVRVM)
-            b = new assembler.VMFile(new vm.VmProcessor())
+        else if (target.nativeType == NATIVE_TYPE_AVRVM)
+            b = new assembler.VMFile(new vm.VmProcessor(target))
         else
             b = new assembler.File(new thumb.ThumbProcessor())
 
@@ -694,8 +700,8 @@ ${hex.hexPrelude()}
     }
 
     let peepDbg = false
-    export function assemble(nativeType: string, bin: Binary, src: string) {
-        let b = mkProcessorFile(nativeType)
+    export function assemble(target: CompileTarget, bin: Binary, src: string) {
+        let b = mkProcessorFile(target)
         b.emit(src);
 
         src = b.getSource(!peepDbg, bin.numStmts, target.flashEnd);
@@ -785,7 +791,7 @@ __flash_checksums:
         }
         bin.writeFile(pxtc.BINARY_ASM, src)
         bin.numStmts = cres.breakpoints.length
-        let res = assemble(opts.target.nativeType, bin, src)
+        let res = assemble(opts.target, bin, src)
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
         if (res.buf) {

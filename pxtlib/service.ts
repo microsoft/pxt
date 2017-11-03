@@ -128,6 +128,8 @@ namespace ts.pxtc {
         colorSecondary?: string;
         colorTertiary?: string;
         icon?: string;
+        jresURL?: string;
+        iconURL?: string;
         imageLiteral?: number;
         weight?: number;
         parts?: string;
@@ -139,6 +141,7 @@ namespace ts.pxtc {
         subcategory?: string;
         group?: string;
         whenUsed?: boolean;
+        jres?: string;
         // On namepspace
         subcategories?: string[];
         groups?: string[];
@@ -197,6 +200,12 @@ namespace ts.pxtc {
         messageText: string | DiagnosticMessageChain;
     }
 
+    export interface ConfigEntry {
+        name: string;
+        key: number;
+        value: number;
+    }
+
     export interface CompileResult {
         outfiles: pxt.Map<string>;
         diagnostics: KsDiagnostic[];
@@ -213,6 +222,7 @@ namespace ts.pxtc {
         userContextWindow?: Window;
         downloadFileBaseName?: string;
         confirmAsync?: (confirmOptions: {}) => Promise<number>;
+        configData?: ConfigEntry[];
     }
 
     export interface Breakpoint extends LocationInfo {
@@ -473,6 +483,8 @@ namespace ts.pxtc {
             res.callingConvention = ir.CallingConvention.Async
         if (res.promise)
             res.callingConvention = ir.CallingConvention.Promise
+        if (res.jres)
+            res.whenUsed = true
         if (res.subcategories) {
             try {
                 res.subcategories = JSON.parse(res.subcategories as any);

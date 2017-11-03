@@ -38,7 +38,6 @@ namespace pxt.editor {
         projectName?: string;
 
         tutorialOptions?: TutorialOptions;
-        hintShown?: boolean;
 
         running?: boolean;
         resumeOnVisibility?: boolean;
@@ -55,7 +54,8 @@ namespace pxt.editor {
         tracing?: boolean;
 
         highContrast?: boolean;
-        hideExperimentalBanner?: boolean;
+
+        home?: boolean;
     }
 
     export interface EditorState {
@@ -108,7 +108,9 @@ namespace pxt.editor {
         forceUpdate(): void;
 
         openBlocks(): void;
-        openJavaScript(): void;
+        openJavaScript(giveFocusOnLoading?: boolean): void;
+        openSettings(): void;
+        openSimView(): void;
         openPreviousEditor(): void;
 
         switchTypeScript(): void;
@@ -151,7 +153,6 @@ namespace pxt.editor {
         exitTutorial(): void;
         completeTutorial(): void;
         showTutorialHint(): void;
-        gettingStarted(): void;
 
         anonymousPublishAsync(): Promise<string>;
 
@@ -163,8 +164,11 @@ namespace pxt.editor {
         expandSimulator(): void;
         collapseSimulator(): void;
         toggleSimulatorCollapse(): void;
+        toggleSimulatorFullscreen(): void;
         proxySimulatorMessage(content: string): void;
         toggleTrace(intervalSpeed?: number): void;
+        toggleMute(): void;
+        openInstructions(): void;
         closeFlyout(): void;
 
         startTutorial(tutorialId: string, tutorialTitle?: string): void;
@@ -185,7 +189,20 @@ namespace pxt.editor {
         // obsolete, may go away
         convertTouchDevelopToTypeScriptAsync(td: string): Promise<string>;
 
+        selectLang(): void;
+        toggleHighContrast(): void;
+        share(): void;
+        about(): void;
+        reset(): void;
+        showReportAbuse(): void;
+        exitAndSave(): void;
+        launchFullEditor(): void;
+
         settings: EditorSettings;
+
+        isEmbedSimActive(): boolean;
+        isBlocksActive(): boolean;
+        isJavaScriptActive(): boolean;
 
         editor: IEditor;
     }
@@ -229,6 +246,7 @@ namespace pxt.editor {
         resourceImporters?: IResourceImporter[];
         beforeCompile?: () => void;
         deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
+        showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync?: (options: any) => Promise<number>) => Promise<void>;
         fieldEditors?: IFieldCustomOptions[];
         toolboxOptions?: IToolboxOptions;
     }
@@ -319,6 +337,11 @@ namespace pxt.editor {
          * dynamically added to the category (eg. loops.forever())
          */
         weight?: number;
+
+        /**
+         * The return type of the block. This is used to determine the shape of the block rendered.
+         */
+        retType?: string;
     }
 
     export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;

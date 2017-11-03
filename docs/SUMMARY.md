@@ -20,6 +20,7 @@
     * [Static File Drops](/cli/staticpkg)
     * [Simulator](/targets/simulator)
     * [Theming Editor](/targets/theming)
+    * [Embedding resources](/jres)
 * [Creating Packages](/packages)
     * [Getting started](/packages/getting-started)
     * [pxt.json](/packages/pxtJson)

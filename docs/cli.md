@@ -24,7 +24,7 @@ C:\srecord_dir
 
 ### ~
 
-## Setting up workspace
+## Setting up a workspace
 
 For every PXT target you will need to create a directory for your projects.
 Let's say you want to install `microbit` target, and name the directory `microbit`:

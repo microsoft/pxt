@@ -19,6 +19,7 @@
 @pink:#E2008C;
 @brown:#00BCF2;
 @grey:#505050;
+@lightGrey: #d9d9d9;
 
 @greenTextColor: darken(@green, 5);
 
@@ -33,8 +34,8 @@
 
 @importGoogleFonts: false;
 
-@docsHeaderFont: @headerFont;
-@docsPageFont: @pageFont;
+@docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
+@docsPageFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
 
 @emSize      : 14px;
 @fontSize    : 12pt;
@@ -43,7 +44,8 @@
    Links
 --------------------*/
 
-@linkColor           : #004d99;
+@linkColor           : #4183c4;
+@linkHoverUnderline  : underline;
 
 /*-------------------
    Breakpoints
@@ -97,7 +99,8 @@
      PXT Variables
 *******************************/
 
-@avatarUrl: data-uri("../docs/static/avatar.svg");
+@avatarUrlPath: "../docs/static/avatar.svg";
+@avatarUrl: data-uri(@avatarUrlPath);
 @fileLogoUrl: data-uri("../docs/static/filelogo.svg");
 
 @poweredBySmall: data-uri("../docs/static/logo/Powered-By-Microsoft-logo-small.png");
@@ -159,6 +162,17 @@
 @trashIconColor: @primaryColor;
 
 /*-------------------
+   Serial editor
+--------------------*/
+@serialBackgroundColor: lighten(@simulatorBackground, 2);
+@serialTextColor: @darkTextColor;
+@serialGraphBackground: @lightGrey;
+@serialGraphColor: black;
+@editorCloseColor: black;
+@editorCloseColorHover: darken(@editorCloseColor, 25%);
+@serialConsoleFont: @blocklyFont;
+
+/*-------------------
    Blockly
 --------------------*/
 
@@ -186,3 +200,37 @@
 @blocklyFlyoutColor: @grey;
 @blocklyFlyoutColorOpacity: 0.9;
 @monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);
+
+
+/*-------------------
+   Home
+--------------------*/
+
+@homeHeaderColor: @textColor;
+@homeCardBorderRadius: 0px;
+@homeCardBorderSize: 5px;
+@homeCardBorderColor: #e9eef2;
+@homeCardHoverBorderColor: white;
+@homeCardFocusBorderColor: yellow;
+@homeCardColor: @textColor;
+@homeCardMetaColor: @homeCardColor;
+@homeCardHeaderColor: @homeCardColor;
+@homeFooterColor: @homeCardColor;
+
+@homeCardImageBorderRadius: 0;
+@homeCardBackgroundColor: white;
+@homeCardHoverBackgroundColor: darken(@homeCardBackgroundColor, 5%);
+
+/* Detail view */
+@homeSelectedCardBorderSize: @homeCardBorderSize*2;
+@homeSelectedCardBorderColor: white;
+@homeDetailViewBackground: darken(@homeScreenBackground, 10%);
+@homeDetailViewColor: @homeCardColor;
+@homeDetailCloseColor: white;
+
+/*-------------------
+   Tutorial
+--------------------*/
+
+@tutorialSegmentBackground: #f8f8f9;
+@tutorialSegmentColor: @textColor;

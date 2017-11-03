@@ -6,6 +6,7 @@ namespace pxsim {
         id?: string;
         boardDefinition?: BoardDefinition;
         frameCounter?: number;
+        refCountingDebug?: boolean;
         options?: any;
         parts?: string[];
         partDefinitions?: Map<PartDefinition>
@@ -134,6 +135,30 @@ namespace pxsim {
         message?: string;
     }
 
+    export interface RenderReadyResponseMessage extends SimulatorMessage {
+        source: "makecode",
+        type: "renderready"
+    }
+
+    export interface RenderBlocksRequestMessage extends SimulatorMessage {
+        type: "renderblocks",
+        id: string;
+        code: string;
+        options?: {
+            package?: string;
+            snippetMode?: boolean;
+        }
+    }
+
+    export interface RenderBlocksResponseMessage extends SimulatorMessage {
+        source: "makecode",
+        type: "renderblocks",
+        id: string;
+        svg?: string;
+        width?: number;
+        height?: number;
+    }
+
     export namespace Embed {
         export function start() {
             window.addEventListener("message", receiveMessage, false);
@@ -186,8 +211,7 @@ namespace pxsim {
             if (msg.localizedStrings) {
                 pxsim.localization.setLocalizedStrings(msg.localizedStrings);
             }
-            runtime = new Runtime(msg.code);
-            runtime.id = msg.id;
+            runtime = new Runtime(msg);
             runtime.board.initAsync(msg)
                 .done(() => {
                     runtime.run((v) => {

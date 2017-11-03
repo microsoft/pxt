@@ -45,6 +45,8 @@ namespace pxt.blocks {
             defaultValue: "list"
         }
     }
+    export const advancedTitle = Util.lf("{id:category}Advanced");
+    export const addPackageTitle = Util.lf("{id:category}Extensions");
 
     // Matches arrays and tuple types
     const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
@@ -283,6 +285,9 @@ namespace pxt.blocks {
                     else {
                         // If no weight is specified, insert alphabetically after the weighted subcategories but above "More"
                         category = getOrAddSubcategoryByName(category, sub, sub, category.getAttribute("colour"), 'blocklyTreeIconmore')
+                    }
+                    if (nsn && nsn.attributes.groups) {
+                        category.setAttribute("groups", nsn.attributes.groups.join(', '));
                     }
                 }
             }
@@ -683,8 +688,8 @@ namespace pxt.blocks {
                     const dd = syms.map(v => {
                         const k = v.attributes.block || v.attributes.blockId || v.name;
                         return [
-                            v.attributes.blockImage ? {
-                                src: Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
+                            v.attributes.iconURL || v.attributes.blockImage ? {
+                                src: v.attributes.iconURL || Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
                                 alt: k,
                                 width: 36,
                                 height: 36,
@@ -1123,10 +1128,10 @@ namespace pxt.blocks {
                 const nsColor = getNamespaceColor(topCats[i].getAttribute('nameid'));
                 if (nsColor && nsColor != "") {
                     topCats[i].setAttribute('colour', nsColor);
-                    // update children colors
-                    const childCats = topCats[i].getElementsByTagName('category');
-                    for (let j = 0; j < childCats.length; j++) {
-                        childCats[j].setAttribute('colour', nsColor);
+                    // Update subcategory colours
+                    const subCats = getChildCategories(topCats[i]);
+                    for (let j = 0; j < subCats.length; j++) {
+                        subCats[j].setAttribute('colour', nsColor);
                     }
                 }
                 if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
@@ -1157,6 +1162,23 @@ namespace pxt.blocks {
                         }
                     }
                     topCats[i].insertBefore(headingLabel, topCats[i].firstChild);
+                    // Add subcategory labels
+                    const subCats = getChildCategories(topCats[i]);
+                    for (let j = 0; j < subCats.length; j++) {
+                        let subHeadingLabel = goog.dom.createDom('label');
+                        subHeadingLabel.setAttribute('text', `${topCats[i].getAttribute('name')} > ${subCats[j].getAttribute('name')}`);
+                        subHeadingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
+                        subHeadingLabel.setAttribute('web-icon-color', topCats[i].getAttribute('colour'));
+                        subCats[j].insertBefore(subHeadingLabel, subCats[j].firstChild);
+                        if (icon) {
+                            if (icon.length == 1) {
+                                subHeadingLabel.setAttribute('web-icon', icon);
+                                if (iconClass) subHeadingLabel.setAttribute('web-icon-class', iconClass);
+                            } else {
+                                subHeadingLabel.setAttribute('web-icon-class', `blocklyFlyoutIcon${topCats[i].getAttribute('name')}`);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1185,7 +1207,7 @@ namespace pxt.blocks {
 
         // Add the "Advanced" category
         if (showAdvanced && tb && showCategories !== CategoryMode.None) {
-            const cat = createCategoryElement(Util.lf("{id:category}Advanced"), "Advanced", 1, getNamespaceColor('advanced'), showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
+            const cat = createCategoryElement(advancedTitle, "Advanced", 1, getNamespaceColor('advanced'), showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
             insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             insertTopLevelCategory(cat, tb, 1, false);
         }
@@ -1195,7 +1217,7 @@ namespace pxt.blocks {
                 insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             }
             // Add the "Add package" category
-            getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
+            getOrAddSubcategoryByWeight(tb, addPackageTitle, "Extensions", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
         if (tb) {
@@ -1341,6 +1363,9 @@ namespace pxt.blocks {
                     let xmlList: Element[] = [];
                     for (let bg = 0; bg < sortedGroups.length; ++bg) {
                         let group = sortedGroups[bg];
+                        // Check if there are any blocks in that group
+                        if (!blockGroups[group] || !blockGroups[group].length) continue;
+
                         // Add the group label
                         if (group != 'other') {
                             let groupLabel = goog.dom.createDom('label');
@@ -2147,13 +2172,11 @@ namespace pxt.blocks {
             if (a == that.selectedItem_ || a == toolbox.tree_) {
                 return;
             }
-
-            if (a === null) {
-                collapseSubcategories(that.selectedItem_);
-                editor.lastInvertedCategory = that.selectedItem_;
-            }
-
+            let oldSelectedItem = that.selectedItem_;
             oldSetSelectedItem.call(that, a);
+            if (a === null) {
+                collapseSubcategories(oldSelectedItem);
+            }
         };
 
         // TODO: look into porting this code over to pxt-blockly
@@ -2285,23 +2308,15 @@ namespace pxt.blocks {
 
         Blockly.Blocks[pxtc.TS_OUTPUT_TYPE] = {
             init: function () {
-                this.jsonInit({
-                    "colour": "#717171",
-                    "message0": "%1",
-                    "args0": [
-                        {
-                            "type": "field_input",
-                            "name": "EXPRESSION",
-                            "text": ""
-                        }
-                    ]
-                });
-                this.setPreviousStatement(false);
-                this.setNextStatement(false);
-                this.setOutput(true);
-                this.setEditable(false);
+                let that: Blockly.Block = this;
+                that.setColour("#717171")
+                that.setPreviousStatement(false);
+                that.setNextStatement(false);
+                that.setOutput(true);
+                that.setEditable(false);
+                that.appendDummyInput().appendField(new pxtblockly.FieldTsExpression(""), "EXPRESSION");
 
-                setHelpResources(this,
+                setHelpResources(that,
                     pxtc.TS_OUTPUT_TYPE,
                     lf("JavaScript expression"),
                     lf("A JavaScript expression that could not be converted to blocks"),
@@ -2690,6 +2705,7 @@ namespace pxt.blocks {
         // Dropdown menu of variables_get
         msg.RENAME_VARIABLE = lf("Rename variable...");
         msg.DELETE_VARIABLE = lf("Delete the \"%1\" variable");
+        msg.DELETE_VARIABLE_CONFIRMATION = lf("Delete %1 uses of the \"%2\" variable?");
 
         // builtin variables_set
         const variablesSetId = "variables_set";
@@ -2898,7 +2914,7 @@ namespace pxt.blocks {
                 let headingLabel = goog.dom.createDom('label');
                 headingLabel.setAttribute('text', lf("Functions"));
                 headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
-                headingLabel.setAttribute('web-icon', '\uf107');
+                headingLabel.setAttribute('web-icon', '\uf109');
                 headingLabel.setAttribute('web-icon-class', 'blocklyFlyoutIconfunctions');
                 headingLabel.setAttribute('web-icon-color', getNamespaceColor('functions'));
                 xmlList.push(headingLabel as HTMLElement);

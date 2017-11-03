@@ -57,7 +57,7 @@ example in http://github.com/microsoft/pxt-microbit/blob/master, we see:
 This ensures that the above four packages are compiled/bundled into the web app and delivered on the initial
 download of the web app. Other packages for the micro:bit, such as http://github.com/microsoft/pxt-neopixel 
 are not bundled and remain on github.com, where they are loaded as needed by the web app (usually 
-via an "add package" request by the end user).
+via an "Extensions" request by the end user).
 
 ## AppTarget
 
@@ -210,6 +210,8 @@ Each target has one board (plus optional parts).
     interface AppSimulator {
         // define aspects of physical computing device
         boardDefinition?: BoardDefinition;
+        // if true, boardDefinition comes from board package
+        dynamicBoardDefinition?: boolean;
 
         // running and code changes
         autoRun?: boolean;          // automatically run program after a change to its code
@@ -232,6 +234,7 @@ Each target has one board (plus optional parts).
     }
 ```
 
+The `boardDefinition` can be also defined in the [core board package](/targets/board).
 
 ### runtime?: RuntimeOptions;
 

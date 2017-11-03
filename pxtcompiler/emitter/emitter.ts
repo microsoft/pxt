@@ -80,7 +80,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9267
+    // next free error 9272
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -100,11 +100,11 @@ namespace ts.pxtc {
     }
 
     export function isStackMachine() {
-        return target.nativeType == NATIVE_TYPE_AVRVM
+        return target.isNative && target.nativeType == NATIVE_TYPE_AVRVM
     }
 
     export function isAVR() {
-        return target.nativeType == NATIVE_TYPE_AVRVM || target.nativeType == NATIVE_TYPE_AVR
+        return target.isNative && (target.nativeType == NATIVE_TYPE_AVRVM || target.nativeType == NATIVE_TYPE_AVR)
     }
 
     function isRefType(t: Type) {
@@ -895,6 +895,8 @@ namespace ts.pxtc {
         let ifaceMembers: pxt.Map<number> = {}
         let nextIfaceMemberId = 0;
         let autoCreateFunctions: pxt.Map<boolean> = {}
+        let configEntries: pxt.Map<ConfigEntry> = {}
+        let currJres: pxt.JRes = null
 
         cachedSubtypeQueries = {}
         lastNodeId = 0
@@ -982,6 +984,17 @@ namespace ts.pxtc {
             reset();
             bin.finalPass = true
             emit(rootFunction)
+
+            res.configData = []
+            for (let k of Object.keys(configEntries)) {
+                if (configEntries["!" + k])
+                    continue
+                res.configData.push({
+                    name: k.replace(/^\!/, ""),
+                    key: configEntries[k].key,
+                    value: configEntries[k].value
+                })
+            }
 
             catchErrors(rootFunction, finalEmit)
         }
@@ -1862,15 +1875,32 @@ ${lbl}: .short 0xffff
                 }
 
             if (nm.indexOf('(') >= 0) {
-                let parse = /(.*)\((\d+)\)$/.exec(nm)
+                let parse = /(.*)\((.*)\)$/.exec(nm)
                 if (parse) {
                     if (args.length)
                         U.userError("no arguments expected")
+                    let litargs: ir.Expr[] = []
+                    let strargs = parse[2].replace(/\s/g, "")
+                    if (strargs) {
+                        for (let a of parse[2].split(/,/)) {
+                            let v = parseInt(a)
+                            if (isNaN(v)) {
+                                v = lookupDalConst(node, a)
+                                if (v == null)
+                                    v = lookupConfigConst(node, a)
+                                if (v == null)
+                                    U.userError("invalid argument: " + a + " in " + nm)
+                            }
+                            litargs.push(ir.numlit(v))
+                        }
+                        if (litargs.length > 4)
+                            U.userError("too many args")
+                    }
                     nm = parse[1]
                     if (opts.target.isNative) {
-                        hex.validateShim(getDeclName(decl), nm, attrs, true, [true])
+                        hex.validateShim(getDeclName(decl), nm, attrs, true, litargs.map(v => true))
                     }
-                    return ir.rtcallMask(nm, 0, attrs.callingConvention, [ir.numlit(parseInt(parse[2]))])
+                    return ir.rtcallMask(nm, 0, attrs.callingConvention, litargs)
                 }
             }
 
@@ -2324,6 +2354,16 @@ ${lbl}: .short 0xffff
                 return /^[0-9a-f]$/i.test(c)
             }
             function parseHexLiteral(s: string) {
+                if (s == "" && currJres) {
+                    if (!currJres.dataEncoding || currJres.dataEncoding == "base64") {
+                        s = U.toHex(U.stringToUint8Array(atob(currJres.data)))
+                    } else if (currJres.dataEncoding == "hex") {
+                        s = currJres.data
+                    } else {
+                        userError(9271, lf("invalid jres encoding '{0}' on '{1}'",
+                            currJres.dataEncoding, currJres.id))
+                    }
+                }
                 let res = ""
                 for (let i = 0; i < s.length; ++i) {
                     let c = s[i]
@@ -2635,7 +2675,11 @@ ${lbl}: .short 0xffff
                     case SK.MinusMinusToken:
                         return emitIncrement(node.operand, "numops::subs", false)
                     case SK.MinusToken:
-                        return emitIntOp("numops::subs", emitLit(0), emitExpr(node.operand))
+                        let inner = emitExpr(node.operand)
+                        let v = valueToInt(inner)
+                        if (v != null)
+                            return emitLit(-v)
+                        return emitIntOp("numops::subs", emitLit(0), inner)
                     case SK.PlusToken:
                         return emitExpr(node.operand) // no-op
                     default:
@@ -2811,6 +2855,69 @@ ${lbl}: .short 0xffff
             op = mapIntOpName(op)
             return ir.rtcallMask(op, opts.target.taggedInts ? 3 : 0,
                 ir.CallingConvention.Plain, [left, right])
+        }
+
+        function emitAsInt(e: Expression) {
+            let expr = emitExpr(e)
+            let v = valueToInt(expr)
+            if (v === undefined)
+                throw userError(9267, lf("a constant number-like expression is required here"))
+            return v
+        }
+
+        function lookupConfigConst(ctx: Node, name: string) {
+            let r = lookupConfigConstCore(ctx, name, "userconfig")
+            if (r == null)
+                r = lookupConfigConstCore(ctx, name, "config")
+            return r
+        }
+
+        function lookupConfigConstCore(ctx: Node, name: string, mod: string) {
+            let syms = checker.getSymbolsInScope(ctx, SymbolFlags.Module)
+            let configMod = syms.filter(s => s.name == mod && !!s.valueDeclaration)[0]
+            if (!configMod)
+                return null
+            for (let stmt of ((configMod.valueDeclaration as ModuleDeclaration).body as ModuleBlock).statements) {
+                if (stmt.kind == SK.VariableStatement) {
+                    let v = stmt as VariableStatement
+                    for (let d of v.declarationList.declarations) {
+                        if (d.symbol.name == name) {
+                            return emitAsInt(d.initializer)
+                        }
+                    }
+                }
+            }
+            return null
+        }
+
+        function lookupDalConst(ctx: Node, name: string) {
+            let syms = checker.getSymbolsInScope(ctx, SymbolFlags.Enum)
+            let dalEnm = syms.filter(s => s.name == "DAL" && !!s.valueDeclaration)[0]
+            if (!dalEnm)
+                return null
+            let decl = (dalEnm.valueDeclaration as EnumDeclaration).members
+                .filter(s => s.symbol.name == name)[0]
+            if (decl)
+                return checker.getConstantValue(decl)
+            return null
+        }
+
+        function valueToInt(e: ir.Expr): number {
+            if (e.exprKind == ir.EK.NumberLiteral) {
+                let v = e.data
+                if (opts.target.taggedInts) {
+                    if (v == taggedNull || v == taggedUndefined || v == taggedFalse)
+                        return 0
+                    if (v == taggedTrue)
+                        return 1
+                    if (typeof v == "number")
+                        return v >> 1
+                } else {
+                    if (typeof v == "number")
+                        return v
+                }
+            }
+            return undefined
         }
 
         function emitLit(v: number | boolean) {
@@ -3223,6 +3330,33 @@ ${lbl}: .short 0xffff
             throw userError(9260, lf("variable needs to be defined using 'let' instead of 'var'"));
         }
         function emitVariableStatement(node: VariableStatement) {
+            function addConfigEntry(ent: ConfigEntry) {
+                let entry = U.lookup(configEntries, ent.name)
+                if (!entry) {
+                    entry = ent
+                    configEntries[ent.name] = entry
+                }
+                if (entry.value != ent.value)
+                    throw userError(9269, lf("conflicting values for config.{0}", ent.name))
+            }
+
+            if (node.declarationList.flags & NodeFlags.Const)
+                for (let decl of node.declarationList.declarations) {
+                    let nm = getDeclName(decl)
+                    let parname = node.parent && node.parent.kind == SK.ModuleBlock ?
+                        getName(node.parent.parent) : "?"
+
+                    if (parname == "config" || parname == "userconfig") {
+                        if (!decl.initializer) continue
+                        let val = emitAsInt(decl.initializer)
+                        let key = lookupDalConst(node, "CFG_" + nm)
+                        if (key == null || key == 0) // key cannot be 0
+                            throw userError(9268, lf("can't find DAL.CFG_{0}", nm))
+                        if (parname == "userconfig")
+                            nm = "!" + nm
+                        addConfigEntry({ name: nm, key: key, value: val })
+                    }
+                }
             if (node.flags & NodeFlags.Ambient)
                 return;
             checkForLetOrConst(node.declarationList);
@@ -3601,10 +3735,25 @@ ${lbl}: .short 0xffff
                 proc.stackEmpty();
             }
             else if (node.initializer) {
-                // TODO: make sure we don't emit code for top-level globals being initialized to zero
                 emitBrk(node)
+                if (isGlobalVar(node)) {
+                    let attrs = parseComments(node)
+                    let jrname = attrs.jres
+                    if (jrname) {
+                        if (jrname == "true") {
+                            jrname = getFullName(checker, node.symbol)
+                        }
+                        let jr = U.lookup(opts.jres || {}, jrname)
+                        if (!jr)
+                            userError(9270, lf("resource '{0}' not found in any .jres file", jrname))
+                        else {
+                            currJres = jr
+                        }
+                    }
+                }
                 typeCheckSubtoSup(node.initializer, node)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
+                currJres = null
                 proc.stackEmpty();
             }
             return loc;
@@ -3656,8 +3805,6 @@ ${lbl}: .short 0xffff
         }
         function emitEnumMember(node: EnumMember) { }
         function emitModuleDeclaration(node: ModuleDeclaration) {
-            if (node.flags & NodeFlags.Ambient)
-                return;
             emit(node.body);
         }
         function emitImportDeclaration(node: ImportDeclaration) { }
