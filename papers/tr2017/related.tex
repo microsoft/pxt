@@ -14,23 +14,31 @@ There are four basic paradigms for programming microcontrollers:
 this is the common paradigm for Arduino~\cite{buildingArduino2014};
 \item[2.] bytecode for interpretation on the microcontoller is compiled on the host and loaded onto microcontroller - 
 this is the common paradigm for Java for embedded systems~\cite{ClausenTOPLAS};
-\item[3.] a complete REPL, compiler and runtime are put on microcontroller, as with MicroPython~\cite{MicroPython};
+\item[3.] a complete REPL, compiler and runtime are put on microcontroller, as with MicroPython~\cite{MicroPython} 
+and Espruino~\cite{Espruino};
 \item[4.] a program executing on a host computer sends commands (via some communication protocol) 
 to a fixed program loaded onto the microcontroller - this paradigm is the basis of Scratch's
 device extensions~\cite{ScratchCACM2009} and Arduino's Firmata library~\cite{Firmata};
 \end{itemize}
 
 In the educational and maker settings, microcontrollers often are embedded in projects where a 
-connection to a host computer is not possible. The microcontroller is power by battery and
+connection to a host computer is not possible. In this case, the microcontroller is powered by battery and
 the user program resides in the non-volatile flash memory of the microcontroller. For these
 reasons, our platform supports native compilation and byte code generation on the host,
-with reliance on a code loader (see below). In either case, the production of the entire executable file
-takes places solely within the web app, which is a unique aspect of our platform (our platform
-also supports partial flashing of just user code in the case when the device runtime already is
-resident in the microcontroller's flash).
+with reliance on a code loader (see below) to place the user program into flash memory. 
+The production of the entire executable file
+takes places solely within the web app, which is a unique aspect of our platform (we
+also support partial flashing of just user code when it can be determined that the 
+proper device runtime already is resident in the microcontroller's flash).
+
+\flameon{need to discuss our design with respect to MicroPython and Espruino: they would
+have no chance running on the Uno}
 
 \flameon{talk about our use of JavaScript for programming microcontrollers - makes it easier 
-to support in-browser simulator; are there are other examples?}
+to support in-browser simulator}
+
+% https://www.espruino.com/Quick+Start
+
 
 \subsection{Types for JavaScript}
 
