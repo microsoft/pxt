@@ -41,7 +41,7 @@
     clip: rect(0 0 0 0);
 }
 
-.ui.menu.accessibleMenu {
+.ui.menu.accessibleMenu, #accessibleMenu {
     z-index: 1001 !important;
     top: -20em !important;
     padding: 0;
@@ -67,7 +67,7 @@
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
-    .menubar .ui.menu.accessibleMenu {
+    .menubar .ui.menu.accessibleMenu, #accessibleMenu {
         height: @mobileMenuHeight !important;
         min-height: @mobileMenuHeight !important;
     }
