@@ -20,7 +20,7 @@ namespace pxt.crowdin {
         node_type: "file" | "directory" | "branch";
         phrases?: number;
         translated?: number;
-        approved?: number;        
+        approved?: number;
         files?: CrowdinFileInfo[];
     }
 
@@ -191,6 +191,17 @@ namespace pxt.crowdin {
             // filter out crowdin folder
             allFiles = allFiles.filter(f => f.fullName.indexOf(crowdinPath) == 0);
         }
+
+        // filter out non-target files
+        if (pxt.appTarget.id != "core") {
+            const id = pxt.appTarget.id + '/'
+            allFiles = allFiles.filter(f => {
+                return f.fullName.indexOf('/') < 0 // top level file
+                    || f.fullName.substr(0, id.length) == id // from the target folder
+                    || f.fullName.indexOf('common-docs') >= 0 // common docs
+            })
+        }
+
         return allFiles;
     }
 
@@ -208,8 +219,8 @@ namespace pxt.crowdin {
             const info = JSON.parse(respText) as CrowdinProjectInfo;
             if (!info) throw new Error("info failed")
 
-            const allFiles = filterAndFlattenFiles(info.files, branch, crowdinPath);
-            pxt.log(`crowdin: found ${allFiles.length} under ${crowdinPath}`)
+            let allFiles = filterAndFlattenFiles(info.files, branch, crowdinPath);
+            pxt.debug(`crowdin: found ${allFiles.length} under ${crowdinPath}`)
 
             return allFiles.map(f => {
                 return {
