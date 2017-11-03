@@ -283,8 +283,10 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
         return Promise.resolve();
     }
 
-    if (!args[0]) throw new Error("filename missing");
-    switch (cmd.toLowerCase()) {
+    cmd = cmd.toLowerCase();
+    if (!args[0] && cmd != "clean") throw new Error(cmd == "status" ? "language missing" : "filename missing");
+    switch (cmd) {
+        case "stats": return statsCrowdinAsync(branch, prj, key, args[0]);
         case "clean": return cleanCrowdinAsync(branch, prj, key, args[0] || "docs");
         case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
         case "download": {
@@ -316,6 +318,28 @@ function cleanCrowdinAsync(branch: string, prj: string, key: string, dir: string
         .then(files => {
             files.filter(f => !nodeutil.fileExistsSync(f.fullName.substring(pxt.appTarget.id.length + 1)))
                 .forEach(f => pxt.log(`crowdin: dead file: ${branch ? branch + "/" : ""}${f.fullName}`));
+        })
+}
+
+function statsCrowdinAsync(branch: string, prj: string, key: string, lang: string): Promise<void> {
+    return pxt.crowdin.languageStatsAsync(branch, prj, key, lang)
+        .then(stats => {
+            console.log('BLOCKS / SIM / TARGET')
+            console.log(`file, phrases, translated, approved`);
+            stats.filter(stat => /strings\.json$/i.test(stat.name))
+                .forEach(stat => {
+                    console.log(`${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}`)
+                })
+            console.log();
+            // dump all in CSV
+            let r = ''
+            r += `file, phrases, translated, approved\r\n`
+            stats.forEach(stat => {
+                r += `${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}\r\n`;
+            })
+            const fn = `crowdinstats-${lang}.csv`;
+            fs.writeFileSync(fn, r, "utf8");
+            console.log(`stats written to ${fn}`)
         })
 }
 
