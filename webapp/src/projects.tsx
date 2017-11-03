@@ -173,7 +173,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                             if (resp.success) {
                                                 this.props.parent.overrideBlocksFile(resp.outfiles["main.blocks"])
                                             }
-                                            this.props.parent.setSideDoc(scr.url, loadBlocks);
                                         })
                                 })
                                 .done(() => {
@@ -479,10 +478,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/maxresdefault.jpg` : undefined);
 
         let clickLabel = lf("Show Instructions");
-        if (cardType == "tutorial") clickLabel = lf("Begin Tutorial");
-        else if (cardType == "codeExample" || cardType == "example") clickLabel = lf("Try Example Code");
-        else if (youTubeId) clickLabel = lf("Watch Video");
-        else if (url) clickLabel = lf("Launch Website");
+        if (cardType == "tutorial") clickLabel = lf("Start Tutorial");
+        else if (cardType == "codeExample" || cardType == "example") clickLabel = lf("Open Example");
+        else if (youTubeId) clickLabel = lf("Play Video");
 
         const actions = [{
             label: clickLabel,
