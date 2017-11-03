@@ -152,7 +152,7 @@ export class ProjectView
                 pxt.debug('workspace changed, reloading...')
                 let id = this.state.header ? this.state.header.id : '';
                 workspace.initAsync()
-                    .done(() => id ? this.loadHeaderAsync(workspace.getHeader(id)) : Promise.resolve());
+                    .done(() => !this.state.home && id ? this.loadHeaderAsync(workspace.getHeader(id)) : Promise.resolve());
             } else if (this.state.resumeOnVisibility && !this.state.running) {
                 this.setState({ resumeOnVisibility: false });
                 this.runSimulator();
