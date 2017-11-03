@@ -770,11 +770,17 @@ export class Editor extends srceditor.Editor {
             const comment = fn.attributes.jsDoc;
 
             let snippetPrefix = fn.noNamespace ? "" : ns;
+            let isInstance = false;
 
             const element = fn as pxtc.SymbolInfo;
             if (element.attributes.block) {
                 if (element.attributes.defaultInstance) {
                     snippetPrefix = element.attributes.defaultInstance;
+                }
+                else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
+                    const params = pxt.blocks.parameterNames(element);
+                    snippetPrefix = params.attrNames["this"].name;
+                    isInstance = true;
                 }
                 else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                     const nsInfo = this.blockInfo.apis.byQName[element.namespace];
@@ -885,6 +891,12 @@ export class Editor extends srceditor.Editor {
             }
 
             if (!fn.snippetOnly) {
+                if (isInstance) {
+                    const instanceToken = document.createElement('span');
+                    instanceToken.textContent = snippetPrefix + '.';
+                    instanceToken.className = 'sigPrefix';
+                    monacoBlock.appendChild(instanceToken);
+                }
                 let methodToken = document.createElement('span');
                 methodToken.textContent = fn.name;
                 monacoBlock.appendChild(methodToken);
@@ -906,7 +918,7 @@ export class Editor extends srceditor.Editor {
                 monacoBlock.className += ' monacoHexBlock';
                 const styleBlock = document.createElement('style') as HTMLStyleElement;
                 styleBlock.innerHTML = `
-                        #monacoHexBlock${monacoHexBlockId}:before, 
+                        #monacoHexBlock${monacoHexBlockId}:before,
                         #monacoHexBlock${monacoHexBlockId}:after {
                             border-top: ${monacoBlockHeight / 2}px solid transparent;
                             border-bottom: ${monacoBlockHeight / 2}px solid transparent;
@@ -1490,7 +1502,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
             } else if (charCode == 38) { // UP
                 previousItem();
             } else if ((charCode == 39 && !isRtl) || (charCode == 37 && isRtl)) { // (LEFT & LTR) || (RIGHT & RTL)
-                // Focus inside flyout 
+                // Focus inside flyout
                 toolbox.moveFocusToFlyout();
             } else if (charCode == 27) { // ESCAPE
                 // Close the flyout
