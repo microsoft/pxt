@@ -180,13 +180,12 @@ device runtime to an intermediate representation (IR) that makes explicit: label
 sequence of instructions with conditional and unconditional jumps; heap cells; field accesses; store operations,
 and reference counting.
 
-There are four backends for code generation from the IR. The first backend simply generates JavaScript,
+There are three backends for code generation from the IR. The first backend generates JavaScript,
 for execution against the simulator runtime.  A second backend generates assembler, parameterized by a
 processor description.  Currently supported processors include ARM's Cortex class (Thumb instructions)
 and Atmel's Atmega class (AVR instructions). A separate assembler, also parameterized by an instruction
 encoder/decoder, generates machine code and resolves runtime references, producing a final binary executable
-in the UF2 format (Section~\ref{sec:uf2}).
-A third backend generates bytecode instructions and a fourth backend targets C\#. 
+in the UF2 format (Section~\ref{sec:uf2}). A third backend generates bytecode instructions.
 %The compiler chain
 %can be found at \emph{\dbhref{https://github.com/Microsoft/pxt/tree/master/pxtcompiler/emitter}{pxtcompiler/emitter}} and 
 %\emph{\dbhref{https://github.com/Microsoft/pxt/tree/master/pxtlib/emitter}{pxtlib/emitter}}.
