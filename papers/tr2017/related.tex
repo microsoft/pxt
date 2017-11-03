@@ -1,7 +1,8 @@
 \section{Related Work}
 \label{sec:related}
 
-Related work breaks into four parts: the programming of microcontrollers, 
+Related work breaks into four parts, following the
+flow of the paper: the programming of microcontrollers, 
 type systems for JavaScript, operating systems
 for microcontrollers, and techniques for code loading.
 
@@ -9,25 +10,27 @@ for microcontrollers, and techniques for code loading.
 
 There are four basic paradigms for programming microcontrollers:
 \begin{itemize}
-\item a binary for the microcontroller is compiled on a host computer and loaded onto the microcontroller -
+\item[1.] a binary for the microcontroller is compiled on a host computer and loaded onto the microcontroller -
 this is the common paradigm for Arduino~\cite{buildingArduino2014};
-\item bytecode for interpretation on the microcontoller is compiled on host and loaded onto microcontroller - 
+\item[2.] bytecode for interpretation on the microcontoller is compiled on the host and loaded onto microcontroller - 
 this is the common paradigm for Java for embedded systems~\cite{ClausenTOPLAS};
-\item a complete REPL, compiler and runtime are put on microcontroller, as 
-with MicroPython~\cite{MicroPython};
-\item a program executing on a host computer sends commands to a fixed program loaded onto the
-microcontroller, either over a wired connection (USB serial, for example) or a radio network
-(Bluetooth, for example) - this paradigm is used by Scratch~\cite{ScratchCACM2009};
+\item[3.] a complete REPL, compiler and runtime are put on microcontroller, as with MicroPython~\cite{MicroPython};
+\item[4.] a program executing on a host computer sends commands (via some communication protocol) 
+to a fixed program loaded onto the microcontroller - this paradigm is the basis of Scratch's
+device extensions~\cite{ScratchCACM2009} and Arduino's Firmata library~\cite{Firmata};
 \end{itemize}
 
-\emph{\MC supports both native compilation and bytecode generation.}
+In the educational and maker settings, microcontrollers often are embedded in projects where a 
+connection to a host computer is not possible. The microcontroller is power by battery and
+the user program resides in the non-volatile flash memory of the microcontroller. For these
+reasons, our platform supports native compilation and byte code generation on the host,
+with reliance on a code loader (see below). In either case, the production of the entire executable file
+takes places solely within the web app, which is a unique aspect of our platform (our platform
+also supports partial flashing of just user code in the case when the device runtime already is
+resident in the microcontroller's flash).
 
-\begin{itemize}
-\item While the Arduino IDE recently 
-has been ported to the web, it lacks basic features of modern IDEs (such as intellisense) 
-and needs a connection to a server to invoke a C/C++ compiler on user code;
-\item scratch and scratch extensions (provide tethered mode for microcontrollers)
-\end{itemize}
+\flameon{talk about our use of JavaScript for programming microcontrollers - makes it easier 
+to support in-browser simulator; are there are other examples?}
 
 \subsection{Types for JavaScript}
 
