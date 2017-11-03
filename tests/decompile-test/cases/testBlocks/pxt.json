@@ -4,6 +4,7 @@
     "files": [
         "basic.ts",
         "mb.ts",
+        "fixedInstance.ts",
         "cp.ts"
     ],
     "public": true,
