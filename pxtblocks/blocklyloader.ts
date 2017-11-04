@@ -670,7 +670,7 @@ namespace pxt.blocks {
                 let typeInfo = U.lookup(info.apis.byQName, pr.type)
 
                 let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
-                let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances
+                let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowType;
                 let customField = (fn.attributes.paramFieldEditor && fn.attributes.paramFieldEditor[p]);
                 let fieldLabel = pr.name.charAt(0).toUpperCase() + pr.name.slice(1);
                 let fieldType = pr.type;
