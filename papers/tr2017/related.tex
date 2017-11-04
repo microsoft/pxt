@@ -8,24 +8,27 @@ for microcontrollers, and techniques for code loading.
 
 \subsection{Programming microcontrollers}
 
-There are four basic ways to program microcontrollers:
+There are four basic ways to program microcontrollers,
+(ordered roughly from lower to greater resource usage):
 \begin{itemize}
-\item[1.] a binary for the microcontroller is compiled on a host computer and loaded onto the microcontroller -
-this is the common method for Arduino~\cite{buildingArduino2014};
-\item[2.] bytecode is compiled on the host and loaded onto microcontroller, where it is interpreted
-(e.g., Java for embedded systems~\cite{ClausenTOPLAS}(;
-\item[3.] a complete compiler and runtime are put on microcontroller, as with MicroPython~\cite{MicroPython} 
-and Espruino~\cite{Espruino};
-\item[4.] a program executing on a host computer sends commands (via some communication protocol) 
+\item[1.] a program executing on a host computer sends commands (via some communication protocol) 
 to a fixed program loaded onto the microcontroller (e.g., Scratch's
 device extensions~\cite{ScratchCACM2009}, Arduino's Firmata library~\cite{Firmata}).
+\item[2.] a binary for the microcontroller is compiled on a host computer and loaded onto the microcontroller -
+this is the common method for Arduino~\cite{buildingArduino2014};
+\item[3.] bytecode is compiled on the host and loaded onto microcontroller, where it is interpreted
+(e.g., Java for embedded systems~\cite{ClausenTOPLAS}(;
+\item[4.] a complete compiler and runtime are put on microcontroller, as with MicroPython~\cite{MicroPython} 
+and Espruino~\cite{Espruino};
+% 5. an embedded operating system
 \end{itemize}
 
-In the educational and maker settings, microcontrollers often are embedded in projects where a 
-connection to a host computer is not possible. In this case, the microcontroller is powered by battery and
-the user program resides in the non-volatile flash memory of the microcontroller. For these
-reasons, our platform supports native compilation and byte code generation on the host,
-with reliance on a code loader (see below) to place the user program into flash memory. 
+In the educational and maker settings, microcontrollers often are embedded in projects,
+option 1 has limited utility. In this case, the microcontroller is powered by battery and
+the user program resides in the non-volatile flash memory of the microcontroller. 
+
+For these reasons, our platform supports (2) machine code and (3) byte code generation on the host,
+with reliance on a code loader to place the user program into flash memory. 
 The production of the entire executable file
 takes places solely within the web app, which is a unique aspect of our platform.
 The platform also supports partial flashing of just user code, 
@@ -33,10 +36,24 @@ when it can be determined that the proper device runtime already is resident in 
 
 \flameon{need to discuss our design with respect to MicroPython, Espruino (also microJS and JerryScript): 
 they would have no chance running on the Uno - microJS doesn't support much of the constructs that we do
-- closer to C}
+- closer to C; big difference is that MakeCode + CODAL supports fibers}
 
 % https://www.espruino.com/
+
+
 % https://github.com/jerryscript-project
+
+% JerryScript is a lightweight JavaScript engine for resource-constrained devices
+% uch as microcontrollers. It can run on devices with less than 64 KB of RAM and
+% less than 200 KB of flash memory.
+
+% Key characteristics of JerryScript:
+
+% Full ECMAScript 5.1 standard compliance
+% 160K binary size when compiled for ARM Thumb-2
+
+
+
 % https://github.com/cesanta/mongoose-os
 % - Supported microcontrollers: CC3220, CC3200, ESP32, ESP8266, STM32F4;
 % https://github.com/cesanta/mjs
