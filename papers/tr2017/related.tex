@@ -27,9 +27,9 @@ In the educational and maker settings, microcontrollers often are embedded in pr
 option 1 has limited utility. In this case, the microcontroller is powered by battery and
 the user program resides in the non-volatile flash memory of the microcontroller. 
 
-For these reasons, our platform supports (2) machine code and (3) byte code generation on the host,
-with reliance on a code loader to place the user program into flash memory. 
-The production of the entire executable file
+For these reasons, our platform supports (2) machine code and (3) byte code generation 
+from JavaScript on the host, with reliance on a code loader to place the user's executable 
+into flash memory.  The production of the entire executable file
 takes places solely within the web app, which is a unique aspect of our platform.
 The platform also supports partial flashing of just user code, 
 when it can be determined that the proper device runtime already is resident in the microcontroller's flash.
@@ -37,6 +37,8 @@ when it can be determined that the proper device runtime already is resident in 
 \flameon{need to discuss our design with respect to MicroPython, Espruino (also microJS and JerryScript): 
 they would have no chance running on the Uno - microJS doesn't support much of the constructs that we do
 - closer to C; big difference is that MakeCode + CODAL supports fibers}
+
+\flameon{Also, we have a concurrency model that needs support both at JavaScript level and C++ runtime}
 
 % https://www.espruino.com/
 
