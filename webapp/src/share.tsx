@@ -68,7 +68,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
         const hideEmbed = !!targetTheme.hideShareEmbed;
-        const showSocialIcons = !!targetTheme.socialOptions;
+        const showSocialIcons = !!targetTheme.socialOptions && !pxt.BrowserUtils.isUwpEdge();
 
         let ready = false;
         let mode = this.state.mode;
