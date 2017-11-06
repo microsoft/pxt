@@ -145,15 +145,20 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 case "codeExample": chgCode(scr, false); break;
                 case "tutorial": this.props.parent.startTutorial(scr.url, scr.name); break;
                 default:
-                    const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url);
+                    const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url); // Tutorial
                     if (m) this.props.parent.startTutorial(m[1]);
                     else {
-                        if (scr.youTubeId && !scr.url)
+                        if (scr.youTubeId && !scr.url) // Youtube video
                             window.open('https://youtu.be/' + scr.youTubeId, 'yt');
-                        else if (/^https:\/\//i.test(scr.url))
+                        else if (/^https:\/\//i.test(scr.url)) // External video
                             window.open(scr.url, '_blank');
+                        else if (scr.url) // Docs url, open in new tab
+                            if (/^\//i.test(scr.url))
+                                window.open(scr.url, '_blank');
+                            else
+                                core.errorNotification(lf("Sorry, the project url looks invalid."));
                         else
-                            this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
+                            this.props.parent.newEmptyProject(scr.name.toLowerCase());
                     }
             }
         }
