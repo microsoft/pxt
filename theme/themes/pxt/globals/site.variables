@@ -200,12 +200,6 @@
 @blocklyFlyoutColorOpacity: 0.9;
 @monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);
 
-<<<<<<< HEAD
-/*-------------------
-    Banner
--------------------*/
-@bannerHeight: 4rem;
-=======
 
 /*-------------------
    Home
@@ -242,4 +236,3 @@
     Banner
 -------------------*/
 @bannerHeight: 4rem;
->>>>>>> 817c5f7afb3d837595dd14c025bf3aea9da1a028

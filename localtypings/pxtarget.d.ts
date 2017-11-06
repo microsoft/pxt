@@ -37,7 +37,6 @@ declare namespace pxt {
         appTheme: AppTheme;
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
-        windowsStoreInfo?: WindowsStoreInfo;
     }
 
     interface ProjectTemplate {
@@ -212,6 +211,7 @@ declare namespace pxt {
         hideMenuBar?: boolean; // Hides the main menu bar
         hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
         appStoreID?: string; // Apple iTune Store ID if any
+        windowsStoreLink?: string; // Link to UWP app in Windows store
         mobileSafariDownloadProtocol?: string; // custom protocol to be used on iOS
         sounds?: {
             tutorialStep?: string;
@@ -260,12 +260,6 @@ declare namespace pxt {
         nextPath?: string;
 
         markdown?: string;
-    }
-
-    interface WindowsStoreInfo {
-        appName: string,
-        link: string,
-        thumbnail: string
     }
 
     interface TargetBundle extends AppTarget {

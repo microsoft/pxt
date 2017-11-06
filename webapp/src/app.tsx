@@ -1735,7 +1735,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
-        const showWindowsStoreBanner = !this.state.hideWindowsStoreBanner && !pxt.winrt.isWinRT() && isWindows10 && pxt.appTarget.windowsStoreInfo;
+        const showWindowsStoreBanner = !this.state.hideWindowsStoreBanner && !pxt.winrt.isWinRT() && isWindows10 && pxt.appTarget.appTheme.windowsStoreLink;
         const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
         // cookie consent
@@ -1777,16 +1777,11 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 </div> : undefined}
                 {showWindowsStoreBanner ? <div id="windowsStoreBanner" className="ui blue attached message">
                     <div className="leftBannerContent">
-                        <a href={pxt.appTarget.windowsStoreInfo.link}>
-                            <img src={pxt.appTarget.windowsStoreInfo.thumbnail} />
+                        <a href={pxt.appTarget.appTheme.windowsStoreLink}>
                         </a>
                     </div>
                     <div className="rightBannerContent">
                         <sui.Icon icon="close" onClick={() => this.hideWindowsStoreBanner()} />
-                    </div>
-                    <div className="centerBannerContent">
-                        {pxt.appTarget.windowsStoreInfo.appName}<br />
-                        FREE - on the Windows Store
                     </div>
                 </div> : undefined}
                 {hideMenuBar ? undefined :
