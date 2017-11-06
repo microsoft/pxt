@@ -71,7 +71,8 @@ namespace pxt.blocks.layout {
     }
 
     export function screenshotEnabled(): boolean {
-        return !BrowserUtils.isIE();
+        return !BrowserUtils.isIE()
+            && !BrowserUtils.isUwpEdge();
     }
 
     export function screenshotAsync(ws: B.Workspace): Promise<string> {
