@@ -152,8 +152,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             window.open('https://youtu.be/' + scr.youTubeId, 'yt');
                         else if (/^https:\/\//i.test(scr.url)) // External video
                             window.open(scr.url, '_blank');
-                        else if (/^\//i.test(scr.url)) // Docs url, open in new tab
-                            window.open(scr.url, '_blank');
+                        else if (scr.url) // Docs url, open in new tab
+                            if (/^\//i.test(scr.url))
+                                window.open(scr.url, '_blank');
+                            else
+                                core.errorNotification(lf("Sorry, the project url looks invalid."));
                         else
                             this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
                     }
