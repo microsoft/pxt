@@ -158,7 +158,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             else
                                 core.errorNotification(lf("Sorry, the project url looks invalid."));
                         else
-                            this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
+                            this.props.parent.newEmptyProject(scr.name.toLowerCase());
                     }
             }
         }
