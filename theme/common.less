@@ -177,8 +177,15 @@ html, body {
 }
 
 #cookiemsg > a {
-   color:white;
+   color: white;
    text-decoration: underline;
+}
+
+#cookiemsg > .ui.button.icon.clear {
+    color: white !important;
+}
+#cookiemsg > .ui.button.icon.clear:hover, #cookiemsg > .ui.button.icon.clear:focus {
+    color: darken(white, 20%) !important;
 }
 
 .collapsedEditorTools #cookiemsg {
@@ -206,30 +213,30 @@ div.simframe > iframe {
 }
 
 /* Menu */
-#menubar .ui.menu .item.editor-menuitem {
+.menubar .ui.menu .item.editor-menuitem {
     padding: 0;
 }
-#menubar .ui.menu .item.editor-menuitem:hover {
+.menubar .ui.menu .item.editor-menuitem:hover {
     background: none;
 }
-#menubar .ui.menu.fixed .item.editor-menuitem .ui.grid {
+.menubar .ui.menu.fixed .item.editor-menuitem .ui.grid {
     background: fade(@black, 40%) !important;
     border: 3px solid fade(@black, 20%);
     border-radius: 2.5rem !important;
     position: relative;
 }
-#menubar .ui.menu.fixed .ui.item.editor-menuitem .item {
+.menubar .ui.menu.fixed .ui.item.editor-menuitem .item {
     border-radius: 2.5rem !important;
     width: 140px;
     z-index: 2;
 }
-#menubar .ui.menu.fixed .ui.item.editor-menuitem .item.link:hover {
+.menubar .ui.menu.fixed .ui.item.editor-menuitem .item.link:hover {
     background: none;
 }
-#menubar .ui.menu.fixed .ui.item.editor-menuitem .item:not(.active) {
+.menubar .ui.menu.fixed .ui.item.editor-menuitem .item:not(.active) {
     opacity: 0.6;
 }
-#menubar .ui.menu.inverted.fixed .ui.item.editor-menuitem .active.item {
+.menubar .ui.menu.inverted.fixed .ui.item.editor-menuitem .active.item {
     background: none;
     color: @mainMenuInvertedBackground !important;
 }
@@ -468,7 +475,7 @@ div.simframe > iframe {
 
 .ui.modal .closeIcon {
     position: absolute;
-    top: 0; 
+    top: 0;
     right: 0;
 }
 .ui.modal.projectsdialog .closeIcon {
@@ -491,14 +498,6 @@ Avatar
 
 .avatar {
     position: relative;
-}
-
-#docs .avatar .message {
-    margin-left: 4em;
-    margin-bottom: 1em;
-}
-#docs code.lang-typescript {
-    overflow-wrap: break-word;
 }
 
 @media only screen {
@@ -734,7 +733,7 @@ Field editors
     }
     .fullscreensim #simulator .ui.item:not(.simtoolbar),
         .fullscreensim #simulator .ui.menu,
-        .fullscreensim #menubar .ui.item:not(.logo),
+        .fullscreensim .menubar .ui.item:not(.logo),
         .fullscreensim #maineditor,
         .fullscreensim #editortools {
         display: none !important;
@@ -869,13 +868,13 @@ Field editors
         display: none;
     }
     /* Menu spacing */
-    #root:not(.sandbox) #menubar .ui.menu .item {
+    #root:not(.sandbox) .menubar .ui.menu .item {
         padding: 0.3em !important;
     }
-    #root #menubar .ui.menu .item.editor-menuitem .item {
+    #root .menubar .ui.menu .item.editor-menuitem .item {
         padding: 0.7em !important;
     }
-    #root #menubar .ui.menu.fixed .ui.item.editor-menuitem .item {
+    #root .menubar .ui.menu.fixed .ui.item.editor-menuitem .item {
         width: 40px;
         height: 38px;
     }

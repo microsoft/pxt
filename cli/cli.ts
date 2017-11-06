@@ -1667,7 +1667,7 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                 }
 
                 if (fileName === "pxt.json") {
-                    newProject.config = nodeutil.readJson(f);
+                    newProject.config = nodeutil.readPkgConfig(projectPath)
                     U.iterMap(newProject.config.dependencies, (k, v) => {
                         if (/^file:/.test(v)) {
                             newProject.config.dependencies[k] = "*";
@@ -1739,8 +1739,8 @@ function buildTargetCoreAsync() {
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
             let isPrj = /prj$/.test(dirname);
-            const config = JSON.parse(fs.readFileSync(pxt.CONFIG_NAME, "utf8")) as pxt.PackageConfig;
-            if (config && config.additionalFilePath) {
+            const config = nodeutil.readPkgConfig(".")
+            if (config.additionalFilePath) {
                 dirsToWatch.push(path.resolve(config.additionalFilePath));
             }
 
@@ -2046,25 +2046,28 @@ class SnippetHost implements pxt.Host {
         } else if (pxt.appTarget.bundledpkgs[module.id] && filename === pxt.CONFIG_NAME) {
             return pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME];
         } else {
-            let ps = [
-                path.join(module.id, filename),
-                path.join('libs', module.id, filename),
-                path.join('libs', module.id, 'built', filename),
-            ];
+            const readFile = (filename: string) => {
+                let ps = [
+                    path.join(module.id, filename),
+                    path.join('libs', module.id, filename),
+                    path.join('libs', module.id, 'built', filename),
+                ];
+                for (let p of ps) {
+                    try {
+                        return fs.readFileSync(p, 'utf8')
+                    }
+                    catch (e) {
+                    }
+                }
+                return null
+            }
 
-            let contents: string = null
-            if (!ps.some(p => {
-                try {
-                    contents = fs.readFileSync(p, 'utf8')
-                    return true;
-                }
-                catch (e) {
-                }
-                return false;
-            })) {
+            let contents = readFile(filename)
+            if (contents == null) {
                 // try additional package location
                 if (pxt.appTarget.bundledpkgs[module.id]) {
-                    const modpkg = JSON.parse(pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                    let f = readFile(pxt.CONFIG_NAME)
+                    const modpkg = JSON.parse(f || "{}") as pxt.PackageConfig;
                     if (modpkg.additionalFilePath) {
                         try {
                             const ad = path.join(modpkg.additionalFilePath.replace('../../', ''), filename);
@@ -2155,7 +2158,10 @@ class Host
         if (module.level == 0) {
             return "./" + filename
         } else if (module.verProtocol() == "file") {
-            return module.verArgument() + "/" + filename
+            let fn = module.verArgument() + "/" + filename
+            if (module.level > 1 && module.addedBy[0])
+                fn = this.resolve(module.addedBy[0], fn)
+            return fn
         } else {
             return "pxt_modules/" + module.id + "/" + filename
         }
@@ -2172,6 +2178,14 @@ class Host
         }
 
         const resolved = this.resolve(module, filename)
+        const dir = path.dirname(resolved)
+        if (filename == pxt.CONFIG_NAME)
+            try {
+                return JSON.stringify(nodeutil.readPkgConfig(dir), null, 4)
+            } catch (e) {
+                return null
+            }
+
         try {
             // pxt.debug(`reading ${path.resolve(resolved)}`)
             return fs.readFileSync(resolved, "utf8")
@@ -2180,7 +2194,7 @@ class Host
                 let addPath = module.config.additionalFilePath
                 if (addPath) {
                     try {
-                        return fs.readFileSync(path.join(addPath, resolved), "utf8")
+                        return fs.readFileSync(path.join(dir, addPath, filename), "utf8")
                     } catch (e) {
                         return null
                     }
@@ -2349,6 +2363,10 @@ pxt_modules
         "**/yotta_targets": true,
         "**/pxt_modules/**": true
     },
+    "files.associations": {
+        "*.blocks": "html",
+        "*.jres": "json"
+    },    
     "search.exclude": {
         "**/built": true,
         "**/node_modules": true,
@@ -2699,7 +2717,10 @@ function runCoreAsync(res: pxtc.CompileResult) {
     if (f) {
         // TODO: non-microbit specific load
         pxsim.initCurrentRuntime = pxsim.initBareRuntime
-        let r = new pxsim.Runtime(f)
+        let r = new pxsim.Runtime({
+            type: "run",
+            code: f
+        })
         pxsim.Runtime.messagePosted = (msg) => {
             if (msg.type == "serial") {
                 let d = (msg as any).data
@@ -2858,7 +2879,7 @@ function simshimAsync() {
         cont = "// Auto-generated from simulator. Do not edit.\n" + cont +
             "\n// Auto-generated. Do not edit. Really.\n"
         let cfgname = "libs/" + s + "/" + pxt.CONFIG_NAME
-        let cfg: pxt.PackageConfig = readJson(cfgname)
+        let cfg = nodeutil.readPkgConfig("libs/" + s)
         if (cfg.files.indexOf(filename) == -1)
             U.userError(U.lf("please add \"{0}\" to {1}", filename, cfgname))
         let fn = "libs/" + s + "/" + filename
@@ -2956,9 +2977,9 @@ function compilesOK(opts: pxtc.CompileOptions, fn: string, content: string) {
 
 function getApiInfoAsync() {
     return prepBuildOptionsAsync(BuildOption.GenDocs)
-        .then(pxtc.compile)
-        .then(res => {
-            return pxtc.getApiInfo(res.ast, true)
+        .then(opts => {
+            let res = pxtc.compile(opts);
+            return pxtc.getApiInfo(opts, res.ast, true)
         })
 }
 
@@ -3286,7 +3307,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                 if (/^block/.test(snippet.type)) {
                     //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
                     const file = resp.ast.getSourceFile('main.ts');
-                    const apis = pxtc.getApiInfo(resp.ast);
+                    const apis = pxtc.getApiInfo(opts, resp.ast);
                     const blocksInfo = pxtc.getBlocksInfo(apis);
                     const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false })
                     const success = !!bresp.outfiles['main.blocks']
@@ -3419,7 +3440,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
 
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:
-                    const apiInfo = pxtc.getApiInfo(res.ast)
+                    const apiInfo = pxtc.getApiInfo(compileOptions, res.ast)
                     // keeps apis from this module only
                     for (const infok in apiInfo.byQName) {
                         const info = apiInfo.byQName[infok];
@@ -3427,7 +3448,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                             info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
                     }
                     const md = pxtc.genDocs(mainPkg.config.name, apiInfo, {
-                        package: mainPkg.config.name != pxt.appTarget.corepkg,
+                        package: mainPkg.config.name != pxt.appTarget.corepkg && !mainPkg.config.core,
                         locs: buildOpts.locs,
                         docs: buildOpts.docs
                     })
@@ -3616,14 +3637,16 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                         locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
                     })
                 // update pxt.json
-                const pxtJsonf = path.join(projectdir, "pxt.json");
-                const pxtJsons = fs.readFileSync(pxtJsonf, "utf8");
-                const pxtJson = JSON.parse(pxtJsons) as pxt.PackageConfig;
-                Object.keys(locFiles).filter(f => pxtJson.files.indexOf(f) < 0).forEach(f => pxtJson.files.push(f));
-                const pxtJsonn = JSON.stringify(pxtJson, null, 4);
-                if (pxtJsons != pxtJsonn) {
+                const pxtJson = nodeutil.readPkgConfig(projectdir)
+                const missingFiles = Object.keys(locFiles).filter(f => pxtJson.files.indexOf(f) < 0)
+                if (missingFiles.length) {
+                    U.pushRange(pxtJson.files, missingFiles)
+                    // note that pxtJson might result from additionalFilePath, so we read the local file again
+                    const pxtJsonf = path.join(projectdir, "pxt.json");
+                    let local: pxt.PackageConfig = nodeutil.readJson(pxtJsonf)
+                    local.files = pxtJson.files
                     pxt.log(`writing ${pxtJsonf}`);
-                    fs.writeFileSync(pxtJsonf, pxtJsonn, "utf8");
+                    fs.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), "utf8");
                 }
                 return nextFileAsync()
             });
@@ -3679,6 +3702,48 @@ export function cleanAsync(parsed: commandParser.ParsedCommand) {
         .then(() => { });
 }
 
+export function buildJResAsync(parsed: commandParser.ParsedCommand) {
+    ensurePkgDir();
+    nodeutil.allFiles(".")
+        .filter(f => /\.jres$/i.test(f))
+        .forEach(f => {
+            pxt.log(`expanding jres resources in ${f}`);
+            const jresources = nodeutil.readJson(f);
+            const oldjr = JSON.stringify(jresources, null, 2);
+            const dir = path.join('jres', path.basename(f, '.jres'));
+            // images or sounds?
+            const star = jresources["*"];
+            if (!star.dataEncoding) star.dataEncoding = 'base64';
+            Object.keys(jresources).filter(k => k != "*").forEach(k => {
+                const jres = jresources[k];
+                const mime = jres.mimeType || star.mimeType;
+                pxt.log(`expanding ${k}`);
+                // try to slurp icon
+                const iconn = path.join(dir, k + '-icon.png');
+                if (nodeutil.fileExistsSync(iconn)) {
+                    pxt.log(`importing ${iconn}`);
+                    jres.icon = 'data:image/png;base64,' + fs.readFileSync(iconn, 'base64');
+                }
+                // try to find file
+                if (mime) {
+                    const ext = mime.replace(/^.*\//, '');
+                    const fn = path.join(dir, k + '-data.' + ext);
+                    if (nodeutil.fileExistsSync(fn)) {
+                        pxt.log(`importing ${fn}`);
+                        jres.data = fs.readFileSync(fn, 'base64');
+                    }
+                }
+            })
+
+            const newjr = JSON.stringify(jresources, null, 2);
+            if (oldjr != newjr) {
+                pxt.log(`updating ${f}`)
+                fs.writeFileSync(f, newjr);
+            }
+        })
+    return Promise.resolve();
+}
+
 export function buildAsync(parsed: commandParser.ParsedCommand) {
     forceCloudBuild = !!parsed.flags["cloud"];
 
@@ -3709,7 +3774,7 @@ export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: 
         createOnly
     }).then((compileOpts) => { });
     // from target location?
-    if (fs.existsSync("pxtarget.json"))
+    if (fs.existsSync("pxtarget.json") && !!readJson("pxtarget.json").appTheme)
         return forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building docs in ${dirname}`);
             return build();
@@ -4084,6 +4149,10 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         const entrypath = todo.pop();
         pxt.debug(`checking ${entrypath}`)
         const md = (urls[entrypath] as string) || nodeutil.resolveMd(docsRoot, entrypath);
+        if (!md) {
+            pxt.log(`unable to resolve ${entrypath}`)
+            broken++;
+        }
         // look for broken urls
         md.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
             let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
@@ -4471,6 +4540,11 @@ function initCommands() {
             electron: { description: "used to indicate that the server is being started in the context of an electron app" }
         }
     }, serveAsync);
+
+    p.defineCommand({
+        name: "buildjres",
+        help: "embeds resources into jres files"
+    }, buildJResAsync);
 
     p.defineCommand({
         name: "gist",

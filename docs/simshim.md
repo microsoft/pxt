@@ -174,3 +174,82 @@ You can also specify inheritance in such a declaration:
 ```typescript-ignore
 interface AnalogPin extends DigitalPin {}
 ```
+
+## Configuring instances from TypeScript
+
+The method above with `indexedInstanceShim` works well when the set of instances
+(eg. pins) is defined in C++. However, sometimes you will want to define these on the
+TypeScript side, potentially limiting code size, and allowing the definitions to be
+changed without altering the C++ code (and thus cloud recompilation).
+
+This comes in handy especially when there are multiple boards defined in one target.
+The [core board package](/targets/board) includes at least two configuration files, here
+we use `device.d.ts` and `config.ts`, but you can call them something else.
+
+You would then use something like this:
+
+```typescript-ignore
+// In device.d.ts
+declare namespace pins {
+    //% fixedInstance shim=pxt::getPinById(PIN_A0)
+    const A0: PwmPin;
+    //% fixedInstance shim=pxt::getPinById(PIN_A1)
+    const A1: PwmPin;
+    // ...
+}
+```
+
+The C++ function `pxt::getPinById(int pinId)` would lookup a pin object given its hardware
+name, allocating the object first if it hasn't been allocated yet.
+
+The definition of `PIN_A0` etc. comes in `config` namespace:
+
+```typescript-ignore
+// In config.ts
+namespace config {
+    export const PIN_A0 = DAL.PA02;
+    export const PIN_A1 = DAL.PB08;
+    // ...
+    export const NUM_NEOPIXELS = 1;
+    // ...
+}
+```
+
+You can configure pin names but also other hardware characteristics, like the number of
+on-board neopixels etc.
+
+The user can override the constants using the `userconfig` namespace. For example:
+
+```typescript-ignore
+// In main.ts or other user file
+namespace userconfig {
+    // My board has PIN_D2 and PIN_D4 swapped!
+    export const PIN_D2 = DAL.PA08;
+    export const PIN_D4 = DAL.PA14;
+}
+```
+
+Both of these refer to constants from the `DAL` namespace. There is typically one
+`dal.d.ts` file per target which defines the `DAL` namespace, and it is generated 
+automatically from the C++ sources.
+
+For every constant `FOO` in `config` (or `userconfig`), there has to be a corresponding
+`DAL.CFG_FOO` which defines an index under which the configuration setting is stored.
+The indexes for settings can be any 32 bit number, but they should be unique within a target.
+These are typically defined in a C++ header file:
+
+```cpp
+#define CFG_PIN_A0 100
+#define CFG_PIN_A1 101
+#define CFG_PIN_A2 102
+// ...
+#define CFG_NUM_NEOPIXELS 200
+// ...
+```
+
+On the C++ side, the setting `PIN_A0` is accessed with `pxt::getConfig(CFG_PIN_A0)`.
+
+The arguments in annotations like `shim=pxt::getButtonByPin(PIN_A5,BUTTON_ACTIVE_LOW_PULL_UP)`
+are resolved in the `DAL` namespace, then in `userconfig` and then in `config`.
+They must resolve to an integer constant.
+

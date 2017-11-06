@@ -514,7 +514,7 @@ namespace pxt.blocks {
     }
 
     function extractTsExpression(e: Environment, b: B.Block, comments: string[]): JsNode {
-        return mkText(b.getFieldValue("EXPRESSION"));
+        return mkText(b.getFieldValue("EXPRESSION").trim());
     }
 
     function compileNumber(e: Environment, b: B.Block, comments: string[]): JsNode {

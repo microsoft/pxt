@@ -231,7 +231,7 @@ namespace pxsim {
     }
 
     // overriden at loadtime by specific implementation
-    export let initCurrentRuntime: () => void = undefined;
+    export let initCurrentRuntime: (msg: SimulatorRunMessage) => void = undefined;
     export let handleCustomMessage: (message: pxsim.SimulatorCustomMessage) => void = undefined;
 
     export class Runtime {
@@ -249,11 +249,29 @@ namespace pxsim {
         currFrame: StackFrame;
         entry: LabelFn;
 
+        public refCountingDebug = false;
+        public refCounting = true;
+        private refObjId = 1;
+        private liveRefObjs: pxsim.Map<RefObject> = {};
+        private stringRefCounts: any = {};
+
         overwriteResume: (retPC: number) => void;
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
         setupTop: (cb: ResumeFn) => StackFrame;
         handleDebuggerMsg: (msg: DebuggerMessage) => void;
+
+        registerLiveObject(object: RefObject) {
+            const id = this.refObjId++;
+            if (this.refCounting)
+                this.liveRefObjs[id + ""] = object;
+            return id;
+        }
+
+        unregisterLiveObject(object: RefObject) {
+            U.assert(object.refcnt == 0, "ref count is not 0");
+            delete this.liveRefObjs[object.id + ""]
+        }
 
         runningTime(): number {
             return U.now() - this.startTime;
@@ -316,8 +334,24 @@ namespace pxsim {
             }
         }
 
-        constructor(code: string) {
+        dumpLivePointers() {
+            if (!this.refCounting || !this.refCountingDebug) return;
+
+            const liveObjectNames = Object.keys(this.liveRefObjs);
+            const stringRefCountNames = Object.keys(this.stringRefCounts);
+            console.log(`Live objects: ${liveObjectNames.length} objects, ${stringRefCountNames.length} strings`)
+            liveObjectNames.forEach(k => this.liveRefObjs[k].print());
+            stringRefCountNames.forEach(k => {
+                const n = this.stringRefCounts[k]
+                console.log("Live String:", JSON.stringify(k), "refcnt=", n)
+            })
+        }
+
+        constructor(msg: SimulatorRunMessage) {
             U.assert(!!initCurrentRuntime);
+
+            this.id = msg.id
+            this.refCountingDebug = !!msg.refCountingDebug;
 
             let yieldMaxSteps = 100
 
@@ -580,7 +614,7 @@ namespace pxsim {
             }
 
             // tslint:disable-next-line
-            eval(code)
+            eval(msg.code)
 
             this.run = (cb) => topCall(entryPoint, cb)
             this.getResume = () => {
@@ -600,7 +634,7 @@ namespace pxsim {
             }
             runtime = this;
 
-            initCurrentRuntime();
+            initCurrentRuntime(msg);
         }
     }
 }

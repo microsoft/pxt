@@ -118,6 +118,10 @@ namespace ts.pxtc {
                 } else {
                     if (err) err("File not found: " + fn)
                 }
+                if (text == null) {
+                    err("File not found: " + fn)
+                    text = ""
+                }
                 return createSourceFile(fn, text, v, setParentNodes)
             },
             fileExists: fn => {
@@ -199,7 +203,7 @@ namespace ts.pxtc {
         if (!resp.success) return resp;
 
         let file = resp.ast.getSourceFile(fileName);
-        const apis = getApiInfo(resp.ast);
+        const apis = getApiInfo(opts, resp.ast);
         const blocksInfo = pxtc.getBlocksInfo(apis);
         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false, alwaysEmitOnStart: opts.alwaysDecompileOnStart }, pxtc.decompiler.buildRenameMap(resp.ast, file))
         return bresp;

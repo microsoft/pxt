@@ -38,8 +38,13 @@ declare namespace pxt {
         npmDependencies?: Map<string>;
         card?: CodeCard;
         additionalFilePath?: string;
+        core?: boolean;
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
+        dalDTS?: {
+            includeDirs: string[];
+            excludePrefix?: string[];
+        };
     }
 
     interface PackageExtension {
@@ -84,9 +89,11 @@ declare namespace pxt {
 
         color?: string; // one of semantic ui colors
         description?: string;
+        extracontent?: string;
         blocksXml?: string;
         typeScript?: string;
         imageUrl?: string;
+        largeImageUrl?: string;
         youTubeId?: string;
         time?: number;
         url?: string;
@@ -108,5 +115,14 @@ declare namespace pxt {
 
         target?: string;
         className?: string;
+    }
+
+    interface JRes {
+        id: string; // something like "sounds.bark"
+        data: string;
+        dataEncoding?: string; // must be "base64" or missing (meaning the same)
+        icon?: string; // URL (usually data-URI) for the icon
+        namespace?: string; // used to construct id
+        mimeType: string;
     }
 }

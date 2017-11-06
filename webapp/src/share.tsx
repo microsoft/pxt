@@ -18,6 +18,7 @@ export enum ShareMode {
     Cli
 }
 
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface ShareEditorState {
     advancedMenu?: boolean;
     mode?: ShareMode;

@@ -48,6 +48,7 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
     }
 }
 
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface TutorialContentState {
     tutorialUrl: string;
 }
@@ -135,7 +136,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
             className: 'green'
         }]
 
-        return <sui.Modal open={visible} className="hintdialog" size="small" header={header} closeIcon={true}
+        return <sui.Modal open={visible} className="hintdialog" size="" longer={true} header={header} closeIcon={true}
                 onClose={() => this.setState({ visible: false })} dimmer={true}
                 actions={actions}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
@@ -240,7 +241,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
 
         return <div id="tutorialcard" className={`ui ${tutorialReady ? 'tutorialReady' : ''}`} >
             <div className='ui buttons'>
-                <div className="ui segment attached message">
+                <div className="ui segment attached tutorialsegment">
                     <div className='avatar-image' onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter}></div>
                     {hasHint ? <sui.Button class="mini blue hintbutton hidelightbox" text={lf("Hint") } tabIndex={-1} onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter} /> : undefined }
                     <div className={`tutorialmessage ${hasHint ? 'focused' : undefined}`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1} onClick={() => {if (hasHint) this.showHint();}} onKeyDown={sui.fireClickOnEnter}>

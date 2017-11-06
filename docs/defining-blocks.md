@@ -370,7 +370,7 @@ flag to disable showing it in auto-completion.
 ## Grouping
 
 Use the **blockGap** macro to specify the distance to the next block in the toolbox. Combined with the weight parameter,
-this macro allows to definte groups of blocks. The default ``blockGap`` value is ``8``.
+this macro allows to define groups of blocks. The default ``blockGap`` value is ``8``.
 
 ```
 //% blockGap=14

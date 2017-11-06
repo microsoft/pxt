@@ -43,7 +43,7 @@ declare namespace pxt {
     interface ProjectTemplate {
         id: string;
         config: PackageConfig;
-        files: Map<string>;
+        files: pxt.Map<string>;
     }
 
     interface BlockToolboxDefinition {
@@ -51,7 +51,7 @@ declare namespace pxt {
         type: string;
         gap?: number;
         weight?: number;
-        fields?: Map<string>;
+        fields?: pxt.Map<string>;
     }
 
     interface RuntimeOptions {
@@ -112,6 +112,7 @@ declare namespace pxt {
         streams?: boolean;
         aspectRatio?: number; // width / height
         boardDefinition?: pxsim.BoardDefinition;
+        dynamicBoardDefinition?: boolean; // if true, boardDefinition comes from board package
         parts?: boolean; // parts enabled?
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
@@ -170,7 +171,6 @@ declare namespace pxt {
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
-        showHomeScreen?: boolean; // show the home page on editor load
         homeScreenHero?: string; // home screen hero image
         sideDoc?: string; // deprecated
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
@@ -311,6 +311,7 @@ declare namespace ts.pxtc {
         target: CompileTarget;
         testMode?: boolean;
         sourceFiles?: string[];
+        jres?: pxt.Map<pxt.JRes>;
         hexinfo: HexInfo;
         extinfo?: ExtensionInfo;
         noEmit?: boolean;

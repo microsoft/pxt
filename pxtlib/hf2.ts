@@ -406,6 +406,13 @@ namespace pxt.HF2 {
             return this.talkAsync(HF2_CMD_READ_WORDS, args)
         }
 
+        pingAsync() {
+            if (this.rawMode)
+                return Promise.resolve()
+            return this.talkAsync(HF2_CMD_BININFO)
+                .then(buf => { })
+        }
+
         flashAsync(blocks: pxtc.UF2.Block[]) {
             let start = Date.now()
             let fstart = 0
