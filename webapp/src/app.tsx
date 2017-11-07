@@ -125,6 +125,7 @@ export class ProjectView
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
+        this.homeLoaded();
     }
 
     shouldShowHomeScreen() {
@@ -726,7 +727,7 @@ export class ProjectView
                 // Editor is loaded
                 pxt.BrowserUtils.changeHash("#editor", true);
                 document.getElementById("root").focus(); // Clear the focus.
-                pxt.tickEvent('app.editor');
+                this.editorLoaded();
             })
     }
 
@@ -893,10 +894,18 @@ export class ProjectView
 
     openHome() {
         this.stopSimulator();
-        this.setState({ home: true });
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
+        this.setState({ home: true });
+        this.homeLoaded();
+    }
+
+    private homeLoaded() {
         pxt.tickEvent('app.home');
+    }
+
+    private editorLoaded() {
+        pxt.tickEvent('app.editor');
     }
 
     exitAndSave() {
