@@ -116,16 +116,17 @@ export class ProjectView
         document.title = pxt.appTarget.title || pxt.appTarget.name;
         this.reload = false; //set to true in case of reset of the project where we are going to reload the page.
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
+        const shouldShowHomeScreen = this.shouldShowHomeScreen();
 
         this.state = {
             showFiles: false,
-            home: this.shouldShowHomeScreen(),
+            home: shouldShowHomeScreen,
             active: document.visibilityState == 'visible',
             collapseEditorTools: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile()
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
-        this.homeLoaded();
+        if (shouldShowHomeScreen) this.homeLoaded();
     }
 
     shouldShowHomeScreen() {
