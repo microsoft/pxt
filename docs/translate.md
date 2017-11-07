@@ -53,7 +53,7 @@ You will find target specific localization files under folders in crowdin. For e
 * ``core-strings.json``: contains the block definitions
 * ``core-jsdoc-strings.json``: contains the descriptions
 
-The block definition should be carefully translated using the [block definition syntax](https://makecode.com/defining-blocks). 
+The block definition should be carefully translated using the [block definition syntax](/defining-blocks). 
 Open the developer tools and watch the console, PXT wil validate the localized string and flag potential issues.
 
 ### Block localization guidance
@@ -62,6 +62,50 @@ Open the developer tools and watch the console, PXT wil validate the localized s
 * Do not translalte ``%variable`` names
 * Do not reorder parameters
 * Maintain the same structure of ``|`` and ``%variables%``
+
+### Testing block translations
+
+It might be helpful to see what a translated block will look like prior to submitting the translated block string. This is useful in verifying that the format and order of the block string elements appear correctly.
+
+You can do this using a MakeCode editor project with custom blocks. Let's say you're trying to translate the block string for the **agent.transfer()** function:
+
+```
+"agent transfer|amount %quantity|from slot %srcSlot|to slot %destinationSlot"
+```
+
+The block, in English, looks like:
+
+![Default English block](/static/block-english.png)
+
+To test your translation for the block string, start by following the instructions for adding [custom blocks](https://makecode.microbit.org/blocks/custom) to the project. Then, insert a 'dummy' function (a function that will pretends to be the one you want the translation for) at the bottom of the `custom` namespace.
+
+In this example, we're testing a Korean string for **agent.transfer()**. We've named the function as **transfer** and defined a `blockId` attribute. The `block` attribute contains the Korean string we want to test:
+
+```typescript-ingnore
+**
+ * Custom blocks
+ */
+//% weight=100 color=#0fbc11 icon=" "
+namespace custom {
+    ...
+
+    /*
+     * A 'dummy' function to test translation of agent.transfer()
+     * @param quantity number of items, eg: 1
+     * @param sourceSlot the source slot, eg: 1
+     * @param destinationSlot the destination slot, eg: 2
+     * 
+     */
+    //% blockId=custom_transfer block="에이전트가 아이템 옮기기: |%quantity |개|슬롯 %sourceSlot |에서|슬롯 %destinationSlot |로"
+    export function transfer(quantity: number, sourceSlot: number, destinationSlot: number): void {
+
+    }
+}
+```
+
+After reloading the editor in the browser, the new test block for **transfer** appears in the **CUSTOM** category. We can now see what the translation will look like later for the actual block in the target editor.
+
+![Custom Korean block](/static/block-korean.png)
 
 ## Translating Target specific strings
 
