@@ -1696,6 +1696,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
     }
 
     hideWindowsStoreBanner() {
+        pxt.tickEvent("windowsBanner.closed")
         this.setState({ hideWindowsStoreBanner: true })
     }
 
@@ -1780,15 +1781,15 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
 
                         {showWindowsStoreBanner ? <div id="windowsStoreBanner" className="ui attached message">
-                            <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows Store")} href={pxt.appTarget.appTheme.windowsStoreLink}>
+                            <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={pxt.appTarget.appTheme.windowsStoreLink} onClick={() => pxt.tickEvent("windowsBanner.linkClicked")}>
                                 <span>
                                     <img src="https://assets.windowsphone.com/13484911-a6ab-4170-8b7e-795c1e8b4165/English_get_L_InvariantCulture_Default.png"
                                     alt={lf("Windows Store logo")} />
                                 </span>
-                                {lf("Get the app from the")} <span className="bold">{lf("Windows Store")}</span>
+                                {lf("Get the app from the")} <span className="bold">&nbsp; {lf("Windows Store")}</span>
                             </sui.Link>
-                            <div className="close">
-                                <sui.Icon icon="close" onClick={() => this.hideWindowsStoreBanner()} />
+                            <div className="close" tabIndex={0} onClick={() => this.hideWindowsStoreBanner()}>
+                                <sui.Icon icon="close" />
                             </div>
                         </div> : undefined}
                         <container.MainMenu parent={this} />
