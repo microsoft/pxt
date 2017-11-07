@@ -1759,7 +1759,8 @@ function buildTargetCoreAsync() {
 
     console.log(`building target.json in ${process.cwd()}...`)
 
-    return buildTargetDocsAsync(false, true)
+    return buildWebStringsAsync()
+        .then(() => buildTargetDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
             let isPrj = /prj$/.test(dirname);
@@ -4359,7 +4360,9 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
 
 function webstringsJson() {
     let missing: Map<string> = {}
-    for (let fn of onlyExts(nodeutil.allFiles("docfiles"), [".html"])) {
+    const files = onlyExts(nodeutil.allFiles("docfiles"), [".html"])
+        .concat(onlyExts(nodeutil.allFiles("docs"), [".html"]))
+    for (let fn of files) {
         let res = pxt.docs.translate(fs.readFileSync(fn, "utf8"), {})
         U.jsonCopyFrom(missing, res.missing)
     }
