@@ -1776,11 +1776,17 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     </div>
                 </div> : undefined}
                 {showWindowsStoreBanner ? <div id="windowsStoreBanner" className="ui blue attached message">
-                    <div className="leftBannerContent">
+                    <div className="thumbnail">
                         <a href={pxt.appTarget.appTheme.windowsStoreLink}>
+                            <img src="https://assets.windowsphone.com/13484911-a6ab-4170-8b7e-795c1e8b4165/English_get_L_InvariantCulture_Default.png" alt="Get" />
                         </a>
                     </div>
-                    <div className="rightBannerContent">
+                    <div className="text">
+                        <a href={pxt.appTarget.appTheme.windowsStoreLink}>
+                            Get the app from the <span className="windowsStore">Windows Store</span>
+                        </a>
+                    </div>
+                    <div className="close">
                         <sui.Icon icon="close" onClick={() => this.hideWindowsStoreBanner()} />
                     </div>
                 </div> : undefined}

@@ -36,31 +36,51 @@ html, body {
     top: calc(@mainMenuHeight + @bannerHeight);
 }
 
-.showWindowsStoreBanner #menubar {
+.showWindowsStoreBanner #mainmenu {
     top: @bannerHeight;
     margin: 0;
 }
 
 #windowsStoreBanner {
     padding: 8px;
-    background-color: lighten(@primaryColor, 25.0);
-    color: black;
+    background-color: @bannerBackgroundColor;
+    color: @bannerContrastColor;
+    border-bottom: 2px solid @bannerContrastColor;
+    font-family: "Segoe UI", "Helvetica Neue", sans-serif;
 }
 
-#windowsStoreBanner .leftBannerContent {
+#windowsStoreBanner > div {
+    position: relative;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+#windowsStoreBanner .thumbnail {
     float: left;
+    height: @bannerIconHeight;
 }
 
-#windowsStoreBanner .centerBannerContent {
-    font-size: 0.9rem;
+#windowsStoreBanner .text {
+    font-size: 0.8rem;
+    float: left;
+    margin-left: 1rem;
 }
 
-#windowsStoreBanner .centerBannerContent span {
-    padding-left: 8px;
+#windowsStoreBanner .windowsStore {
+    font-weight: bold;
 }
 
-#windowsStoreBanner .rightBannerContent {
+#windowsStoreBanner .text a,
+    #windowsStoreBanner .text a:hover {
+    text-decoration: none;
+    color: @bannerContrastColor
+}
+
+#windowsStoreBanner .close {
     float: right;
+    cursor: pointer;
 }
 
 .hideMenuBar #filelist,
