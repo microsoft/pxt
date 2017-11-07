@@ -7,7 +7,10 @@ declare namespace pxt {
     interface TargetConfig {
         packages?: PackagesConfig;
         languages?: string[];
+        // common galleries
         galleries?: pxt.Map<string>;
+        // localized galleries
+        localizedGalleries?: pxt.Map<pxt.Map<string>>;
     }
 
     interface PackagesConfig {
