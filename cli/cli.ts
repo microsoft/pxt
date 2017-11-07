@@ -1599,7 +1599,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
 }
 
 function buildWebStringsAsync() {
-    if (pxt.appTarget.id != "core") return Promise.resolve(); 
+    if (pxt.appTarget.id != "core") return Promise.resolve();
 
     fs.writeFileSync("built/webstrings.json", JSON.stringify(webstringsJson(), null, 4))
     return Promise.resolve()
@@ -1759,7 +1759,7 @@ function buildTargetCoreAsync() {
     let hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
     nodeutil.mkdirP(hexCachePath);
 
-    console.log(`building target.json in ${process.cwd()}...`)
+    pxt.log(`building target.json in ${process.cwd()}...`)
 
     return buildWebStringsAsync()
         .then(() => buildTargetDocsAsync(false, true))
