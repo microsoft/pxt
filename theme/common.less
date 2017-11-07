@@ -42,47 +42,45 @@ html, body {
 }
 
 #windowsStoreBanner {
-    padding: 8px;
+    padding: 0;
     background-color: @bannerBackgroundColor;
     color: @bannerContrastColor;
-    border-bottom: 2px solid @bannerContrastColor;
+    outline: 2px solid @bannerContrastColor;
     font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    height: @bannerHeight;
+    margin-top: 0;
+    img {
+        height: calc(@bannerHeight - 1rem);
+    }
+    a.link {
+        text-decoration: none;
+        color: @bannerContrastColor;
+        height: 100%;
+        float: left;
+
+        &:hover, &:focus {
+            text-decoration: none;
+            color: @linkColor;
+        }
+        span {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            float: left;
+            margin: 0 0.2rem 0 0.2rem;
+        }
+    }
+    .bold {
+        font-weight: bold;
+    }
+    .close {
+        float: right;
+        line-height: @bannerHeight;
+        cursor: pointer;
+    }
 }
 
-#windowsStoreBanner > div {
-    position: relative;
-    top: 50%;
-    -webkit-transform: translateY(-50%);
-    -ms-transform: translateY(-50%);
-    transform: translateY(-50%);
-}
-
-#windowsStoreBanner .thumbnail {
-    float: left;
-    height: @bannerIconHeight;
-}
-
-#windowsStoreBanner .text {
-    font-size: 0.8rem;
-    float: left;
-    margin-left: 1rem;
-}
-
-#windowsStoreBanner .windowsStore {
-    font-weight: bold;
-}
-
-#windowsStoreBanner .text a,
-    #windowsStoreBanner .text a:hover {
-    text-decoration: none;
-    color: @bannerContrastColor
-}
-
-#windowsStoreBanner .close {
-    float: right;
-    cursor: pointer;
-}
-
+#windowsStoreBanner
 .hideMenuBar #filelist,
     .hideMenuBar #maineditor,
     .hideMenuBar #sidedocs {
@@ -417,14 +415,6 @@ div.simframe > iframe {
 /* Experimental banner */
 #experimentalBanner, #windowsStoreBanner {
     z-index: 1000;
-}
-
-#windowsStoreBanner {
-    height: @bannerHeight;
-}
-
-#windowsStoreBanner img {
-    height: calc(@bannerHeight - 1rem);
 }
 
 /*******************************

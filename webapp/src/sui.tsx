@@ -290,6 +290,7 @@ export class Button extends UiElement<ButtonProps> {
 
 export interface LinkProps extends ButtonProps {
     href?: string;
+    target?: string;
 }
 
 export class Link extends UiElement<LinkProps> {
@@ -298,6 +299,7 @@ export class Link extends UiElement<LinkProps> {
             <a className={genericClassName("ui", this.props) + " " + (this.props.disabled ? "disabled" : "") }
                 id={this.props.id}
                 href={this.props.href}
+                target={this.props.target}
                 role={this.props.role}
                 title={this.props.title}
                 tabIndex={this.props.tabIndex || 0}
