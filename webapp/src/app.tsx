@@ -1768,18 +1768,10 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
         return (
             <div id='root' className={rootClasses}>
-                {showExperimentalBanner ? <div id="experimentalBanner" className="ui icon top attached fixed negative mini message">
-                    <sui.Icon icon="warning circle" />
-                    <sui.Icon icon="close" onClick={() => this.hideBanner()} />
-                    <div className="content">
-                        <div className="header">{lf("You are viewing an experimental version of the editor")}</div>
-                        <a href={liveUrl}>{lf("Take me back")}</a>
-                    </div>
-                </div> : undefined}
+                {showExperimentalBanner ? <container.ExperimentalBanner parent={this} /> : undefined}
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
-
                         {showWindowsStoreBanner ? <div id="windowsStoreBanner" className="ui attached message">
                             <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={pxt.appTarget.appTheme.windowsStoreLink} onClick={() => pxt.tickEvent("windowsBanner.linkClicked")}>
                                 <span>

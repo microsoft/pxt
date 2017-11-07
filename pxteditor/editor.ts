@@ -40,7 +40,6 @@ namespace pxt.editor {
         tutorialOptions?: TutorialOptions;
 
         running?: boolean;
-        home?: boolean;
         resumeOnVisibility?: boolean;
         compiling?: boolean;
         isSaving?: boolean;
@@ -55,7 +54,8 @@ namespace pxt.editor {
         tracing?: boolean;
 
         highContrast?: boolean;
-        hideExperimentalBanner?: boolean;
+
+        home?: boolean;
         hideWindowsStoreBanner?: boolean;
     }
 
