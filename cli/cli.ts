@@ -1599,6 +1599,8 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
 }
 
 function buildWebStringsAsync() {
+    if (pxt.appTarget.id != "core") return Promise.resolve(); 
+
     fs.writeFileSync("built/webstrings.json", JSON.stringify(webstringsJson(), null, 4))
     return Promise.resolve()
 }
