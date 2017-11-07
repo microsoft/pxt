@@ -1835,13 +1835,15 @@ function pxtVersion(): string {
 }
 
 function pxtCrowdinBranch(): string {
-    return pxt.appTarget.id == "core" ?
-        readJson("pxtarget.json").appTheme.crowdinBranch :
-        readJson("node_modules/pxt-core/pxtarget.json").appTheme.crowdinBranch;
+    const theme = pxt.appTarget.id == "core" ?
+        readJson("pxtarget.json").appTheme :
+        readJson("node_modules/pxt-core/pxtarget.json").appTheme;
+    return theme ? theme.crowdinBranch : undefined;
 }
 
 function targetCrowdinBranch(): string {
-    return readJson("pxtarget.json").appTheme.crowdinBranch;
+    const theme = readJson("pxtarget.json").appTheme;
+    return theme ? theme.crowdinBranch : undefined;
 }
 
 function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
