@@ -2276,7 +2276,7 @@ $(document).ready(() => {
                 config.commitCdnUrl,
                 useLang,
                 pxt.appTarget.versions.pxtCrowdinBranch,
-                pxt.appTarget.versions.branch,
+                pxt.appTarget.versions.targetCrowdinBranch,
                 live)
                 // Download sim translations and save them in the sim
                 .then(() => Util.downloadSimulatorLocalizationAsync(
@@ -2284,7 +2284,7 @@ $(document).ready(() => {
                     config.commitCdnUrl,
                     useLang,
                     pxt.appTarget.versions.pxtCrowdinBranch,
-                    pxt.appTarget.versions.branch,
+                    pxt.appTarget.versions.targetCrowdinBranch,
                     live
                 )).then((simStrings) => {
                     if (simStrings)

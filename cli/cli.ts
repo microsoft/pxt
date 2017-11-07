@@ -1804,7 +1804,8 @@ function buildTargetCoreAsync() {
                 commits: info.commitUrl,
                 target: readJson("package.json")["version"],
                 pxt: pxtVersion(),
-                pxtCrowdinBranch: pxtCrowdinBranch()
+                pxtCrowdinBranch: pxtCrowdinBranch(),
+                targetCrowdinBranch: targetCrowdinBranch()
             }
 
             saveThemeJson(cfg)
@@ -1837,6 +1838,10 @@ function pxtCrowdinBranch(): string {
     return pxt.appTarget.id == "core" ?
         readJson("pxtarget.json").appTheme.crowdinBranch :
         readJson("node_modules/pxt-core/pxtarget.json").appTheme.crowdinBranch;
+}
+
+function targetCrowdinBranch(): string {
+    return readJson("pxtarget.json").appTheme.crowdinBranch;
 }
 
 function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
