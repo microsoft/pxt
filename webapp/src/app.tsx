@@ -726,6 +726,7 @@ export class ProjectView
                 // Editor is loaded
                 pxt.BrowserUtils.changeHash("#editor", true);
                 document.getElementById("root").focus(); // Clear the focus.
+                pxt.tickEvent('app.editor');
             })
     }
 
@@ -895,6 +896,7 @@ export class ProjectView
         this.setState({ home: true });
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
+        pxt.tickEvent('app.home');
     }
 
     exitAndSave() {
