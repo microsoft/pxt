@@ -117,7 +117,13 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         const targetTheme = pxt.appTarget.appTheme;
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
-        const galleries = (targetConfig ? targetConfig.galleries : undefined) || {};
+        const lang = pxt.Util.userLanguage();
+        // collect localized and unlocalized galleries
+        let galleries: pxt.Map<string> = {};
+        if (targetConfig && targetConfig.localizedGalleries && targetConfig.localizedGalleries[lang])
+            pxt.Util.jsonCopyFrom(galleries, targetConfig.localizedGalleries[lang]);
+        if ( targetConfig && targetConfig.galleries)
+            pxt.Util.jsonCopyFrom(galleries, targetConfig.galleries);
 
         // lf("Make")
         // lf("Code")
