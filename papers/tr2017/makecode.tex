@@ -29,8 +29,8 @@ which shows the high-level components of the web app.
 
 A \MC target is defined, in part, by its device runtime, which can be a combination of C++ 
 and Static TypeScript (STS) code, as shown in the lower-left of Figure~\ref{fig:makecode}.
-The C++ runtime (\CO, as described in Section~\ref{sec:codal}) for the target microcontroller is precompiled 
-and stored in the cloud. The runtime binary also is stored in the HTML5 application cache (with 
+All C++ files for the target microcontroller are precompiled 
+and stored in the cloud in a single blob and also is cached in the HTML5 application cache (with 
 other assets) so that the web app can function when the browser is offline. Additional runtime
 components may be authored in STS, which allows the device runtime to be updated without the
 use of C++, and permits components of the device runtime to be shared by both the device

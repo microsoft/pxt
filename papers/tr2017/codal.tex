@@ -7,7 +7,9 @@
 \label{sec:codal}
 
 \CO is a component-oriented device runtime designed to make efficient use of memory and energy, provide both synchronous and asynchronous API variants, and be a reasonable target for higher level languages such as JavaScript.  It is the preferred runtime
-for \MC and is supported by a standardized mapping up to TypeScript so that different \MC targets that use \CO share a common API and block vocabulary.
+for \MC and, as such, is supported by an annotated C++ library (\emph{\MCN-common-packages}) defining and abstracting
+the mapping from \CO to TypeScript. The use of \MCN-common-packages ensures that different \MC targets that 
+use \CO share a common Typescript and block API vocabulary.
 
 \CO provides a set of components that abstract away microcontroller specifics, a non-preemptive scheduler that minimises the need for resource locking primitives whilst allowing asynchronous operation, and an eventing subsystem (common to all components) that enables the decoupling of system and user code.
 
