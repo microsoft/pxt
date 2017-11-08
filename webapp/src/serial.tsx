@@ -314,6 +314,8 @@ class Chart {
             grid: {
                 verticalSections: 0,
                 borderVisible: false,
+                millisPerLine: 5000,
+                fillStyle: serialTheme && serialTheme.gridFillStyle || 'transparent',
                 strokeStyle: serialTheme && serialTheme.gridStrokeStyle || '#fff'
             },
             tooltip: true,
