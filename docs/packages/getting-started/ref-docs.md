@@ -1,14 +1,14 @@
 # Reference documents
 
-the documentation for the methods in a package namespace are included with the package. They are markdown files written in the format described by [writing docs](https://makecode.com/writing-docs).
+the documentation for the functions in a package namespace are included with the package. They are markdown files written in the format described by [writing docs](https://makecode.com/writing-docs).
 
 ## Step 0: Document tree discussion
 
-Documentation for namespace methods almost always goes under the _/reference_ document path. Other standard document paths are _/blocks_ and _/types_ but these are for the documents related to built-in blocks. If a package has other related documents that aren't for namespace methods, such as hardware associated with the API in the package, these are place under another path, like _/device_, in the package.
+Documentation for namespace functions almost always goes under the _/reference_ document path. Other standard document paths are _/blocks_ and _/types_ but these are for the documents related to built-in blocks. If a package has other related documents that aren't for namespace functions, such as hardware associated with the API in the package, these are place under another path, like _/device_, in the package.
 
 ### Document file layout
 
-Earlier you saw that the `tropic.ts` and `pxt.json` files were placed under the _/tropic_ folder. To add documents, make a folder called _/docs_ under that one. You put the documents for the namespace methods under a _/reference/<namespace>_ folder. The file layout, including the documents for the two methods in the **tropic** namespace, looks like this:
+Earlier you saw that the `tropic.ts` and `pxt.json` files were placed under the _/tropic_ folder. To add documents, make a folder called _/docs_ under that one. You put the documents for the namespace functions under a _/reference/<namespace>_ folder. The file layout, including the documents for the two functions in the **tropic** namespace, looks like this:
 
 ```
 /libs
@@ -19,11 +19,11 @@ Earlier you saw that the `tropic.ts` and `pxt.json` files were placed under the 
                     peel.md
                     pick.md
                 tropic.md
-    tropic.ts
-    pxt.json
+        tropic.ts
+        pxt.json
 ```
 
-Again, the individual reference document files are placed under _/tropic_ which is under _/reference_. This maps the `tropic` namespace documents under the global reference document tree for the target. The referring URI for the **peel** method when served locally is:
+Again, the individual reference document files are placed under _/tropic_ which is under _/reference_. This maps the `tropic` namespace documents under the global reference document tree for the target. The referring URI for the **peel** function when served locally is:
 
 ```
 localhost:3232/reference/tropic/peel
@@ -60,12 +60,12 @@ Under the _/tropic_ folder create a folder path called: _/docs/reference/tropic_
 
 There's no required format for writing the reference documents. However, current convention is for reference documents to contain these elements, when applicable:
 
-1. Use the method name as the title in a first level heading: `# peel`.
-2. A short paragraph overview of what the method does.
-3. The signature of the method.
+1. Use the function name as the title in a first level heading: `# peel`.
+2. A short paragraph overview of what the function does.
+3. The signature of the function.
 4. A list of parameters (if any) with their types and descriptions.
 5. The return value (if any) description and it's type information.
-6. A example use of the method.
+6. A example use of the function.
 7. Any **See also** links to related reference or external information.
 8. A package tag associating the document with it's package.
 
@@ -110,11 +110,11 @@ tropic
 ```
 ````
 
-Copy the markdown for the **pick** method reference and save it as _pick.md_ under _/docs/reference/tropic_ in the package folder.
+Copy the markdown for the **pick** function reference and save it as _pick.md_ under _/docs/reference/tropic_ in the package folder.
 
 ## Step 3: Write the reference document: `peel.md`
 
-Do the same thing as in **Step 2** and copy the markdown here but save it as _peel.md_ for the other method in `tropic`:
+Do the same thing as in **Step 2** and copy the markdown here but save it as _peel.md_ for the other function in `tropic`:
 
 ````markdown
 # peel
@@ -155,7 +155,7 @@ tropic
 
 ## Step 4: Set the help attributes
 
-Now, go back and open `tropic.ts` again in an editor. We need to add the `help` attribute to each method in order to associate the new documents as help content for the blocks.
+Now, go back and open `tropic.ts` again in an editor. We need to add the `help` attribute to each function in order to associate the new documents as help content for the blocks.
 
 For **pick**, add:
 
@@ -199,7 +199,7 @@ namespace tropic {
 ## Step 5: Make a card page
 
 A nice feature of the MakeCode document system is generation of cards for code statements and
-functions based on signature. The cards show a block from the compiled code of the method in the namespace. Also, the description from the JsDoc is extracted and displayed in the card.
+functions based on signature. The cards show a block from the compiled code of the function in the namespace. Also, the description from the JsDoc is extracted and displayed in the card.
 
 Card pages form the top levels of the reference document tree (usually the second level after the reference page: _reference.md_).
 
@@ -207,14 +207,14 @@ Card pages form the top levels of the reference document tree (usually the secon
 The card page isn't automatically added to the top level reference page, _reference.md_,  when a package is added. If a package is included with a target statically, the card page is added manually in a [namespaces](/writing-docs/macros#namespaces) section.
 ### ~
 
-Cards are declared in a [**cards**](/writing-docs/macros#cards) section in the card markdown page. You have the option of exposing some or all of the available methods from you namespace in the card page. The document for the card page is placed in the _/reference_ folder and has the same name as the namespace folder but with the markdown (md) extension.
+Cards are declared in a [**cards**](/writing-docs/macros#cards) section in the card markdown page. You have the option of exposing some or all of the available functions from your namespace in the card page. The document for the card page is placed in the _/reference_ folder and has the same name as the namespace folder but with the markdown (md) extension.
 
 Here's the card page for the `tropic` namespace package called `tropic.md`:
 
 ````markdown
 # Tropic
 
-The methods to pick, peel, and eat tropical fruit.
+The functions to pick, peel, and eat tropical fruit.
 
 ## Reference
 
@@ -237,6 +237,8 @@ Everything's in place now to make the documents work with the blocks and the in 
 Open a new browser page and navigate to ``localhost:3232/reference/tropic``. You should see the card page for **Tropic** appear. Click on one of the cards to see a reference page.
 
 Go back over to the editor and in the blocks view, right-click one of the blocks from the **Tropic** package. Select **help** in the menu and see the reference show up in the doc slider.
+
+**NEXT:** add a [class and use object instances](./objects-instances) to your package namespace.
 
 ## See also
 
