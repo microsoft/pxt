@@ -1742,7 +1742,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const isWindows10 = pxt.BrowserUtils.isWindows10();
         const showWindowsStoreBanner = !pxt.winrt.isWinRT() && isWindows10 && Cloud.isOnline() && pxt.appTarget.appTheme.windowsStoreLink && !this.state.hideBanner && this.timeToShowBanner();
         if (showWindowsStoreBanner) {
-            setTimeout(() => this.hideBanner(), 30000);
+            // Banner should hide after 30s if not dismissed by user
+            setTimeout(() => {pxt.tickEvent("banner.automaticallyClosed"); this.hideBanner()}, 30000);
         }
         const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
@@ -1779,7 +1780,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
-                        {showWindowsStoreBanner ? <container.WindowsStoreBanner handleClose={() => this.hideBanner()} parent={this} /> : undefined}
+                        {showWindowsStoreBanner ? <container.WindowsStoreBanner close={() => this.hideBanner()} parent={this} /> : undefined}
                         <container.MainMenu parent={this} />
                     </header>}
                 {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
