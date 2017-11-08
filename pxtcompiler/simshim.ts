@@ -1,7 +1,7 @@
 /// <reference path='../built/pxtlib.d.ts' />
 
 namespace pxt {
-    export function simshim(prog: ts.Program): Map<string> {
+    export function simshim(prog: ts.Program): pxt.Map<string> {
         let SK = ts.SyntaxKind
         let checker = prog.getTypeChecker()
         let mainWr = cpp.nsWriter("declare namespace")
@@ -13,12 +13,12 @@ namespace pxt {
             for (let stmt of src.statements) {
                 let mod = stmt as ts.ModuleDeclaration
                 if (stmt.kind == SK.ModuleDeclaration && mod.name.text == "pxsim") {
-                    doStmt(mod.body)
+                    doStmt(mod.body as ts.ModuleBlock)
                 }
             }
         }
 
-        let res: Map<string> = {}
+        let res: pxt.Map<string> = {}
         res[appTarget.corepkg] = mainWr.finish()
         return res
 
@@ -43,7 +43,7 @@ namespace pxt {
             let prevNs = currNs
             if (currNs) currNs += "."
             currNs += mod.name.text
-            doStmt(mod.body)
+            doStmt(mod.body as ts.ModuleBlock)
             currNs = prevNs
         }
 
@@ -57,7 +57,7 @@ namespace pxt {
         }
 
         function promiseElementType(tp: ts.Type) {
-            if ((tp.flags & ts.TypeFlags.Reference) && tp.symbol.name == "Promise") {
+            if (pxtc.isObjectType(tp) && (tp.objectFlags & ts.ObjectFlags.Reference) && tp.symbol.name == "Promise") {
                 return (tp as ts.TypeReference).typeArguments[0]
             }
             return null

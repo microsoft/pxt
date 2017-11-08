@@ -303,7 +303,10 @@ namespace ts.pxtc.Util {
         length: number;
     }
 
-    export function toArray<T>(a: ArrayLike<T>): T[] {
+    export function toArray<T>(a: ArrayLike<T> | ReadonlyArray<T>): T[] {
+        if (Array.isArray(a)) {
+            return a;
+        }
         let r: T[] = []
         for (let i = 0; i < a.length; ++i)
             r.push(a[i])
@@ -1056,7 +1059,7 @@ namespace ts.pxtc.BrowserImpl {
                     let res: Util.HttpResponse = {
                         statusCode: client.status,
                         headers: {},
-                        buffer: client.responseBody || client.response,
+                        buffer: (client as any).responseBody || client.response,
                         text: options.responseArrayBuffer ? undefined : client.responseText,
                     }
                     client.getAllResponseHeaders().split(/\r?\n/).forEach(l => {

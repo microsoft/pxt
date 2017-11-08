@@ -176,8 +176,6 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
     let data = options.data
     u.method = options.method || (data == null ? "GET" : "POST");
 
-    let mod = isHttps ? https : http;
-
     let buf: Buffer = null;
 
     u.headers["accept-encoding"] = "gzip"
@@ -209,7 +207,7 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
         u.headers['content-length'] = buf.length
 
     return new Promise<Util.HttpResponse>((resolve, reject) => {
-        let req = mod.request(u, res => {
+        const handleResponse = (res : http.IncomingMessage) => {
             let g: events.EventEmitter = res;
             if (/gzip/.test(res.headers['content-encoding'])) {
                 let tmp = zlib.createUnzip();
@@ -231,7 +229,9 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
                 }
                 return resp;
             }))
-        })
+        };
+
+        const req = isHttps ? https.request(u, handleResponse) : http.request(u, handleResponse);
         req.on('error', (err: any) => reject(err))
         req.end(buf)
     })

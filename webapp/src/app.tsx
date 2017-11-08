@@ -441,11 +441,11 @@ export class ProjectView
     private updatingEditorFile = false;
     private updateEditorFile(editorOverride: srceditor.Editor = null) {
         if (!this.state.active)
-            return;
+            return undefined;
         if (this.state.currFile == this.editorFile && !editorOverride)
-            return;
+            return undefined;
         if (this.updatingEditorFile)
-            return;
+            return undefined;
         this.updatingEditorFile = true;
         this.saveSettings();
 
@@ -1081,7 +1081,7 @@ export class ProjectView
     }
 
     saveAndCompile() {
-        if (!this.state.header) return;
+        if (!this.state.header) return undefined;
         this.setState({ isSaving: true });
 
         return (this.state.projectName !== lf("Untitled")
@@ -1681,7 +1681,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const highContrastOn = !this.state.highContrast;
         pxt.tickEvent("app.highcontrast", { on: highContrastOn ? 1 : 0 });
         this.setState({ highContrast: highContrastOn }, () => this.restartSimulator());
-        core.highContrast = highContrastOn;
+        core.setHighContrast(highContrastOn);
         if (this.editor && this.editor.isReady) {
             this.editor.setHighContrast(highContrastOn);
         }
@@ -2266,10 +2266,10 @@ $(document).ready(() => {
                 lang.setCookieLang(mlang[2]);
                 pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
             }
-            const useLang = mlang ? mlang[2] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+            const useLang = mlang ? mlang[2] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
             if (useLang) pxt.tickEvent("locale." + useLang + (live ? ".live" : ""));
-            lang.initialLang = useLang;
+            lang.setInitialLang(useLang);
             return Util.updateLocalizationAsync(
                 pxt.appTarget.id,
                 false,
@@ -2288,7 +2288,7 @@ $(document).ready(() => {
                     live
                 )).then((simStrings) => {
                     if (simStrings)
-                        simulator.simTranslations = simStrings;
+                        simulator.setTranslations(simStrings);
                 });
         })
         .then(() => pxt.BrowserUtils.initTheme())

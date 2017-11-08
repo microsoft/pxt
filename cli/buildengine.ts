@@ -14,7 +14,7 @@ import * as hid from './hid';
 import U = pxt.Util;
 import Map = pxt.Map;
 
-// abstract over build engine 
+// abstract over build engine
 export interface BuildEngine {
     updateEngineAsync: () => Promise<void>;
     setPlatformAsync: () => Promise<void>;
@@ -104,6 +104,10 @@ export const buildEngines: Map<BuildEngine> = {
 
 // once we have a different build engine, set this appropriately
 export var thisBuild = buildEngines['yotta']
+
+export function setThisBuild(b: BuildEngine) {
+    thisBuild = b;
+}
 
 function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
     let buildEngine = buildEngines['yotta']

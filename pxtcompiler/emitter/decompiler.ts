@@ -104,7 +104,7 @@ namespace ts.pxtc.decompiler {
         type: string;
         inputs?: ValueNode[];
         fields?: FieldNode[]
-        mutation?: Map<string>;
+        mutation?: pxt.Map<string>;
     }
 
     interface ExpressionNode extends BlockNode {
@@ -227,7 +227,7 @@ namespace ts.pxtc.decompiler {
         return undefined;
 
         function collectNameCollisions(): void {
-            const takenNames: Map<boolean> = {};
+            const takenNames: pxt.Map<boolean> = {};
 
             checkChildren(s);
 
@@ -302,7 +302,7 @@ namespace ts.pxtc.decompiler {
 
     export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile, options: DecompileBlocksOptions, renameMap?: RenameMap): pxtc.CompileResult {
         let emittedBlocks = 0;
-        let stmts: ts.Statement[] = file.statements;
+        let stmts: NodeArray<ts.Statement> = file.statements;
         let result: pxtc.CompileResult = {
             blocksInfo: blocksInfo,
             outfiles: {}, diagnostics: [], success: true, times: {}
@@ -678,7 +678,7 @@ ${output}</xml>`;
 
             return result;
 
-            function isTextJoin(n: ts.Node): n is ts.BinaryExpression {
+            function isTextJoin(n: ts.Node): boolean {
                 if (n.kind === SK.BinaryExpression) {
                     const b = n as ts.BinaryExpression;
                     if (b.operatorToken.getText() === "+") {
@@ -692,8 +692,8 @@ ${output}</xml>`;
 
             function collectTextJoinArgs(n: ts.Node, result: ts.Node[]) {
                 if (isTextJoin(n)) {
-                    collectTextJoinArgs(n.left, result);
-                    collectTextJoinArgs(n.right, result)
+                    collectTextJoinArgs((n as ts.BinaryExpression).left, result);
+                    collectTextJoinArgs((n as ts.BinaryExpression).right, result)
                 }
                 else {
                     result.push(n);
@@ -789,7 +789,7 @@ ${output}</xml>`;
             let callInfo = (n as any).callInfo as pxtc.CallInfo;
             if (!callInfo) {
                 error(n);
-                return;
+                return undefined;
             }
 
             if (callInfo.attrs.blockId === "lists_length" || callInfo.attrs.blockId === "text_length") {
@@ -903,7 +903,7 @@ ${output}</xml>`;
                         else {
                             error(node, Util.lf("Statement kind unsupported in blocks: {0}", SK[node.kind]))
                         }
-                        return;
+                        return undefined;
                 }
             }
 
@@ -981,7 +981,7 @@ ${output}</xml>`;
             let arg = node.arguments[0];
             if (arg.kind != SK.StringLiteral && arg.kind != SK.NoSubstitutionTemplateLiteral) {
                 error(node)
-                return;
+                return undefined;
             }
 
             const res = mkStmt(info.attrs.blockId);
@@ -991,7 +991,7 @@ ${output}</xml>`;
             const nc = info.attrs.imageLiteral * 5;
             if (nc * 5 != leds.length) {
                 error(node, Util.lf("Invalid image pattern"));
-                return;
+                return undefined;
             }
             for (let r = 0; r < 5; ++r) {
                 for (let c = 0; c < nc; ++c) {
@@ -1024,7 +1024,7 @@ ${output}</xml>`;
                     return r;
                 default:
                     error(n, Util.lf("Unsupported operator token in statement {0}", SK[n.operatorToken.kind]));
-                    return;
+                    return undefined;
             }
         }
 
@@ -1151,7 +1151,7 @@ ${output}</xml>`;
 
             if (!isPlusPlus && node.operator !== SK.MinusMinusToken) {
                 error(node);
-                return;
+                return undefined;
             }
 
             return getVariableSetOrChangeBlock(node.operand as ts.Identifier, isPlusPlus ? 1 : -1, true);
@@ -1326,7 +1326,7 @@ ${output}</xml>`;
         //     });
         // }
 
-        function getDestructuringMutation(callback: ts.ArrowFunction): Map<string> {
+        function getDestructuringMutation(callback: ts.ArrowFunction): pxt.Map<string> {
             const bindings = getObjectBindingProperties(callback);
             if (bindings) {
                 return {
@@ -1381,12 +1381,13 @@ ${output}</xml>`;
             return r;
         }
 
-        function codeBlock(statements: ts.Node[], next?: ts.Node[], topLevel = false, parent?: ts.Node) {
+        function codeBlock(statements: NodeArray<Node>, next?: ts.Node[], topLevel = false, parent?: ts.Node) {
             const eventStatements: ts.Node[] = [];
             const blockStatements: ts.Node[] = next || [];
 
             // Go over the statements in reverse so that we can insert the nodes into the existing list if there is one
-            statements.reverse().forEach(statement => {
+            for (let i = statements.length - 1; i >= 0; i++) {
+                const statement = statements[i];
                 if ((statement.kind === SK.FunctionDeclaration ||
                     (statement.kind == SK.ExpressionStatement && isEventExpression(statement as ts.ExpressionStatement))) &&
                     !checkStatement(statement, env, false, topLevel)) {
@@ -1395,7 +1396,7 @@ ${output}</xml>`;
                 else {
                     blockStatements.unshift(statement)
                 }
-            });
+            }
 
             eventStatements.map(n => getStatementBlock(n, undefined, undefined, false, topLevel)).forEach(emitStatementNode);
 
@@ -1945,7 +1946,7 @@ ${output}</xml>`;
         return undefined;
     }
 
-    function getObjectBindingProperties(callback: ts.ArrowFunction): [string[], Map<string>] {
+    function getObjectBindingProperties(callback: ts.ArrowFunction): [string[], pxt.Map<string>] {
         if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
             const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
 

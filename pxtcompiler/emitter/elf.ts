@@ -109,7 +109,7 @@ namespace pxt.elf {
         }
 
         function readPH(off: number) {
-            let r: Map<number> = {};
+            let r: pxt.Map<number> = {};
             let o0 = off
             for (let f of progHeaderFields) {
                 r[f] = r32(buf, off)

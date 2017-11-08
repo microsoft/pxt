@@ -155,7 +155,7 @@ namespace pxt {
                 .then(verNo => {
                     if (!/^embed:/.test(verNo) &&
                         this.config && this.config.installedVersion == verNo)
-                        return
+                        return undefined;
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
                         .then(() => {

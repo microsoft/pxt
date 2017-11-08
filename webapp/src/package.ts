@@ -350,7 +350,7 @@ function resolvePath(p: string) {
 }
 
 const theHost = new Host();
-export var mainPkg = new pxt.MainPackage(theHost);
+export var mainPkg: pxt.MainPackage = new pxt.MainPackage(theHost);
 
 export function getEditorPkg(p: pxt.Package) {
     let r: EditorPackage = (p as any)._editorPkg

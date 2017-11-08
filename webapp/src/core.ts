@@ -30,6 +30,10 @@ export function isLoading() {
 let loadingQueue: string[] = [];
 let loadingQueueMsg: pxt.Map<string> = {};
 
+export function setHighContrast(on: boolean) {
+    highContrast = on;
+}
+
 export function hideLoading(id: string) {
     pxt.debug("hideloading: " + id);
     if (loadingQueueMsg[id] != undefined) {

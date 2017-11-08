@@ -45,7 +45,6 @@ namespace pxt.blocks {
             workspace = Blockly.inject(blocklyDiv, {
                 scrollbars: false,
                 readOnly: true,
-                zoom: false,
                 sound: false,
                 media: pxt.webConfig.commitCdnUrl + "blockly/media/",
                 rtl: Util.isUserLanguageRtl()

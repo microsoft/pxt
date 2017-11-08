@@ -166,7 +166,7 @@ namespace ts.pxtc {
                 pkg,
                 extendsTypes,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
-                parameters: !hasParams ? null : (decl.parameters as ParameterDeclaration[] || []).map((p, i) => {
+                parameters: !hasParams ? null : (Util.toArray(decl.parameters)).map((p, i) => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
                     let minVal = attributes.paramMin && attributes.paramMin[n];
@@ -192,7 +192,7 @@ namespace ts.pxtc {
                             });
                         }
                     }
-                    let options: Map<PropertyOption> = {};
+                    let options: pxt.Map<PropertyOption> = {};
                     const paramType = typechecker.getTypeAtLocation(p);
                     let isEnum = paramType && !!(paramType.flags & TypeFlags.Enum);
 
@@ -395,11 +395,11 @@ namespace ts.pxtc {
         }
 
         // transitive closure of inheritance
-        let closed: Map<boolean> = {}
+        let closed: pxt.Map<boolean> = {}
         let closeSi = (si: SymbolInfo) => {
             if (U.lookup(closed, si.qName)) return;
             closed[si.qName] = true
-            let mine: Map<boolean> = {}
+            let mine: pxt.Map<boolean> = {}
             mine[si.qName] = true
             for (let e of si.extendsTypes || []) {
                 mine[e] = true
@@ -529,7 +529,7 @@ namespace ts.pxtc.service {
     let lastFuse: Fuse;
     let builtinItems: SearchInfo[];
     let blockDefinitions: pxt.Map<pxt.blocks.BlockDefinition>;
-    let tbSubset: Map<boolean>;
+    let tbSubset: pxt.Map<boolean>;
 
     function fileDiags(fn: string) {
         if (!/\.ts$/.test(fn))
@@ -565,7 +565,7 @@ namespace ts.pxtc.service {
         }
     }
 
-    const operations: pxt.Map<(v: OpArg) => any> = {
+    const operations: pxt.Map<(v: any) => any> = {
         reset: () => {
             service.cleanupSemanticCache();
             host.setOpts(emptyOptions)
@@ -621,7 +621,7 @@ namespace ts.pxtc.service {
         allDiags: () => {
             let global = service.getCompilerOptionsDiagnostics() || []
             let byFile = host.getScriptFileNames().map(fileDiags)
-            let allD = global.concat(Util.concat(byFile))
+            let allD: ReadonlyArray<Diagnostic> = global.concat(Util.concat(byFile))
 
             if (allD.length == 0) {
                 let res: CompileResult = {
@@ -658,9 +658,9 @@ namespace ts.pxtc.service {
             }
 
             // Computes the preferred tooltip or block text to use for search (used for blocks that have multiple tooltips or block texts)
-            const computeSearchProperty = (tooltipOrBlock: string | Map<string>, preferredSearch: string, blockDef: pxt.blocks.BlockDefinition): string => {
+            const computeSearchProperty = (tooltipOrBlock: string | pxt.Map<string>, preferredSearch: string, blockDef: pxt.blocks.BlockDefinition): string => {
                 if (!tooltipOrBlock) {
-                    return;
+                    return undefined;
                 }
                 if (typeof tooltipOrBlock === "string") {
                     // There is only one tooltip or block text; use it
@@ -671,7 +671,7 @@ namespace ts.pxtc.service {
                     return (<any>tooltipOrBlock)[preferredSearch];
                 }
                 // The block definition does not specify which tooltip or block text to use for search; join all values with a space
-                return Object.keys(tooltipOrBlock).map(k => (<Map<string>>tooltipOrBlock)[k]).join(" ");
+                return Object.keys(tooltipOrBlock).map(k => (<pxt.Map<string>>tooltipOrBlock)[k]).join(" ");
             };
 
             if (!builtinItems) {
@@ -686,7 +686,7 @@ namespace ts.pxtc.service {
                             opValues.forEach(v => builtinItems.push({
                                 id,
                                 name: blockDef.name,
-                                jsdoc: typeof blockDef.tooltip === "string" ? <string>blockDef.tooltip : (<Map<string>>blockDef.tooltip)[v],
+                                jsdoc: typeof blockDef.tooltip === "string" ? <string>blockDef.tooltip : (<pxt.Map<string>>blockDef.tooltip)[v],
                                 block: v,
                                 field: [op, v]
                             }));
@@ -868,7 +868,7 @@ namespace ts.pxtc.service {
 
             const type = checker ? checker.getTypeAtLocation(param) : undefined;
             if (type) {
-                if (type.flags & ts.TypeFlags.Anonymous) {
+                if (isObjectType(type) && type.objectFlags & ts.ObjectFlags.Anonymous) {
                     const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
                     if (sigs.length) {
                         return getFunctionString(sigs[0]);

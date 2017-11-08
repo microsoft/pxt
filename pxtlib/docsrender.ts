@@ -249,12 +249,12 @@ namespace pxt.docs {
 
         if (currentTocEntry) {
             if (currentTocEntry.prevPath) {
-                params["prev"] = `<a href="${currentTocEntry.prevPath}" class="navigation navigation-prev " title="${'Previous page: {0}', currentTocEntry.prevName}">
+                params["prev"] = `<a href="${currentTocEntry.prevPath}" class="navigation navigation-prev " title="${currentTocEntry.prevName}">
                                     <i class="icon angle left"></i>
                                 </a>`;
             }
             if (currentTocEntry.nextPath) {
-                params["next"] = `<a href="${currentTocEntry.nextPath}" class="navigation navigation-next " title="${'Next page {0}', currentTocEntry.nextName}">
+                params["next"] = `<a href="${currentTocEntry.nextPath}" class="navigation navigation-next " title="${currentTocEntry.nextName}">
                                     <i class="icon angle right"></i>
                                 </a>`;
             }
@@ -283,7 +283,7 @@ namespace pxt.docs {
             params["github"] = "";
         }
 
-        // Add accessiblity menu 
+        // Add accessiblity menu
         const accMenuHtml = `
             <a href="#maincontent" class="ui item link" tabindex="0" role="menuitem">${lf("Skip to main content")}</a>
         `
