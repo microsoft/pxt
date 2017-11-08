@@ -1692,7 +1692,16 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
     }
 
     hideBanner() {
+        pxt.tickEvent("banner.hidden");
+        pxt.storage.setLocal("lastBannerClosedTime", Util.nowSeconds().toString());
         this.setState({ hideBanner: true });
+    }
+
+    timeToShowBanner() {
+        const lastBannerClosedTime = parseInt(pxt.storage.getLocal("lastBannerClosedTime") || "0");
+        const now = Util.nowSeconds();
+        //604800 = seconds in a week
+        return (now - lastBannerClosedTime) > 604800;
     }
 
     renderCore() {
@@ -1731,7 +1740,10 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
-        const showWindowsStoreBanner = !pxt.winrt.isWinRT() && isWindows10 && Cloud.isOnline() && pxt.appTarget.appTheme.windowsStoreLink && !this.state.hideBanner;
+        const showWindowsStoreBanner = !pxt.winrt.isWinRT() && isWindows10 && Cloud.isOnline() && pxt.appTarget.appTheme.windowsStoreLink && !this.state.hideBanner && this.timeToShowBanner();
+        if (showWindowsStoreBanner) {
+            setTimeout(() => this.hideBanner(), 30000);
+        }
         const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
         // cookie consent
