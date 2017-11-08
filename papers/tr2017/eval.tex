@@ -1,75 +1,21 @@
 \section{Evaluation}
 \label{sec:evaluate}
 
-From Joe Finney
-
+This section evaluates the costs of the various layers of abstraction
+in our platform used to create the simplified end-to-end experience. 
+The C++ of our platform breaks into two essential layers:
 \begin{itemize}
-\item Introducing TS and Blocks to this domain brings a range of immediate, 
-    well understood benefits to users (Ease of programming, memory safety, 
-    removal of syntactic errors, simplified event driven programming models). 
-\item Our combination of native C++ and TS also allows for low level optimisations 
-      by users if they need it.
-\item Our software only approach means we have a wide platform base – 
-     we are able to run on a diverse range of small, simple MCUs.
-\item Native compiled approach also promises performance advantages over 
-      an interpreted bytecode VM approach.
+\item \emph{\CON-core}: the \CO device runtime, against which we write C++ programs;
+\item \emph{\MCN-common-packages}: the C++ and Static TypeScript wrapping \CON-core 
+to make it known to \MC, against which we write Static TypeScript programs;
 \end{itemize}
+We evaluate the cost of these layers using a set of micro-benchmarks, written
+in both C++ and Static TypeScript, for three targets: nrF52, SAMD21, and Atmega (representing
+the micro:bit, CPX, and Uno, respectively). The C++ benchmarks isolate the performance
+of \CO and provide a baseline, while the Static TypeScript benchmarks show the overhead
+added by \MC. 
 
-But what is the cost of these high level abstractions? Resources and metrics we care about are:
-\begin{itemize}
-% FLASH and RAM footprint
-\item Core FLASH footprint of the combined runtime codebase -- 
-      split by role (libc, codal-core, pxt-common-packages, makecode). PXT test. 
-      Analyse MAP file. (Assuming PXT core is in build, 
-      else Michal to provide size of PXT core libs)?
-\item Core RAM footprint of the combined runtime codebase --
-      split by role (libc, codal-core, pxt-common-packages, makecode). Analyse MAP file for static footprint. 
-      Enable HEAP\_DEBUG, and run C++ blinky and PXT blinky.
-% cost of async/fibers/handlers
-\item How RAM footprint scales with number of active fibers (parallel recursive calls in TS. 
-      Should be predictable, but validates we scale linearly and sets some hard figures 
-      for a real device). C++ test.
-\item Context switch time (both in real terms (uS) and CPU instructions). C++ test, 
-      flipping a GPIO or two duting context switch and measuring on scope.
-\item Event handling time (both in real terms (uS) and CPU instructions. 
-      Both IMMEDIATE and THREADED mode). C++ test. flipping a GPIO or two during context 
-      switch sections and measuring on scope.
-\item Async Procedure Call (APC) handling time (both in real terms (uS) and CPU instructions. 
-      C++ test. flipping a GPIO or two during context switch and measuring on scope.
-% measuring compile time
-% - do this in Node?
-% - do this in browser?
-\item Time taken to compile and link simple program in browser (can we use some existing apps 
-      here as case studies? E.g. Smiley emoji and fireflies?
-% microbenchmarks
-% in addition, Arduino "examples"
-\item Tight loop performance of C++, TS, and Blocks e.g. flipping a GPIO. PXT native compile.
-\item Tight loop performance of C++, TS, and Blocks e.g. flipping a GPIO. PXT bytecode interpreted.
-% instrument via node? or shell?
-\item UF2 File Size comparisons to HEX and bin. Time taken to complete a UF2 flash operation 
-    (c.f. equivalent DAPLINK flash on micro:bit and avrdude flash on uno?)
-\end{itemize}
-
-
-\subsection{\CO}
-% - cost of runtime for a standard app in terms of flash and RAM
-%     - APP: simple blinky, recursive factorial
-%     - Designed to expose fork on block and other optimisations
-% - event response time
-%     - APP: Fire an event, time how long it takes using GPIO
-%     - Measure the cost of an event
-% - cost of DPC/APC (Delayed/Asynchronous Proc Call)
-%     - APP: ?
-%     - Measure RAM and CPU overhead.
-% - context switch time with known stack size
-%     - APP: simple app that calls sleep, measured using GPIO + scope
-%     - expose stack allocated / managed type memory differences
-% - program benchmarks for C++, compiled MakeCode, interpreted MakeCode
-%     - APP: A simple blinky
-%     - Measures CPU time, RAM, Flash consumption
-
-\subsection{Implementation}
-
+%\subsection{Implementation}
 % •	\CO (SAMD21 and AVR): base runtime (C++ only)
 % •	pxt
 % •	pxt-common-packages: C++ and Static TypeScript
@@ -77,15 +23,59 @@ But what is the cost of these high level abstractions? Resources and metrics we 
 % •	pxt-arduino-uno
 % •	pxt-monaco, pxt-blockly
 
-\subsection{Benchmarks}
+\subsection{FLASH and RAM footprint}
 
-\subsection{Performance evaluation}
+\begin{itemize}
 
-% •	\MC and \CO Performance compared to raw Arduino
-% o	Compile-time (end user)
-% o	Code size
-% o	Performance
-% •	Runtime measurements
-% o	Energy consumption
+ % FLASH and RAM footprint
+\item FLASH footprint of the combined runtime codebase split by role (\CON-core, \MCN-common-packages)
+% Analyse MAP file. (Assuming PXT core is in build, else Michal to provide size of PXT core libs)?
+\item RAM footprint of the combined runtime codebase, also split by role; 
+% (libc, codal-core, pxt-common-packages, makecode). Analyse MAP file for static footprint. 
+%Enable HEAP\_DEBUG, and run C++ blinky and PXT blinky.
+% cost of async/fibers/handlers
+\item Scaling of RAM footprint with number of active fibers (parallel recursive calls in TS. 
+%      Should be predictable, but validates we scale linearly and sets some hard figures 
+%      for a real device). C++ test.
+\end{itemize}
+
+\subsection{Time for common \CO operations}
+
+\begin{itemize}
+\item Context switch time (both in real terms (uS) and CPU instructions). 
+% C++ test, flipping a GPIO or two duting context switch and measuring on scope.
+\item Event handling time (both in real terms (uS) and CPU instructions. 
+%      Both IMMEDIATE and THREADED mode). C++ test. flipping a GPIO or two during context 
+%      switch sections and measuring on scope.
+\item Async Procedure Call (APC) handling time (both in real terms (uS) and CPU instructions). 
+% C++ test. flipping a GPIO or two during context switch and measuring on scope.
+\end{itemize}
+
+\subsection{Compile time of Static TypeScript}
+
+% measuring compile time
+% - do this in Node?
+% - do this in browser?
+\begin{itemize}
+\item Time taken to compile and link simple program in browser (can we use some existing apps 
+      here as case studies? E.g. Smiley emoji and fireflies?
+% microbenchmarks
+% in addition, Arduino "examples"
+% instrument via node? or shell?
+\item UF2 File Size comparisons to HEX and bin. Time taken to complete a UF2 flash operation 
+    (c.f. equivalent DAPLINK flash on micro:bit and avrdude flash on uno?)
+\end{itemize}
+
+\subsection{C++, Native vs Bytecode}
+% - program benchmarks for C++, compiled MakeCode, interpreted MakeCode
+%     - APP: A simple blinky
+%     - Measures CPU time, RAM, Flash consumption
+\begin{itemize}
+\item Tight loop performance of C++, TS, and Blocks e.g. flipping a GPIO. PXT native compile.
+\item Tight loop performance of C++, TS, and Blocks e.g. flipping a GPIO. PXT bytecode interpreted.
+\end{itemize}
+
+\subsection{Hardware resources}
+
 % - efficient use of hardware resources, compared to Arduino, which uses spin loops and doesn't always use the hardware (bit bangs instead)
-% o	Performance
+
