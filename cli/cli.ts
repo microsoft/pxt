@@ -3284,7 +3284,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
         filenameMatch = new RegExp(pattern);
     }
     catch (e) {
-        console.log(`pattern could not be compiled as a regular expression, ignoring`);
+        pxt.log(`pattern could not be compiled as a regular expression, ignoring`);
         filenameMatch = new RegExp('.*')
     }
     snippets = snippets.filter(snippet => filenameMatch.test(snippet.name));
@@ -3337,6 +3337,16 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             opts.ast = true
             let resp = pxtc.compile(opts)
 
+            if (resp.success && resp.outfiles && snippet.file) {
+                const dir = snippet.file.replace(/\.ts$/, '');
+                nodeutil.mkdirP(dir);
+                Object.keys(resp.outfiles).forEach(outfile => {
+                    const ofn = path.join(dir, outfile);
+                    pxt.log(`writing ${ofn}`);
+                    fs.writeFileSync(ofn, resp.outfiles[outfile], 'utf8')
+                })
+            }
+            resp.outfiles[pxtc.BINARY_HEX]
             if (resp.success) {
                 if (/^block/.test(snippet.type)) {
                     //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
