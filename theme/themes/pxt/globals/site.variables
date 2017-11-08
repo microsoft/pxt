@@ -99,12 +99,26 @@
      PXT Variables
 *******************************/
 
-@avatarUrlPath: "../docs/static/avatar.svg";
-@avatarUrl: data-uri(@avatarUrlPath);
-@fileLogoUrl: data-uri("../docs/static/filelogo.svg");
+@avatarImageUrl: "../docs/static/avatar.svg";
+@avatarImage: data-uri(@avatarImageUrl);
 
-@poweredBySmall: data-uri("../docs/static/logo/Powered-By-Microsoft-logo-small.png");
-@poweredByLarge: data-uri("../docs/static/logo/Powered-By-Microsoft-logo.png");
+@fileLogoUrl: "../docs/static/filelogo.svg";
+@fileLogo: data-uri(@fileLogoUrl);
+
+@loaderImageUrl: "../docs/static/loader.svg";
+@loaderImage: data-uri(@loaderImageUrl);
+
+@poweredBySmallUrl: "../docs/static/logo/Powered-By-Microsoft-logo-small.png";
+@poweredBySmall: data-uri(@poweredBySmallUrl);
+@poweredByLargeUrl: "../docs/static/logo/Powered-By-Microsoft-logo.png";
+@poweredByLarge: data-uri(@poweredByLargeUrl);
+
+@docsAvatarImageUrl: none;
+@docsAvatarImage: none;
+.setDocsAvatarUrl() when not (@docsAvatarImageUrl = none) {
+  @docsAvatarImage: data-uri(@docsAvatarImageUrl);
+}
+.setDocsAvatarUrl();
 
 /*-------------------
    Menu

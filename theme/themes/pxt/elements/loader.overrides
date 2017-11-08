@@ -14,7 +14,7 @@
    box-shadow: none;
    border-radius: 0px;
    margin: 40px auto;
-   background: transparent data-uri(@loaderImageUrl) no-repeat center center;
+   background: transparent @loaderImage no-repeat center center;
    background-size: 100%;
   -webkit-animation: @loaderAnimation @loaderSpeed infinite linear;
   animation: @loaderAnimation @loaderSpeed infinite linear;
@@ -25,7 +25,7 @@
    box-shadow: none;
    border-radius: 0px;
    margin: 40px auto;
-   background: transparent @avatarUrl no-repeat center center;
+   background: transparent @avatarImage no-repeat center center;
    background-size: 100%;
   -webkit-animation: @loaderAnimation @loaderSpeed infinite linear;
   animation: @loaderAnimation @loaderSpeed infinite linear;

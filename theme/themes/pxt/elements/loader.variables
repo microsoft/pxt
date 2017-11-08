@@ -4,7 +4,6 @@
 
 @loaderSpeed: 2s;
 @loaderAngle: 5deg;
-@loaderImageUrl: "../../docs/static/loader.svg";
 @loaderAnimation: loader-pxt;
 
 @large   : 200px;
