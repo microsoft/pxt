@@ -1691,10 +1691,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
-    hideBanner() {
-        this.setState({ hideExperimentalBanner: true });
-    }
-
     hideWindowsStoreBanner() {
         pxt.tickEvent("windowsBanner.closed")
         this.setState({ hideWindowsStoreBanner: true })
@@ -1734,7 +1730,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const isLocalServe = location.hostname === "localhost";
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
-        const showExperimentalBanner = !isLocalServe && isApp && !this.state.hideExperimentalBanner && isExperimentalUrlPath;
+        const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
         const showWindowsStoreBanner = !this.state.hideWindowsStoreBanner && !pxt.winrt.isWinRT() && isWindows10 && pxt.appTarget.appTheme.windowsStoreLink;
         const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
@@ -1778,7 +1774,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                     <img src="https://assets.windowsphone.com/13484911-a6ab-4170-8b7e-795c1e8b4165/English_get_L_InvariantCulture_Default.png"
                                     alt={lf("Windows Store logo")} />
                                 </span>
-                                {lf("Get the app from the")} <span className="bold">&nbsp; {lf("Windows Store")}</span>
+                                {lf("Get the app from the Windows Store")}
                             </sui.Link>
                             <div className="close" tabIndex={0} onClick={() => this.hideWindowsStoreBanner()}>
                                 <sui.Icon icon="close" />
