@@ -1353,6 +1353,8 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
         // Filter toolbox categories
         const filters = parent.parent.state.editorState && parent.parent.state.editorState.filters;
         function filterCategory(ns: string, fns: MonacoBlockDefinition[]): boolean {
+            if (!fns || !fns.length) return false;
+
             const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
             let hasChild = false;
             if (filters && categoryState !== undefined && fns) {
@@ -1378,7 +1380,7 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
                 }).map(([ns, md]) => {
                     if (!snippets.isBuiltin(ns)) {
                         const blocks = parent.nsMap[ns].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated));
-                        if (!filterCategory(ns, blocks)) return;
+                        if (!filterCategory(ns, blocks)) return undefined;
                         const categoryName = md.block ? md.block : undefined;
                         return {
                             ns: ns,
@@ -1398,8 +1400,7 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
                         const categoryName = cat.name;
                         blocks.forEach(b => { b.noNamespace = true })
                         if (!cat.custom && parent.nsMap[ns.toLowerCase()]) blocks = blocks.concat(parent.nsMap[ns.toLowerCase()].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
-                        if (!blocks || !blocks.length) return;
-                        if (!filterCategory(ns, blocks)) return;
+                        if (!filterCategory(ns, blocks)) return undefined;
                         return {
                             ns: ns,
                             category: categoryName,
@@ -1411,7 +1412,7 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
                             index: index++
                         }
                     }
-                });
+                }).filter(cat => !!cat);
         }
 
         const hasAdvanced = namespaces.some(([, md]) => md.advanced);
