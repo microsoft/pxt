@@ -3342,7 +3342,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                 nodeutil.mkdirP(dir);
                 Object.keys(resp.outfiles).forEach(outfile => {
                     const ofn = path.join(dir, outfile);
-                    pxt.log(`writing ${ofn}`);
+                    pxt.debug(`writing ${ofn}`);
                     fs.writeFileSync(ofn, resp.outfiles[outfile], 'utf8')
                 })
             }
