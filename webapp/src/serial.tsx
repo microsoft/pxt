@@ -332,7 +332,10 @@ class Chart {
     }
 
     tooltip(timestamp: number, data: { series: TimeSeries, index: number, value: number }[]): string {
-        return data.map(n => `<span>${(n.series as any).timeSeries.__name}: ${n.value}</span>`).join('<br/>');
+        return data.map(n => {
+            const name = (n.series as any).timeSeries.__name;
+            return `<span>${name ? name + ': ' : ''}${n.value}</span>`;
+        }).join('<br/>');
     }
 
     getLine(name: string): TimeSeries {
