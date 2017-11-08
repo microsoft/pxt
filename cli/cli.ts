@@ -3346,7 +3346,6 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                     fs.writeFileSync(ofn, resp.outfiles[outfile], 'utf8')
                 })
             }
-            resp.outfiles[pxtc.BINARY_HEX]
             if (resp.success) {
                 if (/^block/.test(snippet.type)) {
                     //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
