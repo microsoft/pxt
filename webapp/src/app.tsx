@@ -1691,9 +1691,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
-    hideWindowsStoreBanner() {
-        pxt.tickEvent("windowsBanner.closed")
-        this.setState({ hideWindowsStoreBanner: true })
+    hideBanner() {
+        this.setState({ hideBanner: true });
     }
 
     renderCore() {
@@ -1732,7 +1731,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
-        const showWindowsStoreBanner = !this.state.hideWindowsStoreBanner && !pxt.winrt.isWinRT() && isWindows10 && pxt.appTarget.appTheme.windowsStoreLink;
+        const showWindowsStoreBanner = !pxt.winrt.isWinRT() && isWindows10 && pxt.appTarget.appTheme.windowsStoreLink && !this.state.hideBanner;
         const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
         // cookie consent
@@ -1768,18 +1767,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
-                        {showWindowsStoreBanner ? <div id="windowsStoreBanner" className="ui attached message">
-                            <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={pxt.appTarget.appTheme.windowsStoreLink} onClick={() => pxt.tickEvent("windowsBanner.linkClicked")}>
-                                <span>
-                                    <img src="https://assets.windowsphone.com/13484911-a6ab-4170-8b7e-795c1e8b4165/English_get_L_InvariantCulture_Default.png"
-                                    alt={lf("Windows Store logo")} />
-                                </span>
-                                {lf("Get the app from the Windows Store")}
-                            </sui.Link>
-                            <div className="close" tabIndex={0} onClick={() => this.hideWindowsStoreBanner()}>
-                                <sui.Icon icon="close" />
-                            </div>
-                        </div> : undefined}
+                        {showWindowsStoreBanner ? <container.WindowsStoreBanner handleClose={() => this.hideBanner()} parent={this} /> : undefined}
                         <container.MainMenu parent={this} />
                     </header>}
                 {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">

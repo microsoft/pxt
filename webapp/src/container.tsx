@@ -443,6 +443,29 @@ export class CookieMessage extends data.Component<CookieMessageProps, CookieMess
     }
 }
 
+export interface IBannerProps extends ISettingsProps {
+    handleClose: () => void;
+}
+
+export class WindowsStoreBanner extends data.Component<IBannerProps, {}> {
+    renderCore() {
+        return (
+            <div id="windowsStoreBanner" className="ui attached message">
+                <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={pxt.appTarget.appTheme.windowsStoreLink} onClick={() => pxt.tickEvent("windowsBanner.linkClicked")}>
+                    <span>
+                        <img src="https://assets.windowsphone.com/13484911-a6ab-4170-8b7e-795c1e8b4165/English_get_L_InvariantCulture_Default.png"
+                        alt={lf("Windows Store logo")} />
+                    </span>
+                    {lf("Get the app from the Windows Store")}
+                </sui.Link>
+                <div className="close" tabIndex={0} onClick={this.props.handleClose}>
+                    <sui.Icon icon="close" />
+                </div>
+            </div>
+        );
+    }
+}
+
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export class ExperimentalBannerState {
     hideExperimentalBanner: boolean;
