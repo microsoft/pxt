@@ -314,8 +314,7 @@ class Chart {
             grid: {
                 verticalSections: 0,
                 borderVisible: false,
-                fillStyle: serialTheme && serialTheme.graphBackground || '#fff',
-                strokeStyle: serialTheme && serialTheme.graphBackground || '#fff'
+                strokeStyle: serialTheme && serialTheme.gridStrokeStyle || '#fff'
             },
             tooltip: true,
             tooltipFormatter: (ts, data) => this.tooltip(ts, data)
