@@ -305,7 +305,9 @@ class Chart {
         const chartConfig: IChartOptions = {
             interpolation: 'bezier',
             labels: {
-                disabled: true
+                disabled: false,
+                fillStyle: 'black',
+                fontSize: 14
             },
             responsive: true,
             millisPerPixel: 20,
