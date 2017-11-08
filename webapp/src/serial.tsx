@@ -370,7 +370,7 @@ class Chart {
 
     makeLabel() {
         this.label = document.createElement("div")
-        this.label.className = "ui orange bottom left attached label seriallabel"
+        this.label.className = "ui orange bottom left attached no-select label seriallabel"
         this.label.innerText = this.variable || "...";
         return this.label;
     }
