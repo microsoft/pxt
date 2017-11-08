@@ -39,7 +39,7 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
     render() {
         if (!this.state.active) return <div />;
         return(
-            <div title={lf("Open Console")} className="ui label circular" tabIndex={0} onClick={this.props.onClick} onKeyDown={sui.fireClickOnEnter}>
+            <div title={lf("Open console")} className="ui label circular" tabIndex={0} onClick={this.props.onClick} onKeyDown={sui.fireClickOnEnter}>
                 <div className="detail">
                     <sui.Icon icon="bar graph"/>
                 </div>
