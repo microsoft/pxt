@@ -3337,7 +3337,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             opts.ast = true
             let resp = pxtc.compile(opts)
 
-            if (resp.success && resp.outfiles && snippet.file) {
+            if (resp.outfiles && snippet.file) {
                 const dir = snippet.file.replace(/\.ts$/, '');
                 nodeutil.mkdirP(dir);
                 Object.keys(resp.outfiles).forEach(outfile => {
