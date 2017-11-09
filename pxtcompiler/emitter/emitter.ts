@@ -2200,7 +2200,7 @@ ${lbl}: .short 0xffff
             }
 
             // otherwise we assume a lambda
-            if (args.length > (isStackMachine() ? 2 : 3))
+            if (args.length > (!opts.countAllStmts && isStackMachine() ? 2 : 3))
                 userError(9217, lf("lambda functions with more than 3 arguments not supported"))
 
             let suff = args.length + ""
@@ -2609,7 +2609,7 @@ ${lbl}: .short 0xffff
             if (attrs.shim != null) {
                 if (attrs.shim[0] == "@")
                     return
-                if (opts.target.isNative) {
+                if (opts.target.isNative && !opts.countAllStmts) {
                     hex.validateShim(getDeclName(node),
                         attrs.shim,
                         attrs,
