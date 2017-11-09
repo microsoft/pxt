@@ -704,7 +704,7 @@ ${hex.hexPrelude()}
         let b = mkProcessorFile(target)
         b.emit(src);
 
-        src = b.getSource(!peepDbg, bin.numStmts, target.flashEnd);
+        src = b.getSource(!peepDbg, bin.res.times, target.flashEnd);
 
         throwAssemblerErrors(b)
 
@@ -790,7 +790,6 @@ __flash_checksums:
 `
         }
         bin.writeFile(pxtc.BINARY_ASM, src)
-        bin.numStmts = cres.breakpoints.length
         let res = assemble(opts.target, bin, src)
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)

@@ -308,6 +308,7 @@ declare namespace ts.pxtc {
         fileSystem: pxt.Map<string>;
         target: CompileTarget;
         testMode?: boolean;
+        countAllStmts?: boolean;
         sourceFiles?: string[];
         jres?: pxt.Map<pxt.JRes>;
         hexinfo: HexInfo;

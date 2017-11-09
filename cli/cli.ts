@@ -2155,13 +2155,13 @@ class SnippetHost implements pxt.Host {
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
-        //console.log(`cacheStoreAsync(${id}, ${val})`)
-        return Promise.resolve()
+        mkHomeDirs()
+        return writeFileAsync(path.join(cacheDir(), id), val, "utf8")
     }
 
     cacheGetAsync(id: string): Promise<string> {
-        //console.log(`cacheGetAsync(${id})`)
-        return Promise.resolve("")
+        return readFileAsync(path.join(cacheDir(), id), "utf8")
+            .then((v: string) => v, (e: any) => null as string)
     }
 
     downloadPackageAsync(pkg: pxt.Package): Promise<void> {
@@ -3277,7 +3277,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     });
 }
 
-function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> {
+function testSnippetsAsync(snippets: CodeSnippet[], re?: string, stats?: boolean): Promise<void> {
     let filenameMatch: RegExp;
     try {
         let pattern = re || '.*';
@@ -3306,7 +3306,47 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
         })
         infos.forEach(info => pxt.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
     }
-    return Promise.map(snippets, (snippet: CodeSnippet) => {
+    if (stats) {
+        const empty: CodeSnippet =
+            {
+                name: '/empty',
+                code: '',
+                type: 'blocks',
+                ext: 'ts',
+                packages: { blocksprj: '*' },
+                file: 'built/docs/snippets/blocks/empty.ts'
+            }
+        snippets.unshift(empty)
+        snippets.unshift(empty)
+    }
+
+    let timeKeys: pxt.Map<number> = {}
+    let allTimes: { name: string; times: pxt.Map<number> }[] = []
+    let emptyStmts = 0
+
+    return (stats ? Promise.mapSeries(snippets, compileSnippetAsync)
+        : Promise.map(snippets, compileSnippetAsync, { concurrency: 4 }))
+        .then((a: any) => {
+            pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
+            if (stats) {
+                let keys = Object.keys(timeKeys)
+                keys.sort(U.strcmp)
+                let csv = "name," + keys.join(",") + "\n"
+                for (let tm of allTimes) {
+                    csv += tm.name + "," + keys.map(k => tm.times[k] || 0).join(",") + "\n"
+                }
+                fs.writeFileSync("stats.csv", csv)
+                pxt.log("wrote stats.csv")
+            }
+            if (ignoreCount > 0) {
+                pxt.log(`Skipped ${ignoreCount} snippets`)
+            }
+        }).then(() => {
+            if (failures.length > 0)
+                U.userError(`${failures.length} snippets not compiling in the docs`)
+        })
+
+    function compileSnippetAsync(snippet: CodeSnippet) {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
         pxt.debug(`compiling ${fn} (${snippet.type})`);
@@ -3333,9 +3373,40 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
         }
 
         const pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, Object.keys(snippet.packages)));
+        let times: pxt.Map<number> = {}
+        const t0 = Date.now()
         return pkg.getCompileOptionsAsync().then(opts => {
             opts.ast = true
+            let t1 = Date.now()
+            times["compile prep ms"] = t1 - t0
+            let stmtsSample = 0
+
+            if (stats) {
+                let o2 = U.flatClone(opts)
+                o2.countAllStmts = true
+                o2.testMode = true
+                o2.noEmit = true
+                let r2 = pxtc.compile(o2)
+                times["numStmts (all)"] = r2.times["numStmts"]
+
+                if (snippet.name == "/empty") {
+                    emptyStmts = r2.times["numStmts"]
+                    opts.countAllStmts = true
+                    opts.testMode = true
+                } else {
+                    stmtsSample = r2.times["numStmts"] - emptyStmts
+                }
+            }
+
             let resp = pxtc.compile(opts)
+
+            U.jsonMergeFrom(times, resp.times)
+            times["numStmts (sample)"] = stmtsSample
+            times["numStmts (runtime)"] = times["numStmts"] - stmtsSample
+            U.jsonMergeFrom(timeKeys, times)
+            if (stats) {
+                allTimes.push({ name: snippet.name, times })
+            }
 
             if (resp.outfiles && snippet.file) {
                 const dir = snippet.file.replace(/\.ts$/, '');
@@ -3378,15 +3449,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                 }
             ])
         })
-    }, { concurrency: 4 }).then((a: any) => {
-        pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
-        if (ignoreCount > 0) {
-            pxt.log(`Skipped ${ignoreCount} snippets`)
-        }
-    }).then(() => {
-        if (failures.length > 0)
-            U.userError(`${failures.length} snippets not compiling in the docs`)
-    })
+    }
 }
 
 function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
@@ -4105,11 +4168,12 @@ function cherryPickAsync(parsed: commandParser.ParsedCommand) {
 function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     return internalCheckDocsAsync(
         !!parsed.flags["snippets"],
-        parsed.flags["re"] as string
+        parsed.flags["re"] as string,
+        !!parsed.flags["stats"]
     )
 }
 
-function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise<void> {
+function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, stats?: boolean): Promise<void> {
     if (!nodeutil.existsDirSync("docs"))
         return Promise.resolve();
     const docsRoot = nodeutil.targetDir;
@@ -4190,6 +4254,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     while (todo.length) {
         checked++;
         const entrypath = todo.pop();
+        if (re && !new RegExp(re).test(entrypath))
+            continue
         pxt.debug(`checking ${entrypath}`)
         const md = (urls[entrypath] as string) || nodeutil.resolveMd(docsRoot, entrypath);
         if (!md) {
@@ -4225,7 +4291,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
 
     let p = Promise.resolve();
     if (compileSnippets)
-        p = p.then(() => testSnippetsAsync(snippets, re));
+        p = p.then(() => testSnippetsAsync(snippets, re, stats));
     return p.then(() => {
         if (broken > 0)
             U.userError(`${broken} broken links found in the docs`);
@@ -4661,6 +4727,7 @@ function initCommands() {
         help: "check docs for broken links, typing errors, etc...",
         flags: {
             snippets: { description: "compile snippets" },
+            stats: { description: "show compilation statistics" },
             re: {
                 description: "regular expression that matches the snippets to test",
                 argument: "regex"

@@ -857,7 +857,7 @@ namespace ts.pxtc.assembler {
         }
 
 
-        public getSource(clean: boolean, numStmts = 1, flashSize = 0) {
+        public getSource(clean: boolean, times: pxt.Map<number> = {}, flashSize = 0) {
             let lenTotal = this.buf ? this.location() : 0
             let lenThumb = this.labels["_program_end"] || lenTotal;
             let lenFrag = this.labels["_frag_start"] || 0
@@ -871,8 +871,8 @@ namespace ts.pxtc.assembler {
             let totalInfo = lf("; total bytes: {0} ({1}% of {2}k flash with {3} free)",
                 totalSize, (100 * totalSize / flashSize).toFixed(1), (flashSize / 1024).toFixed(1),
                 flashSize - totalSize)
+            let numStmts = times["numStmts"] || 1
             let res =
-                // ARM-specific
                 lf("; code sizes (bytes): {0} (incl. {1} frags, and {2} lits); src size {3}\n",
                     lenThumb, lenFrag, lenLit, lenTotal - lenThumb) +
                 lf("; assembly: {0} lines; density: {1} bytes/stmt\n",
@@ -880,6 +880,11 @@ namespace ts.pxtc.assembler {
                     Math.round(100 * (lenThumb - lenLit) / numStmts) / 100) +
                 totalInfo + "\n" +
                 this.stats + "\n\n"
+            
+            times["binary TS code bytes"] = lenThumb - lenLit
+            times["binary literal bytes"] = lenLit
+            times["binary source bytes"] = lenTotal - lenThumb
+            times["code density bytes/stmt"] = Math.round(100 * (lenThumb - lenLit) / numStmts) / 100
 
             let skipOne = false
 

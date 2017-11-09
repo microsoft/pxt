@@ -80,7 +80,6 @@ ${hex.hexPrelude()}
         let alltmps: ir.Expr[] = []
         let currTmps: ir.Expr[] = []
         let final = false
-        let numBrk = 0
         let numLoc = 0
 
         //console.log(proc.toString())
@@ -88,7 +87,6 @@ ${hex.hexPrelude()}
         // console.log("OPT", proc.toString())
 
         emitAll()
-        bin.numStmts = numBrk
         resText = ""
         for (let t of alltmps) t.currUses = 0
         final = true
@@ -131,7 +129,6 @@ ${hex.hexPrelude()}
                         writeRaw(`${s.lblName}:`)
                         break;
                     case ir.SK.Breakpoint:
-                        numBrk++
                         break;
                     default: oops();
                 }

@@ -930,6 +930,7 @@ namespace ts.pxtc {
 
         function reset() {
             bin.reset()
+            bin.numStmts = 1
             proc = null
             res.breakpoints = [{
                 id: 0,
@@ -980,6 +981,8 @@ namespace ts.pxtc {
         pruneMethodsAndRecompute()
         emitVTables()
 
+        res.times["numStmts"] = bin.numStmts
+        
         if (diagnostics.getModificationCount() == 0) {
             reset();
             bin.finalPass = true
@@ -998,7 +1001,7 @@ namespace ts.pxtc {
 
             catchErrors(rootFunction, finalEmit)
         }
-
+         
         return {
             diagnostics: diagnostics.getDiagnostics(),
             emitSkipped: !!opts.noEmit
@@ -1780,6 +1783,8 @@ ${lbl}: .short 0xffff
         }
 
         function isOnDemandDecl(decl: Declaration) {
+            if (opts.countAllStmts)
+                return false
             let res = isOnDemandGlobal(decl) || isTopLevelFunctionDecl(decl)
             if (opts.testMode && res) {
                 if (!U.startsWith(getSourceFileOfNode(decl).fileName, "pxt_modules"))
@@ -3109,6 +3114,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitBrk(node: Node) {
+            bin.numStmts++
             if (!opts.breakpoints)
                 return
             let src = getSourceFileOfNode(node)
