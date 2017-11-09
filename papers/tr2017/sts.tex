@@ -85,7 +85,8 @@ are not related by STS's subtype relation.
 TypeScript introduces two (object) types for each class declaration: 
 (1) a constructor function type by which instances of a class
 are created (and static properties accessed), as seen in the previous section; 
-(2) a class type describing the instances of the class, which is essentially a record type. 
+(2) a class type describing the instances of the class, which is a record type, having
+only (member) properties. 
 TypeScript's treatment of class types as record types
 means that it is possible to assign to a property representing a method, 
 destroying the class abstraction that ties together code and data. This also 
@@ -113,11 +114,11 @@ In STS, $S$ is a subtype of a type $T$ if one of the following is true:
 \item $S$ and $T$ are class types and all the following are true:
 \begin{itemize}
   \item $S$ is derived from $T$ (via \emph{extends} clauses);
-  \item checkMemb($S$,$T$) holds;
+  \item checkProps($S$,$T$) holds;
 \end{itemize}
 \item $S$ is a class/record type and $T$ is a record type and
 \begin{itemize}
-  \item checkMemb($S$,$T$) holds;
+  \item checkProps($S$,$T$) holds;
 \end{itemize}
 \item $S$ and $T$ are function types such that all the following hold:
 \begin{itemize}
@@ -130,14 +131,14 @@ In STS, $S$ is a subtype of a type $T$ if one of the following is true:
 \item $T$ has a numeric index signature with element type $U$, 
     and $S$ has a numeric index signature with element type $V$
     such that $V$ is a subtype of $U$;
-\item checkMemb($S$,$T$) holds.
+\item checkProps($S$,$T$) holds.
 \end{itemize}
 \end{itemize}
 
 % https://www.earthli.com/news/view_article.php?id=3391
 
-Given types $S$ and $T$, checkMemb($S$,$T$) holds if for each member $N$ in $T$, 
-$N$ is a property and $S$ has a property $M$ where all of the following are true:
+Given types $S$ and $T$, checkProps($S$,$T$) holds if for each property $N$ in $T$, 
+$S$ has a property $M$ where all of the following are true:
 \begin{itemize}
 \item $M$ and $N$ have the same name;
 \item the type of $M$ is a subtype of the type of $N$;
