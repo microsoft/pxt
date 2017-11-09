@@ -1430,11 +1430,11 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
                         <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
                     )) }
                     {hasAdvanced ? <TreeSeparator key="advancedseparator" /> : undefined}
-                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ ns: "", category: pxt.blocks.advancedTitle, color: pxt.blocks.getNamespaceColor('advanced'), icon: showAdvanced ? 'advancedexpanded' : 'advancedcollapsed' }} onCategoryClick={this.advancedClicked.bind(this) }/> : undefined}
+                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ ns: "", category: pxt.blocks.advancedTitle(), color: pxt.blocks.getNamespaceColor('advanced'), icon: showAdvanced ? 'advancedexpanded' : 'advancedcollapsed' }} onCategoryClick={this.advancedClicked.bind(this) }/> : undefined}
                     {showAdvanced ? advancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
                     )) : undefined}
-                    {hasPackages && showAdvanced ? <TreeRow treeRow={{ ns: "", category: pxt.blocks.addPackageTitle, color: '#717171', icon: "addpackage" }} onClick={this.addPackage.bind(this) } /> : undefined }
+                    {hasPackages && showAdvanced ? <TreeRow treeRow={{ ns: "", category: pxt.blocks.addPackageTitle(), color: '#717171', icon: "addpackage" }} onClick={this.addPackage.bind(this) } /> : undefined }
                 </div>
             </div>
         </div>
