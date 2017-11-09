@@ -1780,7 +1780,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
-                        {showWindowsStoreBanner ? <container.WindowsStoreBanner close={() => this.hideBanner()} parent={this} /> : undefined}
+                        {showWindowsStoreBanner ? <container.WindowsStoreBanner parent={this} /> : undefined}
                         <container.MainMenu parent={this} />
                     </header>}
                 {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">

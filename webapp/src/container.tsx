@@ -443,11 +443,7 @@ export class CookieMessage extends data.Component<CookieMessageProps, CookieMess
     }
 }
 
-export interface IBannerProps extends ISettingsProps {
-    close: () => void;
-}
-
-export class WindowsStoreBanner extends data.Component<IBannerProps, {}> {
+export class WindowsStoreBanner extends data.Component<ISettingsProps, {}> {
     renderCore() {
         return (
             <div id="windowsStoreBanner" className="ui attached message">
@@ -458,7 +454,7 @@ export class WindowsStoreBanner extends data.Component<IBannerProps, {}> {
                     </span>
                     {lf("Get the app from the Windows Store")}
                 </sui.Link>
-                <div className="close" tabIndex={0} onClick={() => {pxt.tickEvent("banner.userClosed"); this.props.close()}}>
+                <div className="close" tabIndex={0} onClick={() => {pxt.tickEvent("banner.userClosed"); this.props.parent.hideBanner()}}>
                     <sui.Icon icon="close" />
                 </div>
             </div>
