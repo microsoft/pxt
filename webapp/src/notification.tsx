@@ -1,15 +1,16 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
+import * as core from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-export class WindowsStoreBanner extends data.Component<ISettingsProps, {}> {
+export class NotificationBanner extends data.Component<ISettingsProps, {}> {
     iconImage: HTMLImageElement;
 
     renderCore() {
         return (
-            <div id="windowsStoreBanner" className="ui attached message">
+            <div id="notificationBanner" className="ui attached message">
                 <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={pxt.appTarget.appTheme.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
                     <span>
                         <img className="bannerIcon" ref={e => this.iconImage = e}>

@@ -1770,7 +1770,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             hideMenuBar ? 'hideMenuBar' : '',
-            showWindowsStoreBanner ? "showWindowsStoreBanner" : "",
+            (showWindowsStoreBanner || showExperimentalBanner) ? "showNotificationBanner" : "",
             !showEditorToolbar ? 'hideEditorToolbar' : '',
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
             'full-abs',
@@ -1783,7 +1783,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
-                        {showWindowsStoreBanner ? <notification.WindowsStoreBanner parent={this} /> : undefined}
+                        {showWindowsStoreBanner ? <notification.NotificationBanner parent={this} /> : undefined}
                         <container.MainMenu parent={this} />
                     </header>}
                 {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">

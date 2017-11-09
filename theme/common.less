@@ -356,25 +356,25 @@ div.simframe > iframe {
 }
 
 /*******************************
-      Windows store banner
+      Notification banner
 *******************************/
 /* Experimental banner */
-#experimentalBanner, #windowsStoreBanner {
+#experimentalBanner, #notificationBanner {
     z-index: 1000;
 }
 
-.showWindowsStoreBanner #filelist,
-.showWindowsStoreBanner #maineditor,
-.showWindowsStoreBanner #sidedocs {
+.showNotificationBanner #filelist,
+.showNotificationBanner #maineditor,
+.showNotificationBanner #sidedocs {
     top: calc(@mainMenuHeight + @bannerHeight);
 }
 
-.showWindowsStoreBanner #mainmenu {
+.showNotificationBanner #mainmenu {
     top: @bannerHeight;
     margin: 0;
 }
 
-#windowsStoreBanner {
+#notificationBanner {
     padding: 0;
     background-color: @bannerBackgroundColor;
     color: @bannerContrastColor;
@@ -417,7 +417,7 @@ div.simframe > iframe {
     }
 }
 
-#windowsStoreBanner
+#notificationBanner
     .hideMenuBar #filelist,
     .hideMenuBar #maineditor,
     .hideMenuBar #sidedocs {
