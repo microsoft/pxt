@@ -704,7 +704,7 @@ ${hex.hexPrelude()}
         let b = mkProcessorFile(target)
         b.emit(src);
 
-        src = b.getSource(!peepDbg, bin.res.times, target.flashEnd);
+        src = b.getSource(!peepDbg, bin.res.times, bin.options.countAllStmts ? 10000000 : target.flashEnd);
 
         throwAssemblerErrors(b)
 

@@ -40,12 +40,14 @@ ${hex.hexPrelude()}
         bin.usedClassInfos.forEach(info => {
             vmsource += vtableToVM(info)
         })
+        vmsource += "_js_end:\n"
         U.iterMap(bin.hexlits, (k, v) => {
             vmsource += snip.hex_literal(v, k)
         })
         U.iterMap(bin.strings, (k, v) => {
             vmsource += snip.string_literal(v, k)
         })
+        vmsource += "_program_end:\n"
         vmsource += "\n; The end.\n"
         bin.writeFile(BINARY_ASM, vmsource)
 
