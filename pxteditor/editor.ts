@@ -56,7 +56,7 @@ namespace pxt.editor {
         highContrast?: boolean;
 
         home?: boolean;
-        hideBanner?: boolean;
+        notificationBannerVisible?: boolean;
     }
 
     export interface EditorState {

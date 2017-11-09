@@ -5,11 +5,28 @@ import * as core from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-export class NotificationBanner extends data.Component<ISettingsProps, {}> {
-    iconImage: HTMLImageElement;
+export interface NotificationBannerProps extends ISettingsProps {
+    hide?: () => void;
+    show?: () => void;
+    visible?: boolean;
+}
+
+//TODO put this somewhere
+//pxt.storage.setLocal("lastBannerClosedTime", Util.nowSeconds().toString());
+
+export class NotificationBanner extends data.Component<NotificationBannerProps, {}> {
+    iconImage: HTMLElement;
+
+    constructor(props: NotificationBannerProps) {
+        super(props);
+    }
 
     renderCore() {
         return (
+            this.props.visible ?
+            <div id="notificationBanner" className="ui attached message">YOU CAN SEE ME </div> :
+            <div id="notificationBanner" className="ui attached message">I AM INVISIBLE</div>
+            /**
             <div id="notificationBanner" className="ui attached message">
                 <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={pxt.appTarget.appTheme.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
                     <span>
@@ -22,6 +39,7 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
                     <sui.Icon icon="close" />
                 </div>
             </div>
+            **/
         );
     }
 
@@ -29,6 +47,7 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         if (this.iconImage) {
             this.iconImage.setAttribute("src", "https://assets.windowsphone.com/13484911-a6ab-4170-8b7e-795c1e8b4165/English_get_L_InvariantCulture_Default.png");
         }
+        setTimeout(() => {console.log("hyar"); this.props.show()}, 10000);
     }
 }
 

@@ -1692,10 +1692,12 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
+    showBanner() {
+        this.setState({ notificationBannerVisible: true });
+    }
+
     hideBanner() {
-        pxt.tickEvent("banner.hidden");
-        pxt.storage.setLocal("lastBannerClosedTime", Util.nowSeconds().toString());
-        this.setState({ hideBanner: true });
+        this.setState({ notificationBannerVisible: false });
     }
 
     timeToShowBanner() {
@@ -1741,7 +1743,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
-        //const showWindowsStoreBanner = !pxt.winrt.isWinRT() && isWindows10 && Cloud.isOnline() && pxt.appTarget.appTheme.windowsStoreLink && !this.state.hideBanner && this.timeToShowBanner();
+        //TODO: shouldn't consider notificationBannerVisible
+        //const showWindowsStoreBanner = !pxt.winrt.isWinRT() && isWindows10 && Cloud.isOnline() && pxt.appTarget.appTheme.windowsStoreLink && !this.state.bannerVisible && this.timeToShowBanner();
         const showWindowsStoreBanner = true;
         /**
         if (showWindowsStoreBanner) {
@@ -1770,7 +1773,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             hideMenuBar ? 'hideMenuBar' : '',
-            (showWindowsStoreBanner || showExperimentalBanner) ? "showNotificationBanner" : "",
+            (this.state.notificationBannerVisible) ? "notificationBannerVisible" : "",
             !showEditorToolbar ? 'hideEditorToolbar' : '',
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
             'full-abs',
@@ -1783,7 +1786,12 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
-                        {showWindowsStoreBanner ? <notification.NotificationBanner parent={this} /> : undefined}
+                        {showWindowsStoreBanner ? <notification.NotificationBanner 
+                            parent={this}
+                            hide={this.hideBanner.bind(this)}
+                            show={this.showBanner.bind(this)}
+                            visible={this.state.notificationBannerVisible} /> :
+                        undefined}
                         <container.MainMenu parent={this} />
                     </header>}
                 {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
