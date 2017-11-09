@@ -53,9 +53,13 @@ added by \MC.
 
 \subsection{Compile time of Static TypeScript}
 
-% measuring compile time
-% - do this in Node?
-% - do this in browser?
+%mmoskal [10:10 AM] 
+%`pxt checkdocs --snippets --re perf --stats`
+% [10:11] 
+% I compile empty sample first twice, to reduce JIT costs
+% [10:12] 
+% also, the first "compile prep" is slightly more costly, since it parses a hex file
+
 \begin{itemize}
 \item Time taken to compile and link simple program in browser (can we use some existing apps 
       here as case studies? E.g. Smiley emoji and fireflies?
