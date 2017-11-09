@@ -1740,11 +1740,14 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
-        const showWindowsStoreBanner = !pxt.winrt.isWinRT() && isWindows10 && Cloud.isOnline() && pxt.appTarget.appTheme.windowsStoreLink && !this.state.hideBanner && this.timeToShowBanner();
+        //const showWindowsStoreBanner = !pxt.winrt.isWinRT() && isWindows10 && Cloud.isOnline() && pxt.appTarget.appTheme.windowsStoreLink && !this.state.hideBanner && this.timeToShowBanner();
+        const showWindowsStoreBanner = true;
+        /**
         if (showWindowsStoreBanner) {
             // Banner should hide after 30s if not dismissed by user
             setTimeout(() => {pxt.tickEvent("banner.automaticallyClosed"); this.hideBanner()}, 30000);
         }
+        **/
         const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
         // cookie consent

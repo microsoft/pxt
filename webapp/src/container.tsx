@@ -444,13 +444,13 @@ export class CookieMessage extends data.Component<CookieMessageProps, CookieMess
 }
 
 export class WindowsStoreBanner extends data.Component<ISettingsProps, {}> {
+    iconSpan: HTMLSpanElement;
+
     renderCore() {
         return (
             <div id="windowsStoreBanner" className="ui attached message">
                 <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={pxt.appTarget.appTheme.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
-                    <span>
-                        <img src="https://assets.windowsphone.com/13484911-a6ab-4170-8b7e-795c1e8b4165/English_get_L_InvariantCulture_Default.png"
-                        alt={lf("Windows Store logo")} />
+                    <span ref={e => this.iconSpan = e}>
                     </span>
                     {lf("Get the app from the Windows Store")}
                 </sui.Link>
@@ -459,6 +459,12 @@ export class WindowsStoreBanner extends data.Component<ISettingsProps, {}> {
                 </div>
             </div>
         );
+    }
+
+    componentDidMount() {
+        if (this.iconSpan) {
+            this.iconSpan.setAttribute("style", "background-image: url(https://assets.windowsphone.com/13484911-a6ab-4170-8b7e-795c1e8b4165/English_get_L_InvariantCulture_Default.png);");
+        }
     }
 }
 
