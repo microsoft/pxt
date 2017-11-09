@@ -232,6 +232,7 @@
 
 @tutorialSegmentBackground: #f8f8f9;
 @tutorialSegmentColor: @textColor;
+
 /*-------------------
     Banner
 -------------------*/

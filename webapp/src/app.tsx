@@ -44,6 +44,7 @@ import * as codecard from "./codecard"
 import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as electron from "./electron";
+import * as notification from "./notification";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 type IAppProps = pxt.editor.IAppProps;
@@ -1748,7 +1749,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             setTimeout(() => {pxt.tickEvent("banner.automaticallyClosed"); this.hideBanner()}, 30000);
         }
         **/
-        const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
 
         // cookie consent
         const cookieKey = "cookieconsent"
@@ -1779,11 +1779,11 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
         return (
             <div id='root' className={rootClasses}>
-                {showExperimentalBanner ? <container.ExperimentalBanner parent={this} /> : undefined}
+                {showExperimentalBanner ? <notification.ExperimentalBanner parent={this} /> : undefined}
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
-                        {showWindowsStoreBanner ? <container.WindowsStoreBanner parent={this} /> : undefined}
+                        {showWindowsStoreBanner ? <notification.WindowsStoreBanner parent={this} /> : undefined}
                         <container.MainMenu parent={this} />
                     </header>}
                 {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">

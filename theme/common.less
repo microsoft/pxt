@@ -382,16 +382,11 @@ div.simframe > iframe {
     font-family: "Segoe UI", "Helvetica Neue", sans-serif;
     height: @bannerHeight;
     margin-top: 0;
-    img {
-        height: calc(@bannerHeight - 0.5rem);
-        margin: 0 0.5rem 0 0.5rem;
-    }
     a.link {
         text-decoration: none;
         color: @bannerContrastColor;
         height: 100%;
         float: left;
-
         &:hover, &:focus {
             text-decoration: none;
             color: @linkColor;
@@ -401,6 +396,13 @@ div.simframe > iframe {
             display: flex;
             align-items: center;
             float: left;
+        }
+        .bannerIcon {
+            background-size: 100%;
+            @iconHeight: @bannerHeight - 0.7rem;
+            height: @iconHeight;
+            width: @iconHeight * 2.6;
+            margin: 0 0.5rem 0 0.5rem;
         }
     }
     .bold {
