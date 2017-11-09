@@ -28,23 +28,7 @@ the Intel HEX format does not have this property, which results in extra complex
 in the DAPlink code and fragility with respect to operating system differences with
 respect to FAT. 
 
-% A UF2 file consists of 512 byte blocks. Each block starts with a 32 byte header, 
-% followed by data, and a final magic number. 
-% All fields, except for data, are 32 bit unsigned little endian integers.
-%
-% Offset	Size	Value
-% 0	4	First magic number, 0x0A324655 ("UF2\n")
-% 4	4	Second magic number, 0x9E5D5157
-% 8	4	Flags
-% 12	4	Address in flash where the data should be written
-% 16	4	Number of bytes used in data (often 256)
-% 20	4	Sequential block number; starts at 0
-% 24	4	Total number of blocks in file
-% 28	4	File size or reserved (write as zero)
-% 32	476	Data, padded with zeros
-% 508	4	Final magic number, 0x0AB16F30
-
-For these reasons, we designed the USB Flashing Format (UF2). It consists of 512 byte blocks, where each block contains:
+For these reasons, we designed the Flashing Format (\UF). \ consists of 512 byte blocks, where each block contains:
 \begin{itemize}
 \item two ``magic'' numbers at the beginning and one at the end of the block,
 to heuristically distinguish it from any other blocks that the OS writes;
@@ -61,10 +45,10 @@ The format is designed specifically to deal with the following problems:
 \item OS writes of partial blocks (first/final part of a block), possibly for metadata detection or search indexing.
 \end{itemize}
 
-The first magic number is \texttt{UF2}, making easy to identify UF2 blocks in a text editor.
+The first magic number is \texttt{\UFN}, making easy to identify \UF blocks in a text editor.
 The second and final magic numbers were randomly selected.
 The magic number at the end of the block helps to mitigate partial block writes.
-The UF2 header is padded to 32 bytes, as hex editors commonly use 16 or 32 bytes as line length. 
+The \UF header is padded to 32 bytes, as hex editors commonly use 16 or 32 bytes as line length. 
 This way, the data payload is aligned to line start. 32 bit integers are used for all fields so that 
 large flash sizes can be supported in future, as well as for simplicity.
 Little endian is used, as most microcontrollers are little endian. 
@@ -78,7 +62,7 @@ In the wild these devices always almost report exactly 512, and some
 operating systems do not support other values.
 
 Target chips usually can only write their flash in chunks larger than page size. On the SAMD21, pages are 64 bytes 
-but need to be erased four pages at once, so the effective page size is 256 bytes. Therefore, UF2 for SAMD21 uses 
+but need to be erased four pages at once, so the effective page size is 256 bytes. Therefore, \UF for SAMD21 uses 
 only 256 out of the 476 byte payload, so every block can written to flash straight away. This is still more 
 efficient than HEX (which stores every byte as two ASCII characters and adds 20-30\% overhead). It also doesn’t 
 matter - the file is transferred at USB full speed (around 1MB per second), and so the limiting factor is writing 
