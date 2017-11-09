@@ -172,13 +172,16 @@ the program text of the grey blocks when converting from Blockly back to TypeScr
 \subsection{Browser compilation}
 
 \MC first invokes the TypeScript language service to perform type inference and type checking on the 
-user's program, using the TypeScript declaration files for the device runtime.   It then checks that the
-user's program is within the STS subset through additional syntactic and type checks over the adorned
+user's program, the device runtime writen in TypeScript, as well as the TypeScript declarations
+corresponding to the C++ device runtime. It then checks that the
+combined TypeScript program is within the STS subset through additional syntactic and type checks over the adorned
 abstract syntax tree (AST) produced by the language service (detailed in Section XYZ).  Assuming all the
-above checks pass, \MC then performs tree shaking and compilation of the AST of the user code and
-device runtime to an intermediate representation (IR) that makes explicit: labelled control flow among a
-sequence of instructions with conditional and unconditional jumps; heap cells; field accesses; store operations,
+above checks pass, \MC then performs tree shaking of the AST to remove unused TypeScript functions.
+The reduced AST then is compiled to an intermediate representation (IR) that makes explicit: labelled control 
+flow among a sequence of instructions with conditional and unconditional jumps; heap cells; field accesses; store operations,
 and reference counting.
+
+\flameon{MICHAL: can you please add a little more about the design of IR and the code generation - this PLDI, after all.}
 
 There are three backends for code generation from the IR. The first backend generates JavaScript,
 for execution against the simulator runtime.  A second backend generates assembler, parameterized by a

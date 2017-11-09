@@ -82,11 +82,13 @@ are not related by STS's subtype relation.
 
 \subsection{Treatment of Classes and Methods}
 
-TypeScript introduces two (object) types for each class declaration: 
-(1) a constructor function type by which instances of a class
+TypeScript introduces two (object) types for each class declaration:
+\begin{itemize}
+\item a constructor function type by which instances of a class
 are created (and static properties accessed), as seen in the previous section; 
-(2) a class type describing the instances of the class, which is a record type, having
-only (member) properties. 
+\item a class type describing the instances of the class, which is a record type, but
+with public/private/protected modifiers on its properties (in a record type, all properties are public).
+\end{itemize}
 TypeScript's treatment of class types as record types
 means that it is possible to assign to a property representing a method, 
 destroying the class abstraction that ties together code and data. This also 
