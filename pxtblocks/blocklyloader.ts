@@ -45,8 +45,6 @@ namespace pxt.blocks {
             defaultValue: "list"
         }
     }
-    export const advancedTitle = Util.lf("{id:category}Advanced");
-    export const addPackageTitle = Util.lf("{id:category}Extensions");
 
     // Matches arrays and tuple types
     const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
@@ -1204,6 +1202,9 @@ namespace pxt.blocks {
                 if (b) shadow.innerHTML = b.innerHTML;
             })
         }
+
+        const advancedTitle = Util.lf("{id:category}Advanced");
+        const addPackageTitle = Util.lf("{id:category}Extensions");
 
         // Add the "Advanced" category
         if (showAdvanced && tb && showCategories !== CategoryMode.None) {
