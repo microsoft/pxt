@@ -45,7 +45,7 @@ infer a more precise type. STS uses the \emph{--noImplicitAny} option to direct 
 whenever it makes an (implicit) assignment of the Any type.  STS also checks for an explicit use of the Any type in
 the program and raises an error. Many JavaScript constructs can only be typed with the Any type, including: prototype lookup,
 the \emph{eval} and \emph{with} statements, a \emph{this} reference outside of class context, an index access on non-array object, and
-reflection on Function/Object objects. Therefore, these constructs are not in STS. For good measure,
+reflection on Function/Object objects. Therefore, these constructs are not in STS.
 STS also excludes TypeScript's union and intersection types.
 
 \subsection{Partitioning of Object Types}
@@ -94,7 +94,8 @@ means that it is possible to assign to a property representing a method,
 destroying the class abstraction that ties together code and data. This also 
 eliminates the possibility of using a shared vtable implementation for classes.
 
-STS adds a new partition to represent class types, separate from record types, describing the instances of classes.
+STS adds a new partition to represent class types, separate from record types, 
+describing the instances of classes. \flameon{CLASS DECLARATION}
 Classic nominal subtyping is applied to class types, with function subtyping used to relate methods with 
 the same name in subclass and superclass, per TypeScript, just as record types are treated.
 Furthermore, STS permits a cast from a class type

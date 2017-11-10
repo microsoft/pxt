@@ -20,8 +20,8 @@ The \MC web app encapsulates all the components needed to deliver a programming 
 for microcontrollers, free of the need for a C++ compiler for the compilation of user code.
 The web app is written in TypeScript and incorporates the TypeScript compiler and 
 language service as well. 
-The app is built from a target (e.g., \emph{\dbhref{https://github.com/microsoft/pxt-microbit}{pxt-microbit}})
-which extends the core framework (\emph{\dbhref{https://github.com/microsoft/pxt}{pxt}}).
+The app is built from a \MC ``target'' (\emph{\dbhref{https://github.com/microsoft/pxt-microbit}{pxt-microbit}})
+which extends the \MC framework (\emph{\dbhref{https://github.com/microsoft/pxt}{pxt}}).
 The remaining subsections describe the parts of Figure~\ref{fig:makecode}, 
 which shows the high-level components of the web app.
 
@@ -35,7 +35,7 @@ other assets) so that the web app can function when the browser is offline. Addi
 components may be authored in STS, which allows the device runtime to be updated without the
 use of C++, and permits components of the device runtime to be shared by both the device
 and simulator runtimes. The ability to author the device runtime in both STS and C++ is
-a unique aspect of \MC's design.
+a unique aspect of \MCN's design.
 
 Whether runtime components are authored in C++ or STS, all runtime APIs are exposed as fully-typed
 TypeScript definitions. A fully-typed runtime improves the end-user experience 
@@ -45,7 +45,7 @@ compiler to infer types for (unannotated) user JavaScript programs, as in Figure
 \MC supports a simple foreign function interface from TypeScript to C++ based on namespaces,
 enumerations, functions, and basic type mappings. \MC uses top-level namespaces (in both C++ and
 TypeScript) to organize sets of related functions.  Preceding a C++ namespace, enumeration, or function
-with \emph{//\%} indicates that \MC should map the C++ construct to TypeScript.
+with a comment starting with \emph{//\%} indicates that \MC should map the C++ construct to TypeScript.
 Within the \emph{//\%} comment, attributes are used to define the visual appearance for that
 language construct, such as for the LED namespace in the C++ micro:bit target:
 
@@ -102,7 +102,7 @@ function toggle(x: number, y: number): void {
 }
 \end{lstlisting}
 To the end user, the toggle function appears as just another runtime function available
-in the led namespace. 
+in the LED namespace. 
 
 %Here is the shim file generated from C++ micro:bit device runtime:
 %\dbhref{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/shims.d.ts}{pxt-microbit/libs/core/shims.d.ts}.
@@ -135,7 +135,7 @@ Blockly metadata to expose an API as a visual block.
 Additional attribute definitions can provide text descriptions for the block, project function
 parameters (thus simplifying the API available via Blockly), and describe other visual/functional
 characteristics of the block.  \MC uses the types of function parameters to select appropriate
-Blockly widgets.  For example, an enumeration is represented by a dropdown menu in blocks.
+Blockly widgets.  For example, an enumeration is represented by a dropdown menu.
 %For more information on the block-specific annotations, see 
 %\dburl{https://makecode.com/defining-blocks}. 
 \MCN's support for Blockly means that for the common case, the target developer doesn't need
@@ -155,9 +155,8 @@ left of the programming area. The Blockly and Monaco toolboxes show the same set
 help in transition from coding with blocks to coding with JavaScript. More advanced TypeScript
 APIs can be discovered in Monaco via code intellisense.
 
-The Blockly program representation is compiled to Static TypeScript in a syntax-directed manner
-(see \emph{\dburl{https://github.com/Microsoft/pxt/tree/master/pxtblocks}{pxtblocks}}). A key issue 
-is the need for type inference on the Blockly representation, as variables generally are defined and used without
+\MC compiles the Blockly program representation to Static TypeScript in a syntax-directed manner.
+A key issue is the need for type inference on the Blockly representation, as variables generally are defined and used without
 being declared in Blockly. \MC uses a simple unification type inference to assign a
 unique type to each variable.  
 % this may not be possible:
@@ -174,8 +173,7 @@ the program text of the grey blocks when converting from Blockly back to TypeScr
 \MC first invokes the TypeScript language service to perform type inference and type checking on the 
 user's program, the device runtime writen in TypeScript, as well as the TypeScript declarations
 corresponding to the C++ device runtime. It then checks that the
-combined TypeScript program is within the STS subset through additional syntactic and type checks over the adorned
-abstract syntax tree (AST) produced by the language service (detailed in Section XYZ).  Assuming all the
+combined TypeScript program is within the STS subset through additional syntactic and type checks over the typed AST (detailed in Section~\ref{sec:sts}).  Assuming all the
 above checks pass, \MC then performs tree shaking of the AST to remove unused TypeScript functions.
 The reduced AST then is compiled to an intermediate representation (IR) that makes explicit: labelled control 
 flow among a sequence of instructions with conditional and unconditional jumps; heap cells; field accesses; store operations,
@@ -187,8 +185,10 @@ There are three backends for code generation from the IR. The first backend gene
 for execution against the simulator runtime.  A second backend generates assembler, parameterized by a
 processor description.  Currently supported processors include ARM's Cortex class (Thumb instructions)
 and Atmel's Atmega class (AVR instructions). A separate assembler, also parameterized by an instruction
-encoder/decoder, generates machine code and resolves runtime references, producing a final binary executable
-in the \UF format (Section~\ref{sec:uf2}). A third backend generates bytecode instructions.
+encoder/decoder, generates machine code and resolves runtime references, producing a final binary executable. A third backend generates bytecode instructions.
+\MC can encode the resulting binary in a number of formats, 
+including Intel's HEX format and the \UF format, introduced in Section~\ref{sec:uf2}.
+
 %The compiler chain
 %can be found at \emph{\dbhref{https://github.com/Microsoft/pxt/tree/master/pxtcompiler/emitter}{pxtcompiler/emitter}} and 
 %\emph{\dbhref{https://github.com/Microsoft/pxt/tree/master/pxtlib/emitter}{pxtlib/emitter}}.
