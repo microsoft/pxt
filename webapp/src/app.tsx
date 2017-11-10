@@ -1700,13 +1700,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         this.setState({ notificationBannerVisible: false });
     }
 
-    timeToShowBanner() {
-        const lastBannerClosedTime = parseInt(pxt.storage.getLocal("lastBannerClosedTime") || "0");
-        const now = Util.nowSeconds();
-        //604800 = seconds in a week
-        return (now - lastBannerClosedTime) > 604800;
-    }
-
     renderCore() {
         theEditor = this;
 
@@ -1744,14 +1737,9 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
         //TODO: shouldn't consider notificationBannerVisible
+        //TODO: shouldn't consider hibernation time
         //const showWindowsStoreBanner = !pxt.winrt.isWinRT() && isWindows10 && Cloud.isOnline() && pxt.appTarget.appTheme.windowsStoreLink && !this.state.bannerVisible && this.timeToShowBanner();
         const showWindowsStoreBanner = true;
-        /**
-        if (showWindowsStoreBanner) {
-            // Banner should hide after 30s if not dismissed by user
-            setTimeout(() => {pxt.tickEvent("banner.automaticallyClosed"); this.hideBanner()}, 30000);
-        }
-        **/
 
         // cookie consent
         const cookieKey = "cookieconsent"
@@ -1786,7 +1774,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
-                        {showWindowsStoreBanner ? <notification.NotificationBanner 
+                        {showWindowsStoreBanner ? <notification.NotificationBanner
                             parent={this}
                             hide={this.hideBanner.bind(this)}
                             show={this.showBanner.bind(this)}

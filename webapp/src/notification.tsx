@@ -9,45 +9,71 @@ export interface NotificationBannerProps extends ISettingsProps {
     hide?: () => void;
     show?: () => void;
     visible?: boolean;
+    delayTime?: number;
+    displayTime?: number;
+    hibernationTime?: number;
+    bannerTheme?: string;
+    iconUrl?: string;
 }
 
-//TODO put this somewhere
-//pxt.storage.setLocal("lastBannerClosedTime", Util.nowSeconds().toString());
-
 export class NotificationBanner extends data.Component<NotificationBannerProps, {}> {
-    iconImage: HTMLElement;
+    delayTime: number;
+    displayTime: number;
+    hibernationDone: boolean;
+    bannerTheme: string;
+
+    hibernationIsDone() {
+        const lastBannerClosedTime = parseInt(pxt.storage.getLocal("lastBannerClosedTime") || "0");
+        const now = Util.nowSeconds();
+        //604800 = seconds in a week
+        //TODO
+        //return (now - lastBannerClosedTime) > 604800;
+        return (now - lastBannerClosedTime) > 10;
+    }
+
+    show() {
+        pxt.tickEvent("notificationBanner.show");
+        this.props.show()
+    }
+
+    hide(mode: string) {
+        pxt.tickEvent("notificationBanner." + mode + "Close");
+        pxt.storage.setLocal("lastBannerClosedTime", Util.nowSeconds().toString());
+        this.props.hide();
+    }
+
+    //TODO need shouldComponentUpdate?
 
     constructor(props: NotificationBannerProps) {
         super(props);
+        this.delayTime = this.props.delayTime || 0;
+        this.displayTime = this.props.displayTime;
+        this.hibernationDone = this.hibernationIsDone();
+        this.bannerTheme = this.props.bannerTheme || "default";
+
+        setTimeout(() => this.show(), this.delayTime);
+        if (this.displayTime) {
+            setTimeout(() => this.hide("automatic"), this.delayTime + this.displayTime);
+        }
     }
 
     renderCore() {
         return (
-            this.props.visible ?
-            <div id="notificationBanner" className="ui attached message">YOU CAN SEE ME </div> :
-            <div id="notificationBanner" className="ui attached message">I AM INVISIBLE</div>
-            /**
-            <div id="notificationBanner" className="ui attached message">
+            (this.props.visible  && this.hibernationDone) ?
+            <div id="notificationBanner" className={`ui attached ${this.bannerTheme} message`}>
                 <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={pxt.appTarget.appTheme.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
                     <span>
-                        <img className="bannerIcon" ref={e => this.iconImage = e}>
+                        <img className="bannerIcon" src="https://assets.windowsphone.com/13484911-a6ab-4170-8b7e-795c1e8b4165/English_get_L_InvariantCulture_Default.png">
                         </img>
                     </span>
                     {lf("Get the app from the Windows Store")}
                 </sui.Link>
-                <div className="close" tabIndex={0} onClick={() => {pxt.tickEvent("banner.userClosed"); this.props.parent.hideBanner()}}>
+                <div className="close" tabIndex={0} onClick={() => this.hide("manual")}>
                     <sui.Icon icon="close" />
                 </div>
-            </div>
-            **/
+            </div> :
+            <div></div>
         );
-    }
-
-    componentDidMount() {
-        if (this.iconImage) {
-            this.iconImage.setAttribute("src", "https://assets.windowsphone.com/13484911-a6ab-4170-8b7e-795c1e8b4165/English_get_L_InvariantCulture_Default.png");
-        }
-        setTimeout(() => {console.log("hyar"); this.props.show()}, 10000);
     }
 }
 

@@ -376,20 +376,15 @@ div.simframe > iframe {
 
 #notificationBanner {
     padding: 0;
-    background-color: @bannerBackgroundColor;
-    color: @bannerContrastColor;
-    outline: 2px solid @bannerContrastColor;
     font-family: "Segoe UI", "Helvetica Neue", sans-serif;
     height: @bannerHeight;
     margin-top: 0;
     a.link {
         text-decoration: none;
-        color: @bannerContrastColor;
         height: 100%;
         float: left;
         &:hover, &:focus {
             text-decoration: none;
-            color: @linkColor;
         }
         span {
             height: 100%;
@@ -412,6 +407,24 @@ div.simframe > iframe {
         cursor: pointer;
         &:hover, &:focus {
             outline: none;
+            color: darken(@bannerContrastColor, 25%);
+        }
+    }
+}
+
+#notificationBanner.default {
+    background-color: @bannerBackgroundColor;
+    color: @bannerContrastColor;
+    outline: 2px solid @bannerContrastColor;
+    a.link {
+        color: @bannerContrastColor;
+        &:hover, &:focus {
+            text-decoration: none;
+            color: @linkColor;
+        }
+    }
+    .close {
+        &:hover, &:focus {
             color: darken(@bannerContrastColor, 25%);
         }
     }
