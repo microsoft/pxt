@@ -170,7 +170,7 @@ export class ProjectView
         }
 
         let f = this.editorFile
-        if (f && f.epkg.getTopHeader()) {
+        if (f && f.epkg.getTopHeader() && this.editor.hasHistory()) {
             let n: FileHistoryEntry = {
                 id: f.epkg.getTopHeader().id,
                 name: f.getName(),
