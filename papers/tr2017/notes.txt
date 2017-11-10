@@ -13,5 +13,5 @@
 - what can we say at a high-level about numbers
   - sessions across all devices
   - countries, browsers, operatings systems
-
+- James to work on codal.tex to make examples align with Figure 1
 
