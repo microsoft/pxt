@@ -1736,10 +1736,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
-        //TODO: shouldn't consider notificationBannerVisible
-        //TODO: shouldn't consider hibernation time
-        //const showWindowsStoreBanner = !pxt.winrt.isWinRT() && isWindows10 && Cloud.isOnline() && pxt.appTarget.appTheme.windowsStoreLink && !this.state.bannerVisible && this.timeToShowBanner();
-        const showWindowsStoreBanner = true;
+        const showWindowsStoreBanner = !pxt.winrt.isWinRT() && isWindows10 && Cloud.isOnline() && pxt.appTarget.appTheme.windowsStoreLink && !showExperimentalBanner;
 
         // cookie consent
         const cookieKey = "cookieconsent"
@@ -1770,11 +1767,11 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
         return (
             <div id='root' className={rootClasses}>
-                {showExperimentalBanner ? <notification.ExperimentalBanner parent={this} /> : undefined}
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
-                        {showWindowsStoreBanner ? <notification.WindowsStoreBanner parent={this} /> : undefined }
+                        {showExperimentalBanner ? <notification.ExperimentalBanner parent={this} /> : undefined}
+                        {showWindowsStoreBanner ? <notification.WindowsStoreBanner parent={this} /> : undefined}
                         <container.MainMenu parent={this} />
                     </header>}
                 {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
