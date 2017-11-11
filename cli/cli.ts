@@ -2057,9 +2057,10 @@ class SnippetHost implements pxt.Host {
         if (module.id == "this") {
             if (filename == "pxt.json") {
                 return JSON.stringify(<pxt.PackageConfig>{
-                    "name": this.name,
+                    "name": this.name.replace(/[^a-zA-z0-9]/g, ''),
                     "dependencies": this.dependencies(),
                     "description": "",
+                    "public": true,
                     "yotta": {
                         "ignoreConflicts": true
                     },
@@ -2335,7 +2336,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand) {
 
 const defaultFiles: Map<string> = {
     "tsconfig.json":
-    `{
+        `{
     "compilerOptions": {
         "target": "es5",
         "noImplicitAny": true,
@@ -2377,7 +2378,7 @@ test:
 `,
 
     ".gitignore":
-    `built
+        `built
 node_modules
 yotta_modules
 yotta_targets
@@ -2386,7 +2387,7 @@ pxt_modules
 *.tgz
 `,
     ".vscode/settings.json":
-    `{
+        `{
     "editor.formatOnType": true,
     "files.autoSave": "afterDelay",
     "files.watcherExclude": {
@@ -2410,7 +2411,7 @@ pxt_modules
     }
 }`,
     ".vscode/tasks.json":
-    `
+        `
 // A task runner that calls the PXT compiler and
 {
     "version": "0.1.0",
@@ -3340,11 +3341,20 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             if (resp.outfiles && snippet.file) {
                 const dir = snippet.file.replace(/\.ts$/, '');
                 nodeutil.mkdirP(dir);
+                nodeutil.mkdirP(path.join(dir, "built"));
                 Object.keys(resp.outfiles).forEach(outfile => {
-                    const ofn = path.join(dir, outfile);
+                    const ofn = path.join(dir, "built", outfile);
                     pxt.debug(`writing ${ofn}`);
                     fs.writeFileSync(ofn, resp.outfiles[outfile], 'utf8')
                 })
+                pkg.filesToBePublishedAsync()
+                    .then(files => {
+                        Object.keys(files).forEach(f => {
+                            const fn = path.join(dir, f);
+                            pxt.debug(`writing ${fn}`);
+                            fs.writeFileSync(fn, files[f], 'utf8');
+                        })
+                    })
             }
             if (resp.success) {
                 if (/^block/.test(snippet.type)) {
