@@ -379,35 +379,35 @@ div.simframe > iframe {
     font-family: "Segoe UI", "Helvetica Neue", sans-serif;
     height: @bannerHeight;
     margin-top: 0;
-    a.link {
-        text-decoration: none;
-        height: 100%;
-        float: left;
-        &:hover, &:focus {
-            text-decoration: none;
-        }
-        span {
-            height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    .bannerLeft {
+        display: block;
+        .content {
             display: flex;
+            flex-direction: row;
             align-items: center;
-            float: left;
+            line-height: 100%;
+            > * {
+                margin: 0 0.25rem 0 0.25rem;
+            }
+            img {
+                height: @bannerHeight - 0.5rem;
+            }
+            a.link {
+                text-decoration: none;
+            }
         }
-        img {
-            background-size: 100%;
-            height: @bannerHeight - 0.5rem;
-            margin: 0 0.5rem 0 0.5rem;
-        }
-    }
-    .bold {
-        font-weight: bold;
     }
     .close {
-        float: right;
-        line-height: @bannerHeight;
-        cursor: pointer;
+        display: flex;
+        flex-direction: row-reverse;
+        flex-grow: 1;
+        line-height: 100%;
         &:hover, &:focus {
-            outline: none;
             color: darken(@bannerContrastColor, 25%);
+            cursor: pointer;
         }
     }
 }
@@ -416,16 +416,13 @@ div.simframe > iframe {
     background-color: @bannerBackgroundColor;
     color: @bannerContrastColor;
     outline: 2px solid @bannerContrastColor;
-    a.link {
-        color: @bannerContrastColor;
-        &:hover, &:focus {
-            text-decoration: none;
-            color: @linkColor;
-        }
-    }
-    .close {
-        &:hover, &:focus {
-            color: darken(@bannerContrastColor, 25%);
+    .content {
+        a.link {
+            color: @bannerContrastColor;
+            &:hover, &:focus {
+                text-decoration: none;
+                color: @linkColor;
+            }
         }
     }
 }
