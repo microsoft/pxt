@@ -1,9 +1,21 @@
 \begin{abstract}
-    (Anything) The use of microcontrollers has
-    exploded across all major segments (IOT???).  More on this. 
-    (Anyone) Typically, programming microcontroller-based devices is the reallm of the pro developer. 
-    But over the last decade, microcontroller-based devices have become
-    central to efforts in making and education. 
-    (Anywhere) XYZ
-    (\MC, \CO), with Blockly and Static TypeScript.
+    Over the last decade, microcontrollers, the workhorses of embedded systems, have become
+    central to efforts in making and education.  Microcontroller-based devices are small,
+    low-power, inexpensive and programmable, which accounts for their huge growth. Typically,
+    one needs a professional IDE and many programming skills to develop for such devices. 
+    
+    We present a new platform that simplifies the programming of microcontroller-based devices,
+    to make it easy for anyone to participate in creating with microcontrollers from most any
+    computer with a modern web browser. The platform supports visual block-based programming,
+    and JavaScript in a web app with editors, simulator and complete compile chain that compiles 
+    user code to binary in the browser. Static TypeScript, a subset of the TypeScript languge, 
+    mediates between worlds of JavaScript and the C++ runtime for the microcontroller, 
+    which is precompiled and cached in the web app. Both the JavaScript and C++ runtimes support
+    an event-based programming model with support for non-preemptive fibers provides a simple starting 
+    point for beginners, and progression to scenarios which benefit from concurrency. 
+
+    We evalutate the performance of the open-source platform on devices ranging from the Arduino Uno
+    to micro:bit and Adafruit Circuit Playground Express, popular boards used in making and creating
+    arouind the world. 
+
 \end{abstract}
