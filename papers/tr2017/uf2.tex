@@ -1,69 +1,48 @@
 \section{USB Flashing Format}
 \label{sec:uf2}
 
-The way that code gets from a host computer onto a microcontroller is deeply rooted in 1980's technologies - 
-serial wires, obscure protocols, and textual file formats with restricted line length. Depending on exact circumstances,
-one must install serial USB drivers, select the right port and parameters, and use a native application to access
-the microcontroller. As the advance of maker content in educational curricula continues,
-this complicated flashing process presents one of the major obstacles to adoption in schools, 
-where installing any software is usually the domain of IT administrators.
+There are several ways of installing a user program in the non-volatile flash memory
+of a microcontroller. In professional scenarios one typically uses a debugger
+interface of the target, with a specialized debugger chip and a native application
+talking to it. Hobbyist typically employ a custom protocol over RS-232 serial
+line. This typically requires operating system drivers and a native application.
 
-ARM created a solution with its DAPLink firmware: a USB-capable microcontroller presents itself 
-to an external computer as a USB pen drive. No special drivers need to be installed, as operating systems support pen
-drives out of the box, typically formatted using FAT. The USB pen drive protocol (Mass Storage Class or MSC) is a
-block-level protocol (generally 512 bytes) with no concept of files. 
+ARM mbed uses DAPLink firmware, which presents itself to an external computer
+as a USB pen drive. No special drivers need to be installed, as operating
+systems support pen drives out of the box. The USB pen drive protocol (USB Mass
+Storage Class or MSC) is a block-level protocol (generally 512 bytes) with no
+concept of files. 
 
 DAPLink exposes a small virtual FAT file system, which
-never changes due to OS writes - it has an informational text file and HTML file. 
-Otherwise, the FAT and the root directory table are empty. When the OS tries to read a block,
-DAPLink computes what should be there, 
-based on compiled-in contents of the info and HTML files.
+never changes due to OS writes - it contains an informational HTML file, but
+the file allocation table and the root directory are otherwise empty.
+When the OS tries to read a block, DAPLink computes what should be there, 
+based on compiled-in contents of the HTML file.
 On file system writes, DAPLink detects the Intel HEX format~\cite{IntelHEX}, 
 decodes it and flashes the file's contents into the target microcontroller's memory. 
+Other writes are ignored.
 
-If every 512 block of the file being flashed was easy to distinguish from meta-data
-or other random files, and easy to act on, independent of other blocks, DAPlink's
-task would be made much easier., Unfortunately, as discussed in related work, 
-the Intel HEX format does not have this property, which results in extra complexity
-in the DAPlink code and fragility with respect to operating system differences with
-respect to FAT. 
+DAPLink needs to implement heuristics to deal with quirks of FAT file
+system implementations in various operating systems (order of writes, various meta-data files
+that are created and need to be ignored, etc.). It is acceptable since DAPLink runs
+on a separate debugger chip, however in a single-chip setup it is quite heavy for a bootloader occupying 
+flash space of a target MCU.
 
-For these reasons, we designed the Flashing Format (\UF). \ consists of 512 byte blocks, where each block contains:
-\begin{itemize}
-\item two ``magic'' numbers at the beginning and one at the end of the block,
-to heuristically distinguish it from any other blocks that the OS writes;
-\item the address in the target chip flash memory where the payload should be written;
-\item total number of blocks in the file and the sequential index of the current block;
-\item the payload data (up to 476 bytes)
-\end{itemize}
-A detailed description of the format can be found at~\emph{\href{https://github.com/microsoft/uf2}{uf2}}.
-The format is designed specifically to deal with the following problems:
-\begin{itemize}
-\item operating system (OS) writes of blocks in different order than occurs in a file;
-\item OS writes of blocks multiple times;
-\item OS writes of data that is not a UF2 block;
-\item OS writes of partial blocks (first/final part of a block), possibly for metadata detection or search indexing.
-\end{itemize}
+Instead of dealing with these quirks we decided to keep the virtual FAT architecture, but change 
+the file format, so that MSC writes can be easily acted upon.
+Flashing Format (\UF) files consist of one or more 512-byte self-contained blocks.
+The blocks have magic numbers, the payload data to be written to flash,
+and the address where it should be written.
+Thus, on every 512-byte write via the USB MSC, the bootloader can quickly and easily
+check if the block being written is part of a \UF file (by comparing magic numbers)
+and if so, write it immediately. In fact, this can be implemented in a streaming
+fashion with less than 100 bytes of RAM, as on the ATmega16u2 interface chip
+on Arduino UNO.
+The minimal implementation of the \UF bootloader is 1-2k of code, depending
+on the MCU instruction set and USB interfaces.
+The bootloader on SAMD21 (which is 8k of code) implements \UF flashing with read-back capability (ie.,
+a \UF file is exposed in the virtual FAT that contains current content of the 
+MCU flash; as \MC embeds source code in binaries this lets the user drag the current \UF file from
+a board into \MC browser window to load the project), legacy serial bootloader for Arduino, and a custom USB HID protocol
+for flashing with a native application (but no drivers).
 
-The first magic number is \texttt{\UFN}, making easy to identify \UF blocks in a text editor.
-The second and final magic numbers were randomly selected.
-The magic number at the end of the block helps to mitigate partial block writes.
-The \UF header is padded to 32 bytes, as hex editors commonly use 16 or 32 bytes as line length. 
-This way, the data payload is aligned to line start. 32 bit integers are used for all fields so that 
-large flash sizes can be supported in future, as well as for simplicity.
-Little endian is used, as most microcontrollers are little endian. 
-The total number of blocks in the file and the sequential block number make it easy 
-bootloaders to detect that all blocks have been transferred, requiring just one bit of 
-memory per block (eg., on SAMD21G18A it's 128 bytes).
-
-The only file system assumption we make is that blocks of file are aligned with blocks on the hard drive. 
-We also assume that USB MSC device reports its block size to be a multiple of 512 bytes. 
-In the wild these devices always almost report exactly 512, and some 
-operating systems do not support other values.
-
-Target chips usually can only write their flash in chunks larger than page size. On the SAMD21, pages are 64 bytes 
-but need to be erased four pages at once, so the effective page size is 256 bytes. Therefore, \UF for SAMD21 uses 
-only 256 out of the 476 byte payload, so every block can written to flash straight away. This is still more 
-efficient than HEX (which stores every byte as two ASCII characters and adds 20-30\% overhead). It also doesn’t 
-matter - the file is transferred at USB full speed (around 1MB per second), and so the limiting factor is writing 
-to flash.
