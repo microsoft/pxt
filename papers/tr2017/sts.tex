@@ -86,16 +86,16 @@ TypeScript introduces two (object) types for each class declaration:
 \begin{itemize}
 \item a constructor function type by which instances of a class
 are created (and static properties accessed), as seen in the previous section; 
-\item a class type describing the instances of the class, which is a record type, but
-with public/private/protected modifiers on its properties (in a record type, all properties are public).
+\item a class type describing the instances of the class, which is a record type.
 \end{itemize}
 TypeScript's treatment of class types as record types
 means that it is possible to assign to a property representing a method, 
-destroying the class abstraction that ties together code and data. This also 
-eliminates the possibility of using a shared vtable implementation for classes.
+destroying the class abstraction that ties together code and data. 
+This also eliminates the possibility of using a shared vtable implementation for classes.
 
-STS adds a new partition to represent class types, separate from record types, 
-describing the instances of classes. \flameon{CLASS DECLARATION}
+Instead, STS adds a new partition to represent class types, separate from record types, 
+describing the instances of classes. In STS, a class type is a 
+record type with an explicit association to its class declaration.
 Classic nominal subtyping is applied to class types, with function subtyping used to relate methods with 
 the same name in subclass and superclass, per TypeScript, just as record types are treated.
 Furthermore, STS permits a cast from a class type
