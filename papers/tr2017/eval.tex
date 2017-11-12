@@ -3,17 +3,67 @@
 
 This section evaluates the costs of the various layers of abstraction
 in our platform used to create the simplified end-to-end experience. 
+We evaluate the cost of these layers using a set of micro-benchmarks, written
+in both C++ and Static TypeScript, for three microcontrollers: nrF52, SAMD21 (CPX device), and Atmega (Uno).
+The C++ benchmarks isolate the performance
+of \CO and provide a baseline, while the Static TypeScript benchmarks show the overhead
+added by \MC. 
+
+\subsection{C++ runtime}
 The C++ of our platform breaks into two essential layers:
 \begin{itemize}
 \item \emph{\CON-core}: the \CO device runtime, against which we write C++ programs;
 \item \emph{\MCN-common-packages}: the C++ and Static TypeScript wrapping \CON-core 
 to make it known to \MC, against which we write Static TypeScript programs;
 \end{itemize}
-We evaluate the cost of these layers using a set of micro-benchmarks, written
-in both C++ and Static TypeScript, for three targets: nrF52, SAMD21, and Atmega (representing
-the micro:bit, CPX, and Uno, respectively). The C++ benchmarks isolate the performance
-of \CO and provide a baseline, while the Static TypeScript benchmarks show the overhead
-added by \MC. 
+With respect 
+This section concentrates on the CPX runtime, as the CPX has lots of on-board
+components, the runtime is largest, and it shares code with other
+SAMD21 \MC targets.
+The compiled C++ runtime is 114k in total, with \CO accounting for 29k, with an
+additional 15k from libmbed. The \MCN-common-packages adds 20k, but also pulls in
+49k of the math support libraries (floating point operations,
+including trigonometry and number printing/parsing).
+As the SAMD21 has 256k of flash, this code was not heavily optimized for space.
+
+On UNO, which has 32k of flash, the much less complete \MC runtime is 8k, and \CO
+is 14k. C library isn't really used.
+
+\subsection{Compiling Static TypeScript}
+% data generated using 'node map-file-stats.js CIRCUIT_PLAYGROUND.map'
+% maybe put it in a table?
+
+The TypeScript part of the runtime is 1060 statements on CPX and 216 on UNO.
+In our samples 99\% of that runtime is tree-shaken away.
+When compiling the runtime with code-shaking we obtain generated code density of 
+37.5 bytes per statement on CPX, 60.8 on AVR native, and 12.3 on AVR VM.
+This excludes string literals (which don't change the picture significantly), but includes class vtables and number literals
+if any. Note that ARM and AVR native instructions are 2 bytes each, and AVR VM
+instructions are between 0.5 and 3 bytes.
+
+When compiling, the entire TypeScript program, including the runtime, is
+passed to TypeScript language service for parsing. Then, only the used
+part of the program is compiled to native code.
+On a modern laptop, using node.js runtime, TS parsing and analysis takes about 0.1ms per statement,
+while compilation to native code takes about 1ms per statement.
+While TS compiler is optimized for speed, our native compilation process wasn't yet.
+For example, for CPX the TS pass is dominated by runtime and takes about 100ms,
+whereas the second pass typically only includes small user program
+and tiny bit of runtime, resulting in less than 100ms. Thus, typical compilation
+times are in the range of 200ms.
+
+The AVR VM was specifically designed for high code density, since the C++ runtime
+leaves less than 10k for TS runtime and user code.
+The interpreter is implemented in assembly and always included with the program and is around 0.5k.
+There is about 30 opcodes, some of which can take 1 or 2 byte arguments. 
+There is also a few combined opcodes, representing a sequence of one argument-less opcode,
+and one with an argument, which improves code density by about 25\%.
+Opcodes are direct offsets into the code of the interpreter, speeding up execution.
+They operate on stack (mainly for function calls) and a special scratch register.
+There is essentially no stack space overhead compared to native AVR compilation.
+The speed overhead is around 5x for computational tasks.
+
+
 
 %\subsection{Implementation}
 % •	\CO (SAMD21 and AVR): base runtime (C++ only)
@@ -51,51 +101,7 @@ added by \MC.
 % C++ test. flipping a GPIO or two during context switch and measuring on scope.
 \end{itemize}
 
-\subsection{Compile time of Static TypeScript}
-% data generated using 'node map-file-stats.js CIRCUIT_PLAYGROUND.map'
-% maybe put it in a table?
 
-As for flash footprint, we concentrate on the CPX runtime, as it has lots of on-board
-components, and the runtime is largest. Also, it shares code with other
-SAMD21 \MC targets.
-The compiled template is 114k in total. \CO amounts to 29k, and also pulls
-in 15k from libmbed. The \MC C++ runtime adds 20k, but also pulls in
-49k of the math support libraries (floating point operations,
-including trigonometry and number printing/parsing).
-As the target chip has 256k of flash, this code was not heavily optimized for space.
-
-On UNO, which has 32k of flash, the much less complete \MC runtime is 8k, and \CO
-is 14k. C library isn't really used.
-
-The TypeScript part of the runtime is 1060 statements on CPX and 216 on UNO.
-In our samples 99\% of that runtime is tree-shaken away.
-When compiling the runtime with code-shaking we obtain generated code density of 
-37.5 bytes per statement on CPX, 60.8 on AVR native, and 12.3 on AVR VM.
-This excludes string literals (which don't change the picture significantly), but includes class vtables and number literals
-if any. Note that ARM and AVR native instructions are 2 bytes each, and AVR VM
-instructions are between 0.5 and 3 bytes.
-
-When compiling, the entire TypeScript program, including the runtime, is
-passed to TypeScript language service for parsing. Then, only the used
-part of the program is compiled to native code.
-On a modern laptop, using node.js runtime, TS parsing and analysis takes about 0.1ms per statement,
-while compilation to native code takes about 1ms per statement.
-While TS compiler is optimized for speed, our native compilation process wasn't yet.
-For example, for CPX the TS pass is dominated by runtime and takes about 100ms,
-whereas the second pass typically only includes small user program
-and tiny bit of runtime, resulting in less than 100ms. Thus, typical compilation
-times are in the range of 200ms.
-
-The AVR VM was specifically designed for high code density, since the C++ runtime
-leaves less than 10k for TS runtime and user code.
-The interpreter is implemented in assembly and always included with the program and is around 0.5k.
-There is about 30 opcodes, some of which can take 1 or 2 byte arguments. 
-There is also a few combined opcodes, representing a sequence of one argument-less opcode,
-and one with an argument, which improves code density by about 25\%.
-Opcodes are direct offsets into the code of the interpreter, speeding up execution.
-They operate on stack (mainly for function calls) and a special scratch register.
-There is essentially no stack space overhead compared to native AVR compilation.
-The speed overhead is around 5x for computational tasks.
 
 
 %mmoskal [10:10 AM] 
