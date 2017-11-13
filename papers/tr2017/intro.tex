@@ -114,7 +114,6 @@ to the internet). All of the platform's components are open source on GitHub.
 Uno         & 2 kB     & 32 kB      & 8         & AVR      & 328P  \\ \hline
 micro:bit   & 16 Kb    & 128 KB     & 32        & M0       & nRF51       \\ \hline
 CPX         & 32 kB    & 256 kB     & 32        & M0       & SAMD21      \\ \hline
-NRF52-DK    & 64 kB    & 256 kB     & 32        & M4-f     & nRF52     \\ \hline
 \end{tabular}
 \caption{\label{table:devices}A subset of devices supported by the platform.
 CPX is Adafruit's Circuit Playground Express. M0 denotes Cortex-M0 and 328P denotes
@@ -123,7 +122,7 @@ the Atmega328P.}
 
 Table~\ref{table:devices} lists a number of the devices/microcontrollers supported by our platform, 
 ranging from the highly resource-contrained Arduino Uno to the slightly less constrained space of
-the micro:bit, Adafruit Circuit Playground Express (CPX), and NRF52.
+the micro:bit, and Adafruit Circuit Playground Express (CPX).
 
 \subsection{Running Example: firefly simulation.}
 
@@ -202,7 +201,11 @@ consider:
 %      evaluate memory consumption and code performance for native code generation
 %      vs. bytecode generation and interpretation on the Uno.
 \end{itemize}
-\flameon{The results show that XYZ.}
+The high-level results are: compilation speed in the browser is on the order
+of several hundred milliseconds for small programs (the norm), so not noticeable 
+by the end-user; execution slowdown for Static TypeScript code relative to C++
+code is 2x-3x, which compares very well to systems such as MicroPython and
+Circuit Python, which incur 100X slowdown. \flameon{Flashing speed}
 
 %\flameon{TODO: we should present some of high-level experimental results here.}
 

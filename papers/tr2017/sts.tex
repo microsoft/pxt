@@ -110,51 +110,12 @@ though it is possible to construct records with function properties using object
 
 \subsection{Subtyping and Type Checking}
 
-In STS, $S$ is a subtype of a type $T$ if one of the following is true:
-\begin{itemize}
-\item $S$ and $T$ are identical types;
-\item $S$ is the Undefined type;
-\item $S$ is the Null type and $T$ is not the Undefined type;
-\item $S$ is an enum type and $T$ is the primitive type Number;
-\item $S$ is a string literal type and $T$ is the primitive type String;
-\item $S$ and $T$ are class types and all the following are true:
-\begin{itemize}
-  \item $S$ is derived from $T$ (via \emph{extends} clauses);
-  \item checkProps($S$,$T$) holds;
-\end{itemize}
-\item $S$ is a class/record type and $T$ is a record type and
-\begin{itemize}
-  \item checkProps($S$,$T$) holds;
-\end{itemize}
-\item $S$ and $T$ are function types such that all the following hold:
-\begin{itemize}
-  \item $S$ has at least as many parameters as $T$;
-  \item each parameter type in $T$ is a subtype of the corresponding parameter type in $S$;
-  \item the result type of $T$ is Void, or the result type of $S$ is a subtype of that of $T$;
-\end{itemize}
-\item $S$ and $T$ are array types and all the following hold:
-\begin{itemize}
-\item $T$ has a numeric index signature with element type $U$, 
-    and $S$ has a numeric index signature with element type $V$
-    such that $V$ is a subtype of $U$;
-\item checkProps($S$,$T$) holds.
-\end{itemize}
-\end{itemize}
-
-% https://www.earthli.com/news/view_article.php?id=3391
-
-Given types $S$ and $T$, checkProps($S$,$T$) holds if for each property $N$ in $T$, 
-$S$ has a property $M$ where all of the following are true:
-\begin{itemize}
-\item $M$ and $N$ have the same name;
-\item the type of $M$ is a subtype of the type of $N$;
-\item $M$ and $N$ are both public, or $M$ and $N$ are both 
-      private (protected) and originate in the same declaration, 
-      or $N$ is protected and $S$ is a class derived from class $T$
-\end{itemize}
-
+Given the above, STS's subtype relation is unsurprising and defined in the appendix.
 STS type checking for (pure) expressions remains the same as in TypeScript.
 Type checking at assignments, where a value of type $S$ flows (is assigned to) 
 into a location of type $T$ uses the new subtyping relation: $S$
 must be a subtype of $T$.  Downcasts (a supertype being assigned to a subtype)
 are not permitted in STS.
+
+
+
