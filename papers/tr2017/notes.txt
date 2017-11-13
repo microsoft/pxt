@@ -10,8 +10,10 @@
   - 3. Anywhere. low-floor high-ceiling 
        - programming model (events + non-preemptive language)
        - (blockly, typescript, C++)
-- what can we say at a high-level about numbers
-  - sessions across all devices
-  - countries, browsers, operatings systems
-- James to work on codal.tex to make examples align with Figure 1
 
+- James to work on codal.tex to make examples align with Figure 1
+- David Whale examples?
+- let's compare on CPX
+  - CODAL
+  - MakeCode
+  - CircuitPython
