@@ -239,4 +239,3 @@
 @bannerHeight: 2rem;
 @bannerBackgroundColor: black;
 @bannerContrastColor: white;
-@bannerIconHeight: 16px;

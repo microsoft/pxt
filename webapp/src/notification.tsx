@@ -13,15 +13,33 @@ export interface NotificationBannerProps extends ISettingsProps {
     delayTime?: number; //milliseconds - delay before banner is shown
     displayTime?: number; //milliseconds - duration of banner display
     sleepTime?: number; //seconds - time to hide banner after it is dismissed
-    bannerTheme?: string;
-    content?: JSX.Element;
+    bannerType?: string;
+    content: JSX.Element;
 }
 
-export class NotificationBanner extends data.Component<NotificationBannerProps, {}> {
+export interface NotificationBannerState {
+    visible: boolean;
+}
+
+export class NotificationBanner extends data.Component<NotificationBannerProps, NotificationBannerState> {
     delayTime: number;
-    sleepTime: number;
     doneSleeping: boolean;
-    bannerTheme: string;
+    bannerType: string;
+
+    //TODO need shouldComponentUpdate?
+
+    constructor(props: NotificationBannerProps) {
+        super(props);
+        this.delayTime = this.props.delayTime || 0;
+        this.doneSleeping = this.sleepDone();
+        this.bannerType = this.props.bannerType || "default";
+        this.state = {visible: false};
+
+        setTimeout(() => this.show(), this.delayTime);
+        if (this.props.displayTime) {
+            setTimeout(() => this.hide("automatic"), this.delayTime + this.props.displayTime);
+        }
+    }
 
     sleepDone() {
         if (!this.props.sleepTime) {
@@ -34,33 +52,21 @@ export class NotificationBanner extends data.Component<NotificationBannerProps, 
 
     show() {
         pxt.tickEvent("notificationBanner.show");
+        this.setState({visible: true});
         this.props.parent.showBanner()
     }
 
     hide(mode: string) {
         pxt.tickEvent("notificationBanner." + mode + "Close");
         pxt.storage.setLocal("lastBannerClosedTime", Util.nowSeconds().toString());
+        this.setState({visible: false});
         this.props.parent.hideBanner();
-    }
-
-    //TODO need shouldComponentUpdate?
-
-    constructor(props: NotificationBannerProps) {
-        super(props);
-        this.delayTime = this.props.delayTime || 0;
-        this.doneSleeping = this.sleepDone();
-        this.bannerTheme = this.props.bannerTheme || "default";
-
-        setTimeout(() => this.show(), this.delayTime);
-        if (this.props.displayTime) {
-            setTimeout(() => this.hide("automatic"), this.delayTime + this.props.displayTime);
-        }
     }
 
     renderCore() {
         return (
-            (this.props.parent.state.notificationBannerVisible  && this.doneSleeping) ?
-            <div id="notificationBanner" className={`ui attached ${this.bannerTheme} message`}>
+            (this.state.visible  && this.doneSleeping) ?
+            <div id="notificationBanner" className={`ui attached ${this.bannerType} message`}>
                 <div className="bannerLeft">
                     {this.props.content}
                 </div>
@@ -78,10 +84,10 @@ export class WindowsStoreBanner extends data.Component<ISettingsProps, {}> {
         return (
             <NotificationBanner
                 parent={this.props.parent}
-                delayTime={1000}
-                //TODO display time
-                //TODO sleep time
-                sleepTime={10}
+                delayTime={10000}
+                displayTime={30000}
+                //604800 = seconds in a week
+                sleepTime={604800}
                 content={<WindowsStoreContent />}
             />)
     }
@@ -107,7 +113,7 @@ export class ExperimentalBanner extends data.Component<ISettingsProps, {}> {
         return (
             <NotificationBanner
                 parent={this.props.parent}
-                bannerTheme={"negative"}
+                bannerType={"negative"}
                 content={<ExperimentalContent />}
             />
         )
