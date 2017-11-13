@@ -5,99 +5,58 @@ Over the last decade, microcontrollers, the workhorses of embedded systems, have
 new uses in making~\cite{dougherty2012maker} and education. For example, the Arduino project
 (\url{www.arduino.cc})~\cite{buildingArduino2014},
 started in 2003, created the Uno board using an 8-bit Atmel
-AVR microcontroller. 
+AVR microcontroller with 2Kb of RAM and 32Kb of Flash. 
 The Arduino ecosystem has grown over the past 15 years,
 with the support of companies such as Adafruit Industries (\url{www.adafruit.com}), 
-who resell Arduino and make their own Arduino-compatible boards, as well as providing
-how-to guides for beginners to start working with microcontrollers.
+who resell Arduino and make their own Arduino-compatible boards. Arduino is supported
+by many tutorials, supported by the Arduino IDE and its C/C++ programming model.
 
 Furthermore, demand for microcontrollers is brisk due to their use in the monitoring and controlling
 of a wide variety of systems, ranging from wearables, to home automation, to industrial 
 automation and smart grids. s\emph{compare CPU to microcontroller - what distinguishes MCU from CPU - 
-compute to memory ratio - MCU has simple pipeline, very predictable performance}
-Application programming of microcontrollers generaly requires a professional
-development environment. 
+compute to memory ratio - MCU has simple pipeline, very predictable performance - use of concurrency
+to structure reactive systems}
+Application programming of microcontrollers generally requires a professional
+development environment. [TO BE FURTHER EXPANDED BY JOE]
 
-% https://globenewswire.com/news-release/2015/12/24/798090/0/en/Microcontroller-Market-Worth-26-98Bn-By-2020-Grand-View-Research-Inc.html
-% "The global microcontroller market size was valued at USD 24.61 billion in 2015. The substantial growth in automobile, 
-% consumer electronics, and the healthcare sector is expected to attribute to the industry growth.
-% The global microcontroller market is expected to reach USD 26.98 billion by 2020,"
+With a surge in the demand for microcontrollers across a wide
+spectrum of applications, there is a need to simplify the programming 
+of such devices so that more people can participate in the creation 
+of microcontroller-based systems. Web-based visual editors such as 
+Blockly (\url{https://developers.google.com/blockly/})~\cite{Blocky2015}
+are tremendously popular and allow the creation of programs without the 
+possibility of syntax errors, and that execute in the web browser (Blockly
+is written in JavaScript and compiles user code to JavaScript).
+However, JavaScript's dynamic nature is not well-suited to the world of 
+microcontrollers where memory is limited (consider the Arduino Uno mentioned above).
 
-% https://www.morganstanley.com/ideas/microcontrollers-semiconductors-internet-of-things
-% "Embedded in a product, these tiny chips can efficiently sense, process, 
-% and control operations at low cost.  Over the years, chipmakers have been making them 
-% smaller, more energy efficient, less expensive, and geared for a mobile and wireless world."
-
-% The Arduino platform has the following characteristics, common to many programming
-% environments for microcontrollers~\cite{XYZ}:
-% \begin{itemize}
-% \item it uses C/C++ as the starting programming language;
-% \item it loads code using 1980's era bootloader technology;
-% \item it encourages polling of sensors;
-% \item it lacks many interactive features of modern IDEs;
-% \end{itemize}
-% These characteristics make such systems non-trivial for beginners to work with,
-% require the installation of OS-specific drivers/applications/toolchains,
-% and leads to poor programming practices.
-
-%The Java language (among others) held out the promise of a better way forward for
-%programming microcontrollers, but XYZ.
-%\flameon{we need more description of why current ways of programming microcontrollers
-%make for a high barrier to entry; also need to take on Java head on here, as well as
-%RTOS and MicroPython.}
-
-In comparison, on the web we find many environments for introductory programming.
-Visual block editors such as Scratch (\url{https://scratch.mit.edu/})~\cite{ScratchCACM2009,BlocksBeyondCACM2017}
-and Blockly (\url{https://developers.google.com/blockly/})~\cite{Blocky2015}
-allow the creation of programs without the possibility of syntax errors.
-The programming models associated with Scratch and Blockly generally are
-event based, freeing the programmer from the need to poll.
-
-% HTML, CSS and JavaScript allow a complete programming experience to be delivered as an interactive
-% web app, including editing with code completion, code execution and debugging~\cite{Monaco}.
-
-With a surge in the demand for microcontroller-based devices across a wide
-spectrum of applications, 
-there is a need to simplify the programming of such devices.
-Therefore, we have created a new programming platform that bridges the worlds of
-the web app and the microcontroller. 
-
-The major goals of the platform are to:
-% TypeScript / Blocks + MakeCode
-(1) make it simple to program microcontrollers in a higher-level language,
-using nothing more than a web app;
-% TypeScript and Blocks prevent users from making boo boos.
-(2) provide a safe environment for users to develop programs for microcontrollers;
-% simulator, auto completion...
-(3) create a feature rich and extensible development environment 
-that decreases time taken to program a microcontroller;
-% UF2 is awesome
-(4) allow a users' compiled program to be easily installed on a microcontroller;
-
-
-The platform consists of a stack of four novel technologies, the subject of
-this paper:
+We present a platform that bridges the world of the web and the microcontroller with three
+novel technologies:
 \begin{itemize}
-\item \emph{\MCN}, a web app that supports both visual block programming and text programming,
-via \emph{Static TypeScript}, with conversion between the two program representations (Section~\ref{sec:makecode});
+\item \emph{\MCN}, a web app that supports programming, via Blockly and {\em Static TypeScript},
+a statically-typed runtime composed of Static TypeScript and C++ (Section~\ref{sec:makecode});
 
-\item \emph{Static TypeScript}, a statically-typed subset of TypeScript (\url{www.typescriptlang.org}),
-a gradually-typed superset of JavaScript, for fast execution on low-memory devices, with
+\item \emph{Static TypeScript}, a statically-typed subset of TypeScript 
+(\url{www.typescriptlang.org}), for fast execution on low-memory devices, with
 a simple model for linking against pre-compiled C++ (Section~\ref{sec:sts});
 
-\item \emph{\CO}, a component-based, event-driven, multi-threaded, C++ runtime environment that bridges the semantic gap between higher-level languages and the hardware,
+\item \emph{\CO}, a component-based, event-driven, multi-threaded, C++ runtime environment 
+that bridges the semantic gap between higher-level languages (such as TypeScript) and the hardware,
 modelling each hardware component as a software component (Section~\ref{sec:codal});
 
-\item \emph{\UFN}, a new file format designed for flashing microcontrollers
-over the Mass Storage Class protocol (USB pen drives); the format greatly speeds the installation of user
-programs and is robust to differences in operating systems (Section~\ref{sec:uf2}).
 \end{itemize}
-The \MC web app is the entry point of the platform, and has in-browser execution via a device simulator, as well as compilation to machine code and linking against a
-pre-compiled C++ runtime (\emph{\CON}). No C/C++ compiler is invoked to compile user code and the result of compilation is a binary file that is ``downloaded'' from the web app to the user's
+The \MC web app is the entry point of the platform, and features
+in-browser execution via a device simulator, 
+as well as compilation to machine code and linking against a pre-compiled C++ runtime (\emph{\CON}). 
+The statically-typed runtime and type inference on user code allows uses to write code
+that looks like plain JavaScript (see Figure~\ref{fig:example}) and progress later to working 
+with types.
+No C/C++ compiler is invoked to compile user code and the result of compilation is a 
+binary file that is ``downloaded'' from the web app to the user's
 computer and then flashed to the microcontroller (exposed as a USB pen drive)
-via a simple file copy operation,  with the aid of the \emph{UF2} file format and supporting firmware.
+via a simple file copy operation.
 
-These four advances enable beginners to get started programming microcontrollers from
+These advances enable beginners to get started programming microcontrollers from
 any modern web browser, and enable hardware vendors to innovate and safely add new
 components to the mix using Static TypeScript, leveraging its
 foreign function interface to C++.
@@ -147,7 +106,7 @@ this program are part of the runtime and are explicitly
 typed. This program is a Static TypeScript program:
 the static type of every variable and expression
 can be inferred and passes the more restrictive checks
-of Static TypeScript. 
+of Static TypeScript, as detailed in Section~\ref{sec:sts}.
 
 The program also shows off the use of the non-preemptive concurrency
 model supported by both \MC (for JavaScript) and \CO (for C++).
@@ -199,21 +158,17 @@ consider:
        as well as the size of the resulting executable, including the C++ runtime;
 \item the performance of a set of small benchmarks, written in both Static TypeScript and C++,
       compiled with the \MC and GCC toolchains;
-\item the time to load code onto a microcontroller using UF2, compared to standard bootloaders
-      such as Arduino and ARM's DAPlink;
-%\item \emph{native code vs. bytecode} we
-%      evaluate memory consumption and code performance for native code generation
-%      vs. bytecode generation and interpretation on the Uno.
+\item \emph{native code vs. bytecode} we
+     evaluate memory consumption and code performance for native code generation
+     vs. bytecode generation and interpretation on the Uno.
 \end{itemize}
 The high-level results are: compilation speed in the browser is on the order
 of several hundred milliseconds for small programs (the norm), so not noticeable 
 by the end-user; execution slowdown for Static TypeScript code relative to C++
 code is 2x-3x, which compares very well to systems such as MicroPython and
-Circuit Python, which incur 100X slowdown. \flameon{Flashing speed}
+Circuit Python, which incur 100X slowdown.
 
-%\flameon{TODO: we should present some of high-level experimental results here.}
-
-Sections~\ref{sec:makecode} to~\ref{sec:uf2} presents the four major components of the platform, top-down,
+Sections~\ref{sec:makecode} to~\ref{sec:codal} presents the three major components of the platform, top-down,
 as referenced before. Section~\ref{sec:evaluate} evaluates the performance of the platform,
 Section~\ref{sec:related} discusses related work, and Section~\ref{sec:conclude}
 concludes.
