@@ -11,9 +11,3 @@
        - programming model (events + non-preemptive language)
        - (blockly, typescript, C++)
 
-- James to work on codal.tex to make examples align with Figure 1
-- David Whale examples?
-- let's compare on CPX
-  - CODAL
-  - MakeCode
-  - CircuitPython

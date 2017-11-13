@@ -1,0 +1,8 @@
+- Joe to make pass on abstract/introduction
+- James to work on codal.tex to make examples align with Figure 1
+- James to compare the following on CPX:
+  - CODAL
+  - MakeCode
+  - CircuitPython
+- Tom and Michal to investigate David Whale examples
+- Michal to debug corruption on Uno
