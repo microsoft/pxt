@@ -2,7 +2,7 @@ import e = pxt.editor;
 import * as pkg from "./package";
 
 export enum Permissions {
-    Serial,
+    Console,
     ReadUserCode
 }
 
@@ -86,7 +86,7 @@ export class ExtensionManager {
                 this.sendResponse(resp);
                 break;
             case "extdatastream":
-                return this.permissionOperation(request.extId, Permissions.Serial, resp, (name, resp) => this.handleDataStreamRequest(name, resp));
+                return this.permissionOperation(request.extId, Permissions.Console, resp, (name, resp) => this.handleDataStreamRequest(name, resp));
             case "extquerypermission":
                 const perm = this.getPermissions(request.extId)
                 const r = resp as e.ExtensionResponse;
@@ -133,7 +133,7 @@ export class ExtensionManager {
     private getPermissions(id: string): e.Permissions<PermissionStatus> {
         if (!this.statuses[id]) {
             this.statuses[id] = {
-                serial: PermissionStatus.NotYetPrompted,
+                console: PermissionStatus.NotYetPrompted,
                 readUserCode: PermissionStatus.NotYetPrompted
             };
         }
@@ -184,7 +184,7 @@ export class ExtensionManager {
 
         let status: PermissionStatus;
         switch (permission) {
-            case Permissions.Serial: status = perm.serial; break;
+            case Permissions.Console: status = perm.console; break;
             case Permissions.ReadUserCode: status = perm.readUserCode; break;
         }
 
@@ -193,8 +193,8 @@ export class ExtensionManager {
                 .then(approved => {
                     const newStatus = approved ? PermissionStatus.Granted : PermissionStatus.Denied;
                     switch (permission) {
-                        case Permissions.Serial:
-                            this.statuses[id].serial = newStatus; break;
+                        case Permissions.Console:
+                            this.statuses[id].console = newStatus; break;
                         case Permissions.ReadUserCode:
                             this.statuses[id].readUserCode = newStatus; break;
                     }
@@ -212,8 +212,8 @@ export class ExtensionManager {
         if (p.readUserCode) {
             promises.push(this.checkPermissionAsync(id, Permissions.ReadUserCode));
         }
-        if (p.serial) {
-            promises.push(this.checkPermissionAsync(id, Permissions.Serial));
+        if (p.console) {
+            promises.push(this.checkPermissionAsync(id, Permissions.Console));
         }
 
         return Promise.all(promises)
@@ -225,7 +225,7 @@ export class ExtensionManager {
         const perm = this.getPermissions(extId);
         let status: PermissionStatus;
         switch (permission) {
-            case Permissions.Serial: status = perm.serial; break;
+            case Permissions.Console: status = perm.console; break;
             case Permissions.ReadUserCode: status = perm.readUserCode; break;
         }
         return status === PermissionStatus.NotYetPrompted;
@@ -309,7 +309,7 @@ function mkResponse(request: e.ExtensionRequest, success = true): e.ExtensionRes
 function statusesToResponses(perm: e.Permissions<PermissionStatus>): e.Permissions<e.PermissionResponses> {
     return {
         readUserCode: statusToResponse(perm.readUserCode),
-        serial: statusToResponse(perm.serial)
+        console: statusToResponse(perm.console)
     };
 }
 

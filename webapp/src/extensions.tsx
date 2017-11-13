@@ -47,12 +47,10 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
     }
 
     processMessage(ev: MessageEvent) {
-        let msg = ev.data
+        const msg = ev.data
         if (msg.type !== "serial") return;
 
         const smsg = msg as pxsim.SimulatorSerialMessage
-        if (smsg.sim) return;
-
         const exts = this.manager.streamingExtensions();
         if (!exts || !exts.length) return;
 
@@ -63,9 +61,13 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         exts.forEach(n => {
             this.send(n, {
                 type: "pxtpkgext",
-                extId: n,
-                body: { source, data }
-            } as pxt.editor.ExtensionRequest);
+                event: "extconsole",
+                body: {
+                    source,
+                    sim: smsg.sim,
+                    data
+                }
+            } as pxt.editor.ConsoleEvent);
         })
     }
 
@@ -199,8 +201,8 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
     getIconForPermission(permission: ext.Permissions) {
         switch (permission) {
-            case ext.Permissions.Serial:
-                return "usb"
+            case ext.Permissions.Console:
+                return "terminal"
             case ext.Permissions.ReadUserCode:
                 return "code";
         }
@@ -209,8 +211,8 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
     getDisplayNameForPermission(permission: ext.Permissions) {
         switch (permission) {
-            case ext.Permissions.Serial:
-                return lf("Serial")
+            case ext.Permissions.Console:
+                return lf("Console output")
             case ext.Permissions.ReadUserCode:
                 return lf("Read your code");
         }
@@ -219,8 +221,8 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
     getDescriptionForPermission(permission: ext.Permissions) {
         switch (permission) {
-            case ext.Permissions.Serial:
-                return lf("The extension will be able to read any serial data streamed to the editor")
+            case ext.Permissions.Console:
+                return lf("The extension will be able to read any console output (including device data) streamed to the editor")
             case ext.Permissions.ReadUserCode:
                 return lf("The extension will be able to read the code in the current project");
         }

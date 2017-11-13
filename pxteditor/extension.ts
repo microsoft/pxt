@@ -1,10 +1,10 @@
 namespace pxt.editor {
     export interface DataStreams<T> {
-        serial?: T;
+        console?: T;
     }
 
     export interface Permissions<T> {
-        serial?: T;
+        console?: T;
         readUserCode?: T;
     }
 
@@ -61,11 +61,15 @@ namespace pxt.editor {
     export type HiddenReason = "useraction" | "other";
 
     /**
-     * Event fired when serial data is received
+     * Event fired when console data is received
      */
-    export interface SerialEvent extends ExtensionEvent {
-        event: "extserial";
-        body: string;
+    export interface ConsoleEvent extends ExtensionEvent {
+        event: "extconsole";
+        body: {
+            source: string;
+            sim: boolean;
+            data: string;
+        }
     }
 
     /**
