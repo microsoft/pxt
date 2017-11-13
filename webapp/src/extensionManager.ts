@@ -33,7 +33,13 @@ export class ExtensionManager {
     private pendingRequests: PermissionRequest[] = [];
     private queueLock = false;
 
+    private streams: pxt.Map<boolean> = {};
+
     constructor(private host: ExtensionHost) {
+    }
+
+    streamingExtensions(): string[] {
+        return Object.keys(this.streams);
     }
 
     handleExtensionMessage(message: e.ExtensionMessage) {
@@ -80,7 +86,7 @@ export class ExtensionManager {
                 this.sendResponse(resp);
                 break;
             case "extdatastream":
-                return this.permissionOperation(request.extId, Permissions.Serial, resp, handleDataStreamRequest);
+                return this.permissionOperation(request.extId, Permissions.Serial, resp, (name, resp) => this.handleDataStreamRequest(name, resp));
             case "extquerypermission":
                 const perm = this.getPermissions(request.extId)
                 const r = resp as e.ExtensionResponse;
@@ -224,15 +230,17 @@ export class ExtensionManager {
         }
         return status === PermissionStatus.NotYetPrompted;
     }
+
+    private handleDataStreamRequest(name: string, resp: e.ExtensionResponse) {
+        // ASSERT: permission has been granted
+        this.streams[this.getExtId(name)] = true;
+    }
 }
 
 function handleUserCodeRequest(name: string, resp: e.ExtensionResponse) {
+    // ASSERT: permission has been granded
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     resp.resp = mainPackage.getAllFiles();
-}
-
-function handleDataStreamRequest(name: string, resp: e.ExtensionResponse) {
-    // TODO
 }
 
 function handleReadCodeRequest(name: string, resp: e.ReadCodeResponse) {
