@@ -2,17 +2,19 @@
 \label{sec:sts}
 
 TypeScript is a typed superset of JavaScript designed to enable JavaScript developers to take advantage of code 
-intellisense, static checking and refactoring made possible by types (\url{http://www.typescriptlang.org/}). 
+completion, static checking and refactoring made possible by types (\url{http://www.typescriptlang.org/}). 
 As a starting point, every JavaScript program is a TypeScript program.  Types can be added gradually to such programs, 
-supported by type inference. In TypeScript, the Any type 
+supported by type inference. 
+In TypeScript, the Any type 
 represents any JavaScript value with no constraints. Type inference may assign the Any type to expressions for which 
 no more specific type can be inferred.
 
 While TypeScript provides classes and interfaces with syntax like Java/C\#, their semantics
 are quite different, as they are based on JavaScript.  Classes are simply syntactic sugar for creating objects that
-have code associated with them, but these objects are JavaScript objects with all their dynamic semantics intact. This
-is not surprising, as TypeScript was designed to accommodate the dynamic nature of JavaScript and programming patterns
-familiar to the JavaScript programmer. 
+have code associated with them, but these objects are JavaScript objects with all their dynamic semantics intact. 
+%This
+%is not surprising, as TypeScript was designed to accommodate the dynamic nature of JavaScript and %programming patterns
+%familiar to the JavaScript programmer. 
 
 We approach TypeScript from the viewpoint of the microcontroller programmer, who is 
 familiar with the static (though unsound) type systems of C and C++. Our realization is that TypeScript contains a
@@ -24,8 +26,9 @@ and expressions that only can be typed with Any;
 \item \emph{partitioning} TypeScript's space of object types into functions, records, constructor functions, and arrays, with no casts 
     possible between the partitions (and eliminating all other object types) - structural subtyping is used to relate records 
     to each other, as in TypeScript;
-\item typing of classes \emph{nominally} rather than structurally, as in TypeScript, and traditional function subtyping (contravariant 
-    in the argument type, covariant in the return type) for functions as well as methods;
+\item typing of classes \emph{nominally} rather than structurally, as in TypeScript;
+\item typing of functions/methods via traditional function subtyping (contravariant 
+    in the argument type, covariant in the return type)
 \item \emph{restricting} casts between records and classes: a class can be cast to a record, but a record cannot be cast to a class.
 \end{itemize}
 STS is a syntactic subset of TypeScript -- there is no change to the syntax of TypeScript.
@@ -153,5 +156,5 @@ $S$ has a property $M$ where all of the following are true:
 STS type checking for (pure) expressions remains the same as in TypeScript.
 Type checking at assignments, where a value of type $S$ flows (is assigned to) 
 into a location of type $T$ uses the new subtyping relation: $S$
-must be a subtype of $T$.  Downcasts (where a supertype flows to a subtype)
+must be a subtype of $T$.  Downcasts (a supertype being assigned to a subtype)
 are not permitted in STS.
