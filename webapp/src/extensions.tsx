@@ -177,7 +177,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
     static getFrame(name: string, createIfMissing: boolean): HTMLIFrameElement {
         const customContent = this.getCustomContent();
         let frame = customContent.getElementsByClassName(`extension-frame-${name}`)[0] as HTMLIFrameElement;
-        if (!frame && !createIfMissing) {
+        if (!frame && createIfMissing) {
             frame = this.createFrame(name);
         }
         return frame;
