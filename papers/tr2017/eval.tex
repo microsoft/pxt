@@ -3,7 +3,7 @@
 
 This section evaluates the costs of the various layers of abstraction in our platform.
 We evaluate the cost of these layers using a set of micro-benchmarks, written
-in both C++ and Static TypeScript, for three microcontrollers: nrF52, 
+in both C++ and Static TypeScript, with three microcontrollers: nrF52, 
 SAMD21 (CPX device), and Atmega (Uno). The C++ benchmarks isolate the performance
 of \CO and provide a baseline, while the Static TypeScript benchmarks show the overhead
 added by \MC. 
@@ -33,6 +33,17 @@ In our microbenchmarks, 99\% of that runtime is tree-shaken away.
 \subsection{Compiling Static TypeScript}
 % data generated using 'node map-file-stats.js CIRCUIT_PLAYGROUND.map'
 % maybe put it in a table?
+
+% TOTAL 114.22
+% pxtapp 20.46
+% lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crtbegin.o 0.09
+% codal 29.72
+% libmbed-classic.a 14.78
+% lib/thumb/v6-m\libstdc++_nano.a 0.08
+% lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a 12.76
+% lib/thumb/v6-m\libm.a 24.28
+% lib/thumb/v6-m\libc_nano.a 11.91
+% lib/thumb/v6-m\libnosys.a 0.03
 
 When compiling the Static TypeScript benchmarks and runtime with code shaking we obtain 
 a generated code density of 37.5 bytes per statement on CPX, 60.8 on AVR native, and 12.3 on AVR VM.
