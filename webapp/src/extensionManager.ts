@@ -249,21 +249,31 @@ function handleReadCodeRequest(name: string, resp: e.ReadCodeResponse) {
     const files = mainPackage.getAllFiles();
     resp.resp = {
         json: files[fn + ".json"],
-        code: files[fn + ".ts"]
+        code: files[fn + ".ts"],
+        jres: files[fn + ".jres"]
     };
 }
 
 function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, files: e.ExtensionFiles) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     const fn = ts.pxtc.escapeIdentifier(name);
+
+    function shouldUpdate(value: string, ext: string): boolean {
+        return value !== undefined && (!mainPackage.files[fn + ext] || mainPackage.files[fn + ext].content != value);
+    }
+
     let needsUpdate = false;
-    if (files.json !== undefined) {
+    if (shouldUpdate(files.json, ".json")) {
         needsUpdate = true;
         mainPackage.setFile(fn + ".json", files.json);
     }
-    if (files.code !== undefined) {
+    if (shouldUpdate(files.code, ".ts")) {
         needsUpdate = true;
         mainPackage.setFile(fn + ".ts", files.code);
+    }
+    if (shouldUpdate(files.jres, ".jres")) {
+        needsUpdate = true;
+        mainPackage.setFile(fn + ".jres", files.jres);
     }
 
     return !needsUpdate ? Promise.resolve() : mainPackage.updateConfigAsync(cfg => {
@@ -272,6 +282,9 @@ function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, fi
         }
         if (files.code !== undefined && cfg.files.indexOf(fn + ".ts") < 0) {
             cfg.files.push(fn + ".ts")
+        }
+        if (files.jres !== undefined && cfg.files.indexOf(fn + ".jres") < 0) {
+            cfg.files.push(fn + ".jres")
         }
         return mainPackage.savePkgAsync();
     });

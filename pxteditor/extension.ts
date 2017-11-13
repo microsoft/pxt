@@ -11,6 +11,7 @@ namespace pxt.editor {
     export interface ExtensionFiles {
         code?: string;
         json?: string;
+        jres?: string;
     }
 
     export enum PermissionResponses {
