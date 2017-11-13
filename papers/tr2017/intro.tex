@@ -7,44 +7,61 @@ new uses in making~\cite{dougherty2012maker} and education. For example, the Ard
 started in 2003, created the Uno board using an 8-bit Atmel
 AVR microcontroller. The Uno makes its microcontroller's I/O pins available via headers;
 external hardware modules (shields) may be connected to these headers to extend
-the Uno's capability. The Arduino ecosystem has grown tremendously in the past 15 years,
+the Uno's capability. The Arduino ecosystem has grown over the past 15 years,
 with the support of companies such as Adafruit Industries (\url{www.adafruit.com}) and
 Sparkfun Electronics (\url{www.sparkfun.com}), who resell Arduino and make their
 own Arduino-compatible boards.
 
-The Arduino platform has the following characteristics, common to many programming
-environments for microcontrollers~\cite{XYZ}:
-\begin{itemize}
-\item it uses C/C++ as the starting programming language;
-\item it loads code using 1980's era bootloader technology;
-\item it encourages polling of sensors;
-\item it lacks many interactive features of modern IDEs;
-\end{itemize}
-These characteristics make such systems non-trivial for beginners to work with,
-require the installation of OS-specific drivers/applications/toolchains,
-and leads to poor programming practices.
+Demand for microcontrollers is brisk due to their use in the monitoring and controlling
+of a wide variety of systems, ranging from wearables, to home automation, to industrial 
+automation and smart grids. s\emph{compare CPU to microcontroller - what distinguishes MCU from CPU - 
+compute to memory ratio - MCU has simple pipeline, very predictable performance}
+Application programming of microcontrollers generaly requires a professional
+development environment. 
 
-The Java language (among others) held out the promise of a better way forward for
-programming microcontrollers, but XYZ.
-\flameon{we need more description of why current ways of programming microcontrollers
-make for a high barrier to entry; also need to take on Java head on here, as well as
-RTOS and MicroPython.}
+% https://globenewswire.com/news-release/2015/12/24/798090/0/en/Microcontroller-Market-Worth-26-98Bn-By-2020-Grand-View-Research-Inc.html
+% "The global microcontroller market size was valued at USD 24.61 billion in 2015. The substantial growth in automobile, 
+% consumer electronics, and the healthcare sector is expected to attribute to the industry growth.
+% The global microcontroller market is expected to reach USD 26.98 billion by 2020,"
 
-In contrast to the situation for programming microcontrollers,
-on the web we find many excellent environments for introductory programming.
+% https://www.morganstanley.com/ideas/microcontrollers-semiconductors-internet-of-things
+% "Embedded in a product, these tiny chips can efficiently sense, process, 
+% and control operations at low cost.  Over the years, chipmakers have been making them 
+% smaller, more energy efficient, less expensive, and geared for a mobile and wireless world."
+
+% The Arduino platform has the following characteristics, common to many programming
+% environments for microcontrollers~\cite{XYZ}:
+% \begin{itemize}
+% \item it uses C/C++ as the starting programming language;
+% \item it loads code using 1980's era bootloader technology;
+% \item it encourages polling of sensors;
+% \item it lacks many interactive features of modern IDEs;
+% \end{itemize}
+% These characteristics make such systems non-trivial for beginners to work with,
+% require the installation of OS-specific drivers/applications/toolchains,
+% and leads to poor programming practices.
+
+%The Java language (among others) held out the promise of a better way forward for
+%programming microcontrollers, but XYZ.
+%\flameon{we need more description of why current ways of programming microcontrollers
+%make for a high barrier to entry; also need to take on Java head on here, as well as
+%RTOS and MicroPython.}
+
+In comparison, on the web we find many environments for introductory programming.
 Visual block editors such as Scratch (\url{https://scratch.mit.edu/})~\cite{ScratchCACM2009,BlocksBeyondCACM2017}
 and Blockly (\url{https://developers.google.com/blockly/})~\cite{Blocky2015}
 allow the creation of programs without the possibility of syntax errors.
 The programming models associated with Scratch and Blockly generally are
 event based, freeing the programmer from the need to poll.
-HTML, CSS and JavaScript allow a complete programming experience to be delivered as an interactive
-web app, including editing with intellisense, code execution and debugging~\cite{Monaco}.
 
-With a surge in the demand of microcontroller-based devices for education~\cite{XYZ},
-there is a need to simplify the programming of such devices so that they suitable
-for novice users in restricted environments.
+% HTML, CSS and JavaScript allow a complete programming experience to be delivered as an interactive
+% web app, including editing with code completion, code execution and debugging~\cite{Monaco}.
+
+With a surge in the demand for microcontroller-based devices across a wide
+spectrum of applications, 
+there is a need to simplify the programming of such devices.
 Therefore, we have created a new programming platform that bridges the worlds of
-the microcontroller and the web app.
+the web app and the microcontroller. 
 
 The major goals of the platform are to:
 % TypeScript / Blocks + MakeCode
@@ -95,6 +112,7 @@ to the internet). All of the platform's components are open source on GitHub.
             &          &            & \bf{Word} &          &             \\
 \bf{Device} & \bf{RAM} & \bf{Flash} & \bf{Size} & \bf{CPU} & \bf{Chip}   \\ \hline
 Uno         & 2 kB     & 32 kB      & 8         & AVR      & ATmega328P  \\ \hline
+micro:bit   & 16 Kb    & 128 KB     & 32        & M0       & nRF51       \\ \hline
 CPX         & 32 kB    & 256 kB     & 32        & M0       & SAMD21      \\ \hline
 NRF52-DK    & 64 kB    & 256 kB     & 32        & M4-f     & nRF52     \\ \hline
 \end{tabular}
@@ -102,10 +120,9 @@ NRF52-DK    & 64 kB    & 256 kB     & 32        & M4-f     & nRF52     \\ \hline
 CPX is Adafruit's Circuit Playground Express. M0 denotes Cortex-M0.}
 \end{table}
 
-Table~\ref{table:devices} lists three of the devices supported by our platform, ranging
-from the highly resource-contrained Arduino Uno to the slightly less constrained space of
-the micro:bit and Adafruit Circuit Playground Express (CPX).
-
+Table~\ref{table:devices} lists a number of the devices/microcontrollers supported by our platform, 
+ranging from the highly resource-contrained Arduino Uno to the slightly less constrained space of
+the micro:bit, Adafruit Circuit Playground Express (CPX), and NRF52.
 
 \subsection{Running Example}
 
@@ -170,16 +187,15 @@ In this paper, we evaluate quantitative aspects of the platform
 with respect to the devices from Table~\ref{table:devices}. In particular, we
 consider:
 \begin{itemize}
-\item the time to compile Static TypeScript user code (to machine code) with respect
-      to the GCC C/C++ toolchain, as well as the size of the resulting executable;
-\item the time to load code onto a microcontroller using UF2, compared to standard bootloaders
-      such as Arduino and ARM's DAPlink;
+\item the time to compile Static TypeScript user code (to machine code or bytecode),
+       as well as the size of the resulting executable;
 \item the performance of a set of small benchmarks, written in both Static TypeScript and C++,
       compiled with the \MC and GCC toolchains;
-\item \emph{energy consumption: \CO vs. Arduino}
-\item \emph{native code vs. bytecode} we
-      evaluate memory consumption and code performance for native code generation
-      vs. bytecode generation and interpretation on the Uno.
+\item the time to load code onto a microcontroller using UF2, compared to standard bootloaders
+      such as Arduino and ARM's DAPlink;
+%\item \emph{native code vs. bytecode} we
+%      evaluate memory consumption and code performance for native code generation
+%      vs. bytecode generation and interpretation on the Uno.
 \end{itemize}
 
 \flameon{TODO: we should present some of high-level experimental results here.}
