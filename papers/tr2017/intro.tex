@@ -126,24 +126,28 @@ the micro:bit, and Adafruit Circuit Playground Express (CPX).
 
 \subsection{Running Example: firefly simulation.}
 
-Figure~\ref{fig:example} shows a program in the Static
-TypeScript subset that implements a simple ``firefly'' example
+Figure~\ref{fig:example} shows a JavaScript
+program that implements a simple ``firefly'' example
 for the Adafruit Circuit Playground Express (CPX).
+This program demonstrates the natural phenomenon
+of fireflies synchronizing their light pulses (the program should be
+run on several CPX's close to each other in a dark room).
+
 The program has three top-level statements:
 the first initializes the global variable \emph{clock} (line 1); the
 second registers an event handler (a lambda function) to execute
 each time the CPX's light detector senses a bright light (line 3); the
 third registers a lambda function to run forever on a fiber (line 18),
-to keep track of time and pulse all of the CPX's to white whenever the
-clock reaches 8.  This program demonstrates the natural phenomenon
-of fireflies synchronizing their light pulses (the program should be
-run on several CPX's close to each other in a dark room).
+to keep track of time and pulse the CPX's 10 LEDs whenever the
+clock reaches 8.  
 
 Note that this program is a JavaScript program, as there are no
 types mentioned explicitly. However, all the functions called in
 this program are part of the runtime and are explicitly
-typed.  As a result, the static type of every variable and expression
-can be inferred by TypeScript's type inference.
+typed. This program is a Static TypeScript program:
+the static type of every variable and expression
+can be inferred and passes the more restrictive checks
+of Static TypeScript. 
 
 The program also shows off the use of the non-preemptive concurrency
 model supported by both \MC (for JavaScript) and \CO (for C++).
