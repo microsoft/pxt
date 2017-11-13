@@ -5,14 +5,13 @@ Over the last decade, microcontrollers, the workhorses of embedded systems, have
 new uses in making~\cite{dougherty2012maker} and education. For example, the Arduino project
 (\url{www.arduino.cc})~\cite{buildingArduino2014},
 started in 2003, created the Uno board using an 8-bit Atmel
-AVR microcontroller. The Uno makes its microcontroller's I/O pins available via headers;
-external hardware modules (shields) may be connected to these headers to extend
-the Uno's capability. The Arduino ecosystem has grown over the past 15 years,
-with the support of companies such as Adafruit Industries (\url{www.adafruit.com}) and
-Sparkfun Electronics (\url{www.sparkfun.com}), who resell Arduino and make their
-own Arduino-compatible boards.
+AVR microcontroller. 
+The Arduino ecosystem has grown over the past 15 years,
+with the support of companies such as Adafruit Industries (\url{www.adafruit.com}), 
+who resell Arduino and make their own Arduino-compatible boards, as well as providing
+how-to guides for beginners to start working with microcontrollers.
 
-Demand for microcontrollers is brisk due to their use in the monitoring and controlling
+Furthermore, demand for microcontrollers is brisk due to their use in the monitoring and controlling
 of a wide variety of systems, ranging from wearables, to home automation, to industrial 
 automation and smart grids. s\emph{compare CPU to microcontroller - what distinguishes MCU from CPU - 
 compute to memory ratio - MCU has simple pipeline, very predictable performance}
@@ -70,7 +69,8 @@ using nothing more than a web app;
 % TypeScript and Blocks prevent users from making boo boos.
 (2) provide a safe environment for users to develop programs for microcontrollers;
 % simulator, auto completion...
-(3) create a feature rich and extensible development environment that decreases time taken to program a microcontroller (time to awesome);
+(3) create a feature rich and extensible development environment 
+that decreases time taken to program a microcontroller;
 % UF2 is awesome
 (4) allow a users' compiled program to be easily installed on a microcontroller;
 
@@ -111,30 +111,34 @@ to the internet). All of the platform's components are open source on GitHub.
 \hline
             &          &            & \bf{Word} &          &             \\
 \bf{Device} & \bf{RAM} & \bf{Flash} & \bf{Size} & \bf{CPU} & \bf{Chip}   \\ \hline
-Uno         & 2 kB     & 32 kB      & 8         & AVR      & ATmega328P  \\ \hline
+Uno         & 2 kB     & 32 kB      & 8         & AVR      & 328P  \\ \hline
 micro:bit   & 16 Kb    & 128 KB     & 32        & M0       & nRF51       \\ \hline
 CPX         & 32 kB    & 256 kB     & 32        & M0       & SAMD21      \\ \hline
 NRF52-DK    & 64 kB    & 256 kB     & 32        & M4-f     & nRF52     \\ \hline
 \end{tabular}
 \caption{\label{table:devices}A subset of devices supported by the platform.
-CPX is Adafruit's Circuit Playground Express. M0 denotes Cortex-M0.}
+CPX is Adafruit's Circuit Playground Express. M0 denotes Cortex-M0 and 328P denotes
+the Atmega328P.}
 \end{table}
 
 Table~\ref{table:devices} lists a number of the devices/microcontrollers supported by our platform, 
 ranging from the highly resource-contrained Arduino Uno to the slightly less constrained space of
 the micro:bit, Adafruit Circuit Playground Express (CPX), and NRF52.
 
-\subsection{Running Example}
+\subsection{Running Example: firefly simulation.}
 
 Figure~\ref{fig:example} shows a program in the Static
-TypeScript subset that implements a simple ``stopwatch'' timer
-for the micro:bit.
+TypeScript subset that implements a simple ``firefly'' example
+for the CPX.
 The program has three top-level statements:
-the first initializes the global variable \emph{start} (line 1); the
+the first initializes the global variable \emph{clock} (line 1); the
 second registers an event handler (a lambda function) to execute
-each time button A of the micro:bit is pressed (line 3); the
+each time the CPX's light detector senses a bright light (line 3); the
 third registers a lambda function to run forever on a fiber (line 18),
-to animate the micro:bit's 5x5 LED screen whenever the timer is active.
+to keep track of time and pulse all of the CPX's to white whenever the
+clock reaches 8.  This program demonstrates the natural phenomenon
+of fireflies synchronizing their light pulses (the program should be
+run on several CPX's close to each other in a dark room).
 
 Note that this program is a JavaScript program, as there are no
 types mentioned explicitly. However, all the functions called in
@@ -144,39 +148,40 @@ can be inferred by TypeScript's type inference.
 
 The program also shows off the use of the non-preemptive concurrency
 model supported by both \MC (for JavaScript) and \CO (for C++).
-The fiber running the forever statement executes the lambda inside a ``while (true)''
+The forever procedure executes the lambda inside a ``while (true)''
 loop that yields (via a call to \emph{basic.pause}) after each call to the lambda.
-This gives the button-press event handler a chance to execute
-upon user input (in a separate fiber). Although the global variable \emph{start} is
+This gives the light-detection event handler a chance to execute
+upon user input (in a separate fiber). Although the global variable \emph{clock} is
 shared by the two fibers, there is no data race due to the non-preemptive
 scheduling model.
 
-\flameon{TODO: event queueing/execution model???}
-
 \begin{figure}
 \begin{lstlisting}
-let start = 0
+  let clock = 0
 
-input.onButtonPressed(Button.A, () => {
-  if (start == 0) {
-    start = input.runningTime()
-  } else {
-    let d = input.runningTime() - start
-    start = 0
-    basic.clearScreen()
-    basic.pause(1000)
-    basic.showString(d/1000 + "." + d%1000)
-  }
-})
+  input.onLightConditionChanged(
+    LightCondition.Bright, () => {
+      if (clock < 8) {
+          clock += 1    // catchup to neighbor
+      }
+  })
 
-basic.forever(() => {
-  if (start) {
-    led.toggle(Math.random(5), Math.random(5))
-  }
+  loops.forever(() => {
+    if (clock >= 8) {
+        // notify neighbors
+        light.setAll(Colors.White)  
+        loops.pause(200)
+        light.clear()
+        clock = 0         // reset the clock
+    } else {
+        loops.pause(100)
+        clock += 1         
+    }
 })
 \end{lstlisting}
-\caption{\label{fig:example}Running example.}
+\caption{\label{fig:example}Running example: firefly simulation.}
 \end{figure}
+
 
 \subsection{Evaluation}
 
@@ -198,7 +203,7 @@ consider:
 %      vs. bytecode generation and interpretation on the Uno.
 \end{itemize}
 
-\flameon{TODO: we should present some of high-level experimental results here.}
+%\flameon{TODO: we should present some of high-level experimental results here.}
 
 Sections~\ref{sec:makecode} to~\ref{sec:uf2} presents the four major components of the platform, top-down,
 as referenced before. Section~\ref{sec:evaluate} evaluates the performance of the platform,

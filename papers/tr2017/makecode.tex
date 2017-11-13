@@ -1,6 +1,6 @@
 
 \begin{figure*}[t]
-    \includegraphics[width=5in]{screenSnapFig.pdf}
+    \includegraphics[width=5in]{CPXfig.pdf}
 \caption{\label{fig:screenSnap}Screen snapshot of the \MC web app, showing the Blockly
 view of the JavaScript from Figure~\ref{fig:example}.}
 \end{figure*}
@@ -47,18 +47,15 @@ enumerations, functions, and basic type mappings. \MC uses top-level namespaces 
 TypeScript) to organize sets of related functions.  Preceding a C++ namespace, enumeration, or function
 with a comment starting with \emph{//\%} indicates that \MC should map the C++ construct to TypeScript.
 Within the \emph{//\%} comment, attributes are used to define the visual appearance for that
-language construct, such as for the LED namespace in the C++ micro:bit target:
-
+language construct, such as for the input namespace in the C++ for the CPX:
 \begin{lstlisting}
-//% color=#5C2D91 weight=97 icon="\uf205"
-namespace led { 
-...
+//% color="#B4009E" weight=98 icon="\uf192"
+namespace input {
+    ...
 \end{lstlisting}
 
-Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories, where the LED
+Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories, where the light
 namespace can been seen. 
-%Here is the C++ file defining the micro:bit's led namespace and its functions:
-%~\dbhref{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/led.cpp}{pxt-microbit/libs/core/led.cpp}.
 
 \begin{figure}[t]
     \includegraphics[width=4.5in]{makecodeFig.pdf}
@@ -67,42 +64,31 @@ namespace can been seen.
 
 Mapping of functions and enumerations between C++ and TypeScript is straightforward
 and performed automatically by \MC. 
-Here's an example of the C++ function plot in the led namespace that wraps a more
-complex function call of the underlying device runtime to set/plot an LED in the micro:bit display:
-
+Here's an example of the C++ function onLightConditionChanged in the input namespace that 
+wraps the more complex C++ needed to update the sensor and register it with the
+underlying \CO runtime:
 \begin{lstlisting}
-//% blockId=device_plot block="plot|x %x|y %y"
-//% x.min=0 x.max=4 y.min=0 y.max=4
-void plot(int x, int y) {
-    uBit.display.image.setPixelValue(x, y, 1);
+//% block="on light %condition"
+void onLightConditionChanged(LightCondition condition, Action handler) {
+    auto sensor = &getWLight()->sensor;
+    sensor->updateSample();
+    registerWithDal(sensor->id, (int)condition, handler);
 }
 \end{lstlisting}
 
 We'll describe the attribute definitions in the \emph{//\%} comment in the next section. 
 \MC uses a TypeScript declaration file (here called a shim file) to describe the TypeScript elements corresponding
 to C++ namespaces, enumerations and functions.
-Since the C++ plot function is preceded by a \emph{//\%} comment, 
+Since the C++ function above is preceded by a \emph{//\%} comment, 
 \MC adds the following TypeScript declaration to the shim file and copies
 over the attribute definitions in the comment. \MC also adds an attribute definition mapping
-the TypeScript shim to its C++ function (shim=led::plot):
+the TypeScript shim to its C++ function:
 
 \begin{lstlisting}
-//% block="plot|x %x|y %y
-//% shim=led::plot
-function plot(x: number, y: number): void;
+//% block="on light %condition"
+//% shim=input::onLightConditionChanged
+function onLightConditionChanged(condition: LightCondition, handler: () => void): void;
 \end{lstlisting}
-
-The following TypeScript code defines a function to toggle the state of a LED
-using three functions (led.point, led.unplot, and led.plot) exposed by the C++ runtime:  
-\begin{lstlisting}
-//% block="toggle|x %x|y %y"
-function toggle(x: number, y: number): void {
-    if (led.point(x, y)) led.unplot(x, y)
-    else led.plot(x, y)
-}
-\end{lstlisting}
-To the end user, the toggle function appears as just another runtime function available
-in the LED namespace. 
 
 %Here is the shim file generated from C++ micro:bit device runtime:
 %\dbhref{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/shims.d.ts}{pxt-microbit/libs/core/shims.d.ts}.
@@ -114,18 +100,11 @@ for type aliases to name the various C++ integer types commonly used for microco
 (int32, uint32, int16, uint16, int8, uint8). 
 % don't use int, unsigned etc. they are actually different sizes on different compilers for AVR
 This is particularly useful for saving space on 8-bit architectures such as the AVR. 
+\MC also includes reference counted C++ types for strings, lambdas (Action in C++, with
+up to three arguments and a return type) and collections, with mappings to TypeScript.
 
-%\MC allows a set of C++ functions with the same first parameter (of type Foo) to be
-%exposed as a TypeScript interface Foo as follows: this set of C++ functions must be grouped
-%inside a namespace of the name FooMethods.  
-%See, for example, how a C++ buffer abstraction is exposed in TypeScript:
-%\dbhref{https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp}{pxt-microbit/libs/core/buffer.cpp}.
-%You can find the resulting TypeScript Buffer interface in the previously referenced shim file for the micro:bit.
-
-\MC includes reference counted C++ types for strings, lambdas (with
-up to three arguments and a return type), collections, and user-defined classes/records.  
 \MC does not yet include garbage collection, so advanced users who create cyclic
-data structures must be careful to break cycles in order to ensure complete deallocation. 
+data structures must be careful to break cycles in order to ensure complete deallocation.
 
 \subsection{Metadata generation}
 
@@ -135,9 +114,16 @@ Blockly metadata to expose an API as a visual block.
 Additional attribute definitions can provide text descriptions for the block, project function
 parameters (thus simplifying the API available via Blockly), and describe other visual/functional
 characteristics of the block.  \MC uses the types of function parameters to select appropriate
-Blockly widgets.  For example, an enumeration is represented by a dropdown menu.
-%For more information on the block-specific annotations, see 
-%\dburl{https://makecode.com/defining-blocks}. 
+Blockly widgets.  For example, a C++ enumeration such as:
+\begin{lstlisting}
+enum class LightCondition {
+    Dark = ANALOG_THRESHOLD_LOW,
+    Bright = ANALOG_THRESHOLD_HIGH
+};
+\end{lstlisting}
+is represented by a dropdown menu for a parameter of type LightCondition, as found in
+the event handler onLightConditionChanged.
+ 
 \MCN's support for Blockly means that for the common case, the target developer doesn't need
 to know anything about the Blockly framework.
 For more sophisticated needs, one can directly access the Blockly framework. 
@@ -179,7 +165,7 @@ The reduced AST then is compiled to an intermediate representation (IR) that mak
 flow among a sequence of instructions with conditional and unconditional jumps; heap cells; field accesses; store operations,
 and reference counting.
 
-\flameon{MICHAL: can you please add a little more about the design of IR and the code generation - this PLDI, after all.}
+%\flameon{MICHAL: can you please add a little more about the design of IR and the code generation - %this PLDI, after all.}
 
 There are three backends for code generation from the IR. The first backend generates JavaScript,
 for execution against the simulator runtime.  A second backend generates assembler, parameterized by a
@@ -243,8 +229,8 @@ associated device; in these cases, the ``device runtime'' is defined solely by t
 
 As shown in Figure~\ref{fig:screenSnap}(B), the simulator allows the user to experience the basic functions of the device 
 in the browser and to test their code
-before deploying it to the actual device. The simulator has proxy widgets for sensors such as accelerometer (mouse motion),
-temperature and light, allowing the user to control the sensor's value.  The simulator only provides basic functionality
+before deploying it to the actual device. The simulator has proxy widgets for sensors such as the 
+light detector, temperature and accelerometer, allowing the user to control the sensor's value.  The simulator only provides basic functionality
 and is far from a complete device emulation.  
 % For example, it is not possible for the user to simultaneously modify two
 %inputs to the simulated device, while it is possible with the actual device (i.e., shaking it to change the accelerometer
