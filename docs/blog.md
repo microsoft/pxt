@@ -5,7 +5,7 @@
 November 13th, 2017 by [pelikhan](https://github.com/pelikhan)
 
 We are happy to announce that the Circuit Playground Express editor is coming out of beta!
-**[Read mode](/blog/adafruit-circuit-playground-express/v0.20.13)
+**[Read more](/blog/adafruit-circuit-playground-express/v0.20.13)
 
 ## [Microsoft MakeCode for Minecraft for Windows 10](/blog/minecraft/10-18-2017)
 
