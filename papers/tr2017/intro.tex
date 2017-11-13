@@ -129,7 +129,7 @@ the micro:bit, Adafruit Circuit Playground Express (CPX), and NRF52.
 
 Figure~\ref{fig:example} shows a program in the Static
 TypeScript subset that implements a simple ``firefly'' example
-for the CPX.
+for the Adafruit Circuit Playground Express (CPX).
 The program has three top-level statements:
 the first initializes the global variable \emph{clock} (line 1); the
 second registers an event handler (a lambda function) to execute
@@ -192,8 +192,8 @@ In this paper, we evaluate quantitative aspects of the platform
 with respect to the devices from Table~\ref{table:devices}. In particular, we
 consider:
 \begin{itemize}
-\item the time to compile Static TypeScript user code (to machine code or bytecode),
-       as well as the size of the resulting executable;
+\item the time to compile Static TypeScript to machine code or bytecode,
+       as well as the size of the resulting executable, including the C++ runtime;
 \item the performance of a set of small benchmarks, written in both Static TypeScript and C++,
       compiled with the \MC and GCC toolchains;
 \item the time to load code onto a microcontroller using UF2, compared to standard bootloaders
@@ -202,6 +202,7 @@ consider:
 %      evaluate memory consumption and code performance for native code generation
 %      vs. bytecode generation and interpretation on the Uno.
 \end{itemize}
+\flameon{The results show that XYZ.}
 
 %\flameon{TODO: we should present some of high-level experimental results here.}
 
