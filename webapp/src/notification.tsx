@@ -95,7 +95,7 @@ export class WindowsStoreContent extends data.Component<{}, {}> {
                     <img className="bannerIcon" src={Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)}></img>
                 </sui.Link>
                 <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={pxt.appTarget.appTheme.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
-                    {lf("Get the app from the Windows Store")}
+                    {lf("Want a faster download? Get the app!")}
                 </sui.Link>
             </div>
         );
