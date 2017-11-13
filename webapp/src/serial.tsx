@@ -34,6 +34,8 @@ export class Editor extends srceditor.Editor {
         return "serialEditor"
     }
 
+    hasHistory() { return false; }
+    
     hasEditorToolbar() {
         return false
     }
