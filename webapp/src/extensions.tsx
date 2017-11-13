@@ -74,7 +74,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
     hide() {
         this.setState({ visible: false });
 
-        const frame = Extensions.getFrame(this.state.extension);
+        const frame = Extensions.getFrame(this.state.extension, true);
         frame.style.display = 'none';
 
         // reload project to update changes from the editor
@@ -93,7 +93,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
     initializeFrame() {
         this.manager.setConsent(this.manager.getExtId(this.state.extension), true);
-        const frame = Extensions.getFrame(this.state.extension);
+        const frame = Extensions.getFrame(this.state.extension, true);
         frame.style.display = 'block';
         if (!frame.src) {
             frame.src = this.state.url + "#" + this.manager.getExtId(this.state.extension);
@@ -112,7 +112,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
             // Resize current frame
             const extension = this.extensionWrapper.getAttribute('data-frame');
             if (extension) {
-                const frame = Extensions.getFrame(extension);
+                const frame = Extensions.getFrame(extension, false);
                 const extensionDialog = document.getElementsByClassName('extensiondialog')[0];
                 if (extensionDialog && frame) {
                     const bb = extensionDialog.getBoundingClientRect();
@@ -142,7 +142,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
     }
 
     send(name: string, editorMessage: pxt.editor.ExtensionMessage) {
-        const frame = Extensions.getFrame(name);
+        const frame = Extensions.getFrame(name, false);
         if (frame) {
             frame.contentWindow.postMessage(editorMessage, "*");
         }
@@ -174,10 +174,10 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         return document.getElementById(CUSTOM_CONTENT_DIV) as HTMLElement;
     }
 
-    static getFrame(name: string): HTMLIFrameElement {
+    static getFrame(name: string, createIfMissing: boolean): HTMLIFrameElement {
         const customContent = this.getCustomContent();
         let frame = customContent.getElementsByClassName(`extension-frame-${name}`)[0] as HTMLIFrameElement;
-        if (!frame) {
+        if (!frame && !createIfMissing) {
             frame = this.createFrame(name);
         }
         return frame;
