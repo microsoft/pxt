@@ -488,7 +488,7 @@ namespace ts.pxtc.Util {
     export function requestAsync(options: HttpRequestOptions): Promise<HttpResponse> {
         return httpRequestCoreAsync(options)
             .then(resp => {
-                if (resp.statusCode != 200 && !options.allowHttpErrors) {
+                if ((resp.statusCode != 200 && resp.statusCode != 304) && !options.allowHttpErrors) {
                     let msg = Util.lf("Bad HTTP status code: {0} at {1}; message: {2}",
                         resp.statusCode, options.url, (resp.text || "").slice(0, 500))
                     let err: any = new Error(msg)
@@ -774,14 +774,14 @@ namespace ts.pxtc.Util {
         let url = `${pxt.Cloud.apiRoot}translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
         if (branch) url += '&branch=' + encodeURIComponent(branch);
         const headers: pxt.Map<string> = {};
-        if (etag) headers["If-Not-Matched"] = etag;
+        if (etag) headers["If-None-Matched"] = etag;
         return requestAsync({ url, headers }).then(resp => {
             // if 304, translation not changed, skipe
             if (_translationCache && resp.statusCode == 304)
                 return undefined;
-            else if (_translationCache && resp.statusCode == 200 && resp.headers["ETag"]) {
+            else if (_translationCache && resp.statusCode == 200) {
                 // store etag and translations
-                pxt.debug(`saving translations for ${lang}/${filename}/${branch}/${etag}`)
+                pxt.debug(`saving translations for ${lang}/${filename}/${branch || ""}/${etag || ""}`)
                 _translationCache.setAsync(lang, filename, branch, resp.headers["ETag"], resp.json)
                     .done();
             }
@@ -1149,7 +1149,7 @@ namespace ts.pxtc.BrowserImpl {
         })
     }
 
-    let sha256_k = new Uint32Array([
+    const sha256_k = new Uint32Array([
         0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
         0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
         0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
