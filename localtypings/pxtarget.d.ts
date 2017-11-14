@@ -302,6 +302,7 @@ declare namespace ts.pxtc {
         hidSelectors?: HidSelector[];
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
         vmOpCodes?: pxt.Map<number>;
+        commonalize?: boolean;
     }
 
     interface CompileOptions {

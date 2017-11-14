@@ -10,11 +10,13 @@ namespace ts.pxtc {
         "numops::ands": "_numops_ands",
         "pxt::toInt": "_numops_toInt",
         "pxt::fromInt": "_numops_fromInt",
+        "pxt::incr": "_pxt_incr",
+        "pxt::decr": "_pxt_decr",
     }
 
     // snippets for ARM Thumb assembly
     export class ThumbSnippets extends AssemblerSnippets {
-        hasCommonalize() { return true }
+        hasCommonalize() { return !!target.commonalize }
         stackAligned() {
             return target.stackAlign && target.stackAlign > 1
         }
@@ -235,6 +237,22 @@ _numops_fromInt:
     bl pxt::fromInt
     ${this.popPC()}
 `
+
+            for (let op of ["incr", "decr"]) {
+                r += `
+_pxt_${op}:
+    @scope _pxt_${op}
+    lsls r3, r0, #30
+    bne .skip
+    cmp r0, #0
+    beq .skip
+    ${this.pushLR()}
+    bl pxt::${op}
+    ${this.popPC()}
+.skip:
+    bx lr
+`
+            }
 
             return r
         }

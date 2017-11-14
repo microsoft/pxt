@@ -16,7 +16,7 @@
 
 namespace ts.pxtc.thumb {
 
-export class ThumbProcessor extends pxtc.assembler.AbstractProcessor {
+    export class ThumbProcessor extends pxtc.assembler.AbstractProcessor {
 
         constructor() {
             super();
@@ -222,6 +222,8 @@ export class ThumbProcessor extends pxtc.assembler.AbstractProcessor {
         }
 
         public commonalize(file: assembler.File): void {
+            if (!target.commonalize)
+                return
             // this is a heuristic - we could allow more instructions
             // to be shared, but it seems to result in less sharing
             let canBeShared = (l: assembler.Line) => {
