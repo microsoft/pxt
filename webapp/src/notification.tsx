@@ -81,8 +81,6 @@ export class GenericBanner extends React.Component<GenericBannerProps, {}> {
 }
 
 export class NotificationBanner extends React.Component<ISettingsProps, {}> {
-    banner: any;
-
     render() {
         const targetTheme = pxt.appTarget.appTheme;
         const isApp = electron.isElectron || pxt.winrt.isWinRT();
