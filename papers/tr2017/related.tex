@@ -38,7 +38,7 @@ is resident in the microcontroller's flash.
 
 As demonstrated in the evaluation, our approach to code generation and runtime
 has significant performance advantages over MicroPython and Espruino.
-This is due to a number of factors, the most significant of which is our use of
+This is due to several factors, the most significant of which is our use of
 Static TypeScript. In practice, our hardware partners and users have had no
 trouble with this limitation.  Another significant difference is our support
 for non-preemptive concurrency via fibers (co-routines). 
@@ -86,7 +86,7 @@ to prevent untyped JavaScript from destroying the type invariants of typed JavaS
 StrongScript~\cite{StrongScriptECOOP15} extends TypeScript with a type constructor (!)
 for \emph{concrete} types, which allows the programmer to choose between untyped
 code, optionally-typed code, and concretely typed code, which provides traditional
-type soundess guarantees. As with TypeScript, every JavaScript program is a StrongScript program. 
+type soundness guarantees. As with TypeScript, every JavaScript program is a StrongScript program. 
 
 Static TypeScript differs from these efforts by outlawing untyped or optionally typed
 code: it is non-goal of Static TypeScript to support arbitrary JavaScript programs.
@@ -117,8 +117,8 @@ programmers implement the body of \textit{setup} and \textit{loop}, where they e
 poll the state of the sensors or the microcontroller's pins.
 
 At the other end of the spectrum is ARM's Mbed OS~\cite{ARMmbed}, which is aimed at developers who are familiar 
-with non-preemptive scheduling, memory management, and condition synchronisation; a more 
-complex environment. A number of high-level drivers are provided and the programming model 
+with non-preemptive scheduling, memory management, and condition synchronization; a more 
+complex environment. Various high-level drivers are provided and the programming model 
 is determined by the developer, commonly event or interrupt driven.
 
 Although platforms like Arduino and Mbed OS are widely used by C/C++ developers, 
@@ -128,11 +128,11 @@ Mbed OS is pre-emptive, JavaScript is not; Arduino is based on monolithic pollin
 
 The goals of \CO are to: (1) bridge the semantic gap between 
 higher-level languages and the hardware in a memory, energy and instruction 
-efficient way; and (2) support a number of platforms with various
-resource contraints and capabilities.
+efficient way; and (2) support different platforms with various
+resource constraints and capabilities.
 
 Unlike Mbed, which is designed to make all devices look programmatically alike,
-\CO enables devices with additional on-chip hardware to specialise device drivers 
+\CO enables devices with additional on-chip hardware to specialize device drivers 
 with APIs that can then be used by the end application developer.
 
 % https://state-machine.com/arduino/ 
