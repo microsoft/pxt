@@ -134,10 +134,10 @@ As shown in the upper-left of Figure~\ref{fig:makecode},
 visual blocks or TypeScript. The editing experience is parameterized by the full-typed device
 runtime, which provides a set of categorized APIs to the end-user, based on namespaces, as
 previously described. These APIs are visible in both editors via a toolbox (Figure~\ref{fig:screenSnap}(C))
-to the immediate
-left of the programming area. The Blockly and Monaco toolboxes show the same set of APIs, to
-help in transition from coding with blocks to coding with JavaScript. More advanced TypeScript
-APIs can be discovered in Monaco via code intellisense.
+to the immediate left of the programming area. 
+%The Blockly and Monaco toolboxes show the same set of APIs, to
+%help in transition from coding with blocks to coding with JavaScript. More advanced TypeScript
+%APIs can be discovered in Monaco via code intellisense.
 
 \MC compiles the Blockly program representation to Static TypeScript in a syntax-directed manner.
 A key issue is the need for type inference on the Blockly representation, as variables generally are defined and used without
@@ -148,7 +148,7 @@ unique type to each variable.
 %and eliminate the need for separate type inference over the Blockly representation. 
 TypeScript supports programming constructs that are not available in Blockly, such as classes.
 Such constructs are converted into grey uneditable blocks in Blockly, with the construct's program
-text intact. This means \MC always can decompile a TypeScript program to Blockly and then recover
+text intact. This means \MC always can decompile an error-free TypeScript program to Blockly and then recover
 the program text of the grey blocks when converting from Blockly back to TypeScript.
 % (see \emph{\dbhref{https://github.com/Microsoft/pxt/blob/master/pxtcompiler/emitter/decompiler.ts}{decompiler.ts}}). 
 
@@ -171,7 +171,7 @@ processor description.  Currently supported processors include ARM's Cortex clas
 and Atmel's Atmega class (AVR instructions). A separate assembler, also parameterized by an instruction
 encoder/decoder, generates machine code and resolves runtime references, producing a final binary executable. A third backend generates bytecode instructions.
 \MC can encode the resulting binary in a number of formats, 
-including Intel's HEX format and the \UF format, introduced in Section~\ref{sec:uf2}.
+including Intel's HEX format and the \UF format, documented in the Appendix (Section~\ref{sec:uf2}).
 
 \subsubsection{Asynchronous Functions}
 
@@ -221,8 +221,9 @@ associated device; in these cases, the ``device runtime'' is defined solely by t
 As shown in Figure~\ref{fig:screenSnap}(B), the simulator allows the user to experience the basic functions of the device 
 in the browser and to test their code
 before deploying it to the actual device. The simulator has proxy widgets for sensors such as the 
-light detector, temperature and accelerometer, allowing the user to control the sensor's value.  The simulator only provides basic functionality
-and is far from a complete device emulation.  
+light detector, temperature and accelerometer, allowing the user to control the sensor's value.  
+The simulator only provides basic functionality
+and is far from a complete device emulator. 
 % For example, it is not possible for the user to simultaneously modify two
 %inputs to the simulated device, while it is possible with the actual device (i.e., shaking it to change the accelerometer
 %reading while pushing one of the device's buttons).
