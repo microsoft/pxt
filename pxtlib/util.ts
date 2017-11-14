@@ -668,7 +668,6 @@ namespace ts.pxtc.Util {
     // Localization functions. Please port any modifications over to pxtsim/localization.ts
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
-    let _translationsCache: pxt.Map<pxt.Map<string>> = {};
     export var localizeLive = false;
 
     // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
@@ -755,14 +754,10 @@ namespace ts.pxtc.Util {
         _localizeStrings = strs;
     }
 
-    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<any> {
+    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<void> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0]
-
-        const translationsCacheId = `${code}/${live}/${simulator}`;
-        if (_translationsCache[translationsCacheId])
-            return Promise.resolve(_translationsCache[translationsCacheId]);
 
         const stringFiles: { branch: string, path: string }[] = simulator
             ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" },
@@ -772,43 +767,24 @@ namespace ts.pxtc.Util {
                 { branch: targetBranch, path: targetId + "/target-strings.json" }
             ];
 
-        let translations: pxt.Map<string> = {};
+        _localizeLang = code;
+        _localizeStrings = {};
         function mergeTranslations(tr: pxt.Map<string>) {
             if (!tr) return;
             Object.keys(tr)
                 .filter(k => !!tr[k])
-                .forEach(k => translations[k] = tr[k])
+                .forEach(k => _localizeStrings[k] = tr[k])
         }
 
-        if (live) {
-            let hadError = false;
-
-            const pAll = Promise.mapSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path, file.branch)
+        let hadError = false;
+        const pAll = Promise.mapSeries(stringFiles,
+            (file) => downloadLiveTranslationsAsync(code, file.path, file.branch)
                 .then(mergeTranslations, e => {
                     console.log(e.message);
                     hadError = true;
                 })
-            );
-
-            return pAll.then(() => {
-                // Cache translations unless there was an error for one of the files
-                if (!hadError) {
-                    _translationsCache[translationsCacheId] = translations;
-                }
-                return Promise.resolve(translations);
-            });
-        } else {
-            return Util.httpGetJsonAsync(baseUrl + "locales/" + code + "/strings.json")
-                .then(tr => {
-                    if (tr) {
-                        translations = tr;
-                        _translationsCache[translationsCacheId] = translations;
-                    }
-                }, e => {
-                    console.error('failed to load localizations')
-                })
-                .then(() => translations);
-        }
+        );
+        return pAll.then(() => {});
     }
 
     export function htmlEscape(_input: string) {
