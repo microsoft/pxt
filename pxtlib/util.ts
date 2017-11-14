@@ -775,10 +775,10 @@ namespace ts.pxtc.Util {
         // hitting the cloud
         function downloadFromCloudAsync() {
             // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
-            let url = `${pxt.Cloud.apiRoot}translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+            let url = `https://makecode.com/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
             if (branch) url += '&branch=' + encodeURIComponent(branch);
             const headers: pxt.Map<string> = {};
-            if (etag) headers["If-None-Matched"] = etag;
+            if (etag) headers["If-None-Match"] = etag;
             return requestAsync({ url, headers }).then(resp => {
                 // if 304, translation not changed, skipe
                 if (_translationDb && resp.statusCode == 304)
@@ -786,11 +786,11 @@ namespace ts.pxtc.Util {
                 else if (_translationDb && resp.statusCode == 200) {
                     // store etag and translations
                     etag = resp.headers["ETag"] || "";
-                    pxt.debug(`saving translations for ${lang}, ${filename}, ${branch || ""}, ${etag}`)
-                    _translationDb.setAsync(lang, filename, branch, etag, resp.json)
-                        .done();
+                    return _translationDb.setAsync(lang, filename, branch, etag, resp.json)
+                        .then(() => resp.json);
                 }
-                return resp.json
+
+                return resp.json;
             })
         }
 
@@ -880,7 +880,7 @@ namespace ts.pxtc.Util {
 
             const pAll = Promise.mapSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path, file.branch)
                 .then(mergeTranslations, e => {
-                    pxt.reportException(e, { "path": file.path, "branch": file.branch });
+                    console.log(e.message);
                     hadError = true;
                 })
             );

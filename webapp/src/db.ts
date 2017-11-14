@@ -125,9 +125,12 @@ class TranslationDb implements ts.pxtc.Util.ITranslationDb {
             strings
         };
         pxt.debug(`translation cache: save ${id}-${etag}`)
-        return this.table.forceSetAsync(entry).then(() => {
-            entry.cached = true;
-            this.memCache[id] = entry;
+        const mem = pxt.Util.clone(entry);
+        mem.cached = true;
+        delete (<any>mem)._rev;
+        this.memCache[id] = mem;
+        return this.table.forceSetAsync(entry).then(() => {}, e => {
+            pxt.log(`translate cache: conflict for ${id}`);
         });
     }
 
