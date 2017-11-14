@@ -120,4 +120,4 @@ export class TranslationCache implements ts.pxtc.Util.ITranslationCache {
 
 }
 
-ts.pxtc.Util.translationCache = new TranslationCache();
+ts.pxtc.Util._translationCache = new TranslationCache();
