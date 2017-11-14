@@ -758,7 +758,7 @@ namespace ts.pxtc.Util {
 
     export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string): Promise<pxt.Map<string>> {
         // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
-        let url = `https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+        let url = `${pxt.Cloud.apiRoot}translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
         if (branch) url += '&branch=' + encodeURIComponent(branch);
         return Util.httpGetJsonAsync(url);
     }
