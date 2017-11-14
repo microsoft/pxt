@@ -6,3 +6,17 @@
   - CircuitPython
 - Tom and Michal to investigate David Whale examples
 - Michal to debug corruption on Uno
+
+- table 2 needs caption
+- need to explain micropython and Espruino, mention Espruino is JavaScript!!!
+- performance methodology section
+- describe up front, the different devices and what they use
+  - micro:bit - integer only, untagged
+  - CPX, adds floating point and tagged
+  - Uno, bare bones
+- remove Managed/Unmanaged plot
+- add table for Fig 12 to see what it looks like
+- remove streams and stream Figure
+- Figure 6 and 7 to align with Figure 1
+- Running example: make clear that the CPXs are communicating via 
+  light emission and detection (novel feature of physical computing)
