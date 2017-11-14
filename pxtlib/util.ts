@@ -690,7 +690,7 @@ namespace ts.pxtc.Util {
         // hitting the cloud
         function downloadFromCloudAsync() {
             // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
-            let url = `https://makecode.com/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+            let url = `https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
             if (branch) url += '&branch=' + encodeURIComponent(branch);
             const headers: pxt.Map<string> = {};
             if (etag) headers["If-None-Match"] = etag;

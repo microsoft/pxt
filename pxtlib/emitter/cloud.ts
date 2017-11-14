@@ -1,7 +1,7 @@
 namespace pxt.Cloud {
     import Util = pxtc.Util;
 
-    export var apiRoot = "https://makecode.com/api/";
+    export var apiRoot = "https://www.pxt.io/api/";
     export var accessToken = "";
     export var localToken = "";
     let _isOnline = true;
