@@ -760,6 +760,10 @@ namespace ts.pxtc.Util {
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0]
 
+        const translationsCacheId = `${code}/${live}/${simulator}`;
+        if (_translationsCache[translationsCacheId])
+            return Promise.resolve(_translationsCache[translationsCacheId]);
+
         const stringFiles: { branch: string, path: string }[] = simulator
             ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" },
             { branch: pxtBranch, path: "strings.json" }]
@@ -768,7 +772,6 @@ namespace ts.pxtc.Util {
                 { branch: targetBranch, path: targetId + "/target-strings.json" }
             ];
 
-        const translationsCacheId = `${code}/${live}/${simulator}`;
         let translations: pxt.Map<string> = {};
         function mergeTranslations(tr: pxt.Map<string>) {
             if (!tr) return;
