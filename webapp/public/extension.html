@@ -9,6 +9,9 @@
     @import "/blb/semantic.css";
 </style>
 <style>
+    body {
+        color: white !important;
+    }
     #logs {
         position: absolute;
         left: 0;
@@ -34,6 +37,9 @@
     }
 
     function formatResponse(resp) {
+        if (!resp.id)
+            return `\n${resp.event}, ${JSON.stringify(resp.body, null, 2).replace('\n', '')}`;
+
         var action = idToType[resp.id];
         return "\n< " + action + " (response) s=" + resp.success + " "
             + (resp.error ? resp.error : "") + (resp.resp ? JSON.stringify(resp.resp) : "");
@@ -117,7 +123,7 @@
         <button class="ui button" action="extquerypermission">query permissions</button>
         <button class="ui button" action="extreadcode">read code</button>
         <button class="ui button" action="extwritecode">write code</button>
-        <button class="ui button" action="extdatastream">serial</button>
+        <button class="ui button" action="extdatastream">console</button>
         <button class="ui button" action="extusercode">user code</button>
     </div>
     <pre id="logs" class="ui"></pre>
