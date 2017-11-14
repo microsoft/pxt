@@ -37,7 +37,7 @@ when it can be determined that the proper device runtime already
 is resident in the microcontroller's flash.
 
 As demonstrated in the evaluation, our approach to code generation and runtime
-has significant performance advantages over MicroPython and Espruino (which also).
+has significant performance advantages over MicroPython and Espruino.
 This is due to a number of factors, the most significant of which is our use of
 Static TypeScript. In practice, our hardware partners and users have had no
 trouble with this limitation.  Another significant difference is our support
@@ -74,21 +74,32 @@ for non-preemptive concurrency via fibers (co-routines).
 
 By design, TypeScript does not provide a type soundness guarantee~\cite{BiermanAT14}.
 Type systems with soundness guarantees for JavaScript have as their
-goals: (1) handling arbitrary JavaScript programs; (2) providing efficient
-execution for language subsets.
-Safe TypeScript~\cite{SafeTypeScript15}: distinguishes dynamic from Any type - dynamic means
-one of the known static types, where as Any denotes types coming
-from raw JavaScript.
-StrongScript~\cite{StrongScriptECOOP15}.
+goals: (1) handling arbitrary JavaScript programs; 
+(2) providing efficient execution for language subsets.
+
+Safe TypeScript~\cite{SafeTypeScript15} separates the worlds of typed and untyped 
+objects: the \emph{dynamic} type is an implicit union type of all \emph{known} static type, 
+while Any is an \emph{unknown} type, coming from the untyped JavaScript world. Type tags 
+are needed to distinguish the two worlds; Safe TypeScript also adds extra runtime checks
+to prevent untyped JavaScript from destroying the type invariants of typed JavaScript.  
+
+StrongScript~\cite{StrongScriptECOOP15} extends TypeScript with a type constructor (!)
+for \emph{concrete} types, which allows the programmer to choose between untyped
+code, optionally-typed code, and concretely typed code, which provides traditional
+type soundess guarantees. As with TypeScript, every JavaScript program is a StrongScript program. 
 
 Static TypeScript differs from these efforts by outlawing untyped or optionally typed
-code; \emph{it is non-goal to support arbitrary JavaScript programs}.
-In this sense, it can be seen to be StrongScript where every variable and 
-expression has a concrete (!) type.   As in StrongScript, classes are nominally typed,
+code: it is non-goal of Static TypeScript to support arbitrary JavaScript programs.
+In this sense, Static TypeScript can be seen to be StrongScript where every variable and 
+expression has a concrete (!) type. As in StrongScript, classes are nominally typed,
 which permits a more efficient and traditional property lookup for class instances. 
-Static TypeScript goes further by outlawing downcasts (for untagged implementation).
+Static TypeScript goes further by outlawing downcasts (necessary for our untagged 
+implementation).
 
-Satish Chandra work on type inference for static compilation of JavaScript~\cite{ChandraOOPSLA2016}
+Static TypeScript could benefit by enlarging the set of types
+that can be inferred, so that more JavaScript idioms could be allowed. 
+Chandra's work on type inference for static compilation of 
+JavaScript~\cite{ChandraOOPSLA2016} is one path forward. 
 
 \subsection{Operating systems}
 
@@ -97,7 +108,7 @@ a common design goal: to support developers by providing primitives and programm
 abstractions. Platforms can range from simple C++ classes that control hardware, 
 to real-time operating systems (RTOSs) with scheduling and memory management.
 
-The Arduino ecosystem is an example of a simple platform where the developer uses 
+Arduino~\cite{buildingArduino2014} is an example of a simple platform where the developer uses 
 high-level APIs to control hardware; there is no scheduler, and memory management 
 is discouraged through a heavy emphasis on global variables.  The Arduino programming 
 model is based on polling: an Arduino ``sketch'' is a program template that consists 
@@ -105,22 +116,22 @@ of a setup procedure, for initialization of data structures, and a loop procedur
 programmers implement the body of \textit{setup} and \textit{loop}, where they explicitly 
 poll the state of the sensors or the microcontroller's pins.
 
-At the other end of the spectrum is mbed OS, which is aimed at developers who are familiar 
+At the other end of the spectrum is ARM's Mbed OS~\cite{ARMmbed}, which is aimed at developers who are familiar 
 with non-preemptive scheduling, memory management, and condition synchronisation; a more 
 complex environment. A number of high-level drivers are provided and the programming model 
 is determined by the developer, commonly event or interrupt driven.
 
-Although platforms like Arduino and mbed OS are widely used by C/C++ developers, 
+Although platforms like Arduino and Mbed OS are widely used by C/C++ developers, 
 higher-level languages opt for virtual machines to execute on microcontrollers 
 as neither extreme aligns with the programming models seen in higher level languages: 
-mbed OS is pre-emptive, JavaScript is not; Arduino is based on monolithic polling. 
+Mbed OS is pre-emptive, JavaScript is not; Arduino is based on monolithic polling. 
 
 The goals of \CO are to: (1) bridge the semantic gap between 
 higher-level languages and the hardware in a memory, energy and instruction 
 efficient way; and (2) support a number of platforms with various
 resource contraints and capabilities.
 
-Unlike mbed, which is designed to make all devices look programmatically alike,
+Unlike Mbed, which is designed to make all devices look programmatically alike,
 \CO enables devices with additional on-chip hardware to specialise device drivers 
 with APIs that can then be used by the end application developer.
 
