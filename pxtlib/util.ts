@@ -317,6 +317,24 @@ namespace ts.pxtc.Util {
         };
     }
 
+    // Returns a function, that, as long as it continues to be invoked, will only
+    // trigger every N milliseconds. If `immediate` is passed, trigger the
+    // function on the leading edge, instead of the trailing.
+    export function throttle(func: (...args: any[]) => any, wait: number, immediate?: boolean): any {
+        let timeout: any;
+        return function () {
+            let context = this;
+            let args = arguments;
+            let later = function () {
+                timeout = null;
+                if (!immediate) func.apply(context, args);
+            };
+            let callNow = immediate && !timeout;
+            if (!timeout) timeout = setTimeout(later, wait);
+            if (callNow) func.apply(context, args);
+        };
+    }
+
     export function randomPermute<T>(arr: T[]) {
         for (let i = 0; i < arr.length; ++i) {
             let j = randomUint32() % arr.length
@@ -404,7 +422,7 @@ namespace ts.pxtc.Util {
     export function requestAsync(options: HttpRequestOptions): Promise<HttpResponse> {
         return httpRequestCoreAsync(options)
             .then(resp => {
-                if (resp.statusCode != 200 && !options.allowHttpErrors) {
+                if ((resp.statusCode != 200 && resp.statusCode != 304) && !options.allowHttpErrors) {
                     let msg = Util.lf("Bad HTTP status code: {0} at {1}; message: {2}",
                         resp.statusCode, options.url, (resp.text || "").slice(0, 500))
                     let err: any = new Error(msg)
@@ -635,9 +653,25 @@ namespace ts.pxtc.Util {
         return f() + f() + "-" + f() + "-4" + f().slice(-3) + "-" + f() + "-" + f() + f() + f();
     }
 
+    export interface ITranslationDbEntry {
+        id?: string;
+        etag: string;
+        strings: pxt.Map<string>;
+        cached?: boolean; // cached in memory, no download needed
+    }
+
+    export interface ITranslationDb {
+        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry>;
+        setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void>;
+    }
+
+    // Localization functions. Please port any modifications over to pxtsim/localization.ts
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
     export var localizeLive = false;
+
+    // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
+    export var _translationDb: ITranslationDb = undefined;
 
     /**
      * Returns the current user language, prepended by "live-" if in live mode
@@ -670,16 +704,46 @@ namespace ts.pxtc.Util {
         return _localizeStrings[s] || s;
     }
 
-    // should be also cached locally
-    let _cachedTranslations: pxt.Map<pxt.Map<string>> = {};
-    export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string): Promise<pxt.Map<string>> {
-        // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
-        let url = `https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
-        if (branch) url += '&branch=' + encodeURIComponent(branch);
+    export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string, etag?: string): Promise<pxt.Map<string>> {
+        // hitting the cloud
+        function downloadFromCloudAsync() {
+            // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
+            let url = `https://makecode.com/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+            if (branch) url += '&branch=' + encodeURIComponent(branch);
+            const headers: pxt.Map<string> = {};
+            if (etag) headers["If-None-Match"] = etag;
+            return requestAsync({ url, headers }).then(resp => {
+                // if 304, translation not changed, skipe
+                if (_translationDb && resp.statusCode == 304)
+                    return undefined;
+                else if (_translationDb && resp.statusCode == 200) {
+                    // store etag and translations
+                    etag = resp.headers["ETag"] || "";
+                    return _translationDb.setAsync(lang, filename, branch, etag, resp.json)
+                        .then(() => resp.json);
+                }
 
-        if (_cachedTranslations[url]) return Promise.resolve<pxt.Map<string>>(_cachedTranslations[url]);
+                return resp.json;
+            }, e => {
+                console.log(`failed to load translations from ${url}`)
+                return undefined;
+            })
+        }
 
-        return Util.httpGetJsonAsync(url).then((r: pxt.Map<string>) => _cachedTranslations[url] = r);
+        // check for cache
+        return (_translationDb ? _translationDb.getAsync(lang, filename, branch) : Promise.resolve(undefined))
+            .then((entry: ts.pxtc.Util.ITranslationDbEntry) => {
+                // if cached, return immediately
+                if (entry) {
+                    etag = entry.etag;
+                    // background update
+                    if (!entry.cached)
+                        downloadFromCloudAsync().done();
+                    return entry.strings;
+                } else
+                    return downloadFromCloudAsync();
+            })
+
     }
 
     export function getLocalizedStrings() {
@@ -703,30 +767,45 @@ namespace ts.pxtc.Util {
                 { branch: targetBranch, path: targetId + "/target-strings.json" }
             ];
 
-        if (_localizeLang != code && live) {
-            _localizeStrings = {};
-            _localizeLang = code;
-            localizeLive = true;
-            return Promise.mapSeries(stringFiles, (file) => {
-                return downloadLiveTranslationsAsync(code, file.path, file.branch)
-                    .then((tr) => Object.keys(tr)
-                        .filter(k => !!tr[k])
-                        .forEach(k => _localizeStrings[k] = tr[k])
-                    , e => console.log(`failed to load localizations for file ${file}`));
-            });
+        function mergeTranslations(tr: pxt.Map<string>) {
+            if (!tr) return;
+            if (!translations) {
+                translations = {};
+            }
+            Object.keys(tr)
+                .filter(k => !!tr[k])
+                .forEach(k => translations[k] = tr[k])
         }
 
-        if (_localizeLang != code) {
+        if (live) {
+            let hadError = false;
+
+            const pAll = Promise.mapSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path, file.branch)
+                .then(mergeTranslations, e => {
+                    console.log(e.message);
+                    hadError = true;
+                })
+            );
+
+            return pAll.then(() => {
+                // Cache translations unless there was an error for one of the files
+                if (!hadError) {
+                    _translationsCache[translationsCacheId] = translations;
+                }
+                return Promise.resolve(translations);
+            });
+        } else {
             return Util.httpGetJsonAsync(baseUrl + "locales/" + code + "/strings.json")
                 .then(tr => {
-                    _localizeStrings = tr || {};
-                    _localizeLang = code;
+                    if (tr) {
+                        translations = tr;
+                        _translationsCache[translationsCacheId] = translations;
+                    }
                 }, e => {
                     console.error('failed to load localizations')
                 })
+                .then(() => translations);
         }
-        //
-        return Promise.resolve(undefined);
     }
 
     export function htmlEscape(_input: string) {
@@ -973,7 +1052,7 @@ namespace ts.pxtc.BrowserImpl {
         })
     }
 
-    let sha256_k = new Uint32Array([
+    const sha256_k = new Uint32Array([
         0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
         0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
         0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
