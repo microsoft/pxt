@@ -719,25 +719,25 @@ namespace ts.pxtc.Util {
         return f() + f() + "-" + f() + "-4" + f().slice(-3) + "-" + f() + "-" + f() + f() + f();
     }
 
+    export interface ITranslationDbEntry {
+        etag: string;
+        strings: pxt.Map<string>;
+        _rev?: string;
+    }
+
+    export interface ITranslationDb {
+        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry>;
+        setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void>;
+    }
+
     // Localization functions. Please port any modifications over to pxtsim/localization.ts
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
     let _translationsCache: pxt.Map<pxt.Map<string>> = {};
     export var localizeLive = false;
 
-    export interface ITranslationCacheEntry {
-        etag: string;
-        strings: pxt.Map<string>;
-        _rev?: string;
-    }
-
-    export interface ITranslationCache {
-        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationCacheEntry>;
-        setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void>;
-    }
-
     // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
-    export var _translationCache: ITranslationCache = undefined;
+    export var _translationDb: ITranslationDb = undefined;
 
     /**
      * Returns the current user language, prepended by "live-" if in live mode
@@ -772,6 +772,8 @@ namespace ts.pxtc.Util {
 
     export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string, etag?: string): Promise<pxt.Map<string>> {
         let _rev: string = undefined;
+
+        // hitting the cloud
         function downloadFromCloudAsync() {
             // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
             let url = `${pxt.Cloud.apiRoot}translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
@@ -780,13 +782,13 @@ namespace ts.pxtc.Util {
             if (etag) headers["If-None-Matched"] = etag;
             return requestAsync({ url, headers }).then(resp => {
                 // if 304, translation not changed, skipe
-                if (_translationCache && resp.statusCode == 304)
+                if (_translationDb && resp.statusCode == 304)
                     return undefined;
-                else if (_translationCache && resp.statusCode == 200) {
+                else if (_translationDb && resp.statusCode == 200) {
                     // store etag and translations
                     etag = resp.headers["ETag"] || "";
                     pxt.debug(`saving translations for ${lang}, ${filename}, ${branch || ""}, ${etag}`)
-                    _translationCache.setAsync(lang, filename, branch, etag, _rev, resp.json)
+                    _translationDb.setAsync(lang, filename, branch, etag, _rev, resp.json)
                         .done();
                 }
                 return resp.json
@@ -794,8 +796,8 @@ namespace ts.pxtc.Util {
         }
 
         // check for cache
-        return (_translationCache ? _translationCache.getAsync(lang, filename, branch) : Promise.resolve(undefined))
-            .then((entry: ts.pxtc.Util.ITranslationCacheEntry) => {
+        return (_translationDb ? _translationDb.getAsync(lang, filename, branch) : Promise.resolve(undefined))
+            .then((entry: ts.pxtc.Util.ITranslationDbEntry) => {
                 // if cached, return immediately
                 if (entry) {
                     etag = entry.etag;

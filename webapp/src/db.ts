@@ -83,8 +83,9 @@ export class Table {
     }
 }
 
-export class TranslationCache implements ts.pxtc.Util.ITranslationCache {
+class TranslationDb implements ts.pxtc.Util.ITranslationDb {
     table: Table;
+
     constructor() {
         this.table = new Table("translations");
     }
@@ -93,13 +94,13 @@ export class TranslationCache implements ts.pxtc.Util.ITranslationCache {
         return `${lang}-${filename}-${branch || ""}`;
     }
 
-    getAsync(lang: string, filename: string, branch?: string): Promise<ts.pxtc.Util.ITranslationCacheEntry> {
+    getAsync(lang: string, filename: string, branch?: string): Promise<ts.pxtc.Util.ITranslationDbEntry> {
         const id = this.key(lang, filename, branch);
         pxt.debug(`translation cache: load ${id}`)
         return this.table.getAsync(id).then(
             v => {
                 pxt.debug(`translation cache hit ${id}`);
-                return { etag: v.etag, strings: v.strings };
+                return v;
             },
             e => {
                 pxt.debug(`translation cache miss ${id}`);
@@ -121,4 +122,4 @@ export class TranslationCache implements ts.pxtc.Util.ITranslationCache {
 
 }
 
-ts.pxtc.Util._translationCache = new TranslationCache();
+ts.pxtc.Util._translationDb = new TranslationDb();
