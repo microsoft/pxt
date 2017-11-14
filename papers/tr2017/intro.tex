@@ -33,12 +33,15 @@ microcontrollers where memory is limited (consider the Arduino Uno mentioned abo
 We present a platform that bridges the world of the web and the microcontroller with three
 novel technologies:
 \begin{itemize}
-\item \emph{\MCN}, a web app that supports programming, via Blockly and {\em Static TypeScript},
-a statically-typed runtime composed of Static TypeScript and C++ (Section~\ref{sec:makecode});
+\item \emph{\MCN}, a web app that supports programming of microcontrollers, via the web-based Blockly 
+and Monaco~\cite{Monaco} editors ---
+\MC is parameterized by statically-typed device runtime composed of \emph{Static TypeScript} (STS) and C++:
+an automated mapping from STS to Blockly and a foreign function interface from STS to C++ help
+bridge the gap between Blockly and C++ (Section~\ref{sec:makecode});
 
-\item \emph{Static TypeScript}, a statically-typed subset of TypeScript 
-(\url{www.typescriptlang.org}), for fast execution on low-memory devices, with
-a simple model for linking against pre-compiled C++ (Section~\ref{sec:sts});
+\item \emph{Static TypeScript} is a statically-typed subset of TypeScript 
+(\url{www.typescriptlang.org}) that we have defined for fast execution on low-memory devices, 
+with a simple model for linking against pre-compiled C++ (Section~\ref{sec:sts});
 
 \item \emph{\CO}, a component-based, event-driven, multi-threaded, C++ runtime environment 
 that bridges the semantic gap between higher-level languages (such as TypeScript) and the hardware,
@@ -47,7 +50,7 @@ modelling each hardware component as a software component (Section~\ref{sec:coda
 \end{itemize}
 The \MC web app is the entry point of the platform, and features
 in-browser execution via a device simulator, 
-as well as compilation to machine code and linking against a pre-compiled C++ runtime (\emph{\CON}). 
+as well as compilation of Static TypeScript to machine code and linking against a pre-compiled C++ runtime (\emph{\CON}). 
 The statically-typed runtime and type inference on user code allows uses to write code
 that looks like plain JavaScript (see Figure~\ref{fig:example}) and progress later to working 
 with types.
@@ -58,8 +61,7 @@ via a simple file copy operation.
 
 These advances enable beginners to get started programming microcontrollers from
 any modern web browser, and enable hardware vendors to innovate and safely add new
-components to the mix using Static TypeScript, leveraging its
-foreign function interface to C++.
+components to the mix using Static TypeScript.
 Once the web app has been loaded, all the above functionality works offline
 (i.e., if the host machine loses its connection
 to the internet). All of the platform's components are open source on GitHub.
