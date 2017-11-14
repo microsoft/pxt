@@ -55,8 +55,9 @@ namespace input {
     ...
 \end{lstlisting}
 
-Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories, where the light
-namespace can been seen. 
+Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories, where the 
+category \emph{INPUT} corresponding to the namespace \emph{input} can been seen (second
+from the top).
 
 \begin{figure}[t]
     \includegraphics[width=4.5in]{makecodeFig.pdf}
@@ -65,9 +66,10 @@ namespace can been seen.
 
 Mapping of functions and enumerations between C++ and TypeScript is straightforward
 and performed automatically by \MC. 
-Here's an example of the C++ function onLightConditionChanged in the input namespace that 
-wraps the more complex C++ needed to update the sensor and register it with the
-underlying \CO runtime:
+Here's an example of the C++ function \emph{onLightConditionChanged} 
+in the namespace \emph{input} that 
+wraps the more complex C++ needed to update the sensor and register the (Action) 
+handler with the underlying \CO runtime:
 \begin{lstlisting}
 //% block="on light %condition"
 void onLightConditionChanged(LightCondition condition, Action handler) {
@@ -78,8 +80,8 @@ void onLightConditionChanged(LightCondition condition, Action handler) {
 \end{lstlisting}
 
 We'll describe the attribute definitions in the \emph{//\%} comment in the next section. 
-\MC uses a TypeScript declaration file (here called a shim file) to describe the TypeScript elements corresponding
-to C++ namespaces, enumerations and functions.
+\MC uses a TypeScript declaration file (here called a shim file) to describe the TypeScript 
+elements corresponding to C++ namespaces, enumerations and functions.
 Since the C++ function above is preceded by a \emph{//\%} comment, 
 \MC adds the following TypeScript declaration to the shim file and copies
 over the attribute definitions in the comment. \MC also adds an attribute definition mapping
