@@ -725,6 +725,19 @@ namespace ts.pxtc.Util {
     let _translationsCache: pxt.Map<pxt.Map<string>> = {};
     export var localizeLive = false;
 
+    export interface ITranslationCacheEntry {
+        etag: string;
+        strings: pxt.Map<string>;
+    }
+
+    export interface ITranslationCache {
+        loadAsync(lang: string, filename: string, branch: string): Promise<ITranslationCacheEntry>;
+        saveAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void>;
+    }
+
+    // wired up in the app to store translations in pouchdb
+    export var translationCache: ITranslationCache = undefined;
+
     /**
      * Returns the current user language, prepended by "live-" if in live mode
      */
@@ -756,11 +769,24 @@ namespace ts.pxtc.Util {
         return _localizeStrings[s] || s;
     }
 
-    export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string): Promise<pxt.Map<string>> {
+    export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string, etag?: string): Promise<pxt.Map<string>> {
         // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
         let url = `${pxt.Cloud.apiRoot}translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
         if (branch) url += '&branch=' + encodeURIComponent(branch);
-        return Util.httpGetJsonAsync(url);
+        const headers: pxt.Map<string> = {};
+        if (etag) headers["If-Not-Matched"] = etag;
+        return requestAsync({ url, headers }).then(resp => {
+            // if 304, translation not changed, skipe
+            if (translationCache && resp.statusCode == 304)
+                return undefined;
+            else if (translationCache && resp.statusCode == 200 && resp.headers["ETag"]) {
+                // store etag and translations
+                pxt.debug(`saving translations for ${lang}/${filename}/${branch}/${etag}`)
+                translationCache.saveAsync(lang, filename, branch, resp.headers["ETag"], resp.json)
+                    .done();
+            }
+            return resp.json
+        })
     }
 
     export function getLocalizedStrings() {
@@ -818,18 +844,30 @@ namespace ts.pxtc.Util {
             ];
         let translations: pxt.Map<string>;
 
+        function mergeTranslations(tr: pxt.Map<string>) {
+            if (!tr) return;
+            if (!translations) {
+                translations = {};
+            }
+            Object.keys(tr)
+                .filter(k => !!tr[k])
+                .forEach(k => translations[k] = tr[k])
+        }
+
         if (live) {
             let hadError = false;
             return Promise.mapSeries(stringFiles, (file) => {
-                return downloadLiveTranslationsAsync(code, file.path, file.branch)
-                    .then((tr) => {
-                        if (!translations) {
-                            translations = {};
-                        }
-                        Object.keys(tr)
-                            .filter(k => !!tr[k])
-                            .forEach(k => translations[k] = tr[k])
-                    }, e => {
+                let etag: string = undefined;
+                let p = Promise.resolve();
+                if (translationCache)
+                    p = p.then(() => translationCache.loadAsync(code, file.path, file.branch))
+                        .then(entry => {
+                            etag = entry.etag;
+                            mergeTranslations(entry.strings);
+                        })
+
+                return p.then(() => downloadLiveTranslationsAsync(code, file.path, file.branch, etag))
+                    .then(mergeTranslations, e => {
                         pxt.reportException(e, { "path": file.path, "branch": file.branch });
                         hadError = true;
                     });

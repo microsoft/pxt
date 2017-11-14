@@ -82,3 +82,31 @@ export class Table {
         return getDbAsync().then(db => db.put(obj)).then((resp: any) => resp.rev)
     }
 }
+
+export class TranslationCache implements ts.pxtc.Util.ITranslationCache {
+    table: Table;
+    constructor() {
+        this.table = new Table("translations");
+    }
+
+    private key(lang: string, filename: string, branch: string) {
+        return `${lang}|${filename}|${branch}`;
+    }
+
+    loadAsync(lang: string, filename: string, branch?: string): Promise<ts.pxtc.Util.ITranslationCacheEntry> {
+        const id = this.key(lang, filename, branch);
+        return this.table.getAsync(id).then(v => { return { etag: v.etag, strings: v.strings }; });
+    }
+    saveAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
+        const id = this.key(lang, filename, branch);
+        const entry = {
+            id,
+            etag,
+            strings
+        };
+        return this.table.setAsync(entry).then(() => {});
+    }
+
+}
+
+ts.pxtc.Util.translationCache = new TranslationCache();
