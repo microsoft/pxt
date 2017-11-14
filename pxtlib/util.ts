@@ -770,23 +770,40 @@ namespace ts.pxtc.Util {
     }
 
     export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string, etag?: string): Promise<pxt.Map<string>> {
-        // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
-        let url = `${pxt.Cloud.apiRoot}translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
-        if (branch) url += '&branch=' + encodeURIComponent(branch);
-        const headers: pxt.Map<string> = {};
-        if (etag) headers["If-None-Matched"] = etag;
-        return requestAsync({ url, headers }).then(resp => {
-            // if 304, translation not changed, skipe
-            if (_translationCache && resp.statusCode == 304)
-                return undefined;
-            else if (_translationCache && resp.statusCode == 200) {
-                // store etag and translations
-                pxt.debug(`saving translations for ${lang}/${filename}/${branch || ""}/${etag || ""}`)
-                _translationCache.setAsync(lang, filename, branch, resp.headers["ETag"] || "", resp.json)
-                    .done();
-            }
-            return resp.json
-        })
+        function downloadFromCloudAsync() {
+            // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
+            let url = `${pxt.Cloud.apiRoot}translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+            if (branch) url += '&branch=' + encodeURIComponent(branch);
+            const headers: pxt.Map<string> = {};
+            if (etag) headers["If-None-Matched"] = etag;
+            return requestAsync({ url, headers }).then(resp => {
+                // if 304, translation not changed, skipe
+                if (_translationCache && resp.statusCode == 304)
+                    return undefined;
+                else if (_translationCache && resp.statusCode == 200) {
+                    // store etag and translations
+                    etag = resp.headers["ETag"] || "";
+                    pxt.debug(`saving translations for ${lang}, ${filename}, ${branch || ""}, ${etag}`)
+                    _translationCache.setAsync(lang, filename, branch, etag, resp.json)
+                        .done();
+                }
+                return resp.json
+            })
+        }
+
+        // check for cache
+        return (_translationCache ? _translationCache.getAsync(lang, filename, branch) : Promise.resolve(undefined))
+            .then((entry: ts.pxtc.Util.ITranslationCacheEntry) => {
+                // if cached, return immediately
+                if (entry) {
+                    etag = entry.etag;
+                    // background update
+                    downloadFromCloudAsync().done();
+                    return entry.strings;
+                } else
+                    return downloadFromCloudAsync();
+            })
+
     }
 
     export function getLocalizedStrings() {
@@ -857,32 +874,12 @@ namespace ts.pxtc.Util {
         if (live) {
             let hadError = false;
 
-            const pAll = Promise.mapSeries(stringFiles, (file) => {
-                let etag: string = undefined;
-                let p = Promise.resolve();
-                // try loading on disk translations
-                if (_translationCache)
-                    p = p.then(() => _translationCache.getAsync(code, file.path, file.branch))
-                        .then(entry => {
-                            if (entry) {
-                                etag = entry.etag;
-                                mergeTranslations(entry.strings);
-                            }
-                        })
-                return p.then(() => {
-                    if (etag) { // lazy update
-                        downloadLiveTranslationsAsync(code, file.path, file.branch, etag).done();
-                        return undefined;
-                    } else {
-                        // wait for cloud
-                        return downloadLiveTranslationsAsync(code, file.path, file.branch, etag);
-                    }
-                }).then(mergeTranslations, e => {
+            const pAll = Promise.mapSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path, file.branch)
+                .then(mergeTranslations, e => {
                     pxt.reportException(e, { "path": file.path, "branch": file.branch });
                     hadError = true;
-                });
-            });
-
+                })
+            );
 
             return pAll.then(() => {
                 // Cache translations unless there was an error for one of the files
