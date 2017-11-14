@@ -93,7 +93,7 @@ export class TranslationCache implements ts.pxtc.Util.ITranslationCache {
         return `${lang}|${filename}|${branch || ""}`;
     }
 
-    loadAsync(lang: string, filename: string, branch?: string): Promise<ts.pxtc.Util.ITranslationCacheEntry> {
+    getAsync(lang: string, filename: string, branch?: string): Promise<ts.pxtc.Util.ITranslationCacheEntry> {
         const id = this.key(lang, filename, branch);
         pxt.debug(`translation cache: load ${id}`)
         return this.table.getAsync(id).then(
@@ -107,7 +107,7 @@ export class TranslationCache implements ts.pxtc.Util.ITranslationCache {
             } // not found
         );
     }
-    saveAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
+    setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
         const id = this.key(lang, filename, branch);
         const entry = {
             id,

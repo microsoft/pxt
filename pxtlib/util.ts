@@ -731,8 +731,8 @@ namespace ts.pxtc.Util {
     }
 
     export interface ITranslationCache {
-        loadAsync(lang: string, filename: string, branch: string): Promise<ITranslationCacheEntry>;
-        saveAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void>;
+        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationCacheEntry>;
+        setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void>;
     }
 
     // wired up in the app to store translations in pouchdb
