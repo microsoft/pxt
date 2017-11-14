@@ -7,6 +7,7 @@ declare namespace pxt {
         target: string;
         pxt: string;
         pxtCrowdinBranch?: string;
+        targetCrowdinBranch?: string;
         tag?: string;
         branch?: string;
         commits?: string; // URL
