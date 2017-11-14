@@ -668,6 +668,7 @@ namespace ts.pxtc.Util {
     // Localization functions. Please port any modifications over to pxtsim/localization.ts
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
+    let _translationsCache: pxt.Map<pxt.Map<string>> = {};
     export var localizeLive = false;
 
     // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
@@ -767,11 +768,10 @@ namespace ts.pxtc.Util {
                 { branch: targetBranch, path: targetId + "/target-strings.json" }
             ];
 
+        const translationsCacheId = `${code}/${live}/${simulator}`;
+        let translations: pxt.Map<string> = {};
         function mergeTranslations(tr: pxt.Map<string>) {
             if (!tr) return;
-            if (!translations) {
-                translations = {};
-            }
             Object.keys(tr)
                 .filter(k => !!tr[k])
                 .forEach(k => translations[k] = tr[k])
