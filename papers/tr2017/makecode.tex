@@ -9,9 +9,13 @@ view of the JavaScript from Figure~\ref{fig:example}.}
 \section{\MCN: Design and Implementation}
 \label{sec:makecode}
 
+The key technical contribution of \MC is to provide users a simple progression from block-based
+programming in Blocky, to text-based programming in JavaScript (actually, Static TypeScript) 
+using Monaco, while leveraging C++ on the backend for efficient use of microcontroller resources.
+
 Figure~\ref{fig:screenSnap} shows a screen snapshot of the \MC web app for the CPX.
 There are five parts of the web app labelled in the figure:
-(A) the menu bar allows switching between views of blocks and JavaScript;
+(A) the menu bar allows switching between the two editors;
 (B) the simulator shows the CPX board and provides feedback on user code executed in the browser;
 (C) the toolbar provides access to device-specific APIs and programming elements;
 (D) the programming canvas (showing here the blocks corresponding to the JavaScript from Figure~\ref{fig:example});
@@ -22,7 +26,7 @@ for microcontrollers, free of the need for a C++ compiler for the compilation of
 The web app is written in TypeScript and incorporates the TypeScript compiler and 
 language service as well. 
 The app is built from a \MC ``target'' (\emph{\dbhref{https://github.com/microsoft/pxt-adafruit}{pxt-adafruit}})
-which extends the \MC framework (\emph{\dbhref{https://github.com/microsoft/pxt}{pxt}}).
+which parameterizes the \MC framework (\emph{\dbhref{https://github.com/microsoft/pxt}{pxt}}).
 The remaining subsections describe the parts of Figure~\ref{fig:makecode}, 
 which shows the high-level components of the web app.
 
@@ -30,7 +34,7 @@ which shows the high-level components of the web app.
 
 A \MC target is defined, in part, by its device runtime, which can be a combination of C++ 
 and Static TypeScript (STS) code, as shown in the lower-left of Figure~\ref{fig:makecode}.
-All C++ files for the target microcontroller are precompiled 
+All C++ files for the target microcontroller are precompiled (by a C++ compiler in the cloud)
 and stored in the cloud in a single blob and also is cached in the HTML5 application cache (with 
 other assets) so that the web app can function when the browser is offline. Additional runtime
 components may be authored in STS, which allows the device runtime to be updated without the
@@ -41,7 +45,7 @@ a unique aspect of \MCN's design.
 Whether runtime components are authored in C++ or STS, all runtime APIs are exposed as fully-typed
 TypeScript definitions. A fully-typed runtime improves the end-user experience 
 by making it easier to discover APIs; it also enables the type inference provided by the TypeScript 
-compiler to infer types for (unannotated) user JavaScript programs, as in Figure~\ref{fig:example}.
+compiler to infer types for (unannotated) user programs, as shown in Figure~\ref{fig:example}.
 
 \MC supports a simple foreign function interface from TypeScript to C++ based on namespaces,
 enumerations, functions, and basic type mappings. \MC uses top-level namespaces (in both C++ and
