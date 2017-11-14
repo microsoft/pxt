@@ -33,6 +33,7 @@ export class ExtensionManager {
     private pendingRequests: PermissionRequest[] = [];
     private queueLock = false;
 
+    // name to enabled
     private streams: pxt.Map<boolean> = {};
 
     constructor(private host: ExtensionHost) {
@@ -233,7 +234,7 @@ export class ExtensionManager {
 
     private handleDataStreamRequest(name: string, resp: e.ExtensionResponse) {
         // ASSERT: permission has been granted
-        this.streams[this.getExtId(name)] = true;
+        this.streams[name] = true;
     }
 }
 
