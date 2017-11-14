@@ -90,12 +90,22 @@ export class TranslationCache implements ts.pxtc.Util.ITranslationCache {
     }
 
     private key(lang: string, filename: string, branch: string) {
-        return `${lang}|${filename}|${branch}`;
+        return `${lang}|${filename}|${branch || ""}`;
     }
 
     loadAsync(lang: string, filename: string, branch?: string): Promise<ts.pxtc.Util.ITranslationCacheEntry> {
         const id = this.key(lang, filename, branch);
-        return this.table.getAsync(id).then(v => { return { etag: v.etag, strings: v.strings }; });
+        pxt.debug(`translation cache: load ${id}`)
+        return this.table.getAsync(id).then(
+            v => {
+                pxt.debug(`translation cache hit ${id}`);
+                return { etag: v.etag, strings: v.strings };
+            },
+            e => {
+                pxt.debug(`translation cache miss ${id}`);
+                return { etag: undefined, strings: undefined };
+            } // not found
+        );
     }
     saveAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
         const id = this.key(lang, filename, branch);
@@ -104,7 +114,8 @@ export class TranslationCache implements ts.pxtc.Util.ITranslationCache {
             etag,
             strings
         };
-        return this.table.setAsync(entry).then(() => {});
+        pxt.debug(`translation cache: save ${id}-${etag}`)
+        return this.table.setAsync(entry).then(() => { });
     }
 
 }
