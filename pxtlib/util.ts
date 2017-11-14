@@ -360,15 +360,15 @@ namespace ts.pxtc.Util {
     // function on the leading edge, instead of the trailing.
     export function throttle(func: (...args: any[]) => any, wait: number, immediate?: boolean): any {
         let timeout: any;
-        return function() {
+        return function () {
             let context = this;
             let args = arguments;
-            let later = function() {
+            let later = function () {
                 timeout = null;
                 if (!immediate) func.apply(context, args);
             };
             let callNow = immediate && !timeout;
-            if (!timeout) timeout = setTimeout( later, wait );
+            if (!timeout) timeout = setTimeout(later, wait);
             if (callNow) func.apply(context, args);
         };
     }
@@ -830,7 +830,7 @@ namespace ts.pxtc.Util {
                             .filter(k => !!tr[k])
                             .forEach(k => translations[k] = tr[k])
                     }, e => {
-                        console.log(`failed to load localizations for file ${file}`);
+                        pxt.reportException(e, { "path": file.path, "branch": file.branch });
                         hadError = true;
                     });
             })
@@ -841,17 +841,18 @@ namespace ts.pxtc.Util {
                     }
                     return Promise.resolve(translations);
                 });
+        } else {
+            return Util.httpGetJsonAsync(baseUrl + "locales/" + code + "/strings.json")
+                .then(tr => {
+                    if (tr) {
+                        translations = tr;
+                        _translationsCache[translationsCacheId] = translations;
+                    }
+                }, e => {
+                    console.error('failed to load localizations')
+                })
+                .then(() => translations);
         }
-        return Util.httpGetJsonAsync(baseUrl + "locales/" + code + "/strings.json")
-            .then(tr => {
-                if (tr) {
-                    translations = tr;
-                    _translationsCache[translationsCacheId] = translations;
-                }
-            }, e => {
-                console.error('failed to load localizations')
-            })
-            .then(() => translations);
     }
 
     export function htmlEscape(_input: string) {
