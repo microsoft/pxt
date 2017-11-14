@@ -34,8 +34,8 @@ which shows the high-level components of the web app.
 
 A \MC target is defined, in part, by its device runtime, which can be a combination of C++ 
 and Static TypeScript (STS) code, as shown in the lower-left of Figure~\ref{fig:makecode}.
-All C++ files for the target microcontroller are precompiled (by a C++ compiler in the cloud)
-and stored in the cloud in a single blob and also is cached in the HTML5 application cache (with 
+All the target's C++ files are precompiled (by a C++ compiler in the cloud)
+into a binary, which is stored in the cloud in a single blob, and cached in the HTML5 application cache (with 
 other assets) so that the web app can function when the browser is offline. Additional runtime
 components may be authored in STS, which allows the device runtime to be updated without the
 use of C++, and permits components of the device runtime to be shared by both the device
@@ -108,7 +108,7 @@ This is particularly useful for saving space on 8-bit architectures such as the 
 up to three arguments and a return type) and collections, with mappings to TypeScript.
 
 \MC does not yet include garbage collection, so advanced users who create cyclic
-data structures must be careful to break cycles in order to ensure complete deallocation.
+data structures must be careful to break cycles to ensure complete deallocation.
 
 \subsection{Metadata generation}
 
@@ -125,8 +125,8 @@ enum class LightCondition {
     Bright = ANALOG_THRESHOLD_HIGH
 };
 \end{lstlisting}
-is represented by a dropdown menu for a parameter of type LightCondition, as found in
-the event handler onLightConditionChanged.
+is represented by a dropdown menu for a parameter of type \emph{LightCondition}, as found in
+the function \emph{onLightConditionChanged}.
  
 \MCN's support for Blockly means that for the common case, the target developer doesn't need
 to know anything about the Blockly framework.
@@ -141,9 +141,6 @@ visual blocks or TypeScript. The editing experience is parameterized by the full
 runtime, which provides a set of categorized APIs to the end-user, based on namespaces, as
 previously described. These APIs are visible in both editors via a toolbox (Figure~\ref{fig:screenSnap}(C))
 to the immediate left of the programming area. 
-%The Blockly and Monaco toolboxes show the same set of APIs, to
-%help in transition from coding with blocks to coding with JavaScript. More advanced TypeScript
-%APIs can be discovered in Monaco via code intellisense.
 
 \MC compiles the Blockly program representation to Static TypeScript in a syntax-directed manner.
 A key issue is the need for type inference on the Blockly representation, as variables generally are defined and used without
@@ -161,7 +158,7 @@ the program text of the grey blocks when converting from Blockly back to TypeScr
 \subsection{Browser compilation}
 
 \MC first invokes the TypeScript language service to perform type inference and type checking on the 
-user's program, the device runtime writen in TypeScript, as well as the TypeScript declarations
+user's program, the device runtime written in TypeScript, as well as the TypeScript declarations
 corresponding to the C++ device runtime. It then checks that the
 combined TypeScript program is within the STS subset through additional syntactic and type checks over the typed AST (detailed in Section~\ref{sec:sts}).  Assuming all the
 above checks pass, \MC then performs tree shaking of the AST to remove unused TypeScript functions.
@@ -174,9 +171,9 @@ and reference counting.
 There are three backends for code generation from the IR. The first backend generates JavaScript,
 for execution against the simulator runtime.  A second backend generates assembler, parameterized by a
 processor description.  Currently supported processors include ARM's Cortex class (Thumb instructions)
-and Atmel's Atmega class (AVR instructions). A separate assembler, also parameterized by an instruction
+and Atmel's ATmega class (AVR instructions). A separate assembler, also parameterized by an instruction
 encoder/decoder, generates machine code and resolves runtime references, producing a final binary executable. A third backend generates bytecode instructions.
-\MC can encode the resulting binary in a number of formats, 
+\MC can encode the resulting binary in several formats, 
 including Intel's HEX format and the \UF format, documented in the Appendix (Section~\ref{sec:uf2}).
 
 \subsubsection{Asynchronous Functions}
