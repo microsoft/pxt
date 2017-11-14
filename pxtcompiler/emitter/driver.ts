@@ -162,7 +162,7 @@ namespace ts.pxtc {
         if (res.diagnostics.length > 0) {
             if (opts.forceEmit) {
                 pxt.debug('syntactic errors, forcing emit')
-                compileBinary(program, host, opts, res);
+                compileBinary(program, host, opts, res, "main.ts");
             }
             return res;
         }
@@ -183,7 +183,7 @@ namespace ts.pxtc {
         }
 
         if (opts.ast || opts.forceEmit || res.diagnostics.length == 0) {
-            const binOutput = compileBinary(program, host, opts, res);
+            const binOutput = compileBinary(program, host, opts, res, "main.ts");
             res.times["compilebinary"] = Date.now() - emitStart
             res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(binOutput.diagnostics))
         }

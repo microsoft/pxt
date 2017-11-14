@@ -74,11 +74,11 @@ class CompileHost extends TestHost {
                         "description": "",
                         "files": [
                             "lang-test0.ts",
-                            this.basename,
+                            "main.ts",
                         ]
                     })
             }
-            else if (filename === this.basename) {
+            else if (filename === "main.ts") {
                 return this.fileText;
             }
             else if (filename === "lang-test0.ts") {

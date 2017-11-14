@@ -110,6 +110,11 @@ namespace ts.pxtc {
         return target.isNative && (target.nativeType == NATIVE_TYPE_AVRVM || target.nativeType == NATIVE_TYPE_AVR)
     }
 
+    function isThisType(type: TypeParameter) {
+        // Internal TS field
+        return (type as any).isThisType;
+    }
+
     function isRefType(t: Type) {
         checkType(t);
         if (noRefCounting())
@@ -119,11 +124,14 @@ namespace ts.pxtc {
         if (t.flags & TypeFlags.Undefined)
             return false
         if (t.flags & TypeFlags.TypeParameter) {
+            if (isThisType(t as TypeParameter)) {
+                return true;
+            }
             let b = lookupTypeParameter(t)
             if (b) return b.isRef
             U.oops("unbound type parameter: " + checker.typeToString(t))
         }
-        if (t.flags & (TypeFlags.NumberLike | TypeFlags.Boolean))
+        if (t.flags & (TypeFlags.NumberLike | TypeFlags.Boolean | TypeFlags.NumberLiteral | TypeFlags.BooleanLiteral | TypeFlags.Enum | TypeFlags.EnumLike))
             return target.taggedInts ? true : false
 
         let sym = t.getSymbol()
@@ -179,7 +187,7 @@ namespace ts.pxtc {
 
     function getBitSize(decl: TypedDecl) {
         if (!decl || !decl.type) return BitSize.None
-        if (!(typeOf(decl).flags & TypeFlags.Number)) return BitSize.None
+        if (!(isNumberType(typeOf(decl)))) return BitSize.None
         if (decl.type.kind != SK.TypeReference) return BitSize.None
         switch ((decl.type as TypeReferenceNode).typeName.getText()) {
             case "int8": return BitSize.Int8
@@ -231,7 +239,7 @@ namespace ts.pxtc {
             l.bitSize = getBitSize(l.def)
             if (l.bitSize != BitSize.None) {
                 l._debugType = (isBitSizeSigned(l.bitSize) ? "int" : "uint") + (8 * sizeOfBitSize(l.bitSize))
-            } else if (tp.flags & TypeFlags.String) {
+            } else if (isStringType(tp)) {
                 l._debugType = "string"
             } else if (tp.flags & TypeFlags.NumberLike) {
                 l._debugType = "number"
@@ -306,7 +314,7 @@ namespace ts.pxtc {
         while (true) {
             node = node.parent
             if (!node)
-                userError(9229, lf("cannot determine parent of {0}", stringKind(node0)))
+            userError(9229, lf("cannot determine parent of {0}", stringKind(node0)))
             switch (node.kind) {
                 case SK.MethodDeclaration:
                 case SK.Constructor:
@@ -411,7 +419,7 @@ namespace ts.pxtc {
 
         let cmtCore = (node: Node) => {
             let src = getSourceFileOfNode(node)
-            let doc = getLeadingCommentRangesOfNodeFromText(node, src.text)
+            let doc = getLeadingCommentRangesOfNode(node, src)
             if (!doc) return "";
             let cmt = doc.map(r => src.text.slice(r.pos, r.end)).join("\n")
             return cmt;
@@ -487,11 +495,14 @@ namespace ts.pxtc {
     }
 
     function isClassType(t: Type) {
+        if (isThisType(t as TypeParameter)) {
+            return true;
+        }
         if (!isObjectType(t)) {
             return false;
         }
         // check if we like the class?
-        return !!(t.objectFlags & ObjectFlags.Class)
+        return !!((t.objectFlags & ObjectFlags.Class) || (t.symbol.flags & SymbolFlags.Class))
     }
 
     function isObjectLiteral(t: Type) {
@@ -538,19 +549,45 @@ namespace ts.pxtc {
     }
 
     function isBuiltinType(t: Type) {
-        let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean | TypeFlags.Enum
+        let ok = TypeFlags.String | TypeFlags.StringLiteral |
+            TypeFlags.Number | TypeFlags.NumberLiteral  |
+            TypeFlags.Boolean | TypeFlags.BooleanLiteral |
+            TypeFlags.Enum | TypeFlags.EnumLiteral
         return t.flags & ok
     }
 
-    function checkType(t: Type) {
+    function checkType(t: Type): Type {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
-            TypeFlags.Void | TypeFlags.Enum | TypeFlags.Null | TypeFlags.Undefined
+            TypeFlags.StringLiteral | TypeFlags.NumberLiteral | TypeFlags.BooleanLiteral |
+            TypeFlags.Void | TypeFlags.Enum | TypeFlags.EnumLiteral | TypeFlags.Null | TypeFlags.Undefined
         if ((t.flags & ok) == 0) {
             if (isArrayType(t)) return t;
             if (isClassType(t)) return t;
             if (isInterfaceType(t)) return t;
             if (isFunctionType(t)) return t;
             if (lookupTypeParameter(t)) return t;
+
+            if (t.flags & TypeFlags.Union) {
+                let u = t as UnionType;
+                let allGood = true;
+                let cachedFlags: number;
+                u.types.forEach(st => {
+                    if (st.flags & ok) {
+                        if (cachedFlags == undefined) {
+                            cachedFlags = st.flags;
+                        }
+                        else if (cachedFlags != st.flags) {
+                            allGood = false;
+                        }
+                    }
+                    else {
+                        allGood = false;
+                    }
+                });
+                if (allGood) {
+                    return t;
+                }
+            }
 
             let g = genericRoot(t)
             if (g) {
@@ -805,7 +842,7 @@ namespace ts.pxtc {
 
     function getTypeBindings(t: Type) {
         let g = genericRoot(t)
-        if (!g) return []
+        if (!g || !g.typeParameters) return []
         return getTypeBindingsCore(g.typeParameters, (t as TypeReference).typeArguments)
     }
 
@@ -899,7 +936,8 @@ namespace ts.pxtc {
         program: Program,
         host: CompilerHost,
         opts: CompileOptions,
-        res: CompileResult): EmitResult {
+        res: CompileResult,
+        entryPoint: string): EmitResult {
         target = opts.target
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
@@ -965,15 +1003,18 @@ namespace ts.pxtc {
             res.usedArguments = {}
         }
 
-        let allStmts: NodeArray<Statement>[] = [];
+        let allStmts: Statement[] = [];
         if (!opts.forceEmit && res.diagnostics.length == 0) {
             const files = program.getSourceFiles();
             files.forEach(f => {
-                allStmts.push(f.statements);
+                f.statements.forEach(s => {
+                    allStmts.push(s)
+                });
             });
         }
 
-        let src = program.getSourceFiles()[0]
+        let src = program.getSourceFiles().filter(f => Util.endsWith(f.fileName, entryPoint))[0];
+
         let rootFunction = <any>{
             kind: SK.FunctionDeclaration,
             parameters: [],
@@ -1099,7 +1140,14 @@ namespace ts.pxtc {
                 msg = lf("{0} not currently supported", syntax)
             }
             else {
-                msg = lf("{0} not supported", syntax)
+                msg = lf("{0} not supported", ts.SyntaxKind[n.kind])
+            }
+
+            let t = (n as any) as any[];
+            if (t.forEach) {
+                t.forEach(a => {
+                    console.log(a);
+                })
             }
 
             if (alternative) {
@@ -1651,7 +1699,7 @@ ${lbl}: .short 0xffff
             let eltT = arrayElementType(typeOf(node))
             let isRef = isRefType(eltT)
             let flag = 0
-            if (eltT.flags & TypeFlags.String)
+            if (isStringType(eltT))
                 flag = 3;
             else if (isRef)
                 flag = 1;
@@ -1769,7 +1817,7 @@ ${lbl}: .short 0xffff
             }
 
             let indexer: string = null
-            if (!assign && t.flags & TypeFlags.String) {
+            if (!assign && isStringType(t)) {
                 indexer = "String_::charAt"
             } else if (isArrayType(t))
                 indexer = assign ? "Array_::setAt" : "Array_::getAt"
@@ -2691,7 +2739,7 @@ ${lbl}: .short 0xffff
                 return fromBool(ir.rtcall("Boolean_::bang", [emitCondition(node.operand)]))
             }
 
-            if (tp.flags & TypeFlags.Number) {
+            if (isNumberType(tp)) {
                 switch (node.operator) {
                     case SK.PlusPlusToken:
                         return emitIncrement(node.operand, "numops::adds", false)
@@ -2764,7 +2812,7 @@ ${lbl}: .short 0xffff
         function emitPostfixUnaryExpression(node: PostfixUnaryExpression): ir.Expr {
             let tp = typeOf(node.operand)
 
-            if (tp.flags & TypeFlags.Number) {
+            if (isNumberType(tp)) {
                 switch (node.operator) {
                     case SK.PlusPlusToken:
                         return emitIncrement(node.operand, "numops::adds", true)
@@ -3059,7 +3107,7 @@ ${lbl}: .short 0xffff
 
         function emitLazyBinaryExpression(node: BinaryExpression) {
             let left = emitExpr(node.left)
-            let isString = typeOf(node.left).flags & TypeFlags.String
+            let isString = isStringType(typeOf(node.left));
             let lbl = proc.mkLabel("lazy")
 
             if (opts.target.floatingPoint) {
@@ -3197,7 +3245,7 @@ ${lbl}: .short 0xffff
             let rt = typeOf(node.right)
 
             if (node.operatorToken.kind == SK.PlusToken) {
-                if (lt.flags & TypeFlags.String || rt.flags & TypeFlags.String) {
+                if (isStringType(lt) || isStringType(rt)) {
                     (node as any).exprInfo = { leftType: checker.typeToString(lt), rightType: checker.typeToString(rt) } as BinaryExpressionInfo;
                 }
             }
@@ -3234,7 +3282,7 @@ ${lbl}: .short 0xffff
             }
 
             if (node.operatorToken.kind == SK.PlusToken) {
-                if ((lt.flags & TypeFlags.String) || (rt.flags & TypeFlags.String)) {
+                if (isStringType(lt) || isStringType(rt)) {
                     // TODO use getMask() to limit incr/decr
                     return ir.rtcallMask("String_::concat", 3, ir.CallingConvention.Plain, [
                         emitAsString(node.left),
@@ -3242,9 +3290,7 @@ ${lbl}: .short 0xffff
                 }
             }
 
-            if (node.operatorToken.kind == SK.PlusEqualsToken &&
-                (lt.flags & TypeFlags.String)) {
-
+            if (node.operatorToken.kind == SK.PlusEqualsToken && isStringType(lt)) {
                 let cleanup = prepForAssignment(node.left)
                 // TODO use getMask() to limit incr/decr
                 let post = ir.shared(ir.rtcallMask("String_::concat", 3, ir.CallingConvention.Plain, [
@@ -3256,7 +3302,7 @@ ${lbl}: .short 0xffff
             }
 
 
-            if ((lt.flags & TypeFlags.String) && (rt.flags & TypeFlags.String)) {
+            if (isStringType(lt) && isStringType(rt)) {
                 switch (node.operatorToken.kind) {
                     case SK.EqualsEqualsToken:
                     case SK.EqualsEqualsEqualsToken:
@@ -3299,13 +3345,13 @@ ${lbl}: .short 0xffff
                 return r;
             let tp = typeOf(e)
 
-            if (target.floatingPoint && (tp.flags & (TypeFlags.NumberLike | TypeFlags.Boolean)))
+            if (target.floatingPoint && (tp.flags & (TypeFlags.NumberLike | TypeFlags.Boolean | TypeFlags.BooleanLiteral)))
                 return ir.rtcallMask("numops::toString", 1, ir.CallingConvention.Plain, [r])
             else if (tp.flags & TypeFlags.NumberLike)
                 return ir.rtcall("Number_::toString", [r])
-            else if (tp.flags & TypeFlags.Boolean)
+            else if (isBooleanType(tp))
                 return ir.rtcall("Boolean_::toString", [r])
-            else if (tp.flags & TypeFlags.String)
+            else if (isStringType(tp))
                 return r // OK
             else {
                 let decl = tp.symbol ? tp.symbol.valueDeclaration : null
@@ -3395,7 +3441,7 @@ ${lbl}: .short 0xffff
             if (opts.target.floatingPoint) {
                 return ir.rtcall("numops::toBoolDecr", [inner])
             } else {
-                if (typeOf(expr).flags & TypeFlags.String) {
+                if (isStringType(typeOf(expr))) {
                     return ir.rtcall("pxtrt::stringToBool", [inner])
                 } else if (isRefCountedExpr(expr)) {
                     return ir.rtcall("pxtrt::ptrToBool", [inner])
@@ -3520,7 +3566,7 @@ ${lbl}: .short 0xffff
 
             let indexer = ""
             let length = ""
-            if (t.flags & TypeFlags.String) {
+            if (isStringType(t)) {
                 indexer = "String_::charAt"
                 length = "String_::length"
             }
@@ -3661,7 +3707,7 @@ ${lbl}: .short 0xffff
                             ir.CallingConvention.Plain, [cmpExpr, expr])
                         quickCmpMode = false
                         proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
-                    } else if (switchType.flags & TypeFlags.String) {
+                    } else if (isStringType(switchType)) {
                         let cmpCall = ir.rtcallMask("String_::compare",
                             isRefCountedExpr(cc.expression) ? 3 : 2,
                             ir.CallingConvention.Plain, [cmpExpr, expr])
@@ -3852,8 +3898,8 @@ ${lbl}: .short 0xffff
             } catch (e) {
                 inCatchErrors--
                 lastSecondaryError = null
-                if (!e.ksEmitterUserError)
-                    console.log(e.stack)
+                console.log(e.stack)
+                // if (!e.ksEmitterUserError)
                 let code = e.ksErrorCode || 9200
                 error(node, code, e.message)
                 return null
@@ -4091,6 +4137,22 @@ ${lbl}: .short 0xffff
         let a = new Float64Array(1)
         a[0] = v
         return U.toHex(new Uint8Array(a.buffer))
+    }
+
+    function isStringType(t: Type) {
+        return t.flags & (TypeFlags.String | TypeFlags.StringLiteral);
+    }
+
+    function isNumberType(t: Type) {
+        return t.flags & (TypeFlags.Number | TypeFlags.NumberLiteral);
+    }
+
+    function isBooleanType(t: Type) {
+        return t.flags & (TypeFlags.Boolean | TypeFlags.BooleanLiteral);
+    }
+
+    function isEnumType(t: Type) {
+        return t.flags & (TypeFlags.Enum | TypeFlags.EnumLiteral);
     }
 
     export class Binary {

@@ -120,7 +120,7 @@ namespace ts.pxtc {
             if (stripParams) {
                 t = t.getCallSignatures()[0].getReturnType()
             }
-            return typechecker.typeToString(t, null, TypeFormatFlags.UseFullyQualifiedType)
+            return typechecker.typeToString(t, undefined, TypeFormatFlags.UseFullyQualifiedType)
         }
 
         let kind = getSymbolKind(stmt)
@@ -630,7 +630,7 @@ namespace ts.pxtc.service {
                     success: true,
                     times: {}
                 }
-                const binOutput = compileBinary(service.getProgram(), null, host.opts, res);
+                const binOutput = compileBinary(service.getProgram(), null, host.opts, res, "main.ts");
                 allD = binOutput.diagnostics
             }
 
@@ -851,7 +851,7 @@ namespace ts.pxtc.service {
                                     }
                                 }
                                 return `0`;
-                            } else if (type.flags & ts.TypeFlags.Number) {
+                            } else if (type.flags &( ts.TypeFlags.Number | ts.TypeFlags.NumberLiteral)) {
                                 return `0`;
                             }
                         }
@@ -896,7 +896,7 @@ namespace ts.pxtc.service {
                 returnValue = "return 0;";
             else if (returnType.flags & ts.TypeFlags.StringLike)
                 returnValue = "return \"\";";
-            else if (returnType.flags & ts.TypeFlags.Boolean)
+            else if (returnType.flags & (ts.TypeFlags.Boolean | ts.TypeFlags.BooleanLiteral))
                 returnValue = "return false;";
 
             let displayPartsStr = ts.displayPartsToString(displayParts);
