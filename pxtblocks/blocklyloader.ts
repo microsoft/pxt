@@ -585,7 +585,19 @@ namespace pxt.blocks {
     }
 
     function initField(i: any, ni: number, fn: pxtc.SymbolInfo, ns: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string, nsinfo?: pxtc.SymbolInfo): any {
-        if (pre)
+        if (pre && pre.indexOf('`') > -1) {
+            // parse and create icon fields for every inline icon
+            let regex = /([^`]+|(`([^`]*)`))/gi;
+            let match: RegExpExecArray;
+            while (match = regex.exec(pre)) {
+                if (match[3]) {
+                    i.appendField(iconToFieldImage(match[3]));
+                } else {
+                    i.appendField(match[1]);
+                }
+            }
+        }
+        else if (pre)
             i.appendField(pre);
         if (right)
             i.setAlign(Blockly.ALIGN_LEFT)
@@ -1427,7 +1439,8 @@ namespace pxt.blocks {
     export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters, extensions?: pxt.PackageConfig[]): Element {
         init();
         initTooltip(blockInfo);
-
+        initJresIcons(blockInfo);        
+        
         let tb = createToolbox(blockInfo, toolbox, showCategories, filters, extensions);
 
         // add trash icon to toolbox
@@ -3198,5 +3211,19 @@ namespace pxt.blocks {
                 render();
             }
         }
+    }
+
+    let iconCanvasCache: Map<string> = {};
+    function iconToFieldImage(id: string): Blockly.FieldImage {
+        let url = iconCanvasCache[id];
+        return new Blockly.FieldImage(url, 30, 30, false, '');
+    }
+
+    function initJresIcons(blockInfo: pxtc.BlocksInfo) {
+        Object.keys(blockInfo.apis.jres).forEach((jresId) => {
+            const jresObject = blockInfo.apis.jres[jresId];
+            if (jresObject.icon)
+                iconCanvasCache[jresId] = jresObject.icon;
+        })
     }
 }
