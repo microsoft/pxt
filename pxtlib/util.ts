@@ -722,7 +722,7 @@ namespace ts.pxtc.Util {
     export interface ITranslationDbEntry {
         etag: string;
         strings: pxt.Map<string>;
-        _rev?: string;
+        cached?: boolean; // cached in memory, no download needed
     }
 
     export interface ITranslationDb {
@@ -771,8 +771,6 @@ namespace ts.pxtc.Util {
     }
 
     export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string, etag?: string): Promise<pxt.Map<string>> {
-        let _rev: string = undefined;
-
         // hitting the cloud
         function downloadFromCloudAsync() {
             // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
@@ -788,7 +786,7 @@ namespace ts.pxtc.Util {
                     // store etag and translations
                     etag = resp.headers["ETag"] || "";
                     pxt.debug(`saving translations for ${lang}, ${filename}, ${branch || ""}, ${etag}`)
-                    _translationDb.setAsync(lang, filename, branch, etag, _rev, resp.json)
+                    _translationDb.setAsync(lang, filename, branch, etag, resp.json)
                         .done();
                 }
                 return resp.json
@@ -801,9 +799,9 @@ namespace ts.pxtc.Util {
                 // if cached, return immediately
                 if (entry) {
                     etag = entry.etag;
-                    _rev = entry._rev;
                     // background update
-                    downloadFromCloudAsync().done();
+                    if (!entry.cached)
+                        downloadFromCloudAsync().done();
                     return entry.strings;
                 } else
                     return downloadFromCloudAsync();

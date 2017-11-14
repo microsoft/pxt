@@ -85,6 +85,7 @@ export class Table {
 
 class TranslationDb implements ts.pxtc.Util.ITranslationDb {
     table: Table;
+    memCache: pxt.Map<ts.pxtc.Util.ITranslationDbEntry> = {};
 
     constructor() {
         this.table = new Table("translations");
@@ -96,6 +97,14 @@ class TranslationDb implements ts.pxtc.Util.ITranslationDb {
 
     getAsync(lang: string, filename: string, branch?: string): Promise<ts.pxtc.Util.ITranslationDbEntry> {
         const id = this.key(lang, filename, branch);
+        // only update once per session
+        const entry = this.memCache[id];
+        if (entry) {
+            pxt.debug(`translation cache live hit ${id}`);
+            return Promise.resolve(entry);
+        }
+
+        // load from pouchdb
         pxt.debug(`translation cache: load ${id}`)
         return this.table.getAsync(id).then(
             v => {
@@ -108,16 +117,18 @@ class TranslationDb implements ts.pxtc.Util.ITranslationDb {
             } // not found
         );
     }
-    setAsync(lang: string, filename: string, branch: string, etag: string, rev: string, strings: pxt.Map<string>): Promise<void> {
+    setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
         const id = this.key(lang, filename, branch);
         const entry = {
             id,
             etag,
-            strings,
-            _rev: rev
+            strings
         };
         pxt.debug(`translation cache: save ${id}-${etag}`)
-        return this.table.forceSetAsync(entry).then(() => { });
+        return this.table.forceSetAsync(entry).then(() => { 
+            entry.cached = true;
+            this.memCache[id] = entry;
+        });
     }
 
 }
