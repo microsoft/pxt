@@ -56,7 +56,6 @@ namespace pxt.editor {
         highContrast?: boolean;
 
         home?: boolean;
-        notificationBannerVisible?: boolean;
     }
 
     export interface EditorState {
@@ -171,8 +170,6 @@ namespace pxt.editor {
         toggleMute(): void;
         openInstructions(): void;
         closeFlyout(): void;
-        showBanner(): void;
-        hideBanner(): void;
 
         startTutorial(tutorialId: string, tutorialTitle?: string): void;
 

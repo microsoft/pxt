@@ -1692,14 +1692,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
-    showBanner() {
-        this.setState({ notificationBannerVisible: true });
-    }
-
-    hideBanner() {
-        this.setState({ notificationBannerVisible: false });
-    }
-
     renderCore() {
         theEditor = this;
 
@@ -1729,14 +1721,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
 
-        // For apps, if the user is not on the live website, display a warning banner
         const isApp = electron.isElectron || pxt.winrt.isWinRT();
-        const isLocalServe = location.hostname === "localhost";
-        const isExperimentalUrlPath = location.pathname !== "/"
-            && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
-        const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
-        const isWindows10 = pxt.BrowserUtils.isWindows10();
-        const showWindowsStoreBanner = !pxt.winrt.isWinRT() && isWindows10 && Cloud.isOnline() && pxt.appTarget.appTheme.windowsStoreLink && !showExperimentalBanner;
 
         // cookie consent
         const cookieKey = "cookieconsent"
@@ -1758,7 +1743,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             hideMenuBar ? 'hideMenuBar' : '',
-            (this.state.notificationBannerVisible) ? "notificationBannerVisible" : "",
             !showEditorToolbar ? 'hideEditorToolbar' : '',
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
             'full-abs',
@@ -1770,8 +1754,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
-                        {showExperimentalBanner ? <notification.ExperimentalBanner parent={this} /> : undefined}
-                        {showWindowsStoreBanner ? <notification.WindowsStoreBanner parent={this} /> : undefined}
+                        {<notification.NotificationBanner parent={this} ref="notificationBanner" />}
                         <container.MainMenu parent={this} />
                     </header>}
                 {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
