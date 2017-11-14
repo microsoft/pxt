@@ -739,7 +739,10 @@ namespace ts.pxtc.Util {
     export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<void> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|si|sv|zh)/i.test(code))
-            code = code.split("-")[0]
+            code = code.split("-")[0];
+
+        if (_localizeLang == "code") // nothing to do
+            return Promise.resolve();
 
         const stringFiles: { branch: string, path: string }[] = simulator
             ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" },
