@@ -103,7 +103,7 @@ export class TranslationCache implements ts.pxtc.Util.ITranslationCache {
             },
             e => {
                 pxt.debug(`translation cache miss ${id}`);
-                return { etag: undefined, strings: undefined };
+                return undefined;
             } // not found
         );
     }

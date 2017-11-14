@@ -735,8 +735,8 @@ namespace ts.pxtc.Util {
         setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void>;
     }
 
-    // wired up in the app to store translations in pouchdb
-    export var translationCache: ITranslationCache = undefined;
+    // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
+    export var _translationCache: ITranslationCache = undefined;
 
     /**
      * Returns the current user language, prepended by "live-" if in live mode
@@ -777,12 +777,12 @@ namespace ts.pxtc.Util {
         if (etag) headers["If-Not-Matched"] = etag;
         return requestAsync({ url, headers }).then(resp => {
             // if 304, translation not changed, skipe
-            if (translationCache && resp.statusCode == 304)
+            if (_translationCache && resp.statusCode == 304)
                 return undefined;
-            else if (translationCache && resp.statusCode == 200 && resp.headers["ETag"]) {
+            else if (_translationCache && resp.statusCode == 200 && resp.headers["ETag"]) {
                 // store etag and translations
                 pxt.debug(`saving translations for ${lang}/${filename}/${branch}/${etag}`)
-                translationCache.saveAsync(lang, filename, branch, resp.headers["ETag"], resp.json)
+                _translationCache.setAsync(lang, filename, branch, resp.headers["ETag"], resp.json)
                     .done();
             }
             return resp.json
@@ -856,29 +856,41 @@ namespace ts.pxtc.Util {
 
         if (live) {
             let hadError = false;
-            return Promise.mapSeries(stringFiles, (file) => {
+
+            const pAll = Promise.mapSeries(stringFiles, (file) => {
                 let etag: string = undefined;
                 let p = Promise.resolve();
-                if (translationCache)
-                    p = p.then(() => translationCache.loadAsync(code, file.path, file.branch))
+                // try loading on disk translations
+                if (_translationCache)
+                    p = p.then(() => _translationCache.getAsync(code, file.path, file.branch))
                         .then(entry => {
-                            etag = entry.etag;
-                            mergeTranslations(entry.strings);
+                            if (entry) {
+                                etag = entry.etag;
+                                mergeTranslations(entry.strings);
+                            }
                         })
-
-                return p.then(() => downloadLiveTranslationsAsync(code, file.path, file.branch, etag))
-                    .then(mergeTranslations, e => {
-                        pxt.reportException(e, { "path": file.path, "branch": file.branch });
-                        hadError = true;
-                    });
-            })
-                .then(() => {
-                    // Cache translations unless there was an error for one of the files
-                    if (!hadError) {
-                        _translationsCache[translationsCacheId] = translations;
+                return p.then(() => {
+                    if (etag) { // lazy update
+                        downloadLiveTranslationsAsync(code, file.path, file.branch, etag).done();
+                        return undefined;
+                    } else {
+                        // wait for cloud
+                        return downloadLiveTranslationsAsync(code, file.path, file.branch, etag);
                     }
-                    return Promise.resolve(translations);
+                }).then(mergeTranslations, e => {
+                    pxt.reportException(e, { "path": file.path, "branch": file.branch });
+                    hadError = true;
                 });
+            });
+
+
+            return pAll.then(() => {
+                // Cache translations unless there was an error for one of the files
+                if (!hadError) {
+                    _translationsCache[translationsCacheId] = translations;
+                }
+                return Promise.resolve(translations);
+            });
         } else {
             return Util.httpGetJsonAsync(baseUrl + "locales/" + code + "/strings.json")
                 .then(tr => {
