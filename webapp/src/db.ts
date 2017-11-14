@@ -119,13 +119,13 @@ class TranslationDb implements ts.pxtc.Util.ITranslationDb {
     }
     setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
         const id = this.key(lang, filename, branch);
-        const entry = {
+        const entry: ts.pxtc.Util.ITranslationDbEntry = {
             id,
             etag,
             strings
         };
         pxt.debug(`translation cache: save ${id}-${etag}`)
-        return this.table.forceSetAsync(entry).then(() => { 
+        return this.table.forceSetAsync(entry).then(() => {
             entry.cached = true;
             this.memCache[id] = entry;
         });

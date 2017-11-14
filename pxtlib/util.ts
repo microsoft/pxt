@@ -720,6 +720,7 @@ namespace ts.pxtc.Util {
     }
 
     export interface ITranslationDbEntry {
+        id?: string;
         etag: string;
         strings: pxt.Map<string>;
         cached?: boolean; // cached in memory, no download needed
