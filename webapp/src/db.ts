@@ -115,7 +115,7 @@ export class TranslationCache implements ts.pxtc.Util.ITranslationCache {
             strings
         };
         pxt.debug(`translation cache: save ${id}-${etag}`)
-        return this.table.setAsync(entry).then(() => { });
+        return this.table.forceSetAsync(entry).then(() => { });
     }
 
 }

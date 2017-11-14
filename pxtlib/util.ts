@@ -782,7 +782,7 @@ namespace ts.pxtc.Util {
             else if (_translationCache && resp.statusCode == 200) {
                 // store etag and translations
                 pxt.debug(`saving translations for ${lang}/${filename}/${branch || ""}/${etag || ""}`)
-                _translationCache.setAsync(lang, filename, branch, resp.headers["ETag"], resp.json)
+                _translationCache.setAsync(lang, filename, branch, resp.headers["ETag"] || "", resp.json)
                     .done();
             }
             return resp.json
