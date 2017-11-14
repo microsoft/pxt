@@ -69,7 +69,9 @@ export class GenericBanner extends React.Component<GenericBannerProps, {}> {
             (this.props.parent.state.bannerVisible  && this.doneSleeping) ?
             <div id="notificationBanner" className={`ui attached ${this.bannerType} message`}>
                 <div className="bannerLeft">
-                    {this.props.children}
+                    <div className="content">
+                        {this.props.children}
+                    </div>
                 </div>
                 <div className="close" tabIndex={0} onClick={() => this.hide("manual")}>
                     <sui.Icon icon="close" />
@@ -89,19 +91,17 @@ export class NotificationBanner extends React.Component<ISettingsProps, {}> {
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
-        const showWindowsStoreBanner = !pxt.winrt.isWinRT() && isWindows10 && Cloud.isOnline() && targetTheme.windowsStoreLink && !isApp;
+        const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetTheme.windowsStoreLink && !isApp;
 
         if (showWindowsStoreBanner) {
             return (
-                <GenericBanner parent={this.props.parent} delayTime={1000} displayTime={45000} sleepTime={604800}>
-                    <div className="content">
-                        <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={pxt.appTarget.appTheme.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
-                            <img className="bannerIcon" src={Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)}></img>
-                        </sui.Link>
-                        <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={pxt.appTarget.appTheme.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
-                            {lf("Want a faster download? Get the app!")}
-                        </sui.Link>
-                    </div>
+                <GenericBanner parent={this.props.parent} delayTime={10000} displayTime={45000} sleepTime={604800}>
+                    <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={pxt.appTarget.appTheme.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
+                        <img className="bannerIcon" src={Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)}></img>
+                    </sui.Link>
+                    <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={pxt.appTarget.appTheme.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
+                        {lf("Want a faster download? Get the app!")}
+                    </sui.Link>
                 </GenericBanner>
             );
         }
@@ -110,11 +110,9 @@ export class NotificationBanner extends React.Component<ISettingsProps, {}> {
             const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
             return (
                 <GenericBanner parent={this.props.parent} bannerType={"negative"} >
-                    <div className="content">
-                        <sui.Icon icon="warning circle" />
-                        <div className="header">{lf("You are viewing an experimental version of the editor") }</div>
-                        <sui.Link class="link" ariaLabel={lf("Go back to live editor")} href={liveUrl}>{lf("Take me back")}</sui.Link>
-                    </div>
+                    <sui.Icon icon="warning circle" />
+                    <div className="header">{lf("You are viewing an experimental version of the editor") }</div>
+                    <sui.Link class="link" ariaLabel={lf("Go back to live editor")} href={liveUrl}>{lf("Take me back")}</sui.Link>
                 </GenericBanner>
             );
         }
