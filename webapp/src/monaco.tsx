@@ -1558,8 +1558,8 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         let metaColor = pxt.blocks.convertColour(color);
 
         const invertedMultipler = appTheme.blocklyOptions
-            && (appTheme.blocklyOptions as B.ExtendedOptions).toolboxOptions
-            && (appTheme.blocklyOptions as B.ExtendedOptions).toolboxOptions.invertedMultiplier || 0.3;
+            && appTheme.blocklyOptions.toolboxOptions
+            && appTheme.blocklyOptions.toolboxOptions.invertedMultiplier || 0.3;
 
         let onmouseenter = () => {
             if (appTheme.invertedToolbox) {

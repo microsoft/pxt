@@ -751,8 +751,7 @@ namespace pxt.blocks {
                         i.appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), p);
                     }
                     else i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Number");
-                }
-                else if (pr.type == "boolean") {
+                } else if (pr.type == "boolean") {
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Boolean");
                 } else if (pr.type == "string") {
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "String");

@@ -557,7 +557,7 @@ declare namespace Blockly {
         render_(): void;
         showEditor_(): void;
         getAbsoluteXY_(): goog.math.Coordinate;
-        getScaledBBox_(): goog.math.Size;
+        getScaledBBox_(): {top: number, bottom: number, left: number, right: number};
         setValue(newValue: string): void;
         getValue(): string;
         isCurrentlyEditable(): boolean;
@@ -633,6 +633,10 @@ declare namespace Blockly {
 
     class FieldNumberDropdown extends FieldTextDropdown {
         constructor(value: string | number, menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], opt_min?: any, opt_max?: any, opt_precision?: any, opt_validator?: Function);
+    }
+
+    class FieldAngle extends FieldTextInput {
+        constructor(opt_value?: string, opt_validator?: Function);
     }
 
     class FieldSlider extends FieldNumber {
@@ -954,6 +958,8 @@ declare namespace Blockly {
         };
         enableRealTime?: boolean;
         rtl?: boolean;
+        // PXT specific: 
+        toolboxOptions?: ToolboxOptions;
     }
 
     class Options {
@@ -969,10 +975,6 @@ declare namespace Blockly {
         inverted?: boolean;
         invertedMultiplier?: number;
         disabledOpacity?: number;
-    }
-
-    interface ExtendedOptions extends Options {
-        toolboxOptions?: ToolboxOptions;
     }
 
     // tslint:disable-next-line

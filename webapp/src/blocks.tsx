@@ -704,7 +704,7 @@ export class Editor extends srceditor.Editor {
         const toolbox = showCategories !== CategoryMode.None ?
             document.getElementById('blocklyToolboxDefinitionCategory')
             : document.getElementById('blocklyToolboxDefinitionFlyout');
-        const blocklyOptions: Blockly.ExtendedOptions = {
+        const blocklyOptions: Blockly.Options = {
             toolbox: readOnly ? undefined : toolbox,
             scrollbars: true,
             media: pxt.webConfig.commitCdnUrl + "blockly/media/",
