@@ -791,6 +791,9 @@ namespace ts.pxtc.Util {
                 }
 
                 return resp.json;
+            }, e => {
+                console.log(`failed to load translations from ${url}`)
+                return undefined;
             })
         }
 
