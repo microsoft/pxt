@@ -317,24 +317,6 @@ namespace ts.pxtc.Util {
         };
     }
 
-    // Returns a function, that, as long as it continues to be invoked, will only
-    // trigger every N milliseconds. If `immediate` is passed, trigger the
-    // function on the leading edge, instead of the trailing.
-    export function throttle(func: (...args: any[]) => any, wait: number, immediate?: boolean): any {
-        let timeout: any;
-        return function () {
-            let context = this;
-            let args = arguments;
-            let later = function () {
-                timeout = null;
-                if (!immediate) func.apply(context, args);
-            };
-            let callNow = immediate && !timeout;
-            if (!timeout) timeout = setTimeout(later, wait);
-            if (callNow) func.apply(context, args);
-        };
-    }
-
     export function randomPermute<T>(arr: T[]) {
         for (let i = 0; i < arr.length; ++i) {
             let j = randomUint32() % arr.length
