@@ -21,11 +21,7 @@ export interface GenericBannerProps extends ISettingsProps {
     ref?: any;
 }
 
-export interface GenericBannerState {
-    visible: boolean;
-}
-
-export class GenericBanner extends React.Component<GenericBannerProps, GenericBannerState> {
+export class GenericBanner extends React.Component<GenericBannerProps, {}> {
     delayTime: number;
     doneSleeping: boolean;
     bannerType: string;
@@ -35,13 +31,14 @@ export class GenericBanner extends React.Component<GenericBannerProps, GenericBa
         this.delayTime = this.props.delayTime || 0;
         this.doneSleeping = this.sleepDone();
         this.bannerType = this.props.bannerType || "default";
-        this.state = {visible: false};
     }
 
     componentDidMount() {
-        setTimeout(() => this.show(), this.delayTime);
-        if (this.props.displayTime) {
-            setTimeout(() => this.hide("automatic"), this.delayTime + this.props.displayTime);
+        if (this.doneSleeping) {
+            setTimeout(() => this.show(), this.delayTime);
+            if (this.props.displayTime) {
+                setTimeout(() => this.hide("automatic"), this.delayTime + this.props.displayTime);
+            }
         }
     }
 
@@ -56,18 +53,20 @@ export class GenericBanner extends React.Component<GenericBannerProps, GenericBa
 
     show() {
         pxt.tickEvent("notificationBanner.show");
-        this.setState({visible: true});
+        this.props.parent.showBanner();
+        this.render();
     }
 
     hide(mode: string) {
         pxt.tickEvent("notificationBanner." + mode + "Close");
         pxt.storage.setLocal("lastBannerClosedTime", Util.nowSeconds().toString());
-        this.setState({visible: false});
+        this.props.parent.hideBanner();
+        this.render();
     }
 
     render() {
         return (
-            (this.state.visible  && this.doneSleeping) ?
+            (this.props.parent.state.bannerVisible  && this.doneSleeping) ?
             <div id="notificationBanner" className={`ui attached ${this.bannerType} message`}>
                 <div className="bannerLeft">
                     {this.props.children}
@@ -76,7 +75,7 @@ export class GenericBanner extends React.Component<GenericBannerProps, GenericBa
                     <sui.Icon icon="close" />
                 </div>
             </div> :
-            undefined
+            <div></div>
         );
     }
 }
@@ -125,6 +124,6 @@ export class NotificationBanner extends React.Component<ISettingsProps, {}> {
             );
         }
 
-        return undefined;
+        return <div></div>;
     }
 }

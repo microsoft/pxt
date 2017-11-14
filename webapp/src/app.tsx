@@ -1692,6 +1692,14 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
+    showBanner() {
+        this.setState({ bannerVisible: true });
+    }
+
+    hideBanner() {
+        this.setState({ bannerVisible: false });
+    }
+
     renderCore() {
         theEditor = this;
 
@@ -1744,6 +1752,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             hideMenuBar ? 'hideMenuBar' : '',
             !showEditorToolbar ? 'hideEditorToolbar' : '',
+            this.state.bannerVisible ? "notificationBannerVisible" : "",
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
             'full-abs',
             'dimmable'
@@ -1754,7 +1763,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
-                        {<notification.NotificationBanner parent={this} ref="notificationBanner" />}
+                        <notification.NotificationBanner parent={this} />
                         <container.MainMenu parent={this} />
                     </header>}
                 {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">

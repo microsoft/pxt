@@ -52,6 +52,7 @@ namespace pxt.editor {
         mute?: boolean;
         embedSimView?: boolean;
         tracing?: boolean;
+        bannerVisible?: boolean;
 
         highContrast?: boolean;
 
@@ -170,6 +171,9 @@ namespace pxt.editor {
         toggleMute(): void;
         openInstructions(): void;
         closeFlyout(): void;
+
+        showBanner(): void;
+        hideBanner(): void;
 
         startTutorial(tutorialId: string, tutorialTitle?: string): void;
 
