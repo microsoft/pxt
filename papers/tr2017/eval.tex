@@ -115,11 +115,11 @@ A naiive approach to multithreading would execute event handlers in separate fib
 \caption{\label{table:flash-consumption}The total flash consumption of code required to support \MC.}
 \end{table}
 
-Figure~\ref{table:flash-consumption} shows the flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library and optionally, mbed.
+Table~\ref{table:flash-consumption} shows the flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library and optionally, mbed.
 
 From the bottom up, the profile of the standard library changes dramatically for each device: The Uno has a very lightweight standard library; the microbit uses 64-bit integer operations (for timers) which requires extra standard library functions; and the CircuitPlayground requires virtualised floating point operations pulling in more standard library functions.
 
-Mbed is not used for the Uno as it does not have an ARM processor. Mbed is used more for the micro:bit than the CircuitPlayground as over time we have begun to phase it out in favour of native implementations.
+Mbed is not used for the Uno as it does not have an ARM processor. Mbed is utilised for the micro:bit more than the CircuitPlayground as over time we have begun to phase it out in favour of native implementations.
 
 The size of \CO and \MC scales linearly with the amount of functionality a device has, due to the component oriented nature of \CO and transitively \MC. For instance the Uno has few onboard components when compared to the CircuitPlayground and micro:bit.
 
@@ -170,7 +170,7 @@ When compiling the Static TypeScript benchmarks and runtime with code shaking we
 When compiling, the entire TypeScript program, including the runtime, is
 passed to the TypeScript (TS) language service for parsing. Then, only the remaining part of the program (after code shaking) is compiled to native code.
 On a modern laptop, using Node.js, TS parsing and analysis takes about 0.1ms per statement, and \MC compilation to native code takes about 1ms per statement.
-While the TS compiler has been optimized for speed, \MCN's native compilation process hasn't been. For example, the CircuitPlayground TS pass is dominated by compilation of the device runtime and takes about 100ms, whereas the \MC pass typically only includes a small user program and a small bit of the runtime, resulting in less than 100ms. Thus, typical compilation times are in the range of 200ms for user programs of ABC-XYZ lines.
+While the TS compiler has been optimized for speed, \MCN's native compilation process hasn't been. For example, the CircuitPlayground TS pass is dominated by compilation of the device runtime and takes about 100ms, whereas the \MC pass typically only includes a small user program and a small bit of the runtime, resulting in less than 100ms. Thus, typical compilation times are in the range of 200ms for user programs of \textbf{ABC-XYZ NUMBER MICHAL?} lines.
 
 % Not really a result, more of a description of design, with an anecdotal comment about speed.
 
