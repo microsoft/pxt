@@ -12,4 +12,8 @@
 - James: look for TBALL comments in codal.tex
 - make sure to point out that CircuitPython is MicroPython for the CPX
 
+
 - FINAL STEP: SPELL CHECK
+
+question
+- replace microcontroller by MCU everywhere?

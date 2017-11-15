@@ -2,20 +2,20 @@
 \label{sec:intro}
 
 % The emergence of a new breed of computer
-Recent years have seen an expansive growth in the popularity and ubiquity of embedded devices. 
+Embedded devices are growing impressively in popularity and ubiquity in recent years.
 This growth can be attributed to the emergence of new application domains inspired by small, 
-highy resource constrained programmable processors known as microcontrollers (or MCUs), 
-which can have as little of 2KB of RAM. In fact, it is now 
-widely accepted  that less than 1 percent of the world's processors reside in general purpose 
-computers such as desktop PCs, laptops and tablets - with microcontrollers picking up the remainder.
-Furthermore, demand for microcontrollers continues to grow due to their use in the monitoring and 
+highly resource constrained programmable processors known as microcontroller units (or MCUs), 
+which can have as little of 2KB of RAM. It is now the case that less than 1 percent of 
+the world's processors reside in general purpose computers such as desktop PCs, laptops and tablets 
+- with MCUs picking up the remainder.
+Furthermore, demand for MCUs continues to grow due to their use in the monitoring and 
 controlling of a wide variety of systems, ranging from wearables, to home automation, to 
 industrial automation and smart grids - a phenomenon broadly referred to as the Internet of Things (IoT).
 
-Microcontrollers are highly resource limited devices, but are not simply smaller versions of the laptop 
-and desktop computers. They are architecturally quite distinct. If we are to undertand how to optimise 
+MCUs are highly resource limited devices, but are not simply smaller versions of laptop and desktops. 
+They are architecturally quite distinct. If we are to undertand how to optimize 
 programming languages and their implementation for such devices it is worth dwelling on their key characteristics. 
-Table \ref{table:devices} highlights the core capabilities of three state of the art devices. 
+Table \ref{table:devices} highlights the core capabilities of three state of the art devices vs. a typical PC. 
 
 \begin{table}[]
     \centering
@@ -24,56 +24,63 @@ Table \ref{table:devices} highlights the core capabilities of three state of the
                            &          &              & \bf{Word}  &                 \\
     \bf{Device}            & \bf{RAM} & \bf{Flash}   & \bf{Size}  & \bf{CPU Speed}  \\ \hline
     Arduino Uno            & 2 KB       & 32 KB      & 8          & 16MHz AVR       \\ \hline
-    BBC micro:bit          & 16 KB      & 256 KB     & 32         & 16MHz ntf51     \\ \hline
-    Adafruit CPX           & 32 KB      & 256 KB     & 32         & 48MHz SAMD21    \\ \hline
+    BBC micro:bit          & 16 KB      & 256 KB     & 32         & 16MHz nRF51     \\ \hline
+    Adafruit CPX           & 32 KB      & 256 KB     & 32         & 48MHz SAM    \\ \hline
     Typical PC             & 16 GB      & 1 TB       & 64         & 3GHz Intel      \\ \hline
     \end{tabular}
-    \caption{\label{table:devices}Exemplar microcontroller devices, cf. a typical PC}
+    \caption{\label{table:devices}Example microcontroller devices in relationship to a typical PC (SAM = SAMD21).}
     \end{table}
 
-Whilst it is clear that all such devices are highly resource contrained compared to modern PCs 
-(circa six order of magnitude on most metrics), on deeper analysis we can derive two further key observations.
+While it is clear that all such devices are highly resource contrained compared to modern PCs 
+(about six orders of magnitude on most metrics), a deeper analysis derive two further key observations.
 
-Firstly, \emph{microcontrollers are processor rich}. Contrary to first impressions, these devices have 
+Firstly, \emph{MCUs are processor rich}. Contrary to first impressions, these devices have 
 a \emph{proportionally} large amount of processing power. For example - consider the BBC micro:bit 
-c.f. A typical PC. It has circa 100 times less CPU power, but 10\textsuperscript{6} times less RAM, and 10\textsuperscript{6} time less storage. 
-A good programming language design should therefore not only \emph{seek to provide high code density and spatial efficiency, 
+versus a typical PC. It has about 100 times less CPU power, but 10\textsuperscript{6} times less RAM, 
+and 10\textsuperscript{6} time less storage. A good programming language design should therefore not 
+only \emph{seek to provide high code density and spatial efficiency, 
 but to actively trade off CPU for spatial efficiency where possible}. 
 
-Secondly, \emph{a trend toward on-chip integration}. Microcontrollers also follow Moore's law (which states 
-that the number of transistors double roughly every two years). However, This additional capacity is 
-not typically invested in simply optimising processing power. Instead, \emph{indepedent peripherals} 
+Secondly, \emph{MCUs are accumulating more features on chip}. 
+MCUs still follow Moore's law (the number of transistors doubles roughly every two years). 
+However, this additional capacity is 
+not typically invested in simply optimizing processing power. Instead, \emph{independent peripherals} 
 are integrated onto the same silicon chip as the CPU. Examples include integrated radio hardware such 
 as Bluetooth/WiFi and audio inputs and outputs. This hardware is designed to run independently of the 
 CPU, hence \emph{an effective application programming language should directly support such an asynchronous
 interaction model}.
 
 % Despite this languages and programming environments have yet to keep pace with the mainstream (e.g. Arduino/mbed)
-Furthermore, with this surge in the demand for microcontrollers across a wide spectrum of applications, 
+Furthermore, with this surge in the demand for MCUs across a wide spectrum of applications, 
 there is a need to simplify the programming of such devices so that more people can participate in 
-the creation of microcontroller-based systems. From rapid product innovation to education,
-we have seen a sustained growth in the volume and diversity of people wishing to program microcontroller based devices. 
+the creation of MCU-based systems. From rapid product innovation to education,
+we have seen a sustained growth in the volume and diversity of people wishing to program MCU-based devices.
+% JOE: do we have a citation??? 
+
 These new application developers share a common characterisitic - \emph{they are not professional software developers}. 
-Programming languages and development environments for microcontrollers have not kept pace with these advances 
+Programming languages and development environments for MCUs have not kept pace with these advances 
 in hardware and diversification of user domains. Elsewhere, we have long supported inexperienced developers through  
 modern high level text-based languages for application development such as Java, C\#, Python and Javascript, and also 
-through visual programming languages based on frameworks such as Blockly. In the world of the microcontroller however, the de facto standard remains the C/C++ lanaguge - and for good reason. 
-It provides a familiar imperative programming model, it produces highly efficient code (in terms of both 
-temporal and spatial complexity), and provides low level access to hardware features when necessary. Examples
+through visual programming languages based on frameworks such as Blockly. 
+
+In the world of the MCU, the C/C++ languages remain the standard, and for good reason. 
+They provide a familiar imperative programming model, with compilers that produce highly efficient code (in terms of both 
+temporal and spatial complexity), and enable low level access to hardware features when necessary. Examples
 of this are commonplace, such as the Arduino project (\url{www.arduino.cc})~\cite{buildingArduino2014},
-started in 2003, and the ARM mbed platform (\url{www.mbed.org})~\cite{mbed} - both of which rely heavily on
+started in 2003, and ARM's Mbed platform (\url{www.mbed.org})~\cite{ARMmbed} - both of which rely heavily on
 a C/C++ programming model. However, the limitations of using C/C++ as an application programming language for 
 inexperienced developers are well understood. 
 % Doesn't feel like we really need to spell out the limitation of C/C++ out here. Anyone got good references?
 
 % Paper overview
-In this paper we introduce a novel architecture for microcontroller based devices,
-that is designed with three guiding principles: 
-\emph{it should be usable by anyone}, not just trained professionals. 
-\emph{It should be available anywhere}, requiring no specialist software or hardware to operate.
-\emph{it should run efficiently on anything}, from devices with as little as 2KB of memory.
-More specifically, we present and evaluate a platform that bridges the world of the web and the microcontroller through 
-three novel technologies:
+In this paper we introduce a novel architecture for MCU-based devices,
+that is designed with three goals in mind: 
+(1) it should be usable by \emph{anyone}, not just trained professionals; 
+(2) it should be available \emph{anywhere}, requiring no specialized software (native applications
+or device drivers) to operate;
+(3) it should run efficiently on \emph{anything}, from devices with as little as 2KB of memory.
+More specifically, we present and evaluate a platform that bridges the worlds of the web and the 
+MCU through three novel technologies:
 
 \begin{itemize}
 \item \emph{Static TypeScript} is a statically-typed subset of TypeScript
@@ -85,12 +92,14 @@ that bridges the semantic gap between higher-level languages (such as TypeScript
 modelling each hardware component as a software component (Section~\ref{sec:codal});
 
 \item \emph{\MCN}, a web application containing an \emph{in-browser compiler} that supports the 
-simplified programming of microcontrollers via integrated visual and textual Javascript languages (Section~\ref{sec:makecode});
+simplified programming of MCUs via editors for visual blocks and textual Javascript languages 
+(Section~\ref{sec:makecode});
 \end{itemize}
 
 Our results show that these technologies combined can enable simplified programming through modern
-langauges and event based constructs whilst maintaining a relatively high degree of temporal and spatial efficiency. 
-We show up to 50x more performant than other state-of-the-art implementations, in some cases nearing the performance of native C++. 
+languages and event-based constructs while maintaining a relatively high degree of temporal and spatial efficiency. 
+We show up to 50x more performant than other state-of-the-art implementations, 
+in some cases nearing the performance of native C++. 
 
 % Additional fodder we could work in if needed....
 %even the most conservative estimates predict in excess of 
@@ -102,7 +111,7 @@ We show up to 50x more performant than other state-of-the-art implementations, i
     
 
 
-\section{Architecture}
+\subsection{Architecture}
 
 
 
@@ -121,30 +130,40 @@ are tremendously popular and allow the creation of programs without the
 possibility of syntax errors, and that execute in the web browser (Blockly
 is written in JavaScript and compiles user code to JavaScript).
 However, JavaScript's dynamic nature is not well-suited to the world of
-microcontrollers where memory is limited (consider the Arduino Uno mentioned above).
+MCUs where memory is limited (consider the Arduino Uno mentioned above).
 \end{comment}
 
+\begin{figure}[t]
+    \includegraphics[width=4.8in]{makecodeFig.pdf}
+\caption{\label{fig:makecode}\MC web app}
+\end{figure}
+
 % need to derive some key goals/requirements before here?
-The \MC web app is the entry point of the platform, and features
-in-browser execution via a device simulator,
-as well as compilation of Static TypeScript to machine code and linking against a pre-compiled C++ runtime (\emph{\CON}).
+Figure~\ref{fig:makecode} shows a high-level architecture of
+the \MC web app, the entry point of the platform that
+incorporates the Blockly
+(\emph{\href{https://github.com/google/blockly}{blockly}}) and Monaco
+(\emph{\href{https://github.com/Microsoft/monaco-editor}{monaco-editor}}
+editors (upper-left), in-browser execution via a device simulator (upper-right),
+as well as compilation of Static TypeScript to machine code and linking against 
+the C++ runtime (\emph{\CON}), pre-compiled by a cloud service (lower-left).
+
 The statically-typed runtime and type inference on user code allows uses to write code
 that looks like plain JavaScript (see Figure~\ref{fig:example}) and progress later to working
-with types.
-No C/C++ compiler is invoked to compile user code and the result of compilation is a
-binary file that is ``downloaded'' from the web app to the user's
-computer and then flashed to the microcontroller (exposed as a USB pen drive)
+with types. As can be seen im Figure~\ref{fig:makecode}, 
+no C/C++ compiler is needed to compile the Static TypeScript user code (coming from Monaco);
+the result of compilation is a binary file that is ``downloaded'' from the web app to the user's
+computer and then flashed to the MCU (exposed as a USB pen drive)
 via a simple file copy operation.
 
-These advances enable beginners to get started programming microcontrollers from
+These advances enable beginners to get started programming MCUs from
 any modern web browser, and enable hardware vendors to innovate and safely add new
 components to the mix using Static TypeScript.
 Once the web app has been loaded, all the above functionality works offline
 (i.e., if the host machine loses its connection
 to the internet). All of the platform's components are open source on GitHub.
 
-
-Table~\ref{table:devices} lists a number of the devices/microcontrollers supported by our platform,
+Table~\ref{table:devices} lists a number of the devices/MCUs supported by our platform,
 ranging from the highly resource-contrained Arduino Uno to the slightly less constrained space of
 the micro:bit, and Adafruit Circuit Playground Express (CPX).
 
@@ -209,4 +228,8 @@ scheduling model.
 \caption{\label{fig:example}Running example: firefly simulation.}
 \end{figure}
 
-
+\subsection{Overview}
+Sections~\ref{sec:makecode} to~\ref{sec:codal} presents the three major components of the platform:
+\MC, Static TypeScript, and \CO. Section~\ref{sec:evaluate} evaluates the performance of the platform,
+Section~\ref{sec:related} discusses related work, and Section~\ref{sec:conclude}
+concludes.
