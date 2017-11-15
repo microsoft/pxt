@@ -562,6 +562,11 @@ namespace ts.pxtc {
         return t.flags & ok
     }
 
+    function isGenericType(t: Type) {
+        const g = genericRoot(t);
+        return !!(g && g.typeParameters && g.typeParameters.length);
+    }
+
     function checkType(t: Type): Type {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
             TypeFlags.StringLiteral | TypeFlags.NumberLiteral | TypeFlags.BooleanLiteral |
@@ -763,8 +768,8 @@ namespace ts.pxtc {
             return insertSubtype(key, [false, "Cast to class/interface not supported."])
         }
 
-        if (isClassType(superType) && !genericRoot(superType)) {
-            if (isClassType(subType) && !genericRoot(subType)) {
+        if (isClassType(superType) && !isGenericType(superType)) {
+            if (isClassType(subType) && !isGenericType(subType)) {
                 let superDecl = <ClassDeclaration>superType.symbol.valueDeclaration
                 let subDecl = <ClassDeclaration>subType.symbol.valueDeclaration
                 // only allow upcast (sub -> ... -> sup) in inheritance chain
@@ -1299,7 +1304,7 @@ namespace ts.pxtc {
                             if (!h.types || h.types.length != 1)
                                 throw userError(9228, lf("invalid extends clause"))
                             let superType = typeOf(h.types[0])
-                            if (superType && isClassType(superType)) {
+                            if (superType && isClassType(superType) && !isGenericType(superType)) {
                                 // check if user defined
                                 // let filename = getSourceFileOfNode(tp.symbol.valueDeclaration).fileName
                                 // if (program.getRootFileNames().indexOf(filename) == -1) {
