@@ -678,6 +678,10 @@ function streamPageTestAsync(id: string) {
         })
 }
 
+function certificateTestAsync(): Promise<string> {
+    return Promise.resolve(expandDocFileTemplate("certificates.html"));
+}
+
 // use http://localhost:3232/45912-50568-62072-42379 for testing
 function scriptPageTestAsync(id: string) {
     return Cloud.privateGetAsync(id)
@@ -871,6 +875,11 @@ export function serveAsync(options: ServeOptions) {
             streamPageTestAsync(elts[0] + "/" + elts[1])
                 .then(sendHtml)
             return
+        }
+
+        if (elts[0] == "certificates") {
+            certificateTestAsync().then(sendHtml);
+            return;
         }
 
         if (/\.js\.map$/.test(pathname)) {
