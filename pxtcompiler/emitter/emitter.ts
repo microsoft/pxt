@@ -344,22 +344,6 @@ namespace ts.pxtc {
             isClassFunction(decl)
     }
 
-    function isSideEffectfulInitializer(init: Expression): boolean {
-        if (!init) return false;
-        if (isStringLiteral(init)) return false;
-        switch (init.kind) {
-            case SK.NullKeyword:
-            case SK.NumericLiteral:
-            case SK.TrueKeyword:
-            case SK.FalseKeyword:
-                return false;
-            case SK.ArrayLiteralExpression:
-                return (init as ArrayLiteralExpression).elements.some(isSideEffectfulInitializer)
-            default:
-                return true;
-        }
-    }
-
     export interface CallInfo {
         decl: Declaration;
         qName: string;
@@ -1513,11 +1497,43 @@ ${lbl}: .short 0xffff
             }
         }
 
+        function isConstLiteral(decl: Declaration) {
+            if (isGlobalVar(decl)) {
+                if (decl.parent.flags & NodeFlags.Const) {
+                    return !isSideEffectfulInitializer((decl as VariableDeclaration).initializer)
+                }
+            }
+            return false
+        }
+
+        function isSideEffectfulInitializer(init: Expression): boolean {
+            if (!init) return false;
+            if (isStringLiteral(init)) return false;
+            switch (init.kind) {
+                case SK.NullKeyword:
+                case SK.NumericLiteral:
+                case SK.TrueKeyword:
+                case SK.FalseKeyword:
+                    return false;
+                case SK.Identifier:
+                    return !isConstLiteral(getDecl(init))
+                case SK.PropertyAccessExpression:
+                    let d = getDecl(init)
+                    return !d || d.kind != SK.EnumMember
+                case SK.ArrayLiteralExpression:
+                    return (init as ArrayLiteralExpression).elements.some(isSideEffectfulInitializer)
+                default:
+                    return true;
+            }
+        }
+
         function emitLocalLoad(decl: VarOrParam) {
             if (isGlobalVar(decl)) {
                 let attrs = parseComments(decl)
                 if (attrs.shim)
                     return emitShim(decl, decl, [])
+                if (isConstLiteral(decl))
+                    return emitExpr(decl.initializer)
             }
             let l = lookupCell(decl)
             recordUse(decl)
@@ -2851,7 +2867,7 @@ ${lbl}: .short 0xffff
                         return "Number_::neq";
                 }
             }
-            
+
             if (opts.target.taggedInts && isThumb()) {
                 switch (n) {
                     case "numops::adds":
@@ -3745,6 +3761,8 @@ ${lbl}: .short 0xffff
             if (!isUsed(node)) {
                 return null;
             }
+            if (isConstLiteral(node))
+                return null;
             let loc = isGlobalVar(node) ?
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
