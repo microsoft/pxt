@@ -1,6 +1,6 @@
 # Microsoft MakeCode Blog
 
-## [Microsoft MakeCode for Seeed Grove Zero](/blog/seeed/v0.2.10)
+## [Microsoft MakeCode for Seeed Grove Zero Beta](/blog/seeed/v0.2.10)
 
 November 14th, 2017 by [riknoll](https://github.com/riknoll)
 
