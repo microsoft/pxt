@@ -35,7 +35,13 @@ The C++ of our platform breaks into two essential layers:
 to make it known to \MC, against which we write Static TypeScript programs;
 \end{itemize}
 %some expansion required
-\MC and \CO currently runs on three different devices (Table~\ref{table:devices}), each with varying capabilities. The simplest device is the Uno, consisting of an 8-bit processor running at 48 MHz, it only has 2kB of RAM (a thousandth of the amount a smartphone has in 2017) and 32kB of flash. The Uno has no onboard components other than the microcontroller which supports GPIO, Serial, and I2C. The micro:bit has a 32-bit Cortex M0 clocked at 16MHz, with 16kB RAM and 256kB of flash. It has a number of onboard components including a 5x5 LED matrix display, a compass, accelerometer, buttons, GPIO, I2C, Serial, and Bluetooth Low Energy. The CircuitPlayground is a 32-bit Cortex-M0+, which offers greater energy efficiency and performance; it clocks at 48 MHz and has 32kB of RAM and 256kB of flash. On board the CircuitPlayground are: RGB pixels, an infrared transmitter and receiver, a touch sensor, buttons, accelerometer, speaker, microphone, GPIO, I2C, and Serial. The Uno and micro:bit \MC targets use the untagged strategy, while the solution for the CircuitPlayground takes the tagged strategy (see Section~\ref{sec:untagged-tagged}).
+\MC and \CO currently runs on three different devices (Table~\ref{table:devices}), each with varying capabilities. The simplest device is the Uno, consisting of an 8-bit processor running at 48 MHz, it only has 2kB of RAM (a thousandth of the amount a smartphone has in 2017) and 32kB of flash. The Uno has no onboard components other than the microcontroller which supports GPIO, Serial, and I2C.
+
+The micro:bit has a 32-bit Cortex M0 clocked at 16MHz, with 16kB RAM and 256kB of flash. It has a number of onboard components including a 5x5 LED matrix display, a compass, accelerometer, buttons, GPIO, I2C, Serial, and Bluetooth Low Energy.
+
+The CircuitPlayground is a 32-bit Cortex-M0+, which offers greater energy efficiency and performance; it clocks at 48 MHz, has 32kB of RAM and 256kB of flash. On board the CircuitPlayground are: RGB pixels, an infrared transmitter and receiver, a touch sensor, buttons, accelerometer, speaker, microphone, GPIO, I2C, and Serial.
+
+The Uno and micro:bit \MC targets use the untagged strategy, while the CircuitPlayground target takes the tagged strategy (see Section~\ref{sec:untagged-tagged}).
 
 \subsection{Methodology}
 
@@ -51,14 +57,11 @@ It is important to note that memory and performance analysis are done in separat
 
 \subsection{The Overhead of \MC}
 
-To place the overhead of \MC in context, we perform a comparitive evaluation of \MC against fully virtualised solutions, using the native C++ of \CO as our baseline.  The two points of comparison are MicroPython~\cite{MicroPython}, an implementation of Python for microcontrollers, and Espruino~\cite{espruinoBook}, an
-implementation of JavaScript for micrcontrollers.
+To place the overhead of \MC in context, we perform a comparitive evaluation of \MC against fully virtualised solutions, using the native C++ as our baseline. The two points of comparison are MicroPython~\cite{MicroPython}, an implementation of Python for microcontrollers, and Espruino~\cite{espruinoBook}, an implementation of JavaScript for micrcontrollers.
 
 We created a program to give the cost of each solution with respect to time. The program counts from 0 to 100000 in a tight loop, toggling a GPIO just before the loop starts and immediately after it terminates; we measured the loop's duration using an oscilloscope. The program was rewritten in each solutions' respective language; the results are shown in Table~\ref{table:vm-comparison}.
 
 For the micro:bit, micropython and Espruino are an order of magnitude slower than a native \CO program, while \MC is only 114 milliseconds slower. However, \MC for the CircuitPlayground uses the tagged approach, and runs almost four times slower than a micro:bit while executing instructions three times as fast. For both devices, \MC outperforms both the VM-based solutions of MicroPyhon and Espruino.
-
-
 
 \subsection{Scheduler Performance}
 
@@ -127,6 +130,8 @@ The size of \CO and \MC scales linearly with the amount of functionality a devic
 The configurability of \CO enables us to support multiple devices with different feature sets, while maintaining the same API at the \MC layer.
 
 \subsubsection{RAM Consumption}
+%TODO: GET DATA ;(
+
 % Add globals maps and profile of listener and fiber.
 
 % The CPX runtime is the largest, as the CPX device has lots of on-board
@@ -144,6 +149,8 @@ The configurability of \CO enables us to support multiple devices with different
 % In our microbenchmarks, 99\% of that runtime is tree-shaken away.
 
 \subsection{\MC Native vs. \MC VM}
+
+Table~\ref{table:c-native-vm-stats} talks about BLAH.
 
 \begin{table}[]
 \centering
