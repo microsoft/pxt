@@ -1,7 +1,5 @@
 - Joe to make pass on abstract/introduction
 - James to work on codal.tex to make examples align with Figure 1
-- table 2 needs caption
-- add table for Fig 12 to see what it looks like
 - remove streams and stream Figure
 - Figure 6 and 7 to align with Figure 1
 - Running example: make clear that the CPXs are communicating via
