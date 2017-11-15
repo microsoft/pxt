@@ -3,27 +3,12 @@
 
 This section evaluates the costs of the various layers of abstraction in our platform.
 We evaluate the cost of these layers using a set of micro-benchmarks, written
-in both C++ and Static TypeScript, with three microcontrollers (Table~\ref{table:devices-2}): nRF51 (micro:bit),
+in both C++ and Static TypeScript, with three microcontrollers (Table~\ref{table:devices}): nRF51 (micro:bit),
 SAMD21 (CPX device), and Atmega (Uno). The C++ benchmarks isolate the performance
 of \CO and provide a baseline, while the Static TypeScript benchmarks show the overhead
 added by \MC.
 
 %add some words here about upcoming results... after order is finalised
-
-\begin{table}[]
-\centering
-\begin{tabular}{|l|r|r|r|r|r|}
-\hline
-            &          &            & \bf{Word} &          &             \\
-\bf{Device} & \bf{RAM} & \bf{Flash} & \bf{Size} & \bf{CPU} & \bf{Chip}   \\ \hline
-Uno         & 2 kB     & 32 kB      & 8         & AVR      & 328P  \\ \hline
-micro:bit   & 16 kB    & 256 kB     & 32        & M0       & nRF51       \\ \hline
-CPX         & 32 kB    & 256 kB     & 32        & M0       & SAMD21      \\ \hline
-\end{tabular}
-\caption{\label{table:devices-2}A subset of devices supported by the platform.
-CPX is Adafruit's Circuit Playground Express. M0 denotes Cortex-M0 and 328P denotes
-the Atmega328P.}
-\end{table}
 
 \begin{table}[]
 \centering
@@ -40,9 +25,16 @@ the Atmega328P.}
 \caption{\label{table:vm-comparison} A comparison between fully virtualised solutions, \MC, and native C++.}
 \end{table}
 
-\subsection{Devices}
+\subsection{Software \& Devices}
 
-\MC and \CO currently runs on three different devices (Table~\ref{table:devices-2}), each with varying capabilities. The simplest device is the Uno, consisting of an 8-bit processor running at 48 MHz, it only has 2kB of RAM (a thousandth of the amount a smartphone has in 2017) and 32kB of flash. The Uno has no onboard components other than the microcontroller which supports: GPIO, Serial, and I2C. The micro:bit is a 32-bit cortex M0 clocking at 16MHz, with 16kB RAM and 256kB of flash. It has a number of onboard components including: a 5x5 LED matrix display, a compass, accelerometer, buttons, GPIO, I2C, Serial, and Bluetooth Low Energy. The CircuitPlayground is a 32-bit cortex M0 plus, which offers greater energy efficiency and performance, it clocks at 48 MHz and has 32kB of RAM and 256kB of flash. On board the CircuitPlayground are: RGB pixels, an infrared transmitter and receiver, a touch sensor, buttons, accelerometer, speaker, microphone, GPIO, I2C, and Serial. The solution for the micro:bit takes the untagged strategy, whilst the solution for the CircuitPlayground takes the tagged strategy (See Section~\ref{sec:untagged-tagged}).
+The C++ of our platform breaks into two essential layers:
+\begin{itemize}
+\item \emph{\CON-core}: the \CO device runtime, against which we write C++ programs;
+\item \emph{\MCN-common-packages}: the C++ and Static TypeScript wrapping \CON-core
+to make it known to \MC, against which we write Static TypeScript programs;
+\end{itemize}
+%some expansion required
+\MC and \CO currently runs on three different devices (Table~\ref{table:devices}), each with varying capabilities. The simplest device is the Uno, consisting of an 8-bit processor running at 48 MHz, it only has 2kB of RAM (a thousandth of the amount a smartphone has in 2017) and 32kB of flash. The Uno has no onboard components other than the microcontroller which supports: GPIO, Serial, and I2C. The micro:bit is a 32-bit cortex M0 clocking at 16MHz, with 16kB RAM and 256kB of flash. It has a number of onboard components including: a 5x5 LED matrix display, a compass, accelerometer, buttons, GPIO, I2C, Serial, and Bluetooth Low Energy. The CircuitPlayground is a 32-bit cortex M0 plus, which offers greater energy efficiency and performance, it clocks at 48 MHz and has 32kB of RAM and 256kB of flash. On board the CircuitPlayground are: RGB pixels, an infrared transmitter and receiver, a touch sensor, buttons, accelerometer, speaker, microphone, GPIO, I2C, and Serial. The solution for the micro:bit takes the untagged strategy, whilst the solution for the CircuitPlayground takes the tagged strategy (See Section~\ref{sec:untagged-tagged}).
 
 \subsection{Methodology}
 
@@ -69,25 +61,40 @@ For the micro:bit, micropython and Espruino are an order of magnitude slower tha
 \subsubsection{Context Switch}
 
 \begin{figure}[ht]
-    \includegraphics[width=.9\columnwidth]{images/context-switch.png}
+    \includegraphics[width=.6\columnwidth]{images/context-switch.png}
 \caption{\label{fig:context-switch}Base context switch profiles per device.}
 \end{figure}
 
 \begin{figure}[ht]
-    \includegraphics[width=.9\columnwidth]{images/context-vs-stack.png}
-\caption{\label{fig:context-vs-stack}Time taken to perform a context switch against stack size.}
+    \includegraphics[width=.6\columnwidth]{images/context-vs-stack.png}
+\caption{\label{fig:context-vs-stack}[UPDATE WITH RED BAR]Time taken to perform a context switch against stack size.}
 \end{figure}
 
 To evaluate the performance of the scheduler we conducted a test that created two fibers and continuously swapped context, in each fiber a GPIO was toggled enabling us to capture the duration using an oscilloscope. We performed this test in both \MC and \CO and the resulting profiles can be seen in Figure~\ref{fig:context-switch}. This figure breaks the context switch down into three phases: (1) \CO, the time it takes to perform a context switch in \CO; (2) Stack Swap, the time taken to page out the \MC stack; and (3) \MC, the overhead added by the \MC layer.
 
 Figure~\ref{fig:context-vs-stack} profiles the time a context switch takes with an increasing stack size across all three devices in \CO. This test is similar to the previous test, however, we placed bytes (in powers of 2) on the stack of each fiber, starting from 64 and finishing at 1024. The difference in gradients, and ranges of values can be put down to device capability. For instance, the Uno has an 8-bit processor word size, which means more instructions are required to copy the stack, therefore as the stack size increases, so does context switch time.
 
-\subsubsection{APC}
+\subsubsection{Asynchronous Operations}
+
+% RENAME APC TO ASYNCHRONOUS PROC CALL and REORDER so that Event is below APC for ordering.
+\begin{figure}[ht]
+    \includegraphics[width=.6\columnwidth]{images/ram-consumption.png}
+\caption{\label{fig:ram-consumption}[NOT FINAL]RAM consumption of asynchronous operations in \CO.}
+\end{figure}
 
 \begin{figure}[ht]
-    \includegraphics[width=.75\columnwidth]{images/time-taken.png}
+    \includegraphics[width=.6\columnwidth]{images/time-taken.png}
 \caption{\label{fig:time-taken}[NOT FINAL]Time taken to perform asynchronous operations in \CO.}
 \end{figure}
+To gauge the cost of different asynchronous operations in \CON, we tested three commonly used code paths using the CircuitPlayground: (1) creating a fiber; (2) handling a non-blocking event; and (3) handling a blocking event.
+
+Figures~\ref{fig:ram-consumption}~and~\ref{fig:time-taken} show the RAM consumption and time taken to perform asynchronous operations in \CO, including the overhead of \MC where applicable.
+
+In \CO, creating a fiber costs 208 bytes and 35.4 microseconds, a non-blocking event costs 180 bytes and 156.4 microseconds, and a blocking event costs 416 bytes and 170.4 microseconds. For a non-blocking event \MC adds 24 bytes and 36.8 microseconds, and for a blocking event it adds 192 bytes and 39.6 microseconds.
+
+This exposes an optimisation made at the \CO layer, which is to only create a fiber to handle an event if a user performs a blocking operation in an event handler, as creating a fiber is a costly operation.
+
+Handling an event consumes a lot of time, the reason for this is that once an event has been fired its' corresponding listener is looked up in a singley linked list, and then invoked.
 
 \subsection{Memory Footprint}
 
@@ -110,14 +117,6 @@ The configurability of \CO enables us to support multiple devices with different
 
 \subsubsection{RAM Consumption}
 % Add globals maps and profile of listener and fiber.
-
-% \subsection{C++ and Static TypeScript runtime}
-% The C++ of our platform breaks into two essential layers:
-% \begin{itemize}
-% \item \emph{\CON-core}: the \CO device runtime, against which we write C++ programs;
-% \item \emph{\MCN-common-packages}: the C++ and Static TypeScript wrapping \CON-core
-% to make it known to \MC, against which we write Static TypeScript programs;
-% \end{itemize}
 
 % The CPX runtime is the largest, as the CPX device has lots of on-board
 % components, and this runtime shares much of its code with other SAMD21 \MC targets.
