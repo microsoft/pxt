@@ -5,7 +5,7 @@
 Recent years have seen an expansive growth in the popularity and ubiquity of embedded devices. 
 This growth can be attributed to the emergence of new application domains inspired by small, 
 highy resource constrained programmable processors known as microcontrollers (or MCUs), 
-some which can have as little of 2KB of RAM. In fact, it is now 
+which can have as little of 2KB of RAM. In fact, it is now 
 widely accepted  that less than 1 percent of the world's processors reside in general purpose 
 computers such as desktop PCs, laptops and tablets - with microcontrollers picking up the remainder.
 Furthermore, demand for microcontrollers continues to grow due to their use in the monitoring and 
@@ -34,7 +34,7 @@ Table \ref{table:devices} highlights the core capabilities of three state of the
 Whilst it is clear that all such devices are highly resource contrained compared to modern PCs 
 (circa six order of magnitude on most metrics), on deeper analysis we can derive two further key observations.
 
-Firstly, \emph{microcontrollers are processor rich}. Contrary to popular belief, these devices have 
+Firstly, \emph{microcontrollers are processor rich}. Contrary to first impressions, these devices have 
 a \emph{proportionally} large amount of processing power. For example - consider the BBC micro:bit 
 c.f. A typical PC. It has circa 100 times less CPU power, but 10\textsuperscript{6} times less RAM, and 10\textsuperscript{6} time less storage. 
 A good programming language design should therefore not only \emph{seek to provide high code density and spatial efficiency, 
@@ -62,7 +62,7 @@ It provides a familiar imperative programming model, it produces highly efficien
 temporal and spatial complexity), and provides low level access to hardware features when necessary. Examples
 of this are commonplace, such as the Arduino project (\url{www.arduino.cc})~\cite{buildingArduino2014},
 started in 2003, and the ARM mbed platform (\url{www.mbed.org})~\cite{mbed} - both of which rely heavily on
-a C/C++ programming model. However, the limitations of using C/C++ as an applicaiton programming language for 
+a C/C++ programming model. However, the limitations of using C/C++ as an application programming language for 
 inexperienced developers are well understood. 
 % Doesn't feel like we really need to spell out the limitation of C/C++ out here. Anyone got good references?
 
@@ -88,7 +88,7 @@ modelling each hardware component as a software component (Section~\ref{sec:coda
 simplified programming of microcontrollers via integrated visual and textual Javascript languages (Section~\ref{sec:makecode});
 \end{itemize}
 
-Our results show that these technologies combined can enable sinplified programming through modern
+Our results show that these technologies combined can enable simplified programming through modern
 langauges and event based constructs whilst maintaining a relatively high degree of temporal and spatial efficiency. 
 We show up to 50x more performant than other state-of-the-art implementations, in some cases nearing the performance of native C++. 
 
