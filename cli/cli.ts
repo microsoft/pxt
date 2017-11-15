@@ -2894,7 +2894,7 @@ function simshimAsync() {
         pxt.debug("no sim folder, skipping.")
         return Promise.resolve();
     }
-    let prog = pxtc.plainTsc("sim")
+    let prog = pxtc.plainTsc(path.resolve("sim"))
     let shims = pxt.simshim(prog)
     let filename = "sims.d.ts"
     for (const s of Object.keys(shims)) {
