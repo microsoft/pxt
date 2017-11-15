@@ -652,8 +652,24 @@ namespace ts.pxtc.Util {
     let _localizeStrings: pxt.Map<string> = {};
     export var localizeLive = false;
 
+    class MemTranslationDb implements ITranslationDb {
+        translations: pxt.Map<ITranslationDbEntry> = {};
+        key(lang: string, filename: string, branch: string) {
+            return `${lang}|${filename}|${branch || ""}`;
+        }
+        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry> {
+            return Promise.resolve(this.translations[this.key(lang, filename, branch)]);
+        }
+        setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
+            this.translations[this.key(lang, filename, branch)] = {
+                etag,
+                strings
+            }
+        }
+    }
+
     // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
-    export var _translationDb: ITranslationDb = undefined;
+    export var translationDb: ITranslationDb = new MemTranslationDb();
 
     /**
      * Returns the current user language, prepended by "live-" if in live mode
@@ -696,12 +712,12 @@ namespace ts.pxtc.Util {
             if (etag) headers["If-None-Match"] = etag;
             return requestAsync({ url, headers }).then(resp => {
                 // if 304, translation not changed, skipe
-                if (_translationDb && resp.statusCode == 304)
+                if (resp.statusCode == 304)
                     return undefined;
-                else if (_translationDb && resp.statusCode == 200) {
+                else if (resp.statusCode == 200) {
                     // store etag and translations
                     etag = resp.headers["ETag"] || "";
-                    return _translationDb.setAsync(lang, filename, branch, etag, resp.json)
+                    return translationDb.setAsync(lang, filename, branch, etag, resp.json)
                         .then(() => resp.json);
                 }
 
@@ -713,7 +729,7 @@ namespace ts.pxtc.Util {
         }
 
         // check for cache
-        return (_translationDb ? _translationDb.getAsync(lang, filename, branch) : Promise.resolve(undefined))
+        return translationDb.getAsync(lang, filename, branch)
             .then((entry: ts.pxtc.Util.ITranslationDbEntry) => {
                 // if cached, return immediately
                 if (entry) {
@@ -754,6 +770,7 @@ namespace ts.pxtc.Util {
 
         _localizeLang = code;
         _localizeStrings = {};
+        localizeLive = true;
         function mergeTranslations(tr: pxt.Map<string>) {
             if (!tr) return;
             Object.keys(tr)
