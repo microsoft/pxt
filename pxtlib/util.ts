@@ -781,14 +781,14 @@ namespace ts.pxtc.Util {
         }
 
         let hadError = false;
-        const pAll = Promise.mapSeries(stringFiles, file => 
+        const pAll = Promise.mapSeries(stringFiles, file =>
             downloadLiveTranslationsAsync(code, file.path, file.branch)
                 .then(mergeTranslations, e => {
                     console.log(e.message);
                     hadError = true;
                 })
         );
-        return pAll.then(() => {});
+        return pAll.then(() => { });
     }
 
     export function htmlEscape(_input: string) {
