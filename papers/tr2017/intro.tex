@@ -1,44 +1,81 @@
 \section{Introduction}
 \label{sec:intro}
 
-Over the last decade, microcontrollers, the workhorses of embedded systems, have found
-new uses in making~\cite{dougherty2012maker} and education. For example, the Arduino project
-(\url{www.arduino.cc})~\cite{buildingArduino2014},
-started in 2003, created the Uno board using an 8-bit Atmel
-AVR microcontroller with 2Kb of RAM and 32Kb of Flash.
-The Arduino ecosystem has grown over the past 15 years,
-with the support of companies such as Adafruit Industries (\url{www.adafruit.com}),
-who resell Arduino and make their own Arduino-compatible boards. Arduino projects
-are plentiful, relying heavily on the Arduino IDE and its C/C++ programming model.
+% The emergence of a new breed of computer
+Recent years have seen an expansive growth in the popularity and ubiquity of embedded devices. 
+This growth can be attributed to the emergence of new application domains inspired by small, 
+highy resource constrained programmable processors known as microcontrollers (or MCUs), 
+some which can have as little of 2KB of RAM. In fact, it is now 
+widely accepted  that less than 1 percent of the world's processors reside in general purpose 
+computers such as desktop PCs, laptops and tablets - with microcontrollers picking up the remainder.
+Furthermore, demand for microcontrollers continues to grow due to their use in the monitoring and 
+controlling of a wide variety of systems, ranging from wearables, to home automation, to 
+industrial automation and smart grids - a phenomenon broadly referred to as the Internet of Things (IoT).
 
-Furthermore, demand for microcontrollers grows due to their use in the monitoring and controlling
-of a wide variety of systems, ranging from wearables, to home automation, to industrial
-automation and smart grids. \emph{compare CPU to microcontroller - what distinguishes MCU from CPU -
-compute to memory ratio - MCU has simple pipeline, very predictable performance - use of concurrency
-to structure reactive systems}
-Application programming of microcontrollers generally requires a professional
-development environment. [TO BE FURTHER EXPANDED BY JOE]
+Microcontrollers are highly resource limited devices, but are not simply smaller versions of the laptop 
+and desktop computers. They are architecturally quite distinct. If we are to undertand how to optimise 
+programming languages and their implementation for such devices it is worth dwelling on their key characteristics. 
+Table \ref{table:devices} highlights the core capabilities of three state of the art devices. 
 
-With a surge in the demand for microcontrollers across a wide
-spectrum of applications, there is a need to simplify the programming
-of such devices so that more people can participate in the creation
-of microcontroller-based systems. Web-based visual editors such as
-Blockly (\url{https://developers.google.com/blockly/})~\cite{Blocky2015}
-are tremendously popular and allow the creation of programs without the
-possibility of syntax errors, and that execute in the web browser (Blockly
-is written in JavaScript and compiles user code to JavaScript).
-However, JavaScript's dynamic nature is not well-suited to the world of
-microcontrollers where memory is limited (consider the Arduino Uno mentioned above).
+\begin{table}[]
+    \centering
+    \begin{tabular}{|l|r|r|r|r|r|}
+    \hline
+                           &          &              & \bf{Word}  &                 \\
+    \bf{Device}            & \bf{RAM} & \bf{Flash}   & \bf{Size}  & \bf{CPU Speed}  \\ \hline
+    Arduino Uno            & 2 KB       & 32 KB      & 8          & 16MHz AVR       \\ \hline
+    BBC micro:bit          & 16 KB      & 256 KB     & 32         & 16MHz ntf51     \\ \hline
+    Adafruit CPX           & 32 KB      & 256 KB     & 32         & 48MHz SAMD21    \\ \hline
+    Typical PC             & 16 GB      & 1 TB       & 64         & 3GHz Intel      \\ \hline
+    \end{tabular}
+    \caption{\label{table:devices}Exemplar microcontroller devices, cf. a typical PC}
+    \end{table}
 
-We present a platform that bridges the world of the web and the microcontroller with three
-novel technologies:
+Whilst it is clear that all such devices are highly resource contrained compared to modern PCs 
+(circa six order of magnitude on most metrics), on deeper analysis we can derive two further key observations.
+
+Firstly, \emph{microcontrollers are processor rich}. Contrary to popular belief, these devices have 
+a \emph{proportionally} large amount of processing power. For example - consider the BBC micro:bit 
+c.f. A typical PC. It has circa 100 times less CPU power, but 10\textsuperscript{6} times less RAM, and 10\textsuperscript{6} time less storage. 
+A good programming language design should therefore not only \emph{seek to provide high code density and spatial efficiency, 
+but to actively trade off CPU for spatial efficiency where possible}. 
+
+Secondly, \emph{a trend toward on-chip integration}. Microcontrollers also follow Moore's law (which states 
+that the number of transistors double roughly every two years). However, This additional capacity is 
+not typically invested in simply optimising processing power. Instead, \emph{indepedent peripherals} 
+are integrated onto the same silicon chip as the CPU. Examples include integrated radio hardware such 
+as Bluetooth/WiFi and audio inputs and outputs. This hardware is designed to run independently of the 
+CPU, hence \emph{an effective application programming language should directly support such an asynchronous
+interaction model}.
+
+% Despite this languages and programming environments have yet to keep pace with the mainstream (e.g. Arduino/mbed)
+Furthermore, with this surge in the demand for microcontrollers across a wide spectrum of applications, 
+there is a need to simplify the programming of such devices so that more people can participate in 
+the creation of microcontroller-based systems. From rapid product innovation to education,
+we have seen a sustained growth in the volume and diversity of people wishing to program microcontroller based devices. 
+These new application developers share a common characterisitic - \emph{they are not professional software developers}. 
+Programming languages and development environments for microcontrollers have not kept pace with these advances 
+in hardware and diversification of user domains. Elsewhere, we have long supported inexperienced developers through  
+modern high level text-based languages for application development such as Java, C\#, Python and Javascript, and also 
+through visual programming languages based on frameworks such as Blockly. In the world of the microcontroller however, the de facto standard remains the C/C++ lanaguge - and for good reason. 
+It provides a familiar imperative programming model, it produces highly efficient code (in terms of both 
+temporal and spatial complexity), and provides low level access to hardware features when necessary. Examples
+of this are commonplace, such as the Arduino project (\url{www.arduino.cc})~\cite{buildingArduino2014},
+started in 2003, and the ARM mbed platform (\url{www.mbed.org})~\cite{mbed} - both of which rely heavily on
+a C/C++ programming model. However, the limitations of using C/C++ as an applicaiton programming language for 
+inexperienced developers are well understood. 
+% Doesn't feel like we really need to spell out the limitation of C/C++ out here. Anyone got good references?
+
+% Paper overview
+In this paper we introduce a novel architecture for microcontroller based devices,
+that is designed with three guiding principles: 
+\emph{it should be usable by anyone}, not just trained professionals. 
+\emph{It should be available anywhere}, requiring no specialist software or hardware to operate.
+\emph{it should run efficiently on anything}, from devices with as little as 2KB of memory.
+More specifically, we present and evaluate a platform that bridges the world of the web and the microcontroller through 
+three novel technologies:
+
 \begin{itemize}
-\item \emph{\MCN}, a web app that supports programming of microcontrollers, via the web-based Blockly
-and Monaco~\cite{Monaco} editors ---
-\MC is parameterized by statically-typed device runtime composed of \emph{Static TypeScript} (STS) and C++:
-an automated mapping from STS to Blockly and a foreign function interface from STS to C++ help
-bridge the gap between Blockly and C++ (Section~\ref{sec:makecode});
-
 \item \emph{Static TypeScript} is a statically-typed subset of TypeScript
 (\url{www.typescriptlang.org}) that we have defined for fast execution on low-memory devices,
 with a simple model for linking against pre-compiled C++ (Section~\ref{sec:sts});
@@ -47,7 +84,47 @@ with a simple model for linking against pre-compiled C++ (Section~\ref{sec:sts})
 that bridges the semantic gap between higher-level languages (such as TypeScript) and the hardware,
 modelling each hardware component as a software component (Section~\ref{sec:codal});
 
+\item \emph{\MCN}, a web application containing an \emph{in-browser compiler} that supports the 
+simplified programming of microcontrollers via integrated visual and textual Javascript languages (Section~\ref{sec:makecode});
 \end{itemize}
+
+Our results show that these technologies combined can enable sinplified programming through modern
+langauges and event based constructs whilst maintaining a relatively high degree of temporal and spatial efficiency. 
+We show up to 50x more performant than other state-of-the-art implementations, in some cases nearing the performance of native C++. 
+
+% Additional fodder we could work in if needed....
+%even the most conservative estimates predict in excess of 
+%30 billion IoT devices will be interconnected by 2020 [] - far outstripping the 3.7 billion people 
+%and 1.2 billion websites using the internet today.
+
+
+% The \MC \CO Architecture
+    
+
+
+\section{Architecture}
+
+
+
+% Derive some key goals/requirements
+
+
+
+% Include example app to architecture section
+
+
+% Lacking context - broad statements could also be misinterpreted.
+\begin{comment}
+Web-based visual editors such as
+Blockly (\url{https://developers.google.com/blockly/})~\cite{Blocky2015}
+are tremendously popular and allow the creation of programs without the
+possibility of syntax errors, and that execute in the web browser (Blockly
+is written in JavaScript and compiles user code to JavaScript).
+However, JavaScript's dynamic nature is not well-suited to the world of
+microcontrollers where memory is limited (consider the Arduino Uno mentioned above).
+\end{comment}
+
+% need to derive some key goals/requirements before here?
 The \MC web app is the entry point of the platform, and features
 in-browser execution via a device simulator,
 as well as compilation of Static TypeScript to machine code and linking against a pre-compiled C++ runtime (\emph{\CON}).
@@ -66,20 +143,6 @@ Once the web app has been loaded, all the above functionality works offline
 (i.e., if the host machine loses its connection
 to the internet). All of the platform's components are open source on GitHub.
 
-\begin{table}[]
-\centering
-\begin{tabular}{|l|r|r|r|r|r|}
-\hline
-            &          &            & \bf{Word} &          &             \\
-\bf{Device} & \bf{RAM} & \bf{Flash} & \bf{Size} & \bf{CPU} & \bf{Chip}   \\ \hline
-Uno         & 2 kB     & 32 kB      & 8         & AVR      & 328P  \\ \hline
-micro:bit   & 16 kB    & 256 kB     & 32        & M0       & nRF51       \\ \hline
-CPX         & 32 kB    & 256 kB     & 32        & M0       & SAMD21      \\ \hline
-\end{tabular}
-\caption{\label{table:devices}A subset of devices supported by the platform.
-CPX is Adafruit's Circuit Playground Express. M0 denotes Cortex-M0 and 328P denotes
-the Atmega328P.}
-\end{table}
 
 Table~\ref{table:devices} lists a number of the devices/microcontrollers supported by our platform,
 ranging from the highly resource-contrained Arduino Uno to the slightly less constrained space of
@@ -147,30 +210,3 @@ scheduling model.
 \end{figure}
 
 
-\subsection{Evaluation}
-
-%we encourage the reader to choose a target
-%from \dburl{www.makecode.com} and experiment with programming it, to appreciate the
-%qualitative aspects of the platform, namely its simplicity and ease of use.
-In this paper, we evaluate quantitative aspects of the platform
-with respect to the devices from Table~\ref{table:devices}. In particular, we
-consider:
-\begin{itemize}
-\item the time to compile Static TypeScript to machine code or bytecode,
-       as well as the size of the resulting executable, including the C++ runtime;
-\item the performance of a set of small benchmarks, written in both Static TypeScript and C++,
-      compiled with the \MC and GCC toolchains;
-\item \emph{native code vs. bytecode} we
-     evaluate memory consumption and code performance for native code generation
-     vs. bytecode generation and interpretation on the Uno.
-\end{itemize}
-The high-level results are: compilation speed in the browser is on the order
-of several hundred milliseconds for small programs (the norm), so not noticeable
-by the end-user; execution slowdown for Static TypeScript code relative to C++
-code is 2x-3x, which compares very well to systems such as MicroPython and
-Circuit Python, which incur 100X slowdown.
-
-Sections~\ref{sec:makecode} to~\ref{sec:codal} presents the three major components of the platform, top-down,
-as referenced before. Section~\ref{sec:evaluate} evaluates the performance of the platform,
-Section~\ref{sec:related} discusses related work, and Section~\ref{sec:conclude}
-concludes.
