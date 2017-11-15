@@ -35,7 +35,7 @@ export class Editor extends srceditor.Editor {
     }
 
     hasHistory() { return false; }
-    
+
     hasEditorToolbar() {
         return false
     }
@@ -44,11 +44,9 @@ export class Editor extends srceditor.Editor {
         this.isVisible = b;
         if (this.isVisible) {
             this.startRecording()
-            this.chartDropper = setInterval(this.dropStaleCharts.bind(this), 5000)
         }
         else {
             this.pauseRecording()
-            clearInterval(this.chartDropper)
         }
     }
 
@@ -177,12 +175,14 @@ export class Editor extends srceditor.Editor {
         this.active = false
         if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.stop())
+        clearInterval(this.chartDropper)
     }
 
     startRecording() {
         this.active = true
         if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.start())
+        this.chartDropper = setInterval(this.dropStaleCharts.bind(this), 5000)
     }
 
     toggleRecording() {
