@@ -1,6 +1,6 @@
 /// <reference path="..\..\localtypings\mocha.d.ts" />
 /// <reference path="..\..\localtypings\chai.d.ts" />
-/// <reference path="..\..\localtypings\blockly.d.ts" />
+/// <reference path="..\..\localtypings\pxtblockly.d.ts" />
 /// <reference path="..\..\built\pxtblocks.d.ts" />
 /// <reference path="..\..\built\pxtcompiler.d.ts" />
 

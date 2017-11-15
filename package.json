@@ -30,6 +30,7 @@
     "built/pxt.js",
     "built/pxt-common.json",
     "built/blockly.d.ts",
+    "built/pxtblockly.d.ts",
     "built/pxt.d.ts",
     "built/pxtarget.d.ts",
     "built/pxtpackage.d.ts",

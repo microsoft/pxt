@@ -1,3 +1,12 @@
+/**
+ * @license
+ * PXT Blockly
+ *
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * https://github.com/Microsoft/pxt-blockly
+ * 
+ * See LICENSE file for details.
+ */
 
 declare namespace goog {
     function require(name: string): void;
@@ -275,13 +284,13 @@ declare namespace goog {
             APOSTROPHE: number,
             AT_SIGN: number,
             B: number,
-            BACKSLASH: number,	
+            BACKSLASH: number,
             BACKSPACE: number,
             C: number,
-            CAPS_LOCK: number,	
-            CLOSE_SQUARE_BRACKET: number,	
+            CAPS_LOCK: number,
+            CLOSE_SQUARE_BRACKET: number,
             COMMA: number,
-            CONTEXT_MENU: number,	
+            CONTEXT_MENU: number,
             CTRL: number,
             D: number,
             DASH: number,
@@ -323,7 +332,7 @@ declare namespace goog {
             LAST_MEDIA_KEY: number,
             LEFT: number,
             M: number,
-            MAC_ENTER: number,	
+            MAC_ENTER: number,
             MAC_FF_META: number,
             MAC_WK_CMD_LEFT: number,
             MAC_WK_CMD_RIGHT: number,
@@ -351,7 +360,7 @@ declare namespace goog {
             ONE: number,
             OPEN_SQUARE_BRACKET: number,
             P: number,
-            PAGE_DOWN: number,	
+            PAGE_DOWN: number,
             PAGE_UP: number,
             PAUSE: number,
             PERIOD: number,
@@ -436,15 +445,23 @@ declare namespace goog {
 declare namespace Blockly {
     let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: (e: any) => void): void;
+    function bindEventWithChecks_(node: any, eventName: string, target: any, fn: (e: any) => void, nocapture?: boolean): any;
     function terminateDrag_(): void;
     function svgResize(workspace: Blockly.Workspace): void;
     function hueToRgb(hue: number): string;
+
+    function registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
 
     function alert(message: string, opt_callback?: () => void): void;
     function confirm(message: string, callback: (response: boolean) => void): void;
     function prompt(message: string, defaultValue: string, callback: (response: string) => void): void;
 
+    let ALIGN_LEFT: number;
     let ALIGN_RIGHT: number;
+    let ALIGN_CENTRE: number;
+
+    let VARIABLE_CATEGORY_NAME: string;
+    let PROCEDURE_CATEGORY_NAME: string;
 
     namespace utils {
         function wrap(tip: string, limit: number): string;
@@ -533,29 +550,7 @@ declare namespace Blockly {
         setConstraints(min: any, max: any, precision?: any): void;
     }
 
-    class FieldGridPicker extends FieldDropdown {
-        constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], colour?: string | number, params?: pxt.Map<string> );
-    }
-
     class FieldSlider extends FieldNumber {
-    }
-
-    interface FieldCustomOptions {
-        colour?: string | number;
-    }
-
-    interface FieldCustomDropdownOptions extends FieldCustomOptions {
-        data?: any;
-    }
-
-    interface FieldCustom extends Field {
-        isFieldCustom_: boolean;
-        saveOptions?(): pxt.Map<string | number | boolean>;
-        restoreOptions?(map: pxt.Map<string | number | boolean>): void;
-    }
-
-    interface FieldCustomConstructor {
-        new(text: string, options: FieldCustomOptions, validator?: Function): FieldCustom;
     }
 
     class Block {
@@ -788,10 +783,18 @@ declare namespace Blockly {
             viewTop: number;
             viewWidth: number;
         }
-        variableIndexOf(name: string): number;
+        getVariable(name: string): number;
+        getVariablesOfType(type: string): VariableModel[];
+        getAudioManager(): WorkspaceAudio;
 
         registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
+        registerToolboxCategoryCallback(a: string, b: Function): void;
 
+        resizeContents(): void;        
+    }
+
+    class WorkspaceAudio {
+        play(audio: string): void;
     }
 
     class WorkspaceSvg {
@@ -834,10 +837,16 @@ declare namespace Blockly {
         };
         enableRealTime?: boolean;
         rtl?: boolean;
+        // PXT specific: 
+        toolboxOptions?: ToolboxOptions;
     }
 
-    interface ExtendedOptions extends Options {
-        toolboxType?: string;
+    interface ToolboxOptions {
+        colour?: boolean;
+        border?: boolean;
+        inverted?: boolean;
+        invertedMultiplier?: number;
+        disabledOpacity?: number;
     }
 
     // tslint:disable-next-line
@@ -852,9 +861,19 @@ declare namespace Blockly {
     }
 
     namespace Variables {
+        function generateVariableFieldXml_(variableModel: VariableModel): void;
         function allVariables(wp: Workspace): string[];
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
+        let flyoutCategoryBlocks: (wp: Workspace) => HTMLElement[];
         function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;
+    }
+
+    class VariableModel {
+        name: string;
+        type: string;
+        static compareByName: any;
+        constructor(wp: Workspace, name: string, type?: string, id?: string);
+        getId(): string;
     }
 
     namespace Procedures {
@@ -920,7 +939,7 @@ declare namespace Blockly {
             getTree(): TreeControl;
             hasChildren(): boolean;
             isSelected(): boolean;
-            onMouseDown(e: Event): void;
+            onClick_(e: Event): void;
             select(): void;
             setExpanded(expanded: boolean): void;
             toggle(): void;

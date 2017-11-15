@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="../../localtypings/pxtblockly.d.ts" />
 
 namespace pxtblockly {
     enum Note {
