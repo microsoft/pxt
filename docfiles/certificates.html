@@ -7,32 +7,81 @@
     <meta name="Description" content="Certificate" />
 
     <!-- @include meta.html -->
-    <!-- @include head.html -->
-    
+    <link ref="stylesheet" href="/doccdn/style.css" />
+    <link rel="stylesheet" data-rtl="/doccdn/rtlsemantic.css" href="/doccdn/semantic.css">
+    <script src="/doccdn/jquery.js"></script>
+
+    <style>
+        #template {
+            max-width: 20rem;
+        }
+
+        .certificate {
+            width: 100%;
+        }
+
+        .certificate canvas {
+            width: 100%;
+        }
+    </style>
+
 </head>
+<script>
+    $(document).ready(function () {
+        $('#print').click(function () {
+            var cw = 1754;
+            var ch = 1235;
+            var $certs = $('#certificates');
+            $certs.empty();
+            var img = $('#template')[0];
+            $('#names').val().split(/\r?\n/).forEach(function (m) {
+                if (!m) return;
+                var cvs = document.createElement("canvas");
+                var ctx = cvs.getContext("2d");
+                cvs.width = cw;
+                cvs.height = ch;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "center";
+                ctx.fillStyle = 'black';
+                ctx.font = '200px monospace';
+                ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, cw, ch);
+                ctx.fillText(m, cw / 2, ch / 2);
+
+                var div = $(`<div class="certificate"></div>`);
+                div.append(cvs);
+
+                $certs.append(div);
+            })
+
+            try {
+                // window.print();
+            } catch (e) { }
+        })
+    })
+</script>
 
 <body id='root' class='root'>
 
-    <div class="main ui container mainbody">
-        <div id="inputs" class="ui segment hideprint">
-            <div class="ui input">
-                <input type="text" placeholder="Enter names"></input>
-            </div>
-            <div class="ui buttons">
-                <button class="ui primary button">
-                    Print certificates
-                </button>
+    <div class="main ui container mainbody hideprint">
+        <h1>Certificate</h1>
+        <img id="template" class="ui image" src="/static/certificate.png" />
+        <div id="inputs" class="ui segment">
+            <div class="ui form">
+                <div class="field">
+                    <label>Enter names</label>
+                    <textarea id="names" rows="2"></textarea>
+                </div>
+                <div class="field">
+                    <button id="print" class="ui primary button">
+                        Print certificates
+                    </button>
+                </div>
             </div>
         </div>
-        <div id="certificates" class="ui segment">
-            
-        </div>
+        <p></p>
     </div>
-
-    <script>
-
-    </script>
-
+    <div id="certificates">
+    </div>
 
     <!-- @include footer.html -->
     <!-- @include tracking.html -->
