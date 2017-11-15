@@ -30,6 +30,12 @@ html, body {
     top: @mainMenuHeight;
 }
 
+.hideMenuBar #filelist,
+    .hideMenuBar #maineditor,
+    .hideMenuBar #sidedocs {
+    top: 0 !important;
+}
+
 .full-abs {
     position: absolute !important;
     left: 0;
@@ -425,13 +431,6 @@ div.simframe > iframe {
             }
         }
     }
-}
-
-#notificationBanner
-    .hideMenuBar #filelist,
-    .hideMenuBar #maineditor,
-    .hideMenuBar #sidedocs {
-        top: 0 !important;
 }
 
 /******************************
