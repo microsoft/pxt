@@ -21,10 +21,10 @@ There are five parts of the web app labelled in the figure:
 (D) the programming canvas (showing here the blocks corresponding to the JavaScript from Figure~\ref{fig:example});
 (E) the download button invokes the compiler to produce a binary executable.
 
-The \MC web app encapsulates all the components needed to deliver a programming experience 
+The \MC web app encapsulates all the components needed to deliver a programming experience
 for microcontrollers, free of the need for a C++ compiler for the compilation of user code.
-The web app is written in TypeScript and incorporates the TypeScript compiler and 
-language service as well. 
+The web app is written in TypeScript and incorporates the TypeScript compiler and
+language service as well.
 The app is built from a \MC ``target'' (\emph{\dbhref{https://github.com/microsoft/pxt-adafruit}{pxt-adafruit}})
 which parameterizes the \MC framework (\emph{\dbhref{https://github.com/microsoft/pxt}{pxt}}).
 The remaining subsections describe the parts of Figure~\ref{fig:makecode}, 
@@ -32,7 +32,7 @@ which shows the high-level components of the web app.
 
 \subsection{Device runtime and Shim Generation}
 
-A \MC target is defined, in part, by its device runtime, which can be a combination of C++ 
+A \MC target is defined, in part, by its device runtime, which can be a combination of C++
 and Static TypeScript (STS) code, as shown in the lower-left of Figure~\ref{fig:makecode}.
 All the target's C++ files are precompiled (by a C++ compiler in the cloud)
 into a binary, which is stored in the cloud in a single blob, and cached in the HTML5 application cache (with 
@@ -59,7 +59,7 @@ namespace input {
     ...
 \end{lstlisting}
 
-Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories, where the 
+Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories, where the
 category \emph{INPUT} corresponding to the namespace \emph{input} can been seen (second
 from the top).
 
@@ -69,10 +69,10 @@ from the top).
 \end{figure}
 
 Mapping of functions and enumerations between C++ and TypeScript is straightforward
-and performed automatically by \MC. 
-Here's an example of the C++ function \emph{onLightConditionChanged} 
-in the namespace \emph{input} that 
-wraps the more complex C++ needed to update the sensor and register the (Action) 
+and performed automatically by \MC.
+Here's an example of the C++ function \emph{onLightConditionChanged}
+in the namespace \emph{input} that
+wraps the more complex C++ needed to update the sensor and register the (Action)
 handler with the underlying \CO runtime:
 \begin{lstlisting}
 //% block="on light %condition"
@@ -83,10 +83,10 @@ void onLightConditionChanged(LightCondition condition, Action handler) {
 }
 \end{lstlisting}
 
-We'll describe the attribute definitions in the \emph{//\%} comment in the next section. 
-\MC uses a TypeScript declaration file (here called a shim file) to describe the TypeScript 
+We'll describe the attribute definitions in the \emph{//\%} comment in the next section.
+\MC uses a TypeScript declaration file (here called a shim file) to describe the TypeScript
 elements corresponding to C++ namespaces, enumerations and functions.
-Since the C++ function above is preceded by a \emph{//\%} comment, 
+Since the C++ function above is preceded by a \emph{//\%} comment,
 \MC adds the following TypeScript declaration to the shim file and copies
 over the attribute definitions in the comment. \MC also adds an attribute definition mapping
 the TypeScript shim to its C++ function:
@@ -98,12 +98,12 @@ function onLightConditionChanged(condition: LightCondition, handler: () => void)
 \end{lstlisting}
 
 To support the foreign function interface, \MC defines a mapping between C++ and TypeScript types.
-Boolean and void have straightforward mappings from C++ to TypeScript (bool $\rightarrow$ boolean, void $\rightarrow$ void). 
+Boolean and void have straightforward mappings from C++ to TypeScript (bool $\rightarrow$ boolean, void $\rightarrow$ void).
 As JavaScript only supports number, which is a C++ float/double, \MC uses TypeScript's support
 for type aliases to name the various C++ integer types commonly used for microcontroller programming
-(int32, uint32, int16, uint16, int8, uint8). 
+(int32, uint32, int16, uint16, int8, uint8).
 % don't use int, unsigned etc. they are actually different sizes on different compilers for AVR
-This is particularly useful for saving space on 8-bit architectures such as the AVR. 
+This is particularly useful for saving space on 8-bit architectures such as the AVR.
 \MC also includes reference counted C++ types for strings, lambdas (Action in C++, with
 up to three arguments and a return type) and collections, with mappings to TypeScript.
 
@@ -112,7 +112,7 @@ data structures must be careful to break cycles to ensure complete deallocation.
 
 \subsection{Metadata generation}
 
-Both C++ and TypeScript APIs can be specially annotated (minimally via 
+Both C++ and TypeScript APIs can be specially annotated (minimally via
 \emph{//\% block}) so that the \MC compiler generates the needed
 Blockly metadata to expose an API as a visual block.
 Additional attribute definitions can provide text descriptions for the block, project function
@@ -130,12 +130,12 @@ the function \emph{onLightConditionChanged}.
  
 \MCN's support for Blockly means that for the common case, the target developer doesn't need
 to know anything about the Blockly framework.
-For more sophisticated needs, one can directly access the Blockly framework. 
+For more sophisticated needs, one can directly access the Blockly framework.
 
 \subsection{Editors}
 
 As shown in the upper-left of Figure~\ref{fig:makecode},
-\MC uses the Blockly (\emph{\href{https://github.com/google/blockly}{blockly}}) and Monaco 
+\MC uses the Blockly (\emph{\href{https://github.com/google/blockly}{blockly}}) and Monaco
 (\emph{\href{https://github.com/Microsoft/monaco-editor}{monaco-editor}}) editors to allow the user to code with
 visual blocks or TypeScript. The editing experience is parameterized by the full-typed device
 runtime, which provides a set of categorized APIs to the end-user, based on namespaces, as
@@ -145,15 +145,15 @@ to the immediate left of the programming area.
 \MC compiles the Blockly program representation to Static TypeScript in a syntax-directed manner.
 A key issue is the need for type inference on the Blockly representation, as variables generally are defined and used without
 being declared in Blockly. \MC uses a simple unification type inference to assign a
-unique type to each variable.  
+unique type to each variable.
 % this may not be possible:
 %In the future, we expect to use TypeScript's type inference instead
-%and eliminate the need for separate type inference over the Blockly representation. 
+%and eliminate the need for separate type inference over the Blockly representation.
 TypeScript supports programming constructs that are not available in Blockly, such as classes.
 Such constructs are converted into grey uneditable blocks in Blockly, with the construct's program
 text intact. This means \MC always can decompile an error-free TypeScript program to Blockly and then recover
 the program text of the grey blocks when converting from Blockly back to TypeScript.
-% (see \emph{\dbhref{https://github.com/Microsoft/pxt/blob/master/pxtcompiler/emitter/decompiler.ts}{decompiler.ts}}). 
+% (see \emph{\dbhref{https://github.com/Microsoft/pxt/blob/master/pxtcompiler/emitter/decompiler.ts}{decompiler.ts}}).
 
 \subsection{Browser compilation}
 
@@ -162,7 +162,7 @@ user's program, the device runtime written in TypeScript, as well as the TypeScr
 corresponding to the C++ device runtime. It then checks that the
 combined TypeScript program is within the STS subset through additional syntactic and type checks over the typed AST (detailed in Section~\ref{sec:sts}).  Assuming all the
 above checks pass, \MC then performs tree shaking of the AST to remove unused TypeScript functions.
-The reduced AST then is compiled to an intermediate representation (IR) that makes explicit: labelled control 
+The reduced AST then is compiled to an intermediate representation (IR) that makes explicit: labelled control
 flow among a sequence of instructions with conditional and unconditional jumps; heap cells; field accesses; store operations,
 and reference counting.
 
@@ -178,27 +178,27 @@ including Intel's HEX format and the \UF format, documented in the Appendix (Sec
 
 \subsubsection{Asynchronous Functions}
 
-An important part of the compilation process is to allow users to call asynchronous 
-TypeScript functions (identified through the \emph{//\% async} annotation) 
-as if they were blocking functions.  For example, in Figure~\ref{fig:example}, the runtime 
-function \emph{loops.pause(1000)} (called at line 10) 
-is an async function that sets a countdown timer (for 1000 milliseconds) 
-and then yields to the scheduler. When the timer 
-reaches zero, the function continuation is queued for execution. 
+An important part of the compilation process is to allow users to call asynchronous
+TypeScript functions (identified through the \emph{//\% async} annotation)
+as if they were blocking functions.  For example, in Figure~\ref{fig:example}, the runtime
+function \emph{loops.pause(1000)} (called at line 10)
+is an async function that sets a countdown timer (for 1000 milliseconds)
+and then yields to the scheduler. When the timer
+reaches zero, the function continuation is queued for execution.
 
 For execution in the single-threaded context of the JavaScript runtime,
-every TypeScript function is compiled so that it can be suspended (at the return of a call) and later resumed (at the same point). 
+every TypeScript function is compiled so that it can be suspended (at the return of a call) and later resumed (at the same point).
 The default behavior at a suspension point is to immediately resume execution.  For a call to an async function,
-the default behavior is overridden by the compiler, which suspends execution of the current function. 
-Upon completion of the async function call, the current function then is resumed. 
-The \CO device runtime supports fibers with the ability to yield, so for compilation to a device, 
+the default behavior is overridden by the compiler, which suspends execution of the current function.
+Upon completion of the async function call, the current function then is resumed.
+The \CO device runtime supports fibers with the ability to yield, so for compilation to a device,
 the compiler simply emits a call to yield at a suspension point.
 
 Async functions are written by runtime developers, not end-users, and greatly simplify the JavaScript
-programming model for end-users. For example, although the JavaScript simulator runtime uses promises to 
-achieve asynchronous execution in a single-threaded context, these promises are hidden from the end user. 
+programming model for end-users. For example, although the JavaScript simulator runtime uses promises to
+achieve asynchronous execution in a single-threaded context, these promises are hidden from the end user.
 
-\subsubsection{Untagged and Tagged Strategies}
+\subsubsection{Untagged and Tagged Strategies}\label{sec:untagged-tagged}
 
 The \MC compiler supports the Static TypeScript language subset described in Section~\ref{sec:sts},
 with two compilation strategies: untagged and tagged. Under the untagged strategy,
@@ -207,10 +207,10 @@ to statically distinguish primitive values from boxed values. As a result, the u
 strategy is not fully faithful to JavaScript semantics: there is no support for floating
 point and the Null and Undefined types are represented by the default integer value of zero.
 
-The untagged strategy is used for the micro:bit and Arduino Uno targets. 
+The untagged strategy is used for the micro:bit and Arduino Uno targets.
 
-In the tagged strategy, numbers are either tagged 31-bit signed integers, or if they do not fit, 
-boxed doubles. Special constants like false, null and undefined are given special values 
+In the tagged strategy, numbers are either tagged 31-bit signed integers, or if they do not fit,
+boxed doubles. Special constants like false, null and undefined are given special values
 and can be distinguished. The tagged execution strategy has the capability to fully support
 JavaScript semantics. This strategy is used for all SAMD21 targets, including the CPX.
 
@@ -218,10 +218,10 @@ JavaScript semantics. This strategy is used for all SAMD21 targets, including th
 
 A \MC target can provide an alternate TypeScript implementation for each API in the device runtime, for use in the device
 simulator. As this code runs in the web browser (not on the actual device) and manipulates the DOM, the developer is free to
-use all of TypeScript/JavaScript's features. (As an aside, \MC also support ``simulator-only'' targets that have no 
-associated device; in these cases, the ``device runtime'' is defined solely by the simulator APIs.) 
+use all of TypeScript/JavaScript's features. (As an aside, \MC also support ``simulator-only'' targets that have no
+associated device; in these cases, the ``device runtime'' is defined solely by the simulator APIs.)
 
-As shown in Figure~\ref{fig:screenSnap}(B), the simulator allows the user to experience the basic functions of the device 
+As shown in Figure~\ref{fig:screenSnap}(B), the simulator allows the user to experience the basic functions of the device
 in the browser and to test their code
 before deploying it to the actual device. The simulator has proxy widgets for sensors such as the 
 light detector, temperature and accelerometer, allowing the user to control the sensor's value.  
