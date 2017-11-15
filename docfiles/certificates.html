@@ -7,8 +7,8 @@
     <meta name="Description" content="Certificate" />
 
     <!-- @include meta.html -->
-    <link ref="stylesheet" href="/doccdn/style.css" />
     <link rel="stylesheet" data-rtl="/doccdn/rtlsemantic.css" href="/doccdn/semantic.css">
+    <link ref="stylesheet" href="/doccdn/style.css" />
     <script src="/doccdn/jquery.js"></script>
 
     <style>
@@ -27,36 +27,43 @@
 
 </head>
 <script>
-    $(document).ready(function () {
-        $('#print').click(function () {
-            var cw = 1754;
-            var ch = 1235;
-            var $certs = $('#certificates');
-            $certs.empty();
-            var img = $('#template')[0];
-            $('#names').val().split(/\r?\n/).forEach(function (m) {
-                if (!m) return;
-                var cvs = document.createElement("canvas");
-                var ctx = cvs.getContext("2d");
-                cvs.width = cw;
-                cvs.height = ch;
-                ctx.textAlign = "center";
-                ctx.textBaseline = "center";
-                ctx.fillStyle = 'black';
-                ctx.font = '200px monospace';
-                ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, cw, ch);
-                ctx.fillText(m, cw / 2, ch / 2);
+    function printCertificates() {
+        var cw = 1754;
+        var ch = 1235;
+        var $certs = $('#certificates');
+        $certs.empty();
+        var img = $('#template')[0];
+        $('#names').val().split(/\r?\n/).forEach(function (m) {
+            if (!m) return;
+            var cvs = document.createElement("canvas");
+            var ctx = cvs.getContext("2d");
+            cvs.width = cw;
+            cvs.height = ch;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "center";
+            ctx.fillStyle = 'black';
+            ctx.font = '200px monospace';
+            ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, cw, ch);
+            ctx.fillText(m, cw / 2, ch / 2);
 
-                var div = $(`<div class="certificate"></div>`);
-                div.append(cvs);
+            var div = $(`<div class="certificate"></div>`);
+            div.append(cvs);
 
-                $certs.append(div);
-            })
-
-            try {
-                window.print();
-            } catch (e) { }
+            $certs.append(div);
         })
+
+        try {
+            window.print();
+        } catch (e) { }
+    }
+
+    $(document).ready(function () {
+        $('#print').click(printCertificates);
+
+        if(/^#name:/.test(window.location.hash)) {
+            $('#names').val(window.location.hash.substr("#name:".length));
+            printCertificates();
+        }
     })
 </script>
 
