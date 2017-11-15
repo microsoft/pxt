@@ -103,6 +103,10 @@
             padding-right: @carouselArrowSize !important;
         }
     }
+    .import-dialog-btn {
+        position: relative;
+        z-index: 1; /* Move up so it's above the carousel container that has an offset margin */
+    }
     /* Footer, Privary, Terms of Use */
     .homefooter {
         left: 0;
