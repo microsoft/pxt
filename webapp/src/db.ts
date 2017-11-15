@@ -136,4 +136,4 @@ class TranslationDb implements ts.pxtc.Util.ITranslationDb {
 
 }
 
-ts.pxtc.Util._translationDb = new TranslationDb();
+ts.pxtc.Util.translationDb = new TranslationDb();
