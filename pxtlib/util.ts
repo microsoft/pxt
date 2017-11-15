@@ -663,7 +663,8 @@ namespace ts.pxtc.Util {
         setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
             this.translations[this.key(lang, filename, branch)] = {
                 etag,
-                strings
+                strings,
+                cached: true
             }
         }
     }
