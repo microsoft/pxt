@@ -136,7 +136,7 @@ runtime, which provides a set of categorized APIs to the end-user, based on name
 previously described. These APIs are visible in both editors via a toolbox (Figure~\ref{fig:screenSnap}(C))
 to the immediate left of the programming area. 
 
-\MC compiles the Blockly program representation to Static TypeScript in a syntax-directed manner.
+\MC compiles the Blockly program representation to STS in a syntax-directed manner.
 A key issue is the need for type inference on the Blockly representation, as variables generally are defined and used without
 being declared in Blockly. \MC uses a simple unification type inference to assign a
 unique type to each variable.
@@ -194,7 +194,7 @@ achieve asynchronous execution in a single-threaded context, these promises are 
 
 \subsubsection{Untagged and Tagged Strategies}\label{sec:untagged-tagged}
 
-The \MC compiler supports the Static TypeScript language subset described in Section~\ref{sec:sts},
+The \MC compiler supports the STS language subset described in Section~\ref{sec:sts},
 with two compilation strategies: untagged and tagged. Under the untagged strategy,
 a JavaScript number is interpreted as a C++ int by default and the type system is used
 to statically distinguish primitive values from boxed values. As a result, the untagged
