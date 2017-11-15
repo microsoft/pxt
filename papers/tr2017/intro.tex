@@ -37,9 +37,9 @@ While it is clear that all such devices are highly resource contrained compared 
 Firstly, \emph{MCUs are processor rich}. Contrary to first impressions, these devices have 
 a \emph{proportionally} large amount of processing power. For example - consider the BBC micro:bit 
 versus a typical PC. It has about 100 times less CPU power, but 10\textsuperscript{6} times less RAM, 
-and 10\textsuperscript{6} time less storage. A good programming language design should therefore not 
-only \emph{seek to provide high code density and spatial efficiency, 
-but to actively trade off CPU for spatial efficiency where possible}. 
+and 10\textsuperscript{6} time less storage. A language/runtime designed for MCUs should therefore not 
+only seek to provide high code density and spatial efficiency, 
+\emph{but to actively trade off CPU for spatial efficiency where possible}. 
 
 Secondly, \emph{MCUs are accumulating more features on chip}. 
 MCUs still follow Moore's law (the number of transistors doubles roughly every two years). 
@@ -47,7 +47,7 @@ However, this additional capacity is
 not typically invested in simply optimizing processing power. Instead, \emph{independent peripherals} 
 are integrated onto the same silicon chip as the CPU. Examples include integrated radio hardware such 
 as Bluetooth/WiFi and audio inputs and outputs. This hardware is designed to run independently of the 
-CPU, hence \emph{an effective application programming language should directly support such an asynchronous
+CPU, hence an effective language/runtime should directly support \emph{an asynchronous
 interaction model}.
 
 % Despite this languages and programming environments have yet to keep pace with the mainstream (e.g. Arduino/mbed)
