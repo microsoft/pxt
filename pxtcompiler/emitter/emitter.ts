@@ -1500,7 +1500,10 @@ ${lbl}: .short 0xffff
         function isConstLiteral(decl: Declaration) {
             if (isGlobalVar(decl)) {
                 if (decl.parent.flags & NodeFlags.Const) {
-                    return !isSideEffectfulInitializer((decl as VariableDeclaration).initializer)
+                    let init = (decl as VariableDeclaration).initializer
+                    if (!init) return false
+                    if (init.kind == SK.ArrayLiteralExpression) return false
+                    return !isSideEffectfulInitializer(init)
                 }
             }
             return false
