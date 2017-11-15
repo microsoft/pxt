@@ -5,7 +5,7 @@
 Embedded devices are growing impressively in popularity and ubiquity in recent years.
 This growth can be attributed to the emergence of new application domains inspired by small, 
 highly resource constrained programmable processors known as microcontroller units (or MCUs), 
-some which can have as little of 2KB of RAM. It is now the case that less than 1 percent of 
+which can have as little of 2KB of RAM. It is now the case that less than 1 percent of 
 the world's processors reside in general purpose computers such as desktop PCs, laptops and tablets 
 - with MCUs picking up the remainder.
 Furthermore, demand for MCUs continues to grow due to their use in the monitoring and 
@@ -34,7 +34,7 @@ Table \ref{table:devices} highlights the core capabilities of three state of the
 While it is clear that all such devices are highly resource contrained compared to modern PCs 
 (about six orders of magnitude on most metrics), a deeper analysis derive two further key observations.
 
-Firstly, \emph{MCUs are processor rich}. Contrary to popular belief, these devices have 
+Firstly, \emph{MCUs are processor rich}. Contrary to first impressions, these devices have 
 a \emph{proportionally} large amount of processing power. For example - consider the BBC micro:bit 
 versus a typical PC. It has about 100 times less CPU power, but 10\textsuperscript{6} times less RAM, 
 and 10\textsuperscript{6} time less storage. A good programming language design should therefore not 
@@ -67,8 +67,8 @@ In the world of the MCU, the C/C++ languages remain the standard, and for good r
 They provide a familiar imperative programming model, with compilers that produce highly efficient code (in terms of both 
 temporal and spatial complexity), and enable low level access to hardware features when necessary. Examples
 of this are commonplace, such as the Arduino project (\url{www.arduino.cc})~\cite{buildingArduino2014},
-started in 2003, and the ARM mbed platform (\url{www.mbed.org})~\cite{ARMmbed} - both of which rely heavily on
-a C/C++ programming model. However, the limitations of using C/C++ as an applicaiton programming language for 
+started in 2003, and ARM's Mbed platform (\url{www.mbed.org})~\cite{ARMmbed} - both of which rely heavily on
+a C/C++ programming model. However, the limitations of using C/C++ as an application programming language for 
 inexperienced developers are well understood. 
 % Doesn't feel like we really need to spell out the limitation of C/C++ out here. Anyone got good references?
 
@@ -97,7 +97,7 @@ simplified programming of MCUs via editors for visual blocks and textual Javascr
 \end{itemize}
 
 Our results show that these technologies combined can enable simplified programming through modern
-languages and event based constructs while maintaining a relatively high degree of temporal and spatial efficiency. 
+languages and event-based constructs while maintaining a relatively high degree of temporal and spatial efficiency. 
 We show up to 50x more performant than other state-of-the-art implementations, 
 in some cases nearing the performance of native C++. 
 
