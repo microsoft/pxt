@@ -14,7 +14,8 @@ Example domains include:
 * Chat bot: create a chat bot using https://dev.botframework.com/ 
 * Business workflow: encode business rules as a program; 
 * Formula designer: generate web apps to compute simple equations.
-The web site https://ar.pxt.io/ shows a MakeCode environment a graduate student created over the summer of 2017 to 
+
+The web site http://www.playfulcomputation.group/arcadia.html shows a MakeCode environment a graduate student created over the summer of 2017 to 
 allow programming of music-making applications based on augmented reality.  
 
 ## Activities necessary to achieve the project goal

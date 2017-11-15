@@ -152,7 +152,7 @@ namespace pxt.runner {
             true,
             cfg.commitCdnUrl, lang,
             versions ? versions.pxtCrowdinBranch : "",
-            versions ? versions.branch : "",
+            versions ? versions.targetCrowdinBranch : "",
             live)
             .then(() => {
                 mainPkg = new pxt.MainPackage(new Host());
@@ -297,7 +297,7 @@ namespace pxt.runner {
                 pxt.webConfig.commitCdnUrl,
                 editorLocale.replace(localeLiveRx, ''),
                 pxt.appTarget.versions.pxtCrowdinBranch,
-                pxt.appTarget.versions.branch,
+                pxt.appTarget.versions.targetCrowdinBranch,
                 localeLiveRx.test(editorLocale)
             );
         }

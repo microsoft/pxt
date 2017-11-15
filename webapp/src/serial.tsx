@@ -34,6 +34,8 @@ export class Editor extends srceditor.Editor {
         return "serialEditor"
     }
 
+    hasHistory() { return false; }
+
     hasEditorToolbar() {
         return false
     }
@@ -42,11 +44,9 @@ export class Editor extends srceditor.Editor {
         this.isVisible = b;
         if (this.isVisible) {
             this.startRecording()
-            this.chartDropper = setInterval(this.dropStaleCharts.bind(this), 5000)
         }
         else {
             this.pauseRecording()
-            clearInterval(this.chartDropper)
         }
     }
 
@@ -175,12 +175,14 @@ export class Editor extends srceditor.Editor {
         this.active = false
         if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.stop())
+        clearInterval(this.chartDropper)
     }
 
     startRecording() {
         this.active = true
         if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.start())
+        this.chartDropper = setInterval(this.dropStaleCharts.bind(this), 20000)
     }
 
     toggleRecording() {
@@ -305,15 +307,18 @@ class Chart {
         const chartConfig: IChartOptions = {
             interpolation: 'bezier',
             labels: {
-                disabled: true
+                disabled: false,
+                fillStyle: 'black',
+                fontSize: 14
             },
             responsive: true,
             millisPerPixel: 20,
             grid: {
                 verticalSections: 0,
                 borderVisible: false,
-                fillStyle: serialTheme && serialTheme.graphBackground || '#fff',
-                strokeStyle: serialTheme && serialTheme.graphBackground || '#fff'
+                millisPerLine: 5000,
+                fillStyle: serialTheme && serialTheme.gridFillStyle || 'transparent',
+                strokeStyle: serialTheme && serialTheme.gridStrokeStyle || '#fff'
             },
             tooltip: true,
             tooltipFormatter: (ts, data) => this.tooltip(ts, data)
@@ -330,7 +335,10 @@ class Chart {
     }
 
     tooltip(timestamp: number, data: { series: TimeSeries, index: number, value: number }[]): string {
-        return data.map(n => `<span>${(n.series as any).timeSeries.__name}: ${n.value}</span>`).join('<br/>');
+        return data.map(n => {
+            const name = (n.series as any).timeSeries.__name;
+            return `<span>${name ? name + ': ' : ''}${n.value}</span>`;
+        }).join('<br/>');
     }
 
     getLine(name: string): TimeSeries {
@@ -364,7 +372,7 @@ class Chart {
 
     makeLabel() {
         this.label = document.createElement("div")
-        this.label.className = "ui orange bottom left attached label seriallabel"
+        this.label.className = "ui orange bottom left attached no-select label seriallabel"
         this.label.innerText = this.variable || "...";
         return this.label;
     }

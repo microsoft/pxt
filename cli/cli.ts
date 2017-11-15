@@ -1599,6 +1599,8 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
 }
 
 function buildWebStringsAsync() {
+    if (pxt.appTarget.id != "core") return Promise.resolve();
+
     fs.writeFileSync("built/webstrings.json", JSON.stringify(webstringsJson(), null, 4))
     return Promise.resolve()
 }
@@ -1757,9 +1759,10 @@ function buildTargetCoreAsync() {
     let hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
     nodeutil.mkdirP(hexCachePath);
 
-    console.log(`building target.json in ${process.cwd()}...`)
+    pxt.log(`building target.json in ${process.cwd()}...`)
 
-    return buildTargetDocsAsync(false, true)
+    return buildWebStringsAsync()
+        .then(() => buildTargetDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
             let isPrj = /prj$/.test(dirname);
@@ -1804,7 +1807,8 @@ function buildTargetCoreAsync() {
                 commits: info.commitUrl,
                 target: readJson("package.json")["version"],
                 pxt: pxtVersion(),
-                pxtCrowdinBranch: pxtCrowdinBranch()
+                pxtCrowdinBranch: pxtCrowdinBranch(),
+                targetCrowdinBranch: targetCrowdinBranch()
             }
 
             saveThemeJson(cfg)
@@ -1834,9 +1838,15 @@ function pxtVersion(): string {
 }
 
 function pxtCrowdinBranch(): string {
-    return pxt.appTarget.id == "core" ?
-        readJson("pxtarget.json").appTheme.crowdinBranch :
-        readJson("node_modules/pxt-core/pxtarget.json").appTheme.crowdinBranch;
+    const theme = pxt.appTarget.id == "core" ?
+        readJson("pxtarget.json").appTheme :
+        readJson("node_modules/pxt-core/pxtarget.json").appTheme;
+    return theme ? theme.crowdinBranch : undefined;
+}
+
+function targetCrowdinBranch(): string {
+    const theme = readJson("pxtarget.json").appTheme;
+    return theme ? theme.crowdinBranch : undefined;
 }
 
 function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
@@ -2047,9 +2057,10 @@ class SnippetHost implements pxt.Host {
         if (module.id == "this") {
             if (filename == "pxt.json") {
                 return JSON.stringify(<pxt.PackageConfig>{
-                    "name": this.name,
+                    "name": this.name.replace(/[^a-zA-z0-9]/g, ''),
                     "dependencies": this.dependencies(),
                     "description": "",
+                    "public": true,
                     "yotta": {
                         "ignoreConflicts": true
                     },
@@ -2325,7 +2336,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand) {
 
 const defaultFiles: Map<string> = {
     "tsconfig.json":
-    `{
+        `{
     "compilerOptions": {
         "target": "es5",
         "noImplicitAny": true,
@@ -2367,7 +2378,7 @@ test:
 `,
 
     ".gitignore":
-    `built
+        `built
 node_modules
 yotta_modules
 yotta_targets
@@ -2376,7 +2387,7 @@ pxt_modules
 *.tgz
 `,
     ".vscode/settings.json":
-    `{
+        `{
     "editor.formatOnType": true,
     "files.autoSave": "afterDelay",
     "files.watcherExclude": {
@@ -2400,7 +2411,7 @@ pxt_modules
     }
 }`,
     ".vscode/tasks.json":
-    `
+        `
 // A task runner that calls the PXT compiler and
 {
     "version": "0.1.0",
@@ -3274,7 +3285,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
         filenameMatch = new RegExp(pattern);
     }
     catch (e) {
-        console.log(`pattern could not be compiled as a regular expression, ignoring`);
+        pxt.log(`pattern could not be compiled as a regular expression, ignoring`);
         filenameMatch = new RegExp('.*')
     }
     snippets = snippets.filter(snippet => filenameMatch.test(snippet.name));
@@ -3327,6 +3338,24 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             opts.ast = true
             let resp = pxtc.compile(opts)
 
+            if (resp.outfiles && snippet.file) {
+                const dir = snippet.file.replace(/\.ts$/, '');
+                nodeutil.mkdirP(dir);
+                nodeutil.mkdirP(path.join(dir, "built"));
+                Object.keys(resp.outfiles).forEach(outfile => {
+                    const ofn = path.join(dir, "built", outfile);
+                    pxt.debug(`writing ${ofn}`);
+                    fs.writeFileSync(ofn, resp.outfiles[outfile], 'utf8')
+                })
+                pkg.filesToBePublishedAsync()
+                    .then(files => {
+                        Object.keys(files).forEach(f => {
+                            const fn = path.join(dir, f);
+                            pxt.debug(`writing ${fn}`);
+                            fs.writeFileSync(fn, files[f], 'utf8');
+                        })
+                    })
+            }
             if (resp.success) {
                 if (/^block/.test(snippet.type)) {
                     //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
@@ -4352,7 +4381,9 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
 
 function webstringsJson() {
     let missing: Map<string> = {}
-    for (let fn of onlyExts(nodeutil.allFiles("docfiles"), [".html"])) {
+    const files = onlyExts(nodeutil.allFiles("docfiles"), [".html"])
+        .concat(onlyExts(nodeutil.allFiles("docs"), [".html"]))
+    for (let fn of files) {
         let res = pxt.docs.translate(fs.readFileSync(fn, "utf8"), {})
         U.jsonCopyFrom(missing, res.missing)
     }

@@ -116,15 +116,17 @@ export class ProjectView
         document.title = pxt.appTarget.title || pxt.appTarget.name;
         this.reload = false; //set to true in case of reset of the project where we are going to reload the page.
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
+        const shouldShowHomeScreen = this.shouldShowHomeScreen();
 
         this.state = {
             showFiles: false,
-            home: this.shouldShowHomeScreen(),
+            home: shouldShowHomeScreen,
             active: document.visibilityState == 'visible',
             collapseEditorTools: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile()
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
+        if (shouldShowHomeScreen) this.homeLoaded();
     }
 
     shouldShowHomeScreen() {
@@ -168,7 +170,7 @@ export class ProjectView
         }
 
         let f = this.editorFile
-        if (f && f.epkg.getTopHeader()) {
+        if (f && f.epkg.getTopHeader() && this.editor.hasHistory()) {
             let n: FileHistoryEntry = {
                 id: f.epkg.getTopHeader().id,
                 name: f.getName(),
@@ -726,6 +728,7 @@ export class ProjectView
                 // Editor is loaded
                 pxt.BrowserUtils.changeHash("#editor", true);
                 document.getElementById("root").focus(); // Clear the focus.
+                this.editorLoaded();
             })
     }
 
@@ -892,9 +895,18 @@ export class ProjectView
 
     openHome() {
         this.stopSimulator();
-        this.setState({ home: true });
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
+        this.setState({ home: true });
+        this.homeLoaded();
+    }
+
+    private homeLoaded() {
+        pxt.tickEvent('app.home');
+    }
+
+    private editorLoaded() {
+        pxt.tickEvent('app.editor');
     }
 
     exitAndSave() {
@@ -2276,7 +2288,7 @@ $(document).ready(() => {
                 config.commitCdnUrl,
                 useLang,
                 pxt.appTarget.versions.pxtCrowdinBranch,
-                pxt.appTarget.versions.branch,
+                pxt.appTarget.versions.targetCrowdinBranch,
                 live)
                 // Download sim translations and save them in the sim
                 .then(() => Util.downloadSimulatorLocalizationAsync(
@@ -2284,7 +2296,7 @@ $(document).ready(() => {
                     config.commitCdnUrl,
                     useLang,
                     pxt.appTarget.versions.pxtCrowdinBranch,
-                    pxt.appTarget.versions.branch,
+                    pxt.appTarget.versions.targetCrowdinBranch,
                     live
                 )).then((simStrings) => {
                     if (simStrings)

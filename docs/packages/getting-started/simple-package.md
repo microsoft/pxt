@@ -4,16 +4,16 @@ As a variation of pxt-banana package example from [getting started](/packages/ge
 
 In order to build and test the package, you'll need a running target to add the package to. You can add this example to a target you're already working with or you can use the [pxt-sample](https://github.com/Microsoft/pxt-sample) target.  
 
-## Step 1: Define a namespace and methods
+## Step 1: Define a namespace and functions
 
-Our package has just one block category called `tropic`. The methods we want to expose for this category are contained inside a namespace with that same name. The block category will appear in the Toolbox with this name.
+Our package has just one block category called `tropic`. The functions we want to expose for this category are contained inside a namespace with that same name. The block category will appear in the Toolbox with this name.
 
 ```typescript
 namespace tropic {
 }
 ```
 
-Let's expand the `tropic` namespace and add some methods. If you're running a target and have the editor open, copy the this code into a new project in the editor. Verify that it has no errors and that you can convert it to blocks.
+Let's expand the `tropic` namespace and add some functions. If you're running a target and have the editor open, copy the this code into a new project in the editor. Verify that it has no errors and that you can convert it to blocks.
 
 ```typescript
 /**
@@ -44,7 +44,7 @@ namespace tropic {
 }
 ```
 
-We'll quickly use the methods from `tropic` with a little bit of test code to simulate how they will work if they were added from a package. You can add this bit of code at the bottom of project in the editor to test:
+We'll quickly use the functions from `tropic` with a little bit of test code to simulate how they will work if they were added from a package. You can add this bit of code at the bottom of project in the editor to test:
 
 ```typescript-ignore
 let peeled = false;
@@ -81,7 +81,7 @@ This is what the basic entries in the `pxt.json` do:
 * **description**: The description of the package shown in the package gallery.
 * **icon**: An icon shown along with the description in the package gallery.
 * **files**: The list of sources for the code and blocks of the package.
-* **dependencies**: The other packages that the code in this package will rely on. Often there is a _core_ package that has basic utility methods, helpers, and or data types that other packages will need.
+* **dependencies**: The other packages that the code in this package will rely on. Often there is a _core_ package that has basic utility functions, helpers, and or data types that other packages will need.
 
 ### Icon file
 
@@ -106,7 +106,7 @@ The attributes we've defined for our namespace mean:
 * **icon**: a Unicode identifier for an icon from the [Font Awesome](http://fontawesome.io/icons) icon set.
 * **color**: the RGB color for the catergory item and blocks rendered from the namespace.
 
-For the methods, we add the `blockId` and `block` attributes. This will make the block compiler create actual blocks for the methods. The methods will now show up as blocks under the `tropic` category in the toolbox too.
+For the functions, we add the `blockId` and `block` attributes. This will make the block compiler create actual blocks for the functions. The functions will now show up as blocks under the `tropic` category in the toolbox too.
 
 The text set for `block` is displayed in the blocks shown in the Toolbox and in the blocks editor view.
 
@@ -132,7 +132,7 @@ namespace tropic {
     }
 }
 ```
-You'll notice that the `block` attribute includes a parameter tag called ``%fruit``. This matches to the example methods which have one parameter called `fruit`. This will cause the block in the editor to have a parameter placeholder when compiled.
+You'll notice that the `block` attribute includes a parameter tag called ``%fruit``. This matches to the example functions which have one parameter called `fruit`. This will cause the block in the editor to have a parameter placeholder when compiled.
 
 Let's also add some block descriptions for the `TropicalFruit` enum so that the values will appear in a list as the parameter for **pick** and **peel**.
 
@@ -186,7 +186,7 @@ building cmds...
 
 After the target editor launches from the local server, go to the bottom of the Toolbox in the editor and click on **ADD PACKAGE** (it could be called **EXTENSIONS** or something similar depending on the target). You should see the **tropic** package card with its icon as a gallery selection. Click on it and it will install your package.
 
-The **tropic** category appears in the toolbox list with the color and icon we set as attributes for the namespace. If you click on the category, you will see the **pick** and **peel** methods with a selectable parameter for the ``TropicalFruit`` type.
+The **tropic** category appears in the toolbox list with the color and icon we set as attributes for the namespace. If you click on the category, you will see the **pick** and **peel** functions with a selectable parameter for the ``TropicalFruit`` type.
 
 Switch to JavaScript and paste in again the small section of test code:
 
@@ -199,7 +199,7 @@ if (tropic.pick(TropicalFruit.Banana)) {
 
 Now, switch back to blocks to see **pick** and **peel** appear as blocks. Having added block attributes to the enum values for ``TropicalFruit``, you can go to the parameters for each block and select a different type of fruit.
 
-**NEXT:** add some reference [documentation](./ref-docs) for the package methods.
+**NEXT:** add some reference [documentation](./ref-docs) for the package functions.
 
 ## See also
 

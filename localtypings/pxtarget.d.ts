@@ -7,7 +7,10 @@ declare namespace pxt {
     interface TargetConfig {
         packages?: PackagesConfig;
         languages?: string[];
+        // common galleries
         galleries?: pxt.Map<string>;
+        // localized galleries
+        localizedGalleries?: pxt.Map<pxt.Map<string>>;
     }
 
     interface PackagesConfig {
@@ -88,6 +91,8 @@ declare namespace pxt {
 
     interface SerialTheme {
         graphBackground?: string;
+        gridFillStyle?: string;
+        gridStrokeStyle?: string;
         strokeColor?: string;
         lineColors?: string[];
     }
@@ -197,7 +202,7 @@ declare namespace pxt {
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
         crowdinProject?: string;
-        crowdinBranch?: string; // optional branch specification for pxt
+        crowdinBranch?: string; // optional branch specification for localization files
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor

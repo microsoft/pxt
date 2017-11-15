@@ -1,5 +1,19 @@
 # Microsoft MakeCode Blog
 
+## [Microsoft MakeCode for Seeed Grove Zero Beta](/blog/seeed/v0.2.10)
+
+November 14th, 2017 by [riknoll](https://github.com/riknoll)
+
+The Microsoft MakeCode Team is excited to announce the beta release of a new editor...
+**[Read more](/blog/seeed/v0.2.10)**
+
+## [Adafruit Circuit Playground Express Editor v0.20.13](/blog/adafruit-circuit-playground-express/v0.20.13)
+
+November 13th, 2017 by [pelikhan](https://github.com/pelikhan)
+
+We are happy to announce that the Circuit Playground Express editor is coming out of beta!
+**[Read more](/blog/adafruit-circuit-playground-express/v0.20.13)**
+
 ## [Microsoft MakeCode for Minecraft for Windows 10](/blog/minecraft/10-18-2017)
 
 October 18th, 2017
@@ -16,7 +30,7 @@ UF2 bootloader for Arduino UNO allows for driver-less flashing of the vintage bo
 
 ## [Chibitronics Editor v0.1.40 (Scratch blocks)](/blog/chibitronics/v0.1.40)
 
-October 8th, 2017
+October 8th, 2017 by [microsoftsam](https://github.com/microsoftsam)
 
 A big release for our Chibitronics editor!
 **[Read more](/blog/chibitronics/v0.1.40)**
@@ -39,7 +53,7 @@ Another release...
 
 June 20, 2017 by [mmoskal](https://github.com/mmoskal)
 
-Circuit Playground boards can now talk to each other over IR! How was it done? 
+Circuit Playground Express boards can now talk to each other over IR! How was it done?
 **[Read more](/blog/timing-adventures-in-infrared)**
 
 ## [Microbit Editor v0.12.35](/blog/microbit/v0.12.35)
@@ -56,19 +70,19 @@ May 30th, 2017
 Release notes for the micro:bit editor...
 **[Read more](/blog/microbit/v0.12.23)**
 
-## [Circuit Playground Express](/blog/adafruit-cplay-express)
+## [Adafruit Circuit Playground Express](/blog/adafruit-cplay-express)
 
 May 19, 2017 by [Jaqster](https://github.com/Jaqster)
 
 The Microsoft MakeCode team is proud to announce a great partnership
-with our good friends over at Adafruit Industries. 
+with our good friends over at Adafruit Industries.
 **[Read more](/blog/adafruit-cplay-express)**
 
 ## [Minecraft Code Builder](/blog/minecraft-code-builder)
 
 May 2, 2017 by [Jaqster](https://github.com/Jaqster)
 
-Learn to code using Microsoft MakeCode and Minecraft Education! 
+Learn to code using Microsoft MakeCode and Minecraft Education!
 **[Read more](/blog/minecraft-code-builder)**
 
 ## [Programming the micro:bit on the Apple II](/blog/appleII)
