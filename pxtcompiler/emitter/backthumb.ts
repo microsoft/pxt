@@ -3,6 +3,17 @@
 
 namespace ts.pxtc {
 
+    export const thumbCmpMap: pxt.Map<string> = {
+        "numops::lt": "_cmp_lt",
+        "numops::gt": "_cmp_gt",
+        "numops::le": "_cmp_le",
+        "numops::ge": "_cmp_ge",
+        "numops::eq": "_cmp_eq",
+        "numops::eqq": "_cmp_eqq",
+        "numops::neq": "_cmp_neq",
+        "numops::neqq": "_cmp_neqq",
+    }
+
     const inlineArithmetic: pxt.Map<string> = {
         "numops::adds": "_numops_adds",
         "numops::subs": "_numops_subs",
@@ -243,7 +254,9 @@ _numops_fromInt:
 _pxt_${op}:
     @scope _pxt_${op}
     lsls r3, r0, #30
-    bne .skip
+    beq .t0
+    bx lr
+.t0:
     cmp r0, #0
     beq .skip
     ${this.pushLR()}
@@ -251,6 +264,39 @@ _pxt_${op}:
     ${this.popPC()}
 .skip:
     bx lr
+`
+            }
+
+            for (let op of Object.keys(thumbCmpMap)) {
+                op = op.replace(/.*::/, "")
+                // this make sure to set the Z flag correctly
+                r += `
+_cmp_${op}:
+    @scope _cmp_${op}
+    lsls r2, r0, #31
+    beq .boxed
+    lsls r2, r1, #31
+    beq .boxed
+    subs r0, r1
+    b${op.replace("qq", "q").replace("neq", "ne")} .true
+.false:
+    movs r0, #0
+    bx lr
+.true:
+    movs r0, #1
+    bx lr
+.boxed:
+    push {r4, lr}
+    push {r0, r1}
+    bl numops::${op}
+    bl numops::toBoolDecr
+    movs r4, r0
+    pop {r0}
+    bl _pxt_decr
+    pop {r0}
+    bl _pxt_decr
+    movs r0, r4
+    pop {r4, pc}
 `
             }
 

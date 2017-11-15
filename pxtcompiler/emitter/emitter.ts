@@ -107,6 +107,10 @@ namespace ts.pxtc {
         return target.isNative && (target.nativeType == NATIVE_TYPE_AVRVM || target.nativeType == NATIVE_TYPE_AVR)
     }
 
+    export function isThumb() {
+        return target.isNative && (target.nativeType == NATIVE_TYPE_THUMB)
+    }
+
     function isRefType(t: Type) {
         checkType(t);
         if (noRefCounting())
@@ -3366,6 +3370,17 @@ ${lbl}: .short 0xffff
             emitExprAsStmt(node.expression)
         }
         function emitCondition(expr: Expression, inner: ir.Expr = null) {
+            if (!inner && opts.target.taggedInts && isThumb() && expr.kind == SK.BinaryExpression) {
+                let be = expr as BinaryExpression
+                let lt = typeOf(be.left)
+                let rt = typeOf(be.right)
+                if ((lt.flags & TypeFlags.NumberLike) && (rt.flags & TypeFlags.NumberLike)) {
+                    let mapped = U.lookup(thumbCmpMap, simpleInstruction(be.operatorToken.kind))
+                    if (mapped) {
+                        return ir.rtcall(mapped, [emitExpr(be.left), emitExpr(be.right)])
+                    }
+                }
+            }
             if (!inner)
                 inner = emitExpr(expr)
             // in all cases decr is internal, so no mask
