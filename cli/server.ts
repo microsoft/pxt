@@ -725,7 +725,7 @@ function pkgPageTestAsync(id: string) {
 function readMd(pathname: string): string {
     const content = nodeutil.resolveMd(root, pathname);
     if (content) return content;
-    return "# Not found\nChecked:\n" + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join("")
+    return `# Not found ${pathname}\nChecked:\n` + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join("")
 }
 
 let serveOptions: ServeOptions;
