@@ -182,7 +182,7 @@ export class Editor extends srceditor.Editor {
         this.active = true
         if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.start())
-        this.chartDropper = setInterval(this.dropStaleCharts.bind(this), 5000)
+        this.chartDropper = setInterval(this.dropStaleCharts.bind(this), 20000)
     }
 
     toggleRecording() {
