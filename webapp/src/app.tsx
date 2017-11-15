@@ -1692,12 +1692,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
-    showBanner() {
-        this.setState({ bannerVisible: true });
-    }
-
-    hideBanner() {
-        this.setState({ bannerVisible: false });
+    setBanner(b: boolean) {
+        this.setState({ bannerVisible: b });
     }
 
     renderCore() {

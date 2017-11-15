@@ -172,8 +172,7 @@ namespace pxt.editor {
         openInstructions(): void;
         closeFlyout(): void;
 
-        showBanner(): void;
-        hideBanner(): void;
+        setBanner(b: boolean): void;
 
         startTutorial(tutorialId: string, tutorialTitle?: string): void;
 

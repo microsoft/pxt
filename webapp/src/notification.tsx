@@ -58,14 +58,14 @@ export class GenericBanner extends React.Component<GenericBannerProps, {}> {
         if (this.props.displayTime) {
             this.timer = setTimeout(() => this.hide("automatic"), this.delayTime + this.props.displayTime);
         }
-        this.props.parent.showBanner();
+        this.props.parent.setBanner(true);
         this.render();
     }
 
     hide(mode: string) {
         pxt.tickEvent("notificationBanner." + mode + "Close");
         pxt.storage.setLocal("lastBannerClosedTime", Util.nowSeconds().toString());
-        this.props.parent.hideBanner();
+        this.props.parent.setBanner(false);
         this.render();
     }
 
