@@ -30,11 +30,12 @@ added by \MC.
 
 The C++ of our platform breaks into two essential layers:
 \begin{itemize}
-\item \emph{\CON-core}: the \CO device runtime, against which we write C++ programs;
-\item \emph{\MCN-common-packages}: the C++ and Static TypeScript wrapping \CON-core
+\item \emph{\CO}: the device runtime, against which we write C++ programs;
+\item \emph{\MC wrappers}: the C++ and Static TypeScript wrapping for \CO
 to make it known to \MC, against which we write Static TypeScript programs;
 \end{itemize}
-%some expansion required
+We refer to \emph{\MC wrappers} as \MC throughout the evaluation.
+
 \MC and \CO currently operates on three different devices (Table~\ref{table:devices}), each with varying capabilities. The simplest device is the Uno, consisting of an 8-bit processor running at 48 MHz, it only has 2kB of RAM (a thousandth of the amount a smartphone has in 2017) and 32kB of flash. The Uno has no onboard components other than the microcontroller which supports GPIO, Serial, and I2C.
 
 The micro:bit has a 32-bit Cortex M0 clocked at 16MHz, with 16kB RAM and 256kB of flash. It has a number of onboard components including a 5x5 LED matrix display, a compass, accelerometer, buttons, GPIO, I2C, Serial, and Bluetooth Low Energy.
@@ -57,7 +58,7 @@ It is important to note that memory and performance analysis are done in separat
 
 \subsection{The Overhead of \MC}
 
-To place the overhead of \MC in context, we perform a comparitive evaluation of \MC against fully virtualised solutions, using the native C++ as our baseline. The two points of comparison are MicroPython~\cite{MicroPython}, an implementation of Python for microcontrollers, and Espruino~\cite{espruinoBook}, an implementation of JavaScript for micrcontrollers.
+To place the overhead of \MC in context, we perform a comparitive evaluation of \MC against fully virtualised solutions, using the native C++ as our baseline. The two points of comparison are MicroPython~\cite{MicroPython}, an implementation of Python for microcontrollers, and Espruino~\cite{espruinoBook}, an implementation of JavaScript for micrcontrollers. For the CircuitPlayground, a fork of MicroPython  known as 'CircuitPython' was used.
 
 We created a program to give the cost of each solution with respect to time. The program counts from 0 to 100000 in a tight loop, toggling a GPIO just before the loop starts and immediately after it terminates; we measured the loop's duration using an oscilloscope. The program was rewritten in each solutions' respective language; the results are shown in Table~\ref{table:vm-comparison}.
 
@@ -66,16 +67,16 @@ For the micro:bit, micropython and Espruino are an order of magnitude slower tha
 \subsection{Context Switch Performance}
 
 \begin{figure}[ht]
-    \includegraphics[width=.6\columnwidth]{images/context-switch.png}
+    \includegraphics[width=.7\columnwidth]{images/context-switch.png}
 \caption{\label{fig:context-switch}Base context switch profiles per device.}
 \end{figure}
 
 \begin{figure}[ht]
-    \includegraphics[width=.9\columnwidth]{images/context-vs-stack.png}
+    \includegraphics[width=.78\columnwidth]{images/context-vs-stack.png}
 \caption{\label{fig:context-vs-stack}Time taken to perform a context switch against stack size.}
 \end{figure}
 
-To evaluate the performance of \CON's scheduler we conducted a test that created two fibers and continuously swapped context; in each fiber a GPIO was toggled, enabling us to capture the duration using an oscilloscope. We performed this test in both \MC and \CO and the resulting profiles can be seen in Figure~\ref{fig:context-switch}. This figure breaks the context switch down into three phases: (1) \CO, the time it takes to perform a context switch in \CO; (2) Stack, the time taken to page out the \MC stack; and (3) \MC, the overhead added by the \MC layer.
+To evaluate the performance of \CON's scheduler we conducted a test that created two fibers and continuously swapped context; in each fiber a GPIO was toggled, enabling us to capture the duration using an oscilloscope. We performed this test in both \MC and \CO and the resulting profiles can be seen in Figure~\ref{fig:context-switch}. This figure breaks the context switch down into three phases: (1) \CO, the time it takes to perform a context switch in \CO; (2) Stack, the time taken to page out the \MC stack; and (3) \MC, the overhead added by the \MC layer. For the uno, the context switch profile is for the native implementation only.
 
 Figure~\ref{fig:context-vs-stack} profiles the time a context switch takes with an increasing stack size across all three devices in \CO. This test is similar to the previous test, however, we placed bytes (in powers of 2) on the stack of each fiber, starting from 64 and finishing at 1024. The difference in gradients, and ranges of values can be put down to device capability. For instance, the Uno has an 8-bit processor word size, which means more instructions are required to copy the stack, therefore as the stack size increases, so does context switch time.
 
@@ -95,7 +96,7 @@ Figure~\ref{fig:context-vs-stack} profiles the time a context switch takes with 
 
 To gauge the cost of different asynchronous operations in \CON, we tested three commonly used code paths using the CircuitPlayground: (1) creating a fiber; (2) handling a non-blocking procedure call; and (3) handling a blocking procedure call. Table~\ref{table:time-ram-consumption} presents our results. These code paths are used to invoke handlers for events with corresponding listeners, central to \CO and \MC.
 
-In \CO, creating a fiber costs 136 bytes and 35.4 microseconds, a non-blocking procedure call costs 32 bytes and 4.01 microseconds, and a blocking procedure call costs 204 bytes and 32.4 microseconds. Queuing an event takes an additional 28.87 microseconds, plus the cost of either invoke. In \MC, the total cost of an event is...?
+In \CO, creating a fiber costs 136 bytes and 35.4 microseconds, a non-blocking procedure call costs 32 bytes and 4.01 microseconds, and a blocking procedure call costs 204 bytes and 32.4 microseconds. Queuing an event takes an additional 28.87 microseconds, plus the cost of either invoke.
 
 A naiive approach to multithreading would execute event handlers in separate fibers. In \CO, we invoke functions in the context of the current fiber until it is no longer possible to do so (i.e. the user has performed a blocking operation). For non-blocking calls, the best case, this has an small overhead of 32 bytes of RAM and is not processor intensive, versus the worst case, which incurs a large overhead of 204 bytes of RAM and 32.4 microseconds of processor time.
 

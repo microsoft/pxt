@@ -5,12 +5,10 @@
 - Running example: make clear that the CPXs are communicating via
   light emission and detection (novel feature of physical computing)
 - Related work: should cite and compare to TinyOS, which is pretty well-known
-- increase font size in the graphs
 - Michal to make pass over eval
 - make clear performance of VM in computational context
 - tagged vs. untagged
 - James: look for TBALL comments in codal.tex
-- make sure to point out that CircuitPython is MicroPython for the CPX
 - replace microcontroller by MCU (space)
 - replace Static TypeScript by STS (space)
 
