@@ -218,9 +218,16 @@ _numops_${op}:
 
                 r += `
 .boxed:
-    ${this.pushLR()}
+    push {r4, lr}
+    push {r0, r1}
     bl numops::${op}
-    ${this.popPC()}
+    movs r4, r0
+    pop {r0}
+    bl _pxt_decr
+    pop {r0}
+    bl _pxt_decr
+    movs r0, r4
+    pop {r4, pc}
 `
             }
 

@@ -2851,6 +2851,16 @@ ${lbl}: .short 0xffff
                         return "Number_::neq";
                 }
             }
+            
+            if (opts.target.taggedInts && isThumb()) {
+                switch (n) {
+                    case "numops::adds":
+                    case "numops::subs":
+                    case "numops::eors":
+                    case "numops::ands":
+                        return "@nomask@" + n
+                }
+            }
 
             return n
         }
