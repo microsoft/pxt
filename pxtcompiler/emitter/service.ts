@@ -310,8 +310,7 @@ namespace ts.pxtc {
 
     export function getApiInfo(opts: CompileOptions, program: Program, legacyOnly = false): ApisInfo {
         let res: ApisInfo = {
-            byQName: {},
-            jres: opts.jres || {}
+            byQName: {}
         }
 
         let typechecker = program.getTypeChecker()

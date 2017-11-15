@@ -1439,8 +1439,8 @@ namespace pxt.blocks {
     export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters, extensions?: pxt.PackageConfig[]): Element {
         init();
         initTooltip(blockInfo);
-        initJresIcons(blockInfo);        
-        
+        initJresIcons(blockInfo);
+
         let tb = createToolbox(blockInfo, toolbox, showCategories, filters, extensions);
 
         // add trash icon to toolbox
@@ -3220,9 +3220,9 @@ namespace pxt.blocks {
     }
 
     function initJresIcons(blockInfo: pxtc.BlocksInfo) {
-        Object.keys(blockInfo.apis.jres).forEach((jresId) => {
-            const jresObject = blockInfo.apis.jres[jresId];
-            if (jresObject.icon)
+        Object.keys(blockInfo.jres).forEach((jresId) => {
+            const jresObject = blockInfo.jres[jresId];
+            if (jresObject && jresObject.icon)
                 iconCanvasCache[jresId] = jresObject.icon;
         })
     }

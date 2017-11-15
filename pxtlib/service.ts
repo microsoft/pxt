@@ -73,13 +73,13 @@ namespace ts.pxtc {
 
     export interface ApisInfo {
         byQName: pxt.Map<SymbolInfo>;
-        jres?: pxt.Map<pxt.JRes>;
     }
 
     export interface BlocksInfo {
         apis: ApisInfo;
         blocks: SymbolInfo[];
         blocksById: pxt.Map<SymbolInfo>;
+        jres?: pxt.Map<pxt.JRes>;
     }
 
     export interface CompletionEntry {
