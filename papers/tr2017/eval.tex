@@ -3,7 +3,7 @@
 
 This section evaluates the costs of the various layers of abstraction in our platform.
 using a set of micro-benchmarks. These programs were written
-in both C++ and Static TypeScript, and evaluated on 
+in both C++ and Static TypeScript, and evaluated on
 three microcontrollers (Table~\ref{table:devices}): nRF51 (micro:bit),
 SAMD21 (CPX device), and Atmega (Uno). The C++ benchmarks isolate the performance
 of \CO and provide a baseline, while the Static TypeScript benchmarks show the overhead
@@ -52,11 +52,12 @@ It is important to note that memory and performance analysis are done in separat
 \subsection{The Overhead of \MC}
 
 To place the overhead of \MC in context, we perform a comparitive evaluation of \MC against fully virtualised solutions, using the native C++ of \CO as our baseline.  The two points of comparison are MicroPython~\cite{MicroPython}, an implementation of Python for microcontrollers, and Espruino~\cite{espruinoBook}, an
-implementation of JavaScript for micrcontrollers. 
+implementation of JavaScript for micrcontrollers.
 
 We created a program to give the cost of each solution with respect to time. The program counts from 0 to 100000 in a tight loop, toggling a GPIO just before the loop starts and immediately after it terminates; we measured the loop's duration using an oscilloscope. The program was rewritten in each solutions' respective language; the results are shown in Table~\ref{table:vm-comparison}.
 
 For the micro:bit, micropython and Espruino are an order of magnitude slower than a native \CO program, while \MC is only 114 milliseconds slower. However, \MC for the CircuitPlayground uses the tagged approach, and runs almost four times slower than a micro:bit while executing instructions three times as fast. For both devices, \MC outperforms both the VM-based solutions of MicroPyhon and Espruino.
+
 
 
 \subsection{Scheduler Performance}
@@ -69,8 +70,8 @@ For the micro:bit, micropython and Espruino are an order of magnitude slower tha
 \end{figure}
 
 \begin{figure}[ht]
-    \includegraphics[width=.6\columnwidth]{images/context-vs-stack.png}
-\caption{\label{fig:context-vs-stack}[UPDATE WITH RED BAR]Time taken to perform a context switch against stack size.}
+    \includegraphics[width=.9\columnwidth]{images/context-vs-stack.png}
+\caption{\label{fig:context-vs-stack}Time taken to perform a context switch against stack size.}
 \end{figure}
 
 To evaluate the performance of \CON's scheduler we conducted a test that created two fibers and continuously swapped context; in each fiber a GPIO was toggled, enabling us to capture the duration using an oscilloscope. We performed this test in both \MC and \CO and the resulting profiles can be seen in Figure~\ref{fig:context-switch}. This figure breaks the context switch down into three phases: (1) \CO, the time it takes to perform a context switch in \CO; (2) Stack Swap, the time taken to page out the \MC stack; and (3) \MC, the overhead added by the \MC layer.
@@ -79,36 +80,43 @@ Figure~\ref{fig:context-vs-stack} profiles the time a context switch takes with 
 
 \subsubsection{Asynchronous Operations}
 
-% RENAME APC TO ASYNCHRONOUS PROC CALL and REORDER so that Event is below APC for ordering.
-\begin{figure}[ht]
-    \includegraphics[width=.6\columnwidth]{images/ram-consumption.png}
-\caption{\label{fig:ram-consumption}[NOT FINAL]RAM consumption of asynchronous operations in \CO.}
-\end{figure}
+\begin{table}[]
+\centering
+\begin{tabular}{c|c|c|}
+\cline{2-3}
+                                                                                                            & RAM Overhead & Processing Overhead \\ \hline
+\multicolumn{1}{|c|}{Create a Fiber}                                                                        & 136          & 35.4                \\ \hline
+\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}Asynchronous \\ Procedure Call\end{tabular}}              & 32           & 4.01                \\ \hline
+\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}Asynchronous \\ Procedure Call\\ with a Sleep\end{tabular}} & 204          & 32.4                \\ \hline
+\end{tabular}
+\caption{\label{table:time-ram-consumption}RAM consumption and processing time for various asynchronous operations in \CO.}
+\end{table}
 
-\begin{figure}[ht]
-    \includegraphics[width=.6\columnwidth]{images/time-taken.png}
-\caption{\label{fig:time-taken}[NOT FINAL]Time taken to perform asynchronous operations in \CO.}
-\end{figure}
-To gauge the cost of different asynchronous operations in \CON, we tested three commonly used code paths using the CircuitPlayground: (1) creating a fiber; (2) handling a non-blocking event; and (3) handling a blocking event.
-
-Figures~\ref{fig:ram-consumption}~and~\ref{fig:time-taken} show the RAM consumption and time taken to perform asynchronous operations in \CO, including the overhead of \MC where applicable.
+To gauge the cost of different asynchronous operations in \CON, we tested three commonly used code paths using the CircuitPlayground: (1) creating a fiber; (2) handling a non-blocking event; and (3) handling a blocking event. Table~\ref{table:time-ram-consumption} presents our results.
 
 In \CO, creating a fiber costs 208 bytes and 35.4 microseconds, a non-blocking event costs 180 bytes and 156.4 microseconds, and a blocking event costs 416 bytes and 170.4 microseconds. For a non-blocking event \MC adds 24 bytes and 36.8 microseconds, and for a blocking event it adds 192 bytes and 39.6 microseconds.
 
 This exposes an optimisation made at the \CO layer, which is to only create a fiber to handle an event if a user performs a blocking operation in an event handler, as creating a fiber is a costly operation.
 
-Handling an event consumes a lot of time, the reason for this is that once an event has been fired its' corresponding listener is looked up in a singley linked list, and then invoked.
-
 \subsection{Memory Footprint}
 
 \subsubsection{Flash Consumption}
 
-\begin{figure}[ht]
-    \includegraphics[width=.75\columnwidth]{./images/flash-consumption-per-device.png}
-\caption{\label{fig:flash-consumption}The total flash consumption of code required to support \MC.}
-\end{figure}
+\begin{table}[]
+\centering
+\begin{tabular}{c|c|c|c|}
+\cline{2-4}
+                                                                                                & CPlay & micro:bit & Uno  \\ \hline
+\multicolumn{1}{|c|}{WA}                                                                       & 20.46 & 12.14     & 7.79 \\ \hline
+\multicolumn{1}{|c|}{RT}                                                                       & 29.85 & 34.35     & 13.7 \\ \hline
+\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}mbed and \\ Supporting Libraries\end{tabular}} & 14.99 & 24.28     & -    \\ \hline
+\multicolumn{1}{|c|}{C++ Standard Library}                                                     & 43.14 & 24        & 1.03 \\ \hline
+\end{tabular}
 
-Figure~\ref{fig:flash-consumption} shows the flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The stacked bars align with the composition of the software layer: \MC builds on \CO which builds on Mbed and the C++ standard library.
+\caption{\label{table:flash-consumption}The total flash consumption of code required to support \MC.}
+\end{table}
+
+Figure~\ref{table:flash-consumption} shows the flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The stacked bars align with the composition of the software layer: \MC builds on \CO which builds on Mbed and the C++ standard library.
 
 From the bottom up, the profile of the standard library changes dramatically for each device: The Uno has a very lightweight standard library; the microbit uses 64-bit integer operations (for timers) which requires extra standard library functions; and the CircuitPlayground requires virtualised floating point operations pulling in more standard library functions.
 
@@ -136,6 +144,19 @@ The configurability of \CO enables us to support multiple devices with different
 % In our microbenchmarks, 99\% of that runtime is tree-shaken away.
 
 \subsection{\MC Native vs. \MC VM}
+
+\begin{table}[]
+\centering
+\begin{tabular}{c|c|c|}
+\cline{2-3}
+                                    & \begin{tabular}[c]{@{}c@{}}Context Switch Time \\ (microseconds)\end{tabular} & Stack size (bytes) \\ \hline
+\multicolumn{1}{|c|}{Uno C++}       & 35.62                                                                         & 16                 \\ \hline
+\multicolumn{1}{|c|}{Uno Native WA} & 53.8                                                                          & 34                 \\ \hline
+\multicolumn{1}{|c|}{Uno VM WA}     & 62.9                                                                          & 41                 \\ \hline
+\end{tabular}
+
+\caption{\label{table:c-native-vm-stats}Context switch performance and stack size for C++, Static TypeScript Native, and virtualised Static TypeScript}
+\end{table}
 
 \subsection{Compiling Static TypeScript}
 % data generated using 'node map-file-stats.js CIRCUIT_PLAYGROUND.map'
