@@ -107,14 +107,14 @@ describe("ts compiler", () => {
         }
     };
 
-    describe("without floating point", () => {
-        filenames.forEach(filename => {
-            it("should compile and run " + path.basename(filename), function() {
-                this.timeout(10000)
-                return compileTestAsync(filename)
-            });
-        });
-    });
+    // describe("without floating point", () => {
+    //     filenames.forEach(filename => {
+    //         it("should compile and run " + path.basename(filename), function() {
+    //             this.timeout(10000)
+    //             return compileTestAsync(filename)
+    //         });
+    //     });
+    // });
 
     describe("with floating point", () => {
         before(() => {

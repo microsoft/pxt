@@ -194,7 +194,7 @@ namespace ts.pxtc {
                     }
                     let options: pxt.Map<PropertyOption> = {};
                     const paramType = typechecker.getTypeAtLocation(p);
-                    let isEnum = paramType && !!(paramType.flags & TypeFlags.Enum);
+                    let isEnum = paramType && !!(paramType.flags & (TypeFlags.Enum | TypeFlags.EnumLiteral));
 
                     if (attributes.block && attributes.paramShadowOptions) {
                         const argNames: string[] = []

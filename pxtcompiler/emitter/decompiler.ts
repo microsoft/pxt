@@ -203,7 +203,7 @@ namespace ts.pxtc.decompiler {
 
             getCurrentDirectory(): string { return "."; }
 
-            getDefaultLibFileName(options: ts.CompilerOptions): string { return null; }
+            getDefaultLibFileName(options: ts.CompilerOptions): string { return ""; }
 
             useCaseSensitiveFileNames(): boolean { return true; }
     }
@@ -1386,7 +1386,7 @@ ${output}</xml>`;
             const blockStatements: ts.Node[] = next || [];
 
             // Go over the statements in reverse so that we can insert the nodes into the existing list if there is one
-            for (let i = statements.length - 1; i >= 0; i++) {
+            for (let i = statements.length - 1; i >= 0; i--) {
                 const statement = statements[i];
                 if ((statement.kind === SK.FunctionDeclaration ||
                     (statement.kind == SK.ExpressionStatement && isEventExpression(statement as ts.ExpressionStatement))) &&
@@ -1915,7 +1915,7 @@ ${output}</xml>`;
             if (decl.initializer.kind === SyntaxKind.NullKeyword || decl.initializer.kind === SyntaxKind.FalseKeyword || isDefaultArray(decl.initializer)) {
                 return true
             }
-            else if (isStringOrNumericLiteral(decl.initializer.kind)) {
+            else if (isStringOrNumericLiteral(decl.initializer)) {
                 const text = decl.initializer.getText();
                 return text === "0" || isEmptyString(text);
             }

@@ -2,6 +2,12 @@
 /// <reference path="../../localtypings/pxtpackage.d.ts"/>
 
 namespace ts.pxtc {
+    enum LiteralTypes {
+        Enum,
+        Number,
+        String,
+        Boolean
+    }
 
     // in tagged mode,
     // * the lowest bit set means 31 bit signed integer
@@ -566,28 +572,7 @@ namespace ts.pxtc {
             if (isInterfaceType(t)) return t;
             if (isFunctionType(t)) return t;
             if (lookupTypeParameter(t)) return t;
-
-            if (t.flags & TypeFlags.Union) {
-                let u = t as UnionType;
-                let allGood = true;
-                let cachedFlags: number;
-                u.types.forEach(st => {
-                    if (st.flags & ok) {
-                        if (cachedFlags == undefined) {
-                            cachedFlags = st.flags;
-                        }
-                        else if (cachedFlags != st.flags) {
-                            allGood = false;
-                        }
-                    }
-                    else {
-                        allGood = false;
-                    }
-                });
-                if (allGood) {
-                    return t;
-                }
-            }
+            if (isUnionOfLiterals(t)) return t;
 
             let g = genericRoot(t)
             if (g) {
@@ -618,6 +603,35 @@ namespace ts.pxtc {
         if (!r)
             return r
         return checkType(r)
+    }
+
+    function isUnionOfLiterals(t: Type): t is UnionType {
+        if (!(t.flags & TypeFlags.Union)) {
+            return false;
+        }
+
+        let u = t as UnionType;
+        let allGood = true;
+        let constituentType: LiteralTypes;
+
+        u.types.forEach(tp => {
+            if (constituentType === undefined) {
+                if (isNumberType(tp)) constituentType = LiteralTypes.Number;
+                else if (isBooleanType(tp)) constituentType = LiteralTypes.Boolean;
+                else if (isStringType(tp)) constituentType = LiteralTypes.String;
+                else if (isEnumType(tp)) constituentType = LiteralTypes.Enum;
+            }
+            else {
+                switch (constituentType) {
+                    case LiteralTypes.Number: allGood = allGood && !!isNumberType(tp); break;
+                    case LiteralTypes.Boolean: allGood = allGood && !!isBooleanType(tp); break;
+                    case LiteralTypes.String: allGood = allGood && !!isStringType(tp); break;
+                    case LiteralTypes.Enum: allGood = allGood && !!isEnumType(tp); break;
+                }
+            }
+        });
+
+        return allGood;
     }
 
     // does src inherit from tgt via heritage clauses?
@@ -749,8 +763,8 @@ namespace ts.pxtc {
             return insertSubtype(key, [false, "Cast to class/interface not supported."])
         }
 
-        if (isClassType(superType)) {
-            if (isClassType(subType)) {
+        if (isClassType(superType) && !genericRoot(superType)) {
+            if (isClassType(subType) && !genericRoot(subType)) {
                 let superDecl = <ClassDeclaration>superType.symbol.valueDeclaration
                 let subDecl = <ClassDeclaration>subType.symbol.valueDeclaration
                 // only allow upcast (sub -> ... -> sup) in inheritance chain
@@ -1385,7 +1399,8 @@ namespace ts.pxtc {
                                 kind: SK.Parameter,
                                 name: { text: "v" },
                                 parent: fld.irSetter,
-                                typeOverride: typeOf(fld)
+                                typeOverride: typeOf(fld),
+                                symbol: {}
                             });
                         }
                         let idx = fieldIndexCore(inf, fld, typeOf(fld))
