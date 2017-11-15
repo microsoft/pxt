@@ -1,8 +1,6 @@
 - Joe to make pass on abstract/introduction
 - James to work on codal.tex to make examples align with Figure 1
-- Tom and Michal to investigate David Whale examples
 - table 2 needs caption
-- need to explain micropython and Espruino, mention Espruino is JavaScript!!!
 - add table for Fig 12 to see what it looks like
 - remove streams and stream Figure
 - Figure 6 and 7 to align with Figure 1
@@ -10,7 +8,4 @@
   light emission and detection (novel feature of physical computing)
 - Related work: should cite and compare to TinyOS, which is pretty well-known
 
-
-- FINAL STEPS:
-
-- SPELL CHECK
+- FINAL STEP: SPELL CHECK
