@@ -2,8 +2,9 @@
 \label{sec:evaluate}
 
 This section evaluates the costs of the various layers of abstraction in our platform.
-We evaluate the cost of these layers using a set of micro-benchmarks, written
-in both C++ and Static TypeScript, with three microcontrollers (Table~\ref{table:devices}): nRF51 (micro:bit),
+using a set of micro-benchmarks. These programs were written
+in both C++ and Static TypeScript, and evaluated on 
+three microcontrollers (Table~\ref{table:devices}): nRF51 (micro:bit),
 SAMD21 (CPX device), and Atmega (Uno). The C++ benchmarks isolate the performance
 of \CO and provide a baseline, while the Static TypeScript benchmarks show the overhead
 added by \MC.
@@ -22,7 +23,7 @@ added by \MC.
 \multicolumn{1}{|c|}{micropython} & 10000           & 5679              \\ \hline
 \multicolumn{1}{|c|}{Espruino}    & 115600          & -                 \\ \hline
 \end{tabular}
-\caption{\label{table:vm-comparison} A comparison between fully virtualised solutions, \MC, and native C++.}
+\caption{\label{table:vm-comparison} A comparison between fully virtualised solutions, \MC, and the native C++ of \CO.}
 \end{table}
 
 \subsection{Software \& Devices}
@@ -34,27 +35,29 @@ The C++ of our platform breaks into two essential layers:
 to make it known to \MC, against which we write Static TypeScript programs;
 \end{itemize}
 %some expansion required
-\MC and \CO currently runs on three different devices (Table~\ref{table:devices}), each with varying capabilities. The simplest device is the Uno, consisting of an 8-bit processor running at 48 MHz, it only has 2kB of RAM (a thousandth of the amount a smartphone has in 2017) and 32kB of flash. The Uno has no onboard components other than the microcontroller which supports: GPIO, Serial, and I2C. The micro:bit is a 32-bit cortex M0 clocking at 16MHz, with 16kB RAM and 256kB of flash. It has a number of onboard components including: a 5x5 LED matrix display, a compass, accelerometer, buttons, GPIO, I2C, Serial, and Bluetooth Low Energy. The CircuitPlayground is a 32-bit cortex M0 plus, which offers greater energy efficiency and performance, it clocks at 48 MHz and has 32kB of RAM and 256kB of flash. On board the CircuitPlayground are: RGB pixels, an infrared transmitter and receiver, a touch sensor, buttons, accelerometer, speaker, microphone, GPIO, I2C, and Serial. The solution for the micro:bit takes the untagged strategy, whilst the solution for the CircuitPlayground takes the tagged strategy (See Section~\ref{sec:untagged-tagged}).
+\MC and \CO currently runs on three different devices (Table~\ref{table:devices}), each with varying capabilities. The simplest device is the Uno, consisting of an 8-bit processor running at 48 MHz, it only has 2kB of RAM (a thousandth of the amount a smartphone has in 2017) and 32kB of flash. The Uno has no onboard components other than the microcontroller which supports GPIO, Serial, and I2C. The micro:bit has a 32-bit Cortex M0 clocked at 16MHz, with 16kB RAM and 256kB of flash. It has a number of onboard components including a 5x5 LED matrix display, a compass, accelerometer, buttons, GPIO, I2C, Serial, and Bluetooth Low Energy. The CircuitPlayground is a 32-bit Cortex-M0+, which offers greater energy efficiency and performance; it clocks at 48 MHz and has 32kB of RAM and 256kB of flash. On board the CircuitPlayground are: RGB pixels, an infrared transmitter and receiver, a touch sensor, buttons, accelerometer, speaker, microphone, GPIO, I2C, and Serial. The Uno and micro:bit \MC targets use the untagged strategy, while the solution for the CircuitPlayground takes the tagged strategy (see Section~\ref{sec:untagged-tagged}).
 
 \subsection{Methodology}
 
 To analyse the performance of our solution, we have written a suite of programs to evaluate different aspects of the platform. Although the content of the programs differs, the approach remains the same:
 
 \begin{enumerate}
-    \item \textit{Performance Analysis}: Tests that capture time taken to perform an operation will toggle a GPIO before executing the operation, execute the operation, and toggle the GPIO at the end of the operation. Using an oscilloscope, we can then determine the time taken to perform that operation.
+    \item \textit{Performance Analysis}: Tests that capture time taken to perform an operation will toggle a GPIO before executing the operation, execute the operation, and toggle the GPIO at the end of the operation. Using an oscilloscope hooked to the board, we determine the real time taken to perform that operation.
 
     \item \textit{Memory Analysis}: Tests that capture the RAM footprint of a certain operation will print a map of memory before executing the operation, execute the operation, and print a map of memory at the end of the operation. A serial terminal is used to capture the output of these tests.
 \end{enumerate}
 
-It is important to note that memory and performance analysis are tested separately, as outputting data over a serial port directly affects timing.
+It is important to note that memory and performance analysis are done in separate runs, as outputting data over a serial port directly affects timing.
 
-\subsection{Contextualising \MC and \CO}
+\subsection{The Overhead of \MC}
 
-To contextualise the \MC approach within the space, we perform a comparitive evaluation against fully virtualised solutions using native C++ as our baseline.
+To place the overhead of \MC in context, we perform a comparitive evaluation of \MC against fully virtualised solutions, using the native C++ of \CO as our baseline.  The two points of comparison are MicroPython~\cite{MicroPython}, an implementation of Python for microcontrollers, and Espruino~\cite{espruinoBook}, an
+implementation of JavaScript for micrcontrollers. 
 
-We devised a program to give the cost of each solutions' abstraction with respect to time. The program counted from 0 to 100000 in a tight for loop, toggling a GPIO at the beginning and end of the for loop; we measured the duration using an oscilloscope. The program was rewritten in each solutions' respective language and are functionally equivalent, the results are shown in Table~\ref{table:vm-comparison}.
+We created a program to give the cost of each solution with respect to time. The program counts from 0 to 100000 in a tight loop, toggling a GPIO just before the loop starts and immediately after it terminates; we measured the loop's duration using an oscilloscope. The program was rewritten in each solutions' respective language; the results are shown in Table~\ref{table:vm-comparison}.
 
-For the micro:bit, micropython and Espruino are an order of magnitude slower than a native \CO program, whilst \MC is only 114 milliseconds slower. However, \MC for the CircuitPlayground takes the tagged approach to memory management, and runs almost four times slower than a micro:bit whilst executing instructions three times as fast. For both devices, \MC outperforms virtualised solutions.
+For the micro:bit, micropython and Espruino are an order of magnitude slower than a native \CO program, while \MC is only 114 milliseconds slower. However, \MC for the CircuitPlayground uses the tagged approach, and runs almost four times slower than a micro:bit while executing instructions three times as fast. For both devices, \MC outperforms both the VM-based solutions of MicroPyhon and Espruino.
+
 
 \subsection{Scheduler Performance}
 
@@ -70,7 +73,7 @@ For the micro:bit, micropython and Espruino are an order of magnitude slower tha
 \caption{\label{fig:context-vs-stack}[UPDATE WITH RED BAR]Time taken to perform a context switch against stack size.}
 \end{figure}
 
-To evaluate the performance of the scheduler we conducted a test that created two fibers and continuously swapped context, in each fiber a GPIO was toggled enabling us to capture the duration using an oscilloscope. We performed this test in both \MC and \CO and the resulting profiles can be seen in Figure~\ref{fig:context-switch}. This figure breaks the context switch down into three phases: (1) \CO, the time it takes to perform a context switch in \CO; (2) Stack Swap, the time taken to page out the \MC stack; and (3) \MC, the overhead added by the \MC layer.
+To evaluate the performance of \CON's scheduler we conducted a test that created two fibers and continuously swapped context; in each fiber a GPIO was toggled, enabling us to capture the duration using an oscilloscope. We performed this test in both \MC and \CO and the resulting profiles can be seen in Figure~\ref{fig:context-switch}. This figure breaks the context switch down into three phases: (1) \CO, the time it takes to perform a context switch in \CO; (2) Stack Swap, the time taken to page out the \MC stack; and (3) \MC, the overhead added by the \MC layer.
 
 Figure~\ref{fig:context-vs-stack} profiles the time a context switch takes with an increasing stack size across all three devices in \CO. This test is similar to the previous test, however, we placed bytes (in powers of 2) on the stack of each fiber, starting from 64 and finishing at 1024. The difference in gradients, and ranges of values can be put down to device capability. For instance, the Uno has an 8-bit processor word size, which means more instructions are required to copy the stack, therefore as the stack size increases, so does context switch time.
 
@@ -105,15 +108,15 @@ Handling an event consumes a lot of time, the reason for this is that once an ev
 \caption{\label{fig:flash-consumption}The total flash consumption of code required to support \MC.}
 \end{figure}
 
-Figure~\ref{fig:flash-consumption} shows the flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The stacked bars align with the composition of the software layer: \MC builds on \CO which builds on mbed and the C++ standard library.
+Figure~\ref{fig:flash-consumption} shows the flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The stacked bars align with the composition of the software layer: \MC builds on \CO which builds on Mbed and the C++ standard library.
 
-From the bottom up, the profile of the standard library changes dramatically for each device: The uno has a very lightweight standard library; the microbit will uses 64-bit integer operations which will require extra standard library functions; and the CircuitPlayground requires virtualised floating point operations pulling in more standard library functions.
+From the bottom up, the profile of the standard library changes dramatically for each device: The Uno has a very lightweight standard library; the microbit uses 64-bit integer operations (for timers) which requires extra standard library functions; and the CircuitPlayground requires virtualised floating point operations pulling in more standard library functions.
 
-mbed is not used for the uno as it does not have an ARM processor. The micro:bit uses more of mbed than the CircuitPlayground, as over time we have begun to phase out mbed in favour of native implementations.
+Mbed is not used for the Uno as it does not have an ARM processor. The micro:bit uses more of Mbed than the CircuitPlayground, as over time we have begun to phase out Mbed in favour of native implementations.
 
-The size of \CO and \MC scales linearly with the amount of functionality a device has. For instance the uno has few onboard components when compared to the CircuitPlayground and micro:bit.
+The size of \CO and \MC scales linearly with the amount of functionality a device has. For instance the Uno has few onboard components when compared to the CircuitPlayground and micro:bit.
 
-The configurability of \CO enables us to support multiple devices with different feature sets, whilst maintaining the same API at the \MC layer.
+The configurability of \CO enables us to support multiple devices with different feature sets, while maintaining the same API at the \MC layer.
 
 \subsubsection{RAM Consumption}
 % Add globals maps and profile of listener and fiber.
