@@ -19,7 +19,7 @@ added by \MC.
 \multicolumn{1}{l|}{}             & micro:bit       & CircuitPlayground \\ \cline{2-3}
 \multicolumn{1}{l|}{}             & Time Taken (ms) & Time Taken (ms)   \\ \hline
 \multicolumn{1}{|c|}{\CO}       & 102             & 30.94             \\ \hline
-\multicolumn{1}{|c|}{\MC}    & 216.8           & 747.2             \\ \hline
+\multicolumn{1}{|c|}{\MC}    & 216.8           & 227             \\ \hline
 \multicolumn{1}{|c|}{micropython} & 10000           & 5679              \\ \hline
 \multicolumn{1}{|c|}{Espruino}    & 115600          & -                 \\ \hline
 \end{tabular}
@@ -35,7 +35,7 @@ The C++ of our platform breaks into two essential layers:
 to make it known to \MC, against which we write Static TypeScript programs;
 \end{itemize}
 %some expansion required
-\MC and \CO currently runs on three different devices (Table~\ref{table:devices}), each with varying capabilities. The simplest device is the Uno, consisting of an 8-bit processor running at 48 MHz, it only has 2kB of RAM (a thousandth of the amount a smartphone has in 2017) and 32kB of flash. The Uno has no onboard components other than the microcontroller which supports GPIO, Serial, and I2C.
+\MC and \CO currently operates on three different devices (Table~\ref{table:devices}), each with varying capabilities. The simplest device is the Uno, consisting of an 8-bit processor running at 48 MHz, it only has 2kB of RAM (a thousandth of the amount a smartphone has in 2017) and 32kB of flash. The Uno has no onboard components other than the microcontroller which supports GPIO, Serial, and I2C.
 
 The micro:bit has a 32-bit Cortex M0 clocked at 16MHz, with 16kB RAM and 256kB of flash. It has a number of onboard components including a 5x5 LED matrix display, a compass, accelerometer, buttons, GPIO, I2C, Serial, and Bluetooth Low Energy.
 
@@ -48,12 +48,12 @@ The Uno and micro:bit \MC targets use the untagged strategy, while the CircuitPl
 To analyse the performance of our solution, we have written a suite of programs to evaluate different aspects of the platform. Although the content of the programs differs, the approach remains the same:
 
 \begin{enumerate}
-    \item \textit{Performance Analysis}: Tests that capture time taken to perform an operation will toggle a GPIO before executing the operation, execute the operation, and toggle the GPIO at the end of the operation. Using an oscilloscope hooked to the board, we determine the real time taken to perform that operation.
+    \item \textit{Performance Analysis}: Tests that capture time taken to perform an operation will toggle a GPIO before executing the operation, execute the operation, and toggle the GPIO at the end of the operation. Using an oscilloscope attached to the board, we determine the real time taken to perform that operation.
 
     \item \textit{Memory Analysis}: Tests that capture the RAM footprint of a certain operation will print a map of memory before executing the operation, execute the operation, and print a map of memory at the end of the operation. A serial terminal is used to capture the output of these tests.
 \end{enumerate}
 
-It is important to note that memory and performance analysis are done in separate runs, as outputting data over a serial port directly affects timing.
+It is important to note that memory and performance analysis are done in separate runs, as outputting data over a serial port directly affects time-related tests.
 
 \subsection{The Overhead of \MC}
 
@@ -61,11 +61,9 @@ To place the overhead of \MC in context, we perform a comparitive evaluation of 
 
 We created a program to give the cost of each solution with respect to time. The program counts from 0 to 100000 in a tight loop, toggling a GPIO just before the loop starts and immediately after it terminates; we measured the loop's duration using an oscilloscope. The program was rewritten in each solutions' respective language; the results are shown in Table~\ref{table:vm-comparison}.
 
-For the micro:bit, micropython and Espruino are an order of magnitude slower than a native \CO program, while \MC is only 114 milliseconds slower. However, \MC for the CircuitPlayground uses the tagged approach, and runs almost four times slower than a micro:bit while executing instructions three times as fast. For both devices, \MC outperforms both the VM-based solutions of MicroPyhon and Espruino.
+For the micro:bit, micropython and Espruino are an order of magnitude slower than a native \CO program, while \MC is only 114 milliseconds slower. However, \MC for the CircuitPlayground uses the tagged approach, and completes in the same time as a micro:bit whilst executing instructions three times as fast. For both devices, \MC outperforms both the VM-based solutions of MicroPython and Espruino.
 
-\subsection{Scheduler Performance}
-
-\subsubsection{Context Switch}
+\subsection{Context Switch Performance}
 
 \begin{figure}[ht]
     \includegraphics[width=.6\columnwidth]{images/context-switch.png}
@@ -81,29 +79,27 @@ To evaluate the performance of \CON's scheduler we conducted a test that created
 
 Figure~\ref{fig:context-vs-stack} profiles the time a context switch takes with an increasing stack size across all three devices in \CO. This test is similar to the previous test, however, we placed bytes (in powers of 2) on the stack of each fiber, starting from 64 and finishing at 1024. The difference in gradients, and ranges of values can be put down to device capability. For instance, the Uno has an 8-bit processor word size, which means more instructions are required to copy the stack, therefore as the stack size increases, so does context switch time.
 
-\subsubsection{Asynchronous Operations}
+\subsection{Asynchronous Operation Performance}
 
 \begin{table}[]
 \centering
 \begin{tabular}{c|c|c|}
-\cline{2-3}
-                                                                                                            & RAM Overhead & Processing Overhead \\ \hline
-\multicolumn{1}{|c|}{Create a Fiber}                                                                        & 136          & 35.4                \\ \hline
-\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}Asynchronous \\ Procedure Call\end{tabular}}              & 32           & 4.01                \\ \hline
-\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}Asynchronous \\ Procedure Call\\ with a Sleep\end{tabular}} & 204          & 32.4                \\ \hline
-\end{tabular}
+    \cline{2-3}
+                                                                                                                & \begin{tabular}[c]{@{}c@{}}RAM Overhead\\ (bytes)\end{tabular} & \begin{tabular}[c]{@{}c@{}}Processing Overhead\\ (microseconds)\end{tabular} \\ \hline
+    \multicolumn{1}{|c|}{Create a Fiber}                                                                        & 136                                                            & 35.4                                                                         \\ \hline
+    \multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}Asynchronous \\ Procedure\\ Call\end{tabular}}              & 32                                                             & 4.01                                                                         \\ \hline
+    \multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}Asynchronous \\ Procedure\\ Call with a Sleep\end{tabular}} & 204                                                            & 32.4                                                                         \\ \hline
+    \end{tabular}
 \caption{\label{table:time-ram-consumption}RAM consumption and processing time for various asynchronous operations in \CO.}
 \end{table}
 
-To gauge the cost of different asynchronous operations in \CON, we tested three commonly used code paths using the CircuitPlayground: (1) creating a fiber; (2) handling a non-blocking event; and (3) handling a blocking event. Table~\ref{table:time-ram-consumption} presents our results.
+To gauge the cost of different asynchronous operations in \CON, we tested three commonly used code paths using the CircuitPlayground: (1) creating a fiber; (2) handling a non-blocking procedure call; and (3) handling a blocking procedure call. Table~\ref{table:time-ram-consumption} presents our results. These code paths are used to invoke handlers for events with corresponding listeners, central to \CO and \MC.
 
-In \CO, creating a fiber costs 208 bytes and 35.4 microseconds, a non-blocking event costs 180 bytes and 156.4 microseconds, and a blocking event costs 416 bytes and 170.4 microseconds. For a non-blocking event \MC adds 24 bytes and 36.8 microseconds, and for a blocking event it adds 192 bytes and 39.6 microseconds.
+In \CO, creating a fiber costs 136 bytes and 35.4 microseconds, a non-blocking procedure call costs 32 bytes and 4.01 microseconds, and a blocking procedure call costs 204 bytes and 32.4 microseconds. Queuing an event takes an additional 28.87 microseconds, plus the cost of either invoke. In \MC, the total cost of an event is...?
 
-This exposes an optimisation made at the \CO layer, which is to only create a fiber to handle an event if a user performs a blocking operation in an event handler, as creating a fiber is a costly operation.
+A naiive approach to multithreading would execute event handlers in separate fibers. In \CO, we invoke functions in the context of the current fiber until it is no longer possible to do so (i.e. the user has performed a blocking operation). For non-blocking calls, the best case, this has an small overhead of 32 bytes of RAM and is not processor intensive, versus the worst case, which incurs a large overhead of 204 bytes of RAM and 32.4 microseconds of processor time.
 
-\subsection{Memory Footprint}
-
-\subsubsection{Flash Consumption}
+\subsection{Flash Consumption}
 
 \begin{table}[]
 \centering
@@ -119,7 +115,7 @@ This exposes an optimisation made at the \CO layer, which is to only create a fi
 \caption{\label{table:flash-consumption}The total flash consumption of code required to support \MC.}
 \end{table}
 
-Figure~\ref{table:flash-consumption} shows the flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The stacked bars align with the composition of the software layer: \MC builds on \CO which builds on Mbed and the C++ standard library.
+Figure~\ref{table:flash-consumption} shows the flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library, and optionally mbed.
 
 From the bottom up, the profile of the standard library changes dramatically for each device: The Uno has a very lightweight standard library; the microbit uses 64-bit integer operations (for timers) which requires extra standard library functions; and the CircuitPlayground requires virtualised floating point operations pulling in more standard library functions.
 
@@ -129,7 +125,7 @@ The size of \CO and \MC scales linearly with the amount of functionality a devic
 
 The configurability of \CO enables us to support multiple devices with different feature sets, while maintaining the same API at the \MC layer.
 
-\subsubsection{RAM Consumption}
+\subsection{RAM Consumption}
 %TODO: GET DATA ;(
 
 % Add globals maps and profile of listener and fiber.
