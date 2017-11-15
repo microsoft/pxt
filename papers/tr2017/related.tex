@@ -39,7 +39,7 @@ is resident in the MCU's flash.
 As demonstrated in the evaluation, our approach to code generation and runtime
 has significant performance advantages over MicroPython and Espruino.
 This is due to a number of factors, the most significant of which is our use of
-Static TypeScript. In practice, our hardware partners and users have had no
+STS. In practice, our hardware partners and users have had no
 trouble with this limitation.  Another significant difference is our support
 for non-preemptive concurrency via fibers (co-routines). 
 
@@ -88,15 +88,15 @@ for \emph{concrete} types, which allows the programmer to choose between untyped
 code, optionally-typed code, and concretely typed code, which provides traditional
 type soundess guarantees. As with TypeScript, every JavaScript program is a StrongScript program. 
 
-Static TypeScript differs from these efforts by outlawing untyped or optionally typed
-code: it is non-goal of Static TypeScript to support arbitrary JavaScript programs.
-In this sense, Static TypeScript can be seen to be StrongScript where every variable and 
+STS differs from these efforts by outlawing untyped or optionally typed
+code: it is non-goal of STS to support arbitrary JavaScript programs.
+In this sense, STS can be seen to be StrongScript where every variable and 
 expression has a concrete (!) type. As in StrongScript, classes are nominally typed,
 which permits a more efficient and traditional property lookup for class instances. 
-Static TypeScript goes further by outlawing downcasts (necessary for our untagged 
+STS goes further by outlawing downcasts (necessary for our untagged 
 implementation).
 
-Static TypeScript could benefit by enlarging the set of types
+STS could benefit by enlarging the set of types
 that can be inferred, so that more JavaScript idioms could be allowed. 
 Chandra's work on type inference for static compilation of 
 JavaScript~\cite{ChandraOOPSLA2016} is one path forward. 
