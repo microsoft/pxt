@@ -63,11 +63,6 @@ Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories,
 category \emph{INPUT} corresponding to the namespace \emph{input} can been seen (second
 from the top).
 
-\begin{figure}[t]
-    \includegraphics[width=4.5in]{makecodeFig.pdf}
-\caption{\label{fig:makecode}\MC Architecture}
-\end{figure}
-
 Mapping of functions and enumerations between C++ and TypeScript is straightforward
 and performed automatically by \MC.
 Here's an example of the C++ function \emph{onLightConditionChanged}
@@ -135,8 +130,7 @@ For more sophisticated needs, one can directly access the Blockly framework.
 \subsection{Editors}
 
 As shown in the upper-left of Figure~\ref{fig:makecode},
-\MC uses the Blockly (\emph{\href{https://github.com/google/blockly}{blockly}}) and Monaco
-(\emph{\href{https://github.com/Microsoft/monaco-editor}{monaco-editor}}) editors to allow the user to code with
+\MC uses the Blockly and Monaco editors to allow the user to code with
 visual blocks or TypeScript. The editing experience is parameterized by the full-typed device
 runtime, which provides a set of categorized APIs to the end-user, based on namespaces, as
 previously described. These APIs are visible in both editors via a toolbox (Figure~\ref{fig:screenSnap}(C))
