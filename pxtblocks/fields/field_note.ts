@@ -446,17 +446,19 @@ namespace pxtblockly {
             //let pianoHeight = keyHeight + div.scrollHeight + 5;
             let xy = this.getAbsoluteXY_();
             let borderBBox = this.getScaledBBox_();
+            const borderHeight = borderBBox.bottom - xy.y;
+            const borderWidth = borderBBox.right - xy.x;
             let topPosition: number = 0, leftPosition: number = 0;
             //  Flip the piano vertically if off the bottom (only in web view).
             if (!mobile) {
-                if (xy.y + pianoHeight + borderBBox.height >=
+                if (xy.y + pianoHeight + borderHeight >=
                     windowSize.height + scrollOffset.y) {
-                    topPosition = -(pianoHeight + borderBBox.height);
+                    topPosition = -(pianoHeight + borderHeight);
                 }
                 if (this.sourceBlock_.RTL) {
-                    xy.x += borderBBox.width;
+                    xy.x += borderWidth;
                     xy.x -= pianoWidth;
-                    leftPosition += borderBBox.width;
+                    leftPosition += borderWidth;
                     leftPosition -= pianoWidth;
                     // Don't go offscreen left.
                     if (xy.x < scrollOffset.x) {
@@ -470,7 +472,7 @@ namespace pxtblockly {
                 }
             } else {
                 leftPosition = -(<HTMLElement>document.getElementsByClassName("blocklyWidgetDiv")[0]).offsetLeft;   //+ ((windowSize.width - this.pianoWidth_) / 2);
-                topPosition = windowSize.height - (keyHeight + labelHeight + prevNextHeight) - (<HTMLElement>document.getElementsByClassName("blocklyWidgetDiv")[0]).offsetTop - borderBBox.height;
+                topPosition = windowSize.height - (keyHeight + labelHeight + prevNextHeight) - (<HTMLElement>document.getElementsByClassName("blocklyWidgetDiv")[0]).offsetTop - borderHeight;
             }
 
             //  save all changes in the same group of events

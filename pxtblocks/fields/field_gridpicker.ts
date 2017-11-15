@@ -73,7 +73,7 @@ namespace pxtblockly {
 
             this.disposeTooltips();
 
-            const options = this.getOptions_();
+            const options = this.getOptions();
 
             // Container for the menu rows
             const tableContainer = new goog.ui.Control();
@@ -92,11 +92,6 @@ namespace pxtblockly {
                 tableContainer.addChild(row, true);
             }
 
-            // Record windowSize and scrollOffset before adding menu.
-            const windowSize = goog.dom.getViewportSize();
-            const scrollOffset = goog.style.getViewportPageOffset(document);
-            const xy = this.getAbsoluteXY_();
-            const borderBBox = this.getScaledBBox_();
             const div = Blockly.WidgetDiv.DIV;
 
             scrollContainer.addChild(tableContainer, true);
@@ -108,12 +103,6 @@ namespace pxtblockly {
             const scrollContainerDom = scrollContainer.getElement() as HTMLElement;
             const tableContainerDom = tableContainer.getElement() as HTMLElement;
 
-            // Resize the grid picker if width > screen width
-            if (this.width_ > windowSize.width) {
-                this.width_ = windowSize.width;
-            }
-
-            tableContainerDom.style.width = this.width_ + 'px';
             tableContainerDom.style.backgroundColor = this.backgroundColour_;
             scrollContainerDom.style.backgroundColor = this.backgroundColour_;
             paddingContainerDom.style.backgroundColor = this.backgroundColour_;
@@ -226,24 +215,39 @@ namespace pxtblockly {
                 }
             }
 
+            // Record windowSize and scrollOffset before adding menu.
+            const windowSize = goog.dom.getViewportSize();
+            const scrollOffset = goog.style.getViewportPageOffset(document);
+            const xy = this.getAbsoluteXY_();
+            const borderBBox = this.getScaledBBox_();
+            const borderHeight = borderBBox.bottom - xy.y;
+            const borderWidth = borderBBox.right - xy.x;
+
+            // Resize the grid picker if width > screen width
+            if (this.width_ > windowSize.width) {
+                this.width_ = windowSize.width;
+            }
+
+            tableContainerDom.style.width = this.width_ + 'px';
+
             // Position the menu.
             // Flip menu vertically if off the bottom.
-            if (xy.y + paddingContainerSize.height + borderBBox.height >=
+            if (xy.y + paddingContainerSize.height + borderHeight >=
                 windowSize.height + scrollOffset.y) {
                 xy.y -= paddingContainerSize.height + 2;
             } else {
-                xy.y += borderBBox.height;
+                xy.y += borderHeight;
             }
 
             if (this.sourceBlock_.RTL) {
-                xy.x += paddingContainerSize.width / 2 - borderBBox.width / 2;
+                xy.x += paddingContainerSize.width / 2 - borderWidth / 2;
 
                 // Don't go offscreen left.
                 if (xy.x < scrollOffset.x + paddingContainerSize.width) {
                     xy.x = scrollOffset.x + paddingContainerSize.width;
                 }
             } else {
-                xy.x += borderBBox.width / 2 - paddingContainerSize.width / 2;
+                xy.x += borderWidth / 2 - paddingContainerSize.width / 2;
 
                 // Don't go offscreen right.
                 if (xy.x > windowSize.width + scrollOffset.x - paddingContainerSize.width) {

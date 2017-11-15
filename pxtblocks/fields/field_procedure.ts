@@ -10,7 +10,7 @@ namespace pxtblockly {
             this.setValue(funcname || '');
         }
 
-        getOptions_() {
+        getOptions() {
             return this.dropdownCreate();
         };
 

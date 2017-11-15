@@ -507,7 +507,7 @@ declare namespace Blockly {
         dispose(): void;
         showEditor_(): void;
         getAbsoluteXY_(): goog.math.Coordinate;
-        getScaledBBox_(): goog.math.Size;
+        getScaledBBox_(): {top: number, bottom: number, left: number, right: number};        
         setValue(newValue: string): void;
         getValue(): string;
         setSourceBlock(block: Block): void;
@@ -541,7 +541,7 @@ declare namespace Blockly {
         static CHECKMARK_OVERHANG: number;
         protected value_: any;
         constructor(val: (string[] | Object)[]);
-        protected getOptions_(): (string[] | Object)[];
+        protected getOptions(): (string[] | Object)[];
         onItemSelected(menu: goog.ui.Menu, menuItem: goog.ui.MenuItem): void;
     }
 
