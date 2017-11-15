@@ -146,7 +146,9 @@ The modular composition of \CO allows us to support multiple devices with a vari
 
 \subsection{\MC Native vs. \MC VM}
 
-Table~\ref{table:c-native-vm-stats} talks about BLAH.
+Since the Uno is an extremely resource constrained device, the AVR VM was motivated by the need for high code density. Table~\ref{table:c-native-vm-stats} describes the difference in performance for the native implementation and the virtualised implementation with respect to a C++ benchmark. With low computational complexity, the VM performs similarly to native, however, introducing computational tasks causes the VM to operate up to 5 times slower than the native implementation.
+
+% Since the Uno is an extremely resource constrained device, the AVR VM was specifically designed for high code density. The interpreter is implemented in assembly, always included with the program, and is around 0.5k. There are about 30 opcodes, some of which can take 1 or 2 byte arguments. There are also a few combined opcodes, representing a sequence of one argument-less opcode, and one with an argument, which improves code density by about 25\%. Opcodes are direct offsets into the code of the interpreter, speeding up execution. They operate on a stack (mainly for function calls) and a special scratch register. There is essentially no stack space overhead compared to native AVR compilation. The speed overhead is around 4x-5x (with respect to native) for computational tasks.
 
 \begin{table}[]
 \centering
@@ -162,33 +164,21 @@ Table~\ref{table:c-native-vm-stats} talks about BLAH.
 \end{table}
 
 \subsection{Compiling Static TypeScript}
-% data generated using 'node map-file-stats.js CIRCUIT_PLAYGROUND.map'
-% maybe put it in a table?
 
-% TOTAL 114.22
-% pxtapp 20.46
-% lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m/crtbegin.o 0.09
-% codal 29.72
-% libmbed-classic.a 14.78
-% lib/thumb/v6-m\libstdc++_nano.a 0.08
-% lib/gcc/arm-none-eabi/6.3.1/thumb/v6-m\libgcc.a 12.76
-% lib/thumb/v6-m\libm.a 24.28
-% lib/thumb/v6-m\libc_nano.a 11.91
-% lib/thumb/v6-m\libnosys.a 0.03
-
-When compiling the Static TypeScript benchmarks and runtime with code shaking we obtain a generated code density of 37.5 bytes per statement on CPX, 60.8 on AVR native, and 12.3 on AVR VM. This excludes string literals (which don't change the picture significantly), but includes class vtables and number literals if any. Note that ARM and AVR native instructions are 2 bytes each, while AVR VM instructions are between 0.5 and 3 bytes.
+When compiling the Static TypeScript benchmarks and runtime with code shaking we obtain a generated code density of 37.5 bytes per statement on the CircuitPlayground, 60.8 on AVR native, and 12.3 on AVR VM. This excludes string literals (which don't change the picture significantly), but includes class vtables and number literals if any. Note that ARM and AVR native instructions are 2 bytes each, while AVR VM instructions are between 0.5 and 3 bytes.
 
 When compiling, the entire TypeScript program, including the runtime, is
 passed to the TypeScript (TS) language service for parsing. Then, only the remaining part of the program (after code shaking) is compiled to native code.
-On a modern laptop, using Node.js, TS parsing and analysis takes about 0.1ms per statement, while \MC compilation to native code takes about 1ms per statement.
-While the TS compiler has been optimized for speed, \MCN's native compilation process hasn't been. For example, for CPX the TS pass is dominated by compile the device runtime and takes about 100ms, whereas the \MC pass typically only includes a small user program and a small bit of the runtime, resulting in less than 100ms.
-Thus, typical compilation times are in the range of 200ms for user programs
-of ABC-XYZ lines.
+On a modern laptop, using Node.js, TS parsing and analysis takes about 0.1ms per statement, and \MC compilation to native code takes about 1ms per statement.
+While the TS compiler has been optimized for speed, \MCN's native compilation process hasn't been. For example, the CircuitPlayground TS pass is dominated by compilation of the device runtime and takes about 100ms, whereas the \MC pass typically only includes a small user program and a small bit of the runtime, resulting in less than 100ms. Thus, typical compilation times are in the range of 200ms for user programs of ABC-XYZ lines.
 
-The AVR VM was specifically designed for high code density, since \CO
-leaves less than 10k for TS runtime and user code on the Uno. The interpreter is implemented in assembly and always included with the program and is around 0.5k.
-There are about 30 opcodes, some of which can take 1 or 2 byte arguments.
-There are also a few combined opcodes, representing a sequence of one argument-less opcode, and one with an argument, which improves code density by about 25\%. Opcodes are direct offsets into the code of the interpreter, speeding up execution. They operate on a stack (mainly for function calls) and a special scratch register. There is essentially no stack space overhead compared to native AVR compilation. The speed overhead is around 4x-5x (with respect to native) for computational tasks.
+% Not really a result, more of a description of design, with an anecdotal comment about speed.
+
+% should be moved further up and described alongside AVR VM vs. Native
+
+% The AVR VM was specifically designed for high code density, since \CO
+% leaves less than 10k for TS runtime and user code on the Uno. The interpreter is implemented in assembly, always included with the program, and is around 0.5k.
+% There are about 30 opcodes, some of which can take 1 or 2 byte arguments. There are also a few combined opcodes, representing a sequence of one argument-less opcode, and one with an argument, which improves code density by about 25\%. Opcodes are direct offsets into the code of the interpreter, speeding up execution. They operate on a stack (mainly for function calls) and a special scratch register. There is essentially no stack space overhead compared to native AVR compilation. The speed overhead is around 4x-5x (with respect to native) for computational tasks.
 
 
 %\subsection{Implementation}
