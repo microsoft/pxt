@@ -637,7 +637,7 @@ export class Editor extends srceditor.Editor {
             .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
             // Make sure the package has extensions enabled, and is a github package.
             // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
-            .filter(config => !!config && !!config.extension && config.installedVersion.indexOf('github') == 0);
+            .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
 
         return Promise.resolve();
     }
