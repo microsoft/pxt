@@ -3,48 +3,48 @@
 
 \CO is a lightweight, object-oriented, componentized C++ runtime for microcontrollers designed to provide an efficient abstraction layer that is the target for higher level languages such as JavaScript. \CO is composed of five key elements:
 
-\begin{enumerate} 
-\item a non-preemptive fiber scheduler that enables concurrency whilst minimizing the need for resource locking primitives.
-\item a unified eventing subsystem (common to all components) that provides a mechanism to map asynchronous hardware and software events to high level event handlers 
-\item a simple memory management system based on reference counting to provide a basis for managed types.
-\item a set of drivers, that abstract microcontroller hardware components into higher level software components, each presented as a C++ class.    
-\item a parameterized object model composed from these components that represents a physical device.
+\begin{enumerate}
+\item \emph{a unified eventing subsystem} (common to all components) that provides a mechanism to map asynchronous hardware and software events to high level event handlers
+\item \emph{a non-preemptive fiber scheduler} that enables concurrency whilst minimizing the need for resource locking primitives.
+\item \emph{a simple memory management system} based on reference counting to provide a basis for managed types.
+\item \emph{a set of drivers}, that abstract microcontroller hardware components into higher level software components, each presented as a C++ class.
+\item \emph{a parameterized object model} composed from these components that represents a physical device.
 \end{enumerate}
 % TODO: add Fork on block
 
 \subsection{Message Bus and Events}
 
-\CO offers a simple yet powerful model for handling hardware or user defined events. Events are modeled as a tuple of two integer values - specifying an \emph{id} (namespace) and a \emph{value}. 
-Typically, an id correlates to a specific software component, which may be as simple as a button or complex as a wireless network interface. The value relates to a specific event that is unique within the id namespace. All events pass through the \CO MessageBus. Application developers can then \emph{listen} to events on this bus, by defining a C/C++ function to be invoked when an event is raised. Events can be raised at any time simply by creating an \emph{Event} C++ object, which then invoked the event handlers of any registered listeners.
+\CO offers a simple yet powerful model for handling hardware or user defined events. Events are modeled as a tuple of two integer values - specifying an \emph{id} (namespace) and a \emph{value}.
+Typically, an id correlates to a specific software component, which may be as simple as a button or complex as a wireless network interface. The value relates to a specific event that is unique within the id namespace. All events pass through the \CO MessageBus. Application developers can then \emph{listen} to events on this bus, by defining a C/C++ function to be invoked when an event is raised. Events can be raised at any time simply by creating an \emph{Event} C++ object, which then invoke the event handlers of any registered listeners.
 
-In our running example, a listen call to the MessageBus with a component ID of the light sensor and a threshold event is used as the underlying mechanism to enable the TypeScript event handler, as illustrated by the equivalent \CO code extract in \ref{fig:messageBus}. 
+In our running example, a listen call to the MessageBus with a component ID of the light sensor and a threshold event is used as the underlying mechanism to enable the TypeScript event handler, as illustrated by the equivalent \CO code extract in Figure~\ref{fig:messageBus}.
 
 \begin{figure}
     \begin{lstlisting}
     #include "CircuitPlayground.h"
     CircuitPlayground cplay;
-    
+
     void onBright() {
         // user defined code
     }
-    
+
     int main() {
         cplay.messageBus.listen(ID_LIGHT_SENSOR, LIGHT_THRESHOLD_HIGH, onBright);
     }
     \end{lstlisting}
     \caption{\label{fig:messageBus}Example of the \CO MessageBus.}
 \end{figure}
-    
+
 Unlike simple function pointers, \CO event handlers can be parameterized at by the event listener to provide decoupling between the context of the code raising the event. The receiver of an event can choose to either receive an event in context of the fiber that created it, or be decoupled and executed via an Asynchronous Procedure Call (APC). The former provides performance, while the latter provides elegant decoupling of low level code (that may be executing, say, in an interrupt context) from user code. Each event handler may also define a threading model, so they can be reentrant or run-to-completion, depending upon the semantics required.
 
 \subsection{Fiber Scheduler}
-\CO provides a \emph{non-preemptive} fiber scheduler, to enable elegant asynchronous semantics and power efficiency. \CO fibers can be created at any time, but will only be descheduled as a reult of an explicit call to yield(), sleep() or wait\_for\_event() on the MessageBus. The latter enables condition synchronisation between fibers through a wait/notify mechanism. A round-robin approach is used to schedule runnable fibers. If at any time all fibers are descheduled, the MCU hardware is placed into a power efficient sleep state. 
+\CO provides a \emph{non-preemptive} fiber scheduler, to enable elegant asynchronous semantics and power efficiency. \CO fibers can be created at any time, but will only be descheduled as a reult of an explicit call to yield(), sleep() or wait\_for\_event() on the MessageBus. The latter enables condition synchronisation between fibers through a wait/notify mechanism. A round-robin approach is used to schedule runnable fibers. If at any time all fibers are descheduled, the MCU hardware is placed into a power efficient sleep state.
 
-The \CO scheduler makes use of two novel mechanisms to optimise for MCU hardware. Firstly, \CO adopts a stack duplication approach to fiber management. As we have seen, MCUs do not contain MMU hardware, are heavily RAM constrained but relatively processor rich. Therefore, instead of overprovisioning stack memory for each fiber (which would waste valuable RAM), we instead dynamically allocate stack memory from heap space as necessary and copy the physical stack into this space at the point at which a fiber is descheduled (and similarly restored when a fiber is scheduled). This copy operation clearly brings a small CPU overhead, but brings greater beenfits of RAM efficiency - especially given that MCU stack sizes are typically quite small (~200 bytes is typical). 
+The \CO scheduler makes use of two novel mechanisms to optimise for MCU hardware. Firstly, \CO adopts a stack paging approach to fiber management. As we have seen, MCUs do not support virtual memory, are heavily RAM constrained, but relatively processor rich. Therefore, instead of overprovisioning stack memory for each fiber (which would waste valuable RAM), we instead dynamically allocate stack memory from heap space as necessary and copy the physical stack into this space at the point at which a fiber is descheduled (and similarly restored when a fiber is scheduled). This copy operation clearly brings a small CPU overhead, but brings greater benfits of RAM efficiency - especially given that MCU stack sizes are typically quite small (~200 bytes is typical).
 
-Secondly, the \CO scheduler supports transparent APCs. Any function can be \emph{invoked} as an APC. Conceptually, this is equivalent to calling the given function in its own fiber. However, the \CO runtime provides a common-case transparent optimisation for APCs we call \emph{fork-on-block} - whereby a fiber will only be created at the point at which the given function attempts a blocking operation such as sleep() or wait\_for\_event(). Any functions which do not block therefore do not incur a full context switch overhead. 
+Secondly, the \CO scheduler supports transparent APCs. Any function can be \emph{invoked} as an APC. Conceptually, this is equivalent to calling the given function in its own fiber. However, the \CO runtime provides a common-case transparent optimisation for APCs we call \emph{fork-on-block} - whereby a fiber will only be created at the point at which the given function attempts a blocking operation such as sleep() or wait\_for\_event(). Any functions which do not block therefore do not incur a full context switch overhead.
 
-When invoking an APC, the scheduler snapshots the current processor context and stack pointer (but not the whole stack). If the scheduler is re-entered before the APC completes, a new fiber context is created at the point of descheduling, and placed on the approopriate wait queue. The previously stored context in then restored, and execution continues from the point at which the APC was first invoked. This mechanism provides potentially high RAM savings for processing of MessageBus event handlers in particular.
+When invoking an APC, the scheduler snapshots the current processor context and stack pointer (but not the whole stack). If the scheduler is re-entered before the APC completes, a new fiber context is created at the point of descheduling, and placed on the appropriate wait queue. The previously stored context in then restored, and execution continues from the point at which the APC was first invoked. This mechanism provides potentially high RAM savings for processing of MessageBus event handlers in particular.
 
 \subsection{Memory Management}
 \CO implements its own lightweight heap allocator, introducing reentrant versions of the libc malloc family of functions to permit univeral access to heap memory in user or interrupt code. The heap allocator is flexible and reconfigurable, allowing the specification of multiple heaps across memory and it is optimised for repeat allocations of memory blocks that are commonplace in embedded systems.
@@ -55,16 +55,16 @@ When invoking an APC, the scheduler snapshots the current processor context and 
 \CO drivers abstract away the complexities of the underlying hardware into reusable, extensible, easy-to-use components. For every hardware component there is a corresponding software component that encapsualtes its behaviour in a C++ object. \CO has three types of drivers:
 \begin{itemize}
     \item[1.] a hardware agnostic abstract specification of a driver model (e.g. a Button, or an Accelerometer). This is provided as a C++ base class.
-    \item[2.] the concrete implementation of the abstract driver model, which is typically hardware specific. This is implemented as a subclass of a driver model, such as an ST LIS3DH accelerometer.
+    \item[2.] the concrete implementation of the abstract driver model, which is typically hardware specific. This is implemented as a subclass of a driver model, such as a LIS3DH accelerometer, as manufactured by ST Microelectronics.
     \item[3.] a high level driver that relies only on the interfaces specified in a driver model (e.g. a gesture recognizer based on an Accelerometer model).
 
 \end{itemize}
 
-This approach brings the benefits of abstraction and reusability to \CO, but without losing hardware specific benefits to type erasure seen in flat abstraction models as seen in the Arduino and mbed APIs, for example.
+This approach brings the benefits of abstraction and reusability to \CO, but without losing hardware specific benefits to type erasure seen in flat abstraction models where every MCU is made to look the same, even though their capabilities are different. This can be seen in the Arduino and mbed APIs, for example.
 
-Finally, we group together the components of a physical device to form a \emph{device model}. This is a further C++ class that, through composition of device driver components, provides a configured representation of the capabilities of a device. Such a model provides for an elegant OO API for programming a device and also a static representation that forms an ideal target for the \MCN linker to bind high level STS interfaces to low level optimised code. An example device model for the Adafruit CPX is shown in \ref{fig:codalDeviceModel} for reference.
+Finally, we group together the components of a physical device to form a \emph{device model}. This is a further C++ class that, through composition of device driver components, provides a configured representation of the capabilities of a device. Such a model provides for an elegant OO API for programming a device and also a static representation that forms an ideal target for the \MCN linker to bind high level STS interfaces to low level optimised code. An example device model for the Adafruit CPX is shown in Figure~\ref{fig:codalDeviceModel} for reference.
 
- \MCN is further supported by an annotated C++ library (\emph{\MC-common-packages}) defining and abstracting the mapping from \CO to TypeScript. The use of \MC-common-packages ensures that different \MCN targets that use \CO share a common Typescript and block API vocabulary. 
+ \MCN is further supported by an annotated C++ library (\emph{\MC-common-packages}) defining and abstracting the mapping from \CO to TypeScript. The use of \MC-common-packages ensures that different \MCN targets that use \CO share a common Typescript and block API vocabulary.
 
 
 \begin{figure}
