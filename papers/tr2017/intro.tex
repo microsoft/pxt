@@ -15,23 +15,7 @@ industrial automation and smart grids - a phenomenon broadly referred to as the 
 MCUs are highly resource limited devices, but are not simply smaller versions of laptop and desktops. 
 They are architecturally quite distinct. If we are to undertand how to optimize 
 programming languages and their implementation for such devices it is worth dwelling on their key characteristics. 
-Table \ref{table:devices} highlights the core capabilities of three state of the art devices vs. a typical PC. 
-
-\begin{table}[]
-    \centering
-    \begin{tabular}{|l|r|r|r|r|r|}
-    \hline
-                           &          &              & \bf{Word}  &                 \\
-    \bf{Device}            & \bf{RAM} & \bf{Flash}   & \bf{Size}  & \bf{CPU Speed}  \\ \hline
-    Arduino Uno            & 2 KB       & 32 KB      & 8          & 16MHz AVR       \\ \hline
-    BBC micro:bit          & 16 KB      & 256 KB     & 32         & 16MHz nRF51     \\ \hline
-    Adafruit CPX           & 32 KB      & 256 KB     & 32         & 48MHz SAM    \\ \hline
-    Typical PC             & 16 GB      & 1 TB       & 64         & 3GHz Intel      \\ \hline
-    \end{tabular}
-    \caption{\label{table:devices}Example microcontroller devices in relationship to a typical PC (SAM = SAMD21).}
-    \end{table}
-
-While it is clear that all such devices are highly resource contrained compared to modern PCs 
+Table \ref{table:devices} highlights the core capabilities of three state of the art devices vs. a typical PC. While it is clear that all such devices are highly resource contrained compared to modern PCs 
 (about six orders of magnitude on most metrics), a deeper analysis derive two further key observations.
 
 Firstly, \emph{MCUs are processor rich}. Contrary to first impressions, these devices have 
@@ -50,14 +34,30 @@ as Bluetooth/WiFi and audio inputs and outputs. This hardware is designed to run
 CPU, hence \emph{an effective application programming language should directly support such an asynchronous
 interaction model}.
 
+\begin{table}[]
+    \centering
+    \begin{tabular}{|l|r|r|r|r|r|}
+    \hline
+                           &          &              & \bf{Word}  &                 \\
+    \bf{Device}            & \bf{RAM} & \bf{Flash}   & \bf{Size}  & \bf{CPU Speed}  \\ \hline
+    Arduino Uno            & 2 KB       & 32 KB      & 8          & 16MHz AVR       \\ \hline
+    BBC micro:bit          & 16 KB      & 256 KB     & 32         & 16MHz nRF51     \\ \hline
+    Adafruit CPX           & 32 KB      & 256 KB     & 32         & 48MHz SAM    \\ \hline
+    Typical PC             & 16 GB      & 1 TB       & 64         & 3GHz Intel      \\ \hline
+    \end{tabular}
+    \caption{\label{table:devices}Example microcontroller devices in relationship to a typical PC (SAM = SAMD21).}
+    \end{table}
+
+
+
 % Despite this languages and programming environments have yet to keep pace with the mainstream (e.g. Arduino/mbed)
 Furthermore, with this surge in the demand for MCUs across a wide spectrum of applications, 
 there is a need to simplify the programming of such devices so that more people can participate in 
 the creation of MCU-based systems. From rapid product innovation to education,
 we have seen a sustained growth in the volume and diversity of people wishing to program MCU-based devices.
+These new application developers share a common characterisitic - \emph{they are not professional software developers}.
 % JOE: do we have a citation??? 
 
-These new application developers share a common characterisitic - \emph{they are not professional software developers}. 
 Programming languages and development environments for MCUs have not kept pace with these advances 
 in hardware and diversification of user domains. Elsewhere, we have long supported inexperienced developers through  
 modern high level text-based languages for application development such as Java, C\#, Python and Javascript, and also 
