@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [Microsoft MakeCode for Seeed Grove Zero Beta](/blog/seeed/v0.2.10)
+
+November 14th, 2017 by [riknoll](https://github.com/riknoll)
+
+The Microsoft MakeCode Team is excited to announce the beta release of a new editor...
+**[Read more](/blog/seeed/v0.2.10)**
+
 ## [Adafruit Circuit Playground Express Editor v0.20.13](/blog/adafruit-circuit-playground-express/v0.20.13)
 
 November 13th, 2017 by [pelikhan](https://github.com/pelikhan)
@@ -46,7 +53,7 @@ Another release...
 
 June 20, 2017 by [mmoskal](https://github.com/mmoskal)
 
-Circuit Playground Express boards can now talk to each other over IR! How was it done? 
+Circuit Playground Express boards can now talk to each other over IR! How was it done?
 **[Read more](/blog/timing-adventures-in-infrared)**
 
 ## [Microbit Editor v0.12.35](/blog/microbit/v0.12.35)
@@ -68,14 +75,14 @@ Release notes for the micro:bit editor...
 May 19, 2017 by [Jaqster](https://github.com/Jaqster)
 
 The Microsoft MakeCode team is proud to announce a great partnership
-with our good friends over at Adafruit Industries. 
+with our good friends over at Adafruit Industries.
 **[Read more](/blog/adafruit-cplay-express)**
 
 ## [Minecraft Code Builder](/blog/minecraft-code-builder)
 
 May 2, 2017 by [Jaqster](https://github.com/Jaqster)
 
-Learn to code using Microsoft MakeCode and Minecraft Education! 
+Learn to code using Microsoft MakeCode and Minecraft Education!
 **[Read more](/blog/minecraft-code-builder)**
 
 ## [Programming the micro:bit on the Apple II](/blog/appleII)

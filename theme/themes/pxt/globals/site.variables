@@ -24,7 +24,7 @@
 @greenTextColor: darken(@green, 5);
 
 @lightTextColor              : rgba(0, 0, 0, 0.68);
-@invertedUnselectedTextColor : rgba(255, 255, 255, 0.8); 
+@invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
 
 @pageBackground: #ffffff;
 
@@ -72,7 +72,7 @@
 /*-------------------
      Neutral Text
 --------------------*/
- 
+
 @invertedLightTextColor      : rgba(255, 255, 255, 0.9);
 
 /*******************************
@@ -248,3 +248,10 @@
 
 @tutorialSegmentBackground: #f8f8f9;
 @tutorialSegmentColor: @textColor;
+
+/*-------------------
+    Banner
+-------------------*/
+@bannerHeight: 2rem;
+@bannerBackgroundColor: black;
+@bannerContrastColor: white;
