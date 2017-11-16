@@ -1,17 +1,22 @@
-- James to work on codal.tex to make examples align with Figure 1
-- Figure 6 and 7 to align with Figure 1
+James: Figure 7 text large
+Tom: add "maker" to intro
+
+- Steve to work on conclusion, reminding readers of the three As
+  and summarizing how we did
+  
+- Michal to make pass over eval
+  - code size of VM
+  - make clear performance of VM in computational context
+  - tagged vs. untagged
 
 - Running example: make clear that the CPXs are communicating via
   light emission and detection (novel feature of physical computing)
 
 - Related work: should cite and compare to TinyOS, which is pretty well-known
 
-- Michal to make pass over eval
-- make clear performance of VM in computational context
-- tagged vs. untagged
-
 - add a sentence that the system has been deployed, with users
   across EU and North America (over the last year)
+  - thousands???
 
 - make sure to note that event block in screensnapshot comes from C++ code
 
