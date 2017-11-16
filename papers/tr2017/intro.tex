@@ -162,15 +162,13 @@ third registers a lambda function to run forever on a fiber (line 18),
 to keep track of time and pulse the CPX's 10 LEDs whenever the
 clock reaches 8.
 
-Note that this program is a JavaScript program, as there are no
-types mentioned explicitly. However, all the functions called in
-this program are part of the runtime and are explicitly
-typed. This program is a Static TypeScript program:
+Note that although this program appears as a JavaScript program (there are no
+types mentioned explicitly), this program is a Static TypeScript program:
 the static type of every variable and expression
 can be inferred and passes the more restrictive checks
 of Static TypeScript, as detailed in Section~\ref{sec:sts}.
 
-The program also shows off the use of the non-preemptive concurrency
+The program also demonstrates the use of the non-preemptive concurrency
 model supported by both \MC (for JavaScript) and \CO (for C++).
 The forever procedure executes the lambda inside a ``while (true)''
 loop that yields (via a call to \emph{basic.pause}) after each call to the lambda.
