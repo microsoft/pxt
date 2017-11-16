@@ -590,8 +590,9 @@ namespace pxt.blocks {
             let regex = /([^`]+|(`([^`]*)`))/gi;
             let match: RegExpExecArray;
             while (match = regex.exec(pre)) {
-                if (match[3]) {
-                    i.appendField(iconToFieldImage(match[3]));
+                let img: B.FieldImage;
+                if (match[3] && (img = iconToFieldImage(match[3]))) {
+                    i.appendField(img);
                 } else {
                     i.appendField(match[1]);
                 }
@@ -3213,17 +3214,22 @@ namespace pxt.blocks {
         }
     }
 
-    let iconCanvasCache: Map<string> = {};
+    let jresIconCache: Map<string> = {};
     function iconToFieldImage(id: string): Blockly.FieldImage {
-        let url = iconCanvasCache[id];
+        let url = jresIconCache[id];
+        if (!url) {
+            pxt.log(`missing jres icon ${id}`)
+            return undefined;
+        }
         return new Blockly.FieldImage(url, 30, 30, false, '');
     }
 
     function initJresIcons(blockInfo: pxtc.BlocksInfo) {
+        jresIconCache = {}; // clear previous cache
         Object.keys(blockInfo.jres).forEach((jresId) => {
             const jresObject = blockInfo.jres[jresId];
             if (jresObject && jresObject.icon)
-                iconCanvasCache[jresId] = jresObject.icon;
+                jresIconCache[jresId] = jresObject.icon;
         })
     }
 }
