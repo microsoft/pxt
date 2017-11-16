@@ -84,6 +84,8 @@ namespace pxt.editor {
     }
 
     export interface InitializeResponse extends ExtensionResponse {
+        target?: pxt.AppTarget;
+        paths?: pxt.Map<string>;
     }
 
     /**
