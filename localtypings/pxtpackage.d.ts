@@ -53,7 +53,7 @@ declare namespace pxt {
         label?: string; // Label for the flyout button, defaults to `Editor`
         color?: string; // for new category, category color
         advanced?: boolean; // for new category, is category advanced
-        localUrl?: boolean; // local debugging URL used when served through pxt serve and debugExtensions=1 mode
+        localUrl?: string; // local debugging URL used when served through pxt serve and debugExtensions=1 mode
     }
 
     interface PlatformIOConfig {
