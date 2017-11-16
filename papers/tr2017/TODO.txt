@@ -12,6 +12,7 @@
 - replace microcontroller by MCU (space)
 - replace Static TypeScript by STS (space)
 
-- FINAL STEP: SPELL CHECK
+- FINAL STEPs:
+  - space
+  - make tables and figures fit in margins
 
-question
