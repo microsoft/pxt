@@ -8,10 +8,9 @@ view of the JavaScript from Figure~\ref{fig:example}.}
 
 \section{\MCN: Design and Implementation}
 \label{sec:makecode}
-
-The key technical contribution of \MC is to provide users a simple progression from block-based
-programming in Blocky, to text-based programming in JavaScript (actually, Static TypeScript) 
-using Monaco, while leveraging C++ on the backend for efficient use of MCU resources.
+% @TOM REVIEW:
+The key technical contribution of \MC is to provide users with a safe environment to write programs for MCUs, enabling a simple progression from block-based
+programming using Blocky, to text-based programming in JavaScript (actually, Static TypeScript) using Monaco, while leveraging C++ on the backend for efficient use of MCU resources.
 
 Figure~\ref{fig:screenSnap} shows a screen snapshot of the \MC web app for the CPX.
 There are five parts of the web app labelled in the figure:
@@ -27,7 +26,7 @@ The web app is written in TypeScript and incorporates the TypeScript compiler an
 language service as well.
 The app is built from a \MC ``target'' (\emph{\dbhref{https://github.com/microsoft/pxt-adafruit}{pxt-adafruit}})
 which parameterizes the \MC framework (\emph{\dbhref{https://github.com/microsoft/pxt}{pxt}}).
-The remaining subsections describe the parts of Figure~\ref{fig:makecode}, 
+The remaining subsections describe the parts of Figure~\ref{fig:makecode},
 which shows the high-level components of the web app.
 
 \subsection{Device runtime and Shim Generation}
@@ -35,16 +34,16 @@ which shows the high-level components of the web app.
 A \MC target is defined, in part, by its device runtime, which can be a combination of C++
 and Static TypeScript (STS) code, as shown in the lower-left of Figure~\ref{fig:makecode}.
 All the target's C++ files are precompiled (by a C++ compiler in the cloud)
-into a binary, which is stored in the cloud in a single blob, and cached in the HTML5 application cache (with 
+into a binary, which is stored in the cloud in a single blob, and cached in the HTML5 application cache (with
 other assets) so that the web app can function when the browser is offline. Additional runtime
-components may be authored in STS, which allows the device runtime to be updated without the
+components may be authored in STS, which allows the device runtime to be extended without the
 use of C++, and permits components of the device runtime to be shared by both the device
 and simulator runtimes. The ability to author the device runtime in both STS and C++ is
 a unique aspect of \MCN's design.
 
 Whether runtime components are authored in C++ or STS, all runtime APIs are exposed as fully-typed
-TypeScript definitions. A fully-typed runtime improves the end-user experience 
-by making it easier to discover APIs; it also enables the type inference provided by the TypeScript 
+TypeScript definitions. A fully-typed runtime improves the end-user experience
+by making it easier to discover APIs; it also enables the type inference provided by the TypeScript
 compiler to infer types for (unannotated) user programs, as shown in Figure~\ref{fig:example}.
 
 \MC supports a simple foreign function interface from TypeScript to C++ based on namespaces,
@@ -122,7 +121,7 @@ enum class LightCondition {
 \end{lstlisting}
 is represented by a dropdown menu for a parameter of type \emph{LightCondition}, as found in
 the function \emph{onLightConditionChanged}.
- 
+
 \MCN's support for Blockly means that for the common case, the target developer doesn't need
 to know anything about the Blockly framework.
 For more sophisticated needs, one can directly access the Blockly framework.
@@ -134,7 +133,7 @@ As shown in the upper-left of Figure~\ref{fig:makecode},
 visual blocks or TypeScript. The editing experience is parameterized by the full-typed device
 runtime, which provides a set of categorized APIs to the end-user, based on namespaces, as
 previously described. These APIs are visible in both editors via a toolbox (Figure~\ref{fig:screenSnap}(C))
-to the immediate left of the programming area. 
+to the immediate left of the programming area.
 
 \MC compiles the Blockly program representation to STS in a syntax-directed manner.
 A key issue is the need for type inference on the Blockly representation, as variables generally are defined and used without
@@ -151,7 +150,7 @@ the program text of the grey blocks when converting from Blockly back to TypeScr
 
 \subsection{Browser compilation}
 
-\MC first invokes the TypeScript language service to perform type inference and type checking on the 
+When a user requests a download of the compiled binary, \MC first invokes the TypeScript language service to perform type inference and type checking on the
 user's program, the device runtime written in TypeScript, as well as the TypeScript declarations
 corresponding to the C++ device runtime. It then checks that the
 combined TypeScript program is within the STS subset through additional syntactic and type checks over the typed AST (detailed in Section~\ref{sec:sts}).  Assuming all the
@@ -167,10 +166,12 @@ for execution against the simulator runtime.  A second backend generates assembl
 processor description.  Currently supported processors include ARM's Cortex class (Thumb instructions)
 and Atmel's ATmega class (AVR instructions). A separate assembler, also parameterized by an instruction
 encoder/decoder, generates machine code and resolves runtime references, producing a final binary executable. A third backend generates bytecode instructions.
-\MC can encode the resulting binary in several formats, 
+\MC can encode the resulting binary in several formats,
 including Intel's HEX format and the \UF format, documented in the Appendix (Section~\ref{sec:uf2}).
 
 \subsubsection{Asynchronous Functions}
+
+% TOM: CONTEXT?
 
 An important part of the compilation process is to allow users to call asynchronous
 TypeScript functions (identified through the \emph{//\% async} annotation)
@@ -208,6 +209,8 @@ boxed doubles. Special constants like \texttt{false}, \texttt{null} and \texttt{
 and can be distinguished. The tagged execution strategy has the capability to fully support
 JavaScript semantics. This strategy is used for all SAMD21 targets, including the CPX.
 
+% TOM: WHY ARE ARE THE UNTAGGED STATEGIES USED FOR MB AND UNO, AND TAGGED USED FOR CPLAY? MORE CONTEXT REQUIRED.
+
 \subsection{Simulator}
 
 A \MC target can provide an alternate TypeScript implementation for each API in the device runtime, for use in the device
@@ -217,10 +220,10 @@ associated device; in these cases, the ``device runtime'' is defined solely by t
 
 As shown in Figure~\ref{fig:screenSnap}(B), the simulator allows the user to experience the basic functions of the device
 in the browser and to test their code
-before deploying it to the actual device. The simulator has proxy widgets for sensors such as the 
-light detector, temperature and accelerometer, allowing the user to control the sensor's value.  
+before deploying it to the actual device. The simulator has proxy widgets for sensors such as the
+light detector, temperature and accelerometer, allowing the user to control the sensor's value.
 The simulator only provides basic functionality
-and is far from a complete device emulator. 
+and is far from a complete device emulator.
 % For example, it is not possible for the user to simultaneously modify two
 %inputs to the simulated device, while it is possible with the actual device (i.e., shaking it to change the accelerometer
 %reading while pushing one of the device's buttons).
