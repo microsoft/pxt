@@ -116,7 +116,7 @@ A naiive approach to multithreading would execute event handlers in separate fib
 \caption{\label{table:flash-consumption}The total flash consumption of code required to support \MC.}
 \end{table}
 
-Table~\ref{table:flash-consumption} shows the flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library and optionally, mbed.
+Table~\ref{table:flash-consumption} shows the per device flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library and optionally, mbed.
 
 From the bottom up, the profile of the standard library changes dramatically for each device: The Uno has a very lightweight standard library; the microbit uses 64-bit integer operations (for timers) which requires extra standard library functions; and the CircuitPlayground requires virtualised floating point operations pulling in more standard library functions.
 
@@ -127,8 +127,27 @@ The size of \CO and \MC scales linearly with the amount of functionality a devic
 The modular composition of \CO allows us to support multiple devices with a variety of feature sets, whilst maintaining the same API at the \MC layer.
 
 \subsection{RAM Consumption}
-%TODO: GET DATA ;(
 
+\begin{table}[]
+\centering
+\begin{tabular}{c|c|c|c|}
+\cline{2-4}
+                                                                                                & CPlay & micro:bit & Uno   \\ \hline
+\multicolumn{1}{|c|}{WA}                                                                       & 0.612 & 1.069     & 0.074 \\ \hline
+\multicolumn{1}{|c|}{RT}                                                                       & 1.369 & 0.214     & 0.156 \\ \hline
+\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}mbed and Supporting \\ Libraries\end{tabular}} & 0.312 & 0.923     & -     \\ \hline
+\multicolumn{1}{|c|}{C++ Standard Library}                                                     & 0.161 & 0.149     & 0.074 \\ \hline
+\end{tabular}
+\caption{\label{table:ram-consumption}The total static ram consumption of for an \MC binary.}
+\end{table}
+
+Table~\ref{table:ram-consumption} shows the per device ram consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation.
+
+At runtime MakeCode dynamically allocates memory: 1.56 kB for the CircuitPlayground, 560 bytes for the micro:bit, and 644 bytes for the Uno.
+
+From the table, the micro:bit uses substantially more global space than \CO, yet the reverse is true for the other two devices. The micro:bit operates off of a slightly older code base from the other two devices, over time, we have begun to pull functionality added the \MC layer back down into codal.
+
+For the CircuitPlayground, the globals consumption for \CO is slightly higher. Due to the extra RAM, an unusual luxury, we add a 1K serial buffer so that users can log large amounts of data if required.
 % Add globals maps and profile of listener and fiber.
 
 % The CPX runtime is the largest, as the CPX device has lots of on-board
