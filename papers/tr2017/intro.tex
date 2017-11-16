@@ -14,7 +14,7 @@ industrial automation, and smart grids - a phenomenon broadly referred to as the
 
 MCUs are highly resource limited devices, but are not simply smaller versions of laptop and desktop machines.
 They are architecturally quite distinct. If we are to undertand how to optimize
-programming languages and their implementation for such devices it is worth dwelling on the key characteristics of MCUs, namely their storage and CPU capabilities. 
+programming languages and their implementation for such devices it is worth dwelling on the key characteristics of MCUs, namely their storage and CPU capabilities.
 Table \ref{table:devices} highlights the core capabilities of MCU-based devices
 vs. a typical PC.
 
@@ -24,16 +24,16 @@ vs. a typical PC.
     \hline
                            &          &              & \bf{Word}  & \bf{CPU} &            \\
     \bf{Device}            & \bf{RAM} & \bf{Flash}   & \bf{Size}  & \bf{Speed} & \bf{CPU}  \\ \hline
-    Uno            & 2 KB       & 32 KB      & 8          & 16MHz & AVR       \\ \hline
-    micro:bit          & 16 KB      & 256 KB     & 32         & 16MHz & Cortex     \\ \hline
-    CPX           & 32 KB      & 256 KB     & 32         & 48MHz & Cortex    \\ \hline
+    Uno            & 2 kB       & 32 kB      & 8          & 16MHz & AVR       \\ \hline
+    micro:bit          & 16 kB      & 256 kB     & 32         & 16MHz & Cortex     \\ \hline
+    CPX           & 32 kB      & 256 kB     & 32         & 48MHz & Cortex    \\ \hline
     PC             & 16 GB      & 1 TB       & 64         & 3GHz & Intel      \\ \hline
     \end{tabular}
     \caption{\label{table:devices}Example microcontroller devices in relationship to a typical PC. Device abbreviations: Uno (Arduino Uno), micro:bit (BBC micro:bit), CPX (Adafruit Circuit Playground Express); PC (Personal Computer).}
     \end{table}
 
 While it is clear that all such devices are highly resource contrained compared to modern PCs
-(about six orders of magnitude less on most metrics), a deeper analysis derives two further observations.
+(about six orders of magnitude less on some metrics), a deeper analysis derives two further observations.
 
 Firstly, \emph{MCUs are processor rich}. Contrary to first impressions, these devices have
 a \emph{proportionally} large amount of processing power. Consider the BBC micro:bit
