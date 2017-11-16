@@ -64,8 +64,8 @@ and the ability to statically inherit implementation from super classes. Per the
 \item ``object types are composed from properties, call signatures, construct signatures, and index signatures, collectively called members'';
 \item ``interfaces provide the ability to name and parameterize object types and to compose existing named object types into new ones.''.
 \end{itemize}
-Object types and the interface declarations that describe them enable the typing of a JavaScript object that plays multiple roles
-(as a function, dictionary, etc.). For example, here is an interface that describes an object that is a function from number to number
+Object types and the interface declarations that describe them enable the typing of a JavaScript object that plays multiple roles.
+For example, here is an interface that describes an object that is a function from number to number
 and also has property (foo) which is a string:
 \begin{lstlisting}
 interface Bar {
@@ -108,8 +108,7 @@ Furthermore, STS permits a cast from a class type
 to a record supertype, but does not allow any casts from record types to class types. This means
 it is possible to use interfaces to abstract over classes, as in Java and C\#.
 
-Finally, STS enforces that a function may not be assigned to a property of a record type,
-though it is possible to construct records with function properties using object literals.
+Finally, STS enforces that a function may not be assigned to a property of a class type.
 
 \subsection{Subtyping and Type Checking}
 
@@ -117,8 +116,8 @@ Given the above, STS's subtype relation is unsurprising and defined in the appen
 STS type checking for (pure) expressions remains the same as in TypeScript.
 Type checking at assignments, where a value of type $S$ flows (is assigned to)
 into a location of type $T$ uses the new subtyping relation: $S$
-must be a subtype of $T$.  Downcasts (a supertype being assigned to a subtype)
-are not permitted in STS.
+must be a subtype of $T$.  Downcasts (a value of supertype flowing to where a subtype
+is expected) are not permitted in STS.
 
 
 
