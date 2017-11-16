@@ -8,7 +8,7 @@ for MCUs.
 
 \subsection{Programming microcontrollers}
 
-There are four basic ways to program MCUs,
+There are four ways to program MCUs,
 (ordered roughly from lower to greater resource usage):
 \begin{itemize}
 \item[1.] a program executing on a host computer sends commands (via some communication protocol)
@@ -84,10 +84,7 @@ JavaScript~\cite{ChandraOOPSLA2016} is one path forward.
 
 \subsection{Embedded Runtime Environments}
 
-Typically written in C and/or C++, environments for MCU programming all share
-a common design goal: to support developers by providing primitives and programming
-abstractions. Platforms can range from simple C++ classes that control hardware,
-to real-time operating systems (RTOSs) with scheduling and memory management.
+Typically written in C and/or C++, environments for MCU programming all share a common design goal: to support developers by providing primitives and programming abstractions. Platforms can range from simple C++ classes that control hardware, to real-time operating systems (RTOSs) with scheduling and memory management.
 
 Arduino~\cite{buildingArduino2014} is an example of a simple platform where the developer uses
 high-level APIs to control hardware; there is no scheduler, and memory management
