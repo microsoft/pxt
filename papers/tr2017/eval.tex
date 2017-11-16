@@ -63,33 +63,51 @@ to ensure logging does not affect time-related measurements.
 To place the performance of \MC in context, we perform a comparative evaluation of \MC against two state-of-the-art 
 solutions, using the native C++ as our baseline. The two points of comparison are MicroPython~\cite{MicroPython}, an implementation 
 of Python for microcontrollers, and Espruino~\cite{espruinoBook}, an implementation of JavaScript for micrcontrollers. 
-For the CPX, a fork of MicroPython known as 'CircuitPython' was used. Both micropython and Espruino adopt virtual machine based
+For the CPX, a fork of MicroPython known as 'CircuitPython' was used. Both MicroPython and Espruino adopt virtual machine based
 approaches.
 
 To give an indicative general case execution time cost of each solution, we created a simple program that simply 
 counts for 0..100000 in a tight loop in each solutions' respective language; 
 the results are shown in Table~\ref{table:vm-comparison}. 
+On AVR we only count to 25000, to fit in the 16 bit \texttt{int}, and scale up the results.
 
 For the micro:bit, MicroPython and Espruino are \emph{two or more orders of magnitude slower} than a native \CO program. 
-\MC performs only 2x slower. This reflects the simplicity of the STS compiler.
-it should be noted that \MC for the CPX uses the tagged approach, which allows for seamless runtime switching to floating point numbers,
+\MC performs only 2x slower. The slowdown reflects the simplicity of the STS compiler.
+It should be noted that \MC for the CPX uses the tagged approach, which allows for seamless runtime switching to floating point numbers,
 resulting in a further 3x slowdown. For both devices, we can observe that \MC outperforms both the VM-based solutions of MicroPython and 
-Espruino by at least an order of magnitude. It should also be noted that the Arduino Uno was not used for this comparative experiement as 
+Espruino by at least an order of magnitude. 
+
+MicroPython and similar environment do not run on Arduino Uno due to flash and RAM size limitations.
+We have also run into these, and as a result developed two compilation modes for AVR.
+One compiles STS to AVR machine code, and the other (\MC VM) generates density-optimized byte code for 
+tiny (around 500 bytes of code) interpreter.
+The native strategy achieves code density of about 60.8 bytes per statement,
+which translates into space for 150 lines of user code.
+The VM achieves 12.3 bytes per statement allowing for about 800 lines.
+For comparison, the ARM Thumb code generator used in other targets achieves
+37.5 bytes per statement, but due to the larger flash sizes we did not run
+into space issues.
+
+% Since the Uno is an extremely resource constrained device, the AVR VM was specifically designed for high code density. The interpreter is implemented in assembly, always included with the program, and is around 0.5k. There are about 30 opcodes, some of which can take 1 or 2 byte arguments. There are also a few combined opcodes, representing a sequence of one argument-less opcode, and one with an argument, which improves code density by about 25\%. Opcodes are direct offsets into the code of the interpreter, speeding up execution. They operate on a stack (mainly for function calls) and a special scratch register. There is essentially no stack space overhead compared to native AVR compilation. The speed overhead is around 4x-5x (with respect to native) for computational tasks.
+
 MicroPython and Espruino currently require more RAM and FLASH resource than is available in this device.
 
 \begin{table}[]
     \centering
     
-    \begin{tabular}{c|c|c|}
-    \cline{2-3}
-    \multicolumn{1}{l|}{}             & micro:bit       & CPX \\ \cline{2-3}
-    \multicolumn{1}{l|}{}             & Time Taken (ms) & Time Taken (ms)   \\ \hline
-    \multicolumn{1}{|c|}{\CO}       & 102             & 30.94             \\ \hline
-    \multicolumn{1}{|c|}{\MC}    & 216.8           & 227             \\ \hline
-    \multicolumn{1}{|c|}{micropython} & 10000           & 5679              \\ \hline
-    \multicolumn{1}{|c|}{Espruino}    & 115600          & -                 \\ \hline
+    \begin{tabular}{c|c|c|c|}
+    \cline{2-4}
+    \multicolumn{1}{l|}{}             & UNO    & micro:bit & CPX   \\ \cline{1-4}
+    \multicolumn{1}{|c|}{\CO}         & 171ms  & 102ms     & 31ms  \\ \hline
+    \multicolumn{1}{|c|}{\MC}         & 2.4x   & 2.1x      & 7.3x  \\ \hline
+    \multicolumn{1}{|c|}{\MC VM}      & 15.3x  & -         & -     \\ \hline
+    \multicolumn{1}{|c|}{MicroPython} & -      & 98x       & 183x  \\ \hline
+    \multicolumn{1}{|c|}{Espruino}    & -      & 1133x     & -     \\ \hline
     \end{tabular}
-    \caption{\label{table:vm-comparison} A comparison between Micropython, Espruino, \MC, and the native C++ of \CO.}
+    \caption{\label{table:vm-comparison} A comparison of execution speed between native C++ with \CO, \MC compiled
+    to native machine code, \MC compiled to AVR VM, MicroPython and Espruino.
+    First line lists C++ time, while subsequent lines are slowdowns with respect to the C++ time.
+    The 6.4x slowdown of \MC VM compared to native \MC on AVR is compensated with 5x better code density.}
     \end{table}
     
 
@@ -197,32 +215,7 @@ Table~\ref{table:ram-consumption} shows the per device ram consumption of each s
 % The TypeScript part of the runtime is 1060 statements on the CPX and 216 on the Uno.
 % In our microbenchmarks, 99\% of that runtime is tree-shaken away.
 
-\subsection{\MC Native vs. \MC VM}
-
-Since some MCU's (such as the Arduino Uno) have very little flash memory and quite 
-verbose machine code we also built a tiny (around 500 bytes of code) interpreter 
-for a simple byte code optimized for code density. This allows us to gain further insights into the 
-benefits and drawbacks of compiled vs. interpreted code execution on MCUs.
-Table~\ref{table:c-native-vm-stats} describes the difference in performance for the native implementation and the VM implementation with respect to a C++ benchmark. With low computational complexity, the VM performs similarly to native, however, introducing computational tasks causes the VM to operate up to 5 times slower than the native implementation, but provides a 4x improvement in code density.
-
-% Since the Uno is an extremely resource constrained device, the AVR VM was specifically designed for high code density. The interpreter is implemented in assembly, always included with the program, and is around 0.5k. There are about 30 opcodes, some of which can take 1 or 2 byte arguments. There are also a few combined opcodes, representing a sequence of one argument-less opcode, and one with an argument, which improves code density by about 25\%. Opcodes are direct offsets into the code of the interpreter, speeding up execution. They operate on a stack (mainly for function calls) and a special scratch register. There is essentially no stack space overhead compared to native AVR compilation. The speed overhead is around 4x-5x (with respect to native) for computational tasks.
-
-\begin{table}[]
-\centering
-\begin{tabular}{c|c|c|}
-\cline{2-3}
-                                    & \begin{tabular}[c]{@{}c@{}}Context Switch Time \\ (microseconds)\end{tabular} & Stack size (bytes) \\ \hline
-\multicolumn{1}{|c|}{Uno C++}       & 35.62                                                                         & 16                 \\ \hline
-\multicolumn{1}{|c|}{Uno Native WA} & 53.8                                                                          & 34                 \\ \hline
-\multicolumn{1}{|c|}{Uno VM WA}     & 62.9                                                                          & 41                 \\ \hline
-\end{tabular}
-
-\caption{\label{table:c-native-vm-stats}Context switch performance and stack size for C++, Static TypeScript Native, and virtualised Static TypeScript}
-\end{table}
-
 \subsection{Compiling Static TypeScript}
-
-When compiling the Static TypeScript benchmarks and runtime with code shaking we obtain a generated code density of 37.5 bytes per statement on the CPX, 60.8 on AVR native, and 12.3 on AVR VM. This excludes string literals (which don't change the picture significantly), but includes class vtables and number literals if any. Note that ARM and AVR native instructions are 2 bytes each, while AVR VM instructions are between 0.5 and 3 bytes.
 
 When compiling, the entire TypeScript program, including the runtime, is
 passed to the TypeScript (TS) language service for parsing. Then, only the remaining part of the program (after code shaking) is compiled to native code.
