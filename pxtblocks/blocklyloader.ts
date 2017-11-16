@@ -587,7 +587,7 @@ namespace pxt.blocks {
     function initField(i: any, ni: number, fn: pxtc.SymbolInfo, ns: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string, nsinfo?: pxtc.SymbolInfo): any {
         if (pre && pre.indexOf('`') > -1) {
             // parse and create icon fields for every inline icon
-            let regex = /([^`]+|(`([^`]*)`))/gi;
+            let regex = /([^`]+|(`([^`]+)`))/gi;
             let match: RegExpExecArray;
             while (match = regex.exec(pre)) {
                 let img: B.FieldImage;
