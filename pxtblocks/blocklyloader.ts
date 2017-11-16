@@ -1910,7 +1910,7 @@ namespace pxt.blocks {
      */
     function initDrag() {
         const calculateDistance = (elemBounds: any, mouseX: any) => {
-            return Math.floor(mouseX - (elemBounds.left + (elemBounds.width / 2)));
+            return Math.abs(mouseX - (elemBounds.left + (elemBounds.width / 2)));
         }
 
         /**
