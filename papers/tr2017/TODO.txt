@@ -17,8 +17,9 @@
 
 - replace microcontroller by MCU (space)
 - replace Static TypeScript by STS (space)
+- replace basic.pause by loops.pause
 
 - FINAL STEPs:
-  - space
+  - space (reduce the WA section -- too much!)
   - make tables and figures fit in margins
 
