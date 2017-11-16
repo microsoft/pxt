@@ -46,8 +46,8 @@ namespace pxt.blocks {
         }
     }
 
-    export function advancedTitle() { return  Util.lf("{id:category}Advanced"); }
-    export function addPackageTitle() {  return Util.lf("{id:category}Extensions"); }
+    export function advancedTitle() { return Util.lf("{id:category}Advanced"); }
+    export function addPackageTitle() { return Util.lf("{id:category}Extensions"); }
 
     // Matches arrays and tuple types
     const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
@@ -3226,10 +3226,11 @@ namespace pxt.blocks {
 
     function initJresIcons(blockInfo: pxtc.BlocksInfo) {
         jresIconCache = {}; // clear previous cache
-        Object.keys(blockInfo.jres).forEach((jresId) => {
-            const jresObject = blockInfo.jres[jresId];
-            if (jresObject && jresObject.icon)
-                jresIconCache[jresId] = jresObject.icon;
-        })
+        if (blockInfo.jres)
+            Object.keys(blockInfo.jres).forEach((jresId) => {
+                const jresObject = blockInfo.jres[jresId];
+                if (jresObject && jresObject.icon)
+                    jresIconCache[jresId] = jresObject.icon;
+            })
     }
 }
