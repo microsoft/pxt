@@ -3226,11 +3226,13 @@ namespace pxt.blocks {
 
     function initJresIcons(blockInfo: pxtc.BlocksInfo) {
         jresIconCache = {}; // clear previous cache
-        if (blockInfo.jres)
-            Object.keys(blockInfo.jres).forEach((jresId) => {
-                const jresObject = blockInfo.jres[jresId];
-                if (jresObject && jresObject.icon)
-                    jresIconCache[jresId] = jresObject.icon;
-            })
+        const jres = blockInfo.apis.jres;
+        if (!jres) return;
+
+        Object.keys(jres).forEach((jresId) => {
+            const jresObject = jres[jresId];
+            if (jresObject && jresObject.icon)
+                jresIconCache[jresId] = jresObject.icon;
+        })
     }
 }

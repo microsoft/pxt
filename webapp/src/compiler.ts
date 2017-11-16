@@ -176,7 +176,6 @@ export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
 let firstTypecheck: Promise<void>;
 let cachedApis: pxtc.ApisInfo;
 let cachedBlocks: pxtc.BlocksInfo;
-let cachedCompileOptions: pxtc.CompileOptions;
 let refreshApis = false;
 
 function waitForFirstTypecheckAsync() {
@@ -212,7 +211,6 @@ export function formatAsync(input: string, pos: number) {
 export function typecheckAsync() {
     let p = pkg.mainPkg.getCompileOptionsAsync()
         .then(opts => {
-            cachedCompileOptions = opts;
             opts.testMode = true // show errors in all top-level code
             return workerOpAsync("setOptions", { options: opts })
         })
@@ -234,7 +232,6 @@ export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
         ? Promise.resolve(cachedBlocks)
         : getApisInfoAsync().then(info => {
             cachedBlocks = pxtc.getBlocksInfo(info);
-            cachedBlocks.jres = cachedCompileOptions.jres;
             return cachedBlocks;
         });
 }
