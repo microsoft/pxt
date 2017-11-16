@@ -1,43 +1,89 @@
 \section{Introduction}
 \label{sec:intro}
 
-Over the last decade, microcontrollers, the workhorses of embedded systems, have found
-new uses in making~\cite{dougherty2012maker} and education. For example, the Arduino project
-(\url{www.arduino.cc})~\cite{buildingArduino2014},
-started in 2003, created the Uno board using an 8-bit Atmel
-AVR microcontroller with 2Kb of RAM and 32Kb of Flash.
-The Arduino ecosystem has grown over the past 15 years,
-with the support of companies such as Adafruit Industries (\url{www.adafruit.com}),
-who resell Arduino and make their own Arduino-compatible boards. Arduino projects
-are plentiful, relying heavily on the Arduino IDE and its C/C++ programming model.
+% The emergence of a new breed of computer
+Embedded devices are growing impressively in popularity and ubiquity in recent years.
+This growth can be attributed to the emergence of new application domains inspired by small,
+highly resource constrained programmable processors known as microcontroller units (or MCUs),
+which can have as little as a few kilobytes of RAM. It is now the case that less than 1 percent of
+the world's processors reside in general purpose computers such as desktop PCs, laptops and tablets
+- with MCUs picking up the remainder~\cite{borriello2000embedded}.
+Furthermore, demand for MCUs continues to grow due to their use in the monitoring and
+control of a wide variety of systems, ranging from wearables, to home automation,
+industrial automation, and smart grids - a phenomenon broadly referred to as the Internet of Things (IoT).
 
-Furthermore, demand for microcontrollers grows due to their use in the monitoring and controlling
-of a wide variety of systems, ranging from wearables, to home automation, to industrial
-automation and smart grids. \emph{compare CPU to microcontroller - what distinguishes MCU from CPU -
-compute to memory ratio - MCU has simple pipeline, very predictable performance - use of concurrency
-to structure reactive systems}
-Application programming of microcontrollers generally requires a professional
-development environment. [TO BE FURTHER EXPANDED BY JOE]
+MCUs are highly resource limited devices, but are not simply smaller versions of laptop and desktops.
+They are architecturally quite distinct. If we are to undertand how to optimize
+programming languages and their implementation for such devices it is worth dwelling on their key characteristics.
+Table \ref{table:devices} highlights the core capabilities of three state of the art devices vs. a typical PC.
 
-With a surge in the demand for microcontrollers across a wide
-spectrum of applications, there is a need to simplify the programming
-of such devices so that more people can participate in the creation
-of microcontroller-based systems. Web-based visual editors such as
-Blockly (\url{https://developers.google.com/blockly/})~\cite{Blocky2015}
-are tremendously popular and allow the creation of programs without the
-possibility of syntax errors, and that execute in the web browser (Blockly
-is written in JavaScript and compiles user code to JavaScript).
-However, JavaScript's dynamic nature is not well-suited to the world of
-microcontrollers where memory is limited (consider the Arduino Uno mentioned above).
+\begin{table}[]
+    \centering
+    \begin{tabular}{|l|r|r|r|r|r|}
+    \hline
+                           &          &              & \bf{Word}  &                 \\
+    \bf{Device}            & \bf{RAM} & \bf{Flash}   & \bf{Size}  & \bf{CPU Speed}  \\ \hline
+    Arduino Uno            & 2 KB       & 32 KB      & 8          & 16MHz AVR       \\ \hline
+    BBC micro:bit          & 16 KB      & 256 KB     & 32         & 16MHz nRF51     \\ \hline
+    Adafruit CPX           & 32 KB      & 256 KB     & 32         & 48MHz SAM    \\ \hline
+    Typical PC             & 16 GB      & 1 TB       & 64         & 3GHz Intel      \\ \hline
+    \end{tabular}
+    \caption{\label{table:devices}Example microcontroller devices in relationship to a typical PC (SAM = SAMD21).}
+    \end{table}
 
-We present a platform that bridges the world of the web and the microcontroller with three
-novel technologies:
+While it is clear that all such devices are highly resource contrained compared to modern PCs
+(about six orders of magnitude on most metrics), a deeper analysis derive two further key observations.
+
+Firstly, \emph{MCUs are processor rich}. Contrary to first impressions, these devices have
+a \emph{proportionally} large amount of processing power. For example - consider the BBC micro:bit
+versus a typical PC. It has about 100 times less CPU power, but 10\textsuperscript{6} times less RAM,
+and 10\textsuperscript{6} time less storage. A language/runtime designed for MCUs should therefore not
+only seek to provide high code density and spatial efficiency,
+\emph{but to actively trade off CPU for spatial efficiency where possible}.
+
+Secondly, \emph{MCUs are accumulating more features on chip}.
+MCUs still follow Moore's law (the number of transistors doubles roughly every two years).
+However, this additional capacity is
+not typically invested in simply optimizing processing power. Instead, \emph{independent peripherals}
+are integrated onto the same silicon chip as the CPU. Examples include integrated radio hardware such
+as Bluetooth/WiFi and audio inputs and outputs. This hardware is designed to run independently of the
+CPU, hence an effective language/runtime should directly support \emph{an asynchronous
+interaction model}.
+
+% Despite this languages and programming environments have yet to keep pace with the mainstream (e.g. Arduino/mbed)
+Furthermore, with this surge in the demand for MCUs across a wide spectrum of applications,
+there is a need to simplify the programming of such devices so that more people can participate in
+the creation of MCU-based systems. From rapid product innovation to education,
+we have seen a sustained growth in the volume and diversity of people wishing to program MCU-based devices. These new application developers share a common characterisitic - \emph{they are typically not professional software developers}~\cite{dougherty2012maker,bruce2015make,maksimovic2014raspberry}.
+
+Programming languages and development environments for MCUs have not kept pace with these advances
+in hardware and diversification of user domains. Elsewhere, we have long supported inexperienced developers through
+modern high level text-based languages for application development such as Java, C\#, Python and Javascript, and also
+through visual programming languages based on frameworks such as Blockly.
+
+In the world of the MCU, the C/C++ languages remain the standard, and for good reason.
+They provide a familiar imperative programming model, with compilers that produce highly efficient code (in terms of both
+temporal and spatial complexity), and enable low level access to hardware features when necessary. Examples
+of this are commonplace, such as the Arduino project (\url{www.arduino.cc})~\cite{buildingArduino2014},
+started in 2003, and ARM's Mbed platform (\url{www.mbed.org})~\cite{ARMmbed} - both of which rely heavily on
+a C/C++ programming model. However, the limitations of using C/C++ as an application programming language for
+\emph{inexperienced} developers are well understood~\cite{blikstein2013gears}.
+
+% Paper overview
+In this paper we introduce a novel architecture for MCU-based devices,
+that is designed with three aspirational goals in mind:
+(1) it should be usable by \emph{anyone}, not just trained professionals;
+(2) it should be available \emph{anywhere}, requiring no specialized software (native applications
+or device drivers) to operate;
+(3) it should run efficiently on \emph{anything}, from devices with as little as 2KB of memory.
+
+In this paper we focus on the design, implementation, and evaluation of this architecture using the devices listed in Table~\ref{table:devices} as exemplars. We leave a detailed treatment on the usability of the platform for future work. More specifically, we present and evaluate a platform that bridges the worlds of the web and the
+MCU through three novel technologies:
+
 \begin{itemize}
-\item \emph{\MCN}, a web app that supports programming of microcontrollers, via the web-based Blockly
-and Monaco~\cite{Monaco} editors ---
-\MC is parameterized by statically-typed device runtime composed of \emph{Static TypeScript} (STS) and C++:
-an automated mapping from STS to Blockly and a foreign function interface from STS to C++ help
-bridge the gap between Blockly and C++ (Section~\ref{sec:makecode});
+\item \emph{\MCN}, a web application containing an \emph{in-browser compiler} that supports the
+simplified programming of MCUs via editors for visual blocks and textual Javascript languages
+(Section~\ref{sec:makecode});
 
 \item \emph{Static TypeScript} is a statically-typed subset of TypeScript
 (\url{www.typescriptlang.org}) that we have defined for fast execution on low-memory devices,
@@ -46,55 +92,70 @@ with a simple model for linking against pre-compiled C++ (Section~\ref{sec:sts})
 \item \emph{\CO}, a component-based, event-driven, multi-threaded, C++ runtime environment
 that bridges the semantic gap between higher-level languages (such as TypeScript) and the hardware,
 modelling each hardware component as a software component (Section~\ref{sec:codal});
-
 \end{itemize}
-The \MC web app is the entry point of the platform, and features
-in-browser execution via a device simulator,
-as well as compilation of Static TypeScript to machine code and linking against a pre-compiled C++ runtime (\emph{\CON}).
-The statically-typed runtime and type inference on user code allows uses to write code
-that looks like plain JavaScript (see Figure~\ref{fig:example}) and progress later to working
-with types.
-No C/C++ compiler is invoked to compile user code and the result of compilation is a
-binary file that is ``downloaded'' from the web app to the user's
-computer and then flashed to the microcontroller (exposed as a USB pen drive)
-via a simple file copy operation.
+Our results (Section~\ref{sec:evaluate}) show that these technologies combined can enable simplified programming through modern
+languages and event-based constructs while maintaining a relatively high degree of temporal and spatial efficiency.
+We show up to 50x more performant than other state-of-the-art implementations,
+in some cases nearing the performance of native C++.
 
-These advances enable beginners to get started programming microcontrollers from
-any modern web browser, and enable hardware vendors to innovate and safely add new
-components to the mix using Static TypeScript.
-Once the web app has been loaded, all the above functionality works offline
-(i.e., if the host machine loses its connection
-to the internet). All of the platform's components are open source on GitHub.
+% Additional fodder we could work in if needed....
+%even the most conservative estimates predict in excess of
+%30 billion IoT devices will be interconnected by 2020 [] - far outstripping the 3.7 billion people
+%and 1.2 billion websites using the internet today.
 
-\begin{table}[]
-\centering
-\begin{tabular}{|l|r|r|r|r|r|}
-\hline
-            &          &            & \bf{Word} &          &             \\
-\bf{Device} & \bf{RAM} & \bf{Flash} & \bf{Size} & \bf{CPU} & \bf{Chip}   \\ \hline
-Uno         & 2 kB     & 32 kB      & 8         & AVR      & 328P  \\ \hline
-micro:bit   & 16 kB    & 256 kB     & 32        & M0       & nRF51       \\ \hline
-CPX         & 32 kB    & 256 kB     & 32        & M0       & SAMD21      \\ \hline
-\end{tabular}
-\caption{\label{table:devices}A subset of devices supported by the platform.
-CPX is Adafruit's Circuit Playground Express. M0 denotes Cortex-M0 and 328P denotes
-the ATmega328P.}
-\end{table}
 
-Table~\ref{table:devices} lists a number of the devices/microcontrollers supported by our platform,
-ranging from the highly resource-contrained Arduino Uno to the slightly less constrained space of
-the micro:bit, and Adafruit Circuit Playground Express (CPX).
+% The \MC \CO Architecture
+
+
+
+\subsection{Architecture}
+
+
+
+% Derive some key goals/requirements
+
+
+
+% Include example app to architecture section
+
+
+% Lacking context - broad statements could also be misinterpreted.
+\begin{comment}
+Web-based visual editors such as
+Blockly (\url{https://developers.google.com/blockly/})~\cite{Blocky2015}
+are tremendously popular and allow the creation of programs without the
+possibility of syntax errors, and that execute in the web browser (Blockly
+is written in JavaScript and compiles user code to JavaScript).
+However, JavaScript's dynamic nature is not well-suited to the world of
+MCUs where memory is limited (consider the Arduino Uno mentioned above).
+\end{comment}
+
+\begin{figure}[t]
+    \includegraphics[width=4.8in]{makecodeFig.pdf}
+\caption{\label{fig:makecode}\MC web app}
+\end{figure}
+
+Currently, due to the low-level nature of MCU programming, additional drivers and software are commonly required to be locally installed in order to program them. In restricted environments, like libraries and schools, safeguards are put in place to protect users and machines from downloading or installing additional software. Further, Internet connections are unrealiable in remote locations. These factors create barriers for designing a programming environment that runs anywhere. Therefore, an environment is required that can: (1) operate in restricted environments; (2) operate with little, or no internet connectivity; and (3) work on any operating system.
+
+To meet these requirements, we created the \MC web app (Figure~\ref{fig:makecode}) as the entry point of the platform.
+
+The \MC web app is a platform agnostic environment which can be accessed from any modern web browser and cached locally for \emph{entirely offline use}. The \MC web app incorporates the open source Blockly (\emph{\href{https://github.com/google/blockly}{blockly}}) and Monaco (\emph{\href{https://github.com/Microsoft/monaco-editor}{monaco-editor}}) editors (upper-left), an in-browser device simulator (upper-right) for testing programs before transfering them to the physical device, as well as \emph{in-browser compilation} of Static TypeScript to machine code and linking against the C++ runtime (\emph{\CON}), pre-compiled (by a cloud service, lower left). The statically-typed runtime and type inference on user code allows users to write code that looks like plain JavaScript (see Figure~\ref{fig:example}) and progress later to working with types.
+
+\MC devices appear as USB pen drives when plugged into a computer. After a user has finished developing a program, the compiled binary is ``downloaded'' locally to the users computer and then transferred (flashed) to the MCU (exposed as USB pen drive) by a simple file copy operation. No additional installation is required to program the MCU as drivers for pen drive come pre-installed on many operating systems.
+
+These advances enable beginners to get started programming MCUs from any modern web browser, and offer a safe environment for hardware vendors to innovate and add new components using Static TypeScript. All of the platform's components are open source on GitHub.
 
 \subsection{Running Example: firefly simulation.}
 
 Figure~\ref{fig:example} shows a JavaScript
 program that implements a simple ``firefly'' example
-for the Adafruit Circuit Playground Express (CPX).
-This program demonstrates the natural phenomenon
-of fireflies synchronizing their light pulses (the program should be
-run on several CPX's close to each other in a dark room).
+for the Adafruit Circuit Playground Express (CPX), which has an onboard light sensor and 10 RGB LEDs.
 
-The program has three top-level statements:
+This program demonstrates an emergent, time-based algorithm, run on multiple CPXs in a dark environment. Over time they will synchronize to a common clock using light pulses --- akin to fireflies synchronizing in the wild.
+
+% INCLUDE? (\url{https://www.youtube.com/watch?v=sROKYelaWbo}).
+
+At the top-level, the program has three statements:
 the first initializes the global variable \emph{clock} (line 1); the
 second registers an event handler (a lambda function) to execute
 each time the CPX's light detector senses a bright light (line 3); the
@@ -102,15 +163,13 @@ third registers a lambda function to run forever on a fiber (line 18),
 to keep track of time and pulse the CPX's 10 LEDs whenever the
 clock reaches 8.
 
-Note that this program is a JavaScript program, as there are no
-types mentioned explicitly. However, all the functions called in
-this program are part of the runtime and are explicitly
-typed. This program is a Static TypeScript program:
+Note that although this program appears as a JavaScript program (there are no
+types mentioned explicitly), this program is a Static TypeScript program:
 the static type of every variable and expression
 can be inferred and passes the more restrictive checks
 of Static TypeScript, as detailed in Section~\ref{sec:sts}.
 
-The program also shows off the use of the non-preemptive concurrency
+The program also demonstrates the use of the non-preemptive concurrency
 model supported by both \MC (for JavaScript) and \CO (for C++).
 The forever procedure executes the lambda inside a ``while (true)''
 loop that yields (via a call to \emph{basic.pause}) after each call to the lambda.
@@ -118,6 +177,8 @@ This gives the light-detection event handler a chance to execute
 upon user input (in a separate fiber). Although the global variable \emph{clock} is
 shared by the two fibers, there is no data race due to the non-preemptive
 scheduling model.
+
+We will refer to this example throughout.
 
 \begin{figure}
 \begin{lstlisting}
@@ -145,32 +206,3 @@ scheduling model.
 \end{lstlisting}
 \caption{\label{fig:example}Running example: firefly simulation.}
 \end{figure}
-
-
-\subsection{Evaluation}
-
-%we encourage the reader to choose a target
-%from \dburl{www.makecode.com} and experiment with programming it, to appreciate the
-%qualitative aspects of the platform, namely its simplicity and ease of use.
-In this paper, we evaluate quantitative aspects of the platform
-with respect to the devices from Table~\ref{table:devices}. In particular, we
-consider:
-\begin{itemize}
-\item the time to compile Static TypeScript to machine code or bytecode,
-       as well as the size of the resulting executable, including the C++ runtime;
-\item the performance of a set of small benchmarks, written in both Static TypeScript and C++,
-      compiled with the \MC and GCC toolchains;
-\item \emph{native code vs. bytecode} we
-     evaluate memory consumption and code performance for native code generation
-     vs. bytecode generation and interpretation on the Uno.
-\end{itemize}
-The high-level results are: compilation speed in the browser is on the order
-of several hundred milliseconds for small programs (the norm), so not noticeable
-by the end-user; execution slowdown for Static TypeScript code relative to C++
-code is 2x-3x, which compares very well to systems such as MicroPython and
-Circuit Python, which incur 100X slowdown.
-
-Sections~\ref{sec:makecode} to~\ref{sec:codal} presents the three major components of the platform, top-down,
-as referenced before. Section~\ref{sec:evaluate} evaluates the performance of the platform,
-Section~\ref{sec:related} discusses related work, and Section~\ref{sec:conclude}
-concludes.
