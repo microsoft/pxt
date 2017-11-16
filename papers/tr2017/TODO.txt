@@ -1,18 +1,25 @@
-- Joe to make pass on abstract/introduction
 - James to work on codal.tex to make examples align with Figure 1
-- remove streams and stream Figure
 - Figure 6 and 7 to align with Figure 1
+
 - Running example: make clear that the CPXs are communicating via
   light emission and detection (novel feature of physical computing)
+
 - Related work: should cite and compare to TinyOS, which is pretty well-known
+
 - Michal to make pass over eval
 - make clear performance of VM in computational context
 - tagged vs. untagged
-- James: look for TBALL comments in codal.tex
+
+- add a sentence that the system has been deployed, with users
+  across EU and North America (over the last year)
+
+- make sure to note that event block in screensnapshot comes from C++ code
+
 - replace microcontroller by MCU (space)
 - replace Static TypeScript by STS (space)
+- replace basic.pause by loops.pause
 
 - FINAL STEPs:
-  - space
+  - space (reduce the WA section -- too much!)
   - make tables and figures fit in margins
 
