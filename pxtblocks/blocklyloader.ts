@@ -3221,7 +3221,7 @@ namespace pxt.blocks {
             pxt.log(`missing jres icon ${id}`)
             return undefined;
         }
-        return new Blockly.FieldImage(url, 30, 30, false, '');
+        return new Blockly.FieldImage(url, 56, 56, false, '');
     }
 
     function initJresIcons(blockInfo: pxtc.BlocksInfo) {
