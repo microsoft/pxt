@@ -112,9 +112,10 @@ export class Editor extends srceditor.Editor {
                             .then((config) => {
                                 const repoStatus = pxt.github.repoStatus(parsedRepo, config);
                                 const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
+                                const localDebug = pxt.Cloud.isLocalHost() && /^file:/.test(extension.installedVersion) && extension.extension.localUrl;
                                 const debug = pxt.Cloud.isLocalHost() && /debugExtensions/i.test(window.location.href);
-                                const url = debug
-                                    ? (extension.extension.localUrl || "http://localhost:3232/extension.html") : `https://${parsedRepo.owner}.github.io/${repoName}/`;
+                                const url = debug ? "http://localhost:3232/extension.html"
+                                    : localDebug ? extension.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
                                 this.parent.openExtension(extension.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
                             });
                     })
