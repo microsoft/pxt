@@ -531,17 +531,23 @@ namespace pxtblockly {
             }
 
             // Empty the text element.
-            goog.dom.removeChildren(/** @type {!Element} */ (this.textElement_));
+            goog.dom.removeChildren(/** @type {!Element} */(this.textElement_));
             goog.dom.removeNode(this.imageElement_);
             this.imageElement_ = null;
             if (this.imageJson_) {
                 // Image option is selected.
                 this.imageElement_ = Blockly.utils.createSvgElement('image',
-                    {'y': 5, 'x': 8, 'height': this.imageJson_.height + 'px',
-                    'width': this.imageJson_.width + 'px', cursor: 'pointer'});
+                    {
+                        'y': 5, 'x': 8, 'height': this.imageJson_.height + 'px',
+                        'width': this.imageJson_.width + 'px', cursor: 'pointer'
+                    });
                 this.imageElement_.setAttributeNS('http://www.w3.org/1999/xlink',
-                                                'xlink:href', this.imageJson_.src);
+                    'xlink:href', this.imageJson_.src);
                 this.size_.height = Number(this.imageJson_.height) + 10;
+                if (this.sourceBlock_.RTL)
+                    this.imageElement_.setAttribute('transform',
+                        'translate(' + this.arrowWidth_ + ', 0)'
+                    );
 
                 this.textElement_.parentNode.appendChild(this.imageElement_);
             } else {
