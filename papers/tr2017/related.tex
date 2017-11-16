@@ -3,7 +3,7 @@
 
 Related work breaks into three parts, following the
 flow of the paper: the programming of MCUs,
-type systems for JavaScript, and operating systems
+type systems for JavaScript, and embedded runtime environments
 for MCUs.
 
 \subsection{Programming microcontrollers}
@@ -11,38 +11,19 @@ for MCUs.
 There are four basic ways to program MCUs,
 (ordered roughly from lower to greater resource usage):
 \begin{itemize}
-\item[1.] a program executing on a host computer sends commands (via some communication protocol) 
+\item[1.] a program executing on a host computer sends commands (via some communication protocol)
 to a fixed program loaded onto the MCU (e.g., Scratch's
 device extensions~\cite{ScratchCACM2009}, Arduino's Firmata library~\cite{Firmata}).
 \item[2.] a binary for the MCU is compiled on a host computer and loaded onto the MCU -
 this is the common method for Arduino~\cite{buildingArduino2014};
 \item[3.] bytecode is compiled on the host and loaded onto MCU, where it is interpreted
 (e.g., Java for embedded systems~\cite{ClausenTOPLAS};
-\item[4.] a complete compiler and virtual machine are put on the MCU, 
+\item[4.] a complete compiler and virtual machine are put on the MCU,
 as with MicroPython~\cite{MicroPython} and Espruino~\cite{espruinoBook};
 % 5. an embedded operating system
 \end{itemize}
 
-In the educational and maker settings, MCUs often are embedded in projects,
-option 1 has limited utility, as in such projects the MCU is powered by battery and
-is not connected to a host.
-
-For these reasons, our platform supports (2) machine code and (3) byte code generation 
-from JavaScript on the host, with reliance on a code loader (simplified
-by use of \UF format and supporting firmware) to place the user's executable 
-into flash memory.  The production of the entire executable file
-takes places solely within the web app, which is a unique aspect of our platform.
-The platform also supports partial flashing of just user code, 
-when it can be determined that the proper device runtime already 
-is resident in the MCU's flash.
-
-As demonstrated in the evaluation, our approach to code generation and runtime
-has significant performance advantages over MicroPython and Espruino.
-This is due to a number of factors, the most significant of which is our use of
-STS. In practice, our hardware partners and users have had no
-trouble with this limitation.  Another significant difference is our support
-for non-preemptive concurrency via fibers (co-routines). 
-
+In the educational and maker~\cite{dougherty2012maker} settings, MCUs often are embedded in projects. Here, option 1 has limited utility, as in such projects the MCU is powered by battery and is not connected to a host. Option 2 does not operate well on computers where installation of programs and additional software is forbidden, common in educational environments. Options 3 and 4 suffer in terms of performance on small MCUs, operating slower than native C++ code, and consuming most of the resources (flash and RAM) of the MCU.
 
 % https://github.com/jerryscript-project
 
@@ -61,7 +42,7 @@ for non-preemptive concurrency via fibers (co-routines).
 % - Supported microcontrollers: CC3220, CC3200, ESP32, ESP8266, STM32F4;
 % https://github.com/cesanta/mjs
 
-% On 32-bit ARM mJS engine takes about 25k of flash memory, 
+% On 32-bit ARM mJS engine takes about 25k of flash memory,
 % and less than 1k of RAM (see intro article). mJS is part of MongooseOS,
 % where it enables scripting for IoT devices.
 
@@ -74,67 +55,47 @@ for non-preemptive concurrency via fibers (co-routines).
 
 By design, TypeScript does not provide a type soundness guarantee~\cite{BiermanAT14}.
 Type systems with soundness guarantees for JavaScript have as their
-goals: (1) handling arbitrary JavaScript programs; 
+goals: (1) handling arbitrary JavaScript programs;
 (2) providing efficient execution for language subsets.
 
-Safe TypeScript~\cite{SafeTypeScript15} separates the worlds of typed and untyped 
-objects: the \emph{dynamic} type is an implicit union type of all \emph{known} static type, 
-while Any is an \emph{unknown} type, coming from the untyped JavaScript world. Type tags 
+Safe TypeScript~\cite{SafeTypeScript15} separates the worlds of typed and untyped
+objects: the \emph{dynamic} type is an implicit union type of all \emph{known} static type,
+while Any is an \emph{unknown} type, coming from the untyped JavaScript world. Type tags
 are needed to distinguish the two worlds; Safe TypeScript also adds extra runtime checks
-to prevent untyped JavaScript from destroying the type invariants of typed JavaScript.  
+to prevent untyped JavaScript from destroying the type invariants of typed JavaScript.
 
 StrongScript~\cite{StrongScriptECOOP15} extends TypeScript with a type constructor (!)
 for \emph{concrete} types, which allows the programmer to choose between untyped
 code, optionally-typed code, and concretely typed code, which provides traditional
-type soundess guarantees. As with TypeScript, every JavaScript program is a StrongScript program. 
+type soundess guarantees. As with TypeScript, every JavaScript program is a StrongScript program.
 
 STS differs from these efforts by outlawing untyped or optionally typed
 code: it is non-goal of STS to support arbitrary JavaScript programs.
-In this sense, STS can be seen to be StrongScript where every variable and 
+In this sense, STS can be seen to be StrongScript where every variable and
 expression has a concrete (!) type. As in StrongScript, classes are nominally typed,
-which permits a more efficient and traditional property lookup for class instances. 
-STS goes further by outlawing downcasts (necessary for our untagged 
+which permits a more efficient and traditional property lookup for class instances.
+STS goes further by outlawing downcasts (necessary for our untagged
 implementation).
 
 STS could benefit by enlarging the set of types
-that can be inferred, so that more JavaScript idioms could be allowed. 
-Chandra's work on type inference for static compilation of 
-JavaScript~\cite{ChandraOOPSLA2016} is one path forward. 
+that can be inferred, so that more JavaScript idioms could be allowed.
+Chandra's work on type inference for static compilation of
+JavaScript~\cite{ChandraOOPSLA2016} is one path forward.
 
-\subsection{Operating systems}
+\subsection{Embedded Runtime Environments}
 
-Typically written in C and/or C++, platforms for MCU programming all share 
-a common design goal: to support developers by providing primitives and programming 
-abstractions. Platforms can range from simple C++ classes that control hardware, 
+Typically written in C and/or C++, environments for MCU programming all share
+a common design goal: to support developers by providing primitives and programming
+abstractions. Platforms can range from simple C++ classes that control hardware,
 to real-time operating systems (RTOSs) with scheduling and memory management.
 
-Arduino~\cite{buildingArduino2014} is an example of a simple platform where the developer uses 
-high-level APIs to control hardware; there is no scheduler, and memory management 
-is discouraged through a heavy emphasis on global variables.  The Arduino programming 
-model is based on polling: an Arduino ``sketch'' is a program template that consists 
-of a setup procedure, for initialization of data structures, and a loop procedure; 
-programmers implement the body of \textit{setup} and \textit{loop}, where they explicitly 
-poll the state of the sensors or the MCU's pins.
+Arduino~\cite{buildingArduino2014} is an example of a simple platform where the developer uses
+high-level APIs to control hardware; there is no scheduler, and memory management
+is discouraged through a heavy emphasis on global variables.
 
-At the other end of the spectrum is ARM's Mbed OS~\cite{ARMmbed}, which is aimed at developers who are familiar 
-with non-preemptive scheduling, memory management, and condition synchronisation; a more 
-complex environment. A number of high-level drivers are provided and the programming model 
-is determined by the developer, commonly event or interrupt driven.
+TinyOS~\cite{levis2005tinyos}, Contiki~\cite{dunkels2012contiki}, RIOT OS~\cite{baccelli2013riot}, Mynewt~\cite{ApacheMy53:online} mbed OS~\cite{ARMmbed}, Zephyr~\cite{HomeZeph63:online} are solutions used known widely in the systems community. The majority focus on the networking features of sensor based devices and commonly adopt a preemptive scheduling model, which leads to competition over resources resolved using locks and condition synchronisation primitives. Contiki has a cooperative scheduler, but uses proto-threads to store thread context --- local variables are not allowed as the context of the stack is not stored.
 
-Although platforms like Arduino and Mbed OS are widely used by C/C++ developers, 
-higher-level languages opt for virtual machines to execute on MCUs 
-as neither extreme aligns with the programming models seen in higher level languages: 
-Mbed OS is pre-emptive, JavaScript is not; Arduino is based on monolithic polling. 
+Although the platforms above are widely used by C/C++ developers, none of these existing solutions align well with the programming paradigms seen in higher level languages.
 
-The goals of \CO are to: (1) bridge the semantic gap between 
-higher-level languages and the hardware in a memory, energy and instruction 
-efficient way; and (2) support a number of platforms with various
-resource contraints and capabilities.
-
-Unlike Mbed, which is designed to make all devices look programmatically alike,
-\CO enables devices with additional on-chip hardware to specialise device drivers 
-with APIs that can then be used by the end application developer.
-
-% https://state-machine.com/arduino/ 
-% http://tinyos.stanford.edu/tinyos-wiki/index.php/TinyOS_Overview 
+\CO bridges that semantic gap between the higher level language and the microcontroller, offering appropriate abstractions and higher level primitives written natively in C++.
 
