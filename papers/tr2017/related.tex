@@ -2,29 +2,29 @@
 \label{sec:related}
 
 Related work breaks into three parts, following the
-flow of the paper: the programming of microcontrollers,
+flow of the paper: the programming of MCUs,
 type systems for JavaScript, and operating systems
-for microcontrollers.
+for MCUs.
 
 \subsection{Programming microcontrollers}
 
-There are four basic ways to program microcontrollers,
+There are four basic ways to program MCUs,
 (ordered roughly from lower to greater resource usage):
 \begin{itemize}
 \item[1.] a program executing on a host computer sends commands (via some communication protocol) 
-to a fixed program loaded onto the microcontroller (e.g., Scratch's
+to a fixed program loaded onto the MCU (e.g., Scratch's
 device extensions~\cite{ScratchCACM2009}, Arduino's Firmata library~\cite{Firmata}).
-\item[2.] a binary for the microcontroller is compiled on a host computer and loaded onto the microcontroller -
+\item[2.] a binary for the MCU is compiled on a host computer and loaded onto the MCU -
 this is the common method for Arduino~\cite{buildingArduino2014};
-\item[3.] bytecode is compiled on the host and loaded onto microcontroller, where it is interpreted
+\item[3.] bytecode is compiled on the host and loaded onto MCU, where it is interpreted
 (e.g., Java for embedded systems~\cite{ClausenTOPLAS};
-\item[4.] a complete compiler and virtual machine are put on the microcontroller, 
+\item[4.] a complete compiler and virtual machine are put on the MCU, 
 as with MicroPython~\cite{MicroPython} and Espruino~\cite{espruinoBook};
 % 5. an embedded operating system
 \end{itemize}
 
-In the educational and maker settings, microcontrollers often are embedded in projects,
-option 1 has limited utility, as in such projects the microcontroller is powered by battery and
+In the educational and maker settings, MCUs often are embedded in projects,
+option 1 has limited utility, as in such projects the MCU is powered by battery and
 is not connected to a host.
 
 For these reasons, our platform supports (2) machine code and (3) byte code generation 
@@ -34,12 +34,12 @@ into flash memory.  The production of the entire executable file
 takes places solely within the web app, which is a unique aspect of our platform.
 The platform also supports partial flashing of just user code, 
 when it can be determined that the proper device runtime already 
-is resident in the microcontroller's flash.
+is resident in the MCU's flash.
 
 As demonstrated in the evaluation, our approach to code generation and runtime
 has significant performance advantages over MicroPython and Espruino.
 This is due to a number of factors, the most significant of which is our use of
-Static TypeScript. In practice, our hardware partners and users have had no
+STS. In practice, our hardware partners and users have had no
 trouble with this limitation.  Another significant difference is our support
 for non-preemptive concurrency via fibers (co-routines). 
 
@@ -88,22 +88,22 @@ for \emph{concrete} types, which allows the programmer to choose between untyped
 code, optionally-typed code, and concretely typed code, which provides traditional
 type soundess guarantees. As with TypeScript, every JavaScript program is a StrongScript program. 
 
-Static TypeScript differs from these efforts by outlawing untyped or optionally typed
-code: it is non-goal of Static TypeScript to support arbitrary JavaScript programs.
-In this sense, Static TypeScript can be seen to be StrongScript where every variable and 
+STS differs from these efforts by outlawing untyped or optionally typed
+code: it is non-goal of STS to support arbitrary JavaScript programs.
+In this sense, STS can be seen to be StrongScript where every variable and 
 expression has a concrete (!) type. As in StrongScript, classes are nominally typed,
 which permits a more efficient and traditional property lookup for class instances. 
-Static TypeScript goes further by outlawing downcasts (necessary for our untagged 
+STS goes further by outlawing downcasts (necessary for our untagged 
 implementation).
 
-Static TypeScript could benefit by enlarging the set of types
+STS could benefit by enlarging the set of types
 that can be inferred, so that more JavaScript idioms could be allowed. 
 Chandra's work on type inference for static compilation of 
 JavaScript~\cite{ChandraOOPSLA2016} is one path forward. 
 
 \subsection{Operating systems}
 
-Typically written in C and/or C++, platforms for microcontroller programming all share 
+Typically written in C and/or C++, platforms for MCU programming all share 
 a common design goal: to support developers by providing primitives and programming 
 abstractions. Platforms can range from simple C++ classes that control hardware, 
 to real-time operating systems (RTOSs) with scheduling and memory management.
@@ -114,7 +114,7 @@ is discouraged through a heavy emphasis on global variables.  The Arduino progra
 model is based on polling: an Arduino ``sketch'' is a program template that consists 
 of a setup procedure, for initialization of data structures, and a loop procedure; 
 programmers implement the body of \textit{setup} and \textit{loop}, where they explicitly 
-poll the state of the sensors or the microcontroller's pins.
+poll the state of the sensors or the MCU's pins.
 
 At the other end of the spectrum is ARM's Mbed OS~\cite{ARMmbed}, which is aimed at developers who are familiar 
 with non-preemptive scheduling, memory management, and condition synchronisation; a more 
@@ -122,7 +122,7 @@ complex environment. A number of high-level drivers are provided and the program
 is determined by the developer, commonly event or interrupt driven.
 
 Although platforms like Arduino and Mbed OS are widely used by C/C++ developers, 
-higher-level languages opt for virtual machines to execute on microcontrollers 
+higher-level languages opt for virtual machines to execute on MCUs 
 as neither extreme aligns with the programming models seen in higher level languages: 
 Mbed OS is pre-emptive, JavaScript is not; Arduino is based on monolithic polling. 
 

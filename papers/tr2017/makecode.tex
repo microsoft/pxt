@@ -11,7 +11,7 @@ view of the JavaScript from Figure~\ref{fig:example}.}
 
 The key technical contribution of \MC is to provide users a simple progression from block-based
 programming in Blocky, to text-based programming in JavaScript (actually, Static TypeScript) 
-using Monaco, while leveraging C++ on the backend for efficient use of microcontroller resources.
+using Monaco, while leveraging C++ on the backend for efficient use of MCU resources.
 
 Figure~\ref{fig:screenSnap} shows a screen snapshot of the \MC web app for the CPX.
 There are five parts of the web app labelled in the figure:
@@ -22,7 +22,7 @@ There are five parts of the web app labelled in the figure:
 (E) the download button invokes the compiler to produce a binary executable.
 
 The \MC web app encapsulates all the components needed to deliver a programming experience
-for microcontrollers, free of the need for a C++ compiler for the compilation of user code.
+for MCUs, free of the need for a C++ compiler for the compilation of user code.
 The web app is written in TypeScript and incorporates the TypeScript compiler and
 language service as well.
 The app is built from a \MC ``target'' (\emph{\dbhref{https://github.com/microsoft/pxt-adafruit}{pxt-adafruit}})
@@ -95,7 +95,7 @@ function onLightConditionChanged(condition: LightCondition, handler: () => void)
 To support the foreign function interface, \MC defines a mapping between C++ and TypeScript types.
 Boolean and void have straightforward mappings from C++ to TypeScript (bool $\rightarrow$ boolean, void $\rightarrow$ void).
 As JavaScript only supports number, which is a C++ float/double, \MC uses TypeScript's support
-for type aliases to name the various C++ integer types commonly used for microcontroller programming
+for type aliases to name the various C++ integer types commonly used for MCU programming
 (int32, uint32, int16, uint16, int8, uint8).
 % don't use int, unsigned etc. they are actually different sizes on different compilers for AVR
 This is particularly useful for saving space on 8-bit architectures such as the AVR.
@@ -136,7 +136,7 @@ runtime, which provides a set of categorized APIs to the end-user, based on name
 previously described. These APIs are visible in both editors via a toolbox (Figure~\ref{fig:screenSnap}(C))
 to the immediate left of the programming area. 
 
-\MC compiles the Blockly program representation to Static TypeScript in a syntax-directed manner.
+\MC compiles the Blockly program representation to STS in a syntax-directed manner.
 A key issue is the need for type inference on the Blockly representation, as variables generally are defined and used without
 being declared in Blockly. \MC uses a simple unification type inference to assign a
 unique type to each variable.
@@ -194,7 +194,7 @@ achieve asynchronous execution in a single-threaded context, these promises are 
 
 \subsubsection{Untagged and Tagged Strategies}\label{sec:untagged-tagged}
 
-The \MC compiler supports the Static TypeScript language subset described in Section~\ref{sec:sts},
+The \MC compiler supports the STS language subset described in Section~\ref{sec:sts},
 with two compilation strategies: untagged and tagged. Under the untagged strategy,
 a JavaScript number is interpreted as a C++ int by default and the type system is used
 to statically distinguish primitive values from boxed values. As a result, the untagged
