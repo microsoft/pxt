@@ -86,7 +86,6 @@ export class ExtensionManager {
             case "extinit":
                 const ri = resp as pxt.editor.InitializeResponse;
                 ri.target = pxt.appTarget;
-                ri.paths = (window as any).MonacoPaths;
                 this.sendResponse(resp);
                 break;
             case "extdatastream":
