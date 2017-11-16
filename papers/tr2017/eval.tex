@@ -16,7 +16,7 @@ added by \MC.
 
 \begin{tabular}{c|c|c|}
 \cline{2-3}
-\multicolumn{1}{l|}{}             & micro:bit       & CircuitPlayground \\ \cline{2-3}
+\multicolumn{1}{l|}{}             & micro:bit       & CPX \\ \cline{2-3}
 \multicolumn{1}{l|}{}             & Time Taken (ms) & Time Taken (ms)   \\ \hline
 \multicolumn{1}{|c|}{\CO}       & 102             & 30.94             \\ \hline
 \multicolumn{1}{|c|}{\MC}    & 216.8           & 227             \\ \hline
@@ -40,9 +40,9 @@ We refer to \emph{\MC wrappers} as \MC throughout the evaluation.
 
 The micro:bit has a 32-bit Cortex M0 clocked at 16MHz, with 16kB RAM and 256kB of flash. It has a number of onboard components including a 5x5 LED matrix display, a compass, accelerometer, buttons, GPIO, I2C, Serial, and Bluetooth Low Energy.
 
-The CircuitPlayground is a 32-bit Cortex-M0+, which offers greater energy efficiency and performance; it clocks at 48 MHz, has 32kB of RAM and 256kB of flash. On board the CircuitPlayground are: RGB pixels, an infrared transmitter and receiver, a touch sensor, buttons, accelerometer, speaker, microphone, GPIO, I2C, and Serial.
+The CPX is a 32-bit Cortex-M0+, which offers greater energy efficiency and performance; it clocks at 48 MHz, has 32kB of RAM and 256kB of flash. On board the CPX are: RGB pixels, an infrared transmitter and receiver, a touch sensor, buttons, accelerometer, speaker, microphone, GPIO, I2C, and Serial.
 
-The Uno and micro:bit \MC targets use the untagged strategy, while the CircuitPlayground target takes the tagged strategy (see Section~\ref{sec:untagged-tagged}).
+The Uno and micro:bit \MC targets use the untagged strategy, while the CPX target takes the tagged strategy (see Section~\ref{sec:untagged-tagged}).
 
 \subsection{Methodology}
 
@@ -58,13 +58,13 @@ It is important to note that memory and performance analysis are done in separat
 
 \subsection{The Overhead of \MC}
 
-To place the overhead of \MC in context, we perform a comparative evaluation of \MC against fully virtualised solutions, using the native C++ as our baseline. The two points of comparison are MicroPython~\cite{MicroPython}, an implementation of Python for microcontrollers, and Espruino~\cite{espruinoBook}, an implementation of JavaScript for micrcontrollers. For the CircuitPlayground, a fork of MicroPython  known as 'CircuitPython' was used.
+To place the overhead of \MC in context, we perform a comparative evaluation of \MC against fully virtualised solutions, using the native C++ as our baseline. The two points of comparison are MicroPython~\cite{MicroPython}, an implementation of Python for microcontrollers, and Espruino~\cite{espruinoBook}, an implementation of JavaScript for micrcontrollers. For the CPX, a fork of MicroPython  known as 'CircuitPython' was used.
 
 We created a program to give the cost of each solution with respect to time. The program counts from 0 to 100000 in a tight loop, toggling a GPIO just before the loop starts and immediately after it terminates; we measured the loop's duration using an oscilloscope. The program was rewritten in each solutions' respective language; the results are shown in Table~\ref{table:vm-comparison}.
 
-For the micro:bit, MicroPython and Espruino are two or more orders of magnitude slower than a native \CO program, while \MC is only twice slower. 
+For the micro:bit, MicroPython and Espruino are two or more orders of magnitude slower than a native \CO program, while \MC is only twice slower.
 This reflects the simplicity of the STS compiler.
-However, \MC for the CircuitPlayground uses the tagged approach, which allows for seamless runtime switching to floating point numbers,
+However, \MC for the CPX uses the tagged approach, which allows for seamless runtime switching to floating point numbers,
 resulting in further 3x slowdown.
 For both devices, \MC outperforms both the VM-based solutions of MicroPython and Espruino by at least an order of magnitude.
 
@@ -98,7 +98,7 @@ Figure~\ref{fig:context-vs-stack} profiles the time a context switch takes with 
 \caption{\label{table:time-ram-consumption}RAM consumption and processing time for various asynchronous operations in \CO.}
 \end{table}
 
-To gauge the cost of different asynchronous operations in \CON, we tested three commonly used code paths using the CircuitPlayground: (1) creating a fiber; (2) handling a non-blocking procedure call; and (3) handling a blocking procedure call. Table~\ref{table:time-ram-consumption} presents our results. These code paths are used to invoke handlers for events with corresponding listeners, central to \CO and \MC.
+To gauge the cost of different asynchronous operations in \CON, we tested three commonly used code paths using the CPX: (1) creating a fiber; (2) handling a non-blocking procedure call; and (3) handling a blocking procedure call. Table~\ref{table:time-ram-consumption} presents our results. These code paths are used to invoke handlers for events with corresponding listeners, central to \CO and \MC.
 
 In \CO, creating a fiber costs 136 bytes and 35.4 microseconds, a non-blocking procedure call costs 32 bytes and 4.01 microseconds, and a blocking procedure call costs 204 bytes and 32.4 microseconds. Queuing an event takes an additional 28.87 microseconds, plus the cost of either invoke.
 
@@ -110,7 +110,7 @@ A naiive approach to multithreading would execute event handlers in separate fib
 \centering
 \begin{tabular}{c|c|c|c|}
 \cline{2-4}
-                                                                                                & CPlay & micro:bit & Uno  \\ \hline
+                                                                                                & CPX & micro:bit & Uno  \\ \hline
 \multicolumn{1}{|c|}{WA}                                                                       & 20.46 & 12.14     & 7.79 \\ \hline
 \multicolumn{1}{|c|}{RT}                                                                       & 29.85 & 34.35     & 13.7 \\ \hline
 \multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}mbed and \\ Supporting Libraries\end{tabular}} & 14.99 & 24.28     & -    \\ \hline
@@ -122,11 +122,11 @@ A naiive approach to multithreading would execute event handlers in separate fib
 
 Table~\ref{table:flash-consumption} shows the per device flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library and optionally, mbed.
 
-From the bottom up, the profile of the standard library changes dramatically for each device: The Uno has a very lightweight standard library; the microbit uses 64-bit integer operations (for timers) which requires extra standard library functions; and the CircuitPlayground requires virtualised floating point operations pulling in more standard library functions.
+From the bottom up, the profile of the standard library changes dramatically for each device: The Uno has a very lightweight standard library; the microbit uses 64-bit integer operations (for timers) which requires extra standard library functions; and the CPX requires virtualised floating point operations pulling in more standard library functions.
 
-Mbed is not used for the Uno as it does not have an ARM processor. Mbed is utilised for the micro:bit more than the CircuitPlayground as over time we have begun to phase it out in favour of native implementations.
+Mbed is not used for the Uno as it does not have an ARM processor. Mbed is utilised for the micro:bit more than the CPX as over time we have begun to phase it out in favour of native implementations.
 
-The size of \CO and \MC scales linearly with the amount of functionality a device has, due to the component oriented nature of \CO and transitively \MC. For instance the Uno has few onboard components when compared to the CircuitPlayground and micro:bit.
+The size of \CO and \MC scales linearly with the amount of functionality a device has, due to the component oriented nature of \CO and transitively \MC. For instance the Uno has few onboard components when compared to the CPX and micro:bit.
 
 The modular composition of \CO allows us to support multiple devices with a variety of feature sets, whilst maintaining the same API at the \MC layer.
 
@@ -136,22 +136,22 @@ The modular composition of \CO allows us to support multiple devices with a vari
 \centering
 \begin{tabular}{c|c|c|c|}
 \cline{2-4}
-                                                                                                & CPlay & micro:bit & Uno   \\ \hline
+                                                                                                & CPX & micro:bit & Uno   \\ \hline
 \multicolumn{1}{|c|}{WA}                                                                       & 0.612 & 1.069     & 0.074 \\ \hline
 \multicolumn{1}{|c|}{RT}                                                                       & 1.369 & 0.214     & 0.156 \\ \hline
 \multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}mbed and Supporting \\ Libraries\end{tabular}} & 0.312 & 0.923     & -     \\ \hline
 \multicolumn{1}{|c|}{C++ Standard Library}                                                     & 0.161 & 0.149     & 0.074 \\ \hline
 \end{tabular}
-\caption{\label{table:ram-consumption}The total static ram consumption of for an \MC binary.}
+\caption{\label{table:ram-consumption}The total static ram consumption for an \MC binary.}
 \end{table}
 
 Table~\ref{table:ram-consumption} shows the per device ram consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation.
 
-At runtime MakeCode dynamically allocates memory: 1.56 kB for the CircuitPlayground, 560 bytes for the micro:bit, and 644 bytes for the Uno.
+At runtime MakeCode dynamically allocates memory: 1.56 kB for the CPX, 560 bytes for the micro:bit, and 644 bytes for the Uno.
 
-From the table, the micro:bit uses substantially more global space than \CO, yet the reverse is true for the other two devices. The micro:bit operates off of a slightly older code base from the other two devices, over time, we have begun to pull functionality added the \MC layer back down into codal.
+From the table, the micro:bit uses substantially more global space than \CO, yet the reverse is true for the other two devices. The micro:bit operates off of a slightly older code base from the other two devices, over time, we have begun to pull functionality added the \MC layer into codal.
 
-For the CircuitPlayground, the globals consumption for \CO is slightly higher. Due to the extra RAM, an unusual luxury, we add a 1K serial buffer so that users can log large amounts of data if required.
+For the CPX, the globals consumption for \CO is slightly higher. Due to the extra RAM, an unusual luxury, we add a 1K serial buffer so that users can log large amounts of data if required.
 % Add globals maps and profile of listener and fiber.
 
 % The CPX runtime is the largest, as the CPX device has lots of on-board
@@ -192,12 +192,12 @@ Table~\ref{table:c-native-vm-stats} describes the difference in performance for 
 
 \subsection{Compiling Static TypeScript}
 
-When compiling the Static TypeScript benchmarks and runtime with code shaking we obtain a generated code density of 37.5 bytes per statement on the CircuitPlayground, 60.8 on AVR native, and 12.3 on AVR VM. This excludes string literals (which don't change the picture significantly), but includes class vtables and number literals if any. Note that ARM and AVR native instructions are 2 bytes each, while AVR VM instructions are between 0.5 and 3 bytes.
+When compiling the Static TypeScript benchmarks and runtime with code shaking we obtain a generated code density of 37.5 bytes per statement on the CPX, 60.8 on AVR native, and 12.3 on AVR VM. This excludes string literals (which don't change the picture significantly), but includes class vtables and number literals if any. Note that ARM and AVR native instructions are 2 bytes each, while AVR VM instructions are between 0.5 and 3 bytes.
 
 When compiling, the entire TypeScript program, including the runtime, is
 passed to the TypeScript (TS) language service for parsing. Then, only the remaining part of the program (after code shaking) is compiled to native code.
 On a modern laptop, using Node.js, TS parsing and analysis takes about 0.1ms per statement, and \MC compilation to native code takes about 1ms per statement.
-While the TS compiler has been optimized for speed, \MCN's native compilation process hasn't been. For example, the CircuitPlayground TS pass is dominated by compilation of the device runtime and takes about 100ms, whereas the \MC pass typically only includes a small user program and a small bit of the runtime, resulting in less than 100ms. Thus, typical compilation times are under 200ms for typical user programs of 100 lines or less.
+While the TS compiler has been optimized for speed, \MCN's native compilation process hasn't been. For example, the CPX TS pass is dominated by compilation of the device runtime and takes about 100ms, whereas the \MC pass typically only includes a small user program and a small bit of the runtime, resulting in less than 100ms. Thus, typical compilation times are under 200ms for typical user programs of 100 lines or less.
 
 % Not really a result, more of a description of design, with an anecdotal comment about speed.
 
