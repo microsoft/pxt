@@ -196,15 +196,15 @@ achieve asynchronous execution in a single-threaded context, these promises are 
 
 The \MC compiler supports the STS language subset described in Section~\ref{sec:sts},
 with two compilation strategies: untagged and tagged. Under the untagged strategy,
-a JavaScript number is interpreted as a C++ int by default and the type system is used
+a JavaScript number is interpreted as a C++ \texttt{int} by default and the type system is used
 to statically distinguish primitive values from boxed values. As a result, the untagged
 strategy is not fully faithful to JavaScript semantics: there is no support for floating
-point and the Null and Undefined types are represented by the default integer value of zero.
+point and the \texttt{null} and \texttt{undefined} values are represented by the default integer value of zero.
 
 The untagged strategy is used for the micro:bit and Arduino Uno targets.
 
 In the tagged strategy, numbers are either tagged 31-bit signed integers, or if they do not fit,
-boxed doubles. Special constants like false, null and undefined are given special values
+boxed doubles. Special constants like \texttt{false}, \texttt{null} and \texttt{undefined} are given special values
 and can be distinguished. The tagged execution strategy has the capability to fully support
 JavaScript semantics. This strategy is used for all SAMD21 targets, including the CPX.
 

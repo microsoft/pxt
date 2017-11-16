@@ -58,11 +58,15 @@ It is important to note that memory and performance analysis are done in separat
 
 \subsection{The Overhead of \MC}
 
-To place the overhead of \MC in context, we perform a comparitive evaluation of \MC against fully virtualised solutions, using the native C++ as our baseline. The two points of comparison are MicroPython~\cite{MicroPython}, an implementation of Python for microcontrollers, and Espruino~\cite{espruinoBook}, an implementation of JavaScript for micrcontrollers. For the CircuitPlayground, a fork of MicroPython  known as 'CircuitPython' was used.
+To place the overhead of \MC in context, we perform a comparative evaluation of \MC against fully virtualised solutions, using the native C++ as our baseline. The two points of comparison are MicroPython~\cite{MicroPython}, an implementation of Python for microcontrollers, and Espruino~\cite{espruinoBook}, an implementation of JavaScript for micrcontrollers. For the CircuitPlayground, a fork of MicroPython  known as 'CircuitPython' was used.
 
 We created a program to give the cost of each solution with respect to time. The program counts from 0 to 100000 in a tight loop, toggling a GPIO just before the loop starts and immediately after it terminates; we measured the loop's duration using an oscilloscope. The program was rewritten in each solutions' respective language; the results are shown in Table~\ref{table:vm-comparison}.
 
-For the micro:bit, micropython and Espruino are an order of magnitude slower than a native \CO program, while \MC is only 114 milliseconds slower. However, \MC for the CircuitPlayground uses the tagged approach, and completes in the same time as a micro:bit whilst executing instructions three times as fast. For both devices, \MC outperforms both the VM-based solutions of MicroPython and Espruino.
+For the micro:bit, MicroPython and Espruino are two or more orders of magnitude slower than a native \CO program, while \MC is only twice slower. 
+This reflects the simplicity of the STS compiler.
+However, \MC for the CircuitPlayground uses the tagged approach, which allows for seamless runtime switching to floating point numbers,
+resulting in further 3x slowdown.
+For both devices, \MC outperforms both the VM-based solutions of MicroPython and Espruino by at least an order of magnitude.
 
 \subsection{Context Switch Performance}
 
@@ -171,7 +175,7 @@ When compiling the Static TypeScript benchmarks and runtime with code shaking we
 When compiling, the entire TypeScript program, including the runtime, is
 passed to the TypeScript (TS) language service for parsing. Then, only the remaining part of the program (after code shaking) is compiled to native code.
 On a modern laptop, using Node.js, TS parsing and analysis takes about 0.1ms per statement, and \MC compilation to native code takes about 1ms per statement.
-While the TS compiler has been optimized for speed, \MCN's native compilation process hasn't been. For example, the CircuitPlayground TS pass is dominated by compilation of the device runtime and takes about 100ms, whereas the \MC pass typically only includes a small user program and a small bit of the runtime, resulting in less than 100ms. Thus, typical compilation times are in the range of 200ms for user programs of \textbf{ABC-XYZ NUMBER MICHAL?} lines.
+While the TS compiler has been optimized for speed, \MCN's native compilation process hasn't been. For example, the CircuitPlayground TS pass is dominated by compilation of the device runtime and takes about 100ms, whereas the \MC pass typically only includes a small user program and a small bit of the runtime, resulting in less than 100ms. Thus, typical compilation times are under 200ms for typical user programs of 100 lines or less.
 
 % Not really a result, more of a description of design, with an anecdotal comment about speed.
 
