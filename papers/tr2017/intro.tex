@@ -3,36 +3,19 @@
 
 % The emergence of a new breed of computer
 Embedded devices are growing impressively in popularity and ubiquity in recent years.
-This growth can be attributed to the emergence of new application domains inspired by small, 
-highly resource constrained programmable processors known as microcontroller units (or MCUs), 
-which can have as little of 2KB of RAM. It is now the case that less than 1 percent of 
-the world's processors reside in general purpose computers such as desktop PCs, laptops and tablets 
+This growth can be attributed to the emergence of new application domains inspired by small,
+highly resource constrained programmable processors known as microcontroller units (or MCUs),
+which can have as little of 2KB of RAM. It is now the case that less than 1 percent of
+the world's processors reside in general purpose computers such as desktop PCs, laptops and tablets
 - with MCUs picking up the remainder.
-Furthermore, demand for MCUs continues to grow due to their use in the monitoring and 
-controlling of a wide variety of systems, ranging from wearables, to home automation, to 
+Furthermore, demand for MCUs continues to grow due to their use in the monitoring and
+controlling of a wide variety of systems, ranging from wearables, to home automation, to
 industrial automation and smart grids - a phenomenon broadly referred to as the Internet of Things (IoT).
 
-MCUs are highly resource limited devices, but are not simply smaller versions of laptop and desktops. 
-They are architecturally quite distinct. If we are to undertand how to optimize 
-programming languages and their implementation for such devices it is worth dwelling on their key characteristics. 
-Table \ref{table:devices} highlights the core capabilities of three state of the art devices vs. a typical PC. While it is clear that all such devices are highly resource contrained compared to modern PCs 
-(about six orders of magnitude on most metrics), a deeper analysis derive two further key observations.
-
-Firstly, \emph{MCUs are processor rich}. Contrary to first impressions, these devices have 
-a \emph{proportionally} large amount of processing power. For example - consider the BBC micro:bit 
-versus a typical PC. It has about 100 times less CPU power, but 10\textsuperscript{6} times less RAM, 
-and 10\textsuperscript{6} time less storage. A language/runtime designed for MCUs should therefore not 
-only seek to provide high code density and spatial efficiency, 
-\emph{but to actively trade off CPU for spatial efficiency where possible}. 
-
-Secondly, \emph{MCUs are accumulating more features on chip}. 
-MCUs still follow Moore's law (the number of transistors doubles roughly every two years). 
-However, this additional capacity is 
-not typically invested in simply optimizing processing power. Instead, \emph{independent peripherals} 
-are integrated onto the same silicon chip as the CPU. Examples include integrated radio hardware such 
-as Bluetooth/WiFi and audio inputs and outputs. This hardware is designed to run independently of the 
-CPU, hence an effective language/runtime should directly support \emph{an asynchronous
-interaction model}.
+MCUs are highly resource limited devices, but are not simply smaller versions of laptop and desktops.
+They are architecturally quite distinct. If we are to undertand how to optimize
+programming languages and their implementation for such devices it is worth dwelling on their key characteristics.
+Table \ref{table:devices} highlights the core capabilities of three state of the art devices vs. a typical PC.
 
 \begin{table}[]
     \centering
@@ -48,38 +31,55 @@ interaction model}.
     \caption{\label{table:devices}Example microcontroller devices in relationship to a typical PC (SAM = SAMD21).}
     \end{table}
 
+While it is clear that all such devices are highly resource contrained compared to modern PCs
+(about six orders of magnitude on most metrics), a deeper analysis derive two further key observations.
 
+Firstly, \emph{MCUs are processor rich}. Contrary to first impressions, these devices have
+a \emph{proportionally} large amount of processing power. For example - consider the BBC micro:bit
+versus a typical PC. It has about 100 times less CPU power, but 10\textsuperscript{6} times less RAM,
+and 10\textsuperscript{6} time less storage. A language/runtime designed for MCUs should therefore not
+only seek to provide high code density and spatial efficiency,
+\emph{but to actively trade off CPU for spatial efficiency where possible}.
+
+Secondly, \emph{MCUs are accumulating more features on chip}.
+MCUs still follow Moore's law (the number of transistors doubles roughly every two years).
+However, this additional capacity is
+not typically invested in simply optimizing processing power. Instead, \emph{independent peripherals}
+are integrated onto the same silicon chip as the CPU. Examples include integrated radio hardware such
+as Bluetooth/WiFi and audio inputs and outputs. This hardware is designed to run independently of the
+CPU, hence an effective language/runtime should directly support \emph{an asynchronous
+interaction model}.
 
 % Despite this languages and programming environments have yet to keep pace with the mainstream (e.g. Arduino/mbed)
-Furthermore, with this surge in the demand for MCUs across a wide spectrum of applications, 
-there is a need to simplify the programming of such devices so that more people can participate in 
+Furthermore, with this surge in the demand for MCUs across a wide spectrum of applications,
+there is a need to simplify the programming of such devices so that more people can participate in
 the creation of MCU-based systems. From rapid product innovation to education,
 we have seen a sustained growth in the volume and diversity of people wishing to program MCU-based devices.
+% JOE: do we have a citation???
+
 These new application developers share a common characterisitic - \emph{they are not professional software developers}.
-% JOE: do we have a citation??? 
+Programming languages and development environments for MCUs have not kept pace with these advances
+in hardware and diversification of user domains. Elsewhere, we have long supported inexperienced developers through
+modern high level text-based languages for application development such as Java, C\#, Python and Javascript, and also
+through visual programming languages based on frameworks such as Blockly.
 
-Programming languages and development environments for MCUs have not kept pace with these advances 
-in hardware and diversification of user domains. Elsewhere, we have long supported inexperienced developers through  
-modern high level text-based languages for application development such as Java, C\#, Python and Javascript, and also 
-through visual programming languages based on frameworks such as Blockly. 
-
-In the world of the MCU, the C/C++ languages remain the standard, and for good reason. 
-They provide a familiar imperative programming model, with compilers that produce highly efficient code (in terms of both 
+In the world of the MCU, the C/C++ languages remain the standard, and for good reason.
+They provide a familiar imperative programming model, with compilers that produce highly efficient code (in terms of both
 temporal and spatial complexity), and enable low level access to hardware features when necessary. Examples
 of this are commonplace, such as the Arduino project (\url{www.arduino.cc})~\cite{buildingArduino2014},
 started in 2003, and ARM's Mbed platform (\url{www.mbed.org})~\cite{ARMmbed} - both of which rely heavily on
-a C/C++ programming model. However, the limitations of using C/C++ as an application programming language for 
-inexperienced developers are well understood. 
+a C/C++ programming model. However, the limitations of using C/C++ as an application programming language for
+inexperienced developers are well understood.
 % Doesn't feel like we really need to spell out the limitation of C/C++ out here. Anyone got good references?
 
 % Paper overview
 In this paper we introduce a novel architecture for MCU-based devices,
-that is designed with three goals in mind: 
-(1) it should be usable by \emph{anyone}, not just trained professionals; 
+that is designed with three goals in mind:
+(1) it should be usable by \emph{anyone}, not just trained professionals;
 (2) it should be available \emph{anywhere}, requiring no specialized software (native applications
 or device drivers) to operate;
 (3) it should run efficiently on \emph{anything}, from devices with as little as 2KB of memory.
-More specifically, we present and evaluate a platform that bridges the worlds of the web and the 
+More specifically, we present and evaluate a platform that bridges the worlds of the web and the
 MCU through three novel technologies:
 
 \begin{itemize}
@@ -91,24 +91,24 @@ with a simple model for linking against pre-compiled C++ (Section~\ref{sec:sts})
 that bridges the semantic gap between higher-level languages (such as TypeScript) and the hardware,
 modelling each hardware component as a software component (Section~\ref{sec:codal});
 
-\item \emph{\MCN}, a web application containing an \emph{in-browser compiler} that supports the 
-simplified programming of MCUs via editors for visual blocks and textual Javascript languages 
+\item \emph{\MCN}, a web application containing an \emph{in-browser compiler} that supports the
+simplified programming of MCUs via editors for visual blocks and textual Javascript languages
 (Section~\ref{sec:makecode});
 \end{itemize}
 
 Our results show that these technologies combined can enable simplified programming through modern
-languages and event-based constructs while maintaining a relatively high degree of temporal and spatial efficiency. 
-We show up to 50x more performant than other state-of-the-art implementations, 
-in some cases nearing the performance of native C++. 
+languages and event-based constructs while maintaining a relatively high degree of temporal and spatial efficiency.
+We show up to 50x more performant than other state-of-the-art implementations,
+in some cases nearing the performance of native C++.
 
 % Additional fodder we could work in if needed....
-%even the most conservative estimates predict in excess of 
-%30 billion IoT devices will be interconnected by 2020 [] - far outstripping the 3.7 billion people 
+%even the most conservative estimates predict in excess of
+%30 billion IoT devices will be interconnected by 2020 [] - far outstripping the 3.7 billion people
 %and 1.2 billion websites using the internet today.
 
 
 % The \MC \CO Architecture
-    
+
 
 
 \subsection{Architecture}
@@ -144,9 +144,9 @@ To meet these requirements, we created the \MC web app (Figure~\ref{fig:makecode
 
 The \MC web app is a platform agnostic environment which can be accessed from any modern web browser and cached locally for \emph{entirely offline use}. The \MC web app incorporates the open source Blockly (\emph{\href{https://github.com/google/blockly}{blockly}}) and Monaco (\emph{\href{https://github.com/Microsoft/monaco-editor}{monaco-editor}}) editors (upper-left), an in-browser device simulator (upper-right) for testing programs before transfering them to the physical device, as well as \emph{in-browser compilation} of Static TypeScript to machine code and linking against the pre-compiled (by a cloud service, lower left) C++ runtime (\emph{\CON}). The statically-typed runtime and type inference on user code allows users to write code that looks like plain JavaScript (see Figure~\ref{fig:example}) and progress later to working with types.
 
-\MC devices appear as USB pen drives when plugged into a computer. After a user has finished developing a program, the compiled binary is ``downloaded'' locally to the users computer and then transferred (flashed) to the MCU (exposed as USB pen drive) by a simple file copy operation. No additional installation is required to program the \MC as drivers for pen drive come pre-installed on many operating systems.
+\MC devices appear as USB pen drives when plugged into a computer. After a user has finished developing a program, the compiled binary is ``downloaded'' locally to the users computer and then transferred (flashed) to the MCU (exposed as USB pen drive) by a simple file copy operation. No additional installation is required to program the MCU as drivers for pen drive come pre-installed on many operating systems.
 
-These advances enable beginners to get started programming MCUs from any modern web browser, and enable hardware vendors to innovate and safely add new components to the mix using Static TypeScript. All of the platform's components are open source on GitHub.
+These advances enable beginners to get started programming MCUs from any modern web browser, and offer a safe environment for hardware vendors to innovate and add new components using Static TypeScript. All of the platform's components are open source on GitHub.
 
 \subsection{Running Example: firefly simulation.}
 
