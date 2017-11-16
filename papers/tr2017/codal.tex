@@ -64,8 +64,7 @@ This approach brings the benefits of abstraction and reusability to \CO, but wit
 
 Finally, we group together the components of a physical device to form a \emph{device model}. This is a further C++ class that, through composition of device driver components, provides a configured representation of the capabilities of a device. Such a model provides for an elegant OO API for programming a device and also a static representation that forms an ideal target for the \MCN linker to bind high level STS interfaces to low level optimised code. An example device model for the Adafruit CPX is shown in Figure~\ref{fig:codalDeviceModel} for reference.
 
- \MCN is further supported by an annotated C++ library (\emph{\MC-common-packages}) defining and abstracting the mapping from \CO to TypeScript. The use of \MC-common-packages ensures that different \MCN targets that use \CO share a common Typescript and block API vocabulary.
-
+ \MCN is further supported by an annotated C++ library (\emph{\MC wrappers}) defining and abstracting the mapping from \CO to TypeScript. The use of \MC wrappers ensures that different \MCN targets that use \CO share a common Typescript and block API vocabulary.
 
 \begin{figure}
 % TODO: shrink width
