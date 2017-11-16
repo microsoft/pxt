@@ -67,7 +67,7 @@ to prevent untyped JavaScript from destroying the type invariants of typed JavaS
 StrongScript~\cite{StrongScriptECOOP15} extends TypeScript with a type constructor (!)
 for \emph{concrete} types, which allows the programmer to choose between untyped
 code, optionally-typed code, and concretely typed code, which provides traditional
-type soundness guarantees. As with TypeScript, every JavaScript program is a StrongScript program. 
+type soundness guarantees. As with TypeScript, every JavaScript program is a StrongScript program.
 
 STS differs from these efforts by outlawing untyped or optionally typed
 code: it is non-goal of STS to support arbitrary JavaScript programs.
@@ -93,7 +93,7 @@ Arduino~\cite{buildingArduino2014} is an example of a simple platform where the 
 high-level APIs to control hardware; there is no scheduler, and memory management
 is discouraged through a heavy emphasis on global variables.
 
-TinyOS~\cite{levis2005tinyos}, Contiki~\cite{dunkels2012contiki}, RIOT OS~\cite{baccelli2013riot}, Mynewt~\cite{ApacheMy53:online} mbed OS~\cite{ARMmbed}, Zephyr~\cite{HomeZeph63:online} are solutions used known widely in the systems community. The majority focus on the networking features of sensor based devices and commonly adopt a preemptive scheduling model, which leads to competition over resources resolved using locks and condition synchronisation primitives. Contiki has a cooperative scheduler, but uses proto-threads to store thread context --- local variables are not allowed as the context of the stack is not stored.
+TinyOS~\cite{levis2005tinyos}, Contiki~\cite{dunkels2012contiki}, RIOT OS~\cite{baccelli2013riot}, Mynewt~\cite{ApacheMy53:online} mbed OS~\cite{ARMmbed}, Zephyr~\cite{HomeZeph63:online} are RTOS solutions known widely in the systems community. The majority focus on the networking features of sensor based devices and commonly adopt a preemptive scheduling model, which leads to competition over resources resolved using locks and condition synchronisation primitives. Contiki has a cooperative scheduler, but uses proto-threads to store thread context --- local variables are not allowed as the context of the stack is not stored.
 
 Although the platforms above are widely used by C/C++ developers, none of these existing solutions align well with the programming paradigms seen in higher level languages.
 
