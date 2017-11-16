@@ -442,34 +442,3 @@ export class CookieMessage extends data.Component<CookieMessageProps, CookieMess
         </div>;
     }
 }
-
-// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
-export class ExperimentalBannerState {
-    hideExperimentalBanner: boolean;
-}
-
-export class ExperimentalBanner extends data.Component<ISettingsProps, ExperimentalBannerState> {
-
-    hideBanner() {
-        this.setState({ hideExperimentalBanner: true });
-    }
-
-    shouldComponentUpdate(nextProps: ISettingsProps, nextState: ExperimentalBannerState, nextContext: any): boolean {
-        return this.state.hideExperimentalBanner != nextState.hideExperimentalBanner;
-    }
-
-    renderCore() {
-        const {hideExperimentalBanner} = this.state;
-        if (hideExperimentalBanner) return <div />;
-        const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
-
-        return <div id="experimentalBanner" className="ui icon top attached fixed negative mini message">
-            <sui.Icon icon="warning circle" />
-            <sui.Icon icon="close" onClick={() => this.hideBanner() } />
-            <div className="content">
-                <div className="header">{lf("You are viewing an experimental version of the editor") }</div>
-                <a href={liveUrl}>{lf("Take me back") }</a>
-            </div>
-        </div>;
-    }
-}
