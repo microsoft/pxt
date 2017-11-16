@@ -124,16 +124,18 @@ namespace pxtblockly {
                 if (tooltipText) {
                     const tooltip = new goog.ui.Tooltip(elem, tooltipText);
                     const onShowOld = tooltip.onShow;
+                    const isRTL = this.sourceBlock_.RTL;
+                    const xOffset = (isRTL ? -this.tooltipConfig_.xOffset : this.tooltipConfig_.xOffset);
                     tooltip.onShow = () => {
                         onShowOld.call(tooltip);
-                        const newPos = new goog.positioning.ClientPosition(tooltip.cursorPosition.x + this.tooltipConfig_.xOffset,
+                        const newPos = new goog.positioning.ClientPosition(tooltip.cursorPosition.x + xOffset,
                             tooltip.cursorPosition.y + this.tooltipConfig_.yOffset);
                         tooltip.setPosition(newPos);
                     };
                     tooltip.setShowDelayMs(0);
                     tooltip.className = 'goog-tooltip blocklyGridPickerTooltip';
                     elem.addEventListener('mousemove', (e: MouseEvent) => {
-                        const newPos = new goog.positioning.ClientPosition(e.clientX + this.tooltipConfig_.xOffset,
+                        const newPos = new goog.positioning.ClientPosition(e.clientX + xOffset,
                             e.clientY + this.tooltipConfig_.yOffset);
                         tooltip.setPosition(newPos);
                     });
@@ -153,6 +155,13 @@ namespace pxtblockly {
                     goog.style.setWidth(elem, largestTextItem);
                 }
             }
+
+            // Resize the grid picker if width > screen width
+            const windowSize = goog.dom.getViewportSize();
+            if (this.width_ > windowSize.width) {
+                this.width_ = windowSize.width;
+            }
+            tableContainerDom.style.width = this.width_ + 'px';
 
             // Record current container sizes after adding menu.
             const paddingContainerSize = goog.style.getSize(paddingContainerDom);
@@ -215,47 +224,12 @@ namespace pxtblockly {
                 }
             }
 
-            // Record windowSize and scrollOffset before adding menu.
-            const windowSize = goog.dom.getViewportSize();
-            const scrollOffset = goog.style.getViewportPageOffset(document);
-            const xy = this.getAbsoluteXY_();
-            const borderBBox = this.getScaledBBox_();
-            const borderHeight = borderBBox.bottom - xy.y;
-            const borderWidth = borderBBox.right - xy.x;
-
-            // Resize the grid picker if width > screen width
-            if (this.width_ > windowSize.width) {
-                this.width_ = windowSize.width;
-            }
-
-            tableContainerDom.style.width = this.width_ + 'px';
+            // Record viewport dimensions before adding the dropdown.
+            const viewportBBox = Blockly.utils.getViewportBBox();
+            const anchorBBox = this.getAnchorDimensions_();
 
             // Position the menu.
-            // Flip menu vertically if off the bottom.
-            if (xy.y + paddingContainerSize.height + borderHeight >=
-                windowSize.height + scrollOffset.y) {
-                xy.y -= paddingContainerSize.height + 2;
-            } else {
-                xy.y += borderHeight;
-            }
-
-            if (this.sourceBlock_.RTL) {
-                xy.x += paddingContainerSize.width / 2 - borderWidth / 2;
-
-                // Don't go offscreen left.
-                if (xy.x < scrollOffset.x + paddingContainerSize.width) {
-                    xy.x = scrollOffset.x + paddingContainerSize.width;
-                }
-            } else {
-                xy.x += borderWidth / 2 - paddingContainerSize.width / 2;
-
-                // Don't go offscreen right.
-                if (xy.x > windowSize.width + scrollOffset.x - paddingContainerSize.width) {
-                    xy.x = windowSize.width + scrollOffset.x - paddingContainerSize.width;
-                }
-            }
-
-            Blockly.WidgetDiv.position(xy.x, xy.y, windowSize, scrollOffset,
+            Blockly.WidgetDiv.positionWithAnchor(viewportBBox, anchorBBox, paddingContainerSize,
                 this.sourceBlock_.RTL);
             goog.style.setHeight(div, "auto");
 

@@ -467,6 +467,11 @@ declare namespace Blockly {
         function wrap(tip: string, limit: number): string;
         function genUid(): string;
         function mouseToSvg(e: Event, svg: Element): any;
+        function getViewportBBox(): goog.math.Box;
+    }
+
+    namespace utils.uiMenu {
+        function adjustBBoxesForRTL(viewportBBox: goog.math.Box, anchorBBox: goog.math.Box, menuSize: goog.math.Size): void;
     }
 
     class FieldImage {
@@ -543,6 +548,7 @@ declare namespace Blockly {
         constructor(val: (string[] | Object)[]);
         protected getOptions(): (string[] | Object)[];
         onItemSelected(menu: goog.ui.Menu, menuItem: goog.ui.MenuItem): void;
+        getAnchorDimensions_(): goog.math.Box;
     }
 
     class FieldNumber extends FieldTextInput {
@@ -962,6 +968,7 @@ declare namespace Blockly {
         function hide(): void;
         function position(anchorX: number, anchorY: number, windowSize: goog.math.Size,
             scrollOffset: goog.math.Coordinate, rtl: boolean): void;
+        function positionWithAnchor(viewportBBox: goog.math.Box, anchorBBox: goog.math.Box, widgetSize: goog.math.Size, rtl: boolean): void;
     }
 
     var Tooltip: any;
