@@ -202,7 +202,7 @@ Table~\ref{table:ram-consumption} shows the per device ram consumption of each s
 Since some MCU's (such as the Arduino Uno) have very little flash memory and quite 
 verbose machine code we also built a tiny (around 500 bytes of code) interpreter 
 for a simple byte code optimized for code density. This allows us to gain further insights into the 
-benefits and drwbacls of compiled vs. interpreted code execution on MCUs.
+benefits and drawbacks of compiled vs. interpreted code execution on MCUs.
 Table~\ref{table:c-native-vm-stats} describes the difference in performance for the native implementation and the VM implementation with respect to a C++ benchmark. With low computational complexity, the VM performs similarly to native, however, introducing computational tasks causes the VM to operate up to 5 times slower than the native implementation, but provides a 4x improvement in code density.
 
 % Since the Uno is an extremely resource constrained device, the AVR VM was specifically designed for high code density. The interpreter is implemented in assembly, always included with the program, and is around 0.5k. There are about 30 opcodes, some of which can take 1 or 2 byte arguments. There are also a few combined opcodes, representing a sequence of one argument-less opcode, and one with an argument, which improves code density by about 25\%. Opcodes are direct offsets into the code of the interpreter, speeding up execution. They operate on a stack (mainly for function calls) and a special scratch register. There is essentially no stack space overhead compared to native AVR compilation. The speed overhead is around 4x-5x (with respect to native) for computational tasks.
