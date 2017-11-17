@@ -1,49 +1,51 @@
 \section{USB Flashing Format}
 \label{sec:uf2}
 
-There are several ways to install a user program in the non-volatile flash memory
-of a microcontroller. Developers generally use a debugger
-interface on the target, with a specialized debugger chip, 
-while hobbyists tend to employ a custom protocol over RS-232 serial
-line. Both use cases require operating system drivers and a native application.
+See Supplementary Material Document. 
 
-ARM's mbed platform provides DAPLink, firmware that presents itself to an external computer
-as a USB pen drive. No special drivers need to be installed, as operating
-systems support pen drives out of the box. The USB pen drive protocol (USB Mass
-Storage Class or MSC) is a block-level protocol (generally 512 bytes) with no
-concept of files.
+% There are several ways to install a user program in the non-volatile flash memory
+% of a microcontroller. Developers generally use a debugger
+% interface on the target, with a specialized debugger chip, 
+% while hobbyists tend to employ a custom protocol over RS-232 serial
+% line. Both use cases require operating system drivers and a native application.
 
-DAPLink exposes a small virtual FAT file system containing an informational HTML file
-to the external computer, 
-but its file allocation table and the root directory are otherwise empty.
-When the OS tries to read a block, DAPLink computes what should be there, 
-based on compiled-in contents of the HTML file.
-On file system writes, DAPLink detects the Intel HEX format~\cite{IntelHEX}, 
-decodes it and flashes the file's contents into the target microcontroller's memory. 
-Other file systems writes are ignored.
+% ARM's mbed platform provides DAPLink, firmware that presents itself to an external computer
+% as a USB pen drive. No special drivers need to be installed, as operating
+% systems support pen drives out of the box. The USB pen drive protocol (USB Mass
+% Storage Class or MSC) is a block-level protocol (generally 512 bytes) with no
+% concept of files.
 
-DAPLink implements many heuristics to deal with quirks of FAT file
-system implementations in various operating systems (order of writes, various meta-data files
-that are created and need to be ignored, etc.).  However, we have found that the
-heuristics are fragile with respect to operating system changes, which are not infrequent.
+% DAPLink exposes a small virtual FAT file system containing an informational HTML file
+% to the external computer, 
+% but its file allocation table and the root directory are otherwise empty.
+% When the OS tries to read a block, DAPLink computes what should be there, 
+% based on compiled-in contents of the HTML file.
+% On file system writes, DAPLink detects the Intel HEX format~\cite{IntelHEX}, 
+% decodes it and flashes the file's contents into the target microcontroller's memory. 
+% Other file systems writes are ignored.
 
-We created a new file format so that MSC writes can be easily acted upon, removing
-the need for the complexity of the DAPlink heuristics, while retaining support for 
-a virtual FAT architecture.
-Flashing Format (\UF) files consist of one or more 512-byte self-contained blocks.
-The blocks have magic numbers, the payload data to be written to flash,
-and the address where it should be written.
-Thus, on every 512-byte write via the USB MSC, the bootloader can quickly and easily
-check if the block being written is part of a \UF file (by comparing magic numbers)
-and if so, write it immediately. In fact, this can be implemented in a streaming
-fashion with less than 100 bytes of RAM, as on the ATmega16u2 interface chip
-on the Arduino Uno.
+% DAPLink implements many heuristics to deal with quirks of FAT file
+% system implementations in various operating systems (order of writes, various meta-data files
+% that are created and need to be ignored, etc.).  However, we have found that the
+% heuristics are fragile with respect to operating system changes, which are not infrequent.
 
-The minimal implementation of the \UF bootloader is 1-2k of code, depending
-on the microcontroller instruction set and USB interfaces.
-The bootloader on SAMD21 (which is 8k of code) implements \UF flashing with read-back capability (ie.,
-a \UF file is exposed in the virtual FAT that contains current content of the 
-MCU flash; as \MC embeds source code in binaries this lets the user drag the current \UF file from
-a board into \MC browser window to load the project), legacy serial bootloader for Arduino, 
-and a custom USB HID protocol for flashing with a native application (requiring no drivers).
+% We created a new file format so that MSC writes can be easily acted upon, removing
+% the need for the complexity of the DAPlink heuristics, while retaining support for 
+% a virtual FAT architecture.
+% Flashing Format (\UF) files consist of one or more 512-byte self-contained blocks.
+% The blocks have magic numbers, the payload data to be written to flash,
+% and the address where it should be written.
+% Thus, on every 512-byte write via the USB MSC, the bootloader can quickly and easily
+% check if the block being written is part of a \UF file (by comparing magic numbers)
+% and if so, write it immediately. In fact, this can be implemented in a streaming
+% fashion with less than 100 bytes of RAM, as on the ATmega16u2 interface chip
+% on the Arduino Uno.
+
+% The minimal implementation of the \UF bootloader is 1-2k of code, depending
+% on the microcontroller instruction set and USB interfaces.
+% The bootloader on SAMD21 (which is 8k of code) implements \UF flashing with read-back capability (ie.,
+% a \UF file is exposed in the virtual FAT that contains current content of the 
+% MCU flash; as \MC embeds source code in binaries this lets the user drag the current \UF file from
+% a board into \MC browser window to load the project), legacy serial bootloader for Arduino, 
+% and a custom USB HID protocol for flashing with a native application (requiring no drivers).
 
