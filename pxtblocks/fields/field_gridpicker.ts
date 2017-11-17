@@ -92,6 +92,11 @@ namespace pxtblockly {
                 tableContainer.addChild(row, true);
             }
 
+            // Record windowSize and scrollOffset before adding menu.
+            const windowSize = goog.dom.getViewportSize();
+            const scrollOffset = goog.style.getViewportPageOffset(document);
+            const xy = this.getAbsoluteXY_();
+            const borderBBox = this.getScaledBBox_();
             const div = Blockly.WidgetDiv.DIV;
 
             scrollContainer.addChild(tableContainer, true);
@@ -102,6 +107,11 @@ namespace pxtblockly {
             const paddingContainerDom = paddingContainer.getElement() as HTMLElement;
             const scrollContainerDom = scrollContainer.getElement() as HTMLElement;
             const tableContainerDom = tableContainer.getElement() as HTMLElement;
+
+            // Resize the grid picker if width > screen width
+            if (this.width_ > windowSize.width) {
+                this.width_ = windowSize.width;
+            }
 
             tableContainerDom.style.backgroundColor = this.backgroundColour_;
             scrollContainerDom.style.backgroundColor = this.backgroundColour_;
@@ -154,12 +164,6 @@ namespace pxtblockly {
                     const elem = menuItemsDom[i] as HTMLElement;
                     goog.style.setWidth(elem, largestTextItem);
                 }
-            }
-
-            // Resize the grid picker if width > screen width
-            const windowSize = goog.dom.getViewportSize();
-            if (this.width_ > windowSize.width) {
-                this.width_ = windowSize.width;
             }
             tableContainerDom.style.width = this.width_ + 'px';
 
@@ -224,12 +228,34 @@ namespace pxtblockly {
                 }
             }
 
-            // Record viewport dimensions before adding the dropdown.
-            const viewportBBox = Blockly.utils.getViewportBBox();
-            const anchorBBox = this.getAnchorDimensions_();
-
             // Position the menu.
-            Blockly.WidgetDiv.positionWithAnchor(viewportBBox, anchorBBox, paddingContainerSize,
+            // Flip menu vertically if off the bottom.
+            const borderBBoxHeight = borderBBox.bottom - xy.y;
+            const borderBBoxWidth = borderBBox.right - xy.x;
+            if (xy.y + paddingContainerSize.height + borderBBoxHeight >=
+                windowSize.height + scrollOffset.y) {
+                xy.y -= paddingContainerSize.height + 2;
+            } else {
+                xy.y += borderBBoxHeight;
+            }
+
+            if (this.sourceBlock_.RTL) {
+                xy.x -= paddingContainerSize.width / 2;
+
+                // Don't go offscreen left.
+                if (xy.x < scrollOffset.x) {
+                    xy.x = scrollOffset.x;
+                }
+            } else {
+                xy.x += borderBBoxWidth / 2 - paddingContainerSize.width / 2;
+
+                // Don't go offscreen right.
+                if (xy.x > windowSize.width + scrollOffset.x - paddingContainerSize.width) {
+                    xy.x = windowSize.width + scrollOffset.x - paddingContainerSize.width;
+                }
+            }
+
+            Blockly.WidgetDiv.position(xy.x, xy.y, windowSize, scrollOffset,
                 this.sourceBlock_.RTL);
             goog.style.setHeight(div, "auto");
 

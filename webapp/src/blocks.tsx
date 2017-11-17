@@ -258,7 +258,7 @@ export class Editor extends srceditor.Editor {
                 disagreeLbl: lf("Cancel"),
                 size: "small"
             }).then(value => {
-                callback(value);
+                callback(value ? value : null);
             })
         };
     }
