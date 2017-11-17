@@ -15,20 +15,13 @@
 
 Create a PR adding a config for the board to the [UF2-SAMD21](https://github.com/Microsoft/uf2-samd21/) Bootloader repo (see the README of that repo for details).
 
-## Step 2: Configure the pins in pxt-common-packages
-
-The pinouts for boards are defined in the file `libs\core\pins.h` in the [pxt-common-packages](https://github.com/Microsoft/pxt-common-packages) repo.
-Create a PR adding a board id and pin definitions in this file.
-See `BOARD_ID_METRO` for an example of what that looks like for the Adafruit Metro board.
-You can do this locally to start and open a pr later if desired.
-
-## Step 3: Create a target repo
+## Step 2: Create a target repo
 
 Clone [pxt-sample](https://github.com/Microsoft/pxt-sample) to start.
 Be sure to run `npm install` in this repo.
 You can serve the sample editor by running `pxt serve` in the root directory.
 
-## Step 4: Take a look at pxtarget.json
+## Step 3: Take a look at pxtarget.json
 
 Inside your repo, you will need a pxtarget.json file that configures the pxt editor for your target.
 Go to https://makecode.com/targets/pxtarget for documentation on this file and all of the options that are available.
@@ -52,21 +45,30 @@ The following steps 1-4 can also be used for any other library you wish to use f
 
 1. Delete the contents of the `libs\core` in the pxt-sample repo.
 
-2. Copy the `pxt.json` file from `pxt-common-packages\libs\core` into the newly empty directory.
+2. Create a new file named `pxt.json` with the following contents:
 
-3. Inside the new `pxt.json`, add an additional property that points to the pxt-common-packages core library like so:
-        "additionalFilePath": "../../node_modules/pxt-common-packages/libs/core"
+```json
+{
+    "additionalFilePath": "../../node_modules/pxt-common-packages/libs/core"
+}
+```
 
-4. With the file path configured, any file that is added to this directory with the same name as a file in pxt-common-packages' core library will override that file. Using this method you can override any of the files in pxt-common-packages.
+3. With the file path configured, any file that is added to this directory with the same name as a file in pxt-common-packages' core library will override that file. Using this method you can override any of the files in pxt-common-packages.
 
-5. Copy the files `devpins.h` and `devpins.cpp` from `pxt-common-packages\libs\core` into `libs\core`. These files are used to configure each pin on the board to be either analog, digital, or PWM. Take a look at [pxt-adafruit](https://github.com/Microsoft/pxt-adafruit/tree/master/libs/core) for an example of what this should look like.
+4. Repeat these steps for the "base" library in pxt-common-packages.
 
 ### Add your board's "main" library
 
-Inside the libs folder, create a directory with the name of your board.
+1. Inside the libs folder, create a directory with the name of your board.
 This directory will be the main library for your board and should contain any code that does not belong in pxt-common-packages.
 Add a `pxt.json` to this file that depends on the "core" library created in the previous step.
 See [pxt-adafruit's circuit-playground lib](https://github.com/Microsoft/pxt-adafruit/blob/master/libs/circuit-playground/pxt.json) for an example of what this file should look like.
+
+2. Add a file named `config.ts`. This file will be used to configure the pinout of the board. See [pxt-adafruit](https://github.com/Microsoft/pxt-adafruit/blob/master/libs/circuit-playground/config.ts) for an example.
+
+3. Add another file named `device.d.ts`. This file is used to define the components of the board that will be visible in the TS. See [pxt-adafruit](https://github.com/Microsoft/pxt-adafruit/blob/master/libs/circuit-playground/device.d.ts) for an example.
+
+4. Be sure to add both `device.d.ts` and `config.ts` to the `pxt.json` added in step 1
 
 ### Add the "blocksproj" library
 
