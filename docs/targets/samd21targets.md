@@ -36,7 +36,7 @@ If you are developing libraries locally, you can instead clone the pxt-common-pa
 ## Step 5: Setting up the target's libs folder.
 
 The `libs` folder in a target contains the libraries of code that run on the actual device.
-Libraries are a combination of C++ and TypeScript (*.ts) files that define the APIs available in the block and text editors.
+Libraries are a combination of C++ and TypeScript (\*.ts) files that define the APIs available in the block and text editors.
 To set up your target's `libs` folder, do the following:
 
 ### Add the pxt-common-packages "core" library
