@@ -1050,8 +1050,7 @@ Computing Machinery]
   \ifx\acmConference@shortname\@empty
     \gdef\acmConference@shortname{#2}%
   \fi}
-\acmConference[Conference'17]{ACM Conference}{July 2017}{Washington,
-  DC, USA}
+\acmConference[Private]{-}{Nov. 2017}{-}
 \def\acmBooktitle#1{\gdef\@acmBooktitle{#1}}
 \acmBooktitle{Proceedings of \acmConference@name
        \ifx\acmConference@name\acmConference@shortname\else
@@ -2082,22 +2081,22 @@ Computing Machinery]
       \string\titlenote{} or \string\authornote{} instead!}}%
   \def\@article@string{\ifx\@acmArticle\@empty{\ }\else,
     Article~\@acmArticle\ \fi}%
-  \par\medskip\small\noindent{\bfseries ACM Reference Format:}\par\nobreak
-  \noindent\authors. \@acmYear. \@title
-  \ifx\@subtitle\@empty. \else: \@subtitle. \fi
-  \if@ACM@journal
-     \textit{\@journalNameShort}
-     \@acmVolume, \@acmNumber \@article@string (\@acmPubDate),
-     \ref{TotPages}~\@pages@word.
-  \else
-     In \textit{\@acmBooktitle}%
-     \ifx\@acmEditors\@empty\textit{.}\else
-       \andify\@acmEditors\textit{, }\@acmEditors~\@editorsAbbrev.%
-     \fi\
-     ACM, New York, NY, USA%
-       \@article@string\unskip, \ref{TotPages}~\@pages@word.
-  \fi
-  \@formatdoi{\@acmDOI}
+  % \par\medskip\small\noindent{\bfseries ACM Reference Format:}\par\nobreak
+  % \noindent\authors. \@acmYear. \@title
+  % \ifx\@subtitle\@empty. \else: \@subtitle. \fi
+  % \if@ACM@journal
+  %    \textit{\@journalNameShort}
+  %    \@acmVolume, \@acmNumber \@article@string (\@acmPubDate),
+  %    \ref{TotPages}~\@pages@word.
+  % \else
+  %    In \textit{\@acmBooktitle}%
+  %    \ifx\@acmEditors\@empty\textit{.}\else
+  %      \andify\@acmEditors\textit{, }\@acmEditors~\@editorsAbbrev.%
+  %    \fi\
+  %    ACM, New York, NY, USA%
+  %      \@article@string\unskip, \ref{TotPages}~\@pages@word.
+  % \fi
+  % \@formatdoi{\@acmDOI}
 \par\egroup}
 \def\@printendtopmatter{\par\bigskip}
 \def\@setthanks{\long\def\thanks##1{\par##1\@addpunct.}\thankses}
