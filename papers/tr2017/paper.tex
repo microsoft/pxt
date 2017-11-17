@@ -1,14 +1,15 @@
-\documentclass[sigplan,10pt,review,anonymous]{acmart}\settopmatter{printfolios=true,printccs=false,printacmref=false}
+\documentclass[sigplan,10pt]{acmart}
+  %\settopmatter{printfolios=false,printccs=false,printacmref=false}
   \usepackage{graphicx}
   \usepackage{listings}
   \usepackage{enumitem}
-  \newcommand{\MC}{WA\ }
-  \newcommand{\MCN}{WA}
-  \newcommand{\CO}{RT\ }
-  \newcommand{\CON}{RT}
-  \newcommand{\COLN}{rt}
-  \newcommand{\UF}{FF\ }
-  \newcommand{\UFN}{FF}
+  \newcommand{\MC}{MakeCode\ }
+  \newcommand{\MCN}{MakeCode}
+  \newcommand{\CO}{CODAL\ }
+  \newcommand{\CON}{CODAL}
+  \newcommand{\COLN}{codal}
+  \newcommand{\UF}{UF2\ }
+  \newcommand{\UFN}{UF2}
   \newcommand{\flameon}[1]{\emph{#1}}
   \def\dbhref#1#2{URL}
   %\def\dbhref#1#2{\href{#1}{#2}}
@@ -48,10 +49,10 @@
     %% Conference information
     %% Supplied to authors by publisher for camera-ready submission;
     %% use defaults for review submission.
-    \acmConference[PL'17]{ACM SIGPLAN Conference on Programming Languages}{January 01--03, 2017}{New York, NY, USA}
-    \acmYear{2017}
-    \acmISBN{} % \acmISBN{978-x-xxxx-xxxx-x/YY/MM}
-    \acmDOI{} % \acmDOI{10.1145/nnnnnnn.nnnnnnn}
+    % \acmConference[PL'17]{ACM SIGPLAN Conference on Programming Languages}{January 01--03, 2017}{New York, NY, USA}
+    % \acmYear{2017}
+    % \acmISBN{} % \acmISBN{978-x-xxxx-xxxx-x/YY/MM}
+    % \acmDOI{} % \acmDOI{10.1145/nnnnnnn.nnnnnnn}
     \startPage{1}
 
     %% Copyright information
@@ -116,49 +117,53 @@
     %% extraction tools.
 
     %% Author with single affiliation.
-    \author{First1 Last1}
-    \authornote{with author1 note}          %% \authornote is optional;
-                                            %% can be repeated if necessary
-    \orcid{nnnn-nnnn-nnnn-nnnn}             %% \orcid is optional
+    \author{James Devine}
     \affiliation{
-      \position{Position1}
-      \department{Department1}              %% \department is recommended
-      \institution{Institution1}            %% \institution is required
-      \streetaddress{Street1 Address1}
-      \city{City1}
-      \state{State1}
-      \postcode{Post-Code1}
-      \country{Country1}                    %% \country is recommended
+      \institution{Lancaster University, UK}            %% \institution is required
     }
-    \email{first1.last1@inst1.edu}          %% \email is recommended
+    \email{james@devine.eu}  
+    \author{Joe Finney}
+    \affiliation{
+      \institution{Lancaster University, UK}            %% \institution is required
+    }
+    \email{j.finney@lancaster.ac.uk} 
+    \author{Micha\l Moskal}
+    \affiliation{
+      \institution{Microsoft, USA}            %% \institution is required
+    }
+    \email{mmoskal@microsoft.com} 
+    \author{Peli de Halleux}
+    \affiliation{
+      \institution{Microsoft, USA}            %% \institution is required
+    }
+    \email{jhalleux@microsoft.com} 
+    \author{Thomas Ball}
+    \affiliation{
+      \institution{Microsoft, USA}            %% \institution is required
+    }
+    \email{tball@microsoft.com} 
+    \author{Steve Hodges}
+    \affiliation{
+      \institution{Microsoft, UK}            %% \institution is required
+    }
+    \email{shodges@microsoft.com} 
 
     %% Author with two affiliations and emails.
-    \author{First2 Last2}
-    \authornote{with author2 note}          %% \authornote is optional;
-                                            %% can be repeated if necessary
-    \orcid{nnnn-nnnn-nnnn-nnnn}             %% \orcid is optional
-    \affiliation{
-      \position{Position2a}
-      \department{Department2a}             %% \department is recommended
-      \institution{Institution2a}           %% \institution is required
-      \streetaddress{Street2a Address2a}
-      \city{City2a}
-      \state{State2a}
-      \postcode{Post-Code2a}
-      \country{Country2a}                   %% \country is recommended
-    }
-    \email{first2.last2@inst2a.com}         %% \email is recommended
-    \affiliation{
-      \position{Position2b}
-      \department{Department2b}             %% \department is recommended
-      \institution{Institution2b}           %% \institution is required
-      \streetaddress{Street3b Address2b}
-      \city{City2b}
-      \state{State2b}
-      \postcode{Post-Code2b}
-      \country{Country2b}                   %% \country is recommended
-    }
-    \email{first2.last2@inst2b.org}         %% \email is recommended
+    % \author{First2 Last2}
+    % \authornote{with author2 note}          %% \authornote is optional;
+    %                                         %% can be repeated if necessary
+    % \orcid{nnnn-nnnn-nnnn-nnnn}             %% \orcid is optional
+    % \affiliation{
+    %   \position{Position2a}
+    %   \department{Department2a}             %% \department is recommended
+    %   \institution{Institution2a}           %% \institution is required
+    %   \streetaddress{Street2a Address2a}
+    %   \city{City2a}
+    %   \state{State2a}
+    %   \postcode{Post-Code2a}
+    %   \country{Country2a}                   %% \country is recommended
+    % }
+    % \email{first2.last2@inst2a.com}         %% \email is recommended
 
 
     %% Abstract
