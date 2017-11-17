@@ -230,7 +230,10 @@ export function getApisInfoAsync() {
 export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
     return cachedBlocks
         ? Promise.resolve(cachedBlocks)
-        : getApisInfoAsync().then(info => cachedBlocks = pxtc.getBlocksInfo(info));
+        : getApisInfoAsync().then(info => {
+            cachedBlocks = pxtc.getBlocksInfo(info);
+            return cachedBlocks;
+        });
 }
 
 export function newProject() {
