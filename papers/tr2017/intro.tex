@@ -13,7 +13,7 @@ control of a wide variety of systems, ranging from wearables, to home automation
 industrial automation, and smart grids - a phenomenon broadly referred to as the Internet of Things (IoT).
 
 MCUs are highly resource limited devices, but are not simply smaller versions of laptop and desktop machines.
-They are architecturally quite distinct. If we are to undertand how to optimize
+They are architecturally quite distinct. If we are to understand how to optimize
 programming languages and their implementation for such devices it is worth dwelling on the key characteristics of MCUs, namely their storage and CPU capabilities.
 Table \ref{table:devices} highlights the core capabilities of MCU-based devices
 vs. a typical PC.
@@ -32,7 +32,7 @@ vs. a typical PC.
     \caption{\label{table:devices}Example microcontroller devices in relationship to a typical PC. Device abbreviations: Uno (Arduino Uno), micro:bit (BBC micro:bit), CPX (Adafruit Circuit Playground Express); PC (Personal Computer).}
     \end{table}
 
-While it is clear that all such devices are highly resource contrained compared to modern PCs
+While such devices are highly resource constrained compared to modern PCs
 (about six orders of magnitude less on some metrics), a deeper analysis derives two further observations.
 
 Firstly, \emph{MCUs are processor rich}. Contrary to first impressions, these devices have
@@ -55,7 +55,7 @@ interaction model}.
 Furthermore, with this surge in the demand for MCUs across a wide spectrum of applications,
 there is a need to simplify the programming of such devices so that more people can participate in
 the creation of MCU-based systems. From rapid product innovation to making and education,
-we have seen a sustained growth in the volume and diversity of people wishing to program MCU-based devices. These new application developers share a common characterisitic - \emph{they are typically not professional software developers}~\cite{dougherty2012maker,bruce2015make,maksimovic2014raspberry}.
+we have seen a sustained growth in the volume and diversity of people wishing to program MCU-based devices. These new application developers share a common characteristic - \emph{they are typically not professional software developers}~\cite{dougherty2012maker,bruce2015make,maksimovic2014raspberry}.
 
 Programming languages and development environments for MCUs have not kept pace with advances
 in hardware and diversification of user domains. Elsewhere, we have long supported inexperienced developers through languages such as Java, C\#, Python and JavaScript, and also
@@ -104,9 +104,9 @@ in some cases nearing the performance of native C++.  Our platform was deployed 
 \caption{\label{fig:makecode}\MC web app}
 \end{figure}
 
-Currently, due to the low-level nature of MCU programming, additional drivers and software are commonly required to be locally installed in order to program them. In restricted environments, like libraries and schools, safeguards are put in place to protect users and machines from downloading or installing additional software. Further, Internet connections are unrealiable in remote locations. These factors create barriers for designing a programming environment that runs \emph{anywhere}. Therefore, a solution is required that can: (1) operate in restricted environments; (2) operate with little, or no internet connectivity; and (3) work on any operating system.
+Currently, due to the low-level nature of MCU programming, additional drivers and software are commonly required to be locally installed in order to program them. In restricted environments, like libraries and schools, safeguards are put in place to protect users and machines from downloading or installing additional software. Further, Internet connections are unreliable in remote locations. These factors create barriers for designing a programming environment that runs \emph{anywhere}. Therefore, a solution is required that can: (1) operate in restricted environments; (2) operate with little, or no internet connectivity; and (3) work on any operating system.
 
-To meet these requirements, we created the \MC web app (Figure~\ref{fig:makecode}), the entry point of the platform. The web app can be accessed from any modern web browser and cached locally for \emph{entirely offline use}. The \MC web app incorporates the open source Blockly (\emph{\href{https://github.com/google/blockly}{blockly}}) and Monaco (\emph{\href{https://github.com/Microsoft/monaco-editor}{monaco-editor}}) editors (upper-left), an in-browser device simulator (upper-right) for testing programs before transfering them to the physical device, as well as \emph{in-browser compilation} of Static TypeScript to machine code and linking against the C++ runtime (\emph{\CON}), pre-compiled (by a cloud service, lower left). The statically-typed runtime and type inference on user code allows users to write code that looks like plain JavaScript (see Figure~\ref{fig:example}).
+To meet these requirements, we created the \MC web app (Figure~\ref{fig:makecode}), the entry point of the platform. The web app can be accessed from any modern web browser and cached locally for \emph{entirely offline use}. The \MC web app incorporates the open source Blockly (\emph{\href{https://github.com/google/blockly}{blockly}}) and Monaco (\emph{\href{https://github.com/Microsoft/monaco-editor}{monaco-editor}}) editors (upper-left), an in-browser device simulator (upper-right) for testing programs before transferring them to the physical device, as well as \emph{in-browser compilation} of Static TypeScript to machine code and linking against the C++ runtime (\emph{\CON}), pre-compiled (by a cloud service, lower left). The statically-typed runtime and type inference on user code allows users to write code that looks like plain JavaScript (see Figure~\ref{fig:example}).
 
 \MC devices appear as USB pen drives when plugged into a computer. After a user has finished developing a program, the compiled binary is ``downloaded'' locally to the users computer and then transferred (flashed) to the MCU (exposed as USB pen drive) by a simple file copy operation. No additional installation is required to program the MCU as drivers for pen drive come pre-installed on many operating systems (MacOS, Windows, Linux, Android, ChromeOS).
 
