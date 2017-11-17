@@ -34,10 +34,8 @@ consisting of an 8-bit processor running at 16 MHz,
 with only 2kB of RAM and 32kB of flash.
 The Uno has no onboard components other than the microcontroller which supports
 GPIO, Serial, and I2C.
-
 The micro:bit has a 32-bit Cortex-M0 clocked at 16MHz, with 16kB RAM and 256kB of flash. It has a number of onboard components
 including a 5x5 LED matrix display, a compass, accelerometer, buttons, GPIO, I2C, Serial, and Bluetooth Low Energy.
-
 The CPX is a 32-bit Cortex-M0+, which offers greater energy efficiency and performance; it clocks at 48 MHz, has 32kB of RAM and
 256kB of flash. On board the CPX are: RGB pixels, an infrared transmitter and receiver, a touch sensor, buttons, accelerometer, speaker,
 microphone, GPIO, I2C, and Serial.
@@ -169,7 +167,7 @@ These results highlight the performance gains of the opportunistic fork-on-block
 \multicolumn{1}{|c|}{C++ Standard Library}                                                     & 43.14 & 24        & 1.03 \\ \hline
 \end{tabular}
 
-\caption{\label{table:flash-consumption}The total flash consumption of code required to support \MC (KB).}
+\caption{\label{table:flash-consumption}The total flash consumption of code required to support \MC (kB).}
 \end{table}
 
 MCUs make use of internal non-volatile FLASH memory to store program code. Table~\ref{table:flash-consumption} shows the per device flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library and optionally, Mbed.
@@ -190,7 +188,7 @@ The size of \CO and \MC scales linearly with the amount of functionality a devic
 \multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}mbed and Supporting \\ Libraries\end{tabular}} & 0.312 & 0.923     & -     \\ \hline
 \multicolumn{1}{|c|}{C++ Standard Library}                                                     & 0.161 & 0.149     & 0.074 \\ \hline
 \end{tabular}
-\caption{\label{table:ram-consumption}The total static RAN consumption for an \MC binary (KB).}
+\caption{\label{table:ram-consumption}The total static RAN consumption for an \MC binary (kB).}
 \end{table}
 
 Table~\ref{table:ram-consumption} shows the per device RAM consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. At runtime \MC also dynamically allocates additional memory: 1.56 kB for the CPX, 560 bytes for the micro:bit, and 644 bytes for the Uno. From the table, we can see that in all cases, the RAM consumption of \MC and \CO is well within the RAM available of each device.

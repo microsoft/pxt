@@ -25,6 +25,11 @@ as with MicroPython~\cite{MicroPython} and Espruino~\cite{espruinoBook};
 
 In the educational and maker~\cite{dougherty2012maker} settings, MCUs often are embedded in projects. Here, option 1 has limited utility, as in such projects the MCU is powered by battery and is not connected to a host. Option 2 does not operate well on computers where installation of programs and additional software is forbidden, common in educational environments. Options 3 and 4 suffer in terms of performance on small MCUs, operating slower than native C++ code, and consuming most of the resources (flash and RAM) of the MCU.
 
+Our platform slots into options 2 and 3, using the \MC architecture and USB pen drives to avoid
+the need for installation of native applications or device drivers. Our use of STS provides
+better performance than the MicroPython and Espruino solution, as demonstrated in the evaluation,
+and allows us to fit in the very constrained space of the Uno. 
+
 % https://github.com/jerryscript-project
 
 % JerryScript is a lightweight JavaScript engine for resource-constrained devices
@@ -54,9 +59,9 @@ In the educational and maker~\cite{dougherty2012maker} settings, MCUs often are 
 \subsection{Types for JavaScript}
 
 By design, TypeScript does not provide a type soundness guarantee~\cite{BiermanAT14}.
-Type systems with soundness guarantees for JavaScript have as their
-goals: (1) handling arbitrary JavaScript programs;
-(2) providing efficient execution for language subsets.
+Related work on type systems with soundness guarantees for JavaScript 
+have the additional goals of: (1) handling arbitrary JavaScript programs;
+(2) providing efficient execution.
 
 Safe TypeScript~\cite{SafeTypeScript15} separates the worlds of typed and untyped
 objects: the \emph{dynamic} type is an implicit union type of all \emph{known} static type,

@@ -73,25 +73,16 @@ Finally, we group together the components of a physical device to form a \emph{d
 \begin{lstlisting}
 class CircuitPlayground : public RTDevice
 {
-    ...
-    public:
-
+  public:
     MessageBus                  messageBus;
     CPlayTimer                  timer;
     mbed::Serial                serial;
     CircuitPlaygroundIO         io;
     Button                      buttonA;
-    Button                      buttonB;
-    Button                      buttonC;
-    MultiButton                 buttonAB;
-
     mbed::I2C                   i2c;
-    CoordinateSpace             coordinateSpace;
     LIS3DH                      accelerometer;
     NonLinearAnalogSensor       thermometer;
     AnalogSensor                lightSensor;
-
-    CircuitPlayground();
     ...
 };
 \end{lstlisting}
