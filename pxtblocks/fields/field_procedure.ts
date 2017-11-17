@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="../../localtypings/pxtblockly.d.ts" />
 
 namespace pxtblockly {
 
@@ -10,7 +10,7 @@ namespace pxtblockly {
             this.setValue(funcname || '');
         }
 
-        getOptions_() {
+        getOptions() {
             return this.dropdownCreate();
         };
 

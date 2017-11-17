@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="../../localtypings/pxtblockly.d.ts" />
 /// <reference path="../../typings/globals/jquery/index.d.ts" />
 
 import * as React from "react";
@@ -98,6 +98,7 @@ export class Editor extends srceditor.Editor {
                                 .then((fns: pxtc.service.SearchInfo[]) => fns),
                             searchTb => this.updateToolbox(searchTb, this.showToolboxCategories, true));
                     }
+                    pxt.blocks.initFlyouts(this.editor);
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -257,7 +258,7 @@ export class Editor extends srceditor.Editor {
                 disagreeLbl: lf("Cancel"),
                 size: "small"
             }).then(value => {
-                callback(value);
+                callback(value ? value : null);
             })
         };
     }
@@ -614,7 +615,7 @@ export class Editor extends srceditor.Editor {
         const toolbox = showCategories !== CategoryMode.None ?
             document.getElementById('blocklyToolboxDefinitionCategory')
             : document.getElementById('blocklyToolboxDefinitionFlyout');
-        const blocklyOptions: Blockly.ExtendedOptions = {
+        const blocklyOptions: Blockly.Options = {
             toolbox: readOnly ? undefined : toolbox,
             scrollbars: true,
             media: pxt.webConfig.commitCdnUrl + "blockly/media/",
@@ -624,7 +625,10 @@ export class Editor extends srceditor.Editor {
             comments: true,
             disable: false,
             readOnly: readOnly,
-            toolboxType: pxt.appTarget.appTheme.coloredToolbox ? 'coloured' : pxt.appTarget.appTheme.invertedToolbox ? 'inverted' : 'normal',
+            toolboxOptions: {
+                colour: pxt.appTarget.appTheme.coloredToolbox,
+                inverted: pxt.appTarget.appTheme.invertedToolbox
+            },
             zoom: {
                 enabled: false,
                 controls: false,
