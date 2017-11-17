@@ -59,9 +59,6 @@ and allows us to fit in the very constrained space of the Uno.
 \subsection{Types for JavaScript}
 
 By design, TypeScript does not provide a type soundness guarantee~\cite{BiermanAT14}.
-Related work on type systems with soundness guarantees for JavaScript 
-have the additional goals of: (1) handling arbitrary JavaScript programs;
-(2) providing efficient execution.
 
 Safe TypeScript~\cite{SafeTypeScript15} separates the worlds of typed and untyped
 objects: the \emph{dynamic} type is an implicit union type of all \emph{known} static type,
@@ -75,7 +72,7 @@ code, optionally-typed code, and concretely typed code, which provides tradition
 type soundness guarantees. As with TypeScript, every JavaScript program is a StrongScript program.
 
 STS differs from these efforts by outlawing untyped or optionally typed
-code: it is non-goal of STS to support arbitrary JavaScript programs.
+code: it is a non-goal of STS to support arbitrary JavaScript programs.
 In this sense, STS can be seen to be StrongScript where every variable and
 expression has a concrete (!) type. As in StrongScript, classes are nominally typed,
 which permits a more efficient and traditional property lookup for class instances.
@@ -98,6 +95,5 @@ is discouraged through a heavy emphasis on global variables.
 TinyOS~\cite{levis2005tinyos}, Contiki~\cite{dunkels2012contiki}, RIOT OS~\cite{baccelli2013riot}, Mynewt~\cite{ApacheMy53:online} mbed OS~\cite{ARMmbed}, Zephyr~\cite{HomeZeph63:online} are RTOS solutions known widely in the systems community. The majority focus on the networking features of sensor based devices and commonly adopt a preemptive scheduling model, which leads to competition over resources resolved using locks and condition synchronisation primitives. Contiki has a cooperative scheduler, but uses proto-threads to store thread context --- local variables are not allowed as the context of the stack is not stored.
 
 Although the platforms above are widely used by C/C++ developers, none of these existing solutions align well with the programming paradigms seen in higher level languages.
-
 \CO bridges that semantic gap between the higher level language and the microcontroller, offering appropriate abstractions and higher level primitives written natively in C++.
 
