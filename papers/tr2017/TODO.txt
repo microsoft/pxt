@@ -1,27 +1,11 @@
 Tom: add "maker" to intro
 
 - Steve to work on conclusion, reminding readers of the three As
-  and summarizing how we did
-
-- Michal to make pass over eval
-  - code size of VM
-  - make clear performance of VM in computational context
-  - tagged vs. untagged
-
-- Running example: make clear that the CPXs are communicating via
-  light emission and detection (novel feature of physical computing)
-
-- add a sentence that the system has been deployed, with users
-  across EU and North America (over the last year)
-  - thousands???
-
-- make sure to note that event block in screensnapshot comes from C++ code
-
-- replace microcontroller by MCU (space)
-- replace Static TypeScript by STS (space)
-- replace basic.pause by loops.pause
+  and summarizing how we dids
 
 - FINAL STEPs:
+  - no MakeCode, no CODAL in PDF
   - space (reduce the WA section -- too much!)
   - make tables and figures fit in margins
-
+  - kB, not kB
+  
