@@ -3086,8 +3086,9 @@ ${lbl}: .short 0xffff
 
             proc.emitJmp(lbl, emitExpr(node.right), ir.JmpMode.Always)
             proc.emitLbl(lbl)
-
-            return ir.op(EK.JmpValue, [])
+            let r = ir.shared(ir.op(EK.JmpValue, []))
+            proc.emitExpr(r)
+            return r
         }
 
         function stripEquals(k: SyntaxKind) {
