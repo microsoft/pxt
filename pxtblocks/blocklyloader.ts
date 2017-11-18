@@ -1329,11 +1329,6 @@ namespace pxt.blocks {
         goog.require('Blockly.Blocks');
 
         if ((window as any).PointerEvent) {
-            (Blockly.bindEvent_ as any).TOUCH_MAP = {
-                mousedown: 'pointerdown',
-                mousemove: 'pointermove',
-                mouseup: 'pointerup'
-            };
             document.body.style.touchAction = 'none';
         }
 
