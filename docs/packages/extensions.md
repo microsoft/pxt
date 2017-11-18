@@ -76,6 +76,10 @@ var msg = {
 ...
 ```
 
+### Shown / Hidden
+
+The editor sends a ``extshown`` event when showing the editor frame, and a ``exthidden`` event after hiding the editor.
+
 ### Read and write code
 
 The extension can read (``extreadcode``) and write (``extwritecode``) a dedicated TypeScript and JSON file in the project. The JSON file is designed to store rich metadata while the TypeScript is the "code behind" that gets executed. This feature does not require permissions.
