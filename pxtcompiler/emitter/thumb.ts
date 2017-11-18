@@ -240,6 +240,9 @@ namespace ts.pxtc.thumb {
                             return true
                         case "bl":
                             switch (l.words[1]) {
+                                case "_numops_fromInt":
+                                case "_pxt_incr":
+                                case "_pxt_decr":
                                 case "pxt::incr":
                                 case "pxt::decr":
                                 case "pxt::fromInt":
