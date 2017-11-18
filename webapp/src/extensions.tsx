@@ -86,8 +86,9 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
     showExtension(extension: string, url: string, consentRequired: boolean) {
         let consent = consentRequired ? this.manager.hasConsent(this.manager.getExtId(extension)) : true;
-        this.setState({ visible: true, extension: extension, url: url, consent: consent });
-        this.send(extension, { type: "pxtpkgext", event: "extshown" } as pxt.editor.ShownEvent);
+        this.setState({ visible: true, extension: extension, url: url, consent: consent }, () => {
+            this.send(extension, { type: "pxtpkgext", event: "extshown" } as pxt.editor.ShownEvent);
+        })
     }
 
     submitConsent() {
