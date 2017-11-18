@@ -324,8 +324,8 @@ ${baseLabel}:
                     this.emitExpr(jmp.expr)
 
                     // TODO: remove ARM-specific code
-                    if (jmp.expr.exprKind == ir.EK.RuntimeCall && 
-                            (jmp.expr.data === "thumb::subs" || U.startsWith(jmp.expr.data, "_cmp_"))) {
+                    if (jmp.expr.exprKind == ir.EK.RuntimeCall &&
+                        (jmp.expr.data === "thumb::subs" || U.startsWith(jmp.expr.data, "_cmp_"))) {
                         // no cmp required
                     } else {
                         this.write(this.t.cmp_zero("r0"))
