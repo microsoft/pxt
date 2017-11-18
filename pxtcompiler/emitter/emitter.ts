@@ -107,6 +107,10 @@ namespace ts.pxtc {
         return target.isNative && (target.nativeType == NATIVE_TYPE_AVRVM || target.nativeType == NATIVE_TYPE_AVR)
     }
 
+    export function isThumb() {
+        return target.isNative && (target.nativeType == NATIVE_TYPE_THUMB)
+    }
+
     function isRefType(t: Type) {
         checkType(t);
         if (noRefCounting())
@@ -338,22 +342,6 @@ namespace ts.pxtc {
     function isTopLevelFunctionDecl(decl: Declaration) {
         return (decl.kind == SK.FunctionDeclaration && !getEnclosingFunction(decl)) ||
             isClassFunction(decl)
-    }
-
-    function isSideEffectfulInitializer(init: Expression): boolean {
-        if (!init) return false;
-        if (isStringLiteral(init)) return false;
-        switch (init.kind) {
-            case SK.NullKeyword:
-            case SK.NumericLiteral:
-            case SK.TrueKeyword:
-            case SK.FalseKeyword:
-                return false;
-            case SK.ArrayLiteralExpression:
-                return (init as ArrayLiteralExpression).elements.some(isSideEffectfulInitializer)
-            default:
-                return true;
-        }
     }
 
     export interface CallInfo {
@@ -1509,11 +1497,46 @@ ${lbl}: .short 0xffff
             }
         }
 
+        function isConstLiteral(decl: Declaration) {
+            if (isGlobalVar(decl)) {
+                if (decl.parent.flags & NodeFlags.Const) {
+                    let init = (decl as VariableDeclaration).initializer
+                    if (!init) return false
+                    if (init.kind == SK.ArrayLiteralExpression) return false
+                    return !isSideEffectfulInitializer(init)
+                }
+            }
+            return false
+        }
+
+        function isSideEffectfulInitializer(init: Expression): boolean {
+            if (!init) return false;
+            if (isStringLiteral(init)) return false;
+            switch (init.kind) {
+                case SK.NullKeyword:
+                case SK.NumericLiteral:
+                case SK.TrueKeyword:
+                case SK.FalseKeyword:
+                    return false;
+                case SK.Identifier:
+                    return !isConstLiteral(getDecl(init))
+                case SK.PropertyAccessExpression:
+                    let d = getDecl(init)
+                    return !d || d.kind != SK.EnumMember
+                case SK.ArrayLiteralExpression:
+                    return (init as ArrayLiteralExpression).elements.some(isSideEffectfulInitializer)
+                default:
+                    return true;
+            }
+        }
+
         function emitLocalLoad(decl: VarOrParam) {
             if (isGlobalVar(decl)) {
                 let attrs = parseComments(decl)
                 if (attrs.shim)
                     return emitShim(decl, decl, [])
+                if (isConstLiteral(decl))
+                    return emitExpr(decl.initializer)
             }
             let l = lookupCell(decl)
             recordUse(decl)
@@ -2848,6 +2871,16 @@ ${lbl}: .short 0xffff
                 }
             }
 
+            if (opts.target.taggedInts && isThumb()) {
+                switch (n) {
+                    case "numops::adds":
+                    case "numops::subs":
+                    case "numops::eors":
+                    case "numops::ands":
+                        return "@nomask@" + n
+                }
+            }
+
             return n
         }
 
@@ -3366,6 +3399,17 @@ ${lbl}: .short 0xffff
             emitExprAsStmt(node.expression)
         }
         function emitCondition(expr: Expression, inner: ir.Expr = null) {
+            if (!inner && opts.target.taggedInts && isThumb() && expr.kind == SK.BinaryExpression) {
+                let be = expr as BinaryExpression
+                let lt = typeOf(be.left)
+                let rt = typeOf(be.right)
+                if ((lt.flags & TypeFlags.NumberLike) && (rt.flags & TypeFlags.NumberLike)) {
+                    let mapped = U.lookup(thumbCmpMap, simpleInstruction(be.operatorToken.kind))
+                    if (mapped) {
+                        return ir.rtcall(mapped, [emitExpr(be.left), emitExpr(be.right)])
+                    }
+                }
+            }
             if (!inner)
                 inner = emitExpr(expr)
             // in all cases decr is internal, so no mask
@@ -3720,6 +3764,8 @@ ${lbl}: .short 0xffff
             if (!isUsed(node)) {
                 return null;
             }
+            if (isConstLiteral(node))
+                return null;
             let loc = isGlobalVar(node) ?
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
