@@ -18,7 +18,7 @@
 Typically, an id correlates to a specific software component, which may be as simple as a button or complex as a wireless network interface. The value relates to a specific event that is unique within the id namespace. All events pass through the \CO MessageBus. Application developers can then \emph{listen} to events on this bus, by defining a C/C++ function to be invoked when an event is raised. Events can be raised at any time simply by creating an \emph{Event} C++ object, which then invokes the event handlers of any registered listeners.
 
 In our running example, a listen call to the MessageBus with a component ID of the light sensor and a threshold event is the underlying mechanism to implement the runtime function
-\emph{onLightConditionChanged} from Figure~\ref{fig:example}, 
+\emph{onLightConditionChanged} from Figure~\ref{fig:example},
 as illustrated by the equivalent C++ code snippet in Figure~\ref{fig:messageBus}.
 
 \begin{figure}
@@ -66,7 +66,7 @@ This approach brings the benefits of abstraction and reusability to \CO, but wit
 
 Finally, we group together the components of a physical device to form a \emph{device model}. This is a singleton C++ class that, through composition of device driver components, provides a configured representation of the capabilities of a device. Such a model provides for an elegant OO API for programming a device and also a static representation that forms an ideal target for the \MC linker to bind high level STS interfaces to low level optimized code. An example device model for the Adafruit CPX is shown in Figure~\ref{fig:codalDeviceModel} for reference.
 
- \MCN is further supported by an annotated C++ library (\emph{\MC wrappers}) defining and abstracting the mapping from \CO to TypeScript. The use of \MC wrappers ensures that different \MCN targets that use \CO share a common TypeScript and block API vocabulary.
+ \MC is further supported by an annotated C++ library (\emph{\MC wrappers}) defining and abstracting the mapping from \CO to TypeScript. The use of \MC wrappers ensures that different \MC targets that use \CO share a common TypeScript and block API vocabulary.
 
 \begin{figure}
 % TODO: shrink width
