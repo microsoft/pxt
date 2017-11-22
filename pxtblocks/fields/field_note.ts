@@ -230,12 +230,12 @@ namespace pxtblockly {
                 let prefix: string;
                 let curNote: string = "C";
 
-                let keyNumber = freqToNum(this.minNote_);
+                let keyNumber = freqToNum(thisField.minNote_);
 
                 if (thisField.nKeys_ < 13) {
                     prefix = "";
                 } else {
-                    prefix = prefixForNote(this.minNote_);
+                    prefix = prefixForNote(thisField.minNote_);
                 }
 
                 for (let i = 0; i < thisField.nKeys_; i++) {
