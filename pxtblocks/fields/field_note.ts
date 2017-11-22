@@ -2,8 +2,8 @@
 
 namespace pxtblockly {
 
-     enum Note {
-        C = 262,
+    enum Note {
+       C = 262,
         CSharp = 277,
         D = 294,
         Eb = 311,
@@ -53,16 +53,35 @@ namespace pxtblockly {
         B5 = 988
     }
 
-    enum PianoSize {
-        small = 12,
-        medium = 36,
-        large = 60
+    let regex: RegExp = /^Note\.(.+)$/;
+
+    function freqToNum(f: number) {
+        if (f <= 0) {
+            return 0;
+        }
+        return Math.round((12 * Math.log(f / 440)) / Math.log(2) + 49);
     }
 
-    let regex: RegExp = /^Note\.(.+)$/;
+    function numToFreq(n: number) {
+        return Math.pow(2, (n - 49) / 12) * 440;
+    }
+
+    function prefixForNote(n: Note) {
+        //TODO fill in the rest of this
+        if (n < Note.C3) {
+            return "Deep";
+        } else if (n < Note.C4) {
+            return "Low";
+        } else if (n < Note.C5) {
+            return "Middle";
+        }
+        return "";
+    }
 
     export interface FieldNoteOptions extends Blockly.FieldCustomOptions {
         editorColour?: string;
+        minNote?: number;
+        maxNote?: number;
     }
 
     //  Class for a note input field.
@@ -81,7 +100,9 @@ namespace pxtblockly {
          * @type {number}
          * @private
          */
-        private nKeys_: number = PianoSize.medium;
+        private nKeys_: number = 36;
+        private minNote_: Note = Note.C3;
+        private maxNote_: Note = Note.B5;
 
         /**
          * Absolute error for note frequency identification (Hz)
@@ -103,7 +124,6 @@ namespace pxtblockly {
          */
         private noteName_: Array<string> = [];
 
-
         constructor(text: string, params: FieldNoteOptions, validator?: Function) {
             super(text);
 
@@ -113,6 +133,13 @@ namespace pxtblockly {
             if (params.editorColour) {
                 this.colour_ = pxtblockly.parseColour(params.editorColour);
                 this.colourBorder_ = goog.color.rgbArrayToHex(goog.color.darken(goog.color.hexToRgb(this.colour_), 0.2));
+            }
+
+            if (params.minNote && params.maxNote) {
+                //TODO validation!
+                this.minNote_ = params.minNote;
+                this.maxNote_ = params.maxNote;
+                this.nKeys_ = freqToNum(this.maxNote_) - freqToNum(this.minNote_) + 1;
             }
         }
 
@@ -186,7 +213,7 @@ namespace pxtblockly {
                     case "Low":
                         return "Middle";
                     case "Middle":
-                        if (thisField.nKeys_ == PianoSize.medium)
+                        if (thisField.nKeys_ == 36)
                             return "High";
                         return "Tenor";
                     case "Tenor":
@@ -194,6 +221,7 @@ namespace pxtblockly {
                 }
                 return "";
             }
+
             /**
              * create Array of notes name and frequencies
              * @private
@@ -202,23 +230,14 @@ namespace pxtblockly {
                 let prefix: string;
                 let curNote: string = "C";
 
-                let keyNumber: number;
-                // set piano start key number and key prefix (keyNumbers -> https://en.wikipedia.org/wiki/Piano_key_frequencies)
-                switch (thisField.nKeys_) {
-                    case PianoSize.small:
-                        keyNumber = 40;
-                        //  no prefix for a single octave
-                        prefix = "";
-                        break;
-                    case PianoSize.medium:
-                        keyNumber = 28;
-                        prefix = "Low";
-                        break;
-                    case PianoSize.large:
-                        keyNumber = 16;
-                        prefix = "Deep";
-                        break;
+                let keyNumber = freqToNum(this.minNote_);
+
+                if (thisField.nKeys_ < 13) {
+                    prefix = "";
+                } else {
+                    prefix = prefixForNote(this.minNote_);
                 }
+
                 for (let i = 0; i < thisField.nKeys_; i++) {
                     // set name of the i note
                     thisField.noteName_.push(Util.rlf(prefix + " " + curNote));
@@ -391,8 +410,6 @@ namespace pxtblockly {
          * @return {!Blockly.FieldNote} Returns itself (for method chaining).
          */
         setNumberOfKeys(size: number): FieldNote {
-            if (size != PianoSize.small && size != PianoSize.medium && size != PianoSize.large)
-                return this;
             this.nKeys_ = size;
             return this;
         }
