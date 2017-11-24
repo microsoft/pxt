@@ -100,7 +100,7 @@ escapeinside={\%*}{*)}          % if you want to add a comment within your code
 \begin{document}
 
 %% Title information
-\title{TypeScript: Bridging the Gap Between JavaScript and Blockly}         %% [Short Title] is optional;
+\title{TypeScript: From JavaScript \\ to Blockly and Back}         %% [Short Title] is optional;
                                         %% when present, will be used in
                                         %% header instead of Full Title.
 \subtitle{Microsoft MakeCode Team}                     %% \subtitle is optional
@@ -226,28 +226,189 @@ export function showNumber(v: number, interval: number = 150): void
 
 \section{Blockly Overview}
 
-% Blockly namespace
-% Workspace class
-% Toolbox class
-% Block class
-% Field class
-% Generator class
-% Index of all classes
+Unsuprisingly, the core abstract of Blockly is the \emph{Block},
+which is used to represent statements, expressions, values and variables.  
+Blocks have \emph{connectors} that allow them to be sequenced
+horizontally or vertically in space.  In the default Blockly
+layout, vertically sequenced blocks
+generally represent program statements, while horizontally
+sequenced blocks generally represent program expressions/values.
 
-\section{TypeScript to Blockly Mappings}
+\emph{[Blockly supports nesting of blocks, so leads naturally to representing an
+abstract syntax tree]}
+
+While Blockly does attach a loose meaning to blocks,
+their actual semantics given to blocks is entirely up to the developer.
+In our work, we use the TypeScript language (and its type system) to 
+give a more precise meaning to blocks. 
+
+\subsection{Block connections}
+
+Block connectors, inputs and output:
+\begin{itemize}
+% A block with a previous connector cannot have an output connector, and vice versa. 
+% The term statement block refers to a block with no value output. 
+
+% nextStatement and previousStatement connections can be typed
+% but this feature is not utilized by standard blocks.
+
+\item \emph{previous and next connectors}, both optional, allow a block to be vertically sequenced - Blockly
+  enforces that a block with a previous connector cannnot have an output connector; according
+  to Blockly documentation, ``a statement block will usually have both a previous connection and 
+  a next connection'';
+
+\item a block may have a single \emph{output connector}, 
+      which appears as a male jigsaw connector on a block's left-side; according to 
+      Blockly documentation, ``Blocks with an output are usually called value blocks'';
+
+\item a block may have multiple \emph{inputs}, which can appears as holes in a block
+      or female jigsaw connectors on a block's right-side, about which we'll say more below. 
+\end{itemize}
+
+Block inputs come in three basic forms:
+\begin{enumerate}
+  \item \emph{fields}, which represent terminals (constants, literals, variables);
+  \item \emph{value inputs} (receives value from output block) - value inputs
+      and value blocks allow one to create expression trees;
+  \item \emph{statement inputs}, allow one to create statement trees;
+\end{enumerate}
+
+
+\subsection{Blockly types}
+
+\subsection{Blockly conventions (JavaScript)}
+\begin{itemize}
+  \item no variable declarations (all variables global, except for);
+  \item dynamic typing;
+  \item expressions can't be put where statement expected 
+  - use an assignment to a dummy variable to make expression into statement);
+  \item loops and local scope
+\end{itemize}
+
+\section{Primitive Values and Enumerations}
 
 % The following types are supported in function signatures that are meant to be exported:
 
-% number (TypeScript) or int (C++)
-% string (TypeScript) or StringData* (C++)
+% boolean
+% number (TypeScript)
+% string (TypeScript) 
 % enums (see below)
-% custom classes that are also exported
-% arrays of the above
 
-\subsection{Scalar Types}
-\subsection{Function Types}
-\subsection{Callbacks: Functions as Arguments}
-\subsection{Namespaces}
+\section{API Function Calls}
+
+API represented by
+\begin{itemize}
+  \item namespaces to organize set of related functions, 
+       where namespaces map to Toolbox categories in Blockly;
+       In particular, each top-level namespace is used to populate a category 
+       in the toolbox. The name of the namespaces is capitalized for the toolbox. 
+
+  \item void return type for a function means a call to the function is allowable in
+      a statement context; non-void means expression context for call
+  \item functions return a single value;
+  \item parameters: optional parameters with default value; rest; 
+\end{itemize}
+
+% Block syntax
+
+% The block attribute specifies how the parameters of the function will be organized to create the block.
+
+% block = field, { '|' field }
+% field := string
+%     | string `%` parameter [ `=` type ]
+% parameter = string
+% type = string
+% each field is mapped to a field in the block editor
+% the function parameter are mapped in order to %parameter argument. 
+
+% The loader automatically builds a mapping between the block field names and the function names.
+% the block will automatically switch to external inputs when enough parameters are detected
+% A block type =type can be specified optionally for each parameter. It will be used to populate the shadow type.
+% Supported types
+
+\section{Objects and Object Destructuring}
+API represented by
+\begin{itemize}
+  \item set of classes, with
+  \item constructors
+  \item methods/fields
+\end{itemize}
+
+\section{Event Handlers and Callbacks}
+
+% \item event-handlers via a callback function (callbacks only have parameters with primitive values);
+
+A function $f$ that has an argument $g$ of function type (in last position) will have
+that function argument (callback) converted into a statement input of $B(f)$.
+
+If the callback $g$ has parameters, then
+the best way to map that pattern to the blocks is by modifying
+$g$ to have a single parameter with a class type that has the
+various parameters as fields.
+For example:
+
+% export class ArgumentClass {
+%     argumentA: number;
+%     argumentB: string;
+% }
+
+% //% mutate=objectdestructuring
+% //% mutateText="My Arguments"
+% //% mutateDefaults="argumentA;argumentA,argumentB"
+% // ...
+% export function addSomeEventHandler((a: ArgumentClass) => void) { };
+
+% In the above example, setting mutate=objectdestructuring will cause this API 
+% to use Blockly “mutators” to let users change what parameters appear in the blocks. 
+% Each parameter will be given an optional variable field in the block that defines a 
+% variable that can be used within the callback. The variable fields compile to object
+% destructuring in the TypeScript code. For example:
+
+% addSomeEventHandler(({argumentA, argumentB}) => {
+
+% })
+
+% For an example of this pattern in action, see the radio.onDataPacketReceived block in the microbit target.
+
+% In some cases it can be useful to change the runtime behavior of the API based on the properties 
+% selected by the user. To enable that behavior, create an enum with entries that have the same names 
+% as the argument object’s properties and add an extra parameter taking in an enum array to the API. 
+% For example:
+
+% export class ArgumentClass {
+%     argumentA: number;
+%     argumentB: string;
+% }
+
+% enum ArgNames {
+%     argumentA,
+%     argumentB
+% }
+
+% //% mutate=objectdestructuring
+% //% mutateText="My Arguments"
+% //% mutateDefaults="argumentA;argumentA,argumentB"
+% //% mutatePropertyEnum="argNames"
+% // ...
+% export function addSomeEventHandler(args: ArgNames[], (a: ArgumentClass) => void) { };
+% Note the mutatePropertyEnum attribute added to the comment annotations. The block for this API will look the same as the previous example but the compiled code will also include the arguments passed:
+
+% addSomeEventHandler([ArgNames.argumentA, ArgNames.argumentB], ({argumentA, argumentB}) => {
+
+% })
+% The other attributes related to object destructuring mutators include:
+
+% mutateText - defines the text that appears in the top block of the Blockly mutator dialog (the dialog that appears when you click the blue gear)
+% mutateDefaults - defines the versions of this block that should appear in the toolbox. Block definitions are separated by semicolons and property names should be separated by commas
+
+
+
+
+\section{Collections}
+
+\section{Monads}
+
+\section{Lexical Scoping}
 
 \section{Attributes}
 
