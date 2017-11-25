@@ -171,18 +171,7 @@ escapeinside={\%*}{*)}          % if you want to add a comment within your code
 %% before \maketitle command
 % \input{abstract}
 
-\begin{abstract}
-  There are many JavaScript libraries for building solutions for a 
-  wide range of problems, but it's not easy for novices to harness their power.  
-  The Blockly framework allows the creation of domain-specific 
-  programming environments for novices that greatly reduces the potential
-  for syntax and semantic errors.  We show how the TypeScript
-  programming language, a gradually typed superset of JavaScript, can be used
-  to bridge the jap between JavaScript and Blockly. In particular, we define
-  a mapping from the type system of TypeScript into Blockly that makes it simple
-  to create a domain-specific Blockly editor for a JavaScript library via a 
-  TypeScript declaration file. 
-\end{abstract}
+\input{abstract}
 
 
 %% Keywords
@@ -233,13 +222,12 @@ horizontally or vertically in space.  In the default Blockly
 layout, vertically sequenced blocks
 generally represent program statements, while horizontally
 sequenced blocks generally represent program expressions/values.
-
-\emph{[Blockly supports nesting of blocks, so leads naturally to representing an
-abstract syntax tree]}
+Blockly also supports the nesting of blocks, and so a collection of
+blocks naturally represents an abstract syntax tree. 
 
 While Blockly does attach a loose meaning to blocks,
 their actual semantics given to blocks is entirely up to the developer.
-In our work, we use the TypeScript language (and its type system) to 
+We use the TypeScript language (and its type system) to 
 give a more precise meaning to blocks. 
 
 \subsection{Block connections}
@@ -273,8 +261,9 @@ Block inputs come in three basic forms:
   \item \emph{statement inputs}, allow one to create statement trees;
 \end{enumerate}
 
+\subsection{Mutators}
 
-\subsection{Blockly types}
+\subsection{Blockly type checking}
 
 \subsection{Blockly conventions (JavaScript)}
 \begin{itemize}
@@ -285,14 +274,27 @@ Block inputs come in three basic forms:
   \item loops and local scope
 \end{itemize}
 
-\section{Primitive Values and Enumerations}
+\section{TypeScript Essentials}
+
+Our goal is not to have a mapping of every TypeScript syntax into blocks.
+Rather, it is support common programming paradigms with a simple mapping
+from TypeScript to blocks and back.
+
+\begin{itemize}
+  \item lexical scoping (via let);
+  \item functions as values (also nested functions -> closures);
+  \item classes with single inheritance, methods, objects
+  \item arrays (lists);
+  \item object destructuring
+\end{itemize}
+
+\section{Primitive Values}
 
 % The following types are supported in function signatures that are meant to be exported:
 
 % boolean
 % number (TypeScript)
 % string (TypeScript) 
-% enums (see below)
 
 \section{API Function Calls}
 
@@ -325,6 +327,8 @@ API represented by
 % the block will automatically switch to external inputs when enough parameters are detected
 % A block type =type can be specified optionally for each parameter. It will be used to populate the shadow type.
 % Supported types
+
+\section{Enumerations}
 
 \section{Objects and Object Destructuring}
 API represented by
