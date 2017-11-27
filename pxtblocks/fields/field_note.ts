@@ -3,6 +3,7 @@
 namespace pxtblockly {
 
     enum Note {
+        //TODO: take out duplicates
         C = 262,
         CSharp = 277,
         D = 294,
@@ -50,7 +51,51 @@ namespace pxtblockly {
         GSharp5 = 831,
         A5 = 880,
         Bb5 = 932,
-        B5 = 988
+        B5 = 988,
+        C6 = 1047,
+        CSharp6 = 1109,
+        D6 = 1175,
+        Eb6 = 1245,
+        E6 = 1319,
+        F6 = 1397,
+        FSharp6 = 1480,
+        G6 = 1568,
+        GSharp6 = 1568,
+        A6 = 1760,
+        Bb6 = 1865,
+        B6 = 1976,
+        C7 = 2093
+    }
+    /**
+    let notes1 = {
+        262: {"name": "C", "prefix": "Middle"},
+        277: {"name": "C#", "prefix": "Middle"},
+        294: {"name": "D", "prefix": "Middle"},
+        311: {"name": "Eb", "prefix": "Middle"}
+    }
+    **/
+
+    interface NoteData {
+        name: string,
+        prefix: string,
+        freq: number
+    }
+
+    const Notes: {[key: number]: NoteData} = {
+        40: {name: "C", prefix: "Middle", freq: 262},
+        41: {name: "C#", prefix: "Middle", freq: 277},
+        42: {name: "D", prefix: "Middle", freq: 294},
+        43: {name: "Eb", prefix: "Middle", freq: 311},
+        44: {name: "E", prefix: "Middle", freq: 330},
+        45: {name: "F", prefix: "Middle", freq: 349},
+        46: {name: "F#", prefix: "Middle", freq: 370},
+        47: {name: "G", prefix: "Middle", freq: 392},
+        48: {name: "Ab", prefix: "Middle", freq: 415},
+        49: {name: "A", prefix: "Middle", freq: 440},
+        50: {name: "Bb", prefix: "Middle", freq: 466},
+        51: {name: "B", prefix: "Middle", freq: 494},
+        52: {name: "C", prefix: "Tenor", freq: 523},
+        53: {name: "C#", prefix: "Tenor", freq: 554}
     }
 
     let regex: RegExp = /^Note\.(.+)$/;
@@ -66,22 +111,10 @@ namespace pxtblockly {
         return Math.pow(2, (n - 49) / 12) * 440;
     }
 
-    function prefixForNote(n: Note) {
-        //TODO fill in the rest of this
-        if (n < Note.C3) {
-            return "Deep";
-        } else if (n < Note.C4) {
-            return "Low";
-        } else if (n < Note.C5) {
-            return "Middle";
-        }
-        return "";
-    }
-
     export interface FieldNoteOptions extends Blockly.FieldCustomOptions {
         editorColour?: string;
-        minNote?: number;
-        maxNote?: number;
+        minNote?: string;
+        maxNote?: string;
     }
 
     //  Class for a note input field.
@@ -100,9 +133,10 @@ namespace pxtblockly {
          * @type {number}
          * @private
          */
+        //TODO!!!
         private nKeys_: number = 36;
-        private minNote_: Note = Note.C3;
-        private maxNote_: Note = Note.B5;
+        private minNote_: number = 28;
+        private maxNote_: number = 63;
 
         /**
          * Absolute error for note frequency identification (Hz)
@@ -137,9 +171,9 @@ namespace pxtblockly {
 
             if (params.minNote && params.maxNote) {
                 //TODO validation!
-                this.minNote_ = params.minNote;
-                this.maxNote_ = params.maxNote;
-                this.nKeys_ = freqToNum(this.maxNote_) - freqToNum(this.minNote_) + 1;
+                this.minNote_ = parseInt(params.minNote);
+                this.maxNote_ = parseInt(params.maxNote);
+                this.nKeys_ = this.maxNote_ - this.minNote_ + 1;
             }
         }
 
@@ -181,6 +215,7 @@ namespace pxtblockly {
              * @return {string} next note
              * @private
              */
+            /**
             function nextNote(note: string): string {
                 switch (note) {
                     case "A#":
@@ -200,58 +235,72 @@ namespace pxtblockly {
                 }
                 return note + "#";
             }
-            /**
-             * return next note prefix
-             * @param {string} prefix current note prefix
-             * @return {string} next note prefix
-             * @private
-             */
-            function nextNotePrefix(prefix: string): string {
-                switch (prefix) {
-                    case "Deep":
-                        return "Low";
-                    case "Low":
-                        return "Middle";
-                    case "Middle":
-                        if (thisField.nKeys_ == 36)
-                            return "High";
-                        return "Tenor";
-                    case "Tenor":
-                        return "High";
-                }
-                return "";
-            }
+            **/
 
+            /**
+            function prefix(note: Note) {
+                // special case 1: one octave
+                if (this.nKeys_ < 13) {
+                    return "";
+                }
+                // special case 2: default piano
+                if (this.nKeys_ == 36 && this.minNote_ == Note.C3 && this.maxNote_ == Note.B5) {
+                    if (note < Note.C4) {
+                        return "Low";
+                    }
+                    if (note < Note.C5) {
+                        return "Middle";
+                    } return "High";
+                }
+                // all other cases
+                if (note < Note.C3) {
+                    return "Deep";
+                }
+                if (note < Note.C4) {
+                    return "Low";
+                }
+                if (note < Note.C5) {
+                    return "Middle";
+                }
+                if (note < Note.C6) {
+                    return "Tenor";
+                }
+                if (note < Note.C7) {
+                    return "High";
+                }
+                return "Double High";
+            }
+            **/
             /**
              * create Array of notes name and frequencies
              * @private
              */
             function createNotesArray() {
-                let prefix: string;
-                let curNote: string = "C";
+                let keyNumber = thisField.minNote_;
 
-                let keyNumber = freqToNum(thisField.minNote_);
-
-                if (thisField.nKeys_ < 13) {
-                    prefix = "";
-                } else {
-                    prefix = prefixForNote(thisField.minNote_);
+                for (let i = 0; i < thisField.nKeys_; i++) {
+                    //TODO special case prefixes
+                    let fullNoteName = Notes[keyNumber].prefix + " " + Notes[keyNumber].name;
+                    thisField.noteName_.push(fullNoteName);
+                    thisField.noteFreq_.push(Notes[keyNumber].freq);
+                    keyNumber++;
                 }
-
+                /**
                 for (let i = 0; i < thisField.nKeys_; i++) {
                     // set name of the i note
                     thisField.noteName_.push(Util.rlf(prefix + " " + curNote));
                     // get frequency using math formula -> https://en.wikipedia.org/wiki/Piano_key_frequencies
-                    let curFreq = Math.pow(2, (keyNumber - 49) / 12) * 440;
+                    let curFreq = numToFreq(keyNumber);
                     // set frequency of the i note
                     thisField.noteFreq_.push(curFreq);
                     // get name of the next note
                     curNote = nextNote(curNote);
                     if ((i + 1) % 12 == 0)
-                        prefix = nextNotePrefix(prefix);
+                        prefix = (prefix);
                     // increment keyNumber
                     keyNumber++;
                 }
+                **/
 
                 // Do not remove this comment.
                 // lf("C")
