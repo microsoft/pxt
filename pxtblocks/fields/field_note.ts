@@ -3,7 +3,7 @@
 namespace pxtblockly {
 
     enum Note {
-       C = 262,
+        C = 262,
         CSharp = 277,
         D = 294,
         Eb = 311,
