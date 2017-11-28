@@ -78,8 +78,8 @@ export class GenericBanner extends React.Component<GenericBannerProps, {}> {
                         {this.props.children}
                     </div>
                 </div>
-                <div className="close" tabIndex={0} onClick={() => {this.hide("manual"); clearTimeout(this.timer)}}>
-                    <sui.Icon icon="close" />
+                <div className="bannerRight">
+                    <sui.Icon icon="close" tabIndex={0} onClick={() => {this.hide("manual"); clearTimeout(this.timer)}}/>
                 </div>
             </div> :
             <div></div>

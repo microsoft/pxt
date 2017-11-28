@@ -412,18 +412,24 @@ div.simframe > iframe {
                 height: @bannerHeight;
             }
             a.link {
-                text-decoration: none;
+                font-weight: bold;
+                text-decoration: underline;
+                &:hover, &:focus {
+                    cursor: pointer;
+                }
             }
         }
     }
-    .close {
+    .bannerRight {
         display: flex;
         flex-direction: row-reverse;
         flex-grow: 1;
         line-height: 100%;
-        &:hover, &:focus {
-            color: darken(@bannerContrastColor, 25%);
-            cursor: pointer;
+        .close {
+            &:hover, &:focus {
+                cursor: pointer;
+                color: darken(@bannerContrastColor, 25%);
+            }
         }
     }
 }
@@ -432,13 +438,10 @@ div.simframe > iframe {
     background-color: @bannerBackgroundColor;
     color: @bannerContrastColor;
     outline: 2px solid @bannerContrastColor;
-    .content {
-        a.link {
-            color: @bannerContrastColor;
-            &:hover, &:focus {
-                text-decoration: none;
-                color: @linkColor;
-            }
+    a.link {
+        color: @bannerLinkColor;
+        &:hover, &:focus {
+            color: darken(@bannerLinkColor, 10%);
         }
     }
 }
