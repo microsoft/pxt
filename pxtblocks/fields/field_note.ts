@@ -208,7 +208,7 @@ namespace pxtblockly {
                     else if (thisField.minNote_ >= 28 && thisField.maxNote_ <= 63) {
                         prefix = Notes[i].altPrefix || prefix;
                     }
-                    let fullNoteName = (prefix ? prefix + " " : "") + Notes[i].name;
+                    let fullNoteName = (prefix ? prefix + " " : prefix) + Notes[i].name;
                     thisField.noteName_.push(fullNoteName);
                     thisField.noteFreq_.push(Notes[i].freq);
                 }
