@@ -412,7 +412,11 @@ div.simframe > iframe {
                 height: @bannerHeight;
             }
             a.link {
-                text-decoration: none;
+                font-weight: bold;
+                text-decoration: underline;
+                &:hover, &:focus {
+                    cursor: pointer;
+                }
             }
         }
     }
@@ -434,13 +438,10 @@ div.simframe > iframe {
     background-color: @bannerBackgroundColor;
     color: @bannerContrastColor;
     outline: 2px solid @bannerContrastColor;
-    .content {
-        a.link {
-            color: @bannerContrastColor;
-            &:hover, &:focus {
-                text-decoration: none;
-                color: @linkColor;
-            }
+    a.link {
+        color: @bannerLinkColor;
+        &:hover, &:focus {
+            color: darken(@bannerLinkColor, 10%);
         }
     }
 }
