@@ -1,0 +1,15 @@
+\section{Introduction}
+
+Blockly~\cite{Blocky2015} is a JavaScript framework for creating visual block-based editing environments, 
+inspired by MIT’s Scratch programming environment~\cite{ScratchCACM2009}.  Visual blocks represent structured 
+control-flow statements such as while loops and if-then-else conditionals, as well as expressions. 
+Blocks also represent function calls to domain-specific APIS. Blocky supports the creation of \emph{custom 
+blocks} for domain-specific APIs. Blockly can be compiled to a variety of languages, the main target 
+being JavaScript. 
+
+TypeScript is superset of the JavaScript language that is gradually typed, meaning that types may 
+optionally be added to JavaScript code to provide for a more productive programming and debugging experience. 
+We describe a mapping from TypeScript annotated APIs to Blockly that radically simplifies 
+the creation of domain-specific Blockly-based programming environments  This makes it very easy 
+to take existing JavaScript frameworks and libraries, many of which already have TypeScript 
+descriptions of their APIs, and make them available via Blockly. 
