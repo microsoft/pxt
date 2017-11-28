@@ -416,14 +416,16 @@ div.simframe > iframe {
             }
         }
     }
-    .close {
+    .bannerRight {
         display: flex;
         flex-direction: row-reverse;
         flex-grow: 1;
         line-height: 100%;
-        &:hover, &:focus {
-            color: darken(@bannerContrastColor, 25%);
-            cursor: pointer;
+        .close {
+            &:hover, &:focus {
+                cursor: pointer;
+                color: darken(@bannerContrastColor, 25%);
+            }
         }
     }
 }
