@@ -150,14 +150,12 @@ namespace pxtblockly {
                 this.colourBorder_ = goog.color.rgbArrayToHex(goog.color.darken(goog.color.hexToRgb(this.colour_), 0.2));
             }
 
-            if (params.minNote && params.maxNote) {
-                let minNote = parseInt(params.minNote);
-                let maxNote = parseInt(params.maxNote);
-                if (minNote >= 28 && maxNote <= 76 && maxNote > minNote) {
-                    this.minNote_ = minNote;
-                    this.maxNote_ = maxNote;
-                    this.nKeys_ = this.maxNote_ - this.minNote_ + 1;
-                }
+            let minNote = parseInt(params.minNote) || this.minNote_;
+            let maxNote = parseInt(params.maxNote) || this.maxNote_;
+            if (minNote >= 28 && maxNote <= 76 && maxNote > minNote) {
+                this.minNote_ = minNote;
+                this.maxNote_ = maxNote;
+                this.nKeys_ = this.maxNote_ - this.minNote_ + 1;
             }
         }
 
