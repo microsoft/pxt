@@ -1260,7 +1260,11 @@ function maxMTimeAsync(dirs: string[]) {
         .then(() => max)
 }
 
-export function buildTargetAsync(): Promise<void> {
+export interface BuildTargetOptions {
+    packaged?: boolean;
+}
+
+export function buildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
     if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync()
 
@@ -1283,7 +1287,7 @@ export function buildTargetAsync(): Promise<void> {
     return initPromise
         .then(() => { copyCommonSim(); return simshimAsync() })
         .then(() => buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim'))
-        .then(buildTargetCoreAsync)
+        .then(() => buildTargetCoreAsync(options))
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildSemanticUIAsync())
         .then(() => {
@@ -1732,7 +1736,7 @@ function updateTOC(cfg: pxt.TargetBundle) {
     }
 }
 
-function buildTargetCoreAsync() {
+function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
     updateTOC(cfg);
@@ -1811,6 +1815,7 @@ function buildTargetCoreAsync() {
                 targetCrowdinBranch: targetCrowdinBranch()
             }
             cfg.config = fs.existsSync("targetconfig.json") ? readJson("targetconfig.json") : {};
+            cfg.packaged = !!options.packaged;
             saveThemeJson(cfg)
 
             const webmanifest = buildWebManifest(cfg)
@@ -3095,7 +3100,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
                 .then(testAsync)
                 .then(() => {
                     if (pxt.appTarget.compile.hasHex)
-                        fs.writeFileSync(hexPath, fs.readFileSync(`built/binary.${pxt.appTarget.compile.useUF2 ? "uf2" : "hex" }`))
+                        fs.writeFileSync(hexPath, fs.readFileSync(`built/binary.${pxt.appTarget.compile.useUF2 ? "uf2" : "hex"}`))
                 })
         } else {
             let start = Date.now()

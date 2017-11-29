@@ -58,6 +58,9 @@ namespace pxt.Cloud {
     }
 
     export function downloadTargetConfigAsync(): Promise<pxt.TargetConfig> {
+        if (pxt.appTarget.packaged) // packaged, no backend
+            return Promise.resolve(pxt.appTarget.config || {});
+
         if (!Cloud.isOnline()) // offline
             return Promise.resolve(undefined);
 
