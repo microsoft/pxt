@@ -287,7 +287,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
     if (!args[0] && cmd != "clean") throw new Error(cmd == "status" ? "language missing" : "filename missing");
     switch (cmd) {
         case "langstats": return langStatsCrowdinAsync(prj, key, args[0]);
-        case "clean": return cleanCrowdinAsync(branch, prj, key, args[0] || "docs");
+        case "clean": return cleanCrowdinAsync(prj, key, args[0] || "docs");
         case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
         case "download": {
             if (!args[1]) throw new Error("output path missing");
@@ -312,12 +312,12 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
     }
 }
 
-function cleanCrowdinAsync(branch: string, prj: string, key: string, dir: string): Promise<void> {
+function cleanCrowdinAsync(prj: string, key: string, dir: string): Promise<void> {
     const p = pxt.appTarget.id + "/" + dir;
     return pxt.crowdin.listFilesAsync(prj, key, p)
         .then(files => {
             files.filter(f => !nodeutil.fileExistsSync(f.fullName.substring(pxt.appTarget.id.length + 1)))
-                .forEach(f => pxt.log(`crowdin: dead file: ${branch ? branch + "/" : ""}${f.fullName}`));
+                .forEach(f => pxt.log(`crowdin: dead file: ${f.branch ? f.branch + "/" : ""}${f.fullName}`));
         })
 }
 
@@ -326,19 +326,15 @@ function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<
 
     return pxt.crowdin.languageStatsAsync(prj, key, lang)
         .then(stats => {
-            console.log(`file, phrases, translated, approved`);
-            stats.filter(stat => /strings\.json$/i.test(stat.name))
-                .forEach(stat => {
-                    console.log(`${stat.fullName}${stat.branch ? '#' + stat.branch : ''}, ${stat.phrases}, ${stat.translated}, ${stat.approved}`)
-                })
-            console.log();
-            // dump all in CSV
             let r = ''
             r += `file, phrases, translated, approved\r\n`
             stats.forEach(stat => {
-                r += `${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}\r\n`;
+                r += `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}\r\n`;
+                if (stat.fullName == "strings.json") {
+                    console.log(`UI/core blocks: ${stat.phrases}, ${stat.translated}, ${stat.approved}`)
+                }
             })
-            const fn = `crowdinstats-${lang}.csv`;
+            const fn = `crowdinstats.csv`;
             fs.writeFileSync(fn, r, { encoding: "utf8" });
             console.log(`stats written to ${fn}`)
         })

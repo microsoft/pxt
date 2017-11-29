@@ -216,7 +216,7 @@ namespace pxt.crowdin {
     /**
      * Scans files in crowdin and report files that are not on disk anymore
      */
-    export function listFilesAsync(prj: string, key: string, crowdinPath: string): Promise<{ fullName: string; }[]> {
+    export function listFilesAsync(prj: string, key: string, crowdinPath: string): Promise<{ fullName: string; branch: string; }[]> {
         const q: Map<string> = { json: "true" }
         const infoUri = apiUri("", prj, key, "info", q);
 
@@ -232,7 +232,8 @@ namespace pxt.crowdin {
 
             return allFiles.map(f => {
                 return {
-                    fullName: f.fullName
+                    fullName: f.fullName,
+                    branch: f.branch || ""
                 };
             })
         });
