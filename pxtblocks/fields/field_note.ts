@@ -68,27 +68,63 @@ namespace pxtblockly {
 
     interface NoteData {
         name: string,
-        prefix: string,
-        altPrefix?: string,
+        prefixedName: string,
+        altPrefixedName?: string,
         freq: number
     }
 
     const Notes: {[key: number]: NoteData} = {
-        //TODO fill out the rest of these
-        40: {name: "C", prefix: "Middle", freq: 262},
-        41: {name: "C#", prefix: "Middle", freq: 277},
-        42: {name: "D", prefix: "Middle", freq: 294},
-        43: {name: "Eb", prefix: "Middle", freq: 311},
-        44: {name: "E", prefix: "Middle", freq: 330},
-        45: {name: "F", prefix: "Middle", freq: 349},
-        46: {name: "F#", prefix: "Middle", freq: 370},
-        47: {name: "G", prefix: "Middle", freq: 392},
-        48: {name: "Ab", prefix: "Middle", freq: 415},
-        49: {name: "A", prefix: "Middle", freq: 440},
-        50: {name: "Bb", prefix: "Middle", freq: 466},
-        51: {name: "B", prefix: "Middle", freq: 494},
-        52: {name: "C", prefix: "Tenor", altPrefix: "High", freq: 523},
-        53: {name: "C#", prefix: "Tenor", altPrefix: "High", freq: 554}
+        28: {name: "C", prefixedName: "Low C", freq: 131},
+        29: {name: "C#", prefixedName: "Low C#", freq: 139},
+        30: {name: "D", prefixedName: "Low D", freq: 147},
+        31: {name: "D#", prefixedName: "Low D#", freq: 156},
+        32: {name: "E", prefixedName: "Low E", freq: 165},
+        33: {name: "F", prefixedName: "Low F", freq: 175},
+        34: {name: "F#", prefixedName: "Low F#", freq: 185},
+        35: {name: "G", prefixedName: "Low G", freq: 196},
+        36: {name: "G#", prefixedName: "Low G#", freq: 208},
+        37: {name: "A", prefixedName: "Low A", freq: 220},
+        38: {name: "A#", prefixedName: "Low A#", freq: 233},
+        39: {name: "B", prefixedName: "Low B", freq: 247},
+
+        40: {name: "C", prefixedName: "Middle C", freq: 262},
+        41: {name: "C#", prefixedName: "Middle C#", freq: 277},
+        42: {name: "D", prefixedName: "Middle D", freq: 294},
+        43: {name: "D#", prefixedName: "Middle D#", freq: 311},
+        44: {name: "E", prefixedName: "Middle E", freq: 330},
+        45: {name: "F", prefixedName: "Middle F", freq: 349},
+        46: {name: "F#", prefixedName: "Middle F#", freq: 370},
+        47: {name: "G", prefixedName: "Middle G", freq: 392},
+        48: {name: "G#", prefixedName: "Middle G#", freq: 415},
+        49: {name: "A", prefixedName: "Middle A", freq: 440},
+        50: {name: "A#", prefixedName: "Middle A#", freq: 466},
+        51: {name: "B", prefixedName: "Middle B", freq: 494},
+
+        52: {name: "C", prefixedName: "Tenor C", altPrefixedName: "High C", freq: 523},
+        53: {name: "C#", prefixedName: "Tenor C#", altPrefixedName: "High C#", freq: 554},
+        54: {name: "D", prefixedName: "Tenor D", altPrefixedName: "High D", freq: 587},
+        55: {name: "D#", prefixedName: "Tenor D#", altPrefixedName: "High D#", freq: 622},
+        56: {name: "E", prefixedName: "Tenor E", altPrefixedName: "High E", freq: 659},
+        57: {name: "F", prefixedName: "Tenor F", altPrefixedName: "High F", freq: 698},
+        58: {name: "F#", prefixedName: "Tenor F#", altPrefixedName: "High F#", freq: 740},
+        59: {name: "G", prefixedName: "Tenor G", altPrefixedName: "High G", freq: 784},
+        60: {name: "G#", prefixedName: "Tenor G#", altPrefixedName: "High G#", freq: 831},
+        61: {name: "A", prefixedName: "Tenor A", altPrefixedName: "High A", freq: 880},
+        62: {name: "A#", prefixedName: "Tenor A#", altPrefixedName: "High A#", freq: 932},
+        63: {name: "B", prefixedName: "Tenor B", altPrefixedName: "High B", freq: 988},
+
+        64: {name: "C", prefixedName: "High C", freq: 1046},
+        65: {name: "C#", prefixedName: "High C#", freq: 1109},
+        66: {name: "D", prefixedName: "High D", freq: 1175},
+        67: {name: "D#", prefixedName: "High D#", freq: 1245},
+        68: {name: "E", prefixedName: "High E", freq: 1319},
+        69: {name: "F", prefixedName: "High F", freq: 1397},
+        70: {name: "F#", prefixedName: "High F#", freq: 1478},
+        71: {name: "G", prefixedName: "High G", freq: 1568},
+        72: {name: "G#", prefixedName: "High G#", freq: 1661},
+        73: {name: "A", prefixedName: "High A", freq: 1760},
+        74: {name: "A#", prefixedName: "High A#", freq: 1865},
+        75: {name: "B", prefixedName: "High B", freq: 1976}
     }
 
     let regex: RegExp = /^Note\.(.+)$/;
@@ -197,17 +233,16 @@ namespace pxtblockly {
              */
             function createNotesArray() {
                 for (let i = thisField.minNote_; i <= thisField.maxNote_; i++) {
-                    let prefix = Notes[i].prefix;
+                    let name = Notes[i].prefixedName;
                     // special case: one octave
                     if (thisField.nKeys_ < 13) {
-                        prefix = "";
+                        name = Notes[i].name;
                     }
                     // special case: centered
                     else if (thisField.minNote_ >= 28 && thisField.maxNote_ <= 63) {
-                        prefix = Notes[i].altPrefix || prefix;
+                        name = Notes[i].altPrefixedName || name;
                     }
-                    let fullNoteName = (prefix ? prefix + " " : prefix) + Notes[i].name;
-                    thisField.noteName_.push(fullNoteName);
+                    thisField.noteName_.push(name);
                     thisField.noteFreq_.push(Notes[i].freq);
                 }
 
