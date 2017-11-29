@@ -1781,20 +1781,20 @@ function buildTargetCoreAsync() {
                     // For the projects, we need to save the base HEX file to the offline HEX cache
                     if (isPrj && pxt.appTarget.compile.hasHex) {
                         if (!compileOpts) {
-                            console.error(`Failed to extract HEX image for project ${dirname}`);
+                            console.error(`Failed to extract native image for project ${dirname}`);
                             return;
                         }
 
                         // Place the base HEX image in the hex cache if necessary
                         let sha = compileOpts.extinfo.sha;
                         let hex: string[] = compileOpts.hexinfo.hex;
-                        let hexFile = path.join(hexCachePath, sha + ".hex");
+                        let hexFile = path.join(hexCachePath, sha + pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex");
 
                         if (fs.existsSync(hexFile)) {
-                            pxt.debug(`.hex image already in offline cache for project ${dirname}`);
+                            pxt.debug(`native image already in offline cache for project ${dirname}`);
                         } else {
                             fs.writeFileSync(hexFile, hex.join(os.EOL));
-                            pxt.debug(`created .hex image in offline cache for project ${dirname}: ${hexFile}`);
+                            pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
                         }
                     }
                 })
@@ -3095,7 +3095,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
                 .then(testAsync)
                 .then(() => {
                     if (pxt.appTarget.compile.hasHex)
-                        fs.writeFileSync(hexPath, fs.readFileSync("built/binary.hex"))
+                        fs.writeFileSync(hexPath, fs.readFileSync(`built/binary.${pxt.appTarget.compile.useUF2 ? "uf2" : "hex" }`))
                 })
         } else {
             let start = Date.now()
