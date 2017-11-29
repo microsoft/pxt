@@ -1266,7 +1266,7 @@ export interface BuildTargetOptions {
 
 export function buildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
     if (pxt.appTarget.id == "core")
-        return buildTargetCoreAsync()
+        return buildTargetCoreAsync(options)
 
     let initPromise: Promise<void>;
 
@@ -3733,7 +3733,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
     let p = rimrafAsync(builtPackaged, {})
         .then(() => bump ? bumpAsync() : Promise.resolve())
-        .then(() => buildTargetAsync());
+        .then(() => buildTargetAsync({ packaged: true}));
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
     else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify));
 }
