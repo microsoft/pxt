@@ -314,7 +314,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
 
 function cleanCrowdinAsync(branch: string, prj: string, key: string, dir: string): Promise<void> {
     const p = pxt.appTarget.id + "/" + dir;
-    return pxt.crowdin.listFilesAsync(branch, prj, key, p)
+    return pxt.crowdin.listFilesAsync(prj, key, p)
         .then(files => {
             files.filter(f => !nodeutil.fileExistsSync(f.fullName.substring(pxt.appTarget.id.length + 1)))
                 .forEach(f => pxt.log(`crowdin: dead file: ${branch ? branch + "/" : ""}${f.fullName}`));
