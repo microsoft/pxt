@@ -1110,7 +1110,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     if (opts.localDir)
         return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
             .then(() => {
-                pxt.log("Release files written to" + path.resolve(opts.builtPackaged, opts.localDir))
+                pxt.log("Release files written to " + path.join(opts.builtPackaged, opts.localDir))
             })
 
     return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
@@ -1945,6 +1945,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
 
     const dirs: Map<boolean> = {}
     for (const f of nodeutil.allFiles("docs", 8)) {
+        pxt.log(`rendering ${f}`)
         let dd = path.join(dst, f)
         let dir = path.dirname(dd)
         if (!U.lookup(dirs, dir)) {
@@ -1954,14 +1955,19 @@ function renderDocs(builtPackaged: string, localDir: string) {
         let buf = fs.readFileSync(f)
         if (/\.(md|html)$/.test(f)) {
             let str = buf.toString("utf8")
+            if (/\.md$/.test(f)) {
+                str = nodeutil.resolveMd(".", f.substr(5, f.length - 8));
+                fs.writeFileSync(dd, str, { encoding: "utf8" });
+            }
             let html = ""
-            if (U.endsWith(f, ".md"))
+            if (U.endsWith(f, ".md")) {
                 html = pxt.docs.renderMarkdown({
                     template: docsTemplate,
                     markdown: str,
                     theme: pxt.appTarget.appTheme,
                     filepath: f,
                 })
+            }
             else
                 html = server.expandHtml(str)
             html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
@@ -3723,7 +3729,7 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 }
 
 export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
-    const route = parsed.flags["route"] as string || "";
+    const route = parsed.flags["route"] as string || ".";
     const ghpages = parsed.flags["githubpages"];
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
     const minify = !!parsed.flags["minify"];
@@ -3733,7 +3739,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
     let p = rimrafAsync(builtPackaged, {})
         .then(() => bump ? bumpAsync() : Promise.resolve())
-        .then(() => buildTargetAsync({ packaged: true}));
+        .then(() => buildTargetAsync({ packaged: true }));
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
     else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify));
 }
@@ -3744,7 +3750,9 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
     return uploadCoreAsync({
         label: label || "main",
         pkgversion: "0.0.0",
-        fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
+        fileList: pxtFileList("node_modules/pxt-core/")
+            .concat(targetFileList())
+            .concat(["targetconfig.json"]),
         localDir,
         target: (pxt.appTarget.id || "unknownstatic"),
         builtPackaged,
