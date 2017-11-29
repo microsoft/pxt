@@ -1814,7 +1814,6 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 pxtCrowdinBranch: pxtCrowdinBranch(),
                 targetCrowdinBranch: targetCrowdinBranch()
             }
-            cfg.packaged = !!options.packaged;
             saveThemeJson(cfg)
 
             const webmanifest = buildWebManifest(cfg)

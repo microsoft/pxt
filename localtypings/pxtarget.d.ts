@@ -28,7 +28,6 @@ declare namespace pxt {
         nickname?: string; // friendly id used when generating files, folders, etc... id is used instead if missing
         name: string;
         description?: string;
-        packaged?: boolean; // no support for cloud backend
         corepkg: string;
         title?: string;
         cloud?: AppCloud;
