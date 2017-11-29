@@ -286,7 +286,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
     cmd = cmd.toLowerCase();
     if (!args[0] && cmd != "clean") throw new Error(cmd == "status" ? "language missing" : "filename missing");
     switch (cmd) {
-        case "stats": return statsCrowdinAsync(branch, prj, key, args[0]);
+        case "langstats": return langStatsCrowdinAsync(prj, key, args[0]);
         case "clean": return cleanCrowdinAsync(branch, prj, key, args[0] || "docs");
         case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
         case "download": {
@@ -304,7 +304,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
                         fs.writeFileSync(
                             outf,
                             rtranslations,
-                            "utf8");
+                            { encoding: "utf8" });
                     })
                 })
         }
@@ -321,10 +321,11 @@ function cleanCrowdinAsync(branch: string, prj: string, key: string, dir: string
         })
 }
 
-function statsCrowdinAsync(branch: string, prj: string, key: string, lang: string): Promise<void> {
-    return pxt.crowdin.languageStatsAsync(branch, prj, key, lang)
+function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
+    pxt.log(`collecting crowdin stats for branch ${prj} in ${lang}`);
+
+    return pxt.crowdin.languageStatsAsync(prj, key, lang)
         .then(stats => {
-            console.log('BLOCKS / SIM / TARGET')
             console.log(`file, phrases, translated, approved`);
             stats.filter(stat => /strings\.json$/i.test(stat.name))
                 .forEach(stat => {
@@ -338,7 +339,7 @@ function statsCrowdinAsync(branch: string, prj: string, key: string, lang: strin
                 r += `${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}\r\n`;
             })
             const fn = `crowdinstats-${lang}.csv`;
-            fs.writeFileSync(fn, r, "utf8");
+            fs.writeFileSync(fn, r, { encoding: "utf8" });
             console.log(`stats written to ${fn}`)
         })
 }
