@@ -284,9 +284,9 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
     }
 
     cmd = cmd.toLowerCase();
-    if (!args[0] && cmd != "clean") throw new Error(cmd == "status" ? "language missing" : "filename missing");
+    if (!args[0] && (cmd != "clean" && cmd != "stats")) throw new Error(cmd == "status" ? "language missing" : "filename missing");
     switch (cmd) {
-        case "langstats": return langStatsCrowdinAsync(prj, key, args[0]);
+        case "stats": return statsCrowdinAsync(prj, key);
         case "clean": return cleanCrowdinAsync(prj, key, args[0] || "docs");
         case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
         case "download": {
@@ -321,22 +321,31 @@ function cleanCrowdinAsync(prj: string, key: string, dir: string): Promise<void>
         })
 }
 
-function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
-    pxt.log(`collecting crowdin stats for branch ${prj} in ${lang}`);
+function statsCrowdinAsync(prj: string, key: string): Promise<void> {
+    pxt.log(`collecting crowdin stats for ${prj}`);
 
+    return pxt.crowdin.projectInfoAsync(prj, key)
+        .then(info => {
+            if (!info) throw new Error("info failed")
+            return Promise.all(info.languages.map(lang => langStatsCrowdinAsync(prj, key, lang.code)))
+        }).then(() => {
+
+        })
+}
+
+function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
     return pxt.crowdin.languageStatsAsync(prj, key, lang)
         .then(stats => {
             let r = ''
-            r += `file, phrases, translated, approved\r\n`
+            r += `file\t language\t completion\t phrases\t translated\t approved\r\n`
             stats.forEach(stat => {
                 r += `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}\r\n`;
                 if (stat.fullName == "strings.json") {
-                    console.log(`UI/core blocks: ${stat.phrases}, ${stat.translated}, ${stat.approved}`)
+                    console.log(`strings.json\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
                 }
             })
             const fn = `crowdinstats.csv`;
             fs.writeFileSync(fn, r, { encoding: "utf8" });
-            console.log(`stats written to ${fn}`)
         })
 }
 

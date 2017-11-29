@@ -213,30 +213,36 @@ namespace pxt.crowdin {
         return allFiles;
     }
 
+    export function projectInfoAsync(prj: string, key: string): Promise<CrowdinProjectInfo> {
+        const q: Map<string> = { json: "true" }
+        const infoUri = apiUri("", prj, key, "info", q);
+        return Util.httpGetTextAsync(infoUri).then(respText => {
+            const info = JSON.parse(respText) as CrowdinProjectInfo;
+            return info;
+        });
+    }
+
     /**
      * Scans files in crowdin and report files that are not on disk anymore
      */
     export function listFilesAsync(prj: string, key: string, crowdinPath: string): Promise<{ fullName: string; branch: string; }[]> {
-        const q: Map<string> = { json: "true" }
-        const infoUri = apiUri("", prj, key, "info", q);
 
         pxt.log(`crowdin: listing files under ${crowdinPath}`);
-        pxt.debug(`uri: ${infoUri}`);
 
-        return Util.httpGetTextAsync(infoUri).then(respText => {
-            const info = JSON.parse(respText) as CrowdinProjectInfo;
-            if (!info) throw new Error("info failed")
+        return projectInfoAsync(prj, key)
+            .then(info => {
+                if (!info) throw new Error("info failed")
 
-            let allFiles = filterAndFlattenFiles(info.files, crowdinPath);
-            pxt.debug(`crowdin: found ${allFiles.length} under ${crowdinPath}`)
+                let allFiles = filterAndFlattenFiles(info.files, crowdinPath);
+                pxt.debug(`crowdin: found ${allFiles.length} under ${crowdinPath}`)
 
-            return allFiles.map(f => {
-                return {
-                    fullName: f.fullName,
-                    branch: f.branch || ""
-                };
-            })
-        });
+                return allFiles.map(f => {
+                    return {
+                        fullName: f.fullName,
+                        branch: f.branch || ""
+                    };
+                })
+            });
     }
 
     export function languageStatsAsync(prj: string, key: string, lang: string): Promise<CrowdinFileInfo[]> {
