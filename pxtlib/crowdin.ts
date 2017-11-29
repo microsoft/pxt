@@ -185,8 +185,6 @@ namespace pxt.crowdin {
 
         let allFiles: CrowdinFileInfo[] = [];
 
-        files.forEach(f => console.log(`${f.node_type}-${f.name}`))
-
         // flatten the files
         files.forEach(f => flatten(allFiles, f, ""));
 

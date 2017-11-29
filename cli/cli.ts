@@ -329,7 +329,7 @@ function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<
             console.log(`file, phrases, translated, approved`);
             stats.filter(stat => /strings\.json$/i.test(stat.name))
                 .forEach(stat => {
-                    console.log(`${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}`)
+                    console.log(`${stat.fullName}${stat.branch ? '#' + stat.branch : ''}, ${stat.phrases}, ${stat.translated}, ${stat.approved}`)
                 })
             console.log();
             // dump all in CSV
