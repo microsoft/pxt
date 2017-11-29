@@ -1814,7 +1814,6 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 pxtCrowdinBranch: pxtCrowdinBranch(),
                 targetCrowdinBranch: targetCrowdinBranch()
             }
-            cfg.config = fs.existsSync("targetconfig.json") ? readJson("targetconfig.json") : {};
             cfg.packaged = !!options.packaged;
             saveThemeJson(cfg)
 
