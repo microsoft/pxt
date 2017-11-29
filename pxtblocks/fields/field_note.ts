@@ -133,6 +133,7 @@ namespace pxtblockly {
         editorColour?: string;
         minNote?: string;
         maxNote?: string;
+        defaultFreq?: string;
     }
 
     //  Class for a note input field.
@@ -179,7 +180,7 @@ namespace pxtblockly {
             super(text);
 
             FieldNote.superClass_.constructor.call(this, text, validator);
-            this.note_ = text;
+            this.note_ = params.defaultFreq || text;
 
             if (params.editorColour) {
                 this.colour_ = pxtblockly.parseColour(params.editorColour);
