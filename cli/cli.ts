@@ -1810,7 +1810,7 @@ function buildTargetCoreAsync() {
                 pxtCrowdinBranch: pxtCrowdinBranch(),
                 targetCrowdinBranch: targetCrowdinBranch()
             }
-
+            cfg.config = fs.existsSync("targetconfig.json") ? readJson("targetconfig.json") : {};
             saveThemeJson(cfg)
 
             const webmanifest = buildWebManifest(cfg)

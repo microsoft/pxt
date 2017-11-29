@@ -40,6 +40,7 @@ declare namespace pxt {
         appTheme: AppTheme;
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
+        config?: TargetConfig; // targetconfig when compiled (used for packaged targets)
     }
 
     interface ProjectTemplate {
