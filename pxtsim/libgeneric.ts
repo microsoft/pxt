@@ -222,7 +222,7 @@ namespace pxsim {
         const bh = (b >>> 16) & 0xffff;
         const bl = b & 0xffff;
         // the shift by 0 fixes the sign on the high part
-        // the final |0 converts the unsigned value into a signed value 
+        // the final |0 converts the unsigned value into a signed value
         return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
     }
 
@@ -511,16 +511,6 @@ namespace pxsim {
                 length = buf.data.length;
             length = Math.min(length, buf.data.length - offset);
             return new RefBuffer(buf.data.slice(offset, offset + length));
-        }
-
-        export function toHex(buf: RefBuffer): string {
-            const hex = "0123456789abcdef";
-            let res: string;
-            for (let i = 0; i < buf.data.length; ++i) {
-                res[i << 1] = hex[buf.data[i] >> 4];
-                res[(i << 1) + 1] = hex[buf.data[i] & 0xf];
-            }
-            return res;
         }
 
         function memmove(dst: Uint8Array, dstOff: number, src: Uint8Array, srcOff: number, len: number) {

@@ -482,7 +482,7 @@ namespace ts.pxtc.Util {
 
     export interface HttpResponse {
         statusCode: number;
-        headers: pxt.Map<string>;
+        headers: pxt.Map<string | string[]>;
         buffer?: any;
         text?: string;
         json?: any;
@@ -498,7 +498,7 @@ namespace ts.pxtc.Util {
                     err.statusCode = resp.statusCode
                     return Promise.reject(err)
                 }
-                if (resp.text && /application\/json/.test(resp.headers["content-type"]))
+                if (resp.text && /application\/json/.test(resp.headers["content-type"] as string))
                     resp.json = JSON.parse(resp.text)
                 return resp
             })
@@ -806,7 +806,7 @@ namespace ts.pxtc.Util {
                     return undefined;
                 else if (resp.statusCode == 200) {
                     // store etag and translations
-                    etag = resp.headers["ETag"] || "";
+                    etag = resp.headers["ETag"] as string || "";
                     return translationDb.setAsync(lang, filename, branch, etag, resp.json)
                         .then(() => resp.json);
                 }

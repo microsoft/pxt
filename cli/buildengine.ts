@@ -1,4 +1,3 @@
-/// <reference path="../typings/globals/node/index.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
 
@@ -490,7 +489,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
 }
 
 const writeFileAsync: any = Promise.promisify(fs.writeFile)
-const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Promise.promisify(child_process.exec)
+const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer | string> = Promise.promisify(child_process.exec)
 const readDirAsync = Promise.promisify(fs.readdir)
 
 function buildFinalCsAsync(res: ts.pxtc.CompileResult) {
@@ -533,7 +532,7 @@ function getBoardDrivesAsync(): Promise<string[]> {
     if (process.platform == "win32") {
         const rx = new RegExp("^([A-Z]:)\\s+(\\d+).* " + pxt.appTarget.compile.deployDrives)
         return execAsync("wmic PATH Win32_LogicalDisk get DeviceID, VolumeName, FileSystem, DriveType")
-            .then(buf => {
+            .then((buf: Buffer) => {
                 let res: string[] = []
                 buf.toString("utf8").split(/\n/).forEach(ln => {
                     let m = rx.exec(ln)

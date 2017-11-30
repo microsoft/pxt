@@ -109,7 +109,9 @@
     "typings": "^2.1.0",
     "tslint": "^3.9.0",
     "typescript": "2.6.1",
-    "webfonts-generator": "^0.3.3"
+    "webfonts-generator": "^0.3.3",
+    "@types/node": "ts2.6",
+    "@types/jquery": "ts2.6"
   },
   "scripts": {
     "test": "jake travis --trace",

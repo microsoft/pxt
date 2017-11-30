@@ -130,8 +130,8 @@ namespace pxt.runner {
     }
 
     function patchSemantic() {
-        if ($ && $.fn && $.fn.embed && $.fn.embed.settings && $.fn.embed.settings.sources && $.fn.embed.settings.sources.youtube) {
-            $.fn.embed.settings.sources.youtube.url = '//www.youtube.com/embed/{id}?rel=0'
+        if ($ && $.fn && ($.fn as any).embed && ($.fn as any).embed.settings && ($.fn as any).settings.sources && ($.fn as any).settings.sources.youtube) {
+            ($.fn as any).embed.settings.sources.youtube.url = '//www.youtube.com/embed/{id}?rel=0'
         }
     }
 

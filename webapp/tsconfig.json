@@ -14,7 +14,9 @@
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "declaration": false,
-        "preserveConstEnums": true
+        "preserveConstEnums": true,
+        "lib": ["dom", "dom.iterable", "scripthost", "es6"],
+        "types": ["jquery"]
     },
     "exclude": [ "node_modules" ]
 }

@@ -1,7 +1,6 @@
 /// <reference path="../../built/pxtcompiler.d.ts"/>
 /// <reference path="../../typings/globals/mocha/index.d.ts" />
 /// <reference path="../../typings/modules/chai/index.d.ts" />
-/// <reference path="../../typings/globals/node/index.d.ts"/>
 
 import * as fs from 'fs';
 import * as path from 'path';

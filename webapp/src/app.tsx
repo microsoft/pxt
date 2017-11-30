@@ -1414,7 +1414,7 @@ export class ProjectView
         }).done(res => {
             if (res) {
                 pxt.tickEvent("app.reportabuse.send");
-                const id = pxt.Cloud.parseScriptId(urlInput.val());
+                const id = pxt.Cloud.parseScriptId(urlInput.val() as string);
                 if (!id) {
                     core.errorNotification(lf("Sorry, the project url looks invalid."));
                 } else {

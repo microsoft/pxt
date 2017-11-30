@@ -1,4 +1,3 @@
-/// <reference path="../typings/globals/node/index.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtcompiler.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
@@ -1589,7 +1588,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
                             // process rtl css
                             postcss([rtlcss])
                                 .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                    fs.writeFile(`built/web/rtl${cssFile}`, result2.css);
+                                    fs.writeFile(`built/web/rtl${cssFile}`, result2.css, undefined);
                                 });
                         });
                     });
@@ -2033,7 +2032,6 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
 
 const readFileAsync: any = Promise.promisify(fs.readFile)
 const writeFileAsync: any = Promise.promisify(fs.writeFile)
-const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Promise.promisify(child_process.exec)
 const readDirAsync = Promise.promisify(fs.readdir)
 const statAsync = Promise.promisify(fs.stat)
 const rimrafAsync = Promise.promisify(rimraf);
@@ -3685,7 +3683,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                         const tf = path.join(tfdir, fn);
                         nodeutil.mkdirP(tfdir)
                         pxt.log(`writing ${tf}`);
-                        fs.writeFile(tf, langTranslations, { encoding: "utf8" });
+                        fs.writeFile(tf, langTranslations, { encoding: "utf8" }, undefined);
 
                         locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
                     })
@@ -3903,7 +3901,7 @@ function fetchTextAsync(filename: string): Promise<Buffer> {
         pxt.log(`compile log: ${filename.replace(/\.json$/i, ".log")}`)
         return U.requestAsync({ url: filename, allowHttpErrors: !!fn2 })
             .then(resp => {
-                if (fn2 && (resp.statusCode != 200 || /html/.test(resp.headers["content-type"]))) {
+                if (fn2 && (resp.statusCode != 200 || /html/.test(resp.headers["content-type"] as string))) {
                     pxt.log(`Trying also ${fn2}...`)
                     return U.requestAsync({ url: fn2 })
                 } return resp

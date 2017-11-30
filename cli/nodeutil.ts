@@ -397,7 +397,6 @@ function getBrowserLocation(browser: string) {
     if (normalizedBrowser === "chrome") {
         switch (os.platform()) {
             case "win32":
-            case "win64":
                 browserPath = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe";
                 break;
             case "darwin":
@@ -414,7 +413,6 @@ function getBrowserLocation(browser: string) {
         browserPath = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe";
         switch (os.platform()) {
             case "win32":
-            case "win64":
                 browserPath = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe";
                 break;
             case "darwin":

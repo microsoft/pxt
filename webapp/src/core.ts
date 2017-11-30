@@ -279,7 +279,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     if (options.copyable) enableCopyable(modal);
     if (options.input) {
         const ip = modal.find('.userinput');
-        ip.on('change', e => options.inputValue = ip.val())
+        ip.on('change', e => options.inputValue = ip.val() as string)
     }
     let done = false
     let modalContext = options.modalContext || '#root';

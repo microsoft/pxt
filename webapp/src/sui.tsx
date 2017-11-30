@@ -127,7 +127,7 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
     componentDidMount() {
         this.popup()
         let dropdowmtag = this.child("")
-        dropdowmtag.on("keydown", this.dropDownKeyDown)
+        dropdowmtag.on("keydown", this.dropDownKeyDown as any)
         dropdowmtag.dropdown({
             action: (text: string, value: any, element: JQuery) => {
                 this.close()
