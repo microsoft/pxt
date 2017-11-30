@@ -23,6 +23,7 @@ import * as hidbridge from "./hidbridge";
 import * as share from "./share";
 import * as lang from "./lang";
 import * as notification from "./notification";
+import * as notificationbanner from "./notificationbanner";
 import * as tutorial from "./tutorial";
 import * as editortoolbar from "./editortoolbar";
 import * as filelist from "./filelist";
@@ -1605,6 +1606,10 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
+    setBanner(b: boolean) {
+        this.setState({ bannerVisible: b });
+    }
+
     renderCore() {
         theEditor = this;
 
@@ -1679,6 +1684,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             hideMenuBar ? 'hideMenuBar' : '',
             !showEditorToolbar ? 'hideEditorToolbar' : '',
+            this.state.bannerVisible ? "notificationBannerVisible" : "",
             sandbox && simActive ? 'simView' : '',
             'full-abs',
             'dimmable'
@@ -1693,8 +1699,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                             {selectLanguage ? <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language")} onClick={() => this.selectLang()} /> : undefined}
                             {targetTheme.highContrast ? <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={() => this.toggleHighContrast()} /> : undefined}
                         </div>
-
-                        <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
+                        <notificationbanner.NotificationBanner parent={this} />
+                        <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
                             {!sandbox ? <div className="left menu">
                                 <a id="logo" className="ui item logo" target="_blank" rel="noopener" href={targetTheme.logoUrl} aria-label={lf("{0} website", targetTheme.boardName)} role="menuitem">
                                     {targetTheme.logo || targetTheme.portraitLogo

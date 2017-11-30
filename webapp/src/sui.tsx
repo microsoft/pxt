@@ -319,6 +319,32 @@ export class Popup extends data.Component<UiProps, {}> {
     }
 }
 
+export interface LinkProps extends ButtonProps {
+    href?: string;
+    target?: string;
+}
+
+export class Link extends UiElement<LinkProps> {
+    renderCore() {
+        return (
+            <a className={genericClassName("ui", this.props) + " " + (this.props.disabled ? "disabled" : "") }
+                id={this.props.id}
+                href={this.props.href}
+                target={this.props.target}
+                role={this.props.role}
+                title={this.props.title}
+                tabIndex={this.props.tabIndex || 0}
+                aria-label={this.props.ariaLabel}
+                aria-expanded={this.props.ariaExpanded}
+                onClick={this.props.onClick}
+                onKeyDown={this.props.onKeyDown}>
+                {genericContent(this.props) }
+                {this.props.children}
+            </a>
+        );
+    }
+}
+
 export class Field extends data.Component<{
     label?: string;
     children?: any;
@@ -940,7 +966,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const dimmerClasses = !dimmer
             ? null
             : cx([
-                core.highContrast ? 'hc' : '', 
+                core.highContrast ? 'hc' : '',
                 'ui',
                 dimmer === 'inverted' ? 'inverted' : '',
                 pxt.options.light ? '' : "transition",
