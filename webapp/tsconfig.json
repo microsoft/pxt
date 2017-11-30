@@ -16,7 +16,7 @@
         "declaration": false,
         "preserveConstEnums": true,
         "lib": ["dom", "dom.iterable", "scripthost", "es6"],
-        "types": ["jquery"]
+        "types": ["jquery", "react", "react-dom"]
     },
     "exclude": [ "node_modules" ]
 }

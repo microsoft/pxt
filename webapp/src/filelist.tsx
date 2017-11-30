@@ -1,5 +1,3 @@
-/// <reference path="../../typings/globals/react/index.d.ts" />
-/// <reference path="../../typings/globals/react-dom/index.d.ts" />
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
@@ -26,7 +24,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         }
     }
 
-    private removePkg(e: React.MouseEvent, p: pkg.EditorPackage) {
+    private removePkg(e: React.MouseEvent<HTMLElement>, p: pkg.EditorPackage) {
         e.stopPropagation();
         core.confirmAsync({
             header: lf("Remove {0} package", p.getPkgId()),
@@ -43,12 +41,12 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         })
     }
 
-    private removeFile(e: React.MouseEvent, f: pkg.File) {
+    private removeFile(e: React.MouseEvent<HTMLElement>, f: pkg.File) {
         e.stopPropagation();
         this.props.parent.removeFile(f);
     }
 
-    private updatePkg(e: React.MouseEvent, p: pkg.EditorPackage) {
+    private updatePkg(e: React.MouseEvent<HTMLElement>, p: pkg.EditorPackage) {
         e.stopPropagation();
         pkg.mainEditorPkg().updateDepAsync(p.getPkgId())
             .then(() => this.props.parent.reloadHeaderAsync())

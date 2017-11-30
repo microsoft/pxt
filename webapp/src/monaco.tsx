@@ -1496,7 +1496,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
             toolbox.setNextItem();
         }
         const isRtl = Util.isUserLanguageRtl();
-        const onKeyDown = (e: React.KeyboardEvent) => {
+        const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
             let charCode = (typeof e.which == "number") ? e.which : e.keyCode
             if (charCode == 40) { //  DOWN
                 nextItem();
