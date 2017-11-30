@@ -111,6 +111,7 @@
     "typescript": "2.6.1",
     "webfonts-generator": "^0.3.3",
     "@types/chai": "ts2.6",
+    "@types/bluebird": "2.0.33",
     "@types/node": "ts2.6",
     "@types/fuse": "ts2.6",
     "@types/highlight.js": "ts2.6",

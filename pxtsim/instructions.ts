@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/bluebird/index.d.ts"/>
-
 namespace pxsim.instructions {
     const LOC_LBL_SIZE = 10;
     const QUANT_LBL_SIZE = 30;
