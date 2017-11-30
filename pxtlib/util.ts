@@ -381,6 +381,34 @@ namespace ts.pxtc.Util {
     export function stripUrlProtocol(str: string) {
         return str.replace(/.*?:\/\//g, "");
     }
+
+    export function normalizePath(path: string) {
+        if (path) {
+            path = path.replace(/\\/g, "/")
+        }
+
+        return path;
+    }
+
+    export function pathJoin(a: string, b: string) {
+        normalizePath(a);
+        normalizePath(b);
+
+        if (!a && !b) return undefined;
+        else if (!a) return b;
+        else if (!b) return a;
+
+        if (a.charAt(a.length - 1) !== "/") {
+            a += "/";
+        }
+
+        if (b.charAt(0) == "/") {
+            b = b.substring(1);
+        }
+
+        return a + b;
+    }
+
     export let isNodeJS = false;
 
     export interface HttpRequestOptions {

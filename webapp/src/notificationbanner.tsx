@@ -96,11 +96,12 @@ export class NotificationBanner extends React.Component<ISettingsProps, {}> {
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
-        const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetTheme.windowsStoreLink && !isApp;
+        //const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetTheme.windowsStoreLink && !isApp;
+        const showWindowsStoreBanner = true;
 
         if (showWindowsStoreBanner) {
             return (
-                <GenericBanner parent={this.props.parent} delayTime={10000} displayTime={45000} sleepTime={604800}>
+                <GenericBanner parent={this.props.parent}>
                     <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={pxt.appTarget.appTheme.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
                         <img className="bannerIcon" src={Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)}></img>
                     </sui.Link>

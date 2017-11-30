@@ -218,6 +218,7 @@ declare namespace pxt {
         highContrast?: boolean; // simulator has a high contrast mode
         selectLanguage?: boolean; // add language picker to settings menu
         defaultBlockGap?: number; // For targets to override block gap
+        appPathNames?: string[]; // Authorized URL paths in electron or UWP, all other paths will display a warning banner
     }
 
     interface DocMenuEntry {
