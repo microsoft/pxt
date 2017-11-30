@@ -3,7 +3,7 @@
 
 <head>
 	<meta charset="UTF-8">
-	<title>Microsoft MakeCode - Hour Of Code</title>
+	<title>Microsoft MakeCode - Hour Of MakeCode (Teacher Resources)</title>
 	<meta name="Description" content="Microsoft MakeCode is a free, open-source Block and JavaScript learn-to-code editor that promotes a more inclusive approach to computing education."
 	/>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -224,6 +224,10 @@
 			/*#0072c6; */
 		}
 		
+		#makecode-tweets-container {
+			background: #bdc3c7;
+		}
+		
 		.ui.button.green {
 			background-color: #117D2A;
 		}
@@ -398,8 +402,8 @@
 		<a id="sidenav-about" href="https://makecode.com/" class="item ms-font-m" aria-label="About MakeCode">
 			Home
 		</a>
-		<a href="#resources" class="item ms-font-m" role="menuitem">
-			Teacher Resources
+		<a href="/hourofmakecode" class="item ms-font-m" role="menuitem">
+			Hour of MakeCode
 		</a>
 	</div>
 	<div class="pusher">
@@ -407,7 +411,7 @@
 		<header id="makecode-header">
 
 			<h1 class="ms-font-su ms-fontWeight-light">
-				Microsoft MakeCode
+				Hour Of MakeCode - Teacher Resources
 			</h1>
 
 			<div id="accessibleMenu" class="accessibleMenu" role="menubar">
@@ -420,7 +424,7 @@
 						<i class="ms-Icon ms-Icon--GlobalNavButton" aria-hidden="true"></i>
 					</a>
 					<div class="item ms-font-xl ms-fontWeight-light">
-						Microsoft MakeCode
+						Hour Of MakeCode - Teacher Resources
 					</div>
 				</div>
 			</div>
@@ -430,8 +434,8 @@
 					<a href="https://makecode.com/" class="item ms-font-m" aria-label="About Microsoft MakeCode" role="menuitem">
 						Home
 					</a>
-					<a href="#resources" class="item ms-font-m">
-						Teacher Resources
+					<a href="/hourofmakecode" class="item ms-font-m">
+						Hour of MakeCode
 					</a>
 				</div>
 			</nav>
@@ -442,108 +446,179 @@
 
 			<section id="document-main" aria-label="main content">
 
-				<section id="hour-of-code" aria-label="Hour of Code introduction">
-					<div id="makecode-getinspired-container" class="ui vertical masthead inverted center aligned segment">
-						<div class="ui grid container">
-							<div class="row">
-								<div class="ui text container">
-									<h2 class="ui ms-font-su ms-fontWeight-light">Hour Of Code</h2>
-									<p class="ms-font-l ms-fontWeight-regular">
-										Join us in celebrating this year's Computer Science Education Week from Dec. 4-10th with an Hour of Code&trade; on MakeCode.com.</p>
-								</div>
-							</div>
-						</div>
-					</div>
-				</section>
+				<section id="hour-of-code" aria-label="Hour of MakeCode introduction">
 
-				<section id="hour-of-code-contents" aria-label="Hour of Code contents">
-					<div id="makecode-docs-container" class="ui vertical masthead center aligned segment">
-						<div class="ui grid container">
+
+					<div class="ui vertical stripe segment">
+						<div class="ui middle aligned stackable grid container">
 							<div class="row">
-								<div class="ui text container">
-									<h2 class="ui ms-font-su ms-fontWeight-light">Activities</h2>
+								<div class="ui container">
+									<h2 class="ui ms-font-su ms-fontWeight-light">Resources</h2>
 									<p class="ms-font-l">
-										Try out one of these tutorials
+										Here are some tutorials you can incorporate into your <strong>Hour of MakeCode activities</strong>.
 									</p>
 								</div>
 							</div>
+							<!--
 							<div class="row">
-								<div class="ui cards stackable three centered link doubling">
-									<a class="ui card" href="https://makecode.microbit.org/#tutorial:tutorials/hour-of-code/hey-microbit" target="_blank"
-										onclick="tickEvent('makecode.hourofcode', {'target': 'microbit', 'project': 'heymicrobit'})" aria-label="Hey micro:bit tutorial">
-
-										<div class="image">
-											<img class="ui large rounded image centered" src="/static/hourofcode/microbithello.png" alt="A micro:bit with the letter H">
-										</div>
-
-										<div class="content">
-											<span class="header">Hey micro:bit!</span>
-											<div class="description">
-												Ask your micro:bit a question and see it respond.
+								<div class="eight wide column">
+									<h3 class="ui header">Activity: Hey micro:bit!</h3>
+									<div class="ui blue image label"> Beginner </div>
+									<div class="ui green image label"> 20 minutes </div>
+									<p></p>
+									<p>Ask your micro:bit a question and see it respond.</p>
+									<div class="row">
+										<div class="column">
+											<h3 class="ui ms-font-xxl ms-fontWeight-light">Code</h3>
+											<a target="_blank" href="https://makecode.microbit.org/tutorials/hour-of-code/hey-microbit">https://makecode.microbit.org/tutorials/hour-of-code/hey-microbit</a>
+											<h3 class="ui ms-font-xxl ms-fontWeight-light">Hardware</h3>
+											<p class="ms-font-l">Purchase micro:bit and accessories</p>
+											<div class="col">
+												<a class="ui button green" href="https://www.microbit.org/resellers/" target="_blank" onclick="tickEvent('makecode.hourofcode.hardware.buy', {'target': 'makecode', 'hardware': 'microbit', 'from': 'worldwide'})"
+													aria-label="Purchase a micro:bit from Worldwide resellers">Buy@Worldwide Resellers</a>
 											</div>
 										</div>
-									</a>
-
-									<a class="ui card" href="https://makecode.microbit.org/#tutorial:tutorials/hour-of-code/rock-paper-scissors" target="_blank"
-										onclick="tickEvent('makecode.hourofcode', {'target': 'microbit', 'project': 'rps'})" aria-label="micro:bit rock paper scissors tutorial">
-
-										<div class="image">
-											<img class="ui large rounded image centered" src="/static/hourofcode/microbitrps.png" alt="A micro:bit on a space race game">
+									</div>
+								</div>
+								<div class="six wide right floated column">
+									<img src="/static/hourofmakecode/microbithello.png" class="ui large bordered rounded image">
+									<p></p>
+									<div class="row">
+										<div class="column">
+											<a class="ui huge button right floated" href="https://makecode.microbit.org/#tutorial:tutorials/hour-of-code/hey-microbit"
+												target="_blank">Try activity</a>
 										</div>
-
-										<div class="content">
-											<span class="header">Rock Paper micro:bit!</span>
-											<div class="description">
-												Create the rock paper scissors game with a micro:bit.
+									</div>
+								</div>
+							</div>
+							<div class="row"></div>
+							<div class="row"></div>
+							-->
+							<div class="row">
+								<div class="eight wide column">
+									<h3 class="ui header">Activity: Rock Paper micro:bit!</h3>
+									<div class="ui orange image label"> Intermediate </div>
+									<div class="ui green image label"> 30 minutes </div>
+									<p></p>
+									<p>Create the rock paper scissors game with a micro:bit. </p>
+									<div class="row">
+										<div class="column">
+											<h3 class="ui ms-font-xxl ms-fontWeight-light">Code</h3>
+											<a target="_blank" href="https://makecode.microbit.org/tutorials/hour-of-code/rock-paper-scissors">https://makecode.microbit.org/tutorials/hour-of-code/rock-paper-scissors</a>
+											<h3 class="ui ms-font-xxl ms-fontWeight-light">Hardware</h3>
+											<p class="ms-font-l">Purchase micro:bit and accessories</p>
+											<div class="col">
+												<a class="ui button green" href="https://www.microbit.org/resellers/" target="_blank" onclick="tickEvent('makecode.hourofcode.hardware.buy', {'target': 'makecode', 'hardware': 'microbit', 'from': 'worldwide'})"
+													aria-label="Purchase a micro:bit from Worldwide resellers">Buy@Worldwide Resellers</a>
 											</div>
 										</div>
-									</a>
-
-									<a class="ui card" href="https://makecode.adafruit.com/#tutorial:tutorials/siren" target="_blank"
-										onclick="tickEvent('makecode.hourofcode', {'target': 'adafruit', 'project': 'siren'})" aria-label="circuit playground siren tutorial">
-
-										<div class="image">
-											<img class="ui large rounded image centered" src="/static/hourofcode/siren.jpg" alt="A police car with a circuit playground siren on the front">
+									</div>
+								</div>
+								<div class="six wide right floated column">
+									<img src="/static/hourofmakecode/microbitrps.png" class="ui large bordered rounded image">
+									<p></p>
+									<div class="row">
+										<div class="column">
+											<a class="ui huge button right floated" href="https://makecode.microbit.org/#tutorial:tutorials/hour-of-code/rock-paper-scissors"
+												onclick="tickEvent('makecode.hourofcode.teacher.try', {'target': 'makecode', 'activity': 'rock paper scissors'})"
+												target="_blank">Try activity</a>
 										</div>
-
-										<div class="content">
-											<span class="header">WaWa WaWa!</span>
-											<div class="description">
-												Use a siren to get on the scene. Flashing lights and sounds let everyone know you're on your way!
+									</div>
+								</div>
+							</div>
+							<div class="row"></div>
+							<div class="row"></div>
+							<div class="row">
+								<div class="eight wide column">
+									<h3 class="ui header">Activity: Magic Wand!</h3>
+									<div class="ui blue image label"> Beginner </div>
+									<div class="ui green image label"> 1 hour </div>
+									<p></p>
+									<p>Shake your wand and cast some spells on your friends. Ala kazam! </p>
+									<div class="row">
+										<div class="column">
+											<h3 class="ui ms-font-xxl ms-fontWeight-light">Code</h3>
+											<a target="_blank" href="https://makecode.adafruit.com/tutorials/magic-wand">https://makecode.adafruit.com/tutorials/magic-wand</a>
+											<h3 class="ui ms-font-xxl ms-fontWeight-light">Make Activity</h3>
+											Find materials and step by step instructions for the Make activity:
+											<a target="_blank" href="https://makecode.adafruit.com/projects/magic-wand">https://makecode.adafruit.com/projects/magic-wand</a>
+											<h3 class="ui ms-font-xxl ms-fontWeight-light">Hardware</h3>
+											<p class="ms-font-l">Purchase micro:bit and accessories</p>
+											<div class="col">
+												<a class="ui button green" href="https://www.microbit.org/resellers/" target="_blank" onclick="tickEvent('makecode.hourofcode.hardware.buy', {'target': 'makecode', 'hardware': 'microbit', 'from': 'worldwide'})"
+													aria-label="Purchase a micro:bit from Worldwide resellers">Buy@Worldwide Resellers</a>
 											</div>
 										</div>
-									</a>
-
-									<a class="ui card" href="https://makecode.adafruit.com/#tutorial:tutorials/magic-wand" target="_blank"
-										onclick="tickEvent('makecode.hourofcode', {'target': 'adafruit', 'project': 'magicwand'})" aria-label="circuit playground magic wand tutorial">
-
-										<div class="image">
-											<img class="ui medium rounded image centered" src="/static/hourofcode/magicwand.jpg" alt="A circuit playground magic wand">
+									</div>
+								</div>
+								<div class="six wide right floated column">
+									<img src="/static/hourofmakecode/magicwand.jpg" class="ui large bordered rounded image">
+									<p></p>
+									<div class="row">
+										<div class="column">
+											<a class="ui huge button right floated" href="https://makecode.adafruit.com/#tutorial:tutorials/magic-wand" onclick="tickEvent('makecode.hourofcode.teacher.try', {'target': 'makecode', 'activity': 'magic wand'})"
+												target="_blank">Try activity</a>
 										</div>
+									</div>
+								</div>
+							</div>
 
-										<div class="content">
-											<span class="header">Magic Wand!</span>
-											<div class="description">
-												Shake your wand and cast some spells on your friends. Ala kazam!
+							<div class="row"></div>
+							<div class="row"></div>
+							<div class="row">
+								<div class="eight wide column">
+									<h3 class="ui header">Activity: Chickens!</h3>
+									<div class="ui blue image label"> Beginner </div>
+									<div class="ui green image label"> 30 minutes </div>
+									<p></p>
+									<p>Make it rain chickens with Minecraft! </p>
+									<div class="row">
+										<div class="column">
+											<h3 class="ui ms-font-xxl ms-fontWeight-light">Code</h3>
+											<a target="_blank" href="https://minecraft.makecode.com/tutorials/chicken-rain">https://minecraft.makecode.com/tutorials/chicken-rain</a>
+											<h3 class="ui ms-font-xxl ms-fontWeight-light">Setup</h3>
+											<p class="ms-font-l">Setup instructions available here: <a href="https://minecraft.makecode.com/setup" target="_blank">https://minecraft.makecode.com/setup</a></p>
+										</div>
+									</div>
+								</div>
+								<div class="six wide right floated column">
+									<img src="/static/hourofmakecode/chickenrain.png" class="ui large bordered rounded image">
+									<p></p>
+								</div>
+							</div>
+							<div class="row"></div>
+							<div class="row"></div>
+							<div class="row">
+								<div class="eight wide column">
+									<h3 class="ui header">Activity: Blinky!</h3>
+									<div class="ui blue image label"> Beginner </div>
+									<div class="ui green image label"> 15 minutes </div>
+									<p></p>
+									<p>Blinky with the Chibi Chip!</p>
+									<div class="row">
+										<div class="column">
+											<h4 class="ui ms-font-xl">Code</h4>
+											<a target="_blank" href="https://makecode.chibitronics.com/tutorials/getting-started">https://makecode.chibitronics.com/tutorials/getting-started</a>
+											<h3 class="ui ms-font-xxl ms-fontWeight-light">Hardware</h3>
+											<p class="ms-font-l">Purchase Chibi Chip and accessories</p>
+											<div class="col">
+												<a class="ui button green" href="https://chibitronics.com/shop/love-to-code-chibi-chip-cable/" target="_blank" onclick="tickEvent('makecode.hourofcode.hardware.buy', {'target': 'makecode',  'hardware': 'chibichip', 'from': 'chibitronics'})"
+													aria-label="Purchase a Chibi Chip from Chibitronics">Buy@Chibitronics</a>
+												<a class="ui button green" href="http://a.co/4beatcQ" target="_blank" onclick="tickEvent('makecode.hourofcode.hardware.buy', {'target': 'makecode',  'hardware': 'chibichip', 'from': 'amazon'})"
+													aria-label="Purchase a Chibi Chip from Amazon">Buy@Amazon</a>
 											</div>
 										</div>
-									</a>
-
-									<a class="ui card" href="https://makecode.chibitronics.com/beta#tutorial:tutorials/getting-started" target="_blank"
-										onclick="tickEvent('makecode.hourofcode', {'target': 'chibitronics', 'project': 'blinky'})" aria-label="chibi chip blinky tutorial">
-
-										<div class="image">
-											<img class="ui medium rounded image centered" src="/static/hourofcode/blinky.png" alt="Blinky">
+									</div>
+								</div>
+								<div class="six wide right floated column">
+									<img src="/static/hourofmakecode/blinky.png" class="ui large bordered rounded image">
+									<p></p>
+									<div class="row">
+										<div class="column">
+											<a class="ui huge button right floated" href="https://makecode.chibitronics.com/beta#tutorial:tutorials/getting-started"
+												onclick="tickEvent('makecode.hourofcode.teacher.try', {'target': 'makecode', 'activity': 'blinky'})" target="_blank">Try activity</a>
 										</div>
-
-										<div class="content">
-											<span class="header">Blinky</span>
-											<div class="description">
-												Blinky with the Chibi Chip.
-											</div>
-										</div>
-									</a>
-
+									</div>
 								</div>
 							</div>
 						</div>
@@ -551,79 +626,42 @@
 				</section>
 
 				<section id="tweets" aria-label="Featured Tweets">
-					<div id="makecode-tweets-container" class="ui vertical masthead aligned segment">
-
-						<div class="ui grid container">
-
-							<div class="row">
-								<div class="ui container">
-									<h2 class="ui ms-font-su ms-fontWeight-light">Share your creations</h2>
-									<p class="ms-font-l">
-										<a href="https://twitter.com/intent/tweet?screen_name=MSMakeCode&ref_src=twsrc%5Etfw" class="twitter-mention-button" data-show-count="false">Tweet to @MSMakeCode</a>
-										<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-									</p>
-								</div>
-							</div>
-						</div>
-				</section>
-
-				<section id="resources" aria-label="Resources">
-					<div id="makecode-resources-container" class="ui vertical masthead inverted center aligned segment">
+					<div id="makecode-tweets-container" class="ui vertical masthead center aligned segment">
 
 						<div class="ui grid container">
 							<div class="row">
 								<div class="ui text container">
-									<h2 class="ui ms-font-su ms-fontWeight-light" style="color: black;">Teacher Resources</h2>
+									<h2 class="ui ms-font-su ms-fontWeight-light" style="color: black;">Social Media</h2>
 								</div>
 							</div>
 							<div class="row">
 
-								<div class="ui container cards stackable four centered link doubling">
-									<a class="ui card" href="/hourofcode-teacher" onclick="tickEvent('makecode.hourofcode.resources', {'target': 'makecode'})"
-										aria-label="Developer documentation">
-										<div class="ui medium image centered">
-											<i class="ms-Icon ms-Icon--Documentation ms-fontColor-themePrimary" aria-hidden="true" style="font-size:72px;padding:20px;"></i>
-										</div>
+								<div class="ui container cards stackable four centered doubling">
+									<div class="ui card">
 										<div class="content">
-											<span class="header">Teacher Resources</span>
+											<span class="header">Follow Us</span>
 											<div class="description">
-												View the teacher resources
+												Follow us for the latest in MakeCode news. <br /> <br />
+												<a href="https://twitter.com/MSMakeCode?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-show-count="false">Follow @MSMakeCode</a>
+												<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 											</div>
 										</div>
-									</a>
-									<!--
-									<a class="ui card" href="https://www.microsoft.com/youthsparkprograms" target="_blank" onclick="tickEvent('makecode.resources.translate', {'target': 'makecode'})"
-										aria-label="Help translate Makecode on Crowdin">
+									</div>
+
+									<div class="ui card">
 										<div class="content">
-											<span class="header">Free Minecraft Hour of Code Camps at the Microsoft Store</span>
+											<span class="header">Share your experiences</span>
 											<div class="description">
-												Sign up for the free Minecraft Hour of Code workshops at Microsoft Stores in Australia, Canada, Puerto Rico or the US. Learn
-												how coding is for everyone and combines creativity, problem solving and loads of fun.
+												Share your creations and experiences with @MSMakeCode. <br /> <br />
+												<a href="https://twitter.com/intent/tweet?screen_name=MSMakeCode&ref_src=twsrc%5Etfw" class="twitter-mention-button" data-show-count="false">Tweet to @MSMakeCode</a>
+												<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 											</div>
 										</div>
-									</a> -->
+									</div>
 								</div>
 							</div>
 
 						</div>
-
-					</div>
-				</section>
-
-				<section id="hocfooter" aria-label="Hour Of Code disclaimer">
-					<div id="makecode-hocfooter-container" class="ui vertical masthead inverted center aligned segment">
-
-						<div class="ui container text">
-
-							<div class="row">
-								<div class="column">
-									The <a target="_blank" href="https://hourofcode.com"> 'Hour of Code&trade;' </a> is a nationwide initiative by
-									<a target="_blank" href="https://csedweek.org/">Computer Science Education Week</a> and <a target="_blank" href="https://code.org">Code.org</a>									to introduce millions of students to one hour of computer science and computer programming.
-								</div>
-							</div>
-						</div>
-					</div>
-
 				</section>
 
 			</section>
