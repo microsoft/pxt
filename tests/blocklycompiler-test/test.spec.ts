@@ -1,5 +1,3 @@
-/// <reference path="..\..\typings\globals\mocha\index.d.ts" />
-/// <reference path="..\..\localtypings\chai.d.ts" />
 /// <reference path="..\..\localtypings\pxtblockly.d.ts" />
 /// <reference path="..\..\built\pxtblocks.d.ts" />
 /// <reference path="..\..\built\pxtcompiler.d.ts" />

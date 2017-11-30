@@ -1,11 +1,8 @@
-/// <reference path='../typings/globals/marked/index.d.ts' />
-/// <reference path='../typings/globals/highlightjs/index.d.ts' />
 /// <reference path='../localtypings/pxtarget.d.ts' />
 /// <reference path="util.ts"/>
 
 namespace pxt.docs {
     declare var require: any;
-    let marked: MarkedStatic;
     import U = pxtc.Util;
     const lf = U.lf;
 
@@ -79,7 +76,7 @@ namespace pxt.docs {
     export var requireMarked = () => {
         if (typeof marked !== "undefined") return marked;
         if (typeof require === "undefined") return undefined;
-        return require("marked");
+        return require("marked") as typeof marked;
     }
 
     export interface RenderData {
@@ -419,7 +416,7 @@ namespace pxt.docs {
         prepTemplate(d)
 
         if (!marked) {
-            marked = requireMarked();
+            (marked as any) = requireMarked();
             let renderer = new marked.Renderer()
             renderer.image = function (href: string, title: string, text: string) {
                 let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';

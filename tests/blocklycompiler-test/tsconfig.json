@@ -6,6 +6,7 @@
         "declaration": true,
         "out": "../../built/tests/tests.spec.js",
         "newLine": "LF",
+        "types": ["chai", "mocha"],
         "sourceMap": false
     },
     "files": [

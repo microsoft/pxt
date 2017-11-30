@@ -110,10 +110,16 @@
     "tslint": "^3.9.0",
     "typescript": "2.6.1",
     "webfonts-generator": "^0.3.3",
+    "@types/chai": "ts2.6",
     "@types/node": "ts2.6",
+    "@types/fuse": "ts2.6",
+    "@types/highlight.js": "ts2.6",
     "@types/jquery": "ts2.6",
+    "@types/mocha": "ts2.6",
+    "@types/marked": "ts2.6",
     "@types/react": "ts2.6",
-    "@types/react-dom": "ts2.6"
+    "@types/react-dom": "ts2.6",
+    "@types/request": "ts2.6"
   },
   "scripts": {
     "test": "jake travis --trace",

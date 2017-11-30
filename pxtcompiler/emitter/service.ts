@@ -1,5 +1,3 @@
-/// <reference path="../../typings/globals/fusejs/index.d.ts" />
-
 namespace ts.pxtc {
 
     export const placeholderChar = "◊";
@@ -526,7 +524,7 @@ namespace ts.pxtc.service {
     let lastApiInfo: ApisInfo;
     let lastBlocksInfo: BlocksInfo;
     let lastLocBlocksInfo: BlocksInfo;
-    let lastFuse: Fuse;
+    let lastFuse: Fuse<SearchInfo>;
     let builtinItems: SearchInfo[];
     let blockDefinitions: pxt.Map<pxt.blocks.BlockDefinition>;
     let tbSubset: pxt.Map<boolean>;

@@ -1,14 +1,8 @@
 {
   "name": "pxt-core",
   "globalDependencies": {
-    "bluebird": "github:DefinitelyTyped/DefinitelyTyped/bluebird/bluebird.d.ts#7b3d5a6ea5acda4a81f71309f1cc62354e63b681",
-    "fusejs": "github:DefinitelyTyped/DefinitelyTyped/fuse/index.d.ts#daf9bd392f4c8469ddc8849ee198bbdd1e57c7f4",
-    "highlightjs": "github:DefinitelyTyped/DefinitelyTyped/highlightjs/highlightjs.d.ts#7de6c3dd94feaeb21f20054b9f30d5dabc5efabd",
-    "marked": "github:DefinitelyTyped/DefinitelyTyped/marked/marked.d.ts#418e6719c3d9444629dea0d27bebf9cfda9c6c45",
-    "mocha": "github:DefinitelyTyped/DefinitelyTyped/mocha/mocha.d.ts#717a5fdb079f8dd7c19f1b22f7f656dd990f0ccf"
+    "bluebird": "github:DefinitelyTyped/DefinitelyTyped/bluebird/bluebird.d.ts#7b3d5a6ea5acda4a81f71309f1cc62354e63b681"
   },
   "dependencies": {
-    "chai": "registry:npm/chai#3.5.0+20160723033700",
-    "request": "registry:npm/request#2.69.0+20160428223725"
   }
 }
