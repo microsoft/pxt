@@ -46,8 +46,8 @@ namespace pxt.blocks {
         }
     }
 
-    export function advancedTitle() { return  Util.lf("{id:category}Advanced"); }
-    export function addPackageTitle() {  return Util.lf("{id:category}Extensions"); }
+    export function advancedTitle() { return Util.lf("{id:category}Advanced"); }
+    export function addPackageTitle() { return Util.lf("{id:category}Extensions"); }
 
     // Matches arrays and tuple types
     const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
@@ -585,7 +585,20 @@ namespace pxt.blocks {
     }
 
     function initField(i: any, ni: number, fn: pxtc.SymbolInfo, ns: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string, nsinfo?: pxtc.SymbolInfo): any {
-        if (pre)
+        if (pre && pre.indexOf('`') > -1) {
+            // parse and create icon fields for every inline icon
+            let regex = /([^`]+|(`([^`]+)`))/gi;
+            let match: RegExpExecArray;
+            while (match = regex.exec(pre)) {
+                let img: B.FieldImage;
+                if (match[3] && (img = iconToFieldImage(match[3]))) {
+                    i.appendField(img);
+                } else {
+                    i.appendField(match[1]);
+                }
+            }
+        }
+        else if (pre)
             i.appendField(pre);
         if (right)
             i.setAlign(Blockly.ALIGN_LEFT)
@@ -1427,6 +1440,7 @@ namespace pxt.blocks {
     export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters, extensions?: pxt.PackageConfig[]): Element {
         init();
         initTooltip(blockInfo);
+        initJresIcons(blockInfo);
 
         let tb = createToolbox(blockInfo, toolbox, showCategories, filters, extensions);
 
@@ -3198,5 +3212,27 @@ namespace pxt.blocks {
                 render();
             }
         }
+    }
+
+    let jresIconCache: Map<string> = {};
+    function iconToFieldImage(id: string): Blockly.FieldImage {
+        let url = jresIconCache[id];
+        if (!url) {
+            pxt.log(`missing jres icon ${id}`)
+            return undefined;
+        }
+        return new Blockly.FieldImage(url, 56, 56, Util.isUserLanguageRtl(), '');
+    }
+
+    function initJresIcons(blockInfo: pxtc.BlocksInfo) {
+        jresIconCache = {}; // clear previous cache
+        const jres = blockInfo.apis.jres;
+        if (!jres) return;
+
+        Object.keys(jres).forEach((jresId) => {
+            const jresObject = jres[jresId];
+            if (jresObject && jresObject.icon)
+                jresIconCache[jresId] = jresObject.icon;
+        })
     }
 }

@@ -14,6 +14,10 @@ namespace pxsim {
     let cfgKey: Map<number> = {}
     let cfg: Map<number> = {}
 
+    export function noRefCounting() {
+        if (runtime) runtime.refCounting = false;
+    }
+
     export function getConfig(id: number) {
         if (cfg.hasOwnProperty(id + ""))
             return cfg[id + ""]

@@ -1109,7 +1109,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     if (opts.localDir)
         return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
             .then(() => {
-                pxt.log("Release files written to" + path.resolve(opts.builtPackaged, opts.localDir))
+                pxt.log("Release files written to " + path.join(opts.builtPackaged, opts.localDir))
             })
 
     return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
@@ -1259,9 +1259,17 @@ function maxMTimeAsync(dirs: string[]) {
         .then(() => max)
 }
 
-export function buildTargetAsync(): Promise<void> {
+export interface BuildTargetOptions {
+    packaged?: boolean;
+}
+
+export function buildTargetCommandAsync() {
+    return buildTargetAsync();
+}
+
+export function buildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
     if (pxt.appTarget.id == "core")
-        return buildTargetCoreAsync()
+        return buildTargetCoreAsync(options)
 
     let initPromise: Promise<void>;
 
@@ -1282,7 +1290,7 @@ export function buildTargetAsync(): Promise<void> {
     return initPromise
         .then(() => { copyCommonSim(); return simshimAsync() })
         .then(() => buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim'))
-        .then(buildTargetCoreAsync)
+        .then(() => buildTargetCoreAsync(options))
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildSemanticUIAsync())
         .then(() => {
@@ -1731,7 +1739,7 @@ function updateTOC(cfg: pxt.TargetBundle) {
     }
 }
 
-function buildTargetCoreAsync() {
+function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
     updateTOC(cfg);
@@ -1780,20 +1788,20 @@ function buildTargetCoreAsync() {
                     // For the projects, we need to save the base HEX file to the offline HEX cache
                     if (isPrj && pxt.appTarget.compile.hasHex) {
                         if (!compileOpts) {
-                            console.error(`Failed to extract HEX image for project ${dirname}`);
+                            console.error(`Failed to extract native image for project ${dirname}`);
                             return;
                         }
 
                         // Place the base HEX image in the hex cache if necessary
                         let sha = compileOpts.extinfo.sha;
                         let hex: string[] = compileOpts.hexinfo.hex;
-                        let hexFile = path.join(hexCachePath, sha + ".hex");
+                        let hexFile = path.join(hexCachePath, sha + pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex");
 
                         if (fs.existsSync(hexFile)) {
-                            pxt.debug(`.hex image already in offline cache for project ${dirname}`);
+                            pxt.debug(`native image already in offline cache for project ${dirname}`);
                         } else {
                             fs.writeFileSync(hexFile, hex.join(os.EOL));
-                            pxt.debug(`created .hex image in offline cache for project ${dirname}: ${hexFile}`);
+                            pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
                         }
                     }
                 })
@@ -1809,7 +1817,6 @@ function buildTargetCoreAsync() {
                 pxtCrowdinBranch: pxtCrowdinBranch(),
                 targetCrowdinBranch: targetCrowdinBranch()
             }
-
             saveThemeJson(cfg)
 
             const webmanifest = buildWebManifest(cfg)
@@ -1939,6 +1946,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
 
     const dirs: Map<boolean> = {}
     for (const f of nodeutil.allFiles("docs", 8)) {
+        pxt.log(`rendering ${f}`)
         let dd = path.join(dst, f)
         let dir = path.dirname(dd)
         if (!U.lookup(dirs, dir)) {
@@ -1948,14 +1956,19 @@ function renderDocs(builtPackaged: string, localDir: string) {
         let buf = fs.readFileSync(f)
         if (/\.(md|html)$/.test(f)) {
             let str = buf.toString("utf8")
+            if (/\.md$/.test(f)) {
+                str = nodeutil.resolveMd(".", f.substr(5, f.length - 8));
+                fs.writeFileSync(dd, str, { encoding: "utf8" });
+            }
             let html = ""
-            if (U.endsWith(f, ".md"))
+            if (U.endsWith(f, ".md")) {
                 html = pxt.docs.renderMarkdown({
                     template: docsTemplate,
                     markdown: str,
                     theme: pxt.appTarget.appTheme,
                     filepath: f,
                 })
+            }
             else
                 html = server.expandHtml(str)
             html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
@@ -3093,7 +3106,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
                 .then(testAsync)
                 .then(() => {
                     if (pxt.appTarget.compile.hasHex)
-                        fs.writeFileSync(hexPath, fs.readFileSync("built/binary.hex"))
+                        fs.writeFileSync(hexPath, fs.readFileSync(`built/binary.${pxt.appTarget.compile.useUF2 ? "uf2" : "hex"}`))
                 })
         } else {
             let start = Date.now()
@@ -3716,7 +3729,7 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 }
 
 export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
-    const route = parsed.flags["route"] as string || "";
+    const route = parsed.flags["route"] as string || ".";
     const ghpages = parsed.flags["githubpages"];
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
     const minify = !!parsed.flags["minify"];
@@ -3726,7 +3739,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
     let p = rimrafAsync(builtPackaged, {}, null)
         .then(() => bump ? bumpAsync() : Promise.resolve())
-        .then(() => buildTargetAsync());
+        .then(() => buildTargetAsync({ packaged: true }));
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
     else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify));
 }
@@ -3737,7 +3750,9 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
     return uploadCoreAsync({
         label: label || "main",
         pkgversion: "0.0.0",
-        fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
+        fileList: pxtFileList("node_modules/pxt-core/")
+            .concat(targetFileList())
+            .concat(["targetconfig.json"]),
         localDir,
         target: (pxt.appTarget.id || "unknownstatic"),
         builtPackaged,
@@ -4658,7 +4673,7 @@ function initCommands() {
     advancedCommand("testpkgconflicts", "tests package conflict detection logic", testPkgConflictsAsync);
     advancedCommand("testdbg", "tests hardware debugger", dbgTestAsync);
 
-    advancedCommand("buildtarget", "build pxtarget.json", buildTargetAsync);
+    advancedCommand("buildtarget", "build pxtarget.json", buildTargetCommandAsync);
     advancedCommand("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");
     advancedCommand("uploadtt", "upload tagged release", uploadTaggedTargetAsync, "");
     advancedCommand("downloadtrgtranslations", "download translations from bundled projects", downloadTargetTranslationsAsync, "<package>");
