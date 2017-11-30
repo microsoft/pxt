@@ -3965,7 +3965,6 @@ ${lbl}: .short 0xffff
             } catch (e) {
                 inCatchErrors--
                 lastSecondaryError = null
-                console.log(e.stack)
                 // if (!e.ksEmitterUserError)
                 let code = e.ksErrorCode || 9200
                 error(node, code, e.message)
