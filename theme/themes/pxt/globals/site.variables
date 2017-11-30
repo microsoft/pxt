@@ -173,3 +173,4 @@
 @bannerHeight: 2rem;
 @bannerBackgroundColor: black;
 @bannerContrastColor: white;
+@bannerLinkColor: #3eb1d0;
