@@ -21,7 +21,7 @@
 @greenTextColor: darken(@green, 5);
 
 @lightTextColor              : rgba(0, 0, 0, 0.68);
-@invertedUnselectedTextColor : rgba(255, 255, 255, 0.8); 
+@invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
 
 @pageBackground: #ffffff;
 
@@ -68,7 +68,7 @@
 /*-------------------
      Neutral Text
 --------------------*/
- 
+
 @invertedLightTextColor      : rgba(255, 255, 255, 0.9);
 
 
@@ -150,7 +150,7 @@
 @editorCloseColor: black;
 @editorCloseColorHover: darken(@editorCloseColor, 25%);
 @serialConsoleFont: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
- 
+
 /*-------------------
    Blockly
 --------------------*/
@@ -166,3 +166,10 @@
 @blocklyRowHeightMobile: 50px;
 
 @blocklyRowSubcategoryHeight: 30px;
+
+/*-------------------
+    Banner
+-------------------*/
+@bannerHeight: 2rem;
+@bannerBackgroundColor: black;
+@bannerContrastColor: white;
