@@ -7,7 +7,7 @@
         "outDir": "../../built/tests",
         "newLine": "LF",
         "module": "commonjs",
-        "types": ["chai", "mocha", "node"],
+        "types": ["chai", "mocha", "node", "bluebird"],
         "sourceMap": false
     },
     "files": [
