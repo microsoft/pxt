@@ -850,7 +850,7 @@ namespace ts.pxtc.service {
                                     }
                                 }
                                 return `0`;
-                            } else if (type.flags &( ts.TypeFlags.Number | ts.TypeFlags.NumberLiteral)) {
+                            } else if (type.flags & (ts.TypeFlags.Number | ts.TypeFlags.NumberLiteral)) {
                                 return `0`;
                             }
                         }

@@ -207,7 +207,7 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
         u.headers['content-length'] = buf.length
 
     return new Promise<Util.HttpResponse>((resolve, reject) => {
-        const handleResponse = (res : http.IncomingMessage) => {
+        const handleResponse = (res: http.IncomingMessage) => {
             let g: events.EventEmitter = res;
             if (/gzip/.test(res.headers['content-encoding'])) {
                 let tmp = zlib.createUnzip();
