@@ -1029,6 +1029,14 @@ function uploadCoreAsync(opts: UploadOptions) {
                             }
                         trg.appTheme.logoUrl = opts.localDir
                         trg.appTheme.homeUrl = opts.localDir
+                        // patch icons in bundled packages
+                        Object.keys(trg.bundledpkgs).forEach(pkgid => {
+                            const res = trg.bundledpkgs[pkgid];
+                            // path config before storing
+                            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                            if (/^\//.test(config.icon)) config.icon = opts.localDir + "docs" + config.icon;
+                            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+                        })
                         data = new Buffer((isJs ? targetJsPrefix : '') + JSON.stringify(trg, null, 2), "utf8")
                     } else {
                         trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
@@ -1042,6 +1050,14 @@ function uploadCoreAsync(opts: UploadOptions) {
                                 if (boardDef.outlineImage) boardDef.outlineImage = uploadArtFile(boardDef.outlineImage);
                             }
                         }
+                        // patch icons in bundled packages
+                        Object.keys(trg.bundledpkgs).forEach(pkgid => {
+                            const res = trg.bundledpkgs[pkgid];
+                            // path config before storing
+                            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                            if (config.icon) config.icon = uploadArtFile(config.icon);
+                            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+                        })
                         content = JSON.stringify(trg, null, 2);
                         if (isJs)
                             content = targetJsPrefix + content
@@ -1597,8 +1613,8 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                     return;
                 }
 
-                if (fileName === "pxt.json") {
-                    newProject.config = nodeutil.readJson(f);
+                if (fileName === pxt.CONFIG_NAME) {
+                    newProject.config = nodeutil.readPkgConfig(projectPath)
                     U.iterMap(newProject.config.dependencies, (k, v) => {
                         if (/^file:/.test(v)) {
                             newProject.config.dependencies[k] = "*";
@@ -1652,39 +1668,63 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
     nodeutil.mkdirP(hexCachePath);
 
-    console.log(`building target.json in ${process.cwd()}...`)
-    return forEachBundledPkgAsync((pkg, dirname) => {
-        pxt.log(`building ${dirname}`);
-        let isPrj = /prj$/.test(dirname);
+    pxt.log(`building target.json in ${process.cwd()}...`)
 
-        return pkg.filesToBePublishedAsync(true)
-            .then(res => {
-                cfg.bundledpkgs[path.basename(dirname)] = res
-            })
-            .then(() => testForBuildTargetAsync(isPrj))
-            .then((compileOpts) => {
-                // For the projects, we need to save the base HEX file to the offline HEX cache
-                if (isPrj && pxt.appTarget.compile.hasHex) {
-                    if (!compileOpts) {
-                        console.error(`Failed to extract native image for project ${dirname}`);
-                        return;
+    return buildWebStringsAsync()
+        .then(() => buildTargetDocsAsync(false, true))
+        .then(() => forEachBundledPkgAsync((pkg, dirname) => {
+            pxt.log(`building ${dirname}`);
+            const isPrj = /prj$/.test(dirname);
+            const config = nodeutil.readPkgConfig(".")
+            if (config.additionalFilePath) {
+                dirsToWatch.push(path.resolve(config.additionalFilePath));
+            }
+
+            return pkg.filesToBePublishedAsync(true)
+                .then(res => {
+                    if (!isPrj) {
+                        cfg.bundledpkgs[path.basename(dirname)] = res
                     }
+                })
+                .then(() => testForBuildTargetAsync(isPrj))
+                .then((compileOpts) => {
+                    // For the projects, we need to save the base HEX file to the offline HEX cache
+                    if (isPrj && pxt.appTarget.compile.hasHex) {
+                        if (!compileOpts) {
+                            console.error(`Failed to extract native image for project ${dirname}`);
+                            return;
+                        }
 
-                    // Place the base HEX image in the hex cache if necessary
-                    let sha = compileOpts.extinfo.sha;
-                    let hex: string[] = compileOpts.hexinfo.hex;
-                    let hexFile = path.join(hexCachePath, sha + pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex");
+                        // Place the base HEX image in the hex cache if necessary
+                        let sha = compileOpts.extinfo.sha;
+                        let hex: string[] = compileOpts.hexinfo.hex;
+                        let hexFile = path.join(hexCachePath, sha + pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex");
 
-                    if (fs.existsSync(hexFile)) {
-                        pxt.debug(`native image already in offline cache for project ${dirname}`);
-                    } else {
-                        fs.writeFileSync(hexFile, hex.join(os.EOL));
-                        pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                        if (fs.existsSync(hexFile)) {
+                            pxt.debug(`native image already in offline cache for project ${dirname}`);
+                        } else {
+                            fs.writeFileSync(hexFile, hex.join(os.EOL));
+                            pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                        }
                     }
-                }
-            })
-    }, /*includeProjects*/ true)
+                })
+        }, /*includeProjects*/ true))
         .then(() => {
+            // patch icons in bundled packages
+            Object.keys(cfg.bundledpkgs).forEach(pkgid => {
+                const res = cfg.bundledpkgs[pkgid];
+                // path config before storing
+                const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                if (!config.icon)
+                    // try known location
+                    ['png', 'jpg'].map(ext => `/static/libs/${config.name}.${ext}`)
+                        .filter(ip => fs.existsSync("docs" + ip))
+                        .forEach(ip => config.icon = ip);
+
+                res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+            })
+
+
             let info = travisInfo()
             cfg.versions = {
                 branch: info.branch,
