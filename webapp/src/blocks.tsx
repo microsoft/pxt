@@ -610,6 +610,7 @@ export class Editor extends srceditor.Editor {
         Util.assert(!this.delayLoadXml);
         Util.assert(!this.loadingXmlPromise);
 
+        this.blockInfo = undefined;
         this.currSource = file.content;
         this.typeScriptSaveable = false;
         this.setDiagnostics(file)
@@ -771,7 +772,7 @@ export class Editor extends srceditor.Editor {
 
         pxt.debug('updating toolbox');
         const editor_ = (this.editor as any);
-        if (!this.forceRefreshToolbox && (editor_.toolbox_ && showCategories !== CategoryMode.None) || (editor_.flyout_ && showCategories === CategoryMode.None)) {
+        if ((editor_.toolbox_ && showCategories !== CategoryMode.None) || (editor_.flyout_ && showCategories === CategoryMode.None)) {
             // Toolbox is consistent with current mode, safe to update
             let tbString = new XMLSerializer().serializeToString(tb);
             if (tbString == this.cachedToolbox) return;
