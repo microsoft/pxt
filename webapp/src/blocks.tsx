@@ -35,8 +35,6 @@ export class Editor extends srceditor.Editor {
     extensions: pxt.PackageConfig[];
     showSearch: boolean;
 
-    forceRefreshToolbox: boolean; // force refresh on next reload
-
     setVisible(v: boolean) {
         super.setVisible(v);
         this.isVisible = v;
@@ -797,7 +795,5 @@ export class Editor extends srceditor.Editor {
             this.domUpdate();
             this.editor.scrollCenter();
         }
-
-        this.forceRefreshToolbox = false;
     }
 }
