@@ -33,6 +33,12 @@ Use ``` ``|primary button|`` ``` or ``` ``||secondary button||`` ``` to render a
 If an inline code snippet start with `[` and ends with `]`, the doc engine will try to render it as a block. It must contains a value API call 
 to the desired block.
 
+To change the inline code snippet color to reflect the namespace color, use this format: 
+
+```
+``|namespace.block name|``
+```
+
 ## Code snippets
 
 To avoid screenshot hell, PXT automatically renders code snippets to blocks or javascript. This is done by specifying a language on code blocks.

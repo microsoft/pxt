@@ -120,20 +120,26 @@ namespace pxt.vs {
 
         let editor = monaco.editor.create(element, {
             model: null,
-            //ariaLabel: lf("JavaScript Editor"),
+            ariaLabel: Util.lf("JavaScript editor"),
             fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', 'monospace'",
             scrollBeyondLastLine: false,
             language: "typescript",
-            experimentalScreenReader: true,
             mouseWheelZoom: true,
-            tabCompletion: true,
             wordBasedSuggestions: true,
             lineNumbersMinChars: 3,
             formatOnPaste: true,
-            //automaticLayout: true,
+            minimap: {
+                enabled: false
+            },
+            autoIndent: true,
+            dragAndDrop: true,
+            matchBrackets: true,
+            occurrencesHighlight: false,
             mouseWheelScrollSensitivity: 0.5,
             quickSuggestionsDelay: 200,
-            theme: inverted ? 'vs-dark' : 'vs'
+            theme: inverted ? 'vs-dark' : 'vs',
+            //accessibilitySupport: 'on',
+            accessibilityHelpUrl: "" //TODO: Add help url explaining how to use the editor with a screen reader
         });
 
         editor.layout();

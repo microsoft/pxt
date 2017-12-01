@@ -1,3 +1,12 @@
+/**
+ * @license
+ * PXT Blockly
+ *
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * https://github.com/Microsoft/pxt-blockly
+ * 
+ * See LICENSE file for details.
+ */
 
 declare namespace goog {
     function require(name: string): void;
@@ -269,6 +278,127 @@ declare namespace goog {
             DOMATTRMODIFIED: EventType;
             DOMCHARACTERDATAMODIFIED: EventType;
         };
+        let KeyCodes: {
+            A: number,
+            ALT: number,
+            APOSTROPHE: number,
+            AT_SIGN: number,
+            B: number,
+            BACKSLASH: number,
+            BACKSPACE: number,
+            C: number,
+            CAPS_LOCK: number,
+            CLOSE_SQUARE_BRACKET: number,
+            COMMA: number,
+            CONTEXT_MENU: number,
+            CTRL: number,
+            D: number,
+            DASH: number,
+            DELETE: number,
+            DOWN: number,
+            E: number,
+            EIGHT: number,
+            END: number,
+            ENTER: number,
+            EQUALS: number,
+            ESC: number,
+            F: number,
+            F1: number,
+            F10: number,
+            F11: number,
+            F12: number,
+            F2: number,
+            F3: number,
+            F4: number,
+            F5: number,
+            F6: number,
+            F7: number,
+            F8: number,
+            F9: number,
+            FF_DASH: number,
+            FF_EQUALS: number,
+            FF_SEMICOLON: number,
+            FIRST_MEDIA_KEY: number,
+            FIVE: number,
+            FOUR: number,
+            G: number,
+            H: number,
+            HOME: number,
+            I: number,
+            INSERT: number,
+            J: number,
+            K: number,
+            L: number,
+            LAST_MEDIA_KEY: number,
+            LEFT: number,
+            M: number,
+            MAC_ENTER: number,
+            MAC_FF_META: number,
+            MAC_WK_CMD_LEFT: number,
+            MAC_WK_CMD_RIGHT: number,
+            META: number,
+            N: number,
+            NINE: number,
+            NUMLOCK: number,
+            NUM_CENTER: number,
+            NUM_DIVISION: number,
+            NUM_EIGHT: number,
+            NUM_FIVE: number,
+            NUM_FOUR: number,
+            NUM_MINUS: number,
+            NUM_MULTIPLY: number,
+            NUM_NINE: number,
+            NUM_ONE: number,
+            NUM_PERIOD: number,
+            NUM_PLUS: number,
+            NUM_SEVEN: number,
+            NUM_SIX: number,
+            NUM_THREE: number,
+            NUM_TWO: number,
+            NUM_ZERO: number,
+            O: number,
+            ONE: number,
+            OPEN_SQUARE_BRACKET: number,
+            P: number,
+            PAGE_DOWN: number,
+            PAGE_UP: number,
+            PAUSE: number,
+            PERIOD: number,
+            PHANTOM: number,
+            PLUS_SIGN: number,
+            PRINT_SCREEN: number,
+            Q: number,
+            QUESTION_MARK: number,
+            R: number,
+            RIGHT: number,
+            S: number,
+            SCROLL_LOCK: number,
+            SEMICOLON: number,
+            SEVEN: number,
+            SHIFT: number,
+            SINGLE_QUOTE: number,
+            SIX: number,
+            SLASH: number,
+            SPACE: number,
+            T: number,
+            TAB: number,
+            THREE: number,
+            TILDE: number,
+            TWO: number,
+            U: number,
+            UP: number,
+            V: number,
+            VK_NONAME: number,
+            W: number,
+            WIN_IME: number,
+            WIN_KEY: number,
+            WIN_KEY_FF_LINUX: number,
+            WIN_KEY_RIGHT: number,
+            X: number,
+            Y: number,
+            Z: number,
+            ZERO: number
+        }
         class EventTarget extends Disposable {
         }
         class EventHandler<T> {
@@ -315,20 +445,33 @@ declare namespace goog {
 declare namespace Blockly {
     let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: (e: any) => void): void;
+    function bindEventWithChecks_(node: any, eventName: string, target: any, fn: (e: any) => void, nocapture?: boolean): any;
     function terminateDrag_(): void;
     function svgResize(workspace: Blockly.Workspace): void;
     function hueToRgb(hue: number): string;
+
+    function registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
 
     function alert(message: string, opt_callback?: () => void): void;
     function confirm(message: string, callback: (response: boolean) => void): void;
     function prompt(message: string, defaultValue: string, callback: (response: string) => void): void;
 
+    let ALIGN_LEFT: number;
     let ALIGN_RIGHT: number;
+    let ALIGN_CENTRE: number;
+
+    let VARIABLE_CATEGORY_NAME: string;
+    let PROCEDURE_CATEGORY_NAME: string;
 
     namespace utils {
         function wrap(tip: string, limit: number): string;
         function genUid(): string;
         function mouseToSvg(e: Event, svg: Element): any;
+        function getViewportBBox(): goog.math.Box;
+    }
+
+    namespace utils.uiMenu {
+        function adjustBBoxesForRTL(viewportBBox: goog.math.Box, anchorBBox: goog.math.Box, menuSize: goog.math.Size): void;
     }
 
     class FieldImage {
@@ -345,6 +488,8 @@ declare namespace Blockly {
         renameProcedure?: (oldName: string, newName: string) => void;
         defType_?: string;
         onchange?: (event: any) => void;
+        mutationToDom?: () => Element;
+        domToMutation?: (xmlElement: Element) => void;
     }
 
     const Blocks: {
@@ -367,7 +512,7 @@ declare namespace Blockly {
         dispose(): void;
         showEditor_(): void;
         getAbsoluteXY_(): goog.math.Coordinate;
-        getScaledBBox_(): goog.math.Size;
+        getScaledBBox_(): {top: number, bottom: number, left: number, right: number};        
         setValue(newValue: string): void;
         getValue(): string;
         setSourceBlock(block: Block): void;
@@ -401,8 +546,9 @@ declare namespace Blockly {
         static CHECKMARK_OVERHANG: number;
         protected value_: any;
         constructor(val: (string[] | Object)[]);
-        protected getOptions_(): (string[] | Object)[];
+        protected getOptions(): (string[] | Object)[];
         onItemSelected(menu: goog.ui.Menu, menuItem: goog.ui.MenuItem): void;
+        getAnchorDimensions_(): goog.math.Box;
     }
 
     class FieldNumber extends FieldTextInput {
@@ -410,29 +556,7 @@ declare namespace Blockly {
         setConstraints(min: any, max: any, precision?: any): void;
     }
 
-    class FieldGridPicker extends FieldDropdown {
-        constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], colour?: string | number, params?: pxt.Map<string> );
-    }
-
     class FieldSlider extends FieldNumber {
-    }
-
-    interface FieldCustomOptions {
-        colour?: string | number;
-    }
-
-    interface FieldCustomDropdownOptions extends FieldCustomOptions {
-        data?: any;
-    }
-
-    interface FieldCustom extends Field {
-        isFieldCustom_: boolean;
-        saveOptions?(): pxt.Map<string | number | boolean>;
-        restoreOptions?(map: pxt.Map<string | number | boolean>): void;
-    }
-
-    interface FieldCustomConstructor {
-        new(text: string, options: FieldCustomOptions, validator?: Function): FieldCustom;
     }
 
     class Block {
@@ -665,10 +789,18 @@ declare namespace Blockly {
             viewTop: number;
             viewWidth: number;
         }
-        variableIndexOf(name: string): number;
+        getVariable(name: string): number;
+        getVariablesOfType(type: string): VariableModel[];
+        getAudioManager(): WorkspaceAudio;
 
         registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
+        registerToolboxCategoryCallback(a: string, b: Function): void;
 
+        resizeContents(): void;        
+    }
+
+    class WorkspaceAudio {
+        play(audio: string): void;
     }
 
     class WorkspaceSvg {
@@ -711,10 +843,16 @@ declare namespace Blockly {
         };
         enableRealTime?: boolean;
         rtl?: boolean;
+        // PXT specific: 
+        toolboxOptions?: ToolboxOptions;
     }
 
-    interface ExtendedOptions extends Options {
-        toolboxType?: string;
+    interface ToolboxOptions {
+        colour?: boolean;
+        border?: boolean;
+        inverted?: boolean;
+        invertedMultiplier?: number;
+        disabledOpacity?: number;
     }
 
     // tslint:disable-next-line
@@ -729,9 +867,19 @@ declare namespace Blockly {
     }
 
     namespace Variables {
+        function generateVariableFieldXml_(variableModel: VariableModel): void;
         function allVariables(wp: Workspace): string[];
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
+        let flyoutCategoryBlocks: (wp: Workspace) => HTMLElement[];
         function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;
+    }
+
+    class VariableModel {
+        name: string;
+        type: string;
+        static compareByName: any;
+        constructor(wp: Workspace, name: string, type?: string, id?: string);
+        getId(): string;
     }
 
     namespace Procedures {
@@ -797,11 +945,12 @@ declare namespace Blockly {
             getTree(): TreeControl;
             hasChildren(): boolean;
             isSelected(): boolean;
-            onMouseDown(e: Event): void;
+            onClick_(e: Event): void;
             select(): void;
             setExpanded(expanded: boolean): void;
             toggle(): void;
             updateRow(): void;
+            onKeyDown(e: any): void;
         }
 
         class TreeControl {
@@ -819,6 +968,7 @@ declare namespace Blockly {
         function hide(): void;
         function position(anchorX: number, anchorY: number, windowSize: goog.math.Size,
             scrollOffset: goog.math.Coordinate, rtl: boolean): void;
+        function positionWithAnchor(viewportBBox: goog.math.Box, anchorBBox: goog.math.Box, widgetSize: goog.math.Size, rtl: boolean): void;
     }
 
     var Tooltip: any;

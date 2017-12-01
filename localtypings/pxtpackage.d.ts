@@ -7,6 +7,7 @@ declare namespace pxt {
         target: string;
         pxt: string;
         pxtCrowdinBranch?: string;
+        targetCrowdinBranch?: string;
         tag?: string;
         branch?: string;
         commits?: string; // URL
@@ -35,6 +36,7 @@ declare namespace pxt {
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
         yotta?: YottaConfig;
+        npmDependencies?: Map<string>;
         card?: CodeCard;
         additionalFilePath?: string;
         gistId?: string;
@@ -67,7 +69,10 @@ declare namespace pxt {
         name?: string;
         shortName?: string;
         title?: string;
+        role?: string;
+        ariaLabel?: string;
         label?: string;
+        tabIndex?: number
 
         color?: string; // one of semantic ui colors
         description?: string;
@@ -77,7 +82,7 @@ declare namespace pxt {
         time?: number;
         url?: string;
         responsive?: boolean;
-        cardType?: "example" | "tutorial" | "project";
+        cardType?: "example" | "codeExample" | "tutorial" | "project";
 
         header?: string;
         any?: number;

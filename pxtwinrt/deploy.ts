@@ -1,15 +1,14 @@
 /// <reference path="../typings/globals/bluebird/index.d.ts"/>
-/// <reference path="../typings/globals/winrt/index.d.ts"/>
+/// <reference path="./winrtrefs.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 namespace pxt.winrt {
-    export function deployCoreAsync(res: pxtc.CompileResult): Promise<void> {
-
+    export function driveDeployCoreAsync(res: pxtc.CompileResult): Promise<void> {
         const drives = pxt.appTarget.compile.deployDrives;
         pxt.Util.assert(!!drives);
         pxt.debug(`deploying to drives ${drives}`)
 
         const drx = new RegExp(drives);
-        const firmware = pxt.appTarget.compile.useUF2 ? pxtc.BINARY_UF2 : pxtc.BINARY_HEX;
+        const firmware = pxt.outputName()
         const r = res.outfiles[firmware];
 
         function writeAsync(folder: Windows.Storage.StorageFolder): Promise<void> {
@@ -39,5 +38,30 @@ namespace pxt.winrt {
                 .then(() => Windows.System.Launcher.launchFileAsync(file))
                 .then(b => { })
         );
+    }
+
+    export function saveOnlyAsync(res: pxtc.CompileResult): Promise<boolean> {
+        const useUf2 = pxt.appTarget.compile.useUF2;
+        const fileTypes = useUf2 ? [".uf2"] : [".hex"];
+        const savePicker = new Windows.Storage.Pickers.FileSavePicker();
+        savePicker.suggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.documentsLibrary;
+        savePicker.fileTypeChoices.insert(Util.lf("MakeCode binary file"), <any>fileTypes);
+        savePicker.suggestedFileName = res.downloadFileBaseName;
+        return pxt.winrt.promisify(savePicker.pickSaveFileAsync()
+            .then((file) => {
+                if (file) {
+                    const fileContent = useUf2 ? atob(res.outfiles[pxtc.BINARY_UF2]) : res.outfiles[pxtc.BINARY_HEX];
+                    const ar: number[] = [];
+                    const bytes = Util.stringToUint8Array(fileContent);
+                    bytes.forEach((b) => ar.push(b));
+                    return Windows.Storage.FileIO.writeBytesAsync(file, ar)
+                        .then(() => true);
+                }
+                // Save cancelled
+                return Promise.resolve(false);
+            })
+        ).catch(e => {
+            pxt.reportException(e);
+        });
     }
 }

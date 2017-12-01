@@ -20,9 +20,10 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
 export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     let url = ""
     let fn = ""
-    if (pxt.appTarget.compile.useUF2) {
-        let uf2 = resp.outfiles[pxtc.BINARY_UF2]
-        fn = pkg.genFileName(".uf2");
+    let ext = pxt.outputName().replace(/[^.]*/, "")
+    if (!pxt.isOutputText()) {
+        let uf2 = resp.outfiles[pxt.outputName()]
+        fn = pkg.genFileName(ext);
         pxt.debug('saving ' + fn)
         url = pxt.BrowserUtils.browserDownloadBase64(
             uf2,
@@ -32,8 +33,8 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
             e => core.errorNotification(lf("saving file failed..."))
         );
     } else {
-        let hex = resp.outfiles[pxtc.BINARY_HEX]
-        fn = pkg.genFileName(".hex");
+        let hex = resp.outfiles[pxt.outputName()]
+        fn = pkg.genFileName(ext);
         pxt.debug('saving ' + fn)
         url = pxt.BrowserUtils.browserDownloadBinText(
             hex,
@@ -62,14 +63,14 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
 
     // https://msdn.microsoft.com/en-us/library/cc848897.aspx
-    // "For security reasons, data URIs are restricted to downloaded resources. 
+    // "For security reasons, data URIs are restricted to downloaded resources.
     // Data URIs cannot be used for navigation, for scripting, or to populate frame or iframe elements"
     const downloadAgain = !pxt.BrowserUtils.isIE() && !pxt.BrowserUtils.isEdge();
     const docUrl = pxt.appTarget.appTheme.usbDocs;
     const saveAs = pxt.BrowserUtils.hasSaveAs();
     const body = saveAs ? lf("Click 'Save As' and save the {0} file to the {1} drive to transfer the code into your {2}.",
-            pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
-            boardDriveName, boardName)
+        pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
+        boardDriveName, boardName)
         : lf("Move the {0} file to the {1} drive to transfer the code into your {2}.",
             pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
             boardDriveName, boardName)
@@ -81,13 +82,13 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
         buttons: [downloadAgain ? {
             label: fn,
             icon: "download",
-            class: "lightgrey",
+            class: "lightgrey focused",
             url,
             fileName: fn
         } : undefined, docUrl ? {
             label: lf("Help"),
             icon: "help",
-            class: "lightgrey",
+            class: "lightgrey focused",
             url: docUrl
         } : undefined],
         timeout: 7000
@@ -134,14 +135,34 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 
 export function initCommandsAsync(): Promise<void> {
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
+    pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
     if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
+    } else if (pxt.winrt.isWinRT()) { // windows app
+        const useUf2 = pxt.appTarget.serial && pxt.appTarget.serial.useHF2;
+        const hidSelectors = pxt.appTarget.compile && pxt.appTarget.compile.hidSelectors;
+        if (useUf2 || hidSelectors) {
+            pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
+            pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+        } else {
+            if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID) {
+                pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
+            }
+            pxt.commands.deployCoreAsync = pxt.winrt.driveDeployCoreAsync;
+        }
+        pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
+        pxt.commands.saveOnlyAsync = (resp: pxtc.CompileResult) => {
+            return pxt.winrt.saveOnlyAsync(resp)
+                .then((saved) => {
+                    if (saved) {
+                        core.infoNotification(lf("file saved!"));
+                    }
+                })
+                .catch(() => core.errorNotification(lf("saving file failed...")));
+        };
     } else if (hidbridge.shouldUse() && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
-    } else if (pxt.winrt.isWinRT()) { // window app
-        pxt.commands.deployCoreAsync = pxt.winrt.deployCoreAsync;
-        pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser

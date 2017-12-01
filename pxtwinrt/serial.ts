@@ -1,4 +1,4 @@
-/// <reference path="../typings/globals/winrt/index.d.ts"/>
+/// <reference path="./winrtrefs.d.ts"/>
 
 namespace pxt.winrt {
     let watcher: any;
@@ -56,13 +56,10 @@ namespace pxt.winrt {
         port.device.baudRate = 115200;
         let stream = port.device.inputStream;
         let reader = new Windows.Storage.Streams.DataReader(stream);
+        let serialBuffers: pxt.Map<string> = {};
         let readMore = () => reader.loadAsync(32).done((bytesRead) => {
             let msg = reader.readString(Math.floor(bytesRead / 4) * 4);
-            window.postMessage({
-                type: 'serial',
-                data: msg,
-                id: id
-            }, "*");
+            pxt.Util.bufferSerial(serialBuffers, msg, id)
             readMore();
         }, (e) => {
             setTimeout(() => startDevice(id), 1000);

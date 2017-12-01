@@ -17,14 +17,17 @@ such as schools these automatic updates are disabled for security. **We
 strongly recommend that you use the most recent version of any of these
 browsers**, but if you can't then you must use at least:
 
-| Browser           | Minimum version | Release date   | Windows     | Mac        |
-| ----------------- | --------------- | -------------- | ----------- | ---------- |
-| Edge              | 12              | March 2015     | Windows 10+ | N/A        |
-| Internet Explorer | 11              | October 2013   | Windows 7+  | N/A        |
-| Mozilla Firefox   | 31 ESR          | July 2014      | Windows XP+ | OS X 10.6+ |
-| Google Chrome     | 38              | October 2014   | Windows XP+ | OS X 10.6+ |
-| Safari            | 9               | September 2015 | N/A         | OS X 10.9+ |
-| Opera             | 21              | May 2014       | Windows 7+  | OS X 10.9+ |
+| Browser             | Minimum version | Release date   | Windows     | Mac        | Mobile OS  |
+| ------------------- | --------------- | -------------- | ----------- | ---------- | ---------- |
+| Edge                | 12              | March 2015     | Windows 10+ | N/A        | N/A        |
+| Internet Explorer   | 11              | October 2013   | Windows 7+  | N/A        | N/A        |
+| Mozilla Firefox     | 31 ESR          | July 2014      | Windows XP+ | OS X 10.6+ | N/A        |
+| Google Chrome       | 38              | October 2014   | Windows XP+ | OS X 10.6+ | Android 5+ |
+| Safari              | 9               | September 2015 | N/A         | OS X 10.9+ | N/A        |
+| Opera               | 21              | May 2014       | Windows 7+  | OS X 10.9+ | N/A        |
+| Mobile Safari       | 9               | September 2015 | N/A         | N/A        | iOS 9+     |
+| Chrome for Android  | 59              | March 2017     | N/A         | N/A        | Android 5+ |
+| Firefox for Android | 55              | August 2017    | N/A         | N/A        | Android 5+ |
 
 
 Please see our information for which browsers are recommended for [Windows][],

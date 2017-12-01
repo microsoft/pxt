@@ -18,4 +18,6 @@ before launching the ``on start`` code.
 
 If a block from ``on start`` pauses, other registered events will have the opportunity to run as well.
 
+## #eventorder
+
 ## #examples

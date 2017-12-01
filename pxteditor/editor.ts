@@ -43,7 +43,9 @@ namespace pxt.editor {
         notification?: pxt.Notification;
 
         running?: boolean;
+        resumeOnVisibility?: boolean;
         compiling?: boolean;
+        isSaving?: boolean;
         publishing?: boolean;
         hideEditorFloats?: boolean;
         collapseEditorTools?: boolean;
@@ -53,6 +55,7 @@ namespace pxt.editor {
         mute?: boolean;
         embedSimView?: boolean;
         tracing?: boolean;
+        bannerVisible?: boolean;
 
         highContrast?: boolean;
     }
@@ -84,12 +87,12 @@ namespace pxt.editor {
         hasHint?: boolean;
         content?: string;
         headerContent?: string;
+        ariaLabel?: string;
     }
 
     export interface TutorialOptions {
         tutorial?: string; // tutorial
         tutorialName?: string; // tutorial title
-        tutorialSteps?: string[]; // tutorial steps
         tutorialStepInfo?: TutorialStepInfo[];
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
@@ -134,10 +137,11 @@ namespace pxt.editor {
         setSideDoc(path: string, blocksEditor?: boolean): void;
         setSideMarkdown(md: string): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
+        updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
 
         openTutorials(): void;
         setTutorialStep(step: number): void;
-        exitTutorial(keep?: boolean): void;
+        exitTutorial(): void;
         completeTutorial(): void;
         showTutorialHint(): void;
 
@@ -154,7 +158,9 @@ namespace pxt.editor {
         proxySimulatorMessage(content: string): void;
         toggleTrace(): void;
 
-        startTutorial(tutorialId: string): void;
+        setBanner(b: boolean): void;
+
+        startTutorial(tutorialId: string, tutorialTitle?: string): void;
 
         addPackage(): void;
         typecheckNow(): void;

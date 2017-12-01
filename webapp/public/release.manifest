@@ -15,6 +15,7 @@ CACHE:
 /blb/pxtwinrt.js
 /blb/pxteditor.js
 /blb/pxtsim.js
+/blb/blockly.css
 /blb/semantic.css
 /blb/rtlsemantic.css
 /blb/custom.css
@@ -45,6 +46,9 @@ CACHE:
 /blb/vs/language/typescript/lib/typescriptServices.js
 /blb/vs/language/typescript/src/mode.js
 /blb/vs/language/typescript/src/worker.js
+
+# charts
+/blb/smoothie/smoothie_compressed.js
 
 # ai
 https://az416426.vo.msecnd.net/scripts/a/ai.0.js

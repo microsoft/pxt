@@ -105,18 +105,43 @@ namespace pxsim {
         hasHint?: boolean;
         content?: string;
         headerContent?: string;
+        ariaLabel?: string;
     }
 
     export interface TutorialLoadedMessage extends TutorialMessage {
         subtype: "loaded";
         showCategories?: boolean;
         stepInfo: TutorialStepInfo[];
-        toolboxSubset?: {[index: string]: number };
+        toolboxSubset?: { [index: string]: number };
     }
 
     export interface TutorialStepChangeMessage extends TutorialMessage {
         subtype: "stepchange";
         step: number;
+    }
+
+    export interface RenderReadyResponseMessage extends SimulatorMessage {
+        source: "makecode",
+        type: "renderready"
+    }
+
+    export interface RenderBlocksRequestMessage extends SimulatorMessage {
+        type: "renderblocks",
+        id: string;
+        code: string;
+        options?: {
+            package?: string;
+            snippetMode?: boolean;
+        }
+    }
+
+    export interface RenderBlocksResponseMessage extends SimulatorMessage {
+        source: "makecode",
+        type: "renderblocks",
+        id: string;
+        svg?: string;
+        width?: number;
+        height?: number;
     }
 
     export namespace Embed {

@@ -81,6 +81,7 @@ export function monitorSerial(
     const vendorFilter = pxt.appTarget.serial.vendorId ? parseInt(pxt.appTarget.serial.vendorId, 16) : undefined;
     const productFilter = pxt.appTarget.serial.productId ? parseInt(pxt.appTarget.serial.productId, 16) : undefined;
 
+    // TODO this clearly always returns true
     function filterPort(info: SerialPortInfo): boolean {
         let retVal = true;
         if (vendorFilter)

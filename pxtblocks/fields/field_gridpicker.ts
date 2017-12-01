@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="../../localtypings/pxtblockly.d.ts" />
 
 namespace pxtblockly {
 
@@ -73,7 +73,7 @@ namespace pxtblockly {
 
             this.disposeTooltips();
 
-            const options = this.getOptions_();
+            const options = this.getOptions();
 
             // Container for the menu rows
             const tableContainer = new goog.ui.Control();
@@ -113,7 +113,6 @@ namespace pxtblockly {
                 this.width_ = windowSize.width;
             }
 
-            tableContainerDom.style.width = this.width_ + 'px';
             tableContainerDom.style.backgroundColor = this.backgroundColour_;
             scrollContainerDom.style.backgroundColor = this.backgroundColour_;
             paddingContainerDom.style.backgroundColor = this.backgroundColour_;
@@ -135,16 +134,18 @@ namespace pxtblockly {
                 if (tooltipText) {
                     const tooltip = new goog.ui.Tooltip(elem, tooltipText);
                     const onShowOld = tooltip.onShow;
+                    const isRTL = this.sourceBlock_.RTL;
+                    const xOffset = (isRTL ? -this.tooltipConfig_.xOffset : this.tooltipConfig_.xOffset);
                     tooltip.onShow = () => {
                         onShowOld.call(tooltip);
-                        const newPos = new goog.positioning.ClientPosition(tooltip.cursorPosition.x + this.tooltipConfig_.xOffset,
+                        const newPos = new goog.positioning.ClientPosition(tooltip.cursorPosition.x + xOffset,
                             tooltip.cursorPosition.y + this.tooltipConfig_.yOffset);
                         tooltip.setPosition(newPos);
                     };
                     tooltip.setShowDelayMs(0);
                     tooltip.className = 'goog-tooltip blocklyGridPickerTooltip';
                     elem.addEventListener('mousemove', (e: MouseEvent) => {
-                        const newPos = new goog.positioning.ClientPosition(e.clientX + this.tooltipConfig_.xOffset,
+                        const newPos = new goog.positioning.ClientPosition(e.clientX + xOffset,
                             e.clientY + this.tooltipConfig_.yOffset);
                         tooltip.setPosition(newPos);
                     });
@@ -164,6 +165,7 @@ namespace pxtblockly {
                     goog.style.setWidth(elem, largestTextItem);
                 }
             }
+            tableContainerDom.style.width = this.width_ + 'px';
 
             // Record current container sizes after adding menu.
             const paddingContainerSize = goog.style.getSize(paddingContainerDom);
@@ -228,22 +230,24 @@ namespace pxtblockly {
 
             // Position the menu.
             // Flip menu vertically if off the bottom.
-            if (xy.y + paddingContainerSize.height + borderBBox.height >=
+            const borderBBoxHeight = borderBBox.bottom - xy.y;
+            const borderBBoxWidth = borderBBox.right - xy.x;
+            if (xy.y + paddingContainerSize.height + borderBBoxHeight >=
                 windowSize.height + scrollOffset.y) {
                 xy.y -= paddingContainerSize.height + 2;
             } else {
-                xy.y += borderBBox.height;
+                xy.y += borderBBoxHeight;
             }
 
             if (this.sourceBlock_.RTL) {
-                xy.x += paddingContainerSize.width / 2 - borderBBox.width / 2;
+                xy.x -= paddingContainerSize.width / 2;
 
                 // Don't go offscreen left.
-                if (xy.x < scrollOffset.x + paddingContainerSize.width) {
-                    xy.x = scrollOffset.x + paddingContainerSize.width;
+                if (xy.x < scrollOffset.x) {
+                    xy.x = scrollOffset.x;
                 }
             } else {
-                xy.x += borderBBox.width / 2 - paddingContainerSize.width / 2;
+                xy.x += borderBBoxWidth / 2 - paddingContainerSize.width / 2;
 
                 // Don't go offscreen right.
                 if (xy.x > windowSize.width + scrollOffset.x - paddingContainerSize.width) {

@@ -16,9 +16,14 @@
 @pink:#E2008C;
 @brown:#00BCF2;
 @grey:#505050;
+@lightGrey: #d9d9d9;
+
+@greenTextColor: darken(@green, 5);
+
+@lightTextColor              : rgba(0, 0, 0, 0.68);
+@invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
 
 @pageBackground: #ffffff;
-
 
 /*-------------------
      Fonts
@@ -28,6 +33,15 @@
 
 @docsHeaderFont: @headerFont;
 @docsPageFont: @pageFont;
+
+@emSize      : 14px;
+@fontSize    : 12pt;
+
+/*-------------------
+   Links
+--------------------*/
+
+@linkColor           : #004d99;
 
 /*-------------------
    Breakpoints
@@ -43,6 +57,30 @@
 
 @tallEditorBreakpoint: 44rem;
 @thinEditorBreakpoint: 24rem;
+
+/*--------------
+   Form Input
+---------------*/
+
+@inputPlaceholderColor: lighten(@inputColor, 25);
+@inputPlaceholderFocusColor: lighten(@inputColor, 10);
+
+/*-------------------
+     Neutral Text
+--------------------*/
+
+@invertedLightTextColor      : rgba(255, 255, 255, 0.9);
+
+
+/*******************************
+             States
+*******************************/
+
+/*-------------------
+      Disabled
+--------------------*/
+
+@disabledOpacity: 0.80;
 
 /*******************************
      PXT Variables
@@ -60,9 +98,7 @@
 
 @mainMenuHeight: 4.5rem;
 @mobileMenuHeight: 3.5rem;
-@sandboxMobileMenuHeight: 2.5rem;
-
-@mainMenuBlocksJsToggleColor: @primaryColor;
+@sandboxMobileMenuHeight: 3.0rem;
 
 @tutorialSelectedMenuColor: @primaryColor;
 
@@ -104,3 +140,37 @@
 @blocklyToolboxColor: rgba(0, 0, 0, 0.05);
 @trashIconColor: @primaryColor;
 
+/*-------------------
+   Serial editor
+--------------------*/
+@serialBackgroundColor: lighten(@simulatorBackground, 2);
+@serialTextColor: @darkTextColor;
+@serialGraphBackground: @lightGrey;
+@serialGraphColor: black;
+@editorCloseColor: black;
+@editorCloseColorHover: darken(@editorCloseColor, 25%);
+@serialConsoleFont: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+
+/*-------------------
+   Blockly
+--------------------*/
+
+@blocklyRowWidthWide: 200px;
+@blocklyRowWidthComputer: 180px;
+@blocklyRowWidthTablet: 150px;
+@blocklyRowWidthMobile: 50px;
+
+@blocklyRowHeightWide: 40px;
+@blocklyRowHeightComputer: 40px;
+@blocklyRowHeightTablet: 45px;
+@blocklyRowHeightMobile: 50px;
+
+@blocklyRowSubcategoryHeight: 30px;
+
+/*-------------------
+    Banner
+-------------------*/
+@bannerHeight: 2rem;
+@bannerBackgroundColor: black;
+@bannerContrastColor: white;
+@bannerLinkColor: #3eb1d0;

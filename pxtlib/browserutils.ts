@@ -1,10 +1,4 @@
-/// <reference path="../typings/globals/winrt/index.d.ts"/>
-
 namespace pxt.BrowserUtils {
-    export function isWinRT(): boolean {
-        return typeof Windows !== "undefined";
-    }
-
     export function isIFrame(): boolean {
         try {
             return window && window.self !== window.top;
@@ -19,6 +13,10 @@ namespace pxt.BrowserUtils {
 
     export function isWindows(): boolean {
         return hasNavigator() && /(Win32|Win64|WOW64)/i.test(navigator.platform);
+    }
+
+    export function isWindows10(): boolean {
+        return hasNavigator() && /(Win32|Win64|WOW64)/i.test(navigator.platform) && /Windows NT 10/i.test(navigator.userAgent);
     }
 
     export function isMobile(): boolean {
@@ -39,6 +37,11 @@ namespace pxt.BrowserUtils {
     // Detects if we are running on ARM (Raspberry pi)
     export function isARM(): boolean {
         return hasNavigator() && /arm/i.test(navigator.platform);
+    }
+
+    // Detects if we are running inside the UWP runtime (Edge)
+    export function isUwpEdge(): boolean {
+        return typeof window !== "undefined" && !!(<any>window).Windows;
     }
 
     /*
@@ -103,8 +106,12 @@ namespace pxt.BrowserUtils {
 
     export function isTouchEnabled(): boolean {
         return typeof window !== "undefined" &&
-            ('ontouchstart' in window               // works on most browsers 
+            ('ontouchstart' in window               // works on most browsers
                 || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
+    }
+
+    export function hasPointerEvents(): boolean {
+        return typeof window != "undefined" && !!(window as any).PointerEvent;
     }
 
     export function hasSaveAs(): boolean {
@@ -148,8 +155,9 @@ namespace pxt.BrowserUtils {
             matches = /Version\/([0-9\.]+)/i.exec(navigator.userAgent);
             // pinned web site have a different user agent
             // Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Mobile/14D27
+            // Mozilla/5.0 (iPad; CPU OS 10_3_3 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko) Mobile/14G60
             if (!matches)
-                matches = /(iPod|iPhone|iPad) OS (\d+)/i.exec(navigator.userAgent);
+                matches = /(iPod|iPhone|iPad); CPU .*?OS (\d+)/i.exec(navigator.userAgent);
         }
         else if (isChrome()) {
             matches = /(Chrome|Chromium)\/([0-9\.]+)/i.exec(navigator.userAgent);
@@ -243,10 +251,14 @@ namespace pxt.BrowserUtils {
 
     export function browserDownloadDataUri(uri: string, name: string, userContextWindow?: Window) {
         const windowOpen = isBrowserDownloadInSameWindow();
+        const versionString = browserVersion();
+        const v = parseInt(versionString || "0")
         if (windowOpen) {
             if (userContextWindow) userContextWindow.location.href = uri;
             else window.open(uri, "_self");
-        } else if (pxt.BrowserUtils.isSafari()) {
+        } else if (pxt.BrowserUtils.isSafari()
+            && (v < 10 || (versionString.indexOf('10.0') == 0) || isMobile())) {
+            // For Safari versions prior to 10.1 and all Mobile Safari versions
             // For mysterious reasons, the "link" trick closes the
             // PouchDB database
             let iframe = document.getElementById("downloader") as HTMLIFrameElement;
@@ -330,5 +342,80 @@ namespace pxt.BrowserUtils {
             script.addEventListener('error', (e) => reject(e));
             document.body.appendChild(script);
         });
+    }
+
+    export function loadAjaxAsync(url: string): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            let httprequest = new XMLHttpRequest();
+            httprequest.onreadystatechange = function () {
+                if (httprequest.readyState == XMLHttpRequest.DONE) {
+                    if (httprequest.status == 200) {
+                        resolve(httprequest.responseText);
+                    }
+                    else {
+                        reject(httprequest.status);
+                    }
+                }
+            };
+            httprequest.open("GET", url, true);
+            httprequest.send();
+        })
+    }
+
+    export function initTheme() {
+        function patchCdn(url: string): string {
+            if (!url) return url;
+            return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
+        }
+
+        const theme = pxt.appTarget.appTheme;
+        if (theme) {
+            if (theme.accentColor) {
+                let style = document.createElement('style');
+                style.type = 'text/css';
+                style.innerHTML = `.ui.accent { color: ${theme.accentColor}; }
+                .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${theme.accentColor}; }`;
+                document.getElementsByTagName('head')[0].appendChild(style);
+
+                theme.appLogo = patchCdn(theme.appLogo)
+                theme.cardLogo = patchCdn(theme.cardLogo)
+            }
+        }
+        // RTL languages
+        if (Util.isUserLanguageRtl()) {
+            pxt.debug("rtl layout");
+            document.body.classList.add("rtl");
+            document.body.style.direction = "rtl";
+
+            // replace semantic.css with rtlsemantic.css
+            const links = Util.toArray(document.head.getElementsByTagName("link"));
+            const semanticLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "semantic.css"))[0];
+            if (semanticLink) {
+                const semanticHref = semanticLink.getAttribute("data-rtl");
+                if (semanticHref) {
+                    pxt.debug(`swapping to ${semanticHref}`)
+                    semanticLink.setAttribute("href", semanticHref);
+                }
+            }
+            // replace blockly.css with rtlblockly.css
+            const blocklyLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "blockly.css"))[0];
+            if (blocklyLink) {
+                const blocklyHref = blocklyLink.getAttribute("data-rtl");
+                if (blocklyHref) {
+                    pxt.debug(`swapping to ${blocklyHref}`)
+                    blocklyLink.setAttribute("href", blocklyHref);
+                }
+            }
+        }
+
+        if (pxt.appTarget.simulator
+            && pxt.appTarget.simulator.boardDefinition
+            && pxt.appTarget.simulator.boardDefinition.visual) {
+            let boardDef = pxt.appTarget.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
+            if (boardDef.image) {
+                boardDef.image = patchCdn(boardDef.image)
+                if (boardDef.outlineImage) boardDef.outlineImage = patchCdn(boardDef.outlineImage)
+            }
+        }
     }
 }

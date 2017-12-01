@@ -54,6 +54,7 @@ export class Editor extends srceditor.Editor {
     nsMap: pxt.Map<MonacoBlockDefinition[]>;
     loadingMonaco: boolean;
     showAdvanced: boolean;
+    giveFocusOnLoading: boolean = false;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -191,36 +192,43 @@ export class Editor extends srceditor.Editor {
         )
     }
 
-    private defineEditorTheme() {
+    private defineEditorTheme(hc?: boolean) {
         const inverted = pxt.appTarget.appTheme.invertedMonaco;
         const invertedColorluminosityMultipler = 0.6;
-        let rules: monaco.editor.IThemeRule[] = [];
-        this.getNamespaces().forEach((ns) => {
-            const metaData = this.getNamespaceAttrs(ns);
-            const blocks = snippets.isBuiltin(ns) ? snippets.getBuiltinCategory(ns).blocks : this.nsMap[ns];
+        let rules: monaco.editor.ITokenThemeRule[] = [];
+        if (!hc) {
+            this.getNamespaces().forEach((ns) => {
+                const metaData = this.getNamespaceAttrs(ns);
+                const blocks = snippets.isBuiltin(ns) ? snippets.getBuiltinCategory(ns).blocks : this.nsMap[ns];
 
-            if (metaData.color && blocks) {
-                let hexcolor = pxt.blocks.convertColour(metaData.color);
-                hexcolor = (inverted ? Blockly.PXTUtils.fadeColour(hexcolor, invertedColorluminosityMultipler, true) : hexcolor).replace('#', '');
-                blocks.forEach((fn) => {
-                    rules.push({ token: `identifier.ts ${fn.name}`, foreground: hexcolor });
-                });
-                rules.push({ token: `identifier.ts ${ns}`, foreground: hexcolor });
-            }
-        })
+                if (metaData.color && blocks) {
+                    let hexcolor = pxt.blocks.convertColour(metaData.color);
+                    hexcolor = (inverted ? Blockly.PXTUtils.fadeColour(hexcolor, invertedColorluminosityMultipler, true) : hexcolor).replace('#', '');
+                    blocks.forEach((fn) => {
+                        rules.push({ token: `identifier.ts ${fn.name}`, foreground: hexcolor });
+                    });
+                    rules.push({ token: `identifier.ts ${ns}`, foreground: hexcolor });
+                }
+            })
 
-        rules.push({ token: `identifier.ts if`, foreground: '5B80A5', });
-        rules.push({ token: `identifier.ts else`, foreground: '5B80A5', });
-        rules.push({ token: `identifier.ts while`, foreground: '5BA55B', });
-        rules.push({ token: `identifier.ts for`, foreground: '5BA55B', });
+            rules.push({ token: `identifier.ts if`, foreground: '5B80A5', });
+            rules.push({ token: `identifier.ts else`, foreground: '5B80A5', });
+            rules.push({ token: `identifier.ts while`, foreground: '5BA55B', });
+            rules.push({ token: `identifier.ts for`, foreground: '5BA55B', });
+        }
 
+        const colors = pxt.appTarget.appTheme.monacoColors || {};
         monaco.editor.defineTheme('pxtTheme', {
-            base: inverted ? 'vs-dark' : 'vs', // can also be vs-dark or hc-black
+            base: hc ? 'hc-black' : (inverted ? 'vs-dark' : 'vs'), // can also be vs-dark or hc-black
             inherit: true, // can also be false to completely replace the builtin rules
-            rules: rules
+            rules: rules,
+            colors: hc ? {} : colors
         });
+        monaco.editor.setTheme('pxtTheme');
+    }
 
-        this.editor.updateOptions({ theme: 'pxtTheme' });
+    setHighContrast(hc: boolean) {
+        this.defineEditorTheme(hc);
     }
 
     beforeCompile() {
@@ -405,7 +413,8 @@ export class Editor extends srceditor.Editor {
                         identifier: { major: 0, minor: 0 },
                         range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
                         text: insertText,
-                        forceMoveMarkers: false
+                        forceMoveMarkers: true,
+                        isAutoWhitespaceEdit: true
                     }
                 ]);
                 this.beforeCompile();
@@ -429,12 +438,12 @@ export class Editor extends srceditor.Editor {
 
     undo() {
         if (!this.editor) return;
-        this.editor.trigger('keyboard', monaco.editor.Handler.Undo, null);
+        this.editor.trigger('keyboard', 'undo', null);
     }
 
     redo() {
         if (!this.editor) return;
-        this.editor.trigger('keyboard', monaco.editor.Handler.Redo, null)
+        this.editor.trigger('keyboard', 'redo', null);
     }
 
     zoomIn() {
@@ -536,7 +545,7 @@ export class Editor extends srceditor.Editor {
         root.className = 'blocklyTreeRoot';
         toolbox.appendChild(root);
         let group = document.createElement('div');
-        group.setAttribute('role', 'group');
+        group.setAttribute('role', 'tree');
         root.appendChild(group);
 
         const namespaces = this.getNamespaces().map(ns => [ns, this.getNamespaceAttrs(ns)] as [string, pxtc.CommentAttrs]);
@@ -555,6 +564,7 @@ export class Editor extends srceditor.Editor {
             false, null, () => {
                 this.showAdvanced = !this.showAdvanced;
                 this.updateToolbox();
+                this.resize();
             }, lf("{id:category}Advanced")))
         }
 
@@ -595,7 +605,7 @@ export class Editor extends srceditor.Editor {
                     el = monacoEditor.createCategoryElement(ns, md.color, md.icon, true, blocks, undefined, categoryName);
                 }
                 else {
-                    el = monacoEditor.createCategoryElement("", md.color, md.icon, false, snippets.getBuiltinCategory(ns).blocks, null, ns);
+                    el = monacoEditor.createCategoryElement("", md.color, md.icon, false, snippets.getBuiltinCategory(ns).blocks, null, Util.rlf(`{id:category}${ns}`));
                 }
                 group.appendChild(el);
             });
@@ -920,7 +930,7 @@ export class Editor extends srceditor.Editor {
         this.editor.setValue(content);
     }
 
-    loadFileAsync(file: pkg.File): Promise<void> {
+    loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
         let mode = "text";
         this.currSource = file.content;
 
@@ -959,7 +969,7 @@ export class Editor extends srceditor.Editor {
 
                 if (mode == "typescript") {
                     toolbox.innerHTML = '';
-                    this.beginLoadToolbox(file);
+                    this.beginLoadToolbox(file, hc);
                 }
 
                 // Set the current file
@@ -981,7 +991,7 @@ export class Editor extends srceditor.Editor {
                 });
 
                 if (!file.isReadonly()) {
-                    model.onDidChangeContent((e: monaco.editor.IModelContentChangedEvent2) => {
+                    model.onDidChangeContent((e: monaco.editor.IModelContentChangedEvent) => {
                         // Remove any Highlighted lines
                         this.clearHighlightedStatements();
 
@@ -1010,17 +1020,21 @@ export class Editor extends srceditor.Editor {
 
                 this.resize();
                 this.resetFlyout(true);
+
+                if (this.giveFocusOnLoading) {
+                    this.editor.focus();
+                }
             }).finally(() => {
                 editorArea.removeChild(loading);
             });
     }
 
-    private beginLoadToolbox(file: pkg.File) {
+    private beginLoadToolbox(file: pkg.File, hc?: boolean) {
         compiler.getBlocksAsync().then(bi => {
             this.blockInfo = bi
             this.nsMap = this.partitionBlocks();
             pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
-            this.defineEditorTheme();
+            this.defineEditorTheme(hc);
             this.updateToolbox();
             this.resize();
         });
@@ -1095,10 +1109,10 @@ export class Editor extends srceditor.Editor {
                     monacoErrors.push({
                         severity: monaco.Severity.Error,
                         message: message,
-                        startLineNumber: d.line,
+                        startLineNumber: d.line + 1,
                         startColumn: d.column,
-                        endLineNumber: d.endLine || endPos.lineNumber,
-                        endColumn: d.endColumn || endPos.column
+                        endLineNumber: d.endLine == undefined ? endPos.lineNumber : d.endLine + 1,
+                        endColumn: d.endColumn == undefined ? endPos.column : d.endColumn
                     })
                 }
             }

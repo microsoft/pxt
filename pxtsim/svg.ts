@@ -82,7 +82,8 @@ namespace pxsim.svg {
     export function buttonEvents(el: Element,
         move: (ev: MouseEvent) => void,
         start?: (ev: MouseEvent) => void,
-        stop?: (ev: MouseEvent) => void) {
+        stop?: (ev: MouseEvent) => void,
+        keydown?: (ev: KeyboardEvent) => void) {
         let captured = false;
         el.addEventListener('mousedown', (ev: MouseEvent) => {
             captured = true;
@@ -104,6 +105,10 @@ namespace pxsim.svg {
         el.addEventListener('mouseleave', (ev: MouseEvent) => {
             captured = false;
             if (stop) stop(ev);
+        });
+        el.addEventListener('keydown', (ev: KeyboardEvent) => {
+            captured = false;
+            if (keydown) keydown(ev);
         });
     }
 

@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="../../localtypings/pxtblockly.d.ts" />
 /// <reference path="../../typings/globals/jquery/index.d.ts" />
 
 import * as React from "react";
@@ -98,6 +98,7 @@ export class Editor extends srceditor.Editor {
                                 .then((fns: pxtc.service.SearchInfo[]) => fns),
                             searchTb => this.updateToolbox(searchTb, this.showToolboxCategories, true));
                     }
+                    pxt.blocks.initFlyouts(this.editor);
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -203,9 +204,12 @@ export class Editor extends srceditor.Editor {
          * @param {function()=} opt_callback The callback when the alert is dismissed.
          */
         Blockly.alert = function (message, opt_callback) {
-            return core.dialogAsync({
+            return core.confirmAsync({
                 hideCancel: true,
                 header: lf("Alert"),
+                agreeLbl: lf("Ok"),
+                agreeClass: "positive",
+                agreeIcon: "checkmark",
                 body: message,
                 size: "small"
             }).then(() => {
@@ -254,7 +258,7 @@ export class Editor extends srceditor.Editor {
                 disagreeLbl: lf("Cancel"),
                 size: "small"
             }).then(value => {
-                callback(value);
+                callback(value ? value : null);
             })
         };
     }
@@ -542,6 +546,11 @@ export class Editor extends srceditor.Editor {
             this.filters = null;
         }
         this.currFile = file;
+        // Clear the search field if a value exists
+        let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+        if (searchField && searchField.value) {
+            searchField.value = '';
+        }
         return Promise.resolve();
     }
 
@@ -565,7 +574,7 @@ export class Editor extends srceditor.Editor {
         let sourceMap = this.compilationResult.sourceMap;
 
         diags.filter(diag => diag.category == ts.pxtc.DiagnosticCategory.Error).forEach(diag => {
-            let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: diag.endLine - diag.line });
+            let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: 0 });
             if (bid) {
                 let b = this.editor.getBlockById(bid)
                 if (b) {
@@ -606,7 +615,7 @@ export class Editor extends srceditor.Editor {
         const toolbox = showCategories !== CategoryMode.None ?
             document.getElementById('blocklyToolboxDefinitionCategory')
             : document.getElementById('blocklyToolboxDefinitionFlyout');
-        const blocklyOptions: Blockly.ExtendedOptions = {
+        const blocklyOptions: Blockly.Options = {
             toolbox: readOnly ? undefined : toolbox,
             scrollbars: true,
             media: pxt.webConfig.commitCdnUrl + "blockly/media/",
@@ -616,7 +625,10 @@ export class Editor extends srceditor.Editor {
             comments: true,
             disable: false,
             readOnly: readOnly,
-            toolboxType: pxt.appTarget.appTheme.coloredToolbox ? 'coloured' : pxt.appTarget.appTheme.invertedToolbox ? 'inverted' : 'normal',
+            toolboxOptions: {
+                colour: pxt.appTarget.appTheme.coloredToolbox,
+                inverted: pxt.appTarget.appTheme.invertedToolbox
+            },
             zoom: {
                 enabled: false,
                 controls: false,
@@ -632,7 +644,7 @@ export class Editor extends srceditor.Editor {
 
     private getDefaultToolbox(showCategories = this.showToolboxCategories): HTMLElement {
         return showCategories !== CategoryMode.None ?
-            defaultToolbox.documentElement
+            defaultToolbox().documentElement
             : new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none"></xml>`, "text/xml").documentElement;
     }
 

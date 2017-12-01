@@ -1,6 +1,6 @@
 /// <reference path="pxtpackage.d.ts" />
 /// <reference path="pxtparts.d.ts" />
-/// <reference path="blockly.d.ts" />
+/// <reference path="pxtblockly.d.ts" />
 
 declare namespace pxt {
     // targetconfig.json
@@ -82,10 +82,20 @@ declare namespace pxt {
 
     interface AppSerial {
         useHF2?: boolean;
+        useEditor?: boolean;
         vendorId?: string; // used by node-serial
         productId?: string; // used by node-serial
         nameFilter?: string; // regex to match devices
-        log?: boolean;
+        rawHID?: boolean;
+        log?: boolean; // pipe messages to log
+        chromeExtension?: string; // unique identifier of the chrome extension
+        editorTheme?: SerialTheme;
+    }
+
+    interface SerialTheme {
+        graphBackground?: string;
+        strokeColor?: string;
+        lineColors?: string[];
     }
 
     interface AppCloud {
@@ -119,8 +129,16 @@ declare namespace pxt {
         yottaBinary?: string; // defaults to "pxt-microbit-app-combined.hex"
         yottaCorePackage?: string; // pxt-microbit-core
         yottaConfig?: any; // additional config
-        githubCorePackage?: string; // microsoft/pxt-microbit-core
+
         platformioIni?: string[];
+
+        codalTarget?: string;
+        codalBinary?: string;
+        codalDefinitions?: any;
+
+        dockerImage?: string;
+
+        githubCorePackage?: string; // microsoft/pxt-microbit-core
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio
@@ -158,7 +176,6 @@ declare namespace pxt {
         termsOfUseUrl?: string;
         contactUrl?: string;
         accentColor?: string;
-        locales?: Map<AppTheme>;
         cardLogo?: string;
         appLogo?: string;
         htmlDocIncludes?: Map<string>;
@@ -170,13 +187,14 @@ declare namespace pxt {
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
+        monacoColors?: pxt.Map<string>; // Monaco theme colors, see https://code.visualstudio.com/docs/getstarted/theme-color-reference
         hideBlocklyJavascriptHint?: boolean; // hide javascript preview in blockly hint menu
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
         galleries?: pxt.Map<string>; // list of galleries to display in projects dialog
         crowdinProject?: string;
-        crowdinBranch?: string; // optional branch specification for pxt
+        crowdinBranch?: string; // optional branch specification for localization files
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
@@ -188,6 +206,7 @@ declare namespace pxt {
         hideMenuBar?: boolean; // Hides the main menu bar
         hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
         appStoreID?: string; // Apple iTune Store ID if any
+        windowsStoreLink?: string; // Link to UWP app in Windows store
         mobileSafariDownloadProtocol?: string; // custom protocol to be used on iOS
         sounds?: {
             tutorialStep?: string;
@@ -198,6 +217,8 @@ declare namespace pxt {
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
         selectLanguage?: boolean; // add language picker to settings menu
+        defaultBlockGap?: number; // For targets to override block gap
+        appPathNames?: string[]; // Authorized URL paths in electron or UWP, all other paths will display a warning banner
     }
 
     interface DocMenuEntry {
@@ -218,6 +239,8 @@ declare namespace pxt {
 
         nextName?: string;
         nextPath?: string;
+
+        markdown?: string;
     }
 
     interface TargetBundle extends AppTarget {
@@ -233,6 +256,7 @@ declare namespace ts.pxtc {
         nativeType?: string; // currently only "thumb"
         hasHex: boolean;
         useUF2?: boolean;
+        useELF?: boolean;
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
@@ -245,6 +269,7 @@ declare namespace ts.pxtc {
         openocdScript?: string;
         flashChecksumAddr?: number;
         onStartText?: boolean;
+        hidSelectors?: HidSelector[];
     }
 
     interface CompileOptions {
@@ -284,6 +309,7 @@ declare namespace ts.pxtc {
         extensionFiles: pxt.Map<string>;
         yotta?: pxt.YottaConfig;
         platformio?: pxt.PlatformIOConfig;
+        npmDependencies?: pxt.Map<string>;
         sha: string;
         compileData: string;
         shimsDTS: string;
@@ -293,5 +319,13 @@ declare namespace ts.pxtc {
 
     interface HexInfo {
         hex: string[];
+    }
+
+    // HEX values as strings, e.g. "0xFF97"
+    interface HidSelector {
+        vid: string;
+        pid: string;
+        usagePage: string;
+        usageId: string;
     }
 }

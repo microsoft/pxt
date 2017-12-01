@@ -20,7 +20,9 @@ export interface BuildEngine {
     setPlatformAsync: () => Promise<void>;
     buildAsync: () => Promise<void>;
     patchHexInfo: (extInfo: pxtc.ExtensionInfo) => pxtc.HexInfo;
+    prepBuildDirAsync: () => Promise<void>;
     buildPath: string;
+    appPath: string;
     moduleConfig: string;
     deployAsync?: (r: pxtc.CompileResult) => Promise<void>;
 }
@@ -35,27 +37,56 @@ interface BuildCache {
     modSha?: string;
 }
 
+function noopAsync() { return Promise.resolve() }
+
 export const buildEngines: Map<BuildEngine> = {
     yotta: {
-        updateEngineAsync: () => { return runYottaAsync(["update"]) },
-        buildAsync: () => { return runYottaAsync(["build"]) },
-        setPlatformAsync: () => {
-            return runYottaAsync(["target", pxt.appTarget.compileService.yottaTarget])
-        },
+        updateEngineAsync: () => runYottaAsync(["update"]),
+        buildAsync: () => runYottaAsync(["build"]),
+        setPlatformAsync: () =>
+            runYottaAsync(["target", pxt.appTarget.compileService.yottaTarget]),
         patchHexInfo: patchYottaHexInfo,
+        prepBuildDirAsync: noopAsync,
         buildPath: "built/yt",
         moduleConfig: "module.json",
-        deployAsync: msdDeployCoreAsync
+        deployAsync: msdDeployCoreAsync,
+        appPath: "source"
     },
 
     platformio: {
-        updateEngineAsync: () => Promise.resolve(),
-        buildAsync: () => { return runPlatformioAsync(["run"]) },
-        setPlatformAsync: () => Promise.resolve(),
+        updateEngineAsync: noopAsync,
+        buildAsync: () => runPlatformioAsync(["run"]),
+        setPlatformAsync: noopAsync,
         patchHexInfo: patchPioHexInfo,
+        prepBuildDirAsync: noopAsync,
         buildPath: "built/pio",
         moduleConfig: "platformio.ini",
         deployAsync: platformioDeployAsync,
+        appPath: "src"
+    },
+
+    codal: {
+        updateEngineAsync: updateCodalBuildAsync,
+        buildAsync: () => runBuildCmdAsync("python", "build.py"),
+        setPlatformAsync: noopAsync,
+        patchHexInfo: patchCodalHexInfo,
+        prepBuildDirAsync: prepCodalBuildDirAsync,
+        buildPath: "built/codal",
+        moduleConfig: "codal.json",
+        deployAsync: msdDeployCoreAsync,
+        appPath: "pxtapp"
+    },
+
+    dockermake: {
+        updateEngineAsync: () => runBuildCmdAsync("npm", "install"),
+        buildAsync: () => runDockerAsync(["make"]),
+        setPlatformAsync: noopAsync,
+        patchHexInfo: patchDockermakeHexInfo,
+        prepBuildDirAsync: noopAsync,
+        buildPath: "built/dockermake",
+        moduleConfig: "package.json",
+        deployAsync: msdDeployCoreAsync,
+        appPath: "pxtapp"
     },
 }
 
@@ -67,6 +98,20 @@ function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
     let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.yottaTarget
         + "/source/" + pxt.appTarget.compileService.yottaBinary;
 
+    return {
+        hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
+    }
+}
+
+function patchCodalHexInfo(extInfo: pxtc.ExtensionInfo) {
+    let hexPath = thisBuild.buildPath + "/build/" + pxt.appTarget.compileService.codalBinary + ".hex"
+    return {
+        hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
+    }
+}
+
+function patchDockermakeHexInfo(extInfo: pxtc.ExtensionInfo) {
+    let hexPath = thisBuild.buildPath + "/bld/pxt-app.hex"
     return {
         hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
     }
@@ -118,38 +163,56 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     let allFiles = U.clone(extInfo.generatedFiles)
     U.jsonCopyFrom(allFiles, extInfo.extensionFiles)
 
-    U.iterMap(allFiles, (fn, v) => {
-        fn = buildEngine.buildPath + fn
-        nodeutil.mkdirP(path.dirname(fn))
-        let existing: string = null
-        if (fs.existsSync(fn))
-            existing = fs.readFileSync(fn, "utf8")
-        if (existing !== v)
-            fs.writeFileSync(fn, v)
-    })
+    let writeFiles = () => {
+        for (let f of nodeutil.allFiles(buildEngine.buildPath + "/" + buildEngine.appPath, 8, true)) {
+            let bn = f.slice(buildEngine.buildPath.length)
+            bn = bn.replace(/\\/g, "/").replace(/^\//, "/")
+            if (U.startsWith(bn, "/" + buildEngine.appPath + "/") && !allFiles[bn]) {
+                pxt.log("removing stale " + bn)
+                fs.unlinkSync(f)
+            }
+        }
+
+        U.iterMap(allFiles, (fn, v) => {
+            fn = buildEngine.buildPath + fn
+            nodeutil.mkdirP(path.dirname(fn))
+            let existing: string = null
+            if (fs.existsSync(fn))
+                existing = fs.readFileSync(fn, "utf8")
+            if (existing !== v)
+                fs.writeFileSync(fn, v)
+        })
+    }
+
+    tasks = tasks
+        .then(buildEngine.prepBuildDirAsync)
+        .then(writeFiles)
 
     let saveCache = () => fs.writeFileSync(buildCachePath, JSON.stringify(buildCache, null, 4) + "\n")
 
     let modSha = U.sha256(extInfo.generatedFiles["/" + buildEngine.moduleConfig])
+    let needDal = false
     if (buildCache.modSha !== modSha) {
         tasks = tasks
-            .then(() => buildEngine.setPlatformAsync())
-            .then(() => buildEngine.updateEngineAsync())
+            .then(buildEngine.setPlatformAsync)
+            .then(buildEngine.updateEngineAsync)
             .then(() => {
                 buildCache.sha = ""
                 buildCache.modSha = modSha
                 saveCache();
-                buildDalConst(buildEngine, mainPkg, true);
+                needDal = true
             })
     } else {
         pxt.debug("skipping build update")
     }
 
     tasks = tasks
-        .then(() => buildEngine.buildAsync())
+        .then(buildEngine.buildAsync)
         .then(() => {
             buildCache.sha = extInfo.sha
             saveCache()
+            if (needDal)
+                buildDalConst(buildEngine, mainPkg, true);
         })
 
     return tasks
@@ -199,13 +262,76 @@ function runPlatformioAsync(args: string[]) {
     })
 }
 
+function runDockerAsync(args: string[]) {
+    let fullpath = process.cwd() + "/" + thisBuild.buildPath + "/"
+    let cs = pxt.appTarget.compileService
+    return nodeutil.spawnAsync({
+        cmd: "docker",
+        args: ["run", "--rm", "-v", fullpath + ":/src", "-w", "/src", "-u", "build",
+            cs.dockerImage].concat(args),
+        cwd: thisBuild.buildPath
+    })
+}
+
 let parseCppInt = pxt.cpp.parseCppInt;
+
+
+export function codalGitAsync(...args: string[]) {
+    return nodeutil.spawnAsync({
+        cmd: "git",
+        args: args,
+        cwd: thisBuild.buildPath
+    })
+}
+
+
+function prepCodalBuildDirAsync() {
+    if (fs.existsSync(thisBuild.buildPath + "/.git/config"))
+        return Promise.resolve()
+    let cs = pxt.appTarget.compileService
+    let pkg = "https://github.com/" + cs.githubCorePackage
+    nodeutil.mkdirP("built")
+    return nodeutil.runGitAsync("clone", pkg, thisBuild.buildPath)
+        .then(() => codalGitAsync("checkout", cs.gittag))
+}
+
+function runBuildCmdAsync(cmd: string, ...args: string[]) {
+    return nodeutil.spawnAsync({
+        cmd,
+        args,
+        cwd: thisBuild.buildPath,
+    })
+}
+
+function updateCodalBuildAsync() {
+    let cs = pxt.appTarget.compileService
+    return codalGitAsync("checkout", cs.gittag)
+        .then(() => { }, e => { })
+        .then(() => codalGitAsync("pull"))
+        .then(() => codalGitAsync("checkout", cs.gittag))
+}
 
 // TODO: DAL specific code should be lifted out
 export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage, force = false) {
     let constName = "dal.d.ts"
     let vals: Map<string> = {}
     let done: Map<string> = {}
+
+    function expandInt(s: string): number {
+        s = s.trim()
+        let existing = U.lookup(vals, s)
+        if (existing != null && existing != "?")
+            s = existing
+        let m = /^\((\w+)\s*\+\s*(\d+)\)$/.exec(s)
+        if (m) {
+            let k = expandInt(m[1])
+            if (k != null)
+                return k + parseInt(m[2])
+        }
+        let pp = parseCppInt(s)
+        if (pp != null) return pp
+        return null
+    }
 
     function isValidInt(v: string) {
         return /^-?(\d+|0[xX][0-9a-fA-F]+)$/.test(v)
@@ -218,8 +344,9 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         let inEnum = false
         let enumVal = 0
         let defineVal = (n: string, v: string) => {
-            v = v.trim()
-            if (parseCppInt(v) != null) {
+            let parsed = expandInt(v)
+            if (parsed != null) {
+                v = parsed.toString()
                 let curr = U.lookup(vals, n)
                 if (curr == null || curr == v) {
                     vals[n] = v
@@ -233,8 +360,6 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                     if (dogenerate && !/^MICROBIT_DISPLAY_(ROW|COLUMN)_COUNT$/.test(n))
                         pxt.log(`${fileName}(${lineNo}): #define conflict, ${n}`)
                 }
-            } else {
-                vals[n] = "?" // just in case there's another more valid entry
             }
         }
         src.split(/\r?\n/).forEach(ln => {
@@ -280,17 +405,25 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         if (!fs.existsSync(incPath))
             incPath = buildEngine.buildPath + "/yotta_modules/codal/inc/";
         if (!fs.existsSync(incPath))
+            incPath = buildEngine.buildPath
+        if (!fs.existsSync(incPath))
             U.userError("cannot find " + incPath);
-        let files = nodeutil.allFiles(incPath).filter(fn => U.endsWith(fn, ".h"))
+        let files = nodeutil.allFiles(incPath, 20).filter(fn => U.endsWith(fn, ".h"))
         files.sort(U.strcmp)
         let fc: Map<string> = {}
         for (let fn of files) {
             if (U.endsWith(fn, "Config.h")) continue
+            if (fn.indexOf("/mbed-classic/") >= 0) continue
+            if (fn.indexOf("/mbed-os/") >= 0) continue
             fc[fn] = fs.readFileSync(fn, "utf8")
         }
         files = Object.keys(fc)
 
         // pre-pass - detect conflicts
+        for (let fn of files) {
+            extractConstants(fn, fc[fn])
+        }
+        // stabilize
         for (let fn of files) {
             extractConstants(fn, fc[fn])
         }
@@ -310,13 +443,13 @@ const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = 
 const readDirAsync = Promise.promisify(fs.readdir)
 
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
-    const firmware = pxt.appTarget.compile.useUF2 ? ts.pxtc.BINARY_UF2 : ts.pxtc.BINARY_HEX;
-    const encoding = pxt.appTarget.compile.useUF2 ? "base64" : "utf8";
+    const firmware = pxt.outputName()
+    const encoding = pxt.isOutputText() ? "utf8" : "base64";
 
     if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
         let f = res.outfiles[pxtc.BINARY_UF2]
         let blocks = pxtc.UF2.parseFile(U.stringToUint8Array(atob(f)))
-        return hid.hf2DeviceAsync()
+        return hid.initAsync()
             .then(dev => dev.flashAsync(blocks))
     }
 

@@ -1,4 +1,8 @@
-export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none">
+/// <reference path="../../built/pxtlib.d.ts" />
+import Util = pxt.Util;
+
+export default function() {
+    return new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none">
         <category name="Loops" nameid="loops" colour="#107c10" category="50" iconclass="blocklyTreeIconloops">
             <block type="controls_repeat_ext">
                 <value name="TIMES">
@@ -22,7 +26,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
             <block type="controls_for_of">
                 <value name="LIST">
                     <shadow type="variables_get">
-                        <field name="VAR">list</field>
+                        <field name="VAR">${lf("{id:var}list")}</field>
                     </shadow>
                 </value>
             </block>
@@ -135,14 +139,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
             <block type="math_number" gap="8">
                 <field name="NUM">0</field>
             </block>
-            <block type="device_random" gap="8">
-                <value name="limit">
-                    <shadow type="math_number">
-                        <field name="NUM">4</field>
-                    </shadow>
-                </value>
-            </block>
-            <category colour="#712672" name="More" nameid="more" iconclass="blocklyTreeIconmore" expandedclass="blocklyTreeIconmore">
+            <category colour="#712672" name="${Util.lf("More")}" nameid="more" iconclass="blocklyTreeIconmore" expandedclass="blocklyTreeIconmore">
                 <block type="math_modulo">
                     <value name="DIVIDEND">
                         <shadow type="math_number">
@@ -217,7 +214,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
             <block type="lists_index_get">
                 <value name="LIST">
                     <block type="variables_get">
-                        <field name="VAR">list</field>
+                        <field name="VAR">${lf("{id:var}list")}</field>
                     </block>
                 </value>
                 <value name="INDEX">
@@ -229,7 +226,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
             <block type="lists_index_set">
                 <value name="LIST">
                     <block type="variables_get">
-                        <field name="VAR">list</field>
+                        <field name="VAR">${lf("{id:var}list")}</field>
                     </block>
                 </value>
                 <value name="INDEX">
@@ -263,3 +260,4 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
             </block>
         </category>
     </xml>`, "text/xml");
+}

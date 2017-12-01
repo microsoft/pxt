@@ -8,6 +8,19 @@ namespace pxt.blocks {
         shadowValue?: string;
     }
 
+    export function normalizeBlock(b: string): string {
+        if (!b) return b;
+        // normalize and validate common errors
+        // made while translating
+        let nb = b.replace(/%\s+/g, '%');
+        if (nb != b) {
+            pxt.log(`block has extra spaces: ${b}`);
+            return b;
+        }
+        nb = nb.replace(/\s*\|\s*/g, '|');
+        return nb;
+    }
+
     export function parameterNames(fn: pxtc.SymbolInfo): Map<BlockParameter> {
         // collect blockly parameter name mapping
         const instance = (fn.kind == ts.pxtc.SymbolKind.Method || fn.kind == ts.pxtc.SymbolKind.Property) && !fn.attributes.defaultInstance;
@@ -18,7 +31,7 @@ namespace pxt.blocks {
             fn.parameters.forEach(pr => attrNames[pr.name] = {
                 name: pr.name,
                 type: pr.type,
-                shadowValue: pr.defaults ? pr.defaults[0] : undefined
+                shadowValue: pr.default || undefined
             });
         if (fn.attributes.block) {
             Object.keys(attrNames).forEach(k => attrNames[k].name = "");
@@ -51,14 +64,7 @@ namespace pxt.blocks {
     export function parseFields(b: string): FieldDescription[] {
         // normalize and validate common errors
         // made while translating
-        let nb = b.replace(/%\s+/g, '%');
-        if (nb != b)
-            pxt.log(`block has extra spaces: ${b}`);
-        if (nb[0] == nb[0].toLocaleUpperCase() && nb[0] != nb[0].toLowerCase())
-            pxt.log(`block is capitalized: ${b}`);
-
-        nb = nb.replace(/\s*\|\s*/g, '|');
-        return nb.split('|').map((n, ni) => {
+        return b.split('|').map((n, ni) => {
             let m = /([^%]*)\s*%([a-zA-Z0-9_]+)/.exec(n);
             if (!m) return { n, ni };
 
@@ -131,7 +137,7 @@ namespace pxt.blocks {
                     "min": Util.lf("smaller value of 2 numbers"),
                     "max": Util.lf("larger value of 2 numbers")
                 },
-                url: '/blocks/math',
+                url: '/reference/math',
                 operators: {
                     'op': ["min", "max"]
                 },
@@ -140,34 +146,25 @@ namespace pxt.blocks {
             'math_op3': {
                 name: Util.lf("absolute number"),
                 tooltip: Util.lf("absolute value of a number"),
-                url: '/blocks/math/abs',
+                url: '/reference/math',
                 category: 'math',
                 block: {
                     message0: Util.lf("absolute of %1")
                 }
             },
-            'device_random': {
-                name: Util.lf("pick random number"),
-                tooltip: Util.lf("Returns a random integer between 0 and the specified bound (inclusive)."),
-                url: '/blocks/math/random',
-                category: 'math',
-                block: {
-                    message0: Util.lf("pick random 0 to %1")
-                }
-            },
             'math_number': {
                 name: Util.lf("{id:block}number"),
-                url: '/blocks/math/random',
+                url: '/types/number',
                 category: 'math'
             },
             'math_number_minmax': {
                 name: Util.lf("{id:block}number"),
-                url: '/blocks/math/random',
+                url: '/reference/math',
                 category: 'math'
             },
             'math_arithmetic': {
                 name: Util.lf("arithmetic operation"),
-                url: '/blocks/math',
+                url: '/reference/math',
                 tooltip: {
                     ADD: Util.lf("Return the sum of the two numbers."),
                     MINUS: Util.lf("Return the difference of the two numbers."),
@@ -190,7 +187,7 @@ namespace pxt.blocks {
             'math_modulo': {
                 name: Util.lf("division remainder"),
                 tooltip: Util.lf("Return the remainder from dividing the two numbers."),
-                url: '/blocks/math',
+                url: '/reference/math',
                 category: 'math',
                 block: {
                     MATH_MODULO_TITLE: Util.lf("remainder of %1 ÷ %2")
@@ -254,7 +251,7 @@ namespace pxt.blocks {
             'lists_create_with': {
                 name: Util.lf("create an array"),
                 tooltip: Util.lf("Creates a new array."),
-                url: '/blocks/arrays/create',
+                url: '/reference/arrays/create',
                 category: 'arrays',
                 blockTextSearch: "LISTS_CREATE_WITH_INPUT_WITH",
                 block: {
@@ -267,16 +264,16 @@ namespace pxt.blocks {
             'lists_length': {
                 name: Util.lf("array length"),
                 tooltip: Util.lf("Returns the number of items in an array."),
-                url: '/blocks/arrays/length',
+                url: '/reference/arrays/length',
                 category: 'arrays',
                 block: {
-                    LISTS_LENGTH_TITLE: Util.lf("length of %1")
+                    LISTS_LENGTH_TITLE: Util.lf("length of array %1")
                 }
             },
             'lists_index_get': {
                 name: Util.lf("get a value in an array"),
                 tooltip: Util.lf("Returns the value at the given index in an array."),
-                url: '/blocks/arrays/get',
+                url: '/reference/arrays/get',
                 category: 'arrays',
                 block: {
                     message0: Util.lf("%1 get value at %2")
@@ -285,7 +282,7 @@ namespace pxt.blocks {
             'lists_index_set': {
                 name: Util.lf("set a value in an array"),
                 tooltip: Util.lf("Sets the value at the given index in an array"),
-                url: '/blocks/arrays/set',
+                url: '/reference/arrays/set',
                 category: 'arrays',
                 block: {
                     message0: Util.lf("%1 set value at %2 to %3")
@@ -351,16 +348,16 @@ namespace pxt.blocks {
             'text_length': {
                 name: Util.lf("number of characters in the string"),
                 tooltip: Util.lf("Returns the number of letters (including spaces) in the provided text."),
-                url: 'types/string/length',
+                url: 'reference/text/length',
                 category: 'text',
                 block: {
-                    TEXT_LENGTH_TITLE: Util.lf("length of %1")
+                    TEXT_LENGTH_TITLE: Util.lf("length of text %1")
                 }
             },
             'text_join': {
                 name: Util.lf("join items to create text"),
                 tooltip: Util.lf("Create a piece of text by joining together any number of items."),
-                url: 'types/string/join',
+                url: 'reference/text/join',
                 category: 'text',
                 block: {
                     TEXT_JOIN_TITLE_CREATEWITH: Util.lf("join")

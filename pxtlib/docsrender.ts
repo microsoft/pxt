@@ -201,15 +201,24 @@ namespace pxt.docs {
             mparams["LINK"] = m.path
             if (tocPath.indexOf(m) >= 0) {
                 mparams["ACTIVE"] = 'active';
+                mparams["EXPANDED"] = 'true';
                 currentTocEntry = m;
                 breadcrumb.push({
                     name: m.name,
                     href: m.path
                 })
+            } else {
+                mparams["EXPANDED"] = 'false';
             }
             if (m.subitems && m.subitems.length > 0) {
-                if (lev == 0) templ = toc["top-dropdown"]
-                else templ = toc["inner-dropdown"]
+                if (lev == 0) {
+                    if (m.name !== "") {
+                        templ = toc["top-dropdown"]
+                    } else {
+                        templ = toc["top-dropdown-noHeading"]
+                    }
+                } else if (lev == 1) templ = toc["inner-dropdown"]
+                else templ = toc["nested-dropdown"]
                 mparams["ITEMS"] = m.subitems.map(e => recTOC(e, lev + 1)).join("\n")
             } else {
                 if (/^-+$/.test(m.name)) {
@@ -228,24 +237,24 @@ namespace pxt.docs {
         let breadcrumbHtml = '';
         if (breadcrumb.length > 1) {
             breadcrumbHtml = `
-            <div class="ui breadcrumb">
+            <nav class="ui breadcrumb" aria-label="${lf("Breadcrumb")}">
                 ${breadcrumb.map((b, i) =>
-                    `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section" 
-                        href="${html2Quote(b.href)}">${html2Quote(b.name)}</a>`)
+                    `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section"
+                        href="${html2Quote(b.href)}" aria-current="${i == breadcrumb.length - 1 ? "page" : ""}">${html2Quote(b.name)}</a>`)
                     .join('<i class="right chevron icon divider"></i>')}
-            </div>`;
+            </nav>`;
         }
 
         params["breadcrumb"] = breadcrumbHtml;
 
         if (currentTocEntry) {
             if (currentTocEntry.prevPath) {
-                params["prev"] = `<a href="${currentTocEntry.prevPath}" class="navigation navigation-prev " aria-label="Previous page: ${currentTocEntry.prevName}">
+                params["prev"] = `<a href="${currentTocEntry.prevPath}" class="navigation navigation-prev " title="${'Previous page: {0}', currentTocEntry.prevName}">
                                     <i class="icon angle left"></i>
                                 </a>`;
             }
             if (currentTocEntry.nextPath) {
-                params["next"] = `<a href="${currentTocEntry.nextPath}" class="navigation navigation-next " aria-label="Next page: ${currentTocEntry.nextName}">
+                params["next"] = `<a href="${currentTocEntry.nextPath}" class="navigation navigation-next " title="${'Next page {0}', currentTocEntry.nextName}">
                                     <i class="icon angle right"></i>
                                 </a>`;
             }
@@ -259,7 +268,7 @@ namespace pxt.docs {
             params["homeurl"] = html2Quote(theme.homeUrl);
         params["targetid"] = theme.id || "???";
         params["targetname"] = theme.name || "Microsoft MakeCode";
-        params["targetlogo"] = theme.docsLogo ? `<img class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
+        params["targetlogo"] = theme.docsLogo ? `<img aria-hidden="true" role="presentation" class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
         let ghURLs = d.ghEditURLs || []
         if (ghURLs.length) {
             let ghText = `<p style="margin-top:1em">\n`
@@ -274,10 +283,44 @@ namespace pxt.docs {
             params["github"] = "";
         }
 
+        // Add accessiblity menu 
+        const accMenuHtml = `
+            <a href="#maincontent" class="ui item link" tabindex="0" role="menuitem">${lf("Skip to main content")}</a>
+        `
+        params['accMenu'] = accMenuHtml;
+
+        // Add print button
+        const printBtnHtml = `
+            <button id="printbtn" class="circular ui icon right floated button hideprint" title="${lf("Print this page")}">
+                <i class="icon print"></i>
+            </button>
+        `
+        params['printBtn'] = printBtnHtml;
+
+        // Add sidebar toggle
+        const sidebarToggleHtml = `
+            <a id="togglesidebar" class="launch icon item" tabindex="0" title="Side menu" aria-label="${lf("Side menu")}" role="menu" aria-expanded="false">
+                <i class="content icon"></i>
+            </a>
+        `
+        params['sidebarToggle'] = sidebarToggleHtml;
+
+        // Add search bars
+        const searchBarIds = ['tocsearch1', 'tocsearch2']
+        const searchBarsHtml = searchBarIds.map((searchBarId) => {
+            return `
+                <input type="search" name="q" placeholder="${lf("Search...")}" aria-label="${lf("Search Documentation")}">
+                <i onclick="document.getElementById('${searchBarId}').submit();" tabindex="0" class="search link icon" aria-label="${lf("Search")}" role="button"></i>
+            `;
+        })
+        params["searchBar1"] = searchBarsHtml[0];
+        params["searchBar2"] = searchBarsHtml[1];
+
         let style = '';
         if (theme.accentColor) style += `
 .ui.accent { color: ${theme.accentColor}; }
 .ui.inverted.accent { background: ${theme.accentColor}; }
+#accessibleMenu a { background: ${theme.accentColor}; }
 `
         params["targetstyle"] = style;
 
@@ -290,14 +333,19 @@ namespace pxt.docs {
         d.finish = () => injectHtml(d.html, params, [
             "body",
             "menu",
+            "accMenu",
             "TOC",
             "prev",
             "next",
+            "printBtn",
             "breadcrumb",
             "targetlogo",
             "github",
             "JSON",
-            "appstoremeta"
+            "appstoremeta",
+            "sidebarToggle",
+            "searchBar1",
+            "searchBar2"
         ])
     }
 
@@ -375,7 +423,7 @@ namespace pxt.docs {
             marked = requireMarked();
             let renderer = new marked.Renderer()
             renderer.image = function (href: string, title: string, text: string) {
-                let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
+                let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
                 if (title) {
                     out += ' title="' + title + '"';
                 }
@@ -498,11 +546,11 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
 
         // try getting a better custom image for twitter
         const imgM = /<div class="ui embed mdvid"[^<>]+?data-placeholder="([^"]+)"[^>]*\/?>/i.exec(html)
-            || /<img class="ui image" src="([^"]+)"[^>]*\/?>/i.exec(html);
+            || /<img class="ui [^"]*image" src="([^"]+)"[^>]*\/?>/i.exec(html);
         if (imgM)
             pubinfo["cardLogo"] = html2Quote(imgM[1]);
 
-        pubinfo["twitter"] = html2Quote(opts.theme.twitter || "@mspxtio");
+        pubinfo["twitter"] = html2Quote(opts.theme.twitter || "@msmakecode");
 
         let registers: Map<string> = {}
         registers["main"] = "" // first
@@ -787,6 +835,13 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         return TOC
     }
 
+    export function visitTOC(toc: TOCMenuEntry[], fn: (e: TOCMenuEntry) => void) {
+        function visitEntry(entry: TOCMenuEntry) {
+            fn(entry);
+            if (entry.subitems) entry.subitems.forEach(fn);
+        }
+        toc.forEach(visitEntry);
+    }
 
     let testedAugment = false
     export function augmentDocs(baseMd: string, childMd: string) {

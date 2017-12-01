@@ -7,6 +7,22 @@ namespace ts.pxtc {
 import pxtc = ts.pxtc
 
 namespace ts.pxtc.Util {
+    export function bufferSerial(buffers: pxt.Map<string>, data: string = "", source: string = "?", maxBufLen: number = 255) {
+        for (let i = 0; i < data.length; ++i) {
+            const char = data[i]
+            buffers[source] = buffers[source] ? buffers[source] + char : char
+            if (char === "\n" || buffers[source].length > maxBufLen) {
+                let buffer = buffers[source]
+                buffers[source] = ""
+                window.postMessage({
+                    type: "serial",
+                    id: source,
+                    data: buffer
+                }, "*")
+            }
+        }
+    }
+
     export function assert(cond: boolean, msg = "Assertion failed") {
         if (!cond) {
             debugger
@@ -99,7 +115,7 @@ namespace ts.pxtc.Util {
         return !!v && typeof v === "object" && !Array.isArray(v)
     }
 
-    export function memcpy(trg: Uint8Array, trgOff: number, src: Uint8Array, srcOff?: number, len?: number) {
+    export function memcpy(trg: Uint8Array, trgOff: number, src: ArrayLike<number>, srcOff?: number, len?: number) {
         if (srcOff === void 0)
             srcOff = 0
         if (len === void 0)
@@ -365,6 +381,34 @@ namespace ts.pxtc.Util {
     export function stripUrlProtocol(str: string) {
         return str.replace(/.*?:\/\//g, "");
     }
+
+    export function normalizePath(path: string) {
+        if (path) {
+            path = path.replace(/\\/g, "/")
+        }
+
+        return path;
+    }
+
+    export function pathJoin(a: string, b: string) {
+        normalizePath(a);
+        normalizePath(b);
+
+        if (!a && !b) return undefined;
+        else if (!a) return b;
+        else if (!b) return a;
+
+        if (a.charAt(a.length - 1) !== "/") {
+            a += "/";
+        }
+
+        if (b.charAt(0) == "/") {
+            b = b.substring(1);
+        }
+
+        return a + b;
+    }
+
     export let isNodeJS = false;
 
     export interface HttpRequestOptions {
@@ -388,7 +432,7 @@ namespace ts.pxtc.Util {
     export function requestAsync(options: HttpRequestOptions): Promise<HttpResponse> {
         return httpRequestCoreAsync(options)
             .then(resp => {
-                if (resp.statusCode != 200 && !options.allowHttpErrors) {
+                if ((resp.statusCode != 200 && resp.statusCode != 304) && !options.allowHttpErrors) {
                     let msg = Util.lf("Bad HTTP status code: {0} at {1}; message: {2}",
                         resp.statusCode, options.url, (resp.text || "").slice(0, 500))
                     let err: any = new Error(msg)
@@ -619,9 +663,43 @@ namespace ts.pxtc.Util {
         return f() + f() + "-" + f() + "-4" + f().slice(-3) + "-" + f() + "-" + f() + f() + f();
     }
 
+    export interface ITranslationDbEntry {
+        id?: string;
+        etag: string;
+        strings: pxt.Map<string>;
+        cached?: boolean; // cached in memory, no download needed
+    }
+
+    export interface ITranslationDb {
+        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry>;
+        setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void>;
+    }
+
+    // Localization functions. Please port any modifications over to pxtsim/localization.ts
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
     export var localizeLive = false;
+
+    class MemTranslationDb implements ITranslationDb {
+        translations: pxt.Map<ITranslationDbEntry> = {};
+        key(lang: string, filename: string, branch: string) {
+            return `${lang}|${filename}|${branch || ""}`;
+        }
+        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry> {
+            return Promise.resolve(this.translations[this.key(lang, filename, branch)]);
+        }
+        setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
+            this.translations[this.key(lang, filename, branch)] = {
+                etag,
+                strings,
+                cached: true
+            }
+            return Promise.resolve();
+        }
+    }
+
+    // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
+    export var translationDb: ITranslationDb = new MemTranslationDb();
 
     /**
      * Returns the current user language, prepended by "live-" if in live mode
@@ -654,11 +732,46 @@ namespace ts.pxtc.Util {
         return _localizeStrings[s] || s;
     }
 
-    export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string): Promise<pxt.Map<string>> {
-        // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
-        let url = `https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
-        if (branch) url += '&branch=' + encodeURIComponent(branch);
-        return Util.httpGetJsonAsync(url);
+    export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string, etag?: string): Promise<pxt.Map<string>> {
+        // hitting the cloud
+        function downloadFromCloudAsync() {
+            // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
+            let url = `https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+            if (branch) url += '&branch=' + encodeURIComponent(branch);
+            const headers: pxt.Map<string> = {};
+            if (etag) headers["If-None-Match"] = etag;
+            return requestAsync({ url, headers }).then(resp => {
+                // if 304, translation not changed, skipe
+                if (resp.statusCode == 304)
+                    return undefined;
+                else if (resp.statusCode == 200) {
+                    // store etag and translations
+                    etag = resp.headers["ETag"] || "";
+                    return translationDb.setAsync(lang, filename, branch, etag, resp.json)
+                        .then(() => resp.json);
+                }
+
+                return resp.json;
+            }, e => {
+                console.log(`failed to load translations from ${url}`)
+                return undefined;
+            })
+        }
+
+        // check for cache
+        return translationDb.getAsync(lang, filename, branch)
+            .then((entry: ts.pxtc.Util.ITranslationDbEntry) => {
+                // if cached, return immediately
+                if (entry) {
+                    etag = entry.etag;
+                    // background update
+                    if (!entry.cached)
+                        downloadFromCloudAsync().done();
+                    return entry.strings;
+                } else
+                    return downloadFromCloudAsync();
+            })
+
     }
 
     export function getLocalizedStrings() {
@@ -669,33 +782,41 @@ namespace ts.pxtc.Util {
         _localizeStrings = strs;
     }
 
-    export function updateLocalizationAsync(baseUrl: string, code: string, branch?: string, live?: boolean): Promise<any> {
+    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<void> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|si|sv|zh)/i.test(code))
-            code = code.split("-")[0]
+            code = code.split("-")[0];
 
-        if (_localizeLang != code && live) {
-            return downloadLiveTranslationsAsync(code, "strings.json", branch)
-                .then(tr => {
-                    _localizeStrings = tr || {};
-                    _localizeLang = code;
-                    localizeLive = true;
-                }, e => {
-                    console.log('failed to load localizations')
-                })
+        if (_localizeLang == "code") // nothing to do
+            return Promise.resolve();
+
+        const stringFiles: { branch: string, path: string }[] = simulator
+            ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" },
+            { branch: pxtBranch, path: "strings.json" }]
+            : [
+                { branch: pxtBranch, path: "strings.json" },
+                { branch: targetBranch, path: targetId + "/target-strings.json" }
+            ];
+
+        _localizeLang = code;
+        _localizeStrings = {};
+        localizeLive = true;
+        function mergeTranslations(tr: pxt.Map<string>) {
+            if (!tr) return;
+            Object.keys(tr)
+                .filter(k => !!tr[k])
+                .forEach(k => _localizeStrings[k] = tr[k])
         }
 
-        if (_localizeLang != code) {
-            return Util.httpGetJsonAsync(baseUrl + "locales/" + code + "/strings.json")
-                .then(tr => {
-                    _localizeStrings = tr || {};
-                    _localizeLang = code;
-                }, e => {
-                    console.error('failed to load localizations')
+        let hadError = false;
+        const pAll = Promise.mapSeries(stringFiles, file =>
+            downloadLiveTranslationsAsync(code, file.path, file.branch)
+                .then(mergeTranslations, e => {
+                    console.log(e.message);
+                    hadError = true;
                 })
-        }
-        //
-        return Promise.resolve(undefined);
+        );
+        return pAll.then(() => { });
     }
 
     export function htmlEscape(_input: string) {
@@ -891,7 +1012,7 @@ namespace ts.pxtc.BrowserImpl {
 
             client = new XMLHttpRequest();
             if (options.responseArrayBuffer)
-               client.responseType = "arraybuffer";
+                client.responseType = "arraybuffer";
             client.onreadystatechange = () => {
                 if (resolved) return // Safari/iOS likes to call this thing more than once
 
@@ -942,7 +1063,7 @@ namespace ts.pxtc.BrowserImpl {
         })
     }
 
-    let sha256_k = new Uint32Array([
+    const sha256_k = new Uint32Array([
         0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
         0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
         0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
@@ -1002,6 +1123,34 @@ namespace ts.pxtc.BrowserImpl {
         hs[5] += f
         hs[6] += g
         hs[7] += h
+    }
+
+    export function sha256block(buf: Uint8Array) {
+        let hs = new Uint32Array(8);
+        hs[0] = 0x6a09e667
+        hs[1] = 0xbb67ae85
+        hs[2] = 0x3c6ef372
+        hs[3] = 0xa54ff53a
+        hs[4] = 0x510e527f
+        hs[5] = 0x9b05688c
+        hs[6] = 0x1f83d9ab
+        hs[7] = 0x5be0cd19
+
+        let w = new Uint32Array(64);
+
+        let chunkLen = 16 * 4;
+
+        Util.assert(buf.length % chunkLen == 0)
+
+        for (let i = 0; i < buf.length; i += chunkLen) {
+            for (let j = 0; j < 16; j++) {
+                let off = (j << 2) + i
+                w[j] = (buf[off] << 24) | (buf[off + 1] << 16) | (buf[off + 2] << 8) | buf[off + 3]
+            }
+            sha256round(hs, w)
+        }
+
+        return hs
     }
 
     export function sha256buffer(buf: Uint8Array) {

@@ -71,7 +71,8 @@ namespace pxt.blocks.layout {
     }
 
     export function screenshotEnabled(): boolean {
-        return !BrowserUtils.isIE();
+        return !BrowserUtils.isIE()
+            && !BrowserUtils.isUwpEdge();
     }
 
     export function screenshotAsync(ws: B.Workspace): Promise<string> {
@@ -82,12 +83,14 @@ namespace pxt.blocks.layout {
         return toSvgAsync(ws)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
-                return toPngAsyncInternal(sg.width, sg.height, 4, sg.xml);
+                const pixn = sg.width * sg.height;
+                const pixelDensity = pixn > 1280 * 1280 ? 1 : pixn > 800 * 800 ? 2 : 4;
+                return toPngAsyncInternal(sg.width, sg.height, pixelDensity, sg.xml);
             });
     }
 
-    export function svgToPngAsync(svg: SVGElement, customCss: string, x: number, y: number, width: number, height: number, pixelDensity: number): Promise<string> {
-        return blocklyToSvgAsync(svg, customCss, x, y, width, height)
+    export function svgToPngAsync(svg: SVGElement, x: number, y: number, width: number, height: number, pixelDensity: number): Promise<string> {
+        return blocklyToSvgAsync(svg, x, y, width, height)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
                 return toPngAsyncInternal(sg.width, sg.height, pixelDensity, sg.xml);
@@ -115,28 +118,6 @@ namespace pxt.blocks.layout {
         })
     }
 
-    const CUSTOM_CSS = `
-.blocklyMainBackground {
-    stroke:none !important;
-}
-
-.blocklyTreeLabel, .blocklyText, .blocklyHtmlInput {
-    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
-}
-
-.rtl .blocklyText {
-    text-align:right;
-}
-
-.blocklyTreeLabel {
-    font-size:1.25rem !important;
-}
-
-.blocklyCheckbox {
-    fill: #ff3030 !important;
-    text-shadow: 0px 0px 6px #f00;
-    font-size: 17pt !important;
-}`;
     const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
 
     export function toSvgAsync(ws: B.Workspace): Promise<{
@@ -149,14 +130,14 @@ namespace pxt.blocks.layout {
         let sg = (ws as any).svgBlockCanvas_.cloneNode(true) as SVGGElement;
 
 
-        return blocklyToSvgAsync(sg, CUSTOM_CSS, bbox.x, bbox.y, bbox.width, bbox.height);
+        return blocklyToSvgAsync(sg, bbox.x, bbox.y, bbox.width, bbox.height);
     }
 
-    export function blocklyToSvgAsync(sg: SVGElement, customCss: string, x: number, y: number, width: number, height: number): Promise<{
-        width: number; height: number; xml: string;
+    export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number): Promise<{
+        width: number; height: number; svg: string; xml: string;
     }> {
         if (!sg.childNodes[0])
-            return Promise.resolve<{ width: number; height: number; xml: string; }>(undefined);
+            return Promise.resolve<{ width: number; height: number; svg: string; xml: string; }>(undefined);
 
         sg.removeAttribute("width");
         sg.removeAttribute("height");
@@ -167,14 +148,19 @@ namespace pxt.blocks.layout {
             ${new XMLSerializer().serializeToString(sg)}
             </svg>`, "image/svg+xml");
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
-        // CSS may contain <, > which need to be stored in CDATA section
-        cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
-        xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
+        const customCssHref = (document.getElementById("blocklycss") as HTMLLinkElement).href;
+        return pxt.BrowserUtils.loadAjaxAsync(customCssHref)
+            .then((customCss) => {
 
-        return expandImagesAsync(xsg)
-            .then(() => {
-                return { width: width, height: height, xml: documentToSvg(xsg) };
-            });
+            // CSS may contain <, > which need to be stored in CDATA section
+            cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
+            xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
+
+            return expandImagesAsync(xsg)
+                .then(() => {
+                    return { width: width, height: height, svg: new XMLSerializer().serializeToString(xsg), xml: documentToSvg(xsg) };
+                });
+            })
     }
 
     export function documentToSvg(xsg: Node): string {

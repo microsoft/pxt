@@ -1,8 +1,8 @@
 import * as React from "react";
 import * as pkg from "./package";
-import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as sui from "./sui";
+import * as core from "./core";
 import * as codecard from "./codecard"
 
 import Cloud = pxt.Cloud;
@@ -23,6 +23,10 @@ export class Editor extends srceditor.Editor {
         return "pxtJsonEditor"
     }
 
+    hasEditorToolbar() {
+        return false
+    }
+
     display() {
         const c = this.config
         const save = () => {
@@ -37,6 +41,7 @@ export class Editor extends srceditor.Editor {
                 this.changeMade = true;
                 // switch to previous coding experience
                 this.parent.openPreviousEditor();
+                core.resetFocus();
             })
         }
         const setFileName = (v: string) => {
@@ -86,7 +91,7 @@ export class Editor extends srceditor.Editor {
         return (
             <div className="ui content">
                 <div className="ui segment form text" style={{ backgroundColor: "white" }}>
-                    <sui.Input label={lf("Name")} value={c.name} onChange={setFileName}/>
+                    <sui.Input id={"fileNameInput"} label={lf("Name")} ariaLabel={lf("Type a name for your project")} value={c.name} onChange={setFileName}/>
                     {userConfigs.map(uc =>
                         <sui.Checkbox
                             key={`userconfig-${uc.description}`}

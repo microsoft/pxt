@@ -108,6 +108,7 @@
 <next>
 <block type="test_boolean_argument">
 <value name="arg">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="test_boolean_argument_output">
 <value name="arg">
 <shadow type="logic_boolean">
@@ -148,6 +149,7 @@
 </shadow>
 </value>
 <value name="arg2">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="test_boolean_argument_output">
 <value name="arg">
 <shadow type="logic_boolean">
@@ -159,6 +161,7 @@
 </block>
 </value>
 <value name="arg2">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="test_boolean_argument_output">
 <value name="arg">
 <shadow type="logic_boolean">

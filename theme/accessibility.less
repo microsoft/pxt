@@ -1,0 +1,87 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+/*******************************
+          Accessibility
+*******************************/
+*[tabindex='0']:focus,
+*[tabindex*='d1']:focus,
+*[tabindex*='d2']:focus, /* Takes items with a defined tabIndex from 0 to 29. */
+*[role='menuitem']:focus,
+a:not([tabindex='-1']):focus,
+input:not([tabindex='-1']):focus,
+button:not([tabindex='-1']):focus,
+textarea:not([tabindex='-1']):focus,
+.ui.form input:not([tabindex='-1']):focus {
+    outline: 2px solid #4D90FE;
+}
+
+@media all and (pointer:coarse) { /* If touch screen */
+    *[tabindex='0']:focus,
+    *[tabindex*='d1']:focus,
+    *[tabindex*='d2']:focus,
+    *[role='menuitem']:focus,
+    a:not([tabindex='-1']):focus,
+    input:not([tabindex='-1']):focus,
+    button:not([tabindex='-1']):focus,
+    textarea:not([tabindex='-1']):focus,
+    .ui.form input:not([tabindex='-1']):focus {
+        outline: 1px solid transparent !important;
+    }
+}
+
+.blocklyTreeRoot:focus,
+.blocklyWidgetDiv *:focus,
+.blocklySVG *:focus,
+.monaco-editor *:focus,
+#monacoEditor *:focus {
+    outline: 1px solid transparent !important;
+}
+
+.ui.item:focus, .ui.button:focus {
+    z-index: 1000;
+}
+
+.accessible-hidden {
+    position: absolute !important;
+    display: block;
+    visibility: visible;
+    overflow: hidden;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    border: 0;
+    padding: 0;
+    clip: rect(0 0 0 0);
+}
+
+#accessibleMenu {
+    position: absolute;
+    z-index: 1001;
+    top: -20em;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+
+    .ui.item.link {
+        position: absolute;
+        width: 100%;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .ui.item.link:focus {
+        top:20em;
+    }
+}
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+    #menubar #accessibleMenu {
+        height: @mobileMenuHeight !important;
+        min-height: @mobileMenuHeight !important;
+    }
+}

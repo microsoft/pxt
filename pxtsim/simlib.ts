@@ -31,6 +31,8 @@ namespace pxsim {
 
     export class EventBus {
         private queues: Map<EventQueue<number>> = {};
+        private lastEventValue: string | number;
+        private lastEventTimestampUs: number;
 
         constructor(private runtime: Runtime) { }
 
@@ -42,9 +44,24 @@ namespace pxsim {
         }
 
         queue(id: number | string, evid: number | string, value: number = 0) {
+            //id: event source, e.g., MICROBIT_ID_BUTTON_A
+            //evid: event value, e.g., MICROBIT_BUTTON_EVT_CLICK
+            //value: mysterious optional parameter
             let k = id + ":" + evid;
             let queue = this.queues[k];
-            if (queue) queue.push(value);
+            if (queue) {
+                this.lastEventValue = evid;
+                this.lastEventTimestampUs = U.perfNowUs();
+                queue.push(value);
+            }
+        }
+
+        getLastEventValue() {
+            return this.lastEventValue;
+        }
+
+        getLastEventTime() {
+            return 0xffffffff & (this.lastEventTimestampUs - runtime.startTimeUs);
         }
     }
 
@@ -202,18 +219,34 @@ namespace pxsim {
         leave: string
     }
 
-    export const pointerEvents = typeof window != "undefined" && !!(window as any).PointerEvent ? {
-        up: "pointerup",
-        down: "pointerdown",
-        move: "pointermove",
-        leave: "pointerleave"
-    } : {
+    export function isTouchEnabled(): boolean {
+        return typeof window !== "undefined" &&
+                ('ontouchstart' in window                              // works on most browsers
+                || (navigator && navigator.maxTouchPoints > 0));       // works on IE10/11 and Surface);
+    }
+
+    export function hasPointerEvents(): boolean {
+        return typeof window != "undefined" && !!(window as any).PointerEvent;
+    }
+
+    export const pointerEvents = hasPointerEvents() ? {
+            up: "pointerup",
+            down: "pointerdown",
+            move: "pointermove",
+            leave: "pointerleave"
+        } : isTouchEnabled() ?
+        {
+            up: "mouseup",
+            down: "touchstart",
+            move: "touchmove",
+            leave: "touchend"
+        } :
+        {
             up: "mouseup",
             down: "mousedown",
             move: "mousemove",
             leave: "mouseleave"
         };
-
 }
 
 namespace pxsim.visuals {

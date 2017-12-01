@@ -51,6 +51,8 @@
     * [Number](/types/number)
     * [String](/types/string)
     * [Boolean](/types/boolean)
+    * [Array](/types/array)
+    * [Function](/types/function)
 
 ## #other
 
@@ -67,11 +69,8 @@
 ## Developers #devs
 
 * Developers
-    * [Packages](/packages)
-        * [Build your own](/packages/build-your-own)
-        * [Approval](/packages/approval)
-        * [Versioning](/packages/versioning)
     * [Command Line Interface](/cli)
     * [Visual Studio Code support](/code)
     * [Coding on Raspberry Pi](/raspberry-pi)
+    * [Blocks Embed](/blocks-embed)
 

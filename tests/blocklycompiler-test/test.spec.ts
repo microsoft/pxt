@@ -1,6 +1,6 @@
 /// <reference path="..\..\localtypings\mocha.d.ts" />
 /// <reference path="..\..\localtypings\chai.d.ts" />
-/// <reference path="..\..\localtypings\blockly.d.ts" />
+/// <reference path="..\..\localtypings\pxtblockly.d.ts" />
 /// <reference path="..\..\built\pxtblocks.d.ts" />
 /// <reference path="..\..\built\pxtcompiler.d.ts" />
 
@@ -235,6 +235,14 @@ describe("blockly compiler", () => {
         it("should not infinitely recurse for unininitialized arrays used in a for of loop", done => {
             blockTestAsync("lists_infinite2").then(done, done);
         });
+
+        it("should not declare lists as strings when using the length block", done => {
+            blockTestAsync("lists_length_with_for_of").then(done, done);
+        });
+
+        it("should handle empty array blocks", done => {
+            blockTestAsync("lists_empty_arrays").then(done, done);
+        });
     });
 
     describe("compiling logic", () => {
@@ -284,6 +292,10 @@ describe("blockly compiler", () => {
 
         it("should change invalid names and preserve unicode names", done => {
             blockTestAsync("variables_names").then(done, done);
+        });
+
+        it("should change reserved names", done => {
+            blockTestAsync("variables_reserved_names").then(done, done);
         });
     });
 });

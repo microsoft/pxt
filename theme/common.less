@@ -61,13 +61,14 @@ html, body {
     background-color: @editorToolsBackground;
 }
 
-#blocksArea, #monacoEditor, #pxtJsonEditor, #filelist {
+#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
     bottom: @editorToolsCollapsedHeight;
 }
 
 .hideEditorToolbar #blocksArea,
     .hideEditorToolbar #monacoEditor,
     .hideEditorToolbar #pxtJsonEditor,
+    .hideEditorToolbar #serialEditor,
     .hideEditorToolbar #filelist {
     bottom: 0rem !important;
 }
@@ -182,9 +183,9 @@ div.simframe > iframe {
 
 /* Menu */
 #menubar .ui.menu .item.editor-menuitem {
-    background: fade(@black, 30%) !important;
     margin: calc(@mainMenuHeight/10);
     padding: calc(@mainMenuHeight/10);
+    background: fade(@black, 30%) !important;
     border-radius: 0.5rem !important;
 }
 .ui.menu.fixed .item.editor-menuitem .item {
@@ -202,14 +203,13 @@ div.simframe > iframe {
     border-top-right-radius: 0.2rem !important;
     border-bottom-right-radius: 0.2rem !important;
 }
-
 // Add a transition between the blocks / js menu item toggle options
 .ui.inverted.menu .item.editor-menuitem .item {
-    -webkit-transition: background 1s; /* Safari */
-    -moz-transition: background 1s; /* Mozilla */
+    -webkit-transition: background .3s; /* Safari */
+    -moz-transition: background .3s; /* Mozilla */
     -webkit-transition-timing-function: ease-in; /* Mozilla */
-    -o-transition: background 1s; /* Opera */
-    transition: background 1s;
+    -o-transition: background .3s; /* Opera */
+    transition: background .3s;
     transition-timing-function: ease-in;
 }
 
@@ -230,6 +230,8 @@ div.simframe > iframe {
     background-repeat: no-repeat;
     background-position: center;
     height: 10rem;
+    border-top-left-radius: @defaultBorderRadius;
+    border-top-right-radius: @defaultBorderRadius;
 }
 
 /* Logo */
@@ -249,7 +251,7 @@ div.simframe > iframe {
 }
 
 .ui.item.logo img {
-    max-height: 2.0rem;
+    max-height: 1.6rem;
     margin-left: 1rem;
     margin-right: 1rem;
 }
@@ -327,9 +329,11 @@ div.simframe > iframe {
 }
 
 /* Icon and text */
-#content .ui.button > .icon-and-text {
-    margin-right: 4px;
-    margin-left: -2px;
+.ui.menu > .menu > .ui.item > .icon-and-text.icon {
+    margin: 0em auto;
+}
+.ui.menu > .menu > .ui.item > .icon-and-text.icon ~ span.ui.text {
+    margin-left: 0.6em;
 }
 
 /*******************************
@@ -368,11 +372,37 @@ div.simframe > iframe {
 
 .ui.modal.projectsdialog > .content {
     padding: 0 !important;
+    position: relative;
 }
 
 .ui.modal.projectsdialog .tabsegment {
     min-height: 450px;
     background: white !important;
+    margin: 0;
+}
+
+
+/*******************************
+        Modal Close Icon
+*******************************/
+
+.ui.modal .closeIcon {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+.ui.modal.projectsdialog .closeIcon {
+    top: 0.4rem;
+    right: 0.2rem;
+}
+
+.ui.button.icon.clear {
+    background: transparent;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+.ui.button.icon.inverted.clear:hover, .ui.button.icon.inverted.clear:focus {
+    color: @grey !important;
 }
 
 /*******************************
@@ -387,206 +417,86 @@ div.simframe > iframe {
 .notificationDialog.warning .content a {
     color: white;
     font-weight: 400;
-}
 
+}
 
 /*******************************
-             Blockly
+        Notification Banner
 *******************************/
 
-/* Lower Z index for BlocklyWidgetDiv and grid picker tooltips */
-.blocklyWidgetDiv {
-    z-index: 105;
+#notificationBanner {
+    z-index: 1000;
+    width: 100%;
+    margin: 0;
 }
 
-.blocklyGridPickerTooltip {
-    z-index: 106;
+.notificationBannerVisible #filelist,
+.notificationBannerVisible #maineditor,
+.notificationBannerVisible #sidedocs {
+    top: calc(@mainMenuHeight + @bannerHeight);
 }
 
-.blocklyGridPickerPadder {
-    box-shadow: 0px 0px 8px 1px;
+.notificationBannerVisible #mainmenu {
+    top: @bannerHeight;
+    margin: 0;
 }
 
-/* Set Z index of the Blockly scrollbars to be beneath the BlocklyWidgetDiv */
-.blocklyScrollbarHorizontal, .blocklyScrollbarVertical {
-    z-index: 8 !important;
+#notificationBanner {
+    padding: 0;
+    font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    height: @bannerHeight;
+    margin-top: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    .bannerLeft {
+        display: block;
+        .content {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            line-height: 100%;
+            > * {
+                margin-left: 0.25rem;
+            }
+            img {
+                height: @bannerHeight;
+            }
+            a.link {
+                font-weight: bold;
+                text-decoration: underline;
+                &:hover, &:focus {
+                    cursor: pointer;
+                }
+            }
+        }
+    }
+    .bannerRight {
+        display: flex;
+        flex-direction: row-reverse;
+        flex-grow: 1;
+        line-height: 100%;
+        .close {
+            &:hover, &:focus {
+                color: darken(@bannerContrastColor, 25%);
+                cursor: pointer;
+            }
+        }
+    }
 }
 
-.blocklyTooltipDiv {
-    border:none !important;
-    box-shadow: none !important;
-    background-color: transparent !important;
-    opacity: 1 !important;
-    /* wrap the JS text inside a blockly Tooltip */
-    overflow-wrap: break-word;
-}
-
-.blocklyToolboxDiv, .monacoToolboxDiv {
-    background: @blocklyToolboxColor !important;
-    z-index: 1;
-    -webkit-transition: width 1s; /* Safari */
-    -moz-transition: width 1s; /* Mozilla */
-    -webkit-transition-timing-function: ease-in; /* Mozilla */
-    -o-transition: width 1s; /* Opera */
-    transition: width 1s;
-    transition-timing-function: ease-in;
-}
-
-svg.blocklySvg {
-    background-color: @blocklySvgColor !important;
-}
-#blocksEditor .injectionDiv svg {
-    overflow: visible;
-}
-
-span.blocklyTreeLabel, text.blocklyText, input.blocklyHtmlInput {
-    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
-}
-
-/* Using 1rem creates font size issues in Edge
-text.blocklyText {
-    font-size:1rem !important;
-} */
-
-span.blocklyTreeLabel {
-    font-size:1.25rem;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-}
-
-.blocklyFlyoutButtonShadow {
-    fill: none !important;
-}
-
-.blocklyFlyoutLabelText {
-    fill: white !important;
-    font-size:1rem;
-}
-.blocklyFlyoutLabelText:hover {
-    fill: white !important;
-}
-
-/* Opacity of blockly flyout background */
-.blocklyFlyoutBackground {
-    fill-opacity: 0.9 !important;
-}
-
-div.blocklyTreeRow, span.blocklyTreeLabel {
-    cursor: pointer;
-}
-
-/* This horrendous selector and the next are for subcategories in the Blockly toolbox */
-div.blocklyTreeRoot div div div div div.blocklyTreeRow {
-    border-left-width: 12px !important;
-    padding-left: 0px !important;
-}
-
-div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
-    font-size: 1rem;
-}
-
-/* The trash icon inside the toolbox */
-#blocklyTrashIcon {
-    position: absolute;
-    top: 20%;
-    margin-left: auto;
-    margin-right: auto;
-    left: 0;
-    right: 0;
-    width: 100px;
-    height: 80px;
-    z-index: 8;
-    font-size:5rem;
-    color: @trashIconColor;
-}
-
-/* Blockly / Monaco Toolbox Buttons */
-#blocklyToolboxButtons, #monacoToolboxButtons {
-    margin-top: 0.1rem;
-    font-size:3rem;
-}
-
-/* Blockly Search bar */
-.blocklySearchInputField {
-    border: 0 !important;
-    border-radius: 0 !important;
-}
-
-/* Blockly toolbox icons */
-span.blocklyTreeIcon {
-    opacity: 1;
-    margin: -0.2em 0.25em 0.0em 0.25em;
-    width: 1.18em;
-    font-family: 'Icons';
-    font-style: normal;
-    font-weight: normal;
-    text-decoration: inherit;
-    text-align: center;
-    speak: none;
-    font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    -webkit-font-smoothing: antialiased;
-    backface-visibility: hidden;
-    font-size: 1.2rem;
-    display: none;
-}
-.blocklyTreeSelected .blocklyTreeIcon{
-    color: white;
-}
-.blocklyTreeIcon.blocklyTreeIconsearch::before {
-    content: "\f002";
-}
-.blocklyTreeIcon.blocklyTreeIconDefault::before {
-    content: "\f12e";
-}
-.blocklyTreeIcon.blocklyTreeIconadvancedcollapsed::before {
-    content: "\f078";
-}
-.blocklyTreeIcon.blocklyTreeIconadvancedexpanded::before {
-    content: "\f077";
-}
-.blocklyTreeIcon.blocklyTreeIconmore::before {
-    content: "\f141";
-}
-.blocklyTreeIcon.blocklyTreeIconaddpackage::before {
-    content: "\f055";
-}
-.blocklyTreeIcon.blocklyTreeIconloops::before {
-    content: "\f01e";
-}
-.blocklyTreeIcon.blocklyTreeIconmath::before {
-    content: "\f1ec";
-}
-.blocklyTreeIcon.blocklyTreeIconlogic::before {
-    content: "\f074";
-}
-.blocklyTreeIcon.blocklyTreeIconvariables::before {
-    content: "\f039";
-}
-.blocklyTreeIcon.blocklyTreeIconfunctions::before {
-    content: "\f0ae";
-}
-.blocklyTreeIcon.blocklyTreeIcontext::before {
-    content: "\f035";
-}
-.blocklyTreeIcon.blocklyTreeIconarrays::before {
-    content: "\f0cb";
-}
-
-/* Blockly Slider field */
-.blocklyWidgetDiv .goog-slider-horizontal {
-    background: white;
-    border: 2px solid black;
-    border-radius: 5px;
-}
-
-/* Fade out disabled blocks, but don't completely lose the colour */
-.blocklyDisabled > .blocklyPathDark {
-    display: block !important;
-    fill-opacity: 0.5;
+#notificationBanner.default {
+    background-color: @bannerBackgroundColor;
+    color: @bannerContrastColor;
+    outline: 2px solid @bannerContrastColor;
+    .content {
+        a.link {
+            color: @bannerLinkColor;
+            &:hover, &:focus {
+                color: darken(@bannerLinkColor, 10%);
+            }
+        }
+    }
 }
 
 /*******************************
@@ -604,12 +514,12 @@ span.blocklyTreeIcon {
 
 /* Monaco Editor Line number background, changed from the default light theme */
 .monaco-editor.vs .margin-view-overlays.monaco-editor-background {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.05) !important;
 }
 
 /* Monaco Editor Current line highlighting, only needed for the light theme */
 .monaco-editor.vs .current-line {
-	background: rgba(0, 0, 255, 0.1);
+	background: rgba(0, 0, 255, 0.1) !important;
 }
 
 /* Monaco Editor Suggest Widget, styling */
@@ -617,20 +527,17 @@ span.blocklyTreeIcon {
     border-radius:5px;
 }
 .monaco-list-row.focused {
-    background-color:#0078D7;
-    color: #fff;
+    background-color:#0078D7 !important;
+    color: #fff !important;
 }
 .monaco-editor.vs .suggest-widget:not(.frozen) .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
-    color: #0078D7;
+    color: #0078D7 !important;
 }
 .monaco-editor.vs .suggest-widget:not(.frozen) .monaco-list .monaco-list-row.focused .monaco-highlighted-label .highlight {
-    color: #fff;
+    color: #fff !important;
 }
 .monaco-editor.vs .suggest-widget .details > .monaco-scrollable-element > .body > .type, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .type-label {
-    color: #FFB900;
-}
-.monaco-editor.vs .suggest-widget .details > .monaco-scrollable-element > .body > .docs, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .docs {
-    color: #fff;
+    color: #FFB900 !important;
 }
 
 /* Monaco Editor Main tokens */
@@ -817,33 +724,14 @@ Avatar
 
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
-    /* Blockly */
-    div.blocklyTreeRow {
-        min-width: 200px;
-    }
 }
 
 /* Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
-    /* Blockly row */
-    div.blocklyTreeRow {
-        min-width: 180px;
-    }
 }
 
 /* Tablet */
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
-    /* Blockly */
-    div.blocklyTreeRow {
-        padding-top: 0.25rem !important;
-        padding-bottom: 1.5rem !important;
-        border-left-width: 12px !important;
-    }
-    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
-        border-left-width: 18px !important;
-        padding-top: 0px !important;
-        padding-bottom: 1.6rem !important;
-    }
 }
 
 /* Mobile */
@@ -852,17 +740,6 @@ Avatar
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
 @media only screen and (min-width: @computerBreakpoint) {
-    /* Blockly */
-    div.blocklyTreeRow {
-        padding-top: 0.5rem !important;
-        padding-bottom: 2.0rem !important;
-        border-left-width: 12px !important;
-    }
-    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
-        border-left-width: 18px !important;
-        padding-top: 0px !important;
-        padding-bottom: 1.6rem !important;
-    }
     .collapsedEditorTools #filelist {
         display: none;
     }
@@ -964,10 +841,6 @@ Avatar
     #logo .name {
         display: none !important;
     }
-    /* Blockly */
-    span.blocklyTreeLabel {
-        font-size:1rem;
-    }
     /* Help card */
     #helpcard {
         top: auto;
@@ -978,9 +851,10 @@ Avatar
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
-    /* Blockly */
-    span.blocklyTreeLabel {
-        font-size:1rem;
+    /* Logo */
+    #logo, #organization {
+        font-size: 0rem;
+        padding-right: 0;
     }
     /* Help card */
     #helpcard {
@@ -1012,7 +886,7 @@ Avatar
     #editortools {
         height: 10rem;
     }
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #msg {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #msg {
         bottom: 10rem;
     }
     #tutorialcard.bottom {
@@ -1047,16 +921,15 @@ Avatar
     #root:not(.sandbox) #menubar .ui.menu .item {
         padding: 0.3em !important;
     }
-    #menubar .ui.menu .item.editor-menuitem {
-        margin: calc(@mobileMenuHeight/10);
-        padding: calc(@mobileMenuHeight/10);
+    #root #menubar .ui.menu .item.editor-menuitem .item {
+        padding: 0.7em !important;
     }
-    #menubar .ui.menu .item.editor-menuitem .item {
-        padding: 0.4em !important;
+    #root #menubar .ui.menu.fixed .ui.item.editor-menuitem .item {
+        width: 40px;
+        height: 38px;
     }
-    .sandbox #menubar .ui.menu .item.editor-menuitem {
-        margin: calc(@sandboxMobileMenuHeight/10);
-        padding: calc(@sandboxMobileMenuHeight/10);
+    .active.item.javascript-menuitem ~ .toggle {
+        margin-left: 40px !important;
     }
     /* Top Menu */
     #maineditor {
@@ -1068,59 +941,28 @@ Avatar
     .sandbox #maineditor {
         top: @sandboxMobileMenuHeight;
     }
-
     /* Logo */
     .ui.item.logo img {
         max-height: 2.5rem;
-        margin-left: 0.5rem;
-        margin-right: 0.5rem;
+        margin-left: 0.4rem;
+        margin-right: 0.4rem;
     }
     .ui.mini.image {
         display: block !important;
+    }
+    /* Blocks / JS toggle */
+    #menubar .ui.menu .item.editor-menuitem {
+        margin: calc(@mobileMenuHeight/12);
+        padding: calc(@mobileMenuHeight/12);
+    }
+    .sandbox #menubar .ui.menu .item.editor-menuitem {
+        margin: calc(@sandboxMobileMenuHeight/15);
+        padding: calc(@sandboxMobileMenuHeight/15);
     }
 }
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    /* Logo */
-    #logo, #organization {
-        font-size: 0rem;
-        padding-right: 0;
-    }
-    /* Blockly */
-    text.blocklyCheckbox {
-        font-size: 17pt !important;
-    }
-    /* Hide blockly tree labels on mobile */
-    span.blocklyTreeLabel {
-        display: none !important;
-    }
-    div.blocklyTreeRow:hover span.blocklyTreeLabel {
-        display: none !important;
-    }
-    div.blocklyTreeRow.blocklyTreeSelected:hover span.blocklyTreeLabel {
-        display: none !important;
-    }
-    div.blocklyTreeRow {
-        padding-right: 0;
-        height: 2rem;
-        text-align: center;
-    }
-    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
-        border-left-width: 8px !important;
-    }
-    span.blocklyTreeIcon {
-        font-size: 1.5rem;
-        margin: 0.0em 0.25em 0.0em 0.25em;
-    }
-    /* Blockly trash icon */
-    #blocklyTrashIcon {
-        font-size: 3rem;
-    }
-    /* Hide the blockly toolbox search */
-    #blocklySearchArea {
-        display: none !important;
-    }
     .hideEditorFloats #editortools {
         height: @editorToolsCollapsedHeight;
     }
@@ -1141,6 +983,7 @@ Avatar
     .sandbox #blocksArea,
         .sandbox #monacoEditor,
         .sandbox #pxtJsonEditor,
+        .sandbox #serialEditor,
         .sandbox #editortools,
         .sandbox #msg {
         bottom: 1.5rem !important;

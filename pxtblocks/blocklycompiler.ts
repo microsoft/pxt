@@ -1,4 +1,4 @@
-///<reference path='../localtypings/blockly.d.ts'/>
+///<reference path='../localtypings/pxtblockly.d.ts'/>
 /// <reference path="../built/pxtlib.d.ts" />
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -10,6 +10,18 @@ import B = Blockly;
 let iface: pxt.worker.Iface
 
 namespace pxt.blocks {
+    export const reservedWords = [ "abstract", "any", "as", "break",
+    "case", "catch", "class", "continue", "const", "constructor", "debugger",
+    "declare", "default", "delete", "do", "else", "enum", "export", "extends",
+    "false", "finally", "for", "from", "function", "get", "if", "implements",
+    "import", "in", "instanceof", "interface", "is", "let", "module", "namespace",
+    "new", "null", "package", "private", "protected", "public",
+    "require", "global", "return", "set", "static", "super", "switch",
+    "symbol", "this", "throw", "true", "try", "type", "typeof", "var", "void",
+    "while", "with", "yield", "async", "await", "of",
+
+    // PXT Specific
+    "Math"];
 
     export function initWorker() {
         if (!iface) {
@@ -46,12 +58,6 @@ namespace pxt.blocks {
     }
 
     const MAX_COMMENT_LINE_LENGTH = 50;
-
-    const reservedWords = ["break", "case", "catch", "class", "const", "continue", "debugger",
-        "default", "delete", "do", "else", "enum", "export", "extends", "false", "finally",
-        "for", "function", "if", "import", "in", "instanceof", "new", "null", "return",
-        "super", "switch", "this", "throw", "true", "try", "typeof", "var", "void", "while",
-        "with"];
 
     let placeholders: Map<Map<any>> = {};
 
@@ -383,7 +389,7 @@ namespace pxt.blocks {
                     }
                 }
             }
-            return tp || ground("number[]");
+            return tp || ground("Array");
         }
         else if (check === "T") {
             const func = e.stdCallTable[b.type];
@@ -703,13 +709,13 @@ namespace pxt.blocks {
     function extractNumber(b: B.Block): number {
         let v = b.getFieldValue("NUM");
         const parsed = parseFloat(v);
-        checkNumber(parsed);
+        checkNumber(parsed, b);
         return parsed;
     }
 
-    function checkNumber(n: number) {
-        if (n === Infinity || n === NaN) {
-            U.userError(lf("Number entered is either too large or too small"));
+    function checkNumber(n: number, b: B.Block) {
+        if (n === Infinity || isNaN(n)) {
+            throwBlockError(lf("Number entered is either too large or too small"), b);
         }
     }
 
@@ -830,17 +836,17 @@ namespace pxt.blocks {
         return mkPrefix("!", [H.mkParenthesizedExpression(expr)]);
     }
 
-    function extractNumberLit(e: JsNode): number {
+    function extractNumberLit(e: JsNode, b: B.Block): number {
         if (e.type != NT.Prefix || !/^-?\d+$/.test(e.op))
             return null
         const parsed = parseInt(e.op);
-        checkNumber(parsed);
+        checkNumber(parsed, b);
         return parsed;
     }
 
     function compileRandom(e: Environment, b: B.Block, comments: string[]): JsNode {
         let expr = compileExpression(e, getInputTargetBlock(b, "limit"), comments);
-        let v = extractNumberLit(expr)
+        let v = extractNumberLit(expr, b)
         if (v != null)
             return H.mathCall("random", [H.mkNumberLiteral(v + 1)]);
         else
@@ -1187,7 +1193,7 @@ namespace pxt.blocks {
         let n = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_$]/g, a =>
             ts.pxtc.isIdentifierPart(a.charCodeAt(0), ts.pxtc.ScriptTarget.ES5) ? a : "");
 
-        if (!n || !ts.pxtc.isIdentifierStart(n.charCodeAt(0), ts.pxtc.ScriptTarget.ES5)) {
+        if (!n || !ts.pxtc.isIdentifierStart(n.charCodeAt(0), ts.pxtc.ScriptTarget.ES5) || reservedWords.indexOf(n) !== -1) {
             n = "_" + n;
         }
 
@@ -1552,13 +1558,23 @@ namespace pxt.blocks {
         let e = emptyEnv(w);
 
         // append functions in stdcalltable
-        if (blockInfo)
+        if (blockInfo) {
+            // Enums are not enclosed in namespaces, so add them to the taken names
+            // to avoid collision
+            Object.keys(blockInfo.apis.byQName).forEach(name => {
+                const info = blockInfo.apis.byQName[name];
+                if (info.kind === pxtc.SymbolKind.Enum) {
+                    e.renames.takenNames[info.qName] = true;
+                }
+            });
+
             blockInfo.blocks
                 .forEach(fn => {
                     if (e.stdCallTable[fn.attributes.blockId]) {
                         pxt.reportError("blocks", "function already defined", { "details": fn.attributes.blockId });
                         return;
                     }
+                    e.renames.takenNames[fn.namespace] = true;
                     let fieldMap = pxt.blocks.parameterNames(fn);
                     let instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
                     let args = (fn.parameters || []).map(p => {
@@ -1585,6 +1601,7 @@ namespace pxt.blocks {
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
                 })
+        }
 
         if (skipVariables) return e;
 
@@ -1660,15 +1677,28 @@ namespace pxt.blocks {
         return tdASTtoTS(e, compiled);
     }
 
+    function eventWeight(b: B.Block, e: Environment) {
+        if (b.type === ts.pxtc.ON_START_TYPE) {
+            return 0;
+        }
+        const api = e.stdCallTable[b.type];
+        if (api && api.attrs.afterOnStart) {
+            return 1;
+        }
+        else {
+            return -1;
+        }
+    }
+
     function compileWorkspace(e: Environment, w: B.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
         try {
             infer(e, w);
 
             const stmtsMain: JsNode[] = [];
 
-            // all compiled top level blocks are event, move on start to bottom
+            // all compiled top level blocks are events
             const topblocks = w.getTopBlocks(true).sort((a, b) => {
-                return (a.type == ts.pxtc.ON_START_TYPE ? 1 : 0) - (b.type == ts.pxtc.ON_START_TYPE ? 1 : 0);
+                return eventWeight(a, e) - eventWeight(b, e)
             });
 
             updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
@@ -1715,6 +1745,15 @@ namespace pxt.blocks {
                 });
 
             return stmtsVariables.concat(stmtsMain)
+        } catch (err) {
+            let be: B.Block = (err as any).block;
+            if (be) {
+                be.setWarningText(err + "");
+                e.errors.push(be);
+            }
+            else {
+                throw err;
+            }
         } finally {
             removeAllPlaceholders();
         }

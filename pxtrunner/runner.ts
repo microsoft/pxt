@@ -143,10 +143,17 @@ namespace pxt.runner {
         const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
         const lang = mlang ? mlang[2] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
         const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
+        const versions = pxt.appTarget.versions;
 
         patchSemantic();
         const cfg = pxt.webConfig
-        return Util.updateLocalizationAsync(cfg.commitCdnUrl, lang, pxt.appTarget.versions.pxtCrowdinBranch, live)
+        return Util.updateLocalizationAsync(
+            pxt.appTarget.id,
+            true,
+            cfg.commitCdnUrl, lang,
+            versions ? versions.pxtCrowdinBranch : "",
+            versions ? versions.targetCrowdinBranch : "",
+            live)
             .then(() => {
                 mainPkg = new pxt.MainPackage(new Host());
             })
@@ -283,9 +290,12 @@ namespace pxt.runner {
             const localeLiveRx = /^live-/;
             editorLocale = locale;
             return pxt.Util.updateLocalizationAsync(
+                pxt.appTarget.id,
+                true,
                 pxt.webConfig.commitCdnUrl,
                 editorLocale.replace(localeLiveRx, ''),
                 pxt.appTarget.versions.pxtCrowdinBranch,
+                pxt.appTarget.versions.targetCrowdinBranch,
                 localeLiveRx.test(editorLocale)
             );
         }
@@ -324,6 +334,48 @@ namespace pxt.runner {
         }
     }
 
+    export function startRenderServer() {
+        pxt.tickEvent("renderer.ready");
+
+        const jobQueue: pxsim.RenderBlocksRequestMessage[] = [];
+        let jobPromise: Promise<void> = undefined;
+
+        function consumeQueue() {
+            if (jobPromise) return; // other worker already in action
+            const msg = jobQueue.shift();
+            if (!msg) return; // no more work
+
+            jobPromise = runner.decompileToBlocksAsync(msg.code, msg.options)
+                .then(result => result.blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(result.blocksSvg, 0, 0, result.blocksSvg.viewBox.baseVal.width, result.blocksSvg.viewBox.baseVal.height) : undefined)
+                .then(res => {
+                    window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
+                        source: "makecode",
+                        type: "renderblocks",
+                        id: msg.id,
+                        width: res ? res.width : undefined,
+                        height: res ? res.height : undefined,
+                        svg: res ? res.svg : undefined,
+                        uri: res ? res.xml : undefined
+                    }, "*");
+                    jobPromise = undefined;
+                    consumeQueue();
+                })
+        }
+
+        // notify parent that render engine is loaded
+        window.addEventListener("message", function (ev) {
+            const msg = ev.data as pxsim.RenderBlocksRequestMessage;
+            if (msg.type == "renderblocks") {
+                jobQueue.push(msg);
+                consumeQueue();
+            }
+        }, false);
+        window.parent.postMessage(<pxsim.RenderReadyResponseMessage>{
+            source: "makecode",
+            type: "renderready"
+        }, "*");
+    }
+
     export function startDocsServer(loading: HTMLElement, content: HTMLElement) {
         function render(doctype: string, src: string) {
             pxt.debug(`rendering ${doctype}`);
@@ -338,6 +390,8 @@ namespace pxt.runner {
                             let body = $('body');
                             body.addClass('tutorial');
                             return renderTutorialAsync(content, src);
+                        case "book":
+                            return renderBookAsync(content, src);
                         default:
                             return renderMarkdownAsync(content, src);
                     }
@@ -366,7 +420,7 @@ namespace pxt.runner {
         }
 
         function renderHash() {
-            let m = /^#(doc|md|tutorial):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
+            let m = /^#(doc|md|tutorial|book):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
                 const p = m[4] ? setEditorContextAsync(
@@ -402,6 +456,39 @@ ${files["main.ts"]}
         docid = docid.replace(/^\//, "");
         return pxt.Cloud.downloadMarkdownAsync(docid, editorLocale, pxt.Util.localizeLive)
             .then(md => renderMarkdownAsync(content, md, { path: docid }))
+    }
+
+    function renderBookAsync(content: HTMLElement, summaryid: string): Promise<void> {
+        summaryid = summaryid.replace(/^\//, "");
+        pxt.tickEvent('book', { id: summaryid });
+        pxt.log(`rendering book from ${summaryid}`)
+        let toc: TOCMenuEntry[];
+        return pxt.Cloud.downloadMarkdownAsync(summaryid, editorLocale, pxt.Util.localizeLive)
+            .then(summary => {
+                toc = pxt.docs.buildTOC(summary);
+                pxt.log(`TOC: ${JSON.stringify(toc, null, 2)}`)
+                const tocsp: Promise<void>[] = [];
+                pxt.docs.visitTOC(toc, entry => {
+                    if (!/^\//.test(entry.path) || /^\/pkg\//.test(entry.path)) return;
+                    tocsp.push(
+                        pxt.Cloud.downloadMarkdownAsync(entry.path, editorLocale, pxt.Util.localizeLive)
+                            .then(md => {
+                                entry.markdown = md;
+                            }, e => {
+                                entry.markdown = `_${entry.path} failed to load._`;
+                            })
+                    )
+                });
+                return Promise.all(tocsp);
+            })
+            .then(pages => {
+                let md = toc[0].name;
+                pxt.docs.visitTOC(toc, entry => {
+                    if (entry.markdown)
+                        md += '\n\n' + entry.markdown
+                });
+                return renderMarkdownAsync(content, md);
+            })
     }
 
     const template = `
@@ -522,18 +609,17 @@ ${files["main.ts"]}
         tutorialid = tutorialid.replace(/^\//, "");
         return pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive)
             .then(tutorialmd => {
-                let steps = tutorialmd.split(/^###[^#].*$/gmi);
+                let steps = tutorialmd.split(/^##[^#].*$/gmi);
                 let stepInfo: editor.TutorialStepInfo[] = [];
-                tutorialmd.replace(/###[^#](.*)/g, (f, s) => {
+                tutorialmd.replace(/^##[^#](.*)$/gmi, (f, s) => {
                     let info: editor.TutorialStepInfo = {
-                        fullscreen: s.indexOf('@fullscreen') > -1,
-                        hasHint: s.indexOf('@nohint') < 0
+                        fullscreen: s.indexOf('@fullscreen') > -1
                     }
                     stepInfo.push(info);
                     return ""
                 });
 
-                if (steps.length < 1) return;
+                if (steps.length < 1) return Promise.resolve();
                 let options = steps[0];
                 steps = steps.slice(1, steps.length); // Remove tutorial title
 
@@ -567,16 +653,18 @@ ${files["main.ts"]}
                                 }
                             })
                         }
-                        return;
+                        return Promise.resolve();
                     })
                     .then(() => renderMarkdownAsync(content, tutorialmd, { tutorial: true }))
                     .then(() => {
                         // Split the steps
-                        let stepcontent = content.innerHTML.split(/<h3.*\/h3>/gi);
+                        let stepcontent = content.innerHTML.split(/<h2.*\/h2>/gi);
                         for (let i = 0; i < stepcontent.length - 1; i++) {
                             content.innerHTML = stepcontent[i + 1];
                             stepInfo[i].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
+                            stepInfo[i].ariaLabel = content.firstElementChild.textContent;
                             stepInfo[i].content = stepcontent[i + 1];
+                            stepInfo[i].hasHint = content.childElementCount > 1;
                         }
                         content.innerHTML = '';
                         // return the result
