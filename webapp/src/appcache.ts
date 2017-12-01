@@ -5,6 +5,7 @@ export function init(hash: { cmd: string, arg: string }) {
     appCache.addEventListener('updateready', () => {
         core.infoNotification(lf("Update download complete. Reloading... "));
         setTimeout(() => {
+            pxt.tickEvent('appcache.updated')
             // On embedded pages, preserve the loaded project
             if (pxt.BrowserUtils.isIFrame() && hash.cmd === "pub") {
                 location.replace(location.origin + `/#pub:${hash.arg}`)
