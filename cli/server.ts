@@ -678,6 +678,10 @@ function streamPageTestAsync(id: string) {
         })
 }
 
+function certificateTestAsync(): Promise<string> {
+    return Promise.resolve(expandDocFileTemplate("certificates.html"));
+}
+
 // use http://localhost:3232/45912-50568-62072-42379 for testing
 function scriptPageTestAsync(id: string) {
     return Cloud.privateGetAsync(id)
@@ -725,7 +729,7 @@ function pkgPageTestAsync(id: string) {
 function readMd(pathname: string): string {
     const content = nodeutil.resolveMd(root, pathname);
     if (content) return content;
-    return "# Not found\nChecked:\n" + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join("")
+    return `# Not found ${pathname}\nChecked:\n` + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join("")
 }
 
 let serveOptions: ServeOptions;
@@ -871,6 +875,11 @@ export function serveAsync(options: ServeOptions) {
             streamPageTestAsync(elts[0] + "/" + elts[1])
                 .then(sendHtml)
             return
+        }
+
+        if (elts[0] == "certificates") {
+            certificateTestAsync().then(sendHtml);
+            return;
         }
 
         if (/\.js\.map$/.test(pathname)) {
