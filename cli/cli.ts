@@ -1064,6 +1064,14 @@ function uploadCoreAsync(opts: UploadOptions) {
                             }
                         trg.appTheme.logoUrl = opts.localDir
                         trg.appTheme.homeUrl = opts.localDir
+                        // patch icons in bundled packages
+                        Object.keys(trg.bundledpkgs).forEach(pkgid => {
+                            const res = trg.bundledpkgs[pkgid];
+                            // path config before storing
+                            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                            if (/^\//.test(config.icon)) config.icon = opts.localDir + "docs" + config.icon;
+                            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+                        })
                         data = new Buffer((isJs ? targetJsPrefix : '') + JSON.stringify(trg, null, 2), "utf8")
                     } else {
                         trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
@@ -1077,6 +1085,14 @@ function uploadCoreAsync(opts: UploadOptions) {
                                 if (boardDef.outlineImage) boardDef.outlineImage = uploadArtFile(boardDef.outlineImage);
                             }
                         }
+                        // patch icons in bundled packages
+                        Object.keys(trg.bundledpkgs).forEach(pkgid => {
+                            const res = trg.bundledpkgs[pkgid];
+                            // path config before storing
+                            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                            if (config.icon) config.icon = uploadArtFile(config.icon);
+                            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+                        })
                         content = JSON.stringify(trg, null, 2);
                         if (isJs)
                             content = targetJsPrefix + content
@@ -1702,7 +1718,7 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                     return;
                 }
 
-                if (fileName === "pxt.json") {
+                if (fileName === pxt.CONFIG_NAME) {
                     newProject.config = nodeutil.readPkgConfig(projectPath)
                     U.iterMap(newProject.config.dependencies, (k, v) => {
                         if (/^file:/.test(v)) {
@@ -1775,7 +1791,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         .then(() => buildTargetDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
-            let isPrj = /prj$/.test(dirname);
+            const isPrj = /prj$/.test(dirname);
             const config = nodeutil.readPkgConfig(".")
             if (config.additionalFilePath) {
                 dirsToWatch.push(path.resolve(config.additionalFilePath));
@@ -1783,8 +1799,9 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
             return pkg.filesToBePublishedAsync(true)
                 .then(res => {
-                    if (!isPrj)
+                    if (!isPrj) {
                         cfg.bundledpkgs[path.basename(dirname)] = res
+                    }
                 })
                 .then(() => testForBuildTargetAsync(isPrj))
                 .then((compileOpts) => {
@@ -1810,6 +1827,21 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 })
         }, /*includeProjects*/ true))
         .then(() => {
+            // patch icons in bundled packages
+            Object.keys(cfg.bundledpkgs).forEach(pkgid => {
+                const res = cfg.bundledpkgs[pkgid];
+                // path config before storing
+                const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                if (!config.icon)
+                    // try known location
+                    ['png', 'jpg'].map(ext => `/static/libs/${config.name}.${ext}`)
+                        .filter(ip => fs.existsSync("docs" + ip))
+                        .forEach(ip => config.icon = ip);
+
+                res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+            })
+
+
             let info = travisInfo()
             cfg.versions = {
                 branch: info.branch,
