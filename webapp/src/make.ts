@@ -6,24 +6,24 @@ import * as compiler from "./compiler"
 export function makeAsync(): Promise<void> {
     return compiler.compileAsync({ native: true })
         .then(resp => {
-            let p = pkg.mainEditorPkg();
-            let code = p.files["main.ts"];
-            let data: any = {
+            const p = pkg.mainEditorPkg();
+            const code = p.files["main.ts"];
+            const data: any = {
                 name: p.header.name || lf("Untitled"),
                 code: code ? code.content : `basic.showString("Hi!");`,
                 board: JSON.stringify(pxt.appTarget.simulator.boardDefinition)
             };
-            let parts = ts.pxtc.computeUsedParts(resp);
+            const parts = ts.pxtc.computeUsedParts(resp);
             if (parts.length) {
                 data.parts = parts.join(" ");
                 data.partdefs = JSON.stringify(pkg.mainPkg.computePartDefinitions(parts));
             }
-            let fnArgs = resp.usedArguments;
+            const fnArgs = resp.usedArguments;
             if (fnArgs)
                 data.fnArgs = JSON.stringify(fnArgs);
             data.package = Util.values(pkg.mainPkg.deps).filter(p => p.id != "this").map(p => `${p.id}=${p._verspec}`).join('\n')
-            let urlData = Object.keys(data).map(k => `${k}=${encodeURIComponent(data[k])}`).join('&');
-            let url = `${pxt.webConfig.partsUrl}?${urlData}`
+            const urlData = Object.keys(data).map(k => `${k}=${encodeURIComponent(data[k])}`).join('&');
+            const url = `${pxt.webConfig.partsUrl}?${urlData}`
 
             return core.dialogAsync({
                 hideCancel: true,
