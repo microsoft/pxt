@@ -23,6 +23,12 @@
         .certificate canvas {
             width: 100%;
         }
+
+        @media only print {
+            .hideprint {
+                display: none !important;
+            }
+        }
     </style>
 
 </head>
@@ -60,7 +66,7 @@
     $(document).ready(function () {
         $('#print').click(printCertificates);
 
-        if(/^#name:/.test(window.location.hash)) {
+        if (/^#name:/.test(window.location.hash)) {
             $('#names').val(window.location.hash.substr("#name:".length));
             printCertificates();
         }
