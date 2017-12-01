@@ -35,6 +35,8 @@ export class Editor extends srceditor.Editor {
     extensions: pxt.PackageConfig[];
     showSearch: boolean;
 
+    forceRefreshToolbox: boolean; // force refresh on next reload
+
     setVisible(v: boolean) {
         super.setVisible(v);
         this.isVisible = v;
@@ -769,7 +771,7 @@ export class Editor extends srceditor.Editor {
 
         pxt.debug('updating toolbox');
         const editor_ = (this.editor as any);
-        if ((editor_.toolbox_ && showCategories !== CategoryMode.None) || (editor_.flyout_ && showCategories === CategoryMode.None)) {
+        if (!this.forceRefreshToolbox && (editor_.toolbox_ && showCategories !== CategoryMode.None) || (editor_.flyout_ && showCategories === CategoryMode.None)) {
             // Toolbox is consistent with current mode, safe to update
             let tbString = new XMLSerializer().serializeToString(tb);
             if (tbString == this.cachedToolbox) return;
@@ -794,5 +796,7 @@ export class Editor extends srceditor.Editor {
             this.domUpdate();
             this.editor.scrollCenter();
         }
+
+        this.forceRefreshToolbox = false;
     }
 }

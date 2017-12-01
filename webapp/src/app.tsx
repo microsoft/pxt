@@ -645,6 +645,7 @@ export class ProjectView
     }
 
     reloadHeaderAsync() {
+        this.blocksEditor.forceRefreshToolbox = true;
         return this.loadHeaderAsync(this.state.header, this.state.editorState)
     }
 

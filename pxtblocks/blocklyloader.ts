@@ -1679,6 +1679,7 @@ namespace pxt.blocks {
     function removeBlock(fn: pxtc.SymbolInfo) {
         delete Blockly.Blocks[fn.attributes.blockId];
         delete cachedBlocks[fn.attributes.blockId];
+        delete searchElementCache[fn.attributes.blockId];
     }
 
     let blocklyInitialized = false;
