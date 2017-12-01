@@ -495,7 +495,7 @@ namespace pxsim.instructions {
         let wires = (props.stepToWires[step] || []);
         let mkLabel = (loc: Loc) => {
             if (loc.type === "breadboard") {
-                let {row, col} = (<BBLoc>loc);
+                let { row, col } = (<BBLoc>loc);
                 return `(${row},${col})`
             } else
                 return (<BoardLoc>loc).pin;
@@ -525,7 +525,7 @@ namespace pxsim.instructions {
             locs.forEach((l, i) => {
                 let topLbl: string;
                 if (l) {
-                    let {row, col} = l;
+                    let { row, col } = l;
                     topLbl = `(${row},${col})`;
                 } else {
                     topLbl = "";
@@ -576,6 +576,9 @@ namespace pxsim.instructions {
     }
 
     export function renderParts(options: RenderPartsOptions) {
+        if (options.configData)
+            pxsim.setConfigData(options.configData.cfg, options.configData.cfgKey);
+
         const msg: SimulatorRunMessage = {
             type: "run",
             code: "",
@@ -585,9 +588,6 @@ namespace pxsim.instructions {
         pxsim.runtime = new Runtime(msg);
         pxsim.runtime.board = null;
         pxsim.initCurrentRuntime(msg); // TODO it seems Runtime() ctor already calls this?
-
-        if (options.configData)
-            pxsim.setConfigData(options.configData.cfg, options.configData.cfgKey);
 
         let style = document.createElement("style");
         document.head.appendChild(style);
