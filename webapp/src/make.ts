@@ -22,6 +22,7 @@ export function makeAsync(): Promise<void> {
             if (fnArgs)
                 data.fnArgs = JSON.stringify(fnArgs);
             data.package = Util.values(pkg.mainPkg.deps).filter(p => p.id != "this").map(p => `${p.id}=${p._verspec}`).join('\n')
+            data.configData = pxsim.getConfigData()
             const urlData = Object.keys(data).map(k => `${k}=${encodeURIComponent(data[k])}`).join('&');
             const url = `${pxt.webConfig.partsUrl}?${urlData}`
 

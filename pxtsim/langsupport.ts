@@ -44,6 +44,15 @@ namespace pxsim {
         cfgKey = cfgKey_
     }
 
+    export interface ConfigData {
+        cfg: Map<number>;
+        cfgKey: Map<number>;
+    }
+
+    export function getConfigData(): ConfigData {
+        return { cfg, cfgKey }
+    }
+
     export function enableFloatingPoint() {
         floatingPoint = true
     }

@@ -126,14 +126,14 @@ namespace pxsim.instructions {
     };
 
     function mkBoardImgSvg(def: string | BoardImageDefinition): visuals.SVGElAndSize {
-        let boardView = pxsim.visuals.mkBoardView({
+        const boardView = pxsim.visuals.mkBoardView({
             visual: def
         });
         return boardView.getView();
     }
 
     function mkBBSvg(): visuals.SVGElAndSize {
-        let bb = new visuals.Breadboard({});
+        const bb = new visuals.Breadboard({});
         return bb.getSVGAndSize();
     }
     function wrapSvg(el: visuals.SVGElAndSize, opts: mkCmpDivOpts): HTMLElement {
@@ -572,10 +572,11 @@ namespace pxsim.instructions {
         parts: string[];
         partDefinitions: Map<PartDefinition>;
         fnArgs?: any;
+        configData?: pxsim.ConfigData;
     }
 
     export function renderParts(options: RenderPartsOptions) {
-        let msg: SimulatorRunMessage = {
+        const msg: SimulatorRunMessage = {
             type: "run",
             code: "",
             boardDefinition: options.boardDef,
@@ -584,6 +585,9 @@ namespace pxsim.instructions {
         pxsim.runtime = new Runtime(msg);
         pxsim.runtime.board = null;
         pxsim.initCurrentRuntime(msg); // TODO it seems Runtime() ctor already calls this?
+
+        if (options.configData)
+            pxsim.setConfigData(options.configData.cfg, options.configData.cfgKey);
 
         let style = document.createElement("style");
         document.head.appendChild(style);
