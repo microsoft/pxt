@@ -26,7 +26,7 @@ import * as gdb from './gdb';
 import * as clidbg from './clidbg';
 import * as pyconv from './pyconv';
 
-const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
+const rimraf: (f: string, opts: any, cb?: () => void) => void = require('rimraf');
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
@@ -497,7 +497,7 @@ function travisAsync() {
                 .then(() => internalUploadTargetTranslationsAsync(!!rel));
         return p;
     } else {
-        return buildTargetAsync()
+        return buildTargetAsync({})
             .then(() => internalCheckDocsAsync(true))
             .then(() => npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve())
             .then(() => {
@@ -633,7 +633,7 @@ function uploadTaggedTargetAsync() {
         ]))
         // only build target after getting all the info
         .then(info =>
-            buildTargetAsync()
+            buildTargetAsync({})
                 .then(() => internalCheckDocsAsync(true))
                 .then(() => info))
         .then(info => {
@@ -856,7 +856,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
             for (let u of U.values(uplReqs)) {
                 let fpath = path.join(trgPath, u.filename)
                 nodeutil.mkdirP(path.dirname(fpath))
-                fs.writeFileSync(fpath, u.content, u.encoding)
+                fs.writeFileSync(fpath, u.content, { encoding: u.encoding })
             }
             // make sure there's always something to commit
             fs.writeFileSync(trgPath + "/stamp.txt", new Date().toString())
@@ -998,7 +998,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         }
         if (!rdf) {
             if (!fs.existsSync(p))
-                return;
+                return Promise.resolve();
             rdf = readFileAsync(p)
         }
 
@@ -1270,7 +1270,7 @@ export interface BuildTargetOptions {
     packaged?: boolean;
 }
 
-export function buildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
+export function buildTargetAsync(options?: BuildTargetOptions): Promise<void> {
     if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync(options)
 
@@ -1376,7 +1376,7 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
             }
         });
 
-        let outFile = fs.createWriteStream(`built/${outputName}.js`, 'utf8');
+        let outFile = fs.createWriteStream(`built/${outputName}.js`, { encoding: 'utf8' });
         b.bundle().pipe(outFile);
 
         return new Promise<void>((resolve, reject) => {
@@ -1667,7 +1667,7 @@ ${license}
     tpn += `
 ------------- End of ThirdPartyNotices --------------------------------------------------- */`;
 
-    fs.writeFileSync("THIRD-PARTY-NOTICES.txt", tpn, 'utf8');
+    fs.writeFileSync("THIRD-PARTY-NOTICES.txt", tpn, { encoding: 'utf8' });
     pxt.log('written THIRD-PARTY-NOTICES.txt');
     return Promise.resolve();
 }
@@ -2268,14 +2268,14 @@ class Host
         check(p)
 
         if (U.endsWith(filename, ".uf2"))
-            fs.writeFileSync(p, contents, "base64")
+            fs.writeFileSync(p, contents, { encoding: "base64" })
         else if (U.endsWith(filename, ".elf"))
             fs.writeFileSync(p, contents, {
                 encoding: "base64",
                 mode: 0o777
             })
         else
-            fs.writeFileSync(p, contents, "utf8")
+            fs.writeFileSync(p, contents, { encoding: "utf8" })
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
@@ -2324,7 +2324,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand) {
     const packageName = parsed && parsed.arguments.length ? parsed.arguments[0] : undefined;
     if (packageName) {
         let parsed = pxt.github.parseRepoId(packageName)
-        return pxt.packagesConfigAsync()
+        return pxt.targetConfigAsync()
             .then(config => (parsed.tag ? Promise.resolve(parsed.tag) : pxt.github.latestVersionAsync(parsed.fullName, config))
                 .then(tag => { parsed.tag = tag })
                 .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
@@ -2732,7 +2732,7 @@ export function formatAsync(parsed: commandParser.ParsedCommand) {
                     if (expected == null)
                         expected = input
                     if (formatted != expected) {
-                        fs.writeFileSync(fn, formatted, "utf8")
+                        fs.writeFileSync(fn, formatted, { encoding: "utf8" })
                         console.log("format test FAILED; written:", fn)
                         numErr++;
                     } else {
@@ -2744,10 +2744,10 @@ export function formatAsync(parsed: commandParser.ParsedCommand) {
                     if (!inPlace)
                         fs.unlink(fn, err => { })
                 } else if (inPlace) {
-                    fs.writeFileSync(f, formatted, "utf8")
+                    fs.writeFileSync(f, formatted, { encoding: "utf8" })
                     console.log("replaced:", f)
                 } else {
-                    fs.writeFileSync(fn, formatted, "utf8")
+                    fs.writeFileSync(fn, formatted, { encoding: "utf8" })
                     console.log("written:", fn)
                 }
 
@@ -3360,14 +3360,14 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                 Object.keys(resp.outfiles).forEach(outfile => {
                     const ofn = path.join(dir, "built", outfile);
                     pxt.debug(`writing ${ofn}`);
-                    fs.writeFileSync(ofn, resp.outfiles[outfile], 'utf8')
+                    fs.writeFileSync(ofn, resp.outfiles[outfile], { encoding: 'utf8' })
                 })
                 pkg.filesToBePublishedAsync()
                     .then(files => {
                         Object.keys(files).forEach(f => {
                             const fn = path.join(dir, f);
                             pxt.debug(`writing ${fn}`);
-                            fs.writeFileSync(fn, files[f], 'utf8');
+                            fs.writeFileSync(fn, files[f], { encoding: 'utf8' });
                         })
                     })
             }
@@ -3700,7 +3700,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                         const tf = path.join(tfdir, fn);
                         nodeutil.mkdirP(tfdir)
                         pxt.log(`writing ${tf}`);
-                        fs.writeFile(tf, langTranslations, "utf8");
+                        fs.writeFile(tf, langTranslations, { encoding: "utf8" });
 
                         locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
                     })
@@ -3714,7 +3714,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                     let local: pxt.PackageConfig = nodeutil.readJson(pxtJsonf)
                     local.files = pxtJson.files
                     pxt.log(`writing ${pxtJsonf}`);
-                    fs.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), "utf8");
+                    fs.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), { encoding: "utf8" });
                 }
                 return nextFileAsync()
             });
@@ -3741,7 +3741,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
     pxt.log(`packaging editor to ${builtPackaged}`)
 
-    let p = rimrafAsync(builtPackaged, {})
+    let p = rimrafAsync(builtPackaged)
         .then(() => bump ? bumpAsync() : Promise.resolve())
         .then(() => buildTargetAsync({ packaged: true }));
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
@@ -3766,9 +3766,9 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
 
 export function cleanAsync(parsed: commandParser.ParsedCommand) {
     pxt.log('cleaning built folders')
-    return rimrafAsync("built", {})
-        .then(() => rimrafAsync("libs/**/built", {}))
-        .then(() => rimrafAsync("projects/**/built", {}))
+    return rimrafAsync("built")
+        .then(() => rimrafAsync("libs/**/built"))
+        .then(() => rimrafAsync("projects/**/built"))
         .then(() => { });
 }
 
@@ -4003,7 +4003,7 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
         .then(json => {
             if (!json) {
                 console.log("Couldn't extract.")
-                return
+                return Promise.resolve(null);
             }
             if (Array.isArray(json.scripts)) {
                 console.log("Legacy TD workspace.")
@@ -4029,7 +4029,7 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
             let prjs: SavedProject[] = json.projects
             if (!prjs) {
                 console.log("No projects found.")
-                return
+                return [];
             }
             const dirs = writeProjects(prjs, outDir)
             return dirs;
@@ -4248,7 +4248,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     }
 
     pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in SUMMARY, ${snippets.length} snippets`);
-    fs.writeFileSync("built/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), "utf8");
+    fs.writeFileSync("built/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), { encoding: "utf8" });
 
     let p = Promise.resolve();
     if (compileSnippets)
@@ -4677,7 +4677,7 @@ function initCommands() {
     advancedCommand("testpkgconflicts", "tests package conflict detection logic", testPkgConflictsAsync);
     advancedCommand("testdbg", "tests hardware debugger", dbgTestAsync);
 
-    advancedCommand("buildtarget", "build pxtarget.json", buildTargetAsync);
+    advancedCommand("buildtarget", "build pxtarget.json", pc => buildTargetAsync());
     advancedCommand("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");
     advancedCommand("uploadtt", "upload tagged release", uploadTaggedTargetAsync, "");
     advancedCommand("downloadtrgtranslations", "download translations from bundled projects", downloadTargetTranslationsAsync, "<package>");
