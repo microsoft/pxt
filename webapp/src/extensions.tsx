@@ -78,12 +78,17 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         frame.style.display = 'none';
 
         // reload project to update changes from the editor
-        this.props.parent.reloadHeaderAsync().done();
+        this.props.parent.reloadHeaderAsync()
+            .done(() => {
+                this.send(this.state.extension, { type: "pxtpkgext", event: "exthidden" } as pxt.editor.HiddenEvent);
+            });
     }
 
     showExtension(extension: string, url: string, consentRequired: boolean) {
         let consent = consentRequired ? this.manager.hasConsent(this.manager.getExtId(extension)) : true;
-        this.setState({ visible: true, extension: extension, url: url, consent: consent });
+        this.setState({ visible: true, extension: extension, url: url, consent: consent }, () => {
+            this.send(extension, { type: "pxtpkgext", event: "extshown" } as pxt.editor.ShownEvent);
+        })
     }
 
     submitConsent() {

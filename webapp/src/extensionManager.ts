@@ -84,6 +84,8 @@ export class ExtensionManager {
 
         switch (request.action) {
             case "extinit":
+                const ri = resp as pxt.editor.InitializeResponse;
+                ri.target = pxt.appTarget;
                 this.sendResponse(resp);
                 break;
             case "extdatastream":

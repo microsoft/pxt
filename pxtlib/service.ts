@@ -73,6 +73,7 @@ namespace ts.pxtc {
 
     export interface ApisInfo {
         byQName: pxt.Map<SymbolInfo>;
+        jres?: pxt.Map<pxt.JRes>;
     }
 
     export interface BlocksInfo {

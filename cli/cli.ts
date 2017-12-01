@@ -284,10 +284,10 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
     }
 
     cmd = cmd.toLowerCase();
-    if (!args[0] && cmd != "clean") throw new Error(cmd == "status" ? "language missing" : "filename missing");
+    if (!args[0] && (cmd != "clean" && cmd != "stats")) throw new Error(cmd == "status" ? "language missing" : "filename missing");
     switch (cmd) {
-        case "stats": return statsCrowdinAsync(branch, prj, key, args[0]);
-        case "clean": return cleanCrowdinAsync(branch, prj, key, args[0] || "docs");
+        case "stats": return statsCrowdinAsync(prj, key);
+        case "clean": return cleanCrowdinAsync(prj, key, args[0] || "docs");
         case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
         case "download": {
             if (!args[1]) throw new Error("output path missing");
@@ -304,7 +304,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
                         fs.writeFileSync(
                             outf,
                             rtranslations,
-                            "utf8");
+                            { encoding: "utf8" });
                     })
                 })
         }
@@ -312,34 +312,40 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
     }
 }
 
-function cleanCrowdinAsync(branch: string, prj: string, key: string, dir: string): Promise<void> {
+function cleanCrowdinAsync(prj: string, key: string, dir: string): Promise<void> {
     const p = pxt.appTarget.id + "/" + dir;
-    return pxt.crowdin.listFilesAsync(branch, prj, key, p)
+    return pxt.crowdin.listFilesAsync(prj, key, p)
         .then(files => {
             files.filter(f => !nodeutil.fileExistsSync(f.fullName.substring(pxt.appTarget.id.length + 1)))
-                .forEach(f => pxt.log(`crowdin: dead file: ${branch ? branch + "/" : ""}${f.fullName}`));
+                .forEach(f => pxt.log(`crowdin: dead file: ${f.branch ? f.branch + "/" : ""}${f.fullName}`));
         })
 }
 
-function statsCrowdinAsync(branch: string, prj: string, key: string, lang: string): Promise<void> {
-    return pxt.crowdin.languageStatsAsync(branch, prj, key, lang)
+function statsCrowdinAsync(prj: string, key: string): Promise<void> {
+    pxt.log(`collecting crowdin stats for ${prj}`);
+
+    return pxt.crowdin.projectInfoAsync(prj, key)
+        .then(info => {
+            if (!info) throw new Error("info failed")
+            return Promise.all(info.languages.map(lang => langStatsCrowdinAsync(prj, key, lang.code)))
+        }).then(() => {
+
+        })
+}
+
+function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
+    return pxt.crowdin.languageStatsAsync(prj, key, lang)
         .then(stats => {
-            console.log('BLOCKS / SIM / TARGET')
-            console.log(`file, phrases, translated, approved`);
-            stats.filter(stat => /strings\.json$/i.test(stat.name))
-                .forEach(stat => {
-                    console.log(`${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}`)
-                })
-            console.log();
-            // dump all in CSV
             let r = ''
-            r += `file, phrases, translated, approved\r\n`
+            r += `file\t language\t completion\t phrases\t translated\t approved\r\n`
             stats.forEach(stat => {
-                r += `${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}\r\n`;
+                r += `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}\r\n`;
+                if (stat.fullName == "strings.json") {
+                    console.log(`strings.json\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
+                }
             })
-            const fn = `crowdinstats-${lang}.csv`;
-            fs.writeFileSync(fn, r, "utf8");
-            console.log(`stats written to ${fn}`)
+            const fn = `crowdinstats.csv`;
+            fs.writeFileSync(fn, r, { encoding: "utf8" });
         })
 }
 
@@ -1110,7 +1116,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     if (opts.localDir)
         return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
             .then(() => {
-                pxt.log("Release files written to" + path.resolve(opts.builtPackaged, opts.localDir))
+                pxt.log("Release files written to " + path.join(opts.builtPackaged, opts.localDir))
             })
 
     return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
@@ -1260,9 +1266,13 @@ function maxMTimeAsync(dirs: string[]) {
         .then(() => max)
 }
 
-export function buildTargetAsync(): Promise<void> {
+export interface BuildTargetOptions {
+    packaged?: boolean;
+}
+
+export function buildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
     if (pxt.appTarget.id == "core")
-        return buildTargetCoreAsync()
+        return buildTargetCoreAsync(options)
 
     let initPromise: Promise<void>;
 
@@ -1283,7 +1293,7 @@ export function buildTargetAsync(): Promise<void> {
     return initPromise
         .then(() => { copyCommonSim(); return simshimAsync() })
         .then(() => buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim'))
-        .then(buildTargetCoreAsync)
+        .then(() => buildTargetCoreAsync(options))
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildSemanticUIAsync())
         .then(() => {
@@ -1732,7 +1742,7 @@ function updateTOC(cfg: pxt.TargetBundle) {
     }
 }
 
-function buildTargetCoreAsync() {
+function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
     updateTOC(cfg);
@@ -1781,20 +1791,20 @@ function buildTargetCoreAsync() {
                     // For the projects, we need to save the base HEX file to the offline HEX cache
                     if (isPrj && pxt.appTarget.compile.hasHex) {
                         if (!compileOpts) {
-                            console.error(`Failed to extract HEX image for project ${dirname}`);
+                            console.error(`Failed to extract native image for project ${dirname}`);
                             return;
                         }
 
                         // Place the base HEX image in the hex cache if necessary
                         let sha = compileOpts.extinfo.sha;
                         let hex: string[] = compileOpts.hexinfo.hex;
-                        let hexFile = path.join(hexCachePath, sha + ".hex");
+                        let hexFile = path.join(hexCachePath, sha + pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex");
 
                         if (fs.existsSync(hexFile)) {
-                            pxt.debug(`.hex image already in offline cache for project ${dirname}`);
+                            pxt.debug(`native image already in offline cache for project ${dirname}`);
                         } else {
                             fs.writeFileSync(hexFile, hex.join(os.EOL));
-                            pxt.debug(`created .hex image in offline cache for project ${dirname}: ${hexFile}`);
+                            pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
                         }
                     }
                 })
@@ -1810,7 +1820,6 @@ function buildTargetCoreAsync() {
                 pxtCrowdinBranch: pxtCrowdinBranch(),
                 targetCrowdinBranch: targetCrowdinBranch()
             }
-
             saveThemeJson(cfg)
 
             const webmanifest = buildWebManifest(cfg)
@@ -1940,6 +1949,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
 
     const dirs: Map<boolean> = {}
     for (const f of nodeutil.allFiles("docs", 8)) {
+        pxt.log(`rendering ${f}`)
         let dd = path.join(dst, f)
         let dir = path.dirname(dd)
         if (!U.lookup(dirs, dir)) {
@@ -1949,14 +1959,19 @@ function renderDocs(builtPackaged: string, localDir: string) {
         let buf = fs.readFileSync(f)
         if (/\.(md|html)$/.test(f)) {
             let str = buf.toString("utf8")
+            if (/\.md$/.test(f)) {
+                str = nodeutil.resolveMd(".", f.substr(5, f.length - 8));
+                fs.writeFileSync(dd, str, { encoding: "utf8" });
+            }
             let html = ""
-            if (U.endsWith(f, ".md"))
+            if (U.endsWith(f, ".md")) {
                 html = pxt.docs.renderMarkdown({
                     template: docsTemplate,
                     markdown: str,
                     theme: pxt.appTarget.appTheme,
                     filepath: f,
                 })
+            }
             else
                 html = server.expandHtml(str)
             html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
@@ -3095,7 +3110,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
                 .then(testAsync)
                 .then(() => {
                     if (pxt.appTarget.compile.hasHex)
-                        fs.writeFileSync(hexPath, fs.readFileSync("built/binary.hex"))
+                        fs.writeFileSync(hexPath, fs.readFileSync(`built/binary.${pxt.appTarget.compile.useUF2 ? "uf2" : "hex"}`))
                 })
         } else {
             let start = Date.now()
@@ -3718,7 +3733,7 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 }
 
 export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
-    const route = parsed.flags["route"] as string || "";
+    const route = parsed.flags["route"] as string || ".";
     const ghpages = parsed.flags["githubpages"];
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
     const minify = !!parsed.flags["minify"];
@@ -3728,7 +3743,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
     let p = rimrafAsync(builtPackaged, {})
         .then(() => bump ? bumpAsync() : Promise.resolve())
-        .then(() => buildTargetAsync());
+        .then(() => buildTargetAsync({ packaged: true }));
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
     else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify));
 }
@@ -3739,7 +3754,9 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
     return uploadCoreAsync({
         label: label || "main",
         pkgversion: "0.0.0",
-        fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
+        fileList: pxtFileList("node_modules/pxt-core/")
+            .concat(targetFileList())
+            .concat(["targetconfig.json"]),
         localDir,
         target: (pxt.appTarget.id || "unknownstatic"),
         builtPackaged,

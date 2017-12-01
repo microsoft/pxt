@@ -216,6 +216,7 @@ declare namespace pxt {
         hideMenuBar?: boolean; // Hides the main menu bar
         hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
         appStoreID?: string; // Apple iTune Store ID if any
+        windowsStoreLink?: string; // Link to UWP app in Windows store
         mobileSafariDownloadProtocol?: string; // custom protocol to be used on iOS
         sounds?: {
             tutorialStep?: string;
@@ -302,6 +303,7 @@ declare namespace ts.pxtc {
         hidSelectors?: HidSelector[];
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
         vmOpCodes?: pxt.Map<number>;
+        commonalize?: boolean;
     }
 
     interface CompileOptions {

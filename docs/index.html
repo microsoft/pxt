@@ -14,65 +14,65 @@
 	<style>
 		@media not all and (pointer:coarse) {
 			*:not([tabindex='-1']):focus {
-				outline: auto !important; /* initial or inherit has no render on Chrome */
+				outline: auto !important;
+				/* initial or inherit has no render on Chrome */
 			}
-
 			.ui.inverted:not(#makecode-resources-container) .ui.card:not([tabindex='-1']):focus,
 			.ui.button.green:focus {
 				outline: 2px solid white !important;
 			}
 		}
-
+		
 		#makecode-fixed-menu {
 			background: #2D404F;
 			background: rgba(45, 64, 79, 0.9);
 			height: 3.5rem;
 		}
-
+		
 		#makecode-fixed-menu img {
 			padding: 1.5rem;
 		}
-
+		
 		#makecode-targets {
 			padding-top: 3rem;
 			padding-bottom: 3rem;
 		}
-
+		
 		#makecode-targets>.ui.cards {
 			padding: 3rem;
 		}
-
+		
 		#makecode-targets .ui.card {
 			background: rgba(0, 0, 0, 0.2);
 		}
-
+		
 		.ui.cards>.card {
 			box-shadow: none;
 			vertical-align: bottom;
 		}
 		/* Top target logo */
-
+		
 		#makecode-targets .ui.targetlogo {
 			padding: 1.5rem;
 			height: 5rem;
 		}
 		/* Target image */
-
+		
 		#makecode-targets>.ui.cards>.card>.image,
 		.ui.card>.image {
 			padding: 1rem;
 		}
-
+		
 		#makecode-targets>.ui.cards>.card>.image>img,
 		.ui.card>.image>img {
 			height: 150px;
 		}
-
+		
 		#makecode-targets .image {
 			background: none;
 		}
 		/* Bottom action segment */
-
+		
 		#makecode-targets .ui.labelsegment {
 			background: #035089;
 			padding: 1rem;
@@ -80,7 +80,7 @@
 			height: 3.5rem;
 			border-radius: 0;
 		}
-
+		
 		#makecode-targets .ui.actionsegment {
 			background: #035089;
 			margin: 0;
@@ -88,88 +88,92 @@
 			height: 4rem;
 		}
 		/* About section */
-
+		
 		.ui.vertical.stripe {
 			padding: 8em 0em;
 		}
-
+		
 		.ui.vertical.stripe h3 {
 			font-size: 1.8em;
 		}
-
+		
 		.ui.vertical.stripe .button+h3,
 		.ui.vertical.stripe p+h3 {
 			margin-top: 3em;
 		}
-
+		
 		.ui.vertical.stripe .floated.image {
 			clear: both;
 		}
-
+		
 		.ui.vertical.stripe p {
 			font-size: 1.1em;
 		}
-
+		
 		.ui.vertical.stripe .horizontal.divider {
 			margin: 3em 0em;
 		}
-
+		
 		.editor-image {
 			max-height: 250px;
 		}
 		/* Get Inpired section */
-
+		
 		#makecode-getinspired-container {
 			background: #0072c6;
 		}
-
+		
 		#makecode-getinspired-container .image,
 		#makecode-getinspired-container .image img {
 			min-height: 200px;
 		}
 		/* Docs section */
-
+		
 		#makecode-docs-container .image,
 		#makecode-docs-container .image img {
 			min-height: 200px;
 		}
 		/* Resources section */
-
+		
 		#makecode-resources-container {
 			background: #bdc3c7;
 		}
-
+		
+		#makecode-hardware-container {
+			background: #ecf0f1;
+		}
+		
 		#makecode-resources-container .image {
 			background: white;
 			padding: 2rem;
 			max-height: 120px;
 			min-height: 120px;
 		}
-
+		
 		.targets .welcomeheader {
 			font-weight: 300;
 		}
-
+		
 		.masthead.segment {
 			padding: 4rem;
 		}
-
+		
 		.masthead h3 {
 			font-size: 1.7em;
 			font-weight: normal;
 			margin-top: 0.2em;
 			margin-bottom: 2em;
 		}
-
+		
 		.footer.segment {
 			padding: 5em 0em;
 		}
-
+		
 		.ui.inverted.white {
 			background: none;
 			color: 1px solid white;
 		}
-
+		
 		@media only screen and (min-width: 1200px) {
 			#makecode-targets>.ui.cards {
 				padding: 5rem;
@@ -184,7 +188,7 @@
 			}
 		}
 		/* Fixed header */
-
+		
 		#makecode-header {
 			position: fixed;
 			top: 0;
@@ -194,49 +198,47 @@
 			z-index: 100;
 			color: white;
 		}
-
+		
 		#makecode-header .menuButton {
 			background: none;
 		}
-
+		
 		#makecode-header h1 {
 			font-size: 24px;
 			padding-left: 17px;
 		}
-
+		
 		#makecode-mobile-menu {
 			min-height: 5rem;
 			max-height: 5rem;
 		}
-
+		
 		#makecode-header,
 		#makecode-mobile-menu {
 			background-color: #b4009e;
 			/*#5c005c; */
 		}
-
+		
 		#makecode-targets {
 			background: #0072c6;
 			/*#0072c6; */
 		}
-
+		
 		.ui.button.green {
 			background-color: #117D2A;
 		}
-
+		
 		.ui.card .content .meta {
 			color: #035089;
 		}
-
+		
 		@media only screen and (min-width: 767px) {
-
 			:target:before {
 				content: "";
 				display: block;
 				margin: -7rem;
 				padding: 7rem;
 			}
-
 			#makecode-resources-container,
 			#makecode-getinspired-container,
 			#makecode-hardware-container {
@@ -250,23 +252,22 @@
 				transition: font-size 167ms cubic-bezier(.1, .9, .2, 1);
 			}
 			.fix-top #makecode-header {
-				-webkit-box-shadow: 0 10px 30px -10px rgba(0,0,0,0.2);
-				box-shadow: 0 10px 30px -10px rgba(0,0,0,0.2);
+				-webkit-box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.2);
+				box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.2);
 			}
 			.fix-top #makecode-header h1 {
 				font-size: 24px;
 				padding-top: 12px;
 			}
-
 			#makecode-targets {
 				padding-top: 15rem;
 			}
 		}
-
+		
 		#makecode-mobile-menu {
 			display: none;
 		}
-
+		
 		@media only screen and (max-width: 766px) {
 			#makecode-fixed-menu {
 				display: none;
@@ -279,13 +280,13 @@
 			}
 		}
 		/* Header menu */
-
+		
 		#makecode-fixed-menu {
 			background: none;
 			height: 3.5rem;
 		}
 		/* Accessible menu */
-
+		
 		#accessibleMenu {
 			width: 100%;
 			position: absolute;
@@ -295,7 +296,7 @@
 			margin: 0;
 			left: 0;
 		}
-
+		
 		#accessibleMenu .ui.item.link {
 			position: absolute;
 			left: 0;
@@ -304,9 +305,9 @@
 			font-weight: 700;
 			text-align: center;
 			color: #387894;
-			background: hsla(0,0%,100%,.9)!important;
+			background: hsla(0, 0%, 100%, .9)!important;
 		}
-
+		
 		#accessibleMenu .ui.item.link:focus,
 		#accessibleMenu .ui.item.link:hover {
 			box-shadow: 3px 3px 5px #aaa;
@@ -409,14 +410,13 @@
 		<a href="#resources" class="item ms-font-m" role="menuitem">
 			Resources
 		</a>
-		<a href="https://makecode.com/blog" target="_blank" onclick="tickEvent('makecode.menu.blog', {'target': 'makecode'})" class="item ms-font-m" role="menuitem">
+		<a href="https://makecode.com/blog" target="_blank" onclick="tickEvent('makecode.menu.blog', {'target': 'makecode'})" class="item ms-font-m"
+			role="menuitem">
 			Blog
 		</a>
-		<a href="https://makecode.com/labs" target="_blank" onclick="tickEvent('makecode.menu.labs', {'target': 'makecode'})" class="item ms-font-m" role="menuitem">
+		<a href="https://makecode.com/labs" target="_blank" onclick="tickEvent('makecode.menu.labs', {'target': 'makecode'})" class="item ms-font-m"
+			role="menuitem">
 			Labs
-		</a>
-		<a id="sidenav-contact" href="mailto:makecode@microsoft.com" onclick="tickEvent('makecode.menu.contact', {'target': 'makecode'})" class="item ms-font-m" role="menuitem">
-			Contact
 		</a>
 	</div>
 	<div class="pusher">
@@ -445,29 +445,28 @@
 			<nav id="mainnav" aria-label="Main navigation" role="navigation">
 				<div id="makecode-fixed-menu" class="ui borderless inverted menu" role="menubar">
 					<a href="#about" class="item ms-font-m" aria-label="About Microsoft MakeCode" role="menuitem">
-				About
-				</a>
+						About
+					</a>
 					<a href="#get-inspired" class="item ms-font-m">
-				Get Inspired
-				</a>
+						Get Inspired
+					</a>
 					<a href="#learn" class="item ms-font-m" aria-label="Learn and Teach" role="menuitem">
-				Learn
-				</a>
+						Learn
+					</a>
 					<a href="#hardware" class="item ms-font-m" role="menuitem">
-				Hardware
-				</a>
+						Hardware
+					</a>
 					<a href="#resources" class="item ms-font-m" role="menuitem">
-				Resources
-				</a>
-					<a href="https://makecode.com/blog" target="_blank" onclick="tickEvent('makecode.menu.blog', {'target': 'makecode'})" class="item ms-font-m" role="menuitem">
-				Blog
-				</a>
-					<a href="https://makecode.com/labs" target="_blank" onclick="tickEvent('makecode.menu.labs', {'target': 'makecode'})" class="item ms-font-m" role="menuitem">
-				Labs
-				</a>
-					<a href="mailto:makecode@microsoft.com" onclick="tickEvent('makecode.menu.contact', {'target': 'makecode'})" class="item ms-font-m" role="menuitem">
-				Contact
-				</a>
+						Resources
+					</a>
+					<a href="https://makecode.com/blog" target="_blank" onclick="tickEvent('makecode.menu.blog', {'target': 'makecode'})" class="item ms-font-m"
+						role="menuitem">
+						Blog
+					</a>
+					<a href="https://makecode.com/labs" target="_blank" onclick="tickEvent('makecode.menu.labs', {'target': 'makecode'})" class="item ms-font-m"
+						role="menuitem">
+						Labs
+					</a>
 				</div>
 			</nav>
 
@@ -483,7 +482,13 @@
 
 					<div class="ui padded menubar">
 					</div>
-
+					<!--
+					<div class="ui grid centered inverted padded" style="background: white; color: black; padding: 5rem; margin-top:3rem !important;margin-bottom:3rem !important;">
+						<p class="ms-font-xl ms-fontWeight-regular">
+							Join us in celebrating this year's <span style="font-weight:bold">Computer Science Education Week</span> with an
+							<a class="ui button blue huge" href="/hourofmakecode" target="_blank" onclick="tickEvent('makecode.hourofcode.start', {'target': 'makecode'})" aria-label="Hour of MakeCode">Hour of MakeCode</a>
+						</p>
+					</div>-->
 					<div class="ui four stackable cards doubling centered">
 						<!-- @include editorcards.html -->
 					</div>
@@ -539,7 +544,7 @@
 							<div class="row">
 								<div class="ui link three cards stackable padded">
 									<a class="ui card" href="https://makecode.microbit.org/projects/guitar" target="_blank" onclick="tickEvent('makecode.getinspired.click', {'target': 'makecode', 'card': 'air guitar'})"
-									 aria-label="Air Guitar project">
+										aria-label="Air Guitar project">
 										<div class="image">
 											<iframe style="width:100%;border:0;" height="200" src="https://www.youtube.com/embed/GYmdTFvxz80?html5=1" allowfullscreen></iframe>
 										</div>
@@ -554,7 +559,7 @@
 										</div>
 									</a>
 									<a class="ui card" href="https://youtu.be/VLdWm7LBGjs" target="_blank" onclick="tickEvent('makecode.getinspired.click', {'target': 'makecode', 'card': 'mega jump'})"
-									 aria-label="Mega Jump video">
+										aria-label="Mega Jump video">
 										<div class="image">
 											<iframe style="width:100%;border:0;" height="200" src="https://www.youtube.com/embed/VLdWm7LBGjs?html5=1" allowfullscreen></iframe>
 										</div>
@@ -569,7 +574,7 @@
 										</div>
 									</a>
 									<a class="ui card" href="https://makecode.adafruit.com/projects/magic-wand" target="_blank" onclick="tickEvent('makecode.getinspired.click', {'target': 'makecode', 'card': 'magic wand'})"
-									 aria-label="Magic Wand project">
+										aria-label="Magic Wand project">
 										<div class="image">
 											<iframe style="width:100%;border:0;" height="200" src="https://www.youtube.com/embed/Us-tH3SP8XE?html5=1" allowfullscreen></iframe>
 										</div>
@@ -584,7 +589,7 @@
 										</div>
 									</a>
 									<a class="ui card" href="https://makecode.microbit.org/projects/wallet" target="_blank" onclick="tickEvent('makecode.getinspired.click', {'target': 'makecode', 'card': 'duct tape wallet'})"
-									 aria-label="Duct Tape Wallet project">
+										aria-label="Duct Tape Wallet project">
 										<div class="image">
 											<img src="https://pxt.azureedge.net/blob/714618d6fa1f3befe697c55125e0d4a3b082e326/static/mb/projects/wallet/wallet.jpg" alt="A micro:bit on a wallet made from duct tape">
 										</div>
@@ -599,7 +604,7 @@
 										</div>
 									</a>
 									<a class="ui card" href="https://makecode.microbit.org/projects/milk-carton-robot" target="_blank" onclick="tickEvent('makecode.getinspired.click', {'target': 'makecode', card': 'milk carton'})"
-									 aria-label="Milk Carton Robot project">
+										aria-label="Milk Carton Robot project">
 										<div class="image">
 											<iframe style="width:100%;border:0;" height="200" src="https://www.youtube.com/embed/Ah4fEbJtklU?html5=1" allowfullscreen></iframe>
 										</div>
@@ -614,10 +619,9 @@
 										</div>
 									</a>
 									<a class="ui card" href="https://learn.adafruit.com/circuit-playground-express-laser-tag" target="_blank" onclick="tickEvent('makecode.getinspired.click', {'target': 'makecode', 'card': 'laser tag'})"
-									 aria-label="Laser Tag for Circuit Playground">
+										aria-label="Laser Tag for Circuit Playground">
 										<div class="image">
-											<img src="/static/images/circuit_playground_laserTag_IMG_0486_2k.jpg"
-											 alt="A CircuitPlayground laser tag">
+											<img src="/static/images/circuit_playground_laserTag_IMG_0486_2k.jpg" alt="A CircuitPlayground laser tag">
 										</div>
 										<div class="content">
 											<div class="header">Laser Tag</div>
@@ -649,7 +653,7 @@
 							<div class="row">
 								<div class="ui link three cards stackable padded">
 									<a class="ui card" href="https://makecode.microbit.org/courses/csintro" target="_blank" onclick="tickEvent('makecode.learn.click', {'target': 'makecode', 'card': 'microbit intro cs curriculum'})"
-									 aria-label="Introduction to Computer Science curriculum">
+										aria-label="Introduction to Computer Science curriculum">
 										<div class="image">
 											<img src="https://pxt.azureedge.net/blob/ce157b871e8d7330375d8dc8ade57d7426259ef4/static/courses/csintro.jpg" alt="A micro:bit on a space race game">
 										</div>
@@ -664,7 +668,7 @@
 										</div>
 									</a>
 									<a class="ui card" href="https://www.amazon.com/Little-Book-Griefs-Minecraft-Education-ebook/dp/B073ZKZW57/" target="_blank"
-									 onclick="tickEvent('makecode.learn.click', {'card': 'minecraft book of griefs'})" aria-label="Little Book of Griefs guide">
+										onclick="tickEvent('makecode.learn.click', {'card': 'minecraft book of griefs'})" aria-label="Little Book of Griefs guide">
 										<div class="image">
 											<img src="https://pxt.azureedge.net/blob/9fd4a03447363ddd27fc605bdf962832cbceb31f/static/mods/sand-storm.png" alt="Minecraft blocks">
 										</div>
@@ -679,7 +683,7 @@
 										</div>
 									</a>
 									<a class="ui card" href="https://learn.adafruit.com/makecode" target="_blank" onclick="tickEvent('makecode.learn.click', {'target': 'makecode', 'card': 'circuit playground guide'})"
-									 aria-label="Learn the Circuit Playground guide">
+										aria-label="Learn the Circuit Playground guide">
 										<div class="image">
 											<img src="https://s3.amazonaws.com/learn-production/guides/images/000/001/667/medium800/cpwithblocks.jpg?1496852715" alt="A Circuit Playground Express board with blocks">
 										</div>
@@ -715,32 +719,28 @@
 									<h3 class="ui ms-font-xxl ms-fontWeight-light">micro:bit</h3>
 									<p class="ms-font-l">Purchase micro:bit and accessories</p>
 									<div class="col">
-										<a class="ui button green" href="https://www.adafruit.com/products/3362" target="_blank" onclick="tickEvent('makecode.hardware.buy', {'target': 'makecode', 'device': 'microbit', 'from': 'adafruit'})"
-										 aria-label="Purchase a micro:bit from Adafruit">Buy@Adafruit</a>
-										<a class="ui button green" href="https://www.sparkfun.com/products/14208" target="_blank" onclick="tickEvent('makecode.hardware.buy', {'target': 'makecode', 'device': 'microbit', 'from': 'sparkfun'})"
-										 aria-label="Purchase a micro:bit from Sparkfun">Buy@Sparkfun</a>
 										<a class="ui button green" href="https://www.microbit.org/resellers/" target="_blank" onclick="tickEvent('makecode.hardware.buy', {'target': 'makecode', 'hardware': 'microbit', 'from': 'worldwide'})"
-										 aria-label="Purchase a micro:bit from Worldwide resellers">Buy@Worldwide Resellers</a>
+											aria-label="Purchase a micro:bit from Worldwide resellers">Buy@Worldwide Resellers</a>
 									</div>
 									<h3 class="ui ms-font-xxl ms-fontWeight-light">Circuit Playground Express</h3>
 									<p class="ms-font-l">Purchase Circuit Playground Express (Developer Edition) and accessories</p>
 									<div class="col">
 										<a class="ui button green" href="https://www.adafruit.com/products/3333" target="_blank" onclick="tickEvent('makecode.hardware.buy', {'target': 'makecode', 'hardware': 'circuitplayground', 'from': 'adafruit'})"
-										 aria-label="Purchase a Circuit Playground Express from Adafruit">Buy@Adafruit</a>
+											aria-label="Purchase a Circuit Playground Express from Adafruit">Buy@Adafruit</a>
 									</div>
 									<h3 class="ui ms-font-xxl ms-fontWeight-light">Chibi Chip</h3>
 									<p class="ms-font-l">Purchase Chibi Chip and accessories</p>
 									<div class="col">
 										<a class="ui button green" href="https://chibitronics.com/shop/love-to-code-chibi-chip-cable/" target="_blank" onclick="tickEvent('makecode.hardware.buy', {'target': 'makecode',  'hardware': 'chibichip', 'from': 'chibitronics'})"
-										 aria-label="Purchase a Chibi Chip from Chibitronics">Buy@Chibitronics</a>
-										 <a class="ui button green" href="http://a.co/4beatcQ" target="_blank" onclick="tickEvent('makecode.hardware.buy', {'target': 'makecode',  'hardware': 'chibichip', 'from': 'amazon'})"
-										 aria-label="Purchase a Chibi Chip from Amazon">Buy@Amazon</a>
+											aria-label="Purchase a Chibi Chip from Chibitronics">Buy@Chibitronics</a>
+										<a class="ui button green" href="http://a.co/4beatcQ" target="_blank" onclick="tickEvent('makecode.hardware.buy', {'target': 'makecode',  'hardware': 'chibichip', 'from': 'amazon'})"
+											aria-label="Purchase a Chibi Chip from Amazon">Buy@Amazon</a>
 									</div>
 									<h3 class="ui ms-font-xxl ms-fontWeight-light">Grove Zero</h3>
 									<p class="ms-font-l">Purchase Grove Zero and accessories</p>
 									<div class="col">
 										<a class="ui button green" href="https://www.seeedstudio.com/Grove-Zero-STEM-Starter-Kit-p-2981.html" target="_blank" onclick="tickEvent('makecode.hardware.buy', {'target': 'makecode',  'hardware': 'grovezero', 'from': 'seeedstudio'})"
-										 aria-label="Purchase a Grove Zero from Seeed Studio">Buy@SeeedStudio</a>
+											aria-label="Purchase a Grove Zero from Seeed Studio">Buy@SeeedStudio</a>
 									</div>
 								</div>
 								<div class="six wide right floated column">
@@ -748,6 +748,128 @@
 							</div>
 						</div>
 					</div>
+				</section>
+
+
+
+				<section id="tweets" aria-label="Featured Tweets">
+					<div id="makecode-tweets-container" class="ui vertical masthead aligned segment">
+
+						<div class="ui grid container">
+
+							<div class="row">
+								<div class="ui container">
+									<h2 class="ui ms-font-su ms-fontWeight-light">Featured Tweets</h2>
+									<p class="ms-font-l">
+										<a href="https://twitter.com/MSMakeCode?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-show-count="false">Follow @MSMakeCode</a>
+										<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+									</p>
+								</div>
+							</div>
+							<div class="row">
+
+								<div class="ui grid stackable equal width centered ">
+
+									<div class="row">
+										<div class="column">
+											<blockquote class="twitter-tweet" data-lang="en">
+												<p lang="en" dir="ltr">Goodnight digi-pets.....
+													<a href="https://twitter.com/RibbShowcase?ref_src=twsrc%5Etfw">@RibbShowcase</a>
+													<a href="https://twitter.com/microsofteduk?ref_src=twsrc%5Etfw">@microsofteduk</a>
+													<a href="https://twitter.com/microbit_edu?ref_src=twsrc%5Etfw">@microbit_edu</a>
+													<a href="https://t.co/IYi4C4ekFX">pic.twitter.com/IYi4C4ekFX</a>
+												</p>&mdash; Ribblesdale School (@ribbweb)
+												<a href="https://twitter.com/ribbweb/status/913502439487262721?ref_src=twsrc%5Etfw">September 28, 2017</a>
+											</blockquote>
+											<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+										</div>
+
+										<div class="column">
+											<blockquote class="twitter-tweet" data-lang="en">
+												<p lang="en" dir="ltr">Look at the amazing microbit pets!
+													<a href="https://twitter.com/gravescolleen?ref_src=twsrc%5Etfw">@gravescolleen</a>
+													<a href="https://twitter.com/MasonIBPYP?ref_src=twsrc%5Etfw">@MasonIBPYP</a>
+													<a href="https://twitter.com/hashtag/storyofmason?src=hash&amp;ref_src=twsrc%5Etfw">#storyofmason</a>
+													<a href="https://t.co/cRBA5wSaXK">pic.twitter.com/cRBA5wSaXK</a>
+												</p>&mdash; Deidre Honea (@deidrehonea1)
+												<a href="https://twitter.com/deidrehonea1/status/926588738628669440?ref_src=twsrc%5Etfw">November 3, 2017</a>
+											</blockquote>
+											<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+										</div>
+
+										<div class="column">
+											<blockquote class="twitter-tweet" data-lang="en">
+												<p lang="en" dir="ltr">Today we made
+													<a href="https://twitter.com/microbit_edu?ref_src=twsrc%5Etfw">@microbit_edu</a>
+													<a href="https://twitter.com/hashtag/halloween?src=hash&amp;ref_src=twsrc%5Etfw">#halloween</a> monsters in
+													4th grade elective coding class 👾
+													<a href="https://twitter.com/MSMakeCode?ref_src=twsrc%5Etfw">@MSMakeCode</a>
+													<a href="https://twitter.com/MicrosoftEDU?ref_src=twsrc%5Etfw">@MicrosoftEDU</a>
+													<a href="https://twitter.com/hashtag/CSforAll?src=hash&amp;ref_src=twsrc%5Etfw">#CSforAll</a>
+													<a href="https://twitter.com/hashtag/CodeLikeAGirl?src=hash&amp;ref_src=twsrc%5Etfw">#CodeLikeAGirl</a>
+													<a href="https://t.co/s9EISl6Nf6">pic.twitter.com/s9EISl6Nf6</a>
+												</p>&mdash; Katja Borregaard ⚡️ (@katjaborregaard)
+												<a href="https://twitter.com/katjaborregaard/status/925291348370051072?ref_src=twsrc%5Etfw">October 31, 2017</a>
+											</blockquote>
+											<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+										</div>
+									</div>
+
+									<div class="row">
+
+										<div class="column">
+											<blockquote class="twitter-tweet" data-lang="en">
+												<p lang="en" dir="ltr">I made a LED dog collar with JavaScript,
+													<a href="https://twitter.com/MSMakeCode?ref_src=twsrc%5Etfw">@MSMakeCode</a>, &amp; an
+													<a href="https://twitter.com/adafruit?ref_src=twsrc%5Etfw">@adafruit</a> circuit playground. 🐶✨
+													<a href="https://t.co/YEJmQ1XGpz">https://t.co/YEJmQ1XGpz</a>
+												</p>&mdash; Stephanie Nemeth (@stephaniecodes)
+												<a href="https://twitter.com/stephaniecodes/status/929486022072823808?ref_src=twsrc%5Etfw">November 11, 2017</a>
+											</blockquote>
+											<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+										</div>
+
+										<div class="column">
+											<blockquote class="twitter-tweet" data-lang="en">
+												<p lang="en" dir="ltr">tried to build simple version of Mount Fuji with recursive function on
+													<a href="https://twitter.com/MSMakeCode?ref_src=twsrc%5Etfw">@MSMakeCode</a> with
+													<a href="https://twitter.com/PlayCraftLearn?ref_src=twsrc%5Etfw">@PlayCraftLearn</a> for my Japanese friend
+													<a href="https://twitter.com/taku_ict?ref_src=twsrc%5Etfw">@taku_ict</a> Mr. Fukushima
+													<a href="https://t.co/rLVF1mTd9j">pic.twitter.com/rLVF1mTd9j</a>
+												</p>&mdash; Yunus Emre Çalık (@ynsmrclk)
+												<a href="https://twitter.com/ynsmrclk/status/929783265812205569?ref_src=twsrc%5Etfw">November 12, 2017</a>
+											</blockquote>
+											<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+										</div>
+
+
+										<div class="column">
+											<blockquote class="twitter-tweet" data-lang="en">
+												<p lang="en" dir="ltr">Planning for district leadership meeting. This month’s learning activity: making &amp; Coding
+													<a href="https://twitter.com/hashtag/lufkinlearns?src=hash&amp;ref_src=twsrc%5Etfw">#lufkinlearns</a>
+													<a href="https://twitter.com/hashtag/makecode?src=hash&amp;ref_src=twsrc%5Etfw">#makecode</a>
+													<a href="https://twitter.com/adafruit?ref_src=twsrc%5Etfw">@adafruit</a> CPX &amp;
+													<a href="https://twitter.com/MSMakeCode?ref_src=twsrc%5Etfw">@MSMakeCode</a>
+													<a href="https://t.co/ehKCnprjvY">pic.twitter.com/ehKCnprjvY</a>
+												</p>&mdash; Rafranz Davis (@RafranzDavis)
+												<a href="https://twitter.com/RafranzDavis/status/928394113342459914?ref_src=twsrc%5Etfw">November 8, 2017</a>
+											</blockquote>
+											<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<div class="row">
+								<div class="ui container right aligned">
+									<p class="ms-font-l" style="text-align: right">
+										Share your creations
+										<a href="https://twitter.com/intent/tweet?screen_name=MSMakeCode&ref_src=twsrc%5Etfw" class="twitter-mention-button" data-show-count="false">Tweet to @MSMakeCode</a>
+										<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+									</p>
+								</div>
+							</div>
+						</div>
 				</section>
 
 				<section id="resources" aria-label="Resources">
@@ -762,7 +884,8 @@
 							<div class="row">
 
 								<div class="ui container cards stackable four centered link doubling">
-									<a class="ui card" href="https://makecode.com/docs" target="_blank" onclick="tickEvent('makecode.resources.devdocs', {'target': 'makecode'})" aria-label="Developer documentation">
+									<a class="ui card" href="https://makecode.com/docs" target="_blank" onclick="tickEvent('makecode.resources.devdocs', {'target': 'makecode'})"
+										aria-label="Developer documentation">
 										<div class="ui medium image centered">
 											<i class="ms-Icon ms-Icon--Documentation ms-fontColor-themePrimary" aria-hidden="true" style="font-size:72px;padding:20px;"></i>
 										</div>
@@ -788,7 +911,7 @@
 					</div> -->
 
 									<a class="ui card" href="https://github.com/Microsoft/pxt" target="_blank" onclick="tickEvent('makecode.resources.github', {'target': 'makecode'})"
-									 aria-label="PXT Github repository">
+										aria-label="PXT Github repository">
 										<div class="ui medium image centered">
 											<img src="/static/images/GitHub_Logo.png" alt="Github logo">
 										</div>
@@ -801,7 +924,7 @@
 									</a>
 
 									<a class="ui card" href="https://crowdin.com/project/kindscript" target="_blank" onclick="tickEvent('makecode.resources.translate', {'target': 'makecode'})"
-									 aria-label="Help translate Makecode on Crowdin">
+										aria-label="Help translate Makecode on Crowdin">
 										<div class="ui medium image centered">
 											<img src="/static/images/crowdin-logo.png" alt="Crowdin logo">
 										</div>
@@ -824,7 +947,7 @@
 
 		<!-- @include footer.html -->
 		<!-- @include tracking.html -->
-	</div>
+		</div>
 </body>
 
 </html>

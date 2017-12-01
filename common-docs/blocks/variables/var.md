@@ -1,14 +1,18 @@
 # Variables
 
-A variable is a place where you can store and retrieve data. Variables have a name, a [type](/types), and value:
+A program is always working with information. The information, or data, that a program needs is kept somewhere in a computer's memory. Memory in a computer is arranged so that the data stored there can be found using an address. An address is a number that tells where the data that program wants to use is located in memory.
 
-* *name* is how you'll refer to the variable
-* *type* refers to the kind of data a variable can store
-* *value* refers to what's stored in the variable
+For a program, using an address number to get and store data is very inconvenient. So, programs use _variables_ instead. A variable represents the place in memory for the data that's kept there. It's called a variable because the data it represents may change (vary) when the program stores something new there. When you create a new variable in your program, you're reserving a place in memory for some data that your program might want to create, copy, or check on later.
+
+Variables have a name, a [type](/types), and a value:
+
+* *name* - how you'll refer to the variable
+* *type* - the kind of data a variable will store
+* *value* - what's stored (the data) in the variable
 
 ### ~ hint
 
-You can use the default variable names given in the blocks if you'd like. However, it's best to use descriptive variable names. To change a variable name in the editor, select the down arrow next to the variable and then click "new variable".
+You can use the default variable names given in the blocks if you'd like. However, it's best to use descriptive variable names. To change a variable name in the editor, select the down arrow next to the variable and then click "Rename variable...".
 
 ### ~
 
