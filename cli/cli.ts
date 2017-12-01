@@ -497,7 +497,7 @@ function travisAsync() {
                 .then(() => internalUploadTargetTranslationsAsync(!!rel));
         return p;
     } else {
-        return buildTargetAsync({})
+        return buildTargetAsync()
             .then(() => internalCheckDocsAsync(true))
             .then(() => npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve())
             .then(() => {
@@ -633,7 +633,7 @@ function uploadTaggedTargetAsync() {
         ]))
         // only build target after getting all the info
         .then(info =>
-            buildTargetAsync({})
+            buildTargetAsync()
                 .then(() => internalCheckDocsAsync(true))
                 .then(() => info))
         .then(info => {
