@@ -613,6 +613,7 @@ export class Editor extends srceditor.Editor {
         this.typeScriptSaveable = false;
         this.setDiagnostics(file)
         this.delayLoadXml = file.content;
+        this.editor.clear();
         this.editor.clearUndo();
 
         if (this.currFile && this.currFile != file) {
