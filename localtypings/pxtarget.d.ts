@@ -40,6 +40,7 @@ declare namespace pxt {
         appTheme: AppTheme;
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
+        ignoreDocsErrors?: boolean;
     }
 
     interface ProjectTemplate {

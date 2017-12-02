@@ -3441,8 +3441,11 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             pxt.log(`Skipped ${ignoreCount} snippets`)
         }
     }).then(() => {
-        if (failures.length > 0)
-            U.userError(`${failures.length} snippets not compiling in the docs`)
+        if (failures.length > 0) {
+            const msg = `${failures.length} snippets not compiling in the docs`;
+            if (pxt.appTarget.ignoreDocsErrors) pxt.log(msg);
+            else U.userError(msg);
+        }
     })
 }
 
@@ -4286,8 +4289,11 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     if (compileSnippets)
         p = p.then(() => testSnippetsAsync(snippets, re));
     return p.then(() => {
-        if (broken > 0)
-            U.userError(`${broken} broken links found in the docs`);
+        if (broken > 0) {
+            const msg = `${broken} broken links found in the docs`;
+            if (pxt.appTarget.ignoreDocsErrors) pxt.log(msg)
+            else U.userError(msg);
+        }
     })
 }
 
