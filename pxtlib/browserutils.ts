@@ -420,6 +420,15 @@ namespace pxt.BrowserUtils {
                 if (boardDef.outlineImage) boardDef.outlineImage = patchCdn(boardDef.outlineImage)
             }
         }
+
+        // patch icons in bundled packages
+        Object.keys(pxt.appTarget.bundledpkgs).forEach(pkgid => {
+            const res = pxt.appTarget.bundledpkgs[pkgid];
+            // path config before storing
+            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+            if (config.icon) config.icon = patchCdn(config.icon);
+            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+        })
     }
 
     /**
