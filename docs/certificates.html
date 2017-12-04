@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Certificate</title>
+    <meta name="Description" content="Certificate" />
+
+    <!-- @include meta.html -->
+    <link rel="stylesheet" data-rtl="/doccdn/rtlsemantic.css" href="/doccdn/semantic.css">
+    <link ref="stylesheet" href="/doccdn/style.css" />
+    <script src="/doccdn/jquery.js"></script>
+
+    <style>
+        #template {
+            max-width: 20rem;
+        }
+
+        .certificate {
+            width: 100%;
+        }
+
+        .certificate canvas {
+            width: 100%;
+        }
+
+        @media only print {
+            .hideprint {
+                display: none !important;
+            }
+        }
+    </style>
+
+</head>
+<script>
+    function printCertificates() {
+        var cw = 1754;
+        var ch = 1235;
+        var $certs = $('#certificates');
+        $certs.empty();
+        var img = $('#template')[0];
+        $('#names').val().split(/\r?\n/).forEach(function (m) {
+            if (!m) return;
+            var cvs = document.createElement("canvas");
+            var ctx = cvs.getContext("2d");
+            cvs.width = cw;
+            cvs.height = ch;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "center";
+            ctx.fillStyle = 'black';
+            ctx.font = '200px monospace';
+            ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, cw, ch);
+            ctx.fillText(m, cw / 2, ch / 2);
+
+            var div = $(`<div class="certificate"></div>`);
+            div.append(cvs);
+
+            $certs.append(div);
+        })
+
+        try {
+            window.print();
+        } catch (e) { }
+    }
+
+    $(document).ready(function () {
+        $('#print').click(printCertificates);
+
+        if (/^#name:/.test(window.location.hash)) {
+            $('#names').val(window.location.hash.substr("#name:".length));
+            printCertificates();
+        }
+    })
+</script>
+
+<body id='root' class='root'>
+
+    <div class="main ui container mainbody hideprint">
+        <h1>Microsoft MakeCode Certificate</h1>
+        <img id="template" class="ui medium image" src="/static/certificate.png" />
+        <div id="inputs" class="ui segment">
+            <div class="ui form">
+                <div class="field">
+                    <label>Enter names</label>
+                    <textarea id="names" rows="2"></textarea>
+                </div>
+                <div class="field">
+                    <button id="print" class="ui primary button">
+                        Print certificates
+                    </button>
+                </div>
+            </div>
+        </div>
+        <p></p>
+    </div>
+    <div id="certificates">
+    </div>
+
+    <!-- @include footer.html -->
+    <!-- @include tracking.html -->
+
+</body>
+
+</html>

@@ -283,10 +283,10 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
     }
 
     cmd = cmd.toLowerCase();
-    if (!args[0] && cmd != "clean") throw new Error(cmd == "status" ? "language missing" : "filename missing");
+    if (!args[0] && (cmd != "clean" && cmd != "stats")) throw new Error(cmd == "status" ? "language missing" : "filename missing");
     switch (cmd) {
-        case "stats": return statsCrowdinAsync(branch, prj, key, args[0]);
-        case "clean": return cleanCrowdinAsync(branch, prj, key, args[0] || "docs");
+        case "stats": return statsCrowdinAsync(prj, key);
+        case "clean": return cleanCrowdinAsync(prj, key, args[0] || "docs");
         case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
         case "download": {
             if (!args[1]) throw new Error("output path missing");
@@ -311,34 +311,40 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
     }
 }
 
-function cleanCrowdinAsync(branch: string, prj: string, key: string, dir: string): Promise<void> {
+function cleanCrowdinAsync(prj: string, key: string, dir: string): Promise<void> {
     const p = pxt.appTarget.id + "/" + dir;
-    return pxt.crowdin.listFilesAsync(branch, prj, key, p)
+    return pxt.crowdin.listFilesAsync(prj, key, p)
         .then(files => {
             files.filter(f => !nodeutil.fileExistsSync(f.fullName.substring(pxt.appTarget.id.length + 1)))
-                .forEach(f => pxt.log(`crowdin: dead file: ${branch ? branch + "/" : ""}${f.fullName}`));
+                .forEach(f => pxt.log(`crowdin: dead file: ${f.branch ? f.branch + "/" : ""}${f.fullName}`));
         })
 }
 
-function statsCrowdinAsync(branch: string, prj: string, key: string, lang: string): Promise<void> {
-    return pxt.crowdin.languageStatsAsync(branch, prj, key, lang)
+function statsCrowdinAsync(prj: string, key: string): Promise<void> {
+    pxt.log(`collecting crowdin stats for ${prj}`);
+
+    return pxt.crowdin.projectInfoAsync(prj, key)
+        .then(info => {
+            if (!info) throw new Error("info failed")
+            return Promise.all(info.languages.map(lang => langStatsCrowdinAsync(prj, key, lang.code)))
+        }).then(() => {
+
+        })
+}
+
+function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
+    return pxt.crowdin.languageStatsAsync(prj, key, lang)
         .then(stats => {
-            console.log('BLOCKS / SIM / TARGET')
-            console.log(`file, phrases, translated, approved`);
-            stats.filter(stat => /strings\.json$/i.test(stat.name))
-                .forEach(stat => {
-                    console.log(`${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}`)
-                })
-            console.log();
-            // dump all in CSV
             let r = ''
-            r += `file, phrases, translated, approved\r\n`
+            r += `file\t language\t completion\t phrases\t translated\t approved\r\n`
             stats.forEach(stat => {
-                r += `${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}\r\n`;
+                r += `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}\r\n`;
+                if (stat.fullName == "strings.json") {
+                    console.log(`strings.json\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
+                }
             })
-            const fn = `crowdinstats-${lang}.csv`;
+            const fn = `crowdinstats.csv`;
             fs.writeFileSync(fn, r, { encoding: "utf8" });
-            console.log(`stats written to ${fn}`)
         })
 }
 
@@ -1057,6 +1063,14 @@ function uploadCoreAsync(opts: UploadOptions) {
                             }
                         trg.appTheme.logoUrl = opts.localDir
                         trg.appTheme.homeUrl = opts.localDir
+                        // patch icons in bundled packages
+                        Object.keys(trg.bundledpkgs).forEach(pkgid => {
+                            const res = trg.bundledpkgs[pkgid];
+                            // path config before storing
+                            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                            if (/^\//.test(config.icon)) config.icon = opts.localDir + "docs" + config.icon;
+                            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+                        })
                         data = new Buffer((isJs ? targetJsPrefix : '') + JSON.stringify(trg, null, 2), "utf8")
                     } else {
                         trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
@@ -1070,6 +1084,14 @@ function uploadCoreAsync(opts: UploadOptions) {
                                 if (boardDef.outlineImage) boardDef.outlineImage = uploadArtFile(boardDef.outlineImage);
                             }
                         }
+                        // patch icons in bundled packages
+                        Object.keys(trg.bundledpkgs).forEach(pkgid => {
+                            const res = trg.bundledpkgs[pkgid];
+                            // path config before storing
+                            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                            if (config.icon) config.icon = uploadArtFile(config.icon);
+                            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+                        })
                         content = JSON.stringify(trg, null, 2);
                         if (isJs)
                             content = targetJsPrefix + content
@@ -1699,7 +1721,7 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                     return;
                 }
 
-                if (fileName === "pxt.json") {
+                if (fileName === pxt.CONFIG_NAME) {
                     newProject.config = nodeutil.readPkgConfig(projectPath)
                     U.iterMap(newProject.config.dependencies, (k, v) => {
                         if (/^file:/.test(v)) {
@@ -1772,7 +1794,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         .then(() => buildTargetDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
-            let isPrj = /prj$/.test(dirname);
+            const isPrj = /prj$/.test(dirname);
             const config = nodeutil.readPkgConfig(".")
             if (config.additionalFilePath) {
                 dirsToWatch.push(path.resolve(config.additionalFilePath));
@@ -1780,8 +1802,9 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
             return pkg.filesToBePublishedAsync(true)
                 .then(res => {
-                    if (!isPrj)
+                    if (!isPrj) {
                         cfg.bundledpkgs[path.basename(dirname)] = res
+                    }
                 })
                 .then(() => testForBuildTargetAsync(isPrj))
                 .then((compileOpts) => {
@@ -1807,6 +1830,21 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 })
         }, /*includeProjects*/ true))
         .then(() => {
+            // patch icons in bundled packages
+            Object.keys(cfg.bundledpkgs).forEach(pkgid => {
+                const res = cfg.bundledpkgs[pkgid];
+                // path config before storing
+                const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                if (!config.icon)
+                    // try known location
+                    ['png', 'jpg'].map(ext => `/static/libs/${config.name}.${ext}`)
+                        .filter(ip => fs.existsSync("docs" + ip))
+                        .forEach(ip => config.icon = ip);
+
+                res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+            })
+
+
             let info = travisInfo()
             cfg.versions = {
                 branch: info.branch,
@@ -3405,8 +3443,11 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             pxt.log(`Skipped ${ignoreCount} snippets`)
         }
     }).then(() => {
-        if (failures.length > 0)
-            U.userError(`${failures.length} snippets not compiling in the docs`)
+        if (failures.length > 0) {
+            const msg = `${failures.length} snippets not compiling in the docs`;
+            if (pxt.appTarget.ignoreDocsErrors) pxt.log(msg);
+            else U.userError(msg);
+        }
     })
 }
 
@@ -4250,8 +4291,11 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     if (compileSnippets)
         p = p.then(() => testSnippetsAsync(snippets, re));
     return p.then(() => {
-        if (broken > 0)
-            U.userError(`${broken} broken links found in the docs`);
+        if (broken > 0) {
+            const msg = `${broken} broken links found in the docs`;
+            if (pxt.appTarget.ignoreDocsErrors) pxt.log(msg)
+            else U.userError(msg);
+        }
     })
 }
 

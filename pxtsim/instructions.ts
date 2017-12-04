@@ -124,14 +124,14 @@ namespace pxsim.instructions {
     };
 
     function mkBoardImgSvg(def: string | BoardImageDefinition): visuals.SVGElAndSize {
-        let boardView = pxsim.visuals.mkBoardView({
+        const boardView = pxsim.visuals.mkBoardView({
             visual: def
         });
         return boardView.getView();
     }
 
     function mkBBSvg(): visuals.SVGElAndSize {
-        let bb = new visuals.Breadboard({});
+        const bb = new visuals.Breadboard({});
         return bb.getSVGAndSize();
     }
     function wrapSvg(el: visuals.SVGElAndSize, opts: mkCmpDivOpts): HTMLElement {
@@ -493,7 +493,7 @@ namespace pxsim.instructions {
         let wires = (props.stepToWires[step] || []);
         let mkLabel = (loc: Loc) => {
             if (loc.type === "breadboard") {
-                let {row, col} = (<BBLoc>loc);
+                let { row, col } = (<BBLoc>loc);
                 return `(${row},${col})`
             } else
                 return (<BoardLoc>loc).pin;
@@ -523,7 +523,7 @@ namespace pxsim.instructions {
             locs.forEach((l, i) => {
                 let topLbl: string;
                 if (l) {
-                    let {row, col} = l;
+                    let { row, col } = l;
                     topLbl = `(${row},${col})`;
                 } else {
                     topLbl = "";
@@ -570,12 +570,18 @@ namespace pxsim.instructions {
         parts: string[];
         partDefinitions: Map<PartDefinition>;
         fnArgs?: any;
+        configData?: pxsim.ConfigData;
     }
 
     export function renderParts(options: RenderPartsOptions) {
-        let msg: SimulatorRunMessage = {
+        if (options.configData)
+            pxsim.setConfigData(options.configData.cfg, options.configData.cfgKey);
+
+        const msg: SimulatorRunMessage = {
             type: "run",
             code: "",
+            boardDefinition: options.boardDef,
+            partDefinitions: options.partDefinitions
         }
         pxsim.runtime = new Runtime(msg);
         pxsim.runtime.board = null;
