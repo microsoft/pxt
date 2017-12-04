@@ -1,4 +1,4 @@
- # Statements
+# Statements
 
 The following JavaScript statements are supported for the @boardname@:
 
