@@ -2723,7 +2723,7 @@ ${lbl}: .short 0xffff
                         attrs.shim,
                         attrs,
                         funcHasReturn(node),
-                        getParameters(node).map(p => !!(typeOf(p).flags & TypeFlags.NumberLike)))
+                        getParameters(node).map(p => isNumberLikeType(typeOf(p))))
                 }
                 if (!hasShimDummy(node))
                     return undefined;
@@ -3090,7 +3090,7 @@ ${lbl}: .short 0xffff
             }
             if (e.kind == SK.NumericLiteral)
                 return true
-            return !!(typeOf(e).flags & TypeFlags.NumberLike)
+            return isNumberLikeType(typeOf(e))
         }
 
         function rtcallMask(name: string, args: Expression[], attrs: CommentAttrs, append: Expression[] = null) {
@@ -4277,5 +4277,9 @@ ${lbl}: .short 0xffff
         emitHexLiteral(s: string): string {
             return this.emitLabelled(s, this.hexlits, "_hexlit")
         }
+    }
+
+    function isNumberLikeType(type: Type) {
+        return !!(type.flags & (TypeFlags.NumberLike | TypeFlags.EnumLike))
     }
 }

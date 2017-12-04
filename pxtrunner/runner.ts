@@ -130,7 +130,7 @@ namespace pxt.runner {
     }
 
     function patchSemantic() {
-        if ($ && $.fn && ($.fn as any).embed && ($.fn as any).embed.settings && ($.fn as any).settings.sources && ($.fn as any).settings.sources.youtube) {
+        if ($ && $.fn && ($.fn as any).embed && ($.fn as any).embed.settings && ($.fn as any).embed.settings.sources && ($.fn as any).embed.settings.sources.youtube) {
             ($.fn as any).embed.settings.sources.youtube.url = '//www.youtube.com/embed/{id}?rel=0'
         }
     }

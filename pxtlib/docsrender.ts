@@ -6,6 +6,8 @@ namespace pxt.docs {
     import U = pxtc.Util;
     const lf = U.lf;
 
+    let markedInstance: typeof marked;
+
     let stdboxes: Map<string> = {
     }
 
@@ -415,9 +417,9 @@ namespace pxt.docs {
         }
         prepTemplate(d)
 
-        if (!marked) {
-            (marked as any) = requireMarked();
-            let renderer = new marked.Renderer()
+        if (!markedInstance) {
+            markedInstance = requireMarked();
+            let renderer = new markedInstance.Renderer()
             renderer.image = function (href: string, title: string, text: string) {
                 let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
                 if (title) {
@@ -442,7 +444,7 @@ namespace pxt.docs {
                 }
                 return `<h${level} id="${this.options.headerPrefix}${id}">${text}</h${level}>`
             } as any
-            marked.setOptions({
+            markedInstance.setOptions({
                 renderer: renderer,
                 gfm: true,
                 tables: true,
@@ -480,7 +482,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         // replace pre-template in markdown
         markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
-        let html = marked(markdown)
+        let html = markedInstance(markdown)
 
         // support for breaks which somehow don't work out of the box
         html = html.replace(/&lt;br\s*\/&gt;/ig, "<br/>");
@@ -752,9 +754,9 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         if (!summaryMD)
             return null
 
-        const marked = pxt.docs.requireMarked();
+        const markedInstance = pxt.docs.requireMarked();
         const options = {
-            renderer: new marked.Renderer(),
+            renderer: new markedInstance.Renderer(),
             gfm: true,
             tables: false,
             breaks: false,
@@ -768,7 +770,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         let currentStack: pxt.TOCMenuEntry[] = [];
         currentStack.push(dummy);
 
-        let tokens = marked.lexer(summaryMD, options);
+        let tokens = markedInstance.lexer(summaryMD, options);
         tokens.forEach((token: any) => {
             switch (token.type) {
                 case "heading":

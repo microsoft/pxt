@@ -150,19 +150,30 @@ namespace ts.pxtc {
         let tsFiles = opts.sourceFiles.filter(f => U.endsWith(f, ".ts"))
         // ensure that main.ts is last of TS files
         let tsFilesNoMain = tsFiles.filter(f => f != "main.ts")
+        let hasMain = false;
         if (tsFiles.length > tsFilesNoMain.length) {
             tsFiles = tsFilesNoMain
             tsFiles.push("main.ts")
+            hasMain = true;
         }
         // TODO: ensure that main.ts is last???
         let program = createProgram(tsFiles, options, host);
+
+        let entryPoint: string;
+        if (hasMain) {
+            entryPoint = "main.ts"
+        }
+        else {
+            const lastFile = tsFiles[tsFiles.length - 1];
+            entryPoint = lastFile.substring(lastFile.lastIndexOf("/") + 1);
+        }
 
         // First get and report any syntactic errors.
         res.diagnostics = patchUpDiagnostics(program.getSyntacticDiagnostics(), opts.ignoreFileResolutionErrors);
         if (res.diagnostics.length > 0) {
             if (opts.forceEmit) {
                 pxt.debug('syntactic errors, forcing emit')
-                compileBinary(program, host, opts, res, "main.ts");
+                compileBinary(program, host, opts, res, entryPoint);
             }
             return res;
         }
@@ -183,7 +194,7 @@ namespace ts.pxtc {
         }
 
         if (opts.ast || opts.forceEmit || res.diagnostics.length == 0) {
-            const binOutput = compileBinary(program, host, opts, res, "main.ts");
+            const binOutput = compileBinary(program, host, opts, res, entryPoint);
             res.times["compilebinary"] = Date.now() - emitStart
             res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(binOutput.diagnostics))
         }
