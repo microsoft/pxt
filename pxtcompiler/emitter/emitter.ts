@@ -2,11 +2,12 @@
 /// <reference path="../../localtypings/pxtpackage.d.ts"/>
 
 namespace ts.pxtc {
-    enum LiteralTypes {
+    enum HasLiteralType {
         Enum,
         Number,
         String,
-        Boolean
+        Boolean,
+        Unsupported
     }
 
     // in tagged mode,
@@ -598,33 +599,37 @@ namespace ts.pxtc {
         return checkType(r)
     }
 
-    function isUnionOfLiterals(t: Type): t is UnionType {
+    function checkUnionOfLiterals(t: Type): HasLiteralType {
         if (!(t.flags & TypeFlags.Union)) {
-            return false;
+            return HasLiteralType.Unsupported;
         }
 
         let u = t as UnionType;
         let allGood = true;
-        let constituentType: LiteralTypes;
+        let constituentType: HasLiteralType;
 
         u.types.forEach(tp => {
             if (constituentType === undefined) {
-                if (isNumberType(tp)) constituentType = LiteralTypes.Number;
-                else if (isBooleanType(tp)) constituentType = LiteralTypes.Boolean;
-                else if (isStringType(tp)) constituentType = LiteralTypes.String;
-                else if (isEnumType(tp)) constituentType = LiteralTypes.Enum;
+                if (tp.flags & TypeFlags.NumberLike) constituentType = HasLiteralType.Number;
+                else if (tp.flags & TypeFlags.BooleanLike) constituentType = HasLiteralType.Boolean;
+                else if (tp.flags & TypeFlags.StringLike) constituentType = HasLiteralType.String;
+                else if (tp.flags & TypeFlags.EnumLike) constituentType = HasLiteralType.Enum;
             }
             else {
                 switch (constituentType) {
-                    case LiteralTypes.Number: allGood = allGood && !!isNumberType(tp); break;
-                    case LiteralTypes.Boolean: allGood = allGood && !!isBooleanType(tp); break;
-                    case LiteralTypes.String: allGood = allGood && !!isStringType(tp); break;
-                    case LiteralTypes.Enum: allGood = allGood && !!isEnumType(tp); break;
+                    case HasLiteralType.Number: allGood = allGood && !!(tp.flags & TypeFlags.NumberLike); break;
+                    case HasLiteralType.Boolean: allGood = allGood && !!(tp.flags & TypeFlags.BooleanLike); break;
+                    case HasLiteralType.String: allGood = allGood && !!(tp.flags & TypeFlags.StringLike); break;
+                    case HasLiteralType.Enum: allGood = allGood && !!(tp.flags & TypeFlags.EnumLike); break;
                 }
             }
         });
 
-        return allGood;
+        return allGood ? constituentType : HasLiteralType.Unsupported;
+    }
+
+    function isUnionOfLiterals(t: Type): t is UnionType {
+        return checkUnionOfLiterals(t) !== HasLiteralType.Unsupported;
     }
 
     // does src inherit from tgt via heritage clauses?
@@ -3325,7 +3330,7 @@ ${lbl}: .short 0xffff
                     return emitLazyBinaryExpression(node);
             }
 
-            if ((lt.flags & TypeFlags.NumberLike) && (rt.flags & TypeFlags.NumberLike)) {
+            if (isNumberType(lt) && isNumberType(rt)) {
                 let noEq = stripEquals(node.operatorToken.kind)
                 let shimName = simpleInstruction(noEq || node.operatorToken.kind)
                 if (!shimName)
@@ -4205,20 +4210,28 @@ ${lbl}: .short 0xffff
         return U.toHex(new Uint8Array(a.buffer))
     }
 
+    function checkPrimitiveType(t: Type, flags: number, tp: HasLiteralType) {
+        if (t.flags & flags) {
+            return true;
+        }
+        return checkUnionOfLiterals(t) === tp;
+    }
+
+
     function isStringType(t: Type) {
-        return t.flags & (TypeFlags.String | TypeFlags.StringLiteral);
+        return checkPrimitiveType(t, TypeFlags.String | TypeFlags.StringLiteral, HasLiteralType.String);
     }
 
     function isNumberType(t: Type) {
-        return t.flags & (TypeFlags.Number | TypeFlags.NumberLiteral);
+        return checkPrimitiveType(t, TypeFlags.Number | TypeFlags.NumberLiteral, HasLiteralType.Number);
     }
 
     function isBooleanType(t: Type) {
-        return t.flags & (TypeFlags.Boolean | TypeFlags.BooleanLiteral);
+        return checkPrimitiveType(t, TypeFlags.Boolean | TypeFlags.BooleanLiteral, HasLiteralType.Boolean);
     }
 
     function isEnumType(t: Type) {
-        return t.flags & (TypeFlags.Enum | TypeFlags.EnumLiteral);
+        return checkPrimitiveType(t, TypeFlags.Enum | TypeFlags.EnumLiteral, HasLiteralType.Enum);
     }
 
     export class Binary {
