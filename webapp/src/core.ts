@@ -247,7 +247,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         ip.on('change', e => options.inputValue = ip.val())
     }
     let done = false
-    $('#root').append(modal)
+    $('#dimmerRoot').append(modal)
     if (options.onLoaded) options.onLoaded(modal)
 
     modal.find('img').on('load', () => {
@@ -279,7 +279,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         mo = modal.modal({
             observeChanges: true,
             closeable: !options.hideCancel,
-            context: "#root",
+            context: "#dimmerRoot",
             onHidden: () => {
                 modal.remove();
                 mo.remove();
