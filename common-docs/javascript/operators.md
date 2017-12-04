@@ -4,7 +4,7 @@ The following JavaScript operators are supported for the @boardname@.
 
 ### ~hint
 
-Note that for the @boardname@ all arithmetic is performed on integers, rather than floating point.
+For the @boardname@ all arithmetic is performed on integers, rather than floating point.
 This also is true when simulating in the browser.
 
 ### ~
@@ -15,7 +15,7 @@ This also is true when simulating in the browser.
 * [arithmetic operators](http://devdocs.io/javascript/operators/arithmetic_operators) 
 * [bitwise operators](http://devdocs.io/javascript/operators/bitwise_operators)
 
-# Comparision and conditional
+# Comparison and conditional
 
 * [comparison operators](http://devdocs.io/javascript/operators/comparison_operators)
 * [conditional operator](http://devdocs.io/javascript/operators/conditional_operator)
