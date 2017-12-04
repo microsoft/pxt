@@ -19,6 +19,13 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
     constructor(props: any) {
         super(props)
         this.state = { active: false }
+    }
+
+    componentDidMount() {
+        window.addEventListener("message", this.setActive.bind(this))
+    }
+
+    componentWillUnmount() {
         window.addEventListener("message", this.setActive.bind(this))
     }
 
