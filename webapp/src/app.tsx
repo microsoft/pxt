@@ -1046,7 +1046,10 @@ export class ProjectView
                 if (saveOnly) {
                     return pxt.commands.saveOnlyAsync(resp);
                 }
-                return pxt.commands.deployCoreAsync(resp, { reportError: (e) => core.errorNotification(e) })
+                return pxt.commands.deployCoreAsync(resp, {
+                    reportDeviceNotFoundAsync: (path) => this.showDeviceNotFoundDialogAsync(path),
+                    reportError: (e) => core.errorNotification(e)
+                })
                     .catch(e => {
                         core.warningNotification(lf(".hex file upload failed, please try again."));
                         pxt.reportException(e);
@@ -1063,6 +1066,21 @@ export class ProjectView
                 if (simRestart) this.runSimulator();
             })
             .done();
+    }
+
+    showDeviceNotFoundDialogAsync(docPath: string): Promise<void> {
+        pxt.tickEvent(`compile.devicenotfound`);
+        return core.confirmAsync({
+            header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
+            body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
+            agreeLbl: lf("Troubleshoot"),
+            disagreeLbl: lf("Close")
+        }).then(res => {
+            if (res) {
+                pxt.tickEvent(`compile.troubleshoot`);
+                window.open(docPath, '_blank');
+            }
+        });
     }
 
     overrideTypescriptFile(text: string) {
