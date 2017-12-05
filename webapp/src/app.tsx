@@ -1071,8 +1071,8 @@ export class ProjectView
     showDeviceNotFoundDialogAsync(docPath: string): Promise<void> {
         pxt.tickEvent(`compile.devicenotfound`);
         return core.confirmAsync({
-            header: lf("Device not found"),
-            body: lf("We could not find your device. Do you need help connecting?"),
+            header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
+            body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
             agreeLbl: lf("Troubleshoot"),
             disagreeLbl: lf("Close")
         }).then(res => {
