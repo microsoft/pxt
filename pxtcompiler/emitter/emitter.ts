@@ -3330,7 +3330,7 @@ ${lbl}: .short 0xffff
                     return emitLazyBinaryExpression(node);
             }
 
-            if (isNumberType(lt) && isNumberType(rt)) {
+            if (isNumericalType(lt) && isNumericalType(rt)) {
                 let noEq = stripEquals(node.operatorToken.kind)
                 let shimName = simpleInstruction(noEq || node.operatorToken.kind)
                 if (!shimName)
@@ -4232,6 +4232,10 @@ ${lbl}: .short 0xffff
 
     function isEnumType(t: Type) {
         return checkPrimitiveType(t, TypeFlags.Enum | TypeFlags.EnumLiteral, HasLiteralType.Enum);
+    }
+
+    function isNumericalType(t: Type) {
+        return isEnumType(t) || isNumberType(t);
     }
 
     export class Binary {
