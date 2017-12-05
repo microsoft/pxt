@@ -31,7 +31,7 @@ This denotes that it's a member access.
 In the last line we construct an instance of the `Greeter` class using `new`.
 This calls into the constructor we defined earlier, creating a new object with the `Greeter` shape, and running the constructor to initialize it.
 
-# Inheritance
+## Inheritance
 
 In TypeScript, we can use common object-oriented patterns.
 Of course, one of the most fundamental patterns in class-based programming is being able to extend existing classes to create new ones using inheritance.
@@ -87,9 +87,9 @@ Galloping...
 Tommy the Palomino moved 34m.
 ```
 
-# Public, private, and protected modifiers
+## Public, private, and protected modifiers
 
-## Public by default
+### Public by default
 
 In our examples, we've been able to freely access the members that we declared throughout our programs.
 If you're familiar with classes in other languages, you may have noticed in the above examples 
@@ -110,7 +110,7 @@ class Animal {
 }
 ```
 
-## Understanding `private`
+### Understanding `private`
 
 When a member is marked `private`, it cannot be accessed from outside of its containing class. For example:
 
@@ -164,7 +164,7 @@ Because `Animal` and `Rhino` share the `private` side of their shape from the sa
 When we try to assign from an `Employee` to `Animal` we get an error that these types are not compatible.
 Even though `Employee` also has a `private` member called `name`, it's not the one we declared in `Animal`.
 
-## Understanding `protected`
+### Understanding `protected`
 
 The `protected` modifier acts much like the `private` modifier with the exception that members 
 declared `protected` can also be accessed by instances of deriving classes. For example,
