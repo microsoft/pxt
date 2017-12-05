@@ -97,7 +97,7 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
-        const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && (targetConfig || {}).windowsStoreLink && !isApp;
+        const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetConfig && targetConfig.windowsStoreLink && !isApp;
 
         if (showWindowsStoreBanner) {
             return (
