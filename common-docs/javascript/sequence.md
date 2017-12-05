@@ -7,7 +7,7 @@ doSomething();
 doAnotherThing();
 ```
 
-### The semicolon 
+## The semicolon 
 
 In JavaScript, the semicolon (;) is used to terminate (or end) a statement. However, in most
 cases, the semicolon is optional and can be omitted. So both code sequences below are 
@@ -23,7 +23,7 @@ doSomething();
 doAnotherThing();
 ```
 
-### The empty statement
+## The empty statement
 
 In JavaScript, there is the concept of an *empty statement*, which is whitespace followed by
 a semicolon in the context where a statement is expected.
@@ -33,7 +33,6 @@ followed by a call to `doSomething` that will never execute:
 while(true) ;
 doSomething(); // THIS LINE WILL NEVER EXECUTE!
 ```
-
 
 ### ~hint
 

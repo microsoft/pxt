@@ -1,4 +1,4 @@
- # Statements
+# Statements
 
 The following JavaScript statements are supported for the @boardname@:
 
@@ -10,7 +10,7 @@ The following JavaScript statements are supported for the @boardname@:
 
 * [`{ }` block statement](http://devdocs.io/javascript/statements/block)
 * [`if-else` conditional statement](http://devdocs.io/javascript/statements/if...else)
-* [`while` loop](http://devdocs.io/javascript/statements/do...while)
+* [`while` loop](http://devdocs.io/javascript/statements/while)
 * [`do-while` loop](http://devdocs.io/javascript/statements/do...while)
 * [`for(;;)` loop](http://devdocs.io/javascript/statements/for)
 * [`switch` statement (on numbers only)](http://devdocs.io/javascript/statements/switch)

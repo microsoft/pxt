@@ -3,7 +3,7 @@
 For programs to be useful, we need to be able to work with some of the simplest units of data: 
 numbers, strings, structures, boolean values, and the like.
 
-# Type Inference
+## Type Inference
 
 In TypeScript, there are several places where type inference is used to provide type information when there is
 no explicit type annotation. For example, in this code
@@ -19,7 +19,7 @@ setting parameter default values, and determining function return types.
 
 All the examples below give an example type annotation, but will work just the same without the annotation.
 
-# Boolean
+## Boolean
 
 The most basic datatype is the simple true/false value, which is called a `boolean` value.
 
@@ -27,7 +27,7 @@ The most basic datatype is the simple true/false value, which is called a `boole
 let isDone: boolean = false;
 ```
 
-# Number
+## Number
 
 ### ~ hint 
 In JavaScript, `numbers` are floating point values.
@@ -43,7 +43,7 @@ let binary: number = 0b1010;
 let octal: number = 0o744;
 ```
 
-# String
+## String
 
 As in other languages, we use the type `string` to refer to textual data.
 Use double quotes (`"`) or single quotes (`'`) to surround string data.
@@ -93,7 +93,7 @@ let list: Array<number> = [1, 2, 3];
 For the @boardname@, all elements of an array must have the same type.
 ### ~
 
-# Enum
+## Enum
 
 A helpful addition to the standard set of datatypes from JavaScript is the `enum`.
 As in languages like C#, an enum is a way of giving more friendly names to sets of numeric values.
@@ -119,11 +119,11 @@ enum Color {Red = 1, Green = 2, Blue = 4}
 let c: Color = Color.Green;
 ```
 
-# Any
+## Any
 
 The TypeScript type `any` is not supported in the @boardname@.
 
-# Void
+## Void
 
 `void` is the absence of having any type at all.
 You may commonly see this as the return type of functions that do not return a value:
