@@ -1,15 +1,75 @@
 \section{Introduction}
 
-Blockly~\cite{Blocky2015} is a JavaScript framework for creating visual block-based editing environments, 
+Blockly~\cite{Blocky2015} (\url{github.com/google/blockly}) 
+is a JavaScript framework for creating visual block-based editing environments, 
 inspired by MIT’s Scratch programming environment~\cite{ScratchCACM2009}.  Visual blocks represent structured 
-control-flow statements such as while loops and if-then-else conditionals, as well as expressions. 
+control-flow statements such as while loops and if-then-else conditionals, as well as program expressions,
+values and variables. 
 Blocks also represent function calls to domain-specific APIS. Blocky supports the creation of \emph{custom 
 blocks} for domain-specific APIs. Blockly can be compiled to a variety of languages, the main target 
-being JavaScript. 
+being JavaScript (as Blockly itself is written in JavaScript and hosted in a web browser).
 
-TypeScript is superset of the JavaScript language that is gradually typed, meaning that types may 
+TypeScript (\url{www.typescriptlang.org}) is superset of the JavaScript language that is gradually typed, 
+meaning that types may 
 optionally be added to JavaScript code to provide for a more productive programming and debugging experience. 
-We describe a mapping from TypeScript annotated APIs to Blockly that radically simplifies 
-the creation of domain-specific Blockly-based programming environments  This makes it very easy 
-to take existing JavaScript frameworks and libraries, many of which already have TypeScript 
-descriptions of their APIs, and make them available via Blockly. 
+We describe a mapping from TypeScript annotated JavaScript APIs to Blockly that greatly simplifies 
+the process of making existing JavaScript frameworks and libraries available via Blockly.
+
+Our goal is not to have a mapping of every TypeScript programming construct into Blockly 
+(i.e., a one-to-one mapping of the TypeScript abstract syntax tree nodes to blocks).
+Rather, it is support common programming paradigms with a simple mapping
+from TypeScript to blocks and back.  This mapping may, in fact, be many-to-one, 
+abstracting over multiple TypeScript elements to provide a single block abstraction.
+This supports Blockly's goal to provide a simplified programming experience 
+with higher-level abstractions.
+
+\subsection{Example}
+
+Here's an example of a function that takes two parameters (an enumeration and
+an event handler - a lambda function):
+\begin{lstlisting}
+enum Button { A, B };
+function onButton(button:  Button, 
+                  handler: () => void): void { }
+\end{lstlisting}
+The function is explicitly typed using TypeScript's support for
+type annotations: each parameter has a type, which follows the colon;
+furthermore, the return type of the function also is specified as void
+via annotation. 
+
+This function gives rise to a 
+a block named ``onButton'', shown in Figure~\ref{fig:onButton}
+(later sections described how attributes in the comment preceding
+the function allow the look and feel of the block to be customized).
+The function definition and its types define the structure of the
+block:
+\begin{itemize}
+\item  a \emph{value} input corresponding to the parameter
+\emph{button} which allows selection of one of two 
+possible parameter values, either ``A'' or ``B'', corresponding to the
+the two possible values for the enumeration \emph{Button};
+while an enumeration is realized as a JavaScript number, we
+generate a Blockly field selector for this parameter that allows
+the user to choose either ``A'' or ``B''.
+\item the block has a \emph{statement} input corresponding to the
+statements that comprise the body of the event handler \emph{handler},
+which has the function type \emph{() => void}. 
+\end{itemize}
+So, we see that the block allows user to instantiate the code fully without
+the necessity to explicitly create a lambda function.
+
+\subsection{Overview}
+
+
+
+% Nonetheless, there are features of the TypeScript language that one usually
+% finds lacking in Blockly instantations, such as explicit use of lexical scoping,
+
+
+% \begin{itemize}
+%   \item lexical scoping (via let);
+%   \item functions as values (also nested functions -> closures);
+%   \item classes with single inheritance, methods, objects
+%   \item arrays (lists);
+%   \item object destructuring
+% \end{itemize}
