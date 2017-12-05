@@ -11,6 +11,7 @@ declare namespace pxt {
         galleries?: pxt.Map<string>;
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
+        windowsStoreLink?: string;
     }
 
     interface PackagesConfig {
@@ -217,7 +218,6 @@ declare namespace pxt {
         hideMenuBar?: boolean; // Hides the main menu bar
         hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
         appStoreID?: string; // Apple iTune Store ID if any
-        windowsStoreLink?: string; // Link to UWP app in Windows store
         mobileSafariDownloadProtocol?: string; // custom protocol to be used on iOS
         sounds?: {
             tutorialStep?: string;
