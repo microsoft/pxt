@@ -21,7 +21,7 @@ export interface GenericBannerProps extends ISettingsProps {
     ref?: any;
 }
 
-export class GenericBanner extends React.Component<GenericBannerProps, {}> {
+export class GenericBanner extends data.Component<GenericBannerProps, {}> {
     delayTime: number;
     doneSleeping: boolean;
     bannerType: string;
@@ -59,17 +59,17 @@ export class GenericBanner extends React.Component<GenericBannerProps, {}> {
             this.timer = setTimeout(() => this.hide("automatic"), this.delayTime + this.props.displayTime);
         }
         this.props.parent.setBanner(true);
-        this.render();
+        this.renderCore();
     }
 
     hide(mode: string) {
         pxt.tickEvent("notificationBanner." + mode + "Close");
         pxt.storage.setLocal("lastBannerClosedTime", Util.nowSeconds().toString());
         this.props.parent.setBanner(false);
-        this.render();
+        this.renderCore();
     }
 
-    render() {
+    renderCore() {
         return (
             (this.props.parent.state.bannerVisible  && this.doneSleeping) ?
             <div id="notificationBanner" className={`ui attached ${this.bannerType} message`}>
@@ -87,8 +87,8 @@ export class GenericBanner extends React.Component<GenericBannerProps, {}> {
     }
 }
 
-export class NotificationBanner extends React.Component<ISettingsProps, {}> {
-    render() {
+export class NotificationBanner extends data.Component<ISettingsProps, {}> {
+    renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
         const isApp = electron.isElectron || pxt.winrt.isWinRT();
         const isLocalServe = location.hostname === "localhost";
@@ -96,7 +96,8 @@ export class NotificationBanner extends React.Component<ISettingsProps, {}> {
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
-        const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetTheme.windowsStoreLink && !isApp;
+        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
+        const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && (targetConfig || {}).windowsStoreLink && !isApp;
 
         if (showWindowsStoreBanner) {
             return (
