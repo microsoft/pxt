@@ -1016,7 +1016,7 @@ namespace ts.pxtc {
         }
 
         let allStmts: Statement[] = [];
-        if (!opts.forceEmit && res.diagnostics.length == 0) {
+        if (!opts.forceEmit || res.diagnostics.length == 0) {
             const files = program.getSourceFiles();
             files.forEach(f => {
                 f.statements.forEach(s => {
