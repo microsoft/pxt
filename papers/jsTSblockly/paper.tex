@@ -213,66 +213,7 @@ export function showNumber(v: number, interval: number = 150): void
 % advanced=true causes this block to be placed under the parent category’s “More…” subcategory. Useful for hiding advanced or rarely-used blocks by default
 % Block syntax
 
-\section{Blockly Overview}
-
-Unsuprisingly, the core abstract of Blockly is the \emph{Block},
-which is used to represent statements, expressions, values and variables.  
-Blocks have \emph{connectors} that allow them to be sequenced
-horizontally or vertically in space.  In the default Blockly
-layout, vertically sequenced blocks
-generally represent program statements, while horizontally
-sequenced blocks generally represent program expressions/values.
-Blockly also supports the nesting of blocks, and so a collection of
-blocks naturally represents an abstract syntax tree. 
-
-While Blockly does attach a loose meaning to blocks,
-their actual semantics given to blocks is entirely up to the developer.
-We use the TypeScript language (and its type system) to 
-give a more precise meaning to blocks. 
-
-\subsection{Block connections}
-
-Block connectors, inputs and output:
-\begin{itemize}
-% A block with a previous connector cannot have an output connector, and vice versa. 
-% The term statement block refers to a block with no value output. 
-
-% nextStatement and previousStatement connections can be typed
-% but this feature is not utilized by standard blocks.
-
-\item \emph{previous and next connectors}, both optional, allow a block to be vertically sequenced - Blockly
-  enforces that a block with a previous connector cannnot have an output connector; according
-  to Blockly documentation, ``a statement block will usually have both a previous connection and 
-  a next connection'';
-
-\item a block may have a single \emph{output connector}, 
-      which appears as a male jigsaw connector on a block's left-side; according to 
-      Blockly documentation, ``Blocks with an output are usually called value blocks'';
-
-\item a block may have multiple \emph{inputs}, which can appears as holes in a block
-      or female jigsaw connectors on a block's right-side, about which we'll say more below. 
-\end{itemize}
-
-Block inputs come in three basic forms:
-\begin{enumerate}
-  \item \emph{fields}, which represent terminals (constants, literals, variables);
-  \item \emph{value inputs} (receives value from output block) - value inputs
-      and value blocks allow one to create expression trees;
-  \item \emph{statement inputs}, allow one to create statement trees;
-\end{enumerate}
-
-\subsection{Mutators}
-
-\subsection{Blockly type checking}
-
-\subsection{Blockly conventions (JavaScript)}
-\begin{itemize}
-  \item no variable declarations (all variables global, except for);
-  \item dynamic typing;
-  \item expressions can't be put where statement expected 
-  - use an assignment to a dummy variable to make expression into statement);
-  \item loops and local scope
-\end{itemize}
+\input{blockly}
 
 \section{TypeScript Essentials}
 
