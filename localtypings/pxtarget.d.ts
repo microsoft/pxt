@@ -9,6 +9,7 @@ declare namespace pxt {
         languages?: string[];
         notifications?: Map<Notification>; // domain specific notifications to show users on load
         windowsStoreLink?: string;
+        pineapple?: string;
     }
 
     interface Notification {

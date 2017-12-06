@@ -97,13 +97,14 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
-        const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetConfig && targetConfig.windowsStoreLink && !isApp;
+        //const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetConfig && targetConfig.windowsStoreLink && !isApp;
+        const showWindowsStoreBanner = true;
 
         if (showWindowsStoreBanner) {
             return (
-                <GenericBanner parent={this.props.parent} delayTime={10000} displayTime={45000} sleepTime={604800}>
+                <GenericBanner parent={this.props.parent} delayTime={1000}>
                     <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
-                        <img className="bannerIcon" src={Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)}></img>
+                        <span>{targetConfig.pineapple}</span>
                     </sui.Link>
                     <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
                         {lf("Want a faster download? Get the app!")}
