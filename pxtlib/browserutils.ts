@@ -249,6 +249,7 @@ namespace pxt.BrowserUtils {
         return windowOpen;
     }
 
+    // for browsers that strictly require that a download gets initiated within a user click
     export function isBrowserDownloadWithinUserContext(): boolean {
         const versionString = browserVersion();
         const v = parseInt(versionString || "0")
