@@ -38,6 +38,12 @@
         Modal Close Icon
 *******************************/
 
+.ui.modal > .close {
+    top: @innerCloseTop;
+    right: @innerCloseRight;
+    color: @innerCloseColor;
+}
+
 .ui.modal .closeIcon {
     position: absolute;
     top: 0; 
