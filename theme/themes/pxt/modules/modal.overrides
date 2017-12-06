@@ -1,3 +1,10 @@
 /*******************************
          Site Overrides
 *******************************/
+
+
+.ui.modal > .close {
+    top: @innerCloseTop;
+    right: @innerCloseRight;
+    color: @innerCloseColor;
+}
