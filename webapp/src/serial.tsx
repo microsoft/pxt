@@ -25,6 +25,11 @@ export class Editor extends srceditor.Editor {
     maxChartTime: number = 18000
     chartDropper: number
 
+    lineColors = ["#f00", "#00f", "#0f0", "#ff0"]
+    hcLineColors = ["000"]
+    currentLineColors = this.lineColors
+    highContrast: boolean = false
+
     //refs
     startPauseButton: StartPauseButton
     consoleRoot: HTMLElement
@@ -35,20 +40,33 @@ export class Editor extends srceditor.Editor {
     }
 
     hasHistory() { return false; }
-    
+
     hasEditorToolbar() {
         return false
     }
 
     setVisible(b: boolean) {
-        this.isVisible = b;
+        if (this.parent.state.highContrast !== this.highContrast) {
+            this.setHighContrast(this.parent.state.highContrast)
+        }
+        this.isVisible = b
         if (this.isVisible) {
             this.startRecording()
-            this.chartDropper = setInterval(this.dropStaleCharts.bind(this), 5000)
         }
         else {
             this.pauseRecording()
-            clearInterval(this.chartDropper)
+        }
+    }
+
+    setHighContrast(hc: boolean) {
+        if (hc !== this.highContrast) {
+            this.highContrast = hc;
+            if (hc) {
+                this.currentLineColors = this.hcLineColors
+            } else {
+                this.currentLineColors = this.lineColors
+            }
+            this.clear()
         }
     }
 
@@ -64,6 +82,8 @@ export class Editor extends srceditor.Editor {
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
         window.addEventListener("message", this.processMessage.bind(this), false)
+        const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme
+        this.lineColors = (serialTheme && serialTheme.lineColors) || this.lineColors
     }
 
     processMessage(ev: MessageEvent) {
@@ -108,7 +128,7 @@ export class Editor extends srceditor.Editor {
             }
         }
         if (!homeChart) {
-            homeChart = new Chart(source, variable, this.chartIdx)
+            homeChart = new Chart(source, variable, this.chartIdx, this.currentLineColors)
             this.chartIdx++;
             this.charts.push(homeChart)
             this.chartRoot.appendChild(homeChart.getElement());
@@ -177,12 +197,14 @@ export class Editor extends srceditor.Editor {
         this.active = false
         if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.stop())
+        clearInterval(this.chartDropper)
     }
 
     startRecording() {
         this.active = true
         if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.start())
+        this.chartDropper = setInterval(this.dropStaleCharts.bind(this), 20000)
     }
 
     toggleRecording() {
@@ -303,7 +325,7 @@ class Chart {
     isStale: boolean = false;
     lastUpdatedTime: number = 0;
 
-    constructor(source: string, variable: string, chartIdx: number) {
+    constructor(source: string, variable: string, chartIdx: number, lineColors: string[]) {
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme
         // Initialize chart
         const chartConfig: IChartOptions = {
@@ -316,13 +338,13 @@ class Chart {
             grid: {
                 verticalSections: 0,
                 borderVisible: false,
-                fillStyle: serialTheme && serialTheme.graphBackground || '#fff',
-                strokeStyle: serialTheme && serialTheme.graphBackground || '#fff'
+                fillStyle: serialTheme && serialTheme.gridFillStyle || 'transparent',
+                strokeStyle: serialTheme && serialTheme.gridStrokeStyle || '#fff'
             },
             tooltip: true,
             tooltipFormatter: (ts, data) => this.tooltip(ts, data)
         }
-        this.lineColors = serialTheme && serialTheme.lineColors || ["#f00", "#00f", "#0f0", "#ff0"]
+        this.lineColors = lineColors;
         this.chartIdx = chartIdx;
         this.chart = new SmoothieChart(chartConfig);
         this.rootElement.className = "ui segment";
