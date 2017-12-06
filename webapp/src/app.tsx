@@ -1074,6 +1074,7 @@ export class ProjectView
             header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
             body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
             agreeLbl: lf("Troubleshoot"),
+            hideCancel: true,
             hasCloseIcon: true
         }).then(res => {
             if (res) {
