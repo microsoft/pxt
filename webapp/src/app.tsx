@@ -1016,7 +1016,7 @@ export class ProjectView
             pxt.usb.initAsync().catch(e => { })
         }
         let userContextWindow: Window = undefined;
-        if (pxt.BrowserUtils.isBrowserDownloadInSameWindow())
+        if (pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext())
             userContextWindow = window.open("");
 
         pxt.tickEvent("compile");
