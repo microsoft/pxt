@@ -564,7 +564,7 @@ namespace ts.pxtc.service {
         }
     }
 
-    const operations: pxt.Map<(v: any) => any> = {
+    const operations: pxt.Map<(v: OpArg) => any> = {
         reset: () => {
             service.cleanupSemanticCache();
             host.setOpts(emptyOptions)
@@ -646,7 +646,7 @@ namespace ts.pxtc.service {
             lastFuse = undefined;
             return lastApiInfo = getApiInfo(host.opts, service.getProgram());
         },
-        blocksInfo: blocksInfoOp,
+        blocksInfo: v => blocksInfoOp(v as any),
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;

@@ -325,7 +325,7 @@ namespace ts.pxtc {
         while (true) {
             node = node.parent
             if (!node)
-            userError(9229, lf("cannot determine parent of {0}", stringKind(node0)))
+                userError(9229, lf("cannot determine parent of {0}", stringKind(node0)))
             switch (node.kind) {
                 case SK.MethodDeclaration:
                 case SK.Constructor:
@@ -1153,13 +1153,6 @@ namespace ts.pxtc {
             }
             else {
                 msg = lf("{0} not supported", ts.SyntaxKind[n.kind])
-            }
-
-            let t = (n as any) as any[];
-            if (t.forEach) {
-                t.forEach(a => {
-                    console.log(a);
-                })
             }
 
             if (alternative) {

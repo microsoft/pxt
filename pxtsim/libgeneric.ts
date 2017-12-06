@@ -513,6 +513,16 @@ namespace pxsim {
             return new RefBuffer(buf.data.slice(offset, offset + length));
         }
 
+        export function toHex(buf: RefBuffer): string {
+            const hex = "0123456789abcdef";
+            let res = "";
+            for (let i = 0; i < buf.data.length; ++i) {
+                res += hex[buf.data[i] >> 4];
+                res += hex[buf.data[i] & 0xf];
+            }
+            return res;
+        }
+
         function memmove(dst: Uint8Array, dstOff: number, src: Uint8Array, srcOff: number, len: number) {
             if (src.buffer === dst.buffer) {
                 memmove(dst, dstOff, src.slice(srcOff, srcOff + len), 0, len);
