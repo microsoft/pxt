@@ -19,25 +19,24 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
 
 export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     let url = ""
-    let fn = ""
-    let ext = pxt.outputName().replace(/[^.]*/, "")
-    if (!pxt.isOutputText()) {
-        let uf2 = resp.outfiles[pxt.outputName()]
-        fn = pkg.genFileName(ext);
+    const ext = pxt.outputName().replace(/[^.]*/, "")
+    const out = resp.outfiles[pxt.outputName()]
+    const fn = pkg.genFileName(ext);
+    if (pxt.BrowserUtils.isBrowserDownloadWithinUserContext()) {
+        url = pxt.BrowserUtils.toDownloadDataUri(btoa(pxt.isOutputText() ? btoa(out) : Util.toUTF8(out)), pxt.appTarget.compile.hexMimeType);
+    } else if (!pxt.isOutputText()) {
         pxt.debug('saving ' + fn)
         url = pxt.BrowserUtils.browserDownloadBase64(
-            uf2,
+            out,
             fn,
             "application/x-uf2",
             resp.userContextWindow,
             e => core.errorNotification(lf("saving file failed..."))
         );
     } else {
-        let hex = resp.outfiles[pxt.outputName()]
-        fn = pkg.genFileName(ext);
         pxt.debug('saving ' + fn)
         url = pxt.BrowserUtils.browserDownloadBinText(
-            hex,
+            out,
             fn,
             pxt.appTarget.compile.hexMimeType,
             resp.userContextWindow,
@@ -54,7 +53,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
         }).then(() => { });
     }
 
-    if (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow()) return Promise.resolve();
+    if (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext()) return Promise.resolve();
     else return showUploadInstructionsAsync(fn, url);
 }
 
@@ -65,33 +64,37 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     // https://msdn.microsoft.com/en-us/library/cc848897.aspx
     // "For security reasons, data URIs are restricted to downloaded resources.
     // Data URIs cannot be used for navigation, for scripting, or to populate frame or iframe elements"
+    const userDownload = pxt.BrowserUtils.isBrowserDownloadWithinUserContext();
     const downloadAgain = !pxt.BrowserUtils.isIE() && !pxt.BrowserUtils.isEdge();
     const docUrl = pxt.appTarget.appTheme.usbDocs;
     const saveAs = pxt.BrowserUtils.hasSaveAs();
-    const body = saveAs ? lf("Click 'Save As' and save the {0} file to the {1} drive to transfer the code into your {2}.",
-        pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
-        boardDriveName, boardName)
-        : lf("Move the {0} file to the {1} drive to transfer the code into your {2}.",
-            pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
+    const ext = pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex";
+    const body = userDownload ? lf("Click 'Download' to open the {0} app.", pxt.appTarget.name) :
+        saveAs ? lf("Click 'Save As' and save the {0} file to the {1} drive to transfer the code into your {2}.",
+            ext,
             boardDriveName, boardName)
+            : lf("Move the {0} file to the {1} drive to transfer the code into your {2}.",
+                ext,
+                boardDriveName, boardName);
+    const timeout = pxt.BrowserUtils.isBrowserDownloadWithinUserContext() ? 0 : 7000;
     return core.confirmAsync({
         header: lf("Download completed..."),
         body,
         hideCancel: true,
         agreeLbl: lf("Done!"),
         buttons: [downloadAgain ? {
-            label: fn,
+            label: userDownload ? lf("Download") : fn,
             icon: "download",
-            class: "lightgrey focused",
+            class: `${userDownload ? "primary" : "lightgrey"} focused`,
             url,
             fileName: fn
         } : undefined, docUrl ? {
             label: lf("Help"),
             icon: "help",
-            class: "lightgrey focused",
+            class: "lightgrey",
             url: docUrl
         } : undefined],
-        timeout: 7000
+        timeout
     }).then(() => { });
 }
 
