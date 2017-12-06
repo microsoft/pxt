@@ -78,7 +78,7 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
                 boardDriveName, boardName);
     const timeout = pxt.BrowserUtils.isBrowserDownloadWithinUserContext() ? 0 : 7000;
     return core.confirmAsync({
-        header: lf("Download completed..."),
+        header: userDownload ? lf("Download ready...") : lf("Download completed..."),
         body,
         hideCancel: true,
         agreeLbl: lf("Done!"),
