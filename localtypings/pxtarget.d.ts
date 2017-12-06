@@ -58,6 +58,15 @@ declare namespace pxt {
         fields?: pxt.Map<string>;
     }
 
+    interface BlockOptions {
+        category?: string;      // category in toolbox where the block should appear (defaults to "Loops")
+        group?: string;         // group in toolbox category where the block should appear (defaults to none)
+        color?: string;         // defaults to the color of the "Loops" category
+        weight?: number;        // defaults to 0
+        namespace?: string;     // namespace where the block's function lives (defaults to none)
+        callName?: string;      // name of the block's function if changed in target
+    }
+
     interface RuntimeOptions {
         mathBlocks?: boolean;
         textBlocks?: boolean;
@@ -70,6 +79,8 @@ declare namespace pxt {
         onStartColor?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
+        waitUntilBlock?: BlockOptions;
+        doOnTrueBlock?: BlockOptions;
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
     }
 

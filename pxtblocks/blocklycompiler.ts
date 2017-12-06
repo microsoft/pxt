@@ -383,6 +383,9 @@ namespace pxt.blocks {
                         handleGenericType(b, "LIST");
                         unionParam(e, b, "INDEX", ground(pNumber.type));
                         break;
+                    case pxtc.WAIT_UNTIL_TYPE:
+                        attachPlaceholderIf(e, b, "PREDICATE", pBoolean.type);
+                        break;
                     default:
                         if (b.type in e.stdCallTable) {
                             const call = e.stdCallTable[b.type];
@@ -1279,6 +1282,9 @@ namespace pxt.blocks {
             case pxtc.TS_STATEMENT_TYPE:
                 r = compileTypescriptBlock(e, b);
                 break;
+            case pxtc.WAIT_UNTIL_TYPE:
+                r = compileWaitUntilBlock(e, b, comments);
+                break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) r = [compileCall(e, b, comments)];
@@ -1353,6 +1359,23 @@ namespace pxt.blocks {
         const emptyStatement = mkStmt(mkText(";"));
         emptyStatement.glueToBlock = GlueMode.NoSpace;
         return mkGroup([emptyStatement, n]);
+    }
+
+    function compileWaitUntilBlock(e: Environment, b: B.Block, comments: string[]): JsNode[] {
+        const options = pxt.appTarget.runtime && pxt.appTarget.runtime.waitUntilBlock;
+        Util.assert(!!options, "target has block enabled");
+
+        const ns = options.namespace;
+        const name = options.callName || "waitUntil";
+        const arg = compileArg(e, b, "PREDICATE", comments);
+        const lambda = [mkGroup([mkText("() => "), arg])];
+
+        if (ns) {
+            return [H.namespaceCall(ns, name, lambda, false)];
+        }
+        else {
+            return [H.mkCall(name, lambda, false, false)];
+        }
     }
 
     // This function creates an empty environment where type inference has NOT yet

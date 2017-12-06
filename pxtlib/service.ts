@@ -11,6 +11,8 @@ namespace ts.pxtc {
     export const HANDLER_COMMENT = U.lf("code goes here");
     export const TS_STATEMENT_TYPE = "typescript_statement";
     export const TS_OUTPUT_TYPE = "typescript_expression";
+    export const WAIT_UNTIL_TYPE = "pxt_wait_until";
+    export const DO_ON_TRUE_TYPE = "pxt_on_true";
     export const BINARY_JS = "binary.js";
     export const BINARY_CS = "binary.cs";
     export const BINARY_ASM = "binary.asm";
