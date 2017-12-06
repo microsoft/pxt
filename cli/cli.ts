@@ -497,7 +497,7 @@ function travisAsync() {
                 .then(() => internalUploadTargetTranslationsAsync(!!rel));
         return p;
     } else {
-        return buildTargetAsync()
+        return internalBuildTargetAsync()
             .then(() => internalCheckDocsAsync(true))
             .then(() => npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve())
             .then(() => {
@@ -633,7 +633,7 @@ function uploadTaggedTargetAsync() {
         ]))
         // only build target after getting all the info
         .then(info =>
-            buildTargetAsync()
+            internalBuildTargetAsync()
                 .then(() => internalCheckDocsAsync(true))
                 .then(() => info))
         .then(info => {
@@ -1286,7 +1286,14 @@ export interface BuildTargetOptions {
     packaged?: boolean;
 }
 
-export function buildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
+export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    if (parsed && parsed.flags["cloud"]) {
+        forceCloudBuild = true
+    }
+    return internalBuildTargetAsync();
+}
+
+export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
     if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync(options)
 
@@ -1943,7 +1950,7 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
 
     return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
         .then(buildCommonSimAsync, e => buildFailed("common sim build failed: " + e.message, e))
-        .then(() => buildTargetAsync().then(r => { }, e => {
+        .then(() => internalBuildTargetAsync().then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
         .then(() => {
@@ -3778,7 +3785,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
     let p = rimrafAsync(builtPackaged, {})
         .then(() => bump ? bumpAsync() : Promise.resolve())
-        .then(() => buildTargetAsync({ packaged: true }));
+        .then(() => internalBuildTargetAsync({ packaged: true }));
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
     else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify));
 }
@@ -4715,8 +4722,22 @@ function initCommands() {
     advancedCommand("testpkgconflicts", "tests package conflict detection logic", testPkgConflictsAsync);
     advancedCommand("testdbg", "tests hardware debugger", dbgTestAsync);
 
-    advancedCommand("buildtarget", "build pxtarget.json", buildTargetAsync);
-    advancedCommand("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");
+    p.defineCommand({
+        name: "buildtarget",
+        aliases: ["buildtrg", "bt", "build-target", "buildtrg"],
+        advanced: true,
+        help: "Builds the current target",
+        flags: {
+            cloud: { description: "forces build to happen in the cloud" }
+        }
+    }, buildTargetAsync);
+    p.defineCommand({
+        name: "uploadtarget",
+        aliases: ["uploadtrg", "ut", "upload-target", "upload-trg"],
+        help: "Upload target release",
+        argString: "<label>",
+        advanced: true,
+    }, pc => uploadTargetAsync(pc.arguments[0]));
     advancedCommand("uploadtt", "upload tagged release", uploadTaggedTargetAsync, "");
     advancedCommand("downloadtrgtranslations", "download translations from bundled projects", downloadTargetTranslationsAsync, "<package>");
 
