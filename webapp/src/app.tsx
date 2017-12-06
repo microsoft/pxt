@@ -1070,17 +1070,19 @@ export class ProjectView
 
     showDeviceNotFoundDialogAsync(docPath: string): Promise<void> {
         pxt.tickEvent(`compile.devicenotfound`);
-        return core.confirmAsync({
+        return core.dialogAsync({
             header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
             body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
-            agreeLbl: lf("Troubleshoot"),
+            buttons: [{
+                label: lf("Troubleshoot"),
+                class: "focused",
+                url: docPath,
+                onclick: () => {
+                    pxt.tickEvent(`compile.troubleshoot`);
+                }
+            }],
             hideCancel: true,
             hasCloseIcon: true
-        }).then(res => {
-            if (res) {
-                pxt.tickEvent(`compile.troubleshoot`);
-                window.open(docPath, '_blank');
-            }
         });
     }
 
