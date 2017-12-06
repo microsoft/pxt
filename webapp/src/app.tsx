@@ -1074,7 +1074,7 @@ export class ProjectView
             header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
             body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
             agreeLbl: lf("Troubleshoot"),
-            disagreeLbl: lf("Close")
+            hasCloseIcon: true
         }).then(res => {
             if (res) {
                 pxt.tickEvent(`compile.troubleshoot`);
@@ -1489,6 +1489,7 @@ export class ProjectView
             hideCancel: true,
             agreeLbl: lf("Ok"),
             agreeClass: "positive focused",
+            hasCloseIcon: true,
             htmlBody: `
 <p>${Util.htmlEscape(pxt.appTarget.description)}</p>
 <p>${lf("{0} version:", Util.htmlEscape(pxt.appTarget.name))} <a class="focused" href="${Util.htmlEscape(pxt.appTarget.appTheme.githubUrl)}/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.target)}" aria-label="${lf("{0} version : {1}", Util.htmlEscape(pxt.appTarget.name), Util.htmlEscape(pxt.appTarget.versions.target))}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>

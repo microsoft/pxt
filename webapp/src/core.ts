@@ -50,7 +50,7 @@ export function showLoading(msg: string) {
 }
 
 function initializeDimmer() {
-    $('#content').dimmer({'dimmerName': 'loading'}).dimmer({
+    $('#content').dimmer({ 'dimmerName': 'loading' }).dimmer({
         closable: false
     });
     dimmerInitialized = true;
@@ -189,6 +189,7 @@ export interface DialogOptions {
     onLoaded?: (_: JQuery) => void;
     buttons?: ButtonConfig[];
     timeout?: number;
+    hasCloseIcon?: boolean;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
@@ -200,6 +201,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         .join(' ');
     let html = `
   <div role="dialog" class="ui ${options.size || "small"} modal">
+    ${options.hasCloseIcon ? `<i class="close icon"></i>` : ``}
     <div role="heading" class="header">
         ${Util.htmlEscape(options.header)}
     </div>
