@@ -95,6 +95,8 @@ declare namespace pxt {
 
     interface SerialTheme {
         graphBackground?: string;
+        gridFillStyle?: string;
+        gridStrokeStyle?: string;
         strokeColor?: string;
         lineColors?: string[];
     }
