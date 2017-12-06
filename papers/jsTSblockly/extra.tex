@@ -1,0 +1,17 @@
+\section{Example}
+
+All exported functions with a block attribute will be available in the Block Editor.
+
+\begin{lstlisting}
+//% block
+export function showNumber(v: number, interval: number = 150): void
+{ }
+\end{lstlisting}
+If you need more control over the appearance of the block, you can specify the 
+blockId and block parameters:
+\begin{lstlisting}
+//% blockId=device_show_number
+//% block="show|number %v"
+export function showNumber(v: number, interval: number = 150): void
+{ }
+\end{lstlisting}

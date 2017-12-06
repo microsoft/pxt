@@ -21,16 +21,19 @@ Rather, it is support common programming paradigms with a simple mapping
 from TypeScript to blocks and back.  This mapping may, in fact, be many-to-one, 
 abstracting over multiple TypeScript elements to provide a single block abstraction.
 This supports Blockly's goal to provide a simplified programming experience 
-with higher-level abstractions.
+with higher-level abstractions. 
+
+The challenge we face is provide a sufficiently rich mapping to handle the
+many different API paradigms that JavaScript can support, while
+also simplifying the APIs so that they are accessible from Blockly. 
 
 \subsection{Example}
 
-Here's an example of a function that takes two parameters (an enumeration and
-an event handler - a lambda function):
+Here's an example of a TypeScript function that has (typed) parameters $b$ and $h$:
 \begin{lstlisting}
 enum Button { A, B };
-function onButton(button:  Button, 
-                  handler: () => void): void { }
+function onButton(b:  Button, 
+                  h: () => void): void { }
 \end{lstlisting}
 The function is explicitly typed using TypeScript's support for
 type annotations: each parameter has a type, which follows the colon;
@@ -38,25 +41,32 @@ furthermore, the return type of the function also is specified as void
 via annotation. 
 
 This function gives rise to a 
-a block named ``onButton'', shown in Figure~\ref{fig:onButton}
+a block $B$ named ``onButton'', shown in Figure~\ref{fig:onButton}
+that represents a \emph{call} to the function
 (later sections described how attributes in the comment preceding
 the function allow the look and feel of the block to be customized).
-The function definition and its types define the structure of the
-block:
+
+The function definition and its types define the block's two \emph{inputs}:
 \begin{itemize}
 \item  a \emph{value} input corresponding to the parameter
-\emph{button} which allows selection of one of two 
+$b$ which allows selection of one of two 
 possible parameter values, either ``A'' or ``B'', corresponding to the
-the two possible values for the enumeration \emph{Button};
-while an enumeration is realized as a JavaScript number, we
-generate a Blockly field selector for this parameter that allows
-the user to choose either ``A'' or ``B''.
-\item the block has a \emph{statement} input corresponding to the
-statements that comprise the body of the event handler \emph{handler},
-which has the function type \emph{() => void}. 
+the two possible values for the enumeration \emph{Button} ---
+while an enumeration is realized as a JavaScript number, a 
+Blockly field selector for this parameter only allows
+the user to choose either ``A'' or ``B'' (0 or 1);
+\item a \emph{statement} input corresponding to the parameter $h$
+that allows the user to drag statement blocks inside of block $B$
+to define the body of the lambda function passed to $h$.
 \end{itemize}
-So, we see that the block allows user to instantiate the code fully without
-the necessity to explicitly create a lambda function.
+The resulting block allows user to instantiate the function call's
+parameter values without the necessity to explicitly create a 
+lambda function.  Let $S$ be the sequence of TypeScript statements
+corresponding to the blocks of $B$'s statement input and XYZ. 
+
+[TODO: show the block and the resulting TypeScript call]
+
+
 
 \subsection{Overview}
 
