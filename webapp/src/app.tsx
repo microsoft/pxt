@@ -1750,7 +1750,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
-        const rootClasses = sui.cx([
+        let rootClassList = [
             shouldHideEditorFloats ? " hideEditorFloats" : '',
             shouldCollapseEditorTools ? " collapsedEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
@@ -1765,10 +1765,14 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             !showEditorToolbar ? 'hideEditorToolbar' : '',
             this.state.bannerVisible ? "notificationBannerVisible" : "",
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
-            'full-abs',
-            'dimmable'
-        ]);
-
+            'full-abs'
+        ];
+        let jQueryClasses = ["dimmable", "dimmed"];
+        let prevRoot = document.getElementById("root");
+        if (prevRoot) {
+            jQueryClasses.filter(c => prevRoot.classList.contains(c)).forEach(c => rootClassList.push(c));
+        }
+        const rootClasses = sui.cx(rootClassList);
         return (
             <div id='root' className={rootClasses}>
                 {hideMenuBar ? undefined :
