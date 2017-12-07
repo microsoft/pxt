@@ -465,7 +465,7 @@ function travisAsync() {
                 .then(() => internalUploadTargetTranslationsAsync(!!rel));
         return p;
     } else {
-        return buildTargetAsync()
+        return internalBuildTargetAsync()
             .then(() => internalCheckDocsAsync(true))
             .then(() => npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve())
             .then(() => {
@@ -601,7 +601,7 @@ function uploadTaggedTargetAsync() {
         ]))
         // only build target after getting all the info
         .then(info =>
-            buildTargetAsync()
+            internalBuildTargetAsync()
                 .then(() => internalCheckDocsAsync(true))
                 .then(() => info))
         .then(info => {
@@ -1221,7 +1221,14 @@ export interface BuildTargetOptions {
     packaged?: boolean;
 }
 
-export function buildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
+export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    if (parsed && parsed.flags["cloud"]) {
+        forceCloudBuild = true
+    }
+    return internalBuildTargetAsync();
+}
+
+function internalBuildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
     if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync(options)
 
@@ -1756,7 +1763,7 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
     }
 
     return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
-        .then(() => buildTargetAsync().then(r => { }, e => {
+        .then(() => internalBuildTargetAsync().then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
         .then(() => buildTargetDocsAsync(false, true).then(r => { }, e => {
@@ -2161,7 +2168,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand) {
 
 const defaultFiles: Map<string> = {
     "tsconfig.json":
-    `{
+        `{
     "compilerOptions": {
         "target": "es5",
         "noImplicitAny": true,
@@ -2203,7 +2210,7 @@ test:
 `,
 
     ".gitignore":
-    `built
+        `built
 node_modules
 yotta_modules
 yotta_targets
@@ -2212,7 +2219,7 @@ pxt_modules
 *.tgz
 `,
     ".vscode/settings.json":
-    `{
+        `{
     "editor.formatOnType": true,
     "files.autoSave": "afterDelay",
     "files.watcherExclude": {
@@ -2232,7 +2239,7 @@ pxt_modules
     }
 }`,
     ".vscode/tasks.json":
-    `
+        `
 // A task runner that calls the PXT compiler and
 {
     "version": "0.1.0",
@@ -3664,7 +3671,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     pxt.log(`packaging editor to ${builtPackaged}`)
 
     let p = rimrafAsync(builtPackaged, {})
-        .then(() => buildTargetAsync({ packaged: true }));
+        .then(() => internalBuildTargetAsync({ packaged: true }));
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged));
     else return p.then(() => internalStaticPkgAsync(builtPackaged, route));
 }
@@ -4493,8 +4500,22 @@ function initCommands() {
     advancedCommand("testconv", "test TD->TS converter", testConverterAsync, "<jsonurl>");
     advancedCommand("testpkgconflicts", "tests package conflict detection logic", testPkgConflictsAsync);
 
-    advancedCommand("buildtarget", "build pxtarget.json", buildTargetAsync);
-    advancedCommand("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");
+    p.defineCommand({
+        name: "buildtarget",
+        aliases: ["buildtrg", "bt", "build-target", "buildtrg"],
+        advanced: true,
+        help: "Builds the current target",
+        flags: {
+            cloud: { description: "forces build to happen in the cloud" }
+        }
+    }, buildTargetAsync);
+    p.defineCommand({
+        name: "uploadtarget",
+        aliases: ["uploadtrg", "ut", "upload-target", "upload-trg"],
+        help: "Upload target release",
+        argString: "<label>",
+        advanced: true,
+    }, pc => uploadTargetAsync(pc.arguments[0]));
     advancedCommand("uploadtt", "upload tagged release", uploadTaggedTargetAsync, "");
     advancedCommand("downloadtrgtranslations", "download translations from bundled projects", downloadTargetTranslationsAsync, "<package>");
 

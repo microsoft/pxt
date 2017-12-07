@@ -367,25 +367,10 @@ class Chart {
             (line as any).__name = Util.htmlEscape(name.substring(this.variable.length + 1));
             this.chart.addTimeSeries(line, {
                 strokeStyle: lineColor,
-                fillStyle: this.hexToHalfOpacityRgba(lineColor),
-                lineWidth: 1
+                lineWidth: 3
             })
         }
         return line;
-    }
-
-    hexToHalfOpacityRgba(hex: string) {
-        let shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i
-        hex = hex.replace(shorthandRegex, function(m, r, g, b) {
-            return r + r + g + g + b + b;
-        })
-        let m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-        if (!m) {
-            return hex
-        }
-        let nums = m.slice(1, 4).map(n => parseInt(n, 16))
-        nums.push(0.3)
-        return "rgba(" + nums.join(",") + ")"
     }
 
     makeLabel() {
