@@ -22,8 +22,9 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
     const ext = pxt.outputName().replace(/[^.]*/, "")
     const out = resp.outfiles[pxt.outputName()]
     const fn = pkg.genFileName(ext);
-    if (pxt.BrowserUtils.isBrowserDownloadWithinUserContext()) {
-        url = pxt.BrowserUtils.toDownloadDataUri(btoa(pxt.isOutputText() ? btoa(out) : Util.toUTF8(out)), pxt.appTarget.compile.hexMimeType);
+    const userContext = pxt.BrowserUtils.isBrowserDownloadWithinUserContext();
+    if (userContext) {
+        url = pxt.BrowserUtils.toDownloadDataUri(pxt.isOutputText() ? btoa(out) : out, pxt.appTarget.compile.hexMimeType);
     } else if (!pxt.isOutputText()) {
         pxt.debug('saving ' + fn)
         url = pxt.BrowserUtils.browserDownloadBase64(
@@ -53,7 +54,8 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
         }).then(() => { });
     }
 
-    if (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext()) return Promise.resolve();
+    if (resp.saveOnly && userContext) return showUploadInstructionsAsync(fn, url); // save does the same as download as far iOS is concerned
+    if (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow()) return Promise.resolve();
     else return showUploadInstructionsAsync(fn, url);
 }
 
