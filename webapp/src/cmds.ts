@@ -77,7 +77,7 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync?: (op
             : lf("Move the {0} file to the {1} drive to transfer the code into your {2}.",
                 ext,
                 boardDriveName, boardName);
-    const timeout = pxt.BrowserUtils.isBrowserDownloadWithinUserContext() ? 0 : 7000;
+    const timeout = pxt.BrowserUtils.isBrowserDownloadWithinUserContext() ? 0 : 10000;
     return core.confirmAsync({
         header: userDownload ? lf("Download ready...") : lf("Download completed..."),
         body,
