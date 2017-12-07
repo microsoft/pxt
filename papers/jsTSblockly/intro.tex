@@ -29,11 +29,16 @@ also simplifying the APIs so that they are accessible from Blockly.
 
 \subsection{Example}
 
-Here's an example of a TypeScript function that has (typed) parameters $b$ and $h$:
+Here's an example of a TypeScript function \emph{onButton} 
+with parameters $b$ and $f$
+that represents a common JavaScript pattern of registering an event
+handler ($f$) to be executed when some event occurs (in this case, 
+a press of button $A$ or button $B$, as specified in the enumeration
+\emph{Button}):
 \begin{lstlisting}
 enum Button { A, B };
 function onButton(b:  Button, 
-                  h: () => void): void { }
+                  f: () => void): void { }
 \end{lstlisting}
 The function is explicitly typed using TypeScript's support for
 type annotations: each parameter has a type, which follows the colon;
@@ -41,7 +46,7 @@ furthermore, the return type of the function also is specified as void
 via annotation. 
 
 This function gives rise to a 
-a block $B$ named ``onButton'', shown in Figure~\ref{fig:onButton}
+block $B$ named ``onButton'', shown in Figure~\ref{fig:onButton}
 that represents a \emph{call} to the function
 (later sections described how attributes in the comment preceding
 the function allow the look and feel of the block to be customized).
@@ -55,9 +60,9 @@ the two possible values for the enumeration \emph{Button} ---
 while an enumeration is realized as a JavaScript number, a 
 Blockly field selector for this parameter only allows
 the user to choose either ``A'' or ``B'' (0 or 1);
-\item a \emph{statement} input corresponding to the parameter $h$
+\item a \emph{statement} input corresponding to the parameter $f$
 that allows the user to drag statement blocks inside of block $B$
-to define the body of the lambda function passed to $h$.
+to define the body of the lambda function passed to $f$.
 \end{itemize}
 The resulting block allows user to instantiate the function call's
 parameter values without the necessity to explicitly create a 
