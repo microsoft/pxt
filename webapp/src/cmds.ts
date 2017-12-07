@@ -55,7 +55,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
     }
 
     if (resp.saveOnly && userContext) return showUploadInstructionsAsync(fn, url); // save does the same as download as far iOS is concerned
-    if (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow()) return Promise.resolve();
+    if (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !userContext) return Promise.resolve();
     else return showUploadInstructionsAsync(fn, url);
 }
 
