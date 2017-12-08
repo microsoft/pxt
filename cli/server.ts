@@ -309,6 +309,10 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
         // innerpath start with targetid
         return Promise.resolve(readMd(innerPath.slice(pxt.appTarget.id.length + 1)))
     }
+    else if (cmd == "GET config" && pxt.appTarget.id + "/targetconfig" == innerPath) {
+        // target config
+        return readFileAsync("targetconfig.json").then(buf => JSON.parse(buf.toString("utf8")));
+    }
     else throw throwError(400, `unknown command ${cmd.slice(0, 140)}`)
 }
 
