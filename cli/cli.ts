@@ -2240,39 +2240,33 @@ pxt_modules
 }`,
     ".vscode/tasks.json":
         `
-// A task runner that calls the PXT compiler and
+// A task runner that calls the MakeCode (PXT) compiler
 {
-    "version": "0.1.0",
-
-    // The command is pxt. Assumes that PXT has been installed using npm install -g pxt
-    "command": "pxt",
-
-    // The command is a shell script
-    "isShellCommand": true,
-
-    // Show the output window always.
-    "showOutput": "always",
-
+    "version": "2.0.0",
     "tasks": [{
-        "taskName": "deploy",
-        "isBuildCommand": true,
-        "problemMatcher": "$tsc",
-        "args": [""]
+        "label": "pxt deploy",
+        "type": "shell",
+        "command": "pxt deploy",
+        "group": "build",
+        "problemMatcher": [ "$tsc" ]
     }, {
-        "taskName": "build",
-        "isTestCommand": true,
-        "problemMatcher": "$tsc",
-        "args": [""]
+        "label": "pxt build",
+        "type": "shell",
+        "command": "pxt build",
+        "group": "test",
+        "problemMatcher": [ "$tsc" ]
     }, {
-        "taskName": "clean",
-        "isTestCommand": true,
-        "problemMatcher": "$tsc",
-        "args": [""]
+        "label": "pxt clean",
+        "type": "shell",
+        "command": "pxt clean",
+        "group": "test",
+        "problemMatcher": [ "$tsc" ]
     }, {
-        "taskName": "serial",
-        "isTestCommand": true,
-        "problemMatcher": "$tsc",
-        "args": [""]
+        "label": "pxt serial",
+        "type": "shell",
+        "command": "pxt serial",
+        "group": "test",
+        "problemMatcher": [ "$tsc" ]
     }]
 }
 `
@@ -2373,7 +2367,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
 
     config.name = path.basename(path.resolve(".")).replace(/^pxt-/, "")
     // by default, projects are not public
-    config.public = false
+    config.public = false;
 
     let configMap: Map<string> = config as any
 
