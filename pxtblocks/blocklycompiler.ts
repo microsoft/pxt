@@ -383,7 +383,7 @@ namespace pxt.blocks {
                         handleGenericType(b, "LIST");
                         unionParam(e, b, "INDEX", ground(pNumber.type));
                         break;
-                    case pxtc.WAIT_UNTIL_TYPE:
+                    case pxtc.PAUSE_UNTIL_TYPE:
                         attachPlaceholderIf(e, b, "PREDICATE", pBoolean.type);
                         break;
                     default:
@@ -1128,8 +1128,10 @@ namespace pxt.blocks {
 
         if (isExtension)
             return mkStmt(H.extensionCall(f, args.concat([callback]), false));
-        else
+        else if (n)
             return mkStmt(H.namespaceCall(n, f, args.concat([callback]), false));
+        else
+            return mkStmt(H.mkCall(f, args.concat([callback]), false));
     }
 
     function compileArg(e: Environment, b: B.Block, arg: string, comments: string[]): JsNode {
@@ -1282,8 +1284,8 @@ namespace pxt.blocks {
             case pxtc.TS_STATEMENT_TYPE:
                 r = compileTypescriptBlock(e, b);
                 break;
-            case pxtc.WAIT_UNTIL_TYPE:
-                r = compileWaitUntilBlock(e, b, comments);
+            case pxtc.PAUSE_UNTIL_TYPE:
+                r = compilePauseUntilBlock(e, b, comments);
                 break;
             default:
                 let call = e.stdCallTable[b.type];
@@ -1361,20 +1363,20 @@ namespace pxt.blocks {
         return mkGroup([emptyStatement, n]);
     }
 
-    function compileWaitUntilBlock(e: Environment, b: B.Block, comments: string[]): JsNode[] {
-        const options = pxt.appTarget.runtime && pxt.appTarget.runtime.waitUntilBlock;
+    function compilePauseUntilBlock(e: Environment, b: B.Block, comments: string[]): JsNode[] {
+        const options = pxt.appTarget.runtime && pxt.appTarget.runtime.pauseUntilBlock;
         Util.assert(!!options, "target has block enabled");
 
         const ns = options.namespace;
-        const name = options.callName || "waitUntil";
+        const name = options.callName || "pauseUntil";
         const arg = compileArg(e, b, "PREDICATE", comments);
         const lambda = [mkGroup([mkText("() => "), arg])];
 
         if (ns) {
-            return [H.namespaceCall(ns, name, lambda, false)];
+            return [mkStmt(H.namespaceCall(ns, name, lambda, false))];
         }
         else {
-            return [H.mkCall(name, lambda, false, false)];
+            return [mkStmt(H.mkCall(name, lambda, false, false))];
         }
     }
 

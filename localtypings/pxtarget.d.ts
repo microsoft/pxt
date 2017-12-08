@@ -79,8 +79,7 @@ declare namespace pxt {
         onStartColor?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
-        waitUntilBlock?: BlockOptions;
-        doOnTrueBlock?: BlockOptions;
+        pauseUntilBlock?: BlockOptions;
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
     }
 

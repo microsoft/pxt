@@ -192,3 +192,13 @@ namespace control {
     //% blockId="control_run_in_background" block="run in background" blockGap=8
     export function runInBackground(action: () => void) { }
 }
+
+
+/**
+ * Busy wait for a condition to be true
+ * @param condition condition to test for
+ * @param timeOut if positive, maximum duration to wait for in milliseconds
+ */
+//% blockId="pxt_pause_until"
+function pauseUntil(condition: () => boolean, timeOut?: number): void {
+}

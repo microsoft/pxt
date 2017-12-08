@@ -1130,7 +1130,7 @@ namespace pxt.blocks {
             if (pxt.appTarget.runtime) {
                 const rt = pxt.appTarget.runtime;
 
-                maybeInsertBuiltinBlock(tb, mkWaitUntilShadowBlock(), rt.waitUntilBlock);
+                maybeInsertBuiltinBlock(tb, mkPredicateBlock(pxtc.PAUSE_UNTIL_TYPE), rt.pauseUntilBlock);
             }
 
             // Load localized names for default categories
@@ -2358,12 +2358,12 @@ namespace pxt.blocks {
             }
         };
 
-        if (pxt.appTarget.runtime && pxt.appTarget.runtime.waitUntilBlock) {
-            const blockOptions =  pxt.appTarget.runtime.waitUntilBlock;
-            const blockDef = pxt.blocks.getBlockDefinition(ts.pxtc.WAIT_UNTIL_TYPE);
-            Blockly.Blocks[pxtc.WAIT_UNTIL_TYPE] = {
+        if (pxt.appTarget.runtime && pxt.appTarget.runtime.pauseUntilBlock) {
+            const blockOptions =  pxt.appTarget.runtime.pauseUntilBlock;
+            const blockDef = pxt.blocks.getBlockDefinition(ts.pxtc.PAUSE_UNTIL_TYPE);
+            Blockly.Blocks[pxtc.PAUSE_UNTIL_TYPE] = {
                 init: function () {
-                    const color = blockOptions.color ||  getNamespaceColor('loops');
+                    const color = blockOptions.color || getNamespaceColor('loops');
 
                     this.jsonInit({
                         "message0": blockDef.block["message0"],
@@ -2381,7 +2381,7 @@ namespace pxt.blocks {
                     });
 
                     setHelpResources(this,
-                        ts.pxtc.WAIT_UNTIL_TYPE,
+                        ts.pxtc.PAUSE_UNTIL_TYPE,
                         blockDef.name,
                         blockDef.tooltip,
                         blockDef.url,
@@ -3276,9 +3276,9 @@ namespace pxt.blocks {
      *     </value>
      * </block>
      */
-    function mkWaitUntilShadowBlock() {
+    function mkPredicateBlock(type: string) {
         const block = document.createElement("block");
-        block.setAttribute("type", pxtc.WAIT_UNTIL_TYPE);
+        block.setAttribute("type", type);
 
         const value = document.createElement("value");
         value.setAttribute("name", "PREDICATE");

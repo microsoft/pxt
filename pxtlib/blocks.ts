@@ -411,22 +411,13 @@ namespace pxt.blocks {
                 message0: Util.lf("on start %1 %2")
             }
         };
-        _blockDefinitions[pxtc.WAIT_UNTIL_TYPE] = {
-            name: Util.lf("wait until"),
+        _blockDefinitions[pxtc.PAUSE_UNTIL_TYPE] = {
+            name: Util.lf("pause until"),
             tooltip: Util.lf("Pause execution of code until the given boolean expression is true"),
-            url: '/blocks/wait-until',
+            url: '/blocks/pause-until',
             category: "loops", // The real category is overriden by apptarget in blocklyloader.ts
             block: {
-                message0: Util.lf("wait until %1")
-            }
-        };
-        _blockDefinitions[pxtc.DO_ON_TRUE_TYPE] = {
-            name: Util.lf("do when true"),
-            tooltip: Util.lf("Run code when the given boolean expression is true"),
-            url: '/blocks/do-when-true',
-            category: "loops", // The real category is overriden by apptarget in blocklyloader.ts
-            block: {
-                message0: Util.lf("when %1 do %2")
+                message0: Util.lf("pause until %1")
             }
         };
     }
