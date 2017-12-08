@@ -2203,6 +2203,7 @@ test:
 - [ ] Add a reference for your blocks here
 - [ ] Add "icon.png" image (300x200) in the root folder
 - [ ] Add "- beta" to the GitHub project description if you are still iterating it.
+- [ ] Turn on your automated build on https://travis-ci.org
 - [ ] Use "pxt bump" to create a tagged release on GitHub
 - [ ] Get your package reviewed and approved @DOCS@packages/approval
 
@@ -2248,6 +2249,19 @@ pxt_modules
         "**/pxt_modules": true
     }
 }`,
+    ".travis.yml": `language: node_js
+node_js:
+    - "5.7.0"
+script:
+    - "npm install -g pxt"
+    - "pxt target @TARGET@"
+    - "pxt install"
+    - "pxt build"
+sudo: false
+cache:
+    directories:
+    - npm_modules
+    - pxt_modules`,
     ".vscode/tasks.json":
         `
 // A task runner that calls the MakeCode (PXT) compiler
