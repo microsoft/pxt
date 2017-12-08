@@ -16,7 +16,7 @@
 
 namespace ts.pxtc.thumb {
 
-export class ThumbProcessor extends pxtc.assembler.AbstractProcessor {
+    export class ThumbProcessor extends pxtc.assembler.AbstractProcessor {
 
         constructor() {
             super();
@@ -479,13 +479,16 @@ export class ThumbProcessor extends pxtc.assembler.AbstractProcessor {
             } else if (lnop == "b" && ln.numArgs[0] == -2) {
                 // RULE: b .somewhere; .somewhere: -> .somewhere:
                 ln.update("")
-            } else if (lnop == "bne" && isSkipBranch && lb.encode(lnNext.numArgs[0]) != null) {
+            } else if ((lnop == "beq" || lnop == "bne") && isSkipBranch &&
+                lb.encode(lnNext.numArgs[0] + 8) != null &&
+                lb.encode(lnNext.numArgs[0] - 8) != null &&
+                lb.encode(lnNext.numArgs[0]) != null) {
+                // +/-8 bytes is because the code size can slightly change due to .balign directives
+                // inserted by literal generation code; see https://github.com/Microsoft/pxt-adafruit/issues/514
+                // Most likely 2 would be enough, but we play it safe
                 // RULE: bne .next; b .somewhere; .next: -> beq .somewhere
-                ln.update("beq " + lnNext.words[1])
-                lnNext.update("")
-            } else if (lnop == "beq" && isSkipBranch && lb.encode(lnNext.numArgs[0]) != null) {
                 // RULE: beq .next; b .somewhere; .next: -> bne .somewhere
-                ln.update("bne " + lnNext.words[1])
+                ln.update((lnop == "beq" ? "bne" : "beq") + " " + lnNext.words[1])
                 lnNext.update("")
             } else if (lnop == "push" && lnNext.getOp() == "pop" && ln.numArgs[0] == lnNext.numArgs[0]) {
                 // RULE: push {X}; pop {X} -> nothing
