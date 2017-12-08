@@ -745,6 +745,10 @@ namespace ts.pxtc.ir {
 
     export function rtcallMask(name: string, mask: number, callingConv: CallingConvention, args: Expr[]) {
         let decrs: ir.Expr[] = []
+        if (U.startsWith(name, "@nomask@")) {
+            name = name.slice(8)
+            mask = 0
+        }
         if (isStackMachine())
             name += "^" + mask
         else

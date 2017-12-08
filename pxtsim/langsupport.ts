@@ -14,6 +14,10 @@ namespace pxsim {
     let cfgKey: Map<number> = {}
     let cfg: Map<number> = {}
 
+    export function noRefCounting() {
+        if (runtime) runtime.refCounting = false;
+    }
+
     export function getConfig(id: number) {
         if (cfg.hasOwnProperty(id + ""))
             return cfg[id + ""]
@@ -38,6 +42,15 @@ namespace pxsim {
     export function setConfigData(cfg_: Map<number>, cfgKey_: Map<number>) {
         cfg = cfg_
         cfgKey = cfgKey_
+    }
+
+    export interface ConfigData {
+        cfg: Map<number>;
+        cfgKey: Map<number>;
+    }
+
+    export function getConfigData(): ConfigData {
+        return { cfg, cfgKey }
     }
 
     export function enableFloatingPoint() {

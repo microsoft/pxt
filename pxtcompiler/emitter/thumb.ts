@@ -222,6 +222,8 @@ namespace ts.pxtc.thumb {
         }
 
         public commonalize(file: assembler.File): void {
+            if (!target.commonalize)
+                return
             // this is a heuristic - we could allow more instructions
             // to be shared, but it seems to result in less sharing
             let canBeShared = (l: assembler.Line) => {
@@ -238,6 +240,9 @@ namespace ts.pxtc.thumb {
                             return true
                         case "bl":
                             switch (l.words[1]) {
+                                case "_numops_fromInt":
+                                case "_pxt_incr":
+                                case "_pxt_decr":
                                 case "pxt::incr":
                                 case "pxt::decr":
                                 case "pxt::fromInt":

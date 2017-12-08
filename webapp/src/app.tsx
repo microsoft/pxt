@@ -44,6 +44,7 @@ import * as codecard from "./codecard"
 import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as electron from "./electron";
+import * as notification from "./notification";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 type IAppProps = pxt.editor.IAppProps;
@@ -1123,7 +1124,7 @@ export class ProjectView
         }
         this.beforeCompile();
         let userContextWindow: Window = undefined;
-        if (!pxt.appTarget.compile.useModulator && pxt.BrowserUtils.isBrowserDownloadInSameWindow())
+        if (!pxt.appTarget.compile.useModulator && pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext())
             userContextWindow = window.open("");
 
         pxt.tickEvent("compile");
@@ -1706,6 +1707,10 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
+    setBanner(b: boolean) {
+        this.setState({ bannerVisible: b });
+    }
+
     renderCore() {
         theEditor = this;
 
@@ -1735,12 +1740,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
 
-        // For apps, if the user is not on the live website, display a warning banner
         const isApp = electron.isElectron || pxt.winrt.isWinRT();
-        const isLocalServe = location.hostname === "localhost";
-        const isExperimentalUrlPath = location.pathname !== "/"
-            && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
-        const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
 
         // cookie consent
         const cookieKey = "cookieconsent"
@@ -1750,7 +1750,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
-        const rootClasses = sui.cx([
+        let rootClassList = [
             shouldHideEditorFloats ? " hideEditorFloats" : '',
             shouldCollapseEditorTools ? " collapsedEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
@@ -1763,17 +1763,22 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             hideMenuBar ? 'hideMenuBar' : '',
             !showEditorToolbar ? 'hideEditorToolbar' : '',
+            this.state.bannerVisible ? "notificationBannerVisible" : "",
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
-            'full-abs',
-            'dimmable'
-        ]);
-
+            'full-abs'
+        ];
+        let jQueryClasses = ["dimmable", "dimmed"];
+        let prevRoot = document.getElementById("root");
+        if (prevRoot) {
+            jQueryClasses.filter(c => prevRoot.classList.contains(c)).forEach(c => rootClassList.push(c));
+        }
+        const rootClasses = sui.cx(rootClassList);
         return (
             <div id='root' className={rootClasses}>
-                {showExperimentalBanner ? <container.ExperimentalBanner parent={this} /> : undefined}
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
+                        <notification.NotificationBanner parent={this} />
                         <container.MainMenu parent={this} />
                     </header>}
                 {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">

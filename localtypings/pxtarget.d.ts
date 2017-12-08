@@ -11,6 +11,7 @@ declare namespace pxt {
         galleries?: pxt.Map<string>;
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
+        windowsStoreLink?: string;
     }
 
     interface PackagesConfig {
@@ -40,6 +41,7 @@ declare namespace pxt {
         appTheme: AppTheme;
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
+        ignoreDocsErrors?: boolean;
     }
 
     interface ProjectTemplate {
@@ -302,6 +304,7 @@ declare namespace ts.pxtc {
         hidSelectors?: HidSelector[];
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
         vmOpCodes?: pxt.Map<number>;
+        commonalize?: boolean;
     }
 
     interface CompileOptions {

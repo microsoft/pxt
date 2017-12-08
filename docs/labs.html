@@ -277,7 +277,7 @@
 		}
 		/* Accessible menu */
 
-		.accessibleMenu {
+		#accessibleMenu {
 			width: 100%;
 			position: absolute;
 			top: -20em;
@@ -287,19 +287,19 @@
 			left: 0;
 		}
 
-		.accessibleMenu .ui.item.link {
+		#accessibleMenu .ui.item.link {
 			position: absolute;
 			left: 0;
 			right: 0;
 			padding: 12px 10px;
-			background: rgba(255, 255, 255, .9);
 			font-weight: 700;
 			text-align: center;
-			color: #0072c6;
+			color: #387894;
+			background: hsla(0, 0%, 100%, .9)!important;
 		}
 
-		.accessibleMenu .ui.item.link:focus,
-		.accessibleMenu .ui.item.link:hover {
+		#accessibleMenu .ui.item.link:focus,
+		#accessibleMenu .ui.item.link:hover {
 			box-shadow: 3px 3px 5px #aaa;
 			top: 20em;
 			text-decoration: none;
@@ -389,7 +389,7 @@
 			</h1>
 
 
-			<div id="accessibleMenu" role="menubar">
+			<div id="accessibleMenu" class="accessibleMenu" role="menubar">
 				<a id="skiptocontent" class="ui item link" role="menuitem" href="#document-main" tabindex="1">Skip to Content</a>
 			</div>
 

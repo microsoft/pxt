@@ -108,12 +108,14 @@ export class Editor extends srceditor.Editor {
                     pxt.blocks.initExtensions(this.editor, this.extensions, (extensionName) => {
                         const extension = this.extensions.filter(c => c.name == extensionName)[0];
                         const parsedRepo = pxt.github.parseRepoId(extension.installedVersion);
-                        const debug = pxt.Cloud.isLocalHost() && /debugExtensions/i.test(window.location.href);
                         pxt.packagesConfigAsync()
                             .then((config) => {
                                 const repoStatus = pxt.github.repoStatus(parsedRepo, config);
                                 const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
-                                const url = debug ? "http://localhost:3232/extension.html" : `https://${parsedRepo.owner}.github.io/${repoName}/`;
+                                const localDebug = pxt.Cloud.isLocalHost() && /^file:/.test(extension.installedVersion) && extension.extension.localUrl;
+                                const debug = pxt.Cloud.isLocalHost() && /debugExtensions/i.test(window.location.href);
+                                const url = debug ? "http://localhost:3232/extension.html"
+                                    : localDebug ? extension.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
                                 this.parent.openExtension(extension.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
                             });
                     })
@@ -606,10 +608,12 @@ export class Editor extends srceditor.Editor {
         Util.assert(!this.delayLoadXml);
         Util.assert(!this.loadingXmlPromise);
 
+        this.blockInfo = undefined;
         this.currSource = file.content;
         this.typeScriptSaveable = false;
         this.setDiagnostics(file)
         this.delayLoadXml = file.content;
+        this.editor.clear();
         this.editor.clearUndo();
 
         if (this.currFile && this.currFile != file) {
@@ -636,7 +640,7 @@ export class Editor extends srceditor.Editor {
             .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
             // Make sure the package has extensions enabled, and is a github package.
             // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
-            .filter(config => !!config && !!config.extension && config.installedVersion.indexOf('github') == 0);
+            .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
 
         return Promise.resolve();
     }

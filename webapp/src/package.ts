@@ -146,7 +146,7 @@ export class EditorPackage {
         let p = this.ksPkg.resolveDep(pkgid);
         if (!p || p.verProtocol() != "github") return Promise.resolve();
         let parsed = pxt.github.parseRepoId(p.verArgument())
-        return pxt.packagesConfigAsync()
+        return pxt.targetConfigAsync()
             .then(config => pxt.github.latestVersionAsync(parsed.fullName, config))
             .then(tag => { parsed.tag = tag })
             .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
@@ -352,7 +352,7 @@ function resolvePath(p: string) {
 const theHost = new Host();
 export var mainPkg = new pxt.MainPackage(theHost);
 
-export function getEditorPkg(p: pxt.Package) {
+export function getEditorPkg(p: pxt.Package): EditorPackage {
     let r: EditorPackage = (p as any)._editorPkg
     if (r) return r
 

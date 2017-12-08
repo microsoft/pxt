@@ -155,7 +155,7 @@ namespace pxt {
                 .then(verNo => {
                     if (!/^embed:/.test(verNo) &&
                         this.config && this.config.installedVersion == verNo)
-                        return
+                        return undefined;
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
@@ -582,7 +582,7 @@ namespace pxt {
             return this._jres
         }
 
-        getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()) {
+        getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()): Promise<pxtc.CompileOptions> {
             let opts: pxtc.CompileOptions = {
                 sourceFiles: [],
                 fileSystem: {},

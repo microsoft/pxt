@@ -2,7 +2,7 @@
 
 namespace pxtblockly {
 
-     enum Note {
+    enum Note {
         C = 262,
         CSharp = 277,
         D = 294,
@@ -50,19 +50,89 @@ namespace pxtblockly {
         GSharp5 = 831,
         A5 = 880,
         Bb5 = 932,
-        B5 = 988
+        B5 = 988,
+        C6 = 1047,
+        CSharp6 = 1109,
+        D6 = 1175,
+        Eb6 = 1245,
+        E6 = 1319,
+        F6 = 1397,
+        FSharp6 = 1480,
+        G6 = 1568,
+        GSharp6 = 1568,
+        A6 = 1760,
+        Bb6 = 1865,
+        B6 = 1976,
+        C7 = 2093
     }
 
-    enum PianoSize {
-        small = 12,
-        medium = 36,
-        large = 60
+    interface NoteData {
+        name: string,
+        prefixedName: string,
+        altPrefixedName?: string,
+        freq: number
+    }
+
+    const Notes: {[key: number]: NoteData} = {
+        28: {name: "C", prefixedName: "Low C", freq: 131},
+        29: {name: "C#", prefixedName: "Low C#", freq: 139},
+        30: {name: "D", prefixedName: "Low D", freq: 147},
+        31: {name: "D#", prefixedName: "Low D#", freq: 156},
+        32: {name: "E", prefixedName: "Low E", freq: 165},
+        33: {name: "F", prefixedName: "Low F", freq: 175},
+        34: {name: "F#", prefixedName: "Low F#", freq: 185},
+        35: {name: "G", prefixedName: "Low G", freq: 196},
+        36: {name: "G#", prefixedName: "Low G#", freq: 208},
+        37: {name: "A", prefixedName: "Low A", freq: 220},
+        38: {name: "A#", prefixedName: "Low A#", freq: 233},
+        39: {name: "B", prefixedName: "Low B", freq: 247},
+
+        40: {name: "C", prefixedName: "Middle C", freq: 262},
+        41: {name: "C#", prefixedName: "Middle C#", freq: 277},
+        42: {name: "D", prefixedName: "Middle D", freq: 294},
+        43: {name: "D#", prefixedName: "Middle D#", freq: 311},
+        44: {name: "E", prefixedName: "Middle E", freq: 330},
+        45: {name: "F", prefixedName: "Middle F", freq: 349},
+        46: {name: "F#", prefixedName: "Middle F#", freq: 370},
+        47: {name: "G", prefixedName: "Middle G", freq: 392},
+        48: {name: "G#", prefixedName: "Middle G#", freq: 415},
+        49: {name: "A", prefixedName: "Middle A", freq: 440},
+        50: {name: "A#", prefixedName: "Middle A#", freq: 466},
+        51: {name: "B", prefixedName: "Middle B", freq: 494},
+
+        52: {name: "C", prefixedName: "Tenor C", altPrefixedName: "High C", freq: 523},
+        53: {name: "C#", prefixedName: "Tenor C#", altPrefixedName: "High C#", freq: 554},
+        54: {name: "D", prefixedName: "Tenor D", altPrefixedName: "High D", freq: 587},
+        55: {name: "D#", prefixedName: "Tenor D#", altPrefixedName: "High D#", freq: 622},
+        56: {name: "E", prefixedName: "Tenor E", altPrefixedName: "High E", freq: 659},
+        57: {name: "F", prefixedName: "Tenor F", altPrefixedName: "High F", freq: 698},
+        58: {name: "F#", prefixedName: "Tenor F#", altPrefixedName: "High F#", freq: 740},
+        59: {name: "G", prefixedName: "Tenor G", altPrefixedName: "High G", freq: 784},
+        60: {name: "G#", prefixedName: "Tenor G#", altPrefixedName: "High G#", freq: 831},
+        61: {name: "A", prefixedName: "Tenor A", altPrefixedName: "High A", freq: 880},
+        62: {name: "A#", prefixedName: "Tenor A#", altPrefixedName: "High A#", freq: 932},
+        63: {name: "B", prefixedName: "Tenor B", altPrefixedName: "High B", freq: 988},
+
+        64: {name: "C", prefixedName: "High C", freq: 1046},
+        65: {name: "C#", prefixedName: "High C#", freq: 1109},
+        66: {name: "D", prefixedName: "High D", freq: 1175},
+        67: {name: "D#", prefixedName: "High D#", freq: 1245},
+        68: {name: "E", prefixedName: "High E", freq: 1319},
+        69: {name: "F", prefixedName: "High F", freq: 1397},
+        70: {name: "F#", prefixedName: "High F#", freq: 1478},
+        71: {name: "G", prefixedName: "High G", freq: 1568},
+        72: {name: "G#", prefixedName: "High G#", freq: 1661},
+        73: {name: "A", prefixedName: "High A", freq: 1760},
+        74: {name: "A#", prefixedName: "High A#", freq: 1865},
+        75: {name: "B", prefixedName: "High B", freq: 1976}
     }
 
     let regex: RegExp = /^Note\.(.+)$/;
 
     export interface FieldNoteOptions extends Blockly.FieldCustomOptions {
         editorColour?: string;
+        minNote?: string;
+        maxNote?: string;
     }
 
     //  Class for a note input field.
@@ -81,7 +151,9 @@ namespace pxtblockly {
          * @type {number}
          * @private
          */
-        private nKeys_: number = PianoSize.medium;
+        private nKeys_: number = 36;
+        private minNote_: number = 28;
+        private maxNote_: number = 63;
 
         /**
          * Absolute error for note frequency identification (Hz)
@@ -103,7 +175,6 @@ namespace pxtblockly {
          */
         private noteName_: Array<string> = [];
 
-
         constructor(text: string, params: FieldNoteOptions, validator?: Function) {
             super(text);
 
@@ -113,6 +184,14 @@ namespace pxtblockly {
             if (params.editorColour) {
                 this.colour_ = pxtblockly.parseColour(params.editorColour);
                 this.colourBorder_ = goog.color.rgbArrayToHex(goog.color.darken(goog.color.hexToRgb(this.colour_), 0.2));
+            }
+
+            let minNote = parseInt(params.minNote) || this.minNote_;
+            let maxNote = parseInt(params.maxNote) || this.maxNote_;
+            if (minNote >= 28 && maxNote <= 76 && maxNote > minNote) {
+                this.minNote_ = minNote;
+                this.maxNote_ = maxNote;
+                this.nKeys_ = this.maxNote_ - this.minNote_ + 1;
             }
         }
 
@@ -149,89 +228,22 @@ namespace pxtblockly {
             this.setValue(this.callValidator(this.getValue()));
 
             /**
-             * return next note of a piano key
-             * @param {string} note current note
-             * @return {string} next note
-             * @private
-             */
-            function nextNote(note: string): string {
-                switch (note) {
-                    case "A#":
-                        return "B";
-                    case "B":
-                        return "C";
-                    case "C#":
-                        return "D";
-                    case "D#":
-                        return "E";
-                    case "E":
-                        return "F";
-                    case "F#":
-                        return "G";
-                    case "G#":
-                        return "A";
-                }
-                return note + "#";
-            }
-            /**
-             * return next note prefix
-             * @param {string} prefix current note prefix
-             * @return {string} next note prefix
-             * @private
-             */
-            function nextNotePrefix(prefix: string): string {
-                switch (prefix) {
-                    case "Deep":
-                        return "Low";
-                    case "Low":
-                        return "Middle";
-                    case "Middle":
-                        if (thisField.nKeys_ == PianoSize.medium)
-                            return "High";
-                        return "Tenor";
-                    case "Tenor":
-                        return "High";
-                }
-                return "";
-            }
-            /**
              * create Array of notes name and frequencies
              * @private
              */
             function createNotesArray() {
-                let prefix: string;
-                let curNote: string = "C";
-
-                let keyNumber: number;
-                // set piano start key number and key prefix (keyNumbers -> https://en.wikipedia.org/wiki/Piano_key_frequencies)
-                switch (thisField.nKeys_) {
-                    case PianoSize.small:
-                        keyNumber = 40;
-                        //  no prefix for a single octave
-                        prefix = "";
-                        break;
-                    case PianoSize.medium:
-                        keyNumber = 28;
-                        prefix = "Low";
-                        break;
-                    case PianoSize.large:
-                        keyNumber = 16;
-                        prefix = "Deep";
-                        break;
-                }
-                for (let i = 0; i < thisField.nKeys_; i++) {
-                    // set name of the i note
-                    thisField.noteName_.push(Util.rlf(prefix + " " + curNote));
-                    // get frequency using math formula -> https://en.wikipedia.org/wiki/Piano_key_frequencies
-                    let curFreq = Math.pow(2, (keyNumber - 49) / 12) * 440;
-                    // set frequency of the i note
-                    thisField.noteFreq_.push(curFreq);
-                    // get name of the next note
-                    curNote = nextNote(curNote);
-                    if ((i + 1) % 12 == 0)
-                        prefix = nextNotePrefix(prefix);
-                    // increment keyNumber
-                    keyNumber++;
+                for (let i = thisField.minNote_; i <= thisField.maxNote_; i++) {
+                    let name = Notes[i].prefixedName;
+                    // special case: one octave
+                    if (thisField.nKeys_ < 13) {
+                        name = Notes[i].name;
+                    }
+                    // special case: centered
+                    else if (thisField.minNote_ >= 28 && thisField.maxNote_ <= 63) {
+                        name = Notes[i].altPrefixedName || name;
+                    }
+                    thisField.noteName_.push(name);
+                    thisField.noteFreq_.push(Notes[i].freq);
                 }
 
                 // Do not remove this comment.
@@ -391,8 +403,6 @@ namespace pxtblockly {
          * @return {!Blockly.FieldNote} Returns itself (for method chaining).
          */
         setNumberOfKeys(size: number): FieldNote {
-            if (size != PianoSize.small && size != PianoSize.medium && size != PianoSize.large)
-                return this;
             this.nKeys_ = size;
             return this;
         }
