@@ -2198,6 +2198,16 @@ test:
 
 @DESCRIPTION@
 
+## TODO
+
+- [ ] Add a reference for your blocks here
+- [ ] Add "icon.png" image (300x200) in the root folder
+- [ ] Add "- beta" to the GitHub project description if you are still iterating it.
+- [ ] Use "pxt bump" to create a tagged release on GitHub
+- [ ] Get your package reviewed and approved @DOCS@packages/approval
+
+Read more at @DOCS@packages/build-your-own
+
 ## License
 
 @LICENSE@
@@ -2429,6 +2439,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
 
             configMap = U.clone(configMap)
             configMap["target"] = pxt.appTarget.platformid || pxt.appTarget.id
+            configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
 
             U.iterMap(files, (k, v) => {
                 v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
@@ -3790,7 +3801,7 @@ function fetchTextAsync(filename: string): Promise<Buffer> {
 
     if (/^https?:/.test(filename)) {
         pxt.log(`fetching ${filename}...`)
-        pxt.log(`compile log: ${filename.replace(/\.json$/i, ".log")}`)
+        if (/\.json$/i.test(filename)) pxt.log(`compile log: ${filename.replace(/\.json$/i, ".log")}`)
         return U.requestAsync({ url: filename, allowHttpErrors: !!fn2 })
             .then(resp => {
                 if (fn2 && (resp.statusCode != 200 || /html/.test(resp.headers["content-type"]))) {
@@ -3932,24 +3943,34 @@ function openVsCode(dirname: string) {
 function writeProjects(prjs: SavedProject[], outDir: string): string[] {
     const dirs: string[] = [];
     for (let prj of prjs) {
-        let dirname = prj.name.replace(/[^A-Za-z0-9_]/g, "-")
+        const dirname = prj.name.replace(/[^A-Za-z0-9_]/g, "-")
+        const fdir = path.join(outDir, dirname);
+        nodeutil.mkdirP(fdir);
         for (let fn of Object.keys(prj.files)) {
             fn = fn.replace(/[\/]/g, "-")
-            const fdir = path.join(outDir, dirname);
             const fullname = path.join(fdir, fn)
             nodeutil.mkdirP(path.dirname(fullname));
             fs.writeFileSync(fullname, prj.files[fn])
-            console.log("wrote " + fullname)
+            pxt.debug("wrote " + fullname)
         }
         // add default files if not present
+        const configMap: pxt.Map<string> = {
+            "version": "0.0.0",
+            "description": "",
+            "license": "MIT",
+            "name": prj.name,
+            "target": pxt.appTarget.platformid || pxt.appTarget.id,
+            "docs": pxt.appTarget.appTheme.homeUrl || "./"
+        }
         for (let fn in defaultFiles) {
             if (prj.files[fn]) continue;
-            const fdir = path.join(outDir, dirname);
-            nodeutil.mkdirP(fdir);
             const fullname = path.join(fdir, fn)
             nodeutil.mkdirP(path.dirname(fullname));
-            fs.writeFileSync(fullname, defaultFiles[fn])
-            console.log("wrote " + fullname)
+
+            const src = defaultFiles[fn].replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
+
+            fs.writeFileSync(fullname, src)
+            pxt.debug("wrote " + fullname)
         }
 
         // start installing in the background
