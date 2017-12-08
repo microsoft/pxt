@@ -21,12 +21,12 @@ namespace pxt.Cloud {
         try {
             return /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
                 && !/nolocalhost=1/.test(window.location.href)
-                && !pxt.webConfig.isStatic;
+                && !(pxt.webConfig && pxt.webConfig.isStatic);
         } catch (e) { return false; }
     }
 
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
-        options.url = pxt.webConfig.isStatic ? pxt.webConfig.relprefix + options.url : apiRoot + options.url;
+        options.url = pxt.webConfig && pxt.webConfig.isStatic ? pxt.webConfig.relprefix + options.url : apiRoot + options.url;
         options.allowGzipPost = true
         if (!Cloud.isOnline()) {
             return offlineError(options.url);
@@ -61,7 +61,7 @@ namespace pxt.Cloud {
         if (!Cloud.isOnline()) // offline
             return Promise.resolve(undefined);
 
-        const url = pxt.webConfig.isStatic ? `targetconfig.json` : `config/${pxt.appTarget.id}/targetconfig`;
+        const url = pxt.webConfig && pxt.webConfig.isStatic ? `targetconfig.json` : `config/${pxt.appTarget.id}/targetconfig`;
         if (Cloud.isLocalHost())
             return Util.requestAsync({
                 url: "/api/" + url,
@@ -80,7 +80,7 @@ namespace pxt.Cloud {
     }
 
     export function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
-       const packaged = !!pxt.webConfig.isStatic;
+        const packaged = pxt.webConfig && pxt.webConfig.isStatic;
         let url = packaged
             ? `docs/${docid}.md`
             : `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(pxt.webConfig.targetVersion)}`;
