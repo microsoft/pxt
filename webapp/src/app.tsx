@@ -154,7 +154,7 @@ export class ProjectView
                 pxt.debug('workspace changed, reloading...')
                 let id = this.state.header ? this.state.header.id : '';
                 workspace.initAsync()
-                    .done(() => !this.state.home && id ? this.loadHeaderAsync(workspace.getHeader(id)) : Promise.resolve());
+                    .done(() => !this.state.home && id ? this.loadHeaderAsync(workspace.getHeader(id), this.state.editorState) : Promise.resolve());
             } else if (this.state.resumeOnVisibility && !this.state.running) {
                 this.setState({ resumeOnVisibility: false });
                 this.runSimulator();
@@ -898,6 +898,7 @@ export class ProjectView
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
         this.setState({ home: true });
+        this.allEditors.forEach(e => e.setVisible(false));
         this.homeLoaded();
     }
 

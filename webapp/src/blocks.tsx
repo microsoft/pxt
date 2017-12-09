@@ -44,7 +44,10 @@ export class Editor extends srceditor.Editor {
             // Fire a resize event since the toolbox may have changed width and height.
             this.parent.fireResize();
         }
-        else $(classes).hide();
+        else {
+            $(classes).hide();
+            Blockly.hideChaff();
+        }
     }
 
     saveToTypeScript(): Promise<string> {
