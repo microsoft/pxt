@@ -149,9 +149,11 @@ namespace pxt.blocks.layout {
         sg.removeAttribute("height");
         sg.removeAttribute("transform");
 
+        let xmlString = new XMLSerializer().serializeToString(sg);
+        xmlString = xmlString.replace('&nbsp;', '&#160;'); // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml 
         const xsg = new DOMParser().parseFromString(
             `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}">
-            ${new XMLSerializer().serializeToString(sg)}
+            ${xmlString}
             </svg>`, "image/svg+xml");
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
         const customCssHref = (document.getElementById("blocklycss") as HTMLLinkElement).href;
