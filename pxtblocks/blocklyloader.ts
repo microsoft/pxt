@@ -764,8 +764,7 @@ namespace pxt.blocks {
                         i.appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), p);
                     }
                     else i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Number");
-                }
-                else if (pr.type == "boolean") {
+                } else if (pr.type == "boolean") {
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Boolean");
                 } else if (pr.type == "string") {
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "String");
@@ -1690,11 +1689,6 @@ namespace pxt.blocks {
         goog.require('Blockly.Blocks');
 
         if ((window as any).PointerEvent) {
-            (Blockly.bindEvent_ as any).TOUCH_MAP = {
-                mousedown: 'pointerdown',
-                mousemove: 'pointermove',
-                mouseup: 'pointerup'
-            };
             document.body.style.touchAction = 'none';
         }
 
@@ -1925,7 +1919,7 @@ namespace pxt.blocks {
      */
     function initDrag() {
         const calculateDistance = (elemBounds: any, mouseX: any) => {
-            return Math.floor(mouseX - (elemBounds.left + (elemBounds.width / 2)));
+            return Math.abs(mouseX - (elemBounds.left + (elemBounds.width / 2)));
         }
 
         /**
