@@ -246,7 +246,7 @@ export class Editor extends srceditor.Editor {
             csv += '\r\n';
         }
 
-        pxt.commands.browserDownloadAsync(csv, lf("{id:csvfile}data.csv"), "text/csv")
+        pxt.commands.browserDownloadAsync(csv, lf("{id:csvfilename}data") + ".csv", "text/csv")
         core.infoNotification(lf("Exporting data...."));
     }
 
