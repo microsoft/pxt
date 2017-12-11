@@ -98,7 +98,7 @@ export class Editor extends srceditor.Editor {
         const source = smsg.id || "?"
 
         if (!this.sourceMap[source]) {
-        let sourceIdx = Object.keys(this.sourceMap).length + 1
+            let sourceIdx = Object.keys(this.sourceMap).length + 1
             this.sourceMap[source] = lf("source") + sourceIdx.toString()
         }
         let niceSource = this.sourceMap[source]
@@ -304,8 +304,8 @@ export class StartPauseButton extends data.Component<StartPauseButtonProps, Star
     }
 
     renderCore() {
-        const {toggle} = this.props;
-        const {active} = this.state;
+        const { toggle } = this.props;
+        const { active } = this.state;
 
         return <sui.Button title={active ? lf("Pause recording") : lf("Start recording")} class={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
             <sui.Icon icon={active ? "pause icon" : "circle icon"} />
@@ -332,13 +332,16 @@ class Chart {
         const chartConfig: IChartOptions = {
             interpolation: 'bezier',
             labels: {
-                disabled: true
+                disabled: false,
+                fillStyle: 'black',
+                fontSize: 14
             },
             responsive: true,
             millisPerPixel: 20,
             grid: {
                 verticalSections: 0,
                 borderVisible: false,
+                millisPerLine: 5000,
                 fillStyle: serialTheme && serialTheme.gridFillStyle || 'transparent',
                 strokeStyle: serialTheme && serialTheme.gridStrokeStyle || '#fff'
             },
@@ -357,7 +360,10 @@ class Chart {
     }
 
     tooltip(timestamp: number, data: { series: TimeSeries, index: number, value: number }[]): string {
-        return data.map(n => `<span>${(n.series as any).timeSeries.__name}: ${n.value}</span>`).join('<br/>');
+        return data.map(n => {
+            const name = (n.series as any).timeSeries.__name;
+            return `<span>${name ? name + ': ' : ''}${n.value}</span>`;
+        }).join('<br/>');
     }
 
     getLine(name: string): TimeSeries {
@@ -376,7 +382,7 @@ class Chart {
 
     makeLabel() {
         this.label = document.createElement("div")
-        this.label.className = "ui orange bottom left attached label seriallabel"
+        this.label.className = "ui orange bottom left attached no-select label seriallabel"
         this.label.innerText = this.variable || "...";
         return this.label;
     }
