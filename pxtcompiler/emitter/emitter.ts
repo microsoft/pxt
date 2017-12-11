@@ -3102,7 +3102,7 @@ ${lbl}: .short 0xffff
             let quickCmpMode = isNumber
 
             let expr = ir.shared(emitExpr(node.expression))
-            let finalExpr = isRefCountedExpr(node.expression) ? ir.op(EK.Decr, [expr]) : expr
+            let plainExpr = expr
             if (isNumber) {
                 emitInJmpValue(expr)
             }
@@ -3114,26 +3114,28 @@ ${lbl}: .short 0xffff
                     let cmpExpr = emitExpr(cc.expression)
                     if (switchType.flags & TypeFlags.String) {
                         let cmpCall = ir.rtcallMask("String_::compare",
-                            isRefCountedExpr(cc.expression) ? 1 : 0,
+                            isRefCountedExpr(cc.expression) ? 3 : 2,
                             ir.CallingConvention.Plain, [cmpExpr, expr])
-                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfZero, finalExpr)
+                        expr = ir.op(EK.Incr, [expr])
+                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfZero, plainExpr)
                     } else if (isRefCountedExpr(cc.expression)) {
-                        let cmpCall = ir.rtcallMask("Number_::eq", 1,
+                        let cmpCall = ir.rtcallMask("Number_::eq", 3,
                             ir.CallingConvention.Plain, [cmpExpr, expr])
                         quickCmpMode = false
-                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, finalExpr)
+                        expr = ir.op(EK.Incr, [expr])
+                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                     } else {
                         if (cmpExpr.exprKind == EK.NumberLiteral) {
                             if (!quickCmpMode) {
                                 emitInJmpValue(expr)
                                 quickCmpMode = true
                             }
-                            proc.emitJmp(lbl, cmpExpr, ir.JmpMode.IfJmpValEq, finalExpr)
+                            proc.emitJmp(lbl, cmpExpr, ir.JmpMode.IfJmpValEq, plainExpr)
                         } else {
                             let cmpCall = ir.rtcallMask("Number_::eq", 0,
                                 ir.CallingConvention.Plain, [cmpExpr, expr])
                             quickCmpMode = false
-                            proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, finalExpr)
+                            proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                         }
                     }
                 } else if (cl.kind == SK.DefaultClause) {
@@ -3149,9 +3151,9 @@ ${lbl}: .short 0xffff
             })
 
             if (defaultLabel)
-                proc.emitJmp(defaultLabel, finalExpr)
+                proc.emitJmp(defaultLabel, plainExpr)
             else
-                proc.emitJmp(l.brk, finalExpr);
+                proc.emitJmp(l.brk, plainExpr);
 
             node.caseBlock.clauses.forEach((cl, i) => {
                 proc.emitLbl(lbls[i])

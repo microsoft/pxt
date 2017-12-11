@@ -220,11 +220,6 @@ ${baseLabel}:
         }
 
         private terminate(expr: ir.Expr) {
-            let hasDecr = false
-            if (expr.exprKind == ir.EK.Decr) {
-                hasDecr = true
-                expr = expr.args[0]
-            }
             assert(expr.exprKind == ir.EK.SharedRef)
             let arg = expr.args[0]
             if (arg.currUses == arg.totalUses)
@@ -237,12 +232,6 @@ ${baseLabel}:
                 numEntries++
             }
             assert(numEntries > 0)
-            if (hasDecr) {
-                let idx = this.exprStack.indexOf(arg)
-                U.assert(idx >= 0)
-                this.write(this.t.load_reg_src_off("r0", "sp", idx.toString(), true) + ` ; term. decr`)
-                this.emitCallRaw("pxt::decr")
-            }
             this.write(`@dummystack ${numEntries}`)
             this.write(this.t.pop_locals(numEntries))
 
