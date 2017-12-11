@@ -235,15 +235,16 @@ export class Editor extends srceditor.Editor {
     }
 
     downloadCSV() {
+        const sep = lf("{id:csvseparator},");
         const lines: { name: string; line: TimeSeries; }[] = [];
         this.charts.forEach(chart => Object.keys(chart.lines).forEach(k => lines.push({ name: `${k} (${chart.source})`, line: chart.lines[k] })));
-        let csv = lines.map(line => `time (s), ${line.name}`).join(', ') + '\r\n';
+        let csv = lines.map(line => `time (s)${sep} ${line.name}`).join(sep + ' ') + '\r\n';
 
         const datas = lines.map(line => line.line.data);
         const nl = datas.map(data => data.length).reduce((l, c) => Math.max(l, c));
         const nc = this.charts.length;
         for (let i = 0; i < nl; ++i) {
-            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ' , ').join(', ');
+            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ` ${sep} `).join(sep + ' ');
             csv += '\r\n';
         }
 
