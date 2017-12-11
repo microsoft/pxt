@@ -235,7 +235,7 @@ export class Editor extends srceditor.Editor {
     }
 
     downloadCSV() {
-        const sep = lf("{id:csvseparator},");
+        const sep = lf("{id:csvseparator}\t");
         const lines: { name: string; line: TimeSeries; }[] = [];
         this.charts.forEach(chart => Object.keys(chart.lines).forEach(k => lines.push({ name: `${k} (${chart.source})`, line: chart.lines[k] })));
         let csv = lines.map(line => `time (s)${sep} ${line.name}`).join(sep + ' ') + '\r\n';
