@@ -1,0 +1,50 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+    <variables>
+      <variable type="" id="7_sbSFScEcYic`DE.!]b">item</variable>
+    </variables>
+    <block type="pxt-on-start" id=".;F.tSCx}v]AXr%qwKT$" x="0" y="0">
+      <statement name="HANDLER">
+        <block type="pxt_pause_until" id="#+9Y5Tsu_dq:(Y*I:GA?">
+          <value name="PREDICATE">
+            <shadow type="logic_boolean" id=",N+?)2]kUxp@PKzCc!E8">
+              <field name="BOOL">TRUE</field>
+            </shadow>
+          </value>
+          <next>
+            <block type="pxt_pause_until" id="#)}-L$$:Kqt3:O4-tg?7">
+              <value name="PREDICATE">
+                <shadow type="logic_boolean" id="=KR+OE|M=^Z/g|GN#$c~">
+                  <field name="BOOL">TRUE</field>
+                </shadow>
+                <block type="variables_get" id="{16)N|u].L$I2Z)lX_,D">
+                  <field name="VAR" id="7_sbSFScEcYic`DE.!]b" variabletype="">item</field>
+                </block>
+              </value>
+              <next>
+                <block type="pxt_pause_until" id="n0/jd8/dArb)49)a_fPh">
+                  <value name="PREDICATE">
+                    <shadow type="logic_boolean" id="c5%#TgA,].2~%D$v:$Ur">
+                      <field name="BOOL">TRUE</field>
+                    </shadow>
+                    <block type="logic_operation" id="I=~R!$}c={o1Cj4+#^[_">
+                      <field name="OP">AND</field>
+                      <value name="A">
+                        <block type="logic_boolean" id="sImGW_2cD~;#GM_vaPK[">
+                          <field name="BOOL">TRUE</field>
+                        </block>
+                      </value>
+                      <value name="B">
+                        <block type="logic_boolean" id="kx7fwK}IVNG#$=$?0@@{">
+                          <field name="BOOL">TRUE</field>
+                        </block>
+                      </value>
+                    </block>
+                  </value>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+  </xml>

@@ -384,7 +384,7 @@ namespace pxt.blocks {
                         unionParam(e, b, "INDEX", ground(pNumber.type));
                         break;
                     case pxtc.PAUSE_UNTIL_TYPE:
-                        attachPlaceholderIf(e, b, "PREDICATE", pBoolean.type);
+                        unionParam(e, b, "PREDICATE", pBoolean);
                         break;
                     default:
                         if (b.type in e.stdCallTable) {
