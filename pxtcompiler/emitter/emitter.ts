@@ -481,7 +481,7 @@ namespace ts.pxtc {
                         let tp = typeOf(h.types[0])
                         if (isClassType(tp)) {
                             let parent = <ClassDeclaration>tp.symbol.valueDeclaration
-                            return inheritsFrom(parent,tgt)
+                            return inheritsFrom(parent, tgt)
                         }
                 }
             }
@@ -491,7 +491,7 @@ namespace ts.pxtc {
     function checkInterfaceDeclaration(decl: InterfaceDeclaration, classes: pxt.Map<ClassInfo>) {
         for (let cl in classes) {
             if (classes[cl].decl.symbol == decl.symbol) {
-                 userError(9261, lf("Interface with same name as a class not supported"))
+                userError(9261, lf("Interface with same name as a class not supported"))
             }
         }
         if (decl.heritageClauses)
@@ -506,7 +506,7 @@ namespace ts.pxtc {
             }
     }
 
-    function typeCheckSrcFlowstoTrg(src: Node|Type, trg: Node|Type) {
+    function typeCheckSrcFlowstoTrg(src: Node | Type, trg: Node | Type) {
         // get the direct types
         let trgTypeLoc = (trg as any).kind ? checker.getTypeAtLocation(trg as Node) : trg as Type;
         let srcTypeLoc = (src as any).kind ? checker.getTypeAtLocation(src as Node) : src as Type;
@@ -535,8 +535,8 @@ namespace ts.pxtc {
     }
 
     let occursCheck: string[] = []
-    let cachedSubtypeQueries: Map<[boolean,string]> = {}
-    function insertSubtype(key: string, val: [boolean,string]) {
+    let cachedSubtypeQueries: Map<[boolean, string]> = {}
+    function insertSubtype(key: string, val: [boolean, string]) {
         cachedSubtypeQueries[key] = val
         occursCheck.pop()
         return val
@@ -561,72 +561,72 @@ namespace ts.pxtc {
 
         // check to see if query already on the stack
         if (occursCheck.indexOf(key) != -1)
-            return [true,""]
+            return [true, ""]
         occursCheck.push(key)
 
         // we don't allow Any!
         if (superType.flags & TypeFlags.Any)
-            return insertSubtype(key,[false, "Unsupported type: any."])
+            return insertSubtype(key, [false, "Unsupported type: any."])
 
         // outlaw all things that can't be cast to class/interface
         if (isStructureType(superType) && !castableToStructureType(subType)) {
-            return insertSubtype(key,[false, "Cast to class/interface not supported."])
+            return insertSubtype(key, [false, "Cast to class/interface not supported."])
         }
 
         if (isClassType(superType)) {
-           if (isClassType(subType)) {
+            if (isClassType(subType)) {
                 let superDecl = <ClassDeclaration>superType.symbol.valueDeclaration
                 let subDecl = <ClassDeclaration>subType.symbol.valueDeclaration
                 // only allow upcast (sub -> ... -> sup) in inheritance chain
-                if (!inheritsFrom(subDecl,superDecl)) {
-                    if (inheritsFrom(superDecl,subDecl))
-                       return insertSubtype(key, [false, "Downcasts not supported."])
+                if (!inheritsFrom(subDecl, superDecl)) {
+                    if (inheritsFrom(superDecl, subDecl))
+                        return insertSubtype(key, [false, "Downcasts not supported."])
                     else
-                       return insertSubtype(key, [false, "Casts between unrelated classes not supported."])
+                        return insertSubtype(key, [false, "Casts between unrelated classes not supported."])
                 }
-           } else {
+            } else {
                 if (!(subType.flags & (TypeFlags.Undefined | TypeFlags.Null))) {
-                    return insertSubtype(key,[false, "Cast to class not supported."])
+                    return insertSubtype(key, [false, "Cast to class not supported."])
                 }
-           }
+            }
         } else if (isFunctionType(superType)) {
             // implement standard function subtyping (no bivariance)
             let superFun = isFunctionType(superType)
             if (isFunctionType(subType)) {
                 let subFun = isFunctionType(subType)
                 U.assert(superFun.parameters.length >= subFun.parameters.length, "sup should have at least params of sub")
-                let [ret,msg] = [true,""]
+                let [ret, msg] = [true, ""]
                 for (let i = 0; i < subFun.parameters.length; i++) {
                     let superParamType = checker.getTypeAtLocation(superFun.parameters[i].valueDeclaration)
                     let subParamType = checker.getTypeAtLocation(subFun.parameters[i].valueDeclaration)
                     // Check parameter types (contra-variant)
-                    let [retSub,msgSub] = checkSubtype(superParamType, subParamType)
-                    if (ret && !retSub) [ret,msg] = [retSub,msgSub]
+                    let [retSub, msgSub] = checkSubtype(superParamType, subParamType)
+                    if (ret && !retSub)[ret, msg] = [retSub, msgSub]
                 }
                 // check return type (co-variant)
                 let superRetType = superFun.getReturnType()
                 let subRetType = superFun.getReturnType()
-                let [retSub,msgSub] = checkSubtype(subRetType, superRetType)
-                if (ret && !retSub) [ret,msg] = [retSub,msgSub]
-                return insertSubtype(key,[ret,msg])
+                let [retSub, msgSub] = checkSubtype(subRetType, superRetType)
+                if (ret && !retSub)[ret, msg] = [retSub, msgSub]
+                return insertSubtype(key, [ret, msg])
             }
         } else if (isInterfaceType(superType)) {
             if (isStructureType(subType)) {
                 let superProps = checker.getPropertiesOfType(superType)
                 let subProps = checker.getPropertiesOfType(subType)
-                let [ret,msg] = [true,""]
+                let [ret, msg] = [true, ""]
                 superProps.forEach(superProp => {
                     let superPropDecl = <PropertyDeclaration>superProp.valueDeclaration
                     let find = subProps.filter(sp => sp.name == superProp.name)
                     if (find.length == 1) {
                         let subPropDecl = <PropertyDeclaration>find[0].valueDeclaration
                         // TODO: record the property on which we have a mismatch
-                        let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(subPropDecl),checker.getTypeAtLocation(superPropDecl))
-                        if (ret && !retSub) [ret,msg] = [retSub,msgSub]
+                        let [retSub, msgSub] = checkSubtype(checker.getTypeAtLocation(subPropDecl), checker.getTypeAtLocation(superPropDecl))
+                        if (ret && !retSub)[ret, msg] = [retSub, msgSub]
                     } else if (find.length == 0) {
                         if (!(superProp.flags & SymbolFlags.Optional)) {
                             // we have a cast to an interface with more properties (unsound)
-                            [ret,msg] = [false,"Property " + superProp.name + " not present in " + subType.getSymbol().name]
+                            [ret, msg] = [false, "Property " + superProp.name + " not present in " + subType.getSymbol().name]
                         } else {
                             // we will reach this case for something like
                             // let x: Foo = { a:42 }
@@ -634,18 +634,18 @@ namespace ts.pxtc {
                         }
                     }
                 })
-                return insertSubtype(key,[ret,msg])
+                return insertSubtype(key, [ret, msg])
             }
         } else if (isArrayType(superType)) {
             if (isArrayType(subType)) {
                 let superElemType = arrayElementType(superType)
                 let subElemType = arrayElementType(subType)
-                return checkSubtype(subElemType,superElemType)
+                return checkSubtype(subElemType, superElemType)
             }
         } else if (lookupTypeParameter(superType)) {
             // TODO
         }
-        return insertSubtype(key,[true,""])
+        return insertSubtype(key, [true, ""])
     }
 
     function isGenericFunction(fun: FunctionLikeDeclaration) {
@@ -1561,8 +1561,8 @@ ${lbl}: .short 0xffff
             let decl = getDecl(node);
             // we need to type check node.expression before committing code gen
             if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl))
-                      || decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
-                emitExpr(node.expression,false)
+                || decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
+                emitExpr(node.expression, false)
                 if (!decl)
                     return ir.numlit(0)
             }
@@ -3102,6 +3102,7 @@ ${lbl}: .short 0xffff
             let quickCmpMode = isNumber
 
             let expr = ir.shared(emitExpr(node.expression))
+            let decrSuff = isRefCountedExpr(node.expression) ? "Decr" : ""
             let plainExpr = expr
             if (isNumber) {
                 emitInJmpValue(expr)
@@ -3112,17 +3113,15 @@ ${lbl}: .short 0xffff
                 if (cl.kind == SK.CaseClause) {
                     let cc = cl as CaseClause
                     let cmpExpr = emitExpr(cc.expression)
+                    let mask = isRefCountedExpr(cc.expression) ? 1 : 0
                     if (switchType.flags & TypeFlags.String) {
-                        let cmpCall = ir.rtcallMask("String_::compare",
-                            isRefCountedExpr(cc.expression) ? 3 : 2,
-                            ir.CallingConvention.Plain, [cmpExpr, expr])
-                        expr = ir.op(EK.Incr, [expr])
+                        let cmpCall = ir.rtcallMask("String_::compare" + decrSuff,
+                            mask, ir.CallingConvention.Plain, [cmpExpr, expr])
                         proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfZero, plainExpr)
-                    } else if (isRefCountedExpr(cc.expression)) {
-                        let cmpCall = ir.rtcallMask("Number_::eq", 3,
+                    } else if (isRefCountedExpr(cc.expression) || decrSuff) {
+                        let cmpCall = ir.rtcallMask("Number_::eq" + decrSuff, mask,
                             ir.CallingConvention.Plain, [cmpExpr, expr])
                         quickCmpMode = false
-                        expr = ir.op(EK.Incr, [expr])
                         proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                     } else {
                         if (cmpExpr.exprKind == EK.NumberLiteral) {
@@ -3149,6 +3148,10 @@ ${lbl}: .short 0xffff
                 }
                 return lbl
             })
+
+            if (decrSuff) {
+                proc.emitExpr(ir.op(EK.Decr, [expr]))
+            }
 
             if (defaultLabel)
                 proc.emitJmp(defaultLabel, plainExpr)
@@ -3200,14 +3203,14 @@ ${lbl}: .short 0xffff
             if (node.kind === SK.BindingElement) {
                 emitBrk(node)
                 let rhs = bindingElementAccessExpression(node as BindingElement)
-                typeCheckSrcFlowstoTrg(rhs[1],node)
+                typeCheckSrcFlowstoTrg(rhs[1], node)
                 proc.emitExpr(loc.storeByRef(rhs[0]))
                 proc.stackEmpty();
             }
             else if (node.initializer) {
                 // TODO: make sure we don't emit code for top-level globals being initialized to zero
                 emitBrk(node)
-                typeCheckSrcFlowstoTrg(node.initializer,node)
+                typeCheckSrcFlowstoTrg(node.initializer, node)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 proc.stackEmpty();
             }
@@ -3251,7 +3254,7 @@ ${lbl}: .short 0xffff
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
-            checkInterfaceDeclaration(node,classInfos)
+            checkInterfaceDeclaration(node, classInfos)
             let attrs = parseComments(node)
             if (attrs.autoCreate)
                 autoCreateFunctions[attrs.autoCreate] = true
