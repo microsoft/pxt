@@ -1,4 +1,4 @@
-import { BuiltinCategoryDefinition } from "./monaco";
+import { BuiltinCategoryDefinition, MonacoBlockDefinition } from "./monaco";
 export const loops: BuiltinCategoryDefinition = {
     name: lf("{id:category}Loops"),
     nameid: 'loops',
@@ -418,6 +418,34 @@ export const functions: BuiltinCategoryDefinition = {
         paramDefl: {}
     }
 };
+
+let pauseUntil: MonacoBlockDefinition;
+
+export function getPauseUntil() {
+    if (pauseUntil) return pauseUntil;
+    const opts = pxt.appTarget.runtime && pxt.appTarget.runtime.pauseUntilBlock;
+
+    if (opts) {
+        const callName = opts.callName || "pauseUntil";
+        let snippet = `${callName}(() => true)`;
+        if (opts.namespace) {
+            snippet = `${opts.namespace}.${snippet}`
+        }
+
+        pauseUntil = {
+            name: callName,
+            snippet,
+            attributes: {
+                weight: opts.weight == null ? 0 : opts.weight,
+                jsDoc: pxt.blocks.blockDefinitions()[pxtc.PAUSE_UNTIL_TYPE].tooltip  as string,
+                advanced: false
+            },
+            noNamespace: true
+        };
+    }
+
+    return pauseUntil;
+}
 
 export function getBuiltinCategory(ns: string) {
         switch (ns) {

@@ -1125,6 +1125,13 @@ namespace pxt.blocks {
                 }
             }
 
+            // Inject optional builtin blocks into categories
+            if (pxt.appTarget.runtime) {
+                const rt = pxt.appTarget.runtime;
+
+                maybeInsertBuiltinBlock(tb, mkPredicateBlock(pxtc.PAUSE_UNTIL_TYPE), rt.pauseUntilBlock);
+            }
+
             // Load localized names for default categories
             let cats = tb.getElementsByTagName('category');
             for (let i = 0; i < cats.length; i++) {
@@ -1434,6 +1441,16 @@ namespace pxt.blocks {
                 }
             }
         }
+    }
+
+    function maybeInsertBuiltinBlock(toolbox: Element, block: Element, options: pxt.BlockOptions) {
+        if (!options || !options.category) return;
+
+        const cat = categoryElement(toolbox, options.category || "Loops");
+        if (!cat) return;
+
+        const weight = options.weight == null ? 0 : options.weight;
+        insertBlock(block, cat, weight, options.group);
     }
 
     export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters, extensions?: pxt.PackageConfig[]): Element {
@@ -2335,6 +2352,42 @@ namespace pxt.blocks {
             }
         };
 
+        if (pxt.appTarget.runtime && pxt.appTarget.runtime.pauseUntilBlock) {
+            const blockOptions =  pxt.appTarget.runtime.pauseUntilBlock;
+            const blockDef = pxt.blocks.getBlockDefinition(ts.pxtc.PAUSE_UNTIL_TYPE);
+            Blockly.Blocks[pxtc.PAUSE_UNTIL_TYPE] = {
+                init: function () {
+                    const color = blockOptions.color || getNamespaceColor('loops');
+
+                    this.jsonInit({
+                        "message0": blockDef.block["message0"],
+                        "args0": [
+                            {
+                              "type": "input_value",
+                              "name": "PREDICATE",
+                              "check": "Boolean"
+                            }
+                        ],
+                        "inputsInline": true,
+                        "previousStatement": null,
+                        "nextStatement": null,
+                        "colour": color
+                    });
+
+                    setHelpResources(this,
+                        ts.pxtc.PAUSE_UNTIL_TYPE,
+                        blockDef.name,
+                        blockDef.tooltip,
+                        blockDef.url,
+                        color,
+                        undefined/*colourSecondary*/,
+                        undefined/*colourTertiary*/,
+                        false/*undeletable*/
+                    );
+                }
+            }
+        }
+
         // controls_for_of
         const controlsForOfId = "controls_for_of";
         const controlsForOfDef = pxt.blocks.getBlockDefinition(controlsForOfId);
@@ -3206,6 +3259,35 @@ namespace pxt.blocks {
                 render();
             }
         }
+    }
+
+    /**
+     * <block type="pxt_wait_until">
+     *     <value name="PREDICATE">
+     *          <shadow type="logic_boolean">
+     *              <field name="BOOL">TRUE</field>
+     *          </shadow>
+     *     </value>
+     * </block>
+     */
+    function mkPredicateBlock(type: string) {
+        const block = document.createElement("block");
+        block.setAttribute("type", type);
+
+        const value = document.createElement("value");
+        value.setAttribute("name", "PREDICATE");
+        block.appendChild(value);
+
+        const shadow = document.createElement("shadow");
+        shadow.setAttribute("type", "logic_boolean");
+        value.appendChild(shadow);
+
+        const field = document.createElement("field");
+        field.setAttribute("name", "BOOL");
+        field.textContent = "TRUE";
+        shadow.appendChild(field);
+
+        return block;
     }
 
     let jresIconCache: Map<string> = {};
