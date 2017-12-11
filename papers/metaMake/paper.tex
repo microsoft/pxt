@@ -1,0 +1,427 @@
+\documentclass[sigplan,10pt]{acmart}
+%\settopmatter{printfolios=false,printccs=false,printacmref=false}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{enumitem}
+\newcommand{\MC}{MakeCode\ }
+\newcommand{\MCN}{MakeCode}
+\newcommand{\CO}{CODAL\ }
+\newcommand{\CON}{CODAL}
+\newcommand{\COLN}{codal}
+\newcommand{\UF}{UF2\ }
+\newcommand{\UFN}{UF2}
+\newcommand{\flameon}[1]{\emph{#1}}
+\def\dbhref#1#2{URL}
+%\def\dbhref#1#2{\href{#1}{#2}}
+\def\dburl#1{URL}
+%\def\dburl#1{\url{#1}}
+
+\setlist[itemize]{leftmargin=*}
+\lstset{ %
+language=C++,                % choose the language of the code
+basicstyle=\footnotesize,       % the size of the fonts that are used for the code
+numbers=left,                   % where to put the line-numbers
+numberstyle=\footnotesize,      % the size of the fonts that are used for the line-numbers
+stepnumber=1,                   % the step between two line-numbers. If it is 1 each line will be numbered
+numbersep=5pt,                  % how far the line-numbers are from the code
+backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+showspaces=false,               % show spaces adding particular underscores
+showstringspaces=false,         % underline spaces within strings
+showtabs=false,                 % show tabs within strings adding particular underscores
+frame=single,           % adds a frame around the code
+tabsize=2,          % sets default tabsize to 2 spaces
+captionpos=b,           % sets the caption-position to bottom
+breaklines=true,        % sets automatic line breaking
+breakatwhitespace=false,    % sets if automatic breaks should only happen at whitespace
+escapeinside={\%*}{*)}          % if you want to add a comment within your code
+}
+
+%% For double-blind review submission, w/ CCS and ACM Reference
+%\documentclass[sigplan,10pt,review,anonymous]{acmart}\settopmatter{printfolios=true}
+%% For single-blind review submission, w/o CCS and ACM Reference (max submission space)
+%\documentclass[sigplan,10pt,review]{acmart}\settopmatter{printfolios=true,printccs=false,printacmref=false}
+%% For single-blind review submission, w/ CCS and ACM Reference
+%\documentclass[sigplan,10pt,review]{acmart}\settopmatter{printfolios=true}
+%% For final camera-ready submission, w/ required CCS and ACM Reference
+%\documentclass[sigplan,10pt]{acmart}\settopmatter{}
+
+
+%% Conference information
+%% Supplied to authors by publisher for camera-ready submission;
+%% use defaults for review submission.
+% \acmConference[PL'17]{ACM SIGPLAN Conference on Programming Languages}{January 01--03, 2017}{New York, NY, USA}
+% \acmYear{2017}
+% \acmISBN{} % \acmISBN{978-x-xxxx-xxxx-x/YY/MM}
+% \acmDOI{} % \acmDOI{10.1145/nnnnnnn.nnnnnnn}
+\startPage{1}
+
+%% Copyright information
+%% Supplied to authors (based on authors' rights management selection;
+%% see authors.acm.org) by publisher for camera-ready submission;
+%% use 'none' for review submission.
+\setcopyright{none}
+%\setcopyright{acmcopyright}
+%\setcopyright{acmlicensed}
+%\setcopyright{rightsretained}
+%\copyrightyear{2017}           %% If different from \acmYear
+
+%% Bibliography style
+\bibliographystyle{ACM-Reference-Format}
+%% Citation style
+%\citestyle{acmauthoryear}  %% For author/year citations
+%\citestyle{acmnumeric}     %% For numeric citations
+%\setcitestyle{nosort}      %% With 'acmnumeric', to disable automatic
+                            %% sorting of references within a single citation;
+                            %% e.g., \cite{Smith99,Carpenter05,Baker12}
+                            %% rendered as [14,5,2] rather than [2,5,14].
+%\setcitesyle{nocompress}   %% With 'acmnumeric', to disable automatic
+                            %% compression of sequential references within a
+                            %% single citation;
+                            %% e.g., \cite{Baker12,Baker14,Baker16}
+                            %% rendered as [2,3,4] rather than [2-4].
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Note: Authors migrating a paper from traditional SIGPLAN
+%% proceedings format to PACMPL format must update the
+%% '\documentclass' and topmatter commands above; see
+%% 'acmart-pacmpl-template.tex'.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% Some recommended packages.
+\usepackage{booktabs}   %% For formal tables:
+                        %% http://ctan.org/pkg/booktabs
+\usepackage{subcaption} %% For complex figures with subfigures/subcaptions
+                        %% http://ctan.org/pkg/subcaption
+
+\usepackage{courier}
+
+\begin{document}
+
+%% Title information
+\title{TypeScript: From JavaScript \\ to Blockly and Back}         %% [Short Title] is optional;
+                                        %% when present, will be used in
+                                        %% header instead of Full Title.
+\subtitle{Microsoft MakeCode Team}                     %% \subtitle is optional
+
+
+%% Author information
+%% Contents and number of authors suppressed with 'anonymous'.
+%% Each author should be introduced by \author, followed by
+%% \authornote (optional), \orcid (optional), \affiliation, and
+%% \email.
+%% An author may have multiple affiliations and/or emails; repeat the
+%% appropriate command.
+%% Many elements are not rendered, but should be provided for metadata
+%% extraction tools.
+
+% %% Author with single affiliation.
+% \author{James Devine}
+% \affiliation{
+%   \institution{Lancaster University, UK}            %% \institution is required
+% }
+% \email{james@devine.eu}  
+% \author{Joe Finney}
+% \affiliation{
+%   \institution{Lancaster University, UK}            %% \institution is required
+% }
+% \email{j.finney@lancaster.ac.uk} 
+% \author{Micha\l Moskal}
+% \affiliation{
+%   \institution{Microsoft, USA}            %% \institution is required
+% }
+% \email{mmoskal@microsoft.com} 
+% \author{Peli de Halleux}
+% \affiliation{
+%   \institution{Microsoft, USA}            %% \institution is required
+% }
+% \email{jhalleux@microsoft.com} 
+% \author{Thomas Ball}
+% \affiliation{
+%   \institution{Microsoft, USA}            %% \institution is required
+% }
+% \email{tball@microsoft.com} 
+% \author{Steve Hodges}
+% \affiliation{
+%   \institution{Microsoft, UK}            %% \institution is required
+% }
+% \email{shodges@microsoft.com} 
+
+%% Author with two affiliations and emails.
+% \author{First2 Last2}
+% \authornote{with author2 note}          %% \authornote is optional;
+%                                         %% can be repeated if necessary
+% \orcid{nnnn-nnnn-nnnn-nnnn}             %% \orcid is optional
+% \affiliation{
+%   \position{Position2a}
+%   \department{Department2a}             %% \department is recommended
+%   \institution{Institution2a}           %% \institution is required
+%   \streetaddress{Street2a Address2a}
+%   \city{City2a}
+%   \state{State2a}
+%   \postcode{Post-Code2a}
+%   \country{Country2a}                   %% \country is recommended
+% }
+% \email{first2.last2@inst2a.com}         %% \email is recommended
+
+
+%% Abstract
+%% Note: \begin{abstract}...\end{abstract} environment must come
+%% before \maketitle command
+% \input{abstract}
+
+\input{abstract}
+
+
+%% Keywords
+%% comma separated list
+%\keywords{keyword1, keyword2, keyword3}  %% \keywords are mandatory in final camera-ready submission
+
+
+%% \maketitle
+%% Note: \maketitle command must come after title commands, author
+%% commands, abstract environment, Computing Classification System
+%% environment and commands, and keywords command.
+\maketitle
+
+\section{Introduction}
+
+\section{Example}
+
+All exported functions with a block attribute will be available in the Block Editor.
+
+\begin{lstlisting}
+//% block
+export function showNumber(v: number, interval: number = 150): void
+{ }
+\end{lstlisting}
+If you need more control over the appearance of the block, you can specify the 
+blockId and block parameters:
+\begin{lstlisting}
+//% blockId=device_show_number
+//% block="show|number %v"
+export function showNumber(v: number, interval: number = 150): void
+{ }
+\end{lstlisting}
+
+% blockId is a constant, unique id for the block. This id is serialized in block code so changing it will break your users.
+% block contains the syntax to build the block structure (more below).
+% Other optional attributes can also be used:
+
+% blockExternalInputs= forces External Inputs rendering
+% advanced=true causes this block to be placed under the parent category’s “More…” subcategory. Useful for hiding advanced or rarely-used blocks by default
+% Block syntax
+
+\section{Blockly Overview}
+
+Unsuprisingly, the core abstract of Blockly is the \emph{Block},
+which is used to represent statements, expressions, values and variables.  
+Blocks have \emph{connectors} that allow them to be sequenced
+horizontally or vertically in space.  In the default Blockly
+layout, vertically sequenced blocks
+generally represent program statements, while horizontally
+sequenced blocks generally represent program expressions/values.
+Blockly also supports the nesting of blocks, and so a collection of
+blocks naturally represents an abstract syntax tree. 
+
+While Blockly does attach a loose meaning to blocks,
+their actual semantics given to blocks is entirely up to the developer.
+We use the TypeScript language (and its type system) to 
+give a more precise meaning to blocks. 
+
+\subsection{Block connections}
+
+Block connectors, inputs and output:
+\begin{itemize}
+% A block with a previous connector cannot have an output connector, and vice versa. 
+% The term statement block refers to a block with no value output. 
+
+% nextStatement and previousStatement connections can be typed
+% but this feature is not utilized by standard blocks.
+
+\item \emph{previous and next connectors}, both optional, allow a block to be vertically sequenced - Blockly
+  enforces that a block with a previous connector cannnot have an output connector; according
+  to Blockly documentation, ``a statement block will usually have both a previous connection and 
+  a next connection'';
+
+\item a block may have a single \emph{output connector}, 
+      which appears as a male jigsaw connector on a block's left-side; according to 
+      Blockly documentation, ``Blocks with an output are usually called value blocks'';
+
+\item a block may have multiple \emph{inputs}, which can appears as holes in a block
+      or female jigsaw connectors on a block's right-side, about which we'll say more below. 
+\end{itemize}
+
+Block inputs come in three basic forms:
+\begin{enumerate}
+  \item \emph{fields}, which represent terminals (constants, literals, variables);
+  \item \emph{value inputs} (receives value from output block) - value inputs
+      and value blocks allow one to create expression trees;
+  \item \emph{statement inputs}, allow one to create statement trees;
+\end{enumerate}
+
+\subsection{Mutators}
+
+\subsection{Blockly type checking}
+
+\subsection{Blockly conventions (JavaScript)}
+\begin{itemize}
+  \item no variable declarations (all variables global, except for);
+  \item dynamic typing;
+  \item expressions can't be put where statement expected 
+  - use an assignment to a dummy variable to make expression into statement);
+  \item loops and local scope
+\end{itemize}
+
+\section{TypeScript Essentials}
+
+Our goal is not to have a mapping of every TypeScript syntax into blocks.
+Rather, it is support common programming paradigms with a simple mapping
+from TypeScript to blocks and back.
+
+\begin{itemize}
+  \item lexical scoping (via let);
+  \item functions as values (also nested functions -> closures);
+  \item classes with single inheritance, methods, objects
+  \item arrays (lists);
+  \item object destructuring
+\end{itemize}
+
+\section{Primitive Values}
+
+% The following types are supported in function signatures that are meant to be exported:
+
+% boolean
+% number (TypeScript)
+% string (TypeScript) 
+
+\section{API Function Calls}
+
+API represented by
+\begin{itemize}
+  \item namespaces to organize set of related functions, 
+       where namespaces map to Toolbox categories in Blockly;
+       In particular, each top-level namespace is used to populate a category 
+       in the toolbox. The name of the namespaces is capitalized for the toolbox. 
+
+  \item void return type for a function means a call to the function is allowable in
+      a statement context; non-void means expression context for call
+  \item functions return a single value;
+  \item parameters: optional parameters with default value; rest; 
+\end{itemize}
+
+% Block syntax
+
+% The block attribute specifies how the parameters of the function will be organized to create the block.
+
+% block = field, { '|' field }
+% field := string
+%     | string `%` parameter [ `=` type ]
+% parameter = string
+% type = string
+% each field is mapped to a field in the block editor
+% the function parameter are mapped in order to %parameter argument. 
+
+% The loader automatically builds a mapping between the block field names and the function names.
+% the block will automatically switch to external inputs when enough parameters are detected
+% A block type =type can be specified optionally for each parameter. It will be used to populate the shadow type.
+% Supported types
+
+\section{Enumerations}
+
+\section{Objects and Object Destructuring}
+API represented by
+\begin{itemize}
+  \item set of classes, with
+  \item constructors
+  \item methods/fields
+\end{itemize}
+
+\section{Event Handlers and Callbacks}
+
+% \item event-handlers via a callback function (callbacks only have parameters with primitive values);
+
+A function $f$ that has an argument $g$ of function type (in last position) will have
+that function argument (callback) converted into a statement input of $B(f)$.
+
+If the callback $g$ has parameters, then
+the best way to map that pattern to the blocks is by modifying
+$g$ to have a single parameter with a class type that has the
+various parameters as fields.
+For example:
+
+% export class ArgumentClass {
+%     argumentA: number;
+%     argumentB: string;
+% }
+
+% //% mutate=objectdestructuring
+% //% mutateText="My Arguments"
+% //% mutateDefaults="argumentA;argumentA,argumentB"
+% // ...
+% export function addSomeEventHandler((a: ArgumentClass) => void) { };
+
+% In the above example, setting mutate=objectdestructuring will cause this API 
+% to use Blockly “mutators” to let users change what parameters appear in the blocks. 
+% Each parameter will be given an optional variable field in the block that defines a 
+% variable that can be used within the callback. The variable fields compile to object
+% destructuring in the TypeScript code. For example:
+
+% addSomeEventHandler(({argumentA, argumentB}) => {
+
+% })
+
+% For an example of this pattern in action, see the radio.onDataPacketReceived block in the microbit target.
+
+% In some cases it can be useful to change the runtime behavior of the API based on the properties 
+% selected by the user. To enable that behavior, create an enum with entries that have the same names 
+% as the argument object’s properties and add an extra parameter taking in an enum array to the API. 
+% For example:
+
+% export class ArgumentClass {
+%     argumentA: number;
+%     argumentB: string;
+% }
+
+% enum ArgNames {
+%     argumentA,
+%     argumentB
+% }
+
+% //% mutate=objectdestructuring
+% //% mutateText="My Arguments"
+% //% mutateDefaults="argumentA;argumentA,argumentB"
+% //% mutatePropertyEnum="argNames"
+% // ...
+% export function addSomeEventHandler(args: ArgNames[], (a: ArgumentClass) => void) { };
+% Note the mutatePropertyEnum attribute added to the comment annotations. The block for this API will look the same as the previous example but the compiled code will also include the arguments passed:
+
+% addSomeEventHandler([ArgNames.argumentA, ArgNames.argumentB], ({argumentA, argumentB}) => {
+
+% })
+% The other attributes related to object destructuring mutators include:
+
+% mutateText - defines the text that appears in the top block of the Blockly mutator dialog (the dialog that appears when you click the blue gear)
+% mutateDefaults - defines the versions of this block that should appear in the toolbox. Block definitions are separated by semicolons and property names should be separated by commas
+
+
+
+
+\section{Collections}
+
+\section{Monads}
+
+\section{Lexical Scoping}
+
+\section{Attributes}
+
+%% Bibliography
+%\bibliography{paper}
+
+%% Appendix
+%\appendix
+%\input{appendix}
+%\input{uf2}
+
+\end{document}
