@@ -208,6 +208,14 @@ namespace pxsim {
         export function le(x: number, y: number) { return x <= y; }
         export function neq(x: number, y: number) { return !eq(x, y); }
         export function eq(x: number, y: number) { return pxtrt.nullFix(x) == pxtrt.nullFix(y); }
+        export function eqDecr(x: number, y: number) {
+            if (pxtrt.nullFix(x) == pxtrt.nullFix(y)) {
+                decr(y);
+                return true;
+            } else {
+                return false
+            }
+        }
         export function gt(x: number, y: number) { return x > y; }
         export function ge(x: number, y: number) { return x >= y; }
         export function div(x: number, y: number) { return Math.floor(x / y) | 0; }
@@ -267,6 +275,15 @@ namespace pxsim {
 
         export function compare(s1: string, s2: string) {
             if (s1 == s2) return 0;
+            if (s1 < s2) return -1;
+            return 1;
+        }
+
+        export function compareDecr(s1: string, s2: string) {
+            if (s1 == s2) {
+                decr(s2)
+                return 0;
+            }
             if (s1 < s2) return -1;
             return 1;
         }

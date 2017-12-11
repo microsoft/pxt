@@ -3102,6 +3102,7 @@ ${lbl}: .short 0xffff
             let quickCmpMode = isNumber
 
             let expr = ir.shared(emitExpr(node.expression))
+            let decrSuff = isRefCountedExpr(node.expression) ? "Decr" : ""
             let plainExpr = expr
             if (isNumber) {
                 emitInJmpValue(expr)
@@ -3112,17 +3113,15 @@ ${lbl}: .short 0xffff
                 if (cl.kind == SK.CaseClause) {
                     let cc = cl as CaseClause
                     let cmpExpr = emitExpr(cc.expression)
+                    let mask = isRefCountedExpr(cc.expression) ? 1 : 0
                     if (switchType.flags & TypeFlags.String) {
-                        let cmpCall = ir.rtcallMask("String_::compare",
-                            isRefCountedExpr(cc.expression) ? 3 : 2,
-                            ir.CallingConvention.Plain, [cmpExpr, expr])
-                        expr = ir.op(EK.Incr, [expr])
+                        let cmpCall = ir.rtcallMask("String_::compare" + decrSuff,
+                            mask, ir.CallingConvention.Plain, [cmpExpr, expr])
                         proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfZero, plainExpr)
-                    } else if (isRefCountedExpr(cc.expression)) {
-                        let cmpCall = ir.rtcallMask("Number_::eq", 3,
+                    } else if (isRefCountedExpr(cc.expression) || decrSuff) {
+                        let cmpCall = ir.rtcallMask("Number_::eq" + decrSuff, mask,
                             ir.CallingConvention.Plain, [cmpExpr, expr])
                         quickCmpMode = false
-                        expr = ir.op(EK.Incr, [expr])
                         proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                     } else {
                         if (cmpExpr.exprKind == EK.NumberLiteral) {
@@ -3149,6 +3148,10 @@ ${lbl}: .short 0xffff
                 }
                 return lbl
             })
+
+            if (decrSuff) {
+                proc.emitExpr(ir.op(EK.Decr, [expr]))
+            }
 
             if (defaultLabel)
                 proc.emitJmp(defaultLabel, plainExpr)
