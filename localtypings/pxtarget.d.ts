@@ -11,6 +11,7 @@ declare namespace pxt {
         galleries?: pxt.Map<string>;
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
+        windowsStoreLink?: string;
     }
 
     interface PackagesConfig {
@@ -57,6 +58,15 @@ declare namespace pxt {
         fields?: pxt.Map<string>;
     }
 
+    interface BlockOptions {
+        category?: string;      // category in toolbox where the block should appear (defaults to "Loops")
+        group?: string;         // group in toolbox category where the block should appear (defaults to none)
+        color?: string;         // defaults to the color of the "Loops" category
+        weight?: number;        // defaults to 0
+        namespace?: string;     // namespace where the block's function lives (defaults to none)
+        callName?: string;      // name of the block's function if changed in target
+    }
+
     interface RuntimeOptions {
         mathBlocks?: boolean;
         textBlocks?: boolean;
@@ -69,6 +79,7 @@ declare namespace pxt {
         onStartColor?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
+        pauseUntilBlock?: BlockOptions;
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
     }
 
@@ -217,7 +228,6 @@ declare namespace pxt {
         hideMenuBar?: boolean; // Hides the main menu bar
         hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
         appStoreID?: string; // Apple iTune Store ID if any
-        windowsStoreLink?: string; // Link to UWP app in Windows store
         mobileSafariDownloadProtocol?: string; // custom protocol to be used on iOS
         sounds?: {
             tutorialStep?: string;

@@ -250,6 +250,14 @@ namespace pxt.BrowserUtils {
         return windowOpen;
     }
 
+    // for browsers that strictly require that a download gets initiated within a user click
+    export function isBrowserDownloadWithinUserContext(): boolean {
+        const versionString = browserVersion();
+        const v = parseInt(versionString || "0")
+        const r = (isMobile() && isSafari() && v >= 11) || /downloadUserContext=1/i.test(window.location.href);
+        return r;
+    }
+
     export function browserDownloadDataUri(uri: string, name: string, userContextWindow?: Window) {
         const windowOpen = isBrowserDownloadInSameWindow();
         const versionString = browserVersion();
@@ -300,18 +308,21 @@ namespace pxt.BrowserUtils {
         return browserDownloadBase64(btoa(Util.uint8ArrayToString(buf)), name, contentType, userContextWindow, onError)
     }
 
-    export function browserDownloadBase64(b64: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
-        pxt.debug('trigger download')
-
-        const isMobileBrowser = pxt.BrowserUtils.isMobile();
-        const saveBlob = (<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser;
+    export function toDownloadDataUri(b64: string, contentType: string): string {
         let protocol = "data";
         if (isMobile() && isSafari() && pxt.appTarget.appTheme.mobileSafariDownloadProtocol)
             protocol = pxt.appTarget.appTheme.mobileSafariDownloadProtocol;
-
         const m = /downloadProtocol=([a-z0-9:/?]+)/i.exec(window.location.href);
         if (m) protocol = m[1];
         const dataurl = protocol + ":" + contentType + ";base64," + b64
+        return dataurl;
+    }
+
+    export function browserDownloadBase64(b64: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
+        pxt.debug('trigger download')
+
+        const saveBlob = (<any>window).navigator.msSaveOrOpenBlob && !pxt.BrowserUtils.isMobile();
+        const dataurl = toDownloadDataUri(b64, name);
         try {
             if (saveBlob) {
                 const b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType })
@@ -420,6 +431,15 @@ namespace pxt.BrowserUtils {
                 if (boardDef.outlineImage) boardDef.outlineImage = patchCdn(boardDef.outlineImage)
             }
         }
+
+        // patch icons in bundled packages
+        Object.keys(pxt.appTarget.bundledpkgs).forEach(pkgid => {
+            const res = pxt.appTarget.bundledpkgs[pkgid];
+            // path config before storing
+            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+            if (config.icon) config.icon = patchCdn(config.icon);
+            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+        })
     }
 
     /**

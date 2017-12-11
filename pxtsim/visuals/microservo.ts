@@ -61,7 +61,7 @@ namespace pxsim.visuals {
             translateEl(this.element, [x, y])
         }
         updateState(): void {
-            this.targetAngle = this.state.getPin(this.pin).servoAngle;
+            this.targetAngle = 180.0 - this.state.getPin(this.pin).servoAngle;
             if (this.targetAngle != this.currentAngle) {
                 const now = U.now();
                 const cx = 56.661;

@@ -25,6 +25,11 @@ export class Editor extends srceditor.Editor {
     maxChartTime: number = 18000
     chartDropper: number
 
+    lineColors = ["#f00", "#00f", "#0f0", "#ff0"]
+    hcLineColors = ["000"]
+    currentLineColors = this.lineColors
+    highContrast: boolean = false
+
     //refs
     startPauseButton: StartPauseButton
     consoleRoot: HTMLElement
@@ -41,12 +46,27 @@ export class Editor extends srceditor.Editor {
     }
 
     setVisible(b: boolean) {
-        this.isVisible = b;
+        if (this.parent.state.highContrast !== this.highContrast) {
+            this.setHighContrast(this.parent.state.highContrast)
+        }
+        this.isVisible = b
         if (this.isVisible) {
             this.startRecording()
         }
         else {
             this.pauseRecording()
+        }
+    }
+
+    setHighContrast(hc: boolean) {
+        if (hc !== this.highContrast) {
+            this.highContrast = hc;
+            if (hc) {
+                this.currentLineColors = this.hcLineColors
+            } else {
+                this.currentLineColors = this.lineColors
+            }
+            this.clear()
         }
     }
 
@@ -62,6 +82,8 @@ export class Editor extends srceditor.Editor {
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
         window.addEventListener("message", this.processMessage.bind(this), false)
+        const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme;
+        this.lineColors = (serialTheme && serialTheme.lineColors) || this.lineColors;
     }
 
     processMessage(ev: MessageEvent) {
@@ -106,7 +128,7 @@ export class Editor extends srceditor.Editor {
             }
         }
         if (!homeChart) {
-            homeChart = new Chart(source, variable, this.chartIdx)
+            homeChart = new Chart(source, variable, this.chartIdx, this.currentLineColors)
             this.chartIdx++;
             this.charts.push(homeChart)
             this.chartRoot.appendChild(homeChart.getElement());
@@ -211,19 +233,20 @@ export class Editor extends srceditor.Editor {
     }
 
     downloadCSV() {
+        const sep = lf("{id:csvseparator}\t");
         const lines: { name: string; line: TimeSeries; }[] = [];
         this.charts.forEach(chart => Object.keys(chart.lines).forEach(k => lines.push({ name: `${k} (${chart.source})`, line: chart.lines[k] })));
-        let csv = lines.map(line => `time (s), ${line.name}`).join(', ') + '\r\n';
+        let csv = lines.map(line => `time (s)${sep} ${line.name}`).join(sep + ' ') + '\r\n';
 
         const datas = lines.map(line => line.line.data);
         const nl = datas.map(data => data.length).reduce((l, c) => Math.max(l, c));
         const nc = this.charts.length;
         for (let i = 0; i < nl; ++i) {
-            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ' , ').join(', ');
+            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ` ${sep} `).join(sep + ' ');
             csv += '\r\n';
         }
 
-        pxt.commands.browserDownloadAsync(csv, "data.csv", "text/csv")
+        pxt.commands.browserDownloadAsync(csv, lf("{id:csvfilename}data") + ".csv", "text/csv")
         core.infoNotification(lf("Exporting data...."));
     }
 
@@ -301,9 +324,9 @@ class Chart {
     isStale: boolean = false;
     lastUpdatedTime: number = 0;
 
-    constructor(source: string, variable: string, chartIdx: number) {
-        const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme
+    constructor(source: string, variable: string, chartIdx: number, lineColors: string[]) {
         // Initialize chart
+        const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme;
         const chartConfig: IChartOptions = {
             interpolation: 'bezier',
             labels: {
@@ -323,7 +346,7 @@ class Chart {
             tooltip: true,
             tooltipFormatter: (ts, data) => this.tooltip(ts, data)
         }
-        this.lineColors = serialTheme && serialTheme.lineColors || ["#f00", "#00f", "#0f0", "#ff0"]
+        this.lineColors = lineColors;
         this.chartIdx = chartIdx;
         this.chart = new SmoothieChart(chartConfig);
         this.rootElement.className = "ui segment";
@@ -349,25 +372,10 @@ class Chart {
             (line as any).__name = Util.htmlEscape(name.substring(this.variable.length + 1));
             this.chart.addTimeSeries(line, {
                 strokeStyle: lineColor,
-                fillStyle: this.hexToHalfOpacityRgba(lineColor),
-                lineWidth: 1
+                lineWidth: 3
             })
         }
         return line;
-    }
-
-    hexToHalfOpacityRgba(hex: string) {
-        let shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i
-        hex = hex.replace(shorthandRegex, function (m, r, g, b) {
-            return r + r + g + g + b + b;
-        })
-        let m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-        if (!m) {
-            return hex
-        }
-        let nums = m.slice(1, 4).map(n => parseInt(n, 16))
-        nums.push(0.3)
-        return "rgba(" + nums.join(",") + ")"
     }
 
     makeLabel() {

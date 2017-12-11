@@ -1,5 +1,11 @@
 # Microsoft MakeCode Blog
 
+## [Micro:bit v0.13.52](/blog/microbit/v0.13.52)
+
+December 8th, 2017
+
+A servicing release for the micro:bit editor.
+
 ## [Microsoft MakeCode for Seeed Grove Zero Beta](/blog/seeed/v0.2.10)
 
 November 14th, 2017 by [riknoll](https://github.com/riknoll)

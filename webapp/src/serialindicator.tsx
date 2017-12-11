@@ -19,6 +19,13 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
     constructor(props: any) {
         super(props)
         this.state = { active: false }
+    }
+
+    componentDidMount() {
+        window.addEventListener("message", this.setActive.bind(this))
+    }
+
+    componentWillUnmount() {
         window.addEventListener("message", this.setActive.bind(this))
     }
 
@@ -41,7 +48,7 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
         return(
             <div title={lf("Open console")} className="ui label circular" tabIndex={0} onClick={this.props.onClick} onKeyDown={sui.fireClickOnEnter}>
                 <div className="detail">
-                    <sui.Icon icon="bar graph"/>
+                    <img alt={lf("Animated bar chart")} className="barcharticon" src={Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/Bars_black.gif`)}></img>
                 </div>
                 {lf("Show console") }
                 <div className="detail">

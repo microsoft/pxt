@@ -289,6 +289,9 @@ namespace ts.pxtc.decompiler {
     export interface DecompileBlocksOptions {
         snippetMode?: boolean; // do not emit "on start"
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
+
+        /*@internal*/
+        includeGreyBlockMessages?: boolean; // adds error attributes to the mutations in typescript_statement blocks (for debug pruposes)
     }
 
     enum ReferenceType {
@@ -414,40 +417,9 @@ ${output}</xml>`;
                     error(expr)
                     return false;
                 }
-                return callInfo.attrs.blockId && !callInfo.attrs.handlerStatement && !callInfo.isExpression && hasArrowFunction(callInfo);
+                return callInfo.attrs.blockId && !callInfo.attrs.handlerStatement && !callInfo.isExpression && hasStatementInput(callInfo);
             }
             return false;
-        }
-
-        function isOutputExpression(expr: ts.Expression): boolean {
-
-            switch (expr.kind) {
-                case SK.BinaryExpression:
-                    return !/[=<>]/.test((expr as ts.BinaryExpression).operatorToken.getText());
-                case SK.PrefixUnaryExpression: {
-                    let op = (expr as ts.PrefixUnaryExpression).operator;
-                    return op != SK.PlusPlusToken && op != SK.MinusMinusToken;
-                }
-                case SK.PostfixUnaryExpression: {
-                    let op = (expr as ts.PostfixUnaryExpression).operator;
-                    return op != SK.PlusPlusToken && op != SK.MinusMinusToken;
-                }
-                case SK.CallExpression:
-                    const callInfo: pxtc.CallInfo = (expr as any).callInfo
-                    if (!callInfo) {
-                        error(expr)
-                    }
-                    return callInfo.isExpression;
-                case SK.ParenthesizedExpression:
-                case SK.NumericLiteral:
-                case SK.StringLiteral:
-                case SK.NoSubstitutionTemplateLiteral:
-                case SK.TrueKeyword:
-                case SK.FalseKeyword:
-                case SK.NullKeyword:
-                    return true;
-                default: return false;
-            }
         }
 
         function emitStatementNode(n: StatementNode) {
@@ -845,8 +817,9 @@ ${output}</xml>`;
             const node = n as ts.Node;
             let stmt: StatementNode;
 
-            if (checkStatement(node, env, asExpression, topLevel)) {
-                stmt = getTypeScriptStatementBlock(node);
+            const err = checkStatement(node, env, asExpression, topLevel);
+            if (err) {
+                stmt = getTypeScriptStatementBlock(node, undefined, err);
             }
             else {
                 switch (node.kind) {
@@ -936,7 +909,7 @@ ${output}</xml>`;
             }
         }
 
-        function getTypeScriptStatementBlock(node: ts.Node, prefix?: string): StatementNode {
+        function getTypeScriptStatementBlock(node: ts.Node, prefix?: string, error?: string): StatementNode {
             const r = mkStmt(pxtc.TS_STATEMENT_TYPE);
             r.mutation = {}
 
@@ -969,6 +942,10 @@ ${output}</xml>`;
 
             const parts = text.split("\n");
             r.mutation["numlines"] = parts.length.toString();
+
+            if (error && options.includeGreyBlockMessages) {
+                r.mutation["error"] = U.htmlEscape(error);
+            }
 
             parts.forEach((p, i) => {
                 r.mutation[`line${i}`] = U.htmlEscape(p);
@@ -1168,6 +1145,24 @@ ${output}</xml>`;
 
         function getCallStatement(node: ts.CallExpression, asExpression: boolean): StatementNode {
             const info: pxtc.CallInfo = (node as any).callInfo
+
+            if (info.attrs.blockId === pxtc.PAUSE_UNTIL_TYPE) {
+                const r = mkStmt(pxtc.PAUSE_UNTIL_TYPE);
+                const lambda = node.arguments[0] as (ts.FunctionExpression | ts.ArrowFunction);
+
+                let condition: ts.Node;
+
+                if (lambda.body.kind === SK.Block) {
+                    // We already checked to make sure the body is a single return statement
+                    condition = ((lambda.body as ts.Block).statements[0] as ts.ReturnStatement).expression;
+                }
+                else {
+                    condition = lambda.body;
+                }
+
+                r.inputs = [mkValue("PREDICATE", getOutputBlock(condition), "logic_boolean")];
+                return r;
+            }
 
             if (!info.attrs.blockId || !info.attrs.block) {
                 const builtin = builtinBlocks[info.qName];
@@ -1729,7 +1724,15 @@ ${output}</xml>`;
                 return Util.lf("No output expressions as statements");
             }
 
-            const hasCallback = hasArrowFunction(info);
+            if (info.attrs.blockId === pxtc.PAUSE_UNTIL_TYPE) {
+                const predicate = n.arguments[0];
+                if (n.arguments.length === 1 && checkPredicate(predicate)) {
+                    return undefined;
+                }
+                return Util.lf("Predicates must be inline expressions that return a value");
+            }
+
+            const hasCallback = hasStatementInput(info);
             if (hasCallback && !info.attrs.handlerStatement && !topLevel) {
                 return Util.lf("Events must be top level");
             }
@@ -1882,6 +1885,28 @@ ${output}</xml>`;
                         }
                     }
                 }
+                return false;
+            }
+
+            function checkPredicate(p: ts.Node) {
+                if (p.kind !== SK.FunctionExpression && p.kind !== SK.ArrowFunction) {
+                    return false;
+                }
+
+                const predicate = p as (ts.FunctionExpression | ts.ArrowFunction);
+
+                if (isOutputExpression(predicate.body as ts.Expression)) {
+                    return true;
+                }
+
+                const body = predicate.body as ts.Block;
+                if (body.statements.length === 1) {
+                    const stmt = unwrapNode(body.statements[0]);
+                    if (stmt.kind === SK.ReturnStatement) {
+                        return true;
+                    }
+                }
+
                 return false;
             }
         }
@@ -2097,7 +2122,8 @@ ${output}</xml>`;
         return node && node.kind === SK.Identifier && (node as ts.Identifier).text === "undefined";
     }
 
-    function hasArrowFunction(info: CallInfo): boolean {
+    function hasStatementInput(info: CallInfo): boolean {
+        if (info.attrs.blockId === pxtc.PAUSE_UNTIL_TYPE) return false;
         const parameters = (info.decl as FunctionLikeDeclaration).parameters;
         return info.args.some((arg, index) => arg && isFunctionExpression(arg));
     }
@@ -2171,4 +2197,33 @@ ${output}</xml>`;
     function isFunctionExpression(node: Node) {
         return node.kind === SK.ArrowFunction || node.kind === SK.FunctionExpression;
     }
+
+    function isOutputExpression(expr: ts.Expression): boolean {
+            switch (expr.kind) {
+                case SK.BinaryExpression:
+                    const tk = (expr as ts.BinaryExpression).operatorToken.kind;
+                    return tk != SK.PlusEqualsToken && tk != SK.MinusEqualsToken && tk != SK.EqualsToken;
+                case SK.PrefixUnaryExpression: {
+                    let op = (expr as ts.PrefixUnaryExpression).operator;
+                    return op != SK.PlusPlusToken && op != SK.MinusMinusToken;
+                }
+                case SK.PostfixUnaryExpression: {
+                    let op = (expr as ts.PostfixUnaryExpression).operator;
+                    return op != SK.PlusPlusToken && op != SK.MinusMinusToken;
+                }
+                case SK.CallExpression:
+                    const callInfo: pxtc.CallInfo = (expr as any).callInfo
+                    assert(!!callInfo);
+                    return callInfo.isExpression;
+                case SK.ParenthesizedExpression:
+                case SK.NumericLiteral:
+                case SK.StringLiteral:
+                case SK.NoSubstitutionTemplateLiteral:
+                case SK.TrueKeyword:
+                case SK.FalseKeyword:
+                case SK.NullKeyword:
+                    return true;
+                default: return false;
+            }
+        }
 }

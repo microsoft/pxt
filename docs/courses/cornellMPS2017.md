@@ -5,26 +5,62 @@ for students enrolled in Cornell's [Master of Professional Studies in Informatio
 
 ## Project Description
 
-Today there are many JavaScript libraries for accomplishing just about anything you want on the web, 
-but it’s not easy for non-developers (your customers) to harness the power of these libraries. For example, 
-augmented reality is all the rage, but not easy to get started with. In this project, you’ll create a programming 
-environment for a domain of your choice, using the Microsoft MakeCode platform (www.makecode.com).  
-Example domains include:
-* Survey: build a survey that is dynamic in nature, requiring conditional control-flow;
-* Chat bot: create a chat bot using https://dev.botframework.com/ 
-* Business workflow: encode business rules as a program; 
-* Formula designer: generate web apps to compute simple equations.
+Today there are many JavaScript libraries for accomplishing just about anything you want on the web, but it’s not easy for non-developers (your customers) to harness the power of these libraries. 
+In this project, you’ll create a programming environment for a *domain* of your choice, 
+using the Microsoft MakeCode platform (www.makecode.com).  Example domains include:
 
-The web site http://www.playfulcomputation.group/arcadia.html shows a MakeCode environment a graduate student created over the summer of 2017 to 
-allow programming of music-making applications based on augmented reality.  
+* Augmented reality: using marker-based augmented reality, let the user prototype new user interfaces;
+* Traffic simulator: using a traffic simulation engine, let the user program the strategy to switch the lights 
+* Face interaction: using a face recognition engine, let the user build small apps that morph the user face based on the environment
+* Survey: build a survey that is dynamic in nature, requiring conditional control-flow;
+* Business workflow: encode business rules as a program; 
+* Music sequencer: program a drum machine.
+
+The web site https://makecode.com/labs showcases various domain specific editors built using MakeCode.
+
+## Personas
+
+There are three types of student profiles (or personas) required for 
+the project (each student may wear multiple hats):
+
+* The *specialist* provides knowledge about the domain that the editor is addressing:
+the specialist represents the customer of the editor and does not need to have any 
+programming background.
+
+* The *designer* interviews the specialist, models the editing experience, 
+designs the programming interface and conducts user research and interviews 
+to validate the design. The designer does not need to have any programming background.
+
+* The *developer* implements the design in code using the MakeCode framework: 
+a programming background and familiarity with HTML, CSS and JavaScript is very helpful.
 
 ## Activities necessary to achieve the project goal
 
-1.	Find a JavaScript library or web service that aligns with your domain/interests (1 week);
-2.	Describe a simplified Application Programming Interface (API) for this library/service using TypeScript (www.typescriptlang.org); 
-3.	Configure a new MakeCode editor to surface your API as visual blocks;
-4.	Write an interpreter that brings your API to life in the web browser;
-5.	Deploy your MakeCode web app and test with your customers.
+* Familiarize yourself with MakeCode and the tools/languages that it uses (more details on this in
+  the next section);
+
+* Decide on a domain of interest and what you want users to be able to achieve within
+    that domain.  or example, if the domain is traffic flow, the goal might be to allow the users
+    to explore how different strategies for controlling traffic lights affect the traffic flow 
+    through a network of streets and intersections; (1 week)
+
+* Find and evaluate an open source JavaScript library that aligns with your domain/interests (1-2 weeks); this
+    is critically important - you will not have time to create the supporting you need from scratch;
+    you should be prepared to run into some dead ends here and have to try again (1-2 weeks).  You may
+    need more than one JavaScript library, depending on your domain and goals;
+
+* Describe a simplified Application Programming Interface (API) for this library/service 
+  using TypeScript (www.typescriptlang.org); this is another important step: your end
+  users' likely are not JavaScript programmers, but it is likely that the JavaScript library
+  you use was developed with professional JavaScript developers in mind (2-3 weeks)
+
+* Configure a new MakeCode editor to surface your API as visual blocks;
+
+* Simulator visual design and linking to the above library. 
+Write code linking your API to the JavaScript library to provide a simulator
+that brings your API to life in the web browser;
+
+* Deploy your MakeCode web app and test with your customers.
 
 # Week 1: Getting started with MakeCode
 
@@ -36,7 +72,12 @@ allow programming of music-making applications based on augmented reality.
 6. Follow the directions in the [microsoft/pxt-sample](https://github.com/microsoft/pxt-sample) to build and run the target.
 
 If you are unfamiliar with the above technologies, spend a little time searching and reading about them. From
-most important to least important for the project: TypeScript/JavaScript, GitHub, VS Code, node.js.
+most important to least important for the project: 
+
+* TypeScript/JavaScript;
+* GitHub;
+* VS Code;
+* node.js.
 
 # Week 2
 
