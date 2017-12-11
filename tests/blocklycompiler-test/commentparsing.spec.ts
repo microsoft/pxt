@@ -1,5 +1,3 @@
-/// <reference path="..\..\typings\globals\mocha\index.d.ts" />
-/// <reference path="..\..\localtypings\chai.d.ts" />
 /// <reference path="..\..\built\pxtlib.d.ts" />
 
 describe("comment attribute parser", () => {

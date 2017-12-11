@@ -1,5 +1,3 @@
-/// <reference path="..\..\typings\globals\mocha\index.d.ts" />
-/// <reference path="..\..\localtypings\chai.d.ts" />
 /// <reference path="..\..\localtypings\pxtblockly.d.ts" />
 /// <reference path="..\..\built\pxtblocks.d.ts" />
 /// <reference path="..\..\built\pxtcompiler.d.ts" />
@@ -198,115 +196,115 @@ describe("blockly compiler", function() {
     this.timeout(3000);
 
     describe("compiling lists", () => {
-        it("should handle unambiguously typed list generics", done => {
+        it("should handle unambiguously typed list generics", (done: () => void) => {
             blockTestAsync("lists_generics1").then(done, done);
         });
 
-        it("should handle generic types of lists with empty inputs", done => {
+        it("should handle generic types of lists with empty inputs", (done: () => void) => {
             blockTestAsync("lists_generics2").then(done, done);
         });
 
-        it("should handle generic list return types in uninitialized lists", done => {
+        it("should handle generic list return types in uninitialized lists", (done: () => void) => {
             blockTestAsync("lists_generics3").then(done, done);
         });
 
-        it("should handle generic list return types from non-builtin blocks", done => {
+        it("should handle generic list return types from non-builtin blocks", (done: () => void) => {
             blockTestAsync("lists_generics4").then(done, done);
         });
 
-        it("should handle generic lists types that reference each other", done => {
+        it("should handle generic lists types that reference each other", (done: () => void) => {
             blockTestAsync("lists_generics5").then(done, done);
         });
 
-        it("should handle empty inputs in list blocks by placing literals", done => {
+        it("should handle empty inputs in list blocks by placing literals", (done: () => void) => {
             blockTestAsync("lists_empty_inputs2").then(done, done);
         });
 
-        it("should properly place semicolons when necessary", done => {
+        it("should properly place semicolons when necessary", (done: () => void) => {
             blockTestAsync("lists_semicolons").then(done, done);
         });
 
-        it("should properly handle type declaration for double arrays", done => {
+        it("should properly handle type declaration for double arrays", (done: () => void) => {
             blockTestAsync("lists_double_arrays").then(done, done);
         });
 
-        it("should not place semicolons in expressions", done => {
+        it("should not place semicolons in expressions", (done: () => void) => {
             blockTestAsync("lists_semicolons2").then(done, done);
         });
 
-        it("should not infinitely recurse if both parent and child types are not concrete", done => {
+        it("should not infinitely recurse if both parent and child types are not concrete", (done: () => void) => {
             blockTestAsync("lists_infinite").then(done, done);
         });
 
-        it("should not infinitely recurse for unininitialized arrays used in a for of loop", done => {
+        it("should not infinitely recurse for unininitialized arrays used in a for of loop", (done: () => void) => {
             blockTestAsync("lists_infinite2").then(done, done);
         });
 
-        it("should not declare lists as strings when using the length block", done => {
+        it("should not declare lists as strings when using the length block", (done: () => void) => {
             blockTestAsync("lists_length_with_for_of").then(done, done);
         });
 
-        it("should handle empty array blocks", done => {
+        it("should handle empty array blocks", (done: () => void) => {
             blockTestAsync("lists_empty_arrays").then(done, done);
         });
     });
 
     describe("compiling logic", () => {
-        it("should handle all the logic blocks in the toolbox", done => {
+        it("should handle all the logic blocks in the toolbox", (done: () => void) => {
             blockTestAsync("logic_all").then(done, done);
         });
 
-        it("should handle all the logic operators", done => {
+        it("should handle all the logic operators", (done: () => void) => {
             blockTestAsync("logic_all_operators").then(done, done);
         });
     });
 
     describe("compiling math", () => {
-        it("should handle all the math operators", done => {
+        it("should handle all the math operators", (done: () => void) => {
             blockTestAsync("math_operators").then(done, done);
         });
 
-        it("should handle all the math library functions", done => {
+        it("should handle all the math library functions", (done: () => void) => {
             blockTestAsync("math_library").then(done, done);
         });
     });
 
     describe("compiling text", () => {
-        it("should handle the text blocks", done => {
+        it("should handle the text blocks", (done: () => void) => {
             blockTestAsync("text").then(done, done);
         });
 
-        it("should handle text join", done => {
+        it("should handle text join", (done: () => void) => {
             blockTestAsync("text_join").then(done, done);
         });
     });
 
     describe("compiling loops", () => {
-        it("should handle the loops blocks", done => {
+        it("should handle the loops blocks", (done: () => void) => {
             blockTestAsync("loops").then(done, done);
         });
 
-        it("should generate proper variable declarations for loop variables", done => {
+        it("should generate proper variable declarations for loop variables", (done: () => void) => {
             blockTestAsync("loops_local_variables").then(done, done);
         });
     });
 
     describe("compiling variables", () => {
-        it("should handle the variables blocks", done => {
+        it("should handle the variables blocks", (done: () => void) => {
             blockTestAsync("variables").then(done, done);
         });
 
-        it("should change invalid names and preserve unicode names", done => {
+        it("should change invalid names and preserve unicode names", (done: () => void) => {
             blockTestAsync("variables_names").then(done, done);
         });
 
-        it("should change reserved names", done => {
+        it("should change reserved names", (done: () => void) => {
             blockTestAsync("variables_reserved_names").then(done, done);
         });
     });
 
     describe("compiling functions", () => {
-        it("should handle name collisions", done => {
+        it("should handle name collisions", (done: () => void) => {
             blockTestAsync("functions_names").then(done, done);
         });
     })

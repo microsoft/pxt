@@ -222,7 +222,7 @@ namespace pxsim {
         const bh = (b >>> 16) & 0xffff;
         const bl = b & 0xffff;
         // the shift by 0 fixes the sign on the high part
-        // the final |0 converts the unsigned value into a signed value 
+        // the final |0 converts the unsigned value into a signed value
         return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
     }
 
@@ -532,10 +532,10 @@ namespace pxsim {
 
         export function toHex(buf: RefBuffer): string {
             const hex = "0123456789abcdef";
-            let res: string;
+            let res = "";
             for (let i = 0; i < buf.data.length; ++i) {
-                res[i << 1] = hex[buf.data[i] >> 4];
-                res[(i << 1) + 1] = hex[buf.data[i] & 0xf];
+                res += hex[buf.data[i] >> 4];
+                res += hex[buf.data[i] & 0xf];
             }
             return res;
         }

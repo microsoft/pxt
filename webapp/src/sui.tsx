@@ -59,7 +59,7 @@ function removeClass(el: HTMLElement, cls: string) {
     else if (el.className.indexOf(cls) >= 0) el.className.replace(new RegExp(`(?:^|\\s)${cls}(?:\\s|$)`), ' ');
 }
 
-export function fireClickOnEnter(e: React.KeyboardEvent): void {
+export function fireClickOnEnter(e: React.KeyboardEvent<HTMLElement>): void {
     let charCode = (typeof e.which == "number") ? e.which : e.keyCode
     if (charCode === core.ENTER_KEY || charCode === core.SPACE_KEY) {
         e.preventDefault();
@@ -127,7 +127,7 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
     componentDidMount() {
         this.popup()
         let dropdowmtag = this.child("")
-        dropdowmtag.on("keydown", this.dropDownKeyDown)
+        dropdowmtag.on("keydown", this.dropDownKeyDown as any)
         dropdowmtag.dropdown({
             action: (text: string, value: any, element: JQuery) => {
                 this.close()
@@ -213,7 +213,7 @@ export interface ItemProps extends UiProps {
     active?: boolean;
     value?: string;
     onClick?: () => void;
-    onKeyDown?: (e: React.KeyboardEvent) => void;
+    onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
 }
 
 export class Item extends data.Component<ItemProps, {}> {
@@ -264,9 +264,9 @@ export interface ButtonProps extends WithPopupProps {
     title?: string;
     ariaLabel?: string;
     ariaExpanded?: boolean;
-    onClick?: (e: React.MouseEvent) => void;
+    onClick?: (e: React.MouseEvent<HTMLElement>) => void;
     disabled?: boolean;
-    onKeyDown?: (e: React.KeyboardEvent) => void;
+    onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
 }
 
 export class Button extends UiElement<ButtonProps> {
@@ -591,7 +591,7 @@ export interface MenuItemProps {
     index?: number;
     link?: boolean;
     name?: string;
-    onClick?: (event: React.MouseEvent, data: MenuItemProps) => void;
+    onClick?: (event: React.MouseEvent<HTMLElement>, data: MenuItemProps) => void;
     position?: 'right';
     ariaControls?: string;
     id?: string;
@@ -602,7 +602,7 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
         super(props);
     }
 
-    handleClick = (e: React.MouseEvent) => {
+    handleClick = (e: React.MouseEvent<HTMLElement>) => {
         const { onClick } = this.props;
         if (onClick) onClick(e, this.props);
     }

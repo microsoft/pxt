@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/node/index.d.ts"/>
-
 import * as path from 'path';
 import * as nodeutil from './nodeutil';
 import * as child_process from 'child_process';

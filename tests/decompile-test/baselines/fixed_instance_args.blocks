@@ -5,7 +5,7 @@
 <field name="p">pins2.A3</field>
 <next>
 <block type="typescript_statement">
-<mutation declaredvars="____x" numlines="1" line0="let ___x&#58; PwmPin &#61; pins2.A5&#59;" />
+<mutation declaredvars="___x" numlines="1" line0="let ___x&#58; PwmPin &#61; pins2.A5&#59;" />
 <next>
 <block type="typescript_statement">
 <mutation numlines="1" line0="pins2.fixedInstanceArg&#40;___x&#41;&#59;" />

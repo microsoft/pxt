@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/node/index.d.ts"/>
-
 import * as fs from 'fs';
 import * as path from 'path';
 import * as url from 'url';
@@ -275,7 +273,7 @@ export function flashSerialAsync(c: commandParser.ParsedCommand) {
 /*
 #define wait_ready() \
         while (NVMCTRL->INTFLAG.bit.READY == 0);
-    
+
 void flash_write(void) {
     uint32_t *src = (void *)0x20006000;
     uint32_t *dst = (void *)*src++;

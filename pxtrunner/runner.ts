@@ -130,8 +130,8 @@ namespace pxt.runner {
     }
 
     function patchSemantic() {
-        if ($ && $.fn && $.fn.embed && $.fn.embed.settings && $.fn.embed.settings.sources && $.fn.embed.settings.sources.youtube) {
-            $.fn.embed.settings.sources.youtube.url = '//www.youtube.com/embed/{id}?rel=0'
+        if ($ && $.fn && ($.fn as any).embed && ($.fn as any).embed.settings && ($.fn as any).embed.settings.sources && ($.fn as any).embed.settings.sources.youtube) {
+            ($.fn as any).embed.settings.sources.youtube.url = '//www.youtube.com/embed/{id}?rel=0'
         }
     }
 
@@ -141,7 +141,7 @@ namespace pxt.runner {
 
         const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
         const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-        const lang = mlang ? mlang[2] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+        const lang = mlang ? mlang[2] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
         const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
         const versions = pxt.appTarget.versions;
 

@@ -147,7 +147,7 @@ export class EditorPackage {
         if (!p || p.verProtocol() != "github") return Promise.resolve();
         let parsed = pxt.github.parseRepoId(p.verArgument())
         return pxt.targetConfigAsync()
-            .then(config => pxt.github.latestVersionAsync(parsed.fullName, config))
+            .then(config => pxt.github.latestVersionAsync(parsed.fullName, config.packages))
             .then(tag => { parsed.tag = tag })
             .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
             .catch(core.handleNetworkError)
@@ -350,7 +350,7 @@ function resolvePath(p: string) {
 }
 
 const theHost = new Host();
-export var mainPkg = new pxt.MainPackage(theHost);
+export var mainPkg: pxt.MainPackage = new pxt.MainPackage(theHost);
 
 export function getEditorPkg(p: pxt.Package): EditorPackage {
     let r: EditorPackage = (p as any)._editorPkg

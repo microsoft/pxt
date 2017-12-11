@@ -1,4 +1,3 @@
-/// <reference path="../typings/globals/node/index.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtcompiler.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
@@ -856,7 +855,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
             for (let u of U.values(uplReqs)) {
                 let fpath = path.join(trgPath, u.filename)
                 nodeutil.mkdirP(path.dirname(fpath))
-                fs.writeFileSync(fpath, u.content, u.encoding)
+                fs.writeFileSync(fpath, u.content, { encoding: u.encoding })
             }
             // make sure there's always something to commit
             fs.writeFileSync(trgPath + "/stamp.txt", new Date().toString())
@@ -998,7 +997,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         }
         if (!rdf) {
             if (!fs.existsSync(p))
-                return;
+                return undefined;
             rdf = readFileAsync(p)
         }
 
@@ -1399,7 +1398,7 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
             }
         });
 
-        let outFile = fs.createWriteStream(`built/${outputName}.js`, 'utf8');
+        let outFile = fs.createWriteStream(`built/${outputName}.js`, { encoding: 'utf8' });
         b.bundle().pipe(outFile);
 
         return new Promise<void>((resolve, reject) => {
@@ -1618,11 +1617,11 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
             fs.readFile(`built/web/${cssFile}`, "utf8", (err, css) => {
                 postcss([cssnano])
                     .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` }).then((result: any) => {
-                        fs.writeFile(`built/web/${cssFile}`, result.css, (err2, css2) => {
+                        fs.writeFile(`built/web/${cssFile}`, result.css, (err2) => {
                             // process rtl css
                             postcss([rtlcss])
                                 .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                    fs.writeFile(`built/web/rtl${cssFile}`, result2.css);
+                                    fs.writeFile(`built/web/rtl${cssFile}`, result2.css, undefined);
                                 });
                         });
                     });
@@ -1690,7 +1689,7 @@ ${license}
     tpn += `
 ------------- End of ThirdPartyNotices --------------------------------------------------- */`;
 
-    fs.writeFileSync("THIRD-PARTY-NOTICES.txt", tpn, 'utf8');
+    fs.writeFileSync("THIRD-PARTY-NOTICES.txt", tpn, { encoding: 'utf8' });
     pxt.log('written THIRD-PARTY-NOTICES.txt');
     return Promise.resolve();
 }
@@ -2087,7 +2086,6 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
 
 const readFileAsync: any = Promise.promisify(fs.readFile)
 const writeFileAsync: any = Promise.promisify(fs.writeFile)
-const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Promise.promisify(child_process.exec)
 const readDirAsync = Promise.promisify(fs.readdir)
 const statAsync = Promise.promisify(fs.stat)
 const rimrafAsync = Promise.promisify(rimraf);
@@ -2307,14 +2305,14 @@ class Host
         check(p)
 
         if (U.endsWith(filename, ".uf2"))
-            fs.writeFileSync(p, contents, "base64")
+            fs.writeFileSync(p, contents, { encoding: "base64" })
         else if (U.endsWith(filename, ".elf"))
             fs.writeFileSync(p, contents, {
                 encoding: "base64",
                 mode: 0o777
             })
         else
-            fs.writeFileSync(p, contents, "utf8")
+            fs.writeFileSync(p, contents, { encoding: "utf8" })
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
@@ -2466,7 +2464,7 @@ pxt_modules
     "files.associations": {
         "*.blocks": "html",
         "*.jres": "json"
-    },    
+    },
     "search.exclude": {
         "**/built": true,
         "**/node_modules": true,
@@ -2790,7 +2788,7 @@ export function formatAsync(parsed: commandParser.ParsedCommand) {
                     if (expected == null)
                         expected = input
                     if (formatted != expected) {
-                        fs.writeFileSync(fn, formatted, "utf8")
+                        fs.writeFileSync(fn, formatted, { encoding: "utf8" })
                         console.log("format test FAILED; written:", fn)
                         numErr++;
                     } else {
@@ -2802,10 +2800,10 @@ export function formatAsync(parsed: commandParser.ParsedCommand) {
                     if (!inPlace)
                         fs.unlink(fn, err => { })
                 } else if (inPlace) {
-                    fs.writeFileSync(f, formatted, "utf8")
+                    fs.writeFileSync(f, formatted, { encoding: "utf8" })
                     console.log("replaced:", f)
                 } else {
-                    fs.writeFileSync(fn, formatted, "utf8")
+                    fs.writeFileSync(fn, formatted, { encoding: "utf8" })
                     console.log("written:", fn)
                 }
 
@@ -2978,7 +2976,7 @@ function simshimAsync() {
         pxt.debug("no sim folder, skipping.")
         return Promise.resolve();
     }
-    let prog = pxtc.plainTsc("sim")
+    let prog = pxtc.plainTsc(path.resolve("sim"))
     let shims = pxt.simshim(prog)
     let filename = "sims.d.ts"
     for (const s of Object.keys(shims)) {
@@ -3761,7 +3759,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                         const tf = path.join(tfdir, fn);
                         nodeutil.mkdirP(tfdir)
                         pxt.log(`writing ${tf}`);
-                        fs.writeFile(tf, langTranslations, "utf8");
+                        fs.writeFile(tf, langTranslations, { encoding: "utf8" }, undefined);
 
                         locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
                     })
@@ -3775,7 +3773,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                     let local: pxt.PackageConfig = nodeutil.readJson(pxtJsonf)
                     local.files = pxtJson.files
                     pxt.log(`writing ${pxtJsonf}`);
-                    fs.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), "utf8");
+                    fs.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), { encoding: "utf8" });
                 }
                 return nextFileAsync()
             });
@@ -3802,7 +3800,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
     pxt.log(`packaging editor to ${builtPackaged}`)
 
-    let p = rimrafAsync(builtPackaged, {})
+    let p = rimrafAsync(builtPackaged, {}, null)
         .then(() => bump ? bumpAsync() : Promise.resolve())
         .then(() => internalBuildTargetAsync({ packaged: true }));
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
@@ -3827,9 +3825,9 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
 
 export function cleanAsync(parsed: commandParser.ParsedCommand) {
     pxt.log('cleaning built folders')
-    return rimrafAsync("built", {})
-        .then(() => rimrafAsync("libs/**/built", {}))
-        .then(() => rimrafAsync("projects/**/built", {}))
+    return rimrafAsync("built", {}, null)
+        .then(() => rimrafAsync("libs/**/built", {}, null))
+        .then(() => rimrafAsync("projects/**/built", {}, null))
         .then(() => { });
 }
 
@@ -3981,7 +3979,7 @@ function fetchTextAsync(filename: string): Promise<Buffer> {
         if (/\.json$/i.test(filename)) pxt.log(`compile log: ${filename.replace(/\.json$/i, ".log")}`)
         return U.requestAsync({ url: filename, allowHttpErrors: !!fn2 })
             .then(resp => {
-                if (fn2 && (resp.statusCode != 200 || /html/.test(resp.headers["content-type"]))) {
+                if (fn2 && (resp.statusCode != 200 || /html/.test(resp.headers["content-type"] as string))) {
                     pxt.log(`Trying also ${fn2}...`)
                     return U.requestAsync({ url: fn2 })
                 } return resp
@@ -4064,7 +4062,7 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
         .then(json => {
             if (!json) {
                 console.log("Couldn't extract.")
-                return
+                return undefined;
             }
             if (Array.isArray(json.scripts)) {
                 console.log("Legacy TD workspace.")
@@ -4090,7 +4088,7 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
             let prjs: SavedProject[] = json.projects
             if (!prjs) {
                 console.log("No projects found.")
-                return
+                return undefined;
             }
             const dirs = writeProjects(prjs, outDir)
             return dirs;
@@ -4319,7 +4317,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     }
 
     pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in SUMMARY, ${snippets.length} snippets`);
-    fs.writeFileSync("built/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), "utf8");
+    fs.writeFileSync("built/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), { encoding: "utf8" });
 
     let p = Promise.resolve();
     if (compileSnippets)
@@ -4989,7 +4987,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     pxt.HF2.enableLog()
 
     if (compileId != "none") {
-        build.thisBuild = build.buildEngines[compileId]
+        build.setThisBuild(build.buildEngines[compileId]);
         if (!build.thisBuild) U.userError("cannot find build engine: " + compileId)
     }
 

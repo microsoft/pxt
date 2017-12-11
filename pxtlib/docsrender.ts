@@ -1,13 +1,12 @@
-/// <reference path='../typings/globals/marked/index.d.ts' />
-/// <reference path='../typings/globals/highlightjs/index.d.ts' />
 /// <reference path='../localtypings/pxtarget.d.ts' />
 /// <reference path="util.ts"/>
 
 namespace pxt.docs {
     declare var require: any;
-    let marked: MarkedStatic;
     import U = pxtc.Util;
     const lf = U.lf;
+
+    let markedInstance: typeof marked;
 
     let stdboxes: Map<string> = {
     }
@@ -79,7 +78,7 @@ namespace pxt.docs {
     export var requireMarked = () => {
         if (typeof marked !== "undefined") return marked;
         if (typeof require === "undefined") return undefined;
-        return require("marked");
+        return require("marked") as typeof marked;
     }
 
     export interface RenderData {
@@ -249,12 +248,12 @@ namespace pxt.docs {
 
         if (currentTocEntry) {
             if (currentTocEntry.prevPath) {
-                params["prev"] = `<a href="${currentTocEntry.prevPath}" class="navigation navigation-prev " title="${'Previous page: {0}', currentTocEntry.prevName}">
+                params["prev"] = `<a href="${currentTocEntry.prevPath}" class="navigation navigation-prev " title="${currentTocEntry.prevName}">
                                     <i class="icon angle left"></i>
                                 </a>`;
             }
             if (currentTocEntry.nextPath) {
-                params["next"] = `<a href="${currentTocEntry.nextPath}" class="navigation navigation-next " title="${'Next page {0}', currentTocEntry.nextName}">
+                params["next"] = `<a href="${currentTocEntry.nextPath}" class="navigation navigation-next " title="${currentTocEntry.nextName}">
                                     <i class="icon angle right"></i>
                                 </a>`;
             }
@@ -283,7 +282,7 @@ namespace pxt.docs {
             params["github"] = "";
         }
 
-        // Add accessiblity menu 
+        // Add accessiblity menu
         const accMenuHtml = `
             <a href="#maincontent" class="ui item link" tabindex="0" role="menuitem">${lf("Skip to main content")}</a>
         `
@@ -418,9 +417,9 @@ namespace pxt.docs {
         }
         prepTemplate(d)
 
-        if (!marked) {
-            marked = requireMarked();
-            let renderer = new marked.Renderer()
+        if (!markedInstance) {
+            markedInstance = requireMarked();
+            let renderer = new markedInstance.Renderer()
             renderer.image = function (href: string, title: string, text: string) {
                 let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
                 if (title) {
@@ -445,7 +444,7 @@ namespace pxt.docs {
                 }
                 return `<h${level} id="${this.options.headerPrefix}${id}">${text}</h${level}>`
             } as any
-            marked.setOptions({
+            markedInstance.setOptions({
                 renderer: renderer,
                 gfm: true,
                 tables: true,
@@ -483,7 +482,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         // replace pre-template in markdown
         markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
-        let html = marked(markdown)
+        let html = markedInstance(markdown)
 
         // support for breaks which somehow don't work out of the box
         html = html.replace(/&lt;br\s*\/&gt;/ig, "<br/>");
@@ -755,9 +754,9 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         if (!summaryMD)
             return null
 
-        const marked = pxt.docs.requireMarked();
+        const markedInstance = pxt.docs.requireMarked();
         const options = {
-            renderer: new marked.Renderer(),
+            renderer: new markedInstance.Renderer(),
             gfm: true,
             tables: false,
             breaks: false,
@@ -771,7 +770,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         let currentStack: pxt.TOCMenuEntry[] = [];
         currentStack.push(dummy);
 
-        let tokens = marked.lexer(summaryMD, options);
+        let tokens = markedInstance.lexer(summaryMD, options);
         tokens.forEach((token: any) => {
             switch (token.type) {
                 case "heading":

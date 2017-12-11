@@ -67,8 +67,8 @@ namespace ts.pxtc {
             jssource += "pxsim.noRefCounting();\n"
         if (bin.target.floatingPoint)
             jssource += "pxsim.enableFloatingPoint();\n"
-        let cfg: Map<number> = {}
-        let cfgKey: Map<number> = {}
+        let cfg: pxt.Map<number> = {}
+        let cfgKey: pxt.Map<number> = {}
         for (let ce of bin.res.configData || []) {
             cfg[ce.key + ""] = ce.value
             cfgKey[ce.name] = ce.key

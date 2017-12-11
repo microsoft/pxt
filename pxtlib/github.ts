@@ -264,7 +264,7 @@ namespace pxt.github {
         if (!url) return undefined;
 
         let m = /^((https:\/\/)?github.com\/)?([^/]+\/[^/#]+)(#(\w+))?$/i.exec(url.trim());
-        if (!m) return;
+        if (!m) return undefined;
 
         let r: { repo: string; tag?: string; path?: string; } = {
             repo: m ? m[3].toLowerCase() : null,
@@ -299,7 +299,7 @@ namespace pxt.github {
         return stringifyRepo(parseRepoId(id))
     }
 
-    export function latestVersionAsync(path: string, config: TargetConfig): Promise<string> {
+    export function latestVersionAsync(path: string, config: PackagesConfig): Promise<string> {
         let parsed = parseRepoId(path)
 
         if (!parsed) return Promise.resolve<string>(null);

@@ -80,7 +80,7 @@ export class Editor extends srceditor.Editor {
 
         let promise = Promise.resolve().then(() => {
             if (!this.hasBlocks())
-                return
+                return undefined;
 
             let blockFile = this.currFile.getVirtualFileName();
             if (!blockFile) {
@@ -89,7 +89,7 @@ export class Editor extends srceditor.Editor {
                     if (mainPkg) {
                         this.parent.setFile(mainPkg.files["main.ts"]);
                     }
-                    return;
+                    return undefined;
                 }
                 this.currFile = mainPkg.files["main.ts"];
                 blockFile = this.currFile.getVirtualFileName();
@@ -772,7 +772,7 @@ export class Editor extends srceditor.Editor {
             let monacoBlockDisabled = false;
             const fnState = filters ? (filters.fns && filters.fns[fn.name] != undefined ? filters.fns[fn.name] : (categoryState != undefined ? categoryState : filters.defaultState)) : undefined;
             monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
-            if (fnState == pxt.editor.FilterState.Hidden) return;
+            if (fnState == pxt.editor.FilterState.Hidden) return undefined;
 
             let monacoBlockArea = document.createElement('div');
             monacoBlockArea.className = `monacoBlock ${monacoBlockDisabled ? 'monacoDisabledBlock' : ''}`;
@@ -801,7 +801,7 @@ export class Editor extends srceditor.Editor {
                 else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                     const nsInfo = this.blockInfo.apis.byQName[element.namespace];
                     if (nsInfo.kind === pxtc.SymbolKind.Class) {
-                        return;
+                        return undefined;
                     }
                     else if (nsInfo.attributes.fixedInstances) {
                         const instances = Util.values(this.blockInfo.apis.byQName).filter(value =>
@@ -1131,7 +1131,7 @@ export class Editor extends srceditor.Editor {
         if (!this.editor) return;
         if (!pos || Object.keys(pos).length === 0) return;
         this.editor.setPosition(pos)
-        this.editor.setScrollPosition(pos)
+        this.editor.setScrollPosition(pos as monaco.editor.INewScrollPosition)
     }
 
     setDiagnostics(file: pkg.File, snapshot: string[]) {
@@ -1170,6 +1170,16 @@ export class Editor extends srceditor.Editor {
         if (file && file.diagnostics) {
             let model = monaco.editor.getModel(monaco.Uri.parse(`pkg:${file.getName()}`))
             for (let d of file.diagnostics) {
+                const addErrorMessage = (message: string) => {
+                    monacoErrors.push({
+                        severity: monaco.Severity.Error,
+                        message: message,
+                        startLineNumber: d.line + 1,
+                        startColumn: d.column,
+                        endLineNumber: d.endLine == undefined ? endPos.lineNumber : d.endLine + 1,
+                        endColumn: d.endColumn == undefined ? endPos.column : d.endColumn
+                    })
+                }
                 let endPos = model.getPositionAt(d.start + d.length);
                 if (typeof d.messageText === 'string') {
                     addErrorMessage(d.messageText as string);
@@ -1179,16 +1189,6 @@ export class Editor extends srceditor.Editor {
                         addErrorMessage(curr.messageText);
                         curr = curr.next;
                     }
-                }
-                function addErrorMessage(message: string) {
-                    monacoErrors.push({
-                        severity: monaco.Severity.Error,
-                        message: message,
-                        startLineNumber: d.line + 1,
-                        startColumn: d.column,
-                        endLineNumber: d.endLine == undefined ? endPos.lineNumber : d.endLine + 1,
-                        endColumn: d.endColumn == undefined ? endPos.column : d.endColumn
-                    })
                 }
             }
             monaco.editor.setModelMarkers(model, 'typescript', monacoErrors);
@@ -1519,7 +1519,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
             toolbox.setNextItem();
         }
         const isRtl = Util.isUserLanguageRtl();
-        const onKeyDown = (e: React.KeyboardEvent) => {
+        const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
             let charCode = (typeof e.which == "number") ? e.which : e.keyCode
             if (charCode == 40) { //  DOWN
                 nextItem();

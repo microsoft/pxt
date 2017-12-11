@@ -1,7 +1,4 @@
 /// <reference path="../../built/pxtcompiler.d.ts"/>
-/// <reference path="../../typings/globals/mocha/index.d.ts" />
-/// <reference path="../../typings/modules/chai/index.d.ts" />
-/// <reference path="../../typings/globals/node/index.d.ts"/>
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -90,13 +87,13 @@ function errorTestAsync(filename: string) {
             }
             let numErr = 0
             for (let diag of res.diagnostics) {
-                chai.assert(errCode(lines[diag.line]) !== 0, "Error code on line " + diag.line + " is not valid")
+                chai.assert(errCode(lines[diag.line]) !== 0, "Error code on line " + diag.line + " is not valid " + JSON.stringify(res.diagnostics, undefined, 4))
             }
             let lineNo = 0
             for (let line of lines) {
                 let code = errCode(line);
 
-                chai.assert(!code || res.diagnostics.filter(d => d.line == lineNo && d.code == code).length != 0, `${basename}(${lineNo + 1}): expecting error TS${code}`)
+                chai.assert(!code || res.diagnostics.filter(d => d.line == lineNo && d.code == code).length != 0, `${basename}(${lineNo + 1}): expecting error TS${code} but got ${JSON.stringify(res.diagnostics, undefined, 4)}`)
                 lineNo++
             }
         })

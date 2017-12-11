@@ -132,7 +132,7 @@ namespace pxt.runner {
         if ($menu.children().length) r.push($h);
 
         // inject container
-        $container.replaceWith(r);
+        $container.replaceWith(r as any);
 
         // download screenshots
         if (options.downloadScreenshots && woptions.hexname) {

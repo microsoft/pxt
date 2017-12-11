@@ -158,7 +158,7 @@ declare namespace ts {
     function isKeyword(token: SyntaxKind): boolean;
     function isTrivia(token: SyntaxKind): boolean;
     function isAsyncFunctionLike(node: Node): boolean;
-    function isStringOrNumericLiteral(kind: SyntaxKind): boolean;
+    function isStringOrNumericLiteral(node: Node): boolean;
     /**
      * A declaration has a dynamic name if both of the following are true:
      *   1. The declaration has a computed property name

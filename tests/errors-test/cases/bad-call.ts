@@ -1,3 +1,3 @@
 function f() {}
 let g = f
-g(0) //TS2346
+g(0) //TS2554
