@@ -180,7 +180,7 @@ namespace pxt.winrt.workspace {
         return n.replace(/[\\/:\*\?"<>\|]/g, '-')
             .replace(/^\./, '')
             .replace(/^(nul|prn|con|lpt[0-9]|com[0-9])(\.|$)/i, lf("Untitled"))
-            .trim().replace(/ /g, "-");
+            .trim().replace(/ /g, "-") || lf("Untitled");
     }
 
     function installAsync(h0: InstallHeader, text: ScriptText): Promise<Header> {
