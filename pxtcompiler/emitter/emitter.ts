@@ -3665,6 +3665,7 @@ ${lbl}: .short 0xffff
             let quickCmpMode = isNumber
 
             let expr = ir.shared(emitExpr(node.expression))
+            let decrSuff = isRefCountedExpr(node.expression) ? "Decr" : ""
             let plainExpr = expr
             if (isNumber) {
                 emitInJmpValue(expr)
@@ -3675,25 +3676,22 @@ ${lbl}: .short 0xffff
                 if (cl.kind == SK.CaseClause) {
                     let cc = cl as CaseClause
                     let cmpExpr = emitExpr(cc.expression)
+                    let mask = isRefCountedExpr(cc.expression) ? 1 : 0
                     if (opts.target.needsUnboxing) {
                         // we assume the value we're switching over will stay alive
                         // so, the mask only applies to the case expression if needed
                         let cmpCall = ir.rtcallMask(mapIntOpName("pxt::switch_eq"),
-                            isRefCountedExpr(cc.expression) ? 1 : 0,
-                            ir.CallingConvention.Plain, [cmpExpr, expr])
+                            mask, ir.CallingConvention.Plain, [cmpExpr, expr])
                         quickCmpMode = false
                         proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                     } else if (switchType.flags & TypeFlags.String) {
-                        let cmpCall = ir.rtcallMask("String_::compare",
-                            isRefCountedExpr(cc.expression) ? 3 : 2,
-                            ir.CallingConvention.Plain, [cmpExpr, expr])
-                        expr = ir.op(EK.Incr, [expr])
+                        let cmpCall = ir.rtcallMask("String_::compare" + decrSuff,
+                            mask, ir.CallingConvention.Plain, [cmpExpr, expr])
                         proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfZero, plainExpr)
-                    } else if (isRefCountedExpr(cc.expression)) {
-                        let cmpCall = ir.rtcallMask(mapIntOpName("langsupp::ptreq"), 3,
+                    } else if (isRefCountedExpr(cc.expression) || decrSuff) {
+                        let cmpCall = ir.rtcallMask(mapIntOpName("langsupp::ptreq") + decrSuff, 3,
                             ir.CallingConvention.Plain, [cmpExpr, expr])
                         quickCmpMode = false
-                        expr = ir.op(EK.Incr, [expr])
                         proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                     } else {
                         // TODO re-enable this opt for small non-zero number literals
@@ -3721,7 +3719,7 @@ ${lbl}: .short 0xffff
                 return lbl
             })
 
-            if (opts.target.taggedInts) {
+            if (opts.target.taggedInts || decrSuff) {
                 proc.emitExpr(ir.op(EK.Decr, [expr]))
             }
 
