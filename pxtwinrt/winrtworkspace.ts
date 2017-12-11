@@ -176,9 +176,18 @@ namespace pxt.winrt.workspace {
         return saveCoreAsync(h, text)
     }
 
+    function escapeFilename(n: string): string {
+        return n.replace(/[\\/:\*\?"<>\|]/g, '-')
+            .replace(/^\./, '')
+            .replace(/^(nul|prn|con|lpt[0-9]|com[0-9])(\.|$)/i, lf("Untitled"))
+            .trim()
+            .replace(/ /g, "-")
+            .replace(/-{2,}/g, "-") || lf("Untitled");
+    }
+
     function installAsync(h0: InstallHeader, text: ScriptText): Promise<Header> {
         const h = <Header>h0
-        let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
+        let path = escapeFilename(h.name);
         if (lookup(path)) {
             let n = 2
             while (lookup(path + "-" + n))
