@@ -103,6 +103,41 @@ namespace pxt {
             this.host().writeFile(this, pxt.CONFIG_NAME, cfg)
         }
 
+        parseJRes(allres: Map<JRes> = {}) {
+            for (const f of this.getFiles()) {
+                if (U.endsWith(f, ".jres")) {
+                    let js: Map<JRes> = JSON.parse(this.readFile(f))
+                    let base = js["*"]
+                    for (let k of Object.keys(js)) {
+                        if (k == "*") continue
+                        let v = js[k]
+                        if (typeof v == "string") {
+                            // short form
+                            v = { data: v } as any
+                        }
+                        let ns = v.namespace || base.namespace || ""
+                        if (ns) ns += "."
+                        let id = v.id || ns + k
+                        let icon = v.icon
+                        let mimeType = v.mimeType || base.mimeType
+                        let dataEncoding = v.dataEncoding || base.dataEncoding || "base64"
+                        if (!icon && dataEncoding == "base64" && (mimeType == "image/png" || mimeType == "image/jpeg")) {
+                            icon = "data:" + mimeType + ";base64," + v.data
+                        }
+                        allres[id] = {
+                            id,
+                            data: v.data,
+                            dataEncoding: v.dataEncoding || base.dataEncoding || "base64",
+                            icon,
+                            namespace: ns,
+                            mimeType
+                        }
+                    }
+                }
+            }
+            return allres
+        }
+
         private resolveVersionAsync() {
             let v = this._verspec
 
@@ -120,7 +155,7 @@ namespace pxt {
                 .then(verNo => {
                     if (!/^embed:/.test(verNo) &&
                         this.config && this.config.installedVersion == verNo)
-                        return
+                        return undefined;
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
@@ -488,6 +523,7 @@ namespace pxt {
 
     export class MainPackage extends Package {
         public deps: Map<Package> = {};
+        private _jres: Map<JRes>;
 
         constructor(public _host: Host) {
             super("this", "file:.", null, null)
@@ -536,7 +572,17 @@ namespace pxt {
             return res
         }
 
-        getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()) {
+        getJRes() {
+            if (!this._jres) {
+                this._jres = {}
+                for (const pkg of this.sortedDeps()) {
+                    pkg.parseJRes(this._jres)
+                }
+            }
+            return this._jres
+        }
+
+        getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()): Promise<pxtc.CompileOptions> {
             let opts: pxtc.CompileOptions = {
                 sourceFiles: [],
                 fileSystem: {},
@@ -625,6 +671,7 @@ namespace pxt {
                             }
                         }
                     }
+                    opts.jres = this.getJRes()
                     return opts;
                 })
         }

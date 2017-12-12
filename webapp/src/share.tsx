@@ -18,6 +18,7 @@ export enum ShareMode {
     Cli
 }
 
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface ShareEditorState {
     advancedMenu?: boolean;
     mode?: ShareMode;
@@ -67,7 +68,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
         const hideEmbed = !!targetTheme.hideShareEmbed;
-        const showSocialIcons = !!targetTheme.socialOptions;
+        const showSocialIcons = !!targetTheme.socialOptions && !pxt.BrowserUtils.isUwpEdge();
 
         let ready = false;
         let mode = this.state.mode;

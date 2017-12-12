@@ -18,7 +18,7 @@
         height: 3rem;
         background-repeat: no-repeat;
         background-size: contain;
-        background-image: @fileLogoUrl;
+        background-image: @fileLogo;
     }
     .content {
         margin-left: 4rem;
@@ -101,12 +101,6 @@
     }
 }
 .setExampleCardFullHeight();
-
-/* Hover animation on home screen cards */
-
-.ui.card.file:hover, .ui.card.newprojectcard:hover, .ui.card.example:hover {
-    transform: scale(1.1);
-}
 
 
 /* Project code cards */

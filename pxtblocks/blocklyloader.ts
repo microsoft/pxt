@@ -45,8 +45,9 @@ namespace pxt.blocks {
             defaultValue: "list"
         }
     }
-    export const advancedTitle = Util.lf("{id:category}Advanced");
-    export const addPackageTitle = Util.lf("{id:category}Extensions");
+
+    export function advancedTitle() { return Util.lf("{id:category}Advanced"); }
+    export function addPackageTitle() { return Util.lf("{id:category}Extensions"); }
 
     // Matches arrays and tuple types
     const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
@@ -584,7 +585,20 @@ namespace pxt.blocks {
     }
 
     function initField(i: any, ni: number, fn: pxtc.SymbolInfo, ns: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string, nsinfo?: pxtc.SymbolInfo): any {
-        if (pre)
+        if (pre && pre.indexOf('`') > -1) {
+            // parse and create icon fields for every inline icon
+            let regex = /([^`]+|(`([^`]+)`))/gi;
+            let match: RegExpExecArray;
+            while (match = regex.exec(pre)) {
+                let img: B.FieldImage;
+                if (match[3] && (img = iconToFieldImage(match[3]))) {
+                    i.appendField(img);
+                } else {
+                    i.appendField(match[1]);
+                }
+            }
+        }
+        else if (pre)
             i.appendField(pre);
         if (right)
             i.setAlign(Blockly.ALIGN_LEFT)
@@ -670,7 +684,7 @@ namespace pxt.blocks {
                 let typeInfo = U.lookup(info.apis.byQName, pr.type)
 
                 let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
-                let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances
+                let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowType;
                 let customField = (fn.attributes.paramFieldEditor && fn.attributes.paramFieldEditor[p]);
                 let fieldLabel = pr.name.charAt(0).toUpperCase() + pr.name.slice(1);
                 let fieldType = pr.type;
@@ -688,8 +702,8 @@ namespace pxt.blocks {
                     const dd = syms.map(v => {
                         const k = v.attributes.block || v.attributes.blockId || v.name;
                         return [
-                            v.attributes.blockImage ? {
-                                src: Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
+                            v.attributes.iconURL || v.attributes.blockImage ? {
+                                src: v.attributes.iconURL || Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
                                 alt: k,
                                 width: 36,
                                 height: 36,
@@ -1207,7 +1221,7 @@ namespace pxt.blocks {
 
         // Add the "Advanced" category
         if (showAdvanced && tb && showCategories !== CategoryMode.None) {
-            const cat = createCategoryElement(advancedTitle, "Advanced", 1, getNamespaceColor('advanced'), showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
+            const cat = createCategoryElement(advancedTitle(), "Advanced", 1, getNamespaceColor('advanced'), showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
             insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             insertTopLevelCategory(cat, tb, 1, false);
         }
@@ -1217,7 +1231,7 @@ namespace pxt.blocks {
                 insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             }
             // Add the "Add package" category
-            getOrAddSubcategoryByWeight(tb, addPackageTitle, "Extensions", 1, "#717171", 'blocklyTreeIconaddpackage')
+            getOrAddSubcategoryByWeight(tb, addPackageTitle(), "Extensions", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
         if (tb) {
@@ -1426,6 +1440,7 @@ namespace pxt.blocks {
     export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters, extensions?: pxt.PackageConfig[]): Element {
         init();
         initTooltip(blockInfo);
+        initJresIcons(blockInfo);
 
         let tb = createToolbox(blockInfo, toolbox, showCategories, filters, extensions);
 
@@ -3197,5 +3212,27 @@ namespace pxt.blocks {
                 render();
             }
         }
+    }
+
+    let jresIconCache: Map<string> = {};
+    function iconToFieldImage(id: string): Blockly.FieldImage {
+        let url = jresIconCache[id];
+        if (!url) {
+            pxt.log(`missing jres icon ${id}`)
+            return undefined;
+        }
+        return new Blockly.FieldImage(url, 56, 56, Util.isUserLanguageRtl(), '');
+    }
+
+    function initJresIcons(blockInfo: pxtc.BlocksInfo) {
+        jresIconCache = {}; // clear previous cache
+        const jres = blockInfo.apis.jres;
+        if (!jres) return;
+
+        Object.keys(jres).forEach((jresId) => {
+            const jresObject = jres[jresId];
+            if (jresObject && jresObject.icon)
+                jresIconCache[jresId] = jresObject.icon;
+        })
     }
 }

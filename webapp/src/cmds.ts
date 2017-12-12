@@ -54,10 +54,10 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
     }
 
     if (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow()) return Promise.resolve();
-    else return showUploadInstructionsAsync(fn, url);
+    else return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync);
 }
 
-function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
+function showUploadInstructionsAsync(fn: string, url: string, confirmAsync?: (options: any) => Promise<number>): Promise<void> {
     const boardName = pxt.appTarget.appTheme.boardName || "???";
     const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
 
@@ -75,7 +75,7 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
             pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
             boardDriveName, boardName);
     if (useUF2) body = lf("Press the `reset` button once on the {0}.", boardName) + " " + body;
-    return core.confirmAsync({
+    return confirmAsync({
         header: lf("Download completed..."),
         body,
         hideCancel: true,
@@ -137,6 +137,7 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 export function initCommandsAsync(): Promise<void> {
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
+    pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
 
     if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
@@ -161,7 +162,7 @@ export function initCommandsAsync(): Promise<void> {
                 })
                 .catch(() => core.errorNotification(lf("saving file failed...")));
         };
-    } else if (hidbridge.shouldUse() && !forceHexDownload) {
+    } else if (hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;

@@ -320,7 +320,6 @@ namespace pxt.docs {
         if (theme.accentColor) style += `
 .ui.accent { color: ${theme.accentColor}; }
 .ui.inverted.accent { background: ${theme.accentColor}; }
-#accessibleMenu a { background: ${theme.accentColor}; }
 `
         params["targetstyle"] = style;
 
@@ -623,8 +622,8 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         em: 1,
     }
 
-    export function translate(html: string, locale: Map<string>) {
-        let missing: Map<string> = {}
+    export function translate(html: string, locale: Map<string>): { text: string; missing: Map<string> } {
+        const missing: Map<string> = {}
 
         function translateOne(toTranslate: string): string {
             let spm = /^(\s*)([^]*?)(\s*)$/.exec(toTranslate)

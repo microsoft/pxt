@@ -70,4 +70,5 @@
     * [Command Line Interface](/cli)
     * [Visual Studio Code support](/code)
     * [Coding on Raspberry Pi](/raspberry-pi)
+    * [Blocks Embed](/blocks-embed)
 

@@ -7,7 +7,11 @@ declare namespace pxt {
     interface TargetConfig {
         packages?: PackagesConfig;
         languages?: string[];
+        // common galleries
         galleries?: pxt.Map<string>;
+        // localized galleries
+        localizedGalleries?: pxt.Map<pxt.Map<string>>;
+        windowsStoreLink?: string;
     }
 
     interface PackagesConfig {
@@ -37,12 +41,13 @@ declare namespace pxt {
         appTheme: AppTheme;
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
+        ignoreDocsErrors?: boolean;
     }
 
     interface ProjectTemplate {
         id: string;
         config: PackageConfig;
-        files: Map<string>;
+        files: pxt.Map<string>;
     }
 
     interface BlockToolboxDefinition {
@@ -50,7 +55,7 @@ declare namespace pxt {
         type: string;
         gap?: number;
         weight?: number;
-        fields?: Map<string>;
+        fields?: pxt.Map<string>;
     }
 
     interface RuntimeOptions {
@@ -88,6 +93,8 @@ declare namespace pxt {
 
     interface SerialTheme {
         graphBackground?: string;
+        gridFillStyle?: string;
+        gridStrokeStyle?: string;
         strokeColor?: string;
         lineColors?: string[];
     }
@@ -170,7 +177,6 @@ declare namespace pxt {
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
-        showHomeScreen?: boolean; // show the home page on editor load
         homeScreenHero?: string; // home screen hero image
         sideDoc?: string; // deprecated
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
@@ -198,7 +204,7 @@ declare namespace pxt {
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
         crowdinProject?: string;
-        crowdinBranch?: string; // optional branch specification for pxt
+        crowdinBranch?: string; // optional branch specification for localization files
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
@@ -298,6 +304,7 @@ declare namespace ts.pxtc {
         hidSelectors?: HidSelector[];
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
         vmOpCodes?: pxt.Map<number>;
+        commonalize?: boolean;
     }
 
     interface CompileOptions {
@@ -305,6 +312,7 @@ declare namespace ts.pxtc {
         target: CompileTarget;
         testMode?: boolean;
         sourceFiles?: string[];
+        jres?: pxt.Map<pxt.JRes>;
         hexinfo: HexInfo;
         extinfo?: ExtensionInfo;
         noEmit?: boolean;

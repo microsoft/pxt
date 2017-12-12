@@ -73,6 +73,7 @@ namespace ts.pxtc {
 
     export interface ApisInfo {
         byQName: pxt.Map<SymbolInfo>;
+        jres?: pxt.Map<pxt.JRes>;
     }
 
     export interface BlocksInfo {
@@ -128,6 +129,8 @@ namespace ts.pxtc {
         colorSecondary?: string;
         colorTertiary?: string;
         icon?: string;
+        jresURL?: string;
+        iconURL?: string;
         imageLiteral?: number;
         weight?: number;
         parts?: string;
@@ -139,6 +142,7 @@ namespace ts.pxtc {
         subcategory?: string;
         group?: string;
         whenUsed?: boolean;
+        jres?: string;
         // On namepspace
         subcategories?: string[];
         groups?: string[];
@@ -480,6 +484,8 @@ namespace ts.pxtc {
             res.callingConvention = ir.CallingConvention.Async
         if (res.promise)
             res.callingConvention = ir.CallingConvention.Promise
+        if (res.jres)
+            res.whenUsed = true
         if (res.subcategories) {
             try {
                 res.subcategories = JSON.parse(res.subcategories as any);

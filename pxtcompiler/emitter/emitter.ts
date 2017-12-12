@@ -80,7 +80,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9270
+    // next free error 9272
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -100,11 +100,15 @@ namespace ts.pxtc {
     }
 
     export function isStackMachine() {
-        return target.nativeType == NATIVE_TYPE_AVRVM
+        return target.isNative && target.nativeType == NATIVE_TYPE_AVRVM
     }
 
     export function isAVR() {
-        return target.nativeType == NATIVE_TYPE_AVRVM || target.nativeType == NATIVE_TYPE_AVR
+        return target.isNative && (target.nativeType == NATIVE_TYPE_AVRVM || target.nativeType == NATIVE_TYPE_AVR)
+    }
+
+    export function isThumb() {
+        return target.isNative && (target.nativeType == NATIVE_TYPE_THUMB)
     }
 
     function isRefType(t: Type) {
@@ -338,22 +342,6 @@ namespace ts.pxtc {
     function isTopLevelFunctionDecl(decl: Declaration) {
         return (decl.kind == SK.FunctionDeclaration && !getEnclosingFunction(decl)) ||
             isClassFunction(decl)
-    }
-
-    function isSideEffectfulInitializer(init: Expression): boolean {
-        if (!init) return false;
-        if (isStringLiteral(init)) return false;
-        switch (init.kind) {
-            case SK.NullKeyword:
-            case SK.NumericLiteral:
-            case SK.TrueKeyword:
-            case SK.FalseKeyword:
-                return false;
-            case SK.ArrayLiteralExpression:
-                return (init as ArrayLiteralExpression).elements.some(isSideEffectfulInitializer)
-            default:
-                return true;
-        }
     }
 
     export interface CallInfo {
@@ -896,6 +884,7 @@ namespace ts.pxtc {
         let nextIfaceMemberId = 0;
         let autoCreateFunctions: pxt.Map<boolean> = {}
         let configEntries: pxt.Map<ConfigEntry> = {}
+        let currJres: pxt.JRes = null
 
         cachedSubtypeQueries = {}
         lastNodeId = 0
@@ -1508,11 +1497,46 @@ ${lbl}: .short 0xffff
             }
         }
 
+        function isConstLiteral(decl: Declaration) {
+            if (isGlobalVar(decl)) {
+                if (decl.parent.flags & NodeFlags.Const) {
+                    let init = (decl as VariableDeclaration).initializer
+                    if (!init) return false
+                    if (init.kind == SK.ArrayLiteralExpression) return false
+                    return !isSideEffectfulInitializer(init)
+                }
+            }
+            return false
+        }
+
+        function isSideEffectfulInitializer(init: Expression): boolean {
+            if (!init) return false;
+            if (isStringLiteral(init)) return false;
+            switch (init.kind) {
+                case SK.NullKeyword:
+                case SK.NumericLiteral:
+                case SK.TrueKeyword:
+                case SK.FalseKeyword:
+                    return false;
+                case SK.Identifier:
+                    return !isConstLiteral(getDecl(init))
+                case SK.PropertyAccessExpression:
+                    let d = getDecl(init)
+                    return !d || d.kind != SK.EnumMember
+                case SK.ArrayLiteralExpression:
+                    return (init as ArrayLiteralExpression).elements.some(isSideEffectfulInitializer)
+                default:
+                    return true;
+            }
+        }
+
         function emitLocalLoad(decl: VarOrParam) {
             if (isGlobalVar(decl)) {
                 let attrs = parseComments(decl)
                 if (attrs.shim)
                     return emitShim(decl, decl, [])
+                if (isConstLiteral(decl))
+                    return emitExpr(decl.initializer)
             }
             let l = lookupCell(decl)
             recordUse(decl)
@@ -2353,6 +2377,16 @@ ${lbl}: .short 0xffff
                 return /^[0-9a-f]$/i.test(c)
             }
             function parseHexLiteral(s: string) {
+                if (s == "" && currJres) {
+                    if (!currJres.dataEncoding || currJres.dataEncoding == "base64") {
+                        s = U.toHex(U.stringToUint8Array(atob(currJres.data)))
+                    } else if (currJres.dataEncoding == "hex") {
+                        s = currJres.data
+                    } else {
+                        userError(9271, lf("invalid jres encoding '{0}' on '{1}'",
+                            currJres.dataEncoding, currJres.id))
+                    }
+                }
                 let res = ""
                 for (let i = 0; i < s.length; ++i) {
                     let c = s[i]
@@ -2837,6 +2871,16 @@ ${lbl}: .short 0xffff
                 }
             }
 
+            if (opts.target.taggedInts && isThumb()) {
+                switch (n) {
+                    case "numops::adds":
+                    case "numops::subs":
+                    case "numops::eors":
+                    case "numops::ands":
+                        return "@nomask@" + n
+                }
+            }
+
             return n
         }
 
@@ -3075,8 +3119,9 @@ ${lbl}: .short 0xffff
 
             proc.emitJmp(lbl, emitExpr(node.right), ir.JmpMode.Always)
             proc.emitLbl(lbl)
-
-            return ir.op(EK.JmpValue, [])
+            let r = ir.shared(ir.op(EK.JmpValue, []))
+            proc.emitExpr(r)
+            return r
         }
 
         function stripEquals(k: SyntaxKind) {
@@ -3355,6 +3400,17 @@ ${lbl}: .short 0xffff
             emitExprAsStmt(node.expression)
         }
         function emitCondition(expr: Expression, inner: ir.Expr = null) {
+            if (!inner && opts.target.taggedInts && isThumb() && expr.kind == SK.BinaryExpression) {
+                let be = expr as BinaryExpression
+                let lt = typeOf(be.left)
+                let rt = typeOf(be.right)
+                if ((lt.flags & TypeFlags.NumberLike) && (rt.flags & TypeFlags.NumberLike)) {
+                    let mapped = U.lookup(thumbCmpMap, simpleInstruction(be.operatorToken.kind))
+                    if (mapped) {
+                        return ir.rtcall(mapped, [emitExpr(be.left), emitExpr(be.right)])
+                    }
+                }
+            }
             if (!inner)
                 inner = emitExpr(expr)
             // in all cases decr is internal, so no mask
@@ -3709,6 +3765,8 @@ ${lbl}: .short 0xffff
             if (!isUsed(node)) {
                 return null;
             }
+            if (isConstLiteral(node))
+                return null;
             let loc = isGlobalVar(node) ?
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
@@ -3724,10 +3782,25 @@ ${lbl}: .short 0xffff
                 proc.stackEmpty();
             }
             else if (node.initializer) {
-                // TODO: make sure we don't emit code for top-level globals being initialized to zero
                 emitBrk(node)
+                if (isGlobalVar(node)) {
+                    let attrs = parseComments(node)
+                    let jrname = attrs.jres
+                    if (jrname) {
+                        if (jrname == "true") {
+                            jrname = getFullName(checker, node.symbol)
+                        }
+                        let jr = U.lookup(opts.jres || {}, jrname)
+                        if (!jr)
+                            userError(9270, lf("resource '{0}' not found in any .jres file", jrname))
+                        else {
+                            currJres = jr
+                        }
+                    }
+                }
                 typeCheckSubtoSup(node.initializer, node)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
+                currJres = null
                 proc.stackEmpty();
             }
             return loc;

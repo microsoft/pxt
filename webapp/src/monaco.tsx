@@ -770,11 +770,17 @@ export class Editor extends srceditor.Editor {
             const comment = fn.attributes.jsDoc;
 
             let snippetPrefix = fn.noNamespace ? "" : ns;
+            let isInstance = false;
 
             const element = fn as pxtc.SymbolInfo;
             if (element.attributes.block) {
                 if (element.attributes.defaultInstance) {
                     snippetPrefix = element.attributes.defaultInstance;
+                }
+                else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
+                    const params = pxt.blocks.parameterNames(element);
+                    snippetPrefix = params.attrNames["this"].name;
+                    isInstance = true;
                 }
                 else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                     const nsInfo = this.blockInfo.apis.byQName[element.namespace];
@@ -885,6 +891,12 @@ export class Editor extends srceditor.Editor {
             }
 
             if (!fn.snippetOnly) {
+                if (isInstance) {
+                    const instanceToken = document.createElement('span');
+                    instanceToken.textContent = snippetPrefix + '.';
+                    instanceToken.className = 'sigPrefix';
+                    monacoBlock.appendChild(instanceToken);
+                }
                 let methodToken = document.createElement('span');
                 methodToken.textContent = fn.name;
                 monacoBlock.appendChild(methodToken);
@@ -906,7 +918,7 @@ export class Editor extends srceditor.Editor {
                 monacoBlock.className += ' monacoHexBlock';
                 const styleBlock = document.createElement('style') as HTMLStyleElement;
                 styleBlock.innerHTML = `
-                        #monacoHexBlock${monacoHexBlockId}:before, 
+                        #monacoHexBlock${monacoHexBlockId}:before,
                         #monacoHexBlock${monacoHexBlockId}:after {
                             border-top: ${monacoBlockHeight / 2}px solid transparent;
                             border-bottom: ${monacoBlockHeight / 2}px solid transparent;
@@ -1341,6 +1353,8 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
         // Filter toolbox categories
         const filters = parent.parent.state.editorState && parent.parent.state.editorState.filters;
         function filterCategory(ns: string, fns: MonacoBlockDefinition[]): boolean {
+            if (!fns || !fns.length) return false;
+
             const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
             let hasChild = false;
             if (filters && categoryState !== undefined && fns) {
@@ -1366,7 +1380,7 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
                 }).map(([ns, md]) => {
                     if (!snippets.isBuiltin(ns)) {
                         const blocks = parent.nsMap[ns].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated));
-                        if (!filterCategory(ns, blocks)) return;
+                        if (!filterCategory(ns, blocks)) return undefined;
                         const categoryName = md.block ? md.block : undefined;
                         return {
                             ns: ns,
@@ -1386,8 +1400,7 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
                         const categoryName = cat.name;
                         blocks.forEach(b => { b.noNamespace = true })
                         if (!cat.custom && parent.nsMap[ns.toLowerCase()]) blocks = blocks.concat(parent.nsMap[ns.toLowerCase()].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
-                        if (!blocks || !blocks.length) return;
-                        if (!filterCategory(ns, blocks)) return;
+                        if (!filterCategory(ns, blocks)) return undefined;
                         return {
                             ns: ns,
                             category: categoryName,
@@ -1399,7 +1412,7 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
                             index: index++
                         }
                     }
-                });
+                }).filter(cat => !!cat);
         }
 
         const hasAdvanced = namespaces.some(([, md]) => md.advanced);
@@ -1417,11 +1430,11 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
                         <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
                     )) }
                     {hasAdvanced ? <TreeSeparator key="advancedseparator" /> : undefined}
-                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ ns: "", category: pxt.blocks.advancedTitle, color: pxt.blocks.getNamespaceColor('advanced'), icon: showAdvanced ? 'advancedexpanded' : 'advancedcollapsed' }} onCategoryClick={this.advancedClicked.bind(this) }/> : undefined}
+                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ ns: "", category: pxt.blocks.advancedTitle(), color: pxt.blocks.getNamespaceColor('advanced'), icon: showAdvanced ? 'advancedexpanded' : 'advancedcollapsed' }} onCategoryClick={this.advancedClicked.bind(this) }/> : undefined}
                     {showAdvanced ? advancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
                     )) : undefined}
-                    {hasPackages && showAdvanced ? <TreeRow treeRow={{ ns: "", category: pxt.blocks.addPackageTitle, color: '#717171', icon: "addpackage" }} onClick={this.addPackage.bind(this) } /> : undefined }
+                    {hasPackages && showAdvanced ? <TreeRow treeRow={{ ns: "", category: pxt.blocks.addPackageTitle(), color: '#717171', icon: "addpackage" }} onClick={this.addPackage.bind(this) } /> : undefined }
                 </div>
             </div>
         </div>
@@ -1490,7 +1503,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
             } else if (charCode == 38) { // UP
                 previousItem();
             } else if ((charCode == 39 && !isRtl) || (charCode == 37 && isRtl)) { // (LEFT & LTR) || (RIGHT & RTL)
-                // Focus inside flyout 
+                // Focus inside flyout
                 toolbox.moveFocusToFlyout();
             } else if (charCode == 27) { // ESCAPE
                 // Close the flyout

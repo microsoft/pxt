@@ -16,6 +16,10 @@ namespace pxt.BrowserUtils {
         return hasNavigator() && /(Win32|Win64|WOW64)/i.test(navigator.platform);
     }
 
+    export function isWindows10(): boolean {
+        return hasNavigator() && /(Win32|Win64|WOW64)/i.test(navigator.platform) && /Windows NT 10/i.test(navigator.userAgent);
+    }
+
     export function isMobile(): boolean {
         return hasNavigator() && /mobi/i.test(navigator.userAgent);
     }
@@ -344,8 +348,8 @@ namespace pxt.BrowserUtils {
     export function loadAjaxAsync(url: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             let httprequest = new XMLHttpRequest();
-            httprequest.onreadystatechange = function() {
-                if (httprequest.readyState == XMLHttpRequest.DONE ) {
+            httprequest.onreadystatechange = function () {
+                if (httprequest.readyState == XMLHttpRequest.DONE) {
                     if (httprequest.status == 200) {
                         resolve(httprequest.responseText);
                     }
@@ -357,5 +361,86 @@ namespace pxt.BrowserUtils {
             httprequest.open("GET", url, true);
             httprequest.send();
         })
+    }
+
+    export function initTheme() {
+        function patchCdn(url: string): string {
+            if (!url) return url;
+            return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
+        }
+
+        const theme = pxt.appTarget.appTheme;
+        if (theme) {
+            if (theme.accentColor) {
+                let style = document.createElement('style');
+                style.type = 'text/css';
+                style.innerHTML = `.ui.accent { color: ${theme.accentColor}; }
+                .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${theme.accentColor}; }`;
+                document.getElementsByTagName('head')[0].appendChild(style);
+
+            }
+            theme.appLogo = patchCdn(theme.appLogo)
+            theme.cardLogo = patchCdn(theme.cardLogo)
+            theme.homeScreenHero = patchCdn(theme.homeScreenHero)
+        }
+        // RTL languages
+        if (Util.isUserLanguageRtl()) {
+            pxt.debug("rtl layout");
+            document.body.classList.add("rtl");
+            document.body.style.direction = "rtl";
+
+            // replace semantic.css with rtlsemantic.css
+            const links = Util.toArray(document.head.getElementsByTagName("link"));
+            const semanticLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "semantic.css"))[0];
+            if (semanticLink) {
+                const semanticHref = semanticLink.getAttribute("data-rtl");
+                if (semanticHref) {
+                    pxt.debug(`swapping to ${semanticHref}`)
+                    semanticLink.setAttribute("href", semanticHref);
+                }
+            }
+            // replace blockly.css with rtlblockly.css
+            const blocklyLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "blockly.css"))[0];
+            if (blocklyLink) {
+                const blocklyHref = blocklyLink.getAttribute("data-rtl");
+                if (blocklyHref) {
+                    pxt.debug(`swapping to ${blocklyHref}`)
+                    blocklyLink.setAttribute("href", blocklyHref);
+                }
+            }
+        }
+
+        const sim = pxt.appTarget.simulator;
+        if (sim
+            && sim.boardDefinition
+            && sim.boardDefinition.visual) {
+            let boardDef = sim.boardDefinition.visual as pxsim.BoardImageDefinition;
+            if (boardDef.image) {
+                boardDef.image = patchCdn(boardDef.image)
+                if (boardDef.outlineImage) boardDef.outlineImage = patchCdn(boardDef.outlineImage)
+            }
+        }
+
+        // patch icons in bundled packages
+        Object.keys(pxt.appTarget.bundledpkgs).forEach(pkgid => {
+            const res = pxt.appTarget.bundledpkgs[pkgid];
+            // path config before storing
+            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+            if (config.icon) config.icon = patchCdn(config.icon);
+            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+        })
+    }
+
+    /**
+     * Utility method to change the hash. 
+     * Pass keepHistory to retain an entry of the change in the browser history.
+     */
+    export function changeHash(hash: string, keepHistory?: boolean) {
+        if (hash.charAt(0) != '#') hash = '#' + hash;
+        if (keepHistory) {
+            window.location.hash = hash;
+        } else {
+            window.history.replaceState('', '', hash)
+        }
     }
 }

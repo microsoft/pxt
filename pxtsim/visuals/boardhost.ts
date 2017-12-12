@@ -20,7 +20,7 @@ namespace pxsim.visuals {
     }
 
     export var mkBoardView = (opts: BoardViewOptions): BoardView => {
-        let boardVis = opts.visual as BoardImageDefinition;
+        const boardVis = opts.visual as BoardImageDefinition;
         return new visuals.GenericBoardSvg({
             visualDef: boardVis,
             wireframe: opts.wireframe,

@@ -9,12 +9,36 @@
 @carouselArrowSize: 60px;
 @carouselArrowSizeMobile: 40px;
 
-/* Carousel */
+@homeCarouselArrowZIndex: @homeScreenZIndex+1; /* Show the carousel above the home screen */
+@homeDetailViewZIndex: @homeCarouselArrowZIndex+1; /* Show the detail view above the carousel arrows */
+@homeDetailViewSelectedCardZIndex: @homeDetailViewZIndex+1; /* Show the card arrow above the detail view */
+@homeFooterZIndex: @homeCarouselArrowZIndex+1;
+
+#homescreen {
+    background: lighten(@homeScreenBackground, 10%);
+    z-index: @homeScreenZIndex;
+}
+
+.inHome > *:not(#homescreen):not(#cookiemsg) {
+    visibility: hidden;
+}
 
 .projectsdialog {
+    background: @homeScreenBackground;
+    position: relative;
+    height: 100%;
+    overflow: auto;
+    z-index: @homeScreenZIndex+1;
+    .accessibleMenu {
+        z-index: @homeScreenZIndex+3 !important;
+        .ui.item:focus, .ui.button:focus {
+            z-index: @homeScreenZIndex+2 !important;
+        }
+    }
     .getting-started-segment {
         border: 0;
         margin-top: -2.1rem !important;
+        margin-bottom: 2.1rem !important;
         padding: 0;
         border-radius: 0;
         background-repeat: no-repeat;
@@ -50,12 +74,20 @@
         box-shadow: none;
         padding: 0rem;
         margin: 0;
-        padding-top: 1.5rem;
         .ui.header {
             margin: 0;
             padding-left: @carouselArrowSize;
-            font-size: 24px;
+            font-size: 20px;
             color: @homeHeaderColor;
+        }
+        .ui.padded.grid.heading, .heading {
+            margin-bottom: -1rem !important;
+            margin-top: 1rem !important;
+        }
+        .ui.padded.grid.heading .ui.header {
+            bottom: 0;
+            position: absolute;
+            vertical-align: bottom;
         }
         .column {
             padding: 0 !important;
@@ -64,9 +96,9 @@
             padding-right: @carouselArrowSize !important;
         }
     }
-    /* Import button */
-    .ui.import-dialog-btn.label {
-        color: @linkColor;
+    .import-dialog-btn {
+        position: relative;
+        z-index: 1; /* Move up so it's above the carousel container that has an offset margin */
     }
     /* Footer, Privary, Terms of Use */
     .homefooter {
@@ -75,8 +107,11 @@
         width: 100%;
         text-align: center;
         padding: 5px !important;
+        z-index: @homeFooterZIndex;
+        position: absolute;
         .item {
             font-size: 0.8rem !important;
+            color: @homeFooterColor !important;
         }
     }
     .ui.card {
@@ -98,9 +133,118 @@
     .ui.card:hover {
         border: @homeCardBorderSize solid @homeCardHoverBorderColor !important;
         background-color: @homeCardHoverBackgroundColor;
+        transform: scale(1.1);
+    }
+    .ui.card:focus {
+        outline: none;
+        border: @homeCardBorderSize solid @homeCardFocusBorderColor !important;
     }
     .header {
         user-select: none;
+    }
+
+    .carouselitem.selected {
+        .ui.card {
+            border: @homeSelectedCardBorderSize solid @homeSelectedCardBorderColor !important;
+            z-index: @homeDetailViewSelectedCardZIndex;
+        }
+        .ui.card:hover {
+            transform: none;
+        }
+        .ui.card:after, .ui.card:before {
+            top: 100%;
+            left: 50%;
+            border: solid transparent;
+            content: " ";
+            height: 0;
+            width: 0;
+            position: absolute;
+            pointer-events: none;
+        }
+        .ui.card:after {
+            border-color: rgba(46, 255, 46, 0);
+            border-top-color: @homeCardBackgroundColor;
+            border-width: 10px;
+            margin-left: -10px;
+        }
+        .ui.card:before {
+            border-color: rgba(255, 255, 255, 0);
+            border-top-color: @homeSelectedCardBorderColor;
+            border-width: 17px;
+            margin-left: -17px;
+        }            
+    }
+
+    .detailview.visible {
+        margin-top: -2rem;
+        transition: height 0.5s;
+        z-index: @homeDetailViewZIndex;
+        position: relative;
+        box-shadow: rgba(0, 0, 0, 0.75) 0px 0px 50px 0px;
+        .ui.grid {
+            background: @homeDetailViewBackground;
+        }
+        .column {
+            height: 400px;
+        }
+        .segment {
+            margin: 0;
+            padding-left: @carouselArrowSize;
+            margin-top: 2rem;
+        }
+        .imagewrapper {
+            position: absolute;
+            top: 0; right: 0;
+            left: 30%; bottom: 0;
+            padding: 0;
+            .image {
+                height: 400px;
+                background-size: cover;
+            }
+        }
+        .imagewrapper:after {
+            content: " ";
+            position: absolute;
+            pointer-events: none;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(90deg, @homeDetailViewBackground, rgba(0,0,0,0));
+        }
+        .header {
+            font-size: 20px;
+            color: @homeDetailViewColor;
+            margin-bottom: 1rem;
+        }
+        .detail {
+            color: @homeDetailViewColor;
+        }
+        .actions {
+            padding: 2rem;
+            position: absolute;
+            bottom: 0;
+        }
+        > .close {
+            margin: 1.5rem;
+            position: absolute;
+            top: 0;
+            right: 0;
+            z-index: 1;
+        }
+        >.close .remove.icon {
+            font-size: 34px;
+            cursor: pointer;
+            width: 2.25rem;
+            color: @homeDetailCloseColor;
+            height: 2.25rem;
+            transition: all 0.15s ease-out;
+            opacity: 0.9;
+            border-radius: 50%;
+            padding-top: 7px;
+        }
+        > .close .remove.icon:hover {
+            opacity: 1;
+            transform: scale(1.1, 1.1);
+            box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.35);
+        }
     }
 }
 
@@ -112,9 +256,8 @@
 }
 
 .carouselcontainer {
-    overflow-x: hidden;
-    overflow-y: visible;
-    padding: 1rem @carouselArrowSize !important;
+    overflow: hidden;
+    padding: 2rem @carouselArrowSize !important;
 }
 
 .carouselbody {
@@ -200,7 +343,7 @@
         }
     }
     .carouselcontainer {
-        padding: 1rem @carouselArrowSizeMobile !important;
+        padding: 2rem @carouselArrowSizeMobile !important;
     }
     .carouselarrow {
         width: @carouselArrowSizeMobile;
@@ -229,5 +372,52 @@
                 font-size: 30px;
             }
         }
+    }
+}
+
+/*******************************
+        Projects Modal
+*******************************/
+
+.projectsdialog {
+    .ui.dividing.header, .content > .header{
+        font-weight: normal !important;
+    }
+
+    .ui.secondary.inverted.pointing.menu {
+        border: 0;
+    }
+
+    .group {
+        padding: 1rem;
+    }
+
+    .group .cards .card .button.iconcontent {
+        min-height: 4em;
+    }
+
+    .labelsgroup {
+        display: block;
+        position: relative;
+        min-height: 18em;
+    }
+
+    h2.editorname {
+        top: 20%;
+        width: calc(100% - 2rem);
+        text-align: center;
+        position: absolute;
+        display: block;
+    }
+
+    .loader.editoravatar {
+        display: block;
+        position: absolute;
+        top: 50%;
+    }
+
+    > .content {
+        padding: 0 !important;
+        position: relative;
     }
 }
