@@ -8,15 +8,25 @@ export interface Gallery {
 function parseExampleMarkdown(name: string, md: string): pxt.editor.ProjectCreationOptions {
     if (!md) return undefined;
 
-    const m =  /```(blocks?|typescript)\s*((.|\s)+?)\s*```/i.exec(md);
+    const m =  /```(blocks?|typescript)\s+((.|\s)+?)\s*```/i.exec(md);
     if (!m) return undefined;
+
+    const pm = /```package\s+((.|\s)+?)\s*```/i.exec(md);
+    let dependencies: pxt.Map<string> = undefined;
+    if (pm) {
+        dependencies = {};
+        pm[1].split('\n').map(s => s.replace(/\s*/g, '')).filter(s => !!s)
+            .map(l => l.split('='))
+            .forEach(kv => dependencies[kv[0]] = kv[1] || "*");
+    }
 
     return {
         name,
         filesOverride: {
             "main.blocks": "",
             "main.ts": m[2]
-        }
+        },
+        dependencies
     };
 }
 
