@@ -1820,6 +1820,18 @@ ${output}</xml>`;
                             }
                         }
                     }
+                    else if (env.blocks.apis.byQName[paramInfo.type]) {
+                        const typeInfo = env.blocks.apis.byQName[paramInfo.type];
+                        if (typeInfo.attributes.fixedInstances) {
+                            const callInfo: pxtc.CallInfo = (e as any).callInfo;
+
+                            if (callInfo && callInfo.attrs.fixedInstance) {
+                                return undefined;
+                            }
+
+                            fail = Util.lf("Arguments of a fixed instance type must be a reference to a fixed instance declaration");
+                        }
+                    }
                 });
 
                 if (fail) {
@@ -2039,10 +2051,16 @@ ${output}</xml>`;
                         return undefined;
                     }
                 }
-                else if (callInfo.attrs.fixedInstance && n.parent && n.parent.parent &&
-                    n.parent.kind === SK.PropertyAccessExpression && n.parent.parent.kind === SK.CallExpression) {
-                    const call = n.parent.parent as CallExpression;
-                    if (call.expression === n.parent) {
+                else if (callInfo.attrs.fixedInstance && n.parent) {
+                    // Check if this is a fixedInstance with a method being called on it
+                    if (n.parent.parent && n.parent.kind === SK.PropertyAccessExpression && n.parent.parent.kind === SK.CallExpression) {
+                        const call = n.parent.parent as CallExpression;
+                        if (call.expression === n.parent) {
+                            return undefined;
+                        }
+                    }
+                    // Check if this fixedInstance is an argument passed to a function
+                    else if (n.parent.kind === SK.CallExpression && (n.parent as CallExpression).expression !== n) {
                         return undefined;
                     }
                 }

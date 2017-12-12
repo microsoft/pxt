@@ -2,7 +2,7 @@ import e = pxt.editor;
 import * as pkg from "./package";
 
 export enum Permissions {
-    Serial,
+    Console,
     ReadUserCode
 }
 
@@ -33,7 +33,14 @@ export class ExtensionManager {
     private pendingRequests: PermissionRequest[] = [];
     private queueLock = false;
 
+    // name to enabled
+    private streams: pxt.Map<boolean> = {};
+
     constructor(private host: ExtensionHost) {
+    }
+
+    streamingExtensions(): string[] {
+        return Object.keys(this.streams);
     }
 
     handleExtensionMessage(message: e.ExtensionMessage) {
@@ -77,10 +84,12 @@ export class ExtensionManager {
 
         switch (request.action) {
             case "extinit":
+                const ri = resp as pxt.editor.InitializeResponse;
+                ri.target = pxt.appTarget;
                 this.sendResponse(resp);
                 break;
             case "extdatastream":
-                return this.permissionOperation(request.extId, Permissions.Serial, resp, handleDataStreamRequest);
+                return this.permissionOperation(request.extId, Permissions.Console, resp, (name, resp) => this.handleDataStreamRequest(name, resp));
             case "extquerypermission":
                 const perm = this.getPermissions(request.extId)
                 const r = resp as e.ExtensionResponse;
@@ -127,7 +136,7 @@ export class ExtensionManager {
     private getPermissions(id: string): e.Permissions<PermissionStatus> {
         if (!this.statuses[id]) {
             this.statuses[id] = {
-                serial: PermissionStatus.NotYetPrompted,
+                console: PermissionStatus.NotYetPrompted,
                 readUserCode: PermissionStatus.NotYetPrompted
             };
         }
@@ -178,7 +187,7 @@ export class ExtensionManager {
 
         let status: PermissionStatus;
         switch (permission) {
-            case Permissions.Serial: status = perm.serial; break;
+            case Permissions.Console: status = perm.console; break;
             case Permissions.ReadUserCode: status = perm.readUserCode; break;
         }
 
@@ -187,8 +196,8 @@ export class ExtensionManager {
                 .then(approved => {
                     const newStatus = approved ? PermissionStatus.Granted : PermissionStatus.Denied;
                     switch (permission) {
-                        case Permissions.Serial:
-                            this.statuses[id].serial = newStatus; break;
+                        case Permissions.Console:
+                            this.statuses[id].console = newStatus; break;
                         case Permissions.ReadUserCode:
                             this.statuses[id].readUserCode = newStatus; break;
                     }
@@ -206,8 +215,8 @@ export class ExtensionManager {
         if (p.readUserCode) {
             promises.push(this.checkPermissionAsync(id, Permissions.ReadUserCode));
         }
-        if (p.serial) {
-            promises.push(this.checkPermissionAsync(id, Permissions.Serial));
+        if (p.console) {
+            promises.push(this.checkPermissionAsync(id, Permissions.Console));
         }
 
         return Promise.all(promises)
@@ -219,20 +228,22 @@ export class ExtensionManager {
         const perm = this.getPermissions(extId);
         let status: PermissionStatus;
         switch (permission) {
-            case Permissions.Serial: status = perm.serial; break;
+            case Permissions.Console: status = perm.console; break;
             case Permissions.ReadUserCode: status = perm.readUserCode; break;
         }
         return status === PermissionStatus.NotYetPrompted;
     }
+
+    private handleDataStreamRequest(name: string, resp: e.ExtensionResponse) {
+        // ASSERT: permission has been granted
+        this.streams[name] = true;
+    }
 }
 
 function handleUserCodeRequest(name: string, resp: e.ExtensionResponse) {
+    // ASSERT: permission has been granded
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     resp.resp = mainPackage.getAllFiles();
-}
-
-function handleDataStreamRequest(name: string, resp: e.ExtensionResponse) {
-    // TODO
 }
 
 function handleReadCodeRequest(name: string, resp: e.ReadCodeResponse) {
@@ -241,21 +252,31 @@ function handleReadCodeRequest(name: string, resp: e.ReadCodeResponse) {
     const files = mainPackage.getAllFiles();
     resp.resp = {
         json: files[fn + ".json"],
-        code: files[fn + ".ts"]
+        code: files[fn + ".ts"],
+        jres: files[fn + ".jres"]
     };
 }
 
 function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, files: e.ExtensionFiles) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     const fn = ts.pxtc.escapeIdentifier(name);
+
+    function shouldUpdate(value: string, ext: string): boolean {
+        return value !== undefined && (!mainPackage.files[fn + ext] || mainPackage.files[fn + ext].content != value);
+    }
+
     let needsUpdate = false;
-    if (files.json !== undefined) {
+    if (shouldUpdate(files.json, ".json")) {
         needsUpdate = true;
         mainPackage.setFile(fn + ".json", files.json);
     }
-    if (files.code !== undefined) {
+    if (shouldUpdate(files.code, ".ts")) {
         needsUpdate = true;
         mainPackage.setFile(fn + ".ts", files.code);
+    }
+    if (shouldUpdate(files.jres, ".jres")) {
+        needsUpdate = true;
+        mainPackage.setFile(fn + ".jres", files.jres);
     }
 
     return !needsUpdate ? Promise.resolve() : mainPackage.updateConfigAsync(cfg => {
@@ -264,6 +285,9 @@ function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, fi
         }
         if (files.code !== undefined && cfg.files.indexOf(fn + ".ts") < 0) {
             cfg.files.push(fn + ".ts")
+        }
+        if (files.jres !== undefined && cfg.files.indexOf(fn + ".jres") < 0) {
+            cfg.files.push(fn + ".jres")
         }
         return mainPackage.savePkgAsync();
     });
@@ -288,7 +312,7 @@ function mkResponse(request: e.ExtensionRequest, success = true): e.ExtensionRes
 function statusesToResponses(perm: e.Permissions<PermissionStatus>): e.Permissions<e.PermissionResponses> {
     return {
         readUserCode: statusToResponse(perm.readUserCode),
-        serial: statusToResponse(perm.serial)
+        console: statusToResponse(perm.console)
     };
 }
 

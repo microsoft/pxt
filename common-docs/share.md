@@ -8,7 +8,13 @@ Once you've made your project, you can save it the cloud, share it, or embed it 
 
 ## Sharing the URL
 
-You can share the URL for the project with other people, and they will be able to visit that page to see your project, download it, or edit it.
+You can share the URL for the project with other people, and they will be able to visit that page to see your project, download it, or edit it. 
+
+### ~hint
+
+**Developers:** This page supports [OEmbed](https://oembed.com/).
+
+### ~
 
 ## Embedding into a blog or web site
 
@@ -58,12 +64,6 @@ Google Sites doesn't currently [support iframes in custom HTML][google-sites-ifr
 ### Embedding in Markdown documents
 
 [Markdown][] is a popular text format supported by many blog editors. As Markdown supports embedded HTML, you should be able to paste the HTML into the document, although some sites may prevent you from doing this.
-
-### ~hint
-
-**Developers:** This page supports OEmbed as well 
-
-### ~
 
 [wordpress.com]: https://wordpress.com
 [wordpress-vip]: https://vip.wordpress.com/documentation/embedding-rich-media-from-around-the-web-with-protected-embeds/#scripts-iframes-and-objects

@@ -9,6 +9,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
+import * as accessibility from "./accessibility";
 import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
@@ -19,15 +20,13 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 import Cloud = pxt.Cloud;
 
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ProjectsState {
     searchFor?: string;
     visible?: boolean;
-    tab?: string;
-    isInitialStartPage?: boolean;
-    welcomeDescription?: string;
+    selectedCategory?: string;
+    selectedIndex?: number;
 }
-
-const HOME = "__welcome";
 
 export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     private prevUrlData: Cloud.JsonScript[] = [];
@@ -37,34 +36,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     constructor(props: ISettingsProps) {
         super(props)
         this.state = {
-            visible: false,
-            tab: HOME
+            visible: false
         }
-    }
-
-    hide(closeOnly: boolean = false) {
-        if (this.state.isInitialStartPage && closeOnly) {
-            // If this was the initial start page and the dialog was close without a selection being made, load the
-            // previous project if available or create a new one
-            pxt.tickEvent("projects.welcome.hide");
-            this.props.parent.newProject();
-        }
-        this.setState({ visible: false, isInitialStartPage: false });
-    }
-
-    showHome() {
-        pxt.tickEvent("projects.show");
-        this.props.parent.stopSimulator();
-        this.setState({
-            visible: true,
-            tab: HOME,
-            isInitialStartPage: true
-        });
     }
 
     fetchGallery(tab: string, path: string): pxt.CodeCard[] {
-        if (this.state.tab != tab) return [];
-
         let res = this.getData(`gallery:${encodeURIComponent(path)}`) as gallery.Gallery[];
         if (res) {
             if (res instanceof Error) {
@@ -91,8 +67,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     fetchLocalData(): pxt.workspace.Header[] {
-        if (this.state.tab != HOME) return [];
-
         let headers: pxt.workspace.Header[] = this.getData("header:*")
         if (this.state.searchFor)
             headers = headers.filter(hdr => hdr.name.toLowerCase().indexOf(this.state.searchFor.toLowerCase()) > -1);
@@ -101,22 +75,55 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ProjectsState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
-            || this.state.tab != nextState.tab
             || this.state.searchFor != nextState.searchFor
-            || this.state.welcomeDescription != nextState.welcomeDescription;
+            || this.state.selectedCategory != nextState.selectedCategory
+            || this.state.selectedIndex != nextState.selectedIndex;
     }
 
-    private numDaysOld(d1: number) {
-        let diff = Math.abs((Date.now() / 1000) - d1);
-        return Math.floor(diff / (60 * 60 * 24));
+    setSelected(category: string, index: number) {
+        if (index == undefined || this.state.selectedCategory == category && this.state.selectedIndex == index) {
+            this.setState({ selectedCategory: undefined, selectedIndex: undefined });
+        } else {
+            this.setState({ selectedCategory: category, selectedIndex: index });
+        }
+    }
+
+    componentDidUpdate(prevProps: ISettingsProps, prevState: ProjectsState) {
+        if (this.state.selectedCategory !== prevState.selectedCategory) {
+            this.ensureSelectedItemVisible();
+        }
+    }
+
+    ensureSelectedItemVisible() {
+        let activeCarousel = this.refs['activeCarousel'];
+        if (activeCarousel) {
+            let domNode = (activeCarousel as ProjectsCarousel).getCarouselDOM();
+            this.scrollElementIntoViewIfNeeded(domNode);
+        }
+    }
+
+    scrollElementIntoViewIfNeeded(domNode: Element) {
+        let containerDomNode = ReactDOM.findDOMNode(this.refs['homeContainer']);
+        // Determine if `domNode` fully fits inside `containerDomNode`.
+        // If not, set the container's scrollTop appropriately.
+        const domTop = (domNode as HTMLElement).getBoundingClientRect().top;
+        const delta = domTop;
+        const offset = 30;
+        containerDomNode.parentElement.scrollTop = containerDomNode.parentElement.scrollTop + delta - offset;
     }
 
     renderCore() {
-        const { visible, tab } = this.state;
+        const { visible, selectedCategory, selectedIndex } = this.state;
 
         const targetTheme = pxt.appTarget.appTheme;
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
-        const galleries = (targetConfig ? targetConfig.galleries : undefined) || {};
+        const lang = pxt.Util.userLanguage();
+        // collect localized and unlocalized galleries
+        let galleries: pxt.Map<string> = {};
+        if (targetConfig && targetConfig.localizedGalleries && targetConfig.localizedGalleries[lang])
+            pxt.Util.jsonCopyFrom(galleries, targetConfig.localizedGalleries[lang]);
+        if ( targetConfig && targetConfig.galleries)
+            pxt.Util.jsonCopyFrom(galleries, targetConfig.galleries);
 
         // lf("Make")
         // lf("Code")
@@ -132,7 +139,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         const chgHeader = (hdr: pxt.workspace.Header) => {
             pxt.tickEvent("projects.header");
             core.showLoading("changeheader", lf("Loading..."));
-            this.hide();
             this.props.parent.loadHeaderAsync(hdr)
                 .done(() => {
                     core.hideLoading("changeheader");
@@ -140,21 +146,25 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         }
         const chgGallery = (scr: pxt.CodeCard) => {
             pxt.tickEvent("projects.gallery", { name: scr.name });
-            if (!scr.youTubeId || (scr.url && !/^https:\/\//i.test(scr.url))) this.hide();
             switch (scr.cardType) {
                 case "example": chgCode(scr, true); break;
                 case "codeExample": chgCode(scr, false); break;
                 case "tutorial": this.props.parent.startTutorial(scr.url, scr.name); break;
                 default:
-                    const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url);
+                    const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url); // Tutorial
                     if (m) this.props.parent.startTutorial(m[1]);
                     else {
-                        if (scr.youTubeId && !scr.url)
+                        if (scr.youTubeId && !scr.url) // Youtube video
                             window.open('https://youtu.be/' + scr.youTubeId, 'yt');
-                        else if (/^https:\/\//i.test(scr.url))
+                        else if (/^https:\/\//i.test(scr.url)) // External video
                             window.open(scr.url, '_blank');
+                        else if (scr.url) // Docs url, open in new tab
+                            if (/^\//i.test(scr.url))
+                                window.open(scr.url, '_blank');
+                            else
+                                core.errorNotification(lf("Sorry, the project url looks invalid."));
                         else
-                            this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
+                            this.props.parent.newEmptyProject(scr.name.toLowerCase());
                     }
             }
         }
@@ -190,85 +200,94 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         }
         const importProject = () => {
             pxt.tickEvent("projects.importdialog");
-            this.hide();
             this.props.parent.importProjectDialog();
         }
-        const gettingStarted = () => {
-            pxt.tickEvent("projects.gettingstarted");
-            this.hide();
-            this.props.parent.gettingStarted();
+
+        const selectLang = () => {
+            pxt.tickEvent("projects.langpicker");
+            this.props.parent.selectLang();
         }
 
-        const hadFetchError = this.galleryFetchErrors[tab];
-        const isLoading = tab != HOME && !hadFetchError && !gals[tab].length;
         const showHeroBanner = !!targetTheme.homeScreenHero;
         const betaUrl = targetTheme.betaUrl;
 
         const tabClasses = sui.cx([
-            isLoading ? 'loading' : '',
             'ui segment bottom attached tab active tabsegment'
         ]);
 
-        const tabName = tab == HOME ? lf("Home") : Util.rlf(tab);
-        const tabIcon = tab == HOME ? "home large" : undefined;
-
-        return (
-            <sui.Modal open={visible} className="projectsdialog" size="home" onClose={() => this.hide(/* closeOnly */ true)} dimmer={true} closeOnDimmerClick>
-                <div id="menubar" role="banner">
-                    <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
-                        <div className="left menu">
-                            <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={() => pxt.tickEvent("projects.brand")}>
-                                {targetTheme.logo || targetTheme.portraitLogo
-                                    ? <img className={`ui logo ${targetTheme.logo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo)} alt={lf("{0} Logo", targetTheme.boardName)} />
-                                    : <span className="name">{targetTheme.boardName}</span>}
-                                {targetTheme.portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo)} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
-                            </a>
-                        </div>
-                        <div className="ui item">{tabIcon ? <sui.Icon icon={`icon ${tabIcon}`} /> : undefined} {tabName}</div>
-                        <div className="right menu">
-                            <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={() => pxt.tickEvent("projects.org")}>
-                                {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                                    ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo)} alt={lf("{0} Logo", targetTheme.organization)} />
-                                    : <span className="name">{targetTheme.organization}</span>}
-                                {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo)} alt={lf("{0} Logo", targetTheme.organization)} />) : null}
-                            </a>
-                        </div>
-                        {betaUrl ? <a href={`${betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
+        return <div ref="homeContainer" className={tabClasses}>
+            {showHeroBanner ?
+                <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
+            <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
+                <div className="ui grid equal width padded heading">
+                    <div className="column">
+                        <h2 className="ui header">{lf("My Projects") } </h2>
+                    </div>
+                    <div className="column right aligned">
+                        {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing) ?
+                            <sui.Button key="import" icon="upload" class="mini import-dialog-btn" textClass="landscape only" text={lf("Import") } title={lf("Import a project") } onClick={() => importProject() } /> : undefined}
                     </div>
                 </div>
-                {tab == HOME ? <div className={tabClasses}>
-                    {showHeroBanner ?
-                        <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
-                    <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
-                        <div className="ui grid equal width padded">
-                            <div className="column">
-                                <h2 className="ui header">{lf("My Projects")} </h2>
-                            </div>
-                            <div className="column right aligned">
-                                {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing) ?
-                                    <sui.Link key="import" icon="upload" class="label basic import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={() => importProject()} /> : undefined}
-                            </div>
-                        </div>
-                        <div className="content">
-                            <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} hide={() => this.hide()} onClick={(scr: any) => chgHeader(scr)} />
-                        </div>
+                <div className="content">
+                    <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} onClick={(scr: any) => chgHeader(scr) } />
+                </div>
+            </div>
+            {Object.keys(galleries).map(galleryName =>
+                <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
+                    <h2 className="ui header heading">{Util.rlf(galleryName) } </h2>
+                    <div className="content">
+                        <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`} key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} onClick={(scr: any) => chgGallery(scr) } setSelected={(index: number) => this.setSelected(galleryName, index) } selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined}/>
                     </div>
-                    {Object.keys(galleries).map(galleryName =>
-                        <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
-                            <h2 className="ui header">{Util.rlf(galleryName)} </h2>
-                            <div className="content">
-                                <ProjectsCarousel key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} hide={() => this.hide()} onClick={(scr: any) => chgGallery(scr)} />
-                            </div>
-                        </div>
-                    )}
-                    {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl ? <div className="ui horizontal small divided link list homefooter">
-                        {targetTheme.organizationUrl && targetTheme.organization ? <a className="item focused" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                        {targetTheme.termsOfUseUrl ? <a target="_blank" className="item focused" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use")}</a> : undefined}
-                        {targetTheme.privacyUrl ? <a target="_blank" className="item focused" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy")}</a> : undefined}
-                    </div> : undefined}
-                </div> : undefined}
-            </sui.Modal >
-        );
+                </div>
+            ) }
+            {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl ? <div className="ui horizontal small divided link list homefooter">
+                {targetTheme.organizationUrl && targetTheme.organization ? <a className="item focused" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
+                {targetTheme.selectLanguage ? <sui.Link class="item focused" text={lf("Language") } onClick={() => selectLang() } onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {targetTheme.termsOfUseUrl ? <a target="_blank" className="item focused" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use") }</a> : undefined}
+                {targetTheme.privacyUrl ? <a target="_blank" className="item focused" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy") }</a> : undefined}
+            </div> : undefined}
+        </div>;
+    }
+}
+
+export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
+
+    brandIconClick() {
+        pxt.tickEvent("projects.brand");
+    }
+
+    orgIconClick() {
+        pxt.tickEvent("projects.org");
+    }
+
+    shouldComponentUpdate(nextProps: ISettingsProps, nextState: ProjectsState, nextContext: any): boolean {
+        return false;
+    }
+
+    render() {
+        const targetTheme = pxt.appTarget.appTheme;
+        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
+
+        return <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
+            <div className="left menu">
+                <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName) } role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={() => this.brandIconClick() }>
+                    {targetTheme.logo || targetTheme.portraitLogo
+                        ? <img className={`ui logo ${targetTheme.logo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />
+                        : <span className="name">{targetTheme.boardName}</span>}
+                    {targetTheme.portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />) : null}
+                </a>
+            </div>
+            <div className="ui item"><sui.Icon icon={`icon home large`} /> {lf("Home") }</div>
+            <div className="right menu">
+                <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={() => this.orgIconClick() }>
+                    {targetTheme.organizationWideLogo || targetTheme.organizationLogo
+                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization) } />
+                        : <span className="name">{targetTheme.organization}</span>}
+                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={lf("{0} Logo", targetTheme.organization) } />) : null}
+                </a>
+            </div>
+            {targetTheme.betaUrl ? <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta") }</a> : undefined}
+        </div>;
     }
 }
 
@@ -276,12 +295,12 @@ interface ProjectsCarouselProps extends ISettingsProps {
     name: string;
     path?: string;
     cardWidth?: number;
-    hide: Function;
-    onClick: Function;
+    onClick: (src: any) => void;
+    selectedIndex?: number;
+    setSelected?: (index: number) => void;
 }
 
 interface ProjectsCarouselState {
-
 }
 
 export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, ProjectsCarouselState> {
@@ -326,16 +345,36 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
     newProject() {
         pxt.tickEvent("projects.new");
-        this.props.hide();
         this.props.parent.newProject();
     }
 
+    closeDetail() {
+        pxt.tickEvent("projects.detail.close");
+        this.props.setSelected(undefined);
+    }
+
+    getCarouselDOM() {
+        let carouselDom = ReactDOM.findDOMNode(this.refs["carousel"]);
+        return carouselDom;
+    }
+
+    getDetailDOM() {
+        let detailDom = ReactDOM.findDOMNode(this.refs["detailView"]);
+        return detailDom;
+    }
+
     renderCore() {
-        const { name, path } = this.props;
+        const { name, path, selectedIndex } = this.props;
         const theme = pxt.appTarget.appTheme;
 
-        const onClick = (scr: any) => {
-            this.props.onClick(scr);
+        const onClick = (scr: any, index?: number) => {
+            if (this.props.setSelected) {
+                // Set this item as selected
+                pxt.tickEvent("projects.detail.open");
+                this.props.setSelected(index);
+            } else {
+                this.props.onClick(scr);
+            }
         }
 
         if (path) {
@@ -345,28 +384,46 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const cards = this.fetchGallery(path);
             if (this.hasFetchErrors) {
                 return <div className="ui carouselouter">
-                    <div className="carouselcontainer" tabIndex={0} onClick={() => this.setState({})}>
-                        <p className="ui grey inverted segment">{lf("Oops, please connect to the Internet and try again.")}</p>
+                    <div className="carouselcontainer" tabIndex={0} onClick={() => this.setState({}) }>
+                        <p className="ui grey inverted segment">{lf("Oops, please connect to the Internet and try again.") }</p>
                     </div>
                 </div>
             } else {
-                return <carousel.Carousel bleedPercent={20}>
-                    {cards.map((scr, index) =>
-                        <div key={path + scr.name}>
-                            <codecard.CodeCardView
-                                className="example"
-                                key={'gallery' + scr.name}
+                return <div>
+                    <carousel.Carousel ref="carousel" bleedPercent={20} selectedIndex={selectedIndex}>
+                        {cards.map((scr, index) =>
+                            <div key={path + scr.name}>
+                                <codecard.CodeCardView
+                                    className="example"
+                                    key={'gallery' + scr.name}
+                                    name={scr.name}
+                                    url={scr.url}
+                                    imageUrl={scr.imageUrl}
+                                    youTubeId={scr.youTubeId}
+                                    label={scr.label}
+                                    labelClass={scr.labelClass}
+                                    onClick={() => onClick(scr, index) }
+                                    />
+                            </div>
+                        ) }
+                    </carousel.Carousel>
+                    <div ref="detailView" className={`detailview ${cards.filter((scr, index) => index == selectedIndex).length > 0 ? 'visible' : ''}`}>
+                        {cards.filter((scr, index) => index == selectedIndex).length > 0 ? <div tabIndex={0} className="close"><sui.Icon icon="remove circle" onClick={() => this.closeDetail() } /> </div> : undefined }
+                        {cards.filter((scr, index) => index == selectedIndex).map(scr =>
+                            <ProjectsDetail parent={this.props.parent}
                                 name={scr.name}
+                                key={'detail' + scr.name}
+                                description={scr.description}
                                 url={scr.url}
                                 imageUrl={scr.imageUrl}
+                                largeImageUrl={scr.largeImageUrl}
                                 youTubeId={scr.youTubeId}
-                                label={scr.label}
-                                labelClass={scr.labelClass}
-                                onClick={() => onClick(scr)}
-                            />
-                        </div>
-                    )}
-                </carousel.Carousel>
+                                onClick={() => this.props.onClick(scr) }
+                                cardType={scr.cardType}
+                                />
+                        ) }
+                    </div>
+                </div>
             }
         } else {
             let headers = this.fetchLocalData();
@@ -377,7 +434,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             if (headers.length == 0) {
                 return <div className="ui carouselouter">
                     <div className="carouselcontainer">
-                        <p>{lf("This is where you will you find your code.")}</p>
+                        <p>{lf("This is where you will you find your code.") }</p>
                     </div>
                 </div>
             } else {
@@ -385,7 +442,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     {headers.map((scr, index) =>
                         <div key={'local' + scr.id + scr.recentUse}>
                             {scr.id == 'new' ?
-                                <div className="ui card link newprojectcard focused" tabIndex={0} title={lf("Creates a new empty project")} onClick={() => this.newProject()} onKeyDown={sui.fireClickOnEnter} >
+                                <div className="ui card link newprojectcard focused" tabIndex={0} title={lf("Creates a new empty project") } onClick={() => this.newProject() } onKeyDown={sui.fireClickOnEnter} >
                                     <div className="content">
                                         <sui.Icon icon="huge add circle" />
                                         <span className="header">{scr.name}</span>
@@ -393,19 +450,80 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 </div>
                                 :
                                 <codecard.CodeCardView
-                                    ref={(view) => { if (index === 1) this.latestProject = view }}
+                                    ref={(view) => { if (index === 1) this.latestProject = view } }
                                     cardType="file"
                                     className="file"
                                     name={scr.name}
                                     time={scr.recentUse}
                                     url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                                    onClick={() => onClick(scr)}
-                                />}
+                                    onClick={() => onClick(scr) }
+                                    />}
                         </div>
-                    )}
+                    ) }
                 </carousel.Carousel>
             }
         }
+    }
+}
+
+export interface ProjectsDetailProps extends ISettingsProps {
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    largeImageUrl?: string;
+    youTubeId?: string;
+    url?: string;
+    onClick: () => void;
+    cardType: string;
+}
+
+export interface ProjectsDetailState {
+
+}
+
+export class ProjectsDetail extends data.Component<ProjectsDetailProps, ProjectsDetailState> {
+
+    renderCore() {
+        const { name, description, imageUrl, largeImageUrl, youTubeId, url, onClick, cardType } = this.props;
+
+        const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/maxresdefault.jpg` : undefined);
+
+        let clickLabel = lf("Show Instructions");
+        if (cardType == "tutorial") clickLabel = lf("Start Tutorial");
+        else if (cardType == "codeExample" || cardType == "example") clickLabel = lf("Open Example");
+        else if (youTubeId) clickLabel = lf("Play Video");
+
+        const actions = [{
+            label: clickLabel,
+            onClick: onClick,
+            icon: '',
+            className: 'huge positive'
+        }]
+
+        return <div className="ui grid stackable padded">
+            {image ? <div className="imagewrapper"><div className="image" style={ { backgroundImage: `url("${image}")` }} /></div> : undefined }
+            <div className="column eight wide">
+                <div className="segment">
+                    <div className="header"> {name} </div>
+                    <p className="detail">
+                        {description}
+                    </p>
+                    <div className="actions">
+                        {actions.map(action =>
+                            <sui.Button
+                                key={`action_${action.label}`}
+                                icon={action.icon}
+                                text={action.label}
+                                class={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
+                                onClick={() => {
+                                    action.onClick();
+                                } }
+                                onKeyDown={sui.fireClickOnEnter} />
+                        ) }
+                    </div>
+                </div>
+            </div>
+        </div>;
     }
 }
 
@@ -427,7 +545,6 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
 
     close() {
         this.setState({ visible: false });
-        this.props.parent.openHome();
     }
 
     show() {
@@ -449,36 +566,36 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         }
 
         return (
-            <sui.Modal open={this.state.visible} className="importdialog" header={lf("Import")} size="small"
-                onClose={() => this.close()} dimmer={true}
+            <sui.Modal open={this.state.visible} className="importdialog" header={lf("Import") } size="small"
+                onClose={() => this.close() } dimmer={true}
                 closeIcon={true}
-                closeOnDimmerClick closeOnDocumentClick
-            >
+                closeOnDimmerClick closeOnDocumentClick closeOnEscape
+                >
                 <div className="ui cards">
                     {pxt.appTarget.compile ?
                         <codecard.CodeCardView
-                            ariaLabel={lf("Open files from your computer")}
+                            ariaLabel={lf("Open files from your computer") }
                             className="focused"
                             role="button"
                             key={'import'}
                             icon="upload"
                             iconColor="secondary"
-                            name={lf("Import File...")}
-                            description={lf("Open files from your computer")}
-                            onClick={() => importHex()}
-                        /> : undefined}
+                            name={lf("Import File...") }
+                            description={lf("Open files from your computer") }
+                            onClick={() => importHex() }
+                            /> : undefined}
                     {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
                         <codecard.CodeCardView
-                            ariaLabel={lf("Open a shared project URL")}
+                            ariaLabel={lf("Open a shared project URL") }
                             className="focused"
                             role="button"
                             key={'importurl'}
                             icon="cloud download"
                             iconColor="secondary"
-                            name={lf("Import URL...")}
-                            description={lf("Open a shared project URL")}
-                            onClick={() => importUrl()}
-                        /> : undefined}
+                            name={lf("Import URL...") }
+                            description={lf("Open a shared project URL") }
+                            onClick={() => importUrl() }
+                            /> : undefined}
                 </div>
             </sui.Modal>
         )
@@ -549,20 +666,20 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             icon: 'check',
             className: 'positive'
         }, {
-            label: lf("Cancel"),
-            icon: 'cancel',
-            onClick: cancel
-        }]
+                label: lf("Cancel"),
+                icon: 'cancel',
+                onClick: cancel
+            }]
 
         return (
-            <sui.Modal open={visible} className="exitandsave" header={lf("Exit Project")} size="tiny"
-                onClose={() => this.hide()} dimmer={true}
+            <sui.Modal open={visible} className="exitandsave" header={lf("Exit Project") } size="tiny"
+                onClose={() => this.hide() } dimmer={true}
                 actions={actions}
                 closeIcon={true}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
-            >
+                >
                 <div className="ui form">
-                    <sui.Input id={"projectNameInput"} class="focused" label={lf("Project Name")} ariaLabel={lf("Type a name for your project")} value={projectName} onChange={onChange} />
+                    <sui.Input id={"projectNameInput"} class="focused" label={lf("Project Name") } ariaLabel={lf("Type a name for your project") } value={projectName} onChange={onChange} />
                 </div>
             </sui.Modal>
         )

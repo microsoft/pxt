@@ -253,6 +253,24 @@ namespace pxsim {
         export function ignore(v: any) { return v; }
     }
 
+    export namespace avr {
+        function toInt(v: number) {
+            return (v << 16) >> 16
+        }
+        export function adds(x: number, y: number) { return toInt(x + y); }
+        export function subs(x: number, y: number) { return toInt(x - y); }
+        export function divs(x: number, y: number) { return toInt(Math.floor(x / y)); }
+        export function muls(x: number, y: number) { return toInt(intMult(x, y)); }
+        export function ands(x: number, y: number) { return toInt(x & y); }
+        export function orrs(x: number, y: number) { return toInt(x | y); }
+        export function eors(x: number, y: number) { return toInt(x ^ y); }
+        export function lsls(x: number, y: number) { return toInt(x << y); }
+        export function lsrs(x: number, y: number) { return (x & 0xffff) >>> y; }
+        export function asrs(x: number, y: number) { return toInt(x >> y); }
+
+        export function ignore(v: any) { return v; }
+    }
+
     export namespace String_ {
         export function mkEmpty() {
             return ""
@@ -493,6 +511,16 @@ namespace pxsim {
                 length = buf.data.length;
             length = Math.min(length, buf.data.length - offset);
             return new RefBuffer(buf.data.slice(offset, offset + length));
+        }
+
+        export function toHex(buf: RefBuffer): string {
+            const hex = "0123456789abcdef";
+            let res: string;
+            for (let i = 0; i < buf.data.length; ++i) {
+                res[i << 1] = hex[buf.data[i] >> 4];
+                res[(i << 1) + 1] = hex[buf.data[i] & 0xf];
+            }
+            return res;
         }
 
         function memmove(dst: Uint8Array, dstOff: number, src: Uint8Array, srcOff: number, len: number) {

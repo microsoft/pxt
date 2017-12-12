@@ -195,7 +195,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
         aspectRatio: parts.length ? pxt.appTarget.simulator.partsAspectRatio : pxt.appTarget.simulator.aspectRatio,
         partDefinitions: pkg.computePartDefinitions(parts),
         cdnUrl: pxt.webConfig.commitCdnUrl,
-        localizedStrings: simTranslations
+        localizedStrings: simTranslations,
+        refCountingDebug: pxt.options.debug
     }
     postSimEditorEvent("started");
 

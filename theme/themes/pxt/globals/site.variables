@@ -24,7 +24,7 @@
 @greenTextColor: darken(@green, 5);
 
 @lightTextColor              : rgba(0, 0, 0, 0.68);
-@invertedUnselectedTextColor : rgba(255, 255, 255, 0.8); 
+@invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
 
 @pageBackground: #ffffff;
 
@@ -72,7 +72,7 @@
 /*-------------------
      Neutral Text
 --------------------*/
- 
+
 @invertedLightTextColor      : rgba(255, 255, 255, 0.9);
 
 /*******************************
@@ -99,11 +99,26 @@
      PXT Variables
 *******************************/
 
-@avatarUrl: data-uri("../docs/static/avatar.svg");
-@fileLogoUrl: data-uri("../docs/static/filelogo.svg");
+@avatarImageUrl: "../docs/static/avatar.svg";
+@avatarImage: data-uri(@avatarImageUrl);
 
-@poweredBySmall: data-uri("../docs/static/logo/Powered-By-Microsoft-logo-small.png");
-@poweredByLarge: data-uri("../docs/static/logo/Powered-By-Microsoft-logo.png");
+@fileLogoUrl: "../docs/static/filelogo.svg";
+@fileLogo: data-uri(@fileLogoUrl);
+
+@loaderImageUrl: "../docs/static/loader.svg";
+@loaderImage: data-uri(@loaderImageUrl);
+
+@poweredBySmallUrl: "../docs/static/logo/Powered-By-Microsoft-logo-small.png";
+@poweredBySmall: data-uri(@poweredBySmallUrl);
+@poweredByLargeUrl: "../docs/static/logo/Powered-By-Microsoft-logo.png";
+@poweredByLarge: data-uri(@poweredByLargeUrl);
+
+@docsAvatarImageUrl: none;
+@docsAvatarImage: none;
+.setDocsAvatarUrl() when not (@docsAvatarImageUrl = none) {
+  @docsAvatarImage: data-uri(@docsAvatarImageUrl);
+}
+.setDocsAvatarUrl();
 
 /*-------------------
    Menu
@@ -210,14 +225,22 @@
 @homeCardBorderSize: 5px;
 @homeCardBorderColor: #e9eef2;
 @homeCardHoverBorderColor: white;
+@homeCardFocusBorderColor: yellow;
 @homeCardColor: @textColor;
 @homeCardMetaColor: @homeCardColor;
 @homeCardHeaderColor: @homeCardColor;
+@homeFooterColor: @homeCardColor;
 
 @homeCardImageBorderRadius: 0;
 @homeCardBackgroundColor: white;
 @homeCardHoverBackgroundColor: darken(@homeCardBackgroundColor, 5%);
 
+/* Detail view */
+@homeSelectedCardBorderSize: @homeCardBorderSize*2;
+@homeSelectedCardBorderColor: white;
+@homeDetailViewBackground: darken(@homeScreenBackground, 10%);
+@homeDetailViewColor: @homeCardColor;
+@homeDetailCloseColor: white;
 
 /*-------------------
    Tutorial
@@ -225,3 +248,11 @@
 
 @tutorialSegmentBackground: #f8f8f9;
 @tutorialSegmentColor: @textColor;
+
+/*-------------------
+    Banner
+-------------------*/
+@bannerHeight: 2rem;
+@bannerBackgroundColor: black;
+@bannerContrastColor: white;
+@bannerLinkColor: #3eb1d0;

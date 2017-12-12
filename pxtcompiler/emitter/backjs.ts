@@ -36,6 +36,8 @@ namespace ts.pxtc {
         shimName = shimName.replace(/::/g, ".")
         if (shimName.slice(0, 4) == "pxt.")
             shimName = "pxtcore." + shimName.slice(4)
+        if (target.shortPointers)
+            shimName = shimName.replace(/^thumb\./, "avr.")
         return "pxsim." + shimName
     }
 

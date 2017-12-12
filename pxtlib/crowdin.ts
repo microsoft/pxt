@@ -13,15 +13,19 @@ namespace pxt.crowdin {
         return apiRoot + cmd + suff;
     }
 
-    interface CrowdinFileInfo {
+    export interface CrowdinFileInfo {
         name: string;
         fullName?: string;
         id: number;
         node_type: "file" | "directory" | "branch";
+        phrases?: number;
+        translated?: number;
+        approved?: number;
+        branch?: string;
         files?: CrowdinFileInfo[];
     }
 
-    interface CrowdinProjectInfo {
+    export interface CrowdinProjectInfo {
         languages: { name: string; code: string; }[];
         files: CrowdinFileInfo[];
     }
@@ -157,57 +161,97 @@ namespace pxt.crowdin {
         return startAsync();
     }
 
+    function flatten(allFiles: CrowdinFileInfo[], files: CrowdinFileInfo, parentDir: string, branch?: string) {
+        const n = files.name;
+        const d = parentDir ? parentDir + "/" + n : n;
+        files.fullName = d;
+        files.branch = branch || "";
+        switch (files.node_type) {
+            case "file":
+                allFiles.push(files);
+                break;
+            case "directory":
+                (files.files || []).forEach(f => flatten(allFiles, f, d));
+                break;
+            case "branch":
+                (files.files || []).forEach(f => flatten(allFiles, f, parentDir, files.name));
+                break;
+        }
+    }
+
+    function filterAndFlattenFiles(files: CrowdinFileInfo[], crowdinPath?: string): CrowdinFileInfo[] {
+        const pxtCrowdinBranch = pxt.appTarget.versions.pxtCrowdinBranch || "";
+        const targetCrowdinBranch = pxt.appTarget.versions.targetCrowdinBranch || "";
+
+        let allFiles: CrowdinFileInfo[] = [];
+
+        // flatten the files
+        files.forEach(f => flatten(allFiles, f, ""));
+
+        // top level files are for PXT, subolder are targets
+        allFiles = allFiles.filter(f => {
+            if (f.fullName.indexOf('/') < 0) return f.branch == pxtCrowdinBranch; // pxt file
+            else return f.branch == targetCrowdinBranch;
+        })
+
+        // folder filter
+        if (crowdinPath) {
+            // filter out crowdin folder
+            allFiles = allFiles.filter(f => f.fullName.indexOf(crowdinPath) == 0);
+        }
+
+        // filter out non-target files
+        if (pxt.appTarget.id != "core") {
+            const id = pxt.appTarget.id + '/'
+            allFiles = allFiles.filter(f => {
+                return f.fullName.indexOf('/') < 0 // top level file
+                    || f.fullName.substr(0, id.length) == id // from the target folder
+                    || f.fullName.indexOf('common-docs') >= 0 // common docs
+            })
+        }
+
+        return allFiles;
+    }
+
+    export function projectInfoAsync(prj: string, key: string): Promise<CrowdinProjectInfo> {
+        const q: Map<string> = { json: "true" }
+        const infoUri = apiUri("", prj, key, "info", q);
+        return Util.httpGetTextAsync(infoUri).then(respText => {
+            const info = JSON.parse(respText) as CrowdinProjectInfo;
+            return info;
+        });
+    }
+
     /**
      * Scans files in crowdin and report files that are not on disk anymore
      */
-    export function listFilesAsync(branch: string, prj: string, key: string, crowdinPath: string): Promise<{ fullName: string; }[]> {
-        const q: Map<string> = { json: "true" }
-        const infoUri = apiUri(branch, prj, key, "info", q);
+    export function listFilesAsync(prj: string, key: string, crowdinPath: string): Promise<{ fullName: string; branch: string; }[]> {
 
-        function flatten(allFiles: CrowdinFileInfo[], files: CrowdinFileInfo, parentDir: string) {
-            const n = files.name;
-            const d = parentDir ? parentDir + "/" + n : n;
-            files.fullName = d;
-            switch (files.node_type) {
-                case "file":
-                    allFiles.push(files);
-                    break;
-                case "directory":
-                    (files.files || []).forEach(f => flatten(allFiles, f, d));
-                    break;
-                case "branch":
-                    (files.files || []).forEach(f => flatten(allFiles, f, parentDir));
-                    break;
-            }
-        }
+        pxt.log(`crowdin: listing files under ${crowdinPath}`);
 
-        pxt.log(`crowdin: listing files under ${crowdinPath} in branch ${branch}`);
-        pxt.debug(`ur: ${infoUri}`);
+        return projectInfoAsync(prj, key)
+            .then(info => {
+                if (!info) throw new Error("info failed")
 
-        return Util.httpGetTextAsync(infoUri).then(respText => {
-            const info = JSON.parse(respText) as CrowdinProjectInfo;
-            if (!info) throw new Error("info failed")
+                let allFiles = filterAndFlattenFiles(info.files, crowdinPath);
+                pxt.debug(`crowdin: found ${allFiles.length} under ${crowdinPath}`)
 
-            let files = info.files;
-            let allFiles: CrowdinFileInfo[] = [];
+                return allFiles.map(f => {
+                    return {
+                        fullName: f.fullName,
+                        branch: f.branch || ""
+                    };
+                })
+            });
+    }
 
-            // if branch, filter out
-            if (branch)
-                files = files.filter(f => f.node_type == "branch" && f.name == branch);
+    export function languageStatsAsync(prj: string, key: string, lang: string): Promise<CrowdinFileInfo[]> {
+        const uri = apiUri("", prj, key, "language-status", { language: lang, json: "true" });
 
-            // flatten the files
-            files.forEach(f => flatten(allFiles, f, ""));
-
-            // filter out crowdin folder
-            allFiles = allFiles.filter(f => f.fullName.indexOf(crowdinPath) == 0);
-
-            pxt.log(`crowdin: found ${allFiles.length} under ${crowdinPath}`)
-
-            return allFiles.map(f => {
-                return {
-                    fullName: f.fullName
-                };
-            })
-        });
+        return Util.httpGetJsonAsync(uri)
+            .then(info => {
+                const allFiles = filterAndFlattenFiles(info.files);
+                return allFiles;
+            });
     }
 }

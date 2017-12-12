@@ -73,6 +73,7 @@ export class Editor implements pxt.editor.IEditor {
         return false
     }
 
+    hasHistory() { return true; }
     hasUndo() { return true; }
     hasRedo() { return true; }
     undo() { }

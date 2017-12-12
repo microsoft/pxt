@@ -34,7 +34,7 @@
 
 /* Grid picker */
 @gridPickerZIndex: @blocklyWidgetDivZIndex+1; /* Needs to be above the @blocklyWidgetDivZIndex */
-@gridPickerTooltipZIndex: (@dimmerZIndex)-1; /* Just below dimmer */
+@gridPickerTooltipZIndex: (@dimmerZIndex)-5; /* Just below dimmer */
 
 /* Monaco */
 @monacoFlyoutZIndex: @blocklyFlyoutZIndex; /* Same as blockly Flyout */
@@ -53,7 +53,7 @@
 @tutorialLightboxCardZIndex: @dimmerZIndex+1;
 
 /* Home screen */
-@homeCarouselArrowZIndex: 10; /* Above the carousel cards */
+@homeScreenZIndex: (@dimmerZIndex)-1; /* Just below the dimmer */
 
 /* Side doc */
 @sidedocZIndex: @aboveEditorZIndex+5; /* Above the editor and its components */

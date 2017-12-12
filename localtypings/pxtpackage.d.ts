@@ -7,6 +7,7 @@ declare namespace pxt {
         target: string;
         pxt: string;
         pxtCrowdinBranch?: string;
+        targetCrowdinBranch?: string;
         tag?: string;
         branch?: string;
         commits?: string; // URL
@@ -52,6 +53,7 @@ declare namespace pxt {
         label?: string; // Label for the flyout button, defaults to `Editor`
         color?: string; // for new category, category color
         advanced?: boolean; // for new category, is category advanced
+        localUrl?: string; // local debugging URL used when served through pxt serve and debugExtensions=1 mode
     }
 
     interface PlatformIOConfig {
@@ -93,6 +95,7 @@ declare namespace pxt {
         blocksXml?: string;
         typeScript?: string;
         imageUrl?: string;
+        largeImageUrl?: string;
         youTubeId?: string;
         time?: number;
         url?: string;
@@ -114,5 +117,14 @@ declare namespace pxt {
 
         target?: string;
         className?: string;
+    }
+
+    interface JRes {
+        id: string; // something like "sounds.bark"
+        data: string;
+        dataEncoding?: string; // must be "base64" or missing (meaning the same)
+        icon?: string; // URL (usually data-URI) for the icon
+        namespace?: string; // used to construct id
+        mimeType: string;
     }
 }

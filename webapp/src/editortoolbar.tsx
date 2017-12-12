@@ -80,7 +80,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     render() {
-        const { tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, showParts, compiling, isSaving, running } = this.props.parent.state;
+        const {home, tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, showParts, compiling, isSaving, running } = this.props.parent.state;
+
+        if (home) return <div />; // Don't render if we're in the home screen
 
         const sandbox = pxt.shell.isSandboxMode();
         const readOnly = pxt.shell.isReadOnly();
@@ -93,11 +95,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex;
         const simOpts = pxt.appTarget.simulator;
-        const make = !sandbox && showParts && simOpts && (simOpts.instructions || (simOpts.parts && pxt.options.debug));
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
         const compileLoading = !!compiling;
         const runTooltip = running ? lf("Stop the simulator") : lf("Start the simulator");
-        const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");
         const collapseTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");
         const headless = simOpts.headless;

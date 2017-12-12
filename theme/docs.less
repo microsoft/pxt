@@ -25,8 +25,6 @@
 @docsCardBorderColor: #e9eef2;
 @docsCardHoverBorderColor: #1dacf4;
 
-@docsAvatarUrl: none;
-
 #docs {
     background-color: @docsBackgroundColor;
     font-family: @docsPageFont !important;
@@ -64,6 +62,7 @@
         color: @docsCardColor;
         border-radius: 0.5rem !important;
         border: 2px solid @docsCardBorderColor;
+        text-decoration: none; /* Remove underline applied by a link */
         > .image {
             background: @docsCardImageBackgroundColor;
         }
@@ -106,10 +105,10 @@
     color: @docsLinkColor;
 }
 
-.replaceDocsAvatar() when not (@docsAvatarUrl = none) {
+.replaceDocsAvatar() when not (@docsAvatarImage = none) {
     #docs {
         .avatar .avatar-image {
-            background-image: @docsAvatarUrl;
+            background-image: @docsAvatarImage;
         }
     }
 }

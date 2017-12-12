@@ -30,7 +30,7 @@ namespace basic {
 ```
 
 * `icon` icon Unicode character from the icon font to display. The [Semantic UI](https://semantic-ui.com/elements/icon.html) icon set has been ported from Font Awesome (v4.5.6 at the time of writing), and a full list can be found at http://fontawesome.io/icons/
-* `color` should be included in a comment line starting with `\\%`. The color takes a **hue** value or a HTML color.
+* `color` should be included in a comment line starting with `//%`. The color takes a **hue** value or a HTML color.
 
 To have a category appear under the "Advanced" section of the Block Editor toolbox, add the annotation `advanced=true`.
 
@@ -154,9 +154,7 @@ look the same as the previous example but the compiled code will also include th
 addSomeEventHandler([ArgNames.argumentA, ArgNames.argumentB], ({argumentA, argumentB}) => {
 
 })
-
 ```
-
 
 The other attributes related to object destructuring mutators include:
 
@@ -248,7 +246,6 @@ class Message {
 
 * when annotating an instance method, you need to specify the ``%this`` parameter in the block syntax definition.
 
-
 You will need to expose a factory method to create your objects as needed. For the example above, we add a function that creates the message:
 
 ```typescript-ignore
@@ -281,7 +278,6 @@ In cases when the default constructor has side effects (eg., configuring a pin),
 or if the default value is most often overridden,
 the `autoCreate` syntax should not be used.
 
-
 ### Fixed Instance Set
 
 It is sometimes the case that there is only a fixed number of instances
@@ -306,7 +302,7 @@ namespace pins {
 ```
 
 This will result in a block `digital write pin [D0] to [0]`, where the
-first hold is a dropdown with `D0` and `D1`, and the second hole is a regular
+first hole is a dropdown with `D0` and `D1`, and the second hole is a regular
 integer value. The variables `D0` and `D1` can have additional annotations
 (eg., `block="D#0"`). Currently, only variables are supported with `fixedInstance`
 (`let` or `const`).
@@ -370,7 +366,7 @@ flag to disable showing it in auto-completion.
 ## Grouping
 
 Use the **blockGap** macro to specify the distance to the next block in the toolbox. Combined with the weight parameter,
-this macro allows to definte groups of blocks. The default ``blockGap`` value is ``8``.
+this macro allows to define groups of blocks. The default ``blockGap`` value is ``8``.
 
 ```
 //% blockGap=14

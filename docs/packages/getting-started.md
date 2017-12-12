@@ -1,11 +1,11 @@
-## Building your own package
+# Building your own package
 
-### Step 0: Local server setup
+## Step 0: Local server setup
 
 In order to build and test your package locally, you need to setup PXT to run locally.
-Follow the [instructions on setting up workspace](/cli#setting-up-workspace).
+Follow the instructions for [setting up a workspace](/cli#setting-up-a-workspace).
 
-### Step 1: GitHub setup
+## Step 1: GitHub setup
 
 You will need to get a [GitHub](https://github.com) account and create a GitHub repository. At this time, other repository hosting solutions (GitLab, Bitbucket, etc.) are not supported.
 
@@ -17,9 +17,9 @@ Let's say you want to create a package called `banana` for target `TARGET`.
 * edit `pxt.json` and `README.md` with the right descriptions
 * commit files to git: `git add .`, and commit them: `git commit -m "Initial"`
 
-> **Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target id) in `README.md`. Otherwise the package will not show up in search.**
+> **Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target id) in `README.md`. Otherwise, the package will not show up in search.**
 
-### Step 2: Developing package
+## Step 2: Developing package
 
 Now, you're ready to develop your package. You can do it with [VSCode](https://code.visualstudio.com/)
 or from the web editor served from `pxt serve`.
@@ -35,10 +35,11 @@ You will develop your package in `pxt-banana`, and then test this work by creati
 If the local editor fails to open, copy the URL printed in the console and open it in your favorite browser. 
 
 The local server requires a security token embedded in the URL to serve pages.
-
 ### ~
 
-### Step 3: Testing
+For a quick introduction on creating packages, try the [simple package](./getting-started/simple-package) tutorial.
+
+## Step 3: Testing
 
 In order to test your package, you need to create a new project, and manually add a reference back to the package you've been developing.
 
@@ -47,7 +48,7 @@ In order to test your package, you need to create a new project, and manually ad
 * Click on ``Edit Settings As Text``
 * Add an entry under ``dependencies`` that points to your package folder:
 
-```
+```typescript-ignore
 {
     "name": "banana test",
     "dependencies": {
@@ -60,7 +61,7 @@ In order to test your package, you need to create a new project, and manually ad
 
 * Reload the editor and the new blocks you developed in `pxt-banana` will be loaded into the project "Just Look At It."
 
-### Step 4: Publishing your package
+## Step 4: Publishing your package
 
 When you're happy with the first version of your package, commit the changes and
 bump the version and push to github:
@@ -75,7 +76,7 @@ create a git tag, and push everything to github.
 
 In the editor, paste the full URL to your repo after selecting `Settings -> Extensions`. Your package should show up.
 
-### Step 5: Approval
+## Step 5: Approval
 
 In order to be searchable by users, packages need to be approved. GitHub organizations or individual repos can be approved.
 
@@ -88,10 +89,10 @@ in `README.md`. Otherwise the package will not show up in search.**
 
 ### ~
 
-Read more an [defining-blocks](https://makecode.com/defining-blocks) to learn how to surface your APIs into blocks and JavaScript.
+Read more on [defining blocks](/defining-blocks) to learn how to surface your APIs into blocks and JavaScript.
 
 ### Icon
 
 The editor will automatically use any ``icon.png`` file when displaying the package in the editor. **This feature only works for approved packages.**
 
-The icon should be sized with a 16:9 ratio and of at least ``184`` pixel wide.
+The icon should be sized with a 16:9 ratio and of at least ``184`` pixels wide.
