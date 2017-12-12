@@ -231,7 +231,7 @@ namespace ts.pxtc {
                 m = /^:..(....)00/.exec(hex[i])
                 if (m) {
                     let newAddr = parseInt(upperAddr + m[1], 16)
-                    if (newAddr >= 0x3C000)
+                    if (opts.flashUsableEnd && newAddr >= opts.flashUsableEnd)
                         hitEnd()
                     lastIdx = i
                     lastAddr = newAddr
