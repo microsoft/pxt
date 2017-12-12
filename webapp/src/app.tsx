@@ -886,7 +886,9 @@ export class ProjectView
         let files: pxt.workspace.ScriptText = Util.clone(options.prj.files)
         if (options.filesOverride)
             Util.jsonCopyFrom(files, options.filesOverride)
-        files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n"
+        if (options.dependencies)
+            Util.jsonMergeFrom(cfg.dependencies, options.dependencies)
+        files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n";
         return workspace.installAsync({
             name: cfg.name,
             meta: {},
