@@ -465,9 +465,19 @@ namespace ts.pxtc.thumb {
         }
 
         public peephole(ln: pxtc.assembler.Line, lnNext: pxtc.assembler.Line, lnNext2: pxtc.assembler.Line) {
-
             let lb11 = this.encoders["$lb11"]
             let lb = this.encoders["$lb"]
+
+            // +/-8 bytes is because the code size can slightly change due to .balign directives
+            // inserted by literal generation code; see https://github.com/Microsoft/pxt-adafruit/issues/514
+            // Most likely 4 would be enough, but we play it safe
+            function fits(enc: assembler.Encoder, ln: assembler.Line) {
+                return (
+                    enc.encode(ln.numArgs[0] + 8) != null &&
+                    enc.encode(ln.numArgs[0] - 8) != null &&
+                    enc.encode(ln.numArgs[0]) != null
+                )
+            }
 
             let lnop = ln.getOp()
             let isSkipBranch = false
@@ -478,22 +488,19 @@ namespace ts.pxtc.thumb {
                     isSkipBranch = true;
             }
 
-            if (lnop == "bb" && lb11.encode(ln.numArgs[0]) != null) {
+            if (lnop == "bb" && fits(lb11, ln)) {
                 // RULE: bb .somewhere -> b .somewhere (if fits)
                 ln.update("b " + ln.words[1])
             } else if (lnop == "b" && ln.numArgs[0] == -2) {
                 // RULE: b .somewhere; .somewhere: -> .somewhere:
                 ln.update("")
-            } else if ((lnop == "beq" || lnop == "bne") && isSkipBranch &&
-                lb.encode(lnNext.numArgs[0] + 8) != null &&
-                lb.encode(lnNext.numArgs[0] - 8) != null &&
-                lb.encode(lnNext.numArgs[0]) != null) {
-                // +/-8 bytes is because the code size can slightly change due to .balign directives
-                // inserted by literal generation code; see https://github.com/Microsoft/pxt-adafruit/issues/514
-                // Most likely 2 would be enough, but we play it safe
+            } else if (lnop == "bne" && isSkipBranch && fits(lb, lnNext)) {
                 // RULE: bne .next; b .somewhere; .next: -> beq .somewhere
+                ln.update("beq " + lnNext.words[1])
+                lnNext.update("")
+            } else if (lnop == "beq" && isSkipBranch && fits(lb, lnNext)) {
                 // RULE: beq .next; b .somewhere; .next: -> bne .somewhere
-                ln.update((lnop == "beq" ? "bne" : "beq") + " " + lnNext.words[1])
+                ln.update("bne " + lnNext.words[1])
                 lnNext.update("")
             } else if (lnop == "push" && lnNext.getOp() == "pop" && ln.numArgs[0] == lnNext.numArgs[0]) {
                 // RULE: push {X}; pop {X} -> nothing
