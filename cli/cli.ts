@@ -2316,6 +2316,33 @@ class Host
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
+        if (process.env["PXT_LOCAL_DOCKER_TEST"] === "yes") {
+            const compileReq = JSON.parse(new Buffer(extInfo.compileData, "base64").toString("utf8"))
+            const mappedFiles =
+                Object.keys(compileReq.replaceFiles).map(k => {
+                    return {
+                        name: k.replace(/^\/+/, ""),
+                        text: compileReq.replaceFiles[k]
+                    }
+                })
+            const cs = pxt.appTarget.compileService
+            const dockerReq = {
+                op: "buildex",
+                files: mappedFiles,
+                gittag: compileReq.tag,
+                empty: true,
+                hexfile: "build/" + cs.codalBinary + ".hex",
+                platformio: false,
+                clone: "https://github.com/" + cs.githubCorePackage,
+                buildcmd: "python build.py",
+                image: "pext/yotta:latest"
+            }
+
+            const fn = "built/dockerreq.json"
+            fs.writeFileSync(fn, JSON.stringify(dockerReq, null, 4))
+            pxt.log("wrote " + fn)
+        }
+
         if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
             return pxt.hex.getHexInfoAsync(this, extInfo)
 
