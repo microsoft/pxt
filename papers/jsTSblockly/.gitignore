@@ -1,5 +1,5 @@
-paper.pdf
-/*.gz
-paper.bbl
-paper.blg
+paper.*
+!paper.tex
+!paper.bib
+
 
