@@ -1,6 +1,9 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
 /// <reference path="../../built/pxtcompiler.d.ts"/>
 
+
+declare const importScripts: (...args: string[]) => void;
+
 importScripts(
     "/blb/typescript.js",
     "/blb/fuse.min.js",

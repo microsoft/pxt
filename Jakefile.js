@@ -311,7 +311,7 @@ file("built/web/pxtlib.js", [
 
     let ts = fs.readFileSync("node_modules/typescript/lib/typescript.js", "utf8")
     ts = ts.replace(/getCompletionsAtPosition: getCompletionsAtPosition,/,
-        f => f + " " + additionalExports.map(s => s + ": " + s + ",").join(" "))
+        f => f + " " + additionalExports.map(s => s + ": ts.Completions." + s + ",").join(" "))
     fs.writeFileSync("built/web/typescript.js", ts)
 })
 

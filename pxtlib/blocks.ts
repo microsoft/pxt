@@ -411,5 +411,14 @@ namespace pxt.blocks {
                 message0: Util.lf("on start %1 %2")
             }
         };
+        _blockDefinitions[pxtc.PAUSE_UNTIL_TYPE] = {
+            name: Util.lf("pause until"),
+            tooltip: Util.lf("Pause execution of code until the given boolean expression is true"),
+            url: '/blocks/pause-until',
+            category: "loops", // The real category is overriden by apptarget in blocklyloader.ts
+            block: {
+                message0: Util.lf("pause until %1")
+            }
+        };
     }
 }

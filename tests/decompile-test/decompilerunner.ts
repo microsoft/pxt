@@ -1,7 +1,4 @@
 /// <reference path="../../built/pxtcompiler.d.ts"/>
-/// <reference path="../../typings/globals/mocha/index.d.ts" />
-/// <reference path="../../typings/modules/chai/index.d.ts" />
-/// <reference path="../../typings/globals/node/index.d.ts"/>
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -44,6 +41,9 @@ pxt.setAppTarget({
     appTheme: {},
     tsprj: undefined,
     blocksprj: undefined,
+    runtime: {
+        pauseUntilBlock: { category: "Loops", color: "0x0000ff" }
+    },
     corepkg: undefined
 });
 
@@ -104,7 +104,14 @@ function decompileTestAsync(filename: string) {
 
 function compareBaselines(a: string, b: string): boolean {
     // Ignore whitespace
-    return a.replace(/\s/g, "") === b.replace(/\s/g, "")
+    a = a.replace(/\s/g, "");
+    b = b.replace(/\s/g, "");
+
+    // Ignore error messages in TS statement mutations
+    a = a.replace(/error="[^"]*"/g, "");
+    b = b.replace(/error="[^"]*"/g, "");
+
+    return a === b;
 }
 
 function replaceFileExtension(file: string, extension: string) {
@@ -120,7 +127,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
             .then(opts => {
                 opts.ast = true;
                 opts.ignoreFileResolutionErrors = true;
-                const decompiled = pxtc.decompile(opts, "main.ts");
+                const decompiled = pxtc.decompile(opts, "main.ts", true);
                 if (decompiled.success) {
                     resolve(decompiled.outfiles["main.blocks"]);
                 }

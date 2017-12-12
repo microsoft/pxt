@@ -1,5 +1,3 @@
-/// <reference path="../../typings/globals/react/index.d.ts" />
-/// <reference path="../../typings/globals/react-dom/index.d.ts" />
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
@@ -29,6 +27,10 @@ export function isLoading() {
 
 let loadingQueue: string[] = [];
 let loadingQueueMsg: pxt.Map<string> = {};
+
+export function setHighContrast(on: boolean) {
+    highContrast = on;
+}
 
 export function hideLoading(id: string) {
     pxt.debug("hideloading: " + id);
@@ -275,7 +277,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     if (options.copyable) enableCopyable(modal);
     if (options.input) {
         const ip = modal.find('.userinput');
-        ip.on('change', e => options.inputValue = ip.val())
+        ip.on('change', e => options.inputValue = ip.val() as string)
     }
     let done = false
     let modalContext = options.modalContext || '#root';

@@ -1,6 +1,5 @@
 /// <reference path="../localtypings/pxtblockly.d.ts" />
 /// <reference path="../built/pxtlib.d.ts" />
-/// <reference path="../typings/globals/jquery/index.d.ts" />
 
 namespace pxt.blocks {
     let workspace: B.Workspace;
@@ -45,7 +44,6 @@ namespace pxt.blocks {
             workspace = Blockly.inject(blocklyDiv, {
                 scrollbars: false,
                 readOnly: true,
-                zoom: false,
                 sound: false,
                 media: pxt.webConfig.commitCdnUrl + "blockly/media/",
                 rtl: Util.isUserLanguageRtl()

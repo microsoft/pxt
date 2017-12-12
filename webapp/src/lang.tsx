@@ -56,6 +56,10 @@ const defaultLanguages = ["en"];
 
 export let initialLang: string;
 
+export function setInitialLang(lang: string) {
+    initialLang = lang;
+}
+
 export function getCookieLang() {
     const cookiePropRegex = new RegExp(`${pxt.Util.escapeForRegex(pxtLangCookieId)}=(.*?)(?:;|$)`)
     const cookieValue = cookiePropRegex.exec(document.cookie);

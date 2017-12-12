@@ -1,4 +1,3 @@
-/// <reference path="../typings/globals/bluebird/index.d.ts"/>
 /// <reference path="../localtypings/monaco.d.ts" />
 /// <reference path="../built/pxtlib.d.ts"/>
 

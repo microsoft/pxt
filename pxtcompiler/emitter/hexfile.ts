@@ -13,15 +13,15 @@ namespace ts.pxtc {
 
         A record (line of text) consists of six fields (parts) that appear in order from left to right:
         - Start code, one character, an ASCII colon ':'.
-        - Byte count, two hex digits, indicating the number of bytes (hex digit pairs) in the data field. 
+        - Byte count, two hex digits, indicating the number of bytes (hex digit pairs) in the data field.
           The maximum byte count is 255 (0xFF). 16 (0x10) and 32 (0x20) are commonly used byte counts.
-        - Address, four hex digits, representing the 16-bit beginning memory address offset of the data. 
-          The physical address of the data is computed by adding this offset to a previously established 
-          base address, thus allowing memory addressing beyond the 64 kilobyte limit of 16-bit addresses. 
-          The base address, which defaults to zero, can be changed by various types of records. 
+        - Address, four hex digits, representing the 16-bit beginning memory address offset of the data.
+          The physical address of the data is computed by adding this offset to a previously established
+          base address, thus allowing memory addressing beyond the 64 kilobyte limit of 16-bit addresses.
+          The base address, which defaults to zero, can be changed by various types of records.
           Base addresses and address offsets are always expressed as big endian values.
         - Record type (see record types below), two hex digits, 00 to 05, defining the meaning of the data field.
-        - Data, a sequence of n bytes of data, represented by 2n hex digits. Some records omit this field (n equals zero). 
+        - Data, a sequence of n bytes of data, represented by 2n hex digits. Some records omit this field (n equals zero).
           The meaning and interpretation of data bytes depends on the application.
         - Checksum, two hex digits, a computed value that can be used to verify the record has no errors.
 
@@ -32,7 +32,7 @@ namespace ts.pxtc {
 
     // TODO should be internal
     export namespace hex {
-        let funcInfo: Map<FuncInfo> = {};
+        let funcInfo: pxt.Map<FuncInfo> = {};
         let hex: string[];
         let jmpStartAddr: number;
         let jmpStartIdx: number;
@@ -41,7 +41,7 @@ namespace ts.pxtc {
         let elfInfo: pxt.elf.Info;
         export let bytecodeStartAddrPadded: number;
         let bytecodeStartIdx: number;
-        let asmLabels: Map<boolean> = {};
+        let asmLabels: pxt.Map<boolean> = {};
         export let asmTotalSource: string = "";
         export const defaultPageSize = 0x400;
 
@@ -364,7 +364,7 @@ namespace ts.pxtc {
         }
 
         function applyPatches(f: UF2.BlockFile, binfile: Uint8Array = null) {
-            // constant strings in the binary are 4-byte aligned, and marked 
+            // constant strings in the binary are 4-byte aligned, and marked
             // with "@PXT@:" at the beginning - this 6 byte string needs to be
             // replaced with proper reference count (0xffff to indicate read-only
             // flash location), string virtual table, and the length of the string
@@ -587,7 +587,7 @@ ${info.id}_IfaceVT:
 
     function serialize(bin: Binary, opts: CompileOptions) {
         let asmsource = `; start
-${hex.hexPrelude()}        
+${hex.hexPrelude()}
     .hex 708E3B92C615A841C49866C975EE5197 ; magic number
     .hex ${hex.hexTemplateHash()} ; hex template hash
     .hex 0000000000000000 ; @SRCHASH@
@@ -680,7 +680,7 @@ ${hex.hexPrelude()}
             b.errors.forEach(e => {
                 let m = /^user(\d+)/.exec(e.scope)
                 if (m) {
-                    // This generally shouldn't happen, but it may for certin kind of global 
+                    // This generally shouldn't happen, but it may for certin kind of global
                     // errors - jump range and label redefinitions
                     let no = parseInt(m[1]) // TODO lookup assembly file name
                     userErrors += U.lf("At inline assembly:\n")

@@ -7,6 +7,7 @@
         "outDir": "../../built/tests/format-test",
         "newLine": "LF",
         "module": "commonjs",
+        "types": ["chai", "mocha", "node", "bluebird"],
         "sourceMap": false
     },
     "files": [

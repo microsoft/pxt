@@ -1,5 +1,3 @@
-/// <reference path="../../typings/globals/react/index.d.ts" />
-/// <reference path="../../typings/globals/react-dom/index.d.ts" />
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
@@ -148,7 +146,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 this.setState({ searchFor: str });
             }
         };
-        const kupd = (ev: __React.KeyboardEvent) => {
+        const kupd = (ev: React.KeyboardEvent<HTMLElement>) => {
             if (ev.keyCode == 13) upd(ev);
         }
         const installGh = (scr: pxt.github.GitRepo) => {

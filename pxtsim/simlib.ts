@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/bluebird/index.d.ts"/>
-
 namespace pxsim {
     export type BoardPin = string;
     export interface BBLoc {

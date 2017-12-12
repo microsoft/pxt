@@ -1,5 +1,3 @@
-/// <reference path="../../typings/globals/react/index.d.ts" />
-/// <reference path="../../typings/globals/react-dom/index.d.ts" />
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
@@ -17,7 +15,6 @@ export interface GenericBannerProps extends ISettingsProps {
     displayTime?: number; //milliseconds - duration of banner display
     sleepTime?: number; //seconds - time to hide banner after it is dismissed
     bannerType?: string;
-    children?: React.ReactChild;
     ref?: any;
 }
 

@@ -155,7 +155,7 @@ export class ProjectView
                 pxt.debug('workspace changed, reloading...')
                 let id = this.state.header ? this.state.header.id : '';
                 workspace.initAsync()
-                    .done(() => !this.state.home && id ? this.loadHeaderAsync(workspace.getHeader(id)) : Promise.resolve());
+                    .done(() => !this.state.home && id ? this.loadHeaderAsync(workspace.getHeader(id), this.state.editorState) : Promise.resolve());
             } else if (this.state.resumeOnVisibility && !this.state.running) {
                 this.setState({ resumeOnVisibility: false });
                 this.runSimulator();
@@ -444,11 +444,11 @@ export class ProjectView
     private updatingEditorFile = false;
     private updateEditorFile(editorOverride: srceditor.Editor = null) {
         if (!this.state.active)
-            return;
+            return undefined;
         if (this.state.currFile == this.editorFile && !editorOverride)
-            return;
+            return undefined;
         if (this.updatingEditorFile)
-            return;
+            return undefined;
         this.updatingEditorFile = true;
         this.saveSettings();
 
@@ -899,6 +899,7 @@ export class ProjectView
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
         this.setState({ home: true });
+        this.allEditors.forEach(e => e.setVisible(false));
         this.homeLoaded();
     }
 
@@ -1094,7 +1095,7 @@ export class ProjectView
     }
 
     saveAndCompile() {
-        if (!this.state.header) return;
+        if (!this.state.header) return undefined;
         this.setState({ isSaving: true });
 
         return (this.state.projectName !== lf("Untitled")
@@ -1415,7 +1416,7 @@ export class ProjectView
         }).done(res => {
             if (res) {
                 pxt.tickEvent("app.reportabuse.send");
-                const id = pxt.Cloud.parseScriptId(urlInput.val());
+                const id = pxt.Cloud.parseScriptId(urlInput.val() as string);
                 if (!id) {
                     core.errorNotification(lf("Sorry, the project url looks invalid."));
                 } else {
@@ -1694,7 +1695,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const highContrastOn = !this.state.highContrast;
         pxt.tickEvent("app.highcontrast", { on: highContrastOn ? 1 : 0 });
         this.setState({ highContrast: highContrastOn }, () => this.restartSimulator());
-        core.highContrast = highContrastOn;
+        core.setHighContrast(highContrastOn);
         if (this.editor && this.editor.isReady) {
             this.editor.setHighContrast(highContrastOn);
         }
@@ -2283,10 +2284,10 @@ $(document).ready(() => {
                 lang.setCookieLang(mlang[2]);
                 pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
             }
-            const useLang = mlang ? mlang[2] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+            const useLang = mlang ? mlang[2] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
             if (useLang) pxt.tickEvent("locale." + useLang + (live ? ".live" : ""));
-            lang.initialLang = useLang;
+            lang.setInitialLang(useLang);
             return Util.updateLocalizationAsync(
                 pxt.appTarget.id,
                 false,
@@ -2305,7 +2306,7 @@ $(document).ready(() => {
                     live
                 )).then((simStrings) => {
                     if (simStrings)
-                        simulator.simTranslations = simStrings;
+                        simulator.setTranslations(simStrings);
                 });
         })
         .then(() => pxt.BrowserUtils.initTheme())

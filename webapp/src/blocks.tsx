@@ -1,5 +1,4 @@
 /// <reference path="../../localtypings/pxtblockly.d.ts" />
-/// <reference path="../../typings/globals/jquery/index.d.ts" />
 
 import * as React from "react";
 import * as pkg from "./package";
@@ -44,7 +43,10 @@ export class Editor extends srceditor.Editor {
             // Fire a resize event since the toolbox may have changed width and height.
             this.parent.fireResize();
         }
-        else $(classes).hide();
+        else {
+            $(classes).hide();
+            Blockly.hideChaff();
+        }
     }
 
     saveToTypeScript(): Promise<string> {
@@ -708,7 +710,7 @@ export class Editor extends srceditor.Editor {
         const toolbox = showCategories !== CategoryMode.None ?
             document.getElementById('blocklyToolboxDefinitionCategory')
             : document.getElementById('blocklyToolboxDefinitionFlyout');
-        const blocklyOptions: Blockly.ExtendedOptions = {
+        const blocklyOptions: Blockly.Options = {
             toolbox: readOnly ? undefined : toolbox,
             scrollbars: true,
             media: pxt.webConfig.commitCdnUrl + "blockly/media/",

@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/node/index.d.ts"/>
-
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
@@ -253,7 +251,7 @@ function getCachedHexAsync(sha: string): Promise<any> {
 }
 
 function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<any> {
-    const opts: pxt.Map<string> = querystring.parse(url.parse(req.url).query)
+    const opts: pxt.Map<string | string[]> = querystring.parse(url.parse(req.url).query)
     const innerPath = elts.slice(2).join("/").replace(/^\//, "")
     const filename = path.resolve(path.join(userProjectsDir, innerPath))
     const meth = req.method.toUpperCase()

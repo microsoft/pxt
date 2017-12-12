@@ -25,6 +25,10 @@ let dirty = false;
 
 let $debugger: JQuery;
 
+export function setTranslations(translations: pxt.Map<string>) {
+    simTranslations = translations;
+}
+
 export function init(root: HTMLElement, cfg: SimulatorConfig) {
     $(root).html(
         `

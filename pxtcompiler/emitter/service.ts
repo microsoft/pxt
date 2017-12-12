@@ -1,5 +1,3 @@
-/// <reference path="../../typings/globals/fusejs/index.d.ts" />
-
 namespace ts.pxtc {
 
     export const placeholderChar = "◊";
@@ -120,7 +118,7 @@ namespace ts.pxtc {
             if (stripParams) {
                 t = t.getCallSignatures()[0].getReturnType()
             }
-            return typechecker.typeToString(t, null, TypeFormatFlags.UseFullyQualifiedType)
+            return typechecker.typeToString(t, undefined, TypeFormatFlags.UseFullyQualifiedType)
         }
 
         let kind = getSymbolKind(stmt)
@@ -166,7 +164,7 @@ namespace ts.pxtc {
                 pkg,
                 extendsTypes,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
-                parameters: !hasParams ? null : (decl.parameters as ParameterDeclaration[] || []).map((p, i) => {
+                parameters: !hasParams ? null : (Util.toArray(decl.parameters)).map((p, i) => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
                     let minVal = attributes.paramMin && attributes.paramMin[n];
@@ -192,9 +190,9 @@ namespace ts.pxtc {
                             });
                         }
                     }
-                    let options: Map<PropertyOption> = {};
+                    let options: pxt.Map<PropertyOption> = {};
                     const paramType = typechecker.getTypeAtLocation(p);
-                    let isEnum = paramType && !!(paramType.flags & TypeFlags.Enum);
+                    let isEnum = paramType && !!(paramType.flags & (TypeFlags.Enum | TypeFlags.EnumLiteral));
 
                     if (attributes.block && attributes.paramShadowOptions) {
                         const argNames: string[] = []
@@ -396,11 +394,11 @@ namespace ts.pxtc {
         }
 
         // transitive closure of inheritance
-        let closed: Map<boolean> = {}
+        let closed: pxt.Map<boolean> = {}
         let closeSi = (si: SymbolInfo) => {
             if (U.lookup(closed, si.qName)) return;
             closed[si.qName] = true
-            let mine: Map<boolean> = {}
+            let mine: pxt.Map<boolean> = {}
             mine[si.qName] = true
             for (let e of si.extendsTypes || []) {
                 mine[e] = true
@@ -527,10 +525,10 @@ namespace ts.pxtc.service {
     let lastApiInfo: ApisInfo;
     let lastBlocksInfo: BlocksInfo;
     let lastLocBlocksInfo: BlocksInfo;
-    let lastFuse: Fuse;
+    let lastFuse: Fuse<SearchInfo>;
     let builtinItems: SearchInfo[];
     let blockDefinitions: pxt.Map<pxt.blocks.BlockDefinition>;
-    let tbSubset: Map<boolean>;
+    let tbSubset: pxt.Map<boolean>;
 
     function fileDiags(fn: string) {
         if (!/\.ts$/.test(fn))
@@ -622,7 +620,7 @@ namespace ts.pxtc.service {
         allDiags: () => {
             let global = service.getCompilerOptionsDiagnostics() || []
             let byFile = host.getScriptFileNames().map(fileDiags)
-            let allD = global.concat(Util.concat(byFile))
+            let allD: ReadonlyArray<Diagnostic> = global.concat(Util.concat(byFile))
 
             if (allD.length == 0) {
                 let res: CompileResult = {
@@ -631,7 +629,7 @@ namespace ts.pxtc.service {
                     success: true,
                     times: {}
                 }
-                const binOutput = compileBinary(service.getProgram(), null, host.opts, res);
+                const binOutput = compileBinary(service.getProgram(), null, host.opts, res, "main.ts");
                 allD = binOutput.diagnostics
             }
 
@@ -648,7 +646,7 @@ namespace ts.pxtc.service {
             lastFuse = undefined;
             return lastApiInfo = getApiInfo(host.opts, service.getProgram());
         },
-        blocksInfo: blocksInfoOp,
+        blocksInfo: v => blocksInfoOp(v as any),
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
@@ -659,9 +657,9 @@ namespace ts.pxtc.service {
             }
 
             // Computes the preferred tooltip or block text to use for search (used for blocks that have multiple tooltips or block texts)
-            const computeSearchProperty = (tooltipOrBlock: string | Map<string>, preferredSearch: string, blockDef: pxt.blocks.BlockDefinition): string => {
+            const computeSearchProperty = (tooltipOrBlock: string | pxt.Map<string>, preferredSearch: string, blockDef: pxt.blocks.BlockDefinition): string => {
                 if (!tooltipOrBlock) {
-                    return;
+                    return undefined;
                 }
                 if (typeof tooltipOrBlock === "string") {
                     // There is only one tooltip or block text; use it
@@ -672,7 +670,7 @@ namespace ts.pxtc.service {
                     return (<any>tooltipOrBlock)[preferredSearch];
                 }
                 // The block definition does not specify which tooltip or block text to use for search; join all values with a space
-                return Object.keys(tooltipOrBlock).map(k => (<Map<string>>tooltipOrBlock)[k]).join(" ");
+                return Object.keys(tooltipOrBlock).map(k => (<pxt.Map<string>>tooltipOrBlock)[k]).join(" ");
             };
 
             if (!builtinItems) {
@@ -687,7 +685,7 @@ namespace ts.pxtc.service {
                             opValues.forEach(v => builtinItems.push({
                                 id,
                                 name: blockDef.name,
-                                jsdoc: typeof blockDef.tooltip === "string" ? <string>blockDef.tooltip : (<Map<string>>blockDef.tooltip)[v],
+                                jsdoc: typeof blockDef.tooltip === "string" ? <string>blockDef.tooltip : (<pxt.Map<string>>blockDef.tooltip)[v],
                                 block: v,
                                 field: [op, v]
                             }));
@@ -852,7 +850,7 @@ namespace ts.pxtc.service {
                                     }
                                 }
                                 return `0`;
-                            } else if (type.flags & ts.TypeFlags.Number) {
+                            } else if (type.flags & (ts.TypeFlags.Number | ts.TypeFlags.NumberLiteral)) {
                                 return `0`;
                             }
                         }
@@ -869,7 +867,7 @@ namespace ts.pxtc.service {
 
             const type = checker ? checker.getTypeAtLocation(param) : undefined;
             if (type) {
-                if (type.flags & ts.TypeFlags.Anonymous) {
+                if (isObjectType(type) && type.objectFlags & ts.ObjectFlags.Anonymous) {
                     const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
                     if (sigs.length) {
                         return getFunctionString(sigs[0]);
@@ -897,7 +895,7 @@ namespace ts.pxtc.service {
                 returnValue = "return 0;";
             else if (returnType.flags & ts.TypeFlags.StringLike)
                 returnValue = "return \"\";";
-            else if (returnType.flags & ts.TypeFlags.Boolean)
+            else if (returnType.flags & (ts.TypeFlags.Boolean | ts.TypeFlags.BooleanLiteral))
                 returnValue = "return false;";
 
             let displayPartsStr = ts.displayPartsToString(displayParts);
