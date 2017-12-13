@@ -290,7 +290,7 @@ declare namespace Math {
      * Returns a pseudorandom number between 0 and 1.
      */
     //% shim=Math_::random
-    //% helpUrl="/reference/math/random"
+    //% help=math/random
     function random(): number;
 
     /**
@@ -300,7 +300,7 @@ declare namespace Math {
      * @param max the upper inclusive bound, eg: 10
      */
     //% blockId="device_random" block="pick random %min|to %limit"
-    //% helpUrl="/reference/math/random-range"
+    //% help=math/random-range
     //% shim=Math_::randomRange
     function randomRange(min: number, max: number): number;
 
