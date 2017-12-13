@@ -62,6 +62,8 @@ that brings your API to life in the web browser;
 
 * Deploy your MakeCode web app and test with your customers.
 
+* Fill up the project ``README`` file with link to the live editor, a screenshot, final report, build information and licensing information.
+
 # Week 1: Getting started with MakeCode
 
 1. Get a [GitHub](https://www.github.com) account, if you don't already have one;
