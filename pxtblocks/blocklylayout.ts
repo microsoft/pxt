@@ -133,6 +133,12 @@ namespace pxt.blocks.layout {
         return blocklyToSvgAsync(sg, bbox.x, bbox.y, bbox.width, bbox.height);
     }
 
+    export function serializeNode(sg: Node): string {
+        const xmlString = new XMLSerializer().serializeToString(sg)
+            .replace('&nbsp;', '&#160;'); // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml     
+        return xmlString;
+    }
+
     export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number): Promise<{
         width: number; height: number; svg: string; xml: string;
     }> {
@@ -143,8 +149,7 @@ namespace pxt.blocks.layout {
         sg.removeAttribute("height");
         sg.removeAttribute("transform");
 
-        const xmlString = new XMLSerializer().serializeToString(sg)
-            .replace('&nbsp;', '&#160;') // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml 
+        const xmlString = serializeNode(sg)
             .replace(/^\s*<svg[^>]+>/i, '')
             .replace(/<\/svg>\s*$/i, '') // strip out svg tag
         const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}">${xmlString}</svg>`;
@@ -158,9 +163,15 @@ namespace pxt.blocks.layout {
                 cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
                 xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 
+                // images need to be preloaded
                 return expandImagesAsync(xsg)
                     .then(() => {
-                        return { width: width, height: height, svg: new XMLSerializer().serializeToString(xsg), xml: documentToSvg(xsg) };
+                        return {
+                            width: width,
+                            height: height,
+                            svg: serializeNode(xsg),
+                            xml: documentToSvg(xsg)
+                        };
                     });
             })
     }
