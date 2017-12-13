@@ -139,11 +139,13 @@ namespace pxt.blocks.layout {
         return xmlString;
     }
 
-    export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number): Promise<{
-        width: number; height: number; svg: string; xml: string;
-    }> {
+    export interface BlockSvg {
+        width: number; height: number; svg: string; xml: string; css: string;
+    }
+
+    export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number): Promise<BlockSvg> {
         if (!sg.childNodes[0])
-            return Promise.resolve<{ width: number; height: number; svg: string; xml: string; }>(undefined);
+            return Promise.resolve<{ width: number; height: number; svg: string; xml: string; css: string; }>(undefined);
 
         sg.removeAttribute("width");
         sg.removeAttribute("height");
@@ -160,17 +162,19 @@ namespace pxt.blocks.layout {
             .then((customCss) => {
 
                 // CSS may contain <, > which need to be stored in CDATA section
-                cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
+                const cssString = (Blockly as any).Css.CONTENT.join('') + '\r\n' + customCss + '\r\n';
+                cssLink.appendChild(xsg.createCDATASection(cssString));
                 xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 
                 // images need to be preloaded
                 return expandImagesAsync(xsg)
                     .then(() => {
-                        return {
+                        return <BlockSvg>{
                             width: width,
                             height: height,
-                            svg: serializeNode(xsg),
-                            xml: documentToSvg(xsg)
+                            svg: serializeNode(xsg).replace('<style xmlns="http://www.w3.org/1999/xhtml">', '<style>'),
+                            xml: documentToSvg(xsg),
+                            css: cssString
                         };
                     });
             })
