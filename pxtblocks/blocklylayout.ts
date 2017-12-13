@@ -143,25 +143,25 @@ namespace pxt.blocks.layout {
         sg.removeAttribute("height");
         sg.removeAttribute("transform");
 
-        let xmlString = new XMLSerializer().serializeToString(sg);
-        xmlString = xmlString.replace('&nbsp;', '&#160;'); // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml 
-        const xsg = new DOMParser().parseFromString(
-            `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}">
-            ${xmlString}
-            </svg>`, "image/svg+xml");
+        const xmlString = new XMLSerializer().serializeToString(sg)
+            .replace('&nbsp;', '&#160;') // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml 
+            .replace(/^\s*<svg[^>]+>/i, '')
+            .replace(/<\/svg>\s*$/i, '') // strip out svg tag
+        const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}">${xmlString}</svg>`;
+        const xsg = new DOMParser().parseFromString(svgXml, "image/svg+xml");
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
         const customCssHref = (document.getElementById("blocklycss") as HTMLLinkElement).href;
         return pxt.BrowserUtils.loadAjaxAsync(customCssHref)
             .then((customCss) => {
 
-            // CSS may contain <, > which need to be stored in CDATA section
-            cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
-            xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
+                // CSS may contain <, > which need to be stored in CDATA section
+                cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
+                xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 
-            return expandImagesAsync(xsg)
-                .then(() => {
-                    return { width: width, height: height, svg: new XMLSerializer().serializeToString(xsg), xml: documentToSvg(xsg) };
-                });
+                return expandImagesAsync(xsg)
+                    .then(() => {
+                        return { width: width, height: height, svg: new XMLSerializer().serializeToString(xsg), xml: documentToSvg(xsg) };
+                    });
             })
     }
 
