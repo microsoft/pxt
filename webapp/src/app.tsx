@@ -88,6 +88,8 @@ class CloudSyncButton extends data.Component<ISettingsProps, {}> {
     }
 }*/
 
+let savedState = {highContrast: false};
+
 export class ProjectView
     extends data.Component<IAppProps, IAppState>
     implements IProjectView {
@@ -123,7 +125,8 @@ export class ProjectView
             showFiles: false,
             home: shouldShowHomeScreen,
             active: document.visibilityState == 'visible',
-            collapseEditorTools: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile()
+            collapseEditorTools: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile(),
+            highContrast: savedState.highContrast
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -435,6 +438,11 @@ export class ProjectView
         if (pxt.appTarget.appTheme.allowParentController || pxt.appTarget.appTheme.allowPackageExtensions || pxt.appTarget.appTheme.allowSimulatorTelemetry)
             pxt.editor.bindEditorMessages(this);
         this.forceUpdate(); // we now have editors prepared
+        this.set
+    }
+
+    public componentWillUnmount() {
+        savedState.highContrast = this.state.highContrast;
     }
 
     private pickEditorFor(f: pkg.File): srceditor.Editor {
