@@ -19,8 +19,8 @@ let not = !true;
 The next six blocks represent comparison operators that yield a Boolean value. Most comparisons you will do involve [numbers](/types/number):
 
 ```block
-let equality = 42 == 0;
-let inequality = 42 != 0;
+let equality = 42 == 42;
+let inequality = 42 != 42;
 let lowerThan = 42 < 0;
 let greaterThan = 42 > 0;
 let lowerOrEqualThan =42 <= 0;
