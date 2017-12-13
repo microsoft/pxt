@@ -223,7 +223,9 @@ _numops_${op}:
     bl numops::${op}
     movs r4, r0
     pop {r0}
+    ${this.stackAligned() ? "push {r0} ; align" : ""}
     bl _pxt_decr
+    ${this.stackAligned() ? "pop {r0} ; unalign" : ""}
     pop {r0}
     bl _pxt_decr
     movs r0, r4
@@ -299,7 +301,9 @@ _cmp_${op}:
     bl numops::toBoolDecr
     movs r4, r0
     pop {r0}
+    ${this.stackAligned() ? "push {r0} ; align" : ""}
     bl _pxt_decr
+    ${this.stackAligned() ? "pop {r0} ; unalign" : ""}
     pop {r0}
     bl _pxt_decr
     movs r0, r4
