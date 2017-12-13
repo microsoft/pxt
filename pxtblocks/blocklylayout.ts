@@ -145,7 +145,7 @@ namespace pxt.blocks.layout {
 
     export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number): Promise<BlockSvg> {
         if (!sg.childNodes[0])
-            return Promise.resolve<{ width: number; height: number; svg: string; xml: string; css: string; }>(undefined);
+            return Promise.resolve<BlockSvg>(undefined);
 
         sg.removeAttribute("width");
         sg.removeAttribute("height");
