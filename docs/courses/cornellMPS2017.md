@@ -26,11 +26,9 @@ the project (each student may wear multiple hats):
 * The *specialist* provides knowledge about the domain that the editor is addressing:
 the specialist represents the customer of the editor and does not need to have any 
 programming background.
-
 * The *designer* interviews the specialist, models the editing experience, 
 designs the programming interface and conducts user research and interviews 
 to validate the design. The designer does not need to have any programming background.
-
 * The *developer* implements the design in code using the MakeCode framework: 
 a programming background and familiarity with HTML, CSS and JavaScript is very helpful.
 
@@ -38,31 +36,31 @@ a programming background and familiarity with HTML, CSS and JavaScript is very h
 
 * Familiarize yourself with MakeCode and the tools/languages that it uses (more details on this in
   the next section);
-
 * Decide on a domain of interest and what you want users to be able to achieve within
     that domain.  or example, if the domain is traffic flow, the goal might be to allow the users
     to explore how different strategies for controlling traffic lights affect the traffic flow 
     through a network of streets and intersections; (1 week)
-
 * Find and evaluate an open source JavaScript library that aligns with your domain/interests (1-2 weeks); this
     is critically important - you will not have time to create the supporting you need from scratch;
     you should be prepared to run into some dead ends here and have to try again (1-2 weeks).  You may
     need more than one JavaScript library, depending on your domain and goals;
-
 * Describe a simplified Application Programming Interface (API) for this library/service 
   using TypeScript (www.typescriptlang.org); this is another important step: your end
   users' likely are not JavaScript programmers, but it is likely that the JavaScript library
   you use was developed with professional JavaScript developers in mind (2-3 weeks)
-
 * Configure a new MakeCode editor to surface your API as visual blocks;
-
 * Simulator visual design and linking to the above library. 
 Write code linking your API to the JavaScript library to provide a simulator
 that brings your API to life in the web browser;
-
 * Deploy your MakeCode web app and test with your customers.
 
-* Fill up the project ``README`` file with link to the live editor, a screenshot, final report, build information and licensing information.
+## Deliverables
+
+The result of this project is:
+* a public GitHub repo with the sources of your MakeCode editor (web app)
+* the web app (live editor) available via GitHub pages;
+* a final report (mark down) about the project;
+* the project ``README`` file with link to the live editor, a screenshot, final report, how-to-build information and licensing information.
 
 # Week 1: Getting started with MakeCode
 
