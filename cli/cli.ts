@@ -28,6 +28,7 @@ const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf')
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
+let prjsExtraDependencies: pxt.Map<string> = undefined;
 
 const p = new commandParser.CommandParser();
 
@@ -1084,6 +1085,10 @@ function readLocalPxTarget() {
     }
     nodeutil.setTargetDir(process.cwd())
     let cfg: pxt.TargetBundle = readJson("pxtarget.json")
+    if (prjsExtraDependencies && cfg.blocksprj) {
+        pxt.log(`injecting dependencies ${Object.keys(prjsExtraDependencies).join(', ')}`)
+        pxt.Util.jsonMergeFrom(cfg.blocksprj.config.dependencies, prjsExtraDependencies);
+    }
     return cfg
 }
 
@@ -1716,7 +1721,7 @@ function pxtCrowdinBranch(): string {
 }
 
 function targetCrowdinBranch(): string {
-    const theme = readJson("pxtarget.json").appTheme;
+    const theme = readLocalPxTarget().appTheme;
     return theme ? theme.crowdinBranch : undefined;
 }
 
@@ -1856,13 +1861,20 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
         //Specifically when the target is being used as a library
         let targetDepLoc = nodeutil.targetDir
         if (fs.existsSync(path.join(targetDepLoc, "pxtarget.json"))) {
-            console.log(`Going to ${targetDepLoc}`)
+            if (fs.existsSync("pxt.json")) {
+                const pxtJson = readJson("pxt.json") as pxt.PackageConfig;
+                // since we are testing a a library, we also update pxtarget.json to include a dependencies to the current library
+                prjsExtraDependencies = {}
+                prjsExtraDependencies[pxtJson.name] = "file:../" + path.basename(process.cwd());
+                pxt.log(`Extra dependencies: ${JSON.stringify(prjsExtraDependencies, null, 2)}`)
+            }
+            pxt.log(`Going to ${targetDepLoc}`)
             process.chdir(targetDepLoc)
         }
         else {
             let upper = path.join(__dirname, "../../..")
             if (fs.existsSync(path.join(upper, "pxtarget.json"))) {
-                console.log("going to " + upper)
+                pxt.log("going to " + upper)
                 process.chdir(upper)
             } else {
                 U.userError("Cannot find pxtarget.json to serve.")
@@ -2226,6 +2238,7 @@ node_modules
 yotta_modules
 yotta_targets
 pxt_modules
+projects
 *.db
 *.tgz
 `,
