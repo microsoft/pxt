@@ -269,7 +269,7 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button title={lf("Export data")} class="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => this.downloadCSV()}>
+                        <sui.Button title={lf("Export data")} class="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => this.showExportDialog()}>
                             <sui.Icon icon="download" />
                         </sui.Button>
                         <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
@@ -283,6 +283,161 @@ export class Editor extends srceditor.Editor {
     }
 
     domUpdate() {
+    }
+
+    private STREAM_INTERVAL = 30000;
+    private stream: pxt.streams.JsonStream;
+    private lastStreamUploadTime = 0;
+    private streamUploadTimeout: any = 0;
+
+    private cancelStreamData() {
+        if (this.streamUploadTimeout) {
+            clearTimeout(this.streamUploadTimeout);
+            this.streamUploadTimeout = 0;
+        }
+    }
+
+    private scheduleStreamData() {
+        this.cancelStreamData();
+        let towait = Math.max(100, this.STREAM_INTERVAL - (Util.now() - this.lastStreamUploadTime));
+        this.streamUploadTimeout = setTimeout(() => this.streamData(), towait);
+    }
+
+    private streamData() {
+        if (!this.stream) {
+            if (this.streamUploadTimeout) {
+                clearTimeout(this.streamUploadTimeout);
+                this.streamUploadTimeout = 0;
+            }
+            return;
+        }
+
+        if (!pxt.Cloud.isOnline()) {
+            this.scheduleStreamData();
+            return;
+        }
+
+        pxt.debug('streaming payload...')
+        let data = this.streamPayload(this.lastStreamUploadTime);
+        this.lastStreamUploadTime = Util.now();
+
+        if (!data) {
+            this.scheduleStreamData();
+            return;
+        }
+
+        pxt.streams.postPayloadAsync(this.stream, data)
+            .catch(e => {
+                core.warningNotification(lf("Oops, we could not upload your data..."));
+                this.scheduleStreamData();
+            }).done(() => this.scheduleStreamData());
+    }
+
+    streamPayload(startTime: number): { fields: string[]; values: number[][]; } {
+        const fields: pxt.Map<number> = { "timestamp": 1, "partition": 1 };
+        const rows: number[][] = [];
+
+        function entryVariable(e: Chart): string {
+            return /^\s*$/.test(e.variable) ? 'data' : e.variable
+        }
+
+        for(const chart of this.charts) {
+            let n = entryVariable(e);
+            if (!fields[n]) fields[n] = 1;
+        }
+
+        // collapse data and fill values		
+        let fs = Object.keys(fields);
+        this.charts.forEach(e => {
+            let n = entryVariable(e);
+            let ei = fs.indexOf(n);
+            Object.keys(e.lines, kl => {
+                const line = e.lines[kl];
+                line.data.
+                .filter(v => v[0] >= startTime)
+                .forEach(v => {
+                    let row = [v[0], 0];
+                    for (let i = 2; i < fs.length; ++i)
+                        row.push(i == ei ? v.v : null);
+                    rows.push(row);
+                })
+            });
+        })
+
+        return { fields: fs, values: rows };
+    }
+
+    setStream(stream: pxt.streams.JsonStream) {
+        this.stream = stream;
+    }
+
+    showExportDialog() {
+        const targetTheme = pxt.appTarget.appTheme;
+        const streaming = pxt.appTarget.simulator && !!pxt.appTarget.simulator.streams;
+        if (!streaming) {
+            this.downloadCSV();
+            return;
+        }
+
+        let rootUrl = targetTheme.embedUrl
+
+        if (!/\/$/.test(rootUrl)) rootUrl += '/';
+        let streamUrl = this.stream ? rootUrl + this.stream.id : undefined;
+
+        core.confirmAsync({
+            logos: streaming ? ["https://az851932.vo.msecnd.net/pub/hjlxsmaf"] : undefined, // azure logo
+            header: lf("Analyze Data"),
+            hideAgree: true,
+            disagreeLbl: lf("Close"),
+            onLoaded: (_) => {
+                _.find('#datasavelocalfile').click(() => {
+                    _.modal('hide');
+                    this.downloadCSV();
+                }),
+                    _.find('#datastreamstart').click(() => {
+                        _.modal('hide');
+                    })
+                _.find('#datastreamstop').click(() => {
+                    _.modal('hide');
+                    this.setStream(null);
+                })
+            },
+            htmlBody: `
+<div class="ui cards" role="listbox">
+    <div class="ui card">
+        <div class="content">
+            <div class="header">${lf("Local File")}</div>
+            <div class="description">
+                ${lf("Save the data to your 'Downloads' folder.")}
+            </div>
+        </div>
+        <div id="datasavelocalfile" class="ui bottom attached button">
+            <i class="download icon"></i>
+            ${lf("Download data")}
+        </div>        
+    </div>
+    ${streaming ?
+                    `<div id="datastreamcard" class="ui card">
+        <div class="content">
+            <div class="header">${lf("Stream to Cloud")}</div>
+            <div class="description">
+                ${ streamUrl ? lf("We are uploading your data to Microsoft Azure every minute.")
+                        : lf("Upload your data to Microsoft Azure to analyze it.")}
+            </div>
+        </div>
+        ${streamUrl ?
+                        `<div id="datastream" class="ui bottom attached two buttons">
+        <a target="_blank" href="${streamUrl}" class="ui green button">Open</a>
+        <div id="datastreamstop" class="ui button">Stop</div>
+            </div>` :
+                        `<div id="datastreamstart" class="ui bottom attached green button">
+                <i class="play icon"></i>
+                ${lf("Start")}
+                </div>`
+                    }
+  </div>` : ``}
+</div>`
+        }).done();
     }
 }
 
