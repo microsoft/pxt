@@ -311,6 +311,7 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     }
     else if (cmd == "GET config" && pxt.appTarget.id + "/targetconfig" == innerPath) {
         // target config
+        if (!fs.existsSync("targetconfig.json")) return Promise.resolve({});
         return readFileAsync("targetconfig.json").then(buf => JSON.parse(buf.toString("utf8")));
     }
     else throw throwError(400, `unknown command ${cmd.slice(0, 140)}`)
