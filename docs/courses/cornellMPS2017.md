@@ -62,7 +62,7 @@ The result of this project is:
 * a final report (mark down) about the project;
 * the project ``README`` file with link to the live editor, a screenshot, final report, how-to-build information and licensing information.
 
-# Week 1: Getting started with MakeCode
+# Getting started with MakeCode
 
 1. Get a [GitHub](https://www.github.com) account, if you don't already have one;
 2. Download and install a git client or [GitHub client](https://desktop.github.com); 
@@ -79,19 +79,40 @@ most important to least important for the project:
 * VS Code;
 * node.js.
 
-# Week 2
-
-## Set up a GitHut repository per project
+# Set up a GitHut repository per project
 
 All your project's code and documentation should be in the repo. You can start
 the repo by copying over the structure and files of the [microsoft/pxt-sample](https://github.com/microsoft/pxt-sample).
 Use GitHub's issue tracking to discuss (on a topic-by-topic basis) and track main issues. 
 
-## Get a team communication client (like Slack or Microsoft Teams)
+# Get a team communication client 
 
-For real-time communication, you'll want something other than GitHub. 
+For real-time communication, you'll want something other than GitHub,
+like Slack or [Microsoft Teams](https://products.office.com/microsoft-teams/).
 
-## Pointers on TypeScript
+# Choosing your domain
+
+TBD
+
+# Reusing JavaScript libraries
+
+TBD
+
+# Simplifying APIs
+
+TBD
+
+# TypeScript APIs
+
+TBD
+
+# Incorporating into Simulator
+
+# From TypeScript to Blocks
+
+TBD
+
+# Pointers on TypeScript
 
 MakeCode is written in [TypeScript](https://typescriptlang.org/), and uses TypeScript to describe JavaScript APIs, 
 but you don't need to know everything about TypeScript (or JavaScript, for that matter)
