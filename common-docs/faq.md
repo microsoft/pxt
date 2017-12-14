@@ -12,4 +12,4 @@ This is the list of domains that need to be unblocked to allow the web editor to
 * https://trg-@targetid@.userpxt.io
 * https://pxt.azureedge.net
 
-Can't find your question? Pleae see our [support](/support) page.
+Can't find your question? Please see our [support](/support) page.
