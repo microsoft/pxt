@@ -501,7 +501,7 @@ function buildFinalCsAsync(res: ts.pxtc.CompileResult) {
 }
 
 function getCSharpCommand() {
-    return process.platform == "win32" ? "mcs.bat" : "mcs" ;
+    return process.platform == "win32" ? "mcs.bat" : "mcs";
 }
 
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
