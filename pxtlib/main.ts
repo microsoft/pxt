@@ -235,6 +235,6 @@ namespace pxt {
     }
 
     export function isOutputText(trg: CompileTarget = null) {
-        return outputName(trg) == ts.pxtc.BINARY_HEX
+        return outputName(trg) == ts.pxtc.BINARY_HEX || outputName(trg) == ts.pxtc.BINARY_CS
     }
 }
