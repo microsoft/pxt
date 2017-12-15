@@ -90,7 +90,7 @@ export const buildEngines: Map<BuildEngine> = {
 
     cs: {
         updateEngineAsync: noopAsync,
-        buildAsync: () => runBuildCmdAsync("mcs", "-t:library", "-out:pxtapp.dll", "lib.cs"),
+        buildAsync: () => runBuildCmdAsync(getCSharpCommand(), "-t:library", "-out:pxtapp.dll", "lib.cs"),
         setPlatformAsync: noopAsync,
         patchHexInfo: patchCSharpDll,
         prepBuildDirAsync: noopAsync,
@@ -494,10 +494,14 @@ const readDirAsync = Promise.promisify(fs.readdir)
 
 function buildFinalCsAsync(res: ts.pxtc.CompileResult) {
     return nodeutil.spawnAsync({
-        cmd: "mcs",
+        cmd: getCSharpCommand(),
         args: ["-out:pxtapp.exe", "binary.cs"],
         cwd: "built",
     })
+}
+
+function getCSharpCommand() {
+    return process.platform == "win32" ? "mcs.bat" : "mcs" ;
 }
 
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
