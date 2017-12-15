@@ -15,10 +15,9 @@ const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
     savedMessageQueue: MessageEvent[] = []
-    maxSavedMessages: number = 500
+    maxSavedMessages: number = 10
     charts: Chart[] = []
     chartIdx: number = 0
-    sourceMap: pxt.Map<string> = {}
     consoleBuffer: string = ""
     isSim: boolean = true
     maxConsoleLineLength: number = 255
@@ -58,6 +57,7 @@ export class Editor extends srceditor.Editor {
         }
         else {
             this.pauseRecording()
+            this.clear()
         }
     }
 
@@ -78,8 +78,10 @@ export class Editor extends srceditor.Editor {
     }
 
     setSim(b: boolean) {
-        this.isSim = b
-        this.clear()
+        if (this.isSim != b) {
+            this.isSim = b
+            this.clear()
+        }
     }
 
     constructor(public parent: pxt.editor.IProjectView) {
@@ -119,20 +121,13 @@ export class Editor extends srceditor.Editor {
         if (sim != this.isSim) return;
 
         const data = smsg.data || ""
-        const source = smsg.id || "?"
-
-        if (!this.sourceMap[source]) {
-            let sourceIdx = Object.keys(this.sourceMap).length + 1
-            this.sourceMap[source] = lf("source") + sourceIdx.toString()
-        }
-        let niceSource = this.sourceMap[source]
 
         const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
         if (m) {
             const variable = m[2] || '';
             const nvalue = parseFloat(m[3]);
             if (!isNaN(nvalue)) {
-                this.appendGraphEntry(niceSource, variable, nvalue)
+                this.appendGraphEntry(variable, nvalue)
                 return;
             }
         }
@@ -140,19 +135,19 @@ export class Editor extends srceditor.Editor {
         this.appendConsoleEntry(data)
     }
 
-    appendGraphEntry(source: string, variable: string, nvalue: number) {
+    appendGraphEntry(variable: string, nvalue: number) {
         //See if there is a "home chart" that this point belongs to -
         //if not, create a new chart
         let homeChart: Chart = undefined
         for (let i = 0; i < this.charts.length; ++i) {
             let chart = this.charts[i]
-            if (chart.shouldContain(source, variable)) {
+            if (chart.shouldContain(variable)) {
                 homeChart = chart
                 break
             }
         }
         if (!homeChart) {
-            homeChart = new Chart(source, variable, this.chartIdx, this.currentLineColors)
+            homeChart = new Chart(variable, this.chartIdx, this.currentLineColors)
             this.chartIdx++;
             this.charts.push(homeChart)
             this.chartRoot.appendChild(homeChart.getElement());
@@ -256,12 +251,13 @@ export class Editor extends srceditor.Editor {
         }
         this.charts = []
         this.consoleBuffer = ""
+        this.savedMessageQueue = []
     }
 
     downloadCSV() {
         const sep = lf("{id:csvseparator}\t");
         const lines: { name: string; line: TimeSeries; }[] = [];
-        this.charts.forEach(chart => Object.keys(chart.lines).forEach(k => lines.push({ name: `${k} (${chart.source})`, line: chart.lines[k] })));
+        this.charts.forEach(chart => Object.keys(chart.lines).forEach(k => lines.push({ name: `${k}`, line: chart.lines[k] })));
         let csv = lines.map(line => `time (s)${sep} ${line.name}`).join(sep + ' ') + '\r\n';
 
         const datas = lines.map(line => line.line.data);
@@ -344,13 +340,12 @@ class Chart {
     canvas: HTMLCanvasElement;
     label: HTMLDivElement;
     lines: pxt.Map<TimeSeries> = {};
-    source: string;
     variable: string;
     chart: SmoothieChart;
     isStale: boolean = false;
     lastUpdatedTime: number = 0;
 
-    constructor(source: string, variable: string, chartIdx: number, lineColors: string[]) {
+    constructor(variable: string, chartIdx: number, lineColors: string[]) {
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme
         // Initialize chart
         const chartConfig: IChartOptions = {
@@ -376,7 +371,6 @@ class Chart {
         this.chartIdx = chartIdx;
         this.chart = new SmoothieChart(chartConfig);
         this.rootElement.className = "ui segment";
-        this.source = source;
         this.variable = variable.replace(/\..*$/, ''); // keep prefix only
 
         this.rootElement.appendChild(this.makeLabel())
@@ -426,9 +420,8 @@ class Chart {
         return this.rootElement
     }
 
-    shouldContain(source: string, variable: string) {
-        return this.source == source
-            && this.variable == variable.replace(/\..*$/, '');
+    shouldContain(variable: string) {
+        return this.variable == variable.replace(/\..*$/, '');
     }
 
     addPoint(name: string, value: number) {
