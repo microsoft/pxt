@@ -25,7 +25,7 @@ import * as gdb from './gdb';
 import * as clidbg from './clidbg';
 import * as pyconv from './pyconv';
 
-const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
+const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
@@ -2316,6 +2316,33 @@ class Host
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
+        if (process.env["PXT_LOCAL_DOCKER_TEST"] === "yes") {
+            const compileReq = JSON.parse(new Buffer(extInfo.compileData, "base64").toString("utf8"))
+            const mappedFiles =
+                Object.keys(compileReq.replaceFiles).map(k => {
+                    return {
+                        name: k.replace(/^\/+/, ""),
+                        text: compileReq.replaceFiles[k]
+                    }
+                })
+            const cs = pxt.appTarget.compileService
+            const dockerReq = {
+                op: "buildex",
+                files: mappedFiles,
+                gittag: compileReq.tag,
+                empty: true,
+                hexfile: "build/" + cs.codalBinary + ".hex",
+                platformio: false,
+                clone: "https://github.com/" + cs.githubCorePackage,
+                buildcmd: "python build.py",
+                image: "pext/yotta:latest"
+            }
+
+            const fn = "built/dockerreq.json"
+            fs.writeFileSync(fn, JSON.stringify(dockerReq, null, 4))
+            pxt.log("wrote " + fn)
+        }
+
         if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
             return pxt.hex.getHexInfoAsync(this, extInfo)
 
@@ -3800,7 +3827,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
     pxt.log(`packaging editor to ${builtPackaged}`)
 
-    let p = rimrafAsync(builtPackaged, {}, null)
+    let p = rimrafAsync(builtPackaged, {})
         .then(() => bump ? bumpAsync() : Promise.resolve())
         .then(() => internalBuildTargetAsync({ packaged: true }));
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
@@ -3825,9 +3852,9 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
 
 export function cleanAsync(parsed: commandParser.ParsedCommand) {
     pxt.log('cleaning built folders')
-    return rimrafAsync("built", {}, null)
-        .then(() => rimrafAsync("libs/**/built", {}, null))
-        .then(() => rimrafAsync("projects/**/built", {}, null))
+    return rimrafAsync("built", {})
+        .then(() => rimrafAsync("libs/**/built", {}))
+        .then(() => rimrafAsync("projects/**/built", {}))
         .then(() => { });
 }
 

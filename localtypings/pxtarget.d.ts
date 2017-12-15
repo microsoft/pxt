@@ -306,9 +306,10 @@ declare namespace ts.pxtc {
         shortPointers?: boolean; // set to true for 16 bit pointers
         flashCodeAlign?: number; // defaults to 1k
         flashEnd?: number;
+        flashUsableEnd?: number;
+        flashChecksumAddr?: number;
         upgrades?: UpgradePolicy[];
         openocdScript?: string;
-        flashChecksumAddr?: number;
         onStartText?: boolean;
         stackAlign?: number; // 1 word (default), or 2
         hidSelectors?: HidSelector[];

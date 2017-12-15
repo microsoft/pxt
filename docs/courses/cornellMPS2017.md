@@ -26,11 +26,9 @@ the project (each student may wear multiple hats):
 * The *specialist* provides knowledge about the domain that the editor is addressing:
 the specialist represents the customer of the editor and does not need to have any 
 programming background.
-
 * The *designer* interviews the specialist, models the editing experience, 
 designs the programming interface and conducts user research and interviews 
 to validate the design. The designer does not need to have any programming background.
-
 * The *developer* implements the design in code using the MakeCode framework: 
 a programming background and familiarity with HTML, CSS and JavaScript is very helpful.
 
@@ -38,31 +36,33 @@ a programming background and familiarity with HTML, CSS and JavaScript is very h
 
 * Familiarize yourself with MakeCode and the tools/languages that it uses (more details on this in
   the next section);
-
 * Decide on a domain of interest and what you want users to be able to achieve within
     that domain.  or example, if the domain is traffic flow, the goal might be to allow the users
     to explore how different strategies for controlling traffic lights affect the traffic flow 
     through a network of streets and intersections; (1 week)
-
 * Find and evaluate an open source JavaScript library that aligns with your domain/interests (1-2 weeks); this
     is critically important - you will not have time to create the supporting you need from scratch;
     you should be prepared to run into some dead ends here and have to try again (1-2 weeks).  You may
     need more than one JavaScript library, depending on your domain and goals;
-
 * Describe a simplified Application Programming Interface (API) for this library/service 
   using TypeScript (www.typescriptlang.org); this is another important step: your end
   users' likely are not JavaScript programmers, but it is likely that the JavaScript library
   you use was developed with professional JavaScript developers in mind (2-3 weeks)
-
 * Configure a new MakeCode editor to surface your API as visual blocks;
-
 * Simulator visual design and linking to the above library. 
 Write code linking your API to the JavaScript library to provide a simulator
 that brings your API to life in the web browser;
-
 * Deploy your MakeCode web app and test with your customers.
 
-# Week 1: Getting started with MakeCode
+## Deliverables
+
+The result of this project is:
+* a public GitHub repo with the sources of your MakeCode editor (web app)
+* the web app (live editor) available via GitHub pages;
+* a final report (mark down) about the project;
+* the project ``README`` file with link to the live editor, a screenshot, final report, how-to-build information and licensing information.
+
+# Getting started with MakeCode
 
 1. Get a [GitHub](https://www.github.com) account, if you don't already have one;
 2. Download and install a git client or [GitHub client](https://desktop.github.com); 
@@ -79,19 +79,40 @@ most important to least important for the project:
 * VS Code;
 * node.js.
 
-# Week 2
-
-## Set up a GitHut repository per project
+# Set up a GitHut repository per project
 
 All your project's code and documentation should be in the repo. You can start
 the repo by copying over the structure and files of the [microsoft/pxt-sample](https://github.com/microsoft/pxt-sample).
 Use GitHub's issue tracking to discuss (on a topic-by-topic basis) and track main issues. 
 
-## Get a team communication client (like Slack or Microsoft Teams)
+# Get a team communication client 
 
-For real-time communication, you'll want something other than GitHub. 
+For real-time communication, you'll want something other than GitHub,
+like Slack or [Microsoft Teams](https://products.office.com/microsoft-teams/).
 
-## Pointers on TypeScript
+# Choosing your domain
+
+TBD
+
+# Reusing JavaScript libraries
+
+TBD
+
+# Simplifying APIs
+
+TBD
+
+# TypeScript APIs
+
+TBD
+
+# Incorporating into Simulator
+
+# From TypeScript to Blocks
+
+TBD
+
+# Pointers on TypeScript
 
 MakeCode is written in [TypeScript](https://typescriptlang.org/), and uses TypeScript to describe JavaScript APIs, 
 but you don't need to know everything about TypeScript (or JavaScript, for that matter)

@@ -681,7 +681,9 @@ ${baseLabel}:
             let parms = this.proc.args.map(a => a.def)
             this.write(this.t.proc_setup(0, true))
 
-            if (this.t.hasCommonalize())
+            let pushR7 = this.t.hasCommonalize() || !!target.stackAlign
+
+            if (pushR7)
                 this.write(this.t.push_fixed(["r5", "r6", "r7"]))
             else
                 this.write(this.t.push_fixed(["r5", "r6"]))
@@ -719,7 +721,7 @@ ${baseLabel}:
 
             if (numpop)
                 this.write(this.t.pop_locals(numpop))
-            if (this.t.hasCommonalize())
+            if (pushR7)
                 this.write(this.t.pop_fixed(["r6", "r5", "r7"]))
             else
                 this.write(this.t.pop_fixed(["r6", "r5"]))
