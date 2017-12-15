@@ -81,8 +81,9 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync?: (op
     return core.confirmAsync({
         header: userDownload ? lf("Download ready...") : lf("Download completed..."),
         body,
+        hasCloseIcon: true,
         hideCancel: true,
-        agreeLbl: lf("Done!"),
+        hideAgree: true,
         buttons: [downloadAgain ? {
             label: userDownload ? lf("Download") : fn,
             icon: "download",
