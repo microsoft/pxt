@@ -1821,7 +1821,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         // Place the base HEX image in the hex cache if necessary
                         let sha = compileOpts.extinfo.sha;
                         let hex: string[] = compileOpts.hexinfo.hex;
-                        let hexFile = path.join(hexCachePath, sha + pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex");
+                        let hexFile = path.join(hexCachePath, sha + (pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex"));
 
                         if (fs.existsSync(hexFile)) {
                             pxt.debug(`native image already in offline cache for project ${dirname}`);
