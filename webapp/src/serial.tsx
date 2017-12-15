@@ -14,6 +14,8 @@ import Util = pxt.Util
 const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
+    savedMessageQueue: MessageEvent[] = []
+    maxSavedMessages: number = 500
     charts: Chart[] = []
     chartIdx: number = 0
     sourceMap: pxt.Map<string> = {}
@@ -51,6 +53,7 @@ export class Editor extends srceditor.Editor {
         }
         this.isVisible = b
         if (this.isVisible) {
+            this.processQueuedMessages()
             this.startRecording()
         }
         else {
@@ -81,15 +84,36 @@ export class Editor extends srceditor.Editor {
 
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
-        window.addEventListener("message", this.processMessage.bind(this), false)
+        window.addEventListener("message", this.processEvent.bind(this), false)
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme
         this.lineColors = (serialTheme && serialTheme.lineColors) || this.lineColors
     }
 
-    processMessage(ev: MessageEvent) {
-        let msg = ev.data
-        if (!this.active || msg.type !== "serial") return;
+    saveMessageForLater(ev: MessageEvent) {
+        this.savedMessageQueue.push(ev);
+        if (this.savedMessageQueue.length > this.maxSavedMessages) {
+            this.savedMessageQueue.shift();
+        }
+    }
 
+    processQueuedMessages() {
+        this.savedMessageQueue.forEach(m => this.processMessage(m));
+        this.savedMessageQueue = [];
+    }
+
+    processEvent(ev: MessageEvent) {
+        let msg = ev.data
+        if (msg.type !== "serial") return;
+
+        if (!this.active) {
+            this.saveMessageForLater(msg);
+            return;
+        }
+
+        this.processMessage(msg);
+    }
+
+    processMessage(msg: any) {
         const smsg = msg as pxsim.SimulatorSerialMessage
         const sim = !!smsg.sim
         if (sim != this.isSim) return;
