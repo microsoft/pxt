@@ -14,8 +14,8 @@ import Util = pxt.Util
 const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
-    savedMessageQueue: MessageEvent[] = []
-    maxSavedMessages: number = 10
+    savedEventQueue: MessageEvent[] = []
+    maxSavedEvents: number = 100
     charts: Chart[] = []
     chartIdx: number = 0
     sourceMap: pxt.Map<string> = {}
@@ -53,7 +53,7 @@ export class Editor extends srceditor.Editor {
         }
         this.isVisible = b
         if (this.isVisible) {
-            this.processQueuedMessages()
+            this.processQueuedEvents()
             this.startRecording()
         }
         else {
@@ -92,31 +92,31 @@ export class Editor extends srceditor.Editor {
         this.lineColors = (serialTheme && serialTheme.lineColors) || this.lineColors
     }
 
-    saveMessageForLater(ev: MessageEvent) {
-        this.savedMessageQueue.push(ev);
-        if (this.savedMessageQueue.length > this.maxSavedMessages) {
-            this.savedMessageQueue.shift();
+    saveEventForLater(ev: MessageEvent) {
+        this.savedEventQueue.push(ev);
+        if (this.savedEventQueue.length > this.maxSavedEvents) {
+            this.savedEventQueue.shift();
         }
     }
 
-    processQueuedMessages() {
-        this.savedMessageQueue.forEach(m => this.processMessage(m));
-        this.savedMessageQueue = [];
+    processQueuedEvents() {
+        this.savedEventQueue.forEach(ev => this.processMessage(ev.data, ev.receivedTime));
+        this.savedEventQueue = [];
     }
 
     processEvent(ev: MessageEvent) {
         let msg = ev.data
         if (msg.type !== "serial") return;
 
+        ev.receivedTime = Util.now();
         if (!this.active) {
-            this.saveMessageForLater(msg);
+            this.saveEventForLater(ev);
             return;
         }
-
-        this.processMessage(msg);
+        this.processMessage(msg, ev.receivedTime);
     }
 
-    processMessage(msg: any) {
+    processMessage(msg: any, receivedTime: number) {
         const smsg = msg as pxsim.SimulatorSerialMessage
         const sim = !!smsg.sim
         if (sim != this.isSim) return;
@@ -135,7 +135,7 @@ export class Editor extends srceditor.Editor {
             const variable = m[2] || '';
             const nvalue = parseFloat(m[3]);
             if (!isNaN(nvalue)) {
-                this.appendGraphEntry(niceSource, variable, nvalue)
+                this.appendGraphEntry(niceSource, variable, nvalue, receivedTime)
                 return;
             }
         }
@@ -143,7 +143,7 @@ export class Editor extends srceditor.Editor {
         this.appendConsoleEntry(data)
     }
 
-    appendGraphEntry(source: string, variable: string, nvalue: number) {
+    appendGraphEntry(source: string, variable: string, nvalue: number, receivedTime: number) {
         //See if there is a "home chart" that this point belongs to -
         //if not, create a new chart
         let homeChart: Chart = undefined
@@ -160,7 +160,7 @@ export class Editor extends srceditor.Editor {
             this.charts.push(homeChart)
             this.chartRoot.appendChild(homeChart.getElement());
         }
-        homeChart.addPoint(variable, nvalue)
+        homeChart.addPoint(variable, nvalue, receivedTime)
     }
 
     appendConsoleEntry(data: string) {
@@ -259,7 +259,7 @@ export class Editor extends srceditor.Editor {
         }
         this.charts = []
         this.consoleBuffer = ""
-        this.savedMessageQueue = []
+        this.savedEventQueue = []
     }
 
     downloadCSV() {
@@ -435,9 +435,9 @@ class Chart {
             && this.variable == variable.replace(/\..*$/, '');
     }
 
-    addPoint(name: string, value: number) {
+    addPoint(name: string, value: number, timestamp: number) {
         const line = this.getLine(name);
-        line.append(Util.now(), value)
+        line.append(timestamp, value)
         this.lastUpdatedTime = Util.now();
         if (Object.keys(this.lines).length == 1) {
             // update label with last value
