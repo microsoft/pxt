@@ -63,7 +63,7 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync?: (op
     const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
 
     // https://msdn.microsoft.com/en-us/library/cc848897.aspx
-    // "For security reasons, data URIs are restricted to downloaded resources. 
+    // "For security reasons, data URIs are restricted to downloaded resources.
     // Data URIs cannot be used for navigation, for scripting, or to populate frame or iframe elements"
     const userDownload = pxt.BrowserUtils.isBrowserDownloadWithinUserContext();
     const downloadAgain = !pxt.BrowserUtils.isIE() && !pxt.BrowserUtils.isEdge();
@@ -81,6 +81,7 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync?: (op
     return core.confirmAsync({
         header: userDownload ? lf("Download ready...") : lf("Download completed..."),
         body,
+        hasCloseIcon: true,
         hideCancel: true,
         hideAgree: true,
         buttons: [downloadAgain ? {
