@@ -14,8 +14,8 @@ import Util = pxt.Util
 const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
-    savedEventQueue: MessageEvent[] = []
-    maxSavedEvents: number = 100
+    savedMessageQueue: pxsim.SimulatorSerialMessage[] = []
+    maxSavedMessages: number = 100
     charts: Chart[] = []
     chartIdx: number = 0
     sourceMap: pxt.Map<string> = {}
@@ -53,7 +53,7 @@ export class Editor extends srceditor.Editor {
         }
         this.isVisible = b
         if (this.isVisible) {
-            this.processQueuedEvents()
+            this.processQueuedMessages()
             this.startRecording()
         }
         else {
@@ -92,38 +92,38 @@ export class Editor extends srceditor.Editor {
         this.lineColors = (serialTheme && serialTheme.lineColors) || this.lineColors
     }
 
-    saveEventForLater(ev: MessageEvent) {
-        this.savedEventQueue.push(ev);
-        if (this.savedEventQueue.length > this.maxSavedEvents) {
-            this.savedEventQueue.shift();
+    saveMessageForLater(m: pxsim.SimulatorSerialMessage) {
+        this.savedMessageQueue.push(m);
+        if (this.savedMessageQueue.length > this.maxSavedMessages) {
+            this.savedMessageQueue.shift();
         }
     }
 
-    processQueuedEvents() {
-        this.savedEventQueue.forEach(ev => this.processMessage(ev.data, ev.receivedTime));
-        this.savedEventQueue = [];
+    processQueuedMessages() {
+        this.savedMessageQueue.forEach(m => this.processMessage(m));
+        this.savedMessageQueue = [];
     }
 
     processEvent(ev: MessageEvent) {
         let msg = ev.data
         if (msg.type !== "serial") return;
+        const smsg = msg as pxsim.SimulatorSerialMessage
 
-        ev.receivedTime = Util.now();
+        smsg.receivedTime = Util.now();
         if (!this.active) {
-            this.saveEventForLater(ev);
+            this.saveMessageForLater(smsg);
             return;
         }
-        this.processMessage(msg, ev.receivedTime);
+        this.processMessage(smsg);
     }
 
-    processMessage(msg: any, receivedTime: number) {
-        console.log(receivedTime);
-        const smsg = msg as pxsim.SimulatorSerialMessage
+    processMessage(smsg: pxsim.SimulatorSerialMessage) {
         const sim = !!smsg.sim
         if (sim != this.isSim) return;
 
         const data = smsg.data || ""
         const source = smsg.id || "?"
+        const receivedTime = smsg.receivedTime || Util.now()
 
         if (!this.sourceMap[source]) {
             let sourceIdx = Object.keys(this.sourceMap).length + 1
@@ -260,7 +260,7 @@ export class Editor extends srceditor.Editor {
         }
         this.charts = []
         this.consoleBuffer = ""
-        this.savedEventQueue = []
+        this.savedMessageQueue = []
     }
 
     downloadCSV() {
