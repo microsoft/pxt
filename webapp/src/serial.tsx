@@ -117,6 +117,7 @@ export class Editor extends srceditor.Editor {
     }
 
     processMessage(msg: any, receivedTime: number) {
+        console.log(receivedTime);
         const smsg = msg as pxsim.SimulatorSerialMessage
         const sim = !!smsg.sim
         if (sim != this.isSim) return;
