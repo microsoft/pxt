@@ -41,6 +41,7 @@ const allLanguages: pxt.Map<Language> = {
     "pt-PT": { englishName: "Portuguese (Portugal)", localizedName: "Português (Portugal)" },
     "ro": { englishName: "Romanian", localizedName: "Română" },
     "ru": { englishName: "Russian", localizedName: "Русский" },
+    "ta": { englishName: "Tamil", localizedName: "தமிழ்" },
     "si-LK": { englishName: "Sinhala (Sri Lanka)", localizedName: "සිංහල (ශ්රී ලංකා)" },
     "sr": { englishName: "Serbian", localizedName: "Srpski" },
     "sv-SE": { englishName: "Swedish (Sweden)", localizedName: "Svenska (Sverige)" },
