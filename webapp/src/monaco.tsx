@@ -680,7 +680,7 @@ export class Editor extends srceditor.Editor {
                 let groupLabelLine = document.createElement('hr');
                 groupLabelLine.className = 'monacoFlyoutLabelLine';
                 groupLabelLine.align = 'left';
-                groupLabelLine.style.width = `${Math.min(parseInt(labelLineWidth) || groupLabelText.offsetWidth, 350)}px`;
+                groupLabelLine.style.width = `${Math.min(labelLineWidth ? parseInt(labelLineWidth) : groupLabelText.offsetWidth, 350)}px`;
                 groupLabel.appendChild(groupLabelLine);
             }
 

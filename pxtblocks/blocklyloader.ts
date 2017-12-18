@@ -266,6 +266,9 @@ namespace pxt.blocks {
                     if (nsn && nsn.attributes.groups) {
                         category.setAttribute("groups", nsn.attributes.groups.join(', '));
                     }
+                    if (nsn && nsn.attributes.groupIcons) {
+                        category.setAttribute("groupicons", nsn.attributes.groupIcons.join(', '));
+                    }
                     if (nsn && nsn.attributes.labelLineWidth) {
                         category.setAttribute("labellinewidth", nsn.attributes.labelLineWidth);
                     }
@@ -289,6 +292,9 @@ namespace pxt.blocks {
                     }
                     if (nsn && nsn.attributes.groups) {
                         category.setAttribute("groups", nsn.attributes.groups.join(', '));
+                    }
+                    if (nsn && nsn.attributes.groupIcons) {
+                        category.setAttribute("groupicons", nsn.attributes.groupIcons.join(', '));
                     }
                 }
             }
@@ -1358,10 +1364,22 @@ namespace pxt.blocks {
 
                 let blocks = getDirectChildren(cat, `block`);
                 let groups = cat.getAttribute("groups");
+                let groupIcons = cat.getAttribute("groupicons");
+
                 let labelLineWidth = cat.getAttribute("labellinewidth");
                 let blockGroups: { [group: string]: Element[] } = {}
                 let sortedGroups: string[] = [];
                 if (groups) sortedGroups = groups.split(', ');
+
+                // Create a dict of group icon pairs
+                let groupIconsDict: { [group: string]: string } = {}
+                if (groups && groupIcons) {
+                    let groupIconsList = groupIcons.split(', ');
+                    for (let i = 0; i < sortedGroups.length; i++) {
+                        let icon = groupIconsList[i];
+                        groupIconsDict[sortedGroups[i]] = icon || '';
+                    }
+                }
 
                 // Organize the blocks into the different groups
                 for (let bi = 0; bi < blocks.length; ++bi) {
@@ -1392,6 +1410,7 @@ namespace pxt.blocks {
                             groupLabel.setAttribute('text', pxt.Util.rlf(`{id:group}${group}`));
                             groupLabel.setAttribute('web-class', 'blocklyFlyoutGroup');
                             groupLabel.setAttribute('web-line', '1.5');
+                            if (groupIconsDict[group]) groupLabel.setAttribute('web-icon', groupIconsDict[group]);
                             if (labelLineWidth) groupLabel.setAttribute('web-line-width', labelLineWidth);
                             xmlList.push(groupLabel as HTMLElement);
                         }
