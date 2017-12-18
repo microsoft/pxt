@@ -22,4 +22,4 @@
  -paper.fdb_latexmk
  -paper.aux
  -~$diagrams.pptx
- 
+ -paper.synctex(busy)
