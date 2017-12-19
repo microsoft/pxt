@@ -62,6 +62,7 @@ namespace pxsim {
         id: string;
         data: string;
         sim?: boolean;
+        receivedTime?: number;
     }
     export interface SimulatorCommandMessage extends SimulatorMessage {
         type: "simulator",

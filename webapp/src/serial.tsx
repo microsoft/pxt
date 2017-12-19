@@ -14,6 +14,8 @@ import Util = pxt.Util
 const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
+    savedMessageQueue: pxsim.SimulatorSerialMessage[] = []
+    maxSavedMessages: number = 100
     charts: Chart[] = []
     chartIdx: number = 0
     sourceMap: pxt.Map<string> = {}
@@ -51,10 +53,12 @@ export class Editor extends srceditor.Editor {
         }
         this.isVisible = b
         if (this.isVisible) {
+            this.processQueuedMessages()
             this.startRecording()
         }
         else {
             this.pauseRecording()
+            this.clear()
         }
     }
 
@@ -75,27 +79,51 @@ export class Editor extends srceditor.Editor {
     }
 
     setSim(b: boolean) {
-        this.isSim = b
-        this.clear()
+        if (this.isSim != b) {
+            this.isSim = b
+            this.clear()
+        }
     }
 
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
-        window.addEventListener("message", this.processMessage.bind(this), false)
+        window.addEventListener("message", this.processEvent.bind(this), false)
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme;
         this.lineColors = (serialTheme && serialTheme.lineColors) || this.lineColors;
     }
 
-    processMessage(ev: MessageEvent) {
-        let msg = ev.data
-        if (!this.active || msg.type !== "serial") return;
+    saveMessageForLater(m: pxsim.SimulatorSerialMessage) {
+        this.savedMessageQueue.push(m);
+        if (this.savedMessageQueue.length > this.maxSavedMessages) {
+            this.savedMessageQueue.shift();
+        }
+    }
 
+    processQueuedMessages() {
+        this.savedMessageQueue.forEach(m => this.processMessage(m));
+        this.savedMessageQueue = [];
+    }
+
+    processEvent(ev: MessageEvent) {
+        let msg = ev.data
+        if (msg.type !== "serial") return;
         const smsg = msg as pxsim.SimulatorSerialMessage
+
+        smsg.receivedTime = smsg.receivedTime || Util.now();
+        if (!this.active) {
+            this.saveMessageForLater(smsg);
+            return;
+        }
+        this.processMessage(smsg);
+    }
+
+    processMessage(smsg: pxsim.SimulatorSerialMessage) {
         const sim = !!smsg.sim
         if (sim != this.isSim) return;
 
         const data = smsg.data || ""
         const source = smsg.id || "?"
+        const receivedTime = smsg.receivedTime || Util.now()
 
         if (!this.sourceMap[source]) {
             let sourceIdx = Object.keys(this.sourceMap).length + 1
@@ -108,7 +136,7 @@ export class Editor extends srceditor.Editor {
             const variable = m[2] || '';
             const nvalue = parseFloat(m[3]);
             if (!isNaN(nvalue)) {
-                this.appendGraphEntry(niceSource, variable, nvalue)
+                this.appendGraphEntry(niceSource, variable, nvalue, receivedTime)
                 return;
             }
         }
@@ -116,7 +144,7 @@ export class Editor extends srceditor.Editor {
         this.appendConsoleEntry(data)
     }
 
-    appendGraphEntry(source: string, variable: string, nvalue: number) {
+    appendGraphEntry(source: string, variable: string, nvalue: number, receivedTime: number) {
         //See if there is a "home chart" that this point belongs to -
         //if not, create a new chart
         let homeChart: Chart = undefined
@@ -133,7 +161,7 @@ export class Editor extends srceditor.Editor {
             this.charts.push(homeChart)
             this.chartRoot.appendChild(homeChart.getElement());
         }
-        homeChart.addPoint(variable, nvalue)
+        homeChart.addPoint(variable, nvalue, receivedTime)
     }
 
     appendConsoleEntry(data: string) {
@@ -230,6 +258,8 @@ export class Editor extends srceditor.Editor {
         }
         this.charts = []
         this.consoleBuffer = ""
+        this.savedMessageQueue = []
+        this.sourceMap = {}
     }
 
     downloadCSV() {
@@ -405,9 +435,9 @@ class Chart {
             && this.variable == variable.replace(/\..*$/, '');
     }
 
-    addPoint(name: string, value: number) {
+    addPoint(name: string, value: number, timestamp: number) {
         const line = this.getLine(name);
-        line.append(Util.now(), value)
+        line.append(timestamp, value)
         this.lastUpdatedTime = Util.now();
         if (Object.keys(this.lines).length == 1) {
             // update label with last value
