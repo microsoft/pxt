@@ -195,7 +195,7 @@ task('update', function () {
     jake.exec([
         "git pull",
         "npm install",
-        "tsd reinstall"
+        "typings reinstall"
     ], { printStdout: true });
 })
 
