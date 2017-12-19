@@ -109,7 +109,7 @@ export class Editor extends srceditor.Editor {
         if (msg.type !== "serial") return;
         const smsg = msg as pxsim.SimulatorSerialMessage
 
-        smsg.receivedTime = Util.now();
+        smsg.receivedTime = smsg.receivedTime || Util.now();
         if (!this.active) {
             this.saveMessageForLater(smsg);
             return;
