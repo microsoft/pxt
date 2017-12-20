@@ -147,6 +147,7 @@ namespace ts.pxtc {
         // On namepspace
         subcategories?: string[];
         groups?: string[];
+        groupIcons?: string[];
         labelLineWidth?: string;
         handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
         afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
@@ -501,6 +502,14 @@ namespace ts.pxtc {
             }
             catch (e) {
                 res.groups = undefined;
+            }
+        }
+        if (res.groupIcons) {
+            try {
+                res.groupIcons = JSON.parse(res.groupIcons as any);
+            }
+            catch (e) {
+                res.groupIcons = undefined;
             }
         }
 
