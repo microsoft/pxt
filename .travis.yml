@@ -7,7 +7,6 @@ before_install:
   - sh -e /etc/init.d/xvfb start
 before_script:
   - "npm install"
-  - "typings install"
 sudo: false
 notifications:
   email:
@@ -15,7 +14,6 @@ notifications:
 cache:
   directories:
     - node_modules
-    - typings
 addons:
   apt:
     sources:

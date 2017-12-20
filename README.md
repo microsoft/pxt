@@ -50,14 +50,12 @@ npm link ../pxt
 First, install [Node](https://nodejs.org/en/): minimum version 5.7. Then install the following:
 ```
 npm install -g jake
-npm install -g typings
 ```
 
 To build the PXT command line tools:
 
 ```
 npm install
-typings install
 jake
 ```
 

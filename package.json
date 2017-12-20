@@ -106,7 +106,6 @@
     "react": "^0.14.8",
     "react-dom": "^0.14.8",
     "semantic-ui-less": "^2.2.11",
-    "typings": "^2.1.0",
     "tslint": "^3.9.0",
     "typescript": "2.6.1",
     "webfonts-generator": "^0.4.0",

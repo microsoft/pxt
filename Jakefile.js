@@ -194,8 +194,7 @@ task('bump', function () {
 task('update', function () {
     jake.exec([
         "git pull",
-        "npm install",
-        "tsd reinstall"
+        "npm install"
     ], { printStdout: true });
 })
 
