@@ -220,6 +220,7 @@ namespace pxsim {
         up: string,
         down: string,
         move: string,
+        enter: string,
         leave: string
     }
 
@@ -237,18 +238,21 @@ namespace pxsim {
             up: "pointerup",
             down: "pointerdown",
             move: "pointermove",
+            enter: "pointerenter",
             leave: "pointerleave"
         } : isTouchEnabled() ?
         {
             up: "mouseup",
             down: "touchstart",
             move: "touchmove",
+            enter: "touchenter",
             leave: "touchend"
         } :
         {
             up: "mouseup",
             down: "mousedown",
             move: "mousemove",
+            enter: "mouseenter",
             leave: "mouseleave"
         };
 }
