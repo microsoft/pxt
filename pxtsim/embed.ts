@@ -83,6 +83,7 @@ namespace pxsim {
         groupId: number;
         stringData?: string;
         numberData?: number;
+        bufferData?: Uint8Array;
     }
 
     export interface SimulatorCustomMessage extends SimulatorMessage {
