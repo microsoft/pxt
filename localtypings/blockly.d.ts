@@ -935,6 +935,7 @@ declare namespace Blockly {
     interface Options {
         readOnly?: boolean;
         toolbox?: Element | string;
+        hasCategories?: boolean;
         trashcan?: boolean;
         collapse?: boolean;
         comments?: boolean;
@@ -943,6 +944,8 @@ declare namespace Blockly {
         sound?: boolean;
         css?: boolean;
         media?: string;
+        horizontalLayout?: boolean;
+        toolboxPosition?: string;
         grid?: {
             spacing?: number;
             length?: number;
