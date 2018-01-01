@@ -5,6 +5,7 @@ namespace ts.pxtc {
         "numops::div": "/",
         "numops::mod": "%",
         "numops::muls": "*",
+        "numops::exps": "**",
         "numops::ands": "&",
         "numops::orrs": "|",
         "numops::eors": "^",
