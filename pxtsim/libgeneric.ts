@@ -257,6 +257,8 @@ namespace pxsim {
         export function lsls(x: number, y: number) { return x << y; }
         export function lsrs(x: number, y: number) { return x >>> y; }
         export function asrs(x: number, y: number) { return x >> y; }
+        export function exps(base: number, exponent: number) { return base ** exponent; }
+        export function bnot(x: number) { return ~x; }
 
         export function ignore(v: any) { return v; }
     }
@@ -275,6 +277,8 @@ namespace pxsim {
         export function lsls(x: number, y: number) { return toInt(x << y); }
         export function lsrs(x: number, y: number) { return (x & 0xffff) >>> y; }
         export function asrs(x: number, y: number) { return toInt(x >> y); }
+        export function exps(base: number, exponent: number) { return base ** exponent; }
+        export function bnot(x: number) { return ~x; }
 
         export function ignore(v: any) { return v; }
     }
