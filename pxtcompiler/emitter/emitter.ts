@@ -2800,7 +2800,7 @@ ${lbl}: .short 0xffff
                         let v = valueToInt(inner)
                         if (v != null)
                             return emitLit(~v)
-                        return ir.rtcallMask("numops::bnot", 1, ir.CallingConvention.Plain, [inner]);
+                        return ir.rtcallMask(mapIntOpName("numops::bnot"), 1, ir.CallingConvention.Plain, [inner]);
                     }
                     default:
                         break

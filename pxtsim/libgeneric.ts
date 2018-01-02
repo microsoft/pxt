@@ -243,6 +243,8 @@ namespace pxsim {
         export function ge(x: number, y: number) { return x >= y; }
         export function div(x: number, y: number) { return Math.floor(x / y) | 0; }
         export function mod(x: number, y: number) { return x % y; }
+        export function bnot(x: number) { return ~x; }
+        export function exps(x: number, y: number) { return Math_.pow(x, y) | 0; }
         export function toString(x: number) { return initString(x + ""); }
     }
 
