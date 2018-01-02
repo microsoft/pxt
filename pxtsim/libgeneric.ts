@@ -181,7 +181,12 @@ namespace pxsim {
         export function ceil(n: number) { return Math.ceil(n) }
         export function floor(n: number) { return Math.floor(n) }
         export function sqrt(n: number) { return Math.sqrt(n) }
-        export function pow(x: number, y: number) { return Math.pow(x, y) }
+        export function pow(x: number, y: number) {
+            if (pxsim.floatingPoint)
+                return Math.pow(x, y)
+            else
+                return Math.pow(x, y) | 0
+        }
         export function log(n: number) { return Math.log(n) }
         export function exp(n: number) { return Math.exp(n) }
         export function sin(n: number) { return Math.sin(n) }
@@ -244,7 +249,6 @@ namespace pxsim {
         export function div(x: number, y: number) { return Math.floor(x / y) | 0; }
         export function mod(x: number, y: number) { return x % y; }
         export function bnot(x: number) { return ~x; }
-        export function exps(x: number, y: number) { return Math_.pow(x, y) | 0; }
         export function toString(x: number) { return initString(x + ""); }
     }
 
@@ -259,7 +263,6 @@ namespace pxsim {
         export function lsls(x: number, y: number) { return x << y; }
         export function lsrs(x: number, y: number) { return x >>> y; }
         export function asrs(x: number, y: number) { return x >> y; }
-        export function exps(base: number, exponent: number) { return base ** exponent; }
         export function bnot(x: number) { return ~x; }
 
         export function ignore(v: any) { return v; }
@@ -279,7 +282,6 @@ namespace pxsim {
         export function lsls(x: number, y: number) { return toInt(x << y); }
         export function lsrs(x: number, y: number) { return (x & 0xffff) >>> y; }
         export function asrs(x: number, y: number) { return toInt(x >> y); }
-        export function exps(base: number, exponent: number) { return base ** exponent; }
         export function bnot(x: number) { return ~x; }
 
         export function ignore(v: any) { return v; }

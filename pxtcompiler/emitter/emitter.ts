@@ -3275,7 +3275,7 @@ ${lbl}: .short 0xffff
                 case SK.SlashToken: return "numops::div";
                 case SK.PercentToken: return "numops::mod";
                 case SK.AsteriskToken: return "numops::muls";
-                case SK.AsteriskAsteriskToken: return "numops::exps";
+                case SK.AsteriskAsteriskToken: return "Math_::pow";
                 case SK.AmpersandToken: return "numops::ands";
                 case SK.BarToken: return "numops::orrs";
                 case SK.CaretToken: return "numops::eors";
