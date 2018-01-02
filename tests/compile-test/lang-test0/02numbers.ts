@@ -66,7 +66,7 @@ function testNums(): void {
     assert(105 % 100 == 5, "perc")
 
     assert((2 ** 3) == 8, "**")
-    assert((z ** 3) = z * z * z, "**")    
+    assert((z ** 3) == z * z * z, "**")
 
     // test number->bool conversion, #1057
     // x==20 here
