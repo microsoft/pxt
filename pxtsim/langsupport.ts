@@ -10,7 +10,7 @@ namespace pxsim {
         }
     }
 
-    let floatingPoint = false;
+    export let floatingPoint = false;
     let cfgKey: Map<number> = {}
     let cfg: Map<number> = {}
 
@@ -288,9 +288,6 @@ namespace pxsim {
         }
         export function toBool(v: any) {
             return !!v
-        }
-        export function exps(x: number, y: number) {
-            return Math.pow(x, y)
         }
     }
 
