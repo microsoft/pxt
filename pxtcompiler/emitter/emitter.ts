@@ -63,7 +63,7 @@ namespace ts.pxtc {
     }
 
     type TemplateLiteralFragment = TemplateHead | TemplateMiddle | TemplateTail;
-    export type EmittableAsCall = FunctionLikeDeclaration | SignatureDeclaration | ObjectLiteralElementLike| PropertySignature | ModuleDeclaration;
+    export type EmittableAsCall = FunctionLikeDeclaration | SignatureDeclaration | ObjectLiteralElementLike | PropertySignature | ModuleDeclaration;
 
     let lastNodeId = 0
     let currNodeWave = 1
@@ -341,7 +341,7 @@ namespace ts.pxtc {
         }
     }
 
-   export function isObjectType(t: Type): t is ObjectType {
+    export function isObjectType(t: Type): t is ObjectType {
         return "objectFlags" in t;
     }
 
@@ -545,7 +545,7 @@ namespace ts.pxtc {
 
     function isBuiltinType(t: Type) {
         let ok = TypeFlags.String | TypeFlags.StringLiteral |
-            TypeFlags.Number | TypeFlags.NumberLiteral  |
+            TypeFlags.Number | TypeFlags.NumberLiteral |
             TypeFlags.Boolean | TypeFlags.BooleanLiteral |
             TypeFlags.Enum | TypeFlags.EnumLiteral
         return t.flags & ok
@@ -2786,14 +2786,22 @@ ${lbl}: .short 0xffff
                         return emitIncrement(node.operand, "numops::adds", false)
                     case SK.MinusMinusToken:
                         return emitIncrement(node.operand, "numops::subs", false)
-                    case SK.MinusToken:
+                    case SK.MinusToken: {
                         let inner = emitExpr(node.operand)
                         let v = valueToInt(inner)
                         if (v != null)
                             return emitLit(-v)
                         return emitIntOp("numops::subs", emitLit(0), inner)
+                    }
                     case SK.PlusToken:
                         return emitExpr(node.operand) // no-op
+                    case SK.TildeToken: {
+                        let inner = emitExpr(node.operand)
+                        let v = valueToInt(inner)
+                        if (v != null)
+                            return emitLit(~v)
+                        return ir.rtcallMask(mapIntOpName("numops::bnot"), 1, ir.CallingConvention.Plain, [inner]);
+                    }
                     default:
                         break
                 }
@@ -3267,6 +3275,7 @@ ${lbl}: .short 0xffff
                 case SK.SlashToken: return "numops::div";
                 case SK.PercentToken: return "numops::mod";
                 case SK.AsteriskToken: return "numops::muls";
+                case SK.AsteriskAsteriskToken: return "numops::exps";
                 case SK.AmpersandToken: return "numops::ands";
                 case SK.BarToken: return "numops::orrs";
                 case SK.CaretToken: return "numops::eors";

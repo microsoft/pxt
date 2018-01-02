@@ -289,6 +289,9 @@ namespace pxsim {
         export function toBool(v: any) {
             return !!v
         }
+        export function exps(x: number, y: number) {
+            return Math.pow(x, y)
+        }
     }
 
     export namespace langsupp {
