@@ -17,6 +17,16 @@ namespace pxt.blocks {
         advanced: '#3c3c3c'
     }
 
+    export const blockIcons: Map<number | string> = {
+        loops: '\uf01e',
+        logic: '\uf074',
+        math: '\uf1ec',
+        variables: '\uf039',
+        functions: '\uf0cb',
+        text: '\uf035',
+        arrays: '\uf0cb'
+    }
+
     export enum CategoryMode {
         All,
         None,
@@ -915,6 +925,8 @@ namespace pxt.blocks {
             }
             else {
                 let diff = actuallyVisible - currentlyVisible;
+
+
                 for (let j = 0; j < diff; j++) {
                     const arg = handlerArgs[actuallyVisible - j - 1];
                     i.removeField("HANDLER_" + arg.name);
@@ -1159,6 +1171,10 @@ namespace pxt.blocks {
                     for (let j = 0; j < subCats.length; j++) {
                         subCats[j].setAttribute('colour', nsColor);
                     }
+                }
+                const nsIcon = getNamespaceIcon(topCats[i].getAttribute('nameid'));
+                if (nsIcon && nsIcon != "") {
+                    topCats[i].setAttribute('web-icon', nsIcon);
                 }
                 if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
                     // Add the Heading label
@@ -2648,6 +2664,16 @@ namespace pxt.blocks {
         return "";
     }
 
+    export function getNamespaceIcon(ns: string): string {
+        if (pxt.appTarget.appTheme.blockIcons && pxt.appTarget.appTheme.blockIcons[ns]) {
+            return pxt.appTarget.appTheme.blockIcons[ns] as string;
+        }
+        if (blockIcons[ns]) {
+            return blockIcons[ns] as string;
+        }
+        return "";
+    }
+
     export function initFlyouts(workspace: Blockly.Workspace) {
         workspace.registerToolboxCategoryCallback(Blockly.VARIABLE_CATEGORY_NAME, Blockly.Variables.flyoutCategory);
         workspace.registerToolboxCategoryCallback(Blockly.PROCEDURE_CATEGORY_NAME, Blockly.Procedures.flyoutCategory);
@@ -2672,7 +2698,7 @@ namespace pxt.blocks {
                 let headingLabel = goog.dom.createDom('label') as HTMLElement;
                 headingLabel.setAttribute('text', lf("Variables"));
                 headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
-                headingLabel.setAttribute('web-icon', '\uf039');
+                headingLabel.setAttribute('web-icon', getNamespaceIcon('variables'));
                 headingLabel.setAttribute('web-icon-color', getNamespaceColor('variables'));
                 xmlList.push(headingLabel);
             }
@@ -2995,7 +3021,7 @@ namespace pxt.blocks {
                 let headingLabel = goog.dom.createDom('label');
                 headingLabel.setAttribute('text', lf("Functions"));
                 headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
-                headingLabel.setAttribute('web-icon', '\uf109');
+                headingLabel.setAttribute('web-icon', getNamespaceIcon('functions'));
                 headingLabel.setAttribute('web-icon-class', 'blocklyFlyoutIconfunctions');
                 headingLabel.setAttribute('web-icon-color', getNamespaceColor('functions'));
                 xmlList.push(headingLabel as HTMLElement);
