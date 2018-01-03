@@ -925,8 +925,6 @@ namespace pxt.blocks {
             }
             else {
                 let diff = actuallyVisible - currentlyVisible;
-
-
                 for (let j = 0; j < diff; j++) {
                     const arg = handlerArgs[actuallyVisible - j - 1];
                     i.removeField("HANDLER_" + arg.name);
