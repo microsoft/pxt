@@ -787,19 +787,13 @@ export class Editor extends srceditor.Editor {
 
             let snippetPrefix = fn.noNamespace ? "" : ns;
             let isInstance = false;
+            let addNamespace = false;
 
             const element = fn as pxtc.SymbolInfo;
             if (element.attributes.block) {
                 if (element.attributes.defaultInstance) {
                     snippetPrefix = element.attributes.defaultInstance;
                 }
-                /**
-                else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
-                    const params = pxt.blocks.parameterNames(element);
-                    snippetPrefix = params.attrNames["this"].name;
-                    isInstance = true;
-                }
-                **/
                 else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                     const nsInfo = this.blockInfo.apis.byQName[element.namespace];
                     if (nsInfo.attributes.fixedInstances) {
@@ -809,8 +803,15 @@ export class Editor extends srceditor.Editor {
                             value.retType.endsWith(nsInfo.name))
                             .sort((v1, v2) => v1.name.localeCompare(v2.name));
                         if (instances.length) {
-                            snippetPrefix = `${instances[0].namespace}.${instances[0].name}`
+                            snippetPrefix = `${instances[0].name}`
                         }
+                        isInstance = true;
+                        addNamespace = true;
+                    }
+                    else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
+                        const params = pxt.blocks.parameterNames(element);
+                        snippetPrefix = params.attrNames["this"].name;
+                        isInstance = true;
                     }
                     else if (nsInfo.kind === pxtc.SymbolKind.Class) {
                         return undefined;
@@ -841,6 +842,7 @@ export class Editor extends srceditor.Editor {
                     let currPos = monacoEditor.editor.getPosition();
                     let cursor = model.getOffsetAt(currPos)
                     let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
+                    insertText = addNamespace ? `${/([^\.]+)/.exec(element.namespace)[0]}.${insertText}` : insertText;
                     insertText = (currPos.column > 1) ? '\n' + insertText :
                         model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
                             insertText + '\n' : insertText;
@@ -877,6 +879,7 @@ export class Editor extends srceditor.Editor {
                     });
 
                     let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
+                    insertText = addNamespace ? `${/([^\.]+)/.exec(element.namespace)[0]}.${insertText}` : insertText;
                     e.dataTransfer.setData('text', insertText); // IE11 only supports text
                 }
                 monacoBlock.ondragend = (e: DragEvent) => {
