@@ -793,25 +793,27 @@ export class Editor extends srceditor.Editor {
                 if (element.attributes.defaultInstance) {
                     snippetPrefix = element.attributes.defaultInstance;
                 }
+                /**
                 else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
                     const params = pxt.blocks.parameterNames(element);
                     snippetPrefix = params.attrNames["this"].name;
                     isInstance = true;
                 }
+                **/
                 else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                     const nsInfo = this.blockInfo.apis.byQName[element.namespace];
-                    if (nsInfo.kind === pxtc.SymbolKind.Class) {
-                        return undefined;
-                    }
-                    else if (nsInfo.attributes.fixedInstances) {
+                    if (nsInfo.attributes.fixedInstances) {
                         const instances = Util.values(this.blockInfo.apis.byQName).filter(value =>
                             value.kind === pxtc.SymbolKind.Variable &&
                             value.attributes.fixedInstance &&
-                            value.retType === nsInfo.name)
+                            value.retType.endsWith(nsInfo.name))
                             .sort((v1, v2) => v1.name.localeCompare(v2.name));
                         if (instances.length) {
                             snippetPrefix = `${instances[0].namespace}.${instances[0].name}`
                         }
+                    }
+                    else if (nsInfo.kind === pxtc.SymbolKind.Class) {
+                        return undefined;
                     }
                 }
             }
