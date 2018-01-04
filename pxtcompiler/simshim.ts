@@ -11,7 +11,7 @@ namespace pxt {
             if (pathParse) {
                 let pp = pathParse(src.fileName);
                 pxt.debug("SimShim[1]: " + pp.dir)
-                if (!U.endsWith(pp.dir, "/sim") && !U.startsWith(src.fileName, "sim/")) 
+                if (!U.endsWith(pp.dir, "/sim") && !U.startsWith(src.fileName, "sim/"))
                     continue;
             } else if (!U.startsWith(src.fileName, "sim/"))
                 continue;
@@ -54,8 +54,9 @@ namespace pxt {
         }
 
         function mapType(tp: ts.Type) {
-            let fn = checker.typeToString(tp, null, ts.TypeFormatFlags.UseFullyQualifiedType)
+            let fn = checker.typeToString(tp, tp.symbol && tp.symbol.valueDeclaration, ts.TypeFormatFlags.UseFullyQualifiedType)
             switch (fn) {
+                case "RefAction":
                 case "pxsim.RefAction": return "() => void";
                 default:
                     return fn.replace(/^pxsim\./, "")
@@ -152,8 +153,6 @@ namespace pxt {
             }
             pxt.debug("emitFun: "+fnname)
             let args = fn.parameters.map(p => {
-                let ty = typeOf(p)
-                pxt.debug("emitFun:  " + p.name.getText() + " ty=" + ty)
                 return `${p.name.getText()}${p.questionToken ? "?" : ""}: ${mapType(typeOf(p))}`
             })
             let localname = fnname.replace(/Async$/, "")
