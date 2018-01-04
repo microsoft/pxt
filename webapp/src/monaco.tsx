@@ -797,10 +797,16 @@ export class Editor extends srceditor.Editor {
                 else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                     const nsInfo = this.blockInfo.apis.byQName[element.namespace];
                     if (nsInfo.attributes.fixedInstances) {
-                        const instances = Util.values(this.blockInfo.apis.byQName).filter(value =>
+                        let instances = Util.values(this.blockInfo.apis.byQName)
+                        let getExtendsTypesFor = function(name: string) {
+                            return instances
+                                    .filter(v => v.extendsTypes && v.extendsTypes.indexOf(name) !== -1)
+                                    .reduce((x, y) => x.concat(y.extendsTypes), [])
+                        }
+                        instances = instances.filter(value =>
                             value.kind === pxtc.SymbolKind.Variable &&
                             value.attributes.fixedInstance &&
-                            value.retType.endsWith(nsInfo.name))
+                            getExtendsTypesFor(nsInfo.namespace + "." + nsInfo.name).indexOf(value.retType) !== -1)
                             .sort((v1, v2) => v1.name.localeCompare(v2.name));
                         if (instances.length) {
                             snippetPrefix = `${instances[0].name}`
