@@ -801,14 +801,15 @@ export class Editor extends srceditor.Editor {
                         let instances = Util.values(this.blockInfo.apis.byQName)
                         let getExtendsTypesFor = function(name: string) {
                             return instances
-                                    .filter(v => v.extendsTypes && v.extendsTypes.indexOf(name) !== -1)
+                                    .filter(v => v.extendsTypes)
+                                    .filter(v => v.extendsTypes.reduce((x, y) => x || y.indexOf(name) != -1, false))
                                     .reduce((x, y) => x.concat(y.extendsTypes), [])
                         }
                         namespaceToUse = element.attributes.blockNamespace || nsInfo.namespace || "";
                         instances = instances.filter(value =>
                             value.kind === pxtc.SymbolKind.Variable &&
                             value.attributes.fixedInstance &&
-                            getExtendsTypesFor(nsInfo.namespace + "." + nsInfo.name).indexOf(value.retType) !== -1)
+                            getExtendsTypesFor(nsInfo.name).indexOf(value.retType) !== -1)
                             .sort((v1, v2) => v1.name.localeCompare(v2.name));
                         if (instances.length) {
                             snippetPrefix = `${instances[0].name}`
