@@ -806,13 +806,21 @@ export class Editor extends srceditor.Editor {
                                     .reduce((x, y) => x.concat(y.extendsTypes), [])
                         }
                         namespaceToUse = element.attributes.blockNamespace || nsInfo.namespace || "";
-                        instances = instances.filter(value =>
+                        let strictInstances = instances.filter(value =>
+                            value.kind === pxtc.SymbolKind.Variable &&
+                            value.attributes.fixedInstance &&
+                            value.retType == nsInfo.name)
+                            .sort((v1, v2) => v1.name.localeCompare(v2.name));
+                        let relatedInstances = instances.filter(value =>
                             value.kind === pxtc.SymbolKind.Variable &&
                             value.attributes.fixedInstance &&
                             getExtendsTypesFor(nsInfo.name).indexOf(value.retType) !== -1)
                             .sort((v1, v2) => v1.name.localeCompare(v2.name));
-                        if (instances.length) {
-                            snippetPrefix = `${instances[0].name}`
+                        if (strictInstances.length) {
+                            snippetPrefix = `${strictInstances[0].name}`
+                        }
+                        else if (relatedInstances.length) {
+                            snippetPrefix = `${relatedInstances[0].name}`
                         }
                         isInstance = true;
                         addNamespace = true;
