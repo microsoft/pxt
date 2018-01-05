@@ -788,7 +788,7 @@ export class Editor extends srceditor.Editor {
             let snippetPrefix = fn.noNamespace ? "" : ns;
             let isInstance = false;
             let addNamespace = false;
-            let namespaceToUse = ""
+            let namespaceToUse = "";
 
             const element = fn as pxtc.SymbolInfo;
             if (element.attributes.block) {
