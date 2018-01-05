@@ -788,6 +788,7 @@ export class Editor extends srceditor.Editor {
             let snippetPrefix = fn.noNamespace ? "" : ns;
             let isInstance = false;
             let addNamespace = false;
+            let namespaceToUse = ""
 
             const element = fn as pxtc.SymbolInfo;
             if (element.attributes.block) {
@@ -803,6 +804,7 @@ export class Editor extends srceditor.Editor {
                                     .filter(v => v.extendsTypes && v.extendsTypes.indexOf(name) !== -1)
                                     .reduce((x, y) => x.concat(y.extendsTypes), [])
                         }
+                        namespaceToUse = element.attributes.blockNamespace || nsInfo.namespace || "";
                         instances = instances.filter(value =>
                             value.kind === pxtc.SymbolKind.Variable &&
                             value.attributes.fixedInstance &&
@@ -848,7 +850,7 @@ export class Editor extends srceditor.Editor {
                     let currPos = monacoEditor.editor.getPosition();
                     let cursor = model.getOffsetAt(currPos)
                     let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
-                    insertText = addNamespace ? `${/([^\.]+)/.exec(element.namespace)[0]}.${insertText}` : insertText;
+                    insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
                     insertText = (currPos.column > 1) ? '\n' + insertText :
                         model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
                             insertText + '\n' : insertText;
@@ -885,7 +887,7 @@ export class Editor extends srceditor.Editor {
                     });
 
                     let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
-                    insertText = addNamespace ? `${/([^\.]+)/.exec(element.namespace)[0]}.${insertText}` : insertText;
+                    insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
                     e.dataTransfer.setData('text', insertText); // IE11 only supports text
                 }
                 monacoBlock.ondragend = (e: DragEvent) => {
@@ -1668,4 +1670,8 @@ export class TreeItem extends data.Component<TreeItemProps, {}> {
             {this.props.children}
         </div>
     }
+}
+
+function firstWord(s: string) {
+    return /[^\.]+/.exec(s)[0]
 }
