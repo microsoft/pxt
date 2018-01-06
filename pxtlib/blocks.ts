@@ -176,6 +176,16 @@ namespace pxt.blocks {
                 url: '/blocks/math/random',
                 category: 'math'
             },
+            'math_integer': {
+                name: Util.lf("{id:block}number"),
+                url: '/blocks/math/random',
+                category: 'math'
+            },
+            'math_whole_number': {
+                name: Util.lf("{id:block}number"),
+                url: '/blocks/math/random',
+                category: 'math'
+            },
             'math_number_minmax': {
                 name: Util.lf("{id:block}number"),
                 url: '/blocks/math/random',
