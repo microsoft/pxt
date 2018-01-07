@@ -775,7 +775,7 @@ namespace pxt.blocks {
                     }
                 } else if (pr.type == "number") {
                     if (pr.shadowType && pr.shadowType == "value") {
-                        i = block.appendDummyInput(p);
+                        i = block.appendDummyInput();
                         if (pre) i.appendField(pre)
                         i.appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), p);
                     }
