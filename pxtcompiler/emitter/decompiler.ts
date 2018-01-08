@@ -29,6 +29,7 @@ namespace ts.pxtc.decompiler {
     }
 
     const numberType = "math_number";
+    const wholeNumberType = "math_whole_number";
     const stringType = "text";
     const booleanType = "logic_boolean";
 
@@ -1047,7 +1048,7 @@ ${output}</xml>`;
             if (condition.operatorToken.kind === SK.LessThanToken && !checkForVariableUsages(n.statement)) {
                 r = mkStmt("controls_repeat_ext");
                 r.fields = [];
-                r.inputs = [getValue("TIMES", condition.right, numberType)];
+                r.inputs = [getValue("TIMES", condition.right, wholeNumberType)];
                 r.handlers = [];
             }
             else {
@@ -1064,10 +1065,10 @@ ${output}</xml>`;
                         getValue("B", 1, numberType)
                     ];
                     countBlock();
-                    r.inputs.push(mkValue("TO", ex, numberType));
+                    r.inputs.push(mkValue("TO", ex, wholeNumberType));
                 }
                 else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
-                    r.inputs.push(getValue("TO", condition.right, numberType));
+                    r.inputs.push(getValue("TO", condition.right, wholeNumberType));
                 }
             }
 
