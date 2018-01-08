@@ -29,6 +29,7 @@ namespace ts.pxtc.decompiler {
     }
 
     const numberType = "math_number";
+    const integerNumberType = "math_integer";
     const wholeNumberType = "math_whole_number";
     const stringType = "text";
     const booleanType = "logic_boolean";
@@ -478,6 +479,8 @@ ${output}</xml>`;
                 if (!emitShadowOnly) {
                     switch (value.type) {
                         case "math_number":
+                        case "math_integer":
+                        case "math_whole_number":
                         case "logic_boolean":
                         case "text":
                             emitShadowOnly = !n.shadowType;
@@ -494,7 +497,9 @@ ${output}</xml>`;
                 if (n.shadowType !== undefined) {
                     switch (n.shadowType) {
                         case numberType:
-                            write(`<shadow type="math_number"><field name="NUM">0</field></shadow>`)
+                        case integerNumberType:
+                        case wholeNumberType:
+                            write(`<shadow type="${n.shadowType}"><field name="NUM">0</field></shadow>`)
                             break;
                         case booleanType:
                             write(`<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>`)
