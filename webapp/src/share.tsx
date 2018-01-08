@@ -145,7 +145,7 @@ pxt extract ${url}`;
 
         }
         const publish = () => {
-            pxt.tickEvent("menu.embed.publish");
+            pxt.tickEvent("menu.embed.publish", undefined, /*interactiveConsent*/true);
             this.setState({ sharingError: false });
             this.props.parent.anonymousPublishAsync()
                 .catch((e) => {
@@ -186,11 +186,11 @@ pxt extract ${url}`;
             (socialOptions.related ? `&related=${encodeURIComponent(socialOptions.related)}` : '');
         }
         const showFbPopup = () => {
-            pxt.tickEvent('share.facebook')
+            pxt.tickEvent('share.facebook', undefined, /*interactiveConsent*/true)
             sui.popupWindow(fbUrl, lf("Share on Facebook"), 600, 600);
         }
         const showTwtPopup = () => {
-            pxt.tickEvent('share.twitter')
+            pxt.tickEvent('share.twitter', undefined, /*interactiveConsent*/true)
             sui.popupWindow(twitterUrl, lf("Share on Twitter"), 600, 600);
         }
 

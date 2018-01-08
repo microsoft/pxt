@@ -401,7 +401,7 @@ export class Editor extends srceditor.Editor {
 
     prepare() {
         pxt.blocks.openHelpUrl = (url: string) => {
-            pxt.tickEvent("blocks.help", { url });
+            pxt.tickEvent("blocks.help", { url }, /*interactiveConsent*/true);
             const m = /^\/pkg\/([^#]+)#(.+)$/.exec(url);
             if (m) {
                 const dep = pkg.mainPkg.deps[m[1]];

@@ -90,11 +90,11 @@ namespace pxt {
     /**
      * Track an event.
      */
-    export var tickEvent: (id: string, data?: Map<string | number>) => void = function (id) { }
+    export var tickEvent: (id: string, data?: Map<string | number>, interactiveConsent?: boolean) => void = function (id) { }
 
     let activityEvents: Map<number> = {};
     const tickActivityDebounced = Util.debounce(() => {
-        tickEvent("activity", activityEvents);
+        tickEvent("activity", activityEvents, false);
         activityEvents = {};
     }, 10000, false);
     /**

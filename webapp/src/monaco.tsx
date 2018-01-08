@@ -182,9 +182,9 @@ export class Editor extends srceditor.Editor {
         }).then(b => {
             // discard
             if (!b) {
-                pxt.tickEvent("typescript.keepText");
+                pxt.tickEvent("typescript.keepText", undefined, /*interactiveConsent*/true);
             } else {
-                pxt.tickEvent("typescript.discardText");
+                pxt.tickEvent("typescript.discardText", undefined, /*interactiveConsent*/true);
                 this.parent.saveBlocksToTypeScriptAsync().then((src) => {
                     this.overrideFile(src);
                     this.parent.setFile(bf);
@@ -207,7 +207,7 @@ export class Editor extends srceditor.Editor {
     }
 
     addPackage() {
-        pxt.tickEvent("monaco.addpackage");
+        pxt.tickEvent("monaco.addpackage", undefined, /*interactiveConsent*/true);
         this.hideFlyout();
         this.parent.addPackage();
     }
@@ -832,7 +832,7 @@ export class Editor extends srceditor.Editor {
             if (!monacoBlockDisabled) {
                 monacoBlock.draggable = true;
                 monacoBlock.onclick = (e: MouseEvent) => {
-                    pxt.tickEvent("monaco.toolbox.itemclick");
+                    pxt.tickEvent("monaco.toolbox.itemclick", undefined, /*interactiveConsent*/true);
                     monacoEditor.hideFlyout();
 
                     let model = monacoEditor.editor.getModel();
@@ -867,7 +867,7 @@ export class Editor extends srceditor.Editor {
                     //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
                 };
                 monacoBlock.ondragstart = (e: DragEvent) => {
-                    pxt.tickEvent("monaco.toolbox.itemdrag");
+                    pxt.tickEvent("monaco.toolbox.itemdrag", undefined, /*interactiveConsent*/true);
                     let clone = monacoBlock.cloneNode(true) as HTMLDivElement;
 
                     setTimeout(function () {

@@ -6,8 +6,8 @@ namespace pxt.analytics {
         pxt.debug('enabling app insights')
 
         const te = pxt.tickEvent;
-        pxt.tickEvent = function (id: string, data?: Map<string | number>): void {
-            if (te) te(id, data);
+        pxt.tickEvent = function (id: string, data?: Map<string | number>, interactiveConsent = false): void {
+            if (te) te(id, data, interactiveConsent);
             if (!data) ai.trackEvent(id);
             else {
                 const props: Map<string> = {};

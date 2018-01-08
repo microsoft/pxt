@@ -31,12 +31,12 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     openTutorial(path: string) {
-        pxt.tickEvent(`docstutorial`, { path });
+        pxt.tickEvent(`docstutorial`, { path }, /*interactiveConsent*/true);
         this.props.parent.startTutorial(path);
     }
 
     openDocs(path: string) {
-        pxt.tickEvent(`docs`, { path });
+        pxt.tickEvent(`docs`, { path }, /*interactiveConsent*/true);
         this.props.parent.setSideDoc(path);
     }
 
@@ -68,37 +68,37 @@ export interface SettingsMenuItemState {
 export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, SettingsMenuItemState> {
 
     openSettings() {
-        pxt.tickEvent("menu.settings");
+        pxt.tickEvent("menu.settings", undefined, /*interactiveConsent*/true);
         this.props.parent.openSettings();
     }
 
     addPackage() {
-        pxt.tickEvent("menu.addpackage");
+        pxt.tickEvent("menu.addpackage", undefined, /*interactiveConsent*/true);
         this.props.parent.addPackage();
     }
 
     removeProject() {
-        pxt.tickEvent("menu.removeproject");
+        pxt.tickEvent("menu.removeproject", undefined, /*interactiveConsent*/true);
         this.props.parent.removeProject();
     }
 
     showReportAbuse() {
-        pxt.tickEvent("menu.reportabuse");
+        pxt.tickEvent("menu.reportabuse", undefined, /*interactiveConsent*/true);
         this.props.parent.showReportAbuse();
     }
 
     selectLang() {
-        pxt.tickEvent("menu.langpicker");
+        pxt.tickEvent("menu.langpicker", undefined, /*interactiveConsent*/true);
         this.props.parent.selectLang();
     }
 
     toggleHighContrast() {
-        pxt.tickEvent("menu.togglecontrast");
+        pxt.tickEvent("menu.togglecontrast", undefined, /*interactiveConsent*/true);
         this.props.parent.toggleHighContrast();
     }
 
     reset() {
-        pxt.tickEvent("menu.reset");
+        pxt.tickEvent("menu.reset", undefined, /*interactiveConsent*/true);
         pxt.tickEvent("reset"); // Deprecated, will Feb 2018.
         this.props.parent.reset();
     }
@@ -152,46 +152,46 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
 export class MainMenu extends data.Component<ISettingsProps, {}> {
 
     brandIconClick() {
-        pxt.tickEvent("menu.brand");
+        pxt.tickEvent("menu.brand", undefined, /*interactiveConsent*/true);
         this.props.parent.exitAndSave();
     }
 
     orgIconClick() {
-        pxt.tickEvent("menu.org");
+        pxt.tickEvent("menu.org", undefined, /*interactiveConsent*/true);
     }
 
     goHome() {
-        pxt.tickEvent("menu.home");
+        pxt.tickEvent("menu.home", undefined, /*interactiveConsent*/true);
         this.props.parent.exitAndSave();
     }
 
     share() {
-        pxt.tickEvent("menu.share");
+        pxt.tickEvent("menu.share", undefined, /*interactiveConsent*/true);
         this.props.parent.share();
     }
 
     launchFullEditor() {
-        pxt.tickEvent("sandbox.openfulleditor");
+        pxt.tickEvent("sandbox.openfulleditor", undefined, /*interactiveConsent*/true);
         this.props.parent.launchFullEditor();
     }
 
     openSimView() {
-        pxt.tickEvent("menu.simView");
+        pxt.tickEvent("menu.simView", undefined, /*interactiveConsent*/true);
         this.props.parent.openSimView();
     }
 
     openBlocks() {
-        pxt.tickEvent("menu.blocks");
+        pxt.tickEvent("menu.blocks", undefined, /*interactiveConsent*/true);
         this.props.parent.openBlocks();
     }
 
     openJavaScript(giveFocusOnLoading = true) {
-        pxt.tickEvent("menu.javascript");
+        pxt.tickEvent("menu.javascript", undefined, /*interactiveConsent*/true);
         this.props.parent.openJavaScript(giveFocusOnLoading);
     }
 
     exitTutorial() {
-        pxt.tickEvent("menu.exitTutorial");
+        pxt.tickEvent("menu.exitTutorial", undefined, /*interactiveConsent*/true);
         this.props.parent.exitTutorial();
     }
 
@@ -374,7 +374,7 @@ export interface SandboxFooterProps extends ISettingsProps {
 export class SandboxFooter extends data.Component<SandboxFooterProps, {}> {
 
     compile() {
-        pxt.tickEvent("sandboxfooter.compile");
+        pxt.tickEvent("sandboxfooter.compile", undefined, /*interactiveConsent*/true);
         this.props.parent.compile();
     }
 
