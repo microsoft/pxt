@@ -728,7 +728,7 @@ namespace pxt.blocks {
                             v.namespace + "." + v.name
                         ];
                     });
-                    i = initField(block.appendDummyInput(p), field.ni, fn, nsinfo, pre, true);
+                    i = initField(block.appendDummyInput(), field.ni, fn, nsinfo, pre, true);
                     // if a value is provided, move it first
                     if (pr.shadowValue) {
                         let shadowValueIndex = -1;
@@ -760,7 +760,7 @@ namespace pxt.blocks {
                         i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
 
                 } else if (customField) {
-                    i = initField(block.appendDummyInput(p), field.ni, fn, nsinfo, pre, true);
+                    i = initField(block.appendDummyInput(), field.ni, fn, nsinfo, pre, true);
                     const defl = fn.attributes.paramDefl[pr.name] || "";
                     const options = {
                         colour: color,
