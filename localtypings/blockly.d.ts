@@ -62,8 +62,6 @@ declare namespace goog {
             constructor(width: number, height: number);
         }
         function clamp(n: number, min: number, max: number): void;
-        function toRadians(n: number): number;
-        function toDegrees(n: number): number;
     }
 
     namespace color {
@@ -552,7 +550,7 @@ declare namespace Blockly {
         init(block?: Block): void;
         static superClass_: Field;
         constructor(text: string, opt_validator?: Function);
-        callValidator<T>(text: T): T;
+        callValidator(text: string): string;
         getText(): string;
         setText(newText: any): void;
         updateEditable(): void;
@@ -561,7 +559,7 @@ declare namespace Blockly {
         showEditor_(): void;
         getAbsoluteXY_(): goog.math.Coordinate;
         getScaledBBox_(): {top: number, bottom: number, left: number, right: number};
-        setValue(newValue: string | number): void;
+        setValue(newValue: string): void;
         getValue(): string;
         isCurrentlyEditable(): boolean;
         setSourceBlock(block: Block): void;
@@ -570,7 +568,6 @@ declare namespace Blockly {
         updateTextNode_(): void;
         getSize(): goog.math.Size;
         getSvgRoot(): Element;
-        classValidator(text: string): string;
     }
 
     class FieldVariable extends Field {
@@ -641,16 +638,6 @@ declare namespace Blockly {
     }
 
     class FieldAngle extends FieldTextInput {
-        static HALF: number;
-        static RADIUS: number;
-        static OFFSET: number;
-        static CENTER_RADIUS: number;
-        static ARROW_WIDTH: number;
-        static HANDLE_RADIUS: number;
-        static CLOCKWISE: boolean;
-        static ROUND: number;
-        static WRAP: number;
-        static ARROW_SVG_DATAURI: string;
         constructor(opt_value?: string, opt_validator?: Function);
     }
 
@@ -948,7 +935,6 @@ declare namespace Blockly {
     interface Options {
         readOnly?: boolean;
         toolbox?: Element | string;
-        hasCategories?: boolean;
         trashcan?: boolean;
         collapse?: boolean;
         comments?: boolean;
@@ -957,8 +943,6 @@ declare namespace Blockly {
         sound?: boolean;
         css?: boolean;
         media?: string;
-        horizontalLayout?: boolean;
-        toolboxPosition?: string;
         grid?: {
             spacing?: number;
             length?: number;
