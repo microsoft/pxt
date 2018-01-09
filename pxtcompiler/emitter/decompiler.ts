@@ -694,6 +694,13 @@ ${output}</xml>`;
             else {
                 value = getOutputBlock(contents)
             }
+            if (value.kind == "expr" && (value as ExpressionNode).type == "math_number") {
+                const actualValue = value.fields[0].value as number;
+                if (shadowType == "math_integer" && actualValue % 1 === 0)
+                    (value as ExpressionNode).type = "math_integer";
+                if (shadowType == "math_whole_number" && actualValue % 1 === 0 && actualValue > 0)
+                    (value as ExpressionNode).type = "math_whole_number";
+            }
 
             return mkValue(name, value, shadowType);
         }
