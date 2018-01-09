@@ -735,11 +735,17 @@ ${files["main.ts"]}
     }
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
-        return loadPackageAsync(options && options.package ? "docs:" + options.package : null, code)
+        // code may be undefined or empty!!!
+
+        const packageid = options && options.packageId ? "pub:" + options.packageId :
+            options && options.package ? "docs:" + options.package
+                : null;
+        return loadPackageAsync(packageid, code)
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
             .then(opts => {
                 // compile
-                opts.fileSystem["main.ts"] = code;
+                if (code)
+                    opts.fileSystem["main.ts"] = code;
                 opts.ast = true
                 let resp = pxtc.compile(opts)
                 if (resp.diagnostics && resp.diagnostics.length > 0)

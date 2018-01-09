@@ -1,0 +1,69 @@
+<html>
+
+<body>
+    <div id="status"></div>
+    <div id="blocks"></div>
+
+    <script>
+        var pxtFrame;
+        var projectid = /projectid=([^&?]+)/i.exec(window.location.href);
+        function makeCodeInjectRenderer() {
+            var f = document.createElement("iframe");
+            f.id = "makecoderenderer";
+            f.style.position = "absolute";
+            f.style.left = 0;
+            f.style.bottom = 0;
+            f.style.width = "1px";
+            f.style.height = "1px";
+            f.src = "/--docs?render=1&lang=fr"
+            document.body.appendChild(f);
+
+            pxtFrame = f;
+        }
+
+        function makeCodeRenderPre(elid, pid) {
+            var f = document.getElementById("makecoderenderer");
+            f.contentWindow.postMessage({
+                type: "renderblocks",
+                id: elid,
+                options: {
+                    packageId: pid
+                }
+            }, "*");
+        }
+
+        window.addEventListener("message", function (ev) {
+            var msg = ev.data;
+            if (msg.source != "makecode") return;
+
+            switch (msg.type) {
+                case "renderready":
+                    makeCodeRenderPre("blocks", projectid[1])
+                    break;
+                case "renderblocks":
+                    console.log(msg);
+
+                    var id = msg.id;
+                    if (msg.svg) {
+                        var svg = new DOMParser().parseFromString(msg.svg, "image/svg+xml");
+                        var img = svg.childNodes.item(0)
+                        var code = document.getElementById(id)
+                        code.parentElement.insertBefore(img, code)
+                        code.parentElement.removeChild(code);
+                    }
+
+                    // unload iframe
+                    if (pxtFrame) {
+                        pxtFrame.parentElement = undefined;
+                        pxtFrame = undefined;
+                    }
+
+                    break;
+            }
+        }, false);
+
+        makeCodeInjectRenderer();
+    </script>
+</body>
+
+</html>
