@@ -1,13 +1,16 @@
 <html>
+<style>
+    body svg {
+        width: calc(100% - 1rem);
+        height: calc(100% - 1rem);
+    }
+</style>
 
 <body>
-    <div id="status"></div>
     <div id="blocks"></div>
-
-    <script>
+    <script id="loader">
         var pxtFrame;
-        // ....#pub:projectid
-        var projectid = /pub:([^&?]+)/i.exec(window.location.hash);
+
         function makeCodeInjectRenderer() {
             pxtFrame = document.createElement("iframe");
             pxtFrame.id = "makecoderenderer";
@@ -31,21 +34,21 @@
             }, "*");
         }
 
+        function removeEl(el) {
+            if (el && el.parentElement) el.parentElement.removeChild(el);
+        }
+
         window.addEventListener("message", function (ev) {
             var msg = ev.data;
             if (msg.source != "makecode") return;
 
             switch (msg.type) {
                 case "renderready":
+                    // ....#pub:projectid
+                    var projectid = /pub:([^&?]+)/i.exec(window.location.hash);
                     makeCodeRenderPre("blocks", projectid[1])
                     break;
                 case "renderblocks":
-                    // unload iframe
-                    if (pxtFrame) {
-                        if (pxtFrame.parentElement) pxtFrame.parentElement.removeChild(pxtFrame);
-                        pxtFrame = undefined;
-                    }
-
                     var id = msg.id;
                     if (msg.svg) {
                         var svg = new DOMParser().parseFromString(msg.svg, "image/svg+xml");
@@ -54,6 +57,13 @@
                         code.parentElement.insertBefore(img, code)
                         code.parentElement.removeChild(code);
                     }
+
+                    // unload iframe
+                    if (pxtFrame) {
+                        removeEl(pxtFrame);
+                        removeEl(document.getElementById("loader"));
+                        pxtFrame = undefined;
+                    }                    
                     break;
             }
         }, false);
