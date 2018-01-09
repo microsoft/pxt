@@ -4,23 +4,23 @@
 <block type="controls_simple_for">
 <field name="VAR">i</field>
 <value name="TO">
-<shadow type="math_whole_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_whole_number"><field name="NUM">0</field></shadow>
 <block type="math_number">
 <field name="NUM">10.1</field>
 </block>
 </value>
+<statement name="DO">
+</statement>
 <next>
 <block type="controls_repeat_ext">
 <value name="TIMES">
-<shadow type="math_whole_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_whole_number"><field name="NUM">0</field></shadow>
 <block type="math_number">
 <field name="NUM">10.1</field>
 </block>
 </value>
+<statement name="DO">
+</statement>
 </block>
 </next>
 </block>
