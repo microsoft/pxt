@@ -8,17 +8,15 @@
         var pxtFrame;
         var projectid = /projectid=([^&?]+)/i.exec(window.location.href);
         function makeCodeInjectRenderer() {
-            var f = document.createElement("iframe");
-            f.id = "makecoderenderer";
-            f.style.position = "absolute";
-            f.style.left = 0;
-            f.style.bottom = 0;
-            f.style.width = "1px";
-            f.style.height = "1px";
-            f.src = "/--docs?render=1&lang=fr"
-            document.body.appendChild(f);
-
-            pxtFrame = f;
+            pxtFrame = document.createElement("iframe");
+            pxtFrame.id = "makecoderenderer";
+            pxtFrame.style.position = "absolute";
+            pxtFrame.style.left = 0;
+            pxtFrame.style.bottom = 0;
+            pxtFrame.style.width = "1px";
+            pxtFrame.style.height = "1px";
+            pxtFrame.src = "/--docs?render=1"
+            document.body.appendChild(pxtFrame);
         }
 
         function makeCodeRenderPre(elid, pid) {
@@ -41,7 +39,11 @@
                     makeCodeRenderPre("blocks", projectid[1])
                     break;
                 case "renderblocks":
-                    console.log(msg);
+                    // unload iframe
+                    if (pxtFrame) {
+                        if (pxtFrame.parentElement) pxtFrame.parentElement.removeChild(pxtFrame);
+                        pxtFrame = undefined;
+                    }
 
                     var id = msg.id;
                     if (msg.svg) {
@@ -51,13 +53,6 @@
                         code.parentElement.insertBefore(img, code)
                         code.parentElement.removeChild(code);
                     }
-
-                    // unload iframe
-                    if (pxtFrame) {
-                        pxtFrame.parentElement = undefined;
-                        pxtFrame = undefined;
-                    }
-
                     break;
             }
         }, false);
