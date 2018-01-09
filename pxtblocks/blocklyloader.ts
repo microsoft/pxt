@@ -2608,7 +2608,7 @@ namespace pxt.blocks {
             installHelpResources(
                 num_id,
                 mInfo.name,
-                (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
+                mInfo.tooltip,
                 mInfo.url,
                 (Blockly as any).Colours.textField,
                 (Blockly as any).Colours.textField,
