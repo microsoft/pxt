@@ -1,0 +1,29 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="controls_simple_for">
+<field name="VAR">i</field>
+<value name="TO">
+<shadow type="math_whole_number">
+<field name="NUM">0</field>
+</shadow>
+<block type="math_number">
+<field name="NUM">10.1</field>
+</block>
+</value>
+<next>
+<block type="controls_repeat_ext">
+<value name="TIMES">
+<shadow type="math_whole_number">
+<field name="NUM">0</field>
+</shadow>
+<block type="math_number">
+<field name="NUM">10.1</field>
+</block>
+</value>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>
