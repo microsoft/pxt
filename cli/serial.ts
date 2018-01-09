@@ -7,6 +7,7 @@ import * as querystring from 'querystring';
 import * as nodeutil from './nodeutil';
 import * as server from './server';
 import * as util from 'util';
+import * as readline from 'readline';
 import * as commandParser from './commandparser';
 
 import U = pxt.Util;
@@ -23,7 +24,10 @@ export interface SerialPortInfo {
     port?: any;
 }
 
-export function monitorSerial(onData: (info: SerialPortInfo, buffer: Buffer) => void) {
+export function monitorSerial(
+    onData: (info: SerialPortInfo, buffer: Buffer) => void,
+    onLine?: (info: SerialPortInfo, line: string) => void
+) {
     if (!pxt.appTarget.serial || !pxt.appTarget.serial.log) return;
     if (pxt.appTarget.serial.useHF2) {
         return
@@ -39,9 +43,14 @@ export function monitorSerial(onData: (info: SerialPortInfo, buffer: Buffer) => 
         return;
     }
     const serialPorts: pxt.Map<SerialPortInfo> = {};
+    const readers: pxt.Map<readline.ReadLine> = {};
+
     function close(info: SerialPortInfo) {
         console.log('serial: closing ' + info.pnpId);
         delete serialPorts[info.pnpId];
+        const reader = readers[info.pnpId];
+        if (reader) reader.close();
+        delete readers[info.pnpId];
     }
 
     function open(info: SerialPortInfo) {
@@ -58,6 +67,10 @@ export function monitorSerial(onData: (info: SerialPortInfo, buffer: Buffer) => 
             } else {
                 console.log(`serial: connected to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
                 info.opened = true;
+                if (onLine) {
+                    const reader = readers[info.pnpId] = readline.createInterface({ input: info.port })
+                    reader.on('line', (line: string) => onLine(info, line));
+                }
                 info.port.on('data', (buffer: Buffer) => onData(info, buffer));
                 info.port.on('error', function () { close(info); });
                 info.port.on('close', function () { close(info); });
