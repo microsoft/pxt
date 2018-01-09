@@ -12,6 +12,7 @@ import * as serial from './serial';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
+import { publicDecrypt } from 'crypto';
 
 const userProjectsDirName = "projects";
 
@@ -854,6 +855,11 @@ export function serveAsync(options: ServeOptions) {
 
         if (pathname == "/--docs") {
             sendFile(path.join(publicDir, 'docs.html'));
+            return
+        }
+
+        if (pathname == "/--codeembed") {
+            sendFile(path.join(publicDir, 'codeembed.html'));
             return
         }
 
