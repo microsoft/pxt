@@ -338,6 +338,22 @@ namespace pxt.runner {
         }
     }
 
+    function initEditorExtensionsAsync(): Promise<void> {
+        let promise = Promise.resolve();
+        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
+            const opts: pxt.editor.ExtensionOptions = {};
+            promise = promise.then(() => pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js"))
+                .then(() => pxt.editor.initExtensionsAsync(opts))
+                .then(res => {
+                    if (res.fieldEditors)
+                        res.fieldEditors.forEach(fi => {
+                            pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                        })
+                })
+        }
+        return promise;
+    }
+
     export function startRenderServer() {
         pxt.tickEvent("renderer.ready");
 
@@ -367,18 +383,21 @@ namespace pxt.runner {
                 })
         }
 
-        // notify parent that render engine is loaded
-        window.addEventListener("message", function (ev) {
-            const msg = ev.data as pxsim.RenderBlocksRequestMessage;
-            if (msg.type == "renderblocks") {
-                jobQueue.push(msg);
-                consumeQueue();
-            }
-        }, false);
-        window.parent.postMessage(<pxsim.RenderReadyResponseMessage>{
-            source: "makecode",
-            type: "renderready"
-        }, "*");
+        initEditorExtensionsAsync()
+            .done(() => {
+                // notify parent that render engine is loaded
+                window.addEventListener("message", function (ev) {
+                    const msg = ev.data as pxsim.RenderBlocksRequestMessage;
+                    if (msg.type == "renderblocks") {
+                        jobQueue.push(msg);
+                        consumeQueue();
+                    }
+                }, false);
+                window.parent.postMessage(<pxsim.RenderReadyResponseMessage>{
+                    source: "makecode",
+                    type: "renderready"
+                }, "*");
+            })
     }
 
     export function startDocsServer(loading: HTMLElement, content: HTMLElement) {
@@ -435,18 +454,7 @@ namespace pxt.runner {
                 p.then(() => render(m[1], decodeURIComponent(m[2])));
             }
         }
-        let promise = Promise.resolve();
-        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
-            const opts: pxt.editor.ExtensionOptions = {};
-            promise = promise.then(() => pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js"))
-                .then(() => pxt.editor.initExtensionsAsync(opts))
-                .then(res => {
-                    if (res.fieldEditors)
-                        res.fieldEditors.forEach(fi => {
-                            pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                        })
-                })
-        }
+        let promise = initEditorExtensionsAsync();
         promise.done(() => {
             window.addEventListener("message", receiveDocMessage, false);
             window.addEventListener("hashchange", () => {
