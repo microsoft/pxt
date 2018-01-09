@@ -4,30 +4,33 @@
         background: transparent;
     }
 
-    a, a:visited {
-        text-decoration: none;
+    a,
+    a:visited {
+        text-decoration: none !important;
     }
 
     body a svg {
         width: calc(100% - 1rem);
-        height: calc(100% - 4rem);
+        height: calc(100% - 3rem);
     }
 
     footer {
         position: absolute;
         bottom: 0;
-        height: 2rem;
-        background: lightgray;
+        height: 1.3rem;
+        background: #ccc;
+        text-align: right;
         color: white;
+        font-size: 0.7rem;
         font-family: consolas;
         left: 0;
         right: 0;
         padding-top: 0.5rem;
-        padding-left: 1rem;
+        padding-right: 1rem;
     }
 
-    footer a:visited {
-        color:white;
+    footer a, footer a:visited {
+        color: white;
     }
 </style>
 
