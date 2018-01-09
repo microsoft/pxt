@@ -3005,7 +3005,7 @@ function simshimAsync() {
         return Promise.resolve();
     }
     let prog = pxtc.plainTsc(path.resolve("sim"))
-    let shims = pxt.simshim(prog)
+    let shims = pxt.simshim(prog, path.parse)
     let filename = "sims.d.ts"
     for (const s of Object.keys(shims)) {
         let cont = shims[s]

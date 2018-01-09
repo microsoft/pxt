@@ -2,7 +2,7 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
     <category name="Loops" nameid="loops" colour="#107c10" category="50" web-icon="\uf01e" iconclass="blocklyTreeIconloops" expandedclass="blocklyTreeIconloops">    
         <block type="controls_repeat_ext">
             <value name="TIMES">
-                <shadow type="math_number">
+                <shadow type="math_whole_number">
                     <field name="NUM">4</field>
                 </shadow>
             </value>
@@ -14,7 +14,7 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
         </block>
         <block type="controls_simple_for">
             <value name="TO">
-                <shadow type="math_number">
+                <shadow type="math_whole_number">
                     <field name="NUM">4</field>
                 </shadow>
             </value>
