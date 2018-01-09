@@ -61,7 +61,7 @@ declare namespace goog {
             height: number;
             constructor(width: number, height: number);
         }
-        function clamp(n: number, min: number, max: number): void;
+        function clamp(n: number, min: number, max: number): number;
         function toRadians(n: number): number;
         function toDegrees(n: number): number;
     }
