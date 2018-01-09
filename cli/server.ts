@@ -12,7 +12,6 @@ import * as serial from './serial';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
-import { publicDecrypt } from 'crypto';
 
 const userProjectsDirName = "projects";
 
