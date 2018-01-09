@@ -1,6 +1,10 @@
 <html>
 <style>
-    body svg {
+    body a {
+        text-decoration: none;
+    }
+
+    body a svg {
         width: calc(100% - 1rem);
         height: calc(100% - 1rem);
     }
@@ -9,7 +13,12 @@
 <body>
     <div id="blocks"></div>
     <script id="loader">
+        // This line gets patched up by the cloud
+        var pxtConfig = null;
+        // handle to rendering iframe
         var pxtFrame;
+        // ....#pub:projectid
+        var projectid = /pub:([^&?]+)/i.exec(window.location.hash)[1];
 
         function makeCodeInjectRenderer() {
             pxtFrame = document.createElement("iframe");
@@ -44,9 +53,7 @@
 
             switch (msg.type) {
                 case "renderready":
-                    // ....#pub:projectid
-                    var projectid = /pub:([^&?]+)/i.exec(window.location.hash);
-                    makeCodeRenderPre("blocks", projectid[1])
+                    makeCodeRenderPre("blocks", projectid)
                     break;
                 case "renderblocks":
                     var id = msg.id;
@@ -54,7 +61,11 @@
                         var svg = new DOMParser().parseFromString(msg.svg, "image/svg+xml");
                         var img = svg.childNodes.item(0)
                         var code = document.getElementById(id)
-                        code.parentElement.insertBefore(img, code)
+                        var a = document.createElement("a")
+                        a.target = "_blank"
+                        a.href = (pxtConfig ? pxtConfig.targetUrl : "") + "/#pub:" + projectid;
+                        a.appendChild(img)
+                        code.parentElement.insertBefore(a, code)
                         code.parentElement.removeChild(code);
                     }
 
@@ -63,7 +74,7 @@
                         removeEl(pxtFrame);
                         removeEl(document.getElementById("loader"));
                         pxtFrame = undefined;
-                    }                    
+                    }
                     break;
             }
         }, false);
