@@ -2600,31 +2600,21 @@ namespace pxt.blocks {
             }
         };
 
-        // builtin math_number
+        // builtin math_number, math_integer, math_whole_number, math_number_minmax
         //XXX Integer validation needed.
-        const mInfo = pxt.blocks.getBlockDefinition("math_number");
-        installHelpResources(
-            'math_number',
-            mInfo.name,
-            (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
-            mInfo.url,
-            (Blockly as any).Colours.textField,
-            (Blockly as any).Colours.textField,
-            (Blockly as any).Colours.textField
-        );
-
-        // builtin math_number_minmax
-        //XXX Integer validation needed.
-        const mMInfo = pxt.blocks.getBlockDefinition("math_number_minmax");
-        installHelpResources(
-            'math_number_minmax',
-            mMInfo.name,
-            (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
-            mMInfo.url,
-            (Blockly as any).Colours.textField,
-            (Blockly as any).Colours.textField,
-            (Blockly as any).Colours.textField
-        );
+        const numberBlocks = ['math_number', 'math_integer', 'math_whole_number', 'math_number_minmax']
+        numberBlocks.forEach(num_id => {
+            const mInfo = pxt.blocks.getBlockDefinition(num_id);
+            installHelpResources(
+                num_id,
+                mInfo.name,
+                mInfo.tooltip,
+                mInfo.url,
+                (Blockly as any).Colours.textField,
+                (Blockly as any).Colours.textField,
+                (Blockly as any).Colours.textField
+            );
+        })
 
         // builtin math_arithmetic
         const msg: any = Blockly.Msg;

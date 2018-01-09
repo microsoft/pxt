@@ -3,7 +3,7 @@
     <statement name="HANDLER">
       <block id="ZYBqVp|!hY.JD}p,jC:p" type="controls_repeat_ext">
         <value name="TIMES">
-          <shadow id="@+h7+1[(*0BiHW-R~CLA" type="math_number">
+          <shadow id="@+h7+1[(*0BiHW-R~CLA" type="math_whole_number">
             <field name="NUM">4</field>
           </shadow>
         </value>
@@ -18,7 +18,7 @@
             <next>
               <block id="0KiQsda54S?x~mpsBbU`" type="controls_repeat_ext">
                 <value name="TIMES">
-                  <shadow id="EAA+VS`z)]~beS6cN0]y" type="math_number">
+                  <shadow id="EAA+VS`z)]~beS6cN0]y" type="math_whole_number">
                     <field name="NUM">4</field>
                   </shadow>
                 </value>
@@ -40,7 +40,7 @@
           <block id="$LBpRJgn,7$c7J9hpE*s" type="controls_simple_for">
             <field name="VAR">index</field>
             <value name="TO">
-              <shadow id="^()T3+}~@16]C]KwC1ax" type="math_number">
+              <shadow id="^()T3+}~@16]C]KwC1ax" type="math_whole_number">
                 <field name="NUM">4</field>
               </shadow>
             </value>

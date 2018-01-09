@@ -174,7 +174,21 @@ namespace pxt.blocks {
             'math_number': {
                 name: Util.lf("{id:block}number"),
                 url: '/blocks/math/random',
-                category: 'math'
+                category: 'math',
+                tooltip: (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ?
+                    Util.lf("a decimal number") : Util.lf("an integer number")
+            },
+            'math_integer': {
+                name: Util.lf("{id:block}number"),
+                url: '/blocks/math/random',
+                category: 'math',
+                tooltip: Util.lf("an integer number")
+            },
+            'math_whole_number': {
+                name: Util.lf("{id:block}number"),
+                url: '/blocks/math/random',
+                category: 'math',
+                tooltip: Util.lf("an whole number")
             },
             'math_number_minmax': {
                 name: Util.lf("{id:block}number"),
