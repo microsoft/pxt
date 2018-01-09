@@ -6,7 +6,8 @@
 
     <script>
         var pxtFrame;
-        var projectid = /projectid=([^&?]+)/i.exec(window.location.href);
+        // ....#pub:projectid
+        var projectid = /pub:([^&?]+)/i.exec(window.location.hash);
         function makeCodeInjectRenderer() {
             pxtFrame = document.createElement("iframe");
             pxtFrame.id = "makecoderenderer";
