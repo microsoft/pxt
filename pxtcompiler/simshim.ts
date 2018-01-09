@@ -8,6 +8,7 @@ namespace pxt {
         let currNs = ""
 
         for (let src of prog.getSourceFiles()) {
+            pxt.debug("simshim: " + src.fileName);
             if (!U.startsWith(src.fileName, "sim/"))
                 continue;
             for (let stmt of src.statements) {

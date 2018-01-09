@@ -17,6 +17,16 @@ namespace pxt.blocks {
         advanced: '#3c3c3c'
     }
 
+    export const blockIcons: Map<number | string> = {
+        loops: '\uf01e',
+        logic: '\uf074',
+        math: '\uf1ec',
+        variables: '\uf039',
+        functions: '\uf0cb',
+        text: '\uf035',
+        arrays: '\uf0cb'
+    }
+
     export enum CategoryMode {
         All,
         None,
@@ -1159,6 +1169,10 @@ namespace pxt.blocks {
                     for (let j = 0; j < subCats.length; j++) {
                         subCats[j].setAttribute('colour', nsColor);
                     }
+                }
+                const nsIcon = getNamespaceIcon(topCats[i].getAttribute('nameid'));
+                if (nsIcon && nsIcon != "") {
+                    topCats[i].setAttribute('web-icon', nsIcon);
                 }
                 if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
                     // Add the Heading label
@@ -2586,31 +2600,21 @@ namespace pxt.blocks {
             }
         };
 
-        // builtin math_number
+        // builtin math_number, math_integer, math_whole_number, math_number_minmax
         //XXX Integer validation needed.
-        const mInfo = pxt.blocks.getBlockDefinition("math_number");
-        installHelpResources(
-            'math_number',
-            mInfo.name,
-            (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
-            mInfo.url,
-            (Blockly as any).Colours.textField,
-            (Blockly as any).Colours.textField,
-            (Blockly as any).Colours.textField
-        );
-
-        // builtin math_number_minmax
-        //XXX Integer validation needed.
-        const mMInfo = pxt.blocks.getBlockDefinition("math_number_minmax");
-        installHelpResources(
-            'math_number_minmax',
-            mMInfo.name,
-            (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
-            mMInfo.url,
-            (Blockly as any).Colours.textField,
-            (Blockly as any).Colours.textField,
-            (Blockly as any).Colours.textField
-        );
+        const numberBlocks = ['math_number', 'math_integer', 'math_whole_number', 'math_number_minmax']
+        numberBlocks.forEach(num_id => {
+            const mInfo = pxt.blocks.getBlockDefinition(num_id);
+            installHelpResources(
+                num_id,
+                mInfo.name,
+                mInfo.tooltip,
+                mInfo.url,
+                (Blockly as any).Colours.textField,
+                (Blockly as any).Colours.textField,
+                (Blockly as any).Colours.textField
+            );
+        })
 
         // builtin math_arithmetic
         const msg: any = Blockly.Msg;
@@ -2648,6 +2652,16 @@ namespace pxt.blocks {
         return "";
     }
 
+    export function getNamespaceIcon(ns: string): string {
+        if (pxt.appTarget.appTheme.blockIcons && pxt.appTarget.appTheme.blockIcons[ns]) {
+            return pxt.appTarget.appTheme.blockIcons[ns] as string;
+        }
+        if (blockIcons[ns]) {
+            return blockIcons[ns] as string;
+        }
+        return "";
+    }
+
     export function initFlyouts(workspace: Blockly.Workspace) {
         workspace.registerToolboxCategoryCallback(Blockly.VARIABLE_CATEGORY_NAME, Blockly.Variables.flyoutCategory);
         workspace.registerToolboxCategoryCallback(Blockly.PROCEDURE_CATEGORY_NAME, Blockly.Procedures.flyoutCategory);
@@ -2672,7 +2686,7 @@ namespace pxt.blocks {
                 let headingLabel = goog.dom.createDom('label') as HTMLElement;
                 headingLabel.setAttribute('text', lf("Variables"));
                 headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
-                headingLabel.setAttribute('web-icon', '\uf039');
+                headingLabel.setAttribute('web-icon', getNamespaceIcon('variables'));
                 headingLabel.setAttribute('web-icon-color', getNamespaceColor('variables'));
                 xmlList.push(headingLabel);
             }
@@ -2995,7 +3009,7 @@ namespace pxt.blocks {
                 let headingLabel = goog.dom.createDom('label');
                 headingLabel.setAttribute('text', lf("Functions"));
                 headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
-                headingLabel.setAttribute('web-icon', '\uf109');
+                headingLabel.setAttribute('web-icon', getNamespaceIcon('functions'));
                 headingLabel.setAttribute('web-icon-class', 'blocklyFlyoutIconfunctions');
                 headingLabel.setAttribute('web-icon-color', getNamespaceColor('functions'));
                 xmlList.push(headingLabel as HTMLElement);

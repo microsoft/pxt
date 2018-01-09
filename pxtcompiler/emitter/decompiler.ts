@@ -29,6 +29,8 @@ namespace ts.pxtc.decompiler {
     }
 
     const numberType = "math_number";
+    const integerNumberType = "math_integer";
+    const wholeNumberType = "math_whole_number";
     const stringType = "text";
     const booleanType = "logic_boolean";
 
@@ -477,6 +479,8 @@ ${output}</xml>`;
                 if (!emitShadowOnly) {
                     switch (value.type) {
                         case "math_number":
+                        case "math_integer":
+                        case "math_whole_number":
                         case "logic_boolean":
                         case "text":
                             emitShadowOnly = !n.shadowType;
@@ -493,7 +497,9 @@ ${output}</xml>`;
                 if (n.shadowType !== undefined) {
                     switch (n.shadowType) {
                         case numberType:
-                            write(`<shadow type="math_number"><field name="NUM">0</field></shadow>`)
+                        case integerNumberType:
+                        case wholeNumberType:
+                            write(`<shadow type="${n.shadowType}"><field name="NUM">0</field></shadow>`)
                             break;
                         case booleanType:
                             write(`<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>`)
@@ -687,6 +693,13 @@ ${output}</xml>`;
             }
             else {
                 value = getOutputBlock(contents)
+            }
+            if (value.kind == "expr" && (value as ExpressionNode).type == "math_number") {
+                const actualValue = value.fields[0].value as number;
+                if (shadowType == "math_integer" && actualValue % 1 === 0)
+                    (value as ExpressionNode).type = "math_integer";
+                if (shadowType == "math_whole_number" && actualValue % 1 === 0 && actualValue > 0)
+                    (value as ExpressionNode).type = "math_whole_number";
             }
 
             return mkValue(name, value, shadowType);
@@ -1047,7 +1060,7 @@ ${output}</xml>`;
             if (condition.operatorToken.kind === SK.LessThanToken && !checkForVariableUsages(n.statement)) {
                 r = mkStmt("controls_repeat_ext");
                 r.fields = [];
-                r.inputs = [getValue("TIMES", condition.right, numberType)];
+                r.inputs = [getValue("TIMES", condition.right, wholeNumberType)];
                 r.handlers = [];
             }
             else {
@@ -1064,10 +1077,10 @@ ${output}</xml>`;
                         getValue("B", 1, numberType)
                     ];
                     countBlock();
-                    r.inputs.push(mkValue("TO", ex, numberType));
+                    r.inputs.push(mkValue("TO", ex, wholeNumberType));
                 }
                 else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
-                    r.inputs.push(getValue("TO", condition.right, numberType));
+                    r.inputs.push(getValue("TO", condition.right, wholeNumberType));
                 }
             }
 

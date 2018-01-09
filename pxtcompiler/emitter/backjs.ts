@@ -8,6 +8,7 @@ namespace ts.pxtc {
         "numops::ands": "&",
         "numops::orrs": "|",
         "numops::eors": "^",
+        "numops::bnot": "~", // unary
         "numops::lsls": "<<",
         "numops::asrs": ">>",
         "numops::lsrs": ">>>",
@@ -320,8 +321,8 @@ switch (step) {
                 text = `${args[0]}${name}(${args.slice(1).join(", ")})`
             else if (U.startsWith(name, "new "))
                 text = `new ${shimToJs(name.slice(4))}(${args.join(", ")})`
-            else if (args.length == 2 && bin.target.floatingPoint && U.lookup(jsOpMap, name))
-                text = `(${args[0]} ${U.lookup(jsOpMap, name)} ${args[1]})`
+            else if (bin.target.floatingPoint && U.lookup(jsOpMap, name))
+                text = args.length == 2 ? `(${args[0]} ${U.lookup(jsOpMap, name)} ${args[1]})` : `(${U.lookup(jsOpMap, name)} ${args[0]})`;
             else
                 text = `${shimToJs(name)}(${args.join(", ")})`
 

@@ -10,7 +10,7 @@ namespace pxsim {
         }
     }
 
-    let floatingPoint = false;
+    export let floatingPoint = false;
     let cfgKey: Map<number> = {}
     let cfg: Map<number> = {}
 
