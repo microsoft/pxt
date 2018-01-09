@@ -4,7 +4,7 @@
 <block type="controls_simple_for">
 <field name="VAR">i</field>
 <value name="TO">
-<shadow type="math_number">
+<shadow type="math_whole_number">
 <field name="NUM">4</field>
 </shadow>
 </value>
@@ -14,7 +14,7 @@
 <block type="controls_simple_for">
 <field name="VAR">j</field>
 <value name="TO">
-<shadow type="math_number">
+<shadow type="math_whole_number">
 <field name="NUM">4</field>
 </shadow>
 </value>
@@ -77,7 +77,7 @@
 <next>
 <block type="controls_repeat_ext">
 <value name="TIMES">
-<shadow type="math_number"><field name="NUM">0</field></shadow>
+<shadow type="math_whole_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">MINUS</field>
 <value name="A">
@@ -141,7 +141,7 @@
 <block type="controls_simple_for">
 <field name="VAR">u</field>
 <value name="TO">
-<shadow type="math_number"><field name="NUM">0</field></shadow>
+<shadow type="math_whole_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">MINUS</field>
 <value name="A">
