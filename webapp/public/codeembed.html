@@ -1,17 +1,39 @@
 <html>
 <style>
-    body a {
+    a, a:visited {
         text-decoration: none;
     }
 
     body a svg {
         width: calc(100% - 1rem);
-        height: calc(100% - 1rem);
+        height: calc(100% - 4rem);
+    }
+
+    footer {
+        position: absolute;
+        bottom: 0;
+        height: 2rem;
+        background: lightgray;
+        color: white;
+        font-family: consolas;
+        left: 0;
+        right: 0;
+        padding-top: 0.5rem;
+        padding-left: 1rem;
+    }
+
+    footer a:visited {
+        color:white;
     }
 </style>
 
 <body>
     <div id="blocks"></div>
+    <footer class="ui horizontal small divided link list footer">
+        <a target="_blank" class="item" href="https://makecode.com">Microsoft MakeCode</a>
+        <a target="_blank" class="item" href="https://makecode.com/termsofuse">Terms of Use </a>
+        <a target="_blank" class="item" href="https://makecode.com/privacy">Privacy </a>
+    </footer>
     <script id="loader">
         // This line gets patched up by the cloud
         var pxtConfig = null;
