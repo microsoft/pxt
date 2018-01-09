@@ -365,6 +365,7 @@ namespace pxt.runner {
             const msg = jobQueue.shift();
             if (!msg) return; // no more work
 
+            pxt.tickEvent("renderer.job")
             jobPromise = runner.decompileToBlocksAsync(msg.code, msg.options)
                 .then(result => result.blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(result.blocksSvg, 0, 0, result.blocksSvg.viewBox.baseVal.width, result.blocksSvg.viewBox.baseVal.height) : undefined)
                 .then(res => {
@@ -401,6 +402,8 @@ namespace pxt.runner {
     }
 
     export function startDocsServer(loading: HTMLElement, content: HTMLElement) {
+        pxt.tickEvent("docrenderer.ready");
+
         function render(doctype: string, src: string) {
             pxt.debug(`rendering ${doctype}`);
             $(content).hide()
