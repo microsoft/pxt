@@ -62,6 +62,8 @@ declare namespace goog {
             constructor(width: number, height: number);
         }
         function clamp(n: number, min: number, max: number): void;
+        function toRadians(n: number): number;
+        function toDegrees(n: number): number;
     }
 
     namespace color {
@@ -550,7 +552,7 @@ declare namespace Blockly {
         init(block?: Block): void;
         static superClass_: Field;
         constructor(text: string, opt_validator?: Function);
-        callValidator(text: string): string;
+        callValidator<T>(text: T): T;
         getText(): string;
         setText(newText: any): void;
         updateEditable(): void;
@@ -559,7 +561,7 @@ declare namespace Blockly {
         showEditor_(): void;
         getAbsoluteXY_(): goog.math.Coordinate;
         getScaledBBox_(): {top: number, bottom: number, left: number, right: number};
-        setValue(newValue: string): void;
+        setValue(newValue: string | number): void;
         getValue(): string;
         isCurrentlyEditable(): boolean;
         setSourceBlock(block: Block): void;
@@ -568,6 +570,7 @@ declare namespace Blockly {
         updateTextNode_(): void;
         getSize(): goog.math.Size;
         getSvgRoot(): Element;
+        classValidator(text: string): string;
     }
 
     class FieldVariable extends Field {
@@ -638,12 +641,23 @@ declare namespace Blockly {
     }
 
     class FieldAngle extends FieldTextInput {
+        static HALF: number;
+        static RADIUS: number;
+        static OFFSET: number;
+        static CENTER_RADIUS: number;
+        static ARROW_WIDTH: number;
+        static HANDLE_RADIUS: number;
+        static CLOCKWISE: boolean;
+        static ROUND: number;
+        static WRAP: number;
+        static ARROW_SVG_DATAURI: string;
         constructor(opt_value?: string, opt_validator?: Function);
     }
 
     class FieldSlider extends FieldNumber {
         min_: number;
         max_: number;
+        step_: number;
         labelText_: string;
         slider_: goog.ui.Slider;
         constructor(value_: any, opt_min?: string, opt_max?: string, opt_precision?: string, opt_step?: string, opt_labelText?: string, opt_validator?: Function);
