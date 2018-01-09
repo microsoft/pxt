@@ -632,6 +632,10 @@ declare namespace Blockly {
         position_(): void;
     }
 
+    class FieldLabel extends Field {
+        constructor(text: string, opt_class: string);
+    }
+
     class FieldTextDropdown extends FieldTextInput {
         constructor(text: string, menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], opt_validator?: Function, opt_restrictor?: any);
     }
