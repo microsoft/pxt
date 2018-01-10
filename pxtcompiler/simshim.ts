@@ -6,14 +6,16 @@ namespace pxt {
         let checker = prog.getTypeChecker()
         let mainWr = cpp.nsWriter("declare namespace")
         let currNs = ""
+        let currMod: ts.ModuleDeclaration
 
         for (let src of prog.getSourceFiles()) {
             pxt.debug("simshim: " + src.fileName);
-            if (!U.startsWith(src.fileName, "sim/"))
+            if (!U.startsWith(src.fileName, "sim/") && src.fileName.indexOf("/sim/") < 0)
                 continue;
             for (let stmt of src.statements) {
                 let mod = stmt as ts.ModuleDeclaration
                 if (stmt.kind == SK.ModuleDeclaration && mod.name.text == "pxsim") {
+                    currMod = mod
                     doStmt(mod.body as ts.ModuleBlock)
                 }
             }
@@ -49,11 +51,13 @@ namespace pxt {
         }
 
         function mapType(tp: ts.Type) {
-            let fn = checker.typeToString(tp, null, ts.TypeFormatFlags.UseFullyQualifiedType)
+            let fn = checker.typeToString(tp, currMod, ts.TypeFormatFlags.UseFullyQualifiedType)
+            fn = fn.replace(/^pxsim\./, "")
             switch (fn) {
-                case "pxsim.RefAction": return "() => void";
+                case "RefAction": return "() => void";
+                case "RefBuffer": return "Buffer";
                 default:
-                    return fn.replace(/^pxsim\./, "")
+                    return fn
             }
         }
 
@@ -145,7 +149,9 @@ namespace pxt {
             } else if (asyncName) {
                 U.userError(`${currNs}::${fnname} doesn't return a promise`)
             }
-            let args = fn.parameters.map(p => `${p.name.getText()}${p.questionToken ? "?" : ""}: ${mapType(typeOf(p))}`)
+            let args = fn.parameters.map(p => {
+                return `${p.name.getText()}${p.questionToken ? "?" : ""}: ${mapType(typeOf(p))}`
+            })
             let localname = fnname.replace(/Async$/, "")
             let defkw = isMethod ? "public" : "function"
 
