@@ -1,0 +1,115 @@
+<html>
+<style>
+    body {
+        background: transparent;
+    }
+
+    a,
+    a:visited {
+        text-decoration: none !important;
+    }
+
+    body a svg {
+        width: calc(100% - 1rem);
+        height: calc(100% - 3rem);
+    }
+
+    footer {
+        position: absolute;
+        bottom: 0;
+        height: 1.3rem;
+        background: #ccc;
+        text-align: right;
+        color: white;
+        font-size: 0.7rem;
+        font-family: consolas;
+        left: 0;
+        right: 0;
+        padding-top: 0.5rem;
+        padding-right: 1rem;
+    }
+
+    footer a, footer a:visited {
+        color: white;
+    }
+</style>
+
+<body>
+    <div id="blocks"></div>
+    <footer class="ui horizontal small divided link list footer">
+        <a target="_blank" class="item" href="https://makecode.com">Microsoft MakeCode</a>
+        <a target="_blank" class="item" href="https://makecode.com/termsofuse">Terms of Use </a>
+        <a target="_blank" class="item" href="https://makecode.com/privacy">Privacy </a>
+    </footer>
+    <script id="loader">
+        // This line gets patched up by the cloud
+        var pxtConfig = null;
+        // handle to rendering iframe
+        var pxtFrame;
+        // ....#pub:projectid
+        var projectid = /pub:([^&?]+)/i.exec(window.location.hash)[1];
+
+        function makeCodeInjectRenderer() {
+            pxtFrame = document.createElement("iframe");
+            pxtFrame.id = "makecoderenderer";
+            pxtFrame.style.position = "absolute";
+            pxtFrame.style.left = 0;
+            pxtFrame.style.bottom = 0;
+            pxtFrame.style.width = "1px";
+            pxtFrame.style.height = "1px";
+            pxtFrame.src = "/--docs?render=1"
+            document.body.appendChild(pxtFrame);
+        }
+
+        function makeCodeRenderPre(elid, pid) {
+            var f = document.getElementById("makecoderenderer");
+            f.contentWindow.postMessage({
+                type: "renderblocks",
+                id: elid,
+                options: {
+                    packageId: pid
+                }
+            }, "*");
+        }
+
+        function removeEl(el) {
+            if (el && el.parentElement) el.parentElement.removeChild(el);
+        }
+
+        window.addEventListener("message", function (ev) {
+            var msg = ev.data;
+            if (msg.source != "makecode") return;
+
+            switch (msg.type) {
+                case "renderready":
+                    makeCodeRenderPre("blocks", projectid)
+                    break;
+                case "renderblocks":
+                    var id = msg.id;
+                    if (msg.svg) {
+                        var svg = new DOMParser().parseFromString(msg.svg, "image/svg+xml");
+                        var img = svg.childNodes.item(0)
+                        var code = document.getElementById(id)
+                        var a = document.createElement("a")
+                        a.target = "_blank"
+                        a.href = (pxtConfig ? pxtConfig.targetUrl : "") + "/#pub:" + projectid;
+                        a.appendChild(img)
+                        code.parentElement.insertBefore(a, code)
+                        code.parentElement.removeChild(code);
+                    }
+
+                    // unload iframe
+                    if (pxtFrame) {
+                        removeEl(pxtFrame);
+                        removeEl(document.getElementById("loader"));
+                        pxtFrame = undefined;
+                    }
+                    break;
+            }
+        }, false);
+
+        makeCodeInjectRenderer();
+    </script>
+</body>
+
+</html>
