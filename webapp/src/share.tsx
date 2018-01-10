@@ -14,8 +14,7 @@ export enum ShareMode {
     Code,
     Url,
     Editor,
-    Simulator,
-    Cli
+    Simulator
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
@@ -91,11 +90,6 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                     case ShareMode.Code:
                         embed = pxt.docs.codeEmbedUrl(rootUrl, header.pubId);
                         break;
-                    case ShareMode.Cli:
-                        embed = `pxt target ${pxt.appTarget.id}
-pxt extract ${url}`;
-                        help = lf("Run this command from a shell.");
-                        break;
                     case ShareMode.Editor:
                         embed = pxt.docs.embedUrl(rootUrl, "pub", header.pubId);
                         break;
@@ -131,7 +125,6 @@ pxt extract ${url}`;
             { mode: ShareMode.Code, label: lf("Code") },
             { mode: ShareMode.Editor, label: lf("Editor") },
             { mode: ShareMode.Simulator, label: lf("Simulator") },
-            { mode: ShareMode.Cli, label: lf("Command line") }
         ];
 
         const action = !ready ? lf("Publish project") : undefined;
