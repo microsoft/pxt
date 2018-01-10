@@ -601,13 +601,17 @@ namespace pxt.blocks {
     }
 
     function initField(i: any, ni: number, fn: pxtc.SymbolInfo, ns: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string, nsinfo?: pxtc.SymbolInfo): any {
-        if (pre && pre.indexOf('`') > -1) {
-            // parse and create icon fields for every inline icon
-            let regex = /([^`]+|(`([^`]+)`))/gi;
+        if (pre && (pre.indexOf('`') > -1 || pre.indexOf('*') > -1)) {
+            // parse and create icon or bold fields for every inline icon / bold text
+            let regex = /([^`\*]+|(`([^`]+)`)|(\*([^\*]+)\*))/gi; // `icon` indicates icon, *test* indicates bold text
             let match: RegExpExecArray;
             while (match = regex.exec(pre)) {
                 let img: B.FieldImage;
-                if (match[3] && (img = iconToFieldImage(match[3]))) {
+                if (match[5] && match[4][0] === '*') {
+                    // Bold text, eg: *test*
+                    i.appendField(new pxtblockly.FieldBoldLabel(match[5]));
+                } else if (match[3] && match[2][0] === '`' && (img = iconToFieldImage(match[3]))) {
+                    // Icon field, eg: `test`
                     i.appendField(img);
                 } else {
                     i.appendField(match[1]);

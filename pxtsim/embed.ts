@@ -144,8 +144,9 @@ namespace pxsim {
     export interface RenderBlocksRequestMessage extends SimulatorMessage {
         type: "renderblocks",
         id: string;
-        code: string;
+        code?: string;
         options?: {
+            packageId?: string;
             package?: string;
             snippetMode?: boolean;
         }
