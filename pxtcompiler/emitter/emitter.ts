@@ -2685,6 +2685,7 @@ ${lbl}: .short 0xffff
                 case SK.SlashToken: return "Number_::div";
                 case SK.PercentToken: return "Number_::mod";
                 case SK.AsteriskToken: return "thumb::muls";
+                case SK.AsteriskAsteriskToken: return "Math_::pow";
                 case SK.AmpersandToken: return "thumb::ands";
                 case SK.BarToken: return "thumb::orrs";
                 case SK.CaretToken: return "thumb::eors";

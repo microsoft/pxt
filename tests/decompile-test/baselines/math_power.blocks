@@ -51,7 +51,7 @@
     </value>
     <next>
     <block type="typescript_statement">
-    <mutation numlines="1" error="No output expressions as statements" line0="Math.pow&#40;4&#44; 4&#41;&#59;" />
+    <mutation numlines="1" line0="Math.pow&#40;4&#44; 4&#41;&#59;" />
     </block>
     </next>
     </block>
