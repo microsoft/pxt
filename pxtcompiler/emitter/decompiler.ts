@@ -39,6 +39,7 @@ namespace ts.pxtc.decompiler {
         "-": { type: "math_arithmetic", op: "MINUS" },
         "/": { type: "math_arithmetic", op: "DIVIDE" },
         "*": { type: "math_arithmetic", op: "MULTIPLY" },
+        "**": { type: "math_arithmetic", op: "POWER" },
         "%": { type: "math_modulo", leftName: "DIVIDEND", rightName: "DIVISOR" },
         "<": { type: "logic_compare", op: "LT" },
         "<=": { type: "logic_compare", op: "LTE" },
@@ -880,7 +881,7 @@ ${output}</xml>`;
                         stmt = getFunctionDeclaration(node as ts.FunctionDeclaration);
                         break;
                     case SK.CallExpression:
-                        stmt = getCallStatement(node as ts.CallExpression, asExpression);
+                        stmt = getCallStatement(node as ts.CallExpression, asExpression) as StatementNode;
                         break;
                     default:
                         if (next) {
@@ -1156,8 +1157,18 @@ ${output}</xml>`;
             return r;
         }
 
-        function getCallStatement(node: ts.CallExpression, asExpression: boolean): StatementNode {
+        function getCallStatement(node: ts.CallExpression, asExpression: boolean): StatementNode | ExpressionNode {
             const info: pxtc.CallInfo = (node as any).callInfo
+
+            if (info.qName == "Math.pow") {
+                const r = mkExpr("math_arithmetic");
+                r.inputs = [
+                    mkValue("A", getOutputBlock(node.arguments[0]), numberType),
+                    mkValue("B", getOutputBlock(node.arguments[1]), numberType)
+                ];
+                r.fields = [getField("OP", "POWER")];
+                return r;
+            }
 
             if (info.attrs.blockId === pxtc.PAUSE_UNTIL_TYPE) {
                 const r = mkStmt(pxtc.PAUSE_UNTIL_TYPE);
@@ -1208,6 +1219,7 @@ ${output}</xml>`;
 
             const paramInfo = getParameterInfo(info, blocksInfo);
 
+            countBlock();
             const r = {
                 kind: asExpression ? "expr" : "statement",
                 type: info.attrs.blockId
@@ -1733,8 +1745,13 @@ ${output}</xml>`;
                 return Util.lf("Function call not supported in the blocks");
             }
 
-            if (!asExpression && info.isExpression) {
-                return Util.lf("No output expressions as statements");
+            if (!asExpression) {
+                if (info.isExpression) {
+                    return Util.lf("No output expressions as statements");
+                }
+            }
+            else if (info.qName == "Math.pow") {
+                return undefined;
             }
 
             if (info.attrs.blockId === pxtc.PAUSE_UNTIL_TYPE) {
