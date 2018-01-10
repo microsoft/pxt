@@ -61,7 +61,7 @@ declare namespace goog {
             height: number;
             constructor(width: number, height: number);
         }
-        function clamp(n: number, min: number, max: number): void;
+        function clamp(n: number, min: number, max: number): number;
         function toRadians(n: number): number;
         function toDegrees(n: number): number;
     }
@@ -630,6 +630,10 @@ declare namespace Blockly {
         constructor(value: string | number, opt_min?: any, opt_max?: any, opt_precision?: any, opt_validator?: Function);
         setConstraints(min: any, max: any, precision?: any): void;
         position_(): void;
+    }
+
+    class FieldLabel extends Field {
+        constructor(text: string, opt_class: string);
     }
 
     class FieldTextDropdown extends FieldTextInput {
