@@ -12,6 +12,7 @@ type IProjectView = pxt.editor.IProjectView;
 
 export enum ShareMode {
     Code,
+    Screenshot,
     Url,
     Editor,
     Simulator,
