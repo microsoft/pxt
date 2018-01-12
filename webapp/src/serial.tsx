@@ -15,14 +15,14 @@ const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
     savedMessageQueue: pxsim.SimulatorSerialMessage[] = []
-    maxSavedMessages: number = 100
+    maxSavedMessages: number = 1000;
     charts: Chart[] = []
     chartIdx: number = 0
     sourceMap: pxt.Map<string> = {}
     consoleBuffer: string = ""
     isSim: boolean = true
-    maxConsoleLineLength: number = 255
-    maxConsoleEntries: number = 100
+    maxConsoleLineLength: number = 255;
+    maxConsoleEntries: number = 500;
     active: boolean = true
     maxChartTime: number = 18000
     chartDropper: number
