@@ -9,17 +9,50 @@ namespace pxt.github {
         }
     }
 
-    export function listRefsAsync(repopath: string, namespace = "tags") {
-        return U.httpGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/" + namespace + "/?per_page=100")
-            .then<string[]>((resp: GHRef[]) => {
-                let tagnames = resp
-                    .map(x => x.ref.replace(/^refs\/[^\/]+\//, ""))
-                tagnames.sort(semver.strcmp)
-                return tagnames
-            }, err => {
-                if (err.statusCode == 404) return []
-                else return Promise.reject(err)
-            })
+    export interface RefsResult {
+        refs: pxt.Map<string>;
+        head?: string;
+    }
+
+    export function useProxy() {
+        if (U.isNodeJS)
+            return false // bypass proxy for CLI
+        if (pxt.appTarget && pxt.appTarget.cloud && pxt.appTarget.cloud.noGithubProxy)
+            return false // target requests no proxy
+        return true
+    }
+
+    export function listRefsAsync(repopath: string, namespace = "tags"): Promise<string[]> {
+        return listRefsExtAsync(repopath, namespace)
+            .then(res => Object.keys(res.refs))
+    }
+
+    export function listRefsExtAsync(repopath: string, namespace = "tags"): Promise<RefsResult> {
+        let head: string = null
+        let fetch = !useProxy ?
+            U.httpGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/" + namespace + "/?per_page=100") :
+            U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/refs`)
+                .then(r => {
+                    let res = Object.keys(r.refs)
+                        .filter(k => U.startsWith(k, "refs/" + namespace + "/"))
+                        .map(k => ({ ref: k, object: { sha: r.refs[k] } }))
+                    head = r.refs["HEAD"]
+                    return res
+                })
+
+        let clean = (x: string) => x.replace(/^refs\/[^\/]+\//, "")
+
+        return fetch.then<RefsResult>((resp: GHRef[]) => {
+            resp.sort((a, b) => semver.strcmp(clean(a.ref), clean(b.ref)))
+            let r: pxt.Map<string> = {}
+            for (let obj of resp) {
+                r[clean(obj.ref)] = obj.object.sha
+            }
+            return { refs: r, head }
+        }, err => {
+            if (err.statusCode == 404) return { refs: {} }
+            else return Promise.reject(err)
+        })
     }
 
     function resolveRefAsync(r: GHRef): Promise<string> {
@@ -34,7 +67,7 @@ namespace pxt.github {
             return Promise.reject(new Error("Bad type " + r.object.type))
     }
 
-    export function tagToShaAsync(repopath: string, tag: string) {
+    function tagToShaAsync(repopath: string, tag: string) {
         if (/^[a-f0-9]{40}$/.test(tag))
             return Promise.resolve(tag)
         return U.httpGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/tags/" + tag)
@@ -49,6 +82,11 @@ namespace pxt.github {
     }
 
     export function pkgConfigAsync(repopath: string, tag = "master") {
+        if (useProxy()) {
+            // this is a bit wasteful, we just need pxt.json and download everything
+            return U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/${tag}/text`)
+                .then(v => JSON.parse(v[pxt.CONFIG_NAME]) as pxt.PackageConfig)
+        }
         let url = "https://raw.githubusercontent.com/" + repopath + "/" + tag + "/" + pxt.CONFIG_NAME
         return U.httpGetTextAsync(url)
             .then(v => JSON.parse(v) as pxt.PackageConfig)
@@ -67,10 +105,21 @@ namespace pxt.github {
             return Promise.resolve<CachedPackage>(undefined);
         }
 
+        if (!current) current = { sha: "", files: {} }
+
+        if (useProxy()) {
+            if (!p.tag) p.tag = "master"
+            return U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${p.fullName}/${p.tag}/text`)
+                .then(v => {
+                    current.sha = p.tag
+                    current.files = v
+                    return current
+                })
+        }
+
         return tagToShaAsync(p.fullName, p.tag)
             .then(sha => {
                 let pref = "https://raw.githubusercontent.com/" + p.fullName + "/" + sha + "/"
-                if (!current) current = { sha: "", files: {} }
                 if (current.sha === sha) return Promise.resolve(current)
                 else {
                     pxt.log(`Downloading ${repoWithTag} -> ${sha}`)
@@ -227,6 +276,10 @@ namespace pxt.github {
         if (status == GitRepoStatus.Banned)
             return Promise.resolve<GitRepo>(undefined);
 
+        if (!useProxy())
+            return U.httpGetJsonAsync("https://api.github.com/repos/" + rid.fullName)
+                .then((r: Repo) => mkRepo(r, config, rid.tag));
+
         // always use proxy
         return Util.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${rid.fullName}`)
             .then(meta => {
@@ -307,14 +360,14 @@ namespace pxt.github {
         return repoAsync(parsed.fullName, config)
             .then(scr => {
                 if (!scr) return undefined;
-                return listRefsAsync(scr.fullName, "tags")
-                    .then((tags: string[]) => {
-                        tags.sort(pxt.semver.strcmp)
+                return listRefsExtAsync(scr.fullName, "tags")
+                    .then(refsRes => {
+                        let tags = Object.keys(refsRes.refs)
                         tags.reverse()
                         if (tags[0])
                             return Promise.resolve(tags[0])
                         else
-                            return tagToShaAsync(scr.fullName, scr.defaultBranch)
+                            return refsRes.head || tagToShaAsync(scr.fullName, scr.defaultBranch)
                     })
             });
     }
