@@ -2606,7 +2606,10 @@ namespace pxt.blocks {
                 let headingLabel = goog.dom.createDom('label') as HTMLElement;
                 headingLabel.setAttribute('text', lf("Variables"));
                 headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
-                headingLabel.setAttribute('web-icon', '\uf039');
+                // ANA-1774: for some reason, the icon for variables gets set here and is hard-coded
+                // (this is different from all of the other categories)
+                // so I had to change the character to the character we use for variables, '\uf124'
+                headingLabel.setAttribute('web-icon', '\uf124');
                 headingLabel.setAttribute('web-icon-color', getNamespaceColor('variables'));
                 xmlList.push(headingLabel);
             }
