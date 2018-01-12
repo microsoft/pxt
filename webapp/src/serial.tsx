@@ -466,11 +466,33 @@ export class ResourceImporter implements pxt.editor.IResourceImporter {
     public importAsync(project: pxt.editor.IProjectView, data: File): Promise<void> {
         return ts.pxtc.Util.fileReadAsTextAsync(data)
             .then(txt => {
-                window.postMessage({
-                    type: "serial",
-                    data: txt,
-                    id: data.name
-                }, "*")
+                if (!txt) {
+                    core.errorNotification(lf("Ooops, could not read file"));
+                    return;
+                }
+
+                // parse times
+                const lines = txt.split(/\n/g).map(line => {
+                    // extract timespace
+                    const t = /^\s*(\d+)>/.exec(line);
+                    if (t) line = line.substr(t[0].length);
+                    return {
+                        type: "serial",
+                        data: line + "\n",
+                        id: data.name,
+                        receivedTime: t ? parseFloat(t[1]) : undefined
+                    } as pxsim.SimulatorSerialMessage;
+                })
+                if (!lines.length)
+                    return;
+
+                // normalize timestamps
+                const now = Util.now();
+                const tmin = lines[0].receivedTime || 0;
+                lines.forEach(line => line.receivedTime += now - tmin);
+
+                // send as serial message
+                lines.forEach(line => window.postMessage(line, "*"));
             });
     }
 }
