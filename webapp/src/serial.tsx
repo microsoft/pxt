@@ -456,3 +456,21 @@ class Chart {
         this.chart.stop()
     }
 }
+
+export class ResourceImporter implements pxt.editor.IResourceImporter {
+    public id: "console";
+    public canImport(data: File): boolean {
+        return data.type == "text/plain";
+    }
+
+    public importAsync(project: pxt.editor.IProjectView, data: File): Promise<void> {
+        return ts.pxtc.Util.fileReadAsTextAsync(data)
+            .then(txt => {
+                window.postMessage({
+                    type: "serial",
+                    data: txt,
+                    id: data.name
+                }, "*")
+            });
+    }
+}
