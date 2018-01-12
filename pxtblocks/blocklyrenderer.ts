@@ -27,6 +27,7 @@ namespace pxt.blocks {
         layout?: BlockLayout;
         clean?: boolean;
         aspectRatio?: number;
+        packageId?: string;
         package?: string;
         snippetMode?: boolean;
         useViewWidth?: boolean;
