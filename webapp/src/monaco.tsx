@@ -494,9 +494,8 @@ export class Editor extends srceditor.Editor {
     protected onDragBlockThrottled = Util.throttle(() => {
         const {x, y} = this.dragCurrentPos;
         let mouseTarget = this.editor.getTargetAtClientPoint(x, y);
-        let position = mouseTarget.position;
-        if (position && this.editor.getPosition() != position)
-            this.editor.setPosition(position);
+        if  (mouseTarget && mouseTarget.position && this.editor.getPosition() != mouseTarget.position)
+            this.editor.setPosition(mouseTarget.position);
         this.editor.focus();
     }, 200);
 
