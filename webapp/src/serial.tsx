@@ -488,8 +488,13 @@ export class ResourceImporter implements pxt.editor.IResourceImporter {
 
                 // normalize timestamps
                 const now = Util.now();
-                const tmin = lines[0].receivedTime || 0;
-                lines.forEach(line => line.receivedTime += now - tmin);
+                const linest = lines.filter(line => !!line.receivedTime);
+                if (linest.length) {
+                    const tmax = linest[linest.length - 1].receivedTime || 0;
+                    linest.forEach(line => line.receivedTime += now - tmax);
+                }
+
+                // show console
 
                 // send as serial message
                 lines.forEach(line => window.postMessage(line, "*"));
