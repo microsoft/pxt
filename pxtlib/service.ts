@@ -70,6 +70,7 @@ namespace ts.pxtc {
         qName?: string;
         pkg?: string;
         snippet?: string;
+        blockFields?: ParsedBlockDef;
     }
 
     export interface ApisInfo {
@@ -181,6 +182,63 @@ namespace ts.pxtc {
         paramFieldEditorOptions?: pxt.Map<pxt.Map<string>>; //.fieldOptions.
     }
 
+
+    export interface BlockLabel {
+        text: string;
+        style?: string[];
+        isImage?: boolean;
+    }
+
+    export interface BlockParameter {
+        name: string;
+        shadowBlockId?: string;
+    }
+
+    export interface ParsedBlockDef {
+        parts: (BlockLabel | BlockParameter)[];
+        parameters: BlockParameter[];
+
+        expandedParts?: (BlockLabel | BlockParameter)[];
+        expandedParameters?: BlockParameter[];
+    }
+
+    // export interface ParsedBlockDef {
+    //     // Fields that always appear on the block
+    //     fields: BlockField[];
+        
+    //     // This block has a "this" parameter (e.g. classes)
+    //     hasThisParameter?: boolean;
+       
+    //     // Optional fields that are hidden by default
+    //     expandedFields?: BlockField[];
+
+    //     // Variable fields that are for the handler passed to the API (e.g. onChatCommand)
+    //     handlerFields?: BlockField[];
+    // }
+
+    // export interface BlockField {
+    //     // Name of the parameter in the block string
+    //     fieldName?: string;
+
+    //     // Name of the parameter in the code
+    //     parameterName?: string;
+
+    //     // Type of the parameter in the code (e.g. number)
+    //     parameterType?: string;
+
+    //     // Block ID of the shadow block in the block string (e.g. math_number)
+    //     shadowBlockId?: string;
+
+    //     // Default value for the field (e.g. 500)
+    //     defaultValue?: string;
+        
+    //     // Any text appearing before the field
+    //     prefix?: string;
+
+    //     // Indicates that this field is for the "this" object
+    //     isThisParameter?: boolean;
+    // }
+
     export interface LocationInfo {
         fileName: string;
         start: number;
@@ -267,6 +325,31 @@ namespace ts.pxtc {
         UInt16,
         Int32,
         UInt32,
+    }
+
+    /* @internal */
+    const enum TokenKind {
+        SingleAsterisk      = 1,
+        DoubleAsterisk      = 1 << 1,
+        SingleUnderscore    = 1 << 2,
+        DoubleUnderscore    = 1 << 3,
+        Escape              = 1 << 4,
+        Pipe                = 1 << 5,
+        Parameter           = 1 << 6,
+        Word                = 1 << 7,
+        Image               = 1 << 8,
+        
+        TripleUnderscore    = SingleUnderscore | DoubleUnderscore,
+        TripleAsterisk      = SingleAsterisk | DoubleAsterisk,
+        StyleMarks = TripleAsterisk | TripleUnderscore,
+        Bold = DoubleUnderscore | DoubleAsterisk,
+        Italics = SingleUnderscore | SingleAsterisk
+    }
+
+    interface Token {
+        kind: TokenKind;
+        content?: string;
+        type?: string;
     }
 
     export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
@@ -514,6 +597,152 @@ namespace ts.pxtc {
         }
 
         return res
+    }
+
+    export function parseBlockDefinition(def: string): ParsedBlockDef {
+        const tokens: Token[] = [];
+        let currentWord: string;
+
+        let strIndex = 0;
+        for (; strIndex < def.length; strIndex++) {
+            const char = def[strIndex];
+            let newToken: Token;
+            switch (char) {
+                case "*":
+                case "_":
+                    const tk = eatToken(c => c == char).length;
+                    const offset = char === "_" ? 2 : 0;
+                    if (tk === 1) newToken = { kind: TokenKind.SingleAsterisk << offset }
+                    else if (tk === 2) newToken = { kind: TokenKind.DoubleAsterisk << offset };
+                    else if (tk === 3) newToken = { kind: TokenKind.TripleAsterisk << offset };
+                    else return undefined;
+                    break;
+                case "`":
+                    const image = eatToken((c => c !== "`"), true);
+                    if (def[strIndex + 1] !== "`") return undefined; // error: unterminated image
+                    ++strIndex;
+                    newToken = { kind: TokenKind.Image, content: image };
+                    break;
+                case "|":
+                    newToken = { kind: TokenKind.Pipe };
+                    break;
+                case "\\":
+                    if (strIndex < (def.length - 1)) newToken = { kind: TokenKind.Escape, content: def[1 + (strIndex++)] };
+                    break;
+                case "%":
+                    const param = eatToken(c => /[a-zA-Z0-9_=]/.test(c), true).split("=");
+                    if (param.length > 2) return undefined; // error: invalid parameter
+                    newToken = { kind: TokenKind.Parameter, content: param[0], type: param[1] };
+                    break;
+            }
+
+            if (newToken) {
+                if (currentWord)
+                    tokens.push({ kind: TokenKind.Word, content: currentWord });
+                currentWord = undefined;
+                tokens.push(newToken);
+            }
+            else if (!currentWord) {
+                currentWord = char;
+            }
+            else {
+                currentWord += char;
+            }
+        }
+
+        if (currentWord)
+            tokens.push({ kind: TokenKind.Word, content: currentWord });
+
+        const res: ParsedBlockDef = {
+            parts: [],
+            parameters: []
+        };
+
+        const stack: TokenKind[] = [];
+        let open = 0;
+        let currentLabel = ""
+
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i].kind;
+            const top = stack[stack.length - 1];
+
+            let wordEnd = false;
+            let styles: string[] = [];
+            if (open & TokenKind.Bold) styles.push("bold");
+            if (open & TokenKind.Italics) styles.push("italics");
+
+            if (token & TokenKind.StyleMarks) {
+                wordEnd = true;
+                if (token & open) {
+                    if (top & token) {
+                        stack.pop();
+                        open ^= token;
+
+                        // Handle triple tokens
+                        const remainder = (top & open) | (token & open);
+                        if (remainder) {
+                            stack.push(remainder);
+                        }
+                    }
+                    else {
+                        return undefined; // error: mismatched!
+                    }
+                }
+                else {
+                    open |= token;
+                    stack.push(token);
+                }
+            }
+            else {
+                switch (token) {
+                    case TokenKind.Escape:
+                    case TokenKind.Word:
+                        currentLabel += tokens[i].content;
+                        break;
+                    case TokenKind.Pipe:
+                    case TokenKind.Parameter:
+                        if (open) {
+                            return undefined; // error: style marks should be closed
+                        }
+                    case TokenKind.Image: // deliberate fallthrough
+                        wordEnd = true;
+                        break;
+                }
+            }
+
+            if (wordEnd && currentLabel) {
+                res.parts.push({ text: currentLabel, style: styles });
+                currentLabel = "";
+            }
+
+            if (token == TokenKind.Parameter) {
+                const param: BlockParameter = { name: tokens[i].content, shadowBlockId: tokens[i].type };
+                res.parts.push(param);
+                res.parameters.push(param);
+            }
+            else if (token == TokenKind.Image) {
+                res.parts.push({ text: tokens[i].content, isImage: true });
+            }
+        }
+
+        if (open) return undefined; // error: style marks should terminate
+
+        if (currentLabel) {
+            res.parts.push({ text: currentLabel, style: [] });
+        }
+
+        return res;
+
+        function eatToken(pred: (c: string) => boolean, skipCurrent = false) {
+            let current = "";
+            if (skipCurrent) ++strIndex
+            while (strIndex < def.length && pred(def[strIndex])) {
+                current += def[strIndex];
+                ++strIndex;
+            }
+            if (current) --strIndex;
+            return current;
+        }
     }
 
     // TODO should be internal
