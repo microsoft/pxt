@@ -71,7 +71,7 @@
     }
 
     /* Menu bar */
-    .menubar .menu > .item:focus > i, 
+    .menubar .menu > .item:focus > i,
     .menubar .menu > .item:focus > span {
         color: @selected !important;
     }
@@ -127,7 +127,7 @@
         }
     }
 
-    .ui.button.download-button:hover > span, 
+    .ui.button.download-button:hover > span,
     .ui.button.download-button:hover > i {
         color: white !important;
     }
@@ -135,7 +135,7 @@
     /* Inputs */
     .ui.input input {
         background: black !important;
-        color: white !important; 
+        color: white !important;
         border: 1px solid white !important;
     }
     input::placeholder {
@@ -189,14 +189,14 @@
             }
         }
     }
-    
+
     .ui.menu .ui.dropdown .menu > .divider {
         background: black !important;
         border-top: 1px solid white !important;
     }
 
     /* Editor switch toggle */
-    .menubar .ui.menu .item.editor-menuitem { 
+    .menubar .ui.menu .item.editor-menuitem {
         border: 1px solid white !important;
     }
 
@@ -252,7 +252,7 @@
         .header, .description, .meta {
             color: white !important;
         }
-        
+
         &:focus {
             .header, .description, .meta {
                 color: @selected !important;
@@ -280,7 +280,7 @@
         .tutorialmessage {
             outline: 1px solid white !important;
             border: none !important;
-        
+
             &:focus {
                 color: @selected !important;
             }
@@ -304,7 +304,7 @@
 
     .blocklyToolboxDiv, .monacoToolboxDiv {
         background: black !important;
-        border-left: 1px solid white !important; 
+        border-left: 1px solid white !important;
         border-right: 1px solid white !important;
     }
 
@@ -346,7 +346,7 @@
 
     #maineditor, .ui.segment.form {
         background: black !important;
-            
+
         label {
             color: white !important;
         }
@@ -354,5 +354,30 @@
 
     #serialPreview div {
         color: #fff;
+    }
+
+    #serialCharts .ui.segment {
+        background-color: #fff;
+    }
+
+    #serialEditor {
+        background-color: #000;
+    }
+
+    #serialHeader .ui.header {
+        color: #fff;
+    }
+
+    #serialConsole {
+        background-color: #000;
+        color: #fff;
+        border-color: #fff;
+    }
+
+    #serialPreview .label {
+        border: 10px solid #fff !important;
+        &:hover {
+            border-color: darken(#fff, 10.0) !important;
+        }
     }
 }
