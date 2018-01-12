@@ -154,6 +154,7 @@ function htmlmsg(kind: string, msg: string) {
 
 export function errorNotification(msg: string) {
     pxt.tickEvent("notification.error", { message: msg })
+    debugger // trigger a breakpoint when a debugger is connected, like in U.oops()
     htmlmsg("err", msg)
 }
 
