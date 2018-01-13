@@ -732,6 +732,10 @@ export class ProjectView
         }
     }];
 
+    resourceImporters: pxt.editor.IResourceImporter[] = [
+        new serial.ResourceImporter()
+    ];
+
     importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
         const targetId = pxt.appTarget.id;
         if (!data || !data.meta) {
@@ -784,7 +788,14 @@ export class ProjectView
             this.importTypescriptFile(file);
         } else if (isProjectFile(file.name)) {
             this.importProjectFile(file);
-        } else core.warningNotification(lf("Oops, don't know how to load this file!"));
+        } else {
+            const importer = this.resourceImporters.filter(fi => fi.canImport(file))[0];
+            if (importer) {
+                importer.importAsync(this, file).done();
+            } else {
+                core.warningNotification(lf("Oops, don't know how to load this file!"));
+            }
+        }
     }
 
     importProjectAsync(project: pxt.workspace.Project, filters?: pxt.editor.ProjectFilters): Promise<void> {
