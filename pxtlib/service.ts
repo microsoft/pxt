@@ -169,6 +169,8 @@ namespace ts.pxtc {
 
         _name?: string;
         _source?: string;
+        _def?: ParsedBlockDef;
+        _expandedDef?: ParsedBlockDef;
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
@@ -197,47 +199,7 @@ namespace ts.pxtc {
     export interface ParsedBlockDef {
         parts: (BlockLabel | BlockParameter)[];
         parameters: BlockParameter[];
-
-        expandedParts?: (BlockLabel | BlockParameter)[];
-        expandedParameters?: BlockParameter[];
     }
-
-    // export interface ParsedBlockDef {
-    //     // Fields that always appear on the block
-    //     fields: BlockField[];
-        
-    //     // This block has a "this" parameter (e.g. classes)
-    //     hasThisParameter?: boolean;
-       
-    //     // Optional fields that are hidden by default
-    //     expandedFields?: BlockField[];
-
-    //     // Variable fields that are for the handler passed to the API (e.g. onChatCommand)
-    //     handlerFields?: BlockField[];
-    // }
-
-    // export interface BlockField {
-    //     // Name of the parameter in the block string
-    //     fieldName?: string;
-
-    //     // Name of the parameter in the code
-    //     parameterName?: string;
-
-    //     // Type of the parameter in the code (e.g. number)
-    //     parameterType?: string;
-
-    //     // Block ID of the shadow block in the block string (e.g. math_number)
-    //     shadowBlockId?: string;
-
-    //     // Default value for the field (e.g. 500)
-    //     defaultValue?: string;
-        
-    //     // Any text appearing before the field
-    //     prefix?: string;
-
-    //     // Indicates that this field is for the "this" object
-    //     isThisParameter?: boolean;
-    // }
 
     export interface LocationInfo {
         fileName: string;
@@ -428,11 +390,11 @@ namespace ts.pxtc {
                     }
                 }
                 else if (fn.attributes.block && locBlock) {
-                    const ps = pxt.blocks.parameterNames(fn).attrNames;
+                    const ps = pxt.blocks.compileInfo(fn);
                     const oldBlock = fn.attributes.block;
                     fn.attributes.block = pxt.blocks.normalizeBlock(locBlock);
                     if (oldBlock != fn.attributes.block) {
-                        const locps = pxt.blocks.parameterNames(fn).attrNames;
+                        const locps = pxt.blocks.compileInfo(fn);
                         if (JSON.stringify(ps) != JSON.stringify(locps)) {
                             pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`)
                             fn.attributes.block = oldBlock;
@@ -595,6 +557,11 @@ namespace ts.pxtc {
                 res.groupIcons = undefined;
             }
         }
+        if (res.block) {
+            const parts = res.block.split("||");
+            res._def = parseBlockDefinition(parts[0]);
+            if (parts[1]) res._expandedDef = parseBlockDefinition(parts[1]);
+        }
 
         return res
     }
@@ -743,6 +710,10 @@ namespace ts.pxtc {
             if (current) --strIndex;
             return current;
         }
+    }
+
+    export function isBlockParam(v: BlockParameter | BlockLabel): v is BlockParameter {
+        return !!(v as BlockParameter).name;
     }
 
     // TODO should be internal

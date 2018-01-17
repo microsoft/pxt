@@ -2,20 +2,58 @@
 
 namespace pxt.blocks {
     export interface BlockParameter {
-        name: string;
+        // Declared parameter name as it appears in the code. This is the name used
+        // when customizing the field in the comment attributes
+        // For example: actualName.fieldEditor="gridpicker"
+        actualName: string;
+
+        // Declared parameter type as it appears in the code
         type?: string;
-        shadowType?: string;
-        shadowValue?: string;
+
+        // Parameter name as it appears in the block string. This is the name that
+        // gets used for the input/field in the Blockly block
+        definitionName: string;
+
+        // Shadow block ID specified in the block string (if present)
+        shadowBlockId?: string;
+
+        // Default value for this parameter in the toolbox
+        defaultValue?: string;
+
+        // Indicates whether this field is always visible or collapsible
+        isOptional?: boolean;
+
+        // Field editor for this parameter (field is on the parent block).
+        // taken from the API's comment attributes
+        // For example: parameterName.fieldEditor="gridpicker"
+        fieldEditor?: string;
+
+        // Options for a field editor for this parameter (field is on the parent block)
+        // taken from the API's comment attributes
+        // For example: parameterName.fieldOptions.columns=5
+        fieldOptions?: Map<string>;
+
+        // Options for a field editor on a shadow block (field is on the child block)
+        // taken from the API's comment attributes
+        // For example: parameterName.shadowOptions.columns=5
+        shadowOptions?: Map<string>;
+
+        // The max and min for numerical inputs (if specified)
+        range?: { min: number, max: number };
+    }
+
+    export interface BlockCompileInfo {
+        parameters: BlockParameter[];
+        actualNameToParam: Map<BlockParameter>;
+        definitionNameToParam: Map<BlockParameter>;
+
+        handlerArgs?: HandlerArg[];
+        thisParameter?: BlockParameter;
     }
 
     export interface HandlerArg {
         name: string,
         type: string
-    }
-
-    export interface BlockParameters {
-        attrNames: Map<BlockParameter>;
-        handlerArgs: HandlerArg[];
     }
 
     export function normalizeBlock(b: string): string {
@@ -31,45 +69,85 @@ namespace pxt.blocks {
         return nb;
     }
 
-    export function parameterNames(fn: pxtc.SymbolInfo): BlockParameters {
-        // collect blockly parameter name mapping
-        const instance = (fn.kind == ts.pxtc.SymbolKind.Method || fn.kind == ts.pxtc.SymbolKind.Property) && !fn.attributes.defaultInstance;
-        let attrNames: Map<BlockParameter> = {};
-        let handlerArgs: HandlerArg[] = [];
+    export function compileInfo(fn: pxtc.SymbolInfo): BlockCompileInfo {
+        const res: BlockCompileInfo = {
+            parameters: [],
+            actualNameToParam: {},
+            definitionNameToParam: {},
+            handlerArgs: []
+        };
 
-        if (instance) attrNames["this"] = { name: "this", type: fn.namespace };
-        if (fn.parameters)
-            fn.parameters.forEach(pr => {
-                attrNames[pr.name] = {
-                    name: pr.name,
-                    type: pr.type,
-                    shadowValue: pr.default || undefined
-                };
-                if (pr.handlerParameters) {
-                    pr.handlerParameters.forEach(arg => handlerArgs.push(arg))
+        const instance = (fn.kind == ts.pxtc.SymbolKind.Method || fn.kind == ts.pxtc.SymbolKind.Property) && !fn.attributes.defaultInstance;
+        const defParameters = fn.attributes._def.parameters;
+        const optionalStart = defParameters.length;
+
+        if (fn.attributes._expandedDef) {
+            defParameters.push(...fn.attributes._expandedDef.parameters);
+        }
+
+        if (instance && defParameters.length) {
+            const defName = defParameters[0].name;
+            res.thisParameter = {
+                actualName: "this",
+                definitionName: defName,
+                shadowBlockId: defParameters[0].shadowBlockId,
+                type: fn.namespace,
+
+                // Normally we pass ths actual parameter name, but the "this" parameter doesn't have one
+                fieldEditor: fieldEditor(defName),
+                fieldOptions: fieldOptions(defName),
+                shadowOptions: shadowOptions(defName),
+            };
+        }
+
+        if (fn.parameters) {
+            fn.parameters.forEach((p, i) => {
+                const defIndex = instance ? i + 1 : i;
+                if (defIndex < defParameters.length) {
+                    const def = defParameters[defIndex];
+                    let range: { min: number, max: number } = undefined;
+                    if (p.options && p.options["min"] && p.options["max"]) {
+                        range = { min: p.options["min"].value, max: p.options["max"].value };
+                    }
+    
+                    res.parameters.push({
+                        actualName: p.name,
+                        type: p.type,
+                        defaultValue: p.default,
+                        definitionName: def.name,
+                        shadowBlockId: def.shadowBlockId,
+                        isOptional: defIndex > optionalStart,
+                        fieldEditor: fieldEditor(p.name),
+                        fieldOptions: fieldOptions(p.name),
+                        shadowOptions: shadowOptions(p.name),
+                        range
+                    });
+                    
+                    if (p.handlerParameters) {
+                        p.handlerParameters.forEach(arg => res.handlerArgs.push(arg))
+                    }
                 }
             });
-        if (fn.attributes.block) {
-            Object.keys(attrNames).forEach(k => attrNames[k].name = "");
-            let rx = /%([a-zA-Z0-9_]+)(=([a-zA-Z0-9_]+))?/g;
-            let m: RegExpExecArray;
-            let i = 0;
-            while (m = rx.exec(fn.attributes.block)) {
-                if (i == 0 && instance) {
-                    attrNames["this"].name = m[1];
-                    if (m[3]) attrNames["this"].shadowType = m[3];
-                    m = rx.exec(fn.attributes.block); if (!m) break;
-                }
-
-                let at = attrNames[fn.parameters[i++].name];
-                at.name = m[1];
-                if (m[3]) at.shadowType = m[3];
-            }
         }
-        return {
-            attrNames,
-            handlerArgs
-        };
+
+        res.parameters.forEach(p => {
+            res.actualNameToParam[p.actualName] = p;
+            res.definitionNameToParam[p.definitionName] = p;
+        });
+
+        return res;
+
+        function fieldEditor(name: string) {
+            return fn.attributes.paramFieldEditor && fn.attributes.paramFieldEditor[name];
+        }
+
+        function fieldOptions(name: string) {
+            return fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[name];
+        }
+
+        function shadowOptions(name: string) {
+            return fn.attributes.paramShadowOptions && fn.attributes.paramShadowOptions[name];
+        }
     }
 
 
