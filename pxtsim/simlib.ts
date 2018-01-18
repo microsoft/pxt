@@ -227,12 +227,17 @@ namespace pxsim {
             if (!buf) return Promise.resolve();
 
             return new Promise<void>(resolve => {
+                function res() {
+                    if (resolve) resolve();
+                    resolve = undefined;
+                }
                 const url = "data:audio/wav;base64," + btoa(uint8ArrayToString(buf.data))
                 const audio = new Audio(url);
                 if (_mute)
                     audio.volume = 0;
-                audio.onended = () => resolve();
-                audio.onpause = () => resolve();
+                audio.onended = () => res();
+                audio.onpause = () => res();
+                audio.onerror = () => res();
                 audio.play();
             })
         }
