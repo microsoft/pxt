@@ -389,7 +389,7 @@ namespace pxt.blocks {
                     default:
                         if (b.type in e.stdCallTable) {
                             const call = e.stdCallTable[b.type];
-                            allParams(call).forEach((p, i) => {
+                            visibleParams(call, isExpanded(b)).forEach((p, i) => {
                                 const isInstance = call.isExtensionMethod && i === 0;
                                 if (p.definitionName && !b.getFieldValue(p.definitionName)) {
                                     let i = b.inputList.filter((i: B.Input) => i.name == p.definitionName)[0];
@@ -762,7 +762,7 @@ namespace pxt.blocks {
                 if (call) {
                     if (call.imageLiteral)
                         expr = compileImage(e, b, call.imageLiteral, call.namespace, call.f,
-                            allParams(call).map(ar => compileArgument(e, b, ar, comments)))
+                            visibleParams(call, isExpanded(b)).map(ar => compileArgument(e, b, ar, comments)))
                     else
                         expr = compileStdCall(e, b, call, comments);
                 }
@@ -1037,16 +1037,16 @@ namespace pxt.blocks {
         return mkStmt(mkInfix(ref, "+=", expr))
     }
 
-    function eventArgs(call: StdFunc): string[] {
-        return allParams(call).map(ar => ar.definitionName).filter(ar => !!ar);
+    function eventArgs(call: StdFunc, b: B.Block): string[] {
+        return visibleParams(call, isExpanded(b)).map(ar => ar.definitionName).filter(ar => !!ar);
     }
 
     function compileCall(e: Environment, b: B.Block, comments: string[]): JsNode {
         const call = e.stdCallTable[b.type];
         if (call.imageLiteral)
-            return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, allParams(call).map(ar => compileArgument(e, b, ar, comments))))
+            return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, visibleParams(call, isExpanded(b)).map(ar => compileArgument(e, b, ar, comments))))
         else if (call.hasHandler)
-            return compileEvent(e, b, call, eventArgs(call), call.namespace, comments)
+            return compileEvent(e, b, call, eventArgs(call, b), call.namespace, comments)
         else
             return mkStmt(compileStdCall(e, b, call, comments))
     }
@@ -1079,7 +1079,7 @@ namespace pxt.blocks {
             args = b.mutation.compileMutation(e, comments).children;
         }
         else {
-            args = allParams(func).map((p, i) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
+            args = visibleParams(func, isExpanded(b)).map((p, i) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
         }
 
         const externalInputs = !b.getInputsInline();
@@ -1202,15 +1202,6 @@ namespace pxt.blocks {
         let lit = H.mkStringLiteral(state)
         lit.canIndentInside = true
         return H.namespaceCall(n, f, [lit].concat(args), false);
-    }
-
-    // A standard function argument may be a field name (see below)
-    // or a string|number literal.
-    // The literal is used to hide argument in blocks
-    // that are available in TD.
-    export interface StdArg {
-        field?: string;
-        literal?: string | number;
     }
 
     // A description of each function from the "device library". Types are fetched
@@ -1612,7 +1603,7 @@ namespace pxt.blocks {
         const call = e.stdCallTable[b.type];
         if (call) {
             // detect if same event is registered already
-            const compiledArgs = eventArgs(call).map(arg => compileArg(e, b, arg, []));
+            const compiledArgs = eventArgs(call, b).map(arg => compileArg(e, b, arg, []));
             const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs })
                 .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
             return key;
@@ -1770,10 +1761,22 @@ namespace pxt.blocks {
         return text.substr(text.length - suffix.length) === suffix;
     }
 
-    function allParams({ comp }: StdFunc) {
-        if (comp.thisParameter) {
-            return [comp.thisParameter].concat(comp.parameters)
+    function isExpanded(b: Blockly.Block) {
+        if ((b as MutatingBlock).mutationToDom) {
+            const el = (b as MutatingBlock).mutationToDom();
+            return el.hasAttribute("_expanded") && el.getAttribute("_expanded") === "true";
         }
-        return comp.parameters;
+        return false;
+    }
+
+    function visibleParams({ comp }: StdFunc, expanded: boolean) {
+        const all = comp.thisParameter ? [comp.thisParameter].concat(comp.parameters) : comp.parameters;
+
+        if (expanded) {
+            return all;
+        }
+        else {
+            return all.filter(p => !p.isOptional);
+        }
     }
 }

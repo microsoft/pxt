@@ -43,7 +43,7 @@ namespace pxt.blocks {
     }
 
     export interface BlockCompileInfo {
-        parameters: BlockParameter[];
+        parameters: ReadonlyArray<BlockParameter>;
         actualNameToParam: Map<BlockParameter>;
         definitionNameToParam: Map<BlockParameter>;
 
@@ -78,7 +78,7 @@ namespace pxt.blocks {
         };
 
         const instance = (fn.kind == ts.pxtc.SymbolKind.Method || fn.kind == ts.pxtc.SymbolKind.Property) && !fn.attributes.defaultInstance;
-        const defParameters = fn.attributes._def.parameters;
+        const defParameters = fn.attributes._def.parameters.slice(0);
         const optionalStart = defParameters.length;
 
         if (fn.attributes._expandedDef) {
@@ -110,13 +110,13 @@ namespace pxt.blocks {
                         range = { min: p.options["min"].value, max: p.options["max"].value };
                     }
     
-                    res.parameters.push({
+                    (res.parameters as BlockParameter[]).push({
                         actualName: p.name,
                         type: p.type,
                         defaultValue: p.default,
                         definitionName: def.name,
                         shadowBlockId: def.shadowBlockId,
-                        isOptional: defIndex > optionalStart,
+                        isOptional: defIndex >= optionalStart,
                         fieldEditor: fieldEditor(p.name),
                         fieldOptions: fieldOptions(p.name),
                         shadowOptions: shadowOptions(p.name),

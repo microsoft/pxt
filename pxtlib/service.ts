@@ -197,8 +197,8 @@ namespace ts.pxtc {
     }
 
     export interface ParsedBlockDef {
-        parts: (BlockLabel | BlockParameter)[];
-        parameters: BlockParameter[];
+        parts: ReadonlyArray<(BlockLabel | BlockParameter)>;
+        parameters: ReadonlyArray<BlockParameter>;
     }
 
     export interface LocationInfo {
@@ -619,11 +619,9 @@ namespace ts.pxtc {
 
         if (currentWord)
             tokens.push({ kind: TokenKind.Word, content: currentWord });
-
-        const res: ParsedBlockDef = {
-            parts: [],
-            parameters: []
-        };
+        
+        const parts: (BlockLabel | BlockParameter)[] = [];
+        const parameters: BlockParameter[] = [];
 
         const stack: TokenKind[] = [];
         let open = 0;
@@ -678,27 +676,27 @@ namespace ts.pxtc {
             }
 
             if (wordEnd && currentLabel) {
-                res.parts.push({ text: currentLabel, style: styles });
+                parts.push({ text: currentLabel, style: styles });
                 currentLabel = "";
             }
 
             if (token == TokenKind.Parameter) {
                 const param: BlockParameter = { name: tokens[i].content, shadowBlockId: tokens[i].type };
-                res.parts.push(param);
-                res.parameters.push(param);
+                parts.push(param);
+                parameters.push(param);
             }
             else if (token == TokenKind.Image) {
-                res.parts.push({ text: tokens[i].content, isImage: true });
+                parts.push({ text: tokens[i].content, isImage: true });
             }
         }
 
         if (open) return undefined; // error: style marks should terminate
 
         if (currentLabel) {
-            res.parts.push({ text: currentLabel, style: [] });
+            parts.push({ text: currentLabel, style: [] });
         }
 
-        return res;
+        return { parts, parameters };
 
         function eatToken(pred: (c: string) => boolean, skipCurrent = false) {
             let current = "";
