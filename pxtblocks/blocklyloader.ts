@@ -601,13 +601,17 @@ namespace pxt.blocks {
     }
 
     function initField(i: any, ni: number, fn: pxtc.SymbolInfo, ns: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string, nsinfo?: pxtc.SymbolInfo): any {
-        if (pre && pre.indexOf('`') > -1) {
-            // parse and create icon fields for every inline icon
-            let regex = /([^`]+|(`([^`]+)`))/gi;
+        if (pre && (pre.indexOf('`') > -1 || pre.indexOf('*') > -1)) {
+            // parse and create icon or bold fields for every inline icon / bold text
+            let regex = /([^`\*]+|(`([^`]+)`)|(\*([^\*]+)\*))/gi; // `icon` indicates icon, *test* indicates bold text
             let match: RegExpExecArray;
             while (match = regex.exec(pre)) {
                 let img: B.FieldImage;
-                if (match[3] && (img = iconToFieldImage(match[3]))) {
+                if (match[5] && match[4][0] === '*') {
+                    // Bold text, eg: *test*
+                    i.appendField(new pxtblockly.FieldBoldLabel(match[5]));
+                } else if (match[3] && match[2][0] === '`' && (img = iconToFieldImage(match[3]))) {
+                    // Icon field, eg: `test`
                     i.appendField(img);
                 } else {
                     i.appendField(match[1]);
@@ -2600,31 +2604,21 @@ namespace pxt.blocks {
             }
         };
 
-        // builtin math_number
+        // builtin math_number, math_integer, math_whole_number, math_number_minmax
         //XXX Integer validation needed.
-        const mInfo = pxt.blocks.getBlockDefinition("math_number");
-        installHelpResources(
-            'math_number',
-            mInfo.name,
-            (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
-            mInfo.url,
-            (Blockly as any).Colours.textField,
-            (Blockly as any).Colours.textField,
-            (Blockly as any).Colours.textField
-        );
-
-        // builtin math_number_minmax
-        //XXX Integer validation needed.
-        const mMInfo = pxt.blocks.getBlockDefinition("math_number_minmax");
-        installHelpResources(
-            'math_number_minmax',
-            mMInfo.name,
-            (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
-            mMInfo.url,
-            (Blockly as any).Colours.textField,
-            (Blockly as any).Colours.textField,
-            (Blockly as any).Colours.textField
-        );
+        const numberBlocks = ['math_number', 'math_integer', 'math_whole_number', 'math_number_minmax']
+        numberBlocks.forEach(num_id => {
+            const mInfo = pxt.blocks.getBlockDefinition(num_id);
+            installHelpResources(
+                num_id,
+                mInfo.name,
+                mInfo.tooltip,
+                mInfo.url,
+                (Blockly as any).Colours.textField,
+                (Blockly as any).Colours.textField,
+                (Blockly as any).Colours.textField
+            );
+        })
 
         // builtin math_arithmetic
         const msg: any = Blockly.Msg;

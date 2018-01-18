@@ -609,10 +609,10 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         return embed;
     }
 
-    export function docsEmbedUrl(rootUrl: string, id: string, height?: number): string {
-        const docurl = `${rootUrl}--docs?projectid=${id}`;
+    export function codeEmbedUrl(rootUrl: string, id: string, height?: number): string {
+        const docurl = `${rootUrl}---codeembed#pub:${id}`;
         height = Math.ceil(height || 300);
-        return `<div style="position:relative;height:calc(${height}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe></div>`
+        return `<div style="position:relative;height:calc(${height}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-scripts allow-same-origin"></iframe></div>`
     }
 
     const inlineTags: Map<number> = {

@@ -11,6 +11,7 @@ type IAppState = pxt.editor.IAppState;
 type IProjectView = pxt.editor.IProjectView;
 
 export enum ShareMode {
+    Code,
     Screenshot,
     Url,
     Editor,
@@ -46,7 +47,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
     }
 
     show(header: pxt.workspace.Header) {
-        this.setState({ visible: true, mode: ShareMode.Screenshot, pubCurrent: header.pubCurrent, sharingError: false });
+        this.setState({ visible: true, mode: ShareMode.Code, pubCurrent: header.pubCurrent, sharingError: false });
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ShareEditorState, nextContext: any): boolean {
@@ -91,6 +92,9 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                 url = `${shareUrl}${currentPubId}`;
                 let editUrl = `${rootUrl}#pub:${currentPubId}`;
                 switch (mode) {
+                    case ShareMode.Code:
+                        embed = pxt.docs.codeEmbedUrl(rootUrl, header.pubId);
+                        break;
                     case ShareMode.Cli:
                         embed = `pxt target ${pxt.appTarget.id}
 pxt extract ${url}`;
@@ -158,7 +162,9 @@ pxt extract ${url}`;
             this.forceUpdate();
         }
 
-        const formats = [{ mode: ShareMode.Screenshot, label: lf("Screenshot") },
+        const formats = [
+            { mode: ShareMode.Code, label: lf("Code") },
+            { mode: ShareMode.Screenshot, label: lf("Screenshot") },
             { mode: ShareMode.Editor, label: lf("Editor") },
             { mode: ShareMode.Simulator, label: lf("Simulator") },
             { mode: ShareMode.Cli, label: lf("Command line") }
