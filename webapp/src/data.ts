@@ -29,7 +29,10 @@ mountVirtualApi("cloud", {
 })
 
 mountVirtualApi("cloud-search", {
-    getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(e => core.handleNetworkError(e, [404])),
+    getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(e => {
+        core.handleNetworkError(e, [404])
+        return { statusCode: 404, headers: {}, json: {} }
+    }),
     expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline(),
 })

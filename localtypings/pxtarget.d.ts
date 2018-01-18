@@ -110,6 +110,7 @@ declare namespace pxt {
         importing?: boolean; // import url dialog
         embedding?: boolean;
         githubPackages?: boolean; // allow searching github for packages
+        noGithubProxy?: boolean;
     }
 
     interface AppSimulator {
