@@ -16,6 +16,7 @@ namespace ts.pxtc.decompiler {
         "-": { type: "math_arithmetic", op: "MINUS" },
         "/": { type: "math_arithmetic", op: "DIVIDE" },
         "*": { type: "math_arithmetic", op: "MULTIPLY" },
+        "**": { type: "math_arithmetic", op: "POWER" },
         "%": { type: "math_modulo", leftName: "DIVIDEND", rightName: "DIVISOR" },
         "<": { type: "logic_compare", op: "LT" },
         "<=": { type: "logic_compare", op: "LTE" },
@@ -833,7 +834,7 @@ ${output}</xml>`;
                         stmt = getFunctionDeclaration(node as ts.FunctionDeclaration);
                         break;
                     case SK.CallExpression:
-                        stmt = getCallStatement(node as ts.CallExpression, asExpression);
+                        stmt = getCallStatement(node as ts.CallExpression, asExpression) as StatementNode;
                         break;
                     default:
                         if (next) {
@@ -1140,8 +1141,20 @@ ${output}</xml>`;
             };
         }
 
-        function getCallStatement(node: ts.CallExpression, asExpression: boolean): StatementNode {
+        function getCallStatement(node: ts.CallExpression, asExpression: boolean): StatementNode | ExpressionNode {
             const info: pxtc.CallInfo = (node as any).callInfo
+
+            if (info.qName == "Math.pow") {
+                return {
+                    kind: "expr",
+                    type: "math_arithmetic",
+                    fields: [getField("OP", "POWER")],
+                    inputs: [
+                        getValue("A", node.arguments[0], numberType),
+                        getValue("B", node.arguments[1], numberType)
+                    ]
+                };
+            }
 
             if (!info.attrs.blockId || !info.attrs.block) {
                 const builtin = builtinBlocks[info.qName];
@@ -1712,8 +1725,13 @@ ${output}</xml>`;
                 return Util.lf("Function call not supported in the blocks");
             }
 
-            if (!asExpression && info.isExpression) {
-                return Util.lf("No output expressions as statements");
+            if (!asExpression) {
+                if (info.isExpression) {
+                    return Util.lf("No output expressions as statements");
+                }
+            }
+            else if (info.qName == "Math.pow") {
+                return undefined;
             }
 
             const hasCallback = hasArrowFunction(info);

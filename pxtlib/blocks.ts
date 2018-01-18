@@ -181,7 +181,7 @@ namespace pxt.blocks {
                     MATH_SUBTRACTION_SYMBOL: Util.lf("{id:op}-"),
                     MATH_MULTIPLICATION_SYMBOL: Util.lf("{id:op}×"),
                     MATH_DIVISION_SYMBOL: Util.lf("{id:op}÷"),
-                    MATH_POWER_SYMBOL: Util.lf("{id:op}^")
+                    MATH_POWER_SYMBOL: Util.lf("{id:op}**")
                 }
             },
             'math_modulo': {

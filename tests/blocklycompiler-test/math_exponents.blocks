@@ -1,0 +1,43 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+    <variables>
+      <variable type="" id="~|~q8*DL*bB3SZUva1aS">item</variable>
+    </variables>
+    <block type="pxt-on-start" id="+]g}L%m7}x06Ic|7YnaB" x="151" y="90">
+      <statement name="HANDLER">
+        <block type="variables_set" id="!tWtyc$IkCu.z[j.TK]@">
+          <field name="VAR" id="~|~q8*DL*bB3SZUva1aS" variabletype="">item</field>
+          <value name="VALUE">
+            <shadow type="math_number" id="TV2p=cjJyK#Wi[_:`mQv">
+              <field name="NUM">0</field>
+            </shadow>
+            <block type="math_arithmetic" id="1/Hh{}-9?4B1%gJ%HNb2">
+              <field name="OP">POWER</field>
+              <value name="A">
+                <shadow type="math_number" id="r?efBtQ8*Rr8a15Tpg;i">
+                  <field name="NUM">1</field>
+                </shadow>
+              </value>
+              <value name="B">
+                <shadow type="math_number" id="0z=p!q#n,cgIE3DkXans">
+                  <field name="NUM">2</field>
+                </shadow>
+                <block type="math_arithmetic" id="~@_c@PrOfjHmP9xwH|y/">
+                  <field name="OP">ADD</field>
+                  <value name="A">
+                    <shadow type="math_number" id="4la![.5#=WAn%{tnJ_s0">
+                      <field name="NUM">2</field>
+                    </shadow>
+                  </value>
+                  <value name="B">
+                    <shadow type="math_number" id="jLo_+MbyH-UnW9wxD.yK">
+                      <field name="NUM">2</field>
+                    </shadow>
+                  </value>
+                </block>
+              </value>
+            </block>
+          </value>
+        </block>
+      </statement>
+    </block>
+  </xml>

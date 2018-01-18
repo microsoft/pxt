@@ -742,6 +742,7 @@ namespace pxt.blocks {
         "OR": "||",
         "EQ": "==",
         "NEQ": "!=",
+        "POWER": "**"
     };
 
     function compileArithmetic(e: Environment, b: B.Block, comments: string[]): JsNode {
@@ -758,11 +759,8 @@ namespace pxt.blocks {
             return H.mkSimpleCall(opToTok[bOp], args);
 
         // Compilation of math operators.
-        if (bOp == "POWER") return H.mathCall("pow", args);
-        else {
-            assert(bOp in opToTok);
-            return H.mkSimpleCall(opToTok[bOp], args);
-        }
+        assert(bOp in opToTok);
+        return H.mkSimpleCall(opToTok[bOp], args);
     }
 
     function compileModulo(e: Environment, b: B.Block, comments: string[]): JsNode {
@@ -1888,7 +1886,8 @@ namespace pxt.blocks {
         "*": 14,
         "/": 14,
         "%": 14,
-        "!": 15,
+        "**": 15,
+        "!": 16,
         ".": 18,
     }
 
