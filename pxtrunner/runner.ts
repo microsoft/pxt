@@ -663,7 +663,7 @@ ${files["main.ts"]}
                     }
                     stepInfo.push(info);
                     return ""
-                });                
+                });
 
                 if (steps.length < 1) return Promise.resolve();
                 let options = steps[0];
@@ -711,14 +711,13 @@ ${files["main.ts"]}
                         const stepcontent = content.innerHTML.split(newAuthoring ? /<h2.*?>(.*?)<\/h2>/gi : /<h3.*?>(.*?)<\/h3>/gi);
                         // drop first section
                         stepcontent.shift();
-                        for (let i = 0; i < stepcontent.length; i+=2) {
+                        for (let i = 0; i < stepcontent.length; i += 2) {
                             content.innerHTML = stepcontent[i + 1];
                             stepInfo[i / 2].titleContent = (stepcontent[i] || "").replace(/@(fullscreen|unplugged)/g, "").trim();
                             stepInfo[i / 2].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
                             stepInfo[i / 2].ariaLabel = content.firstElementChild.textContent;
                             stepInfo[i / 2].content = stepcontent[i + 1];
                             stepInfo[i / 2].hasHint = content.childElementCount > 1;
-                            stepInfo[i / 2].unplugged = 
                         }
                         content.innerHTML = '';
                         // return the result
