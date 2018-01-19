@@ -119,11 +119,12 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialName} = options;
         if (!tutorialReady) return <div />;
 
-        const tutorialHint = tutorialStepInfo[tutorialStep].content;
-        const tutorialFullscreen = tutorialStepInfo[tutorialStep].fullscreen;
+        const step = tutorialStepInfo[tutorialStep];
+        const tutorialHint = step.content;
+        const tutorialFullscreen = step.fullscreen;
 
         // TODO: Use step name instead of tutorial Name in full screen mode.
-        const header = tutorialFullscreen ? tutorialName : lf("Hint");
+        const header = tutorialFullscreen ? (step.titleContent || tutorialName) : lf("Hint");
 
         const hide = () => this.setState({ visible: false });
 

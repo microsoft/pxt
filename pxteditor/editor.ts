@@ -92,6 +92,7 @@ namespace pxt.editor {
         fullscreen?: boolean;
         hasHint?: boolean;
         content?: string;
+        titleContent?: string;
         headerContent?: string;
         ariaLabel?: string;
     }
