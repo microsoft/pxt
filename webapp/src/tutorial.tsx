@@ -35,12 +35,12 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
                 {tutorialStepInfo.map((step, index) =>
                     (index == currentStep) ?
                         <span className="step-label" key={'tutorialStep' + index}>
-                            <a className={`ui circular label ${currentStep == index ? 'blue selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} role="menuitem" aria-label={lf("Tutorial step {0}. This is the current step", index + 1)} tabIndex={0} onClick={() => this.openTutorialStep(index) } onKeyDown={sui.fireClickOnEnter}>{index + 1}</a>
+                            <a className={`ui circular label ${currentStep == index ? 'blue selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} role="menuitem" aria-label={lf("Tutorial step {0}. This is the current step", index + 1)} tabIndex={0} onClick={() => this.openTutorialStep(index)} onKeyDown={sui.fireClickOnEnter}>{index + 1}</a>
                         </span> :
                         <span className="step-label" key={'tutorialStep' + index} data-tooltip={`${index + 1}`} data-inverted="" data-position="bottom center">
-                            <a className={`ui empty circular label ${!tutorialReady ? 'disabled' : ''} clear`} role="menuitem" aria-label={lf("Tutorial step {0}", index + 1)} tabIndex={0} onClick={() => this.openTutorialStep(index) } onKeyDown={sui.fireClickOnEnter}></a>
+                            <a className={`ui empty circular label ${!tutorialReady ? 'disabled' : ''} clear`} role="menuitem" aria-label={lf("Tutorial step {0}", index + 1)} tabIndex={0} onClick={() => this.openTutorialStep(index)} onKeyDown={sui.fireClickOnEnter}></a>
                         </span>
-                ) }
+                )}
             </div>
         </div>;
     }
@@ -95,7 +95,7 @@ export class TutorialContent extends data.Component<ISettingsProps, TutorialCont
         const { tutorialUrl } = this.state;
         if (!tutorialUrl) return null;
 
-        return <iframe id="tutorialcontent" style={{"width":"1px", "height": "1px"}} src={tutorialUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" />
+        return <iframe id="tutorialcontent" style={{ "width": "1px", "height": "1px" }} src={tutorialUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" />
     }
 }
 
@@ -114,9 +114,9 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
     }
 
     renderCore() {
-        const {visible} = this.state;
+        const { visible } = this.state;
         const options = this.props.parent.state.tutorialOptions;
-        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialName} = options;
+        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialName } = options;
         if (!tutorialReady) return <div />;
 
         const step = tutorialStepInfo[tutorialStep];
@@ -129,10 +129,10 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 
         const hide = () => this.setState({ visible: false });
         const next = () => {
-            const nextStep = tutorialStep + 1;    
-            options.tutorialStep = nextStep;    
+            const nextStep = tutorialStep + 1;
+            options.tutorialStep = nextStep;
             pxt.tickEvent(`tutorial.hint.next`, { tutorial: options.tutorial, step: nextStep });
-            this.props.parent.setTutorialStep(nextStep);            
+            this.props.parent.setTutorialStep(nextStep);
         }
 
         const actions = [tutorialUnplugged ? {
@@ -141,18 +141,18 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
             icon: 'check',
             className: 'green'
         } : {
-            label: lf("Ok"),
-            onClick: hide,
-            icon: 'check',
-            className: 'green'
-        }]
+                label: lf("Ok"),
+                onClick: hide,
+                icon: 'check',
+                className: 'green'
+            }]
 
         return <sui.Modal open={visible} className="hintdialog" size="" longer={true} header={header} closeIcon={true}
-                onClose={hide} dimmer={true}
-                actions={actions}
-                closeOnDimmerClick closeOnDocumentClick closeOnEscape>
-                    <div dangerouslySetInnerHTML={{__html: tutorialHint}} />
-            </sui.Modal>;
+            onClose={hide} dimmer={true}
+            actions={actions}
+            closeOnDimmerClick closeOnDocumentClick closeOnEscape>
+            <div dangerouslySetInnerHTML={{ __html: tutorialHint }} />
+        </sui.Modal>;
     }
 }
 
@@ -212,7 +212,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
 
     componentWillUpdate() {
         $('#tutorialhint')
-         .modal('attach events', '#tutorialcard .ui.button.hintbutton', 'show');
+            .modal('attach events', '#tutorialcard .ui.button.hintbutton', 'show');
         ;
         document.documentElement.addEventListener("keydown", this.closeLightboxOnEscape);
     }
@@ -254,14 +254,14 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
             <div className='ui buttons'>
                 <div className="ui segment attached tutorialsegment">
                     <div className='avatar-image' onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter}></div>
-                    {hasHint ? <sui.Button class="mini blue hintbutton hidelightbox" text={lf("Hint") } tabIndex={-1} onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter} /> : undefined }
-                    <div className={`tutorialmessage ${hasHint ? 'focused' : undefined}`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1} onClick={() => {if (hasHint) this.showHint();}} onKeyDown={sui.fireClickOnEnter}>
-                        <div className="content" dangerouslySetInnerHTML={{__html: tutorialHeaderContent}} />
+                    {hasHint ? <sui.Button class="mini blue hintbutton hidelightbox" text={lf("Hint")} tabIndex={-1} onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                    <div className={`tutorialmessage ${hasHint ? 'focused' : undefined}`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1} onClick={() => { if (hasHint) this.showHint(); }} onKeyDown={sui.fireClickOnEnter}>
+                        <div className="content" dangerouslySetInnerHTML={{ __html: tutorialHeaderContent }} />
                     </div>
-                    <sui.Button id="tutorialOkButton" class="large green okbutton showlightbox focused" text={lf("Ok") } onClick={() => this.closeLightbox() } onKeyDown={sui.fireClickOnEnter} />
+                    <sui.Button id="tutorialOkButton" class="large green okbutton showlightbox focused" text={lf("Ok")} onClick={() => this.closeLightbox()} onKeyDown={sui.fireClickOnEnter} />
                 </div>
-                {hasNext ? <sui.Button icon="right chevron" rightIcon class={`nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next") } ariaLabel={lf("Go to the next step of the tutorial.")} onClick={() => this.nextTutorialStep() } onKeyDown={sui.fireClickOnEnter} /> : undefined }
-                {hasFinish ? <sui.Button icon="left checkmark" class={`orange right attached ${!tutorialReady ? 'disabled' : 'focused'}`} text={lf("Finish") } ariaLabel={lf("Finish the tutorial.")} onClick={() => this.finishTutorial() } onKeyDown={sui.fireClickOnEnter} /> : undefined }
+                {hasNext ? <sui.Button icon="right chevron" rightIcon class={`nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} ariaLabel={lf("Go to the next step of the tutorial.")} onClick={() => this.nextTutorialStep()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hasFinish ? <sui.Button icon="left checkmark" class={`orange right attached ${!tutorialReady ? 'disabled' : 'focused'}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={() => this.finishTutorial()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
     }
