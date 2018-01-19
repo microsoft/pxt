@@ -90,6 +90,8 @@ namespace pxt.editor {
 
     export interface TutorialStepInfo {
         fullscreen?: boolean;
+        // no coding
+        unplugged?: boolean;
         hasHint?: boolean;
         content?: string;
         titleContent?: string;

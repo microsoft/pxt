@@ -122,13 +122,25 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         const step = tutorialStepInfo[tutorialStep];
         const tutorialHint = step.content;
         const tutorialFullscreen = step.fullscreen;
+        const tutorialUnplugged = !!step.unplugged && tutorialStep < tutorialStepInfo.length - 1;
 
         // TODO: Use step name instead of tutorial Name in full screen mode.
         const header = tutorialFullscreen ? (step.titleContent || tutorialName) : lf("Hint");
 
         const hide = () => this.setState({ visible: false });
+        const next = () => {
+            const nextStep = tutorialStep + 1;    
+            options.tutorialStep = nextStep;    
+            pxt.tickEvent(`tutorial.hint.next`, { tutorial: options.tutorial, step: nextStep });
+            this.props.parent.setTutorialStep(nextStep);            
+        }
 
-        const actions = [{
+        const actions = [tutorialUnplugged ? {
+            label: lf("Next"),
+            onClick: next,
+            icon: 'check',
+            className: 'green'
+        } : {
             label: lf("Ok"),
             onClick: hide,
             icon: 'check',
@@ -136,7 +148,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         }]
 
         return <sui.Modal open={visible} className="hintdialog" size="" longer={true} header={header} closeIcon={true}
-                onClose={() => this.setState({ visible: false })} dimmer={true}
+                onClose={hide} dimmer={true}
                 actions={actions}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
                     <div dangerouslySetInnerHTML={{__html: tutorialHint}} />

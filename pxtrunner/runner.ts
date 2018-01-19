@@ -658,11 +658,12 @@ ${files["main.ts"]}
                 let stepInfo: editor.TutorialStepInfo[] = [];
                 tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
                     let info: editor.TutorialStepInfo = {
-                        fullscreen: s.indexOf('@fullscreen') > -1
+                        fullscreen: /@(fullscreen|unplugged)/.test(s),
+                        unplugged: /@unplugged/.test(s)
                     }
                     stepInfo.push(info);
                     return ""
-                });
+                });                
 
                 if (steps.length < 1) return Promise.resolve();
                 let options = steps[0];
@@ -712,11 +713,12 @@ ${files["main.ts"]}
                         stepcontent.shift();
                         for (let i = 0; i < stepcontent.length; i+=2) {
                             content.innerHTML = stepcontent[i + 1];
-                            stepInfo[i / 2].titleContent = (stepcontent[i] || "").replace(/@fullscreen/g, "").trim();
+                            stepInfo[i / 2].titleContent = (stepcontent[i] || "").replace(/@(fullscreen|unplugged)/g, "").trim();
                             stepInfo[i / 2].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
                             stepInfo[i / 2].ariaLabel = content.firstElementChild.textContent;
                             stepInfo[i / 2].content = stepcontent[i + 1];
                             stepInfo[i / 2].hasHint = content.childElementCount > 1;
+                            stepInfo[i / 2].unplugged = 
                         }
                         content.innerHTML = '';
                         // return the result
