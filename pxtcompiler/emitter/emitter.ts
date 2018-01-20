@@ -2242,8 +2242,20 @@ ${lbl}: .short 0xffff
                     return emitShim(decl, node, args);
                 } else if (attrs.helper) {
                     let syms = checker.getSymbolsInScope(node, SymbolFlags.Module)
-                    let helpersModule = <ModuleDeclaration>syms.filter(s => s.name == "helpers")[0].valueDeclaration;
-                    let helperStmt = (<ModuleBlock>helpersModule.body).statements.filter(s => s.symbol.name == attrs.helper)[0]
+                    let helperStmt: Statement
+                    for (let sym of syms) {
+                        if (sym.name == "helpers") {
+                            for (let d of sym.declarations || [sym.valueDeclaration]) {
+                                if (d.kind == SK.ModuleDeclaration) {
+                                    for (let stmt of ((d as ModuleDeclaration).body as ModuleBlock).statements) {
+                                        if (stmt.symbol.name == attrs.helper) {
+                                            helperStmt = stmt
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     if (!helperStmt)
                         userError(9215, lf("helpers.{0} not found", attrs.helper))
                     if (helperStmt.kind != SK.FunctionDeclaration)
