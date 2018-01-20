@@ -2477,6 +2477,68 @@ ${lbl}: .short 0xffff
             function isHexDigit(c: string) {
                 return /^[0-9a-f]$/i.test(c)
             }
+            function f4PreProcess(s: string) {
+                if (!Array.isArray(attrs.groups))
+                    throw unhandled(node, lf("missing groups in @f4 literal"), 9272)
+                let matrix: number[][] = []
+                let line: number[] = []
+                let tbl: pxt.Map<number> = {}
+                let maxLen = 0
+                attrs.groups.forEach((str, n) => {
+                    for (let c of str) tbl[c] = n
+                })
+                s += "\n"
+                for (let i = 0; i < s.length; ++i) {
+                    let c = s[i]
+                    switch (c) {
+                        case ' ':
+                        case '\t':
+                            break
+                        case '\n':
+                            if (line.length > 0) {
+                                matrix.push(line)
+                                maxLen = Math.max(line.length, maxLen)
+                                line = []
+                            }
+                            break
+                        default:
+                            let v = U.lookup(tbl, c)
+                            if (v == null) {
+                                throw unhandled(node, lf("invalid character in image literal: '{0}'", v), 9273)
+                            }
+                            line.push(v)
+                            break
+                    }
+                }
+
+                // even-out
+                for (let l of matrix)
+                    while (l.length < maxLen)
+                        l.push(0)
+
+                let r = ""
+
+                if (attrs.groups.length > 16) {
+                    r = "f5" + hex2(maxLen)
+                    for (let l of matrix)
+                        for (let n of l)
+                            r += hex2(n)
+                } else {
+                    r = "f4" + hex2(maxLen)
+                    for (let l of matrix) {
+                        for (let n of l)
+                            r += n.toString(16)
+                        if (r.length & 1)
+                            r += "0"
+                    }
+                }
+
+                return r
+
+                function hex2(n: number) {
+                    return ("0" + n.toString(16)).slice(-2)
+                }
+            }
             function parseHexLiteral(s: string) {
                 if (s == "" && currJres) {
                     if (!currJres.dataEncoding || currJres.dataEncoding == "base64") {
@@ -2508,15 +2570,28 @@ ${lbl}: .short 0xffff
             if (!decl)
                 throw unhandled(node, lf("invalid tagged template"), 9265)
             let attrs = parseComments(decl)
+            let res: ir.Expr
+
+            function handleHexLike(pp: (s: string) => string) {
+                if (node.template.kind != SK.NoSubstitutionTemplateLiteral)
+                    throw unhandled(node, lf("substitution not supported in hex literal", attrs.shim), 9265);
+                res = parseHexLiteral(pp((node.template as ts.LiteralExpression).text))
+            }
+
             switch (attrs.shim) {
                 case "@hex":
-                    if (node.template.kind != SK.NoSubstitutionTemplateLiteral)
-                        throw unhandled(node, lf("substitution not supported in hex literal", attrs.shim), 9265);
-                    return parseHexLiteral((node.template as ts.LiteralExpression).text)
-
+                    handleHexLike(s => s)
+                    break
+                case "@f4":
+                    handleHexLike(f4PreProcess)
+                    break
                 default:
                     throw unhandled(node, lf("invalid shim '{0}' on tagged template", attrs.shim), 9265)
             }
+            if (attrs.helper) {
+                res = ir.rtcall(attrs.helper, [res])
+            }
+            return res
         }
         function emitTypeAssertion(node: TypeAssertion) {
             typeCheckSubtoSup(node.expression, node)
