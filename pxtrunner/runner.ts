@@ -658,7 +658,8 @@ ${files["main.ts"]}
                 let stepInfo: editor.TutorialStepInfo[] = [];
                 tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
                     let info: editor.TutorialStepInfo = {
-                        fullscreen: s.indexOf('@fullscreen') > -1
+                        fullscreen: /@(fullscreen|unplugged)/.test(s),
+                        unplugged: /@unplugged/.test(s)
                     }
                     stepInfo.push(info);
                     return ""
@@ -707,13 +708,16 @@ ${files["main.ts"]}
                     })
                     .then(() => {
                         // Split the steps
-                        let stepcontent = content.innerHTML.split(newAuthoring ? /<h2.*\/h2>/gi : /<h3.*\/h3>/gi);
-                        for (let i = 0; i < stepcontent.length - 1; i++) {
+                        const stepcontent = content.innerHTML.split(newAuthoring ? /<h2.*?>(.*?)<\/h2>/gi : /<h3.*?>(.*?)<\/h3>/gi);
+                        // drop first section
+                        stepcontent.shift();
+                        for (let i = 0; i < stepcontent.length; i += 2) {
                             content.innerHTML = stepcontent[i + 1];
-                            stepInfo[i].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
-                            stepInfo[i].ariaLabel = content.firstElementChild.textContent;
-                            stepInfo[i].content = stepcontent[i + 1];
-                            stepInfo[i].hasHint = content.childElementCount > 1;
+                            stepInfo[i / 2].titleContent = (stepcontent[i] || "").replace(/@(fullscreen|unplugged)/g, "").trim();
+                            stepInfo[i / 2].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
+                            stepInfo[i / 2].ariaLabel = content.firstElementChild.textContent;
+                            stepInfo[i / 2].content = stepcontent[i + 1];
+                            stepInfo[i / 2].hasHint = content.childElementCount > 1;
                         }
                         content.innerHTML = '';
                         // return the result
