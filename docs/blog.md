@@ -2,7 +2,7 @@
 
 ## [Hello 2018](/blog/bett/01-22-2018)
 
-January 22nd, 2018 by [jaqster](https://github.com/jaqster)
+January 22nd, 2018 by [Jaqster](https://github.com/jaqster)
 
 Wow, hard to believe it’s 2018 already. We’re announcing some very cool stuff to kick off the new year...
 **[Read more](/blog/bett/01-22-2018)**
