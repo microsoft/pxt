@@ -146,6 +146,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             pxt.tickEvent("projects.gallery", { name: scr.name });
             switch (scr.cardType) {
                 case "template":
+                    const prj = pxt.Util.clone(pxt.appTarget.blocksprj);
+                    prj.config.dependencies = {}; // clear all dependencies
+                    chgCode(scr, true, prj); break;
                 case "example": chgCode(scr, true); break;
                 case "codeExample": chgCode(scr, false); break;
                 case "tutorial": this.props.parent.startTutorial(scr.url, scr.name); break;
@@ -168,11 +171,12 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             }
         }
 
-        const chgCode = (scr: pxt.CodeCard, loadBlocks?: boolean) => {
+        const chgCode = (scr: pxt.CodeCard, loadBlocks?: boolean, prj?: pxt.ProjectTemplate) => {
             core.showLoading("changingcode", lf("Loading..."));
             gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
                 .done(opts => {
                     if (opts) {
+                        if (prj) opts.prj = prj;
                         if (loadBlocks) {
                             return this.props.parent.createProjectAsync(opts)
                                 .then(() => {
@@ -426,11 +430,14 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             }
         } else {
             let headers = this.fetchLocalData();
-            headers.unshift({
-                id: 'new',
-                name: lf("New Project")
-            } as any);
-            if (headers.length == 0) {
+            const headersEmpty = !headers.length;
+            if (pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton) {
+                headers.unshift({
+                    id: 'new',
+                    name: lf("New Project")
+                } as any);
+            }
+            if (headersEmpty) {
                 return <div className="ui carouselouter">
                     <div className="carouselcontainer">
                         <p>{lf("This is where you will you find your code.")}</p>
