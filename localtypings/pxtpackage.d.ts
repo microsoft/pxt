@@ -100,7 +100,7 @@ declare namespace pxt {
         time?: number;
         url?: string;
         responsive?: boolean;
-        cardType?: "file" | "example" | "codeExample" | "tutorial" | "project";
+        cardType?: "file" | "example" | "codeExample" | "tutorial" | "project" | "template";
 
         header?: string;
         any?: number;
