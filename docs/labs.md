@@ -11,45 +11,42 @@ Experimental Editors are not supported by the Microsoft MakeCode team.
 
 ## Editors
 
-```codecard
-[
-    {
-        "name": "ARcadia",
-        "description": "Marker-based Augmented Reality",
-        "url": "https://www.playfulcomputation.group/arcadia.html",
-        "imageUrl": "/static/targets/ar/avatar.svg",
-        "secondaryImageUrl": "/static/targets/ar/cuwide.png"
-    },
-    {
-        "name": "App Blocks",
-        "description": "Mobile apps",
-        "url": "https://theblapp-pxt.azurewebsites.net",
-        "imageUrl": "/static/targets/blapp/icon.svg",
-        "secondaryImageUrl": "/static/targets/minecraft/Microsoft-logo_rgb_c-white.png"
-    },
-    {
-        "name": "Holiday Card",
-        "description": "Virtual greeting animations",
-        "url": "https://samelhusseini.github.io/pxt-holidays/controller.html",
-        "imageUrl": "/static/targets/holiday/left-back.svg",
-        "secondaryImageUrl": "/static/targets/minecraft/Microsoft-logo_rgb_c-white.png"
-    },
-    {
-        "name": "Beat the traffic",
-        "description": "Program the traffic lights to reduce traffic",
-        "url": "https://liolop.github.io/Coraffic",
-        "imageUrl": "/static/targets/corafic/logo.svg",
-        "secondaryImageUrl": "/static/targets/corafic/cornell_logo_simple.svg"
-    },
-    {
-        "name": "Build-U-Face",
-        "description": "Program your face!",
-        "url": "https://jcspec.github.io/BuildUFace",
-        "imageUrl": "/static/targets/builduface/logo.svg",
-        "secondaryImageUrl": "/static/targets/corafic/cornell_logo_simple.svg"
-    }
-]
-```
+### ARcadia
+
+![ARcadia logo](/static/targets/ar/avatar.svg)
+
+Marker-based augment reality
+
+* [Editor](http://www.playfulcomputation.group/arcadia.html)
+
+### App Blocks
+
+![App Blocks logo](/static/targets/blapp/icon.svg)
+
+Mobile apps
+
+* [Editor](https://theblapp-pxt.azurewebsites.net)
+
+### Holiday Card
+
+![Holiday card logo](/static/targets/holiday/left-back.svg)
+
+Greeting cards 
+
+* [Editor](https://samelhusseini.github.io/pxt-holidays/controller.html)
+
+
+### Beat the traffic
+
+![Beat the traffic logo](/static/targets/corafic/logo.svg)
+
+* [Editor](https://liolop.github.io/Coraffic)
+
+### Build-U-Face
+
+![Build-U-Face logo](/static/targets/builduface/logo.svg)
+
+* [Editor](https://jcspec.github.io/BuildUFace)
 
 ## Documentation
 
