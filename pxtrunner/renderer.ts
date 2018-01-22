@@ -249,7 +249,7 @@ namespace pxt.runner {
     }
 
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
-        if (pxt.appTarget.id == "code") return Promise.resolve();
+        if (pxt.appTarget.id == "core") return Promise.resolve();
 
         return pxt.runner.decompileToBlocksAsync('', options)
             .then((r) => {
