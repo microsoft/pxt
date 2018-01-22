@@ -20,7 +20,7 @@ ARcadia is a toolkit for bringing paper prototypes to life through the use of ma
 * [Project](http://www.playfulcomputation.group/arcadia.html)
 * [Instructions](https://laboratoryforplayfulcomputation.github.io/arcadia/docs/about.html)
 * [Editor](https://laboratoryforplayfulcomputation.github.io/arcadia/)
-* [Github](https://github.com/LaboratoryForPlayfulComputation/arcadia)
+* [GitHub](https://github.com/LaboratoryForPlayfulComputation/arcadia)
 
 ### Holiday Card
 
