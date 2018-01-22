@@ -6,6 +6,8 @@ A collection of experimental MakeCode Editors created by the community.
 ## ~hint
 
 Experimental Editors are not supported by the Microsoft MakeCode team.
+To be listed on this page, your editor must be open source on GitHub,
+preferrably under the MIT License. 
 
 ## ~
 
@@ -26,7 +28,7 @@ Create your own greeting cards using this MakeCode Editor. This is a nice exampl
 MakeCode's support for embedding the MakeCode editor inside of a web app. For more information, see:
 
 * [Editor](https://samelhusseini.github.io/pxt-holidays/controller.html)
-* [Github](https://github.com/samelhusseini/pxt-holidays)
+* [GitHub](https://github.com/samelhusseini/pxt-holidays)
 
 ### Beat the traffic
 
@@ -35,7 +37,7 @@ uses MakeCode to program the logic behind traffic lights in a traffic simulator.
 more information, see:
 
 * [Editor](https://liolop.github.io/Coraffic)
-* [Github](https://github.com/liolop/Coraffic)
+* [GitHub](https://github.com/liolop/Coraffic)
 
 ### Build-U-Face
 
@@ -44,12 +46,7 @@ uses MakeCode to control a face recognition engine. For
 more information, see:
 
 * [Editor](https://jcspec.github.io/BuildUFace)
-* [Github](https://github.com/JCSPEC/BuildUFace)
-
-### App Blocks: Create Mobile apps
-
-App Blocks is a MakeCode editor for creating Mobile apps. For more information, see:
-* [Editor](https://theblapp-pxt.azurewebsites.net)
+* [GitHub](https://github.com/JCSPEC/BuildUFace)
 
 ## Documentation
 
