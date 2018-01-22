@@ -803,7 +803,9 @@ export class ProjectView
         }
     }];
 
-    resourceImporters: pxt.editor.IResourceImporter[] = [];
+    resourceImporters: pxt.editor.IResourceImporter[] = [
+        new serial.ResourceImporter()
+    ];
 
     importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
         const targetId = pxt.appTarget.id;

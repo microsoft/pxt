@@ -494,9 +494,8 @@ export class Editor extends srceditor.Editor {
     protected onDragBlockThrottled = Util.throttle(() => {
         const {x, y} = this.dragCurrentPos;
         let mouseTarget = this.editor.getTargetAtClientPoint(x, y);
-        let position = mouseTarget.position;
-        if (position && this.editor.getPosition() != position)
-            this.editor.setPosition(position);
+        if (mouseTarget && mouseTarget.position && this.editor.getPosition() != mouseTarget.position)
+            this.editor.setPosition(mouseTarget.position);
         this.editor.focus();
     }, 200);
 
@@ -787,31 +786,57 @@ export class Editor extends srceditor.Editor {
 
             let snippetPrefix = fn.noNamespace ? "" : ns;
             let isInstance = false;
+            let addNamespace = false;
+            let namespaceToUse = "";
 
             const element = fn as pxtc.SymbolInfo;
             if (element.attributes.block) {
                 if (element.attributes.defaultInstance) {
                     snippetPrefix = element.attributes.defaultInstance;
                 }
-                else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
-                    const params = pxt.blocks.parameterNames(element);
-                    snippetPrefix = params.attrNames["this"].name;
-                    isInstance = true;
-                }
                 else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                     const nsInfo = this.blockInfo.apis.byQName[element.namespace];
-                    if (nsInfo.kind === pxtc.SymbolKind.Class) {
-                        return undefined;
-                    }
-                    else if (nsInfo.attributes.fixedInstances) {
-                        const instances = Util.values(this.blockInfo.apis.byQName).filter(value =>
-                            value.kind === pxtc.SymbolKind.Variable &&
-                            value.attributes.fixedInstance &&
-                            value.retType === nsInfo.name)
-                            .sort((v1, v2) => v1.name.localeCompare(v2.name));
-                        if (instances.length) {
-                            snippetPrefix = `${instances[0].namespace}.${instances[0].name}`
+                    if (nsInfo.attributes.fixedInstances) {
+                        let instances = Util.values(this.blockInfo.apis.byQName)
+                        let getExtendsTypesFor = function(name: string) {
+                            return instances
+                                    .filter(v => v.extendsTypes)
+                                    .filter(v => v.extendsTypes.reduce((x, y) => x || y.indexOf(name) != -1, false))
+                                    .reduce((x, y) => x.concat(y.extendsTypes), [])
                         }
+                        // if blockNamespace exists, e.g., "pins", use it for snippet
+                        // else use nsInfo.namespace, e.g., "motors"
+                        namespaceToUse = element.attributes.blockNamespace || nsInfo.namespace || "";
+                        // all fixed instances for this namespace
+                        let fixedInstances = instances.filter(value =>
+                            value.kind === pxtc.SymbolKind.Variable &&
+                            value.attributes.fixedInstance
+                        );
+                        // first try to get fixed instances whose retType matches nsInfo.name
+                        // e.g., DigitalPin
+                        let exactInstances = fixedInstances.filter(value =>
+                            value.retType == nsInfo.name)
+                            .sort((v1, v2) => v1.name.localeCompare(v2.name));
+                        // second choice: use fixed instances whose retType extends type of nsInfo.name
+                        // e.g., nsInfo.name == AnalogPin and instance retType == PwmPin
+                        let extendedInstances = fixedInstances.filter(value =>
+                            getExtendsTypesFor(nsInfo.name).indexOf(value.retType) !== -1)
+                            .sort((v1, v2) => v1.name.localeCompare(v2.name));
+                        if (exactInstances.length) {
+                            snippetPrefix = `${exactInstances[0].name}`
+                        } else if (extendedInstances.length) {
+                            snippetPrefix = `${extendedInstances[0].name}`
+                        }
+                        isInstance = true;
+                        addNamespace = true;
+                    }
+                    else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
+                        const params = pxt.blocks.parameterNames(element);
+                        snippetPrefix = params.attrNames["this"].name;
+                        isInstance = true;
+                    }
+                    else if (nsInfo.kind === pxtc.SymbolKind.Class) {
+                        return undefined;
                     }
                 }
             }
@@ -839,6 +864,7 @@ export class Editor extends srceditor.Editor {
                     let currPos = monacoEditor.editor.getPosition();
                     let cursor = model.getOffsetAt(currPos)
                     let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
+                    insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
                     insertText = (currPos.column > 1) ? '\n' + insertText :
                         model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
                             insertText + '\n' : insertText;
@@ -875,6 +901,7 @@ export class Editor extends srceditor.Editor {
                     });
 
                     let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
+                    insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
                     e.dataTransfer.setData('text', insertText); // IE11 only supports text
                 }
                 monacoBlock.ondragend = (e: DragEvent) => {
@@ -1657,4 +1684,8 @@ export class TreeItem extends data.Component<TreeItemProps, {}> {
             {this.props.children}
         </div>
     }
+}
+
+function firstWord(s: string) {
+    return /[^\.]+/.exec(s)[0]
 }

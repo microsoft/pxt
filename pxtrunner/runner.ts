@@ -338,6 +338,22 @@ namespace pxt.runner {
         }
     }
 
+    function initEditorExtensionsAsync(): Promise<void> {
+        let promise = Promise.resolve();
+        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
+            const opts: pxt.editor.ExtensionOptions = {};
+            promise = promise.then(() => pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js"))
+                .then(() => pxt.editor.initExtensionsAsync(opts))
+                .then(res => {
+                    if (res.fieldEditors)
+                        res.fieldEditors.forEach(fi => {
+                            pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                        })
+                })
+        }
+        return promise;
+    }
+
     export function startRenderServer() {
         pxt.tickEvent("renderer.ready");
 
@@ -349,6 +365,7 @@ namespace pxt.runner {
             const msg = jobQueue.shift();
             if (!msg) return; // no more work
 
+            pxt.tickEvent("renderer.job")
             jobPromise = runner.decompileToBlocksAsync(msg.code, msg.options)
                 .then(result => result.blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(result.blocksSvg, 0, 0, result.blocksSvg.viewBox.baseVal.width, result.blocksSvg.viewBox.baseVal.height) : undefined)
                 .then(res => {
@@ -367,21 +384,26 @@ namespace pxt.runner {
                 })
         }
 
-        // notify parent that render engine is loaded
-        window.addEventListener("message", function (ev) {
-            const msg = ev.data as pxsim.RenderBlocksRequestMessage;
-            if (msg.type == "renderblocks") {
-                jobQueue.push(msg);
-                consumeQueue();
-            }
-        }, false);
-        window.parent.postMessage(<pxsim.RenderReadyResponseMessage>{
-            source: "makecode",
-            type: "renderready"
-        }, "*");
+        initEditorExtensionsAsync()
+            .done(() => {
+                // notify parent that render engine is loaded
+                window.addEventListener("message", function (ev) {
+                    const msg = ev.data as pxsim.RenderBlocksRequestMessage;
+                    if (msg.type == "renderblocks") {
+                        jobQueue.push(msg);
+                        consumeQueue();
+                    }
+                }, false);
+                window.parent.postMessage(<pxsim.RenderReadyResponseMessage>{
+                    source: "makecode",
+                    type: "renderready"
+                }, "*");
+            })
     }
 
     export function startDocsServer(loading: HTMLElement, content: HTMLElement) {
+        pxt.tickEvent("docrenderer.ready");
+
         function render(doctype: string, src: string) {
             pxt.debug(`rendering ${doctype}`);
             $(content).hide()
@@ -435,18 +457,7 @@ namespace pxt.runner {
                 p.then(() => render(m[1], decodeURIComponent(m[2])));
             }
         }
-        let promise = Promise.resolve();
-        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
-            const opts: pxt.editor.ExtensionOptions = {};
-            promise = promise.then(() => pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js"))
-                .then(() => pxt.editor.initExtensionsAsync(opts))
-                .then(res => {
-                    if (res.fieldEditors)
-                        res.fieldEditors.forEach(fi => {
-                            pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                        })
-                })
-        }
+        let promise = initEditorExtensionsAsync();
         promise.done(() => {
             window.addEventListener("message", receiveDocMessage, false);
             window.addEventListener("hashchange", () => {
@@ -647,7 +658,8 @@ ${files["main.ts"]}
                 let stepInfo: editor.TutorialStepInfo[] = [];
                 tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
                     let info: editor.TutorialStepInfo = {
-                        fullscreen: s.indexOf('@fullscreen') > -1
+                        fullscreen: /@(fullscreen|unplugged)/.test(s),
+                        unplugged: /@unplugged/.test(s)
                     }
                     stepInfo.push(info);
                     return ""
@@ -696,13 +708,16 @@ ${files["main.ts"]}
                     })
                     .then(() => {
                         // Split the steps
-                        let stepcontent = content.innerHTML.split(newAuthoring ? /<h2.*\/h2>/gi : /<h3.*\/h3>/gi);
-                        for (let i = 0; i < stepcontent.length - 1; i++) {
+                        const stepcontent = content.innerHTML.split(newAuthoring ? /<h2.*?>(.*?)<\/h2>/gi : /<h3.*?>(.*?)<\/h3>/gi);
+                        // drop first section
+                        stepcontent.shift();
+                        for (let i = 0; i < stepcontent.length; i += 2) {
                             content.innerHTML = stepcontent[i + 1];
-                            stepInfo[i].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
-                            stepInfo[i].ariaLabel = content.firstElementChild.textContent;
-                            stepInfo[i].content = stepcontent[i + 1];
-                            stepInfo[i].hasHint = content.childElementCount > 1;
+                            stepInfo[i / 2].titleContent = (stepcontent[i] || "").replace(/@(fullscreen|unplugged)/g, "").trim();
+                            stepInfo[i / 2].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
+                            stepInfo[i / 2].ariaLabel = content.firstElementChild.textContent;
+                            stepInfo[i / 2].content = stepcontent[i + 1];
+                            stepInfo[i / 2].hasHint = content.childElementCount > 1;
                         }
                         content.innerHTML = '';
                         // return the result
@@ -735,11 +750,17 @@ ${files["main.ts"]}
     }
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
-        return loadPackageAsync(options && options.package ? "docs:" + options.package : null, code)
+        // code may be undefined or empty!!!
+
+        const packageid = options && options.packageId ? "pub:" + options.packageId :
+            options && options.package ? "docs:" + options.package
+                : null;
+        return loadPackageAsync(packageid, code)
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
             .then(opts => {
                 // compile
-                opts.fileSystem["main.ts"] = code;
+                if (code)
+                    opts.fileSystem["main.ts"] = code;
                 opts.ast = true
                 let resp = pxtc.compile(opts)
                 if (resp.diagnostics && resp.diagnostics.length > 0)

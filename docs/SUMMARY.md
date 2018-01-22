@@ -45,6 +45,7 @@
     * [update](/cli/update)
     * [pyconv](/cli/pyconv)
     * [hidserial](/cli/hidserial)
+* [Labs](/labs)
 * [UF2 File Format](https://github.com/microsoft/uf2)
 * [Accessibility](/accessibility)
 * [Telemetry](/telemetry)

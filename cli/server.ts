@@ -857,6 +857,11 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        if (pathname == "/--codeembed") {
+            sendFile(path.join(publicDir, 'codeembed.html'));
+            return
+        }
+
         if (/^\/(\d\d\d\d[\d-]+)$/.test(pathname)) {
             scriptPageTestAsync(pathname.slice(1))
                 .then(sendHtml)

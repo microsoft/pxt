@@ -1,7 +1,7 @@
 /// <reference path='../built/pxtlib.d.ts' />
 
 namespace pxt {
-    export function simshim(prog: ts.Program): pxt.Map<string> {
+    export function simshim(prog: ts.Program, pathParse: any): pxt.Map<string> {
         let SK = ts.SyntaxKind
         let checker = prog.getTypeChecker()
         let mainWr = cpp.nsWriter("declare namespace")
@@ -9,9 +9,14 @@ namespace pxt {
         let currMod: ts.ModuleDeclaration
 
         for (let src of prog.getSourceFiles()) {
-            pxt.debug("simshim: " + src.fileName);
-            if (!U.startsWith(src.fileName, "sim/") && src.fileName.indexOf("/sim/") < 0)
+            if (pathParse) {
+                let pp = pathParse(src.fileName);
+                pxt.debug("SimShim[1]: " + pp.dir)
+                if (!U.endsWith(pp.dir, "/sim") && !U.startsWith(src.fileName, "sim/"))
+                    continue;
+            } else if (!U.startsWith(src.fileName, "sim/"))
                 continue;
+            pxt.debug("SimShim[2]: " + src.fileName)
             for (let stmt of src.statements) {
                 let mod = stmt as ts.ModuleDeclaration
                 if (stmt.kind == SK.ModuleDeclaration && mod.name.text == "pxsim") {
@@ -149,6 +154,7 @@ namespace pxt {
             } else if (asyncName) {
                 U.userError(`${currNs}::${fnname} doesn't return a promise`)
             }
+            pxt.debug("emitFun: "+fnname)
             let args = fn.parameters.map(p => {
                 return `${p.name.getText()}${p.questionToken ? "?" : ""}: ${mapType(typeOf(p))}`
             })

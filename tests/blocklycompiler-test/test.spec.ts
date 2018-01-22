@@ -267,6 +267,10 @@ describe("blockly compiler", function() {
         it("should handle all the math library functions", (done: () => void) => {
             blockTestAsync("math_library").then(done, done);
         });
+
+        it("should handle exponentiation operator", (done: () => void) => {
+            blockTestAsync("math_exponents").then(done, done);
+        });
     });
 
     describe("compiling text", () => {

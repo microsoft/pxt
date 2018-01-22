@@ -11,19 +11,16 @@ type IAppState = pxt.editor.IAppState;
 type IProjectView = pxt.editor.IProjectView;
 
 export enum ShareMode {
-    Screenshot,
+    Code,
     Url,
     Editor,
-    Simulator,
-    Cli
+    Simulator
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface ShareEditorState {
     advancedMenu?: boolean;
     mode?: ShareMode;
-    screenshotId?: string;
-    screenshotUri?: string;
     currentPubId?: string;
     pubCurrent?: boolean;
     visible?: boolean;
@@ -46,7 +43,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
     }
 
     show(header: pxt.workspace.Header) {
-        this.setState({ visible: true, mode: ShareMode.Screenshot, pubCurrent: header.pubCurrent, sharingError: false });
+        this.setState({ visible: true, mode: ShareMode.Code, pubCurrent: header.pubCurrent, sharingError: false });
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ShareEditorState, nextContext: any): boolean {
@@ -54,7 +51,6 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
             || this.state.advancedMenu != nextState.advancedMenu
             || this.state.mode != nextState.mode
             || this.state.pubCurrent != nextState.pubCurrent
-            || this.state.screenshotId != nextState.screenshotId
             || this.state.currentPubId != nextState.currentPubId
             || this.state.sharingError != nextState.sharingError;
     }
@@ -91,10 +87,8 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                 url = `${shareUrl}${currentPubId}`;
                 let editUrl = `${rootUrl}#pub:${currentPubId}`;
                 switch (mode) {
-                    case ShareMode.Cli:
-                        embed = `pxt target ${pxt.appTarget.id}
-pxt extract ${url}`;
-                        help = lf("Run this command from a shell.");
+                    case ShareMode.Code:
+                        embed = pxt.docs.codeEmbedUrl(rootUrl, header.pubId);
                         break;
                     case ShareMode.Editor:
                         embed = pxt.docs.embedUrl(rootUrl, "pub", header.pubId);
@@ -108,37 +102,6 @@ pxt extract ${url}`;
                         break;
                     case ShareMode.Url:
                         embed = editUrl;
-                        break;
-                    default:
-                        if (isBlocks && pxt.blocks.layout.screenshotEnabled()) {
-                            // Render screenshot
-                            if (this.state.screenshotId == currentPubId) {
-                                if (this.state.screenshotUri)
-                                    embed = `<a href="${editUrl}"><img src="${this.state.screenshotUri}" /></a>`
-                                else embed = lf("Ooops, no screenshot available.");
-                            } else {
-                                pxt.debug("rendering share-editor screenshot png");
-                                embed = lf("rendering...");
-                                pxt.blocks.layout.toPngAsync((this.props.parent.editor as blocks.Editor).editor)
-                                    .done(uri => this.setState({ screenshotId: currentPubId, screenshotUri: uri }));
-                            }
-                        } else {
-                            // Render javascript code
-                            pxt.debug("rendering share-editor javascript markdown");
-                            embed = lf("rendering...")
-                            let main = pkg.getEditorPkg(pkg.mainPkg)
-                            let file = main.getMainFile()
-                            if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName())
-                                file = main.lookupFile("this/" + file.getVirtualFileName()) || file
-                            if (pkg.File.tsFileNameRx.test(file.getName())) {
-                                let fileContents = file.content;
-                                let mdContent = pxt.docs.renderMarkdown({
-                                    template: `@body@`,
-                                    markdown: `\`\`\`javascript\n${fileContents}\n\`\`\``
-                                });
-                                embed = `<a style="text-decoration: none;" href="${editUrl}">${mdContent}</a>`;
-                            }
-                        }
                         break;
                 }
             }
@@ -158,10 +121,10 @@ pxt extract ${url}`;
             this.forceUpdate();
         }
 
-        const formats = [{ mode: ShareMode.Screenshot, label: lf("Screenshot") },
+        const formats = [
+            { mode: ShareMode.Code, label: lf("Code") },
             { mode: ShareMode.Editor, label: lf("Editor") },
             { mode: ShareMode.Simulator, label: lf("Simulator") },
-            { mode: ShareMode.Cli, label: lf("Command line") }
         ];
 
         const action = !ready ? lf("Publish project") : undefined;
