@@ -163,10 +163,21 @@ namespace pxsim.visuals {
             let colOffset = 0;
             if (partInst.simulationBehavior) {
                 //TODO: seperate simulation behavior from builtin visual
-                let builtinBehavior = partInst.simulationBehavior;
+                let builtinBehavior = (partInst.simulationBehavior.type ? partInst.simulationBehavior.type : partInst.simulationBehavior);
                 let cnstr = this.state.builtinVisuals[builtinBehavior];
                 let stateFn = this.state.builtinParts[builtinBehavior];
                 part = cnstr();
+                //if an image is passed set the image as an additional parameter
+                //necessary for Dial component
+                if (partInst.visual.image) {
+                    partInst.params["staticSVG"] = partInst.visual.image;
+                    partInst.params["height"] = partInst.visual.height + "";
+                    partInst.params["width"] = partInst.visual.width + "";
+                }
+                if (partInst.simulationBehavior.min && partInst.simulationBehavior.max) {
+                    partInst.params["min"] = partInst.simulationBehavior.min;
+                    partInst.params["max"] = partInst.simulationBehavior.max;
+                }
                 part.init(this.state.bus, stateFn, this.view, partInst.params);
             } else {
                 let vis = partInst.visual as PartVisualDefinition;
