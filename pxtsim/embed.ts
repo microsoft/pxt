@@ -214,11 +214,11 @@ namespace pxsim {
         export function run(msg: SimulatorRunMessage) {
             stop();
 
-            if (msg.mute) mute(msg.mute);
-
-            if (msg.localizedStrings) {
+            if (msg.mute)
+                mute(msg.mute);
+            if (msg.localizedStrings)
                 pxsim.localization.setLocalizedStrings(msg.localizedStrings);
-            }
+
             runtime = new Runtime(msg);
             runtime.board.initAsync(msg)
                 .done(() => {
