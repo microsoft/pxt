@@ -19,17 +19,18 @@ function loadMakeFrameAsync(container: HTMLElement): Promise<HTMLIFrameElement> 
         window.addEventListener('message', waitForReady)
 
         // load iframe in background
+        // do not set an ID on this iframe
         const iframe = document.createElement("iframe");
-        iframe.id = FRAME_ID;
         iframe.frameBorder = "0";
-        iframe.setAttribute("sandbox", "allow-fullscreen allow-popups allow-forms allow-scripts allow-same-origin");
+        iframe.setAttribute("allowfullscreen", "true");
+        iframe.setAttribute("sandbox", "allow-popups allow-forms allow-scripts allow-same-origin allow-modals");
         iframe.setAttribute("style", "position:absolute;top:0;left:0;width:100%;height:100%;");
         iframe.src = pxt.webConfig.partsUrl + '#' + FRAME_ID;
         container.appendChild(iframe);
     })
 }
 
-function renderAsync(container: HTMLElement) {
+function renderAsync(container: HTMLElement): Promise<HTMLIFrameElement> {
     let iframe: HTMLIFrameElement;
     return loadMakeFrameAsync(container)
         .then(frame => {
@@ -62,10 +63,13 @@ function renderAsync(container: HTMLElement) {
                     configData
                 }
             }, "*")
+
+            return iframe;
         });
 }
 
 export function makeAsync(): Promise<void> {
+    let iframe: HTMLIFrameElement;
     return core.dialogAsync({
         hideCancel: true,
         header: lf("Make"),
@@ -75,12 +79,12 @@ export function makeAsync(): Promise<void> {
             <div id="makecontainer" style="position:relative;height:0;padding-bottom:40%;overflow:hidden;">
             </div>
         </div>`, onLoaded: (_) => {
-            renderAsync(_.find("#makecontainer")[0]);
+            renderAsync(_.find("#makecontainer")[0])
+                .done(r => iframe = r);
         },
         buttons: [{
             label: lf("Print"),
             onclick: () => {
-                const iframe = document.getElementById(FRAME_ID) as HTMLIFrameElement;
                 if (iframe && iframe.contentWindow) {
                     iframe.contentWindow.focus();
                     iframe.contentWindow.print();
