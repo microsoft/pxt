@@ -76,7 +76,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
         return <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar") }>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
+                {make ? <sui.Button icon='configure' class="secondary" title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
                 {run ? <sui.Button key='runbtn' class={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
                 {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
                 {trace ? <sui.Button key='debug' class={`trace-button ${isTracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace() } /> : undefined}

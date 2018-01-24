@@ -18,6 +18,11 @@ namespace pxsim {
         localizedStrings?: Map<string>;
     }
 
+    export interface SimulatorInstructionsMessage extends SimulatorMessage {
+        type: "instructions";
+        options: pxsim.instructions.RenderPartsOptions;
+    }
+
     export interface SimulatorMuteMessage extends SimulatorMessage {
         type: "mute";
         mute: boolean;
@@ -176,10 +181,11 @@ namespace pxsim {
             let type = data.type || '';
             if (!type) return;
             switch (type || '') {
-                case 'run': run(<SimulatorRunMessage>data); break;
-                case 'stop': stop(); break;
-                case 'mute': mute((<SimulatorMuteMessage>data).mute); break;
-                case 'custom':
+                case "run": run(<SimulatorRunMessage>data); break;
+                case "instructions": pxsim.instructions.renderInstructions(<SimulatorInstructionsMessage>data); break;
+                case "stop": stop(); break;
+                case "mute": mute((<SimulatorMuteMessage>data).mute); break;
+                case "custom":
                     if (handleCustomMessage) handleCustomMessage((<SimulatorCustomMessage>data));
                     break;
                 case 'pxteditor':
@@ -208,11 +214,11 @@ namespace pxsim {
         export function run(msg: SimulatorRunMessage) {
             stop();
 
-            if (msg.mute) mute(msg.mute);
-
-            if (msg.localizedStrings) {
+            if (msg.mute)
+                mute(msg.mute);
+            if (msg.localizedStrings)
                 pxsim.localization.setLocalizedStrings(msg.localizedStrings);
-            }
+
             runtime = new Runtime(msg);
             runtime.board.initAsync(msg)
                 .done(() => {

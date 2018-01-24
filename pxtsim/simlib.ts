@@ -21,12 +21,6 @@ namespace pxsim {
         return res;
     }
 
-    export function parseQueryString(): (key: string) => string {
-        let qs = window.location.search.substring(1);
-        let getQsVal = (key: string) => decodeURIComponent((qs.split(`${key}=`)[1] || "").split("&")[0] || ""); //.replace(/\+/g, " ");
-        return getQsVal;
-    }
-
     export class EventBus {
         private queues: Map<EventQueue<number>> = {};
         private notifyID: number;
