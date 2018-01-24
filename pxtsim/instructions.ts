@@ -634,6 +634,6 @@ namespace pxsim.instructions {
         }*/
         //project code
         document.getElementById("proj-title").innerText = msg.options.name || "";
-        renderParts(document.getElementById("proj-steps"), msg.options)
+        renderParts(document.body, msg.options)
     }
 }
