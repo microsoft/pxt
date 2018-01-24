@@ -229,7 +229,7 @@ namespace pxsim {
 
             // store information
             this.currentRuntime = {
-                type: 'run',
+                type: "run",
                 boardDefinition: opts.boardDefinition,
                 parts: opts.parts,
                 fnArgs: opts.fnArgs,

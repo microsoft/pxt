@@ -3,34 +3,64 @@ import * as core from "./core";
 import * as sui from "./sui";
 import * as compiler from "./compiler"
 
+const FRAME_ID = 'instructions'
+let iframe: HTMLIFrameElement;
+
+
+function loadMakeFrameAsync(): Promise<void> {
+    if (iframe) return Promise.resolve();
+
+    return new Promise((resolve, reject) => {
+        function waitForReady(ev: MessageEvent) {
+            const data = ev.data as pxsim.SimulatorReadyMessage;
+            if (data.type == "ready" && data.frameid == FRAME_ID) {
+                window.removeEventListener('message', waitForReady);
+                resolve();
+            }
+        }
+
+        // register for ready message
+        window.addEventListener('message', waitForReady)
+
+        // load iframe in background
+        iframe = document.createElement("iframe");
+        iframe.frameBorder = "0";
+        iframe.setAttribute("sandbox", "allow-popups allow-forms allow-scripts allow-same-origin");
+        iframe.setAttribute("style", "position:absolute;top:0;left:0;width:1px;height:1px;");
+        iframe.src = pxt.webConfig.partsUrl + '#' + FRAME_ID;
+        document.body.appendChild(iframe);
+    })
+}
+
 export function makeAsync(): Promise<void> {
-    return compiler.compileAsync({ native: true })
+
+    return loadMakeFrameAsync()
+        .then(() => compiler.compileAsync({ native: true }))
         .then(resp => {
             const p = pkg.mainEditorPkg();
-            const code = p.files["main.ts"];
-            const data: any = {
-                name: p.header.name || lf("Untitled"),
-                code: code ? code.content : `basic.showString("Hi!");`,
-                board: JSON.stringify(pxt.appTarget.simulator.boardDefinition)
-            };
-            const parts = ts.pxtc.computeUsedParts(resp);
-            if (parts.length) {
-                data.parts = parts.join(" ");
-                data.partdefs = JSON.stringify(pkg.mainPkg.computePartDefinitions(parts));
-            }
+            const name = p.header.name || lf("Untitled");
+            const boardDef = pxt.appTarget.simulator.boardDefinition;
+            const parts = ts.pxtc.computeUsedParts(resp).sort();
+            const partDefinitions = pkg.mainPkg.computePartDefinitions(parts);
             const fnArgs = resp.usedArguments;
-            if (fnArgs)
-                data.fnArgs = JSON.stringify(fnArgs);
-            data.package = Util.values(pkg.mainPkg.deps).filter(p => p.id != "this").map(p => `${p.id}=${p._verspec}`).join('\n')
             let cfg: pxsim.Map<number> = {}
             let cfgKey: pxsim.Map<number> = {}
             for (let ce of resp.configData || []) {
                 cfg[ce.key + ""] = ce.value
                 cfgKey[ce.name] = ce.key
             }
-            data.configData = JSON.stringify(<pxsim.ConfigData>{ cfg, cfgKey })
-            const urlData = Object.keys(data).map(k => `${k}=${encodeURIComponent(data[k])}`).join('&');
-            const url = `${pxt.webConfig.partsUrl}?${urlData}`
+            const configData = <pxsim.ConfigData>{ cfg, cfgKey };
+
+            iframe.contentWindow.postMessage(<pxsim.SimulatorInstructionsMessage>{
+                type: "instructions",
+                options: {
+                    name,
+                    boardDef,
+                    parts,
+                    partDefinitions,
+                    configData
+                }
+            }, "*")
 
             return core.dialogAsync({
                 hideCancel: true,
@@ -38,15 +68,20 @@ export function makeAsync(): Promise<void> {
                 size: "large",
                 htmlBody: `
         <div class="ui container">
-            <div style="position:relative;height:0;padding-bottom:40%;overflow:hidden;">
-                <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"
-                    frameborder="0"></iframe>
+            <div id="makecontainer" style="position:relative;height:0;padding-bottom:40%;overflow:hidden;">
             </div>
-        </div>`,
+        </div>`, onLoaded: (_) => {
+                    _.find("#makecontainer").append(iframe);
+                },
                 buttons: [{
-                    label: lf("Open"),
-                    url,
-                    icon: "external"
+                    label: lf("Print"),
+                    onclick: () => {
+                        if (iframe && iframe.contentWindow) {
+                            iframe.contentWindow.focus();
+                            iframe.contentWindow.print();
+                        }
+                    },
+                    icon: "print"
                 }]
             })
         }).then(r => {

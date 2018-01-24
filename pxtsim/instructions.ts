@@ -573,7 +573,7 @@ namespace pxsim.instructions {
         configData?: pxsim.ConfigData;
     }
 
-    export function renderParts(options: RenderPartsOptions) {
+    export function renderParts(container: HTMLElement, options: RenderPartsOptions) {
         if (options.configData)
             pxsim.setConfigData(options.configData.cfg, options.configData.cfgKey);
 
@@ -588,9 +588,8 @@ namespace pxsim.instructions {
         pxsim.initCurrentRuntime(msg); // TODO it seems Runtime() ctor already calls this?
 
         let style = document.createElement("style");
-        document.head.appendChild(style);
-
         style.textContent += STYLE;
+        document.head.appendChild(style);
 
         const cmpDefs = options.partDefinitions;
 
@@ -609,16 +608,32 @@ namespace pxsim.instructions {
 
         //all required parts
         let partsPanel = mkPartsPanel(props);
-        document.body.appendChild(partsPanel);
+        container.appendChild(partsPanel);
 
         //steps
         for (let s = 0; s <= props.lastStep; s++) {
             let p = mkStepPanel(s, props);
-            document.body.appendChild(p);
+            container.appendChild(p);
         }
 
         //final
         let finalPanel = mkFinalPanel(props);
-        document.body.appendChild(finalPanel);
+        container.appendChild(finalPanel);
+    }
+
+    export function renderInstructions(msg: SimulatorInstructionsMessage) {
+        /*
+        pxsim.visuals.mkBoardView = (opts: pxsim.visuals.BoardViewOptions): pxsim.visuals.BoardView => {
+            return new visuals.MetroBoardSvg({
+                runtime: runtime,
+                theme: visuals.randomTheme(),
+                visualDef: opts.visual as BoardImageDefinition,
+                disableTilt: false,
+                wireframe: opts.wireframe
+            });
+        }*/
+        //project code
+        document.getElementById("proj-title").innerText = msg.options.name || "";
+        renderParts(document.getElementById("proj-steps"), msg.options)
     }
 }
