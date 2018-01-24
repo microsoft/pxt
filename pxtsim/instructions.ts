@@ -569,8 +569,8 @@ namespace pxsim.instructions {
         boardDef: BoardDefinition;
         parts: string[];
         partDefinitions: Map<PartDefinition>;
-        fnArgs?: any;
-        configData?: pxsim.ConfigData;
+        fnArgs: any;
+        configData: pxsim.ConfigData;
     }
 
     export function renderParts(container: HTMLElement, options: RenderPartsOptions) {

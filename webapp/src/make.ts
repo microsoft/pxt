@@ -20,9 +20,10 @@ function loadMakeFrameAsync(container: HTMLElement): Promise<HTMLIFrameElement> 
 
         // load iframe in background
         const iframe = document.createElement("iframe");
+        iframe.id = FRAME_ID;
         iframe.frameBorder = "0";
-        iframe.setAttribute("sandbox", "allow-popups allow-forms allow-scripts allow-same-origin");
-        iframe.setAttribute("style", "position:absolute;top:0;left:0;width:1px;height:1px;");
+        iframe.setAttribute("sandbox", "allow-fullscreen allow-popups allow-forms allow-scripts allow-same-origin");
+        iframe.setAttribute("style", "position:absolute;top:0;left:0;width:100%;height:100%;");
         iframe.src = pxt.webConfig.partsUrl + '#' + FRAME_ID;
         container.appendChild(iframe);
     })
@@ -57,6 +58,7 @@ function renderAsync(container: HTMLElement) {
                     boardDef,
                     parts,
                     partDefinitions,
+                    fnArgs,
                     configData
                 }
             }, "*")
@@ -67,7 +69,7 @@ export function makeAsync(): Promise<void> {
     return core.dialogAsync({
         hideCancel: true,
         header: lf("Make"),
-        size: "huge",
+        size: "large",
         htmlBody: `
         <div class="ui container">
             <div id="makecontainer" style="position:relative;height:0;padding-bottom:40%;overflow:hidden;">
@@ -78,6 +80,11 @@ export function makeAsync(): Promise<void> {
         buttons: [{
             label: lf("Print"),
             onclick: () => {
+                const iframe = document.getElementById(FRAME_ID) as HTMLIFrameElement;
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                }
             },
             icon: "print"
         }]
