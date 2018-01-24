@@ -622,17 +622,6 @@ namespace pxsim.instructions {
     }
 
     export function renderInstructions(msg: SimulatorInstructionsMessage) {
-        /*
-        pxsim.visuals.mkBoardView = (opts: pxsim.visuals.BoardViewOptions): pxsim.visuals.BoardView => {
-            return new visuals.MetroBoardSvg({
-                runtime: runtime,
-                theme: visuals.randomTheme(),
-                visualDef: opts.visual as BoardImageDefinition,
-                disableTilt: false,
-                wireframe: opts.wireframe
-            });
-        }*/
-        //project code
         document.getElementById("proj-title").innerText = msg.options.name || "";
         renderParts(document.body, msg.options)
     }
