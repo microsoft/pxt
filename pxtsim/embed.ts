@@ -166,6 +166,15 @@ namespace pxsim {
         height?: number;
     }
 
+    function print() {
+        try {
+            window.print();
+        }
+        catch (e) {
+            // oops
+        }
+    }
+
     export namespace Embed {
         export function start() {
             window.addEventListener("message", receiveMessage, false);
@@ -185,11 +194,12 @@ namespace pxsim {
                 case "instructions": pxsim.instructions.renderInstructions(<SimulatorInstructionsMessage>data); break;
                 case "stop": stop(); break;
                 case "mute": mute((<SimulatorMuteMessage>data).mute); break;
+                case "print": print(); break;
                 case "custom":
                     if (handleCustomMessage) handleCustomMessage((<SimulatorCustomMessage>data));
                     break;
                 case 'pxteditor':
-                    break; //handled elsewhere
+                    break; //handled elsewhere                
                 case 'debugger':
                     if (runtime) {
                         runtime.handleDebuggerMsg(data as DebuggerMessage);

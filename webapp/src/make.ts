@@ -86,8 +86,9 @@ export function makeAsync(): Promise<void> {
             label: lf("Print"),
             onclick: () => {
                 if (iframe && iframe.contentWindow) {
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
+                    iframe.contentWindow.postMessage(<pxsim.SimulatorMessage>{
+                        type: "print"
+                    }, "*");
                 }
             },
             icon: "print"
