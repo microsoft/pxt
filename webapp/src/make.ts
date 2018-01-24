@@ -4,18 +4,14 @@ import * as sui from "./sui";
 import * as compiler from "./compiler"
 
 const FRAME_ID = 'instructions'
-let iframe: HTMLIFrameElement;
 
-
-function loadMakeFrameAsync(): Promise<void> {
-    if (iframe) return Promise.resolve();
-
+function loadMakeFrameAsync(container: HTMLElement): Promise<HTMLIFrameElement> {
     return new Promise((resolve, reject) => {
         function waitForReady(ev: MessageEvent) {
             const data = ev.data as pxsim.SimulatorReadyMessage;
             if (data.type == "ready" && data.frameid == FRAME_ID) {
                 window.removeEventListener('message', waitForReady);
-                resolve();
+                resolve(iframe);
             }
         }
 
@@ -23,19 +19,22 @@ function loadMakeFrameAsync(): Promise<void> {
         window.addEventListener('message', waitForReady)
 
         // load iframe in background
-        iframe = document.createElement("iframe");
+        const iframe = document.createElement("iframe");
         iframe.frameBorder = "0";
         iframe.setAttribute("sandbox", "allow-popups allow-forms allow-scripts allow-same-origin");
         iframe.setAttribute("style", "position:absolute;top:0;left:0;width:1px;height:1px;");
         iframe.src = pxt.webConfig.partsUrl + '#' + FRAME_ID;
-        document.body.appendChild(iframe);
+        container.appendChild(iframe);
     })
 }
 
-export function makeAsync(): Promise<void> {
-
-    return loadMakeFrameAsync()
-        .then(() => compiler.compileAsync({ native: true }))
+function renderAsync(container: HTMLElement) {
+    let iframe: HTMLIFrameElement;
+    return loadMakeFrameAsync(container)
+        .then(frame => {
+            iframe = frame;
+            return compiler.compileAsync({ native: true });
+        })
         .then(resp => {
             const p = pkg.mainEditorPkg();
             const name = p.header.name || lf("Untitled");
@@ -61,30 +60,28 @@ export function makeAsync(): Promise<void> {
                     configData
                 }
             }, "*")
+        });
+}
 
-            return core.dialogAsync({
-                hideCancel: true,
-                header: lf("Make"),
-                size: "large",
-                htmlBody: `
+export function makeAsync(): Promise<void> {
+    return core.dialogAsync({
+        hideCancel: true,
+        header: lf("Make"),
+        size: "huge",
+        htmlBody: `
         <div class="ui container">
             <div id="makecontainer" style="position:relative;height:0;padding-bottom:40%;overflow:hidden;">
             </div>
         </div>`, onLoaded: (_) => {
-                    _.find("#makecontainer").append(iframe);
-                },
-                buttons: [{
-                    label: lf("Print"),
-                    onclick: () => {
-                        if (iframe && iframe.contentWindow) {
-                            iframe.contentWindow.focus();
-                            iframe.contentWindow.print();
-                        }
-                    },
-                    icon: "print"
-                }]
-            })
-        }).then(r => {
+            renderAsync(_.find("#makecontainer")[0]);
+        },
+        buttons: [{
+            label: lf("Print"),
+            onclick: () => {
+            },
+            icon: "print"
+        }]
+    }).then(r => {
 
-        })
+    })
 }
