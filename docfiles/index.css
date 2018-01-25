@@ -176,6 +176,12 @@
 /* Fixed header */
 
 #makecode-header {
+    /* IE doesn't support sticky, so we have to fall back to fixed. We don't
+     * use fixed in other browsers because otherwise the cookie banner will render
+     * on top of the header (and potentially cover it entirely on small screens).
+     * IE will ignore the second position value because it considers it invalid.
+     */
+    position: fixed;
     position: sticky;
     top: 0;
     left: 0;

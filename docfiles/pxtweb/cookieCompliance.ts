@@ -29,53 +29,46 @@ namespace pxt {
         body: string;
     }
 
-    export function initAnalyticsAsync() {
-        let bannerInfo: CookieBannerInfo;
-        return getCookieBannerAsync(detectLocale(), document.domain)
-            .then(info => info)
-            .then(info => {
-                if (info.Error) throw new Error("Error in cookie banner request: " + info.Error);
-
-                bannerInfo = info;
-
-                // Clear the cookie, mscc won't do it automatically
-                if (isConsentExpired(info.CookieName, info.MinimumConsentDate)) {
-                    document.cookie = `${info.CookieName}=0; expires=${new Date(0).toUTCString()}`;
-                }
-
-                let bannerDiv = document.getElementById("cookiebanner");
-                if (!bannerDiv) {
-                    bannerDiv = document.createElement("div");
-                    document.body.insertBefore(bannerDiv, document.body.firstChild);
-                }
-
-                // The markup is trusted because it's from our backend, so it shouldn't need to be scrubbed
-                bannerDiv.innerHTML = bannerInfo.Markup;
-
-                if (info.Css && info.Css.length) {
-                    info.Css.forEach(injectStylesheet)
-                }
-
-                if (info.Js && info.Js.length) {
-                    return Promise.all(info.Js.map(injectScriptAsync)).then(() => {});
-                }
-                return Promise.resolve();
-            })
-            .then(() => {
-                if (typeof mscc !== "undefined") {
-                    if (mscc.hasConsent()) {
-                        initializeAppInsights(true);
-                        return;
-                    }
-                }
-                initializeAppInsights(false);
-            }, err => {
-                // Better to be on the safe side
-                initializeAppInsights(false);
-            });
+    interface Callback<T> {
+        (err?: any, res?: T): void;
     }
 
-    export function detectLocale() {
+    export function initAnalyticsAsync() {
+        getCookieBannerAsync(detectLocale(), document.domain, (bannerErr, info) => {
+            if (bannerErr || info.Error) {
+                // Start app insights, just don't drop any cookies
+                initializeAppInsights(false);
+                return;
+            }
+
+            // Clear the cookies if the consent is too old, mscc won't do it automatically
+            if (isConsentExpired(info.CookieName, info.MinimumConsentDate)) {
+                const definitelyThePast = new Date(0).toUTCString();
+                document.cookie = `ai_user=; expires=${definitelyThePast}`;
+                document.cookie = `ai_session=; expires=${definitelyThePast}`;
+                document.cookie = `${info.CookieName}=0; expires=${definitelyThePast}`;
+            }
+
+            let bannerDiv = document.getElementById("cookiebanner");
+            if (!bannerDiv) {
+                bannerDiv = document.createElement("div");
+                document.body.insertBefore(bannerDiv, document.body.firstChild);
+            }
+
+            // The markup is trusted because it's from our backend, so it shouldn't need to be scrubbed
+            bannerDiv.innerHTML = info.Markup;
+
+            if (info.Css && info.Css.length) {
+                info.Css.forEach(injectStylesheet)
+            }
+
+            all(info.Js || [], injectScriptAsync, msccError => {
+                initializeAppInsights(!msccError && typeof mscc !== "undefined" && mscc.hasConsent());
+            });
+        });
+    }
+
+    function detectLocale() {
         // Intentionally ignoring the default locale in the target settings and the language cookie
         // Warning: app.tsx overwrites the hash after reading the language so this needs
         // to be called before that happens
@@ -83,15 +76,26 @@ namespace pxt {
         return mlang ? mlang[2] : ((navigator as any).userLanguage || navigator.language);
     }
 
-    function getCookieBannerAsync(domain: string, locale: string): Promise<CookieBannerInfo> {
-        return httpGetAsync(`https://makecode.com/api/mscc/${domain}/${locale}`)
-            .then(resp => {
-                if (resp.status === 200) {
+    function getCookieBannerAsync(domain: string, locale: string, cb: Callback<CookieBannerInfo>) {
+        httpGetAsync(`https://makecode.com/api/mscc/${domain}/${locale}`, function(err, resp) {
+            if (err) {
+                cb(err);
+                return;
+            }
+
+            if (resp.status === 200) {
+                try {
                     const info = JSON.parse(resp.body);
-                    return info as CookieBannerInfo;
+                    cb(undefined, info as CookieBannerInfo);
+                    return;
                 }
-                return Promise.reject(new Error(resp.body));
-            })
+                catch (e) {
+                    cb(new Error("Bad response from server: " + resp.body))
+                    return;
+                }
+            }
+            cb(new Error("didn't get 200 response: " + resp.status + " " + resp.body));
+        });
     }
 
     function isConsentExpired(cookieName: string, minimumConsentDate: string) {
@@ -100,7 +104,8 @@ namespace pxt {
         if (!isNaN(minDate)) {
             if (document && document.cookie) {
                 const cookies = document.cookie.split(";");
-                for (const cookie of cookies) {
+                for (let cookie of cookies) {
+                    cookie = cookie.trim();
                     if (cookie.indexOf("=") == cookieName.length && cookie.substr(0, cookieName.length) == cookieName) {
                         const value = parseInt(cookie.substr(cookieName.length + 1));
                         if (!isNaN(value)) {
@@ -124,8 +129,8 @@ namespace pxt {
         }
     }
 
-    function httpGetAsync(url: string) {
-        return new Promise<HttpResponse>((resolve, reject) => {
+    function httpGetAsync(url: string, cb: Callback<HttpResponse>) {
+        try {
             let client: XMLHttpRequest;
             let resolved = false
             client = new XMLHttpRequest();
@@ -138,13 +143,16 @@ namespace pxt {
                         status: client.status,
                         body: client.responseText
                     }
-                    resolve(res)
+                    cb(undefined, res);
                 }
             }
 
             client.open("GET", url);
             client.send();
-        })
+        }
+        catch (e) {
+            cb(e);
+        }
     }
 
     function injectStylesheet(href: string) {
@@ -157,20 +165,53 @@ namespace pxt {
         }
     }
 
-    function injectScriptAsync(src: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            if (document.body) {
-                const script = document.createElement("script");
-                script.setAttribute("type", "text/javascript");
-                script.onload = function (ev) {
-                    resolve();
-                };
-                script.onerror = function (err) {
-                    reject(err);
+    function injectScriptAsync(src: string, cb: Callback<void>) {
+        let resolved = false;
+        if (document.body) {
+            const script = document.createElement("script");
+            script.setAttribute("type", "text/javascript");
+            script.onload = function (ev) {
+                if (!resolved) {
+                    cb();
+                    resolved = true;
                 }
-                document.body.appendChild(script);
-                script.setAttribute("src", src);
+            };
+            script.onerror = function (err) {
+                if (!resolved) {
+                    cb(err);
+                    resolved = true;
+                }
             }
-        });
+            document.body.appendChild(script);
+            script.setAttribute("src", src);
+        }
+        else {
+            throw new Error("Bad call to injectScriptAsync")
+        }
+    }
+
+    // No promises, so here we are
+    function all<T, U>(values: T[], func: (value: T, innerCb: Callback<U>) => void, cb: Callback<U[]>) {
+        let index = 0;
+        let res: U[] = [];
+
+        let doNext = () => {
+            if (index >= values.length) {
+                cb(undefined, res);
+            }
+            else {
+                func(values[index++], (err, val) => {
+                    if (err) {
+                        cb(err);
+                    }
+                    else {
+                        res.push(val);
+                        doNext();
+                    }
+                });
+            }
+        };
+
+        doNext();
     }
 }
