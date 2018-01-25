@@ -1,3 +1,5 @@
+/// <reference path="../localtypings/mscc" />
+
 namespace pxt.analytics {
     export function enable() {
         let ai = (window as any).appInsights;
@@ -8,6 +10,10 @@ namespace pxt.analytics {
         const te = pxt.tickEvent;
         pxt.tickEvent = function (id: string, data?: Map<string | number>, interactiveConsent = false): void {
             if (te) te(id, data, interactiveConsent);
+
+            if (interactiveConsent && typeof mscc !== "undefined" && !mscc.hasConsent()) {
+                mscc.setConsent();
+            }
             if (!data) ai.trackEvent(id);
             else {
                 const props: Map<string> = {};
