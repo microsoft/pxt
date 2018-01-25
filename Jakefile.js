@@ -178,6 +178,7 @@ task("lint", [], { async: true }, function () {
         "pxtsim",
         "pxtwinrt",
         "webapp/src",
+        "docfiles/pxtweb",
         "monacots"]
         .map(function (d) { return "node node_modules/tslint/bin/tslint ./" + d + "/*.ts" })
         , { printStdout: true }, function () {
