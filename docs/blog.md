@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [# マイクロビット はじめてのコンピュータサイエンス (CS Intro)が日本語になりました](/blog/microbit/csintro-japanese)
+
+January 26th, 2018 by Ryuta Hosaka
+
+A team of Japanese from the Seattle area translated the Introduction to Computer Science course for the micro:bit...
+**[Read more](/blog/microbit/csintro-japanese)**
+
 ## [Hello 2018](/blog/bett/01-22-2018)
 
 January 22nd, 2018 by [Jaqster](https://github.com/jaqster)
