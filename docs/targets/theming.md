@@ -4,7 +4,7 @@ PXT uses the [Semantic UI](http://semantic-ui.com/) framework to create the user
 
 ### Blockly
 
-To Blockly themeing, you can overwrite the default Blockly options by configuring `blocklyOptions` under your target's `appTheme`. 
+For Blockly theming, you can overwrite the default Blockly options by configuring `blocklyOptions` under your target's `appTheme`.
 
 See [Blockly Configuration](https://developers.google.com/blockly/guides/get-started/web) for a full list of Blockly configurable options.
 
@@ -17,13 +17,17 @@ PXT comes with a default Semantic UI theme. You can however completely override 
 
 You will most likely be updating the site variables under ``site/globals/site.variables``
 
-From more information on themeing, visit [http://semantic-ui.com/usage/theming.html](http://semantic-ui.com/usage/theming.html)
+From more information on theming, visit [http://semantic-ui.com/usage/theming.html](http://semantic-ui.com/usage/theming.html)
 
 ``pxt serve`` or ``pxt buildtarget`` will automatically rebuild ``semantic.css`` and override the built-in CSS from the app.
 
 ## Favicon
 
 Use [realfavicongenerator](http://realfavicongenerator.net/) to generate all the relevant favicon icon files and save them under ``static/icons`` in the ``docs`` folder.
+
+## The cookie consent banner
+
+PXT injects a banner into each page to notify users that this website uses cookies. This banner is present on all pages including the editor, the docs, and makecode.com. If required, you can remove the banner by overriding `docfiles/tracking.html` in a target and removing the call to `pxt.initAnalytics()` (doing so will also disable Applicaiton Insights). Previously this was configured in [pxtarget.json](/targets/pxtarget).
 
 ## AppTheme
 
@@ -37,11 +41,11 @@ interface AppTheme {
         title?: string;
         description?: string;
         boardName?: string;
-    
+
         // associated social/store information
         appStoreID?: string; // Apple iTune Store ID if any
         twitter?: string;
-        
+
         // localization
         defaultLocale?: string;
         locales?: Map<AppTheme>;
@@ -76,7 +80,7 @@ interface AppTheme {
         feedbackUrl?: string; // is set: a feedback link will show in the settings menu
         githubUrl?: string;
         legacyDomain?: string;
-        
+
         // menu authoring and theming
         docMenu?: DocMenuEntry[];   // help menu
         TOC?: TOCMenuEntry[];       // see SUMMARY.md also
@@ -97,7 +101,7 @@ interface AppTheme {
         accentColor?: string;
         blocksOnly?: boolean; // blocks only workspace
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
-        
+
         // blockly theming
         blockColors?: Map<string>; // block namespace colors, used for build in categories
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
@@ -125,9 +129,8 @@ interface AppTheme {
         downloadIcon?: string; // which icon io use for download
         driveDisplayName?: string; // name of the drive as it shows in the explorer
 
-        // miscellaneous 
+        // miscellaneous
         hideEmbedEdit?: boolean; // hide the edit button in the embedded view
-        hideCookieNotice?: boolean; // always hide cookie notice for targets that embed the editor in apps/chrome
         mobileSafariDownloadProtocol?: string; // custom protocol to be used on iOS
         sounds?: {
             tutorialStep?: string;
