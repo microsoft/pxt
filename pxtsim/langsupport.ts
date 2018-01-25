@@ -11,10 +11,12 @@ namespace pxsim {
     }
 
     export let floatingPoint = false;
+    export let refCounting = true;
     let cfgKey: Map<number> = {}
     let cfg: Map<number> = {}
 
     export function noRefCounting() {
+        refCounting = false;
         if (runtime) runtime.refCounting = false;
     }
 

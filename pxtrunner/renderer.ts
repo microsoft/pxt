@@ -249,9 +249,11 @@ namespace pxt.runner {
     }
 
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
+        if (pxt.appTarget.id == "core") return Promise.resolve();
+
         return pxt.runner.decompileToBlocksAsync('', options)
             .then((r) => {
-                let res: {[ns: string]: string} = {};
+                let res: { [ns: string]: string } = {};
                 const info = r.compileBlocks.blocksInfo;
                 info.blocks.forEach(fn => {
                     const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];

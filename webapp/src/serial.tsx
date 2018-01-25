@@ -15,14 +15,14 @@ const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
     savedMessageQueue: pxsim.SimulatorSerialMessage[] = []
-    maxSavedMessages: number = 100
+    maxSavedMessages: number = 1000;
     charts: Chart[] = []
     chartIdx: number = 0
     sourceMap: pxt.Map<string> = {}
     consoleBuffer: string = ""
     isSim: boolean = true
-    maxConsoleLineLength: number = 255
-    maxConsoleEntries: number = 100
+    maxConsoleLineLength: number = 255;
+    maxConsoleEntries: number = 500;
     active: boolean = true
     maxChartTime: number = 18000
     chartDropper: number
@@ -454,5 +454,50 @@ class Chart {
 
     stop() {
         this.chart.stop()
+    }
+}
+
+export class ResourceImporter implements pxt.editor.IResourceImporter {
+    public id: "console";
+    public canImport(data: File): boolean {
+        return data.type == "text/plain";
+    }
+
+    public importAsync(project: pxt.editor.IProjectView, data: File): Promise<void> {
+        return ts.pxtc.Util.fileReadAsTextAsync(data)
+            .then(txt => {
+                if (!txt) {
+                    core.errorNotification(lf("Ooops, could not read file"));
+                    return;
+                }
+
+                // parse times
+                const lines = txt.split(/\n/g).map(line => {
+                    // extract timespace
+                    const t = /^\s*(\d+)>/.exec(line);
+                    if (t) line = line.substr(t[0].length);
+                    return {
+                        type: "serial",
+                        data: line + "\n",
+                        id: data.name,
+                        receivedTime: t ? parseFloat(t[1]) : undefined
+                    } as pxsim.SimulatorSerialMessage;
+                })
+                if (!lines.length)
+                    return;
+
+                // normalize timestamps
+                const now = Util.now();
+                const linest = lines.filter(line => !!line.receivedTime);
+                if (linest.length) {
+                    const tmax = linest[linest.length - 1].receivedTime || 0;
+                    linest.forEach(line => line.receivedTime += now - tmax);
+                }
+
+                // show console
+
+                // send as serial message
+                lines.forEach(line => window.postMessage(line, "*"));
+            });
     }
 }

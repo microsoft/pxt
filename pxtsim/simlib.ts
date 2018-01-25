@@ -21,12 +21,6 @@ namespace pxsim {
         return res;
     }
 
-    export function parseQueryString(): (key: string) => string {
-        let qs = window.location.search.substring(1);
-        let getQsVal = (key: string) => decodeURIComponent((qs.split(`${key}=`)[1] || "").split("&")[0] || ""); //.replace(/\+/g, " ");
-        return getQsVal;
-    }
-
     export class EventBus {
         private queues: Map<EventQueue<number>> = {};
         private notifyID: number;
@@ -214,6 +208,33 @@ namespace pxsim {
             _vco.frequency.value = frequency;
             _vca.gain.value = gain;
         }
+
+        function uint8ArrayToString(input: Uint8Array) {
+            let len = input.length;
+            let res = ""
+            for (let i = 0; i < len; ++i)
+                res += String.fromCharCode(input[i]);
+            return res;
+        }
+
+        export function playBufferAsync(buf: RefBuffer) {
+            if (!buf) return Promise.resolve();
+
+            return new Promise<void>(resolve => {
+                function res() {
+                    if (resolve) resolve();
+                    resolve = undefined;
+                }
+                const url = "data:audio/wav;base64," + btoa(uint8ArrayToString(buf.data))
+                const audio = new Audio(url);
+                if (_mute)
+                    audio.volume = 0;
+                audio.onended = () => res();
+                audio.onpause = () => res();
+                audio.onerror = () => res();
+                audio.play();
+            })
+        }
     }
 
     export interface IPointerEvents {
@@ -226,7 +247,7 @@ namespace pxsim {
 
     export function isTouchEnabled(): boolean {
         return typeof window !== "undefined" &&
-                ('ontouchstart' in window                              // works on most browsers
+            ('ontouchstart' in window                              // works on most browsers
                 || (navigator && navigator.maxTouchPoints > 0));       // works on IE10/11 and Surface);
     }
 
@@ -235,26 +256,26 @@ namespace pxsim {
     }
 
     export const pointerEvents = hasPointerEvents() ? {
-            up: "pointerup",
-            down: "pointerdown",
-            move: "pointermove",
-            enter: "pointerenter",
-            leave: "pointerleave"
-        } : isTouchEnabled() ?
-        {
-            up: "mouseup",
-            down: "touchstart",
-            move: "touchmove",
-            enter: "touchenter",
-            leave: "touchend"
-        } :
-        {
-            up: "mouseup",
-            down: "mousedown",
-            move: "mousemove",
-            enter: "mouseenter",
-            leave: "mouseleave"
-        };
+        up: "pointerup",
+        down: "pointerdown",
+        move: "pointermove",
+        enter: "pointerenter",
+        leave: "pointerleave"
+    } : isTouchEnabled() ?
+            {
+                up: "mouseup",
+                down: "touchstart",
+                move: "touchmove",
+                enter: "touchenter",
+                leave: "touchend"
+            } :
+            {
+                up: "mouseup",
+                down: "mousedown",
+                move: "mousemove",
+                enter: "mouseenter",
+                leave: "mouseleave"
+            };
 }
 
 namespace pxsim.visuals {
