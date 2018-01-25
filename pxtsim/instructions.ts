@@ -6,8 +6,8 @@ namespace pxsim.instructions {
     const LBL_VERT_PAD = 3;
     const LBL_RIGHT_PAD = 5;
     const LBL_LEFT_PAD = 5;
-    const REQ_WIRE_HEIGHT = 45;
-    const REQ_CMP_HEIGHT = 55;
+    const REQ_WIRE_HEIGHT = 40;
+    const REQ_CMP_HEIGHT = 50;
     const REQ_CMP_SCALE = 0.5 * 3;
     type Orientation = "landscape" | "portrait";
     const ORIENTATION: Orientation = "portrait";
@@ -33,7 +33,7 @@ namespace pxsim.instructions {
     const NUM_FONT = 80;
     const NUM_MARGIN = 10;
     const FRONT_PAGE_BOARD_WIDTH = 400;
-    const PART_SCALAR = 2.3
+    const PART_SCALAR = 1.7;
     const PARTS_BOARD_SCALE = 0.17;
     const PARTS_BB_SCALE = 0.25;
     const PARTS_CMP_SCALE = 0.3;
