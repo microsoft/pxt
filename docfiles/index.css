@@ -176,7 +176,7 @@
 /* Fixed header */
 
 #makecode-header {
-    position: fixed;
+    position: sticky;
     top: 0;
     left: 0;
     right: 0;
@@ -245,9 +245,6 @@
         font-size: 24px;
         padding-top: 12px;
     }
-    #makecode-targets {
-        padding-top: 15rem;
-    }
 }
 
 #makecode-mobile-menu {
@@ -260,9 +257,6 @@
     }
     #makecode-mobile-menu {
         display: block;
-    }
-    #makecode-targets {
-        padding-top: 7rem;
     }
 }
 /* Header menu */
