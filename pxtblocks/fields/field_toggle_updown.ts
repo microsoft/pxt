@@ -17,11 +17,11 @@ namespace pxtblockly {
         }
 
         getTrueText() {
-            return this.inverted ? lf("down"): lf("up");
+            return this.inverted ? lf("DOWN") : lf("UP");
         }
 
         getFalseText() {
-            return this.inverted ?  lf("up") : lf("down");
+            return this.inverted ? lf("UP") : lf("DOWN");
         }
     }
 }
