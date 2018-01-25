@@ -3,19 +3,25 @@
 
 namespace pxtblockly {
 
+    export interface FieldToggleUpDownOptions extends Blockly.FieldCustomOptions {
+        inverted?: boolean;
+    }
+
     export class FieldToggleUpDown extends FieldToggle implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
+        inverted: boolean;
 
-        constructor(state: string, params: Blockly.FieldCustomOptions, opt_validator?: Function) {
+        constructor(state: string, params: FieldToggleUpDownOptions, opt_validator?: Function) {
             super(state, params, opt_validator);
+            this.inverted = !!params.inverted;
         }
 
         getTrueText() {
-            return lf("up");
+            return this.inverted ? lf("down"): lf("up");
         }
 
         getFalseText() {
-            return lf("down");
+            return this.inverted ?  lf("up") : lf("down");
         }
     }
 }
