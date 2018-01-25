@@ -1,6 +1,6 @@
 # Micro:bit Intro to CS curriculum is now available in Japanese 
 
-![Course screenshot in Japanese](/static/blog/microbit/csintro-japanese/screenshot)
+![Course screenshot in Japanese](/static/blog/microbit/csintro-japanese/screenshot.png)
 
 We are pleased to announce that the 14-week [Introduction to CS](https://makecode.microbit.org/courses/csintro) curriculum is now available and fully translated in Japanese! Now you can browse all contents in Intro to CS in Japanese. Translation is done by a [team](http://lazylabo.com/) of Japanese live in Seattle area since September with help from Makecode team. To browse the content in Japanese, switch language settings on [makecode](http://makecode.microbit.org/) or change language settings on your browser. Hope this helps users in Japan could leverage the curriculum much easier. Enjoy!
 
