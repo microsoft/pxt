@@ -157,10 +157,10 @@ namespace pxsim {
     function merge3<A, B, C>(a: A, b: B, c: C): A & B & C {
         return merge2(merge2(a, b), c);
     }
-    export function readPin(arg: string): MicrobitPin {
+    export function readPin(arg: string): string {
         U.assert(!!arg, "Invalid pin: " + arg);
-        const pin = /^(\w+)\..*((P|A|D)\d+)$/.exec(arg);
-        return pin ? <MicrobitPin>pin[2] : undefined;
+        const pin = /^(\w+)\.\s*([A-Z][A-Z\d_]+)$/.exec(arg);
+        return pin ? pin[2] : undefined;
     }
     function mkReverseMap(map: { [key: string]: string }) {
         let origKeys: string[] = [];
@@ -212,7 +212,7 @@ namespace pxsim {
                     } else {
                         let instIdx = (<PinInstantiationIdx>pinDef.target).pinInstantiationIdx;
                         U.assert(!!instPins && instPins[instIdx] !== undefined,
-                            `No pin found for PinInstantiationIdx: ${instIdx}. (Is the part missing an ArguementRole or "trackArgs=" annotations?)`);
+                            `No pin found for PinInstantiationIdx: ${instIdx}. (Is the part missing an ArgumentRole or "trackArgs=" annotations?)`);
                         pinTarget = instPins[instIdx];
                     }
                     let pinLoc = def.visual.pinLocations[i];
