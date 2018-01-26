@@ -592,7 +592,7 @@ namespace pxsim {
                 return l;
             });
             // one of the pins is not accessible
-            if (!endInsts[0] || !endInsts[1]) 
+            if (!endInsts[0] || !endInsts[1])
                 return undefined;
 
             return { start: endInsts[0], end: endInsts[1], color: wireIR.color };
