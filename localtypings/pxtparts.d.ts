@@ -80,16 +80,17 @@ declare namespace pxsim {
         colorGroup?: number, // if set, the allocator while try to give pins for this part in the same group the same color 
     }
     export type UninstantiatedPinTarget = PinTarget | PinInstantiationIdx;
-    export type PinTarget = (
-          "ground"
+    export type PinTarget = string;
+    /*          "ground"
         | "threeVolt"
         | MicrobitPin
         | SPIPin
-        | I2CPin);
+        | I2CPin); */
     // a hard-coded pin index; used by parts that are pre-built on the microbit: led matrix, buttons, etc.
-    export type MicrobitPin = (
+    export type MicrobitPin = string;
+    /* (
         "P0" | "P1" | "P2" | "P3" | "P4" | "P5" | "P6" | "P7" | "P8" | "P9"
-        | "P10" | "P11" | "P12" | "P13" | "P14" | "P15" | "P16" | "P19" | "P20");
+        | "P10" | "P11" | "P12" | "P13" | "P14" | "P15" | "P16" | "P19" | "P20");*/
     export type SPIPin = "MOSI" | "MISO" | "SCK";
     export type I2CPin = "SDA" | "SCL";
     // the pin style, necessary to know how to attach to the pin
