@@ -35,6 +35,7 @@ namespace pxt.blocks {
         registerFieldEditor('toggleonoff', pxtblockly.FieldToggleOnOff);
         registerFieldEditor('toggleyesno', pxtblockly.FieldToggleYesNo);
         registerFieldEditor('toggleupdown', pxtblockly.FieldToggleUpDown);
+        registerFieldEditor('toggledownup', pxtblockly.FieldToggleDownUp);
         registerFieldEditor('togglehighlow', pxtblockly.FieldToggleHighLow);
         registerFieldEditor('colornumber', pxtblockly.FieldColorNumber);
     }
