@@ -56,6 +56,14 @@ namespace pxt.blocks {
         type: string
     }
 
+    // Information for blocks that compile to function calls but are defined by vanilla Blockly 
+    // and not dynamically by BlocklyLoader
+    export const builtinFunctionInfo: pxt.Map<{ params: string[]; blockId: string; }> = {
+        "Math.abs": { blockId: "math_op3", params: ["x"] },
+        "Math.min": { blockId: "math_op2", params: ["x", "y"] },
+        "Math.max": { blockId: "math_op2", params: ["x", "y"] }
+    };
+
     export function normalizeBlock(b: string): string {
         if (!b) return b;
         // normalize and validate common errors
@@ -78,14 +86,16 @@ namespace pxt.blocks {
         };
 
         const instance = (fn.kind == ts.pxtc.SymbolKind.Method || fn.kind == ts.pxtc.SymbolKind.Property) && !fn.attributes.defaultInstance;
-        const defParameters = fn.attributes._def.parameters.slice(0);
-        const optionalStart = defParameters.length;
+        const hasBlockDef = !!fn.attributes._def;
+        const defParameters = hasBlockDef ? fn.attributes._def.parameters.slice(0) : undefined;
+        const optionalStart = hasBlockDef ? defParameters.length : (fn.parameters ? fn.parameters.length : 0);
+        const bInfo = builtinFunctionInfo[fn.qName];
 
-        if (fn.attributes._expandedDef) {
+        if (hasBlockDef && fn.attributes._expandedDef) {
             defParameters.push(...fn.attributes._expandedDef.parameters);
         }
 
-        if (instance && defParameters.length) {
+        if (instance && hasBlockDef && defParameters.length) {
             const defName = defParameters[0].name;
             res.thisParameter = {
                 actualName: "this",
@@ -103,8 +113,8 @@ namespace pxt.blocks {
         if (fn.parameters) {
             fn.parameters.forEach((p, i) => {
                 const defIndex = instance ? i + 1 : i;
-                if (defIndex < defParameters.length) {
-                    const def = defParameters[defIndex];
+                if (!hasBlockDef || defIndex < defParameters.length) {
+                    const def = hasBlockDef && defParameters[defIndex];
                     let range: { min: number, max: number } = undefined;
                     if (p.options && p.options["min"] && p.options["max"]) {
                         range = { min: p.options["min"].value, max: p.options["max"].value };
@@ -114,8 +124,8 @@ namespace pxt.blocks {
                         actualName: p.name,
                         type: p.type,
                         defaultValue: p.default,
-                        definitionName: def.name,
-                        shadowBlockId: def.shadowBlockId,
+                        definitionName: def ? def.name : (bInfo ? bInfo.params[defIndex] : p.name),
+                        shadowBlockId: def && def.shadowBlockId,
                         isOptional: defIndex >= optionalStart,
                         fieldEditor: fieldEditor(p.name),
                         fieldOptions: fieldOptions(p.name),

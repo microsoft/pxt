@@ -194,7 +194,7 @@ namespace testNamespace {
     //% value.fieldEditor="note"
     export function customShadowFieldNoLiterals2(value: string): string { return value; }
 
-    //% blockId=test_customFieldEditor block="%value=test_customShadowFieldNoLiterals %value2=test_customShadowFieldNoLiterals2"
+    //% blockId=test_customFieldEditorNoLiterals block="%value=test_customShadowFieldNoLiterals %value2=test_customShadowFieldNoLiterals2"
     export function customFieldEditorNoLiterals(value: number, value2: string): void {  }
 }
 
