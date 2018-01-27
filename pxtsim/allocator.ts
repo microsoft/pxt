@@ -157,10 +157,10 @@ namespace pxsim {
     function merge3<A, B, C>(a: A, b: B, c: C): A & B & C {
         return merge2(merge2(a, b), c);
     }
-    export function readPin(arg: string): MicrobitPin {
+    export function readPin(arg: string): string {
         U.assert(!!arg, "Invalid pin: " + arg);
-        const pin = /^(\w+)\..*((P|A|D)\d+)$/.exec(arg);
-        return pin ? <MicrobitPin>pin[2] : undefined;
+        const pin = /^(\w+)\.\s*([A-Z][A-Z\d_]+)$/.exec(arg);
+        return pin ? pin[2] : undefined;
     }
     function mkReverseMap(map: { [key: string]: string }) {
         let origKeys: string[] = [];
@@ -212,7 +212,7 @@ namespace pxsim {
                     } else {
                         let instIdx = (<PinInstantiationIdx>pinDef.target).pinInstantiationIdx;
                         U.assert(!!instPins && instPins[instIdx] !== undefined,
-                            `No pin found for PinInstantiationIdx: ${instIdx}. (Is the part missing an ArguementRole or "trackArgs=" annotations?)`);
+                            `No pin found for PinInstantiationIdx: ${instIdx}. (Is the part missing an ArgumentRole or "trackArgs=" annotations?)`);
                         pinTarget = instPins[instIdx];
                     }
                     let pinLoc = def.visual.pinLocations[i];
@@ -248,8 +248,8 @@ namespace pxsim {
             } else if (def.instantiation.kind === "function") {
                 let fnAlloc = def.instantiation as PartFunctionDefinition;
                 let fnNms = fnAlloc.fullyQualifiedName.split(',');
-                let callsitesTrackedArgsHash: {[index: string]: number} = {};
-                fnNms.forEach(fnNm => { if (this.opts.fnArgs[fnNm]) this.opts.fnArgs[fnNm].forEach((targetArg: string) => {callsitesTrackedArgsHash[targetArg] = 1}); });
+                let callsitesTrackedArgsHash: { [index: string]: number } = {};
+                fnNms.forEach(fnNm => { if (this.opts.fnArgs[fnNm]) this.opts.fnArgs[fnNm].forEach((targetArg: string) => { callsitesTrackedArgsHash[targetArg] = 1 }); });
                 let callsitesTrackedArgs: string[] = Object.keys(callsitesTrackedArgsHash);
                 U.assert(!!callsitesTrackedArgs && !!callsitesTrackedArgs.length, "Failed to read pin(s) from callsite for: " + fnNms);
                 callsitesTrackedArgs.forEach(fnArgsStr => {
@@ -481,7 +481,8 @@ namespace pxsim {
                 U.assert(typeof location === "string", "Unknown location type: " + location);
                 let mbPin = <MicrobitPin>location;
                 let boardPin = this.opts.boardDef.gpioPinMap[mbPin];
-                U.assert(!!boardPin, "Unknown pin: " + location);
+                if (!boardPin) // this pin is internal
+                    return undefined;
                 return { type: "dalboard", pin: boardPin };
             }
         }
@@ -579,7 +580,7 @@ namespace pxsim {
             let ends = [wireIR.start, wireIR.end];
             let endIsPower = ends.map(e => e === "ground" || e === "threeVolt");
             //allocate non-power first so we know the nearest pin for the power end
-            let endInsts = ends.map((e, idx) => !endIsPower[idx] ? this.allocLocation(e, {}) : null)
+            let endInsts = ends.map((e, idx) => !endIsPower[idx] ? this.allocLocation(e, {}) : undefined)
             //allocate power pins closest to the other end of the wire
             endInsts = endInsts.map((e, idx) => {
                 if (e)
@@ -590,6 +591,10 @@ namespace pxsim {
                 });
                 return l;
             });
+            // one of the pins is not accessible
+            if (!endInsts[0] || !endInsts[1])
+                return undefined;
+
             return { start: endInsts[0], end: endInsts[1], color: wireIR.color };
         }
         private allocPart(ir: PartPlacement): PartInst {
@@ -634,20 +639,23 @@ namespace pxsim {
                     let irs = this.allocPartIRs(nmAndDef.def, nmAndDef.name, dims);
                     partIRs = partIRs.concat(irs);
                 })
-                let partPlacements = this.placeParts(partIRs);
-                let partsAndWireIRs = partPlacements.map(p => this.allocWireIRs(p));
-                let allWireIRs = partsAndWireIRs.map(p => p.wires).reduce((p, n) => p.concat(n), []);
-                let allPowerUsage = allWireIRs.map(w => computePowerUsage(w));
+                // TODO filter parts that are not representable now
+                const partPlacements = this.placeParts(partIRs);
+                const partsAndWireIRs = partPlacements.map(p => this.allocWireIRs(p));
+                const allWireIRs = partsAndWireIRs.map(p => p.wires).reduce((p, n) => p.concat(n), []);
+                const allPowerUsage = allWireIRs.map(w => computePowerUsage(w));
                 this.powerUsage = mergePowerUsage(allPowerUsage);
-                let basicWires = this.allocPowerWires(this.powerUsage);
-                let partsAndWires: PartAndWiresInst[] = partsAndWireIRs.map((irs, idx) => {
-                    let part = this.allocPart(irs);
-                    let wires = irs.wires.map(w => this.allocWire(w));
-                    let pinIdxToWireIdx: number[] = [];
+                const basicWires = this.allocPowerWires(this.powerUsage);
+                const partsAndWires: PartAndWiresInst[] = partsAndWireIRs.map((irs, idx) => {
+                    const part = this.allocPart(irs);
+                    const wires = irs.wires.map(w => this.allocWire(w));
+                    if (wires.some(w => !w))
+                        return undefined;
+                    const pinIdxToWireIdx: number[] = [];
                     irs.wires.forEach((wIR, idx) => {
                         pinIdxToWireIdx[wIR.pinIdx] = idx;
                     });
-                    let assembly: AssemblyStep[] = irs.def.assembly.map(stepDef => {
+                    const assembly: AssemblyStep[] = irs.def.assembly.map(stepDef => {
                         return {
                             part: stepDef.part,
                             wireIndices: (stepDef.pinIndices || []).map(i => pinIdxToWireIdx[i])
@@ -658,7 +666,7 @@ namespace pxsim {
                         wires: wires,
                         assembly: assembly
                     }
-                });
+                }).filter(p => !!p);
                 let all = [basicWires].concat(partsAndWires);
 
                 // hide breadboard if not used

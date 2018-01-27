@@ -8,7 +8,7 @@ namespace pxtblockly {
          * Same as parent, but adds a different class to text when disabled
          */
         public updateEditable() {
-            var group = this.fieldGroup_;
+            let group = this.fieldGroup_;
             if (!this.EDITABLE || !group) {
               return;
             }

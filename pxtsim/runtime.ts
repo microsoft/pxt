@@ -615,6 +615,8 @@ namespace pxsim {
             // tslint:disable-next-line
             eval(msg.code)
 
+            this.refCounting = refCounting
+
             this.run = (cb) => topCall(entryPoint, cb)
             this.getResume = () => {
                 if (!currResume) oops("noresume")

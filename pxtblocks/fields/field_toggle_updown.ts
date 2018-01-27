@@ -11,11 +11,27 @@ namespace pxtblockly {
         }
 
         getTrueText() {
-            return lf("up");
+            return lf("UP");
         }
 
         getFalseText() {
-            return lf("down");
+            return lf("DOWN");
+        }
+    }
+
+    export class FieldToggleDownUp extends FieldToggle implements Blockly.FieldCustom {
+        public isFieldCustom_ = true;
+
+        constructor(state: string, params: Blockly.FieldCustomOptions, opt_validator?: Function) {
+            super(state, params, opt_validator);
+        }
+
+        getTrueText() {
+            return lf("DOWN");
+        }
+
+        getFalseText() {
+            return lf("UP");
         }
     }
 }
