@@ -1279,7 +1279,6 @@ namespace pxt.hex {
                                     pxt.log("polling at " + url)
                                     return Util.httpGetJsonAsync(url)
                                         .then(json => {
-                                            hideLoading();
                                             if (!json.success)
                                                 U.userError(JSON.stringify(json, null, 1))
                                             else {
@@ -1295,6 +1294,7 @@ namespace pxt.hex {
                                 tryGet();
                             })))
                     .then(text => {
+                        hideLoading();
                         return {
                             enums: [],
                             functions: [],
