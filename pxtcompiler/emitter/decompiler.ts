@@ -1225,7 +1225,7 @@ ${output}</xml>`;
                 });
             }
 
-
+            let optionalCount = 0;
             args.forEach((arg, i) => {
                 const e = arg.value;
                 const param = arg.param;
@@ -1242,6 +1242,10 @@ ${output}</xml>`;
                 if (info.attrs.mutatePropertyEnum && i === info.args.length - 2) {
                     // Implicit in the blocks
                     return;
+                }
+
+                if (param && param.isOptional) {
+                    ++optionalCount;
                 }
 
                 switch (e.kind) {
@@ -1332,6 +1336,11 @@ ${output}</xml>`;
                         break;
                 }
             });
+
+            if (optionalCount) {
+                if (!r.mutation) r.mutation = {};
+                r.mutation["_expanded"] = optionalCount.toString();
+            }
 
             return r;
         }
