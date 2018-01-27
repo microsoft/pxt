@@ -886,15 +886,18 @@ namespace pxt.blocks {
             });
 
             function addParamInput(iName?: string, type?: string) {
-                let i = iName ? block.appendValueInput(iName) : addDummyInput();
+                let i = iName ? block.appendValueInput(iName) : addDummyInput(true);
                 if (type) i.setCheck(type);
                 i.setAlign(Blockly.ALIGN_LEFT);
                 return i;
             }
 
-            function addDummyInput() {
+            function addDummyInput(notLabel = false) {
                 if (expanded) {
-                    return block.appendDummyInput("_expanded_" + (anonIndex ++))
+                    if (notLabel) {
+                        return block.appendDummyInput("_optional_field_" + (anonIndex ++))
+                    }
+                    return block.appendDummyInput("_optional_label_" + (anonIndex ++))
                 }
                 return block.appendDummyInput();
             }

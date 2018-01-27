@@ -98,48 +98,72 @@ namespace pxt.blocks {
     }
 
     export function initExpandableBlock(b: Blockly.Block, def: pxtc.ParsedBlockDef) {
-        const BUTTON_ID = "__expanded_button";
-        let expanded: boolean;
-        let expandedNames = def.parameters.map(p => p.name);
+        // Add underscores before input names to prevent clashes with the ones added
+        // by BlocklyLoader. The underscore makes it an invalid JS identifier
+        const buttonAddName = "__add_button";
+        const buttonRemName = "__rem_button";
+        const attributeName = "_expanded";
 
-        b.appendDummyInput(BUTTON_ID)
+        const optionNames = def.parameters.map(p => p.name);
+        const totalOptions = def.parameters.length;
+        let visibleOptions = 0;
+
         Blockly.Extensions.apply('inline-svgs', b, false);
-        updateShape(false);
+        addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Hide optional arguments"), -1);
+        addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Reveal optional arguments"), 1);
 
         appendMutation(b, {
             mutationToDom: (el: Element) => {
-                el.setAttribute("_expanded", expanded ? "true" : "false");
+                el.setAttribute(attributeName, visibleOptions.toString());
                 return el;
             },
             domToMutation: (saved: Element) => {
-                updateShape(saved.hasAttribute("_expanded") && saved.getAttribute("_expanded") == "true");
+                if (saved.hasAttribute(attributeName)) {
+                    const val = parseInt(saved.getAttribute(attributeName));
+                    if (!isNaN(val)) {
+                        updateShape(val, true);
+                    }
+                }
             }
         });
 
-        function updateShape(expand: boolean) {
-            if (expanded === expand) {
-                return;
-            }
-            expanded = expand;
-            
-            if (expand) {
-                b.inputList.filter(i => Util.startsWith(i.name, "_expanded_") || expandedNames.indexOf(i.name) !== -1).forEach(i => {
-                    i.setVisible(true);
-                });
+        updateShape(0, true);
+        
+        // Set skipRender to true if the block is still initializing. Otherwise
+        // the inputs will render before their shadow blocks are created and
+        // leave behind annoying artifacts
+        function updateShape(delta: number, skipRender = false) {
+            const newValue = Math.min(Math.max(visibleOptions + delta, 0), totalOptions);
+            if (!skipRender && newValue === visibleOptions) return;
 
-                b.removeInput(BUTTON_ID);
-                b.appendDummyInput(BUTTON_ID)
-                    .appendField(new Blockly.FieldImage((b as any).REMOVE_IMAGE_DATAURI, 24, 24, false, lf("Hide optional arguments"), () => updateShape(false)));
-            }
-            else {
-                b.inputList.filter(i => Util.startsWith(i.name, "_expanded_") || expandedNames.indexOf(i.name) !== -1).forEach(i => {
-                    i.setVisible(false);
-                });
+            visibleOptions = newValue;
 
-                b.removeInput(BUTTON_ID);
-                b.appendDummyInput(BUTTON_ID)
-                    .appendField(new Blockly.FieldImage((b as any).ADD_IMAGE_DATAURI, 24, 24, false, lf("Reveal optional arguments"), () => updateShape(true)));
+            let optIndex = 0
+            for (let i = 0; i < b.inputList.length; i++) {
+                const input = b.inputList[i];
+                if (Util.startsWith(input.name, "_optional_label_")) {
+                    input.setVisible(optIndex < visibleOptions);
+                }
+                else if (Util.startsWith(input.name, "_optional_field_") || optionNames.indexOf(input.name) !== -1) {
+                    input.setVisible(optIndex < visibleOptions);
+                    ++optIndex;
+                }
             }
+
+            setButton(buttonAddName, visibleOptions !== totalOptions);
+            setButton(buttonRemName, visibleOptions !== 0);
+            if (!skipRender) b.render();
+        }
+
+        function addButton(name: string, uri: string, alt: string, delta: number) {
+            b.appendDummyInput(name)
+                .appendField(new Blockly.FieldImage(uri, 24, 24, false, alt, () => updateShape(delta)))
+        }
+
+        function setButton(name: string, visible: boolean) {
+            b.inputList.forEach(i => {
+                if (i.name === name) i.setVisible(visible);
+            });
         }
     }
 }

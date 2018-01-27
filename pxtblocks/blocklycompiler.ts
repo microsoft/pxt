@@ -389,7 +389,7 @@ namespace pxt.blocks {
                     default:
                         if (b.type in e.stdCallTable) {
                             const call = e.stdCallTable[b.type];
-                            visibleParams(call, isExpanded(b)).forEach((p, i) => {
+                            visibleParams(call, countOptionals(b)).forEach((p, i) => {
                                 const isInstance = call.isExtensionMethod && i === 0;
                                 if (p.definitionName && !b.getFieldValue(p.definitionName)) {
                                     let i = b.inputList.filter((i: B.Input) => i.name == p.definitionName)[0];
@@ -762,7 +762,7 @@ namespace pxt.blocks {
                 if (call) {
                     if (call.imageLiteral)
                         expr = compileImage(e, b, call.imageLiteral, call.namespace, call.f,
-                            visibleParams(call, isExpanded(b)).map(ar => compileArgument(e, b, ar, comments)))
+                            visibleParams(call, countOptionals(b)).map(ar => compileArgument(e, b, ar, comments)))
                     else
                         expr = compileStdCall(e, b, call, comments);
                 }
@@ -1038,13 +1038,13 @@ namespace pxt.blocks {
     }
 
     function eventArgs(call: StdFunc, b: B.Block): string[] {
-        return visibleParams(call, isExpanded(b)).map(ar => ar.definitionName).filter(ar => !!ar);
+        return visibleParams(call, countOptionals(b)).map(ar => ar.definitionName).filter(ar => !!ar);
     }
 
     function compileCall(e: Environment, b: B.Block, comments: string[]): JsNode {
         const call = e.stdCallTable[b.type];
         if (call.imageLiteral)
-            return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, visibleParams(call, isExpanded(b)).map(ar => compileArgument(e, b, ar, comments))))
+            return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, visibleParams(call, countOptionals(b)).map(ar => compileArgument(e, b, ar, comments))))
         else if (call.hasHandler)
             return compileEvent(e, b, call, eventArgs(call, b), call.namespace, comments)
         else
@@ -1079,7 +1079,7 @@ namespace pxt.blocks {
             args = b.mutation.compileMutation(e, comments).children;
         }
         else {
-            args = visibleParams(func, isExpanded(b)).map((p, i) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
+            args = visibleParams(func, countOptionals(b)).map((p, i) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
         }
 
         const externalInputs = !b.getInputsInline();
@@ -1761,22 +1761,33 @@ namespace pxt.blocks {
         return text.substr(text.length - suffix.length) === suffix;
     }
 
-    function isExpanded(b: Blockly.Block) {
+    function countOptionals(b: Blockly.Block) {
         if ((b as MutatingBlock).mutationToDom) {
             const el = (b as MutatingBlock).mutationToDom();
-            return el.hasAttribute("_expanded") && el.getAttribute("_expanded") === "true";
+            if (el.hasAttribute("_expanded")) {
+                const val = parseInt(el.getAttribute("_expanded"));
+                return isNaN(val) ? 0 : Math.max(val, 0);
+            }
         }
-        return false;
+        return 0;
     }
 
-    function visibleParams({ comp }: StdFunc, expanded: boolean) {
-        const all = comp.thisParameter ? [comp.thisParameter].concat(comp.parameters) : comp.parameters;
+    function visibleParams({ comp }: StdFunc, optionalCount: number) {
+        const res: pxt.blocks.BlockParameter[] = [];
+        if (comp.thisParameter) {
+            res.push(comp.thisParameter);
+        }
 
-        if (expanded) {
-            return all;
-        }
-        else {
-            return all.filter(p => !p.isOptional);
-        }
+        comp.parameters.forEach(p => {
+            if (p.isOptional && optionalCount > 0) {
+                res.push(p);
+                --optionalCount;
+            }
+            else if (!p.isOptional) {
+                res.push(p);
+            }
+        });
+
+        return res;
     }
 }
