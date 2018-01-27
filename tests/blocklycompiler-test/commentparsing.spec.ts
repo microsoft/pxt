@@ -321,6 +321,34 @@ describe("comment attribute parser", () => {
             });
         });
 
+        describe("tagged text", () => {
+            it("should allow you to add custom CSS classes", () => {
+                parseDef("[some text](custom)", tag`some text`);
+            });
+
+            it("should not parse anything inside the brackets", () => {
+                parseDef("[`!@#$%^&*()_](custom)", tag`\`!@#$%^&*()_`);
+            });
+
+            it("should not break up styles", () => {
+                parseDef("*hello [there](custom)*", i`hello `, tag`there`);
+            });
+
+            describe("errors", () => {
+                it("should not allow unclosed brackets", () => {
+                    parseDef("[some text(custom)")
+                });
+
+                it("should not allow unclosed parens", () => {
+                    parseDef("[some text](custom")
+                });
+
+                it("should not allow brackets that are not followed by parens", () => {
+                    parseDef("[some text] (custom)")
+                });
+            });
+        });
+
         describe("escape sequences", () => {
             it("should handle escaped special characters", () => {
                 parseDef("\\\\ \\* \\_ \\` \\|", `\\ * _ \` |`);
@@ -371,7 +399,7 @@ describe("comment attribute parser", () => {
 });
 
 function lbl(text: string, style: string[]): pxtc.BlockLabel {
-    return { text, style}
+    return { text, style };
 }
 
 function i(parts: TemplateStringsArray): pxtc.BlockLabel {
@@ -388,6 +416,10 @@ function ib(parts: TemplateStringsArray): pxtc.BlockLabel {
 
 function img(parts: TemplateStringsArray): pxtc.BlockLabel {
     return { text: parts[0], isImage: true };
+}
+
+function tag(parts: TemplateStringsArray): pxtc.BlockLabel {
+    return { text: parts[0], cssClass: "custom" };
 }
 
 function param(parts: TemplateStringsArray): pxtc.BlockParameter {

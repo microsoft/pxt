@@ -189,6 +189,7 @@ namespace ts.pxtc {
         text: string;
         style?: string[];
         isImage?: boolean;
+        cssClass?: string;
     }
 
     export interface BlockParameter {
@@ -300,6 +301,7 @@ namespace ts.pxtc {
         Parameter           = 1 << 6,
         Word                = 1 << 7,
         Image               = 1 << 8,
+        TaggedText               = 1 << 9,
         
         TripleUnderscore    = SingleUnderscore | DoubleUnderscore,
         TripleAsterisk      = SingleAsterisk | DoubleAsterisk,
@@ -585,9 +587,8 @@ namespace ts.pxtc {
                     else return undefined;
                     break;
                 case "`":
-                    const image = eatToken((c => c !== "`"), true);
-                    if (def[strIndex + 1] !== "`") return undefined; // error: unterminated image
-                    ++strIndex;
+                    const image = eatEnclosure("`");
+                    if (image === undefined) return undefined; // error: not terminated
                     newToken = { kind: TokenKind.Image, content: image };
                     break;
                 case "|":
@@ -595,6 +596,14 @@ namespace ts.pxtc {
                     break;
                 case "\\":
                     if (strIndex < (def.length - 1)) newToken = { kind: TokenKind.Escape, content: def[1 + (strIndex++)] };
+                    break;
+                case "[":
+                    const contentText = eatEnclosure("]");
+                    if (contentText === undefined) return undefined; // error: not terminated
+                    if (def[strIndex++ + 1] !== "(") return undefined; // error: must be followed by class
+                    const contentClass = eatEnclosure(")");
+                    if (contentClass === undefined) return undefined; // error: not terminated
+                    newToken = { kind: TokenKind.TaggedText, content: contentText, type: contentClass };
                     break;
                 case "%":
                     const param = eatToken(c => /[a-zA-Z0-9_=]/.test(c), true).split("=");
@@ -670,6 +679,7 @@ namespace ts.pxtc {
                             return undefined; // error: style marks should be closed
                         }
                     case TokenKind.Image: // deliberate fallthrough
+                    case TokenKind.TaggedText:
                         wordEnd = true;
                         break;
                 }
@@ -687,6 +697,9 @@ namespace ts.pxtc {
             }
             else if (token == TokenKind.Image) {
                 parts.push({ text: tokens[i].content, isImage: true });
+            }
+            else if (token == TokenKind.TaggedText) {
+                parts.push({ text: tokens[i].content, cssClass: tokens[i].type })
             }
         }
 
@@ -707,6 +720,13 @@ namespace ts.pxtc {
             }
             if (current) --strIndex;
             return current;
+        }
+
+        function eatEnclosure(endMark: string) {
+            const content = eatToken(c => c !== endMark, true);
+            if (def[strIndex + 1] !== endMark) return undefined;
+            ++strIndex;
+            return content;
         }
     }
 
