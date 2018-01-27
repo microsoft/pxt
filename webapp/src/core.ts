@@ -60,6 +60,7 @@ export function hideLoading(id: string) {
 
 export function showLoading(id: string, msg: string) {
     pxt.debug("showloading: " + id);
+    if (loadingQueueMsg[id]) return; // already loading?
     initializeDimmer();
     $('.ui.dimmer.loading').dimmer('show');
     $('.ui.dimmer.loading').html(`
