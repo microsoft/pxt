@@ -1227,6 +1227,9 @@ namespace pxt.hex {
     let downloadCache: Map<Promise<any>> = {};
     let cdnUrlPromise: Promise<string>;
 
+    export let showLoading: (msg: string) => void = (msg) => { };
+    export let hideLoading: () => void = () => {};
+
     function downloadHexInfoAsync(extInfo: pxtc.ExtensionInfo) {
         let cachePromise = Promise.resolve();
 
@@ -1255,6 +1258,7 @@ namespace pxt.hex {
     function downloadHexInfoCoreAsync(extInfo: pxtc.ExtensionInfo) {
         let hexurl = ""
 
+        showLoading(pxt.U.lf("Compiling (this may take a minute)..."));
         return downloadHexInfoLocalAsync(extInfo)
             .then((hex) => {
                 if (hex) {
@@ -1275,6 +1279,7 @@ namespace pxt.hex {
                                     pxt.log("polling at " + url)
                                     return Util.httpGetJsonAsync(url)
                                         .then(json => {
+                                            hideLoading();
                                             if (!json.success)
                                                 U.userError(JSON.stringify(json, null, 1))
                                             else {
@@ -1296,6 +1301,8 @@ namespace pxt.hex {
                             hex: text.split(/\r?\n/)
                         };
                     })
+            }).finally(() => {
+                hideLoading();
             })
     }
 
