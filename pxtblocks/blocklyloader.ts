@@ -607,8 +607,11 @@ namespace pxt.blocks {
         if (part.isImage) {
             i.appendField(iconToFieldImage(part.text));
         }
-        else if (part.style.indexOf("bold") !== -1) {
-            i.appendField(new pxtblockly.FieldBoldLabel(part.text));
+        else if (part.style.length) {
+            i.appendField(new pxtblockly.FieldStyledLabel(part.text, {
+                bold: part.style.indexOf("bold") !== -1,
+                italics: part.style.indexOf("italics") !== -1
+            }));
         }
         else {
             i.appendField(part.text);
