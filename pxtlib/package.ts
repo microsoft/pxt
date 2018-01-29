@@ -25,7 +25,8 @@ namespace pxt {
 
         static corePackages(): pxt.PackageConfig[] {
             const pkgs = pxt.appTarget.bundledpkgs;
-            return Object.keys(pkgs).map(id => JSON.parse(pkgs[id][pxt.CONFIG_NAME]) as pxt.PackageConfig);
+            return Object.keys(pkgs).map(id => JSON.parse(pkgs[id][pxt.CONFIG_NAME]) as pxt.PackageConfig)
+                .filter(cfg => !!cfg);
         }
 
         static upgradePackageReference(pkg: string, val: string): string {
@@ -378,9 +379,11 @@ namespace pxt {
             const corePackages = Object.keys(this.config.dependencies)
                 .filter(dep => !!dep && (<pxt.PackageConfig>JSON.parse((pxt.appTarget.bundledpkgs[dep] || {})[pxt.CONFIG_NAME] || "{}").core));
             // no core package? add the first one
-            if (corePackages.length == 0)
-                this.config.dependencies[pxt.Package.corePackages()[0].name];
-            else if (corePackages.length > 1) {
+            if (corePackages.length == 0) {
+                const allCorePkgs = pxt.Package.corePackages();
+                if (allCorePkgs.length)
+                    this.config.dependencies[allCorePkgs[0].name];
+            } else if (corePackages.length > 1) {
                 // keep last package
                 corePackages.pop();
                 corePackages.forEach(dep => {
