@@ -106,5 +106,19 @@ namespace Ctors {
     }
 }
 
+namespace ParentUnused {
+    class A {
+        foo(a: number) { }
+    }
+    class B extends A {
+        foo(a: number) { }
+    }
+    export function run() {
+        const b = new B();
+        b.foo(1)
+    }
+}
+
 ClassTest.run()
 Ctors.run()
+ParentUnused.run()

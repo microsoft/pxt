@@ -1330,6 +1330,7 @@ namespace ts.pxtc {
                         let key = classFunctionKey(m)
                         let done = false
                         let proc = lookupProc(m, inf.bindings)
+                        U.assert(!!proc)
                         for (let i = 0; i < tbl.length; ++i) {
                             if (classFunctionKey(tbl[i].action) == key) {
                                 tbl[i] = proc
@@ -2226,7 +2227,11 @@ ${lbl}: .short 0xffff
                 // if we call a method and it overrides then
                 // mark the virtual root class and all its overrides as used,
                 // if their classes are used
-                if (info.virtualParent) info = info.virtualParent
+                if (info.virtualParent) {
+                    info = info.virtualParent
+                    // mark the parent as used, otherwise vtable layout fails, see #3740
+                    markFunctionUsed(info.decl, bindings)
+                }
                 if (!info.isUsed) {
                     info.isUsed = true
                     for (let vinst of info.virtualInstances || []) {
