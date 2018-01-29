@@ -2227,17 +2227,16 @@ ${lbl}: .short 0xffff
                 // if we call a method and it overrides then
                 // mark the virtual root class and all its overrides as used,
                 // if their classes are used
-                if (info.virtualParent) {
-                    info = info.virtualParent
-                    // mark the parent as used, otherwise vtable layout fails, see #3740
-                    markFunctionUsed(info.decl, bindings)
-                }
+                if (info.virtualParent) info = info.virtualParent
                 if (!info.isUsed) {
                     info.isUsed = true
                     for (let vinst of info.virtualInstances || []) {
                         if (vinst.parentClassInfo.isUsed)
                             markFunctionUsed(vinst.decl, bindings)
                     }
+                    // we need to mark the parent as used, otherwise vtable layout faile, see #3740
+                    if (info.decl.kind == SK.MethodDeclaration)
+                        markFunctionUsed(info.decl, bindings)
                 }
                 if (info.virtualParent && !isSuper) {
                     U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")
