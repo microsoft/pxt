@@ -23,6 +23,11 @@ namespace pxt {
             });
         }
 
+        static corePackages(): pxt.PackageConfig[] {
+            const pkgs = pxt.appTarget.bundledpkgs;
+            return Object.keys(pkgs).map(id => JSON.parse(pkgs[id][pxt.CONFIG_NAME]) as pxt.PackageConfig);
+        }
+
         static upgradePackageReference(pkg: string, val: string): string {
             if (val != "*") return pkg;
             const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
@@ -365,6 +370,26 @@ namespace pxt {
             this.validateConfig();
         }
 
+        private patchCorePackage() {
+            Util.assert(appTarget.simulator && appTarget.simulator.dynamicBoardDefinition);
+            Util.assert(this.level == 0);
+
+            // find all core packages in target
+            const corePackages = Object.keys(this.config.dependencies)
+                .filter(dep => !!dep && (<pxt.PackageConfig>JSON.parse((pxt.appTarget.bundledpkgs[dep] || {})[pxt.CONFIG_NAME] || "{}").core));
+            // no core package? add the first one
+            if (corePackages.length == 0)
+                this.config.dependencies[pxt.Package.corePackages()[0].name];
+            else if (corePackages.length > 1) {
+                // keep last package
+                corePackages.pop();
+                corePackages.forEach(dep => {
+                    pxt.log(`removing core package ${dep}`)
+                    delete this.config.dependencies[dep];
+                });
+            }
+        }
+
         loadAsync(isInstall = false): Promise<void> {
             if (this.isLoaded) return Promise.resolve();
 
@@ -383,6 +408,8 @@ namespace pxt {
                 initPromise = initPromise.then(() => this.downloadAsync())
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
+                if (this.level == 0)
+                    initPromise = initPromise.then(() => this.patchCorePackage());
                 initPromise = initPromise.then(() => {
                     if (this.config.files.indexOf("board.json") < 0) return
                     appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json"))
