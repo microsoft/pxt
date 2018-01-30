@@ -61,6 +61,9 @@ namespace pxt.blocks {
 
     // Matches arrays and tuple types
     const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
+    export function isArrayType(type: string) {
+        return arrayTypeRegex.test(type);
+    }
 
     let usedBlocks: Map<boolean> = {};
     let updateUsedBlocks = false;
@@ -685,7 +688,7 @@ namespace pxt.blocks {
         }
         else if (fn.attributes._expandedDef) {
             buildBlockFromDef(fn.attributes._expandedDef, true);
-            initExpandableBlock(block, fn.attributes._expandedDef);
+            initExpandableBlock(block, fn.attributes._expandedDef, comp);
         }
         else if (comp.handlerArgs.length) {
             hasHandler = true;
@@ -760,7 +763,7 @@ namespace pxt.blocks {
             case "void": break; // do nothing
             //TODO
             default:
-                if (arrayTypeRegex.test(fn.retType)) {
+                if (isArrayType(fn.retType)) {
                     block.setOutput(true, "Array");
                 }
                 else {
@@ -885,7 +888,7 @@ namespace pxt.blocks {
                     } else if (pr.type == "string") {
                         current = addParamInput(defName, "String");
                     } else {
-                        const type = pr.type == "T" ? undefined : (arrayTypeRegex.test(pr.type) ? "Array" : pr.type);
+                        const type = pr.type == "T" ? undefined : (isArrayType(pr.type) ? "Array" : pr.type);
                         current = addParamInput(defName, type);
                     }
                 }

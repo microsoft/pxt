@@ -97,7 +97,7 @@ namespace pxt.blocks {
         }
     }
 
-    export function initExpandableBlock(b: Blockly.Block, def: pxtc.ParsedBlockDef) {
+    export function initExpandableBlock(b: Blockly.Block, def: pxtc.ParsedBlockDef, comp: BlockCompileInfo) {
         // Add underscores before input names to prevent clashes with the ones added
         // by BlocklyLoader. The underscore makes it an invalid JS identifier
         const buttonAddName = "__add_button";
@@ -111,6 +111,24 @@ namespace pxt.blocks {
         Blockly.Extensions.apply('inline-svgs', b, false);
         addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Hide optional arguments"), -1);
         addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Reveal optional arguments"), 1);
+
+        let inputsInitialized = false;
+        const setInitialVisibility = () => {            
+            if (!inputsInitialized && b.rendered) {
+                inputsInitialized = true;
+                updateShape(0, true);
+                b.render();
+
+                // We don't need to anything once the dom is initialized, so clean up
+                b.workspace.removeChangeListener(setInitialVisibility);
+            }
+        }
+
+        // Blockly only lets you hide an input once it is rendered, so we can't
+        // hide the inputs in init() or domToMutation(). This will get called
+        // immediately after the block is rendered but there is still a momentary
+        // flicker in the toolbox while the block hides the additional inputs
+        (b as any).setOnChange(setInitialVisibility);
 
         appendMutation(b, {
             mutationToDom: (el: Element) => {
@@ -126,8 +144,6 @@ namespace pxt.blocks {
                 }
             }
         });
-
-        updateShape(0, true);
         
         // Set skipRender to true if the block is still initializing. Otherwise
         // the inputs will render before their shadow blocks are created and
@@ -142,10 +158,26 @@ namespace pxt.blocks {
             for (let i = 0; i < b.inputList.length; i++) {
                 const input = b.inputList[i];
                 if (Util.startsWith(input.name, "_optional_label_")) {
-                    input.setVisible(optIndex < visibleOptions);
+                    setInputVisible(input, optIndex < visibleOptions);
                 }
                 else if (Util.startsWith(input.name, "_optional_field_") || optionNames.indexOf(input.name) !== -1) {
-                    input.setVisible(optIndex < visibleOptions);
+                    const visible = optIndex < visibleOptions;
+                    if (visible != input.isVisible()) {
+                        setInputVisible(input, visible);
+                        if (visible && input.connection && !(input.connection as any).isConnected()) {
+                            // FIXME: Could probably be smarter here, right now this does not respect
+                            // any options passed to the child block. Need to factor that out of BlocklyLoader
+                            const param = comp.definitionNameToParam[def.parameters[optIndex].name];
+                            const shadowId = param.shadowBlockId || shadowBlockForType(param.type);
+                            if (shadowId) {
+                                const nb = b.workspace.newBlock(shadowId);
+                                nb.setShadow(true);
+                                nb.initSvg();
+                                input.connection.connect(nb.outputConnection);
+                                nb.render();
+                            }
+                        }
+                    }
                     ++optIndex;
                 }
             }
@@ -162,8 +194,29 @@ namespace pxt.blocks {
 
         function setButton(name: string, visible: boolean) {
             b.inputList.forEach(i => {
-                if (i.name === name) i.setVisible(visible);
+                if (i.name === name) setInputVisible(i, visible);
             });
         }
+
+        function setInputVisible(input: Blockly.Input, visible: boolean) {
+            // If the block isn't rendered, Blockly will crash
+            if (b.rendered) {
+                input.setVisible(visible);
+            }
+        }
+    }
+
+    function shadowBlockForType(type: string) {
+        switch (type) {
+            case "number": return "math_number";
+            case "boolean": return "logic_boolean" 
+            case "string": return "text";
+        }
+
+        if (isArrayType(type)) {
+            return "lists_create_with";
+        }
+
+        return undefined;
     }
 }

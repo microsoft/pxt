@@ -562,7 +562,9 @@ namespace ts.pxtc {
         if (res.block) {
             const parts = res.block.split("||");
             res._def = parseBlockDefinition(parts[0]);
+            if (!res._def) pxt.debug("Unable to parse block def for id: " + res.blockId);
             if (parts[1]) res._expandedDef = parseBlockDefinition(parts[1]);
+            if (parts[1] && !res._expandedDef) pxt.debug("Unable to parse expanded block def for id: " + res.blockId);
         }
 
         return res
