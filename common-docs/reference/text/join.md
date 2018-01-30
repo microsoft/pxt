@@ -26,5 +26,5 @@ Add more text to the same string to make it grow.
 
 ```blocks
 let addedText = "The first part";
-let addedText = addedText + " plus the second part."; 
+addedText = addedText + " plus the second part."; 
 ```
