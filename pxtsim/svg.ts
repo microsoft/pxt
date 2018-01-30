@@ -90,25 +90,13 @@ namespace pxsim.svg {
                 || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
     }
 
-    export const touchEvents = isTouchEnabled() ? {
-        "mousedown": ["mousedown", "touchstart"],
-        "mouseup": ["mouseup", "touchend"],
-        "mousemove": ["mousemove", "touchmove"],
-        "mouseleave": ["mouseleave", "touchcancel"]
-    } : {
-            "mousedown": ["mousedown"],
-            "mouseup": ["mouseup"],
-            "mousemove": ["mousemove"],
-            "mouseleave": ["mouseleave"]
-        };
-
     export function onClick(el: Element, click: (ev: MouseEvent) => void) {
         let captured = false;
-        touchEvents.mousedown.forEach(evname => el.addEventListener(evname, (ev: MouseEvent) => {
+        el.addEventListener(pxsim.pointerEvents.down, (ev: MouseEvent) => {
             captured = true;
             return true;
-        }, false));
-        touchEvents.mouseup.forEach(evname => el.addEventListener(evname, (ev: MouseEvent) => {
+        }, false);
+        el.addEventListener(pxsim.pointerEvents.up, (ev: MouseEvent) => {
             if (captured) {
                 captured = false;
                 click(ev);
@@ -116,7 +104,7 @@ namespace pxsim.svg {
                 return false;
             }
             return true;
-        }, false));
+        }, false);
     }
 
     export function buttonEvents(el: Element,
@@ -125,27 +113,27 @@ namespace pxsim.svg {
         stop?: (ev: MouseEvent) => void,
         keydown?: (ev: KeyboardEvent) => void) {
         let captured = false;
-        touchEvents.mousedown.forEach(evname => el.addEventListener(evname, (ev: MouseEvent) => {
+        el.addEventListener(pxsim.pointerEvents.down, (ev: MouseEvent) => {
             captured = true;
             if (start) start(ev)
             return true;
-        }, false));
-        touchEvents.mousemove.forEach(evname => el.addEventListener(evname, (ev: MouseEvent) => {
+        }, false);
+        el.addEventListener(pxsim.pointerEvents.move, (ev: MouseEvent) => {
             if (captured) {
                 if (move) move(ev);
                 ev.preventDefault();
                 return false;
             }
             return true;
-        }, false));
-        touchEvents.mouseup.forEach(evname => el.addEventListener(evname, (ev: MouseEvent) => {
+        }, false);
+        el.addEventListener(pxsim.pointerEvents.up, (ev: MouseEvent) => {
             captured = false;
             if (stop) stop(ev);
-        }, false));
-        touchEvents.mouseleave.forEach(evname => el.addEventListener(evname, (ev: MouseEvent) => {
+        }, false);
+        el.addEventListener(pxsim.pointerEvents.leave, (ev: MouseEvent) => {
             captured = false;
             if (stop) stop(ev);
-        }, false));
+        }, false);
         el.addEventListener('keydown', (ev: KeyboardEvent) => {
             captured = false;
             if (keydown) keydown(ev);
