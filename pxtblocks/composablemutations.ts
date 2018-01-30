@@ -97,11 +97,11 @@ namespace pxt.blocks {
         }
     }
 
-    export function initExpandableBlock(b: Blockly.Block, def: pxtc.ParsedBlockDef, comp: BlockCompileInfo) {
-        // Add underscores before input names to prevent clashes with the ones added
-        // by BlocklyLoader. The underscore makes it an invalid JS identifier
-        const buttonAddName = "__add_button";
-        const buttonRemName = "__rem_button";
+    export function initExpandableBlock(b: Blockly.Block, def: pxtc.ParsedBlockDef, comp: BlockCompileInfo, addInputs: () => void) {
+        // Add numbers before input names to prevent clashes with the ones added
+        // by BlocklyLoader. The number makes it an invalid JS identifier
+        const buttonAddName = "0_add_button";
+        const buttonRemName = "0_rem_button";
         const attributeName = "_expanded";
 
         const optionNames = def.parameters.map(p => p.name);
@@ -109,26 +109,23 @@ namespace pxt.blocks {
         let visibleOptions = 0;
 
         Blockly.Extensions.apply('inline-svgs', b, false);
-        addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Hide optional arguments"), -1);
-        addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Reveal optional arguments"), 1);
+        addPlusButton();
 
         let inputsInitialized = false;
-        const setInitialVisibility = () => {            
-            if (!inputsInitialized && b.rendered) {
-                inputsInitialized = true;
-                updateShape(0, true);
-                b.render();
+        const onFirstRender = () => {            
+            if (b.rendered) {
+                updateShape(0, undefined, true);
 
-                // We don't need to anything once the dom is initialized, so clean up
-                b.workspace.removeChangeListener(setInitialVisibility);
+                // We don't need anything once the dom is initialized, so clean up
+                b.workspace.removeChangeListener(onFirstRender);
             }
-        }
+        };
 
         // Blockly only lets you hide an input once it is rendered, so we can't
         // hide the inputs in init() or domToMutation(). This will get called
-        // immediately after the block is rendered but there is still a momentary
-        // flicker in the toolbox while the block hides the additional inputs
-        (b as any).setOnChange(setInitialVisibility);
+        // whenever a change is made to the workspace including after the first
+        // block render and then remove itself
+        (b as any).setOnChange(onFirstRender);
 
         appendMutation(b, {
             mutationToDom: (el: Element) => {
@@ -148,34 +145,46 @@ namespace pxt.blocks {
         // Set skipRender to true if the block is still initializing. Otherwise
         // the inputs will render before their shadow blocks are created and
         // leave behind annoying artifacts
-        function updateShape(delta: number, skipRender = false) {
+        function updateShape(delta: number, skipRender = false, force = false) {
             const newValue = Math.min(Math.max(visibleOptions + delta, 0), totalOptions);
-            if (!skipRender && newValue === visibleOptions) return;
+            if (!force && !skipRender && newValue === visibleOptions) return;
 
             visibleOptions = newValue;
+
+            if (!inputsInitialized && visibleOptions > 0) {
+                inputsInitialized = true;
+                addInputs();
+                b.removeInput(buttonAddName);
+                addMinusButton();
+                addPlusButton();
+                if (!b.rendered) {
+                    return;
+                }
+            }
 
             let optIndex = 0
             for (let i = 0; i < b.inputList.length; i++) {
                 const input = b.inputList[i];
-                if (Util.startsWith(input.name, "_optional_label_")) {
+                if (Util.startsWith(input.name, optionalDummyInputPrefix)) {
                     setInputVisible(input, optIndex < visibleOptions);
                 }
-                else if (Util.startsWith(input.name, "_optional_field_") || optionNames.indexOf(input.name) !== -1) {
+                else if (Util.startsWith(input.name, optionalInputWithFieldPrefix) || optionNames.indexOf(input.name) !== -1) {
                     const visible = optIndex < visibleOptions;
-                    if (visible != input.isVisible()) {
-                        setInputVisible(input, visible);
-                        if (visible && input.connection && !(input.connection as any).isConnected()) {
-                            // FIXME: Could probably be smarter here, right now this does not respect
-                            // any options passed to the child block. Need to factor that out of BlocklyLoader
-                            const param = comp.definitionNameToParam[def.parameters[optIndex].name];
-                            const shadowId = param.shadowBlockId || shadowBlockForType(param.type);
-                            if (shadowId) {
-                                const nb = b.workspace.newBlock(shadowId);
-                                nb.setShadow(true);
-                                nb.initSvg();
-                                input.connection.connect(nb.outputConnection);
-                                nb.render();
-                            }
+                    setInputVisible(input, visible);
+                    if (visible && input.connection && !(input.connection as any).isConnected()) {
+                        // FIXME: Could probably be smarter here, right now this does not respect
+                        // any options passed to the child block. Need to factor that out of BlocklyLoader
+                        const param = comp.definitionNameToParam[def.parameters[optIndex].name];
+                        const shadowId = param.shadowBlockId || shadowBlockForType(param.type);
+                        if (shadowId) {
+                            const nb = b.workspace.newBlock(shadowId);
+                            nb.setShadow(true);
+
+                            // Because this function is sometimes called before the block is
+                            // rendered, we need to guard these calls to initSvg and render
+                            if (nb.initSvg) nb.initSvg();
+                            input.connection.connect(nb.outputConnection);
+                            if (nb.render) nb.render();
                         }
                     }
                     ++optIndex;
@@ -186,12 +195,20 @@ namespace pxt.blocks {
             setButton(buttonRemName, visibleOptions !== 0);
             if (!skipRender) b.render();
         }
-
+        
         function addButton(name: string, uri: string, alt: string, delta: number) {
             b.appendDummyInput(name)
-                .appendField(new Blockly.FieldImage(uri, 24, 24, false, alt, () => updateShape(delta)))
+            .appendField(new Blockly.FieldImage(uri, 24, 24, false, alt, () => updateShape(delta)))
         }
 
+        function addPlusButton() {
+            addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Reveal optional arguments"), 1);
+        }
+
+        function addMinusButton() {
+            addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Hide optional arguments"), -1);
+        }
+        
         function setButton(name: string, visible: boolean) {
             b.inputList.forEach(i => {
                 if (i.name === name) setInputVisible(i, visible);

@@ -59,6 +59,10 @@ namespace pxt.blocks {
     export function advancedTitle() { return Util.lf("{id:category}Advanced"); }
     export function addPackageTitle() { return Util.lf("{id:category}Extensions"); }
 
+    // Add numbers before input names to prevent clashes with the ones added by BlocklyLoader
+    export const optionalDummyInputPrefix = "0_optional_dummy";
+    export const optionalInputWithFieldPrefix = "0_optional_field";
+
     // Matches arrays and tuple types
     const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
     export function isArrayType(type: string) {
@@ -687,8 +691,7 @@ namespace pxt.blocks {
             addMutation(block as MutatingBlock, fn, MutatorTypes.DefaultInstanceMutator);
         }
         else if (fn.attributes._expandedDef) {
-            buildBlockFromDef(fn.attributes._expandedDef, true);
-            initExpandableBlock(block, fn.attributes._expandedDef, comp);
+            initExpandableBlock(block, fn.attributes._expandedDef, comp, () => buildBlockFromDef(fn.attributes._expandedDef, true));
         }
         else if (comp.handlerArgs.length) {
             hasHandler = true;
@@ -904,9 +907,9 @@ namespace pxt.blocks {
             function addDummyInput(notLabel = false) {
                 if (expanded) {
                     if (notLabel) {
-                        return block.appendDummyInput("_optional_field_" + (anonIndex ++))
+                        return block.appendDummyInput(optionalInputWithFieldPrefix + (anonIndex ++))
                     }
-                    return block.appendDummyInput("_optional_label_" + (anonIndex ++))
+                    return block.appendDummyInput(optionalDummyInputPrefix + (anonIndex ++))
                 }
                 return block.appendDummyInput();
             }
