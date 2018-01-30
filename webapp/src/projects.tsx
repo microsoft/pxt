@@ -429,45 +429,29 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 </div>
             }
         } else {
-            let headers = this.fetchLocalData();
-            const headersEmpty = !headers.length;
-            if (pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton) {
-                headers.unshift({
-                    id: 'new',
-                    name: lf("New Project")
-                } as any);
-            }
-            if (headersEmpty) {
-                return <div className="ui carouselouter">
-                    <div className="carouselcontainer">
-                        <p>{lf("This is where you will you find your code.")}</p>
+            const headers = this.fetchLocalData();
+            const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
+            return <carousel.Carousel bleedPercent={20}>
+                {showNewProject ? <div className="ui card link newprojectcard focused" tabIndex={0} title={lf("Creates a new empty project")} onClick={() => this.newProject()} onKeyDown={sui.fireClickOnEnter} >
+                    <div className="content">
+                        <sui.Icon icon="huge add circle" />
+                        <span className="header">{lf("New Project")}</span>
                     </div>
-                </div>
-            } else {
-                return <carousel.Carousel bleedPercent={20}>
-                    {headers.map((scr, index) =>
-                        <div key={'local' + scr.id + scr.recentUse}>
-                            {scr.id == 'new' ?
-                                <div className="ui card link newprojectcard focused" tabIndex={0} title={lf("Creates a new empty project")} onClick={() => this.newProject()} onKeyDown={sui.fireClickOnEnter} >
-                                    <div className="content">
-                                        <sui.Icon icon="huge add circle" />
-                                        <span className="header">{scr.name}</span>
-                                    </div>
-                                </div>
-                                :
-                                <codecard.CodeCardView
-                                    ref={(view) => { if (index === 1) this.latestProject = view }}
-                                    cardType="file"
-                                    className="file"
-                                    name={scr.name}
-                                    time={scr.recentUse}
-                                    url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                                    onClick={() => onClick(scr)}
-                                />}
-                        </div>
-                    )}
-                </carousel.Carousel>
-            }
+                </div> : undefined}
+                {headers.map((scr, index) =>
+                    <div key={'local' + scr.id + scr.recentUse}>
+                        <codecard.CodeCardView
+                            ref={(view) => { if (index === 1) this.latestProject = view }}
+                            cardType="file"
+                            className="file"
+                            name={scr.name}
+                            time={scr.recentUse}
+                            url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
+                            onClick={() => onClick(scr)}
+                        />
+                    </div>
+                )}
+            </carousel.Carousel>
         }
     }
 }
