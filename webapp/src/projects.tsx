@@ -136,7 +136,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         const chgHeader = (hdr: pxt.workspace.Header) => {
             pxt.tickEvent("projects.header");
-            core.showLoading("changeheader", lf("Loading..."));
+            core.showLoading("changeheader", lf("loading..."));
             this.props.parent.loadHeaderAsync(hdr)
                 .done(() => {
                     core.hideLoading("changeheader");
@@ -172,7 +172,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         }
 
         const chgCode = (scr: pxt.CodeCard, loadBlocks?: boolean, prj?: pxt.ProjectTemplate) => {
-            core.showLoading("changingcode", lf("Loading..."));
+            core.showLoading("changingcode", lf("loading..."));
             gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
                 .done(opts => {
                     if (opts) {
