@@ -42,10 +42,10 @@ let secondScore = scores[1];
 
 Arrays always have a length. The last element of an array has an index that is _length of array - 1_. Indexes begin with `0` so the last element's index is one less than the array length.
 
- ```block
- let directions = ["East", "North", "South", "West"];
- let count = directions.length;
- ```
+```block
+let directions = ["East", "North", "South", "West"];
+let count = directions.length;
+```
 
 ## Advanced
 
