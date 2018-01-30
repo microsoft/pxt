@@ -30,10 +30,10 @@ We have create a [tasks for each language and editor](https://crowdin.com/projec
 ![UI elements](/static/translationui.png)
 
 * **Minecraft / Blocks+description / Translation**: translating the blocks and block descriptions. Available to **translators** for a given language.
-* **Minecraft / Blocks+description / Proofreading**: proofreading translating the blocks and block descriptions. Available to **proof readers** for a given language.
+* **Minecraft / Blocks+description / Proofreading**: proofreading the blocks and block descriptions. Available to **proof readers** for a given language.
 
 * **micro:bit / Blocks+description / Translation**: translating the blocks and block descriptions. Available to **translators** for a given language.
-* **micro:bit / Blocks+description / Proofreading**: proofreading translating the blocks and block descriptions. Available to **proof readers** for a given language.
+* **micro:bit / Blocks+description / Proofreading**: proofreading the blocks and block descriptions. Available to **proof readers** for a given language.
 
 ![UI elements](/static/translationblocks.png)
 
@@ -54,12 +54,12 @@ You will find target specific localization files under folders in crowdin. For e
 * ``core-jsdoc-strings.json``: contains the descriptions
 
 The block definition should be carefully translated using the [block definition syntax](https://makecode.com/defining-blocks). 
-Open the developer tools and watch the console, PXT wil validate the localized string and flag potential issues.
+Open the developer tools and watch the console, PXT will validate the localized string and flag potential issues.
 
 ### Block localization guidance
 
 * Do not capitalize blocks
-* Do not translalte ``%variable`` names
+* Do not translate ``%variable`` names
 * Do not reorder parameters
 * Maintain the same structure of ``|`` and ``%variables%``
 
