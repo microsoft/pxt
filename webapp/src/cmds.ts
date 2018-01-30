@@ -53,12 +53,12 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
         }).then(() => { });
     }
 
-    if (resp.saveOnly && userContext) return showUploadInstructionsAsync(fn, url); // save does the same as download as far iOS is concerned
+    if (resp.saveOnly && userContext) return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync); // save does the same as download as far iOS is concerned
     if (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !userContext) return Promise.resolve();
-    else return showUploadInstructionsAsync(fn, url);
+    else return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync);
 }
 
-function showUploadInstructionsAsync(fn: string, url: string, confirmAsync?: (options: any) => Promise<number>): Promise<void> {
+function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (options: any) => Promise<number>): Promise<void> {
     const boardName = pxt.appTarget.appTheme.boardName || "???";
     const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
 
@@ -78,7 +78,7 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync?: (op
                 ext,
                 boardDriveName, boardName);
     const timeout = pxt.BrowserUtils.isBrowserDownloadWithinUserContext() ? 0 : 10000;
-    return core.confirmAsync({
+    return confirmAsync({
         header: userDownload ? lf("Download ready...") : lf("Download completed..."),
         body,
         hasCloseIcon: true,

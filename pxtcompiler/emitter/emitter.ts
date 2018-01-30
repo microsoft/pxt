@@ -1330,6 +1330,7 @@ namespace ts.pxtc {
                         let key = classFunctionKey(m)
                         let done = false
                         let proc = lookupProc(m, inf.bindings)
+                        U.assert(!!proc)
                         for (let i = 0; i < tbl.length; ++i) {
                             if (classFunctionKey(tbl[i].action) == key) {
                                 tbl[i] = proc
@@ -2233,6 +2234,9 @@ ${lbl}: .short 0xffff
                         if (vinst.parentClassInfo.isUsed)
                             markFunctionUsed(vinst.decl, bindings)
                     }
+                    // we need to mark the parent as used, otherwise vtable layout faile, see #3740
+                    if (info.decl.kind == SK.MethodDeclaration)
+                        markFunctionUsed(info.decl, bindings)
                 }
                 if (info.virtualParent && !isSuper) {
                     U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")

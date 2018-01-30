@@ -2268,6 +2268,8 @@ $(document).ready(() => {
     };
     appcache.init(appCacheUpdated);
 
+    pxt.hex.showLoading = (msg) => core.showLoading("hexcloudcompiler", msg);
+    pxt.hex.hideLoading = () => core.hideLoading("hexcloudcompiler");
     pxt.docs.requireMarked = () => require("marked");
     const importHex = (hex: pxt.cpp.HexFile, createNewIfFailed = false) => theEditor.importHex(hex, createNewIfFailed);
 
