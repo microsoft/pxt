@@ -8,7 +8,7 @@ namespace pxt.blocks {
 
     export function appendMutation(block: Blockly.Block, mutation: ComposableMutation) {
         const b = block as MutatingBlock;
-        
+
         const oldMTD = b.mutationToDom;
         const oldDTM = b.domToMutation;
 
@@ -67,20 +67,20 @@ namespace pxt.blocks {
         appendMutation(b, {
             mutationToDom: (el: Element) => {
                 el.setAttribute("numArgs", currentlyVisible.toString());
-    
+
                 for (let j = 0; j < currentlyVisible; j++) {
                     let varName = b.getFieldValue("HANDLER_" + handlerArgs[j].name);
                     el.setAttribute("arg" + j, varName);
                 }
-    
+
                 return el;
             },
             domToMutation: (saved: Element) => {
                 let numArgs = parseInt(saved.getAttribute("numargs"));
                 currentlyVisible = Math.min(isNaN(numArgs) ? 0 : numArgs, handlerArgs.length);
-    
+
                 updateShape();
-    
+
                 for (let j = 0; j < currentlyVisible; j++) {
                     let varName = saved.getAttribute("arg" + j);
                     b.setFieldValue(varName, "HANDLER_" + handlerArgs[j].name);
@@ -112,7 +112,7 @@ namespace pxt.blocks {
         addPlusButton();
 
         let inputsInitialized = false;
-        const onFirstRender = () => {            
+        const onFirstRender = () => {
             if (b.rendered) {
                 updateShape(0, undefined, true);
 
@@ -141,7 +141,7 @@ namespace pxt.blocks {
                 }
             }
         });
-        
+
         // Set skipRender to true if the block is still initializing. Otherwise
         // the inputs will render before their shadow blocks are created and
         // leave behind annoying artifacts
@@ -195,10 +195,10 @@ namespace pxt.blocks {
             setButton(buttonRemName, visibleOptions !== 0);
             if (!skipRender) b.render();
         }
-        
+
         function addButton(name: string, uri: string, alt: string, delta: number) {
             b.appendDummyInput(name)
-            .appendField(new Blockly.FieldImage(uri, 24, 24, false, alt, () => updateShape(delta)))
+                .appendField(new Blockly.FieldImage(uri, 24, 24, false, alt, () => updateShape(delta)))
         }
 
         function addPlusButton() {
@@ -208,7 +208,7 @@ namespace pxt.blocks {
         function addMinusButton() {
             addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Hide optional arguments"), -1);
         }
-        
+
         function setButton(name: string, visible: boolean) {
             b.inputList.forEach(i => {
                 if (i.name === name) setInputVisible(i, visible);
@@ -226,7 +226,7 @@ namespace pxt.blocks {
     function shadowBlockForType(type: string) {
         switch (type) {
             case "number": return "math_number";
-            case "boolean": return "logic_boolean" 
+            case "boolean": return "logic_boolean"
             case "string": return "text";
         }
 
