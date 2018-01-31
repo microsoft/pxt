@@ -49,8 +49,7 @@ let remainder = 7%4;
 
 ## Absolute value
 
-When you want to know how much a number is without its _sign_ (+/-). The absolute value of -5 is 5 and the
-the absolute value 5 is also 5. The absolute value is sometimes called the _magnitude_.
+When you want to know how much a number is without its _sign_ (+/-). The absolute value of -5 is 5 and the absolute value of 5 is also 5. The absolute value is sometimes called the _magnitude_.
 
 ```block
 let item = Math.abs(-5);
