@@ -1315,8 +1315,8 @@ export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Prom
 
     return initPromise
         .then(() => { copyCommonSim(); return simshimAsync() })
-        .then(() => buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim'))
         .then(() => buildTargetCoreAsync(options))
+        .then(() => buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim'))
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildSemanticUIAsync())
         .then(() => {
@@ -2255,7 +2255,7 @@ class Host
         }
     }
 
-    readFile(module: pxt.Package, filename: string): string {
+    readFile(module: pxt.Package, filename: string, skipAdditionalFiles?: boolean): string {
         const commonFile = U.lookup(commonfiles, filename)
         if (commonFile != null) return commonFile;
 
@@ -2278,7 +2278,7 @@ class Host
             // pxt.debug(`reading ${path.resolve(resolved)}`)
             return fs.readFileSync(resolved, "utf8")
         } catch (e) {
-            if (module.config) {
+            if (!skipAdditionalFiles && module.config) {
                 let addPath = module.config.additionalFilePath
                 if (addPath) {
                     try {
@@ -3859,6 +3859,15 @@ export function cleanAsync(parsed: commandParser.ParsedCommand) {
         .then(() => { });
 }
 
+export function cleanGenAsync(parsed: commandParser.ParsedCommand) {
+    pxt.log('cleaning generated files')
+    return Promise.resolve()
+        .then(() => rimrafAsync("libs/**/enums.d.ts", {}))
+        .then(() => rimrafAsync("libs/**/shims.d.ts", {}))
+        .then(() => rimrafAsync("libs/**/_locales", {}))
+        .then(() => { });
+}
+
 export function buildJResAsync(parsed: commandParser.ParsedCommand) {
     ensurePkgDir();
     nodeutil.allFiles(".")
@@ -4624,6 +4633,8 @@ function initCommands() {
     }, buildAsync);
 
     simpleCmd("clean", "removes built folders", cleanAsync);
+    advancedCommand("cleangen", "remove generated files", cleanGenAsync);
+
     p.defineCommand({
         name: "staticpkg",
         help: "packages the target into static HTML pages",
