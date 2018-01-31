@@ -292,19 +292,19 @@ namespace ts.pxtc {
 
     /* @internal */
     const enum TokenKind {
-        SingleAsterisk      = 1,
-        DoubleAsterisk      = 1 << 1,
-        SingleUnderscore    = 1 << 2,
-        DoubleUnderscore    = 1 << 3,
-        Escape              = 1 << 4,
-        Pipe                = 1 << 5,
-        Parameter           = 1 << 6,
-        Word                = 1 << 7,
-        Image               = 1 << 8,
-        TaggedText               = 1 << 9,
-        
-        TripleUnderscore    = SingleUnderscore | DoubleUnderscore,
-        TripleAsterisk      = SingleAsterisk | DoubleAsterisk,
+        SingleAsterisk = 1,
+        DoubleAsterisk = 1 << 1,
+        SingleUnderscore = 1 << 2,
+        DoubleUnderscore = 1 << 3,
+        Escape = 1 << 4,
+        Pipe = 1 << 5,
+        Parameter = 1 << 6,
+        Word = 1 << 7,
+        Image = 1 << 8,
+        TaggedText = 1 << 9,
+
+        TripleUnderscore = SingleUnderscore | DoubleUnderscore,
+        TripleAsterisk = SingleAsterisk | DoubleAsterisk,
         StyleMarks = TripleAsterisk | TripleUnderscore,
         Bold = DoubleUnderscore | DoubleAsterisk,
         Italics = SingleUnderscore | SingleAsterisk
@@ -630,7 +630,7 @@ namespace ts.pxtc {
 
         if (currentWord)
             tokens.push({ kind: TokenKind.Word, content: currentWord });
-        
+
         const parts: (BlockLabel | BlockParameter)[] = [];
         const parameters: BlockParameter[] = [];
 
@@ -715,12 +715,12 @@ namespace ts.pxtc {
 
         function eatToken(pred: (c: string) => boolean, skipCurrent = false) {
             let current = "";
-            if (skipCurrent) ++strIndex
+            if (skipCurrent)++strIndex
             while (strIndex < def.length && pred(def[strIndex])) {
                 current += def[strIndex];
                 ++strIndex;
             }
-            if (current) --strIndex;
+            if (current)--strIndex;
             return current;
         }
 
