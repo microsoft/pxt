@@ -33,6 +33,9 @@ namespace pxt {
         (err?: any, res?: T): void;
     }
 
+    let analyticsLoaded = false;
+    let pendingCallbacks: (() => void)[] = [];
+
     export function initAnalyticsAsync() {
         getCookieBannerAsync(detectLocale(), document.domain, (bannerErr, info) => {
             if (bannerErr || info.Error) {
@@ -66,6 +69,15 @@ namespace pxt {
                 initializeAppInsights(!msccError && typeof mscc !== "undefined" && mscc.hasConsent());
             });
         });
+    }
+
+    export function onAnalyticsLoaded(cb: () => void) {
+        if (analyticsLoaded) {
+            cb();
+        }
+        else {
+            pendingCallbacks.push(cb);
+        }
     }
 
     function detectLocale() {
@@ -126,6 +138,10 @@ namespace pxt {
         const loadAI = (window as any).loadAppInsights;
         if (loadAI) {
             loadAI(includeCookie)
+            analyticsLoaded = true;
+            while (pendingCallbacks.length) {
+                pendingCallbacks.pop()();
+            }
         }
     }
 
