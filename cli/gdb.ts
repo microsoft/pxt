@@ -138,12 +138,8 @@ echo Use 'rst' command to re-run program from start (set your breakpoints first!
     let start = Date.now()
 
     return new Promise<void>((resolve, reject) => {
-        proc.on("error", (err: any) => {
-            pxt.log("gdb error!")
-            reject(err)
-        })
+        proc.on("error", (err: any) => { reject(err) })
         proc.on("close", () => {
-            pxt.log("gdb done")
             resolve()
         })
     })
