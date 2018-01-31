@@ -37,7 +37,7 @@ namespace pxt {
     let pendingCallbacks: (() => void)[] = [];
 
     export function initAnalyticsAsync() {
-        getCookieBannerAsync(detectLocale(), document.domain, (bannerErr, info) => {
+        getCookieBannerAsync(document.domain, detectLocale(), (bannerErr, info) => {
             if (bannerErr || info.Error) {
                 // Start app insights, just don't drop any cookies
                 initializeAppInsights(false);
