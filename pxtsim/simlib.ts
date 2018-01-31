@@ -239,7 +239,7 @@ namespace pxsim {
 
     export interface IPointerEvents {
         up: string,
-        down: string,
+        down: string[],
         move: string,
         enter: string,
         leave: string
@@ -255,23 +255,23 @@ namespace pxsim {
         return typeof window != "undefined" && !!(window as any).PointerEvent;
     }
 
-    export const pointerEvents = hasPointerEvents() ? {
+    export const pointerEvents: IPointerEvents = hasPointerEvents() ? {
         up: "pointerup",
-        down: "pointerdown",
+        down: ["pointerdown"],
         move: "pointermove",
         enter: "pointerenter",
         leave: "pointerleave"
     } : isTouchEnabled() ?
             {
                 up: "mouseup",
-                down: "touchstart",
+                down: ["mousedown", "touchstart"],
                 move: "touchmove",
                 enter: "touchenter",
                 leave: "touchend"
             } :
             {
                 up: "mouseup",
-                down: "mousedown",
+                down: ["mousedown"],
                 move: "mousemove",
                 enter: "mouseenter",
                 leave: "mouseleave"
