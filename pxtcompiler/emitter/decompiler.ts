@@ -167,38 +167,38 @@ namespace ts.pxtc.decompiler {
 
 
     class LSHost implements ts.LanguageServiceHost {
-            constructor(private p: ts.Program) {}
+        constructor(private p: ts.Program) { }
 
-            getCompilationSettings(): ts.CompilerOptions {
-                const opts = this.p.getCompilerOptions();
-                opts.noLib = true;
-                return opts;
-            }
+        getCompilationSettings(): ts.CompilerOptions {
+            const opts = this.p.getCompilerOptions();
+            opts.noLib = true;
+            return opts;
+        }
 
-            getNewLine(): string { return "\n" }
+        getNewLine(): string { return "\n" }
 
-            getScriptFileNames(): string[] {
-                return this.p.getSourceFiles().map(f => f.fileName);
-            }
+        getScriptFileNames(): string[] {
+            return this.p.getSourceFiles().map(f => f.fileName);
+        }
 
-            getScriptVersion(fileName: string): string {
-                return "0";
-            }
+        getScriptVersion(fileName: string): string {
+            return "0";
+        }
 
-            getScriptSnapshot(fileName: string): ts.IScriptSnapshot {
-                const f = this.p.getSourceFile(fileName);
-                return {
-                    getLength: () => f.getFullText().length,
-                    getText: () => f.getFullText(),
-                    getChangeRange: () => undefined
-                };
-            }
+        getScriptSnapshot(fileName: string): ts.IScriptSnapshot {
+            const f = this.p.getSourceFile(fileName);
+            return {
+                getLength: () => f.getFullText().length,
+                getText: () => f.getFullText(),
+                getChangeRange: () => undefined
+            };
+        }
 
-            getCurrentDirectory(): string { return "."; }
+        getCurrentDirectory(): string { return "."; }
 
-            getDefaultLibFileName(options: ts.CompilerOptions): string { return ""; }
+        getDefaultLibFileName(options: ts.CompilerOptions): string { return ""; }
 
-            useCaseSensitiveFileNames(): boolean { return true; }
+        useCaseSensitiveFileNames(): boolean { return true; }
     }
 
     /**
@@ -369,7 +369,7 @@ ${output}</xml>`;
         }
 
         function countBlock() {
-            emittedBlocks ++;
+            emittedBlocks++;
             if (emittedBlocks > MAX_BLOCKS) {
                 let e = new Error(Util.lf("Could not decompile because the script is too large"));
                 (<any>e).programTooLarge = true;
@@ -777,7 +777,7 @@ ${output}</xml>`;
 
             let value = U.htmlEscape(callInfo.attrs.blockId || callInfo.qName);
 
-            const [parent, ] = getParent(n);
+            const [parent,] = getParent(n);
             const parentCallInfo: pxtc.CallInfo = parent && (parent as any).callInfo;
             if (callInfo.attrs.blockIdentity && !(parentCallInfo && parentCallInfo.qName === callInfo.attrs.blockIdentity)) {
                 if (callInfo.attrs.enumval && parentCallInfo && parentCallInfo.attrs.useEnumVal) {
@@ -1056,7 +1056,7 @@ ${output}</xml>`;
             }
             else {
                 r = mkStmt("controls_simple_for");
-                r.fields =  [getField("VAR", renamed)];
+                r.fields = [getField("VAR", renamed)];
                 r.inputs = [];
                 r.handlers = [];
 
@@ -1095,7 +1095,7 @@ ${output}</xml>`;
             const r = mkStmt("controls_for_of");
             r.inputs = [getValue("LIST", n.expression)];
             r.fields = [getField("VAR", renamed)];
-            r.handlers =  [{ name: "DO", statement: getStatementBlock(n.statement) }];
+            r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
 
             return r
         }
@@ -1184,7 +1184,7 @@ ${output}</xml>`;
                     const name = getVariableName(node.expression as ts.Identifier);
                     if (env.declaredFunctions[name]) {
                         const r = mkStmt("procedures_callnoreturn");
-                        r.mutation = {"name": name};
+                        r.mutation = { "name": name };
                         return r;
                     }
                     else {
@@ -1321,7 +1321,7 @@ ${output}</xml>`;
                                 if (field && decompileLiterals(field)) {
                                     const fieldBlock = getFieldBlock(param.shadowBlockId, field.definitionName, fieldText, true);
                                     if (param.shadowOptions) {
-                                        fieldBlock.mutation = {"customfield": Util.htmlEscape(JSON.stringify(param.shadowOptions))};
+                                        fieldBlock.mutation = { "customfield": Util.htmlEscape(JSON.stringify(param.shadowOptions)) };
                                     }
                                     v = mkValue(vName, fieldBlock, param.shadowBlockId);
                                     defaultV = false;
@@ -1808,7 +1808,7 @@ ${output}</xml>`;
             const api = env.blocks.apis.byQName[info.qName];
             const comp = pxt.blocks.compileInfo(api);
             const totalDecompilableArgs = comp.parameters.length + (comp.thisParameter ? 1 : 0);
-            
+
             if (info.attrs.imageLiteral) {
                 // Image literals do not show up in the block string, so it won't be in comp
                 if (info.args.length - totalDecompilableArgs > 1) {
@@ -1831,11 +1831,11 @@ ${output}</xml>`;
 
             if (argumentDifference > 0 && !checkForDestructuringMutation()) {
                 let diff = argumentDifference;
-                
+
                 // Callbacks and default instance parameters do not appear in the block
                 // definition string so they won't show up in the above count
-                if (hasCallback) --diff;
-                if (info.attrs.defaultInstance) --diff;
+                if (hasCallback)--diff;
+                if (info.attrs.defaultInstance)--diff;
 
                 if (diff > 0) {
                     return Util.lf("Function call has more arguments than are supported by its block");
@@ -1849,7 +1849,7 @@ ${output}</xml>`;
                     if (fail || instance && i === 0) {
                         return;
                     }
-                    if (instance) --i;
+                    if (instance)--i;
                     fail = checkArgument(arg);
                 });
 
@@ -2245,7 +2245,7 @@ ${output}</xml>`;
             const comp = pxt.blocks.compileInfo(sym);
             const builtin = pxt.blocks.builtinFunctionInfo[info.qName]
             let offset = info.attrs.imageLiteral ? 1 : 0;
-    
+
             if (comp.thisParameter) {
                 res.push({
                     value: unwrapNode(info.args[0]) as Expression,
@@ -2265,7 +2265,7 @@ ${output}</xml>`;
             if (hasThisArgInSymbol) {
                 offset++;
             }
-    
+
             for (let i = offset; i < info.args.length; i++) {
                 res.push({
                     value: unwrapNode(info.args[i]) as Expression,
