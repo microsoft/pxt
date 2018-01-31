@@ -15,57 +15,57 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     saveProjectName(name: string, view?: string) {
-        pxt.tickEvent("editortools.projectrename", { view: view }, /*interactiveConsent*/true);
+        pxt.tickEvent("editortools.projectrename", { view: view }, { interactiveConsent: true });
         this.props.parent.updateHeaderName(name);
     }
 
     compile(view?: string) {
-        pxt.tickEvent("editortools.download", { view: view, collapsed: this.getCollapsedState() }, /*interactiveConsent*/true);
+        pxt.tickEvent("editortools.download", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.compile();
     }
 
     saveFile(view?: string) {
-        pxt.tickEvent("editortools.save", { view: view, collapsed: this.getCollapsedState() }, /*interactiveConsent*/true);
+        pxt.tickEvent("editortools.save", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.saveAndCompile();
     }
 
     undo(view?: string) {
-        pxt.tickEvent("editortools.undo", { view: view, collapsed: this.getCollapsedState() }, /*interactiveConsent*/true);
+        pxt.tickEvent("editortools.undo", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.editor.undo();
     }
 
     redo(view?: string) {
-        pxt.tickEvent("editortools.redo", { view: view, collapsed: this.getCollapsedState() }, /*interactiveConsent*/true);
+        pxt.tickEvent("editortools.redo", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.editor.redo();
     }
 
     zoomIn(view?: string) {
-        pxt.tickEvent("editortools.zoomIn", { view: view, collapsed: this.getCollapsedState() }, /*interactiveConsent*/true);
+        pxt.tickEvent("editortools.zoomIn", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.editor.zoomIn();
     }
 
     zoomOut(view?: string) {
-        pxt.tickEvent("editortools.zoomOut", { view: view, collapsed: this.getCollapsedState() }, /*interactiveConsent*/true);
+        pxt.tickEvent("editortools.zoomOut", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.editor.zoomOut();
     }
 
     startStopSimulator(view?: string) {
-        pxt.tickEvent("editortools.startStopSimulator", { view: view, collapsed: this.getCollapsedState(), headless: this.getHeadlessState() }, /*interactiveConsent*/true);
+        pxt.tickEvent("editortools.startStopSimulator", { view: view, collapsed: this.getCollapsedState(), headless: this.getHeadlessState() }, { interactiveConsent: true });
         this.props.parent.startStopSimulator();
     }
 
     restartSimulator(view?: string) {
-        pxt.tickEvent("editortools.restart", { view: view, collapsed: this.getCollapsedState(), headless: this.getHeadlessState() }, /*interactiveConsent*/true);
+        pxt.tickEvent("editortools.restart", { view: view, collapsed: this.getCollapsedState(), headless: this.getHeadlessState() }, { interactiveConsent: true });
         this.props.parent.restartSimulator();
     }
 
     toggleTrace(view?: string) {
-        pxt.tickEvent("editortools.trace", { view: view, collapsed: this.getCollapsedState(), headless: this.getHeadlessState() }, /*interactiveConsent*/true);
+        pxt.tickEvent("editortools.trace", { view: view, collapsed: this.getCollapsedState(), headless: this.getHeadlessState() }, { interactiveConsent: true });
         this.props.parent.toggleTrace();
     }
 
     toggleCollapse(view?: string) {
-        pxt.tickEvent("editortools.toggleCollapse", { view: view, collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, /*interactiveConsent*/true);
+        pxt.tickEvent("editortools.toggleCollapse", { view: view, collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
         this.props.parent.toggleSimulatorCollapse();
     }
 

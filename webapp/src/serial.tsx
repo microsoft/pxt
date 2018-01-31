@@ -236,7 +236,7 @@ export class Editor extends srceditor.Editor {
     }
 
     toggleRecording() {
-        pxt.tickEvent("serial.toggleRecording", undefined, /*interactiveConsent*/true)
+        pxt.tickEvent("serial.toggleRecording", undefined, { interactiveConsent: true })
         if (this.active) this.pauseRecording()
         else this.startRecording()
     }
@@ -281,7 +281,7 @@ export class Editor extends srceditor.Editor {
     }
 
     goBack() {
-        pxt.tickEvent("serial.backButton", undefined, /*interactiveConsent*/true)
+        pxt.tickEvent("serial.backButton", undefined, { interactiveConsent: true })
         this.parent.openPreviousEditor()
     }
 

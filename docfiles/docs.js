@@ -50,7 +50,7 @@ function dirAuto($el) {
 }
 
 function searchSubmit(form) {
-    if (pxt && pxt.tickEvent) pxt.tickEvent("docs.search", { 'source': form.id }, /*interactiveConsent*/true)
+    if (pxt && pxt.tickEvent) pxt.tickEvent("docs.search", { 'source': form.id }, { interactiveConsent: true })
 }
 
 function setupSidebar() {

@@ -1583,7 +1583,7 @@ namespace pxt.blocks {
                 blocklySearchInput.className += ' loading';
                 previousSearchTerm = searchFor;
 
-                pxt.tickEvent("blocks.search", undefined, /*interactiveConsent*/true);
+                pxt.tickEvent("blocks.search", undefined, { interactiveConsent: true });
                 let searchTb = pxt.blocks.cachedSearchTb ? <Element>pxt.blocks.cachedSearchTb.cloneNode(true) : undefined;
 
                 let catName = 'Search';
@@ -2152,7 +2152,7 @@ namespace pxt.blocks {
                     lf("Delete All Blocks", deleteList.length),
                 enabled: deleteList.length > 0,
                 callback: function () {
-                    pxt.tickEvent("blocks.context.delete", undefined, /*interactiveConsent*/true);
+                    pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
                     if (deleteList.length < 2 ||
                         window.confirm(lf("Delete all {0} blocks?", deleteList.length))) {
                         deleteNext();
@@ -2165,7 +2165,7 @@ namespace pxt.blocks {
                 text: lf("Format Code"),
                 enabled: true,
                 callback: () => {
-                    pxt.tickEvent("blocks.context.format", undefined, /*interactiveConsent*/true);
+                    pxt.tickEvent("blocks.context.format", undefined, { interactiveConsent: true });
                     pxt.blocks.layout.flow(this, { useViewWidth: true });
                 }
             }
@@ -2176,7 +2176,7 @@ namespace pxt.blocks {
                     text: lf("Download Screenshot"),
                     enabled: topBlocks.length > 0,
                     callback: () => {
-                        pxt.tickEvent("blocks.context.screenshot", undefined, /*interactiveConsent*/true);
+                        pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.screenshotAsync(this)
                             .done((uri) => {
                                 if (pxt.BrowserUtils.isSafari())

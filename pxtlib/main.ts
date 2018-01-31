@@ -87,14 +87,18 @@ namespace pxt {
         }
     }
 
+    export interface TelemetryEventOptions {
+        interactiveConsent: boolean;
+    }
+
     /**
      * Track an event.
      */
-    export var tickEvent: (id: string, data?: Map<string | number>, interactiveConsent?: boolean) => void = function (id) { }
+    export var tickEvent: (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions) => void = function (id) { }
 
     let activityEvents: Map<number> = {};
     const tickActivityDebounced = Util.debounce(() => {
-        tickEvent("activity", activityEvents, false);
+        tickEvent("activity", activityEvents);
         activityEvents = {};
     }, 10000, false);
     /**

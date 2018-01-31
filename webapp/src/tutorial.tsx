@@ -19,7 +19,7 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
     openTutorialStep(step: number) {
         let options = this.props.parent.state.tutorialOptions;
         options.tutorialStep = step;
-        pxt.tickEvent(`tutorial.step`, { tutorial: options.tutorial, step: step }, /*interactiveConsent*/true);
+        pxt.tickEvent(`tutorial.step`, { tutorial: options.tutorial, step: step }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(step);
     }
 
@@ -169,7 +169,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
 
         options.tutorialStep = previousStep;
 
-        pxt.tickEvent(`tutorial.previous`, { tutorial: options.tutorial, step: previousStep }, /*interactiveConsent*/true);
+        pxt.tickEvent(`tutorial.previous`, { tutorial: options.tutorial, step: previousStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(previousStep);
     }
 
@@ -180,7 +180,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
 
         options.tutorialStep = nextStep;
 
-        pxt.tickEvent(`tutorial.next`, { tutorial: options.tutorial, step: nextStep }, /*interactiveConsent*/true);
+        pxt.tickEvent(`tutorial.next`, { tutorial: options.tutorial, step: nextStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(nextStep);
     }
 

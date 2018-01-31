@@ -108,7 +108,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
 
         }
         const publish = () => {
-            pxt.tickEvent("menu.embed.publish", undefined, /*interactiveConsent*/true);
+            pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
             this.setState({ sharingError: false });
             this.props.parent.anonymousPublishAsync()
                 .catch((e) => {
@@ -149,11 +149,11 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
             (socialOptions.related ? `&related=${encodeURIComponent(socialOptions.related)}` : '');
         }
         const showFbPopup = () => {
-            pxt.tickEvent('share.facebook', undefined, /*interactiveConsent*/true)
+            pxt.tickEvent('share.facebook', undefined, { interactiveConsent: true })
             sui.popupWindow(fbUrl, lf("Share on Facebook"), 600, 600);
         }
         const showTwtPopup = () => {
-            pxt.tickEvent('share.twitter', undefined, /*interactiveConsent*/true)
+            pxt.tickEvent('share.twitter', undefined, { interactiveConsent: true })
             sui.popupWindow(twitterUrl, lf("Share on Twitter"), 600, 600);
         }
 

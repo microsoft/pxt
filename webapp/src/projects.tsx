@@ -202,7 +202,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 });
         }
         const importProject = () => {
-            pxt.tickEvent("projects.importdialog", undefined, /*interactiveConsent*/true);
+            pxt.tickEvent("projects.importdialog", undefined, { interactiveConsent: true });
             this.props.parent.importProjectDialog();
         }
 
@@ -256,11 +256,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
 
     brandIconClick() {
-        pxt.tickEvent("projects.brand", undefined, /*interactiveConsent*/true);
+        pxt.tickEvent("projects.brand", undefined, { interactiveConsent: true });
     }
 
     orgIconClick() {
-        pxt.tickEvent("projects.org", undefined, /*interactiveConsent*/true);
+        pxt.tickEvent("projects.org", undefined, { interactiveConsent: true });
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ProjectsState, nextContext: any): boolean {
@@ -347,7 +347,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     }
 
     newProject() {
-        pxt.tickEvent("projects.new", undefined, /*interactiveConsent*/true);
+        pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
         this.props.parent.newProject();
     }
 
@@ -546,12 +546,12 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         const { visible } = this.state;
 
         const importHex = () => {
-            pxt.tickEvent("projects.import", undefined, /*interactiveConsent*/true);
+            pxt.tickEvent("projects.import", undefined, { interactiveConsent: true });
             this.hide();
             this.props.parent.importFileDialog();
         }
         const importUrl = () => {
-            pxt.tickEvent("projects.importurl", undefined, /*interactiveConsent*/true);
+            pxt.tickEvent("projects.importurl", undefined, { interactiveConsent: true });
             this.hide();
             this.props.parent.importUrlDialog();
         }
@@ -637,14 +637,14 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
 
         const save = () => {
             this.hide();
-            if (this.props.parent.state.projectName != newName) pxt.tickEvent("exitandsave.projectrename", undefined, /*interactiveConsent*/true);
+            if (this.props.parent.state.projectName != newName) pxt.tickEvent("exitandsave.projectrename", undefined, { interactiveConsent: true });
             this.props.parent.updateHeaderNameAsync(newName)
                 .done(() => {
                     this.props.parent.openHome();
                 })
         }
         const cancel = () => {
-            pxt.tickEvent("exitandsave.cancel", undefined, /*interactiveConsent*/true);
+            pxt.tickEvent("exitandsave.cancel", undefined, { interactiveConsent: true });
             this.hide();
         }
         const onChange = (name: string) => {
