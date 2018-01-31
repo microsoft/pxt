@@ -186,6 +186,12 @@ namespace pxt.editor {
         importAsync(project: IProjectView, data: pxt.cpp.HexFile): Promise<void>;
     }
 
+    export interface IResourceImporter {
+        id: string;
+        canImport(data: File): boolean;
+        importAsync(project: IProjectView, data: File): Promise<void>;
+    }
+
     export interface ISettingsProps {
         parent: IProjectView;
         visible?: boolean;
