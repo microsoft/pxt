@@ -233,7 +233,12 @@ namespace pxt.usb {
     }
 
     function requestDeviceAsync(): Promise<USBDevice> {
-        return (navigator as any).usb.requestDevice({ filters: [] })
+        return (navigator as any).usb.requestDevice({ filters: [
+            { vendorId: VID.ADAFRUIT },
+            { vendorId: VID.ARDUINO },
+            { vendorId: VID.NXP },
+            { vendorId: VID.ATMEL },
+        ] })
     }
 
     function getHidAsync() {
