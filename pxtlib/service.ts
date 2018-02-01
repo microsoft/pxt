@@ -577,17 +577,6 @@ namespace ts.pxtc {
 
     }
 
-    /**
-     * atob replacement
-     * @param s 
-     */
-    export var decodeBase64 = function (s: string) { return atob(s); }
-    /**
-     * bota replacement
-     * @param s 
-     */
-    export var encodeBase64 = function (s: string) { return btoa(s); }
-
     export namespace UF2 {
         export const UF2_MAGIC_START0 = 0x0A324655; // "UF2\n"
         export const UF2_MAGIC_START1 = 0x9E5D5157; // Randomly selected
