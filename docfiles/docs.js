@@ -50,14 +50,14 @@ function dirAuto($el) {
 }
 
 function searchSubmit(form) {
-    if (pxt && pxt.tickEvent) pxt.tickEvent("docs.search", { 'source': form.id })
+    if (pxt && pxt.tickEvent) pxt.tickEvent("docs.search", { 'source': form.id }, { interactiveConsent: true })
 }
 
 function setupSidebar() {
     $('#togglesidebar').on('keydown', handleEnterKey);
 
     $('.ui.sidebar')
-        .sidebar({ 
+        .sidebar({
             dimPage: false,
             onShow: function () {
                 togglesidebar.setAttribute("aria-expanded", "true");

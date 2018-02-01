@@ -13,32 +13,32 @@ export interface SimulatorProps extends ISettingsProps {
 export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
     openInstructions() {
-        pxt.tickEvent("simulator.make");
+        pxt.tickEvent("simulator.make", undefined, { interactiveConsent: true });
         this.props.parent.openInstructions();
     }
 
     startStopSimulator() {
-        pxt.tickEvent('simulator.startstop');
+        pxt.tickEvent('simulator.startstop', undefined, { interactiveConsent: true });
         this.props.parent.startStopSimulator();
     }
 
     restartSimulator() {
-        pxt.tickEvent('simulator.restart');
+        pxt.tickEvent('simulator.restart', undefined, { interactiveConsent: true });
         this.props.parent.restartSimulator();
     }
 
     toggleTrace() {
-        pxt.tickEvent("simulator.trace");
+        pxt.tickEvent("simulator.trace", undefined, { interactiveConsent: true });
         this.props.parent.toggleTrace();
     }
 
     toggleMute() {
-        pxt.tickEvent("simulator.mute", { view: 'computer', muteTo: '' + !this.props.parent.state.mute });
+        pxt.tickEvent("simulator.mute", { view: 'computer', muteTo: '' + !this.props.parent.state.mute }, { interactiveConsent: true });
         this.props.parent.toggleMute();
     }
 
     toggleSimulatorFullscreen() {
-        pxt.tickEvent("simulator.fullscreen", { view: 'computer', fullScreenTo: '' + !this.props.parent.state.fullscreen });
+        pxt.tickEvent("simulator.fullscreen", { view: 'computer', fullScreenTo: '' + !this.props.parent.state.fullscreen }, { interactiveConsent: true });
         this.props.parent.toggleSimulatorFullscreen();
     }
 

@@ -1747,11 +1747,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
         const isApp = electron.isElectron || pxt.winrt.isWinRT();
 
-        // cookie consent
-        const cookieKey = "cookieconsent"
-        const cookieConsented = targetTheme.hideCookieNotice || isApp || !!pxt.storage.getLocal(cookieKey)
-            || sandbox;
-
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
@@ -1832,7 +1827,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
-                {cookieConsented ? undefined : <container.CookieMessage parent={this} cookieConsented={cookieConsented} cookieKey={cookieKey} /> }
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
             </div>
         );
