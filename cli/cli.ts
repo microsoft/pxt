@@ -1508,7 +1508,7 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     // expand logo
     let logos = (cfg.appTheme as any as Map<string>);
     Object.keys(logos)
-        .filter(k => /logo$/i.test(k) && /^\.\//.test(logos[k]))
+        .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
         .forEach(k => {
             let fn = path.join('./docs', logos[k]);
             pxt.debug(`importing ${fn}`)
