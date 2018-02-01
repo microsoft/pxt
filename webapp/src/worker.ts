@@ -14,7 +14,7 @@ importScripts(
 let pm: any = postMessage;
 
 // work around safari not providing atob
-if (typeof atob === "undefined" || true) {
+if (typeof atob === "undefined") {
     //http://www.rise4fun.com/Bek/Cbl
     ts.pxtc.decodeBase64 = function (_input: string): string {
         function _D(_x: number): number { return ((_x == 0x2F) ? 0x3F : ((_x == 0x2B) ? 0x3E : ((_x <= 0x39) ? (_x + 0x4) : ((_x <= 0x5A) ? (_x - 0x41) : (_x - 0x47))))); };
@@ -115,10 +115,6 @@ if (typeof atob === "undefined" || true) {
             return undefined;
         }
         const r = result.join('');
-        if (r != atob(_input)) {
-            console.log('atob: ' + atob(_input));
-            console.log('bek: ' + r);
-        }
         return r;
     }
 }
