@@ -64,7 +64,7 @@ namespace pxt.runner {
         if (woptions.showEdit && !theme.hideDocsEdit) { // edit button
             const $editBtn = $(`<a class="item" role="button" tabindex="0" aria-label="${lf("edit")}"><i role="presentation" aria-hidden="true" class="edit icon"></i></a>`).click(() => {
                 decompileResult.package.compressToFileAsync(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
-                    .done(buf => window.open(`${getEditUrl(options)}/#project:${window.btoa(Util.uint8ArrayToString(buf))}`, 'pxt'))
+                    .done(buf => window.open(`${getEditUrl(options)}/#project:${ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf))}`, 'pxt'))
             })
             $menu.append($editBtn);
         }

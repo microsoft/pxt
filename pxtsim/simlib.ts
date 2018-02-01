@@ -225,7 +225,7 @@ namespace pxsim {
                     if (resolve) resolve();
                     resolve = undefined;
                 }
-                const url = "data:audio/wav;base64," + btoa(uint8ArrayToString(buf.data))
+                const url = "data:audio/wav;base64," + window.btoa(uint8ArrayToString(buf.data))
                 const audio = new Audio(url);
                 if (_mute)
                     audio.volume = 0;
