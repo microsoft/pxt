@@ -1438,7 +1438,7 @@ namespace pxt.hex {
                     buf += "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
                 }
             } else {
-                buf = pxtc.decodeBase64(nxt)
+                buf = ts.pxtc.decodeBase64(nxt)
             }
 
             Util.assert(buf.length > 0)

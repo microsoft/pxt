@@ -754,7 +754,7 @@ _stored_program: .string "`
         let src = serialize(bin, opts)
         src = patchSrcHash(bin, src)
         if (opts.embedBlob)
-            src += addSource(opts.embedMeta, decodeBase64(opts.embedBlob))
+            src += addSource(opts.embedMeta, ts.pxtc.decodeBase64(opts.embedBlob))
         let checksumWords = 8
         let pageSize = hex.flashCodeAlign(opts.target)
         if (opts.target.flashChecksumAddr) {
