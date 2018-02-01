@@ -1,6 +1,8 @@
 /// <reference path="../../localtypings/mscc.d.ts" />
 
 namespace pxt {
+    type Map<T> = {[index: string]: T};
+
     interface CookieBannerInfo {
         /* Does the banner need to be shown? */
         IsConsentRequired: boolean;
@@ -33,8 +35,37 @@ namespace pxt {
         (err?: any, res?: T): void;
     }
 
+    const eventBufferSizeLimit = 20;
+    const queues: TelemetryQueue<any, any, any>[] = [];
+
     let analyticsLoaded = false;
-    let pendingCallbacks: (() => void)[] = [];
+
+    class TelemetryQueue<A, B, C> {
+        private q: [A, B, C][] = [];
+        constructor (private log: (a?: A, b?: B, c?: C) => void) {
+            queues.push(this);
+        }
+
+        public track(a: A, b: B, c: C) {
+            if (analyticsLoaded) {
+                this.log(a, b, c);
+            }
+            else {
+                this.q.push([a, b, c]);
+                if (this.q.length > eventBufferSizeLimit) this.q.shift();
+            }
+        }
+
+        public flush() {
+            while (this.q.length) {
+                const [a, b, c] = this.q.shift();
+                this.log(a, b, c);
+            }
+        }
+    }
+
+    let eventLogger: TelemetryQueue<string, Map<string>, Map<number>>;
+    let exceptionLogger: TelemetryQueue<any, string, Map<string>>;
 
     export function initAnalyticsAsync() {
         getCookieBannerAsync(document.domain, detectLocale(), (bannerErr, info) => {
@@ -71,13 +102,18 @@ namespace pxt {
         });
     }
 
-    export function onAnalyticsLoaded(cb: () => void) {
-        if (analyticsLoaded) {
-            cb();
+    export function aiTrackEvent(id: string, data?: any, measures?: any) {
+        if (!eventLogger) {
+            eventLogger = new TelemetryQueue((a, b, c) => (window as any).appInsights.trackEvent(a, b, c));
         }
-        else {
-            pendingCallbacks.push(cb);
+        eventLogger.track(id, data, measures);
+    }
+
+    export function aiTrackException(err: any, kind?: string, props?: any) {
+        if (!exceptionLogger) {
+            exceptionLogger = new TelemetryQueue((a, b, c) => (window as any).appInsights.trackException(a, b, c));
         }
+        exceptionLogger.track(err, kind, props);
     }
 
     function detectLocale() {
@@ -137,11 +173,9 @@ namespace pxt {
         // loadAppInsights is defined in docfiles/tracking.html
         const loadAI = (window as any).loadAppInsights;
         if (loadAI) {
-            loadAI(includeCookie)
+            loadAI(includeCookie);
             analyticsLoaded = true;
-            while (pendingCallbacks.length) {
-                pendingCallbacks.pop()();
-            }
+            queues.forEach(a => a.flush());
         }
     }
 
