@@ -1024,7 +1024,7 @@ int main() {
 
         let data = JSON.stringify(creq)
         res.sha = U.sha256(data)
-        res.compileData = btoa(U.toUTF8(data))
+        res.compileData = ts.pxtc.encodeBase64(U.toUTF8(data))
         res.shimsDTS = shimsDTS.finish()
         res.enumsDTS = enumsDTS.finish()
 
@@ -1517,7 +1517,7 @@ namespace pxt.hex {
                     let bin = ""
                     for (let k = 0; k < outln.length; k += 2)
                         bin += String.fromCharCode(parseInt(outln.slice(k, k + 2), 16))
-                    outp.push(btoa(bin))
+                    outp.push(ts.pxtc.encodeBase64(bin))
                 }
             }
         }

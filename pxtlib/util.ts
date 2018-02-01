@@ -1096,7 +1096,7 @@ namespace ts.pxtc.Util {
 
         // encode
         if (/xml|svg/.test(mimetype)) return `data:${mimetype},${encodeURIComponent(data)}`
-        else return `data:${mimetype || "image/png"};base64,${btoa(toUTF8(data))}`;
+        else return `data:${mimetype || "image/png"};base64,${ts.pxtc.encodeBase64(toUTF8(data))}`;
     }
 }
 
