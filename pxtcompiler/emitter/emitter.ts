@@ -2546,7 +2546,7 @@ ${lbl}: .short 0xffff
             function parseHexLiteral(s: string) {
                 if (s == "" && currJres) {
                     if (!currJres.dataEncoding || currJres.dataEncoding == "base64") {
-                        s = U.toHex(U.stringToUint8Array(atob(currJres.data)))
+                        s = U.toHex(U.stringToUint8Array(ts.pxtc.decodeBase64(currJres.data)))
                     } else if (currJres.dataEncoding == "hex") {
                         s = currJres.data
                     } else {

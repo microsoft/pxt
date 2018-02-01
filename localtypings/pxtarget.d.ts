@@ -174,7 +174,9 @@ declare namespace pxt {
         logoUrl?: string;
         logo?: string;
         portraitLogo?: string;
-        rightLogo?: string;
+        highContrastLogo?: string;
+        highContrastPortraitLogo?: string;
+        rightLogo?: string; 
         docsLogo?: string;
         organization?: string;
         organizationUrl?: string;

@@ -935,7 +935,7 @@ export class ProjectView
         pxt.debug("exporting project");
         return this.exportProjectToFileAsync()
             .then((buf) => {
-                return window.btoa(Util.uint8ArrayToString(buf));
+                return ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf));
             });
     }
 

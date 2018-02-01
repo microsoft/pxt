@@ -206,7 +206,10 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
         const isRunning = this.props.parent.state.running;
+        const hc = !!this.props.parent.state.highContrast;
 
+        const logo = (hc ? targetTheme.highContrastLogo : undefined) || targetTheme.logo;
+        const portraitLogo = (hc ? targetTheme.highContrastPortraitLogo : undefined) || targetTheme.portraitLogo;
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
 
         const simActive = this.props.parent.isEmbedSimActive();
@@ -218,10 +221,10 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu") }>
             {!sandbox ? <div className="left menu">
                 <a aria-label={lf("{0} Logo", targetTheme.boardName) } role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={() => this.brandIconClick() } onKeyDown={sui.fireClickOnEnter}>
-                    {targetTheme.logo || targetTheme.portraitLogo
-                        ? <img className={`ui logo ${targetTheme.logo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />
+                    {logo || portraitLogo
+                        ? <img className={`ui logo ${logo ? " portrait hide" : ''}`} src={Util.toDataUri(logo || portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />
                         : <span className="name">{targetTheme.boardName}</span>}
-                    {targetTheme.portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />) : null}
+                    {portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />) : null}
                 </a>
                 {targetTheme.betaUrl ? <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta") }</a> : undefined}
                 {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen") } text={lf("Home") } onClick={() => this.goHome() } /> : null}

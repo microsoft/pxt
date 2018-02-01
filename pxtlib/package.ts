@@ -623,9 +623,9 @@ namespace pxt {
                 if (this.config.files.indexOf(fn) < 0)
                     U.userError(lf("please add '{0}' to \"files\" in {1}", fn, pxt.CONFIG_NAME))
                 cont = "// Auto-generated. Do not edit.\n" + cont + "\n// Auto-generated. Do not edit. Really.\n"
-                if (this.host().readFile(this, fn) !== cont) {
+                if (this.host().readFile(this, fn, true) !== cont) {
                     pxt.debug(`updating ${fn} (size=${cont.length})...`)
-                    this.host().writeFile(this, fn, cont)
+                    this.host().writeFile(this, fn, cont, true)
                 }
             }
 
@@ -682,7 +682,7 @@ namespace pxt {
                                     eVER: pxt.appTarget.versions ? pxt.appTarget.versions.target : "",
                                     pxtTarget: appTarget.id,
                                 })
-                                opts.embedBlob = btoa(U.uint8ArrayToString(buf))
+                                opts.embedBlob = ts.pxtc.encodeBase64(U.uint8ArrayToString(buf))
                             });
                     } else {
                         return Promise.resolve()
