@@ -32,17 +32,16 @@ $(document).ready(function () {
         }
     })
     // Enable telemetry
-    var ai = window.appInsights;
     tickEvent = function (id, data) {
-        if (!ai) return;
-        if (!data) ai.trackEvent(id);
+        if (!pxt.aiTrackEvent) return;
+        if (!data) pxt.aiTrackEvent(id);
         else {
             var props = {};
             var measures = {};
             for (const k in data)
                 if (typeof data[k] == "string") props[k] = data[k];
                 else measures[k] = data[k];
-            ai.trackEvent(id, props, measures);
+            pxt.aiTrackEvent(id, props, measures);
         }
     }
 });
