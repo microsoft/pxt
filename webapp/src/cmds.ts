@@ -100,15 +100,6 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     }).then(() => { });
 }
 
-function webusbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.debug('webusb deployment...');
-    core.infoNotification(lf("Flashing device..."));
-    let f = resp.outfiles[pxtc.BINARY_UF2]
-    let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
-    return pxt.usb.initAsync()
-        .then(dev => dev.reflashAsync(blocks))
-}
-
 function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('HID deployment...');
     core.infoNotification(lf("Flashing device..."));
@@ -142,8 +133,14 @@ export function initCommandsAsync(): Promise<void> {
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
-    if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
-        pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
+
+    if (pxt.usb.isAvailable() && /webusb=1/i.test(window.location.href)) {
+        pxt.usb.setEnabled(true)
+        pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync
+    }
+
+    if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
+        pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         const useUf2 = pxt.appTarget.serial && pxt.appTarget.serial.useHF2;
         const hidSelectors = pxt.appTarget.compile && pxt.appTarget.compile.hidSelectors;
