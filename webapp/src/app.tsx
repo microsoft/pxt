@@ -1124,9 +1124,9 @@ export class ProjectView
 
     compile(saveOnly = false) {
         // the USB init has to be called from an event handler
-        if (/webusb=1/i.test(window.location.href)) {
-            pxt.usb.initAsync().catch(e => { })
-        }
+        if (!saveOnly)
+            pxt.usb.uiHook()
+
         this.beforeCompile();
         let userContextWindow: Window = undefined;
         if (!pxt.appTarget.compile.useModulator && pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext())
