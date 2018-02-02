@@ -1070,12 +1070,11 @@ export class ProjectView
             disagreeLbl: lf("Cancel")
         }).then(r => {
             if (!r) return Promise.resolve();
-            if (hf2Connection) {
-                return hf2Connection.disconnectAsync()
-                    .then(() => this.resetWorkspace())
-            } else {
-                return this.resetWorkspace()
-            }
+
+            return hidbridge.disconnectWrapperAsync()
+                .then(() => {
+                    return this.resetWorkspace();
+                });
         });
     }
 
@@ -1882,56 +1881,13 @@ function initLogin() {
     }
 }
 
-let serialConnectionPoller: number;
-let hidPingInterval: number;
-let hf2Connection: pxt.HF2.Wrapper;
-
-function startSerialConnectionPoller() {
-    if (serialConnectionPoller == null)
-        serialConnectionPoller = window.setInterval(initSerial, 5000);
-}
-
-function stopSerialConnectionPoller() {
-    clearInterval(serialConnectionPoller);
-    serialConnectionPoller = null;
-}
-
 function initSerial() {
     if (!pxt.appTarget.serial || !pxt.winrt.isWinRT() && (!Cloud.isLocalHost() || !Cloud.localToken))
         return;
 
     if (hidbridge.shouldUse()) {
-        hidbridge.initAsync(true)
-            .then(dev => {
-                hf2Connection = dev;
-                // disable poller when connected; otherwise the forceful reconnecting interferes with
-                // flashing; it may also lead to data loss on serial stream
-                stopSerialConnectionPoller()
-                if (hidPingInterval == null)
-                    hidPingInterval = window.setInterval(() => {
-                        if (serialConnectionPoller == null)
-                            dev.pingAsync()
-                                .then(() => {
-                                }, e => {
-                                    pxt.debug("re-starting connection poller")
-                                    startSerialConnectionPoller()
-                                })
-                    }, 4900)
-                dev.onSerial = (buf, isErr) => {
-                    let data = Util.fromUTF8(Util.uint8ArrayToString(buf))
-                    //pxt.debug('serial: ' + data)
-                    window.postMessage({
-                        type: 'serial',
-                        id: 'n/a', // TODO
-                        data
-                    }, "*")
-                }
-            })
-            .catch(e => {
-                pxt.log(`hidbridge failed to load, ${e}`);
-                startSerialConnectionPoller();
-            })
-        return
+        // Serial is already taken care of by our WinRT module
+        return;
     }
 
     pxt.debug('initializing serial pipe');
@@ -1939,15 +1895,12 @@ function initSerial() {
     let serialBuffers: pxt.Map<string> = {};
     ws.onopen = (ev) => {
         pxt.debug('serial: socket opened');
-        stopSerialConnectionPoller()
     }
     ws.onclose = (ev) => {
         pxt.debug('serial: socket closed')
-        startSerialConnectionPoller()
     }
     ws.onerror = (ev) => {
         pxt.debug('serial: error')
-        startSerialConnectionPoller()
     }
     ws.onmessage = (ev) => {
         try {
@@ -2323,7 +2276,6 @@ $(document).ready(() => {
                 theEditor.setState({ editorState: state });
             }
             initSerial();
-            startSerialConnectionPoller();
             initScreenshots();
             initHashchange();
             electron.init();
