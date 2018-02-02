@@ -104,14 +104,14 @@ namespace pxt {
 
     export function aiTrackEvent(id: string, data?: any, measures?: any) {
         if (!eventLogger) {
-            eventLogger = new TelemetryQueue((a, b, c) => (window as any).appInsights.trackEvent(a, b, c));
+            eventLogger = new TelemetryQueue<string, Map<string>, Map<number>>((a, b, c) => (window as any).appInsights.trackEvent(a, b, c));
         }
         eventLogger.track(id, data, measures);
     }
 
     export function aiTrackException(err: any, kind?: string, props?: any) {
         if (!exceptionLogger) {
-            exceptionLogger = new TelemetryQueue((a, b, c) => (window as any).appInsights.trackException(a, b, c));
+            exceptionLogger = new TelemetryQueue<any, string, Map<string>>((a, b, c) => (window as any).appInsights.trackException(a, b, c));
         }
         exceptionLogger.track(err, kind, props);
     }

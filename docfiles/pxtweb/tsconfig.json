@@ -6,8 +6,6 @@
         "declaration": true,
         "out": "../../built/web/pxtweb.js",
         "newLine": "LF",
-        "sourceMap": false,
-        "lib": ["dom", "dom.iterable", "scripthost", "es6"],
-        "types": []
+        "sourceMap": false
     }
 }
