@@ -10,7 +10,7 @@ In this project, you’ll create a programming environment for a *domain* of you
 using the Microsoft MakeCode platform (www.makecode.com).  Example domains include:
 
 * Augmented reality: using marker-based augmented reality, let the user prototype new user interfaces;
-* Traffic simulator: using a traffic simulation engine, let the user program the strategy to switch the lights 
+* Traffic simulator: using a traffic simulation engine, let the user program a strategy to switch the lights and see the results on traffic flow;
 * Face interaction: using a face recognition engine, let the user build small apps that morph the user face based on the environment
 * Survey: build a survey that is dynamic in nature, requiring conditional control-flow;
 * Business workflow: encode business rules as a program; 
@@ -79,7 +79,7 @@ most important to least important for the project:
 * VS Code;
 * node.js.
 
-# Set up a GitHut repository per project
+# Set up a GitHub repository per project
 
 All your project's code and documentation should be in the repo. You can start
 the repo by copying over the structure and files of the [microsoft/pxt-sample](https://github.com/microsoft/pxt-sample).
@@ -92,7 +92,16 @@ like Slack or [Microsoft Teams](https://products.office.com/microsoft-teams/).
 
 # Choosing your domain
 
-TBD
+You should choose a domain D considering the following questions:
+- what problem/issue does a client in domain D need help with?  Perhaps the client needs to learn a new concept.   
+- can this problem be addressed via computational solution and simple programming?
+- who is your audience? who is your client? 
+- can you (automatically) measure how well a client is progressing in their learning/solving journey? For example, 
+  in the traffic flow example, the client's traffic light logic can be measured by the average traffic flow
+  that it permits through the streets. 
+
+You'll probably want to come up with several potential domains and associated problems/issues. Try to evaluate
+them and put them in a rank order.
 
 # Reusing JavaScript libraries
 
