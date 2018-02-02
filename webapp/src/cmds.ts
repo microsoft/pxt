@@ -148,7 +148,7 @@ export function initCommandsAsync(): Promise<void> {
         pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
-            pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true), ), () => hidbridge.disconnectWrapperAsync()));
+            pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => {}), () => hidbridge.disconnectWrapperAsync());
             pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployCoreAsync = hidDeployCoreAsync;
         } else {

@@ -159,15 +159,26 @@ class BridgeIO implements pxt.HF2.PacketIO {
 }
 
 let uf2Wrapper: pxt.HF2.Wrapper;
-let initPromise: Promise<pxt.HF2.Wrapper>
+let initPromise: Promise<pxt.HF2.Wrapper>;
+let serialHandler: (buf: Uint8Array, isStderr: boolean) => void;
 
 function hf2Async() {
     return pxt.HF2.mkPacketIOAsync()
         .then(h => {
-            uf2Wrapper = new pxt.HF2.Wrapper(h)
+            uf2Wrapper = new pxt.HF2.Wrapper(h);
+            if (serialHandler) {
+                uf2Wrapper.onSerial = serialHandler;
+            }
             return uf2Wrapper.reconnectAsync(true)
                 .then(() => uf2Wrapper)
         })
+}
+
+export function configureHidSerial(serialCb: (buf: Uint8Array, isStderr: boolean) => void): void {
+    serialHandler = serialCb;
+    if (uf2Wrapper) {
+        uf2Wrapper.onSerial = serialHandler;
+    }
 }
 
 export function disconnectWrapperAsync(): Promise<void> {
