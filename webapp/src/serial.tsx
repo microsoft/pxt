@@ -12,7 +12,7 @@ import Cloud = pxt.Cloud
 import Util = pxt.Util
 
 const lf = Util.lf
-const maxEntriesPerChart: number = 2500;
+const maxEntriesPerChart: number = 4000;
 
 export class Editor extends srceditor.Editor {
     savedMessageQueue: pxsim.SimulatorSerialMessage[] = []
@@ -437,7 +437,7 @@ class Chart {
         data.push([timestamp, value]);
         // remove a third of the card
         if (data.length > maxEntriesPerChart)
-            data.splice(0, data.length / 3);
+            data.splice(0, data.length / 4);
     }
 
     start() {
