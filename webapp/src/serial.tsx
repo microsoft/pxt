@@ -252,13 +252,14 @@ export class Editor extends srceditor.Editor {
         const sep = lf("{id:csvseparator}\t");
         const lines: { name: string; line: number[][]; }[] = [];
         this.charts.forEach(chart => Object.keys(chart.datas).forEach(k => lines.push({ name: `${k} (${chart.source})`, line: chart.datas[k] })));
-        let csv = lines.map(line => `time (s)${sep} ${line.name}`).join(sep + ' ') + '\r\n';
+        let csv = `sep=${sep}\r\n` +
+            lines.map(line => `time (s)${sep}${line.name}`).join(sep) + '\r\n';
 
         const datas = lines.map(line => line.line);
         const nl = datas.map(data => data.length).reduce((l, c) => Math.max(l, c));
         const nc = this.charts.length;
         for (let i = 0; i < nl; ++i) {
-            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ` ${sep} `).join(sep + ' ');
+            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}${sep}${data[i][1]}` : sep).join(sep);
             csv += '\r\n';
         }
 
