@@ -769,7 +769,7 @@ namespace pxt {
                                     eVER: pxt.appTarget.versions ? pxt.appTarget.versions.target : "",
                                     pxtTarget: appTarget.id,
                                 })
-                                opts.embedBlob = btoa(U.uint8ArrayToString(buf))
+                                opts.embedBlob = ts.pxtc.encodeBase64(U.uint8ArrayToString(buf))
                             });
                     } else {
                         return Promise.resolve()
