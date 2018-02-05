@@ -71,8 +71,9 @@ namespace pxt {
         getCookieBannerAsync(document.domain, detectLocale(), (bannerErr, info) => {
             if (bannerErr || info.Error) {
                 // Start app insights, just don't drop any cookies
-                initializeAppInsights(false);
-                return;
+                // initializeAppInsights(false);
+                // return;
+                info = { "IsConsentRequired": true, "CookieName": "MSCC", "Markup": "<div id='msccBanner' dir='ltr' data-site-name='uhf-makecode' data-mscc-version='0.4.0' data-nver='aspnet-2.0.7' data-sver='0.1.2' class='cc-banner' role='alert'><div class='cc-container'><svg class='cc-icon cc-v-center' x='0px' y='0px' viewBox='0 0 44 44' height='30px' fill='none' stroke='currentColor'><circle cx='22' cy='22' r='20' stroke-width='2'></circle><line x1='22' x2='22' y1='18' y2='33' stroke-width='3'></line><line x1='22' x2='22' y1='12' y2='15' stroke-width='3'></line></svg> <span class='cc-v-center cc-text'>This site uses cookies for analytics, personalized content and ads. By continuing to browse this site, you agree to this use.</span> <a href='https://go.microsoft.com/fwlink/?linkid=845480' aria-label='Learn more about Microsoft&#39;s Cookie Policy' id='msccLearnMore' class='cc-link cc-v-center cc-float-right' data-mscc-ic='false'>Learn more</a></div></div>", "Css": ["https://uhf.microsoft.com/mscc/statics/mscc-0.4.0.min.css"], "Js": ["https://uhf.microsoft.com/mscc/statics/mscc-0.4.0.min.js"], "MinimumConsentDate": "2019-04-01T00:00:00", "Error": null, "lastUpdate": 1517615910 } as any;
             }
 
             // Clear the cookies if the consent is too old, mscc won't do it automatically

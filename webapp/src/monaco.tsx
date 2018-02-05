@@ -167,9 +167,9 @@ export class Editor extends srceditor.Editor {
         }).then(b => {
             // discard
             if (!b) {
-                pxt.tickEvent("typescript.keepText");
+                pxt.tickEvent("typescript.keepText", undefined, { interactiveConsent: true });
             } else {
-                pxt.tickEvent("typescript.discardText");
+                pxt.tickEvent("typescript.discardText", undefined, { interactiveConsent: true });
                 this.parent.saveBlocksToTypeScriptAsync().then((src) => {
                     this.overrideFile(src);
                     this.parent.setFile(bf);
@@ -685,7 +685,7 @@ export class Editor extends srceditor.Editor {
         let color = pxt.blocks.convertColour(metaColor);
 
         treeitem.onclick = (ev: MouseEvent) => {
-            pxt.tickEvent("monaco.toolbox.click");
+            pxt.tickEvent("monaco.toolbox.click", undefined, { interactiveConsent: true });
 
             let monacoFlyout = document.getElementById('monacoFlyoutWidget');
             monacoEditor.resetFlyout(false);
@@ -792,7 +792,7 @@ export class Editor extends srceditor.Editor {
                     if (!monacoBlockDisabled) {
                         monacoBlock.draggable = true;
                         monacoBlock.onclick = (ev2: MouseEvent) => {
-                            pxt.tickEvent("monaco.toolbox.itemclick");
+                            pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
 
                             monacoEditor.resetFlyout(true);
 

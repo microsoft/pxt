@@ -59,4 +59,23 @@ namespace pxt.analytics {
             }
         };
     }
+
+    export function setConsent() {
+        if (typeof mscc !== "undefined" && !mscc.hasConsent()) {
+            mscc.setConsent();
+        }
+    }
+
+    /**
+     * Helper method for generating a function that can be used to wrap onClick handlers
+     * that should trigger interactive consent
+     */
+    export function consentWrapper<T>(that: T) {
+        return (cb: () => void) => {
+            return () => {
+                cb.bind(that)();
+                setConsent();
+            };
+        };
+    }
 }
