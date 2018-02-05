@@ -237,11 +237,11 @@ namespace pxt.BrowserUtils {
     }
 
     export function browserDownloadBinText(text: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
-        return browserDownloadBase64(btoa(text), name, contentType, userContextWindow, onError)
+        return browserDownloadBase64(ts.pxtc.encodeBase64(text), name, contentType, userContextWindow, onError)
     }
 
     export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
-        return browserDownloadBase64(btoa(Util.toUTF8(text)), name, contentType, userContextWindow, onError)
+        return browserDownloadBase64(ts.pxtc.encodeBase64(Util.toUTF8(text)), name, contentType, userContextWindow, onError)
     }
 
     export function isBrowserDownloadInSameWindow(): boolean {
