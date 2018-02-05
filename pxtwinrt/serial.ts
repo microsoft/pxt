@@ -37,8 +37,8 @@ namespace pxt.winrt {
         if (watcher) {
             watcher.stop();
             watcher.removeEventListener("added", deviceAdded);
-            watcher.removeEventListener("removed", deviceAdded);
-            watcher.removeEventListener("updated", deviceAdded);
+            watcher.removeEventListener("removed", deviceRemoved);
+            watcher.removeEventListener("updated", deviceUpdated);
         }
 
         Object.keys(activePorts).forEach((deviceId) => {
