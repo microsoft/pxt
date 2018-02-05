@@ -92,7 +92,7 @@
     "pxt-monaco-typescript": "2.3.4-v0",
     "browserify": "^13.0.0",
     "jake": "^8.0.12",
-    "jquery": "^2.2.0",
+    "jquery": "^3.0.0",
     "karma": "^1.7.0",
     "karma-chai": "^0.1.0",
     "karma-chrome-launcher": "^2.0.0",
