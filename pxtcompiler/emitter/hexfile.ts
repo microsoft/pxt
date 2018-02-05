@@ -617,7 +617,7 @@ _stored_program: .string "`
         let src = serialize(bin, opts)
         src = patchSrcHash(bin, src)
         if (opts.embedBlob)
-            src += addSource(opts.embedMeta, decodeBase64(opts.embedBlob))
+            src += addSource(opts.embedMeta, ts.pxtc.decodeBase64(opts.embedBlob))
         let checksumWords = 8
         let pageSize = hex.flashCodeAlign(opts.target)
         if (opts.target.flashChecksumAddr) {
@@ -667,7 +667,7 @@ __flash_checksums:
                 bin.checksumBlock = chk;
             }
             if (opts.target.useUF2) {
-                const myhex = btoa(hex.patchHex(bin, res.buf, false, true)[0])
+                const myhex = ts.pxtc.encodeBase64(hex.patchHex(bin, res.buf, false, true)[0])
                 bin.writeFile(pxtc.BINARY_UF2, myhex)
             } else {
                 const myhex = hex.patchHex(bin, res.buf, false, false).join("\r\n") + "\r\n"
