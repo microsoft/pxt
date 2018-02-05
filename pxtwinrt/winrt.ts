@@ -95,6 +95,7 @@ namespace pxt.winrt {
             console.log(`disconnet pack io`);
             packetIO.disconnectAsync().done();
         }
+        suspendSerial();
     }
     function resumingHandler(args: ResumingArgs) {
         console.log(`resuming`);
@@ -102,6 +103,7 @@ namespace pxt.winrt {
             console.log(`reconnet pack io`);
             packetIO.reconnectAsync().done();
         }
+        initSerial();
     }
 
     let initialActivationDeferred: Promise.Resolver<ActivationArgs>;
