@@ -12,6 +12,7 @@ import Cloud = pxt.Cloud
 import Util = pxt.Util
 
 const lf = Util.lf
+const maxEntriesPerChart: number = 4000;
 
 export class Editor extends srceditor.Editor {
     savedMessageQueue: pxsim.SimulatorSerialMessage[] = []
@@ -24,8 +25,6 @@ export class Editor extends srceditor.Editor {
     maxConsoleLineLength: number = 255
     maxConsoleEntries: number = 100
     active: boolean = true
-    maxChartTime: number = 18000
-    chartDropper: number
 
     lineColors = ["#f00", "#00f", "#0f0", "#ff0"]
     hcLineColors = ["000"]
@@ -210,29 +209,16 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    dropStaleCharts() {
-        let now = Util.now()
-        this.charts.forEach((chart) => {
-            if (now - chart.lastUpdatedTime > this.maxChartTime) {
-                this.chartRoot.removeChild(chart.rootElement)
-                chart.isStale = true
-            }
-        })
-        this.charts = this.charts.filter(c => !c.isStale)
-    }
-
     pauseRecording() {
         this.active = false
         if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.stop())
-        clearInterval(this.chartDropper)
     }
 
     startRecording() {
         this.active = true
         if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.start())
-        this.chartDropper = setInterval(this.dropStaleCharts.bind(this), 20000)
     }
 
     toggleRecording() {
@@ -266,15 +252,16 @@ export class Editor extends srceditor.Editor {
 
     downloadCSV() {
         const sep = lf("{id:csvseparator}\t");
-        const lines: { name: string; line: TimeSeries; }[] = [];
-        this.charts.forEach(chart => Object.keys(chart.lines).forEach(k => lines.push({ name: `${k} (${chart.source})`, line: chart.lines[k] })));
-        let csv = lines.map(line => `time (s)${sep} ${line.name}`).join(sep + ' ') + '\r\n';
+        const lines: { name: string; line: number[][]; }[] = [];
+        this.charts.forEach(chart => Object.keys(chart.datas).forEach(k => lines.push({ name: `${k} (${chart.source})`, line: chart.datas[k] })));
+        let csv = `sep=${sep}\r\n` +
+            lines.map(line => `time (s)${sep}${line.name}`).join(sep) + '\r\n';
 
-        const datas = lines.map(line => line.line.data);
+        const datas = lines.map(line => line.line);
         const nl = datas.map(data => data.length).reduce((l, c) => Math.max(l, c));
         const nc = this.charts.length;
         for (let i = 0; i < nl; ++i) {
-            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ` ${sep} `).join(sep + ' ');
+            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}${sep}${data[i][1]}` : sep).join(sep);
             csv += '\r\n';
         }
 
@@ -350,11 +337,10 @@ class Chart {
     canvas: HTMLCanvasElement;
     label: HTMLDivElement;
     lines: pxt.Map<TimeSeries> = {};
+    datas: pxt.Map<number[][]> = {};
     source: string;
     variable: string;
     chart: SmoothieChart;
-    isStale: boolean = false;
-    lastUpdatedTime: number = 0;
 
     constructor(source: string, variable: string, chartIdx: number, lineColors: string[]) {
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme
@@ -406,6 +392,7 @@ class Chart {
                 strokeStyle: lineColor,
                 lineWidth: 3
             })
+            this.datas[name] = [];
         }
         return line;
     }
@@ -440,7 +427,6 @@ class Chart {
     addPoint(name: string, value: number, timestamp: number) {
         const line = this.getLine(name);
         line.append(timestamp, value)
-        this.lastUpdatedTime = Util.now();
         if (Object.keys(this.lines).length == 1) {
             // update label with last value
             const valueText = Number(Math.round(Number(value + "e+2")) + "e-2").toString();
@@ -448,6 +434,12 @@ class Chart {
         } else {
             this.label.innerText = this.variable || '';
         }
+        // store data
+        const data = this.datas[name];
+        data.push([timestamp, value]);
+        // remove a third of the card
+        if (data.length > maxEntriesPerChart)
+            data.splice(0, data.length / 4);
     }
 
     start() {
