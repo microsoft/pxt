@@ -185,7 +185,7 @@ namespace pxt.blocks {
             block.appendChild(createShadowValue(t, t.shadowBlockId || "variables_get", t.defaultValue || t.definitionName));
         }
         if (fn.parameters) {
-            comp.parameters.filter(pr => !pr.isOptional && 
+            comp.parameters.filter(pr => !pr.isOptional &&
                 (/^(string|number|boolean)$/.test(pr.type) || pr.shadowBlockId || pr.defaultValue))
                 .forEach(pr => {
                     let shadowValue: Element;
@@ -730,7 +730,7 @@ namespace pxt.blocks {
                 })
             }
         });
-        
+
         if (fn.attributes.imageLiteral) {
             for (let r = 0; r < 5; ++r) {
                 let ri = block.appendDummyInput();
@@ -805,13 +805,13 @@ namespace pxt.blocks {
 
                     const defName = pr.definitionName;
                     const actName = pr.actualName;
-    
+
                     let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
                     let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowBlockId;
                     let customField = pr.fieldEditor;
                     let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
                     let fieldType = pr.type;
-    
+
                     if (isEnum || isFixed) {
                         const syms = Util.values(info.apis.byQName)
                             .filter(e =>
@@ -851,7 +851,7 @@ namespace pxt.blocks {
                                 dd.unshift(shadowValue);
                             }
                         }
-    
+
                         if (customField) {
                             let defl = fn.attributes.paramDefl[actName] || "";
                             const options = {
@@ -865,7 +865,7 @@ namespace pxt.blocks {
                         }
                         else
                             current.appendField(new Blockly.FieldDropdown(dd), defName);
-    
+
                     } else if (customField) {
                         current = addParamInput();
                         const defl = fn.attributes.paramDefl[pr.actualName] || "";

@@ -302,7 +302,7 @@ namespace ts.pxtc {
         Word                = 1 << 7,
         Image               = 1 << 8,
         TaggedText               = 1 << 9,
-        
+
         TripleUnderscore    = SingleUnderscore | DoubleUnderscore,
         TripleAsterisk      = SingleAsterisk | DoubleAsterisk,
         StyleMarks = TripleAsterisk | TripleUnderscore,
@@ -630,7 +630,7 @@ namespace ts.pxtc {
 
         if (currentWord)
             tokens.push({ kind: TokenKind.Word, content: currentWord });
-        
+
         const parts: (BlockLabel | BlockParameter)[] = [];
         const parameters: BlockParameter[] = [];
 

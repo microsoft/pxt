@@ -1808,7 +1808,7 @@ ${output}</xml>`;
             const api = env.blocks.apis.byQName[info.qName];
             const comp = pxt.blocks.compileInfo(api);
             const totalDecompilableArgs = comp.parameters.length + (comp.thisParameter ? 1 : 0);
-            
+
             if (info.attrs.imageLiteral) {
                 // Image literals do not show up in the block string, so it won't be in comp
                 if (info.args.length - totalDecompilableArgs > 1) {
@@ -1831,7 +1831,7 @@ ${output}</xml>`;
 
             if (argumentDifference > 0 && !checkForDestructuringMutation()) {
                 let diff = argumentDifference;
-                
+
                 // Callbacks and default instance parameters do not appear in the block
                 // definition string so they won't show up in the above count
                 if (hasCallback) --diff;
@@ -2245,7 +2245,7 @@ ${output}</xml>`;
             const comp = pxt.blocks.compileInfo(sym);
             const builtin = pxt.blocks.builtinFunctionInfo[info.qName]
             let offset = info.attrs.imageLiteral ? 1 : 0;
-    
+
             if (comp.thisParameter) {
                 res.push({
                     value: unwrapNode(info.args[0]) as Expression,
@@ -2265,7 +2265,7 @@ ${output}</xml>`;
             if (hasThisArgInSymbol) {
                 offset++;
             }
-    
+
             for (let i = offset; i < info.args.length; i++) {
                 res.push({
                     value: unwrapNode(info.args[i]) as Expression,

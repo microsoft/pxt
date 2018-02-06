@@ -56,7 +56,7 @@ namespace pxt.blocks {
         type: string
     }
 
-    // Information for blocks that compile to function calls but are defined by vanilla Blockly 
+    // Information for blocks that compile to function calls but are defined by vanilla Blockly
     // and not dynamically by BlocklyLoader
     export const builtinFunctionInfo: pxt.Map<{ params: string[]; blockId: string; }> = {
         "Math.abs": { blockId: "math_op3", params: ["x"] },
@@ -119,7 +119,7 @@ namespace pxt.blocks {
                     if (p.options && p.options["min"] && p.options["max"]) {
                         range = { min: p.options["min"].value, max: p.options["max"].value };
                     }
-    
+
                     (res.parameters as BlockParameter[]).push({
                         actualName: p.name,
                         type: p.type,
@@ -132,7 +132,7 @@ namespace pxt.blocks {
                         shadowOptions: shadowOptions(p.name),
                         range
                     });
-                    
+
                     if (p.handlerParameters) {
                         p.handlerParameters.forEach(arg => res.handlerArgs.push(arg))
                     }
