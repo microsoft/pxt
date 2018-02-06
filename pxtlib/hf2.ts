@@ -385,7 +385,8 @@ namespace pxt.HF2 {
             if (this.io.isSwitchingToBootloader) {
                 this.io.isSwitchingToBootloader();
             }
-            return this.talkAsync(HF2_CMD_START_FLASH)
+            return this.maybeReconnectAsync()
+                .then(() => this.talkAsync(HF2_CMD_START_FLASH))
                 .then(() => this.initAsync())
                 .then(() => {
                     if (!this.bootloaderMode)
@@ -420,6 +421,13 @@ namespace pxt.HF2 {
                 return Promise.resolve()
             return this.talkAsync(HF2_CMD_BININFO)
                 .then(buf => { })
+        }
+
+        maybeReconnectAsync() {
+            return this.pingAsync()
+                .catch(e =>
+                    this.reconnectAsync()
+                        .then(() => this.pingAsync()))
         }
 
         flashAsync(blocks: pxtc.UF2.Block[]) {
