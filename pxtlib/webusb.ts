@@ -325,11 +325,4 @@ namespace pxt.usb {
         // TODO check what Chrome on Win7 and Win8 does
         return !!(navigator as any).usb
     }
-
-    export function uiHook() {
-        if (isEnabled) {
-            // this needs to be called from within UI handler, not after some async stuff
-            mkPacketIOAsync().catch(e => { })
-        }
-    }
 }
