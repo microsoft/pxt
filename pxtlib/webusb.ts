@@ -289,8 +289,8 @@ namespace pxt.usb {
     }
 
     function getDeviceAsync(): Promise<USBDevice> {
-        return (navigator as any).usb.getDevices()
-            .then((devs: USBDevice[]) => {
+        return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
+            .then<USBDevice>((devs: USBDevice[]) => {
                 if (!devs || !devs.length)
                     return Promise.reject(new USBError(U.lf("No USB device selected or connected; try pairing!")))
                 return devs[0]
