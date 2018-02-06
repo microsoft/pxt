@@ -9,7 +9,7 @@ var cmdIn = ju.cmdIn;
 var strpSrcMap = ju.strpSrcMap;
 
 function tscIn(task, dir, builtDir) {
-    let command = 'node ../node_modules/typescript/bin/tsc'
+    let command = 'node ' + path.relative(dir, './node_modules/typescript/bin/tsc')
     if (process.env.sourceMaps === 'true') {
         command += ' --sourceMap --mapRoot file:///' + path.resolve(builtDir)
     }
@@ -26,7 +26,7 @@ function loadText(filename) {
     return fs.readFileSync(filename, "utf8");
 }
 
-task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js'], { parallelLimit: 10 })
 
 task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testdecompiler', 'karma'])
 
@@ -102,6 +102,7 @@ compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblocks.js"])
 compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js"])
 compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js"])
 compileDir("backendutils", ['pxtlib/util.ts', 'pxtlib/docsrender.ts'])
+file("built/web/pxtweb.js", expand(["docfiles/pxtweb"]), { async: true }, function () { tscIn(this, "docfiles/pxtweb", "built") })
 
 task("karma", ["blocklycompilertest"], function() {
     var command;
@@ -146,6 +147,7 @@ task("lint", [], { async: true }, function () {
         "pxtsim",
         "pxtwinrt",
         "webapp/src",
+        "docfiles/pxtweb",
         "monacots"]
         .map(function (d) { return "node node_modules/tslint/bin/tslint ./" + d + "/*.ts" })
         , { printStdout: true }, function () {

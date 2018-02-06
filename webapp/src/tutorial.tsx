@@ -21,7 +21,7 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
     openTutorialStep(step: number) {
         let options = this.props.parent.state.tutorialOptions;
         options.tutorialStep = step;
-        pxt.tickEvent(`tutorial.step`, { tutorial: options.tutorial, step: step });
+        pxt.tickEvent(`tutorial.step`, { tutorial: options.tutorial, step: step }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(step);
     }
 
@@ -164,7 +164,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
 
         options.tutorialStep = nextStep;
 
-        pxt.tickEvent(`tutorial.next`, { tutorial: options.tutorial, step: nextStep });
+        pxt.tickEvent(`tutorial.next`, { tutorial: options.tutorial, step: nextStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(nextStep);
     }
 
@@ -271,12 +271,12 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
     }
 
     moreTutorials() {
-        pxt.tickEvent(`tutorial.completed.more`);
+        pxt.tickEvent(`tutorial.completed.more`, undefined, { interactiveConsent: true });
         this.props.parent.openTutorials();
     }
 
     exitTutorial() {
-        pxt.tickEvent(`tutorial.completed.exit`);
+        pxt.tickEvent(`tutorial.completed.exit`, undefined, { interactiveConsent: true });
         this.hide();
         this.props.parent.exitTutorial();
     }
