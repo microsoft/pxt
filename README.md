@@ -27,10 +27,13 @@ Examples of Editors built with PXT:
 
 * https://makecode.microbit.org
 * https://makecode.adafruit.com
+* https://makecode.chibitronics.com
+* https://minecraft.makecode.com
+* More editors at https://makecode.com/labs 
 
 ## Branches
 
-* ``master`` is the active development branch, currently ``v1.*`` builds
+* ``master`` is the active development branch, currently ``v3.*`` builds
 * ``v0`` is the servicing branch for ``v0.*`` builds
 
 ## Running a target from localhost
@@ -56,7 +59,7 @@ If you run `npm i` afterwards (in either the target or pxt), you might need to r
 
 ## Build
 
-First, install [Node](https://nodejs.org/en/): minimum version 5.7. Then install the following:
+First, install [Node](https://nodejs.org/en/): minimum version 8. Then install the following:
 ```
 npm install -g jake
 ```
