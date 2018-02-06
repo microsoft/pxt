@@ -129,10 +129,20 @@ namespace pxt.usb {
             throw new USBError(U.lf("USB error on device {0} ({1})", this.dev.productName, msg))
         }
 
+        log(msg: string) {
+            msg = "WebUSB: " + msg
+            //pxt.log(msg)
+            pxt.debug(msg)
+        }
+
         disconnectAsync() {
             if (!this.dev) return Promise.resolve()
             this.ready = false
+            this.log("close device")
             return this.dev.close()
+                .catch(e => {
+                    // just ignore errors closing, most likely device just disconnected
+                })
                 .then(() => {
                     this.dev = null
                     return Promise.delay(500)
@@ -140,9 +150,11 @@ namespace pxt.usb {
         }
 
         reconnectAsync() {
+            this.log("reconnect")
             return this.disconnectAsync()
                 .then(getDeviceAsync)
                 .then(dev => {
+                    this.log("got device: " + dev.manufacturerName + " " + dev.productName)
                     this.dev = dev
                     return this.initAsync()
                 })
@@ -188,9 +200,13 @@ namespace pxt.usb {
 
         initAsync() {
             let dev = this.dev
+            this.log("open device")
             return dev.open()
                 // assume one configuration; no one really does more
-                .then(() => dev.selectConfiguration(1))
+                .then(() => {
+                    this.log("select configuration")
+                    return dev.selectConfiguration(1)
+                })
                 .then(() => {
                     let matchesFilters = (iface: USBInterface) => {
                         let a0 = iface.alternates[0]
@@ -207,17 +223,22 @@ namespace pxt.usb {
                         }
                         return false
                     }
+                    this.log("got " + dev.configurations[0].interfaces.length + " interfaces")
                     let hid = dev.configurations[0].interfaces.filter(matchesFilters)[0]
                     if (!hid)
-                        this.error("cannot find USB HID interface")
+                        this.error("cannot find supported USB interface")
                     this.altIface = hid.alternates[0]
                     this.epIn = this.altIface.endpoints.filter(e => e.direction == "in")[0]
                     this.epOut = this.altIface.endpoints.filter(e => e.direction == "out")[0]
                     Util.assert(this.epIn.packetSize == 64);
                     Util.assert(this.epOut.packetSize == 64);
+                    this.log("claim interface")
                     return dev.claimInterface(hid.interfaceNumber)
                 })
-                .then(() => { this.ready = true })
+                .then(() => {
+                    this.log("device ready")
+                    this.ready = true
+                })
         }
     }
 
@@ -259,13 +280,12 @@ namespace pxt.usb {
     }
 
     export function pairAsync(): Promise<void> {
-        return (navigator as any).usb.requestDevice({
+        return ((navigator as any).usb.requestDevice({
             filters: filters
-        }).then((dev: USBDevice) => {
-            getDevPromise = null
+        }) as Promise<USBDevice>).then(dev => {
             // try connecting to it
             return mkPacketIOAsync()
-        })
+        }).then(io => io.reconnectAsync())
     }
 
     function getDeviceAsync(): Promise<USBDevice> {
