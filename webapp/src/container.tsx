@@ -103,6 +103,11 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
         this.props.parent.reset();
     }
 
+    pair() {
+        pxt.tickEvent("menu.pair");
+        this.props.parent.pair();
+    }
+
     about() {
         pxt.tickEvent("menu.about");
         this.props.parent.about();
@@ -138,6 +143,8 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
                 // we always need a way to clear local storage, regardless if signed in or not
             }
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => this.reset() } tabIndex={-1} />
+            {!pxt.usb.isEnabled ? undefined :
+                <sui.Item role="menuitem" icon='usb' text={lf("Pair device") } onClick={() => this.pair() } tabIndex={-1} />}
             <div className="ui divider"></div>
             {targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank" tabIndex={-1}>{lf("Privacy & Cookies") }</a> : undefined}
             {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank" tabIndex={-1}>{lf("Terms Of Use") }</a> : undefined}

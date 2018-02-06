@@ -1079,6 +1079,15 @@ export class ProjectView
         });
     }
 
+    pair() {
+        pxt.usb.pairAsync()
+            .then(() => {
+                core.infoNotification(lf("Device paired! Try downloading now."))
+            }, (err: Error) => {
+                core.errorNotification(lf("Failed to pair the device: {0}", err.message))
+            })
+    }
+
     promptRenameProjectAsync(): Promise<boolean> {
         if (!this.state.header) return Promise.resolve(false);
 

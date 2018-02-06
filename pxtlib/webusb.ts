@@ -141,7 +141,7 @@ namespace pxt.usb {
 
         reconnectAsync() {
             return this.disconnectAsync()
-                .then(requestDeviceAsync)
+                .then(getDeviceAsync)
                 .then(dev => {
                     this.dev = dev
                     return this.initAsync()
@@ -258,16 +258,29 @@ namespace pxt.usb {
         packets: USBIsochronousOutTransferPacket[];
     }
 
-    function requestDeviceAsync(): Promise<USBDevice> {
+    export function pairAsync(): Promise<void> {
         return (navigator as any).usb.requestDevice({
             filters: filters
+        }).then((dev: USBDevice) => {
+            getDevPromise = null
+            // try connecting to it
+            return mkPacketIOAsync()
         })
+    }
+
+    function getDeviceAsync(): Promise<USBDevice> {
+        return (navigator as any).usb.getDevices()
+            .then((devs: USBDevice[]) => {
+                if (!devs || !devs.length)
+                    return Promise.reject(new USBError(U.lf("No USB device selected or connected; try pairing!")))
+                return devs[0]
+            })
     }
 
     let getDevPromise: Promise<HF2.PacketIO>
     export function mkPacketIOAsync() {
         if (!getDevPromise)
-            getDevPromise = requestDeviceAsync()
+            getDevPromise = getDeviceAsync()
                 .then(dev => {
                     let h = new HID(dev)
                     return h.initAsync()
