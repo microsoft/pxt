@@ -1,10 +1,13 @@
 ![Picture of the micro:bit](/static/images/blogbanner.jpg)
 
-# Hello Microsoft MakeCode!
+# Merhaba Microsoft MakeCode!
 
-**Posted on March 14th, 2017**
+**24 Marth 2017'de Yayınlandı**
 
-Welcome to the official release and developer blog of Microsoft MakeCode.
+Microsoft MakeCode'nin resmi yayınlanma ve geliştirici bloğuna hoşgeldiniz.
+
+Microsoft MakeCode, Amerika, Redmond Washington'da bulunan (bazen güneşli) Microsoft'da aşk ile yapıldı.
+
 
 Microsoft MakeCode is made with love at Microsoft in (sometimes sunny) Redmond Washington, USA. 
-Microsoft MakeCode is [open source](https://github.com/Microsoft/pxt), join the conversation on GitHub!
+Microsoft MakeCode [açık kaynak]tır!(https://github.com/Microsoft/pxt), Github!'daki iletişime katılıın.
