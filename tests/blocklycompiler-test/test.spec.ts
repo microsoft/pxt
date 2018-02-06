@@ -343,11 +343,17 @@ describe("blockly compiler", function() {
         it("should handle name collisions", (done: () => void) => {
             blockTestAsync("functions_names").then(done, done);
         });
-    })
+    });
 
     describe("compiling special blocks", () => {
         it("should compile the predicate in pause until", done => {
             blockTestAsync("pause_until").then(done, done);
+        });
+    });
+
+    describe("compiling expandable blocks", () => {
+        it("should handle blocks with optional arguments", done => {
+            blockTestAsync("expandable_basic").then(done, done);
         });
     })
 });

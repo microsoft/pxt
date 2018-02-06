@@ -1,11 +1,11 @@
+const enum Direction {
+    //% block=left
+    Left,
+    //% block=right
+    Right
+}
+
 namespace exp {
-    declare const enum Direction {
-        //% block=left
-        Left,
-        //% block=right
-        Right
-    }
-    
     //% fixedInstances
     export class Fixed {
 
