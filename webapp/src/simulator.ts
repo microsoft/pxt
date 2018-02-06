@@ -59,7 +59,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                         if (completeHandler) completeHandler();
                         $(el).remove();
                     }
-                }).error(() => {
+                }).on('error', () => {
                     // Problem with animation, still complete
                     if (completeHandler) completeHandler();
                     $(el).remove();
