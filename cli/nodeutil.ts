@@ -267,6 +267,12 @@ export function readJson(fn: string) {
     return JSON.parse(fs.readFileSync(fn, "utf8"))
 }
 
+export function readPkgConfig(dir: string) {
+    pxt.debug("readPkgConfig in " + dir)
+    const fn = path.join(dir, pxt.CONFIG_NAME)
+    return JSON.parse(fs.readFileSync(fn, "utf8"));
+}
+
 export function getPxtTarget(): pxt.TargetBundle {
     if (fs.existsSync(targetDir + "/built/target.json")) {
         let res: pxt.TargetBundle = readJson(targetDir + "/built/target.json")
