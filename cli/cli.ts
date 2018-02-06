@@ -3748,7 +3748,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     pxt.log(`packaging editor to ${builtPackaged}`)
 
     let p = rimrafAsync(builtPackaged, {})
-        .then(() => buildTargetAsync());
+        .then(() => internalBuildTargetAsync({ packaged: true }))
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
     else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify));
 }
