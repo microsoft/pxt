@@ -19,14 +19,12 @@ namespace pxt.winrt {
             || !pxt.appTarget.serial.log
             || !pxt.appTarget.serial.nameFilter) return;
 
-        if (!watcher) {
-            deviceNameFilter = new RegExp(pxt.appTarget.serial.nameFilter);
-            const serialDeviceSelector = Windows.Devices.SerialCommunication.SerialDevice.getDeviceSelector();
-            // Create a device watcher to look for instances of the Serial device
-            // As per MSDN doc, to use the correct overload, we pass null as 2nd argument
-            watcher = Windows.Devices.Enumeration.DeviceInformation.createWatcher(serialDeviceSelector, null);
-        }
+        deviceNameFilter = new RegExp(pxt.appTarget.serial.nameFilter);
+        const serialDeviceSelector = Windows.Devices.SerialCommunication.SerialDevice.getDeviceSelector();
 
+        // Create a device watcher to look for instances of the Serial device
+        // As per MSDN doc, to use the correct overload, we pass null as 2nd argument
+        watcher = Windows.Devices.Enumeration.DeviceInformation.createWatcher(serialDeviceSelector, null);
         watcher.addEventListener("added", deviceAdded);
         watcher.addEventListener("removed", deviceRemoved);
         watcher.addEventListener("updated", deviceUpdated);
@@ -39,12 +37,12 @@ namespace pxt.winrt {
             watcher.removeEventListener("added", deviceAdded);
             watcher.removeEventListener("removed", deviceRemoved);
             watcher.removeEventListener("updated", deviceUpdated);
+            watcher = undefined;
         }
 
         Object.keys(activePorts).forEach((deviceId) => {
             const port = activePorts[deviceId];
             const device = port.device;
-            delete activePorts[deviceId];
             device.close();
         });
         activePorts = {};
