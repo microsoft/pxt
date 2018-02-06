@@ -45,6 +45,15 @@ If you are modifying your own instance of PXT and want a target (such as pxt-mic
 npm link ../pxt
 ```
 
+If you have multiple checkouts of pxt, you can do the following:
+* run `npm i` in pxt and the target
+* in target, delete `node_modules/pxt-core`
+* in `node_modules` in the target run the following (on Windows):
+  `node -e 'require("fs").symlinkSync("../../some-other-pxt", "pxt-core", "junction")'`
+  On mac or Linux, you can just `ln -s ../../some-other-pxt pxt-core`
+
+If you run `npm i` afterwards (in either the target or pxt), you might need to repeat these steps.
+
 ## Build
 
 First, install [Node](https://nodejs.org/en/): minimum version 5.7. Then install the following:

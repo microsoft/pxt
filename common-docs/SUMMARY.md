@@ -1,5 +1,7 @@
 # Summary
 
+* [About](/about)
+
 ## #support
 
 ## #projects

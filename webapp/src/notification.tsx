@@ -1,4 +1,5 @@
 /// <reference path="../../built/pxtlib.d.ts" />
+/// <reference path="../../localtypings/mscc" />
 
 import * as React from "react";
 import * as data from "./data";
@@ -86,6 +87,7 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
 
 export class NotificationBanner extends data.Component<ISettingsProps, {}> {
     renderCore() {
+        const cookies = !!(typeof mscc === "undefined" || mscc.hasConsent());
         const targetTheme = pxt.appTarget.appTheme;
         const isApp = electron.isElectron || pxt.winrt.isWinRT();
         const isLocalServe = location.hostname === "localhost";
@@ -96,13 +98,18 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
         const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetConfig && targetConfig.windowsStoreLink && !isApp;
 
+        if (cookies) {
+            // don't show any banner while cookie banner is up
+            return <div></div>;
+        }
+
         if (showWindowsStoreBanner) {
             return (
                 <GenericBanner parent={this.props.parent} delayTime={10000} displayTime={45000} sleepTime={604800}>
-                    <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
+                    <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked", undefined, { interactiveConsent: true })}>
                         <img className="bannerIcon" src={Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)}></img>
                     </sui.Link>
-                    <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
+                    <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked", undefined, { interactiveConsent: true })}>
                         {lf("Want a faster download? Get the app!")}
                     </sui.Link>
                 </GenericBanner>
