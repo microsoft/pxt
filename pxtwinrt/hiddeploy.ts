@@ -113,6 +113,10 @@ namespace pxt.winrt {
         pxt.U.assert(!packetIO);
         packetIO = new WindowsRuntimeIO()
         return packetIO.initAsync()
+            .catch((e) => {
+                packetIO = null;
+                return Promise.reject(e);
+            })
             .then(() => packetIO);
     }
 
