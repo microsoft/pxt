@@ -785,7 +785,7 @@ namespace pxt.blocks {
             let current: Blockly.Input;
             let newInput = true;
             let anonIndex = 0;
-            let firstParam = !!comp.thisParameter;
+            let firstParam = !expanded && !!comp.thisParameter;
 
             def.parts.forEach(part => {
                 if (!pxtc.isBlockParam(part)) {
