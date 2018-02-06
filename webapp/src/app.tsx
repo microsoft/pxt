@@ -971,6 +971,15 @@ export class ProjectView
         });
     }
 
+    pair() {
+        pxt.usb.pairAsync()
+            .then(() => {
+                core.infoNotification(lf("Device paired! Try downloading now."))
+            }, (err: Error) => {
+                core.errorNotification(lf("Failed to pair the device: {0}", err.message))
+            })
+    }
+
     promptRenameProjectAsync(): Promise<boolean> {
         if (!this.state.header) return Promise.resolve(false);
 
@@ -1766,6 +1775,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                             // we always need a way to clear local storage, regardless if signed in or not
                                         }
                                         <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={() => this.reset()} tabIndex={-1} />
+                                        {!pxt.usb.isEnabled ? undefined :
+                                            <sui.Item role="menuitem" icon='usb' text={lf("Pair device") } onClick={() => this.pair() } tabIndex={-1} />}
                                         <div className="ui divider"></div>
                                         {targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies")} target="_blank" tabIndex={-1}>{lf("Privacy & Cookies")}</a> : undefined}
                                         {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use")} target="_blank" tabIndex={-1}>{lf("Terms Of Use")}</a> : undefined}
