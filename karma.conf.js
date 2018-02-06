@@ -26,6 +26,7 @@ module.exports = function(config) {
       // test assets
       { pattern: 'tests/blocklycompiler-test/cases/*.blocks', watched: false, included: false, served: true, nocache: false },
       { pattern: 'tests/blocklycompiler-test/baselines/*.ts', watched: false, included: false, served: true, nocache: false },
+      { pattern: 'tests/blocklycompiler-test/test-library/*', watched: false, included: false, served: true, nocache: false },
 
       // test package files
       { pattern: 'libs/pxt-common/*.ts', watched: false, included: false, served: true, nocache: false },
@@ -37,6 +38,7 @@ module.exports = function(config) {
     proxies: {
       "/tests/": "/base/tests/blocklycompiler-test/cases/",
       "/baselines/" : "/base/tests/blocklycompiler-test/baselines/",
+      "/test-library/": "/base/tests/blocklycompiler-test/test-library/",
       "/common/": "/base/libs/pxt-common/",
       // Needed by webworker
       "/blb/": "/base/built/web/"
