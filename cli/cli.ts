@@ -2265,7 +2265,7 @@ pxt_modules
 }`,
     ".travis.yml": `language: node_js
 node_js:
-    - "5.7.0"
+    - "8.9.4"
 script:
     - "npm install -g pxt"
     - "pxt target @TARGET@"
