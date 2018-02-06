@@ -1,23 +1,34 @@
+/// <reference path="../localtypings/mscc" />
+
+namespace pxt {
+    // These functions are defined in docfiles/pxtweb/cookieCompliance.ts
+    export declare function aiTrackEvent(id: string, data?: any, measures?: any): void;
+    export declare function aiTrackException(err: any, kind: string, props: any): void;
+}
+
 namespace pxt.analytics {
     export function enable() {
-        let ai = (window as any).appInsights;
-        if (!ai) return;
+        if (!pxt.aiTrackException || !pxt.aiTrackEvent) return;
 
-        pxt.debug('enabling app insights')
+        pxt.debug('setting up app insights')
 
         const te = pxt.tickEvent;
-        pxt.tickEvent = function (id: string, data?: Map<string | number>): void {
-            if (te) te(id, data);
-            if (!data) ai.trackEvent(id);
+        pxt.tickEvent = function (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions): void {
+            if (te) te(id, data, opts);
+
+            if (opts && opts.interactiveConsent && typeof mscc !== "undefined" && !mscc.hasConsent()) {
+                mscc.setConsent();
+            }
+            if (!data) pxt.aiTrackEvent(id);
             else {
                 const props: Map<string> = {};
                 const measures: Map<number> = {};
                 for (const k in data)
                     if (typeof data[k] == "string") props[k] = <string>data[k];
                     else measures[k] = <number>data[k];
-                ai.trackEvent(id, props, measures);
+                    pxt.aiTrackEvent(id, props, measures);
             }
-        }
+        };
 
         const rexp = pxt.reportException;
         pxt.reportException = function (err: any, data: pxt.Map<string>): void {
@@ -27,8 +38,9 @@ namespace pxt.analytics {
                 version: pxt.appTarget.versions.target
             }
             if (data) Util.jsonMergeFrom(props, data);
-            ai.trackException(err, 'exception', props)
-        }
+            pxt.aiTrackException(err, 'exception', props)
+        };
+
         const re = pxt.reportError;
         pxt.reportError = function (cat: string, msg: string, data?: pxt.Map<string>): void {
             if (re) re(cat, msg, data);
@@ -43,8 +55,27 @@ namespace pxt.analytics {
                     message: msg
                 }
                 if (data) Util.jsonMergeFrom(props, data);
-                ai.trackException(err, 'error', props)
+                pxt.aiTrackException(err, 'error', props);
             }
+        };
+    }
+
+    export function setConsent() {
+        if (typeof mscc !== "undefined" && !mscc.hasConsent()) {
+            mscc.setConsent();
         }
+    }
+
+    /**
+     * Helper method for generating a function that can be used to wrap onClick handlers
+     * that should trigger interactive consent
+     */
+    export function consentWrapper<T>(that: T) {
+        return (cb: () => void) => {
+            return () => {
+                cb.bind(that)();
+                setConsent();
+            };
+        };
     }
 }

@@ -48,7 +48,7 @@ export function monitorSerial(onData: (info: SerialPortInfo, buffer: Buffer) => 
         console.log(`serial: connecting to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
         serialPorts[info.pnpId] = info;
         info.port = new SerialPort(info.comName, {
-            baudrate: 115200,
+            baudRate: 115200,
             autoOpen: false
         }); // this is the openImmediately flag [default is true]
         info.port.open(function (error: any) {
@@ -72,9 +72,9 @@ export function monitorSerial(onData: (info: SerialPortInfo, buffer: Buffer) => 
     function filterPort(info: SerialPortInfo): boolean {
         let retVal = true;
         if (vendorFilter)
-            retVal && (vendorFilter == parseInt(info.vendorId, 16));
+            retVal = retVal && (vendorFilter == parseInt(info.vendorId, 16));
         if (productFilter)
-            retVal && (productFilter == parseInt(info.productId, 16));
+            retVal = retVal && (productFilter == parseInt(info.productId, 16));
         return retVal;
     }
 

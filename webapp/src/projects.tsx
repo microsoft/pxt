@@ -120,7 +120,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             this.props.parent.loadHeaderAsync(hdr)
         }
         const chgGallery = (scr: pxt.CodeCard) => {
-            pxt.tickEvent("projects.gallery", { name: scr.name });
+            pxt.tickEvent("projects.gallery", { name: scr.name }, { interactiveConsent: true });
             this.hide();
             switch (scr.cardType) {
                 case "example": chgCode(scr, true); break;
@@ -174,22 +174,22 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 .done(() => core.hideLoading())
         }
         const importHex = () => {
-            pxt.tickEvent("projects.import");
+            pxt.tickEvent("projects.import", undefined, { interactiveConsent: true });
             this.hide();
             this.props.parent.importFileDialog();
         }
         const importUrl = () => {
-            pxt.tickEvent("projects.importurl");
+            pxt.tickEvent("projects.importurl", undefined, { interactiveConsent: true });
             this.hide();
             this.props.parent.importUrlDialog();
         }
         const importLegacy = () => {
-            pxt.tickEvent("projects.importlegacy");
+            pxt.tickEvent("projects.importlegacy", undefined, { interactiveConsent: true });
             this.hide();
             window.location.href = legacyUrl;
         }
         const newProject = () => {
-            pxt.tickEvent("projects.new");
+            pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
             this.hide();
             this.props.parent.newProject();
         }

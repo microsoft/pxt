@@ -77,10 +77,14 @@ namespace pxt {
         }
     }
 
+    export interface TelemetryEventOptions {
+        interactiveConsent: boolean;
+    }
+
     /**
      * Track an event.
      */
-    export var tickEvent: (id: string, data?: Map<string | number>) => void = function (id) { }
+    export var tickEvent: (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions) => void = function (id) { }
 
     let activityEvents: Map<number> = {};
     const tickActivityDebounced = Util.debounce(() => {
@@ -765,7 +769,7 @@ namespace pxt {
                                     eVER: pxt.appTarget.versions ? pxt.appTarget.versions.target : "",
                                     pxtTarget: appTarget.id,
                                 })
-                                opts.embedBlob = btoa(U.uint8ArrayToString(buf))
+                                opts.embedBlob = ts.pxtc.encodeBase64(U.uint8ArrayToString(buf))
                             });
                     } else {
                         return Promise.resolve()

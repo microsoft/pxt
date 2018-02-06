@@ -140,7 +140,7 @@ pxt extract ${url}`;
 
         }
         const publish = () => {
-            pxt.tickEvent("menu.embed.publish");
+            pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
             this.props.parent.anonymousPublishAsync().done(() => {
                 this.setState({ pubCurrent: true });
             });

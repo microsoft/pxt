@@ -24,7 +24,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
     const fn = pkg.genFileName(ext);
     const userContext = pxt.BrowserUtils.isBrowserDownloadWithinUserContext();
     if (userContext) {
-        url = pxt.BrowserUtils.toDownloadDataUri(pxt.isOutputText() ? btoa(out) : out, pxt.appTarget.compile.hexMimeType);
+        url = pxt.BrowserUtils.toDownloadDataUri(pxt.isOutputText() ? ts.pxtc.encodeBase64(out) : out, pxt.appTarget.compile.hexMimeType);
     } else if (!pxt.isOutputText()) {
         pxt.debug('saving ' + fn)
         url = pxt.BrowserUtils.browserDownloadBase64(

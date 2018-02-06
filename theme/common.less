@@ -14,6 +14,28 @@ html, body {
 }
 
 /* Main Layout */
+#allcontent {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+}
+
+#msccBanner {
+    /* Don't change! This legal text should always be above everything else */
+    z-index: 100000;
+}
+
+#editorcontent {
+    flex: 1 1 auto;
+    position: relative;
+}
+
+#mainmenu {
+    position: relative !important;
+}
+
 #filelist,
 #maineditor,
 #sidedocs {
@@ -150,25 +172,6 @@ html, body {
 }
 .ui.button.getting-started-btn .ui.text {
     font-weight: 100 !important;
-}
-
-/* Cookie Message */
-#cookiemsg {
-   position: absolute;
-   right: 2rem;
-   bottom: 12rem;
-   width: 18rem;
-   text-align: left;
-   z-index:1000;
-}
-
-#cookiemsg > a {
-   color:white;
-   text-decoration: underline;
-}
-
-.collapsedEditorTools #cookiemsg {
-   bottom: 6rem;
 }
 
 /* Simulator */
@@ -760,9 +763,6 @@ Avatar
     .collapsedEditorTools #maineditor {
         left: 0;
     }
-    #cookiemsg {
-        bottom: 7.5rem;
-    }
 
     /* Full screen */
     .fullscreensim #filelist {
@@ -1000,9 +1000,6 @@ Avatar
         .sandbox #msg {
         bottom: 1.5rem !important;
     }
-    .sandbox #cookiemsg {
-        bottom: 3rem;
-    }
     .sandbox #editortools {
         display: none;
     }
@@ -1080,14 +1077,5 @@ Avatar
     }
     .simView div.simframe:only-child > iframe {
         max-width: 100%;
-    }
-    .sandbox #cookiemsg {
-        left: 0;
-        right: 0;
-        margin-left: 0.2rem;
-        margin-right: 0.2rem;
-        width: inherit;
-        bottom: 1.5rem;
-        padding: 0.3rem;
     }
 }
