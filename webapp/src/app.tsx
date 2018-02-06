@@ -2199,7 +2199,7 @@ function initExtensionsAsync(): Promise<void> {
 }
 
 pxt.winrt.captureInitialActivation();
-$(document).ready(() => {
+$(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
