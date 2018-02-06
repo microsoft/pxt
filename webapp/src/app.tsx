@@ -962,12 +962,10 @@ export class ProjectView
             disagreeLbl: lf("Cancel")
         }).then(r => {
             if (!r) return Promise.resolve();
-            if (hf2Connection) {
-                return hf2Connection.disconnectAsync()
-                    .then(() => this.resetWorkspace())
-            } else {
-                return this.resetWorkspace()
-            }
+            return hidbridge.disconnectWrapperAsync()
+                .then(() => {
+                    return this.resetWorkspace();
+                });
         });
     }
 
@@ -1919,41 +1917,21 @@ function initLogin() {
     }
 }
 
-let hidConnectionPoller: number;
-let hidPollerDelay: number;
-let hf2Connection: pxt.HF2.Wrapper;
-
-function startHidConnectionPoller() {
-    hidConnectionPoller = window.setInterval(initSerial, 5000);
-}
-
-function setHidPollerDelay() {
-    clearTimeout(hidPollerDelay);
-    clearInterval(hidConnectionPoller);
-    hidPollerDelay = window.setTimeout(startHidConnectionPoller, 5000);
-}
-
 function initSerial() {
     if (!pxt.appTarget.serial || !Cloud.isLocalHost() || !Cloud.localToken)
         return;
 
     if (hidbridge.shouldUse()) {
-        hidbridge.initAsync(true)
-            .then(dev => {
-                hf2Connection = dev;
-                dev.onSerial = (buf, isErr) => {
-                    setHidPollerDelay();
-                    window.postMessage({
-                        type: 'serial',
-                        id: 'n/a', // TODO
-                        data: Util.fromUTF8(Util.uint8ArrayToString(buf))
-                    }, "*")
-                }
-            })
-            .catch(e => {
-                pxt.log(`hidbridge failed to load, ${e}`);
-            })
-        return
+        hidbridge.configureHidSerial((buf, isErr) => {
+            let data = Util.fromUTF8(Util.uint8ArrayToString(buf))
+            //pxt.debug('serial: ' + data)
+            window.postMessage({
+                type: 'serial',
+                id: 'n/a', // TODO
+                data
+            }, "*")
+        });
+        return;
     }
 
     pxt.debug('initializing serial pipe');
@@ -2261,7 +2239,6 @@ $(() => {
             if (state) {
                 theEditor.setState(state);
             }
-            startHidConnectionPoller();
             initScreenshots();
             initHashchange();
             electron.init();
