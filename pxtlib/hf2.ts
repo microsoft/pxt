@@ -26,6 +26,7 @@ namespace pxt.HF2 {
         error(msg: string): any;
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
+        isSwitchingToBootloader?: () => void;
 
         // these are implemneted by HID-bridge
         talksAsync?(cmds: TalkArgs[]): Promise<Uint8Array[]>;
@@ -381,6 +382,9 @@ namespace pxt.HF2 {
             if (this.bootloaderMode)
                 return Promise.resolve()
             log(`Switching into bootloader mode`)
+            if (this.io.isSwitchingToBootloader) {
+                this.io.isSwitchingToBootloader();
+            }
             return this.talkAsync(HF2_CMD_START_FLASH)
                 .then(() => this.initAsync())
                 .then(() => {

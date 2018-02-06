@@ -31,12 +31,12 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     openTutorial(path: string) {
-        pxt.tickEvent(`docstutorial`, { path });
+        pxt.tickEvent(`docstutorial`, { path }, { interactiveConsent: true });
         this.props.parent.startTutorial(path);
     }
 
     openDocs(path: string) {
-        pxt.tickEvent(`docs`, { path });
+        pxt.tickEvent(`docs`, { path }, { interactiveConsent: true });
         this.props.parent.setSideDoc(path);
     }
 
@@ -68,37 +68,37 @@ export interface SettingsMenuItemState {
 export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, SettingsMenuItemState> {
 
     openSettings() {
-        pxt.tickEvent("menu.settings");
+        pxt.tickEvent("menu.settings", undefined, { interactiveConsent: true });
         this.props.parent.openSettings();
     }
 
     addPackage() {
-        pxt.tickEvent("menu.addpackage");
+        pxt.tickEvent("menu.addpackage", undefined, { interactiveConsent: true });
         this.props.parent.addPackage();
     }
 
     removeProject() {
-        pxt.tickEvent("menu.removeproject");
+        pxt.tickEvent("menu.removeproject", undefined, { interactiveConsent: true });
         this.props.parent.removeProject();
     }
 
     showReportAbuse() {
-        pxt.tickEvent("menu.reportabuse");
+        pxt.tickEvent("menu.reportabuse", undefined, { interactiveConsent: true });
         this.props.parent.showReportAbuse();
     }
 
     selectLang() {
-        pxt.tickEvent("menu.langpicker");
+        pxt.tickEvent("menu.langpicker", undefined, { interactiveConsent: true });
         this.props.parent.selectLang();
     }
 
     toggleHighContrast() {
-        pxt.tickEvent("menu.togglecontrast");
+        pxt.tickEvent("menu.togglecontrast", undefined, { interactiveConsent: true });
         this.props.parent.toggleHighContrast();
     }
 
     reset() {
-        pxt.tickEvent("menu.reset");
+        pxt.tickEvent("menu.reset", undefined, { interactiveConsent: true });
         pxt.tickEvent("reset"); // Deprecated, will Feb 2018.
         this.props.parent.reset();
     }
@@ -152,46 +152,46 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
 export class MainMenu extends data.Component<ISettingsProps, {}> {
 
     brandIconClick() {
-        pxt.tickEvent("menu.brand");
+        pxt.tickEvent("menu.brand", undefined, { interactiveConsent: true });
         this.props.parent.exitAndSave();
     }
 
     orgIconClick() {
-        pxt.tickEvent("menu.org");
+        pxt.tickEvent("menu.org", undefined, { interactiveConsent: true });
     }
 
     goHome() {
-        pxt.tickEvent("menu.home");
+        pxt.tickEvent("menu.home", undefined, { interactiveConsent: true });
         this.props.parent.exitAndSave();
     }
 
     share() {
-        pxt.tickEvent("menu.share");
+        pxt.tickEvent("menu.share", undefined, { interactiveConsent: true });
         this.props.parent.share();
     }
 
     launchFullEditor() {
-        pxt.tickEvent("sandbox.openfulleditor");
+        pxt.tickEvent("sandbox.openfulleditor", undefined, { interactiveConsent: true });
         this.props.parent.launchFullEditor();
     }
 
     openSimView() {
-        pxt.tickEvent("menu.simView");
+        pxt.tickEvent("menu.simView", undefined, { interactiveConsent: true });
         this.props.parent.openSimView();
     }
 
     openBlocks() {
-        pxt.tickEvent("menu.blocks");
+        pxt.tickEvent("menu.blocks", undefined, { interactiveConsent: true });
         this.props.parent.openBlocks();
     }
 
     openJavaScript(giveFocusOnLoading = true) {
-        pxt.tickEvent("menu.javascript");
+        pxt.tickEvent("menu.javascript", undefined, { interactiveConsent: true });
         this.props.parent.openJavaScript(giveFocusOnLoading);
     }
 
     exitTutorial() {
-        pxt.tickEvent("menu.exitTutorial");
+        pxt.tickEvent("menu.exitTutorial", undefined, { interactiveConsent: true });
         this.props.parent.exitTutorial();
     }
 
@@ -206,7 +206,10 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
         const isRunning = this.props.parent.state.running;
+        const hc = !!this.props.parent.state.highContrast;
 
+        const logo = (hc ? targetTheme.highContrastLogo : undefined) || targetTheme.logo;
+        const portraitLogo = (hc ? targetTheme.highContrastPortraitLogo : undefined) || targetTheme.portraitLogo;
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
 
         const simActive = this.props.parent.isEmbedSimActive();
@@ -218,10 +221,10 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu") }>
             {!sandbox ? <div className="left menu">
                 <a aria-label={lf("{0} Logo", targetTheme.boardName) } role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={() => this.brandIconClick() } onKeyDown={sui.fireClickOnEnter}>
-                    {targetTheme.logo || targetTheme.portraitLogo
-                        ? <img className={`ui logo ${targetTheme.logo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />
+                    {logo || portraitLogo
+                        ? <img className={`ui logo ${logo ? " portrait hide" : ''}`} src={Util.toDataUri(logo || portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />
                         : <span className="name">{targetTheme.boardName}</span>}
-                    {targetTheme.portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />) : null}
+                    {portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(portraitLogo) } alt={lf("{0} Logo", targetTheme.boardName) } />) : null}
                 </a>
                 {targetTheme.betaUrl ? <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta") }</a> : undefined}
                 {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen") } text={lf("Home") } onClick={() => this.goHome() } /> : null}
@@ -374,7 +377,7 @@ export interface SandboxFooterProps extends ISettingsProps {
 export class SandboxFooter extends data.Component<SandboxFooterProps, {}> {
 
     compile() {
-        pxt.tickEvent("sandboxfooter.compile");
+        pxt.tickEvent("sandboxfooter.compile", undefined, { interactiveConsent: true });
         this.props.parent.compile();
     }
 
@@ -392,51 +395,6 @@ export class SandboxFooter extends data.Component<SandboxFooterProps, {}> {
             <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use") }</a>
             <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy") }</a>
             <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><sui.Icon icon={`icon ${pxt.appTarget.appTheme.downloadIcon || 'download'}`} />{pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download") }</a></span>
-        </div>;
-    }
-}
-
-export interface CookieMessageProps extends ISettingsProps {
-    cookieConsented: boolean;
-    cookieKey: string;
-}
-
-// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
-export interface CookieMessageState {
-    cookieConsented?: boolean;
-}
-
-export class CookieMessage extends data.Component<CookieMessageProps, CookieMessageState> {
-
-    componentWillReceiveProps(nextProps: CookieMessageProps) {
-        const newState: CookieMessageState = {};
-        if (nextProps.cookieConsented != undefined) {
-            newState.cookieConsented = nextProps.cookieConsented;
-        }
-        if (Object.keys(newState).length > 0) this.setState(newState)
-    }
-
-    shouldComponentUpdate(nextProps: CookieMessageProps, nextState: CookieMessageState, nextContext: any): boolean {
-        return this.state.cookieConsented != nextState.cookieConsented;
-    }
-
-    renderCore() {
-        const {cookieConsented, cookieKey} = this.props;
-        const targetTheme = pxt.appTarget.appTheme;
-        const sandbox = pxt.shell.isSandboxMode();
-        const isApp = electron.isElectron || pxt.winrt.isWinRT();
-
-        const consentCookie = () => {
-            pxt.storage.setLocal(cookieKey, "1");
-            this.props.parent.forceUpdate();
-        }
-
-        return <div id='cookiemsg' className="ui teal inverted black segment" role="alert">
-            <button aria-label={lf("Close") } tabIndex={0} className="ui right floated icon button clear inverted" onClick={consentCookie}>
-                <sui.Icon icon="remove" />
-            </button>
-            {`${lf("By using this site you agree to the use of cookies for analytics.")} ` }
-            <a target="_blank" className="ui link" href={pxt.appTarget.appTheme.privacyUrl} rel="noopener">{lf("Learn more") }</a>
         </div>;
     }
 }

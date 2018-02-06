@@ -188,7 +188,7 @@ namespace pxt.blocks.layout {
 
     export function documentToSvg(xsg: Node): string {
         const xml = new XMLSerializer().serializeToString(xsg);
-        const data = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(xml)));
+        const data = "data:image/svg+xml;base64," + ts.pxtc.encodeBase64(unescape(encodeURIComponent(xml)));
         return data;
     }
 

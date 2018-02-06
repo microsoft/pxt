@@ -92,10 +92,10 @@ namespace pxsim.svg {
 
     export function onClick(el: Element, click: (ev: MouseEvent) => void) {
         let captured = false;
-        el.addEventListener(pxsim.pointerEvents.down, (ev: MouseEvent) => {
+        pxsim.pointerEvents.down.forEach(evid => el.addEventListener(evid, (ev: MouseEvent) => {
             captured = true;
             return true;
-        }, false);
+        }, false));
         el.addEventListener(pxsim.pointerEvents.up, (ev: MouseEvent) => {
             if (captured) {
                 captured = false;
@@ -113,11 +113,11 @@ namespace pxsim.svg {
         stop?: (ev: MouseEvent) => void,
         keydown?: (ev: KeyboardEvent) => void) {
         let captured = false;
-        el.addEventListener(pxsim.pointerEvents.down, (ev: MouseEvent) => {
+        pxsim.pointerEvents.down.forEach(evid => el.addEventListener(evid, (ev: MouseEvent) => {
             captured = true;
             if (start) start(ev)
             return true;
-        }, false);
+        }, false));
         el.addEventListener(pxsim.pointerEvents.move, (ev: MouseEvent) => {
             if (captured) {
                 if (move) move(ev);

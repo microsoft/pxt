@@ -169,9 +169,9 @@ namespace pxsim.visuals {
             let btnStates = [this.state.aBtn, this.state.bBtn];
             let btnSvgs = [this.aBtn, this.bBtn];
             btnSvgs.forEach((btn, index) => {
-                btn.addEventListener(pointerEvents.down, ev => {
+                pxsim.pointerEvents.down.forEach(evid => btn.addEventListener(evid, ev => {
                     btnStates[index].pressed = true;
-                })
+                }))
                 btn.addEventListener(pointerEvents.leave, ev => {
                     btnStates[index].pressed = false;
                 })
@@ -184,9 +184,9 @@ namespace pxsim.visuals {
             let updateBtns = (s: boolean) => {
                 btnStates.forEach(b => b.pressed = s)
             };
-            this.abBtn.addEventListener(pointerEvents.down, ev => {
+            pxsim.pointerEvents.down.forEach(evid => this.abBtn.addEventListener(evid, ev => {
                 updateBtns(true);
-            })
+            }));
             this.abBtn.addEventListener(pointerEvents.leave, ev => {
                 updateBtns(false);
             })

@@ -56,9 +56,9 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
             <div className="carouselcontainer" ref={r => this.container = r}>
                 <div className="carouselbody" ref={r => this.dragSurface = r}>
                 {
-                    React.Children.map(this.props.children, (child, index) => <div className={`carouselitem ${this.props.selectedIndex == index ? 'selected' : ''}`} ref={r => r && this.childrenElements.push(r)}>
+                    React.Children.map(this.props.children, (child, index) => child ? <div className={`carouselitem ${this.props.selectedIndex == index ? 'selected' : ''}`} ref={r => r && this.childrenElements.push(r)}>
                         {child}
-                    </div>)
+                    </div> : undefined)
                 }
                 </div>
             </div>

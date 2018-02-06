@@ -158,20 +158,38 @@ class BridgeIO implements pxt.HF2.PacketIO {
     }
 }
 
+let uf2Wrapper: pxt.HF2.Wrapper;
+let initPromise: Promise<pxt.HF2.Wrapper>;
+let serialHandler: (buf: Uint8Array, isStderr: boolean) => void;
+
 function hf2Async() {
     return pxt.HF2.mkPacketIOAsync()
         .then(h => {
-            let w = new pxt.HF2.Wrapper(h)
-            return w.reconnectAsync(true)
-                .then(() => w)
+            uf2Wrapper = new pxt.HF2.Wrapper(h);
+            if (serialHandler) {
+                uf2Wrapper.onSerial = serialHandler;
+            }
+            return uf2Wrapper.reconnectAsync(true)
+                .then(() => uf2Wrapper)
         })
 }
 
-let initPromise: Promise<pxt.HF2.Wrapper>
+export function configureHidSerial(serialCb: (buf: Uint8Array, isStderr: boolean) => void): void {
+    serialHandler = serialCb;
+    if (uf2Wrapper) {
+        uf2Wrapper.onSerial = serialHandler;
+    }
+}
+
+export function disconnectWrapperAsync(): Promise<void> {
+    if (uf2Wrapper) {
+        return uf2Wrapper.disconnectAsync();
+    }
+    return Promise.resolve();
+}
+
 export function initAsync(force = false) {
-    let isFirstInit = false;
     if (!initPromise) {
-        isFirstInit = true;
         initPromise = hf2Async()
             .catch(err => {
                 initPromise = null
@@ -182,9 +200,7 @@ export function initAsync(force = false) {
     return initPromise
         .then((w) => {
             wrapper = w;
-            if (force || pxt.winrt.isWinRT() && !isFirstInit) {
-                // For WinRT, disconnecting the device after flashing once puts the wrapper in a bad state.
-                // To workaround this, reconnect every time.
+            if (force) {
                 return wrapper.reconnectAsync();
             }
             return Promise.resolve();

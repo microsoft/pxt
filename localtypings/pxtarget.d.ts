@@ -174,7 +174,9 @@ declare namespace pxt {
         logoUrl?: string;
         logo?: string;
         portraitLogo?: string;
-        rightLogo?: string;
+        highContrastLogo?: string;
+        highContrastPortraitLogo?: string;
+        rightLogo?: string; 
         docsLogo?: string;
         organization?: string;
         organizationUrl?: string;
@@ -225,7 +227,6 @@ declare namespace pxt {
         blocksOnly?: boolean; // blocks only workspace
         hideDocsSimulator?: boolean; // do not show simulator button in docs
         hideDocsEdit?: boolean; // do not show edit button in docs
-        hideCookieNotice?: boolean; // always hide cookie notice for targets that embed the editor in apps/chrome
         hideMenuBar?: boolean; // Hides the main menu bar
         hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
         appStoreID?: string; // Apple iTune Store ID if any
