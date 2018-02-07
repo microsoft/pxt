@@ -1,9 +1,4 @@
 namespace pxt.HF2 {
-    export interface MutableArrayLike<T> {
-        readonly length: number;
-        [n: number]: T;
-    }
-
     // http://www.linux-usb.org/usb.ids
     export const enum VID {
         ATMEL = 0x03EB,
@@ -120,14 +115,14 @@ namespace pxt.HF2 {
     // to the HF2_STATUS_EVENT above
     export const HF2_EV_MASK = 0x800000
 
-    export function write32(buf: MutableArrayLike<number>, pos: number, v: number) {
+    export function write32(buf: ArrayLike<number>, pos: number, v: number) {
         buf[pos + 0] = (v >> 0) & 0xff;
         buf[pos + 1] = (v >> 8) & 0xff;
         buf[pos + 2] = (v >> 16) & 0xff;
         buf[pos + 3] = (v >> 24) & 0xff;
     }
 
-    export function write16(buf: MutableArrayLike<number>, pos: number, v: number) {
+    export function write16(buf: ArrayLike<number>, pos: number, v: number) {
         buf[pos + 0] = (v >> 0) & 0xff;
         buf[pos + 1] = (v >> 8) & 0xff;
     }
