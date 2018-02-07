@@ -1,4 +1,9 @@
 namespace pxt.HF2 {
+    export interface MutableArrayLike<T> {
+        readonly length: number;
+        [n: number]: T;
+    }
+
     // http://www.linux-usb.org/usb.ids
     export const enum VID {
         ATMEL = 0x03EB,
@@ -115,14 +120,14 @@ namespace pxt.HF2 {
     // to the HF2_STATUS_EVENT above
     export const HF2_EV_MASK = 0x800000
 
-    export function write32(buf: ArrayLike<number>, pos: number, v: number) {
+    export function write32(buf: MutableArrayLike<number>, pos: number, v: number) {
         buf[pos + 0] = (v >> 0) & 0xff;
         buf[pos + 1] = (v >> 8) & 0xff;
         buf[pos + 2] = (v >> 16) & 0xff;
         buf[pos + 3] = (v >> 24) & 0xff;
     }
 
-    export function write16(buf: ArrayLike<number>, pos: number, v: number) {
+    export function write16(buf: MutableArrayLike<number>, pos: number, v: number) {
         buf[pos + 0] = (v >> 0) & 0xff;
         buf[pos + 1] = (v >> 8) & 0xff;
     }
@@ -221,6 +226,15 @@ namespace pxt.HF2 {
             }
             io.onError = err => {
                 log("recv error: " + err.message)
+                if (this.autoReconnect) {
+                    this.autoReconnect = false
+                    this.reconnectAsync()
+                        .then(() => {
+                            this.autoReconnect = true
+                        }, err => {
+                            log("reconnect error: " + err.message)
+                        })
+                }
                 //this.msgs.pushError(err)
             }
         }
@@ -234,6 +248,7 @@ namespace pxt.HF2 {
         maxMsgSize: number = 63; // when running in forwarding mode, we do not really know
         bootloaderMode = false;
         reconnectTries = 0;
+        autoReconnect = false;
         msgs = new U.PromiseBuffer<Uint8Array>()
         eventHandlers: pxt.Map<(buf: Uint8Array) => void> = {}
 
@@ -370,7 +385,8 @@ namespace pxt.HF2 {
             if (this.io.isSwitchingToBootloader) {
                 this.io.isSwitchingToBootloader();
             }
-            return this.talkAsync(HF2_CMD_START_FLASH)
+            return this.maybeReconnectAsync()
+                .then(() => this.talkAsync(HF2_CMD_START_FLASH))
                 .then(() => this.initAsync())
                 .then(() => {
                     if (!this.bootloaderMode)
@@ -398,6 +414,20 @@ namespace pxt.HF2 {
             write32(args, 4, numwords)
             U.assert(numwords <= 64) // just sanity check
             return this.talkAsync(HF2_CMD_READ_WORDS, args)
+        }
+
+        pingAsync() {
+            if (this.rawMode)
+                return Promise.resolve()
+            return this.talkAsync(HF2_CMD_BININFO)
+                .then(buf => { })
+        }
+
+        maybeReconnectAsync() {
+            return this.pingAsync()
+                .catch(e =>
+                    this.reconnectAsync()
+                        .then(() => this.pingAsync()))
         }
 
         flashAsync(blocks: pxtc.UF2.Block[]) {
