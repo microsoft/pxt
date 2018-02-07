@@ -74,7 +74,6 @@ namespace pxt.winrt {
                 activePorts[deviceInfo.id].device = dev;
                 startDevice(deviceInfo.id);
             });
-        // connectToDevice(deviceInfo.id);
     }
 
     function deviceRemoved(deviceInfo: DeviceInfo) {
@@ -88,25 +87,11 @@ namespace pxt.winrt {
         }
     }
 
-    // function connectToDevice(id: string): void {
-    //     Windows.Devices.SerialCommunication.SerialDevice.fromIdAsync(id)
-    //         .done((dev: SerialDevice) => {
-    //             activePorts[id].device = dev;
-    //             startDevice(id);
-    //         });
-    // }
-
     function startDevice(id: string) {
         let port = activePorts[id];
         if (!port) return;
         if (!port.device) {
             let status = Windows.Devices.Enumeration.DeviceAccessInformation.createFromId(id).currentStatus;
-            // if (status === Windows.Devices.Enumeration.DeviceAccessStatus.allowed) {
-            //     // Sometimes, attempting to connect to early in the app life cycles results in fromIdAsync returning
-            //     // null even if the device can be connected to. Retry in a few.
-            //     setTimeout(connectToDevice(id), 1000);
-            //     return;
-            // }
             pxt.debug(`device issue: ${status}`);
             return;
         }
