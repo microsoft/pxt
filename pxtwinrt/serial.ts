@@ -15,12 +15,24 @@ namespace pxt.winrt {
     }
 
     export function initSerial() {
+        const hasFilter = !!pxt.appTarget.serial.nameFilter ||
+            (pxt.appTarget.serial.vendorId && pxt.appTarget.serial.productId);
         if (!pxt.appTarget.serial
             || !pxt.appTarget.serial.log
-            || !pxt.appTarget.serial.nameFilter) return;
+            || !hasFilter) return;
 
-        deviceNameFilter = new RegExp(pxt.appTarget.serial.nameFilter);
-        const serialDeviceSelector = Windows.Devices.SerialCommunication.SerialDevice.getDeviceSelector();
+        const sd = Windows.Devices.SerialCommunication.SerialDevice;
+        let serialDeviceSelector: string;
+
+        if (!pxt.appTarget.serial.vendorId || !pxt.appTarget.serial.productId) {
+            deviceNameFilter = new RegExp(pxt.appTarget.serial.nameFilter);
+            serialDeviceSelector = sd.getDeviceSelector();
+        } else {
+            serialDeviceSelector = sd.getDeviceSelectorFromUsbVidPid(
+                parseInt(pxt.appTarget.serial.vendorId),
+                parseInt(pxt.appTarget.serial.productId)
+            );
+        }
 
         // Create a device watcher to look for instances of the Serial device
         // As per MSDN doc, to use the correct overload, we pass null as 2nd argument
@@ -49,7 +61,7 @@ namespace pxt.winrt {
     }
 
     function deviceAdded(deviceInfo: DeviceInfo) {
-        if (!deviceNameFilter || !deviceNameFilter.test(deviceInfo.name)) {
+        if (deviceNameFilter && !deviceNameFilter.test(deviceInfo.name)) {
             return;
         }
 
@@ -76,6 +88,7 @@ namespace pxt.winrt {
     }
 
     function startDevice(id: string) {
+        console.log("========================== startDevice()"); // TEMP TODO remove
         let port = activePorts[id];
         if (!port) return;
         if (!port.device) {
@@ -89,8 +102,10 @@ namespace pxt.winrt {
         let reader = new Windows.Storage.Streams.DataReader(stream);
         let serialBuffers: pxt.Map<string> = {};
         let readMore = () => {
+            console.log("========================== readMore()"); // TEMP TODO remove
             // Make sure the device is still active
             if (!activePorts[id]) {
+                console.log("        ================== return early from readMore()"); // TEMP TODO remove
                 return;
             }
             reader.loadAsync(32).done((bytesRead) => {
@@ -101,6 +116,6 @@ namespace pxt.winrt {
                 setTimeout(() => startDevice(id), 1000);
             });
         };
-        readMore();
+        setTimeout(() => readMore(), 100);
     }
 }
