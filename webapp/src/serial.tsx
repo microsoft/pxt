@@ -136,7 +136,6 @@ export class Editor extends srceditor.Editor {
             const nvalue = parseFloat(m[3]);
             if (!isNaN(nvalue)) {
                 this.appendGraphEntry(niceSource, variable, nvalue, receivedTime)
-                return;
             }
         }
 
