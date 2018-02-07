@@ -25,6 +25,8 @@ export class Editor extends srceditor.Editor {
     maxConsoleLineLength: number = 255;
     maxConsoleEntries: number = 500;
     active: boolean = true
+    rawDataBuffer: string = ""
+    maxBufferLength: number = 10000
 
     lineColors = ["#f00", "#00f", "#0f0", "#ff0"]
     hcLineColors = ["000"]
@@ -124,6 +126,8 @@ export class Editor extends srceditor.Editor {
         const source = smsg.id || "?"
         const receivedTime = smsg.receivedTime || Util.now()
 
+        this.appendRawData(data);
+
         if (!this.sourceMap[source]) {
             let sourceIdx = Object.keys(this.sourceMap).length + 1
             this.sourceMap[source] = lf("source") + sourceIdx.toString()
@@ -140,6 +144,14 @@ export class Editor extends srceditor.Editor {
         }
 
         this.appendConsoleEntry(data)
+    }
+
+    appendRawData(data: string) {
+       this.rawDataBuffer += data;
+       let excessChars = this.rawDataBuffer.length - this.maxBufferLength;
+        if (excessChars > 0) {
+           this.rawDataBuffer = this.rawDataBuffer.slice(excessChars);
+        }
     }
 
     appendGraphEntry(source: string, variable: string, nvalue: number, receivedTime: number) {
@@ -255,14 +267,17 @@ export class Editor extends srceditor.Editor {
             lines.map(line => `time (s)${sep}${line.name}`).join(sep) + '\r\n';
 
         const datas = lines.map(line => line.line);
-        const nl = datas.map(data => data.length).reduce((l, c) => Math.max(l, c));
-        const nc = this.charts.length;
+        const nl = datas.length > 0 ? datas.map(data => data.length).reduce((l, c) => Math.max(l, c)) : 0;
+        const nc = this.charts.length;"t"
         for (let i = 0; i < nl; ++i) {
             csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}${sep}${data[i][1]}` : sep).join(sep);
             csv += '\r\n';
         }
 
         pxt.commands.browserDownloadAsync(csv, lf("{id:csvfilename}data") + ".csv", "text/csv")
+
+        pxt.commands.browserDownloadAsync(this.rawDataBuffer, lf("{id:csvfilename}data") + ".txt", "text/plain");
+
         core.infoNotification(lf("Exporting data...."));
     }
 
