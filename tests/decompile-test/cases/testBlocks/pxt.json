@@ -4,6 +4,7 @@
     "files": [
         "basic.ts",
         "mb.ts",
+        "expandableBlocks.ts",
         "fixedInstance.ts",
         "cp.ts"
     ],
