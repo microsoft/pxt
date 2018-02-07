@@ -97,21 +97,25 @@ namespace pxt.blocks {
         }
     }
 
-    export function initExpandableBlock(b: Blockly.Block, def: pxtc.ParsedBlockDef, comp: BlockCompileInfo, addInputs: () => void) {
+    export function initExpandableBlock(b: Blockly.Block, def: pxtc.ParsedBlockDef, comp: BlockCompileInfo, toggle: boolean, addInputs: () => void) {
         // Add numbers before input names to prevent clashes with the ones added
         // by BlocklyLoader. The number makes it an invalid JS identifier
         const buttonAddName = "0_add_button";
         const buttonRemName = "0_rem_button";
         const attributeName = "_expanded";
+        const inputsAttributeName = "_input_init";
 
         const optionNames = def.parameters.map(p => p.name);
         const totalOptions = def.parameters.length;
+        const buttonDelta = toggle ? totalOptions : 1;
+
+        // These two variables are the "state" of the mutation
         let visibleOptions = 0;
+        let inputsInitialized = false;
 
         Blockly.Extensions.apply('inline-svgs', b, false);
         addPlusButton();
 
-        let inputsInitialized = false;
         const onFirstRender = () => {
             if (b.rendered) {
                 updateShape(0, undefined, true);
@@ -123,20 +127,35 @@ namespace pxt.blocks {
 
         // Blockly only lets you hide an input once it is rendered, so we can't
         // hide the inputs in init() or domToMutation(). This will get called
-        // whenever a change is made to the workspace including after the first
-        // block render and then remove itself
+        // whenever a change is made to the workspace (including after the first
+        // block render) and then remove itself
         (b as any).setOnChange(onFirstRender);
 
         appendMutation(b, {
             mutationToDom: (el: Element) => {
+                // The reason we store the inputsInitialized variable separately from visibleOptions
+                // is because it's possible for the block to get into a state where all inputs are
+                // initialized but they aren't visible (i.e. the user hit the - button). Blockly
+                // gets upset if a block has a different number of inputs when it is saved and restored.
                 el.setAttribute(attributeName, visibleOptions.toString());
+                el.setAttribute(inputsAttributeName, inputsInitialized.toString());
                 return el;
             },
             domToMutation: (saved: Element) => {
+                if (saved.hasAttribute(inputsAttributeName) && saved.getAttribute(inputsAttributeName) == "true" && !inputsInitialized) {
+                    initOptionalInputs();
+                }
+
                 if (saved.hasAttribute(attributeName)) {
                     const val = parseInt(saved.getAttribute(attributeName));
                     if (!isNaN(val)) {
-                        updateShape(val, true);
+                        if (inputsInitialized) {
+                            visibleOptions = addDelta(val);
+                        }
+                        else {
+                            updateShape(val, true);
+                        }
+                        return;
                     }
                 }
             }
@@ -146,17 +165,13 @@ namespace pxt.blocks {
         // the inputs will render before their shadow blocks are created and
         // leave behind annoying artifacts
         function updateShape(delta: number, skipRender = false, force = false) {
-            const newValue = Math.min(Math.max(visibleOptions + delta, 0), totalOptions);
+            const newValue = addDelta(delta);
             if (!force && !skipRender && newValue === visibleOptions) return;
 
             visibleOptions = newValue;
 
             if (!inputsInitialized && visibleOptions > 0) {
-                inputsInitialized = true;
-                addInputs();
-                b.removeInput(buttonAddName);
-                addMinusButton();
-                addPlusButton();
+                initOptionalInputs();
                 if (!b.rendered) {
                     return;
                 }
@@ -171,7 +186,7 @@ namespace pxt.blocks {
                 else if (Util.startsWith(input.name, optionalInputWithFieldPrefix) || optionNames.indexOf(input.name) !== -1) {
                     const visible = optIndex < visibleOptions;
                     setInputVisible(input, visible);
-                    if (visible && input.connection && !(input.connection as any).isConnected()) {
+                    if (visible && input.connection && !(input.connection as any).isConnected() && !b.isInsertionMarker()) {
                         // FIXME: Could probably be smarter here, right now this does not respect
                         // any options passed to the child block. Need to factor that out of BlocklyLoader
                         const param = comp.definitionNameToParam[def.parameters[optIndex].name];
@@ -202,11 +217,23 @@ namespace pxt.blocks {
         }
 
         function addPlusButton() {
-            addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Reveal optional arguments"), 1);
+            addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Reveal optional arguments"), buttonDelta);
         }
 
         function addMinusButton() {
-            addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Hide optional arguments"), -1);
+            addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Hide optional arguments"), -1 * buttonDelta);
+        }
+
+        function initOptionalInputs() {
+            inputsInitialized = true;
+            addInputs();
+            b.removeInput(buttonAddName);
+            addMinusButton();
+            addPlusButton();
+        }
+
+        function addDelta(delta: number) {
+            return Math.min(Math.max(visibleOptions + delta, 0), totalOptions);
         }
 
         function setButton(name: string, visible: boolean) {

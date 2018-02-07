@@ -690,8 +690,9 @@ namespace pxt.blocks {
         else if (fn.attributes.defaultInstance) {
             addMutation(block as MutatingBlock, fn, MutatorTypes.DefaultInstanceMutator);
         }
-        else if (fn.attributes._expandedDef) {
-            initExpandableBlock(block, fn.attributes._expandedDef, comp, () => buildBlockFromDef(fn.attributes._expandedDef, true));
+        else if (fn.attributes._expandedDef && fn.attributes.expandableArgumentMode !== "disabled") {
+            const shouldToggle = fn.attributes.expandableArgumentMode === "toggle";
+            initExpandableBlock(block, fn.attributes._expandedDef, comp, shouldToggle, () => buildBlockFromDef(fn.attributes._expandedDef, true));
         }
         else if (comp.handlerArgs.length) {
             hasHandler = true;

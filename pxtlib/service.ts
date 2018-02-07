@@ -163,6 +163,7 @@ namespace ts.pxtc {
         mutateDefaults?: string;
         mutatePropertyEnum?: string;
         inlineInputMode?: string; // can be inline, external, or auto
+        expandableArgumentMode?: string; // can be disabled, enabled, or toggle
 
         optionalVariableArgs?: boolean;
         toolboxVariableArgs?: string;
