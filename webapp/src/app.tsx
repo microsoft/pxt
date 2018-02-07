@@ -1078,6 +1078,15 @@ export class ProjectView
         });
     }
 
+    pair() {
+        pxt.usb.pairAsync()
+            .then(() => {
+                core.infoNotification(lf("Device paired! Try downloading now."))
+            }, (err: Error) => {
+                core.errorNotification(lf("Failed to pair the device: {0}", err.message))
+            })
+    }
+
     promptRenameProjectAsync(): Promise<boolean> {
         if (!this.state.header) return Promise.resolve(false);
 
@@ -1122,10 +1131,6 @@ export class ProjectView
     beforeCompile() { }
 
     compile(saveOnly = false) {
-        // the USB init has to be called from an event handler
-        if (/webusb=1/i.test(window.location.href)) {
-            pxt.usb.initAsync().catch(e => { })
-        }
         this.beforeCompile();
         let userContextWindow: Window = undefined;
         if (!pxt.appTarget.compile.useModulator && pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext())

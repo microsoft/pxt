@@ -201,6 +201,7 @@ namespace pxt.editor {
         share(): void;
         about(): void;
         reset(): void;
+        pair(): void;
         showReportAbuse(): void;
         exitAndSave(): void;
         launchFullEditor(): void;
