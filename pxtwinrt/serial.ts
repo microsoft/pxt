@@ -88,7 +88,6 @@ namespace pxt.winrt {
     }
 
     function startDevice(id: string) {
-        console.log("========================== startDevice()"); // TEMP TODO remove
         let port = activePorts[id];
         if (!port) return;
         if (!port.device) {
@@ -102,10 +101,8 @@ namespace pxt.winrt {
         let reader = new Windows.Storage.Streams.DataReader(stream);
         let serialBuffers: pxt.Map<string> = {};
         let readMore = () => {
-            console.log("========================== readMore()"); // TEMP TODO remove
             // Make sure the device is still active
             if (!activePorts[id]) {
-                console.log("        ================== return early from readMore()"); // TEMP TODO remove
                 return;
             }
             reader.loadAsync(32).done((bytesRead) => {
