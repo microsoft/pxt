@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "0.16.1",
+  "version": "0.17.1",
   "description": "Microsoft MakeCode, a toolkit for Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
@@ -84,7 +84,7 @@
   "optionalDependencies": {
     "keytar": "^3.0.2",
     "node-hid": "^0.5.2",
-    "serialport": "^4.0.1"
+    "serialport": "^6.0.5"
   },
   "devDependencies": {
     "chai": "^3.5.0",
