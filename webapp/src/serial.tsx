@@ -301,6 +301,16 @@ export class Editor extends srceditor.Editor {
                         <sui.Button title={lf("Export data")} class="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => this.downloadCSV()}>
                             <sui.Icon icon="download" />
                         </sui.Button>
+                        <div className="ui blue buttons">
+                            <div className="ui button">Export data</div>
+                            <div className="ui floating dropdown icon button">
+                                <i className="download icon"></i>
+                                <div className="menu">
+                                    <div className="item">txt</div>
+                                    <div className="item">csv</div>
+                                </div>
+                            </div>
+                        </div>
                         <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
                         <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                     </div>
