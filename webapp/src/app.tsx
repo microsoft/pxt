@@ -1047,7 +1047,7 @@ export class ProjectView
                     return pxt.commands.saveOnlyAsync(resp);
                 }
                 return pxt.commands.deployCoreAsync(resp, {
-                    reportDeviceNotFoundAsync: (path) => this.showDeviceNotFoundDialogAsync(path),
+                    reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
                     reportError: (e) => core.errorNotification(e)
                 })
                     .catch(e => {
@@ -1068,19 +1068,40 @@ export class ProjectView
             .done();
     }
 
-    showDeviceNotFoundDialogAsync(docPath: string): Promise<void> {
+    showDeviceNotFoundDialogAsync(docPath: string, resp: pxtc.CompileResult): Promise<void> {
         pxt.tickEvent(`compile.devicenotfound`);
+
+        let fileType = ".mkcd";
+
+        if (pxt.appTarget.compile.useUF2) {
+            fileType = ".uf2";
+        } else if (pxt.appTarget.compile.hasHex) {
+            fileType = ".hex";
+        }
+
         return core.dialogAsync({
             header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
             body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
-            buttons: [{
-                label: lf("Troubleshoot"),
-                class: "focused",
-                url: docPath,
-                onclick: () => {
-                    pxt.tickEvent(`compile.troubleshoot`);
+            buttons: [
+                {
+                    label: lf("Troubleshoot"),
+                    class: "focused",
+                    icon: "help",
+                    url: docPath,
+                    onclick: () => {
+                        pxt.tickEvent(`compile.troubleshoot`);
+                    }
+                },
+                {
+                    label: lf("Download {0} file", fileType),
+                    icon: "download",
+                    class: "lightgrey",
+                    onclick: () => {
+                        pxt.tickEvent(`compile.troubleshoot.download`);
+                        return pxt.commands.saveOnlyAsync(resp);
+                    }
                 }
-            }],
+            ],
             hideCancel: true,
             hasCloseIcon: true
         });
