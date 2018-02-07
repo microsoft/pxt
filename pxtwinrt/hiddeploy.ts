@@ -103,6 +103,7 @@ namespace pxt.winrt {
                 .catch((e) => {
                     const err = new Error(U.lf("Device not found"));
                     (<any>err).notifyUser = true;
+                    (<any>err).type = "devicenotfound";
                     return Promise.reject(err);
                 });
         }
@@ -111,7 +112,7 @@ namespace pxt.winrt {
     export let packetIO: WindowsRuntimeIO = undefined;
     export function mkPacketIOAsync(): Promise<pxt.HF2.PacketIO> {
         pxt.U.assert(!packetIO);
-        packetIO = new WindowsRuntimeIO()
+        packetIO = new WindowsRuntimeIO();
         return packetIO.initAsync()
             .catch((e) => {
                 packetIO = null;
