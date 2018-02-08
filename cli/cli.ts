@@ -2638,8 +2638,13 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
     if (fs.existsSync(pxt.CONFIG_NAME))
         U.userError(`${pxt.CONFIG_NAME} already present`)
 
-    let prj = pxt.appTarget.tsprj;
+    let prj = pxt.appTarget.tsprj || pxt.appTarget.blocksprj;
     let config = U.clone(prj.config);
+    // remove blocks file
+    Object.keys(prj.files)
+        .filter(f => /\.blocks$/.test(f))
+        .forEach(f => delete prj.files[f]);
+    config.files = config.files.filter(f => !/\.blocks$/.test(f));
 
     config.name = path.basename(path.resolve(".")).replace(/^pxt-/, "")
     // by default, projects are not public
