@@ -8,22 +8,46 @@ var expand = ju.expand;
 var cmdIn = ju.cmdIn;
 var strpSrcMap = ju.strpSrcMap;
 
+"gunakan strict";
+
+var fs = membutuhkan ("fs");
+var ju = membutuhkan ("./ jakeutil")
+var os = membutuhkan ("os")
+var path = require ("path")
+var expand = ju.expand;
+var cmdIn = ju.cmdIn;
+var strpSrcMap = ju.strpSrcMap;
+
 function tscIn(task, dir, builtDir) {
     let command = 'node ' + path.relative(dir, './node_modules/typescript/bin/tsc')
     if (process.env.sourceMaps === 'true') {
         command += ' --sourceMap --mapRoot file:///' + path.resolve(builtDir)
+        
+fungsi tscIn (tugas, dir, dir dibangun) {
+     misalkan command = 'node' + path.relative (dir, './node_modules/typescript/bin/tsc')
+     jika (process.env.sourceMaps === 'true') {
+         perintah + = '--sourceMap --mapRoot file: ///' + path.resolve (dibangun Dir)
     }
     cmdIn(task, dir, command)
+    cmdIn (tugas, dir, perintah)
 }
 
 function compileDir(name, deps) {
     if (!deps) deps = []
     let dd = expand([name].concat(deps))
     file('built/' + name + '.js', dd, { async: true }, function () { tscIn(this, name, "built") })
+
+fungsi kompilasiDir (nama, deps) {
+     jika (! deps) deps = []
+     misalkan dd = expand ([name] .concat (deps))
+     file ('built /' + name + '.js', dd, {async: true}, function () {tscIn (ini, nama, "dibangun") })
 }
 
 function loadText(filename) {
     return fs.readFileSync(filename, "utf8");
+    
+fungsi memuat Teks (nama file) {
+    kembali fs.readFileSync (nama file, "utf8");
 }
 
 function setupTest(taskName, testFolder, testFile) {
@@ -34,11 +58,25 @@ function setupTest(taskName, testFolder, testFile) {
         }
         else {
             cmdIn(this, ".", "./node_modules/.bin/mocha" + args)
+            
+ function setupTest (nama tugas, test Folder, test File) {
+     tugas (taskName, ['built / tests /' testFolder + '/runner.js'], {async: true}, function () {
+         const args = "built / tests /" + testFolder + "/runner.js --reporter dot";
+         jika (os.platform () === "win32") {
+             cmdIn (this, ".", path.resolve ("node_modules / .bin / mocha.cmd") + args)
+         }
+         lain {
+             cmdIn (ini, ".", "./node_modules/.bin/mocha" + args)
+             
         }
     })
 
     file("built/tests/" + testFolder + "/" + testFile, ['default'], { async: true }, function () {
         cmdIn(this, "tests/" + testFolder, 'node ../../node_modules/typescript/bin/tsc')
+        
+   file ("built / test /" testFolder + "/" + testFile, ['default'], {async: true}, function () {
+         cmdIn (ini, "test /" + testFolder, 'node ../../node_modules/typescript/bin/tsc')
+    
     });
 
     ju.catFiles('built/tests/' + testFolder + '/runner.js', [
@@ -47,6 +85,13 @@ function setupTest(taskName, testFolder, testFile) {
         "built/pxtcompiler.js",
         "built/pxtsim.js",
         "built/tests/" + testFolder + "/" + testFile,
+        
+     ju.catFiles ('built / test /' testFolder + '/runner.js', [
+         "node_modules / typescript / lib / typescript.js",
+         "dibangun / pxtlib.js",
+         "dibangun / pxtcompiler.js",
+         "dibangun / pxtsim.js",
+         "dibangun / tes /" + testFolder + "/" + testFile,
     ],
         `
     "use strict";
@@ -54,6 +99,13 @@ function setupTest(taskName, testFolder, testFile) {
     global.savedModuleExports = module.exports;
     module.exports = null;
     `, ['built/pxt-common.json']);
+        
+    "gunakan strict";
+     // pastikan TypeScript tidak menimpa module.exports kami
+     global.savedModuleExports = module.exports;
+     module.exports = null;
+     `, ['built / pxt-common.json']);
+       
 }
 
 function runKarma(that, flags) {
@@ -65,6 +117,17 @@ function runKarma(that, flags) {
         command = "./karma start ../../karma.conf.js " + flags;
     }
     cmdIn(that, "node_modules/.bin", command);
+
+fungsi runKarma (itu, bendera) {
+     perintah var;
+     jika (os.platform () === 'win32') {
+         command = "karma.cmd start ../../karma.conf.js" + flags;
+     }
+     lain {
+         command = "./karma start ../../karma.conf.js" + flags;
+     }
+     cmdIn (itu, "node_modules / .bin", perintah);
+
 }
 
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js'], { parallelLimit: 10 })
@@ -77,6 +140,18 @@ task('clean', function () {
             fs.unlinkSync(f)
         } catch (e) {
             console.log("cannot unlink:", f, e.message)
+
+tugas '(' default ',' updatestrings ',' built / pxt.js ',' built / pxt.d.ts ',' built / pxtrunner.js ',' built / backendutils.js ',' built / target. js ',' wapp ',' monaco-editor ',' built / web / pxtweb.js '], {parallelLimit: 10})
+
+tugas 'tes', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testlang', 'karma'])
+
+tugas ('bersih', fungsi () {
+     expand (["built"]) forEach (f => {
+         coba {
+             fs.unlinkSync (f)
+         } menangkap (e) {
+             console.log ("tidak dapat memutuskan tautan:", f, e.message)
+
         }
     })
     jake.rmRf("built")
@@ -90,6 +165,19 @@ setupTest('testfmt', 'format-test', 'formatrunner.js')
 
 task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, "tests/pkgconflicts", 'node ../../built/pxt.js testpkgconflicts')
+
+jake.rmRf ("dibangun")
+})
+
+setupTest ('testdecompiler', 'decompile-test', 'decompilerunner.js')
+setupTest ('testlang', 'compile-test', 'compilerunner.js')
+setupTest ('testerr', 'error-test', 'errorrunner.js')
+setupTest ('testfmt', 'format-test', 'formatrunner.js')
+
+
+tugas ('testpkgconflicts', ['built / pxt.js'], {async: true}, function () {
+     cmdIn (ini, "tes / pkgconflicts", 'node ../../built/pxt.js testpkgconflicts')
+
 })
 
 ju.catFiles('built/pxt.js', [
@@ -98,6 +186,14 @@ ju.catFiles('built/pxt.js', [
     "built/pxtcompiler.js",
     "built/pxtsim.js",
     "built/cli.js"
+
+ju.catFiles ('built / pxt.js', [
+     "node_modules / typescript / lib / typescript.js",
+     "dibangun / pxtlib.js",
+     "dibangun / pxtcompiler.js",
+     "dibangun / pxtsim.js",
+     "dibangun / cli.js"
+
 ],
     `
 "use strict";
@@ -112,10 +208,28 @@ file('built/pxt.d.ts', ['built/cli.js'], function () {
 })
 file('built/target.js', ['built/pxt.js'], { async: true }, function() {
     cmdIn(this, ".", "node built/pxt.js buildtarget");
+
+"gunakan ketat";
+// pastikan TypeScript tidak menimpa module.exports kami
+global.savedModuleExports = module.exports;
+module.exports = null;
+`, ['built / pxt-common.json'])
+
+file ('built / nodeutil.js', ['built / cli.js'])
+file ('built / pxt.d.ts', ['built / cli.js'], function () {
+     jake.cpR ("built / cli.d.ts", "built / pxt.d.ts")
+})
+file ('built / target.js', ['built / pxt.js'], {async: true}, function () {
+     cmdIn (ini, ".", "node build / pxt.js buildtarget");
+    
 })
 file('built/typescriptServices.d.ts', ['node_modules/typescript/lib/typescriptServices.d.ts'], function () {
     if (!fs.existsSync("built")) fs.mkdirSync("built");
     jake.cpR('node_modules/typescript/lib/typescriptServices.d.ts', "built/")
+    
+file ('built / typescriptServices.d.ts', ['node_modules / typescript / lib / typescriptServices.d.ts'], fungsi () {
+    jika (! fs.existsSync ("built")) fs.mkdirSync ("built");
+     jake.cpR ('node_modules / typescript / lib / typescriptServices.d.ts', "built /")
 })
 
 file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
@@ -125,6 +239,14 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
         std[path.basename(f)] = fs.readFileSync(f, "utf8")
     }
     fs.writeFileSync(this.name, JSON.stringify(std, null, 4))
+    
+ file ('built / pxt-common.json', expand (['libs / pxt-common'], ".ts"), function () {
+     console.log (`[$ {this.name}]`)
+     biarkan std = {}
+     untuk (biarkan f dari this.prereqs) {
+         std [path.basename (f)] = fs.readFileSync (f, "utf8")
+     }
+     fs.writeFileSync (this.name, JSON.stringify (std, null, 4))
 })
 
 compileDir("pxtlib", "built/typescriptServices.d.ts")
@@ -140,14 +262,36 @@ file("built/web/pxtweb.js", expand(["docfiles/pxtweb"]), { async: true }, functi
 
 task("karma", ["blocklycompilertest"], function() {
     runKarma(this, "");
+    
+kompilasi Dir ("pxtlib", "built / typescriptServices.d.ts")
+kompilasi Dir ("pxtcompiler", ["built / pxtlib.js"])
+kompilasi Dir ("pxtwinrt", ["built / pxtlib.js"])
+kompilasi Dir ("pxtblocks", ["built / pxtlib.js"])
+kompilasi Dir ("pxtrunner", ["built / pxtlib.js", "built / pxteditor.js", "built / pxtcompiler.js", "built / pxtsim.js", "built / pxtblocks.js"])
+kompilasi Dir ("pxtsim", ["built / pxtlib.js", "built / pxtblocks.js"])
+kompilasi Dir ("pxteditor", ["built / pxtlib.js", "built / pxtblocks.js"])
+kompilasi Dir ("cli", ["built / pxtlib.js", "built / pxtsim.js"])
+kompilasi Dir ("backendutils", ['pxtlib / util.ts', 'pxtlib / docsrender.ts'])
+file ("built / web / pxtweb.js", expand (["docfiles / pxtweb"]), {async: true}, function () {tscIn (ini, "docfiles / pxtweb", "built")})
+
+tugas ("karma", ["blocklycompilertest"], fungsi () {
+     runKarma (ini, "");
 });
 
 task("karma-debug", ["blocklycompilertest"], function() {
     runKarma(this, "--no-single-run");
+    
+tugas ("debug karma", ["uji kompilasi memblok"], function () {
+     runKarma (ini, "-tidak-satu-lari");
+    
 });
 
 task("blocklycompilertest", ["default"], { async: true }, function() {
     cmdIn(this, "tests/blocklycompiler-test", "node ../../node_modules/typescript/bin/tsc")
+    
+tugas ("blocklycompilertest", ["default"], {async: true}, function () {
+     cmdIn (ini, "tes / blocklycompiler-test", "node ../../node_modules/typescript/bin/tsc")
+    
 })
 
 task("travis", ["lint", "test", "upload"])
@@ -157,12 +301,27 @@ task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
         "node built/pxt.js travis",
         "node built/pxt.js buildtarget"
     ], { printStdout: true }, complete.bind(this));
+    
+tugas ("travis", ["serat", "tes", "upload"])
+
+tugas ('upload', ["wapp", "built / pxt.js"], {async: true}, function () {
+     jake.exec ([
+         "node built / pxt.js travis",
+         "buildgenget yang dibangun / pxt.js"
+     ], {printStdout: true}, complete.bind (this));
+    
 })
 
 task('downloadcrowdin', ["built/pxt.js"], { async: true }, function () {
     jake.exec([
         "node built/pxt.js crowdin download strings.json webapp/public/locales"
     ], { printStdout: true }, complete.bind(this));
+    
+tugas ('downloadcrowdin', ["built / pxt.js"], {async: true}, function () {
+     jake.exec ([
+         "node dibangun / pxt.js crowdin download strings.json webapp / public / locales"
+     ], {printStdout: true}, complete.bind (this));
+    
 })
 
 task("lint", [], { async: true }, function () {
@@ -184,6 +343,27 @@ task("lint", [], { async: true }, function () {
         , { printStdout: true }, function () {
             console.log('linted.');
             complete();
+        
+  tugas ("benang", [], {async: true}, function () {
+     console.log ('linting ...')
+     jake.exec ([
+         "cli",
+         "pxt-cli",
+         "pxtblocks",
+         "pxteditor",
+         "pxtlib",
+         "pxtcompiler / emitter",
+         "pxtrunner",
+         "pxtsim",
+         "pxtwinrt",
+         "webapp / src",
+         "docfiles / pxtweb",
+         "monacots"]
+         .map (fungsi (d) {return "node node_modules / tslint / bin / tslint ./" + d + "/*.ts"})
+         , {printStdout: true}, function () {
+             console.log ('linted');
+             lengkap();
+         
         });
 })
 
@@ -201,7 +381,21 @@ task('update', function () {
 })
 
 task('updatestrings', ['built/localization.json'])
+        
+tugas ('benjolan', fungsi () {
+     jake.exec ([
+         "node dibangun / pxt.js benjolan",
+     ], {printStdout: true});
+})
 
+tugas ('update', function () {
+     jake.exec ([
+         "git pull",
+         "npm install"
+     ], {printStdout: true});
+})
+
+tugas ('updatestrings', ['built / localization.json'])
 
 file('built/localization.json', ju.expand1(
     ["pxtlib",
@@ -212,6 +406,16 @@ file('built/localization.json', ju.expand1(
     var errCnt = 0;
     var translationStrings = {}
     var translationHelpStrings = {}
+    
+file ('built / localization.json', ju.expand1 (
+     ["pxtlib",
+         "pxtblocks",
+         "pxtblocks / fields",
+         "webapp / src"]
+), fungsi () {
+     var errCnt = 0;
+     terjemahan varStrings = {}
+     var translationHelpStrings = {}
 
     function processLf(filename) {
         if (!/\.(ts|tsx|html)$/.test(filename)) return
@@ -223,6 +427,17 @@ file('built/localization.json', ju.expand1(
                 console.log("%s(%d): %s", filename, idx, msg);
                 errCnt++;
             }
+            
+      fungsi prosesLf (filename) {
+         jika (! / \. (ts | tsx | html) $ /. test (filename)) kembali
+         jika (/\.d \.ts$/.test(filename)) kembali
+
+         //console.log('extracting string dari% s ', filename);
+         loadText (filename) .split ('\ n') forEach ((baris, idx) => {
+             fungsi err (msg) {
+                 console.log ("% s (% d):% s", nama file, idx, msg);
+                 errCnt ++;
+             }
 
             while (true) {
                 var newLine = line.replace(/\blf(_va)?\s*\(\s*(.*)/, (all, a, args) => {
@@ -242,6 +457,25 @@ file('built/localization.json', ju.expand1(
                 })
                 if (newLine == line) return;
                 line = newLine
+                
+             sementara (benar) {
+                 var newLine = line.replace (/ \ blf (_va)? \ s * \ (\ s * (. *) /, (semua, a, args) => {
+                     var m = /^("([^"]|(\\"))+")\s*[\),]/.exec(args)
+                     jika (m) {
+                         coba {
+                             var str = JSON.parse (m [1])
+                             terjemahanStrings [str] = 1
+                         } menangkap (e) {
+                             err ("tidak bisa JSON-parse" + m [1])
+                         }
+                     } lain {
+                         jika (! / util \ .ts $ /. test (filename))
+                             err ("format tidak sah dari argumen lf ():" + args)
+                     }
+                     kembali "BLAH" + args
+                 })
+                 jika (newLine == line) kembali;
+                 line = newLine
             }
         })
     }
@@ -250,6 +484,12 @@ file('built/localization.json', ju.expand1(
     this.prereqs.forEach(pth => {
         fileCnt++;
         processLf(pth);
+          
+    var fileCnt = 0;
+     this.prereqs.forEach (pth => {
+         fileCnt ++;
+         prosesLf (pth);
+         
     });
 
     Object.keys(translationHelpStrings).forEach(k => translationStrings[k] = k)
@@ -265,6 +505,20 @@ file('built/localization.json', ju.expand1(
     console.log("Localization extraction: " + fileCnt + " files; " + tr.length + " strings");
     if (errCnt > 0)
         console.log("%d errors", errCnt);
+          
+    var tr = Object.keys (translationStrings)
+     tr.sort ()
+
+     jika (! fs.existsSync ("built")) fs.mkdirSync ("built");
+     fs.writeFileSync ("built / localization.json", JSON.stringify ({string: tr}, null, 1))
+     string var = {};
+     tr.forEach (function (k) {strings [k] = k;});
+     fs.writeFileSync ("built / strings.json", JSON.stringify (string, null, 2));
+
+     console.log ("Localization extraction:" + fileCnt + "files;" + tr.length + "string");
+     jika (errCnt> 0)
+         console.log ("% d errors", errCnt);
+          
 })
 
 task('wapp', [
@@ -281,6 +535,22 @@ task('wapp', [
     'built/web/blockly.css',
     'built/web/semantic.css',
     "built/web/semantic.js"
+    
+    tugas ('wapp', [
+     "dibangun / web / pxtlib.js",
+     "dibangun / web / pxtcompiler.js",
+     "dibangun / web / pxtsim.js",
+     "dibangun / web / pxtblocks.js",
+     "dibangun / web / pxteditor.js",
+     "dibangun / web / pxtwinrt.js",
+     'built / web / main.js',
+     'built / web / worker.js',
+     'built / web / fonts / icons.woff2',
+     'built / web / icons.css',
+     'built / web / blockly.css',
+     'built / web / semantic.css',
+     "dibangun / web / semantic.js"
+    
 ])
 
 file("built/web/pxtlib.js", [
@@ -297,6 +567,20 @@ file("built/web/pxtlib.js", [
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
     jake.cpR("node_modules/fuse.js/src/fuse.min.js", "built/web/fuse.min.js")
 
+file ("built / web / pxtlib.js", [
+     "dibangun / pxtlib.js",
+     "dibangun / pxtcompiler.js",
+     "dibangun / pxtblocks.js",
+     "dibangun / pxtsim.js",
+     "dibangun / pxtrunner.js",
+     "dibangun / pxteditor.js",
+     "dibangun / pxtwinrt.js"
+], fungsi () {
+     jake.mkdirP ("built / web")
+     jake.cpR ("node_modules / jquery / dist / jquery.min.js", "dibangun / web / jquery.js")
+     jake.cpR ("node_modules / bluebird / js / browser / bluebird.min.js", "dibangun / web / bluebird.min.js")
+     jake.cpR ("node_modules / fuse.js / src / fuse.min.js", "dibangun / web / fuse.min.js")
+    
     jake.cpR("built/pxtlib.js", "built/web/")
     jake.cpR("built/pxtcompiler.js", "built/web/")
     jake.cpR("built/pxtblocks.js", "built/web/")
@@ -306,6 +590,15 @@ file("built/web/pxtlib.js", [
     jake.cpR("built/pxtwinrt.js", "built/web/")
     jake.cpR("external/tdast.js", "built/web/")
 
+    jake.cpR ("built / pxtlib.js", "dibangun / web /")
+     jake.cpR ("built / pxtcompiler.js", "dibangun / web /")
+     jake.cpR ("built / pxtblocks.js", "dibangun / web /")
+     jake.cpR ("built / pxtsim.js", "dibangun / web /")
+     jake.cpR ("built / pxtrunner.js", "dibangun / web /")
+     jake.cpR ("built / pxteditor.js", "dibangun / web /")
+     jake.cpR ("built / pxtwinrt.js", "dibangun / web /")
+     jake.cpR ("external / tdast.js", "built / web /")
+    
     let additionalExports = [
         "getCompletionData"
     ]
@@ -314,12 +607,26 @@ file("built/web/pxtlib.js", [
     ts = ts.replace(/getCompletionsAtPosition: getCompletionsAtPosition,/,
         f => f + " " + additionalExports.map(s => s + ": ts.Completions." + s + ",").join(" "))
     fs.writeFileSync("built/web/typescript.js", ts)
+    
+    biarkan additionalExports = [
+         "getCompletionData"
+     ]
+
+     biarkan ts = fs.readFileSync ("node_modules / typescript / lib / typescript.js", "utf8")
+     ts = ts.replace (/ getCompletionsAtPosition: getCompletionsAtPosition, /,
+         f => f + "" + additionalExports.map (s => s + ": ts.Completions." + s + ","). join (""))
+     fs.writeFileSync ("built / web / typescript.js", ts)
+    
 })
 
 
 task('monaco-editor', [
     "built/web/vs/editor/editor.main.js",
     "built/web/vs/language/typescript/src/mode.js"
+    
+tugas ('monaco-editor', [
+     "dibangun / web / vs / editor / editor.main.js",
+     "dibangun / web / vs / bahasa / typescript / src / mode.js"
 ])
 
 
@@ -352,6 +659,37 @@ task('serve', ['default'], { async: true }, function () {
         destination = '../' + process.env.target;
     }
     cmdIn(this, destination, 'node ../pxt/built/pxt.js serve ' + cmdArg)
+    
+tugas ('melayani', ['default'], {async: true}, function () {
+     biarkan cmdArg = '';
+     jika (process.env.sourceMaps === 'true') {
+         cmdArg = '-include-source-maps'
+     }
+     lain jika (process.env.noBrowser === 'true') {
+         cmdArg = '-tidak ada-browser'
+     }
+     lain jika (process.env.localYotta === 'true') {
+         cmdArg = '-yt'
+     }
+     else if (process.env.cloud === 'true') {
+         cmdArg = '-cloud'
+     }
+     else if (process.env.justServe === 'true') {
+         cmdArg = '- hanya'
+     }
+     lain jika (process.env.packaged === 'true') {
+         cmdArg = '-pkg'
+     }
+     jika (process.env.browser) {
+         cmdArg + = '-browser' + process.env.browser;
+     }
+
+     biarkan tujuan = '../pxt-microbit';
+     jika (process.env.target) {
+         destination = '../' + process.env.target;
+     }
+     cmdIn (ini, tujuan, 'node ../pxt/built/pxt.js serve' + cmdArg)
+    
 })
 
 file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js'], function () {
@@ -398,6 +736,52 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
 
     // Strip out the sourceMappingURL= from each of the monaco files (recursively)
     strpSrcMap(this, "webapp/public/vs/")
+    
+file ('built / web / vs / editor / editor.main.js', ['node_modules / pxt-monaco-typescript / release / src / monaco.contribution.js'], fungsi () {
+    console.log (`Memperbarui bit editor Monaco`)
+    jake.mkdirP ("built / web / vs / editor")
+    biarkan monacotypescriptcontribution = fs.readFileSync ("node_modules / pxt-monaco-typescript / release / src / monaco.contribution.js", "utf8")
+    monacotypescriptcontribution = monacotypescriptcontribution.replace (/ \ [\ "require \" \, \ s * \ "exports \" \] /, '["require", "exports", "vs / editor / edcore.main"]')
+
+    biarkan monacoeditor = fs.readFileSync ("node_modules / monaco-editor / dev / vs / editor / editor.main.js", "utf8")
+    // Hapus beberapa tindakan dari menu konteks
+    monacoeditor = monacoeditor.replace (/ ((GoToDefinitionAction | 'editor.action. (ubahAll | quickOutline | previewDeclaration | referenceSearch.trigger)') [. \ s \ S] *?) (menuOpts: [. \ s \ S] * ?}) / gi, '$ 1')
+    monacoeditor = monacoeditor.replace (/.* define \ (\ "vs. \ / bahasa \ / typescript \ / src \ /monaco.contribution \",. * / gi, `$ {monacotypescriptcontribution}`)
+    // Perbaiki masalah keyboard android:
+    // Issue 1: getClientRects masalah di Android 5.1 (Chrome 40), monaco-editor / # 562
+    monacoeditor = monacoeditor.replace (/ FloatHorizontalRange \ (Math \ .max \ (0, clientRect \ .left - clientRectDeltaLeft \), clientRect \ .width \) / gi,
+                `FloatHorizontalRange (Math.max (0, clientRect.right - clientRectDeltaLeft), clientRect.width)`)
+    // Issue 2: Tombol Delete adalah masukan komposisi pada Android 6+, monaco-editor / # 563
+    monacoeditor = monacoeditor.replace (/ if \ (typeInput \ .text! == '' \) / gi,
+                `if (typeInput.text! == '' || (typeInput.text === '' && typeInput.replaceCharCnt == 1))`)
+    // Issue 3: Gboard di Android mengabaikan bidang pelengkapan otomatis, jadi saya menonaktifkan pembaruan komposisi pada keyboard yang mendukungnya.
+    monacoeditor = monacoeditor.replace (/exports\.isChromev56 = \ (userAgent \ .indexOf \ ('Chrome \ / 56 \.' \)> = 0 / gi,
+                `exports.isAndroid = (userAgent.indexOf ('Android')> = 0); \ n exports.isChromev56 = (userAgent.indexOf ('Chrome / 56.')> = 0`)
+    monacoeditor = monacoeditor.replace (/ var newState = _this \ ._ textAreaState \ .readFromTextArea \ (_ this \ ._ textArea \); / gi,
+                `var newState = _this._textAreaState.readFromTextArea (_this._textArea); \ n if (browser.isAndroid) newState.selectionStart = newState.selectionEnd;`)
+    monacoeditor = monacoeditor.replace (/ _ this \ ._ register \ (dom \ .addDisposableListener \ (textArea \ .domNode, 'compositionstart', function \ (e \) {/ gi,
+                `_this._register (dom.addDisposableListener (textArea.domNode, 'compositionstart', function (e) {\ n if (browser.isAndroid) kembali;`)
+    monacoeditor = monacoeditor.replace (/ _ this \ ._ register \ (dom \ .addDisposableListener \ (textArea \ .domNode, 'compositionupdate', function \ (e \) {/ gi,
+                `_this._register (dom.addDisposableListener (textArea.domNode, 'compositionupdate', function (e) {\ n if (browser.isAndroid) kembali;`)
+    monacoeditor = monacoeditor.replace (/ _ this \ ._ register \ (dom \ .addDisposableListener \ (textArea \ .domNode, 'compositionend', function \ (e \) {/ gi,
+                `_this._register (dom.addDisposableListener (textArea.domNode, 'compositionend', function (e) {\ n if (browser.isAndroid) kembali;`)
+    fs.writeFileSync ("built / web / vs / editor / editor.main.js", monacoeditor)
+
+    jake.mkdirP ("webapp / public / vs")
+    jake.cpR ("node_modules / monaco-editor / min / vs / base", "webapp / public / vs /")
+    jake.cpR ("node_modules / monaco-editor / min / vs / editor", "webapp / public / vs /")
+    fs.unlinkSync ("webapp / public / vs / editor / editor.main.js")
+
+    jake.cpR ("node_modules / monaco-editor / min / vs / loader.js", "webapp / public / vs /")
+    jake.mkdirP ("webapp / public / vs / basic-languages ​​/ src")
+    jake.cpR ("node_modules / monaco-editor / min / vs / basic-languages ​​/ src / bat.js", "webapp / publik / vs / basic-languages ​​/ src /")
+    jake.cpR ("node_modules / monaco-editor / min / vs / basic-languages ​​/ src / cpp.js", "webapp / public / vs / basic-languages ​​/ src /")
+    jake.mkdirP ("webapp / publik / vs / bahasa / json")
+    jake.cpR ("node_modules / monaco-editor / min / vs / language / json /", "webapp / public / vs / language /")
+
+    // Strip out sourceMappingURL = dari masing-masing file monaco (secara rekursif)
+    strpSrcMap (ini, "webapp / public / vs /")
+    
 })
 
 file('built/web/vs/language/typescript/src/mode.js', ['node_modules/pxt-monaco-typescript/release/src/mode.js'], function () {
@@ -407,6 +791,13 @@ file('built/web/vs/language/typescript/src/mode.js', ['node_modules/pxt-monaco-t
     jake.cpR("node_modules/pxt-monaco-typescript/release/lib/typescriptServices.js", "built/web/vs/language/typescript/lib/")
     jake.cpR("node_modules/pxt-monaco-typescript/release/src/mode.js", "built/web/vs/language/typescript/src/")
     jake.cpR("node_modules/pxt-monaco-typescript/release/src/worker.js", "built/web/vs/language/typescript/src/")
+file ('built / web / vs / language / typescript / src / mode.js', ['node_modules / pxt-monaco-typescript / release / src / mode.js'], fungsi () {
+     console.log (`Memperbarui layanan bahasa bahasa monaco typescript`)
+     jake.mkdirP ("built / web / vs / bahasa / typescript / src")
+     jake.mkdirP ("dibangun / web / vs / bahasa / typescript / lib")
+     jake.cpR ("node_modules / pxt-monaco-typescript / release / lib / typescriptServices.js", "dibangun / web / vs / bahasa / typescript / lib /")
+     jake.cpR ("node_modules / pxt-monaco-typescript / release / src / mode.js", "dibangun / web / vs / bahasa / typescript / src /")
+     jake.cpR ("node_modules / pxt-monaco-typescript / release / src / worker.js", "dibangun / web / vs / bahasa / typescript / src /")
 })
 
 file('built/webapp/src/app.js', expand([
@@ -418,30 +809,59 @@ file('built/webapp/src/app.js', expand([
     "built/web/pxtwinrt.js"
 ]), { async: true }, function () {
     tscIn(this, "webapp", "built/webapp")
+    
+file ('built / webapp / src / app.js', expand ([
+     "aplikasi website",
+     "dibangun / web / pxtlib.js",
+     "dibangun / web / pxtsim.js",
+     "dibangun / web / pxtblocks.js",
+     "dibangun / web / pxteditor.js",
+     "dibangun / web / pxtwinrt.js"
+]), {async: true}, function () {
+     tscIn (ini, "webapp", "built / webapp")
+    
 })
 
 file('built/web/main.js', ["built/webapp/src/app.js"], { async: true }, function () {
     cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js')
+file ('built / web / main.js', ["built / webapp / src / app.js"], {async: true}, function () {
+     cmdIn (this, ".", 'node node_modules / browserify / bin / cmd built / webapp / src / app.js -o built / web / main.js')
 })
 
 file('built/web/worker.js', ["built/webapp/src/app.js"], function () {
     jake.cpR("built/webapp/src/worker.js", "built/web/")
+    
+file ('built / web / worker.js', ["built / webapp / src / app.js"], fungsi () {
+     jake.cpR ("built / webapp / src / worker.js", "dibangun / web /")
 })
 
 file('built/web/fonts/icons.woff2', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes/default/assets/fonts", "built/web/")
+    
+file ('built / web / fonts / icons.woff2', [], function () {
+     jake.cpR ("node_modules / semantic-ui-less / themes / default / assets / fonts", "built / web /")
 })
 
 file('built/web/blockly.css', ['built/pxt.js',
     "theme/blockly.less", "theme/theme.config", "theme/themes/pxt/globals/site.variables"
 ], { async: true }, function () {
     cmdIn(this, ".", 'node built/pxt.js buildcss')
+    
+file ('built / web / blockly.css', ['built / pxt.js',
+     "theme / blockly.less", "theme / theme.config", "theme / themes / pxt / globals / site.variables"
+], {async: true}, function () {
+     cmdIn (this, ".", 'node built / pxt.js buildcss')
 })
 
 file('built/web/semantic.css', ['built/pxt.js',
     "theme/style.less", "theme/theme.config", "theme/themes/pxt/globals/site.variables"
 ], { async: true }, function () {
     cmdIn(this, ".", 'node built/pxt.js buildcss')
+    
+file ('built / web / semantic.css', ['built / pxt.js',
+     "theme / style.less", "theme / theme.config", "theme / themes / pxt / globals / site.variables"
+], {async: true}, function () {
+     cmdIn (this, ".", 'node built / pxt.js buildcss')
 })
 
 file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
@@ -456,6 +876,20 @@ file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
         templateOptions: {
             classPrefix: name + ".",
             baseClass: name
+            
+  file ('built / web / icons.css', expand (["svgicons"]), {async: true}, function () {
+     biarkan webfontsGenerator = require ('webfonts-generator')
+     biarkan nama = "xicon"
+     biarkan task = ini
+
+     webfontsGenerator ({
+         fontName: nama,
+         file: expand (["svgicons"], ".svg"),
+         dest: "built / fonts /", // palsu
+         templateOptions: {
+             classPrefix: nama + ".",
+             baseClass: nama
+             
         },
         writeFiles: false,
     }, function (error, res) {
@@ -479,6 +913,29 @@ file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
             fs.writeFileSync("built/web/icons.html", html)
             fs.writeFileSync("built/web/icons.css", css)
             task.complete()
+            
+          writeFiles: salah,
+    }, fungsi (kesalahan, res) {
+        jika (error) {
+            task.fail (error)
+        } lain {
+            biarkan css = res.generateCss ()
+            biarkan data = res ["woff"] toString ("base64")
+            css = css.replace (/ ^ \ s * src: [^;] +; / m,
+                Format "src: url (data: application / x-font-woff; charset = utf-8; base64," + data + ") (\" woff \ ");")
+            css = css.replace (/ line-height: \ s * 1; /, "")
+            // File css SUI akan mengganti ikon kita tanpa! Penting;
+            // ikon kita memiliki kelas xicon sehingga tidak pernah terjadi sebaliknya
+            css = css.replace (/ (konten:. *); / g, (f, m) => m + "! penting;")
+            console.log ("Generated icons.css -", ​​css.length, "bytes")
+            biarkan html = "<! doctype html> \ n <html> <body style = 'ukuran font: 30px'> <style> @import './icons.css';</style>\n"
+            css.replace (/ \. (\ w +): sebelum / g, (f, n) => {
+                html + = `<div style =" margin: 20px; "> <i class =" $ {name} $ {n} "> </ i> <span style = 'padding-left: 1em; ukuran huruf: 0.8em; opacity: 0.5; '> $ {n} </ span> </ div> \ n`
+            })
+            html + = "</ body> </ html> \ n"
+            fs.writeFileSync ("built / web / icons.html", html)
+            fs.writeFileSync ("dibangun / web / icons.css", css)
+            task.complete ()
         }
     })
 })
@@ -497,3 +954,18 @@ ju.catFiles("built/web/semantic.js",
         "node_modules/semantic-ui-less/definitions/modules/transition.js",
         "node_modules/semantic-ui-less/definitions/behaviors"], ".js"),
     "")
+         
+ ju.catFiles ("built / web / semantic.js",
+     memperluas (["node_modules / semantic-ui-less / definition / globals",
+         "node_modules / semantik-ui-kurang / definisi / modules / accordion.js",
+         "node_modules / semantic-ui-less / definitions / modules / checkbox.js",
+         "node_modules / semantic-ui-less / definitions / modules / dimmer.js",
+         "node_modules / semantik-ui-kurang / definisi / modules / dropdown.js",
+         "node_modules / semantic-ui-less / definitions / modules / embed.js",
+         "node_modules / semantik-ui-kurang / definisi / modul / modal.js",
+         "node_modules / semantik-ui-kurang / definisi / modules / popup.js",
+         "node_modules / semantik-ui-kurang / definisi / modules / search.js",
+         "node_modules / semantik-ui-kurang / definisi / modules / sidebar.js",
+         "node_modules / semantik-ui-kurang / definisi / modules / transition.js",
+         "node_modules / semantik-ui-kurang / definisi / perilaku"], ".js"),
+     "")
