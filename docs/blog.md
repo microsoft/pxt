@@ -1,5 +1,11 @@
 # Microsoft MakeCode Blog
 
+## [Microsoft MakeCode for Cue](/blog/wonder-workshop/01-22-2018)
+
+January 22nd, 2018
+
+Announcing Microsoft MakeCode for Cue!
+
 ## [Micro:bit v0.13.52](/blog/microbit/v0.13.52)
 
 December 8th, 2017
