@@ -174,7 +174,7 @@ function showFirmwareUpdateInstructionsAsync(resp: pxtc.CompileResult): Promise<
         </div>
     </div>`;
             return core.confirmAsync({
-                header: lf("Upgrade your {0} firmware", boardName),
+                header: lf("Upgrade firmware"),
                 htmlBody,
             })
                 .then(r => r ? showWebUSBPairingInstructionsAsync(resp) : browserDownloadDeployCoreAsync(resp));
