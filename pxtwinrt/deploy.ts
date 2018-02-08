@@ -42,7 +42,15 @@ namespace pxt.winrt {
 
     export function saveOnlyAsync(res: pxtc.CompileResult): Promise<boolean> {
         const useUf2 = pxt.appTarget.compile.useUF2;
-        const fileTypes = useUf2 ? [".uf2"] : [".hex"];
+
+        let fileTypes = [".mkcd"];
+
+        if (pxt.appTarget.compile.useUF2) {
+            fileTypes = [".uf2"];
+        } else if (pxt.appTarget.compile.hasHex) {
+            fileTypes = [".hex"];
+        }
+
         const savePicker = new Windows.Storage.Pickers.FileSavePicker();
         savePicker.suggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.documentsLibrary;
         savePicker.fileTypeChoices.insert(Util.lf("MakeCode binary file"), <any>fileTypes);
