@@ -69,6 +69,8 @@ namespace pxt.blocks {
         return arrayTypeRegex.test(type);
     }
 
+    type NamedField = { field: Blockly.Field, name?: string };
+
     let usedBlocks: Map<boolean> = {};
     let updateUsedBlocks = false;
 
@@ -610,24 +612,22 @@ namespace pxt.blocks {
         return true;
     }
 
-    function addLabel(i: Blockly.Input, part: pxtc.BlockLabel): Blockly.Input {
-        if (part.isImage) {
-            i.appendField(iconToFieldImage(part.text));
+    function newLabel(part: pxtc.BlockLabel | pxtc.BlockImage): Blockly.Field {
+        if (part.kind === "image") {
+            return iconToFieldImage(part.uri);
         }
         else if (part.cssClass) {
-            i.appendField(new Blockly.FieldLabel(part.text, part.cssClass));
+            return new Blockly.FieldLabel(part.text, part.cssClass);
         }
         else if (part.style.length) {
-            i.appendField(new pxtblockly.FieldStyledLabel(part.text, {
+            return new pxtblockly.FieldStyledLabel(part.text, {
                 bold: part.style.indexOf("bold") !== -1,
                 italics: part.style.indexOf("italics") !== -1
-            }));
+            })
         }
         else {
-            i.appendField(part.text);
+            return new Blockly.FieldLabel(part.text, undefined);
         }
-
-        return i;
     }
 
     function cleanOuterHTML(el: HTMLElement): string {
@@ -783,139 +783,147 @@ namespace pxt.blocks {
         block.setTooltip(fn.attributes.jsDoc);
 
         function buildBlockFromDef(def: pxtc.ParsedBlockDef, expanded = false) {
-            let current: Blockly.Input;
-            let newInput = true;
             let anonIndex = 0;
             let firstParam = !expanded && !!comp.thisParameter;
 
-            def.parts.forEach(part => {
-                if (!pxtc.isBlockParam(part)) {
-                    current = addLabel(newInput ? addDummyInput() : current, part);
-                    newInput = false;
-                }
-                else {
-                    newInput = true;
-                    // find argument
-                    let pr = firstParam ? comp.thisParameter : comp.definitionNameToParam[part.name];
-                    firstParam = false;
-                    if (!pr) {
-                        console.error("block " + fn.attributes.blockId + ": unkown parameter " + part.name);
-                        return;
+            const inputs = splitInputs(def);
+
+            inputs.forEach(inputParts => {
+                const fields: NamedField[] = [];
+                let inputName: string;
+                let inputCheck: string;
+                let hasParameter = false;
+
+                inputParts.forEach(part => {
+                    if (part.kind !== "param") {
+                        fields.push({ field: newLabel(part) });
                     }
-                    let typeInfo = U.lookup(info.apis.byQName, pr.type)
-
-                    const defName = pr.definitionName;
-                    const actName = pr.actualName;
-
-                    let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
-                    let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowBlockId;
-                    let customField = pr.fieldEditor;
-                    let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
-                    let fieldType = pr.type;
-
-                    if (isEnum || isFixed) {
-                        const syms = Util.values(info.apis.byQName)
-                            .filter(e =>
-                                isEnum ? e.namespace == pr.type
-                                    : (e.kind == pxtc.SymbolKind.Variable
-                                        && e.attributes.fixedInstance
-                                        && isSubtype(info.apis, e.retType, typeInfo.qName)))
-                        if (syms.length == 0) {
-                            console.error(`no instances of ${typeInfo.qName} found`)
+                    else {
+                        // find argument
+                        let pr = firstParam ? comp.thisParameter : comp.definitionNameToParam[part.name];
+                        firstParam = false;
+                        if (!pr) {
+                            console.error("block " + fn.attributes.blockId + ": unkown parameter " + part.name);
+                            return;
                         }
-                        const dd = syms.map(v => {
-                            const k = v.attributes.block || v.attributes.blockId || v.name;
-                            return [
-                                v.attributes.iconURL || v.attributes.blockImage ? {
-                                    src: v.attributes.iconURL || Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
-                                    alt: k,
-                                    width: 36,
-                                    height: 36,
-                                    value: v.name
-                                } : k,
-                                v.namespace + "." + v.name
-                            ];
-                        });
-                        current = addParamInput();
-                        // if a value is provided, move it first
-                        if (pr.defaultValue) {
-                            let shadowValueIndex = -1;
-                            dd.some((v, i) => {
-                                if (v[1] === pr.defaultValue) {
-                                    shadowValueIndex = i;
-                                    return true;
-                                }
-                                return false;
-                            });
-                            if (shadowValueIndex > -1) {
-                                const shadowValue = dd.splice(shadowValueIndex, 1)[0];
-                                dd.unshift(shadowValue);
+                        let typeInfo = U.lookup(info.apis.byQName, pr.type)
+
+                        hasParameter = true;
+                        const defName = pr.definitionName;
+                        const actName = pr.actualName;
+
+                        let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
+                        let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowBlockId;
+                        let customField = pr.fieldEditor;
+                        let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
+                        let fieldType = pr.type;
+
+                        if (isEnum || isFixed) {
+                            const syms = Util.values(info.apis.byQName)
+                                .filter(e =>
+                                    isEnum ? e.namespace == pr.type
+                                        : (e.kind == pxtc.SymbolKind.Variable
+                                            && e.attributes.fixedInstance
+                                            && isSubtype(info.apis, e.retType, typeInfo.qName)))
+                            if (syms.length == 0) {
+                                console.error(`no instances of ${typeInfo.qName} found`)
                             }
-                        }
+                            const dd = syms.map(v => {
+                                const k = v.attributes.block || v.attributes.blockId || v.name;
+                                return [
+                                    v.attributes.iconURL || v.attributes.blockImage ? {
+                                        src: v.attributes.iconURL || Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
+                                        alt: k,
+                                        width: 36,
+                                        height: 36,
+                                        value: v.name
+                                    } : k,
+                                    v.namespace + "." + v.name
+                                ];
+                            });
+                            // if a value is provided, move it first
+                            if (pr.defaultValue) {
+                                let shadowValueIndex = -1;
+                                dd.some((v, i) => {
+                                    if (v[1] === pr.defaultValue) {
+                                        shadowValueIndex = i;
+                                        return true;
+                                    }
+                                    return false;
+                                });
+                                if (shadowValueIndex > -1) {
+                                    const shadowValue = dd.splice(shadowValueIndex, 1)[0];
+                                    dd.unshift(shadowValue);
+                                }
+                            }
 
-                        if (customField) {
-                            let defl = fn.attributes.paramDefl[actName] || "";
+                            if (customField) {
+                                let defl = fn.attributes.paramDefl[actName] || "";
+                                const options = {
+                                    data: dd,
+                                    colour: color,
+                                    label: fieldLabel,
+                                    type: fieldType
+                                } as Blockly.FieldCustomDropdownOptions;
+                                Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[actName] || {});
+                                fields.push(namedField(createFieldEditor(customField, defl, options), defName));
+                            }
+                            else
+                                fields.push(namedField(new Blockly.FieldDropdown(dd), defName));
+
+                        } else if (customField) {
+                            const defl = fn.attributes.paramDefl[pr.actualName] || "";
                             const options = {
-                                data: dd,
                                 colour: color,
                                 label: fieldLabel,
                                 type: fieldType
-                            } as Blockly.FieldCustomDropdownOptions;
-                            Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[actName] || {});
-                            current.appendField(createFieldEditor(customField, defl, options), defName);
+                            } as Blockly.FieldCustomOptions;
+                            Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[pr.actualName] || {});
+                            fields.push(namedField(createFieldEditor(customField, defl, options), pr.definitionName));
+                        } else {
+                            inputName = defName;
+                            if (instance && part.name === "this") {
+                                inputCheck = pr.type;
+                            } else if (pr.type == "number") {
+                                if (pr.shadowBlockId && pr.shadowBlockId == "value") {
+                                    inputName = undefined;
+                                    fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
+                                }
+                                else {
+                                    inputCheck = "Number"
+                                }
+                            } else if (pr.type == "boolean") {
+                                inputCheck = "Boolean"
+                            } else if (pr.type == "string") {
+                                inputCheck = "String"
+                            } else {
+                                inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? "Array" : pr.type);
+                            }
                         }
-                        else
-                            current.appendField(new Blockly.FieldDropdown(dd), defName);
-
-                    } else if (customField) {
-                        current = addParamInput();
-                        const defl = fn.attributes.paramDefl[pr.actualName] || "";
-                        const options = {
-                            colour: color,
-                            label: fieldLabel,
-                            type: fieldType
-                        } as Blockly.FieldCustomOptions;
-                        Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[pr.actualName] || {});
-                        current.appendField(createFieldEditor(customField, defl, options), pr.definitionName);
-                    } else if (instance && part.name === "this") {
-                        if (!fn.attributes.defaultInstance) {
-                            current = addParamInput(defName, pr.type)
-                        }
-                    } else if (pr.type == "number") {
-                        if (pr.shadowBlockId && pr.shadowBlockId == "value") {
-                            current = addParamInput();
-                            current.appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName);
-                        }
-                        else current = addParamInput(defName, "Number");
-                    } else if (pr.type == "boolean") {
-                        current = addParamInput(defName, "Boolean");
-                    } else if (pr.type == "string") {
-                        current = addParamInput(defName, "String");
-                    } else {
-                        const type = pr.type == "T" ? undefined : (isArrayType(pr.type) ? "Array" : pr.type);
-                        current = addParamInput(defName, type);
                     }
+                });
+
+                let input: Blockly.Input;
+
+                if (inputName) {
+                    input = block.appendValueInput(inputName);
+                    input.setAlign(Blockly.ALIGN_LEFT);
                 }
+                else if (expanded) {
+                    const prefix = hasParameter ? optionalInputWithFieldPrefix : optionalDummyInputPrefix;
+                    input = block.appendDummyInput(prefix + (anonIndex ++));
+                }
+                else {
+                    input = block.appendDummyInput();
+                }
+
+                if (inputCheck) {
+                    input.setCheck(inputCheck);
+                }
+
+                fields.forEach(f => input.appendField(f.field, f.name));
             });
-
-            function addParamInput(iName?: string, type?: string) {
-                let i = iName ? block.appendValueInput(iName) : addDummyInput(true);
-                if (type) i.setCheck(type);
-                i.setAlign(Blockly.ALIGN_LEFT);
-                return i;
-            }
-
-            function addDummyInput(notLabel = false) {
-                if (expanded) {
-                    if (notLabel) {
-                        return block.appendDummyInput(optionalInputWithFieldPrefix + (anonIndex ++))
-                    }
-                    return block.appendDummyInput(optionalDummyInputPrefix + (anonIndex ++))
-                }
-                return block.appendDummyInput();
-            }
         }
-
     }
 
     export function hasArrowFunction(fn: pxtc.SymbolInfo): boolean {
@@ -3297,5 +3305,41 @@ namespace pxt.blocks {
             if (jresObject && jresObject.icon)
                 jresIconCache[jresId] = jresObject.icon;
         })
+    }
+
+    function splitInputs(def: pxtc.ParsedBlockDef): pxtc.BlockContentPart[][] {
+        const res: pxtc.BlockContentPart[][] = [];
+        let current: pxtc.BlockContentPart[] = [];
+
+        def.parts.forEach(part => {
+            switch (part.kind) {
+                case "break":
+                    newInput();
+                    break;
+                case "param":
+                    current.push(part);
+                    newInput();
+                    break;
+                case "image":
+                case "label":
+                    current.push(part);
+                    break;
+            }
+        });
+
+        newInput();
+
+        return res;
+
+        function newInput() {
+            if (current.length) {
+                res.push(current);
+                current = [];
+            }
+        }
+    }
+
+    function namedField(field: Blockly.Field, name: string): NamedField {
+        return { field, name };
     }
 }

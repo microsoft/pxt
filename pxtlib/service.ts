@@ -186,20 +186,33 @@ namespace ts.pxtc {
     }
 
 
+    export type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
+    export type BlockPart = BlockContentPart | BlockBreak;
+
     export interface BlockLabel {
+        kind: "label";
         text: string;
         style?: string[];
-        isImage?: boolean;
         cssClass?: string;
     }
 
     export interface BlockParameter {
+        kind: "param";
         name: string;
         shadowBlockId?: string;
     }
 
+    export interface BlockBreak {
+        kind: "break";
+    }
+
+    export interface BlockImage {
+        kind: "image";
+        uri: string;
+    }
+
     export interface ParsedBlockDef {
-        parts: ReadonlyArray<(BlockLabel | BlockParameter)>;
+        parts: ReadonlyArray<(BlockPart)>;
         parameters: ReadonlyArray<BlockParameter>;
     }
 
@@ -632,7 +645,7 @@ namespace ts.pxtc {
         if (currentWord)
             tokens.push({ kind: TokenKind.Word, content: currentWord });
 
-        const parts: (BlockLabel | BlockParameter)[] = [];
+        const parts: BlockPart[] = [];
         const parameters: BlockParameter[] = [];
 
         const stack: TokenKind[] = [];
@@ -689,27 +702,30 @@ namespace ts.pxtc {
             }
 
             if (wordEnd && currentLabel) {
-                parts.push({ text: currentLabel, style: styles });
+                parts.push({ kind: "label", text: currentLabel, style: styles } as BlockLabel);
                 currentLabel = "";
             }
 
             if (token == TokenKind.Parameter) {
-                const param: BlockParameter = { name: tokens[i].content, shadowBlockId: tokens[i].type };
+                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type };
                 parts.push(param);
                 parameters.push(param);
             }
             else if (token == TokenKind.Image) {
-                parts.push({ text: tokens[i].content, isImage: true });
+                parts.push({ kind: "image", uri: tokens[i].content } as BlockImage);
             }
             else if (token == TokenKind.TaggedText) {
-                parts.push({ text: tokens[i].content, cssClass: tokens[i].type })
+                parts.push({ kind: "label", text: tokens[i].content, cssClass: tokens[i].type } as BlockLabel)
+            }
+            else if (token == TokenKind.Pipe) {
+                parts.push({ kind: "break" });
             }
         }
 
         if (open) return undefined; // error: style marks should terminate
 
         if (currentLabel) {
-            parts.push({ text: currentLabel, style: [] });
+            parts.push({ kind: "label", text: currentLabel, style: [] } as BlockLabel);
         }
 
         return { parts, parameters };
@@ -731,10 +747,6 @@ namespace ts.pxtc {
             ++strIndex;
             return content;
         }
-    }
-
-    export function isBlockParam(v: BlockParameter | BlockLabel): v is BlockParameter {
-        return !!(v as BlockParameter).name;
     }
 
     // TODO should be internal
