@@ -135,7 +135,7 @@ export function initCommandsAsync(): Promise<void> {
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
 
-    if (pxt.usb.isAvailable() && /webusb=1/i.test(window.location.href)) {
+    if (pxt.usb.isAvailable() && (pxt.appTarget.compile.webUsb || /webusb=1/i.test(window.location.href))) {
         pxt.usb.setEnabled(true)
         pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync
     }
