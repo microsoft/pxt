@@ -119,12 +119,13 @@ function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<v
 
     return core.confirmAsync({
         header: lf("No device detected..."),
-        body: `
-<p>Do you want to pair your ${boardName} to the editor to allow instant download of your code?
-A dialog will open and ask you to select your device.</p>
+        htmlBody: `
+<p>${lf("Do you want to pair your {0} to the editor to allow instant download of your code?", boardName)}
+${lf("A dialog will open and ask you to select your device.")}</p>
         `,
         hasCloseIcon: true,
         hideAgree: true,
+        hideCancel: true,
         buttons: [{
             label: lf("Pair Device"),
             icon: "usb",
