@@ -101,12 +101,10 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
 }
 
 function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.debug('HID deployment...');
-
-    // error message handle in browser download
+    pxt.tickEvent(`hid.deploy`)
+    // error message handled in browser download
     if (!resp.success)
         return browserDownloadDeployCoreAsync(resp);
-
     core.infoNotification(lf("Downloading..."));
     let f = resp.outfiles[pxtc.BINARY_UF2]
     let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
@@ -242,6 +240,7 @@ function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<v
 }
 
 function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.tickEvent(`webusb.deploy`)
     return hidDeployCoreAsync(resp)
         .catch(e => askWebUSBPairAsync(resp));
 }
