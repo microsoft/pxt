@@ -59,7 +59,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
 }
 
 function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (options: any) => Promise<number>): Promise<void> {
-    const boardName = pxt.appTarget.appTheme.boardName || "???";
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
 
     // https://msdn.microsoft.com/en-us/library/cc848897.aspx
@@ -102,11 +102,50 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
 
 function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('HID deployment...');
+
+    // error message handle in browser download
+    if (!resp.success)
+        return browserDownloadDeployCoreAsync(resp);
+
     core.infoNotification(lf("Flashing device..."));
     let f = resp.outfiles[pxtc.BINARY_UF2]
     let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
     return hidbridge.initAsync()
         .then(dev => dev.reflashAsync(blocks))
+}
+
+function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<void> {
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+
+    return core.confirmAsync({
+        header: lf("No device detected..."),
+        body: `
+<p>Do you want to pair your ${boardName} to the editor to allow instant download of your code?
+A dialog will open and ask you to select your device.</p>
+        `,
+        hasCloseIcon: true,
+        hideAgree: true,
+        buttons: [{
+            label: lf("Pair Device"),
+            icon: "usb",
+            class: "lightgrey",
+            onclick: () => {
+                pxt.usb.pairAsync()
+                    .then(() => hidDeployCoreAsync(resp))
+                    .catch(e => browserDownloadDeployCoreAsync(resp));
+            }
+        }, {
+            label: lf("Help"),
+            icon: "help",
+            class: "lightgrey",
+            url: "/device/webusb"
+        }],
+    }).then(() => { });
+}
+
+function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    return hidDeployCoreAsync(resp)
+        .catch(e => showWebUSBPairingInstructionsAsync(resp));
 }
 
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
@@ -135,16 +174,17 @@ export function initCommandsAsync(): Promise<void> {
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
 
-    if (pxt.usb.isAvailable() && (pxt.appTarget.compile.webUsb || /webusb=1/i.test(window.location.href))) {
+    if (pxt.usb.isAvailable() && (pxt.appTarget.compile.webUSB || /webusb=1/i.test(window.location.href))) {
+        pxt.log(`enabled webusb`)
         pxt.usb.setEnabled(true)
         pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync
     }
 
     if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
-        pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+        pxt.commands.deployCoreAsync = webUsbDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
-            pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => {}), () => hidbridge.disconnectWrapperAsync());
+            pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => { }), () => hidbridge.disconnectWrapperAsync());
             pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployCoreAsync = hidDeployCoreAsync;
         } else {

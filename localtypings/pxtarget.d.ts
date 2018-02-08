@@ -298,7 +298,7 @@ declare namespace ts.pxtc {
         useMkcd?: boolean;
         useELF?: boolean;
         useModulator?: boolean;
-        webUsb?: boolean; // use WebUSB when supported
+        webUSB?: boolean; // use WebUSB when supported
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
