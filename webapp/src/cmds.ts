@@ -165,7 +165,7 @@ function showFirmwareUpdateInstructionsAsync(resp: pxtc.CompileResult): Promise<
                 <div class="content">
                     <div class="description">
                         <span class="ui blue circular label">3</span>
-                        ${lf("Move the .uf2 file to {0}", boardName)}
+                        ${lf("Move the .uf2 file to your board")}
                         <br/>
                         ${lf("Locate the downloaded .uf2 file and drag it to the {0} drive", driveName)}
                     </div>
