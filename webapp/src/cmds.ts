@@ -202,7 +202,7 @@ function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<v
                 <div class="content">
                     <div class="description">
                         <span class="ui blue circular label">2</span>
-                        <strong>${lf("Select {0} in the pairing dialog", webUsbName)}</strong>
+                        ${lf("Select \"{0}\" in the pairing dialog", webUsbName)}
                     </div>
                 </div>
             </div>
@@ -212,18 +212,16 @@ function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<v
                 <div class="content">
                     <div class="description">
                         <span class="ui blue circular label">3</span>
-                        ${lf("Press Connect")}
+                        ${lf("Press \"Connect\"")}
                     </div>
                 </div>
             </div>
         </div>
     </div>`;
-    const pairBtn = lf("Pair Device");
 
     return core.confirmAsync({
         header: lf("Pair your {0}", boardName),
         htmlBody,
-        agreeLbl: pairBtn
     }).then(r => {
         pxt.usb.pairAsync()
             .then(() => hidDeployCoreAsync(resp))
