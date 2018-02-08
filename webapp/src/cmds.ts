@@ -114,7 +114,15 @@ function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         .then(dev => dev.reflashAsync(blocks))
 }
 
+let askPairingCount = 0;
 function askWebUSBPairAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.tickEvent(`webusb.askpair`);
+    askPairingCount++;
+    if (askPairingCount > 3) { // looks like this is not working, don't ask anymore
+        pxt.tickEvent(`webusb.askpaircancel`);
+        return browserDownloadDeployCoreAsync(resp);
+    }
+
     const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     return core.confirmAsync({
         header: lf("No device detected..."),
@@ -127,12 +135,12 @@ ${lf("You will get instant downloads and data logging.")}</p>
 }
 
 function showFirmwareUpdateInstructionsAsync(resp: pxtc.CompileResult): Promise<void> {
-
     return pxt.targetConfigAsync()
         .then(config => {
             const firmwareUrl = (config.firmwareUrls || {})[pxt.appTarget.simulator.boardDefinition.id];
             if (!firmwareUrl) // skip firmware update
                 return showWebUSBPairingInstructionsAsync(resp)
+            pxt.tickEvent(`webusb.upgradefirmware`);
             const boardName = pxt.appTarget.appTheme.boardName || lf("device");
             const driveName = pxt.appTarget.appTheme.driveDisplayName || "DRIVE";
             const htmlBody = `
@@ -182,6 +190,7 @@ function showFirmwareUpdateInstructionsAsync(resp: pxtc.CompileResult): Promise<
 }
 
 function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.tickEvent(`webusb.pair`);
     const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const webUsbName = pxt.appTarget.simulator.boardDefinition.usbDeviceName || "MakeCode Device";
     const htmlBody = `
@@ -224,7 +233,10 @@ function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<v
         htmlBody,
     }).then(r => {
         pxt.usb.pairAsync()
-            .then(() => hidDeployCoreAsync(resp))
+            .then(() => {
+                pxt.tickEvent(`webusb.pair.success`);
+                return hidDeployCoreAsync(resp)
+            })
             .catch(e => browserDownloadDeployCoreAsync(resp));
     })
 }
