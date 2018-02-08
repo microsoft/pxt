@@ -1687,7 +1687,7 @@ namespace pxt.blocks {
                 const collapseOption: any = { enabled: hasExpandedBlocks };
                 collapseOption.text = lf("Collapse Block");
                 collapseOption.callback = function () {
-                    pxt.tickEvent("blocks.context.collapse")
+                    pxt.tickEvent("blocks.context.collapse", undefined, { interactiveConsent: true })
                     toggleOption(true);
                 };
                 menuOptions.push(collapseOption);
@@ -1696,7 +1696,7 @@ namespace pxt.blocks {
                 const expandOption: any = { enabled: hasCollapsedBlocks };
                 expandOption.text = lf("Expand Block");
                 expandOption.callback = function () {
-                    pxt.tickEvent("blocks.context.expand")
+                    pxt.tickEvent("blocks.context.expand", undefined, { interactiveConsent: true })
                     toggleOption(false);
                 };
                 menuOptions.push(expandOption);
@@ -1738,7 +1738,7 @@ namespace pxt.blocks {
                     lf("Delete {0} Blocks", deleteList.length),
                 enabled: deleteList.length > 0,
                 callback: function () {
-                    pxt.tickEvent("blocks.context.delete");
+                    pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
                     if (deleteList.length < 2 ||
                         window.confirm(lf("Delete all {0} blocks?", deleteList.length))) {
                         deleteNext();
@@ -1751,7 +1751,7 @@ namespace pxt.blocks {
                 text: lf("Format Code"),
                 enabled: true,
                 callback: () => {
-                    pxt.tickEvent("blocks.context.format");
+                    pxt.tickEvent("blocks.context.format", undefined, { interactiveConsent: true });
                     pxt.blocks.layout.flow(this);
                 }
             }
@@ -1762,7 +1762,7 @@ namespace pxt.blocks {
                     text: lf("Download Screenshot"),
                     enabled: topBlocks.length > 0,
                     callback: () => {
-                        pxt.tickEvent("blocks.context.screenshot");
+                        pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.screenshotAsync(this)
                             .done((uri) => {
                                 if (pxt.BrowserUtils.isSafari())

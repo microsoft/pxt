@@ -1,6 +1,9 @@
 /// <reference path="./winrtrefs.d.ts"/>
 namespace pxt.winrt {
     type ActivationArgs = Windows.ApplicationModel.Activation.IActivatedEventArgs;
+    type SuspendingArgs = Windows.ApplicationModel.ISuspendingEventArgs;
+    type ResumingArgs = any;
+
     export function promisify<T>(p: Windows.Foundation.IAsyncOperation<T> | Windows.Foundation.Projections.Promise<T>): Promise<T> {
         return new Promise<T>((resolve, reject) => {
             p.done(v => resolve(v), e => reject(e));
@@ -30,6 +33,9 @@ namespace pxt.winrt {
 
         const uiCore = Windows.UI.Core;
         const navMgr = uiCore.SystemNavigationManager.getForCurrentView();
+        const app = Windows.UI.WebUI.WebUIApplication as any;
+        app.addEventListener("suspending", suspendingHandler, false);
+        app.addEventListener("resuming", resumingHandler, false);
         navMgr.onbackrequested = (e) => {
             // Ignore the built-in back button; it tries to back-navigate the sidedoc panel, but it crashes the
             // app if the sidedoc has been closed since the navigation happened
@@ -43,9 +49,8 @@ namespace pxt.winrt {
             .then(() => {
                 if (importHexImpl) {
                     importHex = importHexImpl;
-                    const app = Windows.UI.WebUI.WebUIApplication as any;
-                    app.removeEventListener("activated", initialActivationHandler);
-                    app.addEventListener("activated", fileActivationHandler);
+                    app.removeEventListener("activated", initialActivationHandler, false);
+                    app.addEventListener("activated", fileActivationHandler, false);
                 }
             });
     }
@@ -56,7 +61,8 @@ namespace pxt.winrt {
             return;
         }
         initialActivationDeferred = Promise.defer<ActivationArgs>();
-        (Windows.UI.WebUI.WebUIApplication as any).addEventListener("activated", initialActivationHandler);
+        const app = Windows.UI.WebUI.WebUIApplication as any;
+        app.addEventListener("activated", initialActivationHandler);
     }
 
     export function loadActivationProject() {
@@ -81,6 +87,23 @@ namespace pxt.winrt {
     function initialActivationHandler(args: ActivationArgs) {
         (Windows.UI.WebUI.WebUIApplication as any).removeEventListener("activated", initialActivationHandler);
         initialActivationDeferred.resolve(args);
+    }
+
+    function suspendingHandler(args: SuspendingArgs) {
+        console.log(`suspending`);
+        if (packetIO) {
+            console.log(`disconnet pack io`);
+            packetIO.disconnectAsync().done();
+        }
+        suspendSerial();
+    }
+    function resumingHandler(args: ResumingArgs) {
+        console.log(`resuming`);
+        if (packetIO) {
+            console.log(`reconnet pack io`);
+            packetIO.reconnectAsync().done();
+        }
+        initSerial();
     }
 
     let initialActivationDeferred: Promise.Resolver<ActivationArgs>;

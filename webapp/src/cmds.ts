@@ -142,12 +142,14 @@ export function initCommandsAsync(): Promise<void> {
     if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
-        const useUf2 = pxt.appTarget.serial && pxt.appTarget.serial.useHF2;
-        const hidSelectors = pxt.appTarget.compile && pxt.appTarget.compile.hidSelectors;
-        if (useUf2 || hidSelectors) {
+        if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
+            pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => { }), () => hidbridge.disconnectWrapperAsync());
             pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployCoreAsync = hidDeployCoreAsync;
         } else {
+            // If we're not using HF2, then the target is using their own deploy logic in extension.ts, so don't use
+            // the wrapper callbacks
+            pxt.winrt.initWinrtHid(null, null);
             if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID) {
                 pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             }
