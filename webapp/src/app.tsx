@@ -1068,17 +1068,10 @@ export class ProjectView
             .done();
     }
 
-    showDeviceNotFoundDialogAsync(docPath: string, resp: pxtc.CompileResult): Promise<void> {
+    showDeviceNotFoundDialogAsync(docPath: string, resp?: pxtc.CompileResult): Promise<void> {
         pxt.tickEvent(`compile.devicenotfound`);
-
-        let fileType = ".mkcd";
-
-        if (pxt.appTarget.compile.useUF2) {
-            fileType = ".uf2";
-        } else if (pxt.appTarget.compile.hasHex) {
-            fileType = ".hex";
-        }
-
+        const ext = pxt.outputName().replace(/[^.]*/, "");
+        const fn = pkg.genFileName(ext);
         return core.dialogAsync({
             header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
             body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
@@ -1089,18 +1082,18 @@ export class ProjectView
                     icon: "help",
                     url: docPath,
                     onclick: () => {
-                        pxt.tickEvent(`compile.troubleshoot`);
+                        pxt.tickEvent(`compile.devicenotfound.troubleshoot`);
                     }
                 },
-                {
-                    label: lf("Download {0} file", fileType),
+                resp ? {
+                    label: fn,
                     icon: "download",
                     class: "lightgrey",
                     onclick: () => {
-                        pxt.tickEvent(`compile.troubleshoot.download`);
+                        pxt.tickEvent(`compile.devicenotfound.download`);
                         return pxt.commands.saveOnlyAsync(resp);
                     }
-                }
+                } : undefined
             ],
             hideCancel: true,
             hasCloseIcon: true
