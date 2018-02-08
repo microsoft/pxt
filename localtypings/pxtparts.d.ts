@@ -24,6 +24,8 @@ declare namespace pxsim {
         leds?: LEDDefinition[]
     }
     interface BoardDefinition {
+        id?: string, // optional board id   
+        usbDeviceName?: string, // device name as advertise through USB     
         visual: BoardImageDefinition | string,
         gpioPinBlocks?: string[][], // not used
         gpioPinMap: { [pin: string]: string },

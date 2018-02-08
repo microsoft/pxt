@@ -416,6 +416,7 @@ namespace pxt {
                 initPromise = initPromise.then(() => {
                     if (this.config.files.indexOf("board.json") < 0) return
                     appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json"))
+                    appTarget.simulator.boardDefinition.id = this.config.name;
                     let expandPkg = (v: string) => {
                         let m = /^pkg:\/\/(.*)/.exec(v)
                         if (m) {
