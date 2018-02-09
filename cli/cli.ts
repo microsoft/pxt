@@ -1641,9 +1641,9 @@ function buildWebStringsAsync() {
 function thirdPartyNoticesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
     let tpn = `
-/*!----------------- PXT ThirdPartyNotices -------------------------------------------------------
+/*!----------------- MakeCode (PXT) ThirdPartyNotices -------------------------------------------------------
 
-PXT uses third party material from the projects listed below.
+MakeCode (PXT) uses third party material from the projects listed below.
 The original copyright notice and the license under which Microsoft
 received such third party material are set forth below. Microsoft
 reserves all other rights not expressly granted, whether by
