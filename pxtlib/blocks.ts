@@ -1,6 +1,7 @@
 /// <reference path="main.ts"/>
 
 namespace pxt.blocks {
+    const THIS_NAME = "this";
     export interface BlockParameter {
         // Declared parameter name as it appears in the code. This is the name used
         // when customizing the field in the comment attributes
@@ -98,15 +99,15 @@ namespace pxt.blocks {
         if (instance && hasBlockDef && defParameters.length) {
             const defName = defParameters[0].name;
             res.thisParameter = {
-                actualName: "this",
+                actualName: THIS_NAME,
                 definitionName: defName,
                 shadowBlockId: defParameters[0].shadowBlockId,
                 type: fn.namespace,
 
                 // Normally we pass ths actual parameter name, but the "this" parameter doesn't have one
-                fieldEditor: fieldEditor(defName),
-                fieldOptions: fieldOptions(defName),
-                shadowOptions: shadowOptions(defName),
+                fieldEditor: fieldEditor(defName, THIS_NAME),
+                fieldOptions: fieldOptions(defName, THIS_NAME),
+                shadowOptions: shadowOptions(defName, THIS_NAME),
             };
         }
 
@@ -120,16 +121,18 @@ namespace pxt.blocks {
                         range = { min: p.options["min"].value, max: p.options["max"].value };
                     }
 
+                    const defName = def ? def.name : (bInfo ? bInfo.params[defIndex] : p.name);
+
                     (res.parameters as BlockParameter[]).push({
                         actualName: p.name,
                         type: p.type,
                         defaultValue: p.default,
-                        definitionName: def ? def.name : (bInfo ? bInfo.params[defIndex] : p.name),
+                        definitionName: defName,
                         shadowBlockId: def && def.shadowBlockId,
                         isOptional: defIndex >= optionalStart,
-                        fieldEditor: fieldEditor(p.name),
-                        fieldOptions: fieldOptions(p.name),
-                        shadowOptions: shadowOptions(p.name),
+                        fieldEditor: fieldEditor(defName, p.name),
+                        fieldOptions: fieldOptions(defName, p.name),
+                        shadowOptions: shadowOptions(defName, p.name),
                         range
                     });
 
@@ -147,16 +150,19 @@ namespace pxt.blocks {
 
         return res;
 
-        function fieldEditor(name: string) {
-            return fn.attributes.paramFieldEditor && fn.attributes.paramFieldEditor[name];
+        function fieldEditor(defName: string, actualName: string) {
+            return fn.attributes.paramFieldEditor &&
+                (fn.attributes.paramFieldEditor[defName] || fn.attributes.paramFieldEditor[actualName]);
         }
 
-        function fieldOptions(name: string) {
-            return fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[name];
+        function fieldOptions(defName: string, actualName: string) {
+            return fn.attributes.paramFieldEditorOptions &&
+                (fn.attributes.paramFieldEditorOptions[defName] || fn.attributes.paramFieldEditorOptions[actualName]);
         }
 
-        function shadowOptions(name: string) {
-            return fn.attributes.paramShadowOptions && fn.attributes.paramShadowOptions[name];
+        function shadowOptions(defName: string, actualName: string) {
+            return fn.attributes.paramShadowOptions &&
+                (fn.attributes.paramShadowOptions[defName] || fn.attributes.paramShadowOptions[actualName]);
         }
     }
 
