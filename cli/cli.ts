@@ -1622,7 +1622,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
                             // process rtl css
                             postcss([rtlcss])
                                 .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                    fs.writeFile(`built/web/rtl${cssFile}`, result2.css, undefined);
+                                    fs.writeFileSync(`built/web/rtl${cssFile}`, result2.css, { encoding: "utf8" });
                                 });
                         });
                     });
@@ -3792,7 +3792,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                         const tf = path.join(tfdir, fn);
                         nodeutil.mkdirP(tfdir)
                         pxt.log(`writing ${tf}`);
-                        fs.writeFile(tf, langTranslations, { encoding: "utf8" }, undefined);
+                        fs.writeFileSync(tf, langTranslations, { encoding: "utf8" });
 
                         locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
                     })
