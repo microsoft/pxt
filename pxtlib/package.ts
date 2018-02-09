@@ -415,7 +415,10 @@ namespace pxt {
                     initPromise = initPromise.then(() => this.patchCorePackage());
                 initPromise = initPromise.then(() => {
                     if (this.config.files.indexOf("board.json") < 0) return
-                    appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json"))
+                    const def = appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json")) as pxsim.BoardDefinition;
+                    def.id = this.config.name;
+                    appTarget.appTheme.boardName = def.boardName || lf("board");
+                    appTarget.appTheme.driveDisplayName = def.driveDisplayName || lf("DRIVE");
                     let expandPkg = (v: string) => {
                         let m = /^pkg:\/\/(.*)/.exec(v)
                         if (m) {
