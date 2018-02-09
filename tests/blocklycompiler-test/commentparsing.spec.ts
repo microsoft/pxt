@@ -244,9 +244,9 @@ describe("comment attribute parser", () => {
         });
 
         it("should cut out pipes", () => {
-            parseDef("hello|world|its|2018", `hello`, `world`, `its`, `2018`);
+            parseDef("hello|world|its|2018", `hello`, brk(), `world`, brk(), `its`, brk(), `2018`);
         });
-        
+
         describe("style", () => {
             it("should handle italics", () => {
                 parseDef("*hello* _world_", i`hello`, ` `, i`world`);
@@ -382,7 +382,7 @@ describe("comment attribute parser", () => {
             });
 
             it("should terminate parameters with non-identifier characters", () => {
-                parseDef("%hello|world", param`hello`, `world`);
+                parseDef("%hello|world", param`hello`, brk(), `world`);
                 parseDef("%hello world", param`hello`, ` world`);
                 parseDef("%hello*world*", param`hello`, i`world`);
                 parseDef("%hello\\world", param`hello`, `world`);
@@ -398,8 +398,12 @@ describe("comment attribute parser", () => {
     });
 });
 
+function brk(): pxtc.BlockBreak {
+    return { kind: "break" };
+}
+
 function lbl(text: string, style: string[]): pxtc.BlockLabel {
-    return { text, style };
+    return { kind: "label", text, style };
 }
 
 function i(parts: TemplateStringsArray): pxtc.BlockLabel {
@@ -414,39 +418,39 @@ function ib(parts: TemplateStringsArray): pxtc.BlockLabel {
     return lbl(parts[0], ["bold", "italics"]);
 }
 
-function img(parts: TemplateStringsArray): pxtc.BlockLabel {
-    return { text: parts[0], isImage: true };
+function img(parts: TemplateStringsArray): pxtc.BlockImage {
+    return { kind: "image", uri: parts[0] };
 }
 
 function tag(parts: TemplateStringsArray): pxtc.BlockLabel {
-    return { text: parts[0], cssClass: "custom" };
+    return { kind: "label", text: parts[0], cssClass: "custom" };
 }
 
 function param(parts: TemplateStringsArray): pxtc.BlockParameter {
     const split = parts[0].split("=");
-    return { name: split[0], shadowBlockId: split[1] };
+    return { kind: "param", name: split[0], shadowBlockId: split[1] };
 }
 
-function parseDef(def: string, ...expected: (pxtc.BlockLabel | pxtc.BlockParameter | string)[]) {
+function parseDef(def: string, ...expected: (string | pxtc.BlockPart)[]) {
     const res = pxtc.parseBlockDefinition(def);
 
     if (expected && expected.length) {
         chai.expect(res).to.not.be.undefined;
-        
-        const expectedParts: (pxtc.BlockLabel | pxtc.BlockParameter)[] = [];
+
+        const expectedParts: pxtc.BlockPart[] = [];
         const expectedParams: pxtc.BlockParameter[] = [];
         expected.forEach(v => {
             if (typeof v === "string") {
-                expectedParts.push({ text: v, style: [] })
+                expectedParts.push({ kind: "label", text: v, style: [] })
             }
             else {
                 expectedParts.push(v)
                 if ((v as pxtc.BlockParameter).name) {
                     expectedParams.push(v as pxtc.BlockParameter);
-                } 
+                }
             }
         });
-    
+
         chai.expect(res.parts).to.deep.equal(expectedParts, JSON.stringify(res.parts, null, 4) + " != " + JSON.stringify(expectedParts, null, 4));
         chai.expect(res.parameters).to.deep.equal(expectedParams, JSON.stringify(res.parameters, null, 4) + " != " + JSON.stringify(expectedParams, null, 4));
     }
