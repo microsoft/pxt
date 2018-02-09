@@ -127,7 +127,7 @@ function askWebUSBPairAsync(resp: pxtc.CompileResult): Promise<void> {
         htmlBody: `
 <p><strong>${lf("Do you want to pair your {0} to the editor?", boardName)}</strong>
 ${lf("You will get instant downloads and data logging.")}</p>
-<p class="ui font small">The pairing experience is a one-time process and available for Chrome version 61 and up.</p>
+<p class="ui font small">The pairing experience is a one-time process.</p>
         `,
     }).then(r => r ? showFirmwareUpdateInstructionsAsync(resp) : browserDownloadDeployCoreAsync(resp));
 }
