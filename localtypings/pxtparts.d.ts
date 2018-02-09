@@ -27,7 +27,6 @@ declare namespace pxsim {
         id?: string, // optional board id (set to the package id, multiboard only)
         boardName?: string, // friendly board name (multiboard only)
         driveDisplayName?: string, // drive name (multiboard only)
-        usbDeviceName?: string, // device name as advertise through USB     
         visual: BoardImageDefinition | string,
         gpioPinBlocks?: string[][], // not used
         gpioPinMap: { [pin: string]: string },
