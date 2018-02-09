@@ -41,7 +41,7 @@ If you already have added this file to your project, simply navigate to it using
 
 ## Using a shared project in **Extensions**
 
-You can add a shared project as a dependent package and re-use all the blocks from that project. Jsut click on the **Extensions**
+You can add a shared project as a dependent package and re-use all the blocks from that project. Just click on the **Extensions**
 button, paste the shared project url, and search.
 
 ## Development cycle
