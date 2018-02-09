@@ -467,7 +467,7 @@ export function resolveMd(root: string, pathname: string): string {
         return targetMd
 
     let dirs = [
-        path.join(root, "/node_modules/pxt-core/common-docs/"),
+        path.join(root, "/node_modules/pxt-core/common-docs"),
     ]
     lastResolveMdDirs = dirs
     for (let pkg of pxt.appTarget.bundleddirs) {
@@ -480,7 +480,7 @@ export function resolveMd(root: string, pathname: string): string {
             dirs.push(path.join(d, "..", cfg.additionalFilePath, "docs"))
     }
     for (let d of dirs) {
-        let template = tryRead(d + pathname)
+        let template = tryRead(d +"/"+ pathname)
         if (template)
             return pxt.docs.augmentDocs(template, targetMd)
     }
