@@ -59,4 +59,10 @@ namespace pxt.analytics {
             }
         };
     }
+
+    export function enableCookies() {
+        if (typeof mscc !== "undefined" && !mscc.hasConsent()) {
+            mscc.setConsent();
+        }
+    }
 }
