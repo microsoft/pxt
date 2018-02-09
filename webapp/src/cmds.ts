@@ -182,6 +182,7 @@ function showFirmwareUpdateInstructionsAsync(resp: pxtc.CompileResult): Promise<
             return core.confirmAsync({
                 header: lf("Upgrade firmware"),
                 htmlBody,
+                agreeLbl: lf("Upgraded!")
             })
                 .then(r => r ? showWebUSBPairingInstructionsAsync(resp) : browserDownloadDeployCoreAsync(resp));
         });
@@ -228,6 +229,7 @@ function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<v
 
     return core.confirmAsync({
         header: lf("Pair your {0}", boardName),
+        agreeLbl: lf("Let's pair it!"),
         htmlBody,
     }).then(r => {
         pxt.usb.pairAsync()
