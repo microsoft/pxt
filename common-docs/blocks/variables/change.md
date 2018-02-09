@@ -17,7 +17,7 @@ x += 2
 
 ### Declare a variable
 
-Use the assignment operator to set the value of a [variable](/blocks/variables/var). Change the value of a variable from 1 to 2 using the change item block. Like this:
+Use the assignment operator to set the value of a [variable](/blocks/variables/var). Change the value of a variable from 1 to 2 using the change block. Like this:
 
 ```block
 let x = 1
