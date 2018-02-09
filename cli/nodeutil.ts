@@ -480,7 +480,7 @@ export function resolveMd(root: string, pathname: string): string {
             dirs.push(path.join(d, "..", cfg.additionalFilePath, "docs"))
     }
     for (let d of dirs) {
-        let template = tryRead(d +"/"+ pathname)
+        let template = tryRead(path.join(d, pathname))
         if (template)
             return pxt.docs.augmentDocs(template, targetMd)
     }
