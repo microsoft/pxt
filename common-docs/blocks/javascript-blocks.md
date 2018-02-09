@@ -48,7 +48,8 @@ The following examples can't be represented by the blocks:
 for (let x = 0; x > -1; x++) {
 }
 
-// The variable in the condition and incrementor must be the declared variable
+// The both the variable in the condition and the variable with increment
+// operator must be the same as the declared variable
 for (let x = 0; x <= 5; y++) {
 }
 
