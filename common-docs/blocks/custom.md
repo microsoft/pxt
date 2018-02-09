@@ -1,14 +1,13 @@
 # Custom blocks
 
-This page provides a short introduction at defining your own blocks in PXT. 
+This page provides a short introduction to defining your own blocks in PXT. 
 
 ## Custom blocks? I can't find it in the editor!
 
-That's right. Currently, the block editor does not support functions... 
-but it's possible to define functions in JavaScript and turn them into blocks 
-with some comment macros.
+That's right. It's possible to define your own functions in JavaScript and turn them into blocks 
+with the addition of some special comment macros.
 
-In a nutshell, any exported JavaScript function can be turned into a block by adding a ``//% block`` comment:
+Any exported JavaScript function can be turned into a block by simply adding a ``//% block`` comment:
 
 ```typescript
 namespace fun {
@@ -22,33 +21,33 @@ namespace fun {
 }
 ```
 
-There is quite a bit of options to control the appearance of your blocks. 
-We generate a few of those in the template to get your started. 
+There are several options to control the appearance of your blocks. 
+We generate a few of those in the template to get you started. 
 For the complete guide, read https://makecode.com/defining-blocks.
 
 ## Storing blocks within a project
 
 Do not add block definitions directly into ``main.ts`` as they will show up as grey blocks.
-Instead follow the steps below to add a new file, ``custom.ts`` and add all your blocks in that file.
+Instead, follow the steps below to add a new file, ``custom.ts``, and add all your blocks in that file.
 
-In order to add ``custom.ts`` to your project,
+In order to add ``custom.ts`` to your project, you do this:
 
-* go to JavaScript,
+* go to JavaScript
 * click on the **Explorer** view and expand it
 * click on the ``+`` button that just appeared
-* accept the dialog to add a ``custom.ts`` file in your project.
+* accept the dialog to add a ``custom.ts`` file in your project
 
 If you already have added this file to your project, simply navigate to it using the **Explorer** view.
 
 ## Using a shared project in **Add Packages...**
 
-You can add a share project as a dependent package... and re-use all the blocks from that project. Simply click on the **Add Package...**
-button, paste the shared project url and search.
+You can add a shared project as a dependent package and re-use all the blocks from that project. Just click on the **Extensions**
+button, paste the shared project url, and search.
 
 ## Development cycle
 
 Once ``custom.ts`` is added to your project, you can alternate between this file and the blocks view.
-The blocks will automatically be reloaded on each iteration.
+The blocks will automatically reload on each iteration.
 
 If nothing shows up in your category, you might have a syntax error in your function definition.
 Make sure that your code compiles and that the comments look correct.
