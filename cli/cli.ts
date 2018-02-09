@@ -1622,7 +1622,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
                             // process rtl css
                             postcss([rtlcss])
                                 .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                    fs.writeFile(`built/web/rtl${cssFile}`, result2.css, undefined);
+                                    fs.writeFileSync(`built/web/rtl${cssFile}`, result2.css, { encoding: "utf8" });
                                 });
                         });
                     });
@@ -1641,9 +1641,9 @@ function buildWebStringsAsync() {
 function thirdPartyNoticesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
     let tpn = `
-/*!----------------- PXT ThirdPartyNotices -------------------------------------------------------
+/*!----------------- MakeCode (PXT) ThirdPartyNotices -------------------------------------------------------
 
-PXT uses third party material from the projects listed below.
+MakeCode (PXT) uses third party material from the projects listed below.
 The original copyright notice and the license under which Microsoft
 received such third party material are set forth below. Microsoft
 reserves all other rights not expressly granted, whether by
@@ -3792,7 +3792,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                         const tf = path.join(tfdir, fn);
                         nodeutil.mkdirP(tfdir)
                         pxt.log(`writing ${tf}`);
-                        fs.writeFile(tf, langTranslations, { encoding: "utf8" }, undefined);
+                        fs.writeFileSync(tf, langTranslations, { encoding: "utf8" });
 
                         locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
                     })
