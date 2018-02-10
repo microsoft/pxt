@@ -1,206 +1,167 @@
+/ *! ----------------- PXT ThirdPartyNotices ---------------------------- ---------------------------
 
-/*!----------------- PXT ThirdPartyNotices -------------------------------------------------------
+PXT menggunakan materi pihak ketiga dari proyek-proyek yang tercantum di bawah ini.
+Pemberitahuan hak cipta asli dan lisensi di mana Microsoft
+menerima materi pihak ketiga tersebut tercantum di bawah ini. Microsoft
+menyimpan semua hak lain yang tidak diberikan secara jelas, baik oleh
+implikasi, estoppel atau sebaliknya.
 
-PXT uses third party material from the projects listed below.
-The original copyright notice and the license under which Microsoft
-received such third party material are set forth below. Microsoft
-reserves all other rights not expressly granted, whether by
-implication, estoppel or otherwise.
+Jika tidak sengaja kami mencatat daftar pemberitahuan yang dipersyaratkan
+bawa ke perhatian kita Poskan sebuah masalah atau email kami:
 
-In the event that we accidentally failed to list a required notice, please
-bring it to our attention. Post an issue or email us:
-
-           makecode@microsoft.com
-
----------------------------------------------
-Third Party Code Components
----------------------------------------------
-
-    
------------------ bluebird -------------------
-
-The MIT License (MIT)
-
-Copyright (c) 2013-2017 Petka Antonov
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
+           makecode@microsoft.com
 
 ---------------------------------------------
-
------------------ faye-websocket -------------------
-
-
-
-MIT
-
-
-
+Komponen Kode Pihak Ketiga
 ---------------------------------------------
 
------------------ highlight.js -------------------
+    
+----------------- burung biru -------------------
 
-Copyright (c) 2006, Ivan Sagalaev
-All rights reserved.
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+Lisensi MIT (MIT)
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name of highlight.js nor the names of its contributors 
-      may be used to endorse or promote products derived from this software 
-      without specific prior written permission.
+Hak Cipta (c) 2013-2017 Petka Antonov
 
-THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE REGENTS AND CONTRIBUTORS BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Izin dengan ini diberikan, gratis, kepada siapa saja yang mendapatkan salinannya
+dari perangkat lunak ini dan file dokumentasi yang terkait ("Perangkat Lunak"), untuk menangani
+dalam Perangkat Lunak tanpa batasan, termasuk namun tidak terbatas pada hak
+untuk menggunakan, menyalin, memodifikasi, menggabungkan, menerbitkan, mendistribusikan, mensublisensikan, dan / atau menjual
+salinan Perangkat Lunak, dan untuk mengizinkan orang yang menjadi Perangkat Lunak itu
+dilengkapi untuk melakukannya, tunduk pada kondisi berikut:
 
+Pemberitahuan hak cipta di atas dan pemberitahuan izin ini harus disertakan
+semua salinan atau sebagian besar Perangkat Lunak.
 
----------------------------------------------
+PERANGKAT LUNAK INI DISEDIAKAN "APA ADANYA", TANPA JAMINAN APAPUN, BAIK SECARA BAIK
+TERSIRAT, TERMASUK NAMUN TIDAK TERBATAS PADA JAMINAN KELAYAKAN UNTUK DIPERDAGANGKAN,
+KESESUAIAN UNTUK TUJUAN TERTENTU DAN NONINFRINGEMENT. DALAM HAL APAPUN
+PENULIS ATAU PEMEGANG HAK CIPTA TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUGIAN, ATAU LAINNYA
+KEWAJIBAN, BAIK DALAM TINDAKAN KONTRAK, TORT ATAU LAINNYA, YANG TIMBUL DARI,
+KELUAR DARI ATAU BERHUBUNGAN DENGAN PERANGKAT LUNAK ATAU PENGGUNAAN ATAU PENGALAMAN LAIN DI PT
+PERANGKAT LUNAK INI.
 
------------------ lzma -------------------
+Hak Cipta (c) 2006, Ivan Sagalaev
+Seluruh hak cipta.
+Redistribusi dan penggunaan dalam bentuk sumber dan biner, dengan atau tanpa
+modifikasi, diijinkan dengan ketentuan bahwa persyaratan berikut terpenuhi:
 
-© 2016 Nathan Rugg <nmrugg@gmail.com>
+    * Redistribusi kode sumber harus mempertahankan hak cipta di atas
+      perhatikan, daftar kondisi ini dan penafian berikut.
+    * Redistribusi dalam bentuk biner harus mereproduksi hak cipta di atas
+      perhatikan, daftar kondisi ini dan penafian berikut di
+      dokumentasi dan / atau bahan lain yang disediakan dengan distribusi.
+    * Baik nama highlight.js maupun nama kontributornya
+      dapat digunakan untuk mendukung atau mempromosikan produk yang berasal dari perangkat lunak ini
+      tanpa izin tertulis sebelumnya.
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
+PERANGKAT LUNAK INI DISEDIAKAN OLEH WILAYAH DAN KONTRIBUTOR `SEBAGAIMANA ADANYA DAN APAPUN
+JAMINAN TERSURAT MAUPUN TERSIRAT, TERMASUK NAMUN TIDAK TERBATAS PADA, TERSIRAT
+JAMINAN KELAYAKAN UNTUK DIPERDAGANGKAN DAN KESESUAIAN UNTUK TUJUAN TERTENTU
+DISCLAIMED. DALAM HAL APAPUN, WILAYAH DAN KONTRIBUTOR TIDAK BERTANGGUNG JAWAB ATAS SETIAP
+KERUSAKAN LANGSUNG, TIDAK LANGSUNG, INSIDENTAL, KHUSUS, SEBAGAI CONTOH, ATAU KONSEKUENSIAL
+(TERMASUK NAMUN TIDAK TERBATAS PADA, PENGADAAN BARANG ATAU LAYANAN PENGGANTI;
+KEHILANGAN PENGGUNAAN, DATA, ATAU KEUNTUNGAN; ATAU GANGGUAN BISNIS) NAMUN DISEBABKAN DAN
+TENTANG TEORI TANGGUNG JAWAB APAPUN, BAIK DALAM KONTRAK, KEWAJIBAN HUKUM, ATAU KESALAHAN
+(TERMASUK KELALAIAN ATAU LAINNYA) YANG TIMBUL DALAM CARA APAPUN DARI PENGGUNAAN INI
+PERANGKAT LUNAK, BAHKAN JIKA DIBERITAHU TENTANG KEMUNGKINAN KERUSAKAN TERSEBUT.
 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
+Izin diberikan secara cuma-cuma kepada siapa saja yang memperoleh
+salinan perangkat lunak ini dan file dokumentasi yang terkait (a
+"Perangkat Lunak"), untuk menangani Perangkat Lunak tanpa batasan, termasuk
+tanpa batasan hak untuk menggunakan, menyalin, memodifikasi, menggabungkan, menerbitkan,
+mendistribusikan, mensublisensikan, dan / atau menjual salinan Perangkat Lunak, dan ke
+Izinkan orang-orang kepada siapa Perangkat Lunak dilengkapi untuk melakukannya, tunduk pada
+kondisi berikut:
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Pemberitahuan hak cipta di atas dan pemberitahuan izin ini
+termasuk dalam semua salinan atau sebagian besar Perangkat Lunak.
 
+PERANGKAT LUNAK INI DISEDIAKAN "APA ADANYA", TANPA JAMINAN APAPUN,
+TERSURAT MAUPUN TERSIRAT, TERMASUK NAMUN TIDAK TERBATAS PADA JAMINAN
+KELAYAKAN UNTUK DIPERDAGANGKAN, KESESUAIAN UNTUK TUJUAN TERTENTU DAN
+NONINFRINGEMENT. DALAM HAL APAPUN, PENULIS ATAU PEMEGANG HAK CIPTA
+BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN, ATAU KEWAJIBAN LAINNYA, BAIK DALAM TINDAKAN
+KONTRAK, TORT ATAU LAINNYA, YANG TIMBUL DARI, DARI ATAU SEHUBUNGAN
+DENGAN PERANGKAT LUNAK ATAU PENGGUNAAN ATAU DEALINGS LAIN DALAM PERANGKAT LUNAK INI.
 
----------------------------------------------
+Izin dengan ini diberikan, gratis, kepada siapa saja yang mendapatkan salinannya
+dari perangkat lunak ini dan file dokumentasi yang terkait ("Perangkat Lunak"), untuk menangani
+dalam Perangkat Lunak tanpa batasan, termasuk namun tidak terbatas pada hak
+untuk menggunakan, menyalin, memodifikasi, menggabungkan, menerbitkan, mendistribusikan, mensublisensikan, dan / atau menjual
+salinan Perangkat Lunak, dan untuk mengizinkan orang yang menjadi Perangkat Lunak itu
+dilengkapi untuk melakukannya, tunduk pada kondisi berikut:
 
------------------ marked -------------------
+Pemberitahuan hak cipta di atas dan pemberitahuan izin ini harus disertakan
+semua salinan atau sebagian besar Perangkat Lunak.
 
-Copyright (c) 2011-2014, Christopher Jeffrey (https://github.com/chjj/)
+PERANGKAT LUNAK INI DISEDIAKAN "APA ADANYA", TANPA JAMINAN APAPUN, BAIK SECARA BAIK
+TERSIRAT, TERMASUK NAMUN TIDAK TERBATAS PADA JAMINAN KELAYAKAN UNTUK DIPERDAGANGKAN,
+KESESUAIAN UNTUK TUJUAN TERTENTU DAN NONINFRINGEMENT. DALAM HAL APAPUN
+PENULIS ATAU PEMEGANG HAK CIPTA TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUGIAN, ATAU LAINNYA
+KEWAJIBAN, BAIK DALAM TINDAKAN KONTRAK, TORT ATAU LAINNYA, YANG TIMBUL DARI,
+KELUAR DARI ATAU BERHUBUNGAN DENGAN PERANGKAT LUNAK ATAU PENGGUNAAN ATAU PENGALAMAN LAIN DI PT
+PERANGKAT LUNAK INI.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+   SYARAT DAN KETENTUAN PENGGUNAAN, REPRODUKSI, DAN DISTRIBUSI
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+   1. Definisi.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+      "Lisensi" berarti syarat dan ketentuan untuk penggunaan, reproduksi,
+      dan distribusi sebagaimana didefinisikan oleh Bagian 1 sampai 9 dari dokumen ini.
 
+      "Pemberi Lisensi" berarti pemilik hak cipta atau entitas yang diberi wewenang oleh
+      pemilik hak cipta yang memberikan Lisensi.
 
----------------------------------------------
+      "Badan Hukum" berarti penyatuan entitas akting dan sebagainya
+      entitas lain yang mengendalikan, dikendalikan oleh, atau berada di bawah umum
+      kontrol dengan entitas itu Untuk tujuan definisi ini,
+      "kontrol" berarti (i) kekuatan, langsung atau tidak langsung, menyebabkan
+      arah atau pengelolaan entitas tersebut, baik dengan kontrak maupun
+      Jika tidak, atau (ii) kepemilikan lima puluh persen (50%) atau lebih dari jumlah
+      saham yang beredar, atau (iii) kepemilikan yang menguntungkan dari entitas tersebut.
 
------------------ fuse.js -------------------
+      "Anda" (atau "Anda") berarti seseorang atau Badan Hukum
+      menjalankan izin yang diberikan oleh Lisensi ini.
 
-                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
+      Bentuk "Sumber" berarti bentuk yang disukai untuk melakukan modifikasi,
+      termasuk namun tidak terbatas pada kode sumber perangkat lunak, dokumentasi
+      sumber, dan file konfigurasi.
 
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+      Bentuk "Obyek" berarti bentuk yang dihasilkan dari mekanis
+      transformasi atau terjemahan formulir Sumber, termasuk tapi
+      tidak terbatas pada kode objek yang dikompilasi, dokumentasi yang dihasilkan,
+      dan konversi ke jenis media lainnya.
 
-   1. Definitions.
+      "Kerja" berarti karya kepenulisan, baik di Sumber atau
+      Bentuk objek, tersedia di bawah Lisensi, seperti yang ditunjukkan oleh a
+      pemberitahuan hak cipta yang disertakan atau dilampirkan pada pekerjaan
+      (contohnya diberikan di Lampiran di bawah ini).
 
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
+      "Pekerjaan Derivatif" berarti pekerjaan apa pun, baik di Sumber atau Objek
+      formulir, yang didasarkan pada (atau berasal dari) Pekerjaan dan untuk mana
+      revisi editorial, anotasi, elaborasi, atau modifikasi lainnya
+      mewakili, secara keseluruhan, karya asli kepengarangan. Untuk tujuan
+      dari Lisensi ini, Karya Derivatif tidak termasuk pekerjaan yang tetap ada
+      terpisah dari, atau hanya link (atau terikat dengan nama) ke antarmuka,
+      Pekerjaan dan Pekerjaan Derivatifnya.
 
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
+      "Kontribusi" berarti setiap karya kepengarangan, termasuk
+      versi asli dari Work dan setiap modifikasi atau penambahan
+      untuk Karya itu atau Karya Derivatifnya, itu sengaja
+      diserahkan ke Pemberi Lisensi untuk dimasukkan dalam Karya oleh pemilik hak cipta
+      atau oleh perorangan atau Badan Hukum yang diberi kuasa untuk mengajukan atas nama
+      pemilik hak cipta Untuk tujuan definisi ini, "diserahkan"
+      berarti segala bentuk komunikasi elektronik, lisan atau tulisan yang dikirim
+      kepada Pemberi Lisensi atau perwakilannya, termasuk namun tidak terbatas pada
+      komunikasi pada milis elektronik, sistem kontrol kode sumber,
+      dan sistem pelacakan isu yang dikelola oleh, atau atas nama,
+      Pemberi Lisensi untuk tujuan mendiskusikan dan memperbaiki Pekerjaan, namun
+      tidak termasuk komunikasi yang mencolok ditandai atau sebaliknya
+      ditunjuk secara tertulis oleh pemilik hak cipta sebagai "Bukan Kontribusi".
 
-      "Legal Entity" shall mean the union of the acting entity and all
-      other entities that control, are controlled by, or are under common
-      control with that entity. For the purposes of this definition,
-      "control" means (i) the power, direct or indirect, to cause the
-      direction or management of such entity, whether by contract or
-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
-      outstanding shares, or (iii) beneficial ownership of such entity.
-
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
-
-      "Source" form shall mean the preferred form for making modifications,
-      including but not limited to software source code, documentation
-      source, and configuration files.
-
-      "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
-      not limited to compiled object code, generated documentation,
-      and conversions to other media types.
-
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (an example is provided in the Appendix below).
-
-      "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
-      editorial revisions, annotations, elaborations, or other modifications
-      represent, as a whole, an original work of authorship. For the purposes
-      of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
-      the Work and Derivative Works thereof.
-
-      "Contribution" shall mean any work of authorship, including
-      the original version of the Work and any modifications or additions
-      to that Work or Derivative Works thereof, that is intentionally
-      submitted to Licensor for inclusion in the Work by the copyright owner
-      or by an individual or Legal Entity authorized to submit on behalf of
-      the copyright owner. For the purposes of this definition, "submitted"
-      means any form of electronic, verbal, or written communication sent
-      to the Licensor or its representatives, including but not limited to
-      communication on electronic mailing lists, source code control systems,
-      and issue tracking systems that are managed by, or on behalf of, the
-      Licensor for the purpose of discussing and improving the Work, but
-      excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
-
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
+      "Kontributor" berarti Pemberi Lisensi dan Entitas atau Entitas Hukum
+      atas nama siapa Kontribusi telah diterima oleh Pemberi Lisensi dan
+      kemudian digabungkan dalam Karya.
 
    2. Grant of Copyright License. Subject to the terms and conditions of
       this License, each Contributor hereby grants to You a perpetual,
