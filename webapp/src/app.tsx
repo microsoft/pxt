@@ -343,22 +343,22 @@ export class ProjectView
         this.typecheck()
     }
 
-    private autoRunBlocksSimulator = pxtc.Util.debounce(
-        () => {
-            if (Util.now() - this.lastChangeTime < 1000) return;
-            if (!this.state.active)
-                return;
+    private backgroundRun() {
+        if (Util.now() - this.lastChangeTime < 1000) return;
+        if (!this.state.active)
+            return;
+        if (!!pxt.commands.backgroundDeployCoreAsync)
+            this.compile(false, true);
+        else
             this.runSimulator({ background: true });
-        },
+    }
+
+    private autoRunBlocksSimulator = pxtc.Util.debounce(
+        () => this.backgroundRun(),
         1000, true);
 
     private autoRunSimulator = pxtc.Util.debounce(
-        () => {
-            if (Util.now() - this.lastChangeTime < 1000) return;
-            if (!this.state.active)
-                return;
-            this.runSimulator({ background: true });
-        },
+        () => this.backgroundRun(),
         2000, true);
 
     private typecheck = pxtc.Util.debounce(
@@ -1055,8 +1055,8 @@ export class ProjectView
         this.reload = true;
         return workspace.resetAsync()
             .done(
-            () => window.location.reload(),
-            () => window.location.reload()
+                () => window.location.reload(),
+                () => window.location.reload()
             );
     }
 
@@ -1130,10 +1130,13 @@ export class ProjectView
 
     beforeCompile() { }
 
-    compile(saveOnly = false) {
+    compile(saveOnly = false, background = false) {
         this.beforeCompile();
         let userContextWindow: Window = undefined;
-        if (!pxt.appTarget.compile.useModulator && pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext())
+        if (!pxt.appTarget.compile.useModulator
+            && pxt.BrowserUtils.isBrowserDownloadInSameWindow()
+            && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext()
+            && !background)
             userContextWindow = window.open("");
 
         pxt.tickEvent("compile");
@@ -1154,7 +1157,8 @@ export class ProjectView
                 let fn = pxt.outputName()
                 if (!resp.outfiles[fn]) {
                     pxt.tickEvent("compile.noemit")
-                    core.warningNotification(lf("Compilation failed, please check your code for errors."));
+                    if (!background)
+                        core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()
                 }
                 resp.saveOnly = saveOnly
@@ -1164,13 +1168,17 @@ export class ProjectView
                 if (saveOnly) {
                     return pxt.commands.saveOnlyAsync(resp);
                 }
-                return pxt.commands.deployCoreAsync(resp)
+                const deployAsync = (background ? pxt.commands.backgroundDeployCoreAsync : pxt.commands.deployCoreAsync)
+                    || pxt.commands.deployCoreAsync;
+                return deployAsync(resp)
                     .catch(e => {
-                        if (e.notifyUser) {
-                            core.warningNotification(e.message);
-                        } else {
-                            const errorText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload failed, please try again.") : lf("Download failed, please try again.");
-                            core.warningNotification(errorText);
+                        if (!background) {
+                            if (e.notifyUser) {
+                                core.warningNotification(e.message);
+                            } else {
+                                const errorText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload failed, please try again.") : lf("Download failed, please try again.");
+                                core.warningNotification(errorText);
+                            }
                         }
                         pxt.reportException(e);
                         if (userContextWindow)
@@ -1178,7 +1186,8 @@ export class ProjectView
                     })
             }).catch((e: Error) => {
                 pxt.reportException(e);
-                core.errorNotification(lf("Compilation failed, please contact support."));
+                if (!background)
+                    core.errorNotification(lf("Compilation failed, please contact support."));
                 if (userContextWindow)
                     try { userContextWindow.close() } catch (e) { }
             }).finally(() => {
