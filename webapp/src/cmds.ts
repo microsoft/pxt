@@ -105,7 +105,6 @@ function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     // error message handled in browser download
     if (!resp.success)
         return browserDownloadDeployCoreAsync(resp);
-    core.infoNotification(lf("Downloading..."));
     let f = resp.outfiles[pxtc.BINARY_UF2]
     let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
     return hidbridge.initAsync()
@@ -246,6 +245,12 @@ function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         .catch(e => askWebUSBPairAsync(resp));
 }
 
+function webUsbBackgroundDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.tickEvent(`webusb.deploy.background`);
+    return hidDeployCoreAsync(resp)
+        .catch(e => { }); // fail silently
+}
+
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('local deployment...');
     core.infoNotification(lf("Uploading .hex file..."));
@@ -280,6 +285,7 @@ export function initCommandsAsync(): Promise<void> {
 
     if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = webUsbDeployCoreAsync;
+        pxt.commands.backgroundDeployCoreAsync = webUsbBackgroundDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
             pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => { }), () => hidbridge.disconnectWrapperAsync());
