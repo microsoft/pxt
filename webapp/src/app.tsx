@@ -347,11 +347,8 @@ export class ProjectView
         if (Util.now() - this.lastChangeTime < 1000) return;
         if (!this.state.active)
             return;
-        const backgroundDeploy = this.state.canBackgroundDeploy // at least 1 "compile button"
-            && pxt.appTarget.compile && !!pxt.appTarget.compile.backgroundDeploy // target supports
-            && !!pxt.commands.backgroundDeployCoreAsync; // support in this shell
 
-        if (backgroundDeploy)
+        if (this.state.backgroundDeploy)
             this.compile(false, true);
         else
             this.runSimulator({ background: true });
@@ -1199,8 +1196,11 @@ export class ProjectView
                 if (simRestart) this.runSimulator();
             })
             .done(() => {
-                if (!background)
-                    this.setState({ canBackgroundDeploy: true });
+                if (!background && !this.state.backgroundDeploy // at least 1 "compile button"
+                    && !!pxt.commands.backgroundDeployCoreAsync // support in this shell    
+                    && ((pxt.appTarget.compile && !!pxt.appTarget.compile.backgroundDeploy) || /backgroundDeploy=1/i.test(window.location.href))
+                )
+                    this.setState({ backgroundDeploy: true });
             });
     }
 
