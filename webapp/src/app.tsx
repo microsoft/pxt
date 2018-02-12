@@ -1145,7 +1145,7 @@ export class ProjectView
             pxt.tickEvent("compile.double");
             return;
         }
-        const simRestart = this.state.running;
+        const simRestart = this.state.running || background;
         this.setState({ compiling: true });
         this.clearSerial();
         this.editor.beforeCompile();
