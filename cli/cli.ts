@@ -1670,7 +1670,6 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     pxt.log(`building target.json in ${process.cwd()}...`)
 
     return buildWebStringsAsync()
-        .then(() => buildTargetDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
             const isPrj = /prj$/.test(dirname);
@@ -3795,29 +3794,17 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
-    return buildTargetDocsAsync(
-        !!parsed.flags["docs"],
-        !!parsed.flags["locs"],
-        parsed.flags["files"] as string,
-        !!parsed.flags["create"]
-    );
-}
-
-export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: string, createOnly?: boolean): Promise<void> {
-    const build = () => buildCoreAsync({
+    const docs = !!parsed.flags["docs"];
+    const locs = !!parsed.flags["loc"];
+    const fileFilter = parsed.flags["files"] as string;
+    const createOnly = !!parsed.flags["create"];
+    return buildCoreAsync({
         mode: BuildOption.GenDocs,
         docs,
         locs,
         fileFilter,
         createOnly
     }).then((compileOpts) => { });
-    // from target location?
-    if (fs.existsSync("pxtarget.json"))
-        return forEachBundledPkgAsync((pkg, dirname) => {
-            pxt.log(`building docs in ${dirname}`);
-            return build();
-        });
-    else return build();
 }
 
 export function deployAsync(parsed?: commandParser.ParsedCommand) {
