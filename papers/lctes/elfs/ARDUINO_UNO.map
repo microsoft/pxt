@@ -1,0 +1,2334 @@
+Archive member included to satisfy reference by file (symbol)
+
+libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/control.cpp.o (target_wait)
+libcodal-atmega328p.a(ATMegaI2C.cpp.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/i2c.cpp.o (codal::ATMegaI2C::start())
+libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/devpins.cpp.o (codal::ATMegaPin::ATMegaPin(unsigned char, codal::PinCapability))
+libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o (codal::ATMegaSerial::ATMegaSerial())
+libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o (codal::ATMegaTimer::ATMegaTimer())
+libcodal-core.a(CodalComponent.cpp.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o (codal::CodalComponent::components)
+libcodal-core.a(CodalDevice.cpp.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o (codal::CodalDevice::random(int))
+libcodal-core.a(CodalFiber.cpp.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o (codal::scheduler_init(codal::EventModel&))
+libcodal-core.a(CodalListener.cpp.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o (codal::Listener::Listener(unsigned int, unsigned int, void (*)(codal::Event), unsigned int))
+libcodal-core.a(I2C.cpp.o)    libcodal-atmega328p.a(ATMegaI2C.cpp.o) (codal::I2C::I2C(codal::Pin&, codal::Pin&))
+libcodal-core.a(Timer.cpp.o)  libcodal-atmega328p.a(ATMegaTimer.cpp.o) (codal::Timer::disableInterrupts())
+libcodal-core.a(MessageBus.cpp.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o (codal::MessageBus::add(codal::Listener*))
+libcodal-core.a(Event.cpp.o)  libcodal-core.a(CodalComponent.cpp.o) (codal::EventModel::defaultEventBus)
+libcodal-core.a(ManagedBuffer.cpp.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/i2c.cpp.o (codal::ManagedBuffer::ManagedBuffer(int))
+libcodal-core.a(ManagedString.cpp.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o (codal::ManagedString::ManagedString(codal::StringData*))
+libcodal-core.a(RefCounted.cpp.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o (codal::RefCounted::incr())
+libcodal-core.a(RefCountedInit.cpp.o)
+                              libcodal-core.a(RefCounted.cpp.o) (codal::RefCounted::destroy())
+libcodal-core.a(CodalCompat.cpp.o)
+                              libcodal-core.a(ManagedString.cpp.o) (codal::itoa(int, char*))
+libcodal-core.a(MemberFunctionCallback.cpp.o)
+                              libcodal-core.a(MessageBus.cpp.o) (codal::MemberFunctionCallback::fire(codal::Event))
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_divmodhi4.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o (__divmodhi4)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodsi4.o)
+                              libcodal-atmega328p.a(ATMegaI2C.cpp.o) (__udivmodsi4)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_exit.o)
+                              /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/crtatmega328p.o (exit)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_copy_data.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o (__do_copy_data)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_clear_bss.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o (__do_clear_bss)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_ctors.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o (__do_global_ctors)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_dtors.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o (__do_global_dtors)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_usmulhisi3.o)
+                              libcodal-atmega328p.a(ATMegaPin.cpp.o) (__usmulhisi3)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_muluhisi3.o)
+                              libcodal-core.a(Timer.cpp.o) (__muluhisi3)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodhi4.o)
+                              /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_divmodhi4.o) (__udivmodhi4)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_tablejump2.o)
+                              /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_ctors.o) (__tablejump2__)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_umulhisi3.o)
+                              /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_usmulhisi3.o) (__umulhisi3)
+libcodal-atmega328p.a(AVRContextSwitch.S.o)
+                              libcodal-core.a(CodalFiber.cpp.o) (swap_context)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(calloc.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o (calloc)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(malloc.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o (malloc)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(atoi.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o (atoi)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcpy_P.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o (memcpy_P)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcmp.o)
+                              libcodal-core.a(ManagedBuffer.cpp.o) (memcmp)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcpy.o)
+                              libcodal-core.a(ManagedBuffer.cpp.o) (memcpy)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memmove.o)
+                              libcodal-core.a(ManagedBuffer.cpp.o) (memmove)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memset.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o (memset)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(strcmp.o)
+                              CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o (strcmp)
+/usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(mul10.o)
+                              /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(atoi.o) (__mulhi_const_10)
+
+Allocating common symbols
+Common symbol       size              file
+
+__brkval            0x2               /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(malloc.o)
+__flp               0x2               /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(malloc.o)
+
+Discarded input sections
+
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/crtatmega328p.o
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/crtatmega328p.o
+ .group         0x0000000000000000        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .group         0x0000000000000000        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .group         0x0000000000000000        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .group         0x0000000000000000        0xc CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .group         0x0000000000000000        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .text          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .data          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .bss           0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .text._ZN3pxt12forever_stubEPv
+                0x0000000000000000       0x16 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .text._ZN3pxt8sleep_msEm
+                0x0000000000000000        0x4 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .text._ZN3pxt8sleep_usEy
+                0x0000000000000000        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .text._ZN3pxt10runForeverEj
+                0x0000000000000000       0x26 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .text._ZN3pxt12waitForEventEii
+                0x0000000000000000        0x4 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .text._ZN3pxt15current_time_msEv
+                0x0000000000000000        0x4 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .text          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/control.cpp.o
+ .data          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/control.cpp.o
+ .bss           0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/control.cpp.o
+ .text          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/devpins.cpp.o
+ .data          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/devpins.cpp.o
+ .bss           0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/devpins.cpp.o
+ .text          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/i2c.cpp.o
+ .data          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/i2c.cpp.o
+ .bss           0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/i2c.cpp.o
+ .group         0x0000000000000000        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+ .group         0x0000000000000000        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+ .group         0x0000000000000000        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+ .text          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+ .data          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+ .bss           0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+ .text          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/serial.cpp.o
+ .data          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/serial.cpp.o
+ .bss           0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/serial.cpp.o
+ .text          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+ .data          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+ .bss           0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+ .text          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/control.cpp.o
+ .data          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/control.cpp.o
+ .bss           0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/control.cpp.o
+ .text          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+ .data          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+ .bss           0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+ .text          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/loops.cpp.o
+ .data          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/loops.cpp.o
+ .bss           0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/loops.cpp.o
+ .text          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .data          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .bss           0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .text._ZN3pxt16sendSerialLine_PEPKNS_19__FlashStringHelperE
+                0x0000000000000000        0xe CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .text.asmLog   0x0000000000000000        0xa CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .text.asmLog2  0x0000000000000000        0xa CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .text._ZN3pxt15getSerialNumberEv
+                0x0000000000000000        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZ7asmLog2E3__c
+                0x0000000000000000        0x5 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZ6asmLogE3__c
+                0x0000000000000000        0x4 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .text          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/main.cpp.o
+ .data          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/main.cpp.o
+ .bss           0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/main.cpp.o
+ .text          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/pointers.cpp.o
+ .data          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/pointers.cpp.o
+ .bss           0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/pointers.cpp.o
+ .data          0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/vm.s.o
+ .bss           0x0000000000000000        0x0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/vm.s.o
+ .avr.prop      0x0000000000000000       0x16 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/vm.s.o
+ .text          0x0000000000000000        0x0 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaI2C.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-atmega328p.a(ATMegaI2C.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-atmega328p.a(ATMegaI2C.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-atmega328p.a(ATMegaI2C.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .text._ZN5codal3Pin13setServoValueEiii
+                0x0000000000000000        0x6 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .text._ZN5codal3Pin15setServoPulseUsEm
+                0x0000000000000000        0x6 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .text._ZN5codal3Pin7eventOnEi
+                0x0000000000000000        0x6 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .text._ZN5codal9ATMegaPin9IOREG_SETEPKPVh
+                0x0000000000000000       0x3a libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .text._ZN5codal9ATMegaPin9IOREG_CLREPKPVh
+                0x0000000000000000       0x3c libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .text._ZN5codal9ATMegaPin12IOREG_IS_SETEPKPVh
+                0x0000000000000000       0x3a libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .group         0x0000000000000000        0xc libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .group         0x0000000000000000        0xc libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .text._ZN5codal14CodalComponent4initEv
+                0x0000000000000000        0x6 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .text._ZN5codal14CodalComponent16periodicCallbackEv
+                0x0000000000000000        0x2 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .text._ZN5codal14CodalComponent12idleCallbackEv
+                0x0000000000000000        0x2 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .text._ZN5codal14CodalComponentD2Ev
+                0x0000000000000000       0x12 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .text._ZN5codal14CodalComponentD0Ev
+                0x0000000000000000       0x22 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .text._ZN5codal12ATMegaSerial7setBaudEi
+                0x0000000000000000        0x6 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .rodata._ZTVN5codal14CodalComponentE
+                0x0000000000000000        0xe libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(CodalComponent.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(CodalComponent.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(CodalComponent.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-core.a(CodalComponent.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-core.a(CodalComponent.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-core.a(CodalComponent.cpp.o)
+ .text._ZN5codal14CodalComponent16periodicCallbackEv
+                0x0000000000000000        0x2 libcodal-core.a(CodalComponent.cpp.o)
+ .text._ZN5codal14CodalComponent12idleCallbackEv
+                0x0000000000000000        0x2 libcodal-core.a(CodalComponent.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(CodalDevice.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(CodalDevice.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(CodalDevice.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(CodalDevice.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(CodalDevice.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(CodalDevice.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(CodalDevice.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-core.a(CodalDevice.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-core.a(CodalDevice.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-core.a(CodalDevice.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(CodalFiber.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(CodalFiber.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-core.a(CodalFiber.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-core.a(CodalFiber.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-core.a(CodalFiber.cpp.o)
+ .text._ZN5codal10EventModel3addEPNS_8ListenerE
+                0x0000000000000000        0x6 libcodal-core.a(CodalFiber.cpp.o)
+ .text._ZN5codal19fiber_wake_on_eventEjj
+                0x0000000000000000      0x108 libcodal-core.a(CodalFiber.cpp.o)
+ .text._ZN5codal12create_fiberEPFvvES1_
+                0x0000000000000000       0x52 libcodal-core.a(CodalFiber.cpp.o)
+ .text._ZN5codal20fiber_wait_for_eventEjj
+                0x0000000000000000       0x20 libcodal-core.a(CodalFiber.cpp.o)
+ .text._ZN5codal6invokeEPFvvE
+                0x0000000000000000       0xba libcodal-core.a(CodalFiber.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-core.a(CodalListener.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-core.a(CodalListener.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-core.a(CodalListener.cpp.o)
+ .text._ZN5codal8ListenerC2EjjPFvNS_5EventEPvES2_j
+                0x0000000000000000       0x60 libcodal-core.a(CodalListener.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(I2C.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-core.a(I2C.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-core.a(I2C.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-core.a(I2C.cpp.o)
+ .text._ZN5codal3I2C5writeEjPhib
+                0x0000000000000000       0xec libcodal-core.a(I2C.cpp.o)
+ .text._ZN5codal3I2C5writeEjh
+                0x0000000000000000       0x28 libcodal-core.a(I2C.cpp.o)
+ .text._ZN5codal3I2C13writeRegisterEjhh
+                0x0000000000000000       0x2c libcodal-core.a(I2C.cpp.o)
+ .text._ZN5codal3I2C4readEjPhib
+                0x0000000000000000      0x12a libcodal-core.a(I2C.cpp.o)
+ .text._ZN5codal3I2C12readRegisterEjhPhi
+                0x0000000000000000       0x64 libcodal-core.a(I2C.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(Timer.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-core.a(Timer.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-core.a(Timer.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-core.a(Timer.cpp.o)
+ .text._ZN5codal5Timer13getTimerEventEv
+                0x0000000000000000       0x48 libcodal-core.a(Timer.cpp.o)
+ .text._ZN5codal5Timer17releaseTimerEventEPNS_10TimerEventE
+                0x0000000000000000       0x1a libcodal-core.a(Timer.cpp.o)
+ .text._ZN5codal5Timer7getTimeEv
+                0x0000000000000000       0x20 libcodal-core.a(Timer.cpp.o)
+ .text._ZN5codal5Timer9getTimeUsEv
+                0x0000000000000000       0x20 libcodal-core.a(Timer.cpp.o)
+ .text._ZN5codal5Timer6cancelEjj
+                0x0000000000000000        0x6 libcodal-core.a(Timer.cpp.o)
+ .text._ZN5codal5Timer10eventAfterEmjj
+                0x0000000000000000       0x34 libcodal-core.a(Timer.cpp.o)
+ .text._ZN5codal5Timer12eventAfterUsEmjj
+                0x0000000000000000       0x14 libcodal-core.a(Timer.cpp.o)
+ .text._ZN5codal5Timer10eventEveryEmjj
+                0x0000000000000000       0x36 libcodal-core.a(Timer.cpp.o)
+ .text._ZN5codal5Timer12eventEveryUsEmjj
+                0x0000000000000000       0x16 libcodal-core.a(Timer.cpp.o)
+ .text._ZN5codal27system_timer_event_after_usEmjj
+                0x0000000000000000       0x30 libcodal-core.a(Timer.cpp.o)
+ .text._ZN5codal24system_timer_event_everyEmjj
+                0x0000000000000000       0x48 libcodal-core.a(Timer.cpp.o)
+ .text._ZN5codal24system_timer_event_afterEmjj
+                0x0000000000000000       0x46 libcodal-core.a(Timer.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(MessageBus.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(MessageBus.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(MessageBus.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(MessageBus.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(MessageBus.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(MessageBus.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(MessageBus.cpp.o)
+ .group         0x0000000000000000        0xc libcodal-core.a(MessageBus.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(MessageBus.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(MessageBus.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(MessageBus.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(MessageBus.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-core.a(MessageBus.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-core.a(MessageBus.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-core.a(MessageBus.cpp.o)
+ .text._ZN5codal14CodalComponent4initEv
+                0x0000000000000000        0x6 libcodal-core.a(MessageBus.cpp.o)
+ .text._ZN5codal14CodalComponent16periodicCallbackEv
+                0x0000000000000000        0x2 libcodal-core.a(MessageBus.cpp.o)
+ .text._ZN5codal14CodalComponent12idleCallbackEv
+                0x0000000000000000        0x2 libcodal-core.a(MessageBus.cpp.o)
+ .text._ZN5codal10EventModel3addEPNS_8ListenerE
+                0x0000000000000000        0x6 libcodal-core.a(MessageBus.cpp.o)
+ .text._ZN5codal10EventModel6removeEPNS_8ListenerE
+                0x0000000000000000        0x6 libcodal-core.a(MessageBus.cpp.o)
+ .text._ZN5codal14CodalComponentD2Ev
+                0x0000000000000000       0x12 libcodal-core.a(MessageBus.cpp.o)
+ .text._ZN5codal14CodalComponentD0Ev
+                0x0000000000000000       0x22 libcodal-core.a(MessageBus.cpp.o)
+ .rodata._ZTVN5codal14CodalComponentE
+                0x0000000000000000        0xe libcodal-core.a(MessageBus.cpp.o)
+ .group         0x0000000000000000        0x8 libcodal-core.a(Event.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-core.a(Event.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-core.a(Event.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-core.a(Event.cpp.o)
+ .text._ZN5codal10EventModel4sendENS_5EventE
+                0x0000000000000000       0x32 libcodal-core.a(Event.cpp.o)
+ .text._ZN5codal5Event4fireEv
+                0x0000000000000000       0x52 libcodal-core.a(Event.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-core.a(ManagedBuffer.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-core.a(ManagedBuffer.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-core.a(ManagedBuffer.cpp.o)
+ .text._ZN5codal13ManagedBuffer9initEmptyEv
+                0x0000000000000000        0xc libcodal-core.a(ManagedBuffer.cpp.o)
+ .text._ZN5codal13ManagedBufferC2Ev
+                0x0000000000000000        0xc libcodal-core.a(ManagedBuffer.cpp.o)
+ .text._ZN5codal13ManagedBufferC2EPhi
+                0x0000000000000000       0x16 libcodal-core.a(ManagedBuffer.cpp.o)
+ .text._ZN5codal13ManagedBufferC2ERKS0_
+                0x0000000000000000       0x10 libcodal-core.a(ManagedBuffer.cpp.o)
+ .text._ZN5codal13ManagedBuffer4initEPhi
+                0x0000000000000000       0x16 libcodal-core.a(ManagedBuffer.cpp.o)
+ .text._ZN5codal13ManagedBufferaSERKS0_
+                0x0000000000000000       0x3a libcodal-core.a(ManagedBuffer.cpp.o)
+ .text._ZN5codal13ManagedBuffereqERKS0_
+                0x0000000000000000       0x58 libcodal-core.a(ManagedBuffer.cpp.o)
+ .text._ZN5codal13ManagedBuffer8truncateEi
+                0x0000000000000000       0x24 libcodal-core.a(ManagedBuffer.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-core.a(ManagedString.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-core.a(ManagedString.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-core.a(ManagedString.cpp.o)
+ .text._ZN5codal13ManagedString9initEmptyEv
+                0x0000000000000000        0xc libcodal-core.a(ManagedString.cpp.o)
+ .text._ZN5codal13ManagedStringC2EPKc
+                0x0000000000000000       0x2e libcodal-core.a(ManagedString.cpp.o)
+ .text._ZN5codal13ManagedStringC2ENS_13ManagedBufferE
+                0x0000000000000000       0x14 libcodal-core.a(ManagedString.cpp.o)
+ .text._ZN5codal13ManagedStringC2ERKS0_
+                0x0000000000000000       0x10 libcodal-core.a(ManagedString.cpp.o)
+ .text._ZN5codal13ManagedStringC2Ev
+                0x0000000000000000        0xc libcodal-core.a(ManagedString.cpp.o)
+ .text._ZN5codal13ManagedStringaSERKS0_
+                0x0000000000000000       0x3a libcodal-core.a(ManagedString.cpp.o)
+ .text._ZN5codal13ManagedStringeqERKS0_
+                0x0000000000000000       0x48 libcodal-core.a(ManagedString.cpp.o)
+ .text._ZN5codal13ManagedStringltERKS0_
+                0x0000000000000000       0x20 libcodal-core.a(ManagedString.cpp.o)
+ .text._ZN5codal13ManagedStringgtERKS0_
+                0x0000000000000000       0x28 libcodal-core.a(ManagedString.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-core.a(RefCounted.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-core.a(RefCounted.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-core.a(RefCounted.cpp.o)
+ .text._ZN5codal10RefCounted10isReadOnlyEv
+                0x0000000000000000       0x38 libcodal-core.a(RefCounted.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-core.a(RefCountedInit.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-core.a(RefCountedInit.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-core.a(RefCountedInit.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-core.a(CodalCompat.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-core.a(CodalCompat.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-core.a(CodalCompat.cpp.o)
+ .text          0x0000000000000000        0x0 libcodal-core.a(MemberFunctionCallback.cpp.o)
+ .data          0x0000000000000000        0x0 libcodal-core.a(MemberFunctionCallback.cpp.o)
+ .bss           0x0000000000000000        0x0 libcodal-core.a(MemberFunctionCallback.cpp.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_divmodhi4.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_divmodhi4.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_divmodhi4.o)
+ .text.libgcc.mul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_divmodhi4.o)
+ .text.libgcc   0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_divmodhi4.o)
+ .text.libgcc.prologue
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_divmodhi4.o)
+ .text.libgcc.builtins
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_divmodhi4.o)
+ .text.libgcc.fmul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_divmodhi4.o)
+ .text.libgcc.fixed
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_divmodhi4.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodsi4.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodsi4.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodsi4.o)
+ .text.libgcc.mul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodsi4.o)
+ .text.libgcc   0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodsi4.o)
+ .text.libgcc.prologue
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodsi4.o)
+ .text.libgcc.builtins
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodsi4.o)
+ .text.libgcc.fmul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodsi4.o)
+ .text.libgcc.fixed
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodsi4.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_exit.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_exit.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_exit.o)
+ .text.libgcc.mul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_exit.o)
+ .text.libgcc.div
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_exit.o)
+ .text.libgcc   0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_exit.o)
+ .text.libgcc.prologue
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_exit.o)
+ .text.libgcc.builtins
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_exit.o)
+ .text.libgcc.fmul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_exit.o)
+ .text.libgcc.fixed
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_exit.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_copy_data.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_copy_data.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_copy_data.o)
+ .text.libgcc.mul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_copy_data.o)
+ .text.libgcc.div
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_copy_data.o)
+ .text.libgcc   0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_copy_data.o)
+ .text.libgcc.prologue
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_copy_data.o)
+ .text.libgcc.builtins
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_copy_data.o)
+ .text.libgcc.fmul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_copy_data.o)
+ .text.libgcc.fixed
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_copy_data.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_clear_bss.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_clear_bss.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_clear_bss.o)
+ .text.libgcc.mul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_clear_bss.o)
+ .text.libgcc.div
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_clear_bss.o)
+ .text.libgcc   0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_clear_bss.o)
+ .text.libgcc.prologue
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_clear_bss.o)
+ .text.libgcc.builtins
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_clear_bss.o)
+ .text.libgcc.fmul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_clear_bss.o)
+ .text.libgcc.fixed
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_clear_bss.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_ctors.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_ctors.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_ctors.o)
+ .text.libgcc.mul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_ctors.o)
+ .text.libgcc.div
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_ctors.o)
+ .text.libgcc   0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_ctors.o)
+ .text.libgcc.prologue
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_ctors.o)
+ .text.libgcc.builtins
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_ctors.o)
+ .text.libgcc.fmul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_ctors.o)
+ .text.libgcc.fixed
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_ctors.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_dtors.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_dtors.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_dtors.o)
+ .text.libgcc.mul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_dtors.o)
+ .text.libgcc.div
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_dtors.o)
+ .text.libgcc   0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_dtors.o)
+ .text.libgcc.prologue
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_dtors.o)
+ .text.libgcc.builtins
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_dtors.o)
+ .text.libgcc.fmul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_dtors.o)
+ .text.libgcc.fixed
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_dtors.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_usmulhisi3.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_usmulhisi3.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_usmulhisi3.o)
+ .text.libgcc.div
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_usmulhisi3.o)
+ .text.libgcc   0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_usmulhisi3.o)
+ .text.libgcc.prologue
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_usmulhisi3.o)
+ .text.libgcc.builtins
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_usmulhisi3.o)
+ .text.libgcc.fmul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_usmulhisi3.o)
+ .text.libgcc.fixed
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_usmulhisi3.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_muluhisi3.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_muluhisi3.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_muluhisi3.o)
+ .stab          0x0000000000000000       0xcc /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_muluhisi3.o)
+                                         0xd8 (size before relaxing)
+ .text.libgcc.mul
+                0x0000000000000000       0x16 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_muluhisi3.o)
+ .text.libgcc.div
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_muluhisi3.o)
+ .text.libgcc   0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_muluhisi3.o)
+ .text.libgcc.prologue
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_muluhisi3.o)
+ .text.libgcc.builtins
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_muluhisi3.o)
+ .text.libgcc.fmul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_muluhisi3.o)
+ .text.libgcc.fixed
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_muluhisi3.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodhi4.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodhi4.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodhi4.o)
+ .text.libgcc.mul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodhi4.o)
+ .text.libgcc   0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodhi4.o)
+ .text.libgcc.prologue
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodhi4.o)
+ .text.libgcc.builtins
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodhi4.o)
+ .text.libgcc.fmul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodhi4.o)
+ .text.libgcc.fixed
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodhi4.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_tablejump2.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_tablejump2.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_tablejump2.o)
+ .text.libgcc.mul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_tablejump2.o)
+ .text.libgcc.div
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_tablejump2.o)
+ .text.libgcc.prologue
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_tablejump2.o)
+ .text.libgcc.builtins
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_tablejump2.o)
+ .text.libgcc.fmul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_tablejump2.o)
+ .text.libgcc.fixed
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_tablejump2.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_umulhisi3.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_umulhisi3.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_umulhisi3.o)
+ .text.libgcc.div
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_umulhisi3.o)
+ .text.libgcc   0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_umulhisi3.o)
+ .text.libgcc.prologue
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_umulhisi3.o)
+ .text.libgcc.builtins
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_umulhisi3.o)
+ .text.libgcc.fmul
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_umulhisi3.o)
+ .text.libgcc.fixed
+                0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_umulhisi3.o)
+ .data          0x0000000000000000        0x0 libcodal-atmega328p.a(AVRContextSwitch.S.o)
+ .bss           0x0000000000000000        0x0 libcodal-atmega328p.a(AVRContextSwitch.S.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(calloc.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(calloc.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(calloc.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(malloc.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(malloc.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(atoi.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(atoi.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(atoi.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcpy_P.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcpy_P.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcpy_P.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcmp.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcmp.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcmp.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcpy.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcpy.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcpy.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memmove.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memmove.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memmove.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memset.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memset.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memset.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(strcmp.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(strcmp.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(strcmp.o)
+ .text          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(mul10.o)
+ .data          0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(mul10.o)
+ .bss           0x0000000000000000        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(mul10.o)
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+text             0x0000000000000000 0x0000000000020000 xr
+data             0x0000000000800060 0x000000000000ffa0 rw !x
+eeprom           0x0000000000810000 0x0000000000010000 rw !x
+fuse             0x0000000000820000 0x0000000000000400 rw !x
+lock             0x0000000000830000 0x0000000000000400 rw !x
+signature        0x0000000000840000 0x0000000000000400 rw !x
+user_signatures  0x0000000000850000 0x0000000000000400 rw !x
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+Address of section .data set to 0x800100
+LOAD /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/crtatmega328p.o
+START GROUP
+LOAD CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+LOAD CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/control.cpp.o
+LOAD CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/devpins.cpp.o
+LOAD CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/i2c.cpp.o
+LOAD CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+LOAD CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/serial.cpp.o
+LOAD CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+LOAD CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/control.cpp.o
+LOAD CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+LOAD CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/loops.cpp.o
+LOAD CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+LOAD CMakeFiles/ARDUINO_UNO.dir/pxtapp/main.cpp.o
+LOAD CMakeFiles/ARDUINO_UNO.dir/pxtapp/pointers.cpp.o
+LOAD CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/vm.s.o
+LOAD libcodal-arduino-uno.a
+LOAD libcodal-atmega328p.a
+LOAD libcodal-core.a
+LOAD /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a
+END GROUP
+LOAD /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a
+LOAD /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libm.a
+LOAD /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a
+START GROUP
+LOAD /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a
+LOAD /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libm.a
+LOAD /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a
+LOAD /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libatmega328p.a
+END GROUP
+                0x0000000000020000                __TEXT_REGION_LENGTH__ = DEFINED (__TEXT_REGION_LENGTH__)?__TEXT_REGION_LENGTH__:0x20000
+                0x000000000000ffa0                __DATA_REGION_LENGTH__ = DEFINED (__DATA_REGION_LENGTH__)?__DATA_REGION_LENGTH__:0xffa0
+                0x0000000000010000                __EEPROM_REGION_LENGTH__ = DEFINED (__EEPROM_REGION_LENGTH__)?__EEPROM_REGION_LENGTH__:0x10000
+                0x0000000000000400                __FUSE_REGION_LENGTH__ = DEFINED (__FUSE_REGION_LENGTH__)?__FUSE_REGION_LENGTH__:0x400
+                0x0000000000000400                __LOCK_REGION_LENGTH__ = DEFINED (__LOCK_REGION_LENGTH__)?__LOCK_REGION_LENGTH__:0x400
+                0x0000000000000400                __SIGNATURE_REGION_LENGTH__ = DEFINED (__SIGNATURE_REGION_LENGTH__)?__SIGNATURE_REGION_LENGTH__:0x400
+                0x0000000000000400                __USER_SIGNATURE_REGION_LENGTH__ = DEFINED (__USER_SIGNATURE_REGION_LENGTH__)?__USER_SIGNATURE_REGION_LENGTH__:0x400
+
+.hash
+ *(.hash)
+
+.dynsym
+ *(.dynsym)
+
+.dynstr
+ *(.dynstr)
+
+.gnu.version
+ *(.gnu.version)
+
+.gnu.version_d
+ *(.gnu.version_d)
+
+.gnu.version_r
+ *(.gnu.version_r)
+
+.rel.init
+ *(.rel.init)
+
+.rela.init
+ *(.rela.init)
+
+.rel.text
+ *(.rel.text)
+ *(.rel.text.*)
+ *(.rel.gnu.linkonce.t*)
+
+.rela.text
+ *(.rela.text)
+ *(.rela.text.*)
+ *(.rela.gnu.linkonce.t*)
+
+.rel.fini
+ *(.rel.fini)
+
+.rela.fini
+ *(.rela.fini)
+
+.rel.rodata
+ *(.rel.rodata)
+ *(.rel.rodata.*)
+ *(.rel.gnu.linkonce.r*)
+
+.rela.rodata
+ *(.rela.rodata)
+ *(.rela.rodata.*)
+ *(.rela.gnu.linkonce.r*)
+
+.rel.data
+ *(.rel.data)
+ *(.rel.data.*)
+ *(.rel.gnu.linkonce.d*)
+
+.rela.data
+ *(.rela.data)
+ *(.rela.data.*)
+ *(.rela.gnu.linkonce.d*)
+
+.rel.ctors
+ *(.rel.ctors)
+
+.rela.ctors
+ *(.rela.ctors)
+
+.rel.dtors
+ *(.rel.dtors)
+
+.rela.dtors
+ *(.rela.dtors)
+
+.rel.got
+ *(.rel.got)
+
+.rela.got
+ *(.rela.got)
+
+.rel.bss
+ *(.rel.bss)
+
+.rela.bss
+ *(.rela.bss)
+
+.rel.plt
+ *(.rel.plt)
+
+.rela.plt
+ *(.rela.plt)
+
+.text           0x0000000000000000     0x5be4
+ *(.vectors)
+ .vectors       0x0000000000000000       0x68 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/crtatmega328p.o
+                0x0000000000000000                __vectors
+                0x0000000000000000                __vector_default
+ *(.vectors)
+ *(.progmem.gcc*)
+                0x0000000000000068                . = ALIGN (0x2)
+                0x0000000000000068                __trampolines_start = .
+ *(.trampolines)
+ .trampolines   0x0000000000000068        0x0 linker stubs
+ *(.trampolines*)
+                0x0000000000000068                __trampolines_end = .
+ *libprintf_flt.a:*(.progmem.data)
+ *libc.a:*(.progmem.data)
+ *(.progmem*)
+ .progmem.data._ZZN3pxt11exec_binaryEPiE3__c_7
+                0x0000000000000068       0x14 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZN3pxt11exec_binaryEPiE3__c_6
+                0x000000000000007c        0x9 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZN3pxt11exec_binaryEPiE3__c_5
+                0x0000000000000085       0x18 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZN3pxt11exec_binaryEPiE3__c_4
+                0x000000000000009d       0x15 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZN3pxt11exec_binaryEPiE3__c_3
+                0x00000000000000b2       0x13 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZN3pxt11exec_binaryEPiE3__c_2
+                0x00000000000000c5        0x9 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZN3pxt11exec_binaryEPiE3__c_1
+                0x00000000000000ce       0x17 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZN3pxt11exec_binaryEPiE3__c_0
+                0x00000000000000e5        0xb CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZN3pxt11exec_binaryEPiE3__c
+                0x00000000000000f0       0x14 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZN3pxt5panicEiE3__c
+                0x0000000000000104        0xc CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZN3pxt6assertEbjE3__c
+                0x0000000000000110       0x11 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZN3pxt5errorENS_5ERROREiE3__c_0
+                0x0000000000000121        0xc CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZN3pxt5errorENS_5ERROREiE3__c
+                0x000000000000012d        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZN3pxtL18RefRefLocal_vtableE
+                0x0000000000000133        0xa CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZN3pxtL15RefLocal_vtableE
+                0x000000000000013d        0xa CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZN3pxtL16RefAction_vtableE
+                0x0000000000000147        0xa CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .progmem.data._ZZN3pxt17sendSerialValue_PEPKNS_19__FlashStringHelperEiE3__c
+                0x0000000000000151        0x3 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ *fill*         0x0000000000000154        0xc 
+ .progmem.data._ZN3pxt20functionsAndBytecodeE
+                0x0000000000000160      0x100 CMakeFiles/ARDUINO_UNO.dir/pxtapp/pointers.cpp.o
+                0x0000000000000160                pxt::functionsAndBytecode
+                0x0000000000000260                . = ALIGN (0x2)
+ *(.jumptables)
+ *(.jumptables*)
+ *(.lowtext)
+ *(.lowtext*)
+                0x0000000000000260                __ctors_start = .
+ *(.ctors)
+ .ctors         0x0000000000000260        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .ctors         0x0000000000000262        0x2 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+ .ctors         0x0000000000000264        0x2 libcodal-core.a(ManagedString.cpp.o)
+                0x0000000000000266                __ctors_end = .
+                0x0000000000000266                __dtors_start = .
+ *(.dtors)
+ .dtors         0x0000000000000266        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .dtors         0x0000000000000268        0x2 libcodal-core.a(ManagedString.cpp.o)
+                0x000000000000026a                __dtors_end = .
+ SORT(*)(.ctors)
+ SORT(*)(.dtors)
+ *(.init0)
+ .init0         0x000000000000026a        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/crtatmega328p.o
+                0x000000000000026a                __init
+ *(.init0)
+ *(.init1)
+ *(.init1)
+ *(.init2)
+ .init2         0x000000000000026a        0xc /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/crtatmega328p.o
+ *(.init2)
+ *(.init3)
+ *(.init3)
+ *(.init4)
+ .init4         0x0000000000000276       0x16 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_copy_data.o)
+                0x0000000000000276                __do_copy_data
+ .init4         0x000000000000028c       0x10 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_clear_bss.o)
+                0x000000000000028c                __do_clear_bss
+ *(.init4)
+ *(.init5)
+ *(.init5)
+ *(.init6)
+ .init6         0x000000000000029c       0x16 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_ctors.o)
+                0x000000000000029c                __do_global_ctors
+ *(.init6)
+ *(.init7)
+ *(.init7)
+ *(.init8)
+ *(.init8)
+ *(.init9)
+ .init9         0x00000000000002b2        0x8 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/crtatmega328p.o
+ *(.init9)
+ *(.text)
+ .text          0x00000000000002ba        0x4 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/crtatmega328p.o
+                0x00000000000002ba                __vector_20
+                0x00000000000002ba                __vector_1
+                0x00000000000002ba                __vector_24
+                0x00000000000002ba                __vector_12
+                0x00000000000002ba                __bad_interrupt
+                0x00000000000002ba                __vector_6
+                0x00000000000002ba                __vector_3
+                0x00000000000002ba                __vector_23
+                0x00000000000002ba                __vector_25
+                0x00000000000002ba                __vector_13
+                0x00000000000002ba                __vector_17
+                0x00000000000002ba                __vector_19
+                0x00000000000002ba                __vector_7
+                0x00000000000002ba                __vector_5
+                0x00000000000002ba                __vector_4
+                0x00000000000002ba                __vector_9
+                0x00000000000002ba                __vector_2
+                0x00000000000002ba                __vector_21
+                0x00000000000002ba                __vector_15
+                0x00000000000002ba                __vector_8
+                0x00000000000002ba                __vector_14
+                0x00000000000002ba                __vector_10
+                0x00000000000002ba                __vector_16
+                0x00000000000002ba                __vector_18
+                0x00000000000002ba                __vector_22
+ .text          0x00000000000002be      0x260 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/vm.s.o
+                0x00000000000002be                runCode
+                0x00000000000004f0                opcodeOffsets
+ .text          0x000000000000051e      0x154 libcodal-atmega328p.a(AVRContextSwitch.S.o)
+                0x000000000000063a                swap_context
+                0x000000000000065c                save_register_context
+                0x0000000000000662                restore_register_context
+                0x0000000000000668                save_context
+                0x0000000000000672                . = ALIGN (0x2)
+ *(.text.*)
+ .text._ZN5codal14CodalComponent4initEv
+                0x0000000000000672        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x0000000000000672                codal::CodalComponent::init()
+ .text._ZN5codal14CodalComponent16periodicCallbackEv
+                0x0000000000000678        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x0000000000000678                codal::CodalComponent::periodicCallback()
+ .text._ZN5codal14CodalComponent12idleCallbackEv
+                0x000000000000067a        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x000000000000067a                codal::CodalComponent::idleCallback()
+ .text._ZN3pxtL25onListenerRegisteredEventEN5codal5EventE
+                0x000000000000067c       0x26 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .text._ZN3pxt13dispatchEventEN5codal5EventE
+                0x00000000000006a2       0xaa CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x00000000000006a2                pxt::dispatchEvent(codal::Event)
+ .text._ZN3pxt9fiberDoneEPv
+                0x000000000000074c        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x000000000000074c                pxt::fiberDone(void*)
+ .text._ZN5codal14CodalComponentD2Ev
+                0x0000000000000754       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x0000000000000754                codal::CodalComponent::~CodalComponent()
+                0x0000000000000754                codal::CodalComponent::~CodalComponent()
+ .text._ZN5codal14CodalComponentD0Ev
+                0x0000000000000766       0x22 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x0000000000000766                codal::CodalComponent::~CodalComponent()
+ .text._ZN3pxt15runInBackgroundEj
+                0x0000000000000788       0x26 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x0000000000000788                pxt::runInBackground(unsigned int)
+ .text._ZN3pxt10sendSerialEPKci
+                0x00000000000007ae       0x2e CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x00000000000007ae                pxt::sendSerial(char const*, int)
+ .text._ZN3pxt13stringLiteralEj
+                0x00000000000007dc       0x4e CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x00000000000007dc                pxt::stringLiteral(unsigned int)
+ .text._ZN7control6millisEv
+                0x000000000000082a        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x000000000000082a                control::millis()
+ .text.startup._GLOBAL__sub_I__ZN3pxt9lastEventE
+                0x0000000000000832       0x5c CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .text.exit._GLOBAL__sub_D__ZN3pxt9lastEventE
+                0x000000000000088e       0x26 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+ .text._ZN3pxt11initRuntimeEv
+                0x00000000000008b4       0xaa CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x00000000000008b4                pxt::initRuntime()
+ .text._ZN3pxt15registerWithDalEiiji
+                0x000000000000095e       0x88 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x000000000000095e                pxt::registerWithDal(int, int, unsigned int, int)
+ .text._ZN7control10raiseEventEii
+                0x00000000000009e6       0x36 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/control.cpp.o
+                0x00000000000009e6                control::raiseEvent(int, int)
+ .text._ZN7control19allocateNotifyEventEv
+                0x0000000000000a1c        0x4 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/control.cpp.o
+                0x0000000000000a1c                control::allocateNotifyEvent()
+ .text._ZN7control15deviceHeapPrintEv
+                0x0000000000000a20        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/control.cpp.o
+                0x0000000000000a20                control::deviceHeapPrint()
+ .text._ZN7control13spinSchedulerEv
+                0x0000000000000a22        0x4 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/control.cpp.o
+                0x0000000000000a22                control::spinScheduler()
+ .text._ZN7control12releaseFiberEv
+                0x0000000000000a26        0x4 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/control.cpp.o
+                0x0000000000000a26                control::releaseFiber()
+ .text._ZN7control10waitMicrosEi
+                0x0000000000000a2a        0xc CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/control.cpp.o
+                0x0000000000000a2a                control::waitMicros(int)
+ .text._ZN7DevPinsC2Ev
+                0x0000000000000a36      0x162 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/devpins.cpp.o
+                0x0000000000000a36                DevPins::DevPins()
+                0x0000000000000a36                DevPins::DevPins()
+ .text._ZN4pins13i2cReadBufferEiii
+                0x0000000000000b98       0xd0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/i2c.cpp.o
+                0x0000000000000b98                pins::i2cReadBuffer(int, int, int)
+ .text._ZN4pins14i2cWriteBufferEiPN5codal10BufferDataEi
+                0x0000000000000c68       0x9c CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/i2c.cpp.o
+                0x0000000000000c68                pins::i2cWriteBuffer(int, codal::BufferData*, int)
+ .text._ZN5codal3Pin13setServoValueEiii
+                0x0000000000000d04        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000d04                codal::Pin::setServoValue(int, int, int)
+ .text._ZN5codal3Pin15setServoPulseUsEm
+                0x0000000000000d0a        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000d0a                codal::Pin::setServoPulseUs(unsigned long)
+ .text._ZN5codal3Pin7eventOnEi
+                0x0000000000000d10        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000d10                codal::Pin::eventOn(int)
+ .text._ZN3pxt6getPinEi
+                0x0000000000000d16       0x30 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000d16                pxt::getPin(int)
+ .text._ZN3pxt9lookupPinEi
+                0x0000000000000d46       0x3c CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000d46                pxt::lookupPin(int)
+ .text._ZN17DigitalPinMethods11digitalReadEPN5codal9ATMegaPinE
+                0x0000000000000d82       0x1e CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000d82                DigitalPinMethods::digitalRead(codal::ATMegaPin*)
+ .text._ZN17DigitalPinMethods12digitalWriteEPN5codal9ATMegaPinEi
+                0x0000000000000da0        0xe CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000da0                DigitalPinMethods::digitalWrite(codal::ATMegaPin*, int)
+ .text._ZN17DigitalPinMethods8onPulsedEPN5codal9ATMegaPinE10PulseValuej
+                0x0000000000000dae       0x4a CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000dae                DigitalPinMethods::onPulsed(codal::ATMegaPin*, PulseValue, unsigned int)
+ .text._ZN17DigitalPinMethods7pulseInEPN5codal9ATMegaPinE10PulseValuei
+                0x0000000000000df8       0xd8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000df8                DigitalPinMethods::pulseIn(codal::ATMegaPin*, PulseValue, int)
+ .text._ZN17DigitalPinMethods7setPullEPN5codal9ATMegaPinE11PinPullMode
+                0x0000000000000ed0       0x42 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000ed0                DigitalPinMethods::setPull(codal::ATMegaPin*, PinPullMode)
+ .text._ZN16AnalogPinMethods10analogReadEPN5codal9ATMegaPinE
+                0x0000000000000f12        0xe CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000f12                AnalogPinMethods::analogRead(codal::ATMegaPin*)
+ .text._ZN16AnalogPinMethods11analogWriteEPN5codal9ATMegaPinEi
+                0x0000000000000f20        0xe CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000f20                AnalogPinMethods::analogWrite(codal::ATMegaPin*, int)
+ .text._ZN13PwmPinMethods15analogSetPeriodEPN5codal9ATMegaPinEi
+                0x0000000000000f2e       0x16 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000f2e                PwmPinMethods::analogSetPeriod(codal::ATMegaPin*, int)
+ .text._ZN13PwmPinMethods10servoWriteEPN5codal9ATMegaPinEi
+                0x0000000000000f44       0x20 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000f44                PwmPinMethods::servoWrite(codal::ATMegaPin*, int)
+ .text._ZN13PwmPinMethods13servoSetPulseEPN5codal9ATMegaPinEi
+                0x0000000000000f64       0x20 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000f64                PwmPinMethods::servoSetPulse(codal::ATMegaPin*, int)
+ .text._ZN4pins12createBufferEi
+                0x0000000000000f84       0x3a CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000f84                pins::createBuffer(int)
+ .text._ZN4pins13pulseDurationEv
+                0x0000000000000fbe        0xa CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                0x0000000000000fbe                pins::pulseDuration()
+ .text._ZN6serial11writeStringEPN5codal10StringDataE
+                0x0000000000000fc8        0xc CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/serial.cpp.o
+                0x0000000000000fc8                serial::writeString(codal::StringData*)
+ .text._ZN6serial11writeBufferEPN5codal10BufferDataE
+                0x0000000000000fd4       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/serial.cpp.o
+                0x0000000000000fd4                serial::writeBuffer(codal::BufferData*)
+ .text._ZN13BufferMethods7getByteEPN5codal10BufferDataEi
+                0x0000000000000fe6       0x54 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+                0x0000000000000fe6                BufferMethods::getByte(codal::BufferData*, int)
+ .text._ZN13BufferMethods7setByteEPN5codal10BufferDataEii
+                0x000000000000103a       0x42 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+                0x000000000000103a                BufferMethods::setByte(codal::BufferData*, int, int)
+ .text._ZN13BufferMethods8getBytesEPN5codal10BufferDataE
+                0x000000000000107c        0x4 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+                0x000000000000107c                BufferMethods::getBytes(codal::BufferData*)
+ .text._ZN13BufferMethods9setNumberEPN5codal10BufferDataE12NumberFormatii
+                0x0000000000001080       0xd2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+                0x0000000000001080                BufferMethods::setNumber(codal::BufferData*, NumberFormat, int, int)
+ .text._ZN13BufferMethods9getNumberEPN5codal10BufferDataE12NumberFormati
+                0x0000000000001152       0xd0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+                0x0000000000001152                BufferMethods::getNumber(codal::BufferData*, NumberFormat, int)
+ .text._ZN13BufferMethods6lengthEPN5codal10BufferDataE
+                0x0000000000001222        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+                0x0000000000001222                BufferMethods::length(codal::BufferData*)
+ .text._ZN13BufferMethods4fillEPN5codal10BufferDataEiii
+                0x000000000000122a       0x4e CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+                0x000000000000122a                BufferMethods::fill(codal::BufferData*, int, int, int)
+ .text._ZN13BufferMethods5sliceEPN5codal10BufferDataEii
+                0x0000000000001278       0x66 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+                0x0000000000001278                BufferMethods::slice(codal::BufferData*, int, int)
+ .text._ZN13BufferMethods5shiftEPN5codal10BufferDataEiii
+                0x00000000000012de       0x52 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+                0x00000000000012de                BufferMethods::shift(codal::BufferData*, int, int, int)
+ .text._ZN13BufferMethods6rotateEPN5codal10BufferDataEiii
+                0x0000000000001330       0x52 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+                0x0000000000001330                BufferMethods::rotate(codal::BufferData*, int, int, int)
+ .text._ZN13BufferMethods5writeEPN5codal10BufferDataEiS2_
+                0x0000000000001382       0x6a CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+                0x0000000000001382                BufferMethods::write(codal::BufferData*, int, codal::BufferData*)
+ .text._ZN7control7onEventEiiji
+                0x00000000000013ec        0x4 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/control.cpp.o
+                0x00000000000013ec                control::onEvent(int, int, unsigned int, int)
+ .text._ZN7String_6charAtEPN5codal10StringDataEi
+                0x00000000000013f0       0x5e CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000013f0                String_::charAt(codal::StringData*, int)
+ .text._ZN7String_10charCodeAtEPN5codal10StringDataEi
+                0x000000000000144e       0x42 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x000000000000144e                String_::charCodeAt(codal::StringData*, int)
+ .text._ZN7String_6concatEPN5codal10StringDataES2_
+                0x0000000000001490       0x76 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001490                String_::concat(codal::StringData*, codal::StringData*)
+ .text._ZN7String_7compareEPN5codal10StringDataES2_
+                0x0000000000001506       0x24 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001506                String_::compare(codal::StringData*, codal::StringData*)
+ .text._ZN7String_6lengthEPN5codal10StringDataE
+                0x000000000000152a        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x000000000000152a                String_::length(codal::StringData*)
+ .text._ZN7String_12fromCharCodeEi
+                0x0000000000001532       0x3a CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001532                String_::fromCharCode(int)
+ .text._ZN7String_8toNumberEPN5codal10StringDataE
+                0x000000000000156c        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x000000000000156c                String_::toNumber(codal::StringData*)
+ .text._ZN7String_7mkEmptyEv
+                0x0000000000001572        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001572                String_::mkEmpty()
+ .text._ZN7String_6substrEPN5codal10StringDataEii
+                0x000000000000157a       0x9c CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x000000000000157a                String_::substr(codal::StringData*, int, int)
+ .text._ZN8Boolean_8toStringEi
+                0x0000000000001616       0x10 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001616                Boolean_::toString(int)
+ .text._ZN8Boolean_4bangEi
+                0x0000000000001626       0x10 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001626                Boolean_::bang(int)
+ .text._ZN7Number_8toStringEi
+                0x0000000000001636       0x3a CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001636                Number_::toString(int)
+ .text._ZN7Number_2ltEii
+                0x0000000000001670       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001670                Number_::lt(int, int)
+ .text._ZN7Number_2leEii
+                0x0000000000001682       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001682                Number_::le(int, int)
+ .text._ZN7Number_3neqEii
+                0x0000000000001694       0x16 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001694                Number_::neq(int, int)
+ .text._ZN7Number_2eqEii
+                0x00000000000016aa       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000016aa                Number_::eq(int, int)
+ .text._ZN7Number_2gtEii
+                0x00000000000016bc       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000016bc                Number_::gt(int, int)
+ .text._ZN7Number_2geEii
+                0x00000000000016ce       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000016ce                Number_::ge(int, int)
+ .text._ZN7Number_3divEii
+                0x00000000000016e0        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000016e0                Number_::div(int, int)
+ .text._ZN7Number_3modEii
+                0x00000000000016e8        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000016e8                Number_::mod(int, int)
+ .text._ZN7Number_4mulsEii
+                0x00000000000016ee       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000016ee                Number_::muls(int, int)
+ .text._ZN7Number_4asrsEii
+                0x0000000000001700        0xc CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001700                Number_::asrs(int, int)
+ .text._ZN7Number_4lsrsEjj
+                0x000000000000170c        0xc CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x000000000000170c                Number_::lsrs(unsigned int, unsigned int)
+ .text._ZN7Number_4lslsEii
+                0x0000000000001718        0xc CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001718                Number_::lsls(int, int)
+ .text._ZN7Number_4andsEii
+                0x0000000000001724        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001724                Number_::ands(int, int)
+ .text._ZN7Number_4orrsEii
+                0x000000000000172a        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x000000000000172a                Number_::orrs(int, int)
+ .text._ZN7Number_4eorsEii
+                0x0000000000001730        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001730                Number_::eors(int, int)
+ .text._ZN5Math_3powEii
+                0x0000000000001736       0x46 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001736                Math_::pow(int, int)
+ .text._ZN6Array_2mkEj
+                0x000000000000177c        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x000000000000177c                Array_::mk(unsigned int)
+ .text._ZN6Array_6lengthEPN3pxt13RefCollectionE
+                0x0000000000001782        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001782                Array_::length(pxt::RefCollection*)
+ .text._ZN6Array_9setLengthEPN3pxt13RefCollectionEi
+                0x0000000000001788        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001788                Array_::setLength(pxt::RefCollection*, int)
+ .text._ZN6Array_4pushEPN3pxt13RefCollectionEj
+                0x000000000000178a        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x000000000000178a                Array_::push(pxt::RefCollection*, unsigned int)
+ .text._ZN6Array_5getAtEPN3pxt13RefCollectionEi
+                0x000000000000178c        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x000000000000178c                Array_::getAt(pxt::RefCollection*, int)
+ .text._ZN6Array_8removeAtEPN3pxt13RefCollectionEi
+                0x0000000000001792        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001792                Array_::removeAt(pxt::RefCollection*, int)
+ .text._ZN6Array_8insertAtEPN3pxt13RefCollectionEij
+                0x0000000000001798        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001798                Array_::insertAt(pxt::RefCollection*, int, unsigned int)
+ .text._ZN6Array_5setAtEPN3pxt13RefCollectionEij
+                0x000000000000179a        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x000000000000179a                Array_::setAt(pxt::RefCollection*, int, unsigned int)
+ .text._ZN6Array_7indexOfEPN3pxt13RefCollectionEji
+                0x000000000000179c        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x000000000000179c                Array_::indexOf(pxt::RefCollection*, unsigned int, int)
+ .text._ZN6Array_13removeElementEPN3pxt13RefCollectionEj
+                0x00000000000017a2        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000017a2                Array_::removeElement(pxt::RefCollection*, unsigned int)
+ .text._ZN5pxtrt5ldlocEPN3pxt8RefLocalE
+                0x00000000000017a8        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000017a8                pxtrt::ldloc(pxt::RefLocal*)
+ .text._ZN5pxtrt8ldlocRefEPN3pxt11RefRefLocalE
+                0x00000000000017b0       0x18 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000017b0                pxtrt::ldlocRef(pxt::RefRefLocal*)
+ .text._ZN5pxtrt5stlocEPN3pxt8RefLocalEj
+                0x00000000000017c8        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000017c8                pxtrt::stloc(pxt::RefLocal*, unsigned int)
+ .text._ZN5pxtrt8stlocRefEPN3pxt11RefRefLocalEj
+                0x00000000000017d0       0x22 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000017d0                pxtrt::stlocRef(pxt::RefRefLocal*, unsigned int)
+ .text._ZN5pxtrt5mklocEv
+                0x00000000000017f2       0x1a CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000017f2                pxtrt::mkloc()
+ .text._ZN5pxtrt8mklocRefEv
+                0x000000000000180c       0x1a CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x000000000000180c                pxtrt::mklocRef()
+ .text._ZN5pxtrt5ldfldEPN3pxt9RefRecordEi
+                0x0000000000001826       0x66 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001826                pxtrt::ldfld(pxt::RefRecord*, int)
+ .text._ZN5pxtrt8ldfldRefEPN3pxt9RefRecordEi
+                0x000000000000188c       0x6c CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x000000000000188c                pxtrt::ldfldRef(pxt::RefRecord*, int)
+ .text._ZN5pxtrt5stfldEPN3pxt9RefRecordEij
+                0x00000000000018f8       0x60 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000018f8                pxtrt::stfld(pxt::RefRecord*, int, unsigned int)
+ .text._ZN5pxtrt8stfldRefEPN3pxt9RefRecordEij
+                0x0000000000001958       0x84 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001958                pxtrt::stfldRef(pxt::RefRecord*, int, unsigned int)
+ .text._ZN5pxtrt5stcloEPN3pxt9RefActionEij
+                0x00000000000019dc       0x60 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x00000000000019dc                pxtrt::stclo(pxt::RefAction*, int, unsigned int)
+ .text._ZN5pxtrt5panicEi
+                0x0000000000001a3c        0x4 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001a3c                pxtrt::panic(int)
+ .text._ZN5pxtrt6assertEij
+                0x0000000000001a40        0xe CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001a40                pxtrt::assert(int, unsigned int)
+ .text._ZN5pxtrt12stringToBoolEPN5codal10StringDataE
+                0x0000000000001a4e       0x28 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001a4e                pxtrt::stringToBool(codal::StringData*)
+ .text._ZN5pxtrt11emptyToNullEPN5codal10StringDataE
+                0x0000000000001a76       0x18 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001a76                pxtrt::emptyToNull(codal::StringData*)
+ .text._ZN5pxtrt9ptrToBoolEj
+                0x0000000000001a8e       0x14 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001a8e                pxtrt::ptrToBool(unsigned int)
+ .text._ZN5pxtrt11fetchMethodEPN3pxt9RefRecordEj
+                0x0000000000001aa2       0x1c CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001aa2                pxtrt::fetchMethod(pxt::RefRecord*, unsigned int)
+ .text._ZN5pxtrt16fetchMethodIfaceEPN3pxt9RefRecordEj
+                0x0000000000001abe       0x20 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001abe                pxtrt::fetchMethodIface(pxt::RefRecord*, unsigned int)
+ .text._ZN5pxtrt13getGlobalsPtrEv
+                0x0000000000001ade        0xa CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001ade                pxtrt::getGlobalsPtr()
+ .text._ZN5pxtrt14runtimeWarningEPN5codal10StringDataE
+                0x0000000000001ae8        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                0x0000000000001ae8                pxtrt::runtimeWarning(codal::StringData*)
+ .text._ZN5loops5pauseEi
+                0x0000000000001aea        0xc CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/loops.cpp.o
+                0x0000000000001aea                loops::pause(int)
+ .text._ZN7control15runInBackgroundEj
+                0x0000000000001af6        0x4 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/loops.cpp.o
+                0x0000000000001af6                control::runInBackground(unsigned int)
+ .text._ZN3pxt8RefLocal7destroyEv
+                0x0000000000001afa        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001afa                pxt::RefLocal::destroy()
+ .text._ZN3pxt11findBindingEii
+                0x0000000000001afc       0x30 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001afc                pxt::findBinding(int, int)
+ .text._ZN3pxt18sendSerialString_PEPKNS_19__FlashStringHelperE
+                0x0000000000001b2c       0x38 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001b2c                pxt::sendSerialString_P(pxt::__FlashStringHelper const*)
+ .text._ZN3pxt17sendSerialValue_PEPKNS_19__FlashStringHelperEi
+                0x0000000000001b64       0x2a CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001b64                pxt::sendSerialValue_P(pxt::__FlashStringHelper const*, int)
+ .text._ZN3pxt15mkClassInstanceEi
+                0x0000000000001b8e       0x4a CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001b8e                pxt::mkClassInstance(int)
+ .text._ZN3pxt9RefObject7destroyEv
+                0x0000000000001bd8       0x1e CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001bd8                pxt::RefObject::destroy()
+ .text._ZN3pxt8RefLocalC2Ev
+                0x0000000000001bf6       0x18 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001bf6                pxt::RefLocal::RefLocal()
+                0x0000000000001bf6                pxt::RefLocal::RefLocal()
+ .text._ZN3pxt11RefRefLocalC2Ev
+                0x0000000000001c0e       0x18 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001c0e                pxt::RefRefLocal::RefRefLocal()
+                0x0000000000001c0e                pxt::RefRefLocal::RefRefLocal()
+ .text._ZN3pxt8allocateEj
+                0x0000000000001c26        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001c26                pxt::allocate(unsigned int)
+ .text._ZN3pxt5panicEi
+                0x0000000000001c2e        0xc CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001c2e                pxt::panic(int)
+ .text._ZN3pxt15RefRecord_printEPNS_9RefRecordE
+                0x0000000000001c3a        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001c3a                pxt::RefRecord_print(pxt::RefRecord*)
+ .text._ZN3pxt5errorENS_5ERROREi
+                0x0000000000001c42       0x1e CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001c42                pxt::error(pxt::ERROR, int)
+ .text._ZN3pxt4incrEj
+                0x0000000000001c60       0x52 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001c60                pxt::incr(unsigned int)
+ .text._ZN3pxt4decrEj.part.1
+                0x0000000000001cb2       0x46 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .text._ZN3pxt4decrEj
+                0x0000000000001cf8        0xa CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001cf8                pxt::decr(unsigned int)
+ .text._ZN3pxt10setBindingEiij
+                0x0000000000001d02       0xa6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001d02                pxt::setBinding(int, int, unsigned int)
+ .text._ZN3pxt17RefRecord_destroyEPNS_9RefRecordE
+                0x0000000000001da8       0xb0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001da8                pxt::RefRecord_destroy(pxt::RefRecord*)
+ .text._ZN3pxt11RefRefLocal7destroyEv
+                0x0000000000001e58       0x10 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001e58                pxt::RefRefLocal::destroy()
+ .text._ZN3pxt9RefAction7destroyEv
+                0x0000000000001e68       0x56 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001e68                pxt::RefAction::destroy()
+ .text._ZN3pxt8mkActionEiii
+                0x0000000000001ebe       0x90 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001ebe                pxt::mkAction(int, int, int)
+ .text._ZN3pxt10runAction3Ejiii
+                0x0000000000001f4e       0x8a CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001f4e                pxt::runAction3(unsigned int, int, int, int)
+ .text._ZN3pxt10runAction0Ej
+                0x0000000000001fd8       0x80 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000001fd8                pxt::runAction0(unsigned int)
+ .text._ZN3pxt10runAction2Ejii
+                0x0000000000002058       0x7a CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000002058                pxt::runAction2(unsigned int, int, int)
+ .text._ZN3pxt10runAction1Eji
+                0x00000000000020d2       0x7e CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x00000000000020d2                pxt::runAction1(unsigned int, int)
+ .text._ZN3pxt6assertEbj
+                0x0000000000002150       0x14 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000002150                pxt::assert(bool, unsigned int)
+ .text._ZN3pxt12templateHashEv
+                0x0000000000002164       0x10 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000002164                pxt::templateHash()
+ .text._ZN3pxt11programHashEv
+                0x0000000000002174       0x10 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000002174                pxt::programHash()
+ .text._ZN3pxt13getNumGlobalsEv
+                0x0000000000002184       0x10 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000002184                pxt::getNumGlobals()
+ .text._ZN3pxt11exec_binaryEPi
+                0x0000000000002194      0x122 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x0000000000002194                pxt::exec_binary(int*)
+ .text._ZN3pxt5startEv
+                0x00000000000022b6        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x00000000000022b6                pxt::start()
+ .text._ZN5Math_6randomEi
+                0x00000000000022be       0x48 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x00000000000022be                Math_::random(int)
+ .text.startup.main
+                0x0000000000002306        0xa CMakeFiles/ARDUINO_UNO.dir/pxtapp/main.cpp.o
+                0x0000000000002306                main
+ .text.target_enable_irq
+                0x0000000000002310        0x4 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x0000000000002310                target_enable_irq
+ .text.target_disable_irq
+                0x0000000000002314        0x4 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x0000000000002314                target_disable_irq
+ .text.target_wait_for_event
+                0x0000000000002318       0x14 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x0000000000002318                target_wait_for_event
+ .text.target_wait
+                0x000000000000232c       0x22 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x000000000000232c                target_wait
+ .text.target_reset
+                0x000000000000234e       0x18 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x000000000000234e                target_reset
+ .text.target_panic
+                0x0000000000002366       0x24 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x0000000000002366                target_panic
+ .text.fiber_initial_stack_base
+                0x000000000000238a        0x6 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x000000000000238a                fiber_initial_stack_base
+ .text.tcb_allocate
+                0x0000000000002390        0x8 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x0000000000002390                tcb_allocate
+ .text.tcb_configure_lr
+                0x0000000000002398        0x8 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x0000000000002398                tcb_configure_lr
+ .text.tcb_configure_sp
+                0x00000000000023a0        0x8 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x00000000000023a0                tcb_configure_sp
+ .text.tcb_configure_stack_base
+                0x00000000000023a8        0x8 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x00000000000023a8                tcb_configure_stack_base
+ .text.tcb_get_stack_base
+                0x00000000000023b0        0x8 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x00000000000023b0                tcb_get_stack_base
+ .text.get_current_sp
+                0x00000000000023b8        0xc libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x00000000000023b8                get_current_sp
+ .text.tcb_get_sp
+                0x00000000000023c4        0x8 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x00000000000023c4                tcb_get_sp
+ .text.tcb_configure_args
+                0x00000000000023cc       0x10 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x00000000000023cc                tcb_configure_args
+ .text.__cxa_pure_virtual
+                0x00000000000023dc        0x8 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x00000000000023dc                __cxa_pure_virtual
+ .text._Znwj    0x00000000000023e4        0x4 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x00000000000023e4                operator new(unsigned int)
+ .text._ZdlPv   0x00000000000023e8        0x4 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x00000000000023e8                operator delete(void*)
+ .text.startup._GLOBAL__sub_I_target_enable_irq
+                0x00000000000023ec       0x12 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+ .text._ZN5codal9ATMegaI2C12setFrequencyEm
+                0x00000000000023fe       0x26 libcodal-atmega328p.a(ATMegaI2C.cpp.o)
+                0x00000000000023fe                codal::ATMegaI2C::setFrequency(unsigned long)
+ .text._ZN5codal9ATMegaI2C5startEv
+                0x0000000000002424       0x24 libcodal-atmega328p.a(ATMegaI2C.cpp.o)
+                0x0000000000002424                codal::ATMegaI2C::start()
+ .text._ZN5codal9ATMegaI2C4stopEv
+                0x0000000000002448        0xc libcodal-atmega328p.a(ATMegaI2C.cpp.o)
+                0x0000000000002448                codal::ATMegaI2C::stop()
+ .text._ZN5codal9ATMegaI2C5writeEh
+                0x0000000000002454       0x18 libcodal-atmega328p.a(ATMegaI2C.cpp.o)
+                0x0000000000002454                codal::ATMegaI2C::write(unsigned char)
+ .text._ZN5codal9ATMegaI2C4readENS_15AcknowledgeTypeE
+                0x000000000000246c       0x22 libcodal-atmega328p.a(ATMegaI2C.cpp.o)
+                0x000000000000246c                codal::ATMegaI2C::read(codal::AcknowledgeType)
+ .text._ZN5codal9ATMegaI2CC2ERNS_9ATMegaPinES2_
+                0x000000000000248e       0x22 libcodal-atmega328p.a(ATMegaI2C.cpp.o)
+                0x000000000000248e                codal::ATMegaI2C::ATMegaI2C(codal::ATMegaPin&, codal::ATMegaPin&)
+                0x000000000000248e                codal::ATMegaI2C::ATMegaI2C(codal::ATMegaPin&, codal::ATMegaPin&)
+ .text._ZN5codal3Pin15getDigitalValueENS_8PullModeE
+                0x00000000000024b0       0x24 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x00000000000024b0                codal::Pin::getDigitalValue(codal::PullMode)
+ .text._ZN5codal3Pin7isInputEv
+                0x00000000000024d4       0x18 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x00000000000024d4                codal::Pin::isInput()
+ .text._ZN5codal3Pin8isOutputEv
+                0x00000000000024ec       0x18 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x00000000000024ec                codal::Pin::isOutput()
+ .text._ZN5codal3Pin9isDigitalEv
+                0x0000000000002504       0x18 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x0000000000002504                codal::Pin::isDigital()
+ .text._ZN5codal3Pin8isAnalogEv
+                0x000000000000251c       0x18 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x000000000000251c                codal::Pin::isAnalog()
+ .text._ZN5codal3Pin9isTouchedEv
+                0x0000000000002534        0x6 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x0000000000002534                codal::Pin::isTouched()
+ .text._ZN5codal3Pin15setAnalogPeriodEi
+                0x000000000000253a       0x26 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x000000000000253a                codal::Pin::setAnalogPeriod(int)
+ .text._ZN5codal3Pin15getAnalogPeriodEv
+                0x0000000000002560       0x1e libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x0000000000002560                codal::Pin::getAnalogPeriod()
+ .text._ZN5codal3Pin8drainPinEv
+                0x000000000000257e        0x6 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x000000000000257e                codal::Pin::drainPin()
+ .text._ZN5codal9ATMegaPin10disconnectEv
+                0x0000000000002584        0x2 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x0000000000002584                codal::ATMegaPin::disconnect()
+ .text._ZN5codal9ATMegaPin14setAnalogValueEi
+                0x0000000000002586       0x1a libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x0000000000002586                codal::ATMegaPin::setAnalogValue(int)
+ .text._ZN5codal9ATMegaPin17getAnalogPeriodUsEv
+                0x00000000000025a0        0xa libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x00000000000025a0                codal::ATMegaPin::getAnalogPeriodUs()
+ .text._ZN5codal9ATMegaPin7setPullENS_8PullModeE
+                0x00000000000025aa       0x8a libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x00000000000025aa                codal::ATMegaPin::setPull(codal::PullMode)
+ .text._ZN5codal9ATMegaPin15getDigitalValueEv
+                0x0000000000002634      0x122 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x0000000000002634                codal::ATMegaPin::getDigitalValue()
+ .text._ZN5codal9ATMegaPin14getAnalogValueEv
+                0x0000000000002756       0x74 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x0000000000002756                codal::ATMegaPin::getAnalogValue()
+ .text._ZN5codal9ATMegaPin15setDigitalValueEi
+                0x00000000000027ca      0x10e libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x00000000000027ca                codal::ATMegaPin::setDigitalValue(int)
+ .text._ZN5codal9ATMegaPin17setAnalogPeriodUsEm
+                0x00000000000028d8       0x30 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x00000000000028d8                codal::ATMegaPin::setAnalogPeriodUs(unsigned long)
+ .text._ZN5codal9ATMegaPinC2EhNS_13PinCapabilityE
+                0x0000000000002908       0x44 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x0000000000002908                codal::ATMegaPin::ATMegaPin(unsigned char, codal::PinCapability)
+                0x0000000000002908                codal::ATMegaPin::ATMegaPin(unsigned char, codal::PinCapability)
+ .text._ZN5codal12ATMegaSerialD2Ev
+                0x000000000000294c       0x12 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+                0x000000000000294c                codal::ATMegaSerial::~ATMegaSerial()
+                0x000000000000294c                codal::ATMegaSerial::~ATMegaSerial()
+ .text._ZN5codal12ATMegaSerialD0Ev
+                0x000000000000295e       0x22 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+                0x000000000000295e                codal::ATMegaSerial::~ATMegaSerial()
+ .text._ZN5codal12ATMegaSerialC2Ev
+                0x0000000000002980       0x46 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+                0x0000000000002980                codal::ATMegaSerial::ATMegaSerial()
+                0x0000000000002980                codal::ATMegaSerial::ATMegaSerial()
+ .text._ZN5codal12ATMegaSerial8sendCharEc
+                0x00000000000029c6       0x12 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+                0x00000000000029c6                codal::ATMegaSerial::sendChar(char)
+ .text._ZN5codal12ATMegaSerial4sendEPKc
+                0x00000000000029d8       0x22 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+                0x00000000000029d8                codal::ATMegaSerial::send(char const*)
+ .text._ZN5codal12ATMegaSerial4sendEj
+                0x00000000000029fa       0x5c libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+                0x00000000000029fa                codal::ATMegaSerial::send(unsigned int)
+ .text._ZN5codal11ATMegaTimer9triggerInEm
+                0x0000000000002a56       0x66 libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+                0x0000000000002a56                codal::ATMegaTimer::triggerIn(unsigned long)
+ .text._ZN5codal11ATMegaTimer11syncRequestEv
+                0x0000000000002abc       0x30 libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+                0x0000000000002abc                codal::ATMegaTimer::syncRequest()
+ .text.__vector_11
+                0x0000000000002aec       0x84 libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+                0x0000000000002aec                __vector_11
+ .text._ZN5codal11ATMegaTimerC2Ev
+                0x0000000000002b70       0x50 libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+                0x0000000000002b70                codal::ATMegaTimer::ATMegaTimer()
+                0x0000000000002b70                codal::ATMegaTimer::ATMegaTimer()
+ .text._ZN5codal11ATMegaTimer5startEv
+                0x0000000000002bc0        0xc libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+                0x0000000000002bc0                codal::ATMegaTimer::start()
+ .text._ZN5codal11ATMegaTimerD2Ev
+                0x0000000000002bcc        0xe libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+                0x0000000000002bcc                codal::ATMegaTimer::~ATMegaTimer()
+                0x0000000000002bcc                codal::ATMegaTimer::~ATMegaTimer()
+ .text._ZN5codal10EventModel3addEPNS_8ListenerE
+                0x0000000000002bda        0x6 libcodal-core.a(CodalComponent.cpp.o)
+                0x0000000000002bda                codal::EventModel::add(codal::Listener*)
+ .text._Z18component_callbackN5codal5EventE
+                0x0000000000002be0       0xd2 libcodal-core.a(CodalComponent.cpp.o)
+                0x0000000000002be0                component_callback(codal::Event)
+ .text._ZN5codal14CodalComponent12addComponentEv
+                0x0000000000002cb2      0x14c libcodal-core.a(CodalComponent.cpp.o)
+                0x0000000000002cb2                codal::CodalComponent::addComponent()
+ .text._ZN5codal14CodalComponent15removeComponentEv
+                0x0000000000002dfe       0x46 libcodal-core.a(CodalComponent.cpp.o)
+                0x0000000000002dfe                codal::CodalComponent::removeComponent()
+ .text._ZN5codal11CodalDevice10getVersionEv
+                0x0000000000002e44        0x6 libcodal-core.a(CodalDevice.cpp.o)
+                0x0000000000002e44                codal::CodalDevice::getVersion()
+ .text._ZN5codal11CodalDevice15getSerialNumberEv
+                0x0000000000002e4a        0x8 libcodal-core.a(CodalDevice.cpp.o)
+                0x0000000000002e4a                codal::CodalDevice::getSerialNumber()
+ .text._ZN5codal11CodalDevice10seedRandomEm
+                0x0000000000002e52       0x10 libcodal-core.a(CodalDevice.cpp.o)
+                0x0000000000002e52                codal::CodalDevice::seedRandom(unsigned long)
+ .text._ZN5codal11CodalDevice5sleepEm
+                0x0000000000002e62        0x8 libcodal-core.a(CodalDevice.cpp.o)
+                0x0000000000002e62                codal::CodalDevice::sleep(unsigned long)
+ .text._ZN5codal11CodalDevice5panicEi
+                0x0000000000002e6a        0x6 libcodal-core.a(CodalDevice.cpp.o)
+                0x0000000000002e6a                codal::CodalDevice::panic(int)
+ .text._ZN5codal11CodalDevice4waitEm
+                0x0000000000002e70        0x8 libcodal-core.a(CodalDevice.cpp.o)
+                0x0000000000002e70                codal::CodalDevice::wait(unsigned long)
+ .text._ZN5codal11CodalDevice5resetEv
+                0x0000000000002e78        0x4 libcodal-core.a(CodalDevice.cpp.o)
+                0x0000000000002e78                codal::CodalDevice::reset()
+ .text._ZN5codal11CodalDevice6randomEi
+                0x0000000000002e7c      0x174 libcodal-core.a(CodalDevice.cpp.o)
+                0x0000000000002e7c                codal::CodalDevice::random(int)
+ .text._ZN5codal10EventModel6removeEPNS_8ListenerE
+                0x0000000000002ff0        0x6 libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000002ff0                codal::EventModel::remove(codal::Listener*)
+ .text._ZN5codal11queue_fiberEPNS_5FiberEPS1_
+                0x0000000000002ff6       0x5c libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000002ff6                codal::queue_fiber(codal::Fiber*, codal::Fiber**)
+ .text._ZN5codal13dequeue_fiberEPNS_5FiberE
+                0x0000000000003052       0x56 libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000003052                codal::dequeue_fiber(codal::Fiber*)
+ .text._ZN5codal14scheduler_tickENS_5EventE
+                0x00000000000030a8       0xba libcodal-core.a(CodalFiber.cpp.o)
+                0x00000000000030a8                codal::scheduler_tick(codal::Event)
+ .text._ZN5codal15scheduler_eventENS_5EventE
+                0x0000000000003162      0x182 libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000003162                codal::scheduler_event(codal::Event)
+ .text._Z15getFiberContextv
+                0x00000000000032e4       0x74 libcodal-core.a(CodalFiber.cpp.o)
+                0x00000000000032e4                getFiberContext()
+ .text._ZN5codal14scheduler_initERNS_10EventModelE
+                0x0000000000003358      0x1a8 libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000003358                codal::scheduler_init(codal::EventModel&)
+ .text._ZN5codal23fiber_scheduler_runningEv
+                0x0000000000003500        0xa libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000003500                codal::fiber_scheduler_running()
+ .text._Z14__create_fibermmmi
+                0x000000000000350a       0xd0 libcodal-core.a(CodalFiber.cpp.o)
+                0x000000000000350a                __create_fiber(unsigned long, unsigned long, unsigned long, int)
+ .text._ZN5codal12create_fiberEPFvPvES0_S2_
+                0x00000000000035da       0x58 libcodal-core.a(CodalFiber.cpp.o)
+                0x00000000000035da                codal::create_fiber(void (*)(void*), void*, void (*)(void*))
+ .text._ZN5codal24scheduler_runqueue_emptyEv
+                0x0000000000003632       0x16 libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000003632                codal::scheduler_runqueue_empty()
+ .text._ZN5codal4idleEv
+                0x0000000000003648       0x70 libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000003648                codal::idle()
+ .text._ZN5codal8scheduleEv.part.2
+                0x00000000000036b8      0x270 libcodal-core.a(CodalFiber.cpp.o)
+ .text._ZN5codal8scheduleEv
+                0x0000000000003928        0xc libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000003928                codal::schedule()
+ .text._ZN5codal11fiber_sleepEm
+                0x0000000000003934       0x98 libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000003934                codal::fiber_sleep(unsigned long)
+ .text._ZN5codal13release_fiberEv.part.3
+                0x00000000000039cc       0x4e libcodal-core.a(CodalFiber.cpp.o)
+ .text._ZN5codal13release_fiberEv
+                0x0000000000003a1a        0xc libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000003a1a                codal::release_fiber()
+ .text._ZN5codal16launch_new_fiberEPFvvES1_
+                0x0000000000003a26       0x24 libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000003a26                codal::launch_new_fiber(void (*)(), void (*)())
+ .text._ZN5codal13release_fiberEPv
+                0x0000000000003a4a        0xc libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000003a4a                codal::release_fiber(void*)
+ .text._ZN5codal6invokeEPFvPvES0_
+                0x0000000000003a56       0xe8 libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000003a56                codal::invoke(void (*)(void*), void*)
+ .text._ZN5codal22launch_new_fiber_paramEPFvPvES2_S0_
+                0x0000000000003b3e       0x36 libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000003b3e                codal::launch_new_fiber_param(void (*)(void*), void (*)(void*), void*)
+ .text._ZN5codal9idle_taskEv
+                0x0000000000003b74       0x12 libcodal-core.a(CodalFiber.cpp.o)
+                0x0000000000003b74                codal::idle_task()
+ .text._ZN5codal8ListenerC2EjjPFvNS_5EventEEj
+                0x0000000000003b86       0x54 libcodal-core.a(CodalListener.cpp.o)
+                0x0000000000003b86                codal::Listener::Listener(unsigned int, unsigned int, void (*)(codal::Event), unsigned int)
+                0x0000000000003b86                codal::Listener::Listener(unsigned int, unsigned int, void (*)(codal::Event), unsigned int)
+ .text._ZN5codal8ListenerD2Ev
+                0x0000000000003bda       0x10 libcodal-core.a(CodalListener.cpp.o)
+                0x0000000000003bda                codal::Listener::~Listener()
+                0x0000000000003bda                codal::Listener::~Listener()
+ .text._ZN5codal8Listener5queueENS_5EventE
+                0x0000000000003bea       0xfc libcodal-core.a(CodalListener.cpp.o)
+                0x0000000000003bea                codal::Listener::queue(codal::Event)
+ .text._ZN5codal3I2C12setFrequencyEm
+                0x0000000000003ce6        0x6 libcodal-core.a(I2C.cpp.o)
+                0x0000000000003ce6                codal::I2C::setFrequency(unsigned long)
+ .text._ZN5codal3I2C4stopEv
+                0x0000000000003cec        0x6 libcodal-core.a(I2C.cpp.o)
+                0x0000000000003cec                codal::I2C::stop()
+                0x0000000000003cec                codal::I2C::start()
+ .text._ZN5codal3I2C5writeEh
+                0x0000000000003cf2        0x6 libcodal-core.a(I2C.cpp.o)
+                0x0000000000003cf2                codal::I2C::write(unsigned char)
+ .text._ZN5codal3I2C4readENS_15AcknowledgeTypeE
+                0x0000000000003cf8        0x6 libcodal-core.a(I2C.cpp.o)
+                0x0000000000003cf8                codal::I2C::read(codal::AcknowledgeType)
+ .text._ZN5codal3I2CC2ERNS_3PinES2_
+                0x0000000000003cfe        0xc libcodal-core.a(I2C.cpp.o)
+                0x0000000000003cfe                codal::I2C::I2C(codal::Pin&, codal::Pin&)
+                0x0000000000003cfe                codal::I2C::I2C(codal::Pin&, codal::Pin&)
+ .text._ZN5codal5Timer17disableInterruptsEv
+                0x0000000000003d0a        0xa libcodal-core.a(Timer.cpp.o)
+                0x0000000000003d0a                codal::Timer::disableInterrupts()
+ .text._ZN5codal5Timer16enableInterruptsEv
+                0x0000000000003d14        0xa libcodal-core.a(Timer.cpp.o)
+                0x0000000000003d14                codal::Timer::enableInterrupts()
+ .text._ZN5codal5TimerC2Ev
+                0x0000000000003d1e       0x48 libcodal-core.a(Timer.cpp.o)
+                0x0000000000003d1e                codal::Timer::Timer()
+                0x0000000000003d1e                codal::Timer::Timer()
+ .text._ZN5codal5Timer8setEventEmjjb
+                0x0000000000003d66      0x168 libcodal-core.a(Timer.cpp.o)
+                0x0000000000003d66                codal::Timer::setEvent(unsigned long, unsigned int, unsigned int, bool)
+ .text._ZN5codal5Timer4syncEm
+                0x0000000000003ece       0xa8 libcodal-core.a(Timer.cpp.o)
+                0x0000000000003ece                codal::Timer::sync(unsigned long)
+ .text._ZN5codal5Timer7triggerEv
+                0x0000000000003f76      0x22e libcodal-core.a(Timer.cpp.o)
+                0x0000000000003f76                codal::Timer::trigger()
+ .text._ZN5codal5TimerD2Ev
+                0x00000000000041a4        0x2 libcodal-core.a(Timer.cpp.o)
+                0x00000000000041a4                codal::Timer::~Timer()
+                0x00000000000041a4                codal::Timer::~Timer()
+ .text._ZN5codal25system_timer_current_timeEv
+                0x00000000000041a6       0x38 libcodal-core.a(Timer.cpp.o)
+                0x00000000000041a6                codal::system_timer_current_time()
+ .text._ZN5codal28system_timer_current_time_usEv
+                0x00000000000041de       0x38 libcodal-core.a(Timer.cpp.o)
+                0x00000000000041de                codal::system_timer_current_time_us()
+ .text._ZN5codal27system_timer_event_every_usEmjj
+                0x0000000000004216       0x32 libcodal-core.a(Timer.cpp.o)
+                0x0000000000004216                codal::system_timer_event_every_us(unsigned long, unsigned int, unsigned int)
+ .text._ZN5codal10EventModel4sendENS_5EventE
+                0x0000000000004248       0x32 libcodal-core.a(MessageBus.cpp.o)
+                0x0000000000004248                codal::EventModel::send(codal::Event)
+ .text._ZN5codal10MessageBus9elementAtEi
+                0x000000000000427a       0x2a libcodal-core.a(MessageBus.cpp.o)
+                0x000000000000427a                codal::MessageBus::elementAt(int)
+ .text._ZN5codal22MemberFunctionCallback10methodCallINS_10MessageBusEEEvPvPmNS_5EventE
+                0x00000000000042a4       0x8e libcodal-core.a(MessageBus.cpp.o)
+                0x00000000000042a4                void codal::MemberFunctionCallback::methodCall<codal::MessageBus>(void*, unsigned long*, codal::Event)
+ .text._ZN5codal10MessageBus6removeEPNS_8ListenerE
+                0x0000000000004332       0xd0 libcodal-core.a(MessageBus.cpp.o)
+                0x0000000000004332                codal::MessageBus::remove(codal::Listener*)
+ .text._ZN5codal10MessageBus3addEPNS_8ListenerE
+                0x0000000000004402      0x206 libcodal-core.a(MessageBus.cpp.o)
+                0x0000000000004402                codal::MessageBus::add(codal::Listener*)
+ .text._Z14async_callbackPv
+                0x0000000000004608       0xe8 libcodal-core.a(MessageBus.cpp.o)
+                0x0000000000004608                async_callback(void*)
+ .text._ZN5codal10MessageBus12dequeueEventEv
+                0x00000000000046f0       0x46 libcodal-core.a(MessageBus.cpp.o)
+                0x00000000000046f0                codal::MessageBus::dequeueEvent()
+ .text._ZN5codal10MessageBus21deleteMarkedListenersEv
+                0x0000000000004736       0x92 libcodal-core.a(MessageBus.cpp.o)
+                0x0000000000004736                codal::MessageBus::deleteMarkedListeners()
+ .text._ZN5codal10MessageBus7processERNS_5EventEb
+                0x00000000000047c8       0xd0 libcodal-core.a(MessageBus.cpp.o)
+                0x00000000000047c8                codal::MessageBus::process(codal::Event&, bool)
+ .text._ZN5codal10MessageBus10queueEventERNS_5EventE
+                0x0000000000004898      0x104 libcodal-core.a(MessageBus.cpp.o)
+                0x0000000000004898                codal::MessageBus::queueEvent(codal::Event&)
+ .text._ZN5codal10MessageBus4sendENS_5EventE
+                0x000000000000499c       0x4c libcodal-core.a(MessageBus.cpp.o)
+                0x000000000000499c                codal::MessageBus::send(codal::Event)
+ .text._ZN5codal10MessageBus4idleENS_5EventE
+                0x00000000000049e8       0x62 libcodal-core.a(MessageBus.cpp.o)
+                0x00000000000049e8                codal::MessageBus::idle(codal::Event)
+ .text._ZN5codal19allocateNotifyEventEv
+                0x0000000000004a4a       0x18 libcodal-core.a(MessageBus.cpp.o)
+                0x0000000000004a4a                codal::allocateNotifyEvent()
+ .text._ZN5codal8ListenerC2INS_10MessageBusEEEjjPT_MS3_FvNS_5EventEEj
+                0x0000000000004a62       0xa2 libcodal-core.a(MessageBus.cpp.o)
+                0x0000000000004a62                codal::Listener::Listener<codal::MessageBus>(unsigned int, unsigned int, codal::MessageBus*, void (codal::MessageBus::*)(codal::Event), unsigned int)
+                0x0000000000004a62                codal::Listener::Listener<codal::MessageBus>(unsigned int, unsigned int, codal::MessageBus*, void (codal::MessageBus::*)(codal::Event), unsigned int)
+ .text._ZN5codal10MessageBusC2Ev
+                0x0000000000004b04       0xe4 libcodal-core.a(MessageBus.cpp.o)
+                0x0000000000004b04                codal::MessageBus::MessageBus()
+                0x0000000000004b04                codal::MessageBus::MessageBus()
+ .text._ZN5codal10MessageBusD2Ev
+                0x0000000000004be8       0xa8 libcodal-core.a(MessageBus.cpp.o)
+                0x0000000000004be8                codal::MessageBus::~MessageBus()
+                0x0000000000004be8                codal::MessageBus::~MessageBus()
+ .text._ZN5codal10MessageBusD0Ev
+                0x0000000000004c90       0x14 libcodal-core.a(MessageBus.cpp.o)
+                0x0000000000004c90                codal::MessageBus::~MessageBus()
+ .text._ZThn4_N5codal10MessageBusD0Ev
+                0x0000000000004ca4       0x18 libcodal-core.a(MessageBus.cpp.o)
+                0x0000000000004ca4                non-virtual thunk to codal::MessageBus::~MessageBus()
+ .text._ZThn4_N5codal10MessageBusD1Ev
+                0x0000000000004cbc        0x6 libcodal-core.a(MessageBus.cpp.o)
+                0x0000000000004cbc                non-virtual thunk to codal::MessageBus::~MessageBus()
+ .text._ZN5codal5EventC2EjjmNS_15EventLaunchModeE.part.1
+                0x0000000000004cc2       0x52 libcodal-core.a(Event.cpp.o)
+ .text._ZN5codal5EventC2EjjNS_15EventLaunchModeE
+                0x0000000000004d14       0x3c libcodal-core.a(Event.cpp.o)
+                0x0000000000004d14                codal::Event::Event(unsigned int, unsigned int, codal::EventLaunchMode)
+                0x0000000000004d14                codal::Event::Event(unsigned int, unsigned int, codal::EventLaunchMode)
+ .text._ZN5codal5EventC2EjjmNS_15EventLaunchModeE
+                0x0000000000004d50       0x34 libcodal-core.a(Event.cpp.o)
+                0x0000000000004d50                codal::Event::Event(unsigned int, unsigned int, unsigned long, codal::EventLaunchMode)
+                0x0000000000004d50                codal::Event::Event(unsigned int, unsigned int, unsigned long, codal::EventLaunchMode)
+ .text._ZN5codal5EventC2Ev
+                0x0000000000004d84       0x20 libcodal-core.a(Event.cpp.o)
+                0x0000000000004d84                codal::Event::Event()
+                0x0000000000004d84                codal::Event::Event()
+ .text._ZN5codal14EventQueueItemC2ENS_5EventE
+                0x0000000000004da4       0x6c libcodal-core.a(Event.cpp.o)
+                0x0000000000004da4                codal::EventQueueItem::EventQueueItem(codal::Event)
+                0x0000000000004da4                codal::EventQueueItem::EventQueueItem(codal::Event)
+ .text._ZN5codal13ManagedBuffer4initEPhi.part.0
+                0x0000000000004e10       0x64 libcodal-core.a(ManagedBuffer.cpp.o)
+ .text._ZN5codal13ManagedBufferC2Ei
+                0x0000000000004e74       0x1c libcodal-core.a(ManagedBuffer.cpp.o)
+                0x0000000000004e74                codal::ManagedBuffer::ManagedBuffer(int)
+                0x0000000000004e74                codal::ManagedBuffer::ManagedBuffer(int)
+ .text._ZN5codal13ManagedBufferC2EPNS_10BufferDataE
+                0x0000000000004e90        0xc libcodal-core.a(ManagedBuffer.cpp.o)
+                0x0000000000004e90                codal::ManagedBuffer::ManagedBuffer(codal::BufferData*)
+                0x0000000000004e90                codal::ManagedBuffer::ManagedBuffer(codal::BufferData*)
+ .text._ZN5codal13ManagedBufferD2Ev
+                0x0000000000004e9c        0xa libcodal-core.a(ManagedBuffer.cpp.o)
+                0x0000000000004e9c                codal::ManagedBuffer::~ManagedBuffer()
+                0x0000000000004e9c                codal::ManagedBuffer::~ManagedBuffer()
+ .text._ZN5codal13ManagedBuffer7setByteEih
+                0x0000000000004ea6       0x26 libcodal-core.a(ManagedBuffer.cpp.o)
+                0x0000000000004ea6                codal::ManagedBuffer::setByte(int, unsigned char)
+ .text._ZN5codal13ManagedBuffer7getByteEi
+                0x0000000000004ecc       0x24 libcodal-core.a(ManagedBuffer.cpp.o)
+                0x0000000000004ecc                codal::ManagedBuffer::getByte(int)
+ .text._ZN5codal13ManagedBuffer8leakDataEv
+                0x0000000000004ef0       0x10 libcodal-core.a(ManagedBuffer.cpp.o)
+                0x0000000000004ef0                codal::ManagedBuffer::leakData()
+ .text._ZN5codal13ManagedBuffer4fillEhii
+                0x0000000000004f00       0x52 libcodal-core.a(ManagedBuffer.cpp.o)
+                0x0000000000004f00                codal::ManagedBuffer::fill(unsigned char, int, int)
+ .text._ZNK5codal13ManagedBuffer5sliceEii
+                0x0000000000004f52       0x5a libcodal-core.a(ManagedBuffer.cpp.o)
+                0x0000000000004f52                codal::ManagedBuffer::slice(int, int) const
+ .text._ZN5codal13ManagedBuffer5shiftEiii
+                0x0000000000004fac       0xe2 libcodal-core.a(ManagedBuffer.cpp.o)
+                0x0000000000004fac                codal::ManagedBuffer::shift(int, int, int)
+ .text._ZN5codal13ManagedBuffer6rotateEiii
+                0x000000000000508e       0xc4 libcodal-core.a(ManagedBuffer.cpp.o)
+                0x000000000000508e                codal::ManagedBuffer::rotate(int, int, int)
+ .text._ZN5codal13ManagedBuffer11writeBufferEiRKS0_ii
+                0x0000000000005152       0x90 libcodal-core.a(ManagedBuffer.cpp.o)
+                0x0000000000005152                codal::ManagedBuffer::writeBuffer(int, codal::ManagedBuffer const&, int, int)
+ .text._ZN5codal13ManagedBuffer10writeBytesEiPhib
+                0x00000000000051e2       0x68 libcodal-core.a(ManagedBuffer.cpp.o)
+                0x00000000000051e2                codal::ManagedBuffer::writeBytes(int, unsigned char*, int, bool)
+ .text._ZNK5codal13ManagedBuffer9readBytesEPhiib
+                0x000000000000524a       0x72 libcodal-core.a(ManagedBuffer.cpp.o)
+                0x000000000000524a                codal::ManagedBuffer::readBytes(unsigned char*, int, int, bool) const
+ .text._ZN5codal13ManagedString10initStringEPKci
+                0x00000000000052bc       0x54 libcodal-core.a(ManagedString.cpp.o)
+                0x00000000000052bc                codal::ManagedString::initString(char const*, int)
+ .text._ZN5codal13ManagedStringC2EPNS_10StringDataE
+                0x0000000000005310       0x1e libcodal-core.a(ManagedString.cpp.o)
+                0x0000000000005310                codal::ManagedString::ManagedString(codal::StringData*)
+                0x0000000000005310                codal::ManagedString::ManagedString(codal::StringData*)
+ .text._ZN5codal13ManagedString8leakDataEv
+                0x000000000000532e       0x10 libcodal-core.a(ManagedString.cpp.o)
+                0x000000000000532e                codal::ManagedString::leakData()
+ .text._ZN5codal13ManagedStringC2Ei
+                0x000000000000533e       0x5e libcodal-core.a(ManagedString.cpp.o)
+                0x000000000000533e                codal::ManagedString::ManagedString(int)
+                0x000000000000533e                codal::ManagedString::ManagedString(int)
+ .text._ZN5codal13ManagedStringC2Ec
+                0x000000000000539c       0x28 libcodal-core.a(ManagedString.cpp.o)
+                0x000000000000539c                codal::ManagedString::ManagedString(char)
+                0x000000000000539c                codal::ManagedString::ManagedString(char)
+ .text._ZN5codal13ManagedStringC2ERKS0_S2_
+                0x00000000000053c4       0xb4 libcodal-core.a(ManagedString.cpp.o)
+                0x00000000000053c4                codal::ManagedString::ManagedString(codal::ManagedString const&, codal::ManagedString const&)
+                0x00000000000053c4                codal::ManagedString::ManagedString(codal::ManagedString const&, codal::ManagedString const&)
+ .text._ZN5codal13ManagedStringC2EPKci
+                0x0000000000005478       0x30 libcodal-core.a(ManagedString.cpp.o)
+                0x0000000000005478                codal::ManagedString::ManagedString(char const*, int)
+                0x0000000000005478                codal::ManagedString::ManagedString(char const*, int)
+ .text._ZN5codal13ManagedStringD2Ev
+                0x00000000000054a8        0xa libcodal-core.a(ManagedString.cpp.o)
+                0x00000000000054a8                codal::ManagedString::~ManagedString()
+                0x00000000000054a8                codal::ManagedString::~ManagedString()
+ .text._ZN5codal13ManagedString9substringEii
+                0x00000000000054b2       0x50 libcodal-core.a(ManagedString.cpp.o)
+                0x00000000000054b2                codal::ManagedString::substring(int, int)
+ .text._ZN5codalplERKNS_13ManagedStringES2_
+                0x0000000000005502       0x5e libcodal-core.a(ManagedString.cpp.o)
+                0x0000000000005502                codal::operator+(codal::ManagedString const&, codal::ManagedString const&)
+ .text._ZN5codal13ManagedString6charAtEi
+                0x0000000000005560       0x20 libcodal-core.a(ManagedString.cpp.o)
+                0x0000000000005560                codal::ManagedString::charAt(int)
+ .text.startup._GLOBAL__sub_I__ZN5codal13ManagedString9initEmptyEv
+                0x0000000000005580       0x10 libcodal-core.a(ManagedString.cpp.o)
+ .text.exit._GLOBAL__sub_D__ZN5codal13ManagedString9initEmptyEv
+                0x0000000000005590        0xc libcodal-core.a(ManagedString.cpp.o)
+ .text._ZN5codal10RefCounted4incrEv
+                0x000000000000559c       0x44 libcodal-core.a(RefCounted.cpp.o)
+                0x000000000000559c                codal::RefCounted::incr()
+ .text._ZN5codal10RefCounted4decrEv
+                0x00000000000055e0       0x5a libcodal-core.a(RefCounted.cpp.o)
+                0x00000000000055e0                codal::RefCounted::decr()
+ .text._ZN5codal10RefCounted7destroyEv
+                0x000000000000563a        0x4 libcodal-core.a(RefCountedInit.cpp.o)
+                0x000000000000563a                codal::RefCounted::destroy()
+ .text._ZN5codal10RefCounted4initEv
+                0x000000000000563e        0xc libcodal-core.a(RefCountedInit.cpp.o)
+                0x000000000000563e                codal::RefCounted::init()
+ .text._ZN5codal14string_reverseEPc
+                0x000000000000564a       0x3c libcodal-core.a(CodalCompat.cpp.o)
+                0x000000000000564a                codal::string_reverse(char*)
+ .text._ZN5codal4itoaEiPc
+                0x0000000000005686       0x9c libcodal-core.a(CodalCompat.cpp.o)
+                0x0000000000005686                codal::itoa(int, char*)
+ .text._ZN5codal22MemberFunctionCallback4fireENS_5EventE
+                0x0000000000005722       0x60 libcodal-core.a(MemberFunctionCallback.cpp.o)
+                0x0000000000005722                codal::MemberFunctionCallback::fire(codal::Event)
+ .text._ZN5codal22MemberFunctionCallbackeqERKS0_
+                0x0000000000005782       0x2e libcodal-core.a(MemberFunctionCallback.cpp.o)
+                0x0000000000005782                codal::MemberFunctionCallback::operator==(codal::MemberFunctionCallback const&)
+ .text.libgcc.div
+                0x00000000000057b0       0x28 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_divmodhi4.o)
+                0x00000000000057b0                __divmodhi4
+                0x00000000000057b0                _div
+ .text.libgcc.div
+                0x00000000000057d8       0x44 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodsi4.o)
+                0x00000000000057d8                __udivmodsi4
+ .text.libgcc.mul
+                0x000000000000581c        0xe /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_usmulhisi3.o)
+                0x000000000000581c                __usmulhisi3
+                0x0000000000005820                __usmulhisi3_tail
+ .text.libgcc.div
+                0x000000000000582a       0x28 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodhi4.o)
+                0x000000000000582a                __udivmodhi4
+ .text.libgcc   0x0000000000005852        0xc /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_tablejump2.o)
+                0x0000000000005852                __tablejump2__
+ .text.libgcc.mul
+                0x000000000000585e       0x1e /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_umulhisi3.o)
+                0x000000000000585e                __umulhisi3
+ .text.avr-libc
+                0x000000000000587c       0x38 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(calloc.o)
+                0x000000000000587c                calloc
+ .text.avr-libc
+                0x00000000000058b4      0x248 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(malloc.o)
+                0x00000000000058b4                malloc
+                0x00000000000059e6                free
+ .text.avr-libc
+                0x0000000000005afc       0x3c /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(atoi.o)
+                0x0000000000005afc                atoi
+ .text.avr-libc
+                0x0000000000005b38       0x12 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcpy_P.o)
+                0x0000000000005b38                memcpy_P
+ .text.avr-libc
+                0x0000000000005b4a       0x1a /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcmp.o)
+                0x0000000000005b4a                memcmp
+ .text.avr-libc
+                0x0000000000005b64       0x12 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memcpy.o)
+                0x0000000000005b64                memcpy
+ .text.avr-libc
+                0x0000000000005b76       0x24 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memmove.o)
+                0x0000000000005b76                memmove
+ .text.avr-libc
+                0x0000000000005b9a        0xe /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(memset.o)
+                0x0000000000005b9a                memset
+ .text.avr-libc
+                0x0000000000005ba8       0x12 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(strcmp.o)
+                0x0000000000005ba8                strcmp
+ .text.avr-libc
+                0x0000000000005bba       0x10 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(mul10.o)
+                0x0000000000005bba                __mulhi_const_10
+                0x0000000000005bca                . = ALIGN (0x2)
+ *(.fini9)
+ .fini9         0x0000000000005bca        0x0 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_exit.o)
+                0x0000000000005bca                exit
+                0x0000000000005bca                _exit
+ *(.fini9)
+ *(.fini8)
+ *(.fini8)
+ *(.fini7)
+ *(.fini7)
+ *(.fini6)
+ .fini6         0x0000000000005bca       0x16 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_dtors.o)
+                0x0000000000005bca                __do_global_dtors
+ *(.fini6)
+ *(.fini5)
+ *(.fini5)
+ *(.fini4)
+ *(.fini4)
+ *(.fini3)
+ *(.fini3)
+ *(.fini2)
+ *(.fini2)
+ *(.fini1)
+ *(.fini1)
+ *(.fini0)
+ .fini0         0x0000000000005be0        0x4 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_exit.o)
+ *(.fini0)
+                0x0000000000005be4                _etext = .
+
+.data           0x0000000000800100      0x104 load address 0x0000000000005be4
+                0x0000000000800100                PROVIDE (__data_start, .)
+ *(.data)
+ .data          0x0000000000800100        0x6 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(malloc.o)
+                0x0000000000800100                __malloc_heap_end
+                0x0000000000800102                __malloc_heap_start
+                0x0000000000800104                __malloc_margin
+ *(.data*)
+ .data._ZL12userNotifyId
+                0x0000000000800106        0x2 libcodal-core.a(MessageBus.cpp.o)
+ *(.rodata)
+ *(.rodata*)
+ .rodata._ZTVN5codal14CodalComponentE
+                0x0000000000800108        0xe CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x0000000000800108                vtable for codal::CodalComponent
+ *fill*         0x0000000000800116        0x2 
+ .rodata._ZN8Boolean_L6sFalseE
+                0x0000000000800118        0xc CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+ .rodata._ZN8Boolean_L5sTrueE
+                0x0000000000800124        0xc CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+ .rodata.target_panic.str1.1
+                0x0000000000800130        0x6 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+ .rodata._ZTVN5codal9ATMegaI2CE
+                0x0000000000800136        0xe libcodal-atmega328p.a(ATMegaI2C.cpp.o)
+                0x0000000000800136                vtable for codal::ATMegaI2C
+ .rodata._ZTVN5codal9ATMegaPinE
+                0x0000000000800144       0x2c libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                0x0000000000800144                vtable for codal::ATMegaPin
+ .rodata._ZL7PIN_REG
+                0x0000000000800170        0x6 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .rodata._ZL8PORT_REG
+                0x0000000000800176        0x6 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .rodata._ZL6DD_REG
+                0x000000000080017c        0x6 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .rodata._ZN5codal12ATMegaSerial4sendEj.str1.1
+                0x0000000000800182        0x3 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .rodata._ZTVN5codal12ATMegaSerialE
+                0x0000000000800185        0xe libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+                0x0000000000800185                vtable for codal::ATMegaSerial
+ .rodata._ZTVN5codal11ATMegaTimerE
+                0x0000000000800193        0xc libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+                0x0000000000800193                vtable for codal::ATMegaTimer
+ .rodata._ZN5codal11CodalDevice10getVersionEv.str1.1
+                0x000000000080019f        0x8 libcodal-core.a(CodalDevice.cpp.o)
+ .rodata._ZTVN5codal11CodalDeviceE
+                0x00000000008001a7       0x12 libcodal-core.a(CodalDevice.cpp.o)
+                0x00000000008001a7                vtable for codal::CodalDevice
+ .rodata._ZTVN5codal3I2CE
+                0x00000000008001b9        0xe libcodal-core.a(I2C.cpp.o)
+                0x00000000008001b9                vtable for codal::I2C
+ .rodata._ZTVN5codal5TimerE
+                0x00000000008001c7        0xc libcodal-core.a(Timer.cpp.o)
+                0x00000000008001c7                vtable for codal::Timer
+ .rodata._ZTVN5codal10EventModelE
+                0x00000000008001d3        0xa libcodal-core.a(MessageBus.cpp.o)
+                0x00000000008001d3                vtable for codal::EventModel
+ .rodata._ZTVN5codal10MessageBusE
+                0x00000000008001dd       0x1e libcodal-core.a(MessageBus.cpp.o)
+                0x00000000008001dd                vtable for codal::MessageBus
+ *fill*         0x00000000008001fb        0x1 
+ .rodata._ZL9emptyData
+                0x00000000008001fc        0x4 libcodal-core.a(ManagedBuffer.cpp.o)
+ .rodata._ZL9emptyData
+                0x0000000000800200        0x4 libcodal-core.a(ManagedString.cpp.o)
+ *(.gnu.linkonce.d*)
+                0x0000000000800204                . = ALIGN (0x2)
+                0x0000000000800204                _edata = .
+                0x0000000000800204                PROVIDE (__data_end, .)
+
+.bss            0x0000000000800204       0xee
+                0x0000000000800204                PROVIDE (__bss_start, .)
+ *(.bss)
+ *(.bss*)
+ .bss._ZN3pxt13devMessageBusE
+                0x0000000000800204       0x16 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x0000000000800204                pxt::devMessageBus
+ .bss._ZN3pxt9devSerialE
+                0x000000000080021a        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x000000000080021a                pxt::devSerial
+ .bss._ZN3pxt8devTimerE
+                0x0000000000800220       0x1a CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x0000000000800220                pxt::devTimer
+ .bss._ZN3pxt6deviceE
+                0x000000000080023a        0x6 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x000000000080023a                pxt::device
+ .bss._ZN3pxt9lastEventE
+                0x0000000000800240        0x8 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                0x0000000000800240                pxt::lastEvent
+ .bss.io        0x0000000000800248        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/devpins.cpp.o
+                0x0000000000800248                io
+ .bss._ZN3pxt7globalsE
+                0x000000000080024a        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x000000000080024a                pxt::globals
+ .bss._ZN3pxt8bytecodeE
+                0x000000000080024c        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                0x000000000080024c                pxt::bytecode
+ .bss._ZN3pxtL15handlerBindingsE
+                0x000000000080024e        0x2 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .bss.codal_heap_start
+                0x0000000000800250        0x2 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                0x0000000000800250                codal_heap_start
+ .bss._ZZN5codal9ATMegaPinC4EhNS_13PinCapabilityEE16portsInitialized
+                0x0000000000800252        0x2 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .bss._ZL8instance
+                0x0000000000800254        0x2 libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+ .bss._ZN5codal14CodalComponent13configurationE
+                0x0000000000800256        0x1 libcodal-core.a(CodalComponent.cpp.o)
+                0x0000000000800256                codal::CodalComponent::configuration
+ .bss._ZN5codal14CodalComponent10componentsE
+                0x0000000000800257       0x80 libcodal-core.a(CodalComponent.cpp.o)
+                0x0000000000800257                codal::CodalComponent::components
+ .bss._ZN5codalL10messageBusE
+                0x00000000008002d7        0x2 libcodal-core.a(CodalFiber.cpp.o)
+ .bss._ZN5codalL11fiber_flagsE
+                0x00000000008002d9        0x1 libcodal-core.a(CodalFiber.cpp.o)
+ .bss._ZN5codalL9fiberPoolE
+                0x00000000008002da        0x2 libcodal-core.a(CodalFiber.cpp.o)
+ .bss._ZN5codalL9waitQueueE
+                0x00000000008002dc        0x2 libcodal-core.a(CodalFiber.cpp.o)
+ .bss._ZN5codalL10sleepQueueE
+                0x00000000008002de        0x2 libcodal-core.a(CodalFiber.cpp.o)
+ .bss._ZN5codalL8runQueueE
+                0x00000000008002e0        0x2 libcodal-core.a(CodalFiber.cpp.o)
+ .bss._ZN5codalL9idleFiberE
+                0x00000000008002e2        0x2 libcodal-core.a(CodalFiber.cpp.o)
+ .bss._ZN5codalL11forkedFiberE
+                0x00000000008002e4        0x2 libcodal-core.a(CodalFiber.cpp.o)
+ .bss._ZN5codal12currentFiberE
+                0x00000000008002e6        0x2 libcodal-core.a(CodalFiber.cpp.o)
+                0x00000000008002e6                codal::currentFiber
+ .bss._ZN5codal12system_timerE
+                0x00000000008002e8        0x2 libcodal-core.a(Timer.cpp.o)
+                0x00000000008002e8                codal::system_timer
+ .bss._ZN5codal10EventModel15defaultEventBusE
+                0x00000000008002ea        0x2 libcodal-core.a(Event.cpp.o)
+                0x00000000008002ea                codal::EventModel::defaultEventBus
+ .bss._ZN5codal13ManagedString11EmptyStringE
+                0x00000000008002ec        0x2 libcodal-core.a(ManagedString.cpp.o)
+                0x00000000008002ec                codal::ManagedString::EmptyString
+ *(COMMON)
+ COMMON         0x00000000008002ee        0x4 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(malloc.o)
+                0x00000000008002ee                __brkval
+                0x00000000008002f0                __flp
+                0x00000000008002f2                PROVIDE (__bss_end, .)
+                0x0000000000005be4                __data_load_start = LOADADDR (.data)
+                0x0000000000005ce8                __data_load_end = (__data_load_start + SIZEOF (.data))
+
+.noinit         0x00000000008002f2        0x0
+                [!provide]                        PROVIDE (__noinit_start, .)
+ *(.noinit*)
+                [!provide]                        PROVIDE (__noinit_end, .)
+                0x00000000008002f2                _end = .
+                0x00000000008002f2                PROVIDE (__heap_start, .)
+
+.eeprom         0x0000000000810000        0x0
+ *(.eeprom*)
+                0x0000000000810000                __eeprom_end = .
+
+.fuse
+ *(.fuse)
+ *(.lfuse)
+ *(.hfuse)
+ *(.efuse)
+
+.lock
+ *(.lock*)
+
+.signature
+ *(.signature*)
+
+.stab           0x0000000000000000    0x1bd98
+ *(.stab)
+ .stab          0x0000000000000000     0x1110 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                                       0x12cc (size before relaxing)
+ .stab          0x0000000000001110      0x9fc CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/control.cpp.o
+                                        0xa08 (size before relaxing)
+ .stab          0x0000000000001b0c      0x87c CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/devpins.cpp.o
+                                        0x888 (size before relaxing)
+ .stab          0x0000000000002388      0xa14 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/i2c.cpp.o
+                                        0xa20 (size before relaxing)
+ .stab          0x0000000000002d9c     0x10b0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+                                       0x10bc (size before relaxing)
+ .stab          0x0000000000003e4c      0x7bc CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/serial.cpp.o
+                                        0x7c8 (size before relaxing)
+ .stab          0x0000000000004608      0xd5c CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+                                        0xd68 (size before relaxing)
+ .stab          0x0000000000005364      0x780 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/control.cpp.o
+                                        0x78c (size before relaxing)
+ .stab          0x0000000000005ae4     0x22bc CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+                                       0x22c8 (size before relaxing)
+ .stab          0x0000000000007da0      0x7b0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/loops.cpp.o
+                                        0x7bc (size before relaxing)
+ .stab          0x0000000000008550     0x2040 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+                                       0x2184 (size before relaxing)
+ .stab          0x000000000000a590      0x84c CMakeFiles/ARDUINO_UNO.dir/pxtapp/main.cpp.o
+                                        0x858 (size before relaxing)
+ .stab          0x000000000000addc      0x840 CMakeFiles/ARDUINO_UNO.dir/pxtapp/pointers.cpp.o
+                                        0x84c (size before relaxing)
+ .stab          0x000000000000b61c      0xcf0 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/vm.s.o
+                                        0xcfc (size before relaxing)
+ .stab          0x000000000000c30c      0xcf0 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+                                        0xcfc (size before relaxing)
+ .stab          0x000000000000cffc      0x8f4 libcodal-atmega328p.a(ATMegaI2C.cpp.o)
+                                        0x900 (size before relaxing)
+ .stab          0x000000000000d8f0     0x1080 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+                                       0x12a8 (size before relaxing)
+ .stab          0x000000000000e970      0xaa4 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+                                        0xc9c (size before relaxing)
+ .stab          0x000000000000f414      0x930 libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+                                        0x93c (size before relaxing)
+ .stab          0x000000000000fd44      0x978 libcodal-core.a(CodalComponent.cpp.o)
+                                        0xa08 (size before relaxing)
+ .stab          0x00000000000106bc      0x9e4 libcodal-core.a(CodalDevice.cpp.o)
+                                        0x9f0 (size before relaxing)
+ .stab          0x00000000000110a0     0x1af4 libcodal-core.a(CodalFiber.cpp.o)
+                                       0x1f08 (size before relaxing)
+ .stab          0x0000000000012b94      0x7f8 libcodal-core.a(CodalListener.cpp.o)
+                                        0x8e8 (size before relaxing)
+ .stab          0x000000000001338c      0x7ec libcodal-core.a(I2C.cpp.o)
+                                        0xc3c (size before relaxing)
+ .stab          0x0000000000013b78      0xf24 libcodal-core.a(Timer.cpp.o)
+                                       0x14f4 (size before relaxing)
+ .stab          0x0000000000014a9c     0x1818 libcodal-core.a(MessageBus.cpp.o)
+                                       0x1a58 (size before relaxing)
+ .stab          0x00000000000162b4      0x900 libcodal-core.a(Event.cpp.o)
+                                        0x9d8 (size before relaxing)
+ .stab          0x0000000000016bb4     0x13bc libcodal-core.a(ManagedBuffer.cpp.o)
+                                       0x1740 (size before relaxing)
+ .stab          0x0000000000017f70      0xf6c libcodal-core.a(ManagedString.cpp.o)
+                                       0x1380 (size before relaxing)
+ .stab          0x0000000000018edc      0x7ec libcodal-core.a(RefCounted.cpp.o)
+                                        0x8d0 (size before relaxing)
+ .stab          0x00000000000196c8      0x690 libcodal-core.a(RefCountedInit.cpp.o)
+                                        0x69c (size before relaxing)
+ .stab          0x0000000000019d58      0x744 libcodal-core.a(CodalCompat.cpp.o)
+                                        0x750 (size before relaxing)
+ .stab          0x000000000001a49c      0x678 libcodal-core.a(MemberFunctionCallback.cpp.o)
+                                        0x684 (size before relaxing)
+ .stab          0x000000000001ab14      0x138 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_divmodhi4.o)
+                                        0x144 (size before relaxing)
+ .stab          0x000000000001ac4c      0x228 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodsi4.o)
+                                        0x234 (size before relaxing)
+ .stab          0x000000000001ae74       0x6c /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_exit.o)
+                                         0x78 (size before relaxing)
+ .stab          0x000000000001aee0       0xd8 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_copy_data.o)
+                                         0xe4 (size before relaxing)
+ .stab          0x000000000001afb8       0xb4 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_clear_bss.o)
+                                         0xc0 (size before relaxing)
+ .stab          0x000000000001b06c       0xd8 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_ctors.o)
+                                         0xe4 (size before relaxing)
+ .stab          0x000000000001b144       0xd8 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_dtors.o)
+                                         0xe4 (size before relaxing)
+ .stab          0x000000000001b21c       0xcc /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_usmulhisi3.o)
+                                         0xd8 (size before relaxing)
+ .stab          0x000000000001b2e8      0x15c /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_udivmodhi4.o)
+                                        0x168 (size before relaxing)
+ .stab          0x000000000001b444       0x9c /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_tablejump2.o)
+                                         0xa8 (size before relaxing)
+ .stab          0x000000000001b4e0      0x108 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/avr5/libgcc.a(_umulhisi3.o)
+                                        0x114 (size before relaxing)
+ .stab          0x000000000001b5e8      0x7b0 libcodal-atmega328p.a(AVRContextSwitch.S.o)
+                                        0x7bc (size before relaxing)
+
+.stabstr        0x0000000000000000    0x20930
+ *(.stabstr)
+ .stabstr       0x0000000000000000    0x20930 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment        0x0000000000000000       0x11
+ *(.comment)
+ .comment       0x0000000000000000       0x11 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/codal.cpp.o
+                                         0x12 (size before relaxing)
+ .comment       0x0000000000000011       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/control.cpp.o
+ .comment       0x0000000000000011       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/devpins.cpp.o
+ .comment       0x0000000000000011       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/i2c.cpp.o
+ .comment       0x0000000000000011       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/pins.cpp.o
+ .comment       0x0000000000000011       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/core/serial.cpp.o
+ .comment       0x0000000000000011       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/buffer.cpp.o
+ .comment       0x0000000000000011       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/control.cpp.o
+ .comment       0x0000000000000011       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/core.cpp.o
+ .comment       0x0000000000000011       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/loops.cpp.o
+ .comment       0x0000000000000011       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/lang/pxt.cpp.o
+ .comment       0x0000000000000011       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/main.cpp.o
+ .comment       0x0000000000000011       0x12 CMakeFiles/ARDUINO_UNO.dir/pxtapp/pointers.cpp.o
+ .comment       0x0000000000000011       0x12 libcodal-arduino-uno.a(codal_target_hal.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-atmega328p.a(ATMegaI2C.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-atmega328p.a(ATMegaPin.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-atmega328p.a(ATMegaSerial.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-atmega328p.a(ATMegaTimer.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-core.a(CodalComponent.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-core.a(CodalDevice.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-core.a(CodalFiber.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-core.a(CodalListener.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-core.a(I2C.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-core.a(Timer.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-core.a(MessageBus.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-core.a(Event.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-core.a(ManagedBuffer.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-core.a(ManagedString.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-core.a(RefCounted.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-core.a(RefCountedInit.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-core.a(CodalCompat.cpp.o)
+ .comment       0x0000000000000011       0x12 libcodal-core.a(MemberFunctionCallback.cpp.o)
+ .comment       0x0000000000000011       0x12 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(calloc.o)
+ .comment       0x0000000000000011       0x12 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/libc.a(malloc.o)
+
+.note.gnu.avr.deviceinfo
+                0x0000000000000000       0x40
+ .note.gnu.avr.deviceinfo
+                0x0000000000000000       0x40 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/crtatmega328p.o
+
+.note.gnu.build-id
+ *(.note.gnu.build-id)
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges
+ *(.debug_aranges)
+
+.debug_pubnames
+ *(.debug_pubnames)
+
+.debug_info     0x0000000000000000      0x5f4
+ *(.debug_info .gnu.linkonce.wi.*)
+ .debug_info    0x0000000000000000      0x5f4 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/crtatmega328p.o
+
+.debug_abbrev   0x0000000000000000      0x5a2
+ *(.debug_abbrev)
+ .debug_abbrev  0x0000000000000000      0x5a2 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/crtatmega328p.o
+
+.debug_line     0x0000000000000000       0x1d
+ *(.debug_line .debug_line.* .debug_line_end)
+ .debug_line    0x0000000000000000       0x1d /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/crtatmega328p.o
+
+.debug_frame
+ *(.debug_frame)
+
+.debug_str      0x0000000000000000      0x208
+ *(.debug_str)
+ .debug_str     0x0000000000000000      0x208 /usr/local/Cellar/avr-gcc/6.3.0/lib/gcc/avr/6.3.0/../../../../avr/lib/avr5/crtatmega328p.o
+
+.debug_loc
+ *(.debug_loc)
+
+.debug_macinfo
+ *(.debug_macinfo)
+
+.debug_weaknames
+ *(.debug_weaknames)
+
+.debug_funcnames
+ *(.debug_funcnames)
+
+.debug_typenames
+ *(.debug_typenames)
+
+.debug_varnames
+ *(.debug_varnames)
+
+.debug_pubtypes
+ *(.debug_pubtypes)
+
+.debug_ranges
+ *(.debug_ranges)
+
+.debug_macro
+ *(.debug_macro)
+
+.debug_addr
+ *(.debug_addr)
+OUTPUT(ARDUINO_UNO elf32-avr)
+LOAD linker stubs

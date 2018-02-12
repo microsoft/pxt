@@ -1,0 +1,13 @@
+- real language (Static TypeScript, good for teaching programming)
+- language and runtime support simple programming model
+- mention huge growth of microcontroller-based systems
+- idea that end-users will want to customize systems, maker, educational
+- design principles: Anything, Anyone, Anywhere
+  - 1. Anything. efficient in RAM and Flash, don't care as much about CPU cycles
+  -    differences in "shape" of microcontroller from desktop
+  -    Storage to Processor capability
+  - 2. Anyone. program anywhere (web app, uf2)
+  - 3. Anywhere. low-floor high-ceiling 
+       - programming model (events + non-preemptive language)
+       - (blockly, typescript, C++)
+
