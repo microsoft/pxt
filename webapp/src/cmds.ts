@@ -103,8 +103,10 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
 function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.tickEvent(`hid.deploy`)
     // error message handled in browser download
-    if (!resp.success)
+    if (!resp.success) {
+        pxt.log(`hid build failed, showing download dialog`);
         return browserDownloadDeployCoreAsync(resp);
+    }
     let f = resp.outfiles[pxtc.BINARY_UF2]
     let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
     return hidbridge.initAsync()
@@ -230,12 +232,15 @@ function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<v
         agreeLbl: lf("Let's pair it!"),
         htmlBody,
     }).then(r => {
-        pxt.usb.pairAsync()
+        return pxt.usb.pairAsync()
             .then(() => {
                 pxt.tickEvent(`webusb.pair.success`);
                 return hidDeployCoreAsync(resp)
             })
-            .catch(e => browserDownloadDeployCoreAsync(resp));
+            .catch(e => {
+                pxt.reportException(e);
+                return browserDownloadDeployCoreAsync(resp);
+            });
     })
 }
 
@@ -248,7 +253,9 @@ function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 function webUsbBackgroundDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.tickEvent(`webusb.deploy.background`);
     return hidDeployCoreAsync(resp)
-        .catch(e => { }); // fail silently
+        .catch(e => { 
+            pxt.reportException(e)
+        }); // fail silently
 }
 
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
