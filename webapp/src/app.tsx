@@ -1168,8 +1168,8 @@ export class ProjectView
                 if (saveOnly) {
                     return pxt.commands.saveOnlyAsync(resp);
                 }
-                const deployAsync = (background ? pxt.commands.backgroundDeployCoreAsync : pxt.commands.deployCoreAsync)
-                    || pxt.commands.deployCoreAsync;
+                Util.assert(!background || !!pxt.commands.backgroundDeployCoreAsync);
+                const deployAsync = background ? pxt.commands.backgroundDeployCoreAsync : pxt.commands.deployCoreAsync;
                 return deployAsync(resp)
                     .catch(e => {
                         if (!background) {
