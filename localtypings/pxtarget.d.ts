@@ -323,6 +323,7 @@ declare namespace ts.pxtc {
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
         vmOpCodes?: pxt.Map<number>;
         commonalize?: boolean;
+        backgroundDeploy?: boolean;
     }
 
     interface CompileOptions {

@@ -347,7 +347,11 @@ export class ProjectView
         if (Util.now() - this.lastChangeTime < 1000) return;
         if (!this.state.active)
             return;
-        if (!!pxt.commands.backgroundDeployCoreAsync && this.state.running) // require at least one
+        const backgroundDeploy = this.state.canBackgroundDeploy // at least 1 "compile button"
+            && pxt.appTarget.compile && !!pxt.appTarget.compile.backgroundDeploy // target supports
+            && !!pxt.commands.backgroundDeployCoreAsync; // support in this shell
+
+        if (backgroundDeploy)
             this.compile(false, true);
         else
             this.runSimulator({ background: true });
@@ -1194,7 +1198,10 @@ export class ProjectView
                 this.setState({ compiling: false, isSaving: false });
                 if (simRestart) this.runSimulator();
             })
-            .done();
+            .done(() => {
+                if (!background)
+                    this.setState({ canBackgroundDeploy: true });
+            });
     }
 
     overrideTypescriptFile(text: string) {
