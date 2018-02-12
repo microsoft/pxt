@@ -320,7 +320,7 @@ export function initCommandsAsync(): Promise<void> {
         };
     } else if (hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
-        pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+        pxt.commands.backgroundDeployCoreAsync = hidDeployCoreAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
         pxt.commands.backgroundDeployCoreAsync = localhostDeployCoreAsync;
