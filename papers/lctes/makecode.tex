@@ -4,15 +4,6 @@
 The key technical contribution of \MC is to provide users with a safe environment to write programs for MCUs, enabling a simple progression from block-based
 programming, to text-based programming in Static TypeScript (STS), 
 while leveraging C++ on the backend for efficient use of MCU resources.
-
-Figure~\ref{fig:screenSnap} shows a screen snapshot of the \MC web app for the CPX,
-which has five sections:
-(A) the menu bar allows switching between the two editors;
-(B) the simulator shows the CPX board and provides feedback on user code executed in the browser;
-(C) the toolbar provides access to device-specific APIs and programming elements;
-(D) the programming canvas (showing here the blocks corresponding to the JavaScript from Figure~\ref{fig:example});
-(E) the download button invokes the compiler to produce a binary executable.
-
 The web app encapsulates all the components needed to deliver a programming experience
 for MCUs, free of the need for a C++ compiler for the compilation of user code.
 The web app is written in TypeScript and incorporates the TypeScript compiler and
@@ -21,13 +12,6 @@ The app is built from a \MC ``target''
 which parameterizes the \MC framework for a particular device.
 The remaining subsections describe the essential components of the web app 
 from Figure~\ref{fig:makecode}.
-
-
-\begin{figure*}[t]
-    \includegraphics[width=6in]{CPXfig.pdf}
-\caption{\label{fig:screenSnap}Screen snapshot of the \MC web app, showing the Blockly
-view of the JavaScript from Figure~\ref{fig:example}.}
-\end{figure*}
 
 
 \subsection{Device runtime and Shim Generation}
@@ -57,10 +41,6 @@ namespace input {
     ...
 \end{lstlisting}
 
-Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories, where the
-category \emph{INPUT} corresponding to the namespace \emph{input} can been seen (second
-from the top).
-
 Mapping of functions and enumerations between C++ and STS is straightforward
 and performed automatically by \MC.
 Here's an example of the C++ function \emph{onLightConditionChanged}
@@ -88,8 +68,6 @@ the TypeScript shim to its C++ function:
 //% shim=input::onLightConditionChanged
 function onLightConditionChanged(condition: LightCondition, handler: () => void): void;
 \end{lstlisting}
-
-Since the \emph{//\%} comment also contains a \emph{block} attribute, \MC creates a block (named ``on light''), which can be seen in the upper-left of Figure~\ref{fig:screenSnap}(D).
 
 To support the foreign function interface, \MC defines a mapping between C++ and STS types.
 Boolean and void have straightforward mappings from C++ to STS (bool $\rightarrow$ boolean, void $\rightarrow$ void).
@@ -132,8 +110,7 @@ For more sophisticated needs, one can directly access the Blockly framework.
 \MC uses the Blockly and Monaco editors to allow the user to code with
 visual blocks or STS. The editing experience is parameterized by the full-typed device
 runtime, which provides a set of categorized APIs to the end-user, based on namespaces, as
-previously described. These APIs are visible in both editors via a toolbox (Figure~\ref{fig:screenSnap}(C)) to the immediate left of the programming area.
-
+previously described. 
 \MC compiles the Blockly program representation to STS in a syntax-directed manner.
 A key issue is the need for type inference on the Blockly representation, as variables generally are defined and used without
 being declared in Blockly. \MC uses a simple unification type inference to assign a
@@ -203,13 +180,13 @@ JavaScript semantics. This strategy is used for all SAMD21 targets, including th
 
 % TOM: WHY ARE ARE THE UNTAGGED STATEGIES USED FOR MB AND UNO, AND TAGGED USED FOR CPLAY? MORE CONTEXT REQUIRED.
 
-\subsection{Simulator}
+% \subsection{Simulator}
 
-A \MC target can provide an alternate implementation for each API in the device runtime, for use in the device
-simulator. As this code runs in the web browser (not on the actual device) and manipulates the DOM, the developer is free to
-use all of TypeScript/JavaScript's features.
+% A \MC target can provide an alternate implementation for each API in the device runtime, for use in the device
+% simulator. As this code runs in the web browser (not on the actual device) and manipulates the DOM, the developer is free to
+% use all of TypeScript/JavaScript's features.
 
-As shown in Figure~\ref{fig:screenSnap}(B), the simulator allows the user to experience the basic functions of the device
-in the browser and to test their code
-before deploying it to the actual device. The simulator has proxy widgets for sensors such as the
-light detector, temperature and accelerometer, allowing the user to control the sensor's value.
+% As shown in Figure~\ref{fig:screenSnap}(B), the simulator allows the user to experience the basic functions of the device
+% in the browser and to test their code
+% before deploying it to the actual device. The simulator has proxy widgets for sensors such as the
+% light detector, temperature and accelerometer, allowing the user to control the sensor's value.
