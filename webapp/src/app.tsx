@@ -347,7 +347,7 @@ export class ProjectView
         if (Util.now() - this.lastChangeTime < 1000) return;
         if (!this.state.active)
             return;
-        if (!!pxt.commands.backgroundDeployCoreAsync)
+        if (!!pxt.commands.backgroundDeployCoreAsync && this.state.running) // require at least one
             this.compile(false, true);
         else
             this.runSimulator({ background: true });
