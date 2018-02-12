@@ -253,7 +253,7 @@ function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 function webUsbBackgroundDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.tickEvent(`webusb.deploy.background`);
     return hidDeployCoreAsync(resp)
-        .catch(e => { 
+        .catch(e => {
             pxt.reportException(e)
         }); // fail silently
 }
