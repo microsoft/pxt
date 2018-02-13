@@ -86,7 +86,7 @@ The partitioning is further reflected in STS's subtype relation:
 types $T$ and $U$ from different partitions (in the first four partitions above)
 are not related by STS's subtype relation.
 
-\subsection{Treatment of Classes and Methods}
+\subsection{Classes, Methods, and Subtyping}
 
 TypeScript introduces two (object) types for each class declaration:
 \begin{itemize}
@@ -107,12 +107,9 @@ the same name in subclass and superclass, per TypeScript, just as record types a
 Furthermore, STS permits a cast from a class type
 to a record supertype, but does not allow any casts from record types to class types. This means
 it is possible to use interfaces to abstract over classes, as in Java and C\#.
-
 Finally, STS enforces that a function property of a class/record may not be overwritten. 
 
-\subsection{Subtyping and Type Checking}
-
-Given the above, STS's subtype relation is unsurprising and defined in the appendix.
+Given the above, STS's subtype relation is unsurprising.
 STS type checking for (pure) expressions remains the same as in TypeScript.
 Type checking at assignments, where a value of type $S$ flows (is assigned to)
 into a location of type $T$ uses the new subtyping relation: $S$

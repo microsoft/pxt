@@ -138,7 +138,7 @@ and Atmel's ATmega class (AVR instructions). A separate assembler, also paramete
 encoder/decoder, generates machine code and resolves runtime references, producing a final binary executable. A third backend generates bytecode instructions.
 \MC can encode the resulting binary in several formats,
 including Intel's HEX format~\cite{IntelHEX} and the \UF format (created by
-the authors for faster device flashing) documented in the Appendix (Section~\ref{sec:uf2}).
+the authors for faster device flashing).
 
 \subsubsection{Asynchronous Functions}
 
@@ -161,8 +161,7 @@ The \CO device runtime supports fibers with the ability to yield, so for compila
 the compiler simply emits a call to yield at a suspension point.
 
 Async functions are written by runtime developers, not end-users, and greatly simplify the JavaScript
-programming model for end-users. For example, although the JavaScript simulator runtime uses promises to
-achieve asynchronous execution in a single-threaded context, these promises are hidden from the end user.
+programming model for end-users. 
 
 \subsubsection{Untagged and Tagged Strategies}\label{sec:untagged-tagged}
 
