@@ -21,6 +21,7 @@ namespace pxt.HF2 {
         error(msg: string): any;
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
+        isSwitchingToBootloader?: () => void;
 
         // these are implemneted by HID-bridge
         talksAsync?(cmds: TalkArgs[]): Promise<Uint8Array[]>;
@@ -220,6 +221,15 @@ namespace pxt.HF2 {
             }
             io.onError = err => {
                 log("recv error: " + err.message)
+                if (this.autoReconnect) {
+                    this.autoReconnect = false
+                    this.reconnectAsync()
+                        .then(() => {
+                            this.autoReconnect = true
+                        }, err => {
+                            log("reconnect error: " + err.message)
+                        })
+                }
                 //this.msgs.pushError(err)
             }
         }
@@ -233,6 +243,7 @@ namespace pxt.HF2 {
         maxMsgSize: number = 63; // when running in forwarding mode, we do not really know
         bootloaderMode = false;
         reconnectTries = 0;
+        autoReconnect = false;
         msgs = new U.PromiseBuffer<Uint8Array>()
         eventHandlers: pxt.Map<(buf: Uint8Array) => void> = {}
 
@@ -366,7 +377,11 @@ namespace pxt.HF2 {
             if (this.bootloaderMode)
                 return Promise.resolve()
             log(`Switching into bootloader mode`)
-            return this.talkAsync(HF2_CMD_START_FLASH)
+            if (this.io.isSwitchingToBootloader) {
+                this.io.isSwitchingToBootloader();
+            }
+            return this.maybeReconnectAsync()
+                .then(() => this.talkAsync(HF2_CMD_START_FLASH))
                 .then(() => this.initAsync())
                 .then(() => {
                     if (!this.bootloaderMode)
@@ -394,6 +409,20 @@ namespace pxt.HF2 {
             write32(args, 4, numwords)
             U.assert(numwords <= 64) // just sanity check
             return this.talkAsync(HF2_CMD_READ_WORDS, args)
+        }
+
+        pingAsync() {
+            if (this.rawMode)
+                return Promise.resolve()
+            return this.talkAsync(HF2_CMD_BININFO)
+                .then(buf => { })
+        }
+
+        maybeReconnectAsync() {
+            return this.pingAsync()
+                .catch(e =>
+                    this.reconnectAsync()
+                        .then(() => this.pingAsync()))
         }
 
         flashAsync(blocks: pxtc.UF2.Block[]) {

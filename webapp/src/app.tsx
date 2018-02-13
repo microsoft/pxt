@@ -962,12 +962,10 @@ export class ProjectView
             disagreeLbl: lf("Cancel")
         }).then(r => {
             if (!r) return Promise.resolve();
-            if (hf2Connection) {
-                return hf2Connection.disconnectAsync()
-                    .then(() => this.resetWorkspace())
-            } else {
-                return this.resetWorkspace()
-            }
+            return hidbridge.disconnectWrapperAsync()
+                .then(() => {
+                    return this.resetWorkspace();
+                });
         });
     }
 
@@ -1049,7 +1047,7 @@ export class ProjectView
                     return pxt.commands.saveOnlyAsync(resp);
                 }
                 return pxt.commands.deployCoreAsync(resp, {
-                    reportDeviceNotFoundAsync: (path) => this.showDeviceNotFoundDialogAsync(path),
+                    reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
                     reportError: (e) => core.errorNotification(e)
                 })
                     .catch(e => {
@@ -1070,19 +1068,33 @@ export class ProjectView
             .done();
     }
 
-    showDeviceNotFoundDialogAsync(docPath: string): Promise<void> {
+    showDeviceNotFoundDialogAsync(docPath: string, resp?: pxtc.CompileResult): Promise<void> {
         pxt.tickEvent(`compile.devicenotfound`);
+        const ext = pxt.outputName().replace(/[^.]*/, "");
+        const fn = pkg.genFileName(ext);
         return core.dialogAsync({
             header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
             body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
-            buttons: [{
-                label: lf("Troubleshoot"),
-                class: "focused",
-                url: docPath,
-                onclick: () => {
-                    pxt.tickEvent(`compile.troubleshoot`);
-                }
-            }],
+            buttons: [
+                {
+                    label: lf("Troubleshoot"),
+                    class: "focused",
+                    icon: "help",
+                    url: docPath,
+                    onclick: () => {
+                        pxt.tickEvent(`compile.devicenotfound.troubleshoot`);
+                    }
+                },
+                resp ? {
+                    label: fn,
+                    icon: "download",
+                    class: "lightgrey",
+                    onclick: () => {
+                        pxt.tickEvent(`compile.devicenotfound.download`);
+                        return pxt.commands.saveOnlyAsync(resp);
+                    }
+                } : undefined
+            ],
             hideCancel: true,
             hasCloseIcon: true
         });
@@ -1921,41 +1933,21 @@ function initLogin() {
     }
 }
 
-let hidConnectionPoller: number;
-let hidPollerDelay: number;
-let hf2Connection: pxt.HF2.Wrapper;
-
-function startHidConnectionPoller() {
-    hidConnectionPoller = window.setInterval(initSerial, 5000);
-}
-
-function setHidPollerDelay() {
-    clearTimeout(hidPollerDelay);
-    clearInterval(hidConnectionPoller);
-    hidPollerDelay = window.setTimeout(startHidConnectionPoller, 5000);
-}
-
 function initSerial() {
     if (!pxt.appTarget.serial || !Cloud.isLocalHost() || !Cloud.localToken)
         return;
 
     if (hidbridge.shouldUse()) {
-        hidbridge.initAsync(true)
-            .then(dev => {
-                hf2Connection = dev;
-                dev.onSerial = (buf, isErr) => {
-                    setHidPollerDelay();
-                    window.postMessage({
-                        type: 'serial',
-                        id: 'n/a', // TODO
-                        data: Util.fromUTF8(Util.uint8ArrayToString(buf))
-                    }, "*")
-                }
-            })
-            .catch(e => {
-                pxt.log(`hidbridge failed to load, ${e}`);
-            })
-        return
+        hidbridge.configureHidSerial((buf, isErr) => {
+            let data = Util.fromUTF8(Util.uint8ArrayToString(buf))
+            //pxt.debug('serial: ' + data)
+            window.postMessage({
+                type: 'serial',
+                id: 'n/a', // TODO
+                data
+            }, "*")
+        });
+        return;
     }
 
     pxt.debug('initializing serial pipe');
@@ -2263,7 +2255,6 @@ $(() => {
             if (state) {
                 theEditor.setState(state);
             }
-            startHidConnectionPoller();
             initScreenshots();
             initHashchange();
             electron.init();
