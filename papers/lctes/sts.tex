@@ -109,7 +109,7 @@ to a record supertype, but does not allow any casts from record types to class t
 it is possible to use interfaces to abstract over classes, as in Java and C\#.
 Finally, STS enforces that a function property of a class/record may not be overwritten. 
 
-Given the above, STS's subtype relation is unsurprising.
+Given the above, STS's subtype relation is straightfowardly defined.
 STS type checking for (pure) expressions remains the same as in TypeScript.
 Type checking at assignments, where a value of type $S$ flows (is assigned to)
 into a location of type $T$ uses the new subtyping relation: $S$

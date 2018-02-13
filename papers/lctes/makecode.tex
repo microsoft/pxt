@@ -1,9 +1,16 @@
 \section{\MCN: Design and Implementation}
 \label{sec:makecode}
 % @TOM REVIEW:
-The key technical contribution of \MC is to provide users with a safe environment to write programs for MCUs, enabling a simple progression from block-based
+The key technical contribution of \MC is to provide users with a safe environment 
+to write programs for MCUs, enabling a simple progression from block-based
 programming, to text-based programming in Static TypeScript (STS), 
 while leveraging C++ on the backend for efficient use of MCU resources.
+\MC uses the Blockly and Monaco editors to allow the end user to code with
+visual blocks or Static TypeScript.
+Both C++ and TypeScript APIs can be specially annotated (minimally via the
+comment \emph{//\% block}) so that the \MC compiler generates the needed
+Blockly metadata to expose an API as a visual block.
+
 The web app encapsulates all the components needed to deliver a programming experience
 for MCUs, free of the need for a C++ compiler for the compilation of user code.
 The web app is written in TypeScript and incorporates the TypeScript compiler and
@@ -11,7 +18,8 @@ language service as well.
 The app is built from a \MC ``target''
 which parameterizes the \MC framework for a particular device.
 The remaining subsections describe the essential components of the web app 
-from Figure~\ref{fig:makecode}.
+from Figure~\ref{fig:makecode} that pertain to the interface between
+Static TypeScript and C++.
 
 
 \subsection{Device runtime and Shim Generation}
@@ -82,44 +90,6 @@ up to three arguments and a return type) and collections, with mappings to STS.
 \MC does not yet include garbage collection, so advanced users who create cyclic
 data structures must be careful to break cycles to ensure complete deallocation.
 
-\subsection{Metadata generation}
-
-Both C++ and TypeScript APIs can be specially annotated (minimally via
-\emph{//\% block}) so that the \MC compiler generates the needed
-Blockly metadata to expose an API as a visual block.
-Additional attribute definitions can provide text descriptions for the block, project function
-parameters (thus simplifying the API available via Blockly), and describe other visual/functional
-characteristics of the block.  \MC uses the types of function parameters to select appropriate
-Blockly widgets.  For example, given a C++ enumeration such as:
-\begin{lstlisting}
-enum class LightCondition {
-    Dark = ANALOG_THRESHOLD_LOW,
-    Bright = ANALOG_THRESHOLD_HIGH
-};
-\end{lstlisting}
-a parameter of type \emph{LightCondition}, as found in
-the function \emph{onLightConditionChanged}, will use a Blockly drop-down menu
-so the user can select one of the two possible values (Dark, Bright).
-
-\MCN's support for Blockly means that for the common case, the \MC target developer doesn't need
-to know anything about the Blockly framework.
-For more sophisticated needs, one can directly access the Blockly framework.
-
-\subsection{Editors}
-
-\MC uses the Blockly and Monaco editors to allow the user to code with
-visual blocks or STS. The editing experience is parameterized by the full-typed device
-runtime, which provides a set of categorized APIs to the end-user, based on namespaces, as
-previously described. 
-\MC compiles the Blockly program representation to STS in a syntax-directed manner.
-A key issue is the need for type inference on the Blockly representation, as variables generally are defined and used without
-being declared in Blockly. \MC uses a simple unification type inference to assign a
-unique type to each variable.
-STS supports programming constructs that are not available in Blockly, such as classes.
-Such constructs are converted into grey uneditable blocks in Blockly, with the construct's program
-text intact. This means \MC always can decompile an error-free STS program to Blockly and then recover
-the program text of the grey blocks when converting from Blockly back to STS.
-
 \subsection{Browser compilation}
 
 When a user requests a download of the compiled binary, \MC first invokes the TypeScript language service to perform type inference and type checking on the
@@ -132,7 +102,7 @@ flow among a sequence of instructions with conditional and unconditional jumps; 
 and reference counting.
 
 There are three backends for code generation from the IR. The first backend generates JavaScript,
-for execution against the simulator runtime.  A second backend generates assembler, parameterized by a
+for execution against the simulator runtime (not described in this paper).  A second backend generates assembler, parameterized by a
 processor description.  Currently supported processors include ARM's Cortex class (Thumb instructions)
 and Atmel's ATmega class (AVR instructions). A separate assembler, also parameterized by an instruction
 encoder/decoder, generates machine code and resolves runtime references, producing a final binary executable. A third backend generates bytecode instructions.
