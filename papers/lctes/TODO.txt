@@ -1,0 +1,16 @@
+Embedded Systems for Education
+
+- embedded systems start appearing early! in middle school
+  - examples of the Arduino, micro:bit, CPX, etc.
+  - we were involved in making micro:bit 
+  - learned a lot of lessons, incorporated into new framework
+
+- use higher-level scripting language (and transition to C++)
+  - JavaScript (TypeScript) to C++
+- school computers are locked down (hard to install toolchains, device drivers, apps)
+  - in-browser compile chain
+  - UF2
+- microcontrollers will be embedded in projects (science experiments, etc) and powered by battery
+  - CODAL design decisions
+
+
