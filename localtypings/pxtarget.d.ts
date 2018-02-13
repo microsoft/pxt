@@ -188,7 +188,6 @@ declare namespace pxt {
         shareUrl?: string;
         embedUrl?: string;
         betaUrl?: string;
-        legacyDomain?: string;
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
