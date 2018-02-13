@@ -110,31 +110,6 @@ encoder/decoder, generates machine code and resolves runtime references, produci
 including Intel's HEX format~\cite{IntelHEX} and the \UF format (created by
 the authors for faster device flashing).
 
-\subsubsection{Asynchronous Functions}
-
-% TOM: CONTEXT?
-
-An important part of the compilation process is to allow users to call asynchronous
-STS functions (identified through the \emph{//\% async} annotation)
-as if they were blocking functions.  For example, in Figure~\ref{fig:example}, the runtime
-function \emph{loops.pause(1000)} (called at line 10)
-is an async function that sets a countdown timer (for 1000 milliseconds)
-and then yields to the scheduler. When the timer
-reaches zero, the function continuation is queued for execution.
-
-For execution in the single-threaded context of the JavaScript runtime,
-every function is compiled so that it can be suspended (at the return of a call) and later resumed (at the same point).
-The default behavior at a suspension point is to immediately resume execution.  For a call to an async function,
-the default behavior is overridden by the compiler, which suspends execution of the current function.
-Upon completion of the async function call, the current function then is resumed.
-The \CO device runtime supports fibers with the ability to yield, so for compilation to a device,
-the compiler simply emits a call to yield at a suspension point.
-
-Async functions are written by runtime developers, not end-users, and greatly simplify the JavaScript
-programming model for end-users. 
-
-\subsubsection{Untagged and Tagged Strategies}\label{sec:untagged-tagged}
-
 The \MC compiler supports the STS language subset of TypeScript described in Section~\ref{sec:sts},
 with two compilation strategies: untagged and tagged. Under the untagged strategy,
 a JavaScript number is interpreted as a C++ \texttt{int} by default and the type system is used
