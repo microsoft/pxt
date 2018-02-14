@@ -29,7 +29,7 @@ Examples of Editors built with PXT:
 * https://makecode.adafruit.com
 * https://makecode.chibitronics.com
 * https://minecraft.makecode.com
-* More editors at https://makecode.com/labs 
+* More editors at https://makecode.com/labs
 
 ## Branches
 
@@ -50,10 +50,7 @@ npm link ../pxt
 
 If you have multiple checkouts of pxt, you can do the following:
 * run `npm i` in pxt and the target
-* in target, delete `node_modules/pxt-core`
-* in `node_modules` in the target run the following (on Windows):
-  `node -e 'require("fs").symlinkSync("../../some-other-pxt", "pxt-core", "junction")'`
-  On mac or Linux, you can just `ln -s ../../some-other-pxt pxt-core`
+* in the target, run `pxt link ..\some-other-pxt` (you may need to update your CLI first by running `npm install -g pxt`)
 
 If you run `npm i` afterwards (in either the target or pxt), you might need to repeat these steps.
 

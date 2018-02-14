@@ -33,14 +33,14 @@ function findPxtJs() {
             var local = s + "/built/pxt.js" // local build
             if (fs.existsSync(local)) return local
             if (fs.existsSync(installed)) return installed
-            
+
             var cfg = JSON.parse(fs.readFileSync(targetjson, "utf8"))
             if (cfg.forkof) {
                 installed = mod + "pxt-" + cfg.forkof + "/node_modules/pxt-core/built/pxt.js"
                 if (fs.existsSync(installed)) return installed
             }
 
-            console.error("Found", targetjson, "but cannot find neither", 
+            console.error("Found", targetjson, "but cannot find neither",
                 local, "nor", installed, ", did you run 'jake' in the PXT folder once?")
             return null
         }
@@ -70,12 +70,52 @@ function target(n) {
     console.log(`    pxt serve`)
 }
 
+function link(dir) {
+    if (!dir) {
+        console.log("No directory specified")
+    }
+    var absPath = path.resolve(dir);
+    var modulesPath = path.resolve("node_modules");
+
+    if (!fs.existsSync(modulesPath))
+        fs.mkdirSync(modulesPath)
+
+    var corePath = path.join(modulesPath, "pxt-core");
+    if (fs.existsSync(corePath)) {
+        var stats = fs.statSync(corePath);
+        if (stats.isSymbolicLink()) {
+            fs.unlinkSync(corePath);
+        }
+        else {
+            try {
+                var rimraf = require("rimraf");
+                if (rimraf) {
+                    rimraf.sync(corePath)
+                }
+            }
+            catch (e) {
+            }
+        }
+    }
+
+    if (fs.existsSync(corePath)) {
+        console.error("Could not remove " + corePath);
+        process.exit(1);
+    }
+
+    fs.symlinkSync(absPath, corePath, "junction")
+}
+
 function main() {
     var args = process.argv.slice(2)
 
     if (args[0] == "target") {
         target(args[1])
         process.exit(0)
+    }
+    else if (args[0] == "link") {
+        link(args[1]);
+        process.exit(0);
     }
 
     var path = findPxtJs();
