@@ -206,15 +206,12 @@ namespace pxtblockly {
                         this.imageJson_ = null;
                         this.setText(content); // Use setText() because it handles displaying image selection
                     }
-                    // Always rerender if either the value or the text has changed.
-                    this.forceRerender();
                     return;
                 }
             }
             // Value not found.  Add it, maybe it will become valid once set
             // (like variable names).
             this.setText(newValue); // Use setText() because it handles displaying image selection
-            this.forceRerender();
         };
 
         /**
