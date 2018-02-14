@@ -142,8 +142,6 @@ namespace pxt.Cloud {
             domains.push(target.appTheme.embedUrl);
         if (target.appTheme.shareUrl)
             domains.push(target.appTheme.shareUrl);
-        if (target.appTheme.legacyDomain)
-            domains.push(target.appTheme.legacyDomain);
         domains = Util.unique(domains, d => d).map(d => Util.escapeForRegex(Util.stripUrlProtocol(d).replace(/\/$/, '')).toLowerCase());
         const rx = `^((https:\/\/)?(?:${domains.join('|')})\/)?(api\/oembed\?url=.*%2F([^&]*)&.*?|([a-z0-9\-_]+))$`;
         const m = new RegExp(rx, 'i').exec(uri.trim());
