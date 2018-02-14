@@ -1978,7 +1978,7 @@ namespace pxt.blocks {
             const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
             const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
-            if (trashIcon) {
+            if (trashIcon && blocklyTreeRoot) {
                 trashIcon.style.display = 'none';
                 blocklyTreeRoot.style.opacity = '1';
                 blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');

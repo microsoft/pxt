@@ -225,6 +225,11 @@ export function resetAsync() {
     return impl.resetAsync()
 }
 
+export function loadedAsync() {
+    checkSession();
+    return impl.loadedAsync();
+}
+
 /*
     header:<guid>   - one header
     header:*        - all headers

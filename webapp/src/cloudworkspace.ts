@@ -373,6 +373,10 @@ function resetAsync() {
         })
 }
 
+function loadedAsync(): Promise<void> {
+    return Promise.resolve();
+}
+
 function importLegacyScriptsAsync(): Promise<void> {
     const key = 'legacyScriptsImported';
     const legacyDomain = pxt.appTarget.appTheme.legacyDomain;
@@ -466,5 +470,6 @@ export const provider: WorkspaceProvider = {
     saveToCloudAsync,
     syncAsync,
     resetAsync,
+    loadedAsync,
     importLegacyScriptsAsync
 }

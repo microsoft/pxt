@@ -68,6 +68,15 @@ function resetAsync(): Promise<void> {
         })).then(() => { })
 }
 
+function loadedAsync(): Promise<void> {
+    return mem.provider.loadedAsync()
+        .then(() => pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
+            type: "pxthost",
+            action: "workspaceloaded",
+            response: true
+        })).then(() => { })
+}
+
 export const provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
@@ -77,5 +86,6 @@ export const provider: WorkspaceProvider = {
     installAsync,
     saveToCloudAsync,
     syncAsync,
-    resetAsync
+    resetAsync,
+    loadedAsync
 }
