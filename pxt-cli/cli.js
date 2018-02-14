@@ -73,6 +73,7 @@ function target(n) {
 function link(dir) {
     if (!dir) {
         console.log("No directory specified")
+        process.exit(1);
     }
     var absPath = path.resolve(dir);
     var modulesPath = path.resolve("node_modules");
