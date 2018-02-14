@@ -76,6 +76,12 @@ function link(dir) {
         process.exit(1);
     }
     var absPath = path.resolve(dir);
+
+    if (!fs.existsSync(absPath)) {
+        console.log("Could not find " + absPath);
+        process.exit(1);
+    }
+
     var modulesPath = path.resolve("node_modules");
 
     if (!fs.existsSync(modulesPath))
@@ -100,7 +106,7 @@ function link(dir) {
     }
 
     if (fs.existsSync(corePath)) {
-        console.error("Could not remove " + corePath);
+        console.log("Could not remove " + corePath);
         process.exit(1);
     }
 
