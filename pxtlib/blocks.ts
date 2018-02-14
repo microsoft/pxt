@@ -136,9 +136,10 @@ namespace pxt.blocks {
                         range
                     });
 
-                    if (p.handlerParameters) {
-                        p.handlerParameters.forEach(arg => res.handlerArgs.push(arg))
-                    }
+                }
+
+                if (p.handlerParameters) {
+                    p.handlerParameters.forEach(arg => res.handlerArgs.push(arg))
                 }
             });
         }
