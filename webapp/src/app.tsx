@@ -137,9 +137,6 @@ export class ProjectView
         // (e.g. from the URL hash or from WinRT activation arguments)
         const skipStartScreen = pxt.appTarget.appTheme.allowParentController
             || window.location.hash == "#editor";
-        if (pxt.appTarget.appTheme.allowParentController && pxt.shell.layoutTypeClass() != 'widget') {
-            window.location.href = './controller.html';
-        }
         return !isSandbox && !skipStartScreen && !isProjectRelatedHash(hash);
     }
 
