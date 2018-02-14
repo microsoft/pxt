@@ -255,6 +255,7 @@ export class Editor extends srceditor.Editor {
         }
         this.charts = []
         this.consoleBuffer = ""
+        this.rawDataBuffer = ""
         this.savedMessageQueue = []
         this.sourceMap = {}
     }
