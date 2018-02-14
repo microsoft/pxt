@@ -175,6 +175,49 @@ namespace pxtblockly {
         }
 
         /**
+         * Set the language-neutral value for this dropdown menu.
+         * We have to override this from field.js because the grid picker needs to redraw the selected item's image.
+         * @param {string} newValue New value to set.
+         */
+        public setValue(newValue: string) {
+            if (newValue === null || newValue === this.value_) {
+                return;  // No change if null.
+            }
+            if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
+                Blockly.Events.fire(new Blockly.Events.BlockChange(
+                    this.sourceBlock_, 'field', this.name, this.value_, newValue));
+            }
+            // Clear menu item for old value.
+            if (this.selectedItem) {
+                this.selectedItem.setChecked(false);
+                this.selectedItem = null;
+            }
+            this.value_ = newValue;
+            // Look up and display the human-readable text.
+            var options = this.getOptions();
+            for (var i = 0; i < options.length; i++) {
+                // Options are tuples of human-readable text and language-neutral values.
+                if ((options[i] as any)[1] == newValue) {
+                    var content = (options[i] as any)[0];
+                    if (typeof content == 'object') {
+                        this.imageJson_ = content;
+                        this.setText(content.alt); // Use setText() because it handles displaying image selection
+                    } else {
+                        this.imageJson_ = null;
+                        this.setText(content); // Use setText() because it handles displaying image selection
+                    }
+                    // Always rerender if either the value or the text has changed.
+                    this.forceRerender();
+                    return;
+                }
+            }
+            // Value not found.  Add it, maybe it will become valid once set
+            // (like variable names).
+            this.setText(newValue); // Use setText() because it handles displaying image selection
+            this.forceRerender();
+        };
+
+        /**
          * Closes the gridpicker.
          */
         private close() {
