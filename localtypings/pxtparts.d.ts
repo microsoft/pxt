@@ -33,8 +33,8 @@ declare namespace pxsim {
         groundPins: string[],
         threeVoltPins: string[],
         attachPowerOnRight?: boolean,
-        onboardComponents?: string[]
-        useCrocClips?: boolean,
+        onboardComponents?: string[],
+        pinStyles?: { [pin: string]: PinStyle },
         marginWhenBreadboarding?: [number, number, number, number],
         spiPins?: {
             MOSI: string,
@@ -44,8 +44,7 @@ declare namespace pxsim {
         i2cPins?: {
             SDA: string,
             SCL: string,
-        },
-        analogInPins?: string[] //TODO: implement allocation
+        }
     }
     // ---- part definition
     export interface PartDefinition {

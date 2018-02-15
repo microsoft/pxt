@@ -455,12 +455,13 @@ namespace pxsim.instructions {
         // wires
         props.allWireColors.forEach(clr => {
             let quant = props.colorToWires[clr].length;
+            let style = props.boardDef.pinStyles[clr] || "female";
             let cmp = mkCmpDiv("wire", {
                 left: QUANT_LBL(quant),
                 leftSize: WIRE_QUANT_LBL_SIZE,
                 wireClr: clr,
                 cmpScale: PARTS_WIRE_SCALE,
-                crocClips: props.boardDef.useCrocClips
+                crocClips: style == "croc"
             })
             addClass(cmp, "partslist-wire");
             panel.appendChild(cmp);
@@ -499,6 +500,10 @@ namespace pxsim.instructions {
                 return (<BoardLoc>loc).pin;
         };
         wires.forEach(w => {
+            let croc = false;
+            if (w.end.type == "dalboard") {
+                croc = props.boardDef.pinStyles[(<BoardLoc>w.end).pin] == "croc";
+            }
             let cmp = mkCmpDiv("wire", {
                 top: mkLabel(w.end),
                 topSize: LOC_LBL_SIZE,
@@ -506,7 +511,7 @@ namespace pxsim.instructions {
                 botSize: LOC_LBL_SIZE,
                 wireClr: w.color,
                 cmpHeight: REQ_WIRE_HEIGHT,
-                crocClips: props.boardDef.useCrocClips
+                crocClips: croc
             })
             addClass(cmp, "cmp-div");
             reqsDiv.appendChild(cmp);
@@ -574,6 +579,8 @@ namespace pxsim.instructions {
     }
 
     export function renderParts(container: HTMLElement, options: RenderPartsOptions) {
+        if (!options.boardDef.pinStyles)
+            options.boardDef.pinStyles = {};
         if (options.configData)
             pxsim.setConfigData(options.configData.cfg, options.configData.cfgKey);
 
