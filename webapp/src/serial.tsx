@@ -148,10 +148,9 @@ export class Editor extends srceditor.Editor {
 
     appendRawData(data: string) {
        this.rawDataBuffer += data;
-       let excessChars = this.rawDataBuffer.length - this.maxBufferLength;
-        if (excessChars > 0) {
-           this.rawDataBuffer = this.rawDataBuffer.slice(excessChars);
-        }
+       if (this.rawDataBuffer.length > this.maxBufferLength) {
+        this.rawDataBuffer.slice(this.rawDataBuffer.length / 4);
+       }
     }
 
     appendGraphEntry(source: string, variable: string, nvalue: number, receivedTime: number) {
@@ -269,19 +268,19 @@ export class Editor extends srceditor.Editor {
 
         const datas = lines.map(line => line.line);
         const nl = datas.length > 0 ? datas.map(data => data.length).reduce((l, c) => Math.max(l, c)) : 0;
-        const nc = this.charts.length;"t"
+        const nc = this.charts.length;
         for (let i = 0; i < nl; ++i) {
             csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}${sep}${data[i][1]}` : sep).join(sep);
             csv += '\r\n';
         }
 
-        pxt.commands.browserDownloadAsync(csv, lf("{id:csvfilename}data") + ".csv", "text/csv")
         core.infoNotification(lf("Exporting data...."));
+        pxt.commands.browserDownloadAsync(csv, lf("{id:csvfilename}data") + ".csv", "text/csv");
     }
 
     downloadRaw() {
-        pxt.commands.browserDownloadAsync(this.rawDataBuffer, lf("{id:csvfilename}data") + ".txt", "text/plain");
         core.infoNotification(lf("Exporting data...."));
+        pxt.commands.browserDownloadAsync(this.rawDataBuffer, lf("{id:csvfilename}data") + ".txt", "text/plain");
     }
 
     goBack() {
