@@ -5011,9 +5011,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     if (trg.compile.nativeType == pxtc.NATIVE_TYPE_CS)
         compileId = "cs"
 
-    pxt.log(`Using target PXT/${trg.id} with build engine ${compileId}`)
-    pxt.log(`  Target dir:   ${nodeutil.targetDir}`)
-    pxt.log(`  PXT Core dir: ${nodeutil.pxtCoreDir}`)
+    const versions = pxt.appTarget.versions || ({ target: "", pxt: "" } as pxt.TargetVersions);
+    pxt.log(`Using target ${trg.id} with build engine ${compileId}`)
+    pxt.log(`  target: v${versions.target} ${nodeutil.targetDir}`)
+    pxt.log(`  pxt-core: v${versions.pxt} ${nodeutil.pxtCoreDir}`)
 
     pxt.HF2.enableLog()
 
