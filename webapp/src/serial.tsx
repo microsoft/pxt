@@ -266,7 +266,7 @@ export class Editor extends srceditor.Editor {
         }
 
         core.infoNotification(lf("Exporting data...."));
-        const time = new Date(Date.now().toString().replace(/[^\d]+/g, '-');
+        const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-');
         pxt.commands.browserDownloadAsync(csv, pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
     }
 
