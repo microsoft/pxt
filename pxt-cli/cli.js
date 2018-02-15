@@ -82,12 +82,18 @@ function link(dir) {
         process.exit(1);
     }
 
+    var pkgName = "pxt-core";
+    if (fs.existsSync(path.join(absPath, "package.json"))) {
+        var pkg = require(path.join(absPath, "package.json"));
+        pkgName = pkg.name;
+    }
+
     var modulesPath = path.resolve("node_modules");
 
     if (!fs.existsSync(modulesPath))
         fs.mkdirSync(modulesPath)
 
-    var corePath = path.join(modulesPath, "pxt-core");
+    var corePath = path.join(modulesPath, pkgName);
     if (fs.existsSync(corePath)) {
         var stats = fs.statSync(corePath);
         if (stats.isSymbolicLink()) {
@@ -111,6 +117,7 @@ function link(dir) {
     }
 
     fs.symlinkSync(absPath, corePath, "junction")
+    console.log(path.relative(process.cwd(), corePath) + " -> " + absPath);
 }
 
 function main() {
