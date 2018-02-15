@@ -33,7 +33,7 @@ namespace pxt.winrt {
     export function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
         let file: Windows.Storage.StorageFile;
         return pxt.winrt.promisify<void>(
-            Windows.Storage.ApplicationData.current.temporaryFolder.createFileAsync(name, Windows.Storage.CreationCollisionOption.replaceExisting)
+            Windows.Storage.DownloadsFolder.createFileAsync(name, Windows.Storage.CreationCollisionOption.replaceExisting)
                 .then(f => Windows.Storage.FileIO.writeTextAsync(file = f, text))
                 .then(() => Windows.System.Launcher.launchFileAsync(file))
                 .then(b => { })
