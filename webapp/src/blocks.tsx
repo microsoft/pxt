@@ -409,6 +409,11 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     if (toolboxVisible) {
+                        // WARNING! Because we use the category open/close event to dismiss
+                        // the cookie banner, be careful when manipulating the toolbox to make
+                        // sure that this event only fires as the result of user action. Use
+                        // Blockly.Events.disable() and Blockly.Events.enable() to prevent
+                        // UI events from firing.
                         pxt.analytics.setConsent();
                     }
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
