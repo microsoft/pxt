@@ -12,6 +12,7 @@ namespace pxt.editor {
         code?: string;
         json?: string;
         jres?: string;
+        asm?: string;
     }
 
     export enum PermissionResponses {
