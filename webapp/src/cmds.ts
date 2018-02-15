@@ -191,7 +191,6 @@ function showFirmwareUpdateInstructionsAsync(resp: pxtc.CompileResult): Promise<
 function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.tickEvent(`webusb.pair`);
     const boardName = pxt.appTarget.appTheme.boardName || lf("device");
-    const webUsbName = pxt.appTarget.simulator.boardDefinition.usbDeviceName || "MakeCode Device";
     const htmlBody = `
     <div class="ui three column grid stackable">
         <div class="column">
@@ -210,7 +209,7 @@ function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<v
                 <div class="content">
                     <div class="description">
                         <span class="ui blue circular label">2</span>
-                        ${lf("Select \"{0}\" in the pairing dialog", webUsbName)}
+                        ${lf("Select the device in the pairing dialog")}
                     </div>
                 </div>
             </div>

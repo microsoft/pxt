@@ -831,8 +831,8 @@ export class Editor extends srceditor.Editor {
                         addNamespace = true;
                     }
                     else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
-                        const params = pxt.blocks.parameterNames(element);
-                        snippetPrefix = params.attrNames["this"].name;
+                        const params = pxt.blocks.compileInfo(element);
+                        snippetPrefix = params.thisParameter.definitionName;
                         isInstance = true;
                     }
                     else if (nsInfo.kind === pxtc.SymbolKind.Class) {

@@ -79,7 +79,6 @@ interface AppTheme {
         contactUrl?: string;
         feedbackUrl?: string; // is set: a feedback link will show in the settings menu
         githubUrl?: string;
-        legacyDomain?: string;
 
         // menu authoring and theming
         docMenu?: DocMenuEntry[];   // help menu

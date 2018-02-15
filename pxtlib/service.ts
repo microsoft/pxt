@@ -70,6 +70,7 @@ namespace ts.pxtc {
         qName?: string;
         pkg?: string;
         snippet?: string;
+        blockFields?: ParsedBlockDef;
     }
 
     export interface ApisInfo {
@@ -162,12 +163,15 @@ namespace ts.pxtc {
         mutateDefaults?: string;
         mutatePropertyEnum?: string;
         inlineInputMode?: string; // can be inline, external, or auto
+        expandableArgumentMode?: string; // can be disabled, enabled, or toggle
 
         optionalVariableArgs?: boolean;
         toolboxVariableArgs?: string;
 
         _name?: string;
         _source?: string;
+        _def?: ParsedBlockDef;
+        _expandedDef?: ParsedBlockDef;
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
@@ -179,6 +183,37 @@ namespace ts.pxtc {
         paramFieldEditor?: pxt.Map<string>; //.fieldEditor
         paramShadowOptions?: pxt.Map<pxt.Map<string>>; //.shadowOptions.
         paramFieldEditorOptions?: pxt.Map<pxt.Map<string>>; //.fieldOptions.
+    }
+
+
+    export type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
+    export type BlockPart = BlockContentPart | BlockBreak;
+
+    export interface BlockLabel {
+        kind: "label";
+        text: string;
+        style?: string[];
+        cssClass?: string;
+    }
+
+    export interface BlockParameter {
+        kind: "param";
+        name: string;
+        shadowBlockId?: string;
+    }
+
+    export interface BlockBreak {
+        kind: "break";
+    }
+
+    export interface BlockImage {
+        kind: "image";
+        uri: string;
+    }
+
+    export interface ParsedBlockDef {
+        parts: ReadonlyArray<(BlockPart)>;
+        parameters: ReadonlyArray<BlockParameter>;
     }
 
     export interface LocationInfo {
@@ -269,6 +304,32 @@ namespace ts.pxtc {
         UInt32,
     }
 
+    /* @internal */
+    const enum TokenKind {
+        SingleAsterisk      = 1,
+        DoubleAsterisk      = 1 << 1,
+        SingleUnderscore    = 1 << 2,
+        DoubleUnderscore    = 1 << 3,
+        Escape              = 1 << 4,
+        Pipe                = 1 << 5,
+        Parameter           = 1 << 6,
+        Word                = 1 << 7,
+        Image               = 1 << 8,
+        TaggedText               = 1 << 9,
+
+        TripleUnderscore    = SingleUnderscore | DoubleUnderscore,
+        TripleAsterisk      = SingleAsterisk | DoubleAsterisk,
+        StyleMarks = TripleAsterisk | TripleUnderscore,
+        Bold = DoubleUnderscore | DoubleAsterisk,
+        Italics = SingleUnderscore | SingleAsterisk
+    }
+
+    interface Token {
+        kind: TokenKind;
+        content?: string;
+        type?: string;
+    }
+
     export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
         if (!resp.usedSymbols || !pxt.appTarget.simulator || !pxt.appTarget.simulator.parts)
             return [];
@@ -345,11 +406,11 @@ namespace ts.pxtc {
                     }
                 }
                 else if (fn.attributes.block && locBlock) {
-                    const ps = pxt.blocks.parameterNames(fn).attrNames;
+                    const ps = pxt.blocks.compileInfo(fn);
                     const oldBlock = fn.attributes.block;
                     fn.attributes.block = pxt.blocks.normalizeBlock(locBlock);
                     if (oldBlock != fn.attributes.block) {
-                        const locps = pxt.blocks.parameterNames(fn).attrNames;
+                        const locps = pxt.blocks.compileInfo(fn);
                         if (JSON.stringify(ps) != JSON.stringify(locps)) {
                             pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`)
                             fn.attributes.block = oldBlock;
@@ -512,8 +573,180 @@ namespace ts.pxtc {
                 res.groupIcons = undefined;
             }
         }
+        if (res.block) {
+            const parts = res.block.split("||");
+            res._def = parseBlockDefinition(parts[0]);
+            if (!res._def) pxt.debug("Unable to parse block def for id: " + res.blockId);
+            if (parts[1]) res._expandedDef = parseBlockDefinition(parts[1]);
+            if (parts[1] && !res._expandedDef) pxt.debug("Unable to parse expanded block def for id: " + res.blockId);
+        }
 
         return res
+    }
+
+    export function parseBlockDefinition(def: string): ParsedBlockDef {
+        const tokens: Token[] = [];
+        let currentWord: string;
+
+        let strIndex = 0;
+        for (; strIndex < def.length; strIndex++) {
+            const char = def[strIndex];
+            let newToken: Token;
+            switch (char) {
+                case "*":
+                case "_":
+                    const tk = eatToken(c => c == char).length;
+                    const offset = char === "_" ? 2 : 0;
+                    if (tk === 1) newToken = { kind: TokenKind.SingleAsterisk << offset }
+                    else if (tk === 2) newToken = { kind: TokenKind.DoubleAsterisk << offset };
+                    else if (tk === 3) newToken = { kind: TokenKind.TripleAsterisk << offset };
+                    else return undefined;
+                    break;
+                case "`":
+                    const image = eatEnclosure("`");
+                    if (image === undefined) return undefined; // error: not terminated
+                    newToken = { kind: TokenKind.Image, content: image };
+                    break;
+                case "|":
+                    newToken = { kind: TokenKind.Pipe };
+                    break;
+                case "\\":
+                    if (strIndex < (def.length - 1)) newToken = { kind: TokenKind.Escape, content: def[1 + (strIndex++)] };
+                    break;
+                case "[":
+                    const contentText = eatEnclosure("]");
+                    if (contentText === undefined) return undefined; // error: not terminated
+                    if (def[strIndex++ + 1] !== "(") return undefined; // error: must be followed by class
+                    const contentClass = eatEnclosure(")");
+                    if (contentClass === undefined) return undefined; // error: not terminated
+                    newToken = { kind: TokenKind.TaggedText, content: contentText, type: contentClass };
+                    break;
+                case "%":
+                    const param = eatToken(c => /[a-zA-Z0-9_=]/.test(c), true).split("=");
+                    if (param.length > 2) return undefined; // error: invalid parameter
+                    newToken = { kind: TokenKind.Parameter, content: param[0], type: param[1] };
+                    break;
+            }
+
+            if (newToken) {
+                if (currentWord)
+                    tokens.push({ kind: TokenKind.Word, content: currentWord });
+                currentWord = undefined;
+                tokens.push(newToken);
+            }
+            else if (!currentWord) {
+                currentWord = char;
+            }
+            else {
+                currentWord += char;
+            }
+        }
+
+        if (currentWord)
+            tokens.push({ kind: TokenKind.Word, content: currentWord });
+
+        const parts: BlockPart[] = [];
+        const parameters: BlockParameter[] = [];
+
+        const stack: TokenKind[] = [];
+        let open = 0;
+        let currentLabel = ""
+
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i].kind;
+            const top = stack[stack.length - 1];
+
+            let wordEnd = false;
+            let styles: string[] = [];
+            if (open & TokenKind.Bold) styles.push("bold");
+            if (open & TokenKind.Italics) styles.push("italics");
+
+            if (token & TokenKind.StyleMarks) {
+                wordEnd = true;
+                if (token & open) {
+                    if (top & token) {
+                        stack.pop();
+                        open ^= token;
+
+                        // Handle triple tokens
+                        const remainder = (top & open) | (token & open);
+                        if (remainder) {
+                            stack.push(remainder);
+                        }
+                    }
+                    else {
+                        return undefined; // error: mismatched!
+                    }
+                }
+                else {
+                    open |= token;
+                    stack.push(token);
+                }
+            }
+            else {
+                switch (token) {
+                    case TokenKind.Escape:
+                    case TokenKind.Word:
+                        currentLabel += tokens[i].content;
+                        break;
+                    case TokenKind.Pipe:
+                    case TokenKind.Parameter:
+                        if (open) {
+                            return undefined; // error: style marks should be closed
+                        }
+                    case TokenKind.Image: // deliberate fallthrough
+                    case TokenKind.TaggedText:
+                        wordEnd = true;
+                        break;
+                }
+            }
+
+            if (wordEnd && currentLabel) {
+                parts.push({ kind: "label", text: currentLabel, style: styles } as BlockLabel);
+                currentLabel = "";
+            }
+
+            if (token == TokenKind.Parameter) {
+                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type };
+                parts.push(param);
+                parameters.push(param);
+            }
+            else if (token == TokenKind.Image) {
+                parts.push({ kind: "image", uri: tokens[i].content } as BlockImage);
+            }
+            else if (token == TokenKind.TaggedText) {
+                parts.push({ kind: "label", text: tokens[i].content, cssClass: tokens[i].type } as BlockLabel)
+            }
+            else if (token == TokenKind.Pipe) {
+                parts.push({ kind: "break" });
+            }
+        }
+
+        if (open) return undefined; // error: style marks should terminate
+
+        if (currentLabel) {
+            parts.push({ kind: "label", text: currentLabel, style: [] } as BlockLabel);
+        }
+
+        return { parts, parameters };
+
+        function eatToken(pred: (c: string) => boolean, skipCurrent = false) {
+            let current = "";
+            if (skipCurrent) ++strIndex
+            while (strIndex < def.length && pred(def[strIndex])) {
+                current += def[strIndex];
+                ++strIndex;
+            }
+            if (current) --strIndex;
+            return current;
+        }
+
+        function eatEnclosure(endMark: string) {
+            const content = eatToken(c => c !== endMark, true);
+            if (def[strIndex + 1] !== endMark) return undefined;
+            ++strIndex;
+            return content;
+        }
     }
 
     // TODO should be internal

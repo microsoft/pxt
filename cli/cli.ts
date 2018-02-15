@@ -1622,7 +1622,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
                             // process rtl css
                             postcss([rtlcss])
                                 .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                    fs.writeFile(`built/web/rtl${cssFile}`, result2.css, undefined);
+                                    fs.writeFileSync(`built/web/rtl${cssFile}`, result2.css, { encoding: "utf8" });
                                 });
                         });
                     });
@@ -1641,9 +1641,9 @@ function buildWebStringsAsync() {
 function thirdPartyNoticesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
     let tpn = `
-/*!----------------- PXT ThirdPartyNotices -------------------------------------------------------
+/*!----------------- MakeCode (PXT) ThirdPartyNotices -------------------------------------------------------
 
-PXT uses third party material from the projects listed below.
+MakeCode (PXT) uses third party material from the projects listed below.
 The original copyright notice and the license under which Microsoft
 received such third party material are set forth below. Microsoft
 reserves all other rights not expressly granted, whether by
@@ -1795,7 +1795,6 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     pxt.log(`building target.json in ${process.cwd()}...`)
 
     return buildWebStringsAsync()
-        .then(() => buildTargetDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
             const isPrj = /prj$/.test(dirname);
@@ -3792,7 +3791,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                         const tf = path.join(tfdir, fn);
                         nodeutil.mkdirP(tfdir)
                         pxt.log(`writing ${tf}`);
-                        fs.writeFile(tf, langTranslations, { encoding: "utf8" }, undefined);
+                        fs.writeFileSync(tf, langTranslations, { encoding: "utf8" });
 
                         locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
                     })
@@ -3928,29 +3927,17 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
-    return buildTargetDocsAsync(
-        !!parsed.flags["docs"],
-        !!parsed.flags["loc"],
-        parsed.flags["files"] as string,
-        !!parsed.flags["create"]
-    );
-}
-
-export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: string, createOnly?: boolean): Promise<void> {
-    const build = () => buildCoreAsync({
+    const docs = !!parsed.flags["docs"];
+    const locs = !!parsed.flags["loc"];
+    const fileFilter = parsed.flags["files"] as string;
+    const createOnly = !!parsed.flags["create"];
+    return buildCoreAsync({
         mode: BuildOption.GenDocs,
         docs,
         locs,
         fileFilter,
         createOnly
     }).then((compileOpts) => { });
-    // from target location?
-    if (fs.existsSync("pxtarget.json") && !!readJson("pxtarget.json").appTheme)
-        return forEachBundledPkgAsync((pkg, dirname) => {
-            pxt.log(`building docs in ${dirname}`);
-            return build();
-        });
-    else return build();
 }
 
 export function deployAsync(parsed?: commandParser.ParsedCommand) {
@@ -5024,9 +5011,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     if (trg.compile.nativeType == pxtc.NATIVE_TYPE_CS)
         compileId = "cs"
 
-    pxt.log(`Using target PXT/${trg.id} with build engine ${compileId}`)
-    pxt.log(`  Target dir:   ${nodeutil.targetDir}`)
-    pxt.log(`  PXT Core dir: ${nodeutil.pxtCoreDir}`)
+    const versions = pxt.appTarget.versions || ({ target: "", pxt: "" } as pxt.TargetVersions);
+    pxt.log(`Using target ${trg.id} with build engine ${compileId}`)
+    pxt.log(`  target: v${versions.target} ${nodeutil.targetDir}`)
+    pxt.log(`  pxt-core: v${versions.pxt} ${nodeutil.pxtCoreDir}`)
 
     pxt.HF2.enableLog()
 

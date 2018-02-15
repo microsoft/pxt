@@ -151,6 +151,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     chgCode(scr, true, prj); break;
                 case "example": chgCode(scr, true); break;
                 case "codeExample": chgCode(scr, false); break;
+                case "side":
+                    this.props.parent.newEmptyProject(scr.name, scr.url);
+                    break;
                 case "tutorial": this.props.parent.startTutorial(scr.url, scr.name); break;
                 default:
                     const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url); // Tutorial

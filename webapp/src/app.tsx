@@ -2319,7 +2319,6 @@ $(() => {
             else theEditor.newProject();
             return Promise.resolve();
         })
-        .then(() => workspace.importLegacyScriptsAsync())
         .done(() => {
             $("#loading").remove();
         });
