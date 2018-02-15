@@ -408,6 +408,9 @@ export class Editor extends srceditor.Editor {
             if (ev.type == 'ui') {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
+                    if (toolboxVisible) {
+                        pxt.analytics.setConsent();
+                    }
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
                     if (ev.newValue == lf("{id:category}Add Package")) {
                         (this.editor as any).toolbox_.clearSelection();
