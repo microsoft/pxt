@@ -1,10 +1,9 @@
 \section{Related Work}
 \label{sec:related}
 
-Related work breaks into three parts, following the
+Related work breaks into two parts, following the
 flow of the paper: the programming of MCUs,
-type systems for JavaScript, and embedded runtime environments
-for MCUs.
+and embedded runtime environments for MCUs.
 
 \subsection{Programming microcontrollers}
 
@@ -29,60 +28,6 @@ Our platform slots into options 2 and 3, using the \MC architecture and USB pen 
 the need for installation of native applications or device drivers. Our use of STS provides
 better performance than the MicroPython and Espruino solution, as demonstrated in the evaluation,
 and allows us to fit in the very constrained space of the Uno. 
-
-% https://github.com/jerryscript-project
-
-% JerryScript is a lightweight JavaScript engine for resource-constrained devices
-% uch as microcontrollers. It can run on devices with less than 64 KB of RAM and
-% less than 200 KB of flash memory.
-
-% Key characteristics of JerryScript:
-
-% Full ECMAScript 5.1 standard compliance
-% 160K binary size when compiled for ARM Thumb-2
-
-
-
-% https://github.com/cesanta/mongoose-os
-% - Supported microcontrollers: CC3220, CC3200, ESP32, ESP8266, STM32F4;
-% https://github.com/cesanta/mjs
-
-% On 32-bit ARM mJS engine takes about 25k of flash memory,
-% and less than 1k of RAM (see intro article). mJS is part of MongooseOS,
-% where it enables scripting for IoT devices.
-
-% Restrictions
-% No closures, only lexical scoping (i.e. nested functions are allowed).
-% No new. In order to create an object with a custom prototype, use Object.create(), which is available.
-% No getters, setters, classes, template strings.
-
-\subsection{Types for JavaScript}
-
-By design, TypeScript does not provide a type soundness guarantee~\cite{BiermanAT14}.
-
-Safe TypeScript~\cite{SafeTypeScript15} separates the worlds of typed and untyped
-objects: the \emph{dynamic} type is an implicit union type of all \emph{known} static type,
-while Any is an \emph{unknown} type, coming from the untyped JavaScript world. Type tags
-are needed to distinguish the two worlds; Safe TypeScript also adds extra runtime checks
-to prevent untyped JavaScript from destroying the type invariants of typed JavaScript.
-
-StrongScript~\cite{StrongScriptECOOP15} extends TypeScript with a type constructor (!)
-for \emph{concrete} types, which allows the programmer to choose between untyped
-code, optionally-typed code, and concretely typed code, which provides traditional
-type soundness guarantees. As with TypeScript, every JavaScript program is a StrongScript program.
-
-STS differs from these efforts by outlawing untyped or optionally typed
-code: it is a non-goal of STS to support arbitrary JavaScript programs.
-In this sense, STS can be seen to be StrongScript where every variable and
-expression has a concrete (!) type. As in StrongScript, classes are nominally typed,
-which permits a more efficient and traditional property lookup for class instances.
-STS goes further by outlawing downcasts (necessary for our untagged
-implementation).
-
-STS could benefit by enlarging the set of types
-that can be inferred, so that more JavaScript idioms could be allowed.
-Chandra's work on type inference for static compilation of
-JavaScript~\cite{ChandraOOPSLA2016} is one path forward.
 
 \subsection{Embedded Runtime Environments}
 
