@@ -37,6 +37,30 @@ remainder operation, 5 % 2 = 1, gives the number that's left over from a divisio
 let remainder = 7%4;
 ```
 
+### Exponent (\*\*)
+
+The exponent operator will multiply the number on the left by itself for the amount of times of the number on its right. That is, 4 \*\* 2 = 4 \* 4 and 2 \*\* 3 = 2 \* 2 \* 2. The area of a square that has sides with a length of `5` is equal to one side multiplied by another. For a square, all sides are equal, so:
+
+```block
+let side = 5;
+let area = side * side;
+```
+
+But using the exponent operator, this is the same as:
+
+```block
+let side = 5;
+let area = side ** 2;
+```
+
+The volume of a cube is three sides multiplied together. The two volumes are the same:
+
+```block
+let side = 5;
+let volume1 = side * side * side;
+let volume2 = side ** 3;
+```
+
 ## Absolute value
 
 When you want to know how much a number is without it's _sign_ (+/-). The absolute value of -5 is 5 and the 

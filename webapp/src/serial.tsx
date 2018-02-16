@@ -265,8 +265,9 @@ export class Editor extends srceditor.Editor {
             csv += '\r\n';
         }
 
-        pxt.commands.browserDownloadAsync(csv, lf("{id:csvfilename}data") + ".csv", "text/csv")
         core.infoNotification(lf("Exporting data...."));
+        const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
+        pxt.commands.browserDownloadAsync(csv, pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
     }
 
     goBack() {
