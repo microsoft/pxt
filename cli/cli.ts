@@ -561,9 +561,9 @@ function justBumpPkgAsync() {
         .then(() => nodeutil.runGitAsync("tag", "v" + mainPkg.config.version))
 }
 
-function bumpAsync(parsed: commandParser.ParsedCommand) {
-    const bumpPxt = parsed.flags["update"];
-    const upload = parsed.flags["upload"];
+function bumpAsync(parsed?: commandParser.ParsedCommand) {
+    const bumpPxt = parsed && parsed.flags["update"];
+    const upload = parsed && parsed.flags["upload"];
     if (fs.existsSync(pxt.CONFIG_NAME)) {
         if (upload) throw U.userError("upload only supported on packages");
 
@@ -657,6 +657,7 @@ interface UploadOptions {
     localDir?: string;
     githubOnly?: boolean;
     builtPackaged?: string;
+    minify?: boolean;
 }
 
 interface BlobReq {
@@ -930,7 +931,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
             "@defaultLocaleStrings@": "",
             "@cachedHexFiles@": "",
-            "@targetEditorJs@": ""
+            "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : ""
         }
     }
 
@@ -966,10 +967,13 @@ function uploadCoreAsync(opts: UploadOptions) {
             rdf = readFileAsync(p)
         }
 
+        const uglify = opts.minify ? require("uglify-js") : undefined;
+
         let fileName = uploadFileName(p)
         let mime = U.getMime(p)
+        const minified = opts.minify && mime == "application/javascript" && fileName !== "target.js";
 
-        pxt.log(`    ${p} -> ${fileName} (${mime})`)
+        pxt.log(`    ${p} -> ${fileName} (${mime})` + (minified ? ' minified' : ""));
 
         let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
         let content = ""
@@ -994,6 +998,16 @@ function uploadCoreAsync(opts: UploadOptions) {
                     content = content.replace(/\/(cdn|sim)\//g, "/blb/")
                 }
 
+                if (minified) {
+                    const res = uglify.minify(content);
+                    if (!res.error) {
+                        content = res.code;
+                    }
+                    else {
+                        pxt.log(`        Could not minify ${fileName} ${res.error}`)
+                    }
+                }
+
                 if (replFiles.indexOf(fileName) >= 0) {
                     for (let from of Object.keys(replacements)) {
                         content = U.replaceAll(content, from, replacements[from])
@@ -1015,6 +1029,14 @@ function uploadCoreAsync(opts: UploadOptions) {
                             }
                         trg.appTheme.logoUrl = opts.localDir
                         trg.appTheme.homeUrl = opts.localDir
+                        // patch icons in bundled packages
+                        Object.keys(trg.bundledpkgs).forEach(pkgid => {
+                            const res = trg.bundledpkgs[pkgid];
+                            // path config before storing
+                            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                            if (/^\//.test(config.icon)) config.icon = opts.localDir + "docs" + config.icon;
+                            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+                        })
                         data = new Buffer((isJs ? targetJsPrefix : '') + JSON.stringify(trg, null, 2), "utf8")
                     } else {
                         trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
@@ -1028,6 +1050,14 @@ function uploadCoreAsync(opts: UploadOptions) {
                                 if (boardDef.outlineImage) boardDef.outlineImage = uploadArtFile(boardDef.outlineImage);
                             }
                         }
+                        // patch icons in bundled packages
+                        Object.keys(trg.bundledpkgs).forEach(pkgid => {
+                            const res = trg.bundledpkgs[pkgid];
+                            // path config before storing
+                            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                            if (config.icon) config.icon = uploadArtFile(config.icon);
+                            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+                        })
                         content = JSON.stringify(trg, null, 2);
                         if (isJs)
                             content = targetJsPrefix + content
@@ -1043,7 +1073,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                 U.assert(!!opts.builtPackaged);
                 let fn = path.join(opts.builtPackaged, opts.localDir, fileName)
                 nodeutil.mkdirP(path.dirname(fn))
-                return writeFileAsync(fn, data)
+                return minified ? writeFileAsync(fn, content) : writeFileAsync(fn, data)
             }
 
             let req = {
@@ -1196,11 +1226,11 @@ function ghpInitAsync() {
         .then(() => ghpGitAsync("push", "--set-upstream", "origin", "gh-pages"))
 }
 
-export function ghpPushAsync(builtPackaged: string) {
+export function ghpPushAsync(builtPackaged: string, minify = false) {
     let repoName = ""
     return ghpInitAsync()
         .then(() => ghpSetupRepoAsync())
-        .then(name => internalStaticPkgAsync(builtPackaged, (repoName = name)))
+        .then(name => internalStaticPkgAsync(builtPackaged, (repoName = name), minify))
         .then(() => nodeutil.cpR(path.join(builtPackaged, repoName), "gh-pages"))
         .then(() => ghpGitAsync("add", "."))
         .then(() => ghpGitAsync("commit", "-m", "Auto-push"))
@@ -1222,9 +1252,8 @@ export interface BuildTargetOptions {
 }
 
 export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
-    if (parsed && parsed.flags["cloud"]) {
+    if (parsed && parsed.flags["cloud"])
         forceCloudBuild = true
-    }
     return internalBuildTargetAsync();
 }
 
@@ -1482,7 +1511,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
                             // process rtl css
                             postcss([rtlcss])
                                 .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                    fs.writeFile(`built/web/rtl${cssFile}`, result2.css);
+                                    fs.writeFileSync(`built/web/rtl${cssFile}`, result2.css);
                                 });
                         });
                     });
@@ -1583,8 +1612,8 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                     return;
                 }
 
-                if (fileName === "pxt.json") {
-                    newProject.config = nodeutil.readJson(f);
+                if (fileName === pxt.CONFIG_NAME) {
+                    newProject.config = nodeutil.readPkgConfig(projectPath)
                     U.iterMap(newProject.config.dependencies, (k, v) => {
                         if (/^file:/.test(v)) {
                             newProject.config.dependencies[k] = "*";
@@ -1638,39 +1667,62 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
     nodeutil.mkdirP(hexCachePath);
 
-    console.log(`building target.json in ${process.cwd()}...`)
-    return forEachBundledPkgAsync((pkg, dirname) => {
-        pxt.log(`building ${dirname}`);
-        let isPrj = /prj$/.test(dirname);
+    pxt.log(`building target.json in ${process.cwd()}...`)
 
-        return pkg.filesToBePublishedAsync(true)
-            .then(res => {
-                cfg.bundledpkgs[path.basename(dirname)] = res
-            })
-            .then(() => testForBuildTargetAsync(isPrj))
-            .then((compileOpts) => {
-                // For the projects, we need to save the base HEX file to the offline HEX cache
-                if (isPrj && pxt.appTarget.compile.hasHex) {
-                    if (!compileOpts) {
-                        console.error(`Failed to extract native image for project ${dirname}`);
-                        return;
+    return buildWebStringsAsync()
+        .then(() => forEachBundledPkgAsync((pkg, dirname) => {
+            pxt.log(`building ${dirname}`);
+            const isPrj = /prj$/.test(dirname);
+            const config = nodeutil.readPkgConfig(".")
+            if (config.additionalFilePath) {
+                dirsToWatch.push(path.resolve(config.additionalFilePath));
+            }
+
+            return pkg.filesToBePublishedAsync(true)
+                .then(res => {
+                    if (!isPrj) {
+                        cfg.bundledpkgs[path.basename(dirname)] = res
                     }
+                })
+                .then(() => testForBuildTargetAsync(isPrj))
+                .then((compileOpts) => {
+                    // For the projects, we need to save the base HEX file to the offline HEX cache
+                    if (isPrj && pxt.appTarget.compile.hasHex) {
+                        if (!compileOpts) {
+                            console.error(`Failed to extract native image for project ${dirname}`);
+                            return;
+                        }
 
-                    // Place the base HEX image in the hex cache if necessary
-                    let sha = compileOpts.extinfo.sha;
-                    let hex: string[] = compileOpts.hexinfo.hex;
-                    let hexFile = path.join(hexCachePath, sha + pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex");
+                        // Place the base HEX image in the hex cache if necessary
+                        let sha = compileOpts.extinfo.sha;
+                        let hex: string[] = compileOpts.hexinfo.hex;
+                        let hexFile = path.join(hexCachePath, sha + pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex");
 
-                    if (fs.existsSync(hexFile)) {
-                        pxt.debug(`native image already in offline cache for project ${dirname}`);
-                    } else {
-                        fs.writeFileSync(hexFile, hex.join(os.EOL));
-                        pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                        if (fs.existsSync(hexFile)) {
+                            pxt.debug(`native image already in offline cache for project ${dirname}`);
+                        } else {
+                            fs.writeFileSync(hexFile, hex.join(os.EOL));
+                            pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                        }
                     }
-                }
-            })
-    }, /*includeProjects*/ true)
+                })
+        }, /*includeProjects*/ true))
         .then(() => {
+            // patch icons in bundled packages
+            Object.keys(cfg.bundledpkgs).forEach(pkgid => {
+                const res = cfg.bundledpkgs[pkgid];
+                // path config before storing
+                const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                if (!config.icon)
+                    // try known location
+                    ['png', 'jpg'].map(ext => `/static/libs/${config.name}.${ext}`)
+                        .filter(ip => fs.existsSync("docs" + ip))
+                        .forEach(ip => config.icon = ip);
+
+                res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+            })
+
+
             let info = travisInfo()
             cfg.versions = {
                 branch: info.branch,
@@ -2251,7 +2303,7 @@ pxt_modules
 }`,
     ".travis.yml": `language: node_js
 node_js:
-    - "5.7.0"
+    - "8.9.4"
 script:
     - "npm install -g pxt"
     - "pxt target @TARGET@"
@@ -3655,7 +3707,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                         const tf = path.join(tfdir, fn);
                         nodeutil.mkdirP(tfdir)
                         pxt.log(`writing ${tf}`);
-                        fs.writeFile(tf, langTranslations, "utf8");
+                        fs.writeFileSync(tf, langTranslations, "utf8");
 
                         locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
                     })
@@ -3689,16 +3741,23 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const route = parsed.flags["route"] as string || ".";
     const ghpages = parsed.flags["githubpages"];
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
+    const minify = !!parsed.flags["minify"];
+    const bump = !!parsed.flags["bump"];
+    const cloud = !!parsed.flags["cloud"];
 
     pxt.log(`packaging editor to ${builtPackaged}`)
 
+    if (cloud)
+        forceCloudBuild = true
+
     let p = rimrafAsync(builtPackaged, {})
-        .then(() => internalBuildTargetAsync({ packaged: true }));
-    if (ghpages) return p.then(() => ghpPushAsync(builtPackaged));
-    else return p.then(() => internalStaticPkgAsync(builtPackaged, route));
+        .then(() => bump ? bumpAsync() : Promise.resolve())
+        .then(() => internalBuildTargetAsync({ packaged: true }))
+    if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
+    else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify));
 }
 
-function internalStaticPkgAsync(builtPackaged: string, label: string) {
+function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean) {
     const pref = path.resolve(builtPackaged);
     const localDir = label == "./" ? "./" : label ? "/" + label + "/" : "/"
     return uploadCoreAsync({
@@ -3708,7 +3767,9 @@ function internalStaticPkgAsync(builtPackaged: string, label: string) {
             .concat(targetFileList())
             .concat(["targetconfig.json"]),
         localDir,
-        builtPackaged
+        target: (pxt.appTarget.id || "unknownstatic"),
+        builtPackaged,
+        minify
     }).then(() => renderDocs(builtPackaged, localDir))
 }
 
@@ -3733,29 +3794,17 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
-    return buildTargetDocsAsync(
-        !!parsed.flags["docs"],
-        !!parsed.flags["locs"],
-        parsed.flags["files"] as string,
-        !!parsed.flags["create"]
-    );
-}
-
-export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: string, createOnly?: boolean): Promise<void> {
-    const build = () => buildCoreAsync({
+    const docs = !!parsed.flags["docs"];
+    const locs = !!parsed.flags["loc"];
+    const fileFilter = parsed.flags["files"] as string;
+    const createOnly = !!parsed.flags["create"];
+    return buildCoreAsync({
         mode: BuildOption.GenDocs,
         docs,
         locs,
         fileFilter,
         createOnly
     }).then((compileOpts) => { });
-    // from target location?
-    if (fs.existsSync("pxtarget.json"))
-        return forEachBundledPkgAsync((pkg, dirname) => {
-            pxt.log(`building docs in ${dirname}`);
-            return build();
-        });
-    else return build();
 }
 
 export function deployAsync(parsed?: commandParser.ParsedCommand) {
@@ -4412,6 +4461,17 @@ function initCommands() {
                 description: "Specifies the output folder for the generated files",
                 argument: "output",
                 aliases: ["o"]
+            },
+            "minify": {
+                description: "minify all generated js files",
+                aliases: ["m", "uglify"]
+            },
+            "bump": {
+                description: "bump version number prior to package"
+            },
+            "cloud": {
+                description: "Force cloud build",
+                aliases: ["c"]
             }
         }
     }, staticpkgAsync);
