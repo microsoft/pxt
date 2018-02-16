@@ -590,6 +590,14 @@ namespace ts.pxtc.assembler {
                         }
                     } else this.directiveError(lf("expecting number"));
                     break;
+                case ".p2align":
+                    expectOne();
+                    num0 = this.parseOneInt(words[1]);
+                    if (num0 != null) {
+                        this.align(1 << num0);
+                    } else this.directiveError(lf("expecting number"));
+                    break;
+
                 case ".byte":
                     this.emitBytes(words);
                     break;
@@ -609,6 +617,7 @@ namespace ts.pxtc.assembler {
                     break;
                 case ".word":
                 case ".4bytes":
+                case ".long":
                     // TODO: a word is machine-dependent (16-bit for AVR, 32-bit for ARM)
                     this.parseNumbers(words).forEach(n => {
                         // we allow negative numbers
@@ -646,10 +655,12 @@ namespace ts.pxtc.assembler {
                     break;
 
                 case "@stackempty":
-                    if (this.stackpointers[words[1]] == null)
-                        this.directiveError(lf("no such saved stack"))
-                    else if (this.stackpointers[words[1]] != this.stack)
-                        this.directiveError(lf("stack mismatch"))
+                    if (this.checkStack) {
+                        if (this.stackpointers[words[1]] == null)
+                            this.directiveError(lf("no such saved stack"))
+                        else if (this.stackpointers[words[1]] != this.stack)
+                            this.directiveError(lf("stack mismatch"))
+                    }
                     break;
 
                 case "@scope":
@@ -657,6 +668,7 @@ namespace ts.pxtc.assembler {
                     this.currLineNo = this.scope ? 0 : this.realCurrLineNo;
                     break;
 
+                case ".syntax":
                 case "@nostackcheck":
                     this.checkStack = false
                     break
@@ -673,6 +685,11 @@ namespace ts.pxtc.assembler {
                     this.scope = "$S" + this.scopeId++
                     break;
 
+                // TODO ".comm" should reserve memory
+                case ".local":
+                case ".comm":
+                    break
+
                 case ".file":
                 case ".text":
                 case ".cpu":
@@ -681,6 +698,12 @@ namespace ts.pxtc.assembler {
                 case ".code":
                 case ".thumb_func":
                 case ".type":
+                case ".fnstart":
+                case ".save":
+                case ".size":
+                case ".fnend":
+                case ".pad":
+                case ".globl": // TODO might need this one
                     break;
 
                 case "@":
