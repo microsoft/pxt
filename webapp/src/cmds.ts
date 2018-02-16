@@ -103,9 +103,10 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
 function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.tickEvent(`hid.deploy`)
     // error message handled in browser download
-    if (!resp.success)
+    if (!resp.success) {
+        pxt.log(`hid build failed, showing download dialog`);
         return browserDownloadDeployCoreAsync(resp);
-    core.infoNotification(lf("Downloading..."));
+    }
     let f = resp.outfiles[pxtc.BINARY_UF2]
     let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
     return hidbridge.initAsync()
@@ -231,12 +232,15 @@ function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<v
         agreeLbl: lf("Let's pair it!"),
         htmlBody,
     }).then(r => {
-        pxt.usb.pairAsync()
+        return pxt.usb.pairAsync()
             .then(() => {
                 pxt.tickEvent(`webusb.pair.success`);
                 return hidDeployCoreAsync(resp)
             })
-            .catch(e => browserDownloadDeployCoreAsync(resp));
+            .catch(e => {
+                pxt.reportException(e);
+                return browserDownloadDeployCoreAsync(resp);
+            });
     })
 }
 
@@ -244,6 +248,14 @@ function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.tickEvent(`webusb.deploy`)
     return hidDeployCoreAsync(resp)
         .catch(e => askWebUSBPairAsync(resp));
+}
+
+function webUsbBackgroundDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.tickEvent(`webusb.deploy.background`);
+    return hidDeployCoreAsync(resp)
+        .catch(e => {
+            pxt.reportException(e)
+        }); // fail silently
 }
 
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
@@ -280,11 +292,13 @@ export function initCommandsAsync(): Promise<void> {
 
     if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = webUsbDeployCoreAsync;
+        pxt.commands.backgroundDeployCoreAsync = webUsbBackgroundDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
             pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => { }), () => hidbridge.disconnectWrapperAsync());
             pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+            pxt.commands.backgroundDeployCoreAsync = hidDeployCoreAsync;
         } else {
             // If we're not using HF2, then the target is using their own deploy logic in extension.ts, so don't use
             // the wrapper callbacks
@@ -306,8 +320,10 @@ export function initCommandsAsync(): Promise<void> {
         };
     } else if (hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+        pxt.commands.backgroundDeployCoreAsync = hidDeployCoreAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
+        pxt.commands.backgroundDeployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser
         pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
     }

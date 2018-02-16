@@ -343,22 +343,23 @@ export class ProjectView
         this.typecheck()
     }
 
-    private autoRunBlocksSimulator = pxtc.Util.debounce(
-        () => {
-            if (Util.now() - this.lastChangeTime < 1000) return;
-            if (!this.state.active)
-                return;
+    private backgroundRun() {
+        if (Util.now() - this.lastChangeTime < 1000) return;
+        if (!this.state.active)
+            return;
+
+        if (this.state.backgroundDeploy)
+            this.compile(false, true);
+        else
             this.runSimulator({ background: true });
-        },
+    }
+
+    private autoRunBlocksSimulator = pxtc.Util.debounce(
+        () => this.backgroundRun(),
         1000, true);
 
     private autoRunSimulator = pxtc.Util.debounce(
-        () => {
-            if (Util.now() - this.lastChangeTime < 1000) return;
-            if (!this.state.active)
-                return;
-            this.runSimulator({ background: true });
-        },
+        () => this.backgroundRun(),
         2000, true);
 
     private typecheck = pxtc.Util.debounce(
@@ -1055,8 +1056,8 @@ export class ProjectView
         this.reload = true;
         return workspace.resetAsync()
             .done(
-            () => window.location.reload(),
-            () => window.location.reload()
+                () => window.location.reload(),
+                () => window.location.reload()
             );
     }
 
@@ -1130,10 +1131,13 @@ export class ProjectView
 
     beforeCompile() { }
 
-    compile(saveOnly = false) {
+    compile(saveOnly = false, background = false) {
         this.beforeCompile();
         let userContextWindow: Window = undefined;
-        if (!pxt.appTarget.compile.useModulator && pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext())
+        if (!pxt.appTarget.compile.useModulator
+            && pxt.BrowserUtils.isBrowserDownloadInSameWindow()
+            && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext()
+            && !background)
             userContextWindow = window.open("");
 
         pxt.tickEvent("compile");
@@ -1142,7 +1146,7 @@ export class ProjectView
             pxt.tickEvent("compile.double");
             return;
         }
-        const simRestart = this.state.running;
+        const simRestart = this.state.running || background;
         this.setState({ compiling: true });
         this.clearSerial();
         this.editor.beforeCompile();
@@ -1154,7 +1158,8 @@ export class ProjectView
                 let fn = pxt.outputName()
                 if (!resp.outfiles[fn]) {
                     pxt.tickEvent("compile.noemit")
-                    core.warningNotification(lf("Compilation failed, please check your code for errors."));
+                    if (!background)
+                        core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()
                 }
                 resp.saveOnly = saveOnly
@@ -1164,13 +1169,17 @@ export class ProjectView
                 if (saveOnly) {
                     return pxt.commands.saveOnlyAsync(resp);
                 }
-                return pxt.commands.deployCoreAsync(resp)
+                Util.assert(!background || !!pxt.commands.backgroundDeployCoreAsync);
+                const deployAsync = background ? pxt.commands.backgroundDeployCoreAsync : pxt.commands.deployCoreAsync;
+                return deployAsync(resp)
                     .catch(e => {
-                        if (e.notifyUser) {
-                            core.warningNotification(e.message);
-                        } else {
-                            const errorText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload failed, please try again.") : lf("Download failed, please try again.");
-                            core.warningNotification(errorText);
+                        if (!background) {
+                            if (e.notifyUser) {
+                                core.warningNotification(e.message);
+                            } else {
+                                const errorText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload failed, please try again.") : lf("Download failed, please try again.");
+                                core.warningNotification(errorText);
+                            }
                         }
                         pxt.reportException(e);
                         if (userContextWindow)
@@ -1178,14 +1187,21 @@ export class ProjectView
                     })
             }).catch((e: Error) => {
                 pxt.reportException(e);
-                core.errorNotification(lf("Compilation failed, please contact support."));
+                if (!background)
+                    core.errorNotification(lf("Compilation failed, please contact support."));
                 if (userContextWindow)
                     try { userContextWindow.close() } catch (e) { }
             }).finally(() => {
                 this.setState({ compiling: false, isSaving: false });
                 if (simRestart) this.runSimulator();
             })
-            .done();
+            .done(() => {
+                if (!background && !this.state.backgroundDeploy // at least 1 "compile button"
+                    && !!pxt.commands.backgroundDeployCoreAsync // support in this shell    
+                    && ((pxt.appTarget.compile && !!pxt.appTarget.compile.backgroundDeploy) || /backgroundDeploy=1/i.test(window.location.href))
+                )
+                    this.setState({ backgroundDeploy: true });
+            });
     }
 
     overrideTypescriptFile(text: string) {
