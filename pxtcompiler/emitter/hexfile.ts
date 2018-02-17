@@ -341,6 +341,8 @@ namespace ts.pxtc {
         }
 
         export function lookupFunctionAddr(name: string) {
+            if (name == "_pxt_comm_base")
+                return commBase
             let inf = lookupFunc(name)
             if (inf)
                 return inf.value
@@ -675,7 +677,6 @@ ${hex.hexPrelude()}
             if (inf) return inf.name;
             return s
         }
-        b.commPtr = hex.commBase
         // b.throwOnError = true;
 
         return b
@@ -799,7 +800,8 @@ __flash_checksums:
         bin.writeFile(pxtc.BINARY_ASM, src)
         bin.numStmts = cres.breakpoints.length
         let res = assemble(opts.target, bin, src)
-        bin.commSize = res.thumbFile.commPtr - hex.commBase
+        if (res.thumbFile.commPtr)
+            bin.commSize = res.thumbFile.commPtr - hex.commBase
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
         if (res.buf) {

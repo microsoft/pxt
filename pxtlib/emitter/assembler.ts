@@ -688,6 +688,7 @@ namespace ts.pxtc.assembler {
 
                 case ".comm": {
                     words = words.filter(x => x != ",")
+                    words.shift()
                     let sz = this.parseOneInt(words[1])
                     let align = 0
                     if (words[2])
@@ -696,11 +697,14 @@ namespace ts.pxtc.assembler {
                         align = 4 // not quite what AS does...
                     let val = this.lookupLabel(words[0])
                     if (val == null) {
-                        if (!this.commPtr)
-                            this.directiveError(lf("PXT_COMM_BASE not defined"))
+                        if (!this.commPtr) {
+                            this.commPtr = this.lookupExternalLabel("_pxt_comm_base") || 0
+                            if (!this.commPtr)
+                                this.directiveError(lf("PXT_COMM_BASE not defined"))
+                        }
                         while (this.commPtr & (align - 1))
                             this.commPtr++
-                        this.labels[this.scopedName(words[1])] = this.commPtr
+                        this.labels[this.scopedName(words[0])] = this.commPtr - this.baseOffset
                         this.commPtr += sz
                     }
                     break
@@ -968,6 +972,11 @@ namespace ts.pxtc.assembler {
             }
         }
 
+        private clearLabels() {
+            this.labels = {}
+            this.commPtr = 0
+        }
+
         private peepPass(reallyFinal: boolean) {
             if (this.disablePeepHole)
                 return;
@@ -979,7 +988,7 @@ namespace ts.pxtc.assembler {
 
             this.throwOnError = true;
             this.finalEmit = false;
-            this.labels = {};
+            this.clearLabels();
             this.iterLines();
             assert(!this.checkStack || this.stack == 0);
             this.finalEmit = true;
@@ -1004,7 +1013,7 @@ namespace ts.pxtc.assembler {
             if (this.errors.length > 0)
                 return;
 
-            this.labels = {};
+            this.clearLabels();
             this.iterLines();
 
             if (this.checkStack && this.stack != 0)
@@ -1015,7 +1024,7 @@ namespace ts.pxtc.assembler {
 
             this.ei.expandLdlit(this);
             this.ei.commonalize(this);
-            this.labels = {};
+            this.clearLabels();
             this.iterLines();
 
             this.finalEmit = true;
