@@ -252,6 +252,7 @@ namespace ts.pxtc.assembler {
         private userLabelsCache: pxt.Map<number>;
         private stackpointers: pxt.Map<number> = {};
         private stack = 0;
+        public commPtr = 0;
         public peepOps = 0;
         public peepDel = 0;
         public peepCounts: pxt.Map<number> = {}
@@ -685,10 +686,25 @@ namespace ts.pxtc.assembler {
                     this.scope = "$S" + this.scopeId++
                     break;
 
-                // TODO ".comm" should reserve memory
-                case ".local":
-                case ".comm":
+                case ".comm": {
+                    words = words.filter(x => x != ",")
+                    let sz = this.parseOneInt(words[1])
+                    let align = 0
+                    if (words[2])
+                        align = this.parseOneInt(words[2])
+                    else
+                        align = 4 // not quite what AS does...
+                    let val = this.lookupLabel(words[0])
+                    if (val == null) {
+                        if (!this.commPtr)
+                            this.directiveError(lf("PXT_COMM_BASE not defined"))
+                        while (this.commPtr & (align - 1))
+                            this.commPtr++
+                        this.labels[this.scopedName(words[1])] = this.commPtr
+                        this.commPtr += sz
+                    }
                     break
+                }
 
                 case ".file":
                 case ".text":
@@ -704,6 +720,7 @@ namespace ts.pxtc.assembler {
                 case ".fnend":
                 case ".pad":
                 case ".globl": // TODO might need this one
+                case ".local":
                     break;
 
                 case "@":

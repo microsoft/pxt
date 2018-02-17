@@ -44,6 +44,7 @@ namespace ts.pxtc {
         let asmLabels: pxt.Map<boolean> = {};
         export let asmTotalSource: string = "";
         export const defaultPageSize = 0x400;
+        export let commBase = 0;
 
         // utility function
         function swapBytes(str: string) {
@@ -147,6 +148,8 @@ namespace ts.pxtc {
                 return;
 
             let funs: FuncInfo[] = extInfo.functions;
+
+            commBase = extInfo.commBase || 0
 
             currentSetup = extInfo.sha;
             currentHexInfo = hexinfo;
@@ -419,6 +422,8 @@ namespace ts.pxtc {
 
             // store the size of the program (in 16 bit words)
             buf[17] = buf.length
+            // store commSize
+            buf[20] = bin.commSize
 
             let zeros: number[] = []
             for (let i = 0; i < bytecodePaddingSize >> 1; ++i)
@@ -594,7 +599,8 @@ ${hex.hexPrelude()}
     .short ${bin.globalsWords}   ; num. globals
     .short 0 ; patched with number of words resulting from assembly
     .word _pxt_config_data
-    .word 0 ; reserved
+    .short 0 ; patched with comm section size
+    .short 0 ; reserved
     .word 0 ; reserved
 `
         let snippets: AssemblerSnippets = null;
@@ -669,6 +675,7 @@ ${hex.hexPrelude()}
             if (inf) return inf.name;
             return s
         }
+        b.commPtr = hex.commBase
         // b.throwOnError = true;
 
         return b
@@ -792,6 +799,7 @@ __flash_checksums:
         bin.writeFile(pxtc.BINARY_ASM, src)
         bin.numStmts = cres.breakpoints.length
         let res = assemble(opts.target, bin, src)
+        bin.commSize = res.thumbFile.commPtr - hex.commBase
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
         if (res.buf) {

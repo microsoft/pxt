@@ -175,6 +175,7 @@ namespace pxt.cpp {
 
         let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
+        let abiInc = ""
         let includesInc = `#include "pxt.h"\n`
         let fullCS = ""
         let thisErrors = ""
@@ -526,6 +527,21 @@ namespace pxt.cpp {
                     return
                 }
 
+                m = /^PXT_ABI\((\w+)\)/.exec(ln)
+                if (m) {
+                    pointersInc += `PXT_FNPTR(::${m[1]}),\n`
+                    abiInc += `extern "C" void ${m[1]}();\n`
+                    res.functions.push({
+                        name: m[1],
+                        argsFmt: "",
+                        value: 0
+                    })
+                }
+
+                m = /^#define\s+PXT_COMM_BASE\s+([0-9a-fx]+)/.exec(ln)
+                if (m)
+                    res.commBase = parseInt(m[1])
+                    
                 // function definition
                 m = /^\s*(\w+)([\*\&]*\s+[\*\&]*)(\w+)\s*\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
                 if (currAttrs && m) {
@@ -975,7 +991,7 @@ namespace pxt.cpp {
         }
 
         if (!isCSharp) {
-            res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
+            res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + abiInc + pointersInc + "\nPXT_SHIMS_END\n"
             res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
             if (isYotta)
                 res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
@@ -1228,7 +1244,7 @@ namespace pxt.hex {
     let cdnUrlPromise: Promise<string>;
 
     export let showLoading: (msg: string) => void = (msg) => { };
-    export let hideLoading: () => void = () => {};
+    export let hideLoading: () => void = () => { };
 
     function downloadHexInfoAsync(extInfo: pxtc.ExtensionInfo) {
         let cachePromise = Promise.resolve();
@@ -1286,10 +1302,10 @@ namespace pxt.hex {
                                                 resolve(U.httpGetTextAsync(hexurl + ".hex"))
                                             }
                                         },
-                                        e => {
-                                            setTimeout(tryGet, 1000)
-                                            return null
-                                        })
+                                            e => {
+                                                setTimeout(tryGet, 1000)
+                                                return null
+                                            })
                                 }
                                 tryGet();
                             })))

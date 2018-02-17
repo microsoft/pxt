@@ -372,6 +372,7 @@ declare namespace ts.pxtc {
         shimsDTS: string;
         enumsDTS: string;
         onlyPublic: boolean;
+        commBase?: number;
     }
 
     interface HexInfo {
