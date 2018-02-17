@@ -412,6 +412,11 @@ namespace pxt.blocks {
             });
         }
 
+        protected propertyNames() {
+            const i = this.getParameterIndex();
+            return this.info.parameters[i].properties.map(property => property.name);
+        }
+
         protected getVisibleBlockTypes(): string[] {
             return this.currentlyVisible.map(p => this.propertyId(p));
         }
@@ -421,6 +426,7 @@ namespace pxt.blocks {
                 return;
             }
             const dummyInput = this.block.inputList.filter(i => i.name === MutatorHelper.mutatedVariableInputName)[0];
+            const allParameters = this.propertyNames();
 
             if (this.prefix && this.currentlyVisible.length === 0) {
                 dummyInput.appendField(this.prefix, DestructuringMutator.prefixLabel);
@@ -442,7 +448,7 @@ namespace pxt.blocks {
             this.parameters.forEach(param => {
                 if (this.currentlyVisible.indexOf(param) === -1) {
                     const fieldValue = this.parameterRenames[param] || param;
-                    dummyInput.appendField(new Blockly.FieldVariable(fieldValue), param);
+                    dummyInput.appendField(new pxtblockly.FieldParameter(fieldValue, param, allParameters), param);
                 }
             });
 
