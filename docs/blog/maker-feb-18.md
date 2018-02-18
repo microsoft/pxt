@@ -1,5 +1,6 @@
 # Code First, Hardware Parts Chosen Automatically
-```TODO insert headline picture```
+![button-and-speaker](https://media.giphy.com/media/404wXexZOBkg04fioM/giphy.gif)
+
 Many devices supported by MakeCode, 
 such as the [micro:bit](http://makecode.microbit.org/) and 
 the [Adafruit Circuit Playground Express](http://makecode.adafruit.com/),
