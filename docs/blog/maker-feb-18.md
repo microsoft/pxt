@@ -1,5 +1,5 @@
 # Code First, Hardware Parts Chosen Automatically
-![button-and-speaker](https://media.giphy.com/media/404wXexZOBkg04fioM/giphy.gif)
+![button-and-speaker](../static/blog/maker/maker-2.gif)
 
 Many devices supported by MakeCode, 
 such as the [micro:bit](http://makecode.microbit.org/) and 
