@@ -37,7 +37,7 @@ The simulator provides an interactive experience:
 the buttons are clickable, servos are animated, and audio comes out of the web app.
 There's a lot of detail and learning opportunities available in the simulator.
 
-![hovering-over-breadboard](../static/blog/maker/maker-breadboard.gif)
+![hovering-over-breadboard](../static/blog/maker/breadboard-hover.gif)
 
 Hovering over the breadboard shows you how it's connected internally, while
 hovering over wires shows how the component connects.
