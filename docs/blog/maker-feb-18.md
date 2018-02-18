@@ -1,6 +1,6 @@
-# Code First, Hardware Parts Chosen Automatically
 ![button-and-speaker](../static/blog/maker/maker-2.gif)
 
+# Code First
 Many devices supported by MakeCode, 
 such as the [micro:bit](http://makecode.microbit.org/) and 
 the [Adafruit Circuit Playground Express](http://makecode.adafruit.com/),
@@ -19,28 +19,33 @@ This experience is great for beginners to the Arduino style of making.
 Most tutorials and kits out there have you wire everything together 
 before you can experience the behavior. MakeCode requires no knowledge of how 
 breadboards work or how the individual components are wired.
-Users can rapidly prototype many different behaviors with their 
-corresponding hardware. A process that would be much more cumbersome 
+Users can rapidly prototype many different behaviors and the hardware follows along. 
+A process that would be much more cumbersome 
 if users had to manually assemble the hardware.
 Users also don't need to own the parts to see it work.
 
 ## Example: Play a tune
-```TODO insert gif of code first, then hardware appearing```
-
-Here's a very simple example: the user creates two-block program to play a tune
-on the Circuit Playground when a button is pressed. MakeCode detects the hardware
-requirements from the two blocks: an audio player and a button are needed. 
-MakeCode automatically chooses hardware, lays it out, wires it, and provides a simulation.
+Above is a simple example: the user creates a two-block program to play a tune when a button is pressed. 
+MakeCode detects the hardware requirements from the two blocks: an audio player and a button are needed. 
+MakeCode then automatically chooses hardware, lays it out, wires it, and provides a simulation.
+The button can be clicked with a mouse to play the tune in the browser.
 
 # Breadboard Simulator
-```TODO Insert picture of simulator.```
-The simulator provides an interactive experience: 
-the button is clickable and audio comes out of the web app.
+![buttons-and-servo](../static/blog/maker/maker-servo.gif)
+
+The simulator provides an interactive experience:
+the buttons are clickable, servos are animated, and audio comes out of the web app.
 There's a lot of detail and learning opportunities available in the simulator.
+
+![hovering-over-breadboard](../static/blog/maker/maker-breadboard.gif)
+
 Hovering over the breadboard shows you how it's connected internally, while
 hovering over wires shows how the component connects.
-Users might notice that the speaker and button don't require a connection to positive voltage, 
-while the servo, knob, and LEDs do. Users can make connections on their own. 
+
+![hovering-over-wires](../static/blog/maker/maker-wire-hover.gif)
+
+Users might notice that the speaker and button don't require a connection to positive voltage, while the servo, knob, and LEDs do. 
+MakeCode isn't explicitly teaching this (today), but users can make connections on their own.
 They experience hardware in a way that is usually only achievable by having the 
 hardware in front of you.
 
@@ -49,37 +54,37 @@ debugging program behavior is much quicker in a simulator, so
 the "inner loop" of development is rapidly sped up.
 
 # Assembly Instructions
-```TODO Insert picture of instructions.```
+![assembly-instructions](../static/blog/maker/maker-instructions.gif)
 
-Inspired by the step-by-step instructions that come with products with
-"some assembly required", MakeCode can generate a PDF file with such
-instructions that correspond to the parts and wiring shown in the breadboard
-simulator. This tailored file lists the set of parts required, guides
-the user step-by-step and part-by-part to achieve the final system. 
+For every project, MakeCode can generate a PDF file with step-by-step instructions that 
+correspond to the parts and wiring shown in the breadboard
+simulator. 
+This tailored file lists the set of parts required, guides
+the user step-by-step and part-by-part to build the final system. 
 
-This on-demand instruction generation is super for use in the classroom
+This on-demand instruction generation is great for use in the eduction
 and can support teachers in rapidly developing and modifying projects
 for the classroom. There's no need to wait for the next version of a kit -
 you can just change the code and print new instructions.
 
 As in every aspect of MakeCode, there are opportunities to learn here.
-A completed project can look like a daunting mess of wires. 
-```TODO Insert picture of messy project.```
+A completed project can look like a daunting mess of wires.
 The assembly instructions let you learn about a project one step at a time.
 Some users might feel intimidated working with batteries.
 It's not obvious what the rules are: what is allowed to connect to what? What can be damaged?
 The assembly instructions take users on a safe route and include printed warnings 
 if there is something tricky or easy to make a mistake on.
 
-# The Future Potential 
-```TODO is there a non-committal way to write about this?```
+# Help us expand maker.makecode.com!
+We welcome pull requests! Here are some ideas for the future:
+
 There many more possible learning opportunities:
 on-hover or other hints can be added to individual components, the breadboard, the logic board, pins, and more;
 these learning hints could also be printed in the assembly instructions.
 
-Parts purchasing can be made trivial. Once the user is happy with their project in the simulator, 
-they could click a button to generate a shopping cart at a MakeCode hardware partner's site.
+Parts purchasing could be made trivial. Once the user is happy with their project in the simulator, 
+they could click a button to generate a shopping list that could be fulfilled at a number of electronic hardware retailers.
 
-It's conceivable that MakeCode could automatically generate and order a custom PCB for your project.
+With community help, it's conceivable that MakeCode could automatically generate a custom PCB for your project.
 Going even further, perhaps the entire project could be shipped to the user fully 
 assembled with the software already loaded onto it. This would democratize electronics in a whole new way.
