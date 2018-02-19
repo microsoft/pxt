@@ -54,10 +54,16 @@ namespace pxt.winrt {
                     }));
         }
 
-        initAsync(): Promise<void> {
+        initAsync(isRetry: boolean = false): Promise<void> {
             Util.assert(!this.dev, "HID interface not properly reseted");
             const wd = Windows.Devices;
             const whid = wd.HumanInterfaceDevice.HidDevice;
+            const rejectDeviceNotFound = () => {
+                const err = new Error(U.lf("Device not found"));
+                (<any>err).notifyUser = true;
+                (<any>err).type = "devicenotfound";
+                return Promise.reject(err);
+            };
             const getDevicesPromise = hidSelectors.reduce((soFar, currentSelector) => {
                 // Try all selectors, in order, until some devices are found
                 return soFar.then((devices) => {
@@ -70,6 +76,12 @@ namespace pxt.winrt {
 
             return getDevicesPromise
                 .then((devices) => {
+                    // TEMP REMOVE
+                    if (!isRetry) {
+                        return Promise.reject(new Error("testing device not found"));
+                    }
+                    // ...TEMP
+
                     if (!devices || !devices[0]) {
                         pxt.debug("no hid device found");
                         return Promise.reject(new Error("no hid device found"));
@@ -101,13 +113,23 @@ namespace pxt.winrt {
                     return Promise.resolve();
                 })
                 .catch((e) => {
-                    const err = new Error(U.lf("Device not found"));
-                    (<any>err).notifyUser = true;
-                    (<any>err).type = "devicenotfound";
-                    return Promise.reject(err);
+                    if (winrtHandleDeviceNotFoundAsync && !isRetry) {
+                        return winrtHandleDeviceNotFoundAsync(this)
+                            .catch(() => {
+                                return rejectDeviceNotFound();
+                            });
+                    }
+                    return rejectDeviceNotFound();
                 });
         }
     }
+
+    /**
+     * Targets can implement this function in their extension to have custom handling of HID device not found. If this
+     * method returns a resolved promise, deployment continues as if the device had been found and connected to. If
+     * this method returns a rejected promise, deployment fails with the default error message from initAsync().
+     */
+    export let winrtHandleDeviceNotFoundAsync: (io: WindowsRuntimeIO) => Promise<void>;
 
     export let packetIO: WindowsRuntimeIO = undefined;
     export function mkPacketIOAsync(): Promise<pxt.HF2.PacketIO> {
@@ -124,8 +146,8 @@ namespace pxt.winrt {
     const hidSelectors: string[] = [];
     const watchers: Windows.Devices.Enumeration.DeviceWatcher[] = [];
     let deviceCount: number = 0;
-    let expectingAdd: boolean = false;
-    let expectingRemove: boolean = false;
+    let expectingAdd: boolean = true;
+    let expectingRemove: boolean = true;
 
     export function initWinrtHid(reconnectUf2WrapperCb: () => Promise<void>, disconnectUf2WrapperCb: () => Promise<void>) {
         const wd = Windows.Devices;

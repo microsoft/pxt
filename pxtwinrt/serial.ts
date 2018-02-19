@@ -2,6 +2,7 @@
 
 type DeviceWatcher = Windows.Devices.Enumeration.DeviceWatcher;
 type DeviceInfo = Windows.Devices.Enumeration.DeviceInformation;
+type DeviceInfoCollection = Windows.Devices.Enumeration.DeviceInformationCollection;
 type SerialDevice = Windows.Devices.SerialCommunication.SerialDevice;
 
 namespace pxt.winrt {
@@ -58,6 +59,58 @@ namespace pxt.winrt {
             device.close();
         });
         activePorts = {};
+    }
+
+    /**
+     * Connects to all matching serial devices without initializing the full PXT serial stack. Returns the list of
+     * devices that were successfully connected to, but doesn't do anything with these devices.
+     */
+    export function connectSerialDevicesAsync(hidSelectors: pxtc.HidSelector[]): Promise<SerialDevice[]> {
+        if (!hidSelectors) {
+            return Promise.resolve([]);
+        }
+
+        const wd = Windows.Devices;
+        const sd = wd.SerialCommunication.SerialDevice;
+        const di = wd.Enumeration.DeviceInformation;
+        const serialDeviceSelectors: string[] = [];
+
+        hidSelectors.forEach((s) => {
+            const sel = sd.getDeviceSelectorFromUsbVidPid(
+                parseInt(s.vid),
+                parseInt(s.pid)
+            );
+            serialDeviceSelectors.push(sel);
+        });
+        const allDevicesPromise = serialDeviceSelectors.reduce((promiseSoFar, sel) => {
+            let deviceInfoSoFar: DeviceInfoCollection;
+            return promiseSoFar
+                .then((diSoFar) => {
+                    deviceInfoSoFar = diSoFar;
+                    return di.findAllAsync(sel, null);
+                })
+                .then((foundDevices: DeviceInfoCollection) => {
+                    if (deviceInfoSoFar) {
+                        for (let i = 0; i < foundDevices.length; ++i) {
+                            deviceInfoSoFar.push(foundDevices[i]);
+                        }
+                    } else {
+                        deviceInfoSoFar = foundDevices;
+                    }
+                    return Promise.resolve(deviceInfoSoFar);
+                });
+        }, Promise.resolve<DeviceInfoCollection>(null));
+
+        return allDevicesPromise
+            .then((allDeviceInfo) => {
+                if (!allDeviceInfo) {
+                    return Promise.resolve([]);
+                }
+
+                return Promise.map(allDeviceInfo, (devInfo: DeviceInfo) => {
+                    return sd.fromIdAsync(devInfo.id);
+                });
+            });
     }
 
     function deviceAdded(deviceInfo: DeviceInfo) {
