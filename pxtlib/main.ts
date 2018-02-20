@@ -869,7 +869,8 @@ namespace pxt {
         if (_targetConfig) return Promise.resolve(_targetConfig);
         if (!Cloud.isOnline()) // offline, don't try to download
             return Promise.resolve(undefined);
-        if (_targetConfigPromise) return _targetConfigPromise;
+        if (_targetConfigPromise) // cached promise
+            return _targetConfigPromise;
         return _targetConfigPromise = Cloud.downloadTargetConfigAsync()
             .then(
                 js => { _targetConfig = js; },
