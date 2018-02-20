@@ -750,7 +750,7 @@ namespace pxt.blocks {
             block.setInputsInline(true);
         }
         else {
-            block.setInputsInline(fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+            block.setInputsInline(!fn.parameters || (fn.parameters.length < 4 && !fn.attributes.imageLiteral));
         }
 
         const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
@@ -814,17 +814,24 @@ namespace pxt.blocks {
 
                         let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
                         let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowBlockId;
+                        let isConstantShim = !!fn.attributes.constantShim;
                         let customField = pr.fieldEditor;
                         let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
                         let fieldType = pr.type;
 
-                        if (isEnum || isFixed) {
-                            const syms = Util.values(info.apis.byQName)
-                                .filter(e =>
-                                    isEnum ? e.namespace == pr.type
-                                        : (e.kind == pxtc.SymbolKind.Variable
-                                            && e.attributes.fixedInstance
-                                            && isSubtype(info.apis, e.retType, typeInfo.qName)))
+                        if (isEnum || isFixed || isConstantShim) {
+                            let syms: pxtc.SymbolInfo[];
+
+                            if (isEnum) {
+                                syms = getEnumDropdownValues(info.apis, pr.type);
+                            }
+                            else if (isFixed) {
+                                syms = getFixedInstanceDropdownValues(info.apis, typeInfo.qName);
+                            }
+                            else {
+                                syms = getConstantDropdownValues(info.apis, fn.qName);
+                            }
+
                             if (syms.length == 0) {
                                 console.error(`no instances of ${typeInfo.qName} found`)
                             }
@@ -3341,5 +3348,19 @@ namespace pxt.blocks {
 
     function namedField(field: Blockly.Field, name: string): NamedField {
         return { field, name };
+    }
+
+    function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string) {
+        return pxt.Util.values(apis.byQName).filter(sym => sym.namespace === enumName);
+    }
+
+    function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
+        return pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
+            && sym.attributes.fixedInstance
+            && isSubtype(apis, sym.retType, qName));
+    }
+
+    function getConstantDropdownValues(apis: pxtc.ApisInfo, qName: string) {
+        return pxt.Util.values(apis.byQName).filter(sym => sym.attributes.blockIdentity === qName);
     }
 }
