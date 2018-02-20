@@ -866,9 +866,9 @@ namespace pxt {
     let _targetConfig: pxt.TargetConfig = undefined;
     let _targetConfigPromise: Promise<pxt.TargetConfig> = undefined;
     export function targetConfigAsync(): Promise<pxt.TargetConfig> {
-        if (!_targetConfig && !Cloud.isOnline()) // offline
-            return Promise.resolve(undefined);
         if (_targetConfig) return Promise.resolve(_targetConfig);
+        if (!Cloud.isOnline()) // offline, don't try to download
+            return Promise.resolve(undefined);
         if (_targetConfigPromise) return _targetConfigPromise;
         return _targetConfigPromise = Cloud.downloadTargetConfigAsync()
             .then(
