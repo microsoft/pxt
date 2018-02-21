@@ -4,7 +4,7 @@
 Our platform has been actively deployed for over a year, bringing the benefits of
 a safe programming environment for MCUs to thousands of active users.
 In this section we provide a broad, quantitative evaluation of the cost at which
-these benefits are realized. We do this with several micro-benchmarks that 
+these benefits are realized. We do this with several micro-benchmarks that
 give insights into the performance of \MC and \CO across three devices
 (Uno, micro:bit, and CPX).
 
@@ -22,14 +22,14 @@ to expose it to \MC, against which we write STS programs.
 
 To analyze the performance of our solution, we have written a suite of programs to evaluate
 different aspects of \MC and \CO when running on a representative selection of real hardware devices.
-Throughout, we use the C++ \CO benchmarks as a baseline; 
+Throughout, we use the C++ \CO benchmarks as a baseline;
 the STS benchmarks show the overhead added by \MC.
 
-These programs were written in both C++ and STS, and evaluated on the three 
-devices listed in (Table~\ref{table:devices}): The micro:bit (Nordic nRF51 MCU), 
+These programs were written in both C++ and STS, and evaluated on the three
+devices listed in (Table~\ref{table:devices}): The micro:bit (Nordic nRF51 MCU),
 the CPX (Atmel SAMD21 MCU), and the Uno (Atmel Atmega MCU).
 
-The Uno is the simplest of these devices, 
+The Uno is the simplest of these devices,
 consisting of an 8-bit processor running at 16 MHz,
 with only 2kB of RAM and 32kB of flash.
 The Uno has no onboard components other than the microcontroller which supports
@@ -45,7 +45,7 @@ The Uno and micro:bit \MC targets use the untagged strategy, while the CPX targe
 The benchmarks are classified into two types, each with their own methodology:
 
 \begin{enumerate}
-    \item \textit{Performance Analysis}: Tests that capture time taken to perform a given operation. For these benchmarks, toggle physical pins on the device at key points in 
+    \item \textit{Performance Analysis}: Tests that capture time taken to perform a given operation. For these benchmarks, toggle physical pins on the device at key points in
     the test code. We then measure the time to
    execute the operation, by using a calibrated oscilloscope observing these pins. This allows us to derive highly accurate real time
    measurements without biasing the experiment.
@@ -171,6 +171,7 @@ These results highlight the performance gains of the opportunistic fork-on-block
 \end{table}
 
 MCUs make use of internal non-volatile FLASH memory to store program code. Table~\ref{table:flash-consumption} shows the per device flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library and optionally, Mbed.
+In comparison to other languages, \MC and \CO consume a small amount of flash: CircuitPython consumes 201.404 kB, micropython consumes 228.044 kB, and Espruino consumes 142.196 kB of flash. This means that users can write sizeable applications in \MC, without the worry of running out of flash memory.
 
 From the bottom up, the profile of the standard library changes dramatically for each device: The Uno has a very lightweight standard library; the microbit uses 64-bit integer operations (for timers) which requires extra standard library functions; and the CPX requires software floating point operations pulling in more standard library functions.
 
@@ -188,10 +189,12 @@ The size of \CO and \MC scales linearly with the amount of functionality a devic
 \multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}mbed and Supporting \\ Libraries\end{tabular}} & 0.312 & 0.923     & -     \\ \hline
 \multicolumn{1}{|c|}{C++ Standard Library}                                                     & 0.161 & 0.149     & 0.074 \\ \hline
 \end{tabular}
-\caption{\label{table:ram-consumption}The total static RAN consumption for an \MC binary (kB).}
+\caption{\label{table:ram-consumption}The total static RAM consumption for an \MC binary (kB).}
 \end{table}
 
 Table~\ref{table:ram-consumption} shows the per device RAM consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. At runtime \MC also dynamically allocates additional memory: 1.56 kB for the CPX, 560 bytes for the micro:bit, and 644 bytes for the Uno. From the table, we can see that in all cases, the RAM consumption of \MC and \CO is well within the RAM available of each device.
+
+\MC and \CO consume a small amount of resources in comparison: CircuitPython (a derivative of micropython) consumes 12,802 kB, micropython consumes 9.472 kB, and Espruino consumes 5.270 kB of RAM. On the microbit the Bluetooth stack requires 8kB of RAM to run, due to micropython's RAM consumption this means that Bluetooth is inoperable. Comparatively, Espruino does enable the Bluetooth stack, but due to resources required to execute programs, users have 300 bytes available for their programs.
 
 % Add globals maps and profile of listener and fiber.
 
@@ -212,7 +215,7 @@ Table~\ref{table:ram-consumption} shows the per device RAM consumption of each s
 \subsection{Compiling Static TypeScript}
 
 When compiling, the entire STS program, including the runtime, first is
-passed to the TypeScript (TS) language service for parsing. Then, only the remaining part 
+passed to the TypeScript (TS) language service for parsing. Then, only the remaining part
 of the program (after code shaking) is compiled to native code.
 On a modern laptop, using Node.js, TS parsing and analysis takes about 0.1ms per statement, and \MC compilation to native code takes about 1ms per statement.
 While the TS compiler has been optimized for speed, \MCN's native compilation process has not been. For example, the CPX TS pass is dominated by compilation of the device runtime and takes about 100ms, whereas the \MC pass typically only includes a small user program and a small bit of the runtime, resulting in less than 100ms. Thus, typical compilation times are under 200ms for typical user programs of 100 lines or less.

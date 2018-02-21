@@ -1,8 +1,8 @@
-\section{\MCN: Design and Implementation}
+\section{\MC}
 \label{sec:makecode}
 % @TOM REVIEW:
 The key technical contribution of \MC is to provide users with a safe environment to write programs for MCUs, enabling a simple progression from block-based
-programming, to text-based programming in Static TypeScript (STS), 
+programming, to text-based programming in Static TypeScript (STS),
 while leveraging C++ on the backend for efficient use of MCU resources.
 Both C++ and TypeScript APIs can be specially annotated (minimally via
 the \emph{//\% block} comment) so that the \MC compiler generates the required
@@ -25,7 +25,7 @@ The web app is written in TypeScript and incorporates the TypeScript compiler an
 language service as well.
 The app is built from a \MC ``target''
 which parameterizes the \MC framework for a particular device.
-The remaining subsections describe the essential components of the web app 
+The remaining subsections describe the essential components of the web app
 from Figure~\ref{fig:makecode}.
 
 
@@ -39,11 +39,11 @@ view of the JavaScript from Figure~\ref{fig:example}.}
 
 TypeScript is a typed superset of JavaScript designed to enable JavaScript developers to take advantage of code
 completion, static checking and refactoring made possible by types (\url{http://www.typescriptlang.org/}).
-As a starting point, every JavaScript program is a TypeScript program.  Types can be added gradually to such programs, supported by type inference. While TypeScript provides classes and interfaces with syntax like 
-Java/C\#, their semantics are quite different, as they are based on JavaScript. Classes are simply syntactic sugar for creating objects that have code associated with them, but these objects are 
+As a starting point, every JavaScript program is a TypeScript program.  Types can be added gradually to such programs, supported by type inference. While TypeScript provides classes and interfaces with syntax like
+Java/C\#, their semantics are quite different, as they are based on JavaScript. Classes are simply syntactic sugar for creating objects that have code associated with them, but these objects are
 JavaScript objects with all their dynamic semantics intact
 
-Static TypeScript is closely related to  StrongScript~\cite{StrongScriptECOOP15}, 
+Static TypeScript is closely related to  StrongScript~\cite{StrongScriptECOOP15},
 which extends TypeScript with a type constructor (!)
 for \emph{concrete} types, allowing the programmer to choose between untyped
 code, optionally-typed code, and concretely typed code, which provides traditional
