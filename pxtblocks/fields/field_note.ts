@@ -439,9 +439,11 @@ namespace pxtblockly {
 
             //  create piano div
             let div = Blockly.WidgetDiv.DIV;
-            let pianoDiv = goog.dom.createDom("div", {});
+            let pianoDiv = goog.dom.createDom("div", {}) as HTMLElement;
             pianoDiv.className = "blocklyPianoDiv";
             div.appendChild(pianoDiv);
+            pianoDiv.style.position = 'absolute';
+            pianoDiv.style.top = '20px';
             let scrollOffset = goog.style.getViewportPageOffset(document);
             //let pianoHeight = keyHeight + div.scrollHeight + 5;
             let xy = this.getAbsoluteXY_();
@@ -695,7 +697,7 @@ namespace pxtblockly {
              * @private 
              */
             function getShowNoteStyle(topPosition: number, leftPosition: number, isMobile: boolean) {
-                topPosition += keyHeight;
+                topPosition += keyHeight - (isMobile ? 0 : 2);
                 if (isMobile)
                     topPosition += prevNextHeight;
                 let div = goog.dom.createDom("div",
