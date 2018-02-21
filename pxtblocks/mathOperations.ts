@@ -1,5 +1,4 @@
 namespace pxt.blocks {
-    // This array determines the order of the dropdown
     const allOperations = pxt.blocks.MATH_FUNCTIONS.unary.concat(pxt.blocks.MATH_FUNCTIONS.binary);
 
     export function initMathOpBlock() {

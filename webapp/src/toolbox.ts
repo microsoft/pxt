@@ -183,7 +183,7 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
             </value>
         </block>
         <block type="math_js_op">
-            <field name="OP">log</field>
+            <field name="OP">sqrt</field>
             <value name="ARG0">
                 <shadow type="math_number">
                     <field name="NUM">0</field>

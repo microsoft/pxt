@@ -6,9 +6,8 @@ namespace pxt.blocks {
     // The JS Math functions supported in the blocks. The order of this array
     // determines the order of the dropdown in the math_js_op block
     export const MATH_FUNCTIONS = {
-        unary: ["sqrt", "sin", "cos", "tan", "log", "ceil", "floor",
-        "trunc", "round", "exp", "asin", "acos", "atan"],
-        binary: ["atan2", "imul", "idiv"]
+        unary: ["sqrt", "sin", "cos", "tan", "ceil", "floor"],
+        binary: ["atan2"]
     };
 
     export interface BlockParameter {
@@ -333,46 +332,27 @@ namespace pxt.blocks {
             'math_js_op': {
                 name: Util.lf("math function"),
                 tooltip: {
-                    "log": Util.lf("Returns the natural logarithm of the argument"),
-                    "exp": Util.lf("Returns Euler's constant (e) raised to the power of the argument"),
                     "sin": Util.lf("Returns the sine of the argument"),
                     "cos": Util.lf("Returns the cosine of the argument"),
                     "tan": Util.lf("Returns the tangent of the argument"),
-                    "asin": Util.lf("Returns the arcsine of the argument"),
-                    "acos": Util.lf("Returns the arccosine of the argument"),
-                    "atan": Util.lf("Returns the arctangent of the argument"),
                     "sqrt": Util.lf("Returns the square root of the argument"),
                     "ceil": Util.lf("Returns the lowest integer value greater than or equal to the argument"),
                     "floor": Util.lf("Returns the highest integer value lesser than or equal to the argument"),
-                    "trunc": Util.lf("Returns the value of the argument with the decimal component removed"),
-                    "round": Util.lf("Returns the value of the argument 'rounded' to the nearest integer"),
                     "atan2": Util.lf("Returns the arctangent of the quotient of the two arguments"),
-                    "imul": Util.lf("Returns the integer result of product of the two arguments"),
-                    "idiv": Util.lf("Returns the integer result of the quotient of the two arguments"),
                 },
                 url: '/blocks/math',
                 operators: {
-                    'OP': ["sqrt", "sin", "cos", "tan", "log", "ceil", "floor",
-                    "trunc", "round", "exp", "asin", "acos", "atan", "atan2", "imul", "idiv"]
+                    'OP': ["sqrt", "sin", "cos", "tan", "ceil", "floor", "atan2"]
                 },
                 category: 'math',
                 block: {
-                    "log": Util.lf("{id:op}ln"),
-                    "exp": Util.lf("{id:op}e^x"),
                     "sin": Util.lf("{id:op}sin"),
                     "cos": Util.lf("{id:op}cos"),
                     "tan": Util.lf("{id:op}tan"),
-                    "asin": Util.lf("{id:op}asin"),
-                    "acos": Util.lf("{id:op}acos"),
-                    "atan": Util.lf("{id:op}atan"),
                     "sqrt": Util.lf("{id:op}square root"),
                     "ceil": Util.lf("{id:op}ceiling"),
                     "floor": Util.lf("{id:op}floor"),
-                    "trunc": Util.lf("{id:op}truncate"),
-                    "round": Util.lf("{id:op}round"),
                     "atan2": Util.lf("{id:op}atan2"),
-                    "imul": Util.lf("{id:op}imul"),
-                    "idiv": Util.lf("{id:op}idiv"),
                 }
             },
             'variables_change': {
