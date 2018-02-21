@@ -1755,7 +1755,7 @@ namespace pxt.blocks {
         };
     }
 
-    function installHelpResources(id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string) {
+    export function installHelpResources(id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string) {
         let block = Blockly.Blocks[id];
         let old = block.init;
         if (!old) return;
@@ -2611,6 +2611,8 @@ namespace pxt.blocks {
         const mathModuloDef = pxt.blocks.getBlockDefinition(mathModuloId);
         msg.MATH_MODULO_TITLE = mathModuloDef.block["MATH_MODULO_TITLE"];
         installBuiltinHelpInfo(mathModuloId);
+
+        initMathOpBlock();
     }
 
     export function getNamespaceColor(ns: string): string {

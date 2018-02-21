@@ -1,5 +1,5 @@
 const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display: none">
-    <category name="Loops" nameid="loops" colour="#107c10" category="50" web-icon="\uf01e" iconclass="blocklyTreeIconloops" expandedclass="blocklyTreeIconloops">    
+    <category name="Loops" nameid="loops" colour="#107c10" category="50" web-icon="\uf01e" iconclass="blocklyTreeIconloops" expandedclass="blocklyTreeIconloops">
         <block type="controls_repeat_ext">
             <value name="TIMES">
                 <shadow type="math_whole_number">
@@ -27,7 +27,7 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
             </value>
         </block>
     </category>
-    <category name="Logic" nameid="logic" colour="#006970" category="49" web-icon="\uf074" iconclass="blocklyTreeIconlogic" expandedclass="blocklyTreeIconlogic">    
+    <category name="Logic" nameid="logic" colour="#006970" category="49" web-icon="\uf074" iconclass="blocklyTreeIconlogic" expandedclass="blocklyTreeIconlogic">
         <label text="Conditionals" web-class="blocklyFlyoutGroup" web-line="1.5"/>
         <block type="controls_if" gap="8">
             <value name="IF0">
@@ -83,7 +83,7 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
     </category>
     <category name="Variables" nameid="variables" colour="#A80000" custom="VARIABLE" category="48" iconclass="blocklyTreeIconvariables" expandedclass="blocklyTreeIconvariables">
     </category>
-    <category name="Math" nameid="math" colour="#712672" category="47" web-icon="\uf1ec" iconclass="blocklyTreeIconmath" expandedclass="blocklyTreeIconmath">    
+    <category name="Math" nameid="math" colour="#712672" category="47" web-icon="\uf1ec" iconclass="blocklyTreeIconmath" expandedclass="blocklyTreeIconmath">
         <block type="math_arithmetic" gap="8">
             <value name="A">
                 <shadow type="math_number">
@@ -177,6 +177,14 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
         </block>
         <block type="math_op3">
             <value name="x">
+                <shadow type="math_number">
+                    <field name="NUM">0</field>
+                </shadow>
+            </value>
+        </block>
+        <block type="math_js_op">
+            <field name="OP">log</field>
+            <value name="ARG0">
                 <shadow type="math_number">
                     <field name="NUM">0</field>
                 </shadow>

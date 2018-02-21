@@ -659,6 +659,17 @@ namespace pxt.blocks {
 
     }
 
+    function compileMathJsOp(e: Environment, b: B.Block, comments: string[]): JsNode {
+        const op = b.getFieldValue("OP");
+        const args = [compileExpression(e, getInputTargetBlock(b, "ARG0"), comments)];
+
+        if ((b as any).getInput("ARG1")) {
+            args.push(compileExpression(e, getInputTargetBlock(b, "ARG1"), comments));
+        }
+
+        return H.mathCall(op, args);
+    }
+
     function compileProcedure(e: Environment, b: B.Block, comments: string[]): JsNode[] {
         const name = escapeVarName(b.getFieldValue("NAME"), e, true);
         const stmts = getInputTargetBlock(b, "STACK");
@@ -755,6 +766,8 @@ namespace pxt.blocks {
                 expr = compileListGet(e, b, comments); break;
             case "lists_index_set":
                 expr = compileListSet(e, b, comments); break;
+            case "math_js_op":
+                expr = compileMathJsOp(e, b, comments); break;
             case pxtc.TS_OUTPUT_TYPE:
                 expr = extractTsExpression(e, b, comments); break;
             default:
