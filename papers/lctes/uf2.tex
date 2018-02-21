@@ -9,7 +9,7 @@ line. Both use cases require operating system drivers and a native application.
 
 ARM's mbed platform provides DAPLink, firmware that presents itself to an external computer
 as a USB pen drive. No special drivers need to be installed, as operating
-systems support pen drives out of the box. The USB pen drive protocol (USB Mass
+systems support pen drives out of the box. The USB pen drive protocol (technically USB Mass
 Storage Class or MSC) is a block-level protocol (generally 512 bytes) with no
 concept of files.
 
@@ -18,7 +18,7 @@ to the external computer,
 but its file allocation table and the root directory are otherwise empty.
 When the OS tries to read a block, DAPLink computes what should be there, 
 based on compiled-in contents of the HTML file.
-On file system writes, DAPLink detects the Intel HEX format~\cite{IntelHEX}, 
+During file system writes, DAPLink detects blocks of files the Intel HEX format~\cite{IntelHEX}, 
 decodes it and flashes the file's contents into the target microcontroller's memory. 
 Other file systems writes are ignored.
 
@@ -41,9 +41,17 @@ on the Arduino Uno.
 
 The minimal implementation of the \UF bootloader is 1-2k of code, depending
 on the microcontroller instruction set and USB interfaces.
-The bootloader on SAMD21 (which is 8k of code) implements \UF flashing with read-back capability (ie.,
+The \UF bootloader on SAMD21 (which is 8k of code), in addition to straightforward \UF flashing,
+also contains a legacy serial bootloader for Arduino, 
+a custom USB HID protocol for flashing with a native application (requiring no drivers),
+a similar protocol exposed via WebUSB (which allows direct access in recent versions of the Chrome browser),
+as well as \UF read-back capability (ie.,
 a \UF file is exposed in the virtual FAT that contains current content of the 
 MCU flash; as \MC embeds source code in binaries this lets the user drag the current \UF file from
-a board into \MC browser window to load the project), legacy serial bootloader for Arduino, 
-and a custom USB HID protocol for flashing with a native application (requiring no drivers).
+a board into \MC browser window to load the project).
+
+For simplicity, the 512-byte \UF blocks usually contain 256 bytes of payload data.
+While 50\% density might seem low, the 16-byte-per-line HEX format typically used has dansity of around 35\%.
+Regardless, we have not found this to be a problem, since the files are small by standard of modern computers (under 1000k),
+and on the MCU side the bottleneck is speed of flash erase, not the USB bus (which reaches 1000k/s).
 
