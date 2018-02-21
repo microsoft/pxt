@@ -259,6 +259,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 url={"/" + scr.installedVersion}
                                 imageUrl={scr.icon}
                                 onClick={() => addBundle(scr) }
+                                label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
                                 role="option"
                                 />
                         ) }
