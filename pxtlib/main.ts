@@ -209,12 +209,18 @@ namespace pxt {
     }
 
     let _targetConfig: pxt.TargetConfig = undefined;
+    let _targetConfigPromise: Promise<pxt.TargetConfig> = undefined;
     export function targetConfigAsync(): Promise<pxt.TargetConfig> {
-        return _targetConfig ? Promise.resolve(_targetConfig)
-            : Cloud.downloadTargetConfigAsync()
-                .then(
-                js => { _targetConfig = js; return _targetConfig; },
-                err => { _targetConfig = undefined; return undefined; });
+        if (_targetConfig) return Promise.resolve(_targetConfig);
+        if (!Cloud.isOnline()) // offline, don't try to download
+            return Promise.resolve(undefined);
+        if (_targetConfigPromise) // cached promise
+            return _targetConfigPromise;
+        return _targetConfigPromise = Cloud.downloadTargetConfigAsync()
+            .then(
+                js => { _targetConfig = js; },
+                err => { _targetConfig = undefined; })
+            .then(() => _targetConfig);
     }
     export function packagesConfigAsync(): Promise<pxt.PackagesConfig> {
         return targetConfigAsync().then(config => config ? config.packages : undefined);
