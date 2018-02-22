@@ -479,7 +479,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     renderCore() {
         const { name, description, imageUrl, largeImageUrl, youTubeId, url, onClick, cardType } = this.props;
 
-        const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/maxresdefault.jpg` : undefined);
+        const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/0.jpg` : undefined);
 
         let clickLabel = lf("Show Instructions");
         if (cardType == "tutorial") clickLabel = lf("Start Tutorial");
