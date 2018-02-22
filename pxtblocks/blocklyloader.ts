@@ -294,7 +294,7 @@ namespace pxt.blocks {
             }
 
             if (showCategories === CategoryMode.Basic && isAdvanced &&
-                shouldUseBlockInSearch(fn.attributes.blockId, catName.toLowerCase(), filters)) {
+                shouldUseBlockInSearch(fn.attributes.blockId, catName, filters)) {
                 usedBlocks[fn.attributes.blockId] = ns; // ns is localized already
                 updateUsedBlocks = true;
             }
@@ -1243,7 +1243,7 @@ namespace pxt.blocks {
                 const bId = b.getAttribute("type");
                 const bCategoryId = b.parentElement && b.parentElement.nodeName === "category" ? b.parentElement.getAttribute("nameid") : undefined;
                 const bTranslatedCat = bCategoryId ? b.parentElement.getAttribute("name") : undefined;
-                if (shouldUseBlockInSearch(bId, bCategoryId.toLowerCase(), filters)) {
+                if (shouldUseBlockInSearch(bId, bCategoryId, filters)) {
                     usedBlocks[bId] = bTranslatedCat || true;
                     updateUsedBlocks = true;
                 }
@@ -1438,7 +1438,7 @@ namespace pxt.blocks {
                         const b = blockElements.item(i);
                         const bId = b.getAttribute("type");
                         const translatedCatName = Util.rlf(`{id:category}${name}`, []);
-                        if (shouldUseBlockInSearch(bId, name.toLowerCase(), filters)) {
+                        if (shouldUseBlockInSearch(bId, name, filters)) {
                             usedBlocks[bId] = translatedCatName;
                         }
                     }
@@ -3253,6 +3253,9 @@ namespace pxt.blocks {
     function shouldUseBlockInSearch(blockId: string, namespaceId: string, filters: BlockFilters): boolean {
         if (!filters) {
             return true;
+        }
+        if (namespaceId) {
+            namespaceId = namespaceId.toLowerCase();
         }
         const isNamespaceFiltered = filters.namespaces &&
             filters.namespaces[namespaceId] === FilterState.Disabled || filters.namespaces[namespaceId] === FilterState.Hidden;
