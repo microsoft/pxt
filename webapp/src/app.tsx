@@ -962,11 +962,15 @@ export class ProjectView
             disagreeLbl: lf("Cancel")
         }).then(r => {
             if (!r) return Promise.resolve();
-            return hidbridge.disconnectWrapperAsync()
+            return Promise.resolve()
+                .then(() => {
+                    return pxt.winrt.releaseAllDevicesAsync();
+                })
                 .then(() => {
                     return this.resetWorkspace();
                 });
-        });
+        })
+        .done();
     }
 
     promptRenameProjectAsync(): Promise<boolean> {
