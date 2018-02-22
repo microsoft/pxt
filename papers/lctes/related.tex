@@ -1,44 +1,90 @@
 \section{Related Work}
 \label{sec:related}
+In this section, we analyse other novice programming environments, alternate approaches to higher-level languages on microcontrollers, alternative native runtime environments, and finally other mechanisms of transferring programs to microcontrollers.
 
-Related work breaks into two parts, following the
-flow of the paper: the programming of MCUs,
-and embedded runtime environments for MCUs.
+%% potentially cut this one...
+\subsection{Novice programming environments}
 
-\subsection{Programming microcontrollers}
+Arduino~\cite{buildingArduino2014} is an environment for programming microcontrollers, aimed at novices. However, its c-based APIs introduces barriers for novice programmers~\cite{blikstein2013gears}. Scratch~\cite{ScratchCACM2009} is a widely adopted, event-based visual programming environment environment designed to introduce novice programmers to computer science concepts. Extensions enable the programming of physical devices from Scratch. However, devices require constant tethered connections to operate, restricting potential projects in educational and maker~\cite{dougherty2012maker} settings. ArduoBlock~\cite{Ardubloc28:online} brings visual programming to the Arduino, but it lacks the event-based blocks Scratch users are familiar with.
 
-There are four ways to program MCUs,
-(ordered roughly from lower to greater resource usage):
-\begin{itemize}
-\item[1.] a program executing on a host computer sends commands (via some communication protocol)
-to a fixed program loaded onto the MCU (e.g., Scratch's
-device extensions~\cite{ScratchCACM2009}, Arduino's Firmata library~\cite{Firmata}).
-\item[2.] a binary for the MCU is compiled on a host computer and loaded onto the MCU -
-this is the common method for Arduino~\cite{buildingArduino2014};
-\item[3.] bytecode is compiled on the host and loaded onto MCU, where it is interpreted
-(e.g., Java for embedded systems~\cite{ClausenTOPLAS};
-\item[4.] a complete compiler and virtual machine are put on the MCU,
-as with MicroPython~\cite{MicroPython} and Espruino~\cite{espruinoBook};
-% 5. an embedded operating system
-\end{itemize}
+With the environments above, additional software must be installed, which creates barriers for novice users in restrictive environments. Our platform requires \emph{no installation} to support a diverse user base, and supports \emph{event-based higher level languages} to scaffold the progression of users to the world of the microcontroller.
 
-In the educational and maker~\cite{dougherty2012maker} settings, MCUs often are embedded in projects. Here, option 1 has limited utility, as in such projects the MCU is powered by battery and is not connected to a host. Option 2 does not operate well on computers where installation of programs and additional software is forbidden, common in educational environments. Options 3 and 4 suffer in terms of performance on small MCUs, operating slower than native C++ code, and consuming most of the resources (flash and RAM) of the MCU.
+\subsection{Virtual machine-based languages}
 
-Our platform slots into options 2 and 3, using the \MC architecture and USB pen drives to avoid
-the need for installation of native applications or device drivers. Our use of STS provides
-better performance than the MicroPython and Espruino solution, as demonstrated in the evaluation,
-and allows us to fit in the very constrained space of the Uno. 
+Recently, virtual machines supporting most of the semantics of higher level languages like JavaScript, Java, and Python, have been ported to 32-bit microcontrollers by maker~\cite{dougherty2012maker} communities. Examples include: micropython~\cite{MicroPython}, CircuitPython (a derivative of micropython), and Espruino~\cite{espruinoBook} (JavaScript). These VMs consume a large amount of RAM and flash memory, and run slower than native languages.
 
-\subsection{Embedded Runtime Environments}
+In the research community, the motive to bring higher-level languages to microcontrollers exists~\cite{koshy2005vmstar,st2009picobit,vaugon2015programming}, yet, in all cases, these solutions consume more CPU cycles than native solutions, therefore more power. Rather than running a full-featured VM, others enable higher level languages to run efficiently by stripping out advanced language features, in favour of efficient, native execution~\cite{varma2004java}.
 
-Typically written in C and/or C++, environments for MCU programming all share a common design goal: to support developers by providing primitives and programming abstractions. Platforms can range from simple C++ classes that control hardware, to real-time operating systems (RTOSs) with scheduling and memory management.
+Our approach bears most similarity to the latter, where we compile higher level languages to an \emph{optimised, event-driven} C++ runtime (\CON).
 
-Arduino~\cite{buildingArduino2014} is an example of a simple platform where the developer uses
-high-level APIs to control hardware; there is no scheduler, and memory management
-is discouraged through a heavy emphasis on global variables.
+\subsection{Embedded runtime environments}
+
+Embedd runtime environments can range from simple C++ classes that control hardware, to real-time operating systems (RTOSs) with scheduling and memory management.
+
+Arduino~\cite{buildingArduino2014} is an example of a simple platform where the developer uses high-level APIs to control hardware; there is no scheduler, and memory management is discouraged through a heavy emphasis on global variables.
 
 TinyOS~\cite{levis2005tinyos}, Contiki~\cite{dunkels2012contiki}, RIOT OS~\cite{baccelli2013riot}, Mynewt~\cite{ApacheMy53:online} mbed OS~\cite{ARMmbed}, Zephyr~\cite{HomeZeph63:online} are RTOS solutions known widely in the systems community. The majority focus on the networking features of sensor based devices and commonly adopt a preemptive scheduling model, which leads to competition over resources resolved using locks and condition synchronization primitives. Contiki has a cooperative scheduler, but uses proto-threads to store thread context --- local variables are not allowed as the context of the stack is not stored.
 
-Although the platforms above are widely used by C/C++ developers, none of these existing solutions align well with the programming paradigms seen in higher level languages.
-\CO bridges that semantic gap between the higher level language and the microcontroller, offering appropriate abstractions and higher level primitives written natively in C++.
+Although the platforms above are widely used by C/C++ developers, none of these existing solutions align well with the programming paradigms seen in higher level languages. \CO \emph{bridges that semantic gap between the higher level language and the microcontroller}, offering appropriate abstractions and higher level primitives written natively in C++.
 
+\subsection{Flashing microcontrollers}
+
+There are two widely used ways to install a user program in the non-volatile flash memory of a microcontroller: for embedded developers, a specialized debugger chip; for hobbyists, a custom serial protocol. Both approaches require operating system drivers.
+
+ARM's mbed platform provides DAPLink, firmware that presents itself to an external computer as a USB pen drive. DAPLink firmware exposes a virtual file system that caters for normal file system behaviour, and handles the decoding of Intel HEX files~\cite{IntelHEX} --- the firmware consumes large amounts of flash and RAM.
+
+\UF contributes a new file format that \emph{greatly simplifies} the virtual file system approach, reducing complexity of the firmware, and thusly code size.
+
+
+
+% talk about old protocols for flashing protocols, talk about mbed, talk about UF2
+
+% % * programming languages for microcontrollers
+% %     - discuss low level languages
+% %     - talk about approaches to higher level languages by communities
+% %     - talk about approaches to higher level languages by research
+% %     - contextualise against our approach
+% \subsection{Programming languages for novice users}
+
+
+% Java-through-C compilation: \cite{varma2004java}
+
+% VMSTAR: synthesizing scalable runtime environments for sensor networks \cite{koshy2005vmstar}
+
+% % * Embedded Runtime Environments
+% %     -largely remains as is.
+% \subsection{Embedded Runtime Environments}
+
+% Typically written in C and/or C++, environments for MCU programming all share a common design goal: to support developers by providing primitives and programming abstractions. Platforms can range from simple C++ classes that control hardware, to real-time operating systems (RTOSs) with scheduling and memory management.
+
+% Arduino~\cite{buildingArduino2014} is an example of a simple platform where the developer uses high-level APIs to control hardware; there is no scheduler, and memory management is discouraged through a heavy emphasis on global variables.
+
+% TinyOS~\cite{levis2005tinyos}, Contiki~\cite{dunkels2012contiki}, RIOT OS~\cite{baccelli2013riot}, Mynewt~\cite{ApacheMy53:online} mbed OS~\cite{ARMmbed}, Zephyr~\cite{HomeZeph63:online} are RTOS solutions known widely in the systems community. The majority focus on the networking features of sensor based devices and commonly adopt a preemptive scheduling model, which leads to competition over resources resolved using locks and condition synchronization primitives. Contiki has a cooperative scheduler, but uses proto-threads to store thread context --- local variables are not allowed as the context of the stack is not stored.
+
+% Although the platforms above are widely used by C/C++ developers, none of these existing solutions align well with the programming paradigms seen in higher level languages. \CO bridges that semantic gap between the higher level language and the microcontroller, offering appropriate abstractions and higher level primitives written natively in C++.
+
+
+% \subsection{Programming microcontrollers}
+
+% \paragraph{Tethering a device} Scratch's device extensions~\cite{ScratchCACM2009} and Arduino's Firmata library~\cite{Firmata} take the tethered approach. However, in the educational and maker~\cite{dougherty2012maker} settings, MCUs often are embedded in projects. Here, this method has limited utility, as in such projects the MCU is powered by battery and is not connected to a host.
+
+% \paragraph{Loading a pre-compiled native binary onto a device}
+% Arduino~\cite{buildingArduino2014}, mbed~\cite{ARMmbed}, and other C-based solutions require installation of additional software and knowledge of low-level languages. These requirements do not suit a diverse demographic of inexperienced users.
+
+% \paragraph{Interpretting pre-compiled bytecode on the device}
+% Java for embedded systems~\cite{ClausenTOPLAS}
+
+% suffer in terms of performance on small MCUs, operating slower than native C++ code, and consuming most of the resources (flash and RAM) of the MCU.
+
+% \paragraph{Loading a compiler and virtual machine onto a device}
+% MicroPython~\cite{MicroPython} and Espruino~\cite{espruinoBook};
+
+% Our platform slots into options 2 and 3, using the \MC architecture and USB pen drives to avoid the need for installation of native applications or device drivers. Our use of STS provides better performance than the MicroPython and Espruino solution, as demonstrated in the evaluation,
+% and allows us to fit in the very constrained space of the Uno.
+
+
+
+
+% \subsection{Programming microcontrollers}
+
+% talk about old protocols for flashing protocols, talk about mbed, talk about UF2
