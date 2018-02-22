@@ -98,14 +98,16 @@ namespace pxt.winrt {
                 return Promise.resolve();
             })
             .catch((e) => {
-                pxt.reportError("winrt_device", `error disconnecting packetIO: ${e.message}`);
+                e.message = `error disconnecting packetIO: ${e.message}`;
+                pxt.reportException(e);
             })
             .then(() => {
                 pxt.log("suspending serial");
                 return suspendSerialAsync();
             })
             .catch((e) => {
-                pxt.reportError("winrt_device", `error suspending serial: ${e.message}`);
+                e.message = `error suspending serial: ${e.message}`;
+                pxt.reportException(e);
             });
     }
 
