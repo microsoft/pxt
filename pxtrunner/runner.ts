@@ -607,7 +607,7 @@ ${files["main.ts"]}
             theme: pxt.appTarget.appTheme,
         });
         let blocksAspectRatio = options.blocksAspectRatio
-            || window.innerHeight < window.innerWidth ? 1 / 1.62 : 1.62;
+            || window.innerHeight < window.innerWidth ? 1.62 : 1 / 1.62;
         $(content).html(html);
         $(content).find('a').attr('target', '_blank');
         return pxt.runner.renderAsync({
