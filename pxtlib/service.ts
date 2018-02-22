@@ -122,6 +122,7 @@ namespace ts.pxtc {
         blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
         fixedInstances?: boolean;
         fixedInstance?: boolean;
+        constantShim?: boolean;
         indexedInstanceNS?: string;
         indexedInstanceShim?: string;
         defaultInstance?: string;
@@ -443,7 +444,7 @@ namespace ts.pxtc {
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
-    const booleanAttributes = ["advanced", "handlerStatement", "afterOnStart", "optionalVariableArgs", "blockHidden"]
+    const booleanAttributes = ["advanced", "handlerStatement", "afterOnStart", "optionalVariableArgs", "blockHidden", "constantShim"]
 
     export function parseCommentString(cmt: string): CommentAttrs {
         let res: CommentAttrs = {
