@@ -594,21 +594,24 @@ ${files["main.ts"]}
     export interface RenderMarkdownOptions {
         path?: string;
         tutorial?: boolean;
+        blocksAspectRatio?: number;
     }
 
     export function renderMarkdownAsync(content: HTMLElement, md: string, options: RenderMarkdownOptions = {}): Promise<void> {
         const path = options.path;
         const parts = (path || '').split('/');
 
-        let html = pxt.docs.renderMarkdown({
+        const html = pxt.docs.renderMarkdown({
             template: template,
             markdown: md,
             theme: pxt.appTarget.appTheme,
         });
+        let blocksAspectRatio = options.blocksAspectRatio
+            || window.innerHeight < window.innerWidth ? 1.62 : 1 / 1.62;
         $(content).html(html);
         $(content).find('a').attr('target', '_blank');
         return pxt.runner.renderAsync({
-            blocksAspectRatio: 0.5,
+            blocksAspectRatio: blocksAspectRatio,
             snippetClass: 'lang-blocks',
             signatureClass: 'lang-sig',
             blocksClass: 'lang-block',
