@@ -141,6 +141,7 @@
 
 @sideBarWidth: 20rem;
 @sideBarWidthSmall: 18rem;
+@sideBarWidthLarge: 28rem;
 @simulatorWidth: 23rem;
 @simulatorWidthSmall: 20rem;
 
