@@ -183,7 +183,7 @@ namespace pxt.runner {
                 if (options.snippetReplaceParent) c = c.parent();
                 const segment = $('<div class="ui segment"/>').append(s);
                 c.replaceWith(segment);
-            }, { package: options.package, snippetMode: false });
+            }, { package: options.package, snippetMode: false, aspectRatio: options.blocksAspectRatio });
         }
 
         let snippetCount = 0;
@@ -202,7 +202,7 @@ namespace pxt.runner {
                 hexname: hexname,
                 hex: hex,
             });
-        }, { package: options.package });
+        }, { package: options.package, aspectRatio: options.blocksAspectRatio });
     }
 
     function decompileCallInfo(stmt: ts.Statement): pxtc.CallInfo {
@@ -236,7 +236,7 @@ namespace pxt.runner {
             let js = $('<code class="lang-typescript highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(options, c, js, s, r, { showJs: true, hideGutter: true });
-        }, { package: options.package, snippetMode: true });
+        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
 
     function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
@@ -245,7 +245,7 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment"/>').append(s);
             c.replaceWith(segment);
-        }, { package: options.package, snippetMode: true });
+        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
 
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
@@ -496,7 +496,7 @@ namespace pxt.runner {
 
             if (replaceParent) c = c.parent();
             c.replaceWith(ul)
-        }, { package: options.package })
+        }, { package: options.package, aspectRatio: options.blocksAspectRatio })
     }
 
     function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: pxt.docs.codeCard.CodeCardRenderOptions): Promise<void> {
