@@ -101,7 +101,11 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
 
         if (langId !== initialLang) {
             pxt.tickEvent(`menu.lang.changelang.${langId}`);
-            window.location.reload();
+            pxt.winrt.releaseAllDevicesAsync()
+                .then(() => {
+                    window.location.reload();
+                })
+                .done();
         } else {
             pxt.tickEvent(`menu.lang.samelang.${langId}`);
             this.hide();

@@ -33,9 +33,9 @@ namespace pxt.winrt {
 
         const uiCore = Windows.UI.Core;
         const navMgr = uiCore.SystemNavigationManager.getForCurrentView();
-        const app = Windows.UI.WebUI.WebUIApplication as any;
-        app.addEventListener("suspending", suspendingHandler, false);
-        app.addEventListener("resuming", resumingHandler, false);
+        const app = Windows.UI.WebUI.WebUIApplication;
+        app.addEventListener("suspending", suspendingHandler);
+        app.addEventListener("resuming", resumingHandler);
         navMgr.onbackrequested = (e) => {
             // Ignore the built-in back button; it tries to back-navigate the sidedoc panel, but it crashes the
             // app if the sidedoc has been closed since the navigation happened
@@ -49,8 +49,8 @@ namespace pxt.winrt {
             .then(() => {
                 if (importHexImpl) {
                     importHex = importHexImpl;
-                    app.removeEventListener("activated", initialActivationHandler, false);
-                    app.addEventListener("activated", fileActivationHandler, false);
+                    app.removeEventListener("activated", initialActivationHandler);
+                    app.addEventListener("activated", fileActivationHandler);
                 }
             });
     }
@@ -84,6 +84,28 @@ namespace pxt.winrt {
             });
     }
 
+    export function releaseAllDevicesAsync(): Promise<void> {
+        if (!isWinRT()) {
+            return Promise.resolve();
+        }
+
+        return Promise.resolve()
+            .then(() => {
+                if (packetIO) {
+                    console.log(`disconnecting packetIO`);
+                    return packetIO.disconnectAsync();
+                }
+                return Promise.resolve();
+            })
+            .catch((e) => {
+                console.log(`error disconnecting packetIO: ${e.message}`);
+            })
+            .then(() => {
+                console.log("suspending serial");
+                return suspendSerialAsync();
+            });
+    }
+
     function initialActivationHandler(args: ActivationArgs) {
         (Windows.UI.WebUI.WebUIApplication as any).removeEventListener("activated", initialActivationHandler);
         initialActivationDeferred.resolve(args);
@@ -91,12 +113,15 @@ namespace pxt.winrt {
 
     function suspendingHandler(args: SuspendingArgs) {
         console.log(`suspending`);
-        if (packetIO) {
-            console.log(`disconnet pack io`);
-            packetIO.disconnectAsync().done();
-        }
-        suspendSerial();
+        const suspensionDeferral = args.suspendingOperation.getDeferral();
+
+        return releaseAllDevicesAsync()
+            .then(
+                () => suspensionDeferral.complete(),
+                (e) => suspensionDeferral.complete()
+            );
     }
+
     function resumingHandler(args: ResumingArgs) {
         console.log(`resuming`);
         if (packetIO) {

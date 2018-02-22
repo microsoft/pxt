@@ -962,7 +962,13 @@ export class ProjectView
             disagreeLbl: lf("Cancel")
         }).then(r => {
             if (!r) return Promise.resolve();
-            return hidbridge.disconnectWrapperAsync()
+            return Promise.resolve()
+                .then(() => {
+                    return pxt.winrt.releaseAllDevicesAsync();
+                })
+                .catch((e) => {
+                    pxt.log(`Error disconnecting devices: ${e.message}`);
+                })
                 .then(() => {
                     return this.resetWorkspace();
                 });
