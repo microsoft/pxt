@@ -741,8 +741,8 @@ namespace ts.pxtc.service {
                         namespace: s.namespace,
                         block: s.attributes.block,
                         jsdoc: s.attributes.jsDoc,
-                        localizedCategory: search.subset && typeof search.subset[s.attributes.blockId] === "string"
-                            ? search.subset[s.attributes.blockId] as string : undefined
+                        localizedCategory: tbSubset && typeof tbSubset[s.attributes.blockId] === "string"
+                            ? tbSubset[s.attributes.blockId] as string : undefined
                     };
                     return mappedSi;
                 });
