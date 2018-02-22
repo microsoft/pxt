@@ -66,9 +66,6 @@ namespace pxt.winrt {
                 port.cancellingDeferred = deferred;
                 stoppedReadingOpsPromise = stoppedReadingOpsPromise.then(() => {
                     return deferred.promise
-                        .then(() => {
-                            console.log("A deferred was resolved");
-                        })
                         .timeout(500)
                         .catch((e) => {
                             pxt.reportError("winrt_device", `could not cancel reading operation for a device: ${e.message}`);
@@ -83,7 +80,6 @@ namespace pxt.winrt {
                     const port = activePorts[deviceId];
                     if (port.device) {
                         const device = port.device;
-                        console.log("About to close() a device");
                         device.close();
                     }
                 });
@@ -139,27 +135,24 @@ namespace pxt.winrt {
             if (!activePorts[id] || !!port.cancellingDeferred) {
                 return;
             }
-            console.log(`[${++readingOpsCount}] Starting read operation`);
-            port.readingOperation = reader.loadAsync(16);
+            port.readingOperation = reader.loadAsync(32);
             port.readingOperation.done((bytesRead) => {
-                console.log(`=== [${--readingOpsCount}] Read operation completed: ${bytesRead}`);
                 let msg = reader.readString(Math.floor(reader.unconsumedBufferLength / 4) * 4);
                 pxt.Util.bufferSerial(serialBuffers, msg, id);
                 setTimeout(() => readMore(), 1);
             }, (e) => {
                 const status = (<any>port.readingOperation).operation.status;
-                console.log(`=== [${--readingOpsCount}] Error in read operation: ${status}`);
                 if (status === Windows.Foundation.AsyncStatus.canceled) {
                     reader.detachStream();
                     reader.close();
                     if (port.cancellingDeferred) {
-                        port.cancellingDeferred.resolve();
+                        setTimeout(() => port.cancellingDeferred.resolve(), 25);
                     }
                 } else {
                     setTimeout(() => startDevice(id), 1000);
                 }
             });
         };
-        setTimeout(() => readMore(), 10);
+        setTimeout(() => readMore(), 100);
     }
 }
