@@ -966,13 +966,11 @@ export class ProjectView
                 .then(() => {
                     return pxt.winrt.releaseAllDevicesAsync();
                 })
-                .catch((e) => {
-                    pxt.log(`Error disconnecting devices: ${e.message}`);
-                })
                 .then(() => {
                     return this.resetWorkspace();
                 });
-        });
+        })
+        .done();
     }
 
     promptRenameProjectAsync(): Promise<boolean> {

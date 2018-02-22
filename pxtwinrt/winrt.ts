@@ -39,7 +39,7 @@ namespace pxt.winrt {
         navMgr.onbackrequested = (e) => {
             // Ignore the built-in back button; it tries to back-navigate the sidedoc panel, but it crashes the
             // app if the sidedoc has been closed since the navigation happened
-            console.log("BACK NAVIGATION");
+            pxt.log("BACK NAVIGATION");
             navMgr.appViewBackButtonVisibility = uiCore.AppViewBackButtonVisibility.collapsed;
             e.handled = true;
         };
@@ -92,40 +92,44 @@ namespace pxt.winrt {
         return Promise.resolve()
             .then(() => {
                 if (packetIO) {
-                    console.log(`disconnecting packetIO`);
+                    pxt.log(`disconnecting packetIO`);
                     return packetIO.disconnectAsync();
                 }
                 return Promise.resolve();
             })
             .catch((e) => {
-                console.log(`error disconnecting packetIO: ${e.message}`);
+                pxt.reportError("winrt_device", `error disconnecting packetIO: ${e.message}`);
             })
             .then(() => {
-                console.log("suspending serial");
+                pxt.log("suspending serial");
                 return suspendSerialAsync();
+            })
+            .catch((e) => {
+                pxt.reportError("winrt_device", `error suspending serial: ${e.message}`);
             });
     }
 
     function initialActivationHandler(args: ActivationArgs) {
-        (Windows.UI.WebUI.WebUIApplication as any).removeEventListener("activated", initialActivationHandler);
+        Windows.UI.WebUI.WebUIApplication.removeEventListener("activated", initialActivationHandler);
         initialActivationDeferred.resolve(args);
     }
 
     function suspendingHandler(args: SuspendingArgs) {
-        console.log(`suspending`);
+        pxt.log(`suspending`);
         const suspensionDeferral = args.suspendingOperation.getDeferral();
 
         return releaseAllDevicesAsync()
             .then(
                 () => suspensionDeferral.complete(),
                 (e) => suspensionDeferral.complete()
-            );
+            )
+            .done();
     }
 
     function resumingHandler(args: ResumingArgs) {
-        console.log(`resuming`);
+        pxt.log(`resuming`);
         if (packetIO) {
-            console.log(`reconnet pack io`);
+            pxt.log(`reconnet pack io`);
             packetIO.reconnectAsync().done();
         }
         initSerial();

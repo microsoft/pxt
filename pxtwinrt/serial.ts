@@ -66,8 +66,13 @@ namespace pxt.winrt {
                 port.cancellingDeferred = deferred;
                 stoppedReadingOpsPromise = stoppedReadingOpsPromise.then(() => {
                     return deferred.promise
+                        .then(() => {
+                            console.log("A deferred was resolved");
+                        })
                         .timeout(500)
-                        .catch((e) => { });
+                        .catch((e) => {
+                            pxt.reportError("winrt_device", `could not cancel reading operation for a device: ${e.message}`);
+                        });
                 });
                 currentRead.cancel();
             }
@@ -78,6 +83,7 @@ namespace pxt.winrt {
                     const port = activePorts[deviceId];
                     if (port.device) {
                         const device = port.device;
+                        console.log("About to close() a device");
                         device.close();
                     }
                 });
@@ -112,12 +118,13 @@ namespace pxt.winrt {
         }
     }
 
+    let readingOpsCount = 0;
     function startDevice(id: string) {
         let port = activePorts[id];
         if (!port) return;
         if (!port.device) {
             let status = Windows.Devices.Enumeration.DeviceAccessInformation.createFromId(id).currentStatus;
-            pxt.debug(`device issue: ${status}`);
+            pxt.reportError("winrt_device", `could not connect to serial device; device status: ${status}`);
             return;
         }
 
@@ -125,25 +132,23 @@ namespace pxt.winrt {
         port.device.baudRate = 115200;
         let stream = port.device.inputStream;
         let reader = new streams.DataReader(stream);
+        reader.inputStreamOptions = streams.InputStreamOptions.partial;
         let serialBuffers: pxt.Map<string> = {};
         let readMore = () => {
             // Make sure the device is still active
-            if (!activePorts[id]) {
+            if (!activePorts[id] || !!port.cancellingDeferred) {
                 return;
             }
-            port.readingOperation = reader.loadAsync(32);
+            console.log(`[${++readingOpsCount}] Starting read operation`);
+            port.readingOperation = reader.loadAsync(16);
             port.readingOperation.done((bytesRead) => {
-                port.readingOperation = undefined;
-                if (port.cancellingDeferred) {
-                    port.cancellingDeferred.resolve();
-                }
-
+                console.log(`=== [${--readingOpsCount}] Read operation completed: ${bytesRead}`);
                 let msg = reader.readString(Math.floor(reader.unconsumedBufferLength / 4) * 4);
                 pxt.Util.bufferSerial(serialBuffers, msg, id);
-                setTimeout(() => readMore(), 10);
+                setTimeout(() => readMore(), 1);
             }, (e) => {
                 const status = (<any>port.readingOperation).operation.status;
-                port.readingOperation = undefined;
+                console.log(`=== [${--readingOpsCount}] Error in read operation: ${status}`);
                 if (status === Windows.Foundation.AsyncStatus.canceled) {
                     reader.detachStream();
                     reader.close();
