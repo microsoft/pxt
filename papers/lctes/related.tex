@@ -2,7 +2,7 @@
 \label{sec:related}
 In this section, we analyse other novice programming environments, alternate approaches to higher-level languages on microcontrollers, alternative native runtime environments, and finally other mechanisms of transferring programs to microcontrollers.
 
-%% potentially cut this one...
+%% potentially cut this
 \subsection{Novice programming environments}
 
 Arduino~\cite{buildingArduino2014} is an environment for programming microcontrollers, aimed at novices. However, its c-based APIs introduces barriers for novice programmers~\cite{blikstein2013gears}. Scratch~\cite{ScratchCACM2009} is a widely adopted, event-based visual programming environment environment designed to introduce novice programmers to computer science concepts. Extensions enable the programming of physical devices from Scratch. However, devices require constant tethered connections to operate, restricting potential projects in educational and maker~\cite{dougherty2012maker} settings. ArduoBlock~\cite{Ardubloc28:online} brings visual programming to the Arduino, but it lacks the event-based blocks Scratch users are familiar with.
@@ -19,7 +19,7 @@ Our approach bears most similarity to the latter, where we compile higher level 
 
 \subsection{Embedded runtime environments}
 
-Embedd runtime environments can range from simple C++ classes that control hardware, to real-time operating systems (RTOSs) with scheduling and memory management.
+%Embedded runtime environments can range from simple C++ classes that control hardware, to real-time operating systems (RTOSs) with scheduling and memory management.
 
 Arduino~\cite{buildingArduino2014} is an example of a simple platform where the developer uses high-level APIs to control hardware; there is no scheduler, and memory management is discouraged through a heavy emphasis on global variables.
 
