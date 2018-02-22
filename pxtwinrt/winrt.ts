@@ -33,13 +33,13 @@ namespace pxt.winrt {
 
         const uiCore = Windows.UI.Core;
         const navMgr = uiCore.SystemNavigationManager.getForCurrentView();
-        const app = Windows.UI.WebUI.WebUIApplication as any;
-        app.addEventListener("suspending", suspendingHandler, false);
-        app.addEventListener("resuming", resumingHandler, false);
+        const app = Windows.UI.WebUI.WebUIApplication;
+        app.addEventListener("suspending", suspendingHandler);
+        app.addEventListener("resuming", resumingHandler);
         navMgr.onbackrequested = (e) => {
             // Ignore the built-in back button; it tries to back-navigate the sidedoc panel, but it crashes the
             // app if the sidedoc has been closed since the navigation happened
-            console.log("BACK NAVIGATION");
+            pxt.log("BACK NAVIGATION");
             navMgr.appViewBackButtonVisibility = uiCore.AppViewBackButtonVisibility.collapsed;
             e.handled = true;
         };
@@ -49,8 +49,8 @@ namespace pxt.winrt {
             .then(() => {
                 if (importHexImpl) {
                     importHex = importHexImpl;
-                    app.removeEventListener("activated", initialActivationHandler, false);
-                    app.addEventListener("activated", fileActivationHandler, false);
+                    app.removeEventListener("activated", initialActivationHandler);
+                    app.addEventListener("activated", fileActivationHandler);
                 }
             });
     }
@@ -84,23 +84,54 @@ namespace pxt.winrt {
             });
     }
 
+    export function releaseAllDevicesAsync(): Promise<void> {
+        if (!isWinRT()) {
+            return Promise.resolve();
+        }
+
+        return Promise.resolve()
+            .then(() => {
+                if (packetIO) {
+                    pxt.log(`disconnecting packetIO`);
+                    return packetIO.disconnectAsync();
+                }
+                return Promise.resolve();
+            })
+            .catch((e) => {
+                e.message = `error disconnecting packetIO: ${e.message}`;
+                pxt.reportException(e);
+            })
+            .then(() => {
+                pxt.log("suspending serial");
+                return suspendSerialAsync();
+            })
+            .catch((e) => {
+                e.message = `error suspending serial: ${e.message}`;
+                pxt.reportException(e);
+            });
+    }
+
     function initialActivationHandler(args: ActivationArgs) {
-        (Windows.UI.WebUI.WebUIApplication as any).removeEventListener("activated", initialActivationHandler);
+        Windows.UI.WebUI.WebUIApplication.removeEventListener("activated", initialActivationHandler);
         initialActivationDeferred.resolve(args);
     }
 
     function suspendingHandler(args: SuspendingArgs) {
-        console.log(`suspending`);
-        if (packetIO) {
-            console.log(`disconnet pack io`);
-            packetIO.disconnectAsync().done();
-        }
-        suspendSerial();
+        pxt.log(`suspending`);
+        const suspensionDeferral = args.suspendingOperation.getDeferral();
+
+        return releaseAllDevicesAsync()
+            .then(
+                () => suspensionDeferral.complete(),
+                (e) => suspensionDeferral.complete()
+            )
+            .done();
     }
+
     function resumingHandler(args: ResumingArgs) {
-        console.log(`resuming`);
+        pxt.log(`resuming`);
         if (packetIO) {
-            console.log(`reconnet pack io`);
+            pxt.log(`reconnet pack io`);
             packetIO.reconnectAsync().done();
         }
         initSerial();
