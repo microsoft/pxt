@@ -76,12 +76,6 @@ namespace pxt.winrt {
 
             return getDevicesPromise
                 .then((devices) => {
-                    // TEMP REMOVE
-                    if (!isRetry) {
-                        return Promise.reject(new Error("testing device not found"));
-                    }
-                    // ...TEMP
-
                     if (!devices || !devices[0]) {
                         pxt.debug("no hid device found");
                         return Promise.reject(new Error("no hid device found"));
