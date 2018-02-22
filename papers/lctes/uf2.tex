@@ -12,6 +12,6 @@ Our new file format, \UF, consists of one or more 512-byte self-contained blocks
 
 For simplicity, the 512-byte \UF blocks usually contain 256 bytes of payload data. While 50\% density might seem low, the 16-byte-per-line HEX format typically used has dansity of around 35\%. Regardless, we have not found this to be a problem, since the files are small by standard of modern computers (under 1000k), and on the MCU side the bottleneck is speed of flash erase, not the USB bus (which reaches 1000k/s).
 
-The minimal implementation of the \UF bootloader is \emph{just 1 - 2k of code}, depending on the microcontroller instruction set and USB interfaces.
+The minimal implementation of the \UF bootloader is \emph{just 1 - 2k bytes of flash memory}, depending on the microcontroller instruction set and USB interfaces.
 
 % The \UF bootloader on SAMD21 (which is 8k of code), in addition to straightforward \UF flashing, also contains a legacy serial bootloader for Arduino, a custom USB HID protocol for flashing with a native application (requiring no drivers), a similar protocol exposed via WebUSB (which allows direct access in recent versions of the Chrome browser), as well as \UF read-back capability (ie., a \UF file is exposed in the virtual FAT that contains current content of the MCU flash; as \MC embeds source code in binaries this lets the user drag the current \UF file from a board into \MC browser window to load the project).
