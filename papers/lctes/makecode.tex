@@ -15,7 +15,7 @@ Figure~\ref{fig:screenSnap} shows a screen snapshot of the \MC web app for the C
 which has five sections:
 (A) the menu bar allows switching between the two editors;
 (B) the simulator shows the CPX board and provides feedback on user code executed in the browser;
-(C) the toolbar provides access to device-specific APIs and programming elements;
+(C) the toolbar provides access to rtdevice-specific APIs and programming elements;
 (D) the programming canvas (showing here the blocks corresponding to the JavaScript from Figure~\ref{fig:example});
 (E) the download button invokes the compiler to produce a binary executable.
 
@@ -147,8 +147,8 @@ encoder/decoder, generates machine code and resolves runtime references, produci
 including Intel's HEX format~\cite{IntelHEX} and the \UF format (created by
 the authors for faster device flashing) documented in the Appendix (Section~\ref{sec:uf2}).
 
-
-The \MC compiler supports the STS language subset of TypeScript described in Section~\ref{sec:sts},
+\label{sec:untagged-tagged}
+The \MC compiler supports the STS language subset of TypeScript
 with two compilation strategies: untagged and tagged. Under the untagged strategy,
 a JavaScript number is interpreted as a C++ \texttt{int} by default and the type system is used
 to statically distinguish primitive values from boxed values. As a result, the untagged
