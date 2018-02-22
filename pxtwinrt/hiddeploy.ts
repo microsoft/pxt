@@ -140,8 +140,8 @@ namespace pxt.winrt {
     const hidSelectors: string[] = [];
     const watchers: Windows.Devices.Enumeration.DeviceWatcher[] = [];
     let deviceCount: number = 0;
-    let expectingAdd: boolean = true;
-    let expectingRemove: boolean = true;
+    let expectingAdd: boolean = false;
+    let expectingRemove: boolean = false;
 
     export function initWinrtHid(reconnectUf2WrapperCb: () => Promise<void>, disconnectUf2WrapperCb: () => Promise<void>) {
         const wd = Windows.Devices;
