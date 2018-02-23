@@ -1,7 +1,5 @@
 \section{Related Work}
 \label{sec:related}
-In this section, we analyse other novice programming environments, alternate approaches to higher-level languages on microcontrollers, alternative native runtime environments, and finally other mechanisms of transferring programs to microcontrollers.
-
 %% potentially cut this
 \subsection{Novice programming environments}
 
@@ -29,7 +27,7 @@ Although the platforms above are widely used by C/C++ developers, none of these 
 
 \subsection{Flashing microcontrollers}
 
-There are two common ways to transfer a program to the flash memory of a microcontroller: for embedded developers, a specialized debugger chip; for hobbyists, a custom serial protocol~\cite{AVRDUDEA15:online}. Both approaches require operating system drivers.
+There are two common ways to transfer a program to the flash of a microcontroller: for embedded developers, a specialized debugger chip; for hobbyists, a custom serial protocol~\cite{AVRDUDEA15:online}. Both approaches require operating system drivers.
 
 ARM's mbed platform provides DAPLink~\cite{GitHubAR5:online}, firmware that presents itself to an external computer as a USB pen drive. DAPLink firmware exposes a virtual file system that caters for normal file system behaviour, and handles the decoding of Intel HEX files~\cite{IntelHEX} --- the firmware consumes large amounts of flash and RAM.
 
