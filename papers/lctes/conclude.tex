@@ -1,6 +1,16 @@
 \section{Conclusion}
 \label{sec:conclude}
 
-We have presented and evaluated a new platform designed to bring modern language features and tooling to microcontrollers. Our aim was to do this in an extensible way which supports novice programmers with block-based programming while providing a progression path to a text-based scripting language and ultimately to C++. Our platform includes a new C++ runtime called \CO which is designed to make efficient use of the limited resources on a microcontroller. A statically-typed subset of TypeScript forms the basis for both blocks- and text-based programs, created and compiled using a new web-based IDE named \MC.
+We have presented and evaluated a new web-based platform designed to bring modern language features and tooling to microcontrollers. Composing are platform are:
 
-Our aspiration is to enable a new paradigm for programming pretty-much anything, even an Arduino Uno-class MCU, by anyone -- novices and professional developers alike, from anywhere, i.e. without the need for traditional heavyweight embedded toolchains and IDEs. Our open-source implementation is in daily use, with thousands of users writing programs targeted at several different MCU-based devices. In this sense, we have achieved our goal. We also have anecdotal evidence that our platform -- in terms of both language and tooling -- is intuitive to professional developers with no experience of embedded development. 
+\begin{itemize}
+
+\item \MCN, a \emph{no installation} programming environment, that supports novice programmers with \emph{block-based and text-based higher-level languages}, and compiles programs \emph{in the browser}.
+
+\item \CON, a C++ runtime that \emph{bridges the semantic gap} between higher level languages and C++, thereby enabling the efficient mapping of higher level languages onto native C++ calls,
+
+\item \UFN, a new file format that enables the \emph{driverless}, \emph{efficient}, programming of microcontrollers.
+
+\end{itemize}
+
+Combined, our approach to running higher level languages on microcontrollers is up to 50x more performant than other approaches. Further, by using modern tooling, and higher level languages, our approach lowers the barrier to entry for microcontroller programming. Our aspiration is to engage with, and encourage \emph{everyone} to explore embedded systems.
