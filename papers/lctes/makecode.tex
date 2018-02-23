@@ -15,8 +15,8 @@ Figure~\ref{fig:screenSnap} shows a screen snapshot of the \MC web app for the C
 which has five sections:
 (A) the menu bar allows switching between the two editors;
 (B) the simulator shows the CPX board and provides feedback on user code executed in the browser;
-(C) the toolbar provides access to device-specific APIs and programming elements;
-(D) the programming canvas (showing here the blocks corresponding to the JavaScript from Figure~\ref{fig:example});
+(C) the toolbar provides access to rtdevice-specific APIs and programming elements;
+(D) the programming canvas;
 (E) the download button invokes the compiler to produce a binary executable.
 
 The web app encapsulates all the components needed to deliver a programming experience
@@ -31,8 +31,7 @@ from Figure~\ref{fig:makecode}.
 
 \begin{figure*}[t]
     \includegraphics[width=6in]{CPXfig.pdf}
-\caption{\label{fig:screenSnap}Screen snapshot of the \MC web app, showing the Blockly
-view of the JavaScript from Figure~\ref{fig:example}.}
+\caption{\label{fig:screenSnap}Screen snapshot of the \MC web app.}
 \end{figure*}
 
 \subsection{Static TypeScript (STS)}
@@ -54,7 +53,7 @@ which permits a more efficient and traditional property lookup for class instanc
 STS goes further than StrongScript by outlawing downcasts (necessary for our untagged implementation).
 
 \subsection{Device runtime and Shim Generation}
-
+\label{sec:shim-gen}
 A \MC target is defined, in part, by its device runtime, which can be a combination of C++
 and STS code, as shown in the lower-left of Figure~\ref{fig:makecode}.
 All the target's C++ files are precompiled (by a C++ compiler in the cloud)
@@ -67,7 +66,7 @@ a unique aspect of \MCN's design.
 Whether runtime components are authored in C++ or STS, all runtime APIs are exposed as fully-typed
 TypeScript definitions. A fully-typed runtime improves the end-user experience
 by making it easier to discover APIs; it also enables the type inference provided by the TypeScript
-compiler to infer types for (unannotated) user programs, as in Figure~\ref{fig:example}.
+compiler to infer types for (unannotated) user programs.
 
 \MC supports a simple foreign function interface from STS to C++ based on namespaces,
 enumerations, functions, and basic type mappings. \MC uses top-level namespaces to organize sets of related functions.  Preceding a C++ namespace, enumeration, or function
@@ -132,7 +131,7 @@ data structures must be careful to break cycles to ensure complete deallocation.
 When a user requests a download of the compiled binary, \MC first invokes the TypeScript language service to perform type inference and type checking on the
 user's program, the device runtime written in STS, as well as the TypeScript declarations
 corresponding to the C++ device runtime. It then checks that the
-combined TypeScript program is within the STS subset through additional syntactic and type checks over the typed AST (detailed in Section~\ref{sec:sts}).  Assuming all the
+combined TypeScript program is within the STS subset through additional syntactic and type checks over the typed AST.  Assuming all the
 above checks pass, \MC then performs tree shaking of the AST to remove unused functions.
 The reduced AST then is compiled to an intermediate representation (IR) that makes explicit: labelled control
 flow among a sequence of instructions with conditional and unconditional jumps; heap cells; field accesses; store operations,
@@ -147,8 +146,8 @@ encoder/decoder, generates machine code and resolves runtime references, produci
 including Intel's HEX format~\cite{IntelHEX} and the \UF format (created by
 the authors for faster device flashing) documented in the Appendix (Section~\ref{sec:uf2}).
 
-
-The \MC compiler supports the STS language subset of TypeScript described in Section~\ref{sec:sts},
+\label{sec:untagged-tagged}
+The \MC compiler supports the STS language subset of TypeScript
 with two compilation strategies: untagged and tagged. Under the untagged strategy,
 a JavaScript number is interpreted as a C++ \texttt{int} by default and the type system is used
 to statically distinguish primitive values from boxed values. As a result, the untagged
