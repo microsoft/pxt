@@ -31,13 +31,9 @@ the CPX (Atmel SAMD21 MCU), and the Uno (Atmel Atmega MCU).
 The Uno is the simplest of these devices,
 consisting of an 8-bit processor running at 16 MHz,
 with only 2kB of RAM and 32kB of flash.
-The Uno has no onboard components other than the microcontroller which supports
-GPIO, Serial, and I2C.
-The micro:bit has a 32-bit Cortex-M0 clocked at 16MHz, with 16kB RAM and 256kB of flash. It has numerous onboard components
-including a 5x5 LED matrix display, a compass, accelerometer, buttons, GPIO, I2C, Serial, and Bluetooth Low Energy.
+The micro:bit has a 32-bit Cortex-M0 clocked at 16MHz, with 16kB RAM and 256kB of flash.
 The CPX is a 32-bit Cortex-M0+, which offers greater energy efficiency and performance; it clocks at 48 MHz, has 32kB of RAM and
-256kB of flash. On board the CPX are: RGB pixels, an infrared transmitter and receiver, a touch sensor, buttons, accelerometer, speaker,
-microphone and GPIO.
+256kB of flash.
 
 The Uno and micro:bit \MC targets use the untagged strategy, while the CPX target takes the tagged strategy (see Section~\ref{sec:untagged-tagged}).
 
@@ -61,8 +57,8 @@ to ensure logging does not affect time-related measurements.
 
 To place the performance of \MC in context, we perform a comparative evaluation of \MC against two state-of-the-art
 solutions, using native C++ as our baseline. The two points of comparison are MicroPython~\cite{MicroPython}, an implementation
-of Python for microcontrollers, and Espruino~\cite{espruinoBook}, an implementation of JavaScript for micrcontrollers.
-For the CPX, a fork of MicroPython known as ``CircuitPython'' was used. Both MicroPython and Espruino uses virtual machine (VM) approaches.
+of Python for MCUs, and Espruino~\cite{espruinoBook}, an implementation of JavaScript for MCUs.
+For the CPX, a fork of MicroPython known as ``CircuitPython'' was used. Both MicroPython and Espruino use virtual machine (VM) approaches.
 
 To give an indicative general case execution time cost of each solution, we created a simple program that simply
 counts from 0 to 100,000 in a tight loop in each solutions' respective language;
@@ -149,7 +145,7 @@ The vertical band indicates typical stack sizes for \MC programs based on a repr
 \caption{\label{table:time-ram-consumption}RAM consumption and processing time for various asynchronous operations in \CO.}
 \end{table}
 
-To gauge the cost of asynchronous operations in \CON, we tested three commonly used code paths, designed to determine the efficiency of \CON's \emph{fork-on-block} Asynchronous Procedure Call (APC) mechanism that underpins all event handlers in \MC and \CO. We measure the RAM and processor cost of: (1) creating a fiber; (2) handling a non-blocking APC call; and (3) handling a blocking APC call. Table~\ref{table:time-ram-consumption} presents our results. Again, the Adafruit CPX device was used for this experiment.
+To gauge the cost of asynchronous operations in \CON, we tested three commonly used code paths, designed to determine the efficiency of \CON's \emph{fork-on-block} Asynchronous Procedure Call (APC) mechanism that underpins all event handlers in \MC and \CO. We measure the RAM and processor cost of: (1) creating a fiber; (2) handling a non-blocking APC call; and (3) handling a blocking APC call. Table~\ref{table:time-ram-consumption} presents our results. Again, the CPX was used for this experiment.
 
 These results highlight the performance gains of the opportunistic fork-on-block mechanism over a naive approach that would execute every event handler in a separate fiber. For non-blocking calls, the best case, this has a small overhead of 32 bytes of RAM and is not processor intensive, versus the worst case, which incurs a large overhead of 204 bytes of RAM and 32.4 microseconds of processor time.
 
