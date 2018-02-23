@@ -1,4 +1,4 @@
-\section{The \CO Runtime \& \UF }
+\section{The \CO Runtime}
 \label{sec:codal}
 
 \CO is a lightweight, object-oriented, componentized C++ runtime for microcontrollers designed to provide an efficient abstraction layer that is the target for higher level languages. \CO is composed of five key elements:
@@ -17,7 +17,7 @@
 \CO offers a simple yet powerful model for handling hardware or user defined events. Events are modeled as a tuple of two integer values - specifying an \emph{id} (namespace) and a \emph{value}.
 Typically, an id correlates to a specific software component, which may be as simple as a button or complex as a wireless network interface. The value relates to a specific event that is unique within the id namespace. All events pass through the \CO MessageBus. Application developers can then \emph{listen} to events on this bus, by defining a C/C++ function to be invoked when an event is raised. Events can be raised at any time simply by creating an \emph{Event} C++ object, which then invokes the event handlers of any registered listeners.
 
-For example, when a \MC user wishes to detect the brightness of a room, a listen call to the MessageBus with a component ID of the light sensor and a threshold event is the underlying mechanism enabled by the runtime, as illustrated by the equivalent C++ code snippet in Figure~\ref{fig:messageBus}.
+Continuing the example of detecting the brightness of a room used in Section~\ref{sec:shim-gen}, a listen call to the MessageBus with a component ID of the light sensor and a threshold event is the underlying mechanism enabled by the runtime, as illustrated by the equivalent C++ code snippet in Figure~\ref{fig:messageBus}.
 
 \begin{figure}
     \begin{lstlisting}
@@ -45,6 +45,12 @@ The \CO scheduler makes use of two novel mechanisms to optimize for MCU hardware
 Secondly, the \CO scheduler supports transparent APCs. Any function can be \emph{invoked} as an APC. Conceptually, this is equivalent to calling the given function in its own fiber. However, the \CO runtime provides a common-case transparent optimization for APCs we call \emph{fork-on-block} - whereby a fiber will only be created at the point at which the given function attempts a blocking operation such as sleep() or wait\_for\_event(). Any functions which do not block therefore do not incur a full context switch overhead.
 
 When invoking an APC, the scheduler snapshots the current processor context and stack pointer (but not the whole stack). If the scheduler is re-entered before the APC completes, a new fiber context is created at the point of descheduling, and placed on the appropriate wait queue. The previously stored context in then restored, and execution continues from the point at which the APC was first invoked. This mechanism provides potentially high RAM savings for processing of MessageBus event handlers in particular.
+
+Scheduling and concurrency is shared by both high and low level languages, and therefore handled uniformly by \CO. This means that when a foreign function call from blocks is mapped to C++, blocking semantics are handled directly in that mapping, \emph{translating the semantics of the blocks transparently}. The ``on light bright'' block, roughly maps to Figure~\ref{fig:messageBus}.
+
+
+
+%To provide unity, \CO natively supports continuations in two ways. Firstly, through asynchronous procedure calls that may occur at any point in the future, where a condition and callback function are given (Figure~\ref{fig:messageBus}). Secondly, through the
 
 \subsection{Memory Management}
 \CO implements its own lightweight heap allocator, introducing reentrant versions of the libc malloc family of functions to permit universal access to heap memory in user or interrupt code. The heap allocator is flexible and reconfigurable, allowing the specification of multiple heaps across memory and it is optimized for repeat allocations of memory blocks that are commonplace in embedded systems.
