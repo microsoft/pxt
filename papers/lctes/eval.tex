@@ -10,18 +10,17 @@ give insights into the performance of \MC and \CO across three devices
 
 Throughout this
 section we break down results into the two basic layers (\CO and \MCN)
-to give an insight into how each layer performs.
-(we refer to \emph{\MC wrappers} as \MC throughout this evaluation):
+to give an insight into how each layer performs:
 \begin{itemize}
 \item \emph{\CO}: the device runtime, against which we write C++ programs;
-\item \emph{\MC wrappers}: the C++ and STS wrapping \CO
+\item \emph{\MC}: the C++ and STS wrapping \CO
 to expose it to \MC, against which we write STS programs.
 \end{itemize}
 
 \subsection{Benchmarks, Devices, and Methodology}
 
 To analyze the performance of our solution, we have written a suite of programs to evaluate
-different aspects of \MC and \CO when running on a representative selection of real hardware devices.
+different aspects of \MC and \CO  on a representative selection of real hardware devices.
 Throughout, we use the C++ \CO benchmarks as a baseline;
 the STS benchmarks show the overhead added by \MC.
 
@@ -38,7 +37,7 @@ The micro:bit has a 32-bit Cortex-M0 clocked at 16MHz, with 16kB RAM and 256kB o
 including a 5x5 LED matrix display, a compass, accelerometer, buttons, GPIO, I2C, Serial, and Bluetooth Low Energy.
 The CPX is a 32-bit Cortex-M0+, which offers greater energy efficiency and performance; it clocks at 48 MHz, has 32kB of RAM and
 256kB of flash. On board the CPX are: RGB pixels, an infrared transmitter and receiver, a touch sensor, buttons, accelerometer, speaker,
-microphone, GPIO, I2C, and Serial.
+microphone and GPIO.
 
 The Uno and micro:bit \MC targets use the untagged strategy, while the CPX target takes the tagged strategy (see Section~\ref{sec:untagged-tagged}).
 
@@ -77,7 +76,7 @@ resulting in a further 3x slowdown. For both devices, we can observe that \MC ou
 Espruino by at least an order of magnitude.
 
 MicroPython and similar environment cannot run on Arduino Uno due to flash and RAM size limitations.
-We have also run into these, and as a result developed two compilation modes for AVR.
+We have also run into these limitations, and as a result developed two compilation modes for AVR.
 One compiles STS to AVR machine code, and the other (\MC VM) generates density-optimized byte code for
 a tiny (~500 bytes of code) interpreter.
 The native strategy achieves code density of about 60.8 bytes per statement,
@@ -163,14 +162,14 @@ These results highlight the performance gains of the opportunistic fork-on-block
                                                                                                 & CPX & micro:bit & Uno  \\ \hline
 \multicolumn{1}{|c|}{\MC}                                                                       & 20.46 & 12.14     & 7.79 \\ \hline
 \multicolumn{1}{|c|}{\CO}                                                                       & 29.85 & 34.35     & 13.7 \\ \hline
-\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}Mbed and \\ Supporting Libraries\end{tabular}} & 14.99 & 24.28     & -    \\ \hline
+\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}Supporting Libraries\end{tabular}} & 14.99 & 24.28     & -    \\ \hline
 \multicolumn{1}{|c|}{C++ Standard Library}                                                     & 43.14 & 24        & 1.03 \\ \hline
 \end{tabular}
 
 \caption{\label{table:flash-consumption}The total flash consumption of code required to support \MC (kB).}
 \end{table}
 
-MCUs make use of internal non-volatile FLASH memory to store program code. Table~\ref{table:flash-consumption} shows the per device flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library and optionally, Mbed.
+MCUs make use of internal non-volatile FLASH memory to store program code. Table~\ref{table:flash-consumption} shows the per device flash consumption of each software library used in the final \MC binary. To obtain these numbers, we profiled the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library and supporting libraries.
 In comparison to other languages, \MC and \CO consume a small amount of flash: CircuitPython consumes 201.404 kB, micropython consumes 228.044 kB, and Espruino consumes 142.196 kB of flash. This means that users can write sizeable applications in \MC, without the worry of running out of flash memory.
 
 From the bottom up, the profile of the standard library changes dramatically for each device: The Uno has a very lightweight standard library; the microbit uses 64-bit integer operations (for timers) which requires extra standard library functions; and the CPX requires software floating point operations pulling in more standard library functions.
@@ -186,7 +185,7 @@ The size of \CO and \MC scales linearly with the amount of functionality a devic
                                                                                                 & CPX & micro:bit & Uno   \\ \hline
 \multicolumn{1}{|c|}{\MC}                                                                       & 0.612 & 1.069     & 0.074 \\ \hline
 \multicolumn{1}{|c|}{\CO}                                                                       & 0.369 & 0.214     & 0.156 \\ \hline
-\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}mbed and Supporting \\ Libraries\end{tabular}} & 0.312 & 0.923     & -     \\ \hline
+\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}Supporting Libraries\end{tabular}} & 0.312 & 0.923     & -     \\ \hline
 \multicolumn{1}{|c|}{C++ Standard Library}                                                     & 0.161 & 0.149     & 0.074 \\ \hline
 \end{tabular}
 \caption{\label{table:ram-consumption}The total static RAM consumption for an \MC binary (kB).}

@@ -44,10 +44,9 @@ The \CO scheduler makes use of two novel mechanisms to optimize for MCU hardware
 
 Secondly, the \CO scheduler supports transparent APCs. Any function can be \emph{invoked} as an APC. Conceptually, this is equivalent to calling the given function in its own fiber. However, the \CO runtime provides a common-case transparent optimization for APCs we call \emph{fork-on-block} - whereby a fiber will only be created at the point at which the given function attempts a blocking operation such as sleep() or wait\_for\_event(). Any functions which do not block therefore do not incur a full context switch overhead.
 
-When invoking an APC, the scheduler snapshots the current processor context and stack pointer (but not the whole stack). If the scheduler is re-entered before the APC completes, a new fiber context is created at the point of descheduling, and placed on the appropriate wait queue. The previously stored context in then restored, and execution continues from the point at which the APC was first invoked. This mechanism provides potentially high RAM savings for processing of MessageBus event handlers in particular.
+When invoking an APC, the scheduler snapshots the current processor context and stack pointer (but not the whole stack). If the scheduler is re-entered before the APC completes, a new fiber context is created at the point of descheduling, and placed on the appropriate wait queue. The previously stored context is then restored, and execution continues from the point at which the APC was first invoked. This mechanism provides potentially high RAM savings for processing of MessageBus event handlers in particular.
 
-Scheduling and concurrency is shared by both high and low level languages, and therefore handled uniformly by \CO. This means that when a foreign function call from blocks is mapped to C++, blocking semantics are handled directly in that mapping, \emph{translating the semantics of the blocks transparently}. The ``on light bright'' block, roughly maps to Figure~\ref{fig:messageBus}.
-
+\CO's scheduling and eventing models are shared by both high and low level languages, and therefore handled uniformly. Therefore when a foreign function call is mapped to C++, that C++ function is capable of blocking the calling fiber without infringing on the concurrency model of the higher level language. This enables, for example, a C++ device driver to block a TypeScript program when awaiting data without changing affecting the behaviour of other Typescript code acting asynchronously - as in Figure~\ref{fig:screenSnap}.
 
 
 %To provide unity, \CO natively supports continuations in two ways. Firstly, through asynchronous procedure calls that may occur at any point in the future, where a condition and callback function are given (Figure~\ref{fig:messageBus}). Secondly, through the
@@ -68,7 +67,7 @@ Scheduling and concurrency is shared by both high and low level languages, and t
 
 This approach brings the benefits of abstraction and reusability to \CON, but without losing the hardware specific benefits seen in flat abstraction models where every MCU is made to look the same, even though their capabilities are different. This can be seen in the Arduino and mbed APIs, for example.
 
-Finally, we group together the components of a physical device to form a \emph{device model}. This is a singleton C++ class that, through composition of device driver components, provides a configured representation of the capabilities of a device. Such a model provides for an elegant OO API for programming a device and also a static representation that forms an ideal target for the \MC linker to bind high level STS interfaces to low level optimized code. An example device model for the Adafruit CPX is shown in Figure~\ref{fig:codalDeviceModel} for reference.
+Finally, we group together the components of a physical device to form a \emph{device model}. This is a singleton C++ class that, through composition of device driver components, provides a configured representation of the capabilities of a device. Such a model provides for an elegant OO API for programming a device and also a static representation that forms an ideal target for the \MC linker to bind high level STS interfaces to low level optimized code. An example device model for the CPX is shown in Figure~\ref{fig:codalDeviceModel} for reference.
 
  \MC is further supported by an annotated C++ library (\emph{\MC wrappers}) defining and abstracting the mapping from \CO to TypeScript. The use of \MC wrappers ensures that different \MC targets that use \CO share a common TypeScript and block API vocabulary.
 
@@ -80,17 +79,17 @@ class CircuitPlayground : public CodalDevice
   public:
     MessageBus                  messageBus;
     CPlayTimer                  timer;
-    mbed::Serial                serial;
+    SAMD21Serial                serial;
     CircuitPlaygroundIO         io;
     Button                      buttonA;
-    mbed::I2C                   i2c;
+    SAMD21I2C                   i2c;
     LIS3DH                      accelerometer;
     NonLinearAnalogSensor       thermometer;
     AnalogSensor                lightSensor;
     ...
 };
 \end{lstlisting}
-\caption{\label{fig:codalDeviceModel}Device Model for Adafruit CPX}
+\caption{\label{fig:codalDeviceModel}Device Model for the Adafruit CPX}
 \end{figure}
 
 
