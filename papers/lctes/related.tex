@@ -27,7 +27,7 @@ Although the platforms above are widely used by C/C++ developers, none of these 
 
 \subsection{Flashing microcontrollers}
 
-There are two common ways to transfer a program to the flash of a microcontroller: for embedded developers, a specialized debugger chip; for hobbyists, a custom serial protocol~\cite{AVRDUDEA15:online}. Both approaches require operating system drivers. ARM's mbed platform provides DAPLink~\cite{GitHubAR5:online}, firmware that presents itself to an external computer as a USB pen drive. DAPLink exposes a virtual file system that caters for normal file system behaviour, and handles the decoding of Intel HEX files~\cite{IntelHEX} --- the firmware consumes large amounts of flash and RAM.
+There are two common ways to transfer a program to the flash of a microcontroller: for embedded developers, a specialized debugger chip; for hobbyists, a custom serial protocol~\cite{AVRDUDEA15:online}. Both approaches require operating system drivers. ARM's mbed platform provides DAPLink~\cite{GitHubAR5:online}, firmware that presents itself to an external computer as a USB pen drive. DAPLink exposes a virtual file system that caters for normal file system behaviour, and handles the decoding of Intel HEX files~\cite{IntelHEX} --- the firmware consumes 66 kB of flash and 13 kB RAM.
 
 \UF contributes a new file format that \emph{greatly simplifies} the virtual file system approach, reducing complexity of the firmware, and thusly code size.
 
