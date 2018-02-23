@@ -1,6 +1,6 @@
 namespace pxsim.visuals {
     export interface BoardViewOptions {
-        visual: string |  BoardImageDefinition,
+        visual: string | BoardImageDefinition,
         wireframe?: boolean,
         highContrast?: boolean
     }
@@ -28,6 +28,7 @@ namespace pxsim.visuals {
     }
 
     export class BoardHost {
+        private opts: BoardHostOpts;
         private parts: IBoardPart<any>[] = [];
         private wireFactory: WireFactory;
         private breadboard: Breadboard;
@@ -40,13 +41,14 @@ namespace pxsim.visuals {
         private style: SVGStyleElement;
         private defs: SVGDefsElement;
         private state: CoreBoard;
-        private useCrocClips: boolean;
 
         constructor(view: BoardView, opts: BoardHostOpts) {
             this.boardView = view;
+            this.opts = opts;
+            if (!opts.boardDef.pinStyles)
+                opts.boardDef.pinStyles = {};
             this.state = opts.state;
             let activeComponents = opts.partsList;
-            this.useCrocClips = opts.boardDef.useCrocClips;
 
             let useBreadboard = 0 < activeComponents.length || opts.forceBreadboardLayout;
             if (useBreadboard) {
@@ -77,7 +79,7 @@ namespace pxsim.visuals {
                 this.style = <SVGStyleElement>svg.child(this.view, "style", {});
                 this.defs = <SVGDefsElement>svg.child(this.view, "defs", {});
 
-                this.wireFactory = new WireFactory(under, over, edges, this.style, this.getLocCoord.bind(this));
+                this.wireFactory = new WireFactory(under, over, edges, this.style, this.getLocCoord.bind(this), this.getPinStyle.bind(this));
 
                 let allocRes = allocateDefinitions({
                     boardDef: opts.boardDef,
@@ -157,6 +159,11 @@ namespace pxsim.visuals {
             }
             return coord;
         }
+        public getPinStyle(loc: Loc): PinStyle {
+            if (loc.type == "breadboard")
+                return "female";
+            else return this.opts.boardDef.pinStyles[(<BoardLoc>loc).pin] || "female";
+        }
 
         public addPart(partInst: PartInst): IBoardPart<any> {
             let part: IBoardPart<any> = null;
@@ -203,7 +210,7 @@ namespace pxsim.visuals {
             return part;
         }
         public addWire(inst: WireInst): Wire {
-            return this.wireFactory.addWire(inst.start, inst.end, inst.color, this.useCrocClips);
+            return this.wireFactory.addWire(inst.start, inst.end, inst.color);
         }
         public addAll(allocRes: AllocatorResult) {
             allocRes.partsAndWires.forEach(pAndWs => {

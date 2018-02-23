@@ -275,11 +275,11 @@ namespace pxt.blocks {
 
     // Unify the *return* type of the parameter [n] of block [b] with point [p].
     function unionParam(e: Environment, b: B.Block, n: string, p: Point) {
+        attachPlaceholderIf(e, b, n);
         try {
-            attachPlaceholderIf(e, b, n);
             union(returnType(e, getInputTargetBlock(b, n)), p);
         } catch (e) {
-            throwBlockError("The parameter " + n + " of this block is of the wrong type. More precisely: " + e, b);
+            // TypeScript should catch this error and bubble it up
         }
     }
 
@@ -316,11 +316,8 @@ namespace pxt.blocks {
                                 try {
                                     union(p1, p2);
                                 } catch (e) {
-                                    throwBlockError("Comparing objects of different types", b);
+                                    // TypeScript should catch this error and bubble it up
                                 }
-                                let t = find(p1).type;
-                                if (t != pString.type && t != pBoolean.type && t != pNumber.type && t != null)
-                                    throwBlockError("I can only compare strings, booleans and numbers", b);
                                 break;
                         }
                         break;
@@ -359,7 +356,7 @@ namespace pxt.blocks {
                             try {
                                 union(p1, tr);
                             } catch (e) {
-                                throwBlockError("Assigning a value of the wrong type to variable " + x, b);
+                                // TypeScript should catch this error and bubble it up
                             }
                         }
                         break;
@@ -511,7 +508,7 @@ namespace pxt.blocks {
     }
 
     function checkNumber(n: number, b: B.Block) {
-        if (n === Infinity || isNaN(n)) {
+        if (!isFinite(n) || isNaN(n)) {
             throwBlockError(lf("Number entered is either too large or too small"), b);
         }
     }
@@ -659,6 +656,17 @@ namespace pxt.blocks {
 
     }
 
+    function compileMathJsOp(e: Environment, b: B.Block, comments: string[]): JsNode {
+        const op = b.getFieldValue("OP");
+        const args = [compileExpression(e, getInputTargetBlock(b, "ARG0"), comments)];
+
+        if ((b as any).getInput("ARG1")) {
+            args.push(compileExpression(e, getInputTargetBlock(b, "ARG1"), comments));
+        }
+
+        return H.mathCall(op, args);
+    }
+
     function compileProcedure(e: Environment, b: B.Block, comments: string[]): JsNode[] {
         const name = escapeVarName(b.getFieldValue("NAME"), e, true);
         const stmts = getInputTargetBlock(b, "STACK");
@@ -755,6 +763,8 @@ namespace pxt.blocks {
                 expr = compileListGet(e, b, comments); break;
             case "lists_index_set":
                 expr = compileListSet(e, b, comments); break;
+            case "math_js_op":
+                expr = compileMathJsOp(e, b, comments); break;
             case pxtc.TS_OUTPUT_TYPE:
                 expr = extractTsExpression(e, b, comments); break;
             default:
@@ -767,7 +777,7 @@ namespace pxt.blocks {
                         expr = compileStdCall(e, b, call, comments);
                 }
                 else {
-                    pxt.reportError("blocks", "unabled compile expression", { "details": b.type });
+                    pxt.reportError("blocks", "unable to compile expression", { "details": b.type });
                     expr = defaultValueForType(returnType(e, b));
                 }
                 break;
