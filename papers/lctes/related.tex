@@ -11,9 +11,9 @@ With the environments above, additional software must be installed, which create
 
 Recently, virtual machines supporting most of the semantics of higher level languages like JavaScript, Java, and Python, have been ported to 32-bit microcontrollers by maker~\cite{dougherty2012maker} communities. Examples include: micropython~\cite{MicroPython}, CircuitPython, and Espruino~\cite{espruinoBook}. These VMs consume a large amount of RAM and flash memory, and run significantly slower than native languages.
 
-In the research community, the motive to bring higher-level languages to microcontrollers exists~\cite{koshy2005vmstar,st2009picobit,vaugon2015programming}, yet, in all cases, these solutions consume more CPU cycles than native solutions, therefore more power. Rather than running a full-featured VM, others enable higher level languages to run efficiently by stripping out advanced language features, in favour of efficient, native execution~\cite{varma2004java}.
+In the research community, the motive to bring higher-level languages to microcontrollers exists~\cite{koshy2005vmstar,st2009picobit,vaugon2015programming}. Rather than running a full-featured VM, others enable higher level languages to run efficiently by stripping out advanced language features, in favour of efficient, native execution~\cite{varma2004java}. Comparing these solutions to our solution is challenging due to a misalignment in evaluation metrics and microcontrollers. For example PICOBit uses an 8-bit MCU, and evaluates the cost of a VM, without the cost of a runtime environment. Simply accounting for a 32-bit MCU in this case, results in factor of 4 multiplication of most metrics.
 
-Our approach bears most similarity to the latter, where we compile higher level languages to an \emph{optimised, event-driven} C++ runtime (\CON).
+Our approach bears most similarity to~\cite{varma2004java}, where we compile higher level languages to an \emph{optimised, event-driven} C++ runtime (\CON).
 
 \subsection{Embedded runtime environments}
 
