@@ -1,5 +1,11 @@
 # Microsoft MakeCode Blog
 
+## [Micro:bit v0.14.18](/blog/microbit/v0.14.18)
+
+February 23rd, 2018
+
+A servicing release for the micro:bit editor.
+
 ## [# マイクロビット はじめてのコンピュータサイエンス (CS Intro)が日本語になりました](/blog/microbit/csintro-japanese)
 
 January 26th, 2018 by Ryuta Hosaka
