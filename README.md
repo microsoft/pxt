@@ -62,7 +62,7 @@ To build the PXT command line tools:
 
 ```
 npm install
-npm run jake
+npm run build
 ```
 
 Then install the `pxt` command line tool (only need to do it once):
