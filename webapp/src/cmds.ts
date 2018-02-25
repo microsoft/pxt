@@ -167,7 +167,7 @@ export function initCommandsAsync(): Promise<void> {
     if (pxt.BrowserUtils.hasWebKitHost()) {
         pxt.debug(`deploy/save using webkit host`);
         pxt.commands.deployCoreAsync = webKitHostDeployCoreAsync;
-        pxt.commands.saveOnlyAsync = webKitHostDeployCoreAsync;
+        pxt.commands.saveOnlyAsync = webKitSaveDeployCoreAsync;
     }
     else if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
