@@ -112,6 +112,12 @@
 
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
+    .sideDocs #sidedocs, #sidedocsframe, .sideDocs #sidedocsframe-wrapper {
+        width: @sideBarWidthLarge !important;
+    }
+    .sideDocs #sidedocstoggle {
+        right: @sideBarWidthLarge !important;
+    }
 }
 
 /* Small Monitor */
@@ -154,10 +160,10 @@
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    .sideDocs #sidedocs, #sidedocsframe {
-        width: @sideBarWidthSmall;
+    .sideDocs #sidedocs, #sidedocsframe, .sideDocs #sidedocsframe-wrapper {
+        width: @sideBarWidthSmall !important;
     }
     .sideDocs #sidedocstoggle {
-        right: @sideBarWidthSmall;
+        right: @sideBarWidthSmall !important;
     }
 }
