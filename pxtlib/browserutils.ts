@@ -249,6 +249,14 @@ namespace pxt.BrowserUtils {
         return windowOpen;
     }
 
+    export function hasWebKitHost(): boolean {
+        const webkit = (<any>window).webkit;
+        return webkit
+            && webkit.messageHandlers
+            && webkit.messageHandlers.host
+            && webkit.messageHandlers.host.postMessage;
+    }
+
     // for browsers that strictly require that a download gets initiated within a user click
     export function isBrowserDownloadWithinUserContext(): boolean {
         const versionString = browserVersion();
