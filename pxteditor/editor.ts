@@ -257,7 +257,6 @@ namespace pxt.editor {
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
         fieldEditors?: IFieldCustomOptions[];
         toolboxOptions?: IToolboxOptions;
-        winrtHandleDeviceNotFoundAsync?: (io: pxt.HF2.PacketIO) => Promise<void>
     }
 
     export interface MonacoToolboxDefinition {

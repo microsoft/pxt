@@ -62,6 +62,48 @@ namespace pxt.winrt {
     }
 
     /**
+     * Most Arduino devices support switching into bootloader by opening the COM port at 1200 baudrate.
+     */
+    export function bootloaderViaBaud() {
+        if (!appTarget || !appTarget.compile || !appTarget.compile.useUF2 ||
+            !appTarget.simulator || !appTarget.simulator.boardDefinition || !appTarget.simulator.boardDefinition.uf2BootloaderBaudSwitch) {
+            return Promise.reject(new Error("device does not support switching to bootloader via baudrate"));
+        }
+        let allSerialDevices: Windows.Devices.SerialCommunication.SerialDevice[];
+        const vidPidInfo = appTarget.simulator.boardDefinition.uf2BootloaderBaudSwitch;
+        const selector: pxtc.HidSelector = {
+            vid: vidPidInfo.vid,
+            pid: vidPidInfo.pid,
+            usageId: undefined,
+            usagePage: undefined
+        };
+        return connectSerialDevicesAsync([selector])
+            .then((serialDevices) => {
+                if (!serialDevices || serialDevices.length === 0) {
+                    // No device found, it really looks like no device is plugged in. Bail out.
+                    return Promise.reject(new Error("no serial devices to switch into bootloader"));
+                }
+
+                allSerialDevices = serialDevices;
+
+                if (allSerialDevices.length) {
+                    isSwitchingToBootloader();
+                }
+
+                allSerialDevices.forEach((dev) => {
+                    dev.baudRate = 1200;
+                    dev.close();
+                });
+
+                // A long delay is needed before attempting to connect to the bootloader device, enough for the OS to
+                // recognize the device has been plugged in. Without drivers, connection to the device might still fail
+                // the first time, but drivers should be installed by the time the user clicks Download again, at which
+                // point flashing will work without the user ever needing to manually set the device to bootloader
+                return Promise.delay(1500);
+            });
+    }
+
+    /**
      * Connects to all matching serial devices without initializing the full PXT serial stack. Returns the list of
      * devices that were successfully connected to, but doesn't do anything with these devices.
      */

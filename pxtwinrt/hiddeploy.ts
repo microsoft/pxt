@@ -23,8 +23,7 @@ namespace pxt.winrt {
         }
 
         isSwitchingToBootloader() {
-            expectingAdd = true;
-            expectingRemove = true;
+            isSwitchingToBootloader();
         }
 
         disconnectAsync(): Promise<void> {
@@ -107,23 +106,20 @@ namespace pxt.winrt {
                     return Promise.resolve();
                 })
                 .catch((e) => {
-                    if (winrtHandleDeviceNotFoundAsync && !isRetry) {
-                        return winrtHandleDeviceNotFoundAsync(this)
-                            .catch(() => {
-                                return rejectDeviceNotFound();
-                            });
+                    if (isRetry) {
+                        return rejectDeviceNotFound();
                     }
-                    return rejectDeviceNotFound();
+                    return bootloaderViaBaud()
+                        .then(() => {
+                            return this.initAsync(true);
+                        })
+                        .catch(() => {
+                            return rejectDeviceNotFound();
+                        });
+
                 });
         }
     }
-
-    /**
-     * Targets can implement this function in their extension to have custom handling of HID device not found. If this
-     * method returns a resolved promise, deployment continues as if the device had been found and connected to. If
-     * this method returns a rejected promise, deployment fails with the default error message from initAsync().
-     */
-    export let winrtHandleDeviceNotFoundAsync: (io: WindowsRuntimeIO) => Promise<void>;
 
     export let packetIO: WindowsRuntimeIO = undefined;
     export function mkPacketIOAsync(): Promise<pxt.HF2.PacketIO> {
@@ -135,6 +131,13 @@ namespace pxt.winrt {
                 return Promise.reject(e);
             })
             .then(() => packetIO);
+    }
+
+    export function isSwitchingToBootloader() {
+        expectingAdd = true;
+        if (packetIO && packetIO.dev) {
+            expectingRemove = true;
+        }
     }
 
     const hidSelectors: string[] = [];

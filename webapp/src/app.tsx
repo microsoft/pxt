@@ -1055,8 +1055,8 @@ export class ProjectView
         this.reload = true;
         return workspace.resetAsync()
             .done(
-                () => window.location.reload(),
-                () => window.location.reload()
+            () => window.location.reload(),
+            () => window.location.reload()
             );
     }
 
@@ -2178,9 +2178,6 @@ function initExtensionsAsync(): Promise<void> {
                 if (res.toolboxOptions.monacoToolbox) {
                     monacoToolbox.overrideToolbox(res.toolboxOptions.monacoToolbox);
                 }
-            }
-            if (res.winrtHandleDeviceNotFoundAsync) {
-                pxt.winrt.winrtHandleDeviceNotFoundAsync = res.winrtHandleDeviceNotFoundAsync;
             }
         });
 }
