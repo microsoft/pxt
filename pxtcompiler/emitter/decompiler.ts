@@ -1159,6 +1159,16 @@ ${output}</xml>`;
                 r.fields = [getField("OP", "POWER")];
                 return r;
             }
+            else if (pxt.Util.startsWith(info.qName, "Math.")) {
+                const op = info.qName.substring(5);
+                if (isSupportedMathFunction(op)) {
+                    const r = mkExpr("math_js_op");
+                    r.inputs = info.args.map((arg, index) => mkValue("ARG" + index, getOutputBlock(arg), "math_number"))
+                    r.fields = [getField("OP", op)];
+                    r.mutation = { "op-type": info.args.length == 2 ? "binary" : "unary" };
+                    return r;
+                }
+            }
 
             if (info.attrs.blockId === pxtc.PAUSE_UNTIL_TYPE) {
                 const r = mkStmt(pxtc.PAUSE_UNTIL_TYPE);
@@ -1774,6 +1784,12 @@ ${output}</xml>`;
             else if (info.qName == "Math.pow") {
                 return undefined;
             }
+            else if (pxt.Util.startsWith(info.qName, "Math.")) {
+                const op = info.qName.substring(5);
+                if (isSupportedMathFunction(op)) {
+                    return undefined;
+                }
+            }
 
             if (info.attrs.blockId === pxtc.PAUSE_UNTIL_TYPE) {
                 const predicate = n.arguments[0];
@@ -2318,5 +2334,9 @@ ${output}</xml>`;
             default:
                 return false;
         }
+    }
+
+    function isSupportedMathFunction(op: string) {
+        return pxt.blocks.MATH_FUNCTIONS.unary.indexOf(op) !== -1 || pxt.blocks.MATH_FUNCTIONS.binary.indexOf(op) !== -1;
     }
 }
