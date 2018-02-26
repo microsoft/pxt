@@ -12,7 +12,7 @@ namespace pxtblockly {
     export class FieldColorNumber extends Blockly.FieldColour implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
 
-        private colour_: string;
+        protected colour_: string;
 
         private colorPicker_: goog.ui.ColorPicker;
         private className_: string;
