@@ -1265,7 +1265,7 @@ ${output}</xml>`;
                     shadowBlockInfo = blocksInfo.blocksById[param.shadowBlockId];
                 }
 
-                if (paramInfo && paramInfo.isEnum && e.kind === SK.CallExpression) {
+                if (e.kind === SK.CallExpression) {
                     // Many enums have shim wrappers that need to be unwrapped if used
                     // in a parameter that is of an enum type. By default, enum parameters
                     // are dropdown fields (not value inputs) so we want to decompile the
@@ -1313,7 +1313,7 @@ ${output}</xml>`;
                         if (shadowBlockInfo && shadowBlockInfo.attributes.shim === "TD_ID") {
                             addInput(mkValue(aName, getPropertyAccessExpression(e as PropertyAccessExpression, false, param.shadowBlockId), param.shadowBlockId));
                         }
-                        else if (paramInfo && paramInfo.isEnum || callInfo && callInfo.attrs.fixedInstance) {
+                        else if (paramInfo && paramInfo.isEnum || callInfo && (callInfo.attrs.fixedInstance || callInfo.attrs.blockIdentity === info.qName)) {
                             addField(getField(aName, (getPropertyAccessExpression(e as PropertyAccessExpression, true) as TextNode).value))
                         }
                         else {
