@@ -2889,6 +2889,9 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
         sources.push("built/common-sim.d.ts")
     }
 
+    if (!fs.existsSync(sources[0]))
+        return // simulator not yet built; will try next time
+
     let opts: pxtc.CompileOptions = {
         fileSystem: {},
         sourceFiles: sources,
