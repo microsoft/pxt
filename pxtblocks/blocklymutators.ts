@@ -279,6 +279,9 @@ namespace pxt.blocks {
                     this.parameterRenames[param] = declaredName;
                     return `${param}: ${escapeVarName(declaredName, e)}`;
                 }
+                else if (escapedParam != param) {
+                   return `${param}: ${escapedParam}`
+                }
                 return escapedParam;
             }).join(", ");
 
