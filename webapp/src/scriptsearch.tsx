@@ -123,7 +123,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const upd = (v: any) => {
             let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
 
-            // Hidden navigation, used to test /beta or other versions inside released Electron and UWP apps
+            // Hidden navigation, used to test /beta or other versions inside released UWP apps
             // Secret prefix is /@, e.g.: /@beta
             const urlPathExec = /^\/@(.*)$/.exec(str);
             let urlPath = urlPathExec && urlPathExec[1];

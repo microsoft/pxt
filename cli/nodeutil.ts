@@ -22,9 +22,7 @@ export interface SpawnOptions {
 }
 
 //This should be correct at startup when running from command line
-//When running inside Electron it gets updated to the correct path
 export var targetDir: string = process.cwd();
-//When running the Electron app, this will be updated based on targetDir
 export var pxtCoreDir: string = path.join(__dirname, "..");
 
 export function setTargetDir(dir: string) {

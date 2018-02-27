@@ -249,11 +249,10 @@ namespace pxt {
     }
 
     /**
-     * Checks for winrt and electron
+     * Checks for winrt
      */
     function isNativeApp(): boolean {
-        return typeof Windows !== "undefined" ||
-            (typeof process !== "undefined" && process.versions && process.versions["electron"]);
+        return typeof Windows !== "undefined";
     }
 
     // No promises, so here we are
