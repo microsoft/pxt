@@ -1,4 +1,4 @@
-# "Maker", A MakeCode editor for breadboarders
+# Maker: A MakeCode editor for breadboarding
 
 Many devices supported by MakeCode, 
 such as the [micro:bit](https://makecode.microbit.org/) and 
@@ -10,7 +10,7 @@ of parts, wires them up to the board and then codes the system they have made.
 
 ## ~ hint
 
-**Beta zone** The maker is still in beta and evoling, join the fun!
+**Beta zone** The maker is still in beta and evolving, join the fun!
 
 ## ~
 

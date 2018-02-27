@@ -2,7 +2,7 @@
 
 ## [Hello Maker!](/blog/maker/hello)
 
-February 27th, 2018
+February 27th, 2018 by Daryl Zuniga
 
 Introducing a new (beta) editor for bread-board friendly maker boards.
 
