@@ -9,7 +9,7 @@ Arduino-style boards require wiring of sensors and actuators
 to the board's header pins. The user selects a set
 of parts, wires them up to the board and then codes the system they have made. 
 
-In MakeCode for makers, we turn this paradigm on its head: MakeCode's simulator
+In [MakeCode for makers](https://maker.makecode.com/), we turn this paradigm on its head: MakeCode's simulator
 selects basic parts and generates wiring for them from the user's program.
 That is, the user expresses the behavior that they want
 with code, and MakeCode uses that code to configure the simulator, as well as to
@@ -49,7 +49,7 @@ MakeCode isn't explicitly teaching this (today), but users can make connections 
 They experience hardware in a way that is usually only achievable by having the 
 hardware in front of you.
 
-The breadboard simuulator is useful to more people than just beginners:
+The breadboard simulator is useful to more people than just beginners:
 debugging program behavior is much quicker in a simulator, so
 the "inner loop" of development is rapidly sped up.
 
@@ -62,7 +62,7 @@ simulator.
 This tailored file lists the set of parts required, guides
 the user step-by-step and part-by-part to build the final system. 
 
-This on-demand instruction generation is great for use in the eduction
+This on-demand instruction generation is great for use in the education
 and can support teachers in rapidly developing and modifying projects
 for the classroom. There's no need to wait for the next version of a kit -
 you can just change the code and print new instructions.
@@ -75,7 +75,7 @@ It's not obvious what the rules are: what is allowed to connect to what? What ca
 The assembly instructions take users on a safe route and include printed warnings 
 if there is something tricky or easy to make a mistake on.
 
-# Help us expand maker.makecode.com!
+# Help us expand [maker.makecode.com](https://maker.makecode.com/)!
 We welcome pull requests! Here are some ideas for the future:
 
 There many more possible learning opportunities:
