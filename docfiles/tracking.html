@@ -20,8 +20,6 @@
                 telemetryItem.properties["target"] = pxtConfig.targetId;
                 telemetryItem.properties["version"] = pxtConfig.targetVersion;
                 telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/[^a-z]/ig, '')
-                if (typeof window !== "undefined" && window.location && /[?&]electron=1/i.test(window.location.href))
-                    telemetryItem.properties["electron"] = 1;
                 if (typeof Windows !== "undefined")
                     telemetryItem.properties["WindowsApp"] = 1;
             });

@@ -22,7 +22,6 @@ let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let packagedDir = ""
 let localHexDir = path.join("built", "hexcache");
-let electronHandlers: pxt.Map<ElectronHandler> = {};
 
 function setupDocfilesdirs() {
     docfilesdirs = [
@@ -54,33 +53,6 @@ function setupRootDir() {
 }
 
 function setupProjectsDir() {
-    if (serveOptions && serveOptions.electron) {
-        let projectsRootDir = process.cwd();
-
-        if (/^win/.test(os.platform())) {
-            // Use registry to query path of My Documents folder
-            let regQueryResult = "";
-
-            try {
-                let regQueryResult = child_process.execSync("reg query \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders\" /v Personal").toString();
-                let documentsPath = /personal(?:\s+\w+)\s+(.*)/gmi.exec(regQueryResult)[1];
-
-                if (documentsPath) {
-                    projectsRootDir = documentsPath;
-                } else {
-                    projectsRootDir = os.homedir();
-                }
-            } catch (e) {
-                // Fallback to Home directory
-                projectsRootDir = os.homedir();
-            }
-        } else {
-            projectsRootDir = os.homedir();
-        }
-
-        userProjectsDir = path.join(projectsRootDir, userProjectsDirName, pxt.appTarget.appTheme.id);
-    }
-
     nodeutil.mkdirP(userProjectsDir);
 }
 
@@ -369,9 +341,7 @@ export function expandDocFileTemplate(name: string) {
 }
 
 let wsSerialClients: WebSocket[] = [];
-let electronSocket: WebSocket = null;
 let webappReady = false;
-let electronPendingMessages: ElectronMessage[] = [];
 
 function initSocketServer(wsPort: number, hostname: string) {
     console.log(`starting local ws server at ${wsPort}...`)
@@ -562,30 +532,6 @@ function initSocketServer(wsPort: number, hostname: string) {
         })
     }
 
-    function startElectronChannel(request: any, socket: any, body: any) {
-        electronSocket = new WebSocket(request, socket, body);
-        electronSocket.onmessage = function (event: any) {
-            let messageInfo = JSON.parse(event.data) as ElectronMessage;
-
-            if (messageInfo.type === "ready") {
-                webappReady = true;
-                electronPendingMessages.forEach((m) => {
-                    sendElectronMessage(m);
-                });
-            } else if (electronHandlers[messageInfo.type]) {
-                electronHandlers[messageInfo.type](messageInfo.args);
-            }
-        };
-        electronSocket.onclose = function (event: any) {
-            console.log('Electron socket connection closed')
-            electronSocket = null;
-        };
-        electronSocket.onerror = function () {
-            console.log('Electron socket connection closed')
-            electronSocket = null;
-        };
-    }
-
     let wsserver = http.createServer();
     wsserver.on('upgrade', function (request: http.IncomingMessage, socket: WebSocket, body: any) {
         try {
@@ -597,8 +543,6 @@ function initSocketServer(wsPort: number, hostname: string) {
                     startDebug(request, socket, body);
                 else if (request.url == "/" + serveOptions.localToken + "/hid")
                     startHID(request, socket, body);
-                else if (request.url == "/" + serveOptions.localToken + "/electron")
-                    startElectronChannel(request, socket, body);
                 else console.log('refused connection at ' + request.url);
             }
         } catch (e) {
@@ -633,32 +577,15 @@ function initSerialMonitor() {
     })
 }
 
-export interface ElectronMessage {
-    type: string;
-    args?: any
-}
-export interface ElectronHandler { (args?: any): void }
-
 export interface ServeOptions {
     localToken: string;
     autoStart: boolean;
     packaged?: boolean;
-    electron?: boolean;
     browser?: string;
-    electronHandlers?: pxt.Map<ElectronHandler>;
     port?: number;
     hostname?: string;
     wsPort?: number;
     serial?: boolean;
-}
-
-export function sendElectronMessage(message: ElectronMessage) {
-    if (!webappReady) {
-        electronPendingMessages.push(message);
-        return;
-    }
-
-    electronSocket.send(JSON.stringify(message));
 }
 
 // can use http://localhost:3232/streams/nnngzlzxslfu for testing
@@ -740,9 +667,6 @@ export function serveAsync(options: ServeOptions) {
     const wsServerPromise = initSocketServer(serveOptions.wsPort, serveOptions.hostname);
     if (serveOptions.serial)
         initSerialMonitor();
-    if (serveOptions.electronHandlers) {
-        electronHandlers = serveOptions.electronHandlers;
-    }
 
     const server = http.createServer((req, res) => {
         const error = (code: number, msg: string = null) => {

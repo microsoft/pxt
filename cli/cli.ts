@@ -17,7 +17,6 @@ import Map = pxt.Map;
 
 import * as server from './server';
 import * as build from './buildengine';
-import * as electron from "./electron";
 import * as commandParser from './commandparser';
 import * as hid from './hid';
 import * as serial from './serial';
@@ -2071,10 +2070,8 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync(includeSourceMaps))
         .then(() => server.serveAsync({
             autoStart: !globalConfig.noAutoStart,
-            electron: !!parsed.flags["electron"],
             localToken,
             packaged,
-            electronHandlers,
             port: parsed.flags["port"] as number || 0,
             wsPort: parsed.flags["wsport"] as number || 0,
             hostname: parsed.flags["hostname"] as string || "",
@@ -4711,8 +4708,7 @@ function initCommands() {
                 aliases: ["w"],
                 type: "number",
                 argument: "wsport"
-            },
-            electron: { description: "used to indicate that the server is being started in the context of an electron app" }
+            }
         }
     }, serveAsync);
 
@@ -4728,41 +4724,6 @@ function initCommands() {
             new: { description: "force the creation of a new gist" },
         }
     }, publishGistAsync)
-
-    p.defineCommand({
-        name: "electron",
-        help: "SUBCOMMANDS: 'init': prepare target for running inside Electron app; 'run': runs current target inside Electron app; 'package': generates a packaged Electron app for current target",
-        onlineHelp: true,
-        flags: {
-            appsrc: {
-                description: "path to the root of the PXT Electron app in the pxt repo",
-                aliases: ["a"],
-                type: "string",
-                argument: "appsrc"
-            },
-            installer: {
-                description: "('package' only) Also build the installer / zip redistributable for the built app",
-                aliases: ["i"]
-            },
-            just: {
-                description: "During 'run': skips TS compilation of app; During 'package': skips npm install and rebuilding native modules",
-                aliases: ["j"]
-            },
-            product: {
-                description: "path to a product.json file to use instead of the target's default one",
-                aliases: ["p"],
-                type: "string",
-                argument: "product"
-            },
-            release: {
-                description: "('package' only) Instead of using the current local target, use the published target from NPM (value format: <Target's NPM package>[@<Package version>])",
-                aliases: ["r"],
-                type: "string",
-                argument: "release"
-            }
-        },
-        argString: "<subcommand>"
-    }, electron.electronAsync);
 
     p.defineCommand({
         name: "init",
@@ -4985,9 +4946,8 @@ function errorHandler(reason: any) {
     process.exit(20)
 }
 
-let electronHandlers: pxt.Map<server.ElectronHandler>;
 // called from pxt npm package
-export function mainCli(targetDir: string, args: string[] = process.argv.slice(2), handlers?: pxt.Map<server.ElectronHandler>): Promise<void> {
+export function mainCli(targetDir: string, args: string[] = process.argv.slice(2)): Promise<void> {
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
@@ -4998,7 +4958,6 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         return Promise.resolve();
     }
 
-    electronHandlers = handlers;
     nodeutil.setTargetDir(targetDir);
 
     let trg = nodeutil.getPxtTarget()
@@ -5065,10 +5024,6 @@ function initGlobals() {
 
 initGlobals();
 initCommands();
-
-export function sendElectronMessage(message: server.ElectronMessage) {
-    server.sendElectronMessage(message);
-}
 
 if (require.main === module) {
     let targetdir = process.cwd()

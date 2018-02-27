@@ -46,7 +46,6 @@
     "built/typescriptServices.d.ts",
     "built/nodeutil.js",
     "built/server.js",
-    "built/electron.js",
     "built/pyconv.js",
     "built/web/fonts",
     "built/web/*.js",
