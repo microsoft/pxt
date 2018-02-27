@@ -1,5 +1,11 @@
 # Microsoft MakeCode Blog
 
+## [Hello Maker!](/blog/maker/hello)
+
+February 27th, 2018
+
+Introducing a new (beta) editor for bread-board friendly maker boards.
+
 ## [Micro:bit v0.14.18](/blog/microbit/v0.14.18)
 
 February 23rd, 2018

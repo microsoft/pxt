@@ -1,13 +1,20 @@
-![button-and-speaker](../static/blog/maker/maker-2.gif)
+# "Maker", A MakeCode editor for breadboarders
 
-# Code First
 Many devices supported by MakeCode, 
-such as the [micro:bit](http://makecode.microbit.org/) and 
-the [Adafruit Circuit Playground Express](http://makecode.adafruit.com/),
+such as the [micro:bit](https://makecode.microbit.org/) and 
+the [Adafruit Circuit Playground Express](https://makecode.adafruit.com/),
 have a set of built-in sensors and outputs. But
 Arduino-style boards require wiring of sensors and actuators
 to the board's header pins. The user selects a set
 of parts, wires them up to the board and then codes the system they have made. 
+
+## ~ hint
+
+**Beta zone** The maker is still in beta and evoling, join the fun!
+
+## ~
+
+## Code first
 
 In [MakeCode for makers](https://maker.makecode.com/), we turn this paradigm on its head: MakeCode's simulator
 selects basic parts and generates wiring for them from the user's program.
@@ -25,24 +32,28 @@ if users had to manually assemble the hardware.
 Users also don't need to own the parts to see it work.
 
 ## Example: Play a tune
+
+![button-and-speaker](/static/blog/maker/maker-2.gif)
+
 Above is a simple example: the user creates a two-block program to play a tune when a button is pressed. 
 MakeCode detects the hardware requirements from the two blocks: an audio player and a button are needed. 
 MakeCode then automatically chooses hardware, lays it out, wires it, and provides a simulation.
 The button can be clicked with a mouse to play the tune in the browser.
 
 # Breadboard Simulator
-![buttons-and-servo](../static/blog/maker/maker-servo.gif)
+
+![buttons-and-servo](/static/blog/maker/maker-servo.gif)
 
 The simulator provides an interactive experience:
 the buttons are clickable, servos are animated, and audio comes out of the web app.
 There's a lot of detail and learning opportunities available in the simulator.
 
-![hovering-over-breadboard](../static/blog/maker/breadboard-hover.gif)
+![hovering-over-breadboard](/static/blog/maker/breadboard-hover.gif)
 
 Hovering over the breadboard shows you how it's connected internally, while
 hovering over wires shows how the component connects.
 
-![hovering-over-wires](../static/blog/maker/maker-wire-hover.gif)
+![hovering-over-wires](/static/blog/maker/maker-wire-hover.gif)
 
 Users might notice that the speaker and button don't require a connection to positive voltage, while the servo, knob, and LEDs do. 
 MakeCode isn't explicitly teaching this (today), but users can make connections on their own.
@@ -54,7 +65,7 @@ debugging program behavior is much quicker in a simulator, so
 the "inner loop" of development is rapidly sped up.
 
 # Assembly Instructions
-![assembly-instructions](../static/blog/maker/maker-instructions.gif)
+![assembly-instructions](/static/blog/maker/maker-instructions.gif)
 
 For every project, MakeCode can generate a PDF file with step-by-step instructions that 
 correspond to the parts and wiring shown in the breadboard
@@ -75,16 +86,6 @@ It's not obvious what the rules are: what is allowed to connect to what? What ca
 The assembly instructions take users on a safe route and include printed warnings 
 if there is something tricky or easy to make a mistake on.
 
-# Help us expand [maker.makecode.com](https://maker.makecode.com/)!
-We welcome pull requests! Here are some ideas for the future:
+# Help needed!
 
-There many more possible learning opportunities:
-on-hover or other hints can be added to individual components, the breadboard, the logic board, pins, and more;
-these learning hints could also be printed in the assembly instructions.
-
-Parts purchasing could be made trivial. Once the user is happy with their project in the simulator, 
-they could click a button to generate a shopping list that could be fulfilled at a number of electronic hardware retailers.
-
-With community help, it's conceivable that MakeCode could automatically generate a custom PCB for your project.
-Going even further, perhaps the entire project could be shipped to the user fully 
-assembled with the software already loaded onto it. This would democratize electronics in a whole new way.
+We welcome pull requests! Go to https://github.com/Microsoft/pxt-maker to add your board or learn more about the project.
