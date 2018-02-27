@@ -286,7 +286,6 @@ export interface SideDocsState {
 }
 
 export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
-    private firstLoad = true;
     private openingSideDoc = false;
 
     public static notify(message: pxsim.SimulatorMessage) {
@@ -312,10 +311,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     private setUrl(url: string) {
         let el = document.getElementById("sidedocsframe") as HTMLIFrameElement;
         if (el) el.src = url;
-        else this.props.parent.setState({ sideDocsLoadUrl: url });
-        let sideDocsCollapsed = this.firstLoad && (pxt.BrowserUtils.isMobile() || pxt.options.light);
-        this.props.parent.setState({ sideDocsCollapsed: sideDocsCollapsed });
-        this.firstLoad = false;
+        else this.props.parent.setState({ sideDocsLoadUrl: url, sideDocsCollapsed: false });
     }
 
     collapse() {
