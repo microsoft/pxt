@@ -23,8 +23,7 @@ namespace pxt.winrt {
         }
 
         isSwitchingToBootloader() {
-            expectingAdd = true;
-            expectingRemove = true;
+            isSwitchingToBootloader();
         }
 
         disconnectAsync(): Promise<void> {
@@ -54,10 +53,16 @@ namespace pxt.winrt {
                     }));
         }
 
-        initAsync(): Promise<void> {
+        initAsync(isRetry: boolean = false): Promise<void> {
             Util.assert(!this.dev, "HID interface not properly reseted");
             const wd = Windows.Devices;
             const whid = wd.HumanInterfaceDevice.HidDevice;
+            const rejectDeviceNotFound = () => {
+                const err = new Error(U.lf("Device not found"));
+                (<any>err).notifyUser = true;
+                (<any>err).type = "devicenotfound";
+                return Promise.reject(err);
+            };
             const getDevicesPromise = hidSelectors.reduce((soFar, currentSelector) => {
                 // Try all selectors, in order, until some devices are found
                 return soFar.then((devices) => {
@@ -105,10 +110,17 @@ namespace pxt.winrt {
                     return Promise.resolve();
                 })
                 .catch((e) => {
-                    const err = new Error(U.lf("Device not found"));
-                    (<any>err).notifyUser = true;
-                    (<any>err).type = "devicenotfound";
-                    return Promise.reject(err);
+                    if (isRetry) {
+                        return rejectDeviceNotFound();
+                    }
+                    return bootloaderViaBaud()
+                        .then(() => {
+                            return this.initAsync(true);
+                        })
+                        .catch(() => {
+                            return rejectDeviceNotFound();
+                        });
+
                 });
         }
     }
@@ -123,6 +135,13 @@ namespace pxt.winrt {
                 return Promise.reject(e);
             })
             .then(() => packetIO);
+    }
+
+    export function isSwitchingToBootloader() {
+        expectingAdd = true;
+        if (packetIO && packetIO.dev) {
+            expectingRemove = true;
+        }
     }
 
     const hidSelectors: string[] = [];

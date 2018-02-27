@@ -2,6 +2,7 @@
 
 type DeviceWatcher = Windows.Devices.Enumeration.DeviceWatcher;
 type DeviceInfo = Windows.Devices.Enumeration.DeviceInformation;
+type DeviceInfoCollection = Windows.Devices.Enumeration.DeviceInformationCollection;
 type SerialDevice = Windows.Devices.SerialCommunication.SerialDevice;
 type LoadOperation = Windows.Storage.Streams.DataReaderLoadOperation;
 type IBuffer = Windows.Storage.Streams.IBuffer;
@@ -84,6 +85,100 @@ namespace pxt.winrt {
                     }
                 });
                 activePorts = {};
+            });
+    }
+
+    /**
+     * Most Arduino devices support switching into bootloader by opening the COM port at 1200 baudrate.
+     */
+    export function bootloaderViaBaud() {
+        if (!appTarget || !appTarget.compile || !appTarget.compile.useUF2 ||
+            !appTarget.simulator || !appTarget.simulator.boardDefinition || !appTarget.simulator.boardDefinition.bootloaderBaudSwitchInfo) {
+            return Promise.reject(new Error("device does not support switching to bootloader via baudrate"));
+        }
+        let allSerialDevices: Windows.Devices.SerialCommunication.SerialDevice[];
+        const vidPidInfo = appTarget.simulator.boardDefinition.bootloaderBaudSwitchInfo;
+        const selector: pxtc.HidSelector = {
+            vid: vidPidInfo.vid,
+            pid: vidPidInfo.pid,
+            usageId: undefined,
+            usagePage: undefined
+        };
+        return connectSerialDevicesAsync([selector])
+            .then((serialDevices) => {
+                if (!serialDevices || serialDevices.length === 0) {
+                    // No device found, it really looks like no device is plugged in. Bail out.
+                    return Promise.reject(new Error("no serial devices to switch into bootloader"));
+                }
+
+                allSerialDevices = serialDevices;
+
+                if (allSerialDevices.length) {
+                    isSwitchingToBootloader();
+                }
+
+                allSerialDevices.forEach((dev) => {
+                    dev.baudRate = 1200;
+                    dev.close();
+                });
+
+                // A long delay is needed before attempting to connect to the bootloader device, enough for the OS to
+                // recognize the device has been plugged in. Without drivers, connection to the device might still fail
+                // the first time, but drivers should be installed by the time the user clicks Download again, at which
+                // point flashing will work without the user ever needing to manually set the device to bootloader
+                return Promise.delay(1500);
+            });
+    }
+
+    /**
+     * Connects to all matching serial devices without initializing the full PXT serial stack. Returns the list of
+     * devices that were successfully connected to, but doesn't do anything with these devices.
+     */
+    export function connectSerialDevicesAsync(hidSelectors: pxtc.HidSelector[]): Promise<SerialDevice[]> {
+        if (!hidSelectors) {
+            return Promise.resolve([]);
+        }
+
+        const wd = Windows.Devices;
+        const sd = wd.SerialCommunication.SerialDevice;
+        const di = wd.Enumeration.DeviceInformation;
+        const serialDeviceSelectors: string[] = [];
+
+        hidSelectors.forEach((s) => {
+            const sel = sd.getDeviceSelectorFromUsbVidPid(
+                parseInt(s.vid),
+                parseInt(s.pid)
+            );
+            serialDeviceSelectors.push(sel);
+        });
+        const allDevicesPromise = serialDeviceSelectors.reduce((promiseSoFar, sel) => {
+            let deviceInfoSoFar: DeviceInfoCollection;
+            return promiseSoFar
+                .then((diSoFar) => {
+                    deviceInfoSoFar = diSoFar;
+                    return di.findAllAsync(sel, null);
+                })
+                .then((foundDevices: DeviceInfoCollection) => {
+                    if (deviceInfoSoFar) {
+                        for (let i = 0; i < foundDevices.length; ++i) {
+                            deviceInfoSoFar.push(foundDevices[i]);
+                        }
+                    } else {
+                        deviceInfoSoFar = foundDevices;
+                    }
+                    return Promise.resolve(deviceInfoSoFar);
+                });
+        }, Promise.resolve<DeviceInfoCollection>(null));
+
+        return allDevicesPromise
+            .then((allDeviceInfo) => {
+                if (!allDeviceInfo) {
+                    return Promise.resolve([]);
+                }
+
+                return Promise.map(allDeviceInfo, (devInfo: DeviceInfo) => {
+                    return sd.fromIdAsync(devInfo.id);
+                });
             });
     }
 
