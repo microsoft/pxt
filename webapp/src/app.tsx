@@ -997,6 +997,10 @@ export class ProjectView
             Util.jsonCopyFrom(files, options.filesOverride)
         if (options.dependencies)
             Util.jsonMergeFrom(cfg.dependencies, options.dependencies)
+        if (options.tsOnly) {
+            cfg.files = cfg.files.filter(f => f != "main.blocks")
+            delete files["main.blocks"]
+        }
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n";
         return workspace.installAsync({
             name: cfg.name,
@@ -1070,13 +1074,24 @@ export class ProjectView
             disagreeLbl: lf("Cancel")
         }).then(r => {
             if (!r) return Promise.resolve();
-            if (hf2Connection) {
-                return hf2Connection.disconnectAsync()
-                    .then(() => this.resetWorkspace())
-            } else {
-                return this.resetWorkspace()
-            }
-        });
+            return Promise.resolve()
+                .then(() => {
+                    return pxt.winrt.releaseAllDevicesAsync();
+                })
+                .then(() => {
+                    return this.resetWorkspace();
+                });
+        })
+            .done();
+    }
+
+    pair() {
+        pxt.usb.pairAsync()
+            .then(() => {
+                core.infoNotification(lf("Device paired! Try downloading now."))
+            }, (err: Error) => {
+                core.errorNotification(lf("Failed to pair the device: {0}", err.message))
+            })
     }
 
     promptRenameProjectAsync(): Promise<boolean> {
@@ -1123,10 +1138,6 @@ export class ProjectView
     beforeCompile() { }
 
     compile(saveOnly = false) {
-        // the USB init has to be called from an event handler
-        if (/webusb=1/i.test(window.location.href)) {
-            pxt.usb.initAsync().catch(e => { })
-        }
         this.beforeCompile();
         let userContextWindow: Window = undefined;
         if (!pxt.appTarget.compile.useModulator && pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext())
@@ -1777,7 +1788,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             <div id='root' className={rootClasses}>
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
-                        {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
+                        {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> : undefined}
                         <notification.NotificationBanner parent={this} />
                         <container.MainMenu parent={this} />
                     </header>}
@@ -1786,40 +1797,40 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 </div> : undefined}
                 <div id="simulator">
                     <aside id="filelist" className="ui items">
-                        <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden" aria-hidden="true">{lf("Simulator") }</label>
+                        <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden" aria-hidden="true">{lf("Simulator")}</label>
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-labelledby="boardviewLabel">
                         </div>
                         <simtoolbar.SimulatorToolbar parent={this} />
                         <div className="ui item portrait hide">
-                            {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
-                            {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
+                            {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true })} /> : ''}
+                            {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
                         {useSerialEditor ?
                             <div id="serialPreview" className="ui editorFloat portrait hide">
-                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={() => this.openSerial(true) } />
-                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={() => this.openSerial(false) } />
+                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={() => this.openSerial(true)} />
+                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={() => this.openSerial(false)} />
                             </div> : undefined}
                         {sandbox || isBlocks || this.editor == this.serialEditor ? undefined : <filelist.FileList parent={this} />}
                     </aside>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    {this.allEditors.map(e => e.displayOuter()) }
+                    {this.allEditors.map(e => e.displayOuter())}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs" role="main">
                     <div className="ui home projectsdialog">
                         <div className="menubar" role="banner">
-                            <accessibility.HomeAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> }
+                            <accessibility.HomeAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> }
                             <projects.ProjectsMenu parent={this} />
                         </div>
                         <projects.Projects parent={this} ref={v => this.home = v} />
                     </div>
-                </div> : undefined }
+                </div> : undefined}
                 {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined}
                 {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined}
-                {showEditorToolbar ? <div id="editortools" role="complementary" aria-label={lf("Editor toolbar") }>
+                {showEditorToolbar ? <div id="editortools" role="complementary" aria-label={lf("Editor toolbar")}>
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
                 </div> : undefined}
-                {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl}/> : undefined}
+                {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={v => this.extensions = v} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={v => this.importDialog = v} /> : undefined}
@@ -1882,56 +1893,21 @@ function initLogin() {
     }
 }
 
-let serialConnectionPoller: number;
-let hidPingInterval: number;
-let hf2Connection: pxt.HF2.Wrapper;
-
-function startSerialConnectionPoller() {
-    if (serialConnectionPoller == null)
-        serialConnectionPoller = window.setInterval(initSerial, 5000);
-}
-
-function stopSerialConnectionPoller() {
-    clearInterval(serialConnectionPoller);
-    serialConnectionPoller = null;
-}
-
 function initSerial() {
     if (!pxt.appTarget.serial || !pxt.winrt.isWinRT() && (!Cloud.isLocalHost() || !Cloud.localToken))
         return;
 
     if (hidbridge.shouldUse()) {
-        hidbridge.initAsync(true)
-            .then(dev => {
-                hf2Connection = dev;
-                // disable poller when connected; otherwise the forceful reconnecting interferes with
-                // flashing; it may also lead to data loss on serial stream
-                stopSerialConnectionPoller()
-                if (hidPingInterval == null)
-                    hidPingInterval = window.setInterval(() => {
-                        if (serialConnectionPoller == null)
-                            dev.pingAsync()
-                                .then(() => {
-                                }, e => {
-                                    pxt.debug("re-starting connection poller")
-                                    startSerialConnectionPoller()
-                                })
-                    }, 4900)
-                dev.onSerial = (buf, isErr) => {
-                    let data = Util.fromUTF8(Util.uint8ArrayToString(buf))
-                    //pxt.debug('serial: ' + data)
-                    window.postMessage({
-                        type: 'serial',
-                        id: 'n/a', // TODO
-                        data
-                    }, "*")
-                }
-            })
-            .catch(e => {
-                pxt.log(`hidbridge failed to load, ${e}`);
-                startSerialConnectionPoller();
-            })
-        return
+        hidbridge.configureHidSerial((buf, isErr) => {
+            let data = Util.fromUTF8(Util.uint8ArrayToString(buf))
+            //pxt.debug('serial: ' + data)
+            window.postMessage({
+                type: 'serial',
+                id: 'n/a', // TODO
+                data
+            }, "*")
+        });
+        return;
     }
 
     pxt.debug('initializing serial pipe');
@@ -1939,15 +1915,12 @@ function initSerial() {
     let serialBuffers: pxt.Map<string> = {};
     ws.onopen = (ev) => {
         pxt.debug('serial: socket opened');
-        stopSerialConnectionPoller()
     }
     ws.onclose = (ev) => {
         pxt.debug('serial: socket closed')
-        startSerialConnectionPoller()
     }
     ws.onerror = (ev) => {
         pxt.debug('serial: error')
-        startSerialConnectionPoller()
     }
     ws.onmessage = (ev) => {
         try {
@@ -2009,7 +1982,7 @@ function showIcons() {
     core.confirmAsync({
         header: "Icons",
         htmlBody:
-        usedIcons.map(s => `<i style='font-size:2em' class="ui icon ${s}"></i>&nbsp;${s}&nbsp; `).join("\n")
+            usedIcons.map(s => `<i style='font-size:2em' class="ui icon ${s}"></i>&nbsp;${s}&nbsp; `).join("\n")
     })
 }
 
@@ -2217,7 +2190,7 @@ function initExtensionsAsync(): Promise<void> {
 }
 
 pxt.winrt.captureInitialActivation();
-$(document).ready(() => {
+$(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
@@ -2323,7 +2296,6 @@ $(document).ready(() => {
                 theEditor.setState({ editorState: state });
             }
             initSerial();
-            startSerialConnectionPoller();
             initScreenshots();
             initHashchange();
             electron.init();
@@ -2354,7 +2326,6 @@ $(document).ready(() => {
             else theEditor.newProject();
             return Promise.resolve();
         })
-        .then(() => workspace.importLegacyScriptsAsync())
         .done(() => {
             $("#loading").remove();
         });

@@ -73,6 +73,7 @@ namespace pxt.editor {
         temporary?: boolean;
         inTutorial?: boolean;
         dependencies?: pxt.Map<string>;
+        tsOnly?: boolean;
     }
 
     export interface ProjectFilters {
@@ -201,6 +202,7 @@ namespace pxt.editor {
         share(): void;
         about(): void;
         reset(): void;
+        pair(): void;
         showReportAbuse(): void;
         exitAndSave(): void;
         launchFullEditor(): void;

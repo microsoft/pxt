@@ -140,7 +140,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                     homeUrl += "/";
                 }
                 urlPath = urlPath.replace(/^\//, "");
-                window.location.href = homeUrl + urlPath;
+                pxt.winrt.releaseAllDevicesAsync()
+                    .then(() => {
+                        window.location.href = homeUrl + urlPath;
+                    })
+                    .done();
             }
             else {
                 this.setState({ searchFor: str });
@@ -267,6 +271,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 url={"/" + scr.installedVersion}
                                 imageUrl={scr.icon}
                                 onClick={() => addBundle(scr) }
+                                label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
                                 role="option"
                                 />
                         ) }

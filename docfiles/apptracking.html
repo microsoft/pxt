@@ -9,7 +9,7 @@
             overridePageViewDuration: false,
             disableExceptionTracking: true,
             isCookieUseDisabled: !includeCookie,
-            isStorageUseDisabled: true
+            isStorageUseDisabled: !includeCookie
         });
         window.appInsights=appInsights;
         appInsights.queue.push(function () {

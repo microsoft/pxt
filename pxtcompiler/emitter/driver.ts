@@ -186,7 +186,7 @@ namespace ts.pxtc {
             res.diagnostics = patchUpDiagnostics(program.getSemanticDiagnostics(), opts.ignoreFileResolutionErrors);
         }
 
-        let emitStart = Date.now()
+        let emitStart = U.now()
         res.times["typescript"] = emitStart - startTime
 
         if (opts.ast) {
@@ -195,7 +195,7 @@ namespace ts.pxtc {
 
         if (opts.ast || opts.forceEmit || res.diagnostics.length == 0) {
             const binOutput = compileBinary(program, host, opts, res, entryPoint);
-            res.times["compilebinary"] = Date.now() - emitStart
+            res.times["compilebinary"] = U.now() - emitStart
             res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(binOutput.diagnostics))
         }
 
@@ -207,6 +207,8 @@ namespace ts.pxtc {
                 res.outfiles[f.slice(6)] = opts.fileSystem[f]
         }
 
+        res.times["all"] = U.now() - startTime;
+        pxt.tickEvent(`compile`, res.times);
         return res
     }
 

@@ -1,6 +1,6 @@
 # Support
 
-* Try our the [Frequently Asked Questions](/faq).
+* Try our [Frequently Asked Questions](/faq) page.
 
 ## #support
 

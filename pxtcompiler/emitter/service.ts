@@ -118,7 +118,15 @@ namespace ts.pxtc {
             if (stripParams) {
                 t = t.getCallSignatures()[0].getReturnType()
             }
-            return typechecker.typeToString(t, undefined, TypeFormatFlags.UseFullyQualifiedType)
+            const readableName = typechecker.typeToString(t, undefined, TypeFormatFlags.UseFullyQualifiedType)
+
+            // TypeScript 2.0.0+ will assign constant variables numeric literal types which breaks the
+            // type checking we do in the blocks
+            if (!isNaN(Number(readableName))) {
+                return "number";
+            }
+
+            return readableName;
         }
 
         let kind = getSymbolKind(stmt)

@@ -141,7 +141,7 @@ function notify(ce: CacheEntry) {
     }
 
     if (ce.components.length > 0)
-        Util.nextTick(() => ce.components.forEach(c => c.forceUpdate()))
+        ce.components.forEach(c => Util.nextTick(() =>  c.forceUpdate()))
 }
 
 function getVirtualApi(path: string) {

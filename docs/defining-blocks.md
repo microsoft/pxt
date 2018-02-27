@@ -90,6 +90,16 @@ The following types are supported in function signatures that are meant to be ex
 * custom classes that are also exported
 * arrays of the above
 
+## Specifying min and max values
+
+For parameters of type ``number``, you can specify minimum and maximum values, as follows:
+```typescript-ignore
+//% block
+//% v.min=0 v.max= 42
+export function showNumber(v: number, interval: number = 150): void
+{ }
+```
+
 ## Callbacks with Parameters
 
 APIs that take in a callback function will have that callback converted into a statement input.

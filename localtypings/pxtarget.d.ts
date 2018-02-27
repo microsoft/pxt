@@ -12,6 +12,8 @@ declare namespace pxt {
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
         windowsStoreLink?: string;
+        // link to the latest firmware urls (boardid -> url)
+        firmwareUrls?: pxt.Map<string>;
     }
 
     interface PackagesConfig {
@@ -186,7 +188,6 @@ declare namespace pxt {
         shareUrl?: string;
         embedUrl?: string;
         betaUrl?: string;
-        legacyDomain?: string;
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
@@ -298,6 +299,7 @@ declare namespace ts.pxtc {
         useMkcd?: boolean;
         useELF?: boolean;
         useModulator?: boolean;
+        webUSB?: boolean; // use WebUSB when supported        
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;

@@ -1,4 +1,5 @@
 /// <reference path="../../built/pxtlib.d.ts" />
+/// <reference path="../../localtypings/mscc" />
 
 import * as React from "react";
 import * as data from "./data";
@@ -86,6 +87,7 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
 
 export class NotificationBanner extends data.Component<ISettingsProps, {}> {
     renderCore() {
+        const cookies = !!(typeof mscc === "undefined" || mscc.hasConsent());
         const targetTheme = pxt.appTarget.appTheme;
         const isApp = electron.isElectron || pxt.winrt.isWinRT();
         const isLocalServe = location.hostname === "localhost";
@@ -95,6 +97,11 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         const isWindows10 = pxt.BrowserUtils.isWindows10();
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
         const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetConfig && targetConfig.windowsStoreLink && !isApp;
+
+        if (cookies) {
+            // don't show any banner while cookie banner is up
+            return <div></div>;
+        }
 
         if (showWindowsStoreBanner) {
             return (
