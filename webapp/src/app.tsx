@@ -1779,7 +1779,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         }
                                         <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={uiHandler(this.reset)} tabIndex={-1} />
                                         {docMenu ? <div className="ui divider mobile only"></div> : undefined}
-                                        {docMenu ? container.renderDocItems(this.props.parent, "mobile only") : undefined}
+                                        {docMenu ? container.renderDocItems(this, "mobile only") : undefined}
                                         <div className="ui divider"></div>
                                         {targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies")} target="_blank" tabIndex={-1}>{lf("Privacy & Cookies")}</a> : undefined}
                                         {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use")} target="_blank" tabIndex={-1}>{lf("Terms Of Use")}</a> : undefined}
