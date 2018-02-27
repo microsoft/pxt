@@ -140,7 +140,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                     homeUrl += "/";
                 }
                 urlPath = urlPath.replace(/^\//, "");
-                window.location.href = homeUrl + urlPath;
+                pxt.winrt.releaseAllDevicesAsync()
+                    .then(() => {
+                        window.location.href = homeUrl + urlPath;
+                    })
+                    .done();
             }
             else {
                 this.setState({ searchFor: str });
