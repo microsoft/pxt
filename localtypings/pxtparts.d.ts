@@ -45,7 +45,7 @@ declare namespace pxsim {
             SDA: string,
             SCL: string,
         },
-        uf2BootloaderBaudSwitch?: {
+        bootloaderBaudSwitchInfo?: {
             vid: string,
             pid: string,
         };

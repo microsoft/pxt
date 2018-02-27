@@ -93,11 +93,11 @@ namespace pxt.winrt {
      */
     export function bootloaderViaBaud() {
         if (!appTarget || !appTarget.compile || !appTarget.compile.useUF2 ||
-            !appTarget.simulator || !appTarget.simulator.boardDefinition || !appTarget.simulator.boardDefinition.uf2BootloaderBaudSwitch) {
+            !appTarget.simulator || !appTarget.simulator.boardDefinition || !appTarget.simulator.boardDefinition.bootloaderBaudSwitchInfo) {
             return Promise.reject(new Error("device does not support switching to bootloader via baudrate"));
         }
         let allSerialDevices: Windows.Devices.SerialCommunication.SerialDevice[];
-        const vidPidInfo = appTarget.simulator.boardDefinition.uf2BootloaderBaudSwitch;
+        const vidPidInfo = appTarget.simulator.boardDefinition.bootloaderBaudSwitchInfo;
         const selector: pxtc.HidSelector = {
             vid: vidPidInfo.vid,
             pid: vidPidInfo.pid,
