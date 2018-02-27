@@ -997,6 +997,10 @@ export class ProjectView
             Util.jsonCopyFrom(files, options.filesOverride)
         if (options.dependencies)
             Util.jsonMergeFrom(cfg.dependencies, options.dependencies)
+        if (options.tsOnly) {
+            cfg.files = cfg.files.filter(f => f != "main.blocks")
+            delete files["main.blocks"]
+        }
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n";
         return workspace.installAsync({
             name: cfg.name,
@@ -1078,7 +1082,7 @@ export class ProjectView
                     return this.resetWorkspace();
                 });
         })
-        .done();
+            .done();
     }
 
     pair() {

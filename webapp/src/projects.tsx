@@ -174,7 +174,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             }
         }
 
-        const chgCode = (scr: pxt.CodeCard, loadBlocks?: boolean, prj?: pxt.ProjectTemplate) => {
+        const chgCode = (scr: pxt.CodeCard, loadBlocks: boolean, prj?: pxt.ProjectTemplate) => {
             core.showLoading("changingcode", lf("loading..."));
             gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
                 .done(opts => {
@@ -196,6 +196,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                     core.hideLoading("changingcode");
                                 })
                         } else {
+                            opts.tsOnly = true
                             return this.props.parent.createProjectAsync(opts)
                                 .then(() => Promise.delay(500))
                                 .done(() => core.hideLoading("changingcode"));
