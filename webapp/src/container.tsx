@@ -33,7 +33,7 @@ function openDocs(parent: pxt.editor.IProjectView, path: string) {
     parent.setSideDoc(path);
 }
 
-function renderDocItems(parent: pxt.editor.IProjectView, cls: string) {
+export function renderDocItems(parent: pxt.editor.IProjectView, cls: string) {
     const targetTheme = pxt.appTarget.appTheme;
     return targetTheme.docMenu.map(m =>
         m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class={"ui " + cls} onClick={() => openTutorial(parent, m.path)} />
