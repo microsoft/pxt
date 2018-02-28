@@ -87,6 +87,10 @@ namespace pxt.docs.codeCard {
             image.className = "ui cardimage";
             image.src = card.imageUrl;
             image.alt = name;
+            image.onerror = () => {
+                // failed to load, remove
+                imageWrapper.remove();
+            }
             image.setAttribute("role", "presentation");
             imageWrapper.appendChild(image);
             img.appendChild(imageWrapper);
