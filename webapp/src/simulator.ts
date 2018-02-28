@@ -109,6 +109,10 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 case "restart":
                     cfg.restartSimulator();
                     break;
+                case "reload":
+                    stop(true);
+                    cfg.restartSimulator();
+                    break;
                 case "modal":
                     stop();
                     if (!pxt.shell.isSandboxMode() && (!msg.displayOnceId || !displayedModals[msg.displayOnceId])) {

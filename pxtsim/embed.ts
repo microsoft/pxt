@@ -71,7 +71,7 @@ namespace pxsim {
     }
     export interface SimulatorCommandMessage extends SimulatorMessage {
         type: "simulator",
-        command: "modal" | "restart"
+        command: "modal" | "restart" | "reload"
         header?: string;
         body?: string;
         copyable?: string;
@@ -179,6 +179,7 @@ namespace pxsim {
         export function start() {
             window.addEventListener("message", receiveMessage, false);
             let frameid = window.location.hash.slice(1)
+            initAppcache();
             Runtime.postMessage(<SimulatorReadyMessage>{ type: 'ready', frameid: frameid });
         }
 
@@ -199,7 +200,7 @@ namespace pxsim {
                     if (handleCustomMessage) handleCustomMessage((<SimulatorCustomMessage>data));
                     break;
                 case 'pxteditor':
-                    break; //handled elsewhere                
+                    break; //handled elsewhere
                 case 'debugger':
                     if (runtime) {
                         runtime.handleDebuggerMsg(data as DebuggerMessage);
@@ -287,6 +288,19 @@ namespace pxsim {
         if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
             window.parent.postMessage(message, "*");
         }
+    }
+
+    function initAppcache() {
+        if (typeof window !== 'undefined') {
+            if (window.applicationCache.status === window.applicationCache.UPDATEREADY) {
+                reload();
+            }
+            window.applicationCache.addEventListener("updateready", () => reload());
+        }
+    }
+
+    export function reload() {
+        Runtime.postMessage({ type: "simulator", command: "reload" } as SimulatorCommandMessage)
     }
 }
 
