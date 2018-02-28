@@ -804,7 +804,7 @@ namespace pxt.blocks {
                     if (part.kind !== "param") {
                         const f = newLabel(part);
                         if (f) {
-                            fields.push({ field: newLabel(part) });
+                            fields.push({ field: f });
                         }
                     }
                     else {
