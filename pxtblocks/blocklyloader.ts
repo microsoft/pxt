@@ -71,7 +71,7 @@ namespace pxt.blocks {
 
     type NamedField = { field: Blockly.Field, name?: string };
 
-    let usedBlocks: Map<boolean> = {};
+    let usedBlocks: Map<boolean | string> = {}; // Maps a block ID to its translated category name, or to true if not in category mode
     let updateUsedBlocks = false;
 
     // list of built-in blocks, should be touched.
@@ -239,7 +239,7 @@ namespace pxt.blocks {
         return result;
     }
 
-    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement, showCategories = CategoryMode.Basic, comp: pxt.blocks.BlockCompileInfo) {
+    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement, showCategories = CategoryMode.Basic, comp: pxt.blocks.BlockCompileInfo, filters?: BlockFilters) {
         // identity function are just a trick to get an enum drop down in the block
         // while allowing the parameter to be a number
         if (fn.attributes.blockHidden)
@@ -321,9 +321,10 @@ namespace pxt.blocks {
                 }
             }
 
-            if (showCategories === CategoryMode.Basic && isAdvanced) {
-                const type = block.getAttribute("type");
-                usedBlocks[type] = true;
+            if (showCategories === CategoryMode.Basic && isAdvanced &&
+                shouldUseBlockInSearch(fn.attributes.blockId, catName, filters)) {
+                usedBlocks[fn.attributes.blockId] = ns; // ns is localized already
+                updateUsedBlocks = true;
             }
 
             if (fn.attributes.optionalVariableArgs && fn.attributes.toolboxVariableArgs) {
@@ -1233,7 +1234,14 @@ namespace pxt.blocks {
             const blocks = tb.getElementsByTagName("block");
 
             for (let i = 0; i < blocks.length; i++) {
-                usedBlocks[blocks.item(i).getAttribute("type")] = true;
+                const b = blocks.item(i);
+                const bId = b.getAttribute("type");
+                const bCategoryId = b.parentElement && b.parentElement.nodeName === "category" ? b.parentElement.getAttribute("nameid") : undefined;
+                const bTranslatedCat = bCategoryId ? b.parentElement.getAttribute("name") : undefined;
+                if (shouldUseBlockInSearch(bId, bCategoryId, filters)) {
+                    usedBlocks[bId] = bTranslatedCat || true;
+                    updateUsedBlocks = true;
+                }
             }
 
             updateUsedBlocks = true;
@@ -1434,7 +1442,11 @@ namespace pxt.blocks {
                     const blockElements = cat.getElementsByTagName("block");
                     for (let i = 0; i < blockElements.length; i++) {
                         const b = blockElements.item(i);
-                        usedBlocks[b.getAttribute("type")] = true;
+                        const bId = b.getAttribute("type");
+                        const translatedCatName = Util.rlf(`{id:category}${name}`, []);
+                        if (shouldUseBlockInSearch(bId, name, filters)) {
+                            usedBlocks[bId] = translatedCatName;
+                        }
                     }
 
                     if (showCategories === CategoryMode.Basic) {
@@ -3364,5 +3376,19 @@ namespace pxt.blocks {
 
     function getConstantDropdownValues(apis: pxtc.ApisInfo, qName: string) {
         return pxt.Util.values(apis.byQName).filter(sym => sym.attributes.blockIdentity === qName);
+    }
+
+    function shouldUseBlockInSearch(blockId: string, namespaceId: string, filters: BlockFilters): boolean {
+        if (!filters) {
+            return true;
+        }
+        if (namespaceId) {
+            namespaceId = namespaceId.toLowerCase();
+        }
+        const isNamespaceFiltered = filters.namespaces &&
+            filters.namespaces[namespaceId] === FilterState.Disabled || filters.namespaces[namespaceId] === FilterState.Hidden;
+        const isBlockFiltered = filters.blocks &&
+            filters.blocks[blockId] === FilterState.Disabled || filters.blocks[blockId] === FilterState.Hidden;
+        return !isNamespaceFiltered && !isBlockFiltered;
     }
 }
