@@ -1079,6 +1079,11 @@ namespace pxt.blocks {
                 // FIXME: No need to do this if the previous statement was a code block
                 return prefixWithSemicolon(compileExpression(e, target, comments));
             }
+
+            if (p.shadowOptions && p.shadowOptions.toString && returnType(e, target) !== pString) {
+                return H.mkSimpleCall("+", [H.mkStringLiteral(""), compileExpression(e, target, comments)]);
+            }
+
             return compileExpression(e, target, comments)
         }
     }

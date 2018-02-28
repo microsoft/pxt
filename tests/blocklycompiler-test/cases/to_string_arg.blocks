@@ -1,0 +1,62 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+    <variables>
+      <variable type="" id="[KphBG)G|B*8X9h2!(A#">item</variable>
+    </variables>
+    <block type="pxt-on-start" id="N,i05v`Ex0a9C(9{:TBi" x="157" y="112">
+      <statement name="HANDLER">
+        <block type="console_log" id="+7e9tdnh-@;Ng;vy]6J=">
+          <value name="text">
+            <shadow type="text" id="@9N/!VrU*o5tARX0H7)Y">
+              <field name="TEXT"></field>
+            </shadow>
+          </value>
+          <next>
+            <block type="console_log" id="LfFCK)PKKdzx+:f^7@|C">
+              <value name="text">
+                <shadow type="text" id=":,i3v^W2ZT#n=gN?9Iq?">
+                  <field name="TEXT"></field>
+                </shadow>
+                <block type="math_number" id="9RfSwSE`}@mz/[)X.e#Z">
+                  <field name="NUM">5</field>
+                </block>
+              </value>
+              <next>
+                <block type="console_log" id="D/rKuFMQ-IJ#cIf2Sm)B">
+                  <value name="text">
+                    <shadow type="text" id=":,i3v^W2ZT#n=gN?9Iq?">
+                      <field name="TEXT"></field>
+                    </shadow>
+                    <block type="variables_get" id="X6+6uJFBrho%vLYlD79}">
+                      <field name="VAR" id="[KphBG)G|B*8X9h2!(A#" variabletype="">item</field>
+                    </block>
+                  </value>
+                  <next>
+                    <block type="console_log" id="is_@A;U,{@tiTx*_^UkN">
+                      <value name="text">
+                        <shadow type="text" id=":,i3v^W2ZT#n=gN?9Iq?">
+                          <field name="TEXT"></field>
+                        </shadow>
+                        <block type="logic_compare" id=";XU-ui)[5R$}FoAf,cNx">
+                          <field name="OP">EQ</field>
+                          <value name="A">
+                            <shadow type="math_number" id="?,[_MJtf^=y-LZm~EWdb">
+                              <field name="NUM">0</field>
+                            </shadow>
+                          </value>
+                          <value name="B">
+                            <shadow type="math_number" id=",+?+7fLX#P]=EBPGc2aM">
+                              <field name="NUM">0</field>
+                            </shadow>
+                          </value>
+                        </block>
+                      </value>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+  </xml>

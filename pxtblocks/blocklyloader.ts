@@ -791,7 +791,7 @@ namespace pxt.blocks {
             inputs.forEach(inputParts => {
                 const fields: NamedField[] = [];
                 let inputName: string;
-                let inputCheck: string;
+                let inputCheck: string | string[];
                 let hasParameter = false;
 
                 inputParts.forEach(part => {
@@ -902,7 +902,12 @@ namespace pxt.blocks {
                             } else if (pr.type == "boolean") {
                                 inputCheck = "Boolean"
                             } else if (pr.type == "string") {
-                                inputCheck = "String"
+                                if (pr.shadowOptions && pr.shadowOptions["toString"]) {
+                                    inputCheck = undefined;
+                                }
+                                else {
+                                    inputCheck = "String"
+                                }
                             } else {
                                 inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? "Array" : pr.type);
                             }
