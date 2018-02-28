@@ -107,6 +107,7 @@ export class ProjectView
     importDialog: projects.ImportDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     prevEditorId: string;
+    screenshotHandler: (img: string) => void;
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -834,11 +835,8 @@ export class ProjectView
         }
     }
 
-    importProjectFile(file: File) {
-        if (!file) return;
-
-        ts.pxtc.Util.fileReadAsBufferAsync(file)
-            .then(buf => pxt.lzmaDecompressAsync(buf))
+    private importProjectCoreAsync(buf: Uint8Array) {
+        return pxt.lzmaDecompressAsync(buf)
             .then(contents => {
                 let data = JSON.parse(contents) as pxt.cpp.HexFile;
                 this.importHex(data);
@@ -846,6 +844,20 @@ export class ProjectView
                 core.warningNotification(lf("Sorry, we could not import this project."))
                 this.openHome();
             });
+    }
+
+    importProjectFile(file: File) {
+        if (!file) return;
+        ts.pxtc.Util.fileReadAsBufferAsync(file)
+            .then(buf => this.importProjectCoreAsync(buf))
+    }
+
+    importPNGFile(file: File) {
+        if (!file) return;
+        ts.pxtc.Util.fileReadAsBufferAsync(file)
+            .then(buf => screenshot.decodeBlobAsync("data:image/png;base64," +
+                btoa(Util.uint8ArrayToString(buf))))
+            .then(buf => this.importProjectCoreAsync(buf))
     }
 
     importFile(file: File) {
@@ -858,6 +870,8 @@ export class ProjectView
             this.importTypescriptFile(file);
         } else if (isProjectFile(file.name)) {
             this.importProjectFile(file);
+        } else if (isPNGFile(file.name)) {
+            this.importPNGFile(file);
         } else {
             const importer = this.resourceImporters.filter(fi => fi.canImport(file))[0];
             if (importer) {
@@ -951,11 +965,25 @@ export class ProjectView
 
     saveProjectToFileAsync(): Promise<void> {
         const mpkg = pkg.mainPkg
-        return this.exportProjectToFileAsync()
-            .then((buf: Uint8Array) => {
-                const fn = pkg.genFileName(".mkcd");
-                pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
+        if (pxt.appTarget.compile.saveAsPNG) {
+            simulator.driver.postMessage({ type: "screenshot" })
+            return new Promise<void>((resolve, reject) => {
+                this.screenshotHandler = (img) => {
+                    this.screenshotHandler = null
+                    resolve(this.exportProjectToFileAsync()
+                        .then(blob => screenshot.encodeBlobAsync(img, blob))
+                        .then(img => {
+                            const fn = pkg.genFileName(".png");
+                            pxt.BrowserUtils.browserDownloadDataUri(img, fn);
+                        }))
+                }
             })
+        } else
+            return this.exportProjectToFileAsync()
+                .then((buf: Uint8Array) => {
+                    const fn = pkg.genFileName(".mkcd");
+                    pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
+                })
     }
 
     addPackage() {
@@ -1376,11 +1404,14 @@ export class ProjectView
     importFileDialog() {
         let input: HTMLInputElement;
         let ext = ".mkcd";
-        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+        if (pxt.appTarget.compile.hasHex) {
             ext = ".hex";
         }
-        if (pxt.appTarget.compile && pxt.appTarget.compile.useUF2) {
+        if (pxt.appTarget.compile.useUF2) {
             ext = ".uf2";
+        }
+        if (pxt.appTarget.compile.saveAsPNG) {
+            ext = ".png";
         }
         core.confirmAsync({
             header: lf("Open {0} file", ext),
@@ -1871,6 +1902,10 @@ function isProjectFile(filename: string): boolean {
     return /\.(pxt|mkcd)$/i.test(filename)
 }
 
+function isPNGFile(filename: string): boolean {
+    return /\.png$/i.test(filename)
+}
+
 function initLogin() {
     {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
@@ -1949,8 +1984,11 @@ function initScreenshots() {
             pxt.tickEvent("sim.screenshot");
             const scmsg = msg as pxsim.SimulatorScreenshotMessage;
             pxt.debug('received screenshot');
-            screenshot.saveAsync(theEditor.state.header, scmsg.data)
-                .done(() => { pxt.debug('screenshot saved') })
+            if (theEditor.screenshotHandler)
+                theEditor.screenshotHandler(scmsg.data)
+            else
+                screenshot.saveAsync(theEditor.state.header, scmsg.data)
+                    .done(() => { pxt.debug('screenshot saved') })
         };
     }, false);
 }

@@ -298,6 +298,7 @@ declare namespace ts.pxtc {
         useUF2?: boolean;
         useMkcd?: boolean;
         useELF?: boolean;
+        saveAsPNG?: boolean;
         useModulator?: boolean;
         webUSB?: boolean; // use WebUSB when supported        
         hexMimeType?: string;
@@ -339,6 +340,7 @@ declare namespace ts.pxtc {
         trace?: boolean;
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
+        name?: string;
 
         alwaysDecompileOnStart?: boolean; // decompiler only
 
