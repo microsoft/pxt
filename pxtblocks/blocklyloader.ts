@@ -902,7 +902,7 @@ namespace pxt.blocks {
                             } else if (pr.type == "boolean") {
                                 inputCheck = "Boolean"
                             } else if (pr.type == "string") {
-                                if (pr.shadowOptions && pr.shadowOptions["toString"]) {
+                                if (pr.shadowOptions && pr.shadowOptions.toString) {
                                     inputCheck = undefined;
                                 }
                                 else {

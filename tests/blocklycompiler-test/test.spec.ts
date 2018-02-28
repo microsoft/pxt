@@ -350,7 +350,7 @@ describe("blockly compiler", function() {
             blockTestAsync("pause_until").then(done, done);
         });
 
-        it("should implicitly convert arguments marged as toString to a string", done => {
+        it("should implicitly convert arguments marked as toString to a string", done => {
             blockTestAsync("to_string_arg").then(done, done);
         });
     });
