@@ -81,10 +81,14 @@ namespace pxt.docs.codeCard {
         }
 
         if (card.imageUrl) {
-            let image = document.createElement("img") as HTMLImageElement;
+            const image = document.createElement("img") as HTMLImageElement;
             image.className = "ui image";
             image.src = card.imageUrl;
             image.alt = name;
+            image.onerror = () => {
+                // failed to load, remove
+                image.remove();
+            }
             image.setAttribute("role", "presentation");
             img.appendChild(image)
         }
