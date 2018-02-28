@@ -617,7 +617,7 @@ namespace pxt.blocks {
             return iconToFieldImage(part.uri);
         }
 
-        const txt = part.text.trim();
+        const txt = removeOuterSpace(part.text)
         if (!txt) {
             return undefined;
         }
@@ -3373,5 +3373,22 @@ namespace pxt.blocks {
 
     function getConstantDropdownValues(apis: pxtc.ApisInfo, qName: string) {
         return pxt.Util.values(apis.byQName).filter(sym => sym.attributes.blockIdentity === qName);
+    }
+
+    // Trims off a single space from beginning and end (if present)
+    function removeOuterSpace(str: string) {
+        if (str === " ") {
+            return "";
+        }
+        else if (str.length > 1) {
+            const startSpace = str.charAt(0) == " ";
+            const endSpace = str.charAt(str.length - 1) == " ";
+
+            if (startSpace || endSpace) {
+                return str.substring(startSpace ? 1 : 0, endSpace ? str.length - 1 : str.length);
+            }
+        }
+
+        return str;
     }
 }
