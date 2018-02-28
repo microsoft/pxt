@@ -2220,8 +2220,8 @@ $(() => {
     const appCacheUpdated = () => {
         try {
             // On embedded pages, preserve the loaded project
-            if (pxt.BrowserUtils.isIFrame() && hash.cmd === "pub") {
-                location.hash = `#pub:${hash.arg}`;
+            if (pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) {
+                location.hash = `#${hash.cmd}:${hash.arg}`;
             }
             // if in editor, reload project
             else if (theEditor
