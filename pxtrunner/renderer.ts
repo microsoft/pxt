@@ -523,7 +523,7 @@ namespace pxt.runner {
             cards.forEach(card => {
                 const cardEl = pxt.docs.codeCard.render(card, options);
                 cd.appendChild(cardEl)
-                // automitcally update package rendering logic
+                // automitcally display package icon for approved packages
                 if (card.cardType == "package") {
                     const repoId = pxt.github.parseRepoId((card.url || "").replace(/^\/pkg\//, ''));
                     if (repoId) {
