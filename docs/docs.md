@@ -49,7 +49,6 @@ for creating JavaScript/Blocks online editors.
 * [bump](/cli/bump)
 * [cherrypick](/cli/cherrypick)
 * [deploy](/cli/deploy)
-* [electron](/cli/electron)
 * [login](/cli/login)
 * [staticpkg](/cli/staticpkg)
 * [update](/cli/update)

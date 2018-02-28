@@ -5,7 +5,6 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
-import * as electron from "./electron";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
 
@@ -154,7 +153,6 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
             {targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies")} target="_blank" tabIndex={-1}>{lf("Privacy & Cookies")}</a> : undefined}
             {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use")} target="_blank" tabIndex={-1}>{lf("Terms Of Use")}</a> : undefined}
             <sui.Item role="menuitem" text={lf("About...")} onClick={() => this.about()} tabIndex={-1} />
-            {electron.isPxtElectron ? <sui.Item role="menuitem" text={lf("Check for updates...")} onClick={() => electron.checkForUpdate()} tabIndex={-1} /> : undefined}
             {targetTheme.feedbackUrl ? <div className="ui divider"></div> : undefined}
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener" tabIndex={-1}>{lf("Give Feedback")}</a> : undefined}
         </sui.DropdownMenuItem>;

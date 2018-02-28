@@ -43,7 +43,6 @@ import * as blocks from "./blocks"
 import * as codecard from "./codecard"
 import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
-import * as electron from "./electron";
 import * as notification from "./notification";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -1756,7 +1755,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
 
-        const isApp = electron.isElectron || pxt.winrt.isWinRT();
+        const isApp = pxt.winrt.isWinRT();
 
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
@@ -2300,7 +2299,6 @@ $(() => {
             initSerial();
             initScreenshots();
             initHashchange();
-            electron.init();
             return initExtensionsAsync();
         })
         .then(() => pxt.winrt.initAsync(importHex))
