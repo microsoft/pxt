@@ -46,6 +46,7 @@ export function saveAsync(header: Header, screenshot: string): Promise<void> {
 export function loadImageAsync(url: string) {
     return new Promise<HTMLCanvasElement>((resolve, reject) => {
         const img = new Image();
+        img.src = url
         img.onload = () => {
             const canvas = document.createElement("canvas")
             canvas.width = img.width
@@ -54,30 +55,85 @@ export function loadImageAsync(url: string) {
             ctx.drawImage(img, 0, 0);
             resolve(canvas)
         };
+        img.onerror = () => {
+            reject(new Error(lf("Cannot load image")))
+        }
     })
 }
 
-// randomly selected
-const imageHeaderPref = [75, 15, 39, 177]
+const imageMagic = 0x59347a7d // randomly selected
+const imageHeaderSize = 36 // has to be divisible by 9
+
+export function decodeBlobAsync(dataURL: string) {
+    return loadImageAsync(dataURL)
+        .then<Uint8Array>(canvas => {
+            const ctx = canvas.getContext("2d")
+            const imgdat = ctx.getImageData(0, 0, canvas.width, canvas.height)
+            const d = imgdat.data
+            const bpp = (d[0] & 1) | ((d[1] & 1) << 1) | ((d[2] & 1) << 2)
+            if (bpp > 5)
+                return Promise.reject(new Error(lf("Invalid encoded PNG format")))
+
+            function decode(ptr: number, bpp: number, trg: Uint8Array) {
+                let shift = 0
+                let i = 0
+                let acc = 0
+                const mask = (1 << bpp) - 1
+                while (i < trg.length) {
+                    acc |= (d[ptr++] & mask) << shift
+                    if ((ptr & 3) == 3)
+                        ptr++ // skip alpha
+                    shift += bpp
+                    if (shift >= 8) {
+                        trg[i++] = acc & 0xff
+                        acc >>= 8
+                        shift -= 8
+                    }
+                }
+                return ptr
+            }
+
+            const hd = new Uint8Array(imageHeaderSize)
+            let ptr = decode(4, bpp, hd)
+            const dhd = pxt.HF2.decodeU32LE(hd)
+            if (dhd[0] != imageMagic)
+                return Promise.reject(new Error(lf("Invalid magic in encoded PNG")))
+            const res = new Uint8Array(dhd[1])
+            const addedLines = dhd[2]
+            if (addedLines > 0) {
+                const origSize = (canvas.height - addedLines) * canvas.width
+                const imgCap = (origSize - 1) * 3 * bpp >> 3
+                const tmp = new Uint8Array(imgCap - imageHeaderSize)
+                decode(ptr, bpp, tmp)
+                res.set(tmp)
+                const added = new Uint8Array(res.length - tmp.length)
+                decode(origSize * 4, 8, added)
+                res.set(added, tmp.length)
+            } else {
+                decode(ptr, bpp, res)
+            }
+            return res
+        })
+}
 
 export function encodeBlobAsync(dataURL: string, blob: Uint8Array) {
     return loadImageAsync(dataURL)
         .then(canvas => {
-            const neededBits = blob.length * 8
-            // we take 6 bytes for the magic - 2 bits per channel, 6 bits per pixel - 8 pixels
-            const magicPixels = 8
-            const usableBytes = (canvas.width * canvas.height - magicPixels) * 3
+            const neededBytes = imageHeaderSize + blob.length
+            const usableBytes = (canvas.width * canvas.height - 1) * 3
             let bpp = 1
             while (bpp < 4) {
-                if (usableBytes * bpp >= neededBits)
+                if (usableBytes * bpp >= neededBytes * 8)
                     break
+                bpp++
             }
+            let imgCapacity = (usableBytes * bpp) >> 3
+            let missing = neededBytes - imgCapacity
             let addedLines = 0
-            const addedLimit = canvas.width * canvas.height * 4
-            if (usableBytes * bpp < neededBits) {
-                const missing = neededBits - usableBytes * bpp
-                const bitsPerLine = canvas.width * 3 * 8
-                addedLines = Math.ceil(missing / bitsPerLine)
+            let addedOffset = canvas.width * canvas.height * 4
+            if (missing > 0) {
+                const bytesPerLine = canvas.width * 3
+                addedLines = Math.ceil(missing / bytesPerLine)
                 const c2 = document.createElement("canvas")
                 c2.width = canvas.width
                 c2.height = canvas.height + addedLines
@@ -86,20 +142,92 @@ export function encodeBlobAsync(dataURL: string, blob: Uint8Array) {
                 canvas = c2
             }
 
-            function encode(ptr: number, bpp: number, data: ArrayLike<number>) {
-                for (let i = 0; i < data.length; ++i) {
-                    
-                }
-            }
+            let header = pxt.HF2.encodeU32LE([
+                imageMagic,
+                blob.length,
+                addedLines,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ])
 
-            const imageHeader = imageHeaderPref.concat([(addedLines >> 8) | (bpp << 6), addedLines & 0xff])
+            Util.assert(header.length == imageHeaderSize)
+
+            function encode(img: Uint8ClampedArray, ptr: number, bpp: number, data: ArrayLike<number>) {
+                let shift = 0
+                let dp = 0
+                let v = data[dp++]
+                const bppMask = (1 << bpp) - 1
+                let keepGoing = true
+                while (keepGoing) {
+                    let bits = (v >> shift) & bppMask
+                    let left = 8 - shift
+                    if (left <= bpp) {
+                        if (dp >= data.length) {
+                            if (left == 0) break
+                            else keepGoing = false
+                        }
+                        v = data[dp++]
+                        bits |= (v << left) & bppMask
+                        shift = bpp - left
+                    } else {
+                        shift += bpp
+                    }
+                    img[ptr] = ((img[ptr] & ~bppMask) | bits) & 0xff
+                    ptr++
+                    if ((ptr & 3) == 3) {
+                        // set alpha to 0xff
+                        img[ptr++] = 0xff
+                    }
+                }
+                return ptr
+            }
 
             const ctx = canvas.getContext("2d")
             const imgdat = ctx.getImageData(0, 0, canvas.width, canvas.height)
-            let ptr = 0
 
-            for ()
+            // first pixel holds bpp (LSB are written first, so we can skip what it writes in second and third pixel)
+            encode(imgdat.data, 0, 1, [bpp])
+            let ptr = 4
+            // next, the header
+            ptr = encode(imgdat.data, ptr, bpp, header)
+            Util.assert((ptr & 3) == 0)
+            if (addedLines == 0)
+                ptr = encode(imgdat.data, ptr, bpp, blob)
+            else {
+                let firstChunk = imgCapacity - header.length
+                ptr = encode(imgdat.data, ptr, bpp, blob.slice(0, firstChunk))
+                ptr = encode(imgdat.data, addedOffset, 8, blob.slice(firstChunk))
+            }
+            // set remaining alpha
+            ptr |= 3
+            while (ptr < imgdat.data.length) {
+                imgdat.data[ptr] = 0xff
+                ptr += 4
+            }
 
+            ctx.putImageData(imgdat, 0, 0)
+            return canvas.toDataURL("image/png")
+        })
+}
 
-          })
+export function testBlobEncodeAsync(dataURL: string, sz = 10000) {
+    let blob = new Uint8Array(sz)
+    Util.getRandomBuf(blob)
+    return encodeBlobAsync(dataURL, blob)
+        .then(url => {
+            let img = document.createElement("img")
+            img.src = url
+            document.getElementById("msg").appendChild(img)
+            return decodeBlobAsync(url)
+        })
+        .then(resBlob => {
+            Util.assert(resBlob.length == blob.length)
+            for (let i = 0; i < blob.length; ++i) {
+                Util.assert(resBlob[i] == blob[i])
+            }
+        })
 }
