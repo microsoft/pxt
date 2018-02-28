@@ -320,6 +320,8 @@ switch (step) {
             let text = ""
             if (name[0] == ".")
                 text = `${args[0]}${name}(${args.slice(1).join(", ")})`
+            else if (name[0] == "=")
+                text = `(${args[0]})${name.slice(1)} = (${args[1]})`
             else if (U.startsWith(name, "new "))
                 text = `new ${shimToJs(name.slice(4))}(${args.join(", ")})`
             else if (bin.target.floatingPoint && U.lookup(jsOpMap, name))
@@ -413,8 +415,12 @@ switch (step) {
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
-                    // it does the decr itself, no mask
-                    emitExpr(ir.rtcall(withRef("pxtrt::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
+                    if (info.shimName) {
+                        emitExpr(ir.rtcall("=" + info.shimName, [trg.args[0], src]))
+                    } else {
+                        // it does the decr itself, no mask
+                        emitExpr(ir.rtcall(withRef("pxtrt::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
+                    }
                     break;
                 default: oops();
             }
