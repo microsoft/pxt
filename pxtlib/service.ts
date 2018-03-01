@@ -1107,7 +1107,7 @@ namespace ts.pxtc.service {
     }
 
     export interface SearchOptions {
-        subset?: pxt.Map<boolean>;
+        subset?: pxt.Map<boolean | string>;
         term: string;
         localizedApis?: ApisInfo;
         localizedStrings?: pxt.Map<string>;
@@ -1126,6 +1126,7 @@ namespace ts.pxtc.service {
         namespace?: string;
         jsdoc?: string;
         field?: [string, string];
+        localizedCategory?: string;
     }
 }
 
