@@ -18,7 +18,6 @@
                 var telemetryItem = envelope.data.baseData;
                 telemetryItem.properties = telemetryItem.properties || {};
                 telemetryItem.properties["target"] = pxtConfig.targetId;
-                telemetryItem.properties["version"] = pxtConfig.targetVersion;
                 telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/[^a-z]/ig, '')
                 telemetryItem.properties["cookie"] = includeCookie;
                 if (typeof Windows !== "undefined")
