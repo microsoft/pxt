@@ -768,7 +768,7 @@ namespace pxt.blocks {
             //TODO
             default:
                 if (isArrayType(fn.retType)) {
-                    block.setOutput(true, "Array");
+                    block.setOutput(true, ["Array", fn.retType]);
                 }
                 else {
                     block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
@@ -904,7 +904,7 @@ namespace pxt.blocks {
                             } else if (pr.type == "string") {
                                 inputCheck = "String"
                             } else {
-                                inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? "Array" : pr.type);
+                                inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? ["Array", pr.type] : pr.type);
                             }
                         }
                     }
