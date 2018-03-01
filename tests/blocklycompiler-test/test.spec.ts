@@ -279,6 +279,10 @@ describe("blockly compiler", function() {
         it("should handle empty array blocks", (done: () => void) => {
             blockTestAsync("lists_empty_arrays").then(done, done);
         });
+
+        it("should handle functions with list return types", (done: () => void) => {
+            blockTestAsync("array_return_type").then(done, done);
+        });
     });
 
     describe("compiling logic", () => {

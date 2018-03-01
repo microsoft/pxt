@@ -165,6 +165,10 @@ namespace pxt.blocks {
         const check = b.outputConnection.check_ && b.outputConnection.check_.length ? b.outputConnection.check_[0] : "T";
 
         if (check === "Array") {
+            if (b.outputConnection.check_.length > 1) {
+                // HACK: The real type is stored as the second check
+                return ground(b.outputConnection.check_[1])
+            }
             // The only block that hits this case should be lists_create_with, so we
             // can safely infer the type from the first input that has a return type
             let tp: Point;

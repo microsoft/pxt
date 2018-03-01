@@ -30,4 +30,10 @@ namespace exp {
     //% weight=99 inlineInputMode="inline"
     //% blockId=basicOpt block="string %str number %ang || boolean %opt enum %enu"
     export function basicOpt(str: string, ang: number, opt?: boolean, enu?: Direction) { }
+
+    //% blockId="test_arrayReturnType" block="array return type %n"
+   export function arrayReturnType(n : number): Fixed[] {
+        let res: Fixed[] = []
+        return res
+    }
 }
