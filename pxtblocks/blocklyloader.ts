@@ -791,7 +791,7 @@ namespace pxt.blocks {
             inputs.forEach(inputParts => {
                 const fields: NamedField[] = [];
                 let inputName: string;
-                let inputCheck: string;
+                let inputCheck: string | string[];
                 let hasParameter = false;
 
                 inputParts.forEach(part => {
