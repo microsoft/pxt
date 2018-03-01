@@ -616,17 +616,23 @@ namespace pxt.blocks {
         if (part.kind === "image") {
             return iconToFieldImage(part.uri);
         }
-        else if (part.cssClass) {
-            return new Blockly.FieldLabel(part.text, part.cssClass);
+
+        const txt = removeOuterSpace(part.text)
+        if (!txt) {
+            return undefined;
+        }
+
+        if (part.cssClass) {
+            return new Blockly.FieldLabel(txt, part.cssClass);
         }
         else if (part.style.length) {
-            return new pxtblockly.FieldStyledLabel(part.text, {
+            return new pxtblockly.FieldStyledLabel(txt, {
                 bold: part.style.indexOf("bold") !== -1,
                 italics: part.style.indexOf("italics") !== -1
             })
         }
         else {
-            return new Blockly.FieldLabel(part.text, undefined);
+            return new Blockly.FieldLabel(txt, undefined);
         }
     }
 
@@ -796,7 +802,10 @@ namespace pxt.blocks {
 
                 inputParts.forEach(part => {
                     if (part.kind !== "param") {
-                        fields.push({ field: newLabel(part) });
+                        const f = newLabel(part);
+                        if (f) {
+                            fields.push({ field: f });
+                        }
                     }
                     else {
                         // find argument
@@ -3364,5 +3373,22 @@ namespace pxt.blocks {
 
     function getConstantDropdownValues(apis: pxtc.ApisInfo, qName: string) {
         return pxt.Util.values(apis.byQName).filter(sym => sym.attributes.blockIdentity === qName);
+    }
+
+    // Trims off a single space from beginning and end (if present)
+    function removeOuterSpace(str: string) {
+        if (str === " ") {
+            return "";
+        }
+        else if (str.length > 1) {
+            const startSpace = str.charAt(0) == " ";
+            const endSpace = str.charAt(str.length - 1) == " ";
+
+            if (startSpace || endSpace) {
+                return str.substring(startSpace ? 1 : 0, endSpace ? str.length - 1 : str.length);
+            }
+        }
+
+        return str;
     }
 }
