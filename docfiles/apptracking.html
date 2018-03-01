@@ -24,12 +24,15 @@
                     telemetryItem.properties["WindowsApp"] = 1;
             });
         });
+
         appInsights.trackPageView(null, scrubUrl(window.location.toString()), {urlReferrer: scrubUrl(document.referrer.toString())});
 
-        var scriptIdRegex = /(?:\d{5}-\d{5}-\d{5}-\d{5})|(?:_[0-9a-zA-Z]{12})/g;
+        //Scrub the key (if any) from the URL.
         function scrubUrl(url) {
+            var scriptIdRegex = /(?:\d{5}-\d{5}-\d{5}-\d{5})|(?:_[0-9a-zA-Z]{12})/g;
             return url.replace(scriptIdRegex, "xxxxx-xxxxx-xxxxx-xxxxx");
         }
+
     }
     pxt.initAnalyticsAsync();
 </script>
