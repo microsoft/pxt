@@ -619,7 +619,8 @@ namespace pxt {
                 sourceFiles: [],
                 fileSystem: {},
                 target: target,
-                hexinfo: { hex: [] }
+                hexinfo: { hex: [] },
+                name: this.config ? this.config.name : ""
             }
 
             const generateFile = (fn: string, cont: string) => {
