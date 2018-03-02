@@ -41,7 +41,7 @@ function findPxtJs() {
             }
 
             console.error("Found", targetjson, "but cannot find neither",
-                local, "nor", installed, ", did you run 'jake' in the PXT folder once?")
+                local, "nor", installed, ", did you run 'npm run build' in the PXT folder once?")
             return null
         }
 
