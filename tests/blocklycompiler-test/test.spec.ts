@@ -126,7 +126,7 @@ class BlocklyCompilerTestHost implements pxt.Host {
         } else if (pxt.appTarget && pxt.appTarget.bundledpkgs[module.id] && filename === pxt.CONFIG_NAME) {
             return pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME];
         }
-        
+
         if (module.id == "testlib") {
             const split = filename.split(/[/\\]/);
             filename = "test-library/" + split[split.length - 1];
@@ -352,6 +352,10 @@ describe("blockly compiler", function() {
     describe("compiling special blocks", () => {
         it("should compile the predicate in pause until", done => {
             blockTestAsync("pause_until").then(done, done);
+        });
+
+        it("should implicitly convert arguments marked as toString to a string", done => {
+            blockTestAsync("to_string_arg").then(done, done);
         });
     });
 

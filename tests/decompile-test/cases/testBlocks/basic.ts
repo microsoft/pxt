@@ -196,6 +196,13 @@ namespace testNamespace {
 
     //% blockId=test_customFieldEditorNoLiterals block="%value=test_customShadowFieldNoLiterals %value2=test_customShadowFieldNoLiterals2"
     export function customFieldEditorNoLiterals(value: number, value2: string): void {  }
+
+
+    //% blockId=test_toStringArg block="to string %msg"
+    //% msg.shadowOptions.toString=true
+    export function toStringArg(msg: string) {
+
+    }
 }
 
 //% color=#A80000 weight=30

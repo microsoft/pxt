@@ -912,7 +912,12 @@ namespace pxt.blocks {
                             } else if (pr.type == "boolean") {
                                 inputCheck = "Boolean"
                             } else if (pr.type == "string") {
-                                inputCheck = "String"
+                                if (pr.shadowOptions && pr.shadowOptions.toString) {
+                                    inputCheck = undefined;
+                                }
+                                else {
+                                    inputCheck = "String"
+                                }
                             } else {
                                 inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? ["Array", pr.type] : pr.type);
                             }
