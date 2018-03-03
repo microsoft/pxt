@@ -84,7 +84,9 @@ namespace pxt {
             if (currNs) currNs += "."
             currNs += cl.name.text
 
-            mainWr.write(`declare class ${cl.name.text} {`)
+            let decl = prevNs ? "" : "declare"
+
+            mainWr.write(`${decl} class ${cl.name.text} {`)
             mainWr.incrIndent()
 
             for (let mem of cl.members) {
