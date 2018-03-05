@@ -1481,7 +1481,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
                             // process rtl css
                             postcss([rtlcss])
                                 .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                    fs.writeFile(`built/web/rtl${cssFile}`, result2.css);
+                                    fs.writeFileSync(`built/web/rtl${cssFile}`, result2.css);
                                 });
                         });
                     });
@@ -2006,7 +2006,7 @@ class SnippetHost implements pxt.Host {
     }
 
     downloadPackageAsync(pkg: pxt.Package): Promise<void> {
-        //console.log(`downloadPackageAsync(${pkg.id})`)
+        //console.log(`downloadPackageAsync(${pkg.id})`)        
         return Promise.resolve()
     }
 
@@ -3348,7 +3348,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             let resp = pxtc.compile(opts)
 
             if (resp.success) {
-                if (/^block/.test(snippet.type)) {
+                if (/^blocks?/.test(snippet.type)) {
                     //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
                     const file = resp.ast.getSourceFile('main.ts');
                     const apis = pxtc.getApiInfo(resp.ast);
@@ -3366,6 +3366,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                 return addFailure(name, resp.diagnostics)
             }
         }).catch((e: Error) => {
+            console.log(e)
             addFailure(name, [
                 {
                     code: 4242,
@@ -3652,7 +3653,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                         const tf = path.join(tfdir, fn);
                         nodeutil.mkdirP(tfdir)
                         pxt.log(`writing ${tf}`);
-                        fs.writeFile(tf, langTranslations, "utf8");
+                        fs.writeFileSync(tf, langTranslations, { encoding: "utf8" });
 
                         locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
                     })
@@ -3664,7 +3665,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                 const pxtJsonn = JSON.stringify(pxtJson, null, 4);
                 if (pxtJsons != pxtJsonn) {
                     pxt.log(`writing ${pxtJsonf}`);
-                    fs.writeFileSync(pxtJsonf, pxtJsonn, "utf8");
+                    fs.writeFileSync(pxtJsonf, pxtJsonn, { encoding: "utf8" });
                 }
                 return nextFileAsync()
             });
@@ -4207,6 +4208,9 @@ export interface SnippetInfo {
 }
 
 export function getSnippets(source: string): SnippetInfo[] {
+    // snippets from pages using github-based packages are not supported
+    if (/github:/.test(source)) return [];
+
     let snippets: SnippetInfo[] = []
     let re = /^`{3}([\S]+)?\s*\n([\s\S]+?)\n`{3}\s*?$/gm;
     let index = 0
