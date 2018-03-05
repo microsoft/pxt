@@ -2,21 +2,21 @@
 
 An integer number.
 
-### @parent blocks/language
+## @parent blocks/language
 
-A *Number* is an integer such as `42` or `-42`. More precisely, a *Number* is a signed 32-bit integer (two's complement).
+A *Number* is an integer such as `42` or `-42`. More precisely, a *Number* is a signed 32-bit integer (an integer value that contains a positive or negative sign as part of it's information).
 
-### Declare a number variable
+## Declare a number variable
 
 You can assign a number to a variable:
 
-#### #declareexample
+### #declareexample
 
 ```block
 let num = 42;
 ```
 
-### Arithmetic operators
+## Arithmetic operators
 
 The following arithmetic operators work on numbers and return a [Number](/types/number):
 
@@ -26,7 +26,7 @@ The following arithmetic operators work on numbers and return a [Number](/types/
 * integer division: `7 / 3`
 * modulo is available through the [math library](/blocks/math)
 
-### Relational operators
+## Relational operators
 
 The following relational operators work on numbers and return a [Boolean](/blocks/logic/boolean):
 
@@ -39,7 +39,7 @@ The following relational operators work on numbers and return a [Boolean](/block
 
 ## #print
 
-### Functions that return a number
+## Functions that return a number
 
 Some functions return a number, which you can store in a variable. 
 
@@ -49,7 +49,7 @@ Some functions return a number, which you can store in a variable.
 let abs = Math.abs(-42);
 ```
 
-### Math functions
+## Math functions
 
 The [math library](/blocks/math) includes math related functions. 
 For example, the `absolute` function returns the returns the absolute value of input parameter `x`:
@@ -58,6 +58,6 @@ For example, the `absolute` function returns the returns the absolute value of i
 let abs = Math.min(-42, 1000);
 ```
 
-### See also
+## See also
 
 [math](/blocks/math), [var](/blocks/variables/var), [Boolean](/blocks/logic/boolean)
