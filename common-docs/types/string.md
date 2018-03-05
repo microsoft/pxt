@@ -2,9 +2,9 @@
 
 A *String* is a sequence of characters. 
 
-### #intro
+## #intro
 
-### Create a string variable
+## Create a string variable
 
 ```block
 let salutation = "Hello";
@@ -28,6 +28,6 @@ let salutation = "Hello";
 
 ## #examples
 
-### See also #seealso
+## See also #seealso
  
 [Number](/types/number)
