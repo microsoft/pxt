@@ -91,7 +91,7 @@ export class Editor extends srceditor.Editor {
 
                     // Search needs a toolbox with ALL blocks
                     let tbAll: Element;
-                    if (this.showToolboxCategories !== CategoryMode.All) {
+                    if (this.showToolboxCategories === CategoryMode.Basic) {
                         tbAll = pxt.blocks.initBlocks(this.blockInfo, toolbox, CategoryMode.All, this.filters, this.extensions);
                     }
 
@@ -196,6 +196,7 @@ export class Editor extends srceditor.Editor {
         let minX: number;
         let minY: number;
         let needsLayout = false;
+        let flyoutOnly = !(this.editor as any).toolbox_ && (this.editor as any).flyout_;
 
         this.editor.getTopBlocks(false).forEach(b => {
             const tp = b.getBoundingRectangle().topLeft;
@@ -209,14 +210,14 @@ export class Editor extends srceditor.Editor {
             needsLayout = needsLayout || (b.type != ts.pxtc.ON_START_TYPE && tp.x == 0 && tp.y == 0);
         });
 
-        if (needsLayout) {
+        if (needsLayout && !flyoutOnly) {
             // If the blocks file has no location info (e.g. it's from the decompiler), format the code.
             pxt.blocks.layout.flow(this.editor, { useViewWidth: true });
         }
         else {
             // Otherwise translate the blocks so that they are positioned on the top left
             this.editor.getTopBlocks(false).forEach(b => b.moveBy(-minX, -minY));
-            this.editor.scrollX = 10;
+            this.editor.scrollX = flyoutOnly ? (this.editor as any).flyout_.width_ + 10 : 10;
             this.editor.scrollY = 10;
 
             // Forces scroll to take effect
@@ -422,12 +423,10 @@ export class Editor extends srceditor.Editor {
         this.isReady = true
     }
 
-    private prepareBlockly(showCategories = this.showToolboxCategories) {
+    private prepareBlockly(showCategories?: CategoryMode) {
         let blocklyDiv = document.getElementById('blocksEditor');
         blocklyDiv.innerHTML = '';
-        let blocklyOptions = this.getBlocklyOptions(showCategories);
-        Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
-        this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
+        this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(showCategories));
         // set Blockly Colors
         let blocklyColors = (Blockly as any).Colours;
         Util.jsonMergeFrom(blocklyColors, pxt.appTarget.appTheme.blocklyColors || {});
@@ -533,8 +532,9 @@ export class Editor extends srceditor.Editor {
         if (!blocklyToolbox) return;
         this.parent.updateEditorLogo(blocklyToolbox.clientWidth);
 
+        const blocklyOptions = this.getBlocklyOptions(this.showToolboxCategories);
         let toolboxHeight = blocklyDiv.offsetHeight;
-        blocklyToolbox.style.height = `${toolboxHeight}px`;
+        if (!(blocklyOptions as any).horizontalLayout) blocklyToolbox.style.height = `${toolboxHeight}px`;
     }
 
     hasUndo() {
@@ -565,6 +565,13 @@ export class Editor extends srceditor.Editor {
     zoomOut() {
         if (!this.editor) return;
         this.editor.zoomCenter(-2);
+    }
+
+    setScale(scale: number) {
+        if (!this.editor) return;
+        if (scale != (this.editor as any).scale) {
+            (this.editor as any).setScale(scale);
+        }
     }
 
     closeFlyout() {
@@ -598,7 +605,7 @@ export class Editor extends srceditor.Editor {
     setViewState(pos: {}) { }
 
     getCurrentSource() {
-        return this.editor ? this.saveBlockly() : this.currSource;
+        return this.editor && !this.delayLoadXml ? this.saveBlockly() : this.currSource;
     }
 
     acceptsFile(file: pkg.File) {
@@ -638,6 +645,11 @@ export class Editor extends srceditor.Editor {
             this.showSearch = this.parent.state.editorState.searchBar;
         } else {
             this.showSearch = true;
+        }
+        if (this.parent.state.editorState && this.parent.state.editorState.hasCategories != undefined) {
+            this.showToolboxCategories = this.parent.state.editorState.hasCategories ? CategoryMode.Basic : CategoryMode.None;
+        } else {
+            this.showToolboxCategories = CategoryMode.Basic;
         }
         this.currFile = file;
         // Clear the search field if a value exists
@@ -713,13 +725,23 @@ export class Editor extends srceditor.Editor {
         blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
     }
 
-    private getBlocklyOptions(showCategories = this.showToolboxCategories) {
-        const readOnly = pxt.shell.isReadOnly();
-        const toolbox = showCategories !== CategoryMode.None ?
+    private getBlocklyOptions(showCategories?: CategoryMode) {
+        let blocklyOptions = this.getDefaultOptions();
+        Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
+        const hasCategories = showCategories ? showCategories !== CategoryMode.None :
+            (blocklyOptions.hasCategories != undefined ? blocklyOptions.hasCategories : this.showToolboxCategories);
+        (blocklyOptions as any).hasCategories = hasCategories;
+        const toolbox = hasCategories ?
             document.getElementById('blocklyToolboxDefinitionCategory')
             : document.getElementById('blocklyToolboxDefinitionFlyout');
+        blocklyOptions['toolbox'] = blocklyOptions.toolbox != undefined ?
+            blocklyOptions.toolbox : blocklyOptions.readOnly ? undefined : toolbox;
+        return blocklyOptions;
+    }
+
+    private getDefaultOptions() {
+        const readOnly = pxt.shell.isReadOnly();
         const blocklyOptions: Blockly.Options = {
-            toolbox: readOnly ? undefined : toolbox,
             scrollbars: true,
             media: pxt.webConfig.commitCdnUrl + "blockly/media/",
             sound: true,
@@ -749,7 +771,7 @@ export class Editor extends srceditor.Editor {
     private getDefaultToolbox(showCategories = this.showToolboxCategories): HTMLElement {
         return showCategories !== CategoryMode.None ?
             baseToolbox.getBaseToolboxDom().documentElement
-            : new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none"></xml>`, "text/xml").documentElement;
+            :  baseToolbox.getBaseNoCategoryToolboxDom().documentElement;
     }
 
     filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories = this.showToolboxCategories): Element {

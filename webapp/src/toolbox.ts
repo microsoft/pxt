@@ -266,11 +266,20 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
     </category>
 </xml>`;
 
+const defaultNoCategoryToolboxString = `<xml id="blocklyToolboxDefinition" style="display: none"></xml>`;
+
 let cachedToolboxDom: Document;
 
 export function getBaseToolboxDom() {
     if (!cachedToolboxDom) {
         overrideBaseToolbox(defaultToolboxString);
+    }
+    return cachedToolboxDom;
+}
+
+export function getBaseNoCategoryToolboxDom() {
+    if (!cachedToolboxDom) {
+        overrideBaseToolbox(defaultNoCategoryToolboxString);
     }
     return cachedToolboxDom;
 }
