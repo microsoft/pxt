@@ -9,7 +9,7 @@
             overridePageViewDuration: false,
             disableExceptionTracking: true,
             isCookieUseDisabled: !includeCookie,
-            isStorageUseDisabled: true
+            isStorageUseDisabled: !includeCookie
         });
         window.appInsights=appInsights;
         appInsights.queue.push(function () {
@@ -18,18 +18,17 @@
                 var telemetryItem = envelope.data.baseData;
                 telemetryItem.properties = telemetryItem.properties || {};
                 telemetryItem.properties["target"] = pxtConfig.targetId;
-                telemetryItem.properties["version"] = pxtConfig.targetVersion;
                 telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/[^a-z]/ig, '')
-                if (typeof window !== "undefined" && window.location && /[?&]electron=1/i.test(window.location.href))
-                    telemetryItem.properties["electron"] = 1;
+                telemetryItem.properties["cookie"] = includeCookie;
                 if (typeof Windows !== "undefined")
                     telemetryItem.properties["WindowsApp"] = 1;
             });
         });
         appInsights.trackPageView(null, scrubUrl(window.location.toString()), {urlReferrer: scrubUrl(document.referrer.toString())});
 
-        var scriptIdRegex = /(?:\d{5}-\d{5}-\d{5}-\d{5})|(?:_[0-9a-zA-Z]{12})/g;
+        //Scrub the key (if any) from the URL.
         function scrubUrl(url) {
+            var scriptIdRegex = /(?:\d{5}-\d{5}-\d{5}-\d{5})|(?:_[0-9a-zA-Z]{12})/g;
             return url.replace(scriptIdRegex, "xxxxx-xxxxx-xxxxx-xxxxx");
         }
     }

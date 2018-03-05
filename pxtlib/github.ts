@@ -206,6 +206,10 @@ namespace pxt.github {
     export function repoIconUrl(repo: GitRepo): string {
         if (repo.status != GitRepoStatus.Approved) return undefined;
 
+        return mkRepoIconUrl(repo)
+    }
+
+    export function mkRepoIconUrl(repo: ParsedRepo): string {
         return Cloud.apiRoot + `gh/${repo.fullName}/icon`;
     }
 

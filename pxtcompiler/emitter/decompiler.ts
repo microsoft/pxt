@@ -761,7 +761,7 @@ ${output}</xml>`;
             return undefined;
         }
 
-        function getPropertyAccessExpression(n: ts.PropertyAccessExpression): OutputNode {
+        function getPropertyAccessExpression(n: ts.PropertyAccessExpression, asField = false, blockId?: string): OutputNode {
             let callInfo = (n as any).callInfo as pxtc.CallInfo;
             if (!callInfo) {
                 error(n);
@@ -779,27 +779,26 @@ ${output}</xml>`;
 
             const [parent, ] = getParent(n);
             const parentCallInfo: pxtc.CallInfo = parent && (parent as any).callInfo;
-            if (callInfo.attrs.blockIdentity && !(parentCallInfo && parentCallInfo.qName === callInfo.attrs.blockIdentity)) {
-                if (callInfo.attrs.enumval && parentCallInfo && parentCallInfo.attrs.useEnumVal) {
-                    value = callInfo.attrs.enumval;
-                }
-
-                let idfn = blocksInfo.apis.byQName[callInfo.attrs.blockIdentity];
-                let f = /%([a-zA-Z0-9_]+)/.exec(idfn.attributes.block);
-                const r = mkExpr(U.htmlEscape(idfn.attributes.blockId));
-                r.fields = [{
-                    kind: "field",
-                    name: U.htmlEscape(f[1]),
-                    value
-                }];
-                return r
-            }
-            else {
+            if (asField || !(blockId || callInfo.attrs.blockIdentity) || parentCallInfo && parentCallInfo.qName === callInfo.attrs.blockIdentity) {
                 return {
                     kind: "text",
                     value
                 }
             }
+
+            if (callInfo.attrs.enumval && parentCallInfo && parentCallInfo.attrs.useEnumVal) {
+                value = callInfo.attrs.enumval;
+            }
+
+            let idfn = blockId ? blocksInfo.blocksById[blockId] : blocksInfo.apis.byQName[callInfo.attrs.blockIdentity];
+            let f = /%([a-zA-Z0-9_]+)/.exec(idfn.attributes.block);
+            const r = mkExpr(U.htmlEscape(idfn.attributes.blockId));
+            r.fields = [{
+                kind: "field",
+                name: U.htmlEscape(f[1]),
+                value
+            }];
+            return r
         }
 
         function getArrayLiteralExpression(n: ts.ArrayLiteralExpression): ExpressionNode {
@@ -1159,6 +1158,16 @@ ${output}</xml>`;
                 r.fields = [getField("OP", "POWER")];
                 return r;
             }
+            else if (pxt.Util.startsWith(info.qName, "Math.")) {
+                const op = info.qName.substring(5);
+                if (isSupportedMathFunction(op)) {
+                    const r = mkExpr("math_js_op");
+                    r.inputs = info.args.map((arg, index) => mkValue("ARG" + index, getOutputBlock(arg), "math_number"))
+                    r.fields = [getField("OP", op)];
+                    r.mutation = { "op-type": info.args.length == 2 ? "binary" : "unary" };
+                    return r;
+                }
+            }
 
             if (info.attrs.blockId === pxtc.PAUSE_UNTIL_TYPE) {
                 const r = mkStmt(pxtc.PAUSE_UNTIL_TYPE);
@@ -1217,8 +1226,11 @@ ${output}</xml>`;
                 type: info.attrs.blockId
             } as StatementNode;
 
+            const addInput = (v: ValueNode) => (r.inputs || (r.inputs = [])).push(v);
+            const addField = (f: FieldNode) => (r.fields || (r.fields = [])).push(f);
+
             if (info.qName == "Math.max") {
-                (r.fields || (r.fields = [])).push({
+                addField({
                     kind: "field",
                     name: "op",
                     value: "max"
@@ -1227,7 +1239,7 @@ ${output}</xml>`;
 
             let optionalCount = 0;
             args.forEach((arg, i) => {
-                const e = arg.value;
+                let e = arg.value;
                 const param = arg.param;
                 const paramInfo = arg.info;
                 if (i === 0 && info.attrs.defaultInstance) {
@@ -1246,6 +1258,22 @@ ${output}</xml>`;
 
                 if (param && param.isOptional) {
                     ++optionalCount;
+                }
+
+                let shadowBlockInfo: SymbolInfo;
+                if (param && param.shadowBlockId) {
+                    shadowBlockInfo = blocksInfo.blocksById[param.shadowBlockId];
+                }
+
+                if (e.kind === SK.CallExpression) {
+                    // Many enums have shim wrappers that need to be unwrapped if used
+                    // in a parameter that is of an enum type. By default, enum parameters
+                    // are dropdown fields (not value inputs) so we want to decompile the
+                    // inner enum value as a field and not the shim block as a value
+                    const shimCall: pxtc.CallInfo = (e as any).callInfo;
+                    if (shimCall && shimCall.attrs.shim === "TD_ID") {
+                        e = unwrapNode(shimCall.args[0]) as ts.Expression;
+                    }
                 }
 
                 switch (e.kind) {
@@ -1271,7 +1299,7 @@ ${output}</xml>`;
                                     const paramDesc = sym.parameters[i];
                                     arrow.parameters.forEach((parameter, i) => {
                                         const arg = paramDesc.handlerParameters[i];
-                                        (r.fields || (r.fields = [])).push(getField("HANDLER_" + arg.name, (parameter.name as ts.Identifier).text));
+                                        addField(getField("HANDLER_" + arg.name, (parameter.name as ts.Identifier).text));
                                     });
                                 }
                             }
@@ -1280,24 +1308,27 @@ ${output}</xml>`;
                         break;
                     case SK.PropertyAccessExpression:
                         const callInfo = (e as any).callInfo as pxtc.CallInfo;
-                        const shadow = callInfo && !!callInfo.attrs.blockIdentity
                         const aName = U.htmlEscape(param.definitionName);
 
-                        if (shadow && callInfo.attrs.blockIdentity !== info.qName) {
-                            (r.inputs || (r.inputs = [])).push(getValue(aName, e, param.shadowBlockId));
+                        if (shadowBlockInfo && shadowBlockInfo.attributes.shim === "TD_ID") {
+                            addInput(mkValue(aName, getPropertyAccessExpression(e as PropertyAccessExpression, false, param.shadowBlockId), param.shadowBlockId));
+                        }
+                        else if (paramInfo && paramInfo.isEnum || callInfo && (callInfo.attrs.fixedInstance || callInfo.attrs.blockIdentity === info.qName)) {
+                            addField(getField(aName, (getPropertyAccessExpression(e as PropertyAccessExpression, true) as TextNode).value))
                         }
                         else {
-                            const expr = getOutputBlock(e);
-                            if (expr.kind === "text") {
-                                (r.fields || (r.fields = [])).push(getField(aName, (expr as TextNode).value));
-                            }
-                            else {
-                                if (param.shadowBlockId && (expr as ExpressionNode).type !== param.shadowBlockId) {
-                                    countBlock();
-                                }
-                                (r.inputs || (r.inputs = [])).push(mkValue(aName, expr, param.shadowBlockId));
+                            addInput(getValue(aName, e, param.shadowBlockId))
+                        }
+                        break;
+                    case SK.BinaryExpression:
+                        if (param && param.shadowOptions && param.shadowOptions.toString) {
+                            const be = e as BinaryExpression;
+                            if (be.operatorToken.kind === SK.PlusToken && isEmptyStringNode(be.left)) {
+                                addInput(getValue(U.htmlEscape(param.definitionName), be.right, param.shadowBlockId || "text"));
+                                break;
                             }
                         }
+                        addInput(getValue(U.htmlEscape(param.definitionName), e, param.shadowBlockId))
                         break;
                     default:
                         let v: ValueNode;
@@ -1313,7 +1344,7 @@ ${output}</xml>`;
                             const isFieldBlock = param.shadowBlockId && !isLiteralBlockType(param.shadowBlockId);
 
                             if (decompileLiterals(param) && param.fieldOptions['onParentBlock']) {
-                                (r.fields || (r.fields = [])).push(getField(vName, fieldText));
+                                addField(getField(vName, fieldText));
                                 return;
                             }
                             else if (isFieldBlock) {
@@ -1332,7 +1363,7 @@ ${output}</xml>`;
                             v = getValue(vName, e, param.shadowBlockId);
                         }
 
-                        (r.inputs || (r.inputs = [])).push(v);
+                        addInput(v);
                         break;
                 }
             });
@@ -1774,6 +1805,12 @@ ${output}</xml>`;
             else if (info.qName == "Math.pow") {
                 return undefined;
             }
+            else if (pxt.Util.startsWith(info.qName, "Math.")) {
+                const op = info.qName.substring(5);
+                if (isSupportedMathFunction(op)) {
+                    return undefined;
+                }
+            }
 
             if (info.attrs.blockId === pxtc.PAUSE_UNTIL_TYPE) {
                 const predicate = n.arguments[0];
@@ -1931,10 +1968,16 @@ ${output}</xml>`;
                 const param = arg.param;
 
                 if (paramInfo.isEnum) {
-                    if (e.kind === SK.PropertyAccessExpression) {
-                        const enumName = (e as PropertyAccessExpression).expression as Identifier;
-                        if (enumName.kind === SK.Identifier && enumName.text === paramInfo.type) {
-                            return undefined;
+                    if (checkEnumArgument(e)) {
+                        return undefined;
+                    }
+                    else if (e.kind === SK.CallExpression) {
+                        const callInfo: pxtc.CallInfo = (e as any).callInfo;
+                        if (callInfo && callInfo.attrs.shim === "TD_ID" && callInfo.args && callInfo.args.length === 1) {
+                            const arg = unwrapNode(callInfo.args[0]);
+                            if (checkEnumArgument(arg)) {
+                                return undefined;
+                            }
                         }
                     }
                     return Util.lf("Enum arguments may only be literal property access expressions");
@@ -1992,6 +2035,16 @@ ${output}</xml>`;
                 }
 
                 return undefined;
+
+                function checkEnumArgument(enumArg: ts.Node) {
+                    if (enumArg.kind === SK.PropertyAccessExpression) {
+                        const enumName = (enumArg as PropertyAccessExpression).expression as Identifier;
+                        if (enumName.kind === SK.Identifier && enumName.text === paramInfo.type) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
             }
         }
 
@@ -2017,6 +2070,13 @@ ${output}</xml>`;
 
             return undefined;
         }
+    }
+
+    function isEmptyStringNode(node: Node) {
+        if (node.kind === SK.StringLiteral || node.kind === SK.NoSubstitutionTemplateLiteral) {
+            return (node as LiteralLikeNode).text === "";
+        }
+        return false;
     }
 
     function isAutoDeclaration(decl: VariableDeclaration) {
@@ -2318,5 +2378,9 @@ ${output}</xml>`;
             default:
                 return false;
         }
+    }
+
+    function isSupportedMathFunction(op: string) {
+        return pxt.blocks.MATH_FUNCTIONS.unary.indexOf(op) !== -1 || pxt.blocks.MATH_FUNCTIONS.binary.indexOf(op) !== -1;
     }
 }

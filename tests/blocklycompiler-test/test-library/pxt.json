@@ -2,7 +2,8 @@
     "name": "test-compile",
     "description": "Project that defines a variety of blocks to be used in blockly compiler test cases",
     "files": [
-        "expandableBlocks.ts"
+        "expandableBlocks.ts",
+        "toStringArgs.ts"
     ],
     "public": true,
     "dependencies": {},

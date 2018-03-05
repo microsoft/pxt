@@ -16,7 +16,7 @@ namespace basic {
 }
 ```
 
-You can also provide a JsDoc comment, color and weight for the namespace, as well as a friendly name (in Unicode). 
+You can also provide a JsDoc comment, color and weight for the namespace, as well as a friendly name (in Unicode).
 We strongly recommend carefully picking colors as it dramatically impacts
 that appearance and readability of your blocks. All blocks within the same namespace have the same color so that users can find the category easily from
 samples.
@@ -89,6 +89,16 @@ The following types are supported in function signatures that are meant to be ex
 * enums (see below)
 * custom classes that are also exported
 * arrays of the above
+
+## Specifying min and max values
+
+For parameters of type ``number``, you can specify minimum and maximum values, as follows:
+```typescript-ignore
+//% block
+//% v.min=0 v.max= 42
+export function showNumber(v: number, interval: number = 150): void
+{ }
+```
 
 ## Callbacks with Parameters
 
@@ -208,6 +218,26 @@ export function readUntil(del: string) : string {
     ...
 }
 ```
+
+### Tip: implicit conversion for string parameters
+
+If you have an API that takes a string as an argument it is possible to bypass the usual
+type checking done in the blocks editor and allow any typed block to be placed in the input. PXT
+will automatically convert whatever block is connected to the argument's input into a string
+in the generated TypeScript. To enable that behavior, set `shadowOptions.toString` on the
+parameter like so:
+
+```
+    //% blockId=console_log block="console|log %msg"
+    //% text.shadowOptions.toString=true
+    export function log(text: string): void {
+        serial.writeString(text + "\r\n");
+    }
+```
+
+Note that the parameter is referred to using its declared name (`text`) and not the
+name in the block definition string (`msg`).
+
 
 ## Docs and default values
 
@@ -341,7 +371,7 @@ namespace pins {
     //% fixedInstance whenUsed
     export const A7 = new AnalogPin(7);
 }
-``` 
+```
 
 The `whenUsed` annotation causes the variable to be only included in compilation
 when it is used, even though it is initialized with something that can possibly

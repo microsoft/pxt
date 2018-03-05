@@ -12,7 +12,6 @@ It is important to store all the state within the board instance as PXT will reu
         threeVoltPins: string[],
         attachPowerOnRight?: boolean,
         onboardComponents?: string[]
-        useCrocClips?: boolean,
         marginWhenBreadboarding?: [number, number, number, number],
         spiPins?: {
             MOSI: string,
@@ -22,8 +21,7 @@ It is important to store all the state within the board instance as PXT will reu
         i2cPins?: {
             SDA: string,
             SCL: string,
-        },
-        analogInPins?: string[] //TODO: implement allocation
+        }
     }
 
     interface BoardImageDefinition {

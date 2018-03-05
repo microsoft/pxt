@@ -43,7 +43,6 @@ import * as blocks from "./blocks"
 import * as codecard from "./codecard"
 import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
-import * as electron from "./electron";
 import * as notification from "./notification";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -107,6 +106,7 @@ export class ProjectView
     importDialog: projects.ImportDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     prevEditorId: string;
+    screenshotHandler: (img: string) => void;
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -834,11 +834,8 @@ export class ProjectView
         }
     }
 
-    importProjectFile(file: File) {
-        if (!file) return;
-
-        ts.pxtc.Util.fileReadAsBufferAsync(file)
-            .then(buf => pxt.lzmaDecompressAsync(buf))
+    private importProjectCoreAsync(buf: Uint8Array) {
+        return pxt.lzmaDecompressAsync(buf)
             .then(contents => {
                 let data = JSON.parse(contents) as pxt.cpp.HexFile;
                 this.importHex(data);
@@ -846,6 +843,20 @@ export class ProjectView
                 core.warningNotification(lf("Sorry, we could not import this project."))
                 this.openHome();
             });
+    }
+
+    importProjectFile(file: File) {
+        if (!file) return;
+        ts.pxtc.Util.fileReadAsBufferAsync(file)
+            .then(buf => this.importProjectCoreAsync(buf))
+    }
+
+    importPNGFile(file: File) {
+        if (!file) return;
+        ts.pxtc.Util.fileReadAsBufferAsync(file)
+            .then(buf => screenshot.decodeBlobAsync("data:image/png;base64," +
+                btoa(Util.uint8ArrayToString(buf))))
+            .then(buf => this.importProjectCoreAsync(buf))
     }
 
     importFile(file: File) {
@@ -858,6 +869,8 @@ export class ProjectView
             this.importTypescriptFile(file);
         } else if (isProjectFile(file.name)) {
             this.importProjectFile(file);
+        } else if (isPNGFile(file.name)) {
+            this.importPNGFile(file);
         } else {
             const importer = this.resourceImporters.filter(fi => fi.canImport(file))[0];
             if (importer) {
@@ -951,11 +964,25 @@ export class ProjectView
 
     saveProjectToFileAsync(): Promise<void> {
         const mpkg = pkg.mainPkg
-        return this.exportProjectToFileAsync()
-            .then((buf: Uint8Array) => {
-                const fn = pkg.genFileName(".mkcd");
-                pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
+        if (pxt.appTarget.compile.saveAsPNG) {
+            simulator.driver.postMessage({ type: "screenshot" })
+            return new Promise<void>((resolve, reject) => {
+                this.screenshotHandler = (img) => {
+                    this.screenshotHandler = null
+                    resolve(this.exportProjectToFileAsync()
+                        .then(blob => screenshot.encodeBlobAsync(img, blob))
+                        .then(img => {
+                            const fn = pkg.genFileName(".png");
+                            pxt.BrowserUtils.browserDownloadDataUri(img, fn);
+                        }))
+                }
             })
+        } else
+            return this.exportProjectToFileAsync()
+                .then((buf: Uint8Array) => {
+                    const fn = pkg.genFileName(".mkcd");
+                    pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
+                })
     }
 
     addPackage() {
@@ -997,6 +1024,10 @@ export class ProjectView
             Util.jsonCopyFrom(files, options.filesOverride)
         if (options.dependencies)
             Util.jsonMergeFrom(cfg.dependencies, options.dependencies)
+        if (options.tsOnly) {
+            cfg.files = cfg.files.filter(f => f != "main.blocks")
+            delete files["main.blocks"]
+        }
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n";
         return workspace.installAsync({
             name: cfg.name,
@@ -1070,12 +1101,15 @@ export class ProjectView
             disagreeLbl: lf("Cancel")
         }).then(r => {
             if (!r) return Promise.resolve();
-
-            return hidbridge.disconnectWrapperAsync()
+            return Promise.resolve()
+                .then(() => {
+                    return pxt.winrt.releaseAllDevicesAsync();
+                })
                 .then(() => {
                     return this.resetWorkspace();
                 });
-        });
+        })
+            .done();
     }
 
     pair() {
@@ -1369,11 +1403,14 @@ export class ProjectView
     importFileDialog() {
         let input: HTMLInputElement;
         let ext = ".mkcd";
-        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+        if (pxt.appTarget.compile.hasHex) {
             ext = ".hex";
         }
-        if (pxt.appTarget.compile && pxt.appTarget.compile.useUF2) {
+        if (pxt.appTarget.compile.useUF2) {
             ext = ".uf2";
+        }
+        if (pxt.appTarget.compile.saveAsPNG) {
+            ext = ".png";
         }
         core.confirmAsync({
             header: lf("Open {0} file", ext),
@@ -1749,12 +1786,13 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
 
-        const isApp = electron.isElectron || pxt.winrt.isWinRT();
+        const isApp = pxt.winrt.isWinRT();
 
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         let rootClassList = [
+            "ui",
             shouldHideEditorFloats ? " hideEditorFloats" : '',
             shouldCollapseEditorTools ? " collapsedEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
@@ -1769,6 +1807,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             !showEditorToolbar ? 'hideEditorToolbar' : '',
             this.state.bannerVisible ? "notificationBannerVisible" : "",
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
+            isApp ? "app" : "",
             'full-abs'
         ];
         let jQueryClasses = ["dimmable", "dimmed"];
@@ -1862,6 +1901,10 @@ function isProjectFile(filename: string): boolean {
     return /\.(pxt|mkcd)$/i.test(filename)
 }
 
+function isPNGFile(filename: string): boolean {
+    return /\.png$/i.test(filename)
+}
+
 function initLogin() {
     {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
@@ -1940,8 +1983,11 @@ function initScreenshots() {
             pxt.tickEvent("sim.screenshot");
             const scmsg = msg as pxsim.SimulatorScreenshotMessage;
             pxt.debug('received screenshot');
-            screenshot.saveAsync(theEditor.state.header, scmsg.data)
-                .done(() => { pxt.debug('screenshot saved') })
+            if (theEditor.screenshotHandler)
+                theEditor.screenshotHandler(scmsg.data)
+            else
+                screenshot.saveAsync(theEditor.state.header, scmsg.data)
+                    .done(() => { pxt.debug('screenshot saved') })
         };
     }, false);
 }
@@ -2211,8 +2257,8 @@ $(() => {
     const appCacheUpdated = () => {
         try {
             // On embedded pages, preserve the loaded project
-            if (pxt.BrowserUtils.isIFrame() && hash.cmd === "pub") {
-                location.hash = `#pub:${hash.arg}`;
+            if (pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) {
+                location.hash = `#${hash.cmd}:${hash.arg}`;
             }
             // if in editor, reload project
             else if (theEditor
@@ -2291,7 +2337,6 @@ $(() => {
             initSerial();
             initScreenshots();
             initHashchange();
-            electron.init();
             return initExtensionsAsync();
         })
         .then(() => pxt.winrt.initAsync(importHex))
@@ -2319,7 +2364,6 @@ $(() => {
             else theEditor.newProject();
             return Promise.resolve();
         })
-        .then(() => workspace.importLegacyScriptsAsync())
         .done(() => {
             $("#loading").remove();
             return workspace.loadedAsync();

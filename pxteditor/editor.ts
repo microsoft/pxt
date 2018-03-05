@@ -75,6 +75,7 @@ namespace pxt.editor {
         temporary?: boolean;
         inTutorial?: boolean;
         dependencies?: pxt.Map<string>;
+        tsOnly?: boolean;
     }
 
     export interface ProjectFilters {

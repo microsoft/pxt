@@ -126,6 +126,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
         pkg.getCompileOptionsAsync()
             .then(opts => {
                 opts.ast = true;
+                opts.testMode = true;
                 opts.ignoreFileResolutionErrors = true;
                 const decompiled = pxtc.decompile(opts, "main.ts", true);
                 if (decompiled.success) {

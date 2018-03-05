@@ -23,8 +23,7 @@ namespace pxt.winrt {
         }
 
         isSwitchingToBootloader() {
-            expectingAdd = true;
-            expectingRemove = true;
+            isSwitchingToBootloader();
         }
 
         disconnectAsync(): Promise<void> {
@@ -54,10 +53,16 @@ namespace pxt.winrt {
                     }));
         }
 
-        initAsync(): Promise<void> {
+        initAsync(isRetry: boolean = false): Promise<void> {
             Util.assert(!this.dev, "HID interface not properly reseted");
             const wd = Windows.Devices;
             const whid = wd.HumanInterfaceDevice.HidDevice;
+            const rejectDeviceNotFound = () => {
+                const err = new Error(U.lf("Device not found"));
+                (<any>err).notifyUser = true;
+                (<any>err).type = "devicenotfound";
+                return Promise.reject(err);
+            };
             const getDevicesPromise = hidSelectors.reduce((soFar, currentSelector) => {
                 // Try all selectors, in order, until some devices are found
                 return soFar.then((devices) => {
@@ -68,6 +73,7 @@ namespace pxt.winrt {
                 });
             }, Promise.resolve<Windows.Devices.Enumeration.DeviceInformationCollection>(null));
 
+            let deviceId: string;
             return getDevicesPromise
                 .then((devices) => {
                     if (!devices || !devices[0]) {
@@ -77,12 +83,15 @@ namespace pxt.winrt {
                     pxt.debug(`hid enumerate ${devices.length} devices`);
                     const device = devices[0];
                     pxt.debug(`hid connect to ${device.name} (${device.id})`);
+                    deviceId = device.id;
                     return whid.fromIdAsync(device.id, Windows.Storage.FileAccessMode.readWrite);
                 })
                 .then((r: WHID) => {
                     this.dev = r;
                     if (!this.dev) {
                         pxt.debug("can't connect to hid device");
+                        let status = Windows.Devices.Enumeration.DeviceAccessInformation.createFromId(deviceId).currentStatus;
+                        pxt.reportError("winrt_device", `could not connect to HID device; device status: ${status}`);
                         return Promise.reject(new Error("can't connect to hid device"));
                     }
                     pxt.debug(`hid device version ${this.dev.version}`);
@@ -101,10 +110,17 @@ namespace pxt.winrt {
                     return Promise.resolve();
                 })
                 .catch((e) => {
-                    const err = new Error(U.lf("Device not found"));
-                    (<any>err).notifyUser = true;
-                    (<any>err).type = "devicenotfound";
-                    return Promise.reject(err);
+                    if (isRetry) {
+                        return rejectDeviceNotFound();
+                    }
+                    return bootloaderViaBaud()
+                        .then(() => {
+                            return this.initAsync(true);
+                        })
+                        .catch(() => {
+                            return rejectDeviceNotFound();
+                        });
+
                 });
         }
     }
@@ -119,6 +135,13 @@ namespace pxt.winrt {
                 return Promise.reject(e);
             })
             .then(() => packetIO);
+    }
+
+    export function isSwitchingToBootloader() {
+        expectingAdd = true;
+        if (packetIO && packetIO.dev) {
+            expectingRemove = true;
+        }
     }
 
     const hidSelectors: string[] = [];

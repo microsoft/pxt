@@ -113,12 +113,15 @@ namespace pxt.blocks {
         let visibleOptions = 0;
         let inputsInitialized = false;
 
+        let addShown = false;
+        let remShown = false;
+
         Blockly.Extensions.apply('inline-svgs', b, false);
-        addPlusButton();
 
         const onFirstRender = () => {
-            if (b.rendered) {
+            if (b.rendered && !b.workspace.isDragging()) {
                 updateShape(0, undefined, true);
+                updateButtons();
 
                 // We don't need anything once the dom is initialized, so clean up
                 b.workspace.removeChangeListener(onFirstRender);
@@ -129,7 +132,7 @@ namespace pxt.blocks {
         // hide the inputs in init() or domToMutation(). This will get called
         // whenever a change is made to the workspace (including after the first
         // block render) and then remove itself
-        (b as any).setOnChange(onFirstRender);
+        b.workspace.addChangeListener(onFirstRender);
 
         appendMutation(b, {
             mutationToDom: (el: Element) => {
@@ -206,8 +209,7 @@ namespace pxt.blocks {
                 }
             }
 
-            setButton(buttonAddName, visibleOptions !== totalOptions);
-            setButton(buttonRemName, visibleOptions !== 0);
+            updateButtons();
             if (!skipRender) b.render();
         }
 
@@ -216,31 +218,55 @@ namespace pxt.blocks {
             .appendField(new Blockly.FieldImage(uri, 24, 24, false, alt, () => updateShape(delta)))
         }
 
+        function updateButtons() {
+            const showAdd = visibleOptions !== totalOptions;
+            const showRemove = visibleOptions !== 0;
+
+            if (!showAdd) {
+                addShown = false;
+                b.removeInput(buttonAddName, true);
+            }
+            if (!showRemove) {
+                remShown = false;
+                b.removeInput(buttonRemName, true);
+            }
+
+            if (showRemove && !remShown) {
+                if (addShown) {
+                    b.removeInput(buttonAddName, true);
+                    addMinusButton();
+                    addPlusButton();
+                }
+                else {
+                    addMinusButton();
+                }
+            }
+
+            if (showAdd && !addShown) {
+                addPlusButton();
+            }
+        }
+
         function addPlusButton() {
+            addShown = true;
             addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Reveal optional arguments"), buttonDelta);
         }
 
         function addMinusButton() {
+            remShown = true;
             addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Hide optional arguments"), -1 * buttonDelta);
         }
 
         function initOptionalInputs() {
             inputsInitialized = true;
             addInputs();
-            b.removeInput(buttonAddName);
-            addMinusButton();
-            addPlusButton();
+            updateButtons();
         }
 
         function addDelta(delta: number) {
             return Math.min(Math.max(visibleOptions + delta, 0), totalOptions);
         }
 
-        function setButton(name: string, visible: boolean) {
-            b.inputList.forEach(i => {
-                if (i.name === name) setInputVisible(i, visible);
-            });
-        }
 
         function setInputVisible(input: Blockly.Input, visible: boolean) {
             // If the block isn't rendered, Blockly will crash

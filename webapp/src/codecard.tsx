@@ -41,7 +41,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
             card.onClick(e);
         } : undefined;
 
-        const imageUrl = card.imageUrl || (card.youTubeId ? `https://img.youtube.com/vi/${card.youTubeId}/maxresdefault.jpg` : undefined);
+        const imageUrl = card.imageUrl || (card.youTubeId ? `https://img.youtube.com/vi/${card.youTubeId}/0.jpg` : undefined);
 
         const cardDiv = <div ref={el => this.element = el} className={`ui card ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`} role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={card.ariaLabel || card.title} title={card.title} onClick={clickHandler} tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={card.onClick ? sui.fireClickOnEnter : null}>
             {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
