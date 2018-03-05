@@ -254,7 +254,7 @@ namespace pxsim {
         toAny(): any {
             const r: any = {};
             this.data.forEach(d => {
-                r[d.keyName] = d.val;
+                r[d.keyName] = RefObject.toAny(d.val);
             })
             return r;
         }
