@@ -1765,11 +1765,15 @@ ${lbl}: .short 0xffff
                 let refSuff = ""
                 if (isRefCountedExpr(p.initializer))
                     refSuff = "Ref"
-                proc.emitExpr(ir.rtcall("pxtrt::mapSet" + refSuff, [
+                const keyName = p.name.getText();
+                const args = [
                     ir.op(EK.Incr, [expr]),
-                    ir.numlit(getIfaceMemberId(p.name.getText())),
+                    ir.numlit(getIfaceMemberId(keyName)),
                     emitExpr(p.initializer)
-                ]))
+                ];
+                if (!opts.target.isNative)
+                    args.push(emitStringLiteral(keyName));
+                proc.emitExpr(ir.rtcall("pxtrt::mapSet" + refSuff, args))
             })
             return expr
         }
