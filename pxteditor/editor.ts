@@ -8,6 +8,7 @@ namespace pxt.editor {
         zoomIn(): void;
         zoomOut(): void;
         resize(): void;
+        setScale(scale: number): void;
     }
 
     export interface IFile {
@@ -62,6 +63,7 @@ namespace pxt.editor {
     export interface EditorState {
         filters?: pxt.editor.ProjectFilters;
         searchBar?: boolean; // show the search bar in editor
+        hasCategories?: boolean; // show categories in toolbox
     }
 
     export interface ProjectCreationOptions {
@@ -73,6 +75,7 @@ namespace pxt.editor {
         temporary?: boolean;
         inTutorial?: boolean;
         dependencies?: pxt.Map<string>;
+        tsOnly?: boolean;
     }
 
     export interface ProjectFilters {
@@ -90,8 +93,11 @@ namespace pxt.editor {
 
     export interface TutorialStepInfo {
         fullscreen?: boolean;
+        // no coding
+        unplugged?: boolean;
         hasHint?: boolean;
         content?: string;
+        titleContent?: string;
         headerContent?: string;
         ariaLabel?: string;
     }
@@ -198,6 +204,7 @@ namespace pxt.editor {
         share(): void;
         about(): void;
         reset(): void;
+        pair(): void;
         showReportAbuse(): void;
         exitAndSave(): void;
         launchFullEditor(): void;
@@ -250,7 +257,7 @@ namespace pxt.editor {
         resourceImporters?: IResourceImporter[];
         beforeCompile?: () => void;
         deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
-        showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync?: (options: any) => Promise<number>) => Promise<void>;
+        showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
         fieldEditors?: IFieldCustomOptions[];
         toolboxOptions?: IToolboxOptions;
     }

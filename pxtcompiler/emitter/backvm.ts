@@ -66,7 +66,7 @@ ${hex.hexPrelude()}
             let newBuf: number[] = []
             for (let i = 0; i < res.buf.length; i += 2)
                 newBuf.push(res.buf[i] | (res.buf[i + 1] << 8))
-            const myhex = btoa(hex.patchHex(bin, newBuf, false, true)[0])
+            const myhex = ts.pxtc.encodeBase64(hex.patchHex(bin, newBuf, false, true)[0])
             bin.writeFile(pxt.outputName(target), myhex)
         }
     }

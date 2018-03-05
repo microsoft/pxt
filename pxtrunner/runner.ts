@@ -537,7 +537,7 @@ ${files["main.ts"]}
 <aside id=youtube>
 <div class="ui two column stackable grid container">
 <div class="column">
-    <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@" data-placeholder="https://img.youtube.com/vi/@ARGS@/maxresdefault.jpg">
+    <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@" data-placeholder="https://img.youtube.com/vi/@ARGS@/0.jpg">
     </div>
 </div></div>
 </aside>
@@ -594,21 +594,24 @@ ${files["main.ts"]}
     export interface RenderMarkdownOptions {
         path?: string;
         tutorial?: boolean;
+        blocksAspectRatio?: number;
     }
 
     export function renderMarkdownAsync(content: HTMLElement, md: string, options: RenderMarkdownOptions = {}): Promise<void> {
         const path = options.path;
         const parts = (path || '').split('/');
 
-        let html = pxt.docs.renderMarkdown({
+        const html = pxt.docs.renderMarkdown({
             template: template,
             markdown: md,
             theme: pxt.appTarget.appTheme,
         });
+        let blocksAspectRatio = options.blocksAspectRatio
+            || window.innerHeight < window.innerWidth ? 1.62 : 1 / 1.62;
         $(content).html(html);
         $(content).find('a').attr('target', '_blank');
         return pxt.runner.renderAsync({
-            blocksAspectRatio: 0.5,
+            blocksAspectRatio: blocksAspectRatio,
             snippetClass: 'lang-blocks',
             signatureClass: 'lang-sig',
             blocksClass: 'lang-block',
@@ -658,7 +661,8 @@ ${files["main.ts"]}
                 let stepInfo: editor.TutorialStepInfo[] = [];
                 tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
                     let info: editor.TutorialStepInfo = {
-                        fullscreen: s.indexOf('@fullscreen') > -1
+                        fullscreen: /@(fullscreen|unplugged)/.test(s),
+                        unplugged: /@unplugged/.test(s)
                     }
                     stepInfo.push(info);
                     return ""
@@ -707,13 +711,16 @@ ${files["main.ts"]}
                     })
                     .then(() => {
                         // Split the steps
-                        let stepcontent = content.innerHTML.split(newAuthoring ? /<h2.*\/h2>/gi : /<h3.*\/h3>/gi);
-                        for (let i = 0; i < stepcontent.length - 1; i++) {
+                        const stepcontent = content.innerHTML.split(newAuthoring ? /<h2.*?>(.*?)<\/h2>/gi : /<h3.*?>(.*?)<\/h3>/gi);
+                        // drop first section
+                        stepcontent.shift();
+                        for (let i = 0; i < stepcontent.length; i += 2) {
                             content.innerHTML = stepcontent[i + 1];
-                            stepInfo[i].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
-                            stepInfo[i].ariaLabel = content.firstElementChild.textContent;
-                            stepInfo[i].content = stepcontent[i + 1];
-                            stepInfo[i].hasHint = content.childElementCount > 1;
+                            stepInfo[i / 2].titleContent = (stepcontent[i] || "").replace(/@(fullscreen|unplugged)/g, "").trim();
+                            stepInfo[i / 2].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
+                            stepInfo[i / 2].ariaLabel = content.firstElementChild.textContent;
+                            stepInfo[i / 2].content = stepcontent[i + 1];
+                            stepInfo[i / 2].hasHint = content.childElementCount > 1;
                         }
                         content.innerHTML = '';
                         // return the result

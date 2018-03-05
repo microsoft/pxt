@@ -87,10 +87,14 @@ namespace pxt {
         }
     }
 
+    export interface TelemetryEventOptions {
+        interactiveConsent: boolean;
+    }
+
     /**
      * Track an event.
      */
-    export var tickEvent: (id: string, data?: Map<string | number>) => void = function (id) { }
+    export var tickEvent: (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions) => void = function (id) { }
 
     let activityEvents: Map<number> = {};
     const tickActivityDebounced = Util.debounce(() => {
@@ -169,7 +173,7 @@ namespace pxt {
     }
 
     export interface Host {
-        readFile(pkg: Package, filename: string): string;
+        readFile(pkg: Package, filename: string, skipAdditionalFiles?: boolean): string;
         writeFile(pkg: Package, filename: string, contents: string, force?: boolean): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
         getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo>;
@@ -205,12 +209,18 @@ namespace pxt {
     }
 
     let _targetConfig: pxt.TargetConfig = undefined;
+    let _targetConfigPromise: Promise<pxt.TargetConfig> = undefined;
     export function targetConfigAsync(): Promise<pxt.TargetConfig> {
-        return _targetConfig ? Promise.resolve(_targetConfig)
-            : Cloud.downloadTargetConfigAsync()
-                .then(
-                js => { _targetConfig = js; return _targetConfig; },
-                err => { _targetConfig = undefined; return undefined; });
+        if (_targetConfig) return Promise.resolve(_targetConfig);
+        if (!Cloud.isOnline()) // offline, don't try to download
+            return Promise.resolve(undefined);
+        if (_targetConfigPromise) // cached promise
+            return _targetConfigPromise;
+        return _targetConfigPromise = Cloud.downloadTargetConfigAsync()
+            .then(
+                js => { _targetConfig = js; },
+                err => { _targetConfig = undefined; })
+            .then(() => _targetConfig);
     }
     export function packagesConfigAsync(): Promise<pxt.PackagesConfig> {
         return targetConfigAsync().then(config => config ? config.packages : undefined);

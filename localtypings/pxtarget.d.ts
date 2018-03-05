@@ -12,6 +12,8 @@ declare namespace pxt {
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
         windowsStoreLink?: string;
+        // link to the latest firmware urls (boardid -> url)
+        firmwareUrls?: pxt.Map<string>;
     }
 
     interface PackagesConfig {
@@ -117,6 +119,7 @@ declare namespace pxt {
         importing?: boolean; // import url dialog
         embedding?: boolean;
         githubPackages?: boolean; // allow searching github for packages
+        noGithubProxy?: boolean;
     }
 
     interface AppSimulator {
@@ -173,6 +176,8 @@ declare namespace pxt {
         logoUrl?: string;
         logo?: string;
         portraitLogo?: string;
+        highContrastLogo?: string;
+        highContrastPortraitLogo?: string;
         rightLogo?: string;
         docsLogo?: string;
         organization?: string;
@@ -183,7 +188,6 @@ declare namespace pxt {
         shareUrl?: string;
         embedUrl?: string;
         betaUrl?: string;
-        legacyDomain?: string;
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
@@ -224,7 +228,6 @@ declare namespace pxt {
         blocksOnly?: boolean; // blocks only workspace
         hideDocsSimulator?: boolean; // do not show simulator button in docs
         hideDocsEdit?: boolean; // do not show edit button in docs
-        hideCookieNotice?: boolean; // always hide cookie notice for targets that embed the editor in apps/chrome
         hideMenuBar?: boolean; // Hides the main menu bar
         hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
         appStoreID?: string; // Apple iTune Store ID if any
@@ -245,9 +248,10 @@ declare namespace pxt {
         blocklyColors?: Blockly.Colours; // Blockly workspace, flyout and other colors
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
-        appPathNames?: string[]; // Authorized URL paths in electron or UWP, all other paths will display a warning banner
+        appPathNames?: string[]; // Authorized URL paths in UWP, all other paths will display a warning banner
         defaultBlockGap?: number; // For targets to override block gap
         hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
+        hideNewProjectButton?: boolean; // do not show the "new project" button in home page
     }
 
     interface SocialOptions {
@@ -294,7 +298,9 @@ declare namespace ts.pxtc {
         useUF2?: boolean;
         useMkcd?: boolean;
         useELF?: boolean;
+        saveAsPNG?: boolean;
         useModulator?: boolean;
+        webUSB?: boolean; // use WebUSB when supported
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
@@ -334,6 +340,7 @@ declare namespace ts.pxtc {
         trace?: boolean;
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
+        name?: string;
 
         alwaysDecompileOnStart?: boolean; // decompiler only
 

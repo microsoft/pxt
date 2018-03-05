@@ -17,7 +17,6 @@ import Map = pxt.Map;
 
 import * as server from './server';
 import * as build from './buildengine';
-import * as electron from "./electron";
 import * as commandParser from './commandparser';
 import * as hid from './hid';
 import * as serial from './serial';
@@ -1315,8 +1314,8 @@ export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Prom
 
     return initPromise
         .then(() => { copyCommonSim(); return simshimAsync() })
-        .then(() => buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim'))
         .then(() => buildTargetCoreAsync(options))
+        .then(() => buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim'))
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildSemanticUIAsync())
         .then(() => {
@@ -1419,8 +1418,8 @@ function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
 
     console.log(`building ${ksd}...`);
     return nodeutil.spawnAsync({
-        cmd: nodeutil.addCmd("jake"),
-        args: includeSourceMaps ? ["sourceMaps=true"] : [],
+        cmd: nodeutil.addCmd("npm"),
+        args: includeSourceMaps ? ["run", "build", "sourceMaps=true"] : ["run", "build"],
         cwd: ksd
     }).then(() => {
         console.log("local pxt-core built.")
@@ -1508,7 +1507,7 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     // expand logo
     let logos = (cfg.appTheme as any as Map<string>);
     Object.keys(logos)
-        .filter(k => /logo$/i.test(k) && /^\.\//.test(logos[k]))
+        .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
         .forEach(k => {
             let fn = path.join('./docs', logos[k]);
             pxt.debug(`importing ${fn}`)
@@ -1622,7 +1621,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
                             // process rtl css
                             postcss([rtlcss])
                                 .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                    fs.writeFile(`built/web/rtl${cssFile}`, result2.css, undefined);
+                                    fs.writeFileSync(`built/web/rtl${cssFile}`, result2.css, { encoding: "utf8" });
                                 });
                         });
                     });
@@ -1641,9 +1640,9 @@ function buildWebStringsAsync() {
 function thirdPartyNoticesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
     let tpn = `
-/*!----------------- PXT ThirdPartyNotices -------------------------------------------------------
+/*!----------------- MakeCode (PXT) ThirdPartyNotices -------------------------------------------------------
 
-PXT uses third party material from the projects listed below.
+MakeCode (PXT) uses third party material from the projects listed below.
 The original copyright notice and the license under which Microsoft
 received such third party material are set forth below. Microsoft
 reserves all other rights not expressly granted, whether by
@@ -1795,7 +1794,6 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     pxt.log(`building target.json in ${process.cwd()}...`)
 
     return buildWebStringsAsync()
-        .then(() => buildTargetDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
             const isPrj = /prj$/.test(dirname);
@@ -2072,10 +2070,8 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync(includeSourceMaps))
         .then(() => server.serveAsync({
             autoStart: !globalConfig.noAutoStart,
-            electron: !!parsed.flags["electron"],
             localToken,
             packaged,
-            electronHandlers,
             port: parsed.flags["port"] as number || 0,
             wsPort: parsed.flags["wsport"] as number || 0,
             hostname: parsed.flags["hostname"] as string || "",
@@ -2255,7 +2251,7 @@ class Host
         }
     }
 
-    readFile(module: pxt.Package, filename: string): string {
+    readFile(module: pxt.Package, filename: string, skipAdditionalFiles?: boolean): string {
         const commonFile = U.lookup(commonfiles, filename)
         if (commonFile != null) return commonFile;
 
@@ -2278,7 +2274,7 @@ class Host
             // pxt.debug(`reading ${path.resolve(resolved)}`)
             return fs.readFileSync(resolved, "utf8")
         } catch (e) {
-            if (module.config) {
+            if (!skipAdditionalFiles && module.config) {
                 let addPath = module.config.additionalFilePath
                 if (addPath) {
                     try {
@@ -2503,7 +2499,7 @@ pxt_modules
 }`,
     ".travis.yml": `language: node_js
 node_js:
-    - "5.7.0"
+    - "8.9.4"
 script:
     - "npm install -g pxt"
     - "pxt target @TARGET@"
@@ -2638,8 +2634,13 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
     if (fs.existsSync(pxt.CONFIG_NAME))
         U.userError(`${pxt.CONFIG_NAME} already present`)
 
-    let prj = pxt.appTarget.tsprj;
+    let prj = pxt.appTarget.tsprj || pxt.appTarget.blocksprj;
     let config = U.clone(prj.config);
+    // remove blocks file
+    Object.keys(prj.files)
+        .filter(f => /\.blocks$/.test(f))
+        .forEach(f => delete prj.files[f]);
+    config.files = config.files.filter(f => !/\.blocks$/.test(f));
 
     config.name = path.basename(path.resolve(".")).replace(/^pxt-/, "")
     // by default, projects are not public
@@ -2887,6 +2888,9 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
     if (fs.existsSync("built/common-sim.d.ts")) {
         sources.push("built/common-sim.d.ts")
     }
+
+    if (!fs.existsSync(sources[0]))
+        return // simulator not yet built; will try next time
 
     let opts: pxtc.CompileOptions = {
         fileSystem: {},
@@ -3787,7 +3791,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                         const tf = path.join(tfdir, fn);
                         nodeutil.mkdirP(tfdir)
                         pxt.log(`writing ${tf}`);
-                        fs.writeFile(tf, langTranslations, { encoding: "utf8" }, undefined);
+                        fs.writeFileSync(tf, langTranslations, { encoding: "utf8" });
 
                         locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
                     })
@@ -3859,6 +3863,15 @@ export function cleanAsync(parsed: commandParser.ParsedCommand) {
         .then(() => { });
 }
 
+export function cleanGenAsync(parsed: commandParser.ParsedCommand) {
+    pxt.log('cleaning generated files')
+    return Promise.resolve()
+        .then(() => rimrafAsync("libs/**/enums.d.ts", {}))
+        .then(() => rimrafAsync("libs/**/shims.d.ts", {}))
+        .then(() => rimrafAsync("libs/**/_locales", {}))
+        .then(() => { });
+}
+
 export function buildJResAsync(parsed: commandParser.ParsedCommand) {
     ensurePkgDir();
     nodeutil.allFiles(".")
@@ -3914,29 +3927,17 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
-    return buildTargetDocsAsync(
-        !!parsed.flags["docs"],
-        !!parsed.flags["loc"],
-        parsed.flags["files"] as string,
-        !!parsed.flags["create"]
-    );
-}
-
-export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: string, createOnly?: boolean): Promise<void> {
-    const build = () => buildCoreAsync({
+    const docs = !!parsed.flags["docs"];
+    const locs = !!parsed.flags["loc"];
+    const fileFilter = parsed.flags["files"] as string;
+    const createOnly = !!parsed.flags["create"];
+    return buildCoreAsync({
         mode: BuildOption.GenDocs,
         docs,
         locs,
         fileFilter,
         createOnly
     }).then((compileOpts) => { });
-    // from target location?
-    if (fs.existsSync("pxtarget.json") && !!readJson("pxtarget.json").appTheme)
-        return forEachBundledPkgAsync((pkg, dirname) => {
-            pxt.log(`building docs in ${dirname}`);
-            return build();
-        });
-    else return build();
 }
 
 export function deployAsync(parsed?: commandParser.ParsedCommand) {
@@ -4624,6 +4625,8 @@ function initCommands() {
     }, buildAsync);
 
     simpleCmd("clean", "removes built folders", cleanAsync);
+    advancedCommand("cleangen", "remove generated files", cleanGenAsync);
+
     p.defineCommand({
         name: "staticpkg",
         help: "packages the target into static HTML pages",
@@ -4708,8 +4711,7 @@ function initCommands() {
                 aliases: ["w"],
                 type: "number",
                 argument: "wsport"
-            },
-            electron: { description: "used to indicate that the server is being started in the context of an electron app" }
+            }
         }
     }, serveAsync);
 
@@ -4725,41 +4727,6 @@ function initCommands() {
             new: { description: "force the creation of a new gist" },
         }
     }, publishGistAsync)
-
-    p.defineCommand({
-        name: "electron",
-        help: "SUBCOMMANDS: 'init': prepare target for running inside Electron app; 'run': runs current target inside Electron app; 'package': generates a packaged Electron app for current target",
-        onlineHelp: true,
-        flags: {
-            appsrc: {
-                description: "path to the root of the PXT Electron app in the pxt repo",
-                aliases: ["a"],
-                type: "string",
-                argument: "appsrc"
-            },
-            installer: {
-                description: "('package' only) Also build the installer / zip redistributable for the built app",
-                aliases: ["i"]
-            },
-            just: {
-                description: "During 'run': skips TS compilation of app; During 'package': skips npm install and rebuilding native modules",
-                aliases: ["j"]
-            },
-            product: {
-                description: "path to a product.json file to use instead of the target's default one",
-                aliases: ["p"],
-                type: "string",
-                argument: "product"
-            },
-            release: {
-                description: "('package' only) Instead of using the current local target, use the published target from NPM (value format: <Target's NPM package>[@<Package version>])",
-                aliases: ["r"],
-                type: "string",
-                argument: "release"
-            }
-        },
-        argString: "<subcommand>"
-    }, electron.electronAsync);
 
     p.defineCommand({
         name: "init",
@@ -4982,9 +4949,8 @@ function errorHandler(reason: any) {
     process.exit(20)
 }
 
-let electronHandlers: pxt.Map<server.ElectronHandler>;
 // called from pxt npm package
-export function mainCli(targetDir: string, args: string[] = process.argv.slice(2), handlers?: pxt.Map<server.ElectronHandler>): Promise<void> {
+export function mainCli(targetDir: string, args: string[] = process.argv.slice(2)): Promise<void> {
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
@@ -4995,7 +4961,6 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         return Promise.resolve();
     }
 
-    electronHandlers = handlers;
     nodeutil.setTargetDir(targetDir);
 
     let trg = nodeutil.getPxtTarget()
@@ -5008,9 +4973,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     if (trg.compile.nativeType == pxtc.NATIVE_TYPE_CS)
         compileId = "cs"
 
-    pxt.log(`Using target PXT/${trg.id} with build engine ${compileId}`)
-    pxt.log(`  Target dir:   ${nodeutil.targetDir}`)
-    pxt.log(`  PXT Core dir: ${nodeutil.pxtCoreDir}`)
+    const versions = pxt.appTarget.versions || ({ target: "", pxt: "" } as pxt.TargetVersions);
+    pxt.log(`Using target ${trg.id} with build engine ${compileId}`)
+    pxt.log(`  target: v${versions.target} ${nodeutil.targetDir}`)
+    pxt.log(`  pxt-core: v${versions.pxt} ${nodeutil.pxtCoreDir}`)
 
     pxt.HF2.enableLog()
 
@@ -5061,10 +5027,6 @@ function initGlobals() {
 
 initGlobals();
 initCommands();
-
-export function sendElectronMessage(message: server.ElectronMessage) {
-    server.sendElectronMessage(message);
-}
 
 if (require.main === module) {
     let targetdir = process.cwd()

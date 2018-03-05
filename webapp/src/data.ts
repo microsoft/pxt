@@ -29,7 +29,10 @@ mountVirtualApi("cloud", {
 })
 
 mountVirtualApi("cloud-search", {
-    getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(e => core.handleNetworkError(e, [404])),
+    getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(e => {
+        core.handleNetworkError(e, [404])
+        return { statusCode: 404, headers: {}, json: {} }
+    }),
     expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline(),
 })
@@ -138,7 +141,7 @@ function notify(ce: CacheEntry) {
     }
 
     if (ce.components.length > 0)
-        Util.nextTick(() => ce.components.forEach(c => c.forceUpdate()))
+        ce.components.forEach(c => Util.nextTick(() =>  c.forceUpdate()))
 }
 
 function getVirtualApi(path: string) {
@@ -301,7 +304,8 @@ export function wrapWorkspace(ws: pxt.workspace.WorkspaceProvider): pxt.workspac
         }),
         saveToCloudAsync: ws.saveToCloudAsync,
         saveScreenshotAsync: ws.saveScreenshotAsync,
-        installAsync: ws.installAsync
+        installAsync: ws.installAsync,
+        loadedAsync: ws.loadedAsync
     };
 }
 

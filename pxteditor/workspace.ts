@@ -43,8 +43,8 @@ namespace pxt.workspace {
         saveToCloudAsync(h: Header): Promise<void>;
         syncAsync(): Promise<pxt.editor.EditorSyncState>;
         resetAsync(): Promise<void>;
+        loadedAsync(): Promise<void>;
         // optional screenshot support
         saveScreenshotAsync?: (h: Header, screenshot: string, icon: string) => Promise<void>;
-        importLegacyScriptsAsync?: () => Promise<void>;
     }
 }

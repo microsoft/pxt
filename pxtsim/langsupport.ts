@@ -11,10 +11,13 @@ namespace pxsim {
     }
 
     export let floatingPoint = false;
+    export let refCounting = true;
+    export let title = "";
     let cfgKey: Map<number> = {}
     let cfg: Map<number> = {}
 
     export function noRefCounting() {
+        refCounting = false;
         if (runtime) runtime.refCounting = false;
     }
 
@@ -55,6 +58,10 @@ namespace pxsim {
 
     export function enableFloatingPoint() {
         floatingPoint = true
+    }
+
+    export function setTitle(t: string) {
+        title = t;
     }
 
     export class RefObject {

@@ -1,0 +1,44 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="test_toStringArg">
+<value name="msg">
+<shadow type="text">
+<field name="TEXT">whatever</field>
+</shadow>
+</value>
+<next>
+<block type="test_toStringArg">
+<value name="msg">
+<shadow type="text"><field name="TEXT"></field></shadow>
+<block type="math_number">
+<field name="NUM">5</field>
+</block>
+</value>
+<next>
+<block type="test_toStringArg">
+<value name="msg">
+<block type="text_join">
+<mutation items="2" />
+<value name="ADD0">
+<shadow type="text">
+<field name="TEXT">whatever</field>
+</shadow>
+</value>
+<value name="ADD1">
+<shadow type="text"><field name="TEXT"></field></shadow>
+<block type="math_number">
+<field name="NUM">5</field>
+</block>
+</value>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+</block>
+</statement>
+</block>
+</xml>

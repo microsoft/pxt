@@ -6,8 +6,8 @@ namespace pxsim.instructions {
     const LBL_VERT_PAD = 3;
     const LBL_RIGHT_PAD = 5;
     const LBL_LEFT_PAD = 5;
-    const REQ_WIRE_HEIGHT = 45;
-    const REQ_CMP_HEIGHT = 55;
+    const REQ_WIRE_HEIGHT = 40;
+    const REQ_CMP_HEIGHT = 50;
     const REQ_CMP_SCALE = 0.5 * 3;
     type Orientation = "landscape" | "portrait";
     const ORIENTATION: Orientation = "portrait";
@@ -33,7 +33,7 @@ namespace pxsim.instructions {
     const NUM_FONT = 80;
     const NUM_MARGIN = 10;
     const FRONT_PAGE_BOARD_WIDTH = 400;
-    const PART_SCALAR = 2.3
+    const PART_SCALAR = 1.7;
     const PARTS_BOARD_SCALE = 0.17;
     const PARTS_BB_SCALE = 0.25;
     const PARTS_CMP_SCALE = 0.3;
@@ -455,12 +455,13 @@ namespace pxsim.instructions {
         // wires
         props.allWireColors.forEach(clr => {
             let quant = props.colorToWires[clr].length;
+            let style = props.boardDef.pinStyles[clr] || "female";
             let cmp = mkCmpDiv("wire", {
                 left: QUANT_LBL(quant),
                 leftSize: WIRE_QUANT_LBL_SIZE,
                 wireClr: clr,
                 cmpScale: PARTS_WIRE_SCALE,
-                crocClips: props.boardDef.useCrocClips
+                crocClips: style == "croc"
             })
             addClass(cmp, "partslist-wire");
             panel.appendChild(cmp);
@@ -499,6 +500,10 @@ namespace pxsim.instructions {
                 return (<BoardLoc>loc).pin;
         };
         wires.forEach(w => {
+            let croc = false;
+            if (w.end.type == "dalboard") {
+                croc = props.boardDef.pinStyles[(<BoardLoc>w.end).pin] == "croc";
+            }
             let cmp = mkCmpDiv("wire", {
                 top: mkLabel(w.end),
                 topSize: LOC_LBL_SIZE,
@@ -506,7 +511,7 @@ namespace pxsim.instructions {
                 botSize: LOC_LBL_SIZE,
                 wireClr: w.color,
                 cmpHeight: REQ_WIRE_HEIGHT,
-                crocClips: props.boardDef.useCrocClips
+                crocClips: croc
             })
             addClass(cmp, "cmp-div");
             reqsDiv.appendChild(cmp);
@@ -569,11 +574,13 @@ namespace pxsim.instructions {
         boardDef: BoardDefinition;
         parts: string[];
         partDefinitions: Map<PartDefinition>;
-        fnArgs?: any;
-        configData?: pxsim.ConfigData;
+        fnArgs: any;
+        configData: pxsim.ConfigData;
     }
 
-    export function renderParts(options: RenderPartsOptions) {
+    export function renderParts(container: HTMLElement, options: RenderPartsOptions) {
+        if (!options.boardDef.pinStyles)
+            options.boardDef.pinStyles = {};
         if (options.configData)
             pxsim.setConfigData(options.configData.cfg, options.configData.cfgKey);
 
@@ -588,9 +595,8 @@ namespace pxsim.instructions {
         pxsim.initCurrentRuntime(msg); // TODO it seems Runtime() ctor already calls this?
 
         let style = document.createElement("style");
-        document.head.appendChild(style);
-
         style.textContent += STYLE;
+        document.head.appendChild(style);
 
         const cmpDefs = options.partDefinitions;
 
@@ -609,16 +615,21 @@ namespace pxsim.instructions {
 
         //all required parts
         let partsPanel = mkPartsPanel(props);
-        document.body.appendChild(partsPanel);
+        container.appendChild(partsPanel);
 
         //steps
         for (let s = 0; s <= props.lastStep; s++) {
             let p = mkStepPanel(s, props);
-            document.body.appendChild(p);
+            container.appendChild(p);
         }
 
         //final
         let finalPanel = mkFinalPanel(props);
-        document.body.appendChild(finalPanel);
+        container.appendChild(finalPanel);
+    }
+
+    export function renderInstructions(msg: SimulatorInstructionsMessage) {
+        document.getElementById("proj-title").innerText = msg.options.name || "";
+        renderParts(document.body, msg.options)
     }
 }

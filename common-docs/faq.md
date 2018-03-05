@@ -8,7 +8,6 @@ This is the list of domains that need to be unblocked to allow the web editor to
 
 * @homeurl@
 * https://makecode.com
-* https://www.pxt.io
 * https://trg-@targetid@.userpxt.io
 * https://pxt.azureedge.net
 

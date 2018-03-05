@@ -1,7 +1,0 @@
-out
-electron-out
-node_modules
-npm-debug.log
-projects
-src/**/*.js
-src/product.json

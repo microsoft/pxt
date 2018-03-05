@@ -24,9 +24,7 @@ export interface SpawnOptions {
 }
 
 //This should be correct at startup when running from command line
-//When running inside Electron it gets updated to the correct path
 export var targetDir: string = process.cwd();
-//When running the Electron app, this will be updated based on targetDir
 export var pxtCoreDir: string = path.join(__dirname, "..");
 
 export function setTargetDir(dir: string) {
@@ -467,7 +465,7 @@ export function resolveMd(root: string, pathname: string): string {
         return targetMd
 
     let dirs = [
-        path.join(root, "/node_modules/pxt-core/common-docs/"),
+        path.join(root, "/node_modules/pxt-core/common-docs"),
     ]
     lastResolveMdDirs = dirs
     for (let pkg of pxt.appTarget.bundleddirs) {
@@ -480,7 +478,7 @@ export function resolveMd(root: string, pathname: string): string {
             dirs.push(path.join(d, "..", cfg.additionalFilePath, "docs"))
     }
     for (let d of dirs) {
-        let template = tryRead(d + pathname)
+        let template = tryRead(path.join(d, pathname))
         if (template)
             return pxt.docs.augmentDocs(template, targetMd)
     }

@@ -176,7 +176,13 @@
 /* Fixed header */
 
 #makecode-header {
+    /* IE doesn't support sticky, so we have to fall back to fixed. We don't
+     * use fixed in other browsers because otherwise the cookie banner will render
+     * on top of the header (and potentially cover it entirely on small screens).
+     * IE will ignore the second position value because it considers it invalid.
+     */
     position: fixed;
+    position: sticky;
     top: 0;
     left: 0;
     right: 0;
@@ -245,9 +251,6 @@
         font-size: 24px;
         padding-top: 12px;
     }
-    #makecode-targets {
-        padding-top: 15rem;
-    }
 }
 
 #makecode-mobile-menu {
@@ -260,9 +263,6 @@
     }
     #makecode-mobile-menu {
         display: block;
-    }
-    #makecode-targets {
-        padding-top: 7rem;
     }
 }
 /* Header menu */

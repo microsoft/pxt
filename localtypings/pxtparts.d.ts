@@ -24,14 +24,17 @@ declare namespace pxsim {
         leds?: LEDDefinition[]
     }
     interface BoardDefinition {
+        id?: string, // optional board id (set to the package id, multiboard only)
+        boardName?: string, // friendly board name (multiboard only)
+        driveDisplayName?: string, // drive name (multiboard only)
         visual: BoardImageDefinition | string,
         gpioPinBlocks?: string[][], // not used
         gpioPinMap: { [pin: string]: string },
         groundPins: string[],
         threeVoltPins: string[],
         attachPowerOnRight?: boolean,
-        onboardComponents?: string[]
-        useCrocClips?: boolean,
+        onboardComponents?: string[],
+        pinStyles?: { [pin: string]: PinStyle },
         marginWhenBreadboarding?: [number, number, number, number],
         spiPins?: {
             MOSI: string,
@@ -42,7 +45,10 @@ declare namespace pxsim {
             SDA: string,
             SCL: string,
         },
-        analogInPins?: string[] //TODO: implement allocation
+        bootloaderBaudSwitchInfo?: {
+            vid: string,
+            pid: string,
+        };
     }
     // ---- part definition
     export interface PartDefinition {
@@ -50,13 +56,13 @@ declare namespace pxsim {
         simulationBehavior?: string,
         // total number of power + GPIO + other pins
         numberOfPins: number,
-        // visual description or built-in visual name 
+        // visual description or built-in visual name
         visual: PartVisualDefinition,
         // metadata for each pin
         pinDefinitions: PartPinDefinition[],
         // description of how part is instantiated
         instantiation: PartSingletonDefinition | PartFunctionDefinition,
-        // list describing number and order of assembly instruction steps; the length is how many steps this part needs 
+        // list describing number and order of assembly instruction steps; the length is how many steps this part needs
         assembly: AssemblyStepDefinition[],
     }
     export interface PartVisualDefinition {
@@ -77,19 +83,20 @@ declare namespace pxsim {
         target: UninstantiatedPinTarget, // e.g.: "ground", "MISO", etc.; see PinType
         style: PinStyle, // e.g.: "male", "female", "solder"; see PinStyle
         orientation: PinOrientation, // e.g.: "+X", "-Z", etc.; see PinOrientation
-        colorGroup?: number, // if set, the allocator while try to give pins for this part in the same group the same color 
+        colorGroup?: number, // if set, the allocator while try to give pins for this part in the same group the same color
     }
     export type UninstantiatedPinTarget = PinTarget | PinInstantiationIdx;
-    export type PinTarget = (
-          "ground"
+    export type PinTarget = string;
+    /*          "ground"
         | "threeVolt"
         | MicrobitPin
         | SPIPin
-        | I2CPin);
+        | I2CPin); */
     // a hard-coded pin index; used by parts that are pre-built on the microbit: led matrix, buttons, etc.
-    export type MicrobitPin = (
+    export type MicrobitPin = string;
+    /* (
         "P0" | "P1" | "P2" | "P3" | "P4" | "P5" | "P6" | "P7" | "P8" | "P9"
-        | "P10" | "P11" | "P12" | "P13" | "P14" | "P15" | "P16" | "P19" | "P20");
+        | "P10" | "P11" | "P12" | "P13" | "P14" | "P15" | "P16" | "P19" | "P20");*/
     export type SPIPin = "MOSI" | "MISO" | "SCK";
     export type I2CPin = "SDA" | "SCL";
     // the pin style, necessary to know how to attach to the pin
@@ -112,11 +119,11 @@ declare namespace pxsim {
         argumentRoles: ArgumentRole[],
     }
     export interface ArgumentRole {
-        // argument is to be passed to the part during initialization. 
-        //  E.g. NeoPixel uses this to know if the strip is "RGB" or "RGBW" style 
+        // argument is to be passed to the part during initialization.
+        //  E.g. NeoPixel uses this to know if the strip is "RGB" or "RGBW" style
         partParameter?: string;
-        // argument is a "DigitalPin" enum value that is used as a pin value for this part 
-        //  E.g. neopixel.create(..)'s first argument is the pin which the NeoPixel is connected to 
+        // argument is a "DigitalPin" enum value that is used as a pin value for this part
+        //  E.g. neopixel.create(..)'s first argument is the pin which the NeoPixel is connected to
         pinInstantiationIdx?: number;
     }
     export interface PinInstantiationIdx {
@@ -125,7 +132,7 @@ declare namespace pxsim {
     // describes a single step for the assembly instructions
     export interface AssemblyStepDefinition {
         part?: boolean, // if true, the part itself should be assembled during this step
-        pinIndices?: number[], // the indices (ranging from 0 to "numberOfPins") of pins that should be wired for this step 
+        pinIndices?: number[], // the indices (ranging from 0 to "numberOfPins") of pins that should be wired for this step
     }
 
     export interface SimulatorMessage {

@@ -18,7 +18,7 @@ If you're looking for a better solution, carry on reading.
 
 The MakeCode approach to solve this issue is to render the code snippets on the client using the same block rendering engine as the editor. The idea is to load an IFrame from the MakeCode editor that will render the blocks for you.
 
-## Implementation
+## Implementation [try this fiddle](https://jsfiddle.net/ndyz1d57/1/)
 
 The first part is to register a message handler that will communicate with the rendering ``IFrame``.
 The renderer sends a ``renderready`` message when it is loaded and ready to receive messages.
@@ -62,7 +62,7 @@ window.addEventListener("message", function (ev) {
 
     switch (msg.type) {
         case "renderready":
-            // start rendering snippets!
+            // TODO: start rendering snippets!
             break;
         case "renderblocks":
             var svg = msg.svg; // this is an string containing SVG

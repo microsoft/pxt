@@ -6,6 +6,7 @@ namespace pxt {
         let checker = prog.getTypeChecker()
         let mainWr = cpp.nsWriter("declare namespace")
         let currNs = ""
+        let currMod: ts.ModuleDeclaration
 
         for (let src of prog.getSourceFiles()) {
             if (pathParse) {
@@ -19,6 +20,7 @@ namespace pxt {
             for (let stmt of src.statements) {
                 let mod = stmt as ts.ModuleDeclaration
                 if (stmt.kind == SK.ModuleDeclaration && mod.name.text == "pxsim") {
+                    currMod = mod
                     doStmt(mod.body as ts.ModuleBlock)
                 }
             }
@@ -54,12 +56,13 @@ namespace pxt {
         }
 
         function mapType(tp: ts.Type) {
-            let fn = checker.typeToString(tp, tp.symbol && tp.symbol.valueDeclaration, ts.TypeFormatFlags.UseFullyQualifiedType)
+            let fn = checker.typeToString(tp, currMod, ts.TypeFormatFlags.UseFullyQualifiedType)
+            fn = fn.replace(/^pxsim\./, "")
             switch (fn) {
-                case "RefAction":
-                case "pxsim.RefAction": return "() => void";
+                case "RefAction": return "() => void";
+                case "RefBuffer": return "Buffer";
                 default:
-                    return fn.replace(/^pxsim\./, "")
+                    return fn
             }
         }
 

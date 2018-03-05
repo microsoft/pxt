@@ -59,7 +59,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                         if (completeHandler) completeHandler();
                         $(el).remove();
                     }
-                }).error(() => {
+                }).on('error', () => {
                     // Problem with animation, still complete
                     if (completeHandler) completeHandler();
                     $(el).remove();
@@ -107,6 +107,10 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
             switch (msg.command) {
                 case "restart":
+                    cfg.restartSimulator();
+                    break;
+                case "reload":
+                    stop(true);
                     cfg.restartSimulator();
                     break;
                 case "modal":

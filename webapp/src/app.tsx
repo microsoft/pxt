@@ -43,7 +43,6 @@ import * as blocks from "./blocks"
 import * as codecard from "./codecard"
 import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
-import * as electron from "./electron";
 import * as notification from "./notification";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -107,6 +106,7 @@ export class ProjectView
     importDialog: projects.ImportDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     prevEditorId: string;
+    screenshotHandler: (img: string) => void;
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -834,11 +834,8 @@ export class ProjectView
         }
     }
 
-    importProjectFile(file: File) {
-        if (!file) return;
-
-        ts.pxtc.Util.fileReadAsBufferAsync(file)
-            .then(buf => pxt.lzmaDecompressAsync(buf))
+    private importProjectCoreAsync(buf: Uint8Array) {
+        return pxt.lzmaDecompressAsync(buf)
             .then(contents => {
                 let data = JSON.parse(contents) as pxt.cpp.HexFile;
                 this.importHex(data);
@@ -846,6 +843,20 @@ export class ProjectView
                 core.warningNotification(lf("Sorry, we could not import this project."))
                 this.openHome();
             });
+    }
+
+    importProjectFile(file: File) {
+        if (!file) return;
+        ts.pxtc.Util.fileReadAsBufferAsync(file)
+            .then(buf => this.importProjectCoreAsync(buf))
+    }
+
+    importPNGFile(file: File) {
+        if (!file) return;
+        ts.pxtc.Util.fileReadAsBufferAsync(file)
+            .then(buf => screenshot.decodeBlobAsync("data:image/png;base64," +
+                btoa(Util.uint8ArrayToString(buf))))
+            .then(buf => this.importProjectCoreAsync(buf))
     }
 
     importFile(file: File) {
@@ -858,6 +869,8 @@ export class ProjectView
             this.importTypescriptFile(file);
         } else if (isProjectFile(file.name)) {
             this.importProjectFile(file);
+        } else if (isPNGFile(file.name)) {
+            this.importPNGFile(file);
         } else {
             const importer = this.resourceImporters.filter(fi => fi.canImport(file))[0];
             if (importer) {
@@ -935,7 +948,7 @@ export class ProjectView
         pxt.debug("exporting project");
         return this.exportProjectToFileAsync()
             .then((buf) => {
-                return window.btoa(Util.uint8ArrayToString(buf));
+                return ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf));
             });
     }
 
@@ -951,11 +964,25 @@ export class ProjectView
 
     saveProjectToFileAsync(): Promise<void> {
         const mpkg = pkg.mainPkg
-        return this.exportProjectToFileAsync()
-            .then((buf: Uint8Array) => {
-                const fn = pkg.genFileName(".mkcd");
-                pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
+        if (pxt.appTarget.compile.saveAsPNG) {
+            simulator.driver.postMessage({ type: "screenshot" })
+            return new Promise<void>((resolve, reject) => {
+                this.screenshotHandler = (img) => {
+                    this.screenshotHandler = null
+                    resolve(this.exportProjectToFileAsync()
+                        .then(blob => screenshot.encodeBlobAsync(img, blob))
+                        .then(img => {
+                            const fn = pkg.genFileName(".png");
+                            pxt.BrowserUtils.browserDownloadDataUri(img, fn);
+                        }))
+                }
             })
+        } else
+            return this.exportProjectToFileAsync()
+                .then((buf: Uint8Array) => {
+                    const fn = pkg.genFileName(".mkcd");
+                    pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
+                })
     }
 
     addPackage() {
@@ -997,6 +1024,10 @@ export class ProjectView
             Util.jsonCopyFrom(files, options.filesOverride)
         if (options.dependencies)
             Util.jsonMergeFrom(cfg.dependencies, options.dependencies)
+        if (options.tsOnly) {
+            cfg.files = cfg.files.filter(f => f != "main.blocks")
+            delete files["main.blocks"]
+        }
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n";
         return workspace.installAsync({
             name: cfg.name,
@@ -1070,13 +1101,24 @@ export class ProjectView
             disagreeLbl: lf("Cancel")
         }).then(r => {
             if (!r) return Promise.resolve();
-            if (hf2Connection) {
-                return hf2Connection.disconnectAsync()
-                    .then(() => this.resetWorkspace())
-            } else {
-                return this.resetWorkspace()
-            }
-        });
+            return Promise.resolve()
+                .then(() => {
+                    return pxt.winrt.releaseAllDevicesAsync();
+                })
+                .then(() => {
+                    return this.resetWorkspace();
+                });
+        })
+            .done();
+    }
+
+    pair() {
+        pxt.usb.pairAsync()
+            .then(() => {
+                core.infoNotification(lf("Device paired! Try downloading now."))
+            }, (err: Error) => {
+                core.errorNotification(lf("Failed to pair the device: {0}", err.message))
+            })
     }
 
     promptRenameProjectAsync(): Promise<boolean> {
@@ -1123,10 +1165,6 @@ export class ProjectView
     beforeCompile() { }
 
     compile(saveOnly = false) {
-        // the USB init has to be called from an event handler
-        if (/webusb=1/i.test(window.location.href)) {
-            pxt.usb.initAsync().catch(e => { })
-        }
         this.beforeCompile();
         let userContextWindow: Window = undefined;
         if (!pxt.appTarget.compile.useModulator && pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext())
@@ -1365,11 +1403,14 @@ export class ProjectView
     importFileDialog() {
         let input: HTMLInputElement;
         let ext = ".mkcd";
-        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+        if (pxt.appTarget.compile.hasHex) {
             ext = ".hex";
         }
-        if (pxt.appTarget.compile && pxt.appTarget.compile.useUF2) {
+        if (pxt.appTarget.compile.useUF2) {
             ext = ".uf2";
+        }
+        if (pxt.appTarget.compile.saveAsPNG) {
+            ext = ".png";
         }
         core.confirmAsync({
             header: lf("Open {0} file", ext),
@@ -1745,17 +1786,13 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
 
-        const isApp = electron.isElectron || pxt.winrt.isWinRT();
-
-        // cookie consent
-        const cookieKey = "cookieconsent"
-        const cookieConsented = targetTheme.hideCookieNotice || isApp || !!pxt.storage.getLocal(cookieKey)
-            || sandbox;
+        const isApp = pxt.winrt.isWinRT();
 
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         let rootClassList = [
+            "ui",
             shouldHideEditorFloats ? " hideEditorFloats" : '',
             shouldCollapseEditorTools ? " collapsedEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
@@ -1770,6 +1807,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             !showEditorToolbar ? 'hideEditorToolbar' : '',
             this.state.bannerVisible ? "notificationBannerVisible" : "",
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
+            isApp ? "app" : "",
             'full-abs'
         ];
         let jQueryClasses = ["dimmable", "dimmed"];
@@ -1782,7 +1820,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             <div id='root' className={rootClasses}>
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
-                        {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> : undefined }
+                        {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> : undefined}
                         <notification.NotificationBanner parent={this} />
                         <container.MainMenu parent={this} />
                     </header>}
@@ -1791,40 +1829,40 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 </div> : undefined}
                 <div id="simulator">
                     <aside id="filelist" className="ui items">
-                        <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden" aria-hidden="true">{lf("Simulator") }</label>
+                        <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden" aria-hidden="true">{lf("Simulator")}</label>
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-labelledby="boardviewLabel">
                         </div>
                         <simtoolbar.SimulatorToolbar parent={this} />
                         <div className="ui item portrait hide">
-                            {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
-                            {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
+                            {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true })} /> : ''}
+                            {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
                         {useSerialEditor ?
                             <div id="serialPreview" className="ui editorFloat portrait hide">
-                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={() => this.openSerial(true) } />
-                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={() => this.openSerial(false) } />
+                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={() => this.openSerial(true)} />
+                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={() => this.openSerial(false)} />
                             </div> : undefined}
                         {sandbox || isBlocks || this.editor == this.serialEditor ? undefined : <filelist.FileList parent={this} />}
                     </aside>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    {this.allEditors.map(e => e.displayOuter()) }
+                    {this.allEditors.map(e => e.displayOuter())}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs" role="main">
                     <div className="ui home projectsdialog">
                         <div className="menubar" role="banner">
-                            <accessibility.HomeAccessibilityMenu parent={this} highContrast={this.state.highContrast}/> }
+                            <accessibility.HomeAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> }
                             <projects.ProjectsMenu parent={this} />
                         </div>
                         <projects.Projects parent={this} ref={v => this.home = v} />
                     </div>
-                </div> : undefined }
+                </div> : undefined}
                 {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined}
                 {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined}
-                {showEditorToolbar ? <div id="editortools" role="complementary" aria-label={lf("Editor toolbar") }>
+                {showEditorToolbar ? <div id="editortools" role="complementary" aria-label={lf("Editor toolbar")}>
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
                 </div> : undefined}
-                {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl}/> : undefined}
+                {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={v => this.extensions = v} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={v => this.importDialog = v} /> : undefined}
@@ -1832,7 +1870,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
-                {cookieConsented ? undefined : <container.CookieMessage parent={this} cookieConsented={cookieConsented} cookieKey={cookieKey} /> }
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
             </div>
         );
@@ -1864,6 +1901,10 @@ function isProjectFile(filename: string): boolean {
     return /\.(pxt|mkcd)$/i.test(filename)
 }
 
+function isPNGFile(filename: string): boolean {
+    return /\.png$/i.test(filename)
+}
+
 function initLogin() {
     {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
@@ -1888,56 +1929,21 @@ function initLogin() {
     }
 }
 
-let serialConnectionPoller: number;
-let hidPingInterval: number;
-let hf2Connection: pxt.HF2.Wrapper;
-
-function startSerialConnectionPoller() {
-    if (serialConnectionPoller == null)
-        serialConnectionPoller = window.setInterval(initSerial, 5000);
-}
-
-function stopSerialConnectionPoller() {
-    clearInterval(serialConnectionPoller);
-    serialConnectionPoller = null;
-}
-
 function initSerial() {
     if (!pxt.appTarget.serial || !pxt.winrt.isWinRT() && (!Cloud.isLocalHost() || !Cloud.localToken))
         return;
 
     if (hidbridge.shouldUse()) {
-        hidbridge.initAsync(true)
-            .then(dev => {
-                hf2Connection = dev;
-                // disable poller when connected; otherwise the forceful reconnecting interferes with
-                // flashing; it may also lead to data loss on serial stream
-                stopSerialConnectionPoller()
-                if (hidPingInterval == null)
-                    hidPingInterval = window.setInterval(() => {
-                        if (serialConnectionPoller == null)
-                            dev.pingAsync()
-                                .then(() => {
-                                }, e => {
-                                    pxt.debug("re-starting connection poller")
-                                    startSerialConnectionPoller()
-                                })
-                    }, 4900)
-                dev.onSerial = (buf, isErr) => {
-                    let data = Util.fromUTF8(Util.uint8ArrayToString(buf))
-                    //pxt.debug('serial: ' + data)
-                    window.postMessage({
-                        type: 'serial',
-                        id: 'n/a', // TODO
-                        data
-                    }, "*")
-                }
-            })
-            .catch(e => {
-                pxt.log(`hidbridge failed to load, ${e}`);
-                startSerialConnectionPoller();
-            })
-        return
+        hidbridge.configureHidSerial((buf, isErr) => {
+            let data = Util.fromUTF8(Util.uint8ArrayToString(buf))
+            //pxt.debug('serial: ' + data)
+            window.postMessage({
+                type: 'serial',
+                id: 'n/a', // TODO
+                data
+            }, "*")
+        });
+        return;
     }
 
     pxt.debug('initializing serial pipe');
@@ -1945,15 +1951,12 @@ function initSerial() {
     let serialBuffers: pxt.Map<string> = {};
     ws.onopen = (ev) => {
         pxt.debug('serial: socket opened');
-        stopSerialConnectionPoller()
     }
     ws.onclose = (ev) => {
         pxt.debug('serial: socket closed')
-        startSerialConnectionPoller()
     }
     ws.onerror = (ev) => {
         pxt.debug('serial: error')
-        startSerialConnectionPoller()
     }
     ws.onmessage = (ev) => {
         try {
@@ -1980,8 +1983,11 @@ function initScreenshots() {
             pxt.tickEvent("sim.screenshot");
             const scmsg = msg as pxsim.SimulatorScreenshotMessage;
             pxt.debug('received screenshot');
-            screenshot.saveAsync(theEditor.state.header, scmsg.data)
-                .done(() => { pxt.debug('screenshot saved') })
+            if (theEditor.screenshotHandler)
+                theEditor.screenshotHandler(scmsg.data)
+            else
+                screenshot.saveAsync(theEditor.state.header, scmsg.data)
+                    .done(() => { pxt.debug('screenshot saved') })
         };
     }, false);
 }
@@ -2015,7 +2021,7 @@ function showIcons() {
     core.confirmAsync({
         header: "Icons",
         htmlBody:
-        usedIcons.map(s => `<i style='font-size:2em' class="ui icon ${s}"></i>&nbsp;${s}&nbsp; `).join("\n")
+            usedIcons.map(s => `<i style='font-size:2em' class="ui icon ${s}"></i>&nbsp;${s}&nbsp; `).join("\n")
     })
 }
 
@@ -2223,7 +2229,7 @@ function initExtensionsAsync(): Promise<void> {
 }
 
 pxt.winrt.captureInitialActivation();
-$(document).ready(() => {
+$(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
@@ -2251,8 +2257,8 @@ $(document).ready(() => {
     const appCacheUpdated = () => {
         try {
             // On embedded pages, preserve the loaded project
-            if (pxt.BrowserUtils.isIFrame() && hash.cmd === "pub") {
-                location.hash = `#pub:${hash.arg}`;
+            if (pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) {
+                location.hash = `#${hash.cmd}:${hash.arg}`;
             }
             // if in editor, reload project
             else if (theEditor
@@ -2268,6 +2274,8 @@ $(document).ready(() => {
     };
     appcache.init(appCacheUpdated);
 
+    pxt.hex.showLoading = (msg) => core.showLoading("hexcloudcompiler", msg);
+    pxt.hex.hideLoading = () => core.hideLoading("hexcloudcompiler");
     pxt.docs.requireMarked = () => require("marked");
     const importHex = (hex: pxt.cpp.HexFile, createNewIfFailed = false) => theEditor.importHex(hex, createNewIfFailed);
 
@@ -2327,10 +2335,8 @@ $(document).ready(() => {
                 theEditor.setState({ editorState: state });
             }
             initSerial();
-            startSerialConnectionPoller();
             initScreenshots();
             initHashchange();
-            electron.init();
             return initExtensionsAsync();
         })
         .then(() => pxt.winrt.initAsync(importHex))
@@ -2358,9 +2364,9 @@ $(document).ready(() => {
             else theEditor.newProject();
             return Promise.resolve();
         })
-        .then(() => workspace.importLegacyScriptsAsync())
         .done(() => {
             $("#loading").remove();
+            return workspace.loadedAsync();
         });
 
     document.addEventListener("visibilitychange", ev => {

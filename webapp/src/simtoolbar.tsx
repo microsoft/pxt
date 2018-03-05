@@ -13,32 +13,32 @@ export interface SimulatorProps extends ISettingsProps {
 export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
     openInstructions() {
-        pxt.tickEvent("simulator.make");
+        pxt.tickEvent("simulator.make", undefined, { interactiveConsent: true });
         this.props.parent.openInstructions();
     }
 
     startStopSimulator() {
-        pxt.tickEvent('simulator.startstop');
+        pxt.tickEvent('simulator.startstop', undefined, { interactiveConsent: true });
         this.props.parent.startStopSimulator();
     }
 
     restartSimulator() {
-        pxt.tickEvent('simulator.restart');
+        pxt.tickEvent('simulator.restart', undefined, { interactiveConsent: true });
         this.props.parent.restartSimulator();
     }
 
     toggleTrace() {
-        pxt.tickEvent("simulator.trace");
+        pxt.tickEvent("simulator.trace", undefined, { interactiveConsent: true });
         this.props.parent.toggleTrace();
     }
 
     toggleMute() {
-        pxt.tickEvent("simulator.mute", { view: 'computer', muteTo: '' + !this.props.parent.state.mute });
+        pxt.tickEvent("simulator.mute", { view: 'computer', muteTo: '' + !this.props.parent.state.mute }, { interactiveConsent: true });
         this.props.parent.toggleMute();
     }
 
     toggleSimulatorFullscreen() {
-        pxt.tickEvent("simulator.fullscreen", { view: 'computer', fullScreenTo: '' + !this.props.parent.state.fullscreen });
+        pxt.tickEvent("simulator.fullscreen", { view: 'computer', fullScreenTo: '' + !this.props.parent.state.fullscreen }, { interactiveConsent: true });
         this.props.parent.toggleSimulatorFullscreen();
     }
 
@@ -76,7 +76,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
         return <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar") }>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
+                {make ? <sui.Button icon='configure' class="secondary" title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
                 {run ? <sui.Button key='runbtn' class={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
                 {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
                 {trace ? <sui.Button key='debug' class={`trace-button ${isTracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace() } /> : undefined}

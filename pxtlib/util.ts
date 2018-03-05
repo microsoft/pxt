@@ -4,6 +4,19 @@ namespace ts.pxtc {
 
 import pxtc = ts.pxtc
 
+namespace ts.pxtc {
+    /**
+     * atob replacement
+     * @param s 
+     */
+    export var decodeBase64 = function (s: string) { return atob(s); }
+    /**
+     * bota replacement
+     * @param s 
+     */
+    export var encodeBase64 = function (s: string) { return btoa(s); }
+}
+
 namespace ts.pxtc.Util {
     export function bufferSerial(buffers: pxt.Map<string>, data: string = "", source: string = "?", maxBufLen: number = 255) {
         for (let i = 0; i < data.length; ++i) {
@@ -1096,7 +1109,7 @@ namespace ts.pxtc.Util {
 
         // encode
         if (/xml|svg/.test(mimetype)) return `data:${mimetype},${encodeURIComponent(data)}`
-        else return `data:${mimetype || "image/png"};base64,${btoa(toUTF8(data))}`;
+        else return `data:${mimetype || "image/png"};base64,${encodeBase64(toUTF8(data))}`;
     }
 }
 

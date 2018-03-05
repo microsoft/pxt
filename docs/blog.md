@@ -1,10 +1,36 @@
 # Microsoft MakeCode Blog
 
-## [Microsoft MakeCode for Cue](/blog/wonder-workshop/01-22-2018)
+## [Microsoft MakeCode for Cue](/blog/wonder-workshop/03-05-2018)
 
-January 22nd, 2018
+March 5th, 2018
 
 Announcing Microsoft MakeCode for Cue!
+
+## [Hello Maker!](/blog/maker/hello)
+
+February 27th, 2018 by Daryl Zuniga
+
+Introducing a new (beta) editor for bread-board friendly maker boards.
+
+## [Micro:bit v0.14.18](/blog/microbit/v0.14.18)
+
+February 23rd, 2018
+
+A servicing release for the micro:bit editor.
+
+## [# マイクロビット はじめてのコンピュータサイエンス (CS Intro)が日本語になりました](/blog/microbit/csintro-japanese)
+
+January 26th, 2018 by Ryuta Hosaka
+
+A team of Japanese from the Seattle area translated the Introduction to Computer Science course for the micro:bit...
+**[Read more](/blog/microbit/csintro-japanese)**
+
+## [Hello 2018](/blog/bett/01-22-2018)
+
+January 22nd, 2018 by [Jaqster](https://github.com/jaqster)
+
+Wow, hard to believe it’s 2018 already. We’re announcing some very cool stuff to kick off the new year...
+**[Read more](/blog/bett/01-22-2018)**
 
 ## [Micro:bit v0.13.52](/blog/microbit/v0.13.52)
 

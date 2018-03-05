@@ -18,6 +18,11 @@ namespace pxsim {
         localizedStrings?: Map<string>;
     }
 
+    export interface SimulatorInstructionsMessage extends SimulatorMessage {
+        type: "instructions";
+        options: pxsim.instructions.RenderPartsOptions;
+    }
+
     export interface SimulatorMuteMessage extends SimulatorMessage {
         type: "mute";
         mute: boolean;
@@ -66,7 +71,7 @@ namespace pxsim {
     }
     export interface SimulatorCommandMessage extends SimulatorMessage {
         type: "simulator",
-        command: "modal" | "restart"
+        command: "modal" | "restart" | "reload"
         header?: string;
         body?: string;
         copyable?: string;
@@ -161,10 +166,20 @@ namespace pxsim {
         height?: number;
     }
 
+    function print() {
+        try {
+            window.print();
+        }
+        catch (e) {
+            // oops
+        }
+    }
+
     export namespace Embed {
         export function start() {
             window.addEventListener("message", receiveMessage, false);
             let frameid = window.location.hash.slice(1)
+            initAppcache();
             Runtime.postMessage(<SimulatorReadyMessage>{ type: 'ready', frameid: frameid });
         }
 
@@ -176,10 +191,12 @@ namespace pxsim {
             let type = data.type || '';
             if (!type) return;
             switch (type || '') {
-                case 'run': run(<SimulatorRunMessage>data); break;
-                case 'stop': stop(); break;
-                case 'mute': mute((<SimulatorMuteMessage>data).mute); break;
-                case 'custom':
+                case "run": run(<SimulatorRunMessage>data); break;
+                case "instructions": pxsim.instructions.renderInstructions(<SimulatorInstructionsMessage>data); break;
+                case "stop": stop(); break;
+                case "mute": mute((<SimulatorMuteMessage>data).mute); break;
+                case "print": print(); break;
+                case "custom":
                     if (handleCustomMessage) handleCustomMessage((<SimulatorCustomMessage>data));
                     break;
                 case 'pxteditor':
@@ -208,11 +225,11 @@ namespace pxsim {
         export function run(msg: SimulatorRunMessage) {
             stop();
 
-            if (msg.mute) mute(msg.mute);
-
-            if (msg.localizedStrings) {
+            if (msg.mute)
+                mute(msg.mute);
+            if (msg.localizedStrings)
                 pxsim.localization.setLocalizedStrings(msg.localizedStrings);
-            }
+
             runtime = new Runtime(msg);
             runtime.board.initAsync(msg)
                 .done(() => {
@@ -271,6 +288,19 @@ namespace pxsim {
         if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
             window.parent.postMessage(message, "*");
         }
+    }
+
+    function initAppcache() {
+        if (typeof window !== 'undefined') {
+            if (window.applicationCache.status === window.applicationCache.UPDATEREADY) {
+                reload();
+            }
+            window.applicationCache.addEventListener("updateready", () => reload());
+        }
+    }
+
+    export function reload() {
+        Runtime.postMessage({ type: "simulator", command: "reload" } as SimulatorCommandMessage)
     }
 }
 

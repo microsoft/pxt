@@ -1,7 +1,5 @@
 namespace ts.pxtc {
 
-    export var decodeBase64 = function (s: string) { return atob(s); }
-
     // supporting multiple sizes (byte, short, int, long)
     export interface BitSizeInfo {
         size: number;

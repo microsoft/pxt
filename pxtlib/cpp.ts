@@ -1024,7 +1024,7 @@ int main() {
 
         let data = JSON.stringify(creq)
         res.sha = U.sha256(data)
-        res.compileData = btoa(U.toUTF8(data))
+        res.compileData = ts.pxtc.encodeBase64(U.toUTF8(data))
         res.shimsDTS = shimsDTS.finish()
         res.enumsDTS = enumsDTS.finish()
 
@@ -1227,6 +1227,9 @@ namespace pxt.hex {
     let downloadCache: Map<Promise<any>> = {};
     let cdnUrlPromise: Promise<string>;
 
+    export let showLoading: (msg: string) => void = (msg) => { };
+    export let hideLoading: () => void = () => {};
+
     function downloadHexInfoAsync(extInfo: pxtc.ExtensionInfo) {
         let cachePromise = Promise.resolve();
 
@@ -1255,6 +1258,7 @@ namespace pxt.hex {
     function downloadHexInfoCoreAsync(extInfo: pxtc.ExtensionInfo) {
         let hexurl = ""
 
+        showLoading(pxt.U.lf("Compiling (this may take a minute)..."));
         return downloadHexInfoLocalAsync(extInfo)
             .then((hex) => {
                 if (hex) {
@@ -1290,12 +1294,15 @@ namespace pxt.hex {
                                 tryGet();
                             })))
                     .then(text => {
+                        hideLoading();
                         return {
                             enums: [],
                             functions: [],
                             hex: text.split(/\r?\n/)
                         };
                     })
+            }).finally(() => {
+                hideLoading();
             })
     }
 
@@ -1431,7 +1438,7 @@ namespace pxt.hex {
                     buf += "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
                 }
             } else {
-                buf = pxtc.decodeBase64(nxt)
+                buf = ts.pxtc.decodeBase64(nxt)
             }
 
             Util.assert(buf.length > 0)
@@ -1510,7 +1517,7 @@ namespace pxt.hex {
                     let bin = ""
                     for (let k = 0; k < outln.length; k += 2)
                         bin += String.fromCharCode(parseInt(outln.slice(k, k + 2), 16))
-                    outp.push(btoa(bin))
+                    outp.push(ts.pxtc.encodeBase64(bin))
                 }
             }
         }

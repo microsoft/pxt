@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "3.0.11",
+  "version": "3.4.15",
   "description": "Microsoft MakeCode, also known as Programming Experience Toolkit (PXT), provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
@@ -46,7 +46,6 @@
     "built/typescriptServices.d.ts",
     "built/nodeutil.js",
     "built/server.js",
-    "built/electron.js",
     "built/pyconv.js",
     "built/web/fonts",
     "built/web/*.js",
@@ -67,7 +66,7 @@
   ],
   "main": "built/pxt.js",
   "engines": {
-    "node": ">=5.7.0",
+    "node": ">=8.0.0",
     "npm": ">=3.0.0"
   },
   "dependencies": {
@@ -88,14 +87,14 @@
   "optionalDependencies": {
     "keytar": "^3.0.2",
     "node-hid": "^0.5.2",
-    "serialport": "^4.0.1"
+    "serialport": "^6.0.5"
   },
   "devDependencies": {
     "chai": "^3.5.0",
     "monaco-editor": "0.10.0",
     "pxt-monaco-typescript": "2.3.5",
     "jake": "^8.0.12",
-    "jquery": "^2.2.0",
+    "jquery": "^3.0.0",
     "karma": "^1.7.0",
     "karma-chai": "^0.1.0",
     "karma-chrome-launcher": "^2.0.0",
@@ -122,6 +121,7 @@
     "@types/request": "2.0.8"
   },
   "scripts": {
+    "build": "jake",
     "test": "jake travis --trace",
     "clean": "jake clean",
     "lint": "jake lint",
