@@ -293,7 +293,7 @@ export class Editor extends srceditor.Editor {
     display() {
         return (
             <div id="serialArea">
-                <div id="serialHeader" className="ui">
+                <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
                             <sui.Button title={lf("Go back")} class="ui icon circular small button editorBack" ariaLabel={lf("Go back")} onClick={this.goBack.bind(this)}>
@@ -310,9 +310,9 @@ export class Editor extends srceditor.Editor {
                     </div>
                 </div>
                 <div id="serialCharts" className="noconsole" ref={e => this.chartRoot = e}></div>
-                <div id="consoleHeader" className="ui">
+                <div id="consoleHeader" className="ui serialHeader">
                     <div className="rightHeader">
-                        <sui.Button title={lf("Export data")} class="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => this.downloadRaw()}>
+                        <sui.Button title={lf("Export text")} class="ui icon blue button editorExport" ariaLabel={lf("Export text")} onClick={() => this.downloadRaw()}>
                             <sui.Icon icon="download" />
                         </sui.Button>
                     </div>
