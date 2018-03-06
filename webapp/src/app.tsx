@@ -962,27 +962,29 @@ export class ProjectView
             })
     }
 
+    private saveProjectAsPNG(): Promise<void> {
+        simulator.driver.postMessage({ type: "screenshot" })
+        return new Promise<void>((resolve, reject) => {
+            this.screenshotHandler = (img) => {
+                this.screenshotHandler = null
+                resolve(this.exportProjectToFileAsync()
+                    .then(blob => screenshot.encodeBlobAsync(img, blob))
+                    .then(img => {
+                        const fn = pkg.genFileName(".png");
+                        pxt.BrowserUtils.browserDownloadDataUri(img, fn);
+                    }))
+            }
+        })
+    }
+
     saveProjectToFileAsync(): Promise<void> {
         const mpkg = pkg.mainPkg
-        if (pxt.appTarget.compile.saveAsPNG) {
-            simulator.driver.postMessage({ type: "screenshot" })
-            return new Promise<void>((resolve, reject) => {
-                this.screenshotHandler = (img) => {
-                    this.screenshotHandler = null
-                    resolve(this.exportProjectToFileAsync()
-                        .then(blob => screenshot.encodeBlobAsync(img, blob))
-                        .then(img => {
-                            const fn = pkg.genFileName(".png");
-                            pxt.BrowserUtils.browserDownloadDataUri(img, fn);
-                        }))
-                }
+        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNG();
+        else return this.exportProjectToFileAsync()
+            .then((buf: Uint8Array) => {
+                const fn = pkg.genFileName(".mkcd");
+                pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
             })
-        } else
-            return this.exportProjectToFileAsync()
-                .then((buf: Uint8Array) => {
-                    const fn = pkg.genFileName(".mkcd");
-                    pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
-                })
     }
 
     addPackage() {
@@ -1086,8 +1088,8 @@ export class ProjectView
         this.reload = true;
         return workspace.resetAsync()
             .done(
-            () => window.location.reload(),
-            () => window.location.reload()
+                () => window.location.reload(),
+                () => window.location.reload()
             );
     }
 
@@ -1149,7 +1151,7 @@ export class ProjectView
             .then(() => this.saveProjectNameAsync())
             .then(() => this.saveFileAsync())
             .then(() => {
-                if (!pxt.appTarget.compile.hasHex || pxt.appTarget.compile.useMkcd) {
+                if (!pxt.appTarget.compile.hasHex || pxt.appTarget.compile.useMkcd || pxt.appTarget.compile.saveAsPNG) {
                     this.saveProjectToFileAsync()
                         .finally(() => {
                             this.setState({ isSaving: false });
@@ -1165,17 +1167,22 @@ export class ProjectView
     beforeCompile() { }
 
     compile(saveOnly = false) {
+        pxt.tickEvent("compile");
+        pxt.debug('compiling...');
+
+        if (pxt.appTarget.compile.saveAsPNG)
+            return this.saveProjectToFileAsync().done();
+
         this.beforeCompile();
         let userContextWindow: Window = undefined;
         if (!pxt.appTarget.compile.useModulator && pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext())
             userContextWindow = window.open("");
 
-        pxt.tickEvent("compile");
-        pxt.debug('compiling...');
         if (this.state.compiling) {
             pxt.tickEvent("compile.double");
             return;
         }
+
         const simRestart = this.state.running;
         this.setState({ compiling: true });
         this.clearSerial();
