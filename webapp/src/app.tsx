@@ -1171,7 +1171,7 @@ export class ProjectView
         pxt.debug('compiling...');
 
         if (pxt.appTarget.compile.saveAsPNG)
-            return this.saveProjectToFileAsync().done();
+            return this.saveAndCompile();
 
         this.beforeCompile();
         let userContextWindow: Window = undefined;
