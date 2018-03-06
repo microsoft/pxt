@@ -26,7 +26,8 @@ export class Editor extends srceditor.Editor {
     maxConsoleEntries: number = 500;
     active: boolean = true
     rawDataBuffer: string = ""
-    maxBufferLength: number = 10000
+    maxBufferLength: number = 10000;
+    csvHeaders: string[] = [];
 
     lineColors = ["#f00", "#00f", "#0f0", "#ff0"]
     hcLineColors = ["000"]
@@ -134,15 +135,17 @@ export class Editor extends srceditor.Editor {
         }
         const niceSource = this.sourceMap[source]
 
-        // is this a CSV entry
-        if (/^\s*,?\s*(-?\d+(\.\d*)?)(\s*,\s*(-?\d+(\.\d*)?))+\s*,?\s*$/.test(data)) {
+        // is this a CSV data entry
+        if (/^\s*(-?\d+(\.\d*)?)(\s*,\s*(-?\d+(\.\d*)?))+\s*,?\s*$/.test(data)) {
             const parts = data.split(/\s*,\s*/).map(s => parseFloat(s))
                 .filter(d => !isNaN(d))
                 .forEach((d, i) => {
-                    const variable = "data." + i;
+                    const variable = "data." + (this.csvHeaders[i] || i);
                     this.appendGraphEntry(niceSource, variable, d, receivedTime);
                 })
-
+        // is this a CSV header entry
+        } else if (/^\s*[\s\w]+(\s*,\s*[\w\s]+)+\s*,?\s*$/.test(data)) {
+            this.csvHeaders = data.split(/\s*,\s*/).map(h => h.trim());
         }
         else {
             // is this a key-value pair, or just a number?
@@ -270,6 +273,7 @@ export class Editor extends srceditor.Editor {
         this.rawDataBuffer = ""
         this.savedMessageQueue = []
         this.sourceMap = {}
+        this.csvHeaders = [];
     }
 
     downloadCSV() {
