@@ -331,7 +331,7 @@ export class Editor extends srceditor.Editor {
     downloadRaw() {
         core.infoNotification(lf("Exporting data...."));
         const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
-        pxt.commands.browserDownloadAsync(this.rawDataBuffer, pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".txt", "text/plain")
+        pxt.commands.browserDownloadAsync(this.rawDataBuffer, pxt.appTarget.id + '-' + lf("{id:csvfilename}console") + '-' + time + ".txt", "text/plain")
     }
 
     goBack() {
