@@ -290,10 +290,6 @@ export class Editor extends srceditor.Editor {
         this.parent.openPreviousEditor()
     }
 
-    prepare() {
-        $('.ui.dropdown').dropdown();
-    }
-
     display() {
         return (
             <div id="serialArea">
