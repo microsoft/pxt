@@ -143,7 +143,7 @@ export class Editor extends srceditor.Editor {
                     const variable = "data." + (this.csvHeaders[i] || i);
                     this.appendGraphEntry(niceSource, variable, d, receivedTime);
                 })
-        // is this a CSV header entry
+            // is this a CSV header entry
         } else if (/^\s*[\s\w]+(\s*,\s*[\w\s]+)+\s*,?\s*$/.test(data)) {
             this.csvHeaders = data.split(/\s*,\s*/).map(h => h.trim());
         }
@@ -276,24 +276,56 @@ export class Editor extends srceditor.Editor {
         this.csvHeaders = [];
     }
 
+    isCSV(nl: number, datas: number[][][]): boolean {
+        if (datas.length < 2) return false;
+        for (let i = 0; i < datas.length; ++i)
+            if (datas[i].length != nl) return false;
+
+        for (let l = 0; l < nl; ++l) {
+            let t = datas[0][l][0];
+            for (let d = 1; d < datas.length; ++d) {
+                if (datas[d][l][0] != t)
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
     downloadCSV() {
         const sep = lf("{id:csvseparator}\t");
-        const lines: { name: string; line: number[][]; }[] = [];
-        this.charts.forEach(chart => Object.keys(chart.datas).forEach(k => lines.push({ name: `${k} (${chart.source})`, line: chart.datas[k] })));
-        let csv = `sep=${sep}\r\n` +
-            lines.map(line => `time (s)${sep}${line.name}`).join(sep) + '\r\n';
+        let csv: string[] = [];
+        this.charts.forEach(chart => {
+            const lines: { name: string; line: number[][]; }[] = [];
+            Object.keys(chart.datas).forEach(k => lines.push({ name: k, line: chart.datas[k] }));
+            const datas = lines.map(line => line.line);
+            const nl = datas.length > 0 ? datas.map(data => data.length).reduce((l, c) => Math.max(l, c)) : 0;
+            // if all lines have same timestamp, condense output
+            let isCSV = this.isCSV(nl, datas);
+            if (isCSV) {
+                let h = `time (${chart.source})${sep}` + lines.map(line => line.name).join(sep) + sep;
+                csv[0] = csv[0] ? csv[0] + sep + h : h;
+                for (let i = 0; i < nl; ++i) {
+                    const t = (datas[0][i][0] - datas[0][0][0]) / 1000;
+                    const da = t + sep + datas.map(data => data[i][1]).join(sep) + sep;
+                    csv[i + 1] = csv[i + 1] ? csv[i + 1] + sep + da : da;
+                }
+            } else {
+                let h = lines.map(line => `time (${chart.source})${sep}${line.name}`).join(sep);
+                csv[0] = csv[0] ? csv[0] + sep + h : h;
+                for (let i = 0; i < nl; ++i) {
+                    const da = datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}${sep}${data[i][1]}` : sep).join(sep);
+                    csv[i + 1] = csv[i + 1] ? csv[i + 1] + sep + da : da;
+                }
+            }
+        });
 
-        const datas = lines.map(line => line.line);
-        const nl = datas.length > 0 ? datas.map(data => data.length).reduce((l, c) => Math.max(l, c)) : 0;
-        const nc = this.charts.length;
-        for (let i = 0; i < nl; ++i) {
-            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}${sep}${data[i][1]}` : sep).join(sep);
-            csv += '\r\n';
-        }
+        csv.unshift(`sep=${sep}`)
+        const csvText = csv.join('\r\n');
 
         core.infoNotification(lf("Exporting data...."));
         const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
-        pxt.commands.browserDownloadAsync(csv, pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
+        pxt.commands.browserDownloadAsync(csvText, pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
     }
 
     downloadRaw() {
