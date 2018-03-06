@@ -87,6 +87,10 @@ namespace pxt.docs.codeCard {
             image.className = "ui cardimage";
             image.src = card.imageUrl;
             image.alt = name;
+            image.onerror = () => {
+                // failed to load, remove
+                imageWrapper.remove();
+            }
             image.setAttribute("role", "presentation");
             imageWrapper.appendChild(image);
             img.appendChild(imageWrapper);
@@ -95,7 +99,7 @@ namespace pxt.docs.codeCard {
         if (card.youTubeId) {
             let screenshot = document.createElement("img") as HTMLImageElement;
             screenshot.className = "ui image";
-            screenshot.src = `https://img.youtube.com/vi/${card.youTubeId}/maxresdefault.jpg`;
+            screenshot.src = `https://img.youtube.com/vi/${card.youTubeId}/0.jpg`;
             img.appendChild(screenshot)
         }
 

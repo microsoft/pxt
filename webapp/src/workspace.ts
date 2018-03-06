@@ -69,11 +69,6 @@ export function getHeader(id: string) {
     return null
 }
 
-export function importLegacyScriptsAsync(): Promise<void> {
-    checkSession();
-    return impl.importLegacyScriptsAsync ? impl.importLegacyScriptsAsync() : Promise.resolve();
-}
-
 let sessionID: string;
 export function isSessionOutdated() {
     return pxt.storage.getLocal('pxt_workspace_session_id') != sessionID;
@@ -223,6 +218,11 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
 export function resetAsync() {
     checkSession();
     return impl.resetAsync()
+}
+
+export function loadedAsync() {
+    checkSession();
+    return impl.loadedAsync();
 }
 
 /*

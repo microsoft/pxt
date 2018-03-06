@@ -165,6 +165,10 @@ namespace pxt.blocks {
         const check = b.outputConnection.check_ && b.outputConnection.check_.length ? b.outputConnection.check_[0] : "T";
 
         if (check === "Array") {
+            if (b.outputConnection.check_.length > 1) {
+                // HACK: The real type is stored as the second check
+                return ground(b.outputConnection.check_[1])
+            }
             // The only block that hits this case should be lists_create_with, so we
             // can safely infer the type from the first input that has a return type
             let tp: Point;
@@ -188,14 +192,14 @@ namespace pxt.blocks {
         else if (check === "T") {
             const func = e.stdCallTable[b.type];
             const isArrayGet = b.type === "lists_index_get";
-            if (isArrayGet || func && func.args.length) {
+            if (isArrayGet || func && func.comp.thisParameter) {
                 let parentInput: B.Input;
 
                 if (isArrayGet) {
                     parentInput = b.inputList.filter(i => i.name === "LIST")[0];
                 }
                 else {
-                    parentInput = b.inputList.filter(i => i.name === func.args[0].field)[0];
+                    parentInput = b.inputList.filter(i => i.name === func.comp.thisParameter.definitionName)[0];
                 }
 
                 if (parentInput.connection && parentInput.connection.targetBlock()) {
@@ -275,11 +279,11 @@ namespace pxt.blocks {
 
     // Unify the *return* type of the parameter [n] of block [b] with point [p].
     function unionParam(e: Environment, b: B.Block, n: string, p: Point) {
+        attachPlaceholderIf(e, b, n);
         try {
-            attachPlaceholderIf(e, b, n);
             union(returnType(e, getInputTargetBlock(b, n)), p);
         } catch (e) {
-            throwBlockError("The parameter " + n + " of this block is of the wrong type. More precisely: " + e, b);
+            // TypeScript should catch this error and bubble it up
         }
     }
 
@@ -316,11 +320,8 @@ namespace pxt.blocks {
                                 try {
                                     union(p1, p2);
                                 } catch (e) {
-                                    throwBlockError("Comparing objects of different types", b);
+                                    // TypeScript should catch this error and bubble it up
                                 }
-                                let t = find(p1).type;
-                                if (t != pString.type && t != pBoolean.type && t != pNumber.type && t != null)
-                                    throwBlockError("I can only compare strings, booleans and numbers", b);
                                 break;
                         }
                         break;
@@ -359,7 +360,7 @@ namespace pxt.blocks {
                             try {
                                 union(p1, tr);
                             } catch (e) {
-                                throwBlockError("Assigning a value of the wrong type to variable " + x, b);
+                                // TypeScript should catch this error and bubble it up
                             }
                         }
                         break;
@@ -389,13 +390,13 @@ namespace pxt.blocks {
                     default:
                         if (b.type in e.stdCallTable) {
                             const call = e.stdCallTable[b.type];
-                            call.args.forEach((p: StdArg, i: number) => {
+                            visibleParams(call, countOptionals(b)).forEach((p, i) => {
                                 const isInstance = call.isExtensionMethod && i === 0;
-                                if (p.field && !b.getFieldValue(p.field)) {
-                                    let i = b.inputList.filter((i: B.Input) => i.name == p.field)[0];
+                                if (p.definitionName && !b.getFieldValue(p.definitionName)) {
+                                    let i = b.inputList.filter((i: B.Input) => i.name == p.definitionName)[0];
                                     if (i.connection && i.connection.check_) {
                                         if (isInstance && connectionCheck(i) === "Array") {
-                                            let gen = handleGenericType(b, p.field);
+                                            let gen = handleGenericType(b, p.definitionName);
                                             if (gen) {
                                                 return;
                                             }
@@ -406,7 +407,7 @@ namespace pxt.blocks {
                                         for (let j = 0; j < i.connection.check_.length; j++) {
                                             try {
                                                 let t = i.connection.check_[j];
-                                                unionParam(e, b, p.field, ground(t));
+                                                unionParam(e, b, p.definitionName, ground(t));
                                                 break;
                                             }
                                             catch (e) {
@@ -511,7 +512,7 @@ namespace pxt.blocks {
     }
 
     function checkNumber(n: number, b: B.Block) {
-        if (n === Infinity || isNaN(n)) {
+        if (!isFinite(n) || isNaN(n)) {
             throwBlockError(lf("Number entered is either too large or too small"), b);
         }
     }
@@ -659,6 +660,17 @@ namespace pxt.blocks {
 
     }
 
+    function compileMathJsOp(e: Environment, b: B.Block, comments: string[]): JsNode {
+        const op = b.getFieldValue("OP");
+        const args = [compileExpression(e, getInputTargetBlock(b, "ARG0"), comments)];
+
+        if ((b as any).getInput("ARG1")) {
+            args.push(compileExpression(e, getInputTargetBlock(b, "ARG1"), comments));
+        }
+
+        return H.mathCall(op, args);
+    }
+
     function compileProcedure(e: Environment, b: B.Block, comments: string[]): JsNode[] {
         const name = escapeVarName(b.getFieldValue("NAME"), e, true);
         const stmts = getInputTargetBlock(b, "STACK");
@@ -755,6 +767,8 @@ namespace pxt.blocks {
                 expr = compileListGet(e, b, comments); break;
             case "lists_index_set":
                 expr = compileListSet(e, b, comments); break;
+            case "math_js_op":
+                expr = compileMathJsOp(e, b, comments); break;
             case pxtc.TS_OUTPUT_TYPE:
                 expr = extractTsExpression(e, b, comments); break;
             default:
@@ -762,12 +776,12 @@ namespace pxt.blocks {
                 if (call) {
                     if (call.imageLiteral)
                         expr = compileImage(e, b, call.imageLiteral, call.namespace, call.f,
-                            call.args.map(ar => compileArgument(e, b, ar, comments)))
+                            visibleParams(call, countOptionals(b)).map(ar => compileArgument(e, b, ar, comments)))
                     else
                         expr = compileStdCall(e, b, call, comments);
                 }
                 else {
-                    pxt.reportError("blocks", "unabled compile expression", { "details": b.type });
+                    pxt.reportError("blocks", "unable to compile expression", { "details": b.type });
                     expr = defaultValueForType(returnType(e, b));
                 }
                 break;
@@ -1037,34 +1051,31 @@ namespace pxt.blocks {
         return mkStmt(mkInfix(ref, "+=", expr))
     }
 
-    function eventArgs(call: StdFunc): string[] {
-        return call.args.map(ar => ar.field).filter(ar => !!ar);
+    function eventArgs(call: StdFunc, b: B.Block): string[] {
+        return visibleParams(call, countOptionals(b)).map(ar => ar.definitionName).filter(ar => !!ar);
     }
 
     function compileCall(e: Environment, b: B.Block, comments: string[]): JsNode {
         const call = e.stdCallTable[b.type];
         if (call.imageLiteral)
-            return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar, comments))))
+            return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, visibleParams(call, countOptionals(b)).map(ar => compileArgument(e, b, ar, comments))))
         else if (call.hasHandler)
-            return compileEvent(e, b, call, eventArgs(call), call.namespace, comments)
+            return compileEvent(e, b, call, eventArgs(call, b), call.namespace, comments)
         else
             return mkStmt(compileStdCall(e, b, call, comments))
     }
 
-    function compileArgument(e: Environment, b: B.Block, p: StdArg, comments: string[], beginningOfStatement = false): JsNode {
-        let lit: any = p.literal;
-        if (lit)
-            return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
-        let f = b.getFieldValue(p.field);
+    function compileArgument(e: Environment, b: B.Block, p: BlockParameter, comments: string[], beginningOfStatement = false): JsNode {
+        let f = b.getFieldValue(p.definitionName);
         if (f != null) {
-            if (b.getField(p.field) instanceof pxtblockly.FieldTextInput) {
+            if (b.getField(p.definitionName) instanceof pxtblockly.FieldTextInput) {
                 return H.mkStringLiteral(f);
             }
             return mkText(f);
         }
         else {
-            attachPlaceholderIf(e, b, p.field);
-            const target = getInputTargetBlock(b, p.field);
+            attachPlaceholderIf(e, b, p.definitionName);
+            const target = getInputTargetBlock(b, p.definitionName);
             if (beginningOfStatement && target.type === "lists_create_with") {
                 // We have to be careful of array literals at the beginning of a statement
                 // because they can cause errors (i.e. they get parsed as an index). Add a
@@ -1072,6 +1083,11 @@ namespace pxt.blocks {
                 // FIXME: No need to do this if the previous statement was a code block
                 return prefixWithSemicolon(compileExpression(e, target, comments));
             }
+
+            if (p.shadowOptions && p.shadowOptions.toString && returnType(e, target) !== pString) {
+                return H.mkSimpleCall("+", [H.mkStringLiteral(""), compileExpression(e, target, comments)]);
+            }
+
             return compileExpression(e, target, comments)
         }
     }
@@ -1082,7 +1098,7 @@ namespace pxt.blocks {
             args = b.mutation.compileMutation(e, comments).children;
         }
         else {
-            args = func.args.map((p: StdArg, i: number) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
+            args = visibleParams(func, countOptionals(b)).map((p, i) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
         }
 
         const externalInputs = !b.getInputsInline();
@@ -1167,10 +1183,10 @@ namespace pxt.blocks {
         if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.ObjectDestructuringMutator) {
             argumentDeclaration = b.mutation.compileMutation(e, comments);
         }
-        else if (stdfun.handlerArgs.length) {
+        else if (stdfun.comp.handlerArgs.length) {
             let handlerArgs: string[] = []; // = stdfun.handlerArgs.map(arg => escapeVarName(b.getFieldValue("HANDLER_" + arg.name), e));
-            for (let i = 0; i < stdfun.handlerArgs.length; i++) {
-                const arg = stdfun.handlerArgs[i];
+            for (let i = 0; i < stdfun.comp.handlerArgs.length; i++) {
+                const arg = stdfun.comp.handlerArgs[i];
                 const varName = b.getFieldValue("HANDLER_" + arg.name);
                 if (varName !== null) {
                     handlerArgs.push(escapeVarName(varName, e));
@@ -1207,15 +1223,6 @@ namespace pxt.blocks {
         return H.namespaceCall(n, f, [lit].concat(args), false);
     }
 
-    // A standard function argument may be a field name (see below)
-    // or a string|number literal.
-    // The literal is used to hide argument in blocks
-    // that are available in TD.
-    export interface StdArg {
-        field?: string;
-        literal?: string | number;
-    }
-
     // A description of each function from the "device library". Types are fetched
     // from the Blockly blocks definition.
     // - the key is the name of the Blockly.Block that we compile into a device call;
@@ -1229,9 +1236,8 @@ namespace pxt.blocks {
     //   is, "basic -> show image" instead of "micro:bit -> show image".
     export interface StdFunc {
         f: string;
-        args: StdArg[];
+        comp: BlockCompileInfo;
         attrs: ts.pxtc.CommentAttrs;
-        handlerArgs?: HandlerArg[];
         isExtensionMethod?: boolean;
         isExpression?: boolean;
         imageLiteral?: number;
@@ -1407,29 +1413,18 @@ namespace pxt.blocks {
                         return;
                     }
                     e.renames.takenNames[fn.namespace] = true;
-                    let { attrNames, handlerArgs } = pxt.blocks.parameterNames(fn);
-                    let instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
-                    let args = (fn.parameters || []).map(p => {
-                        if (attrNames[p.name] && attrNames[p.name].name) return { field: attrNames[p.name].name };
-                        else return null;
-                    }).filter(a => !!a);
-
-                    if (instance && !fn.attributes.defaultInstance) {
-                        args.unshift({
-                            field: attrNames["this"].name
-                        });
-                    }
+                    const comp = pxt.blocks.compileInfo(fn);
+                    const instance = !!comp.thisParameter;
 
                     e.stdCallTable[fn.attributes.blockId] = {
                         namespace: fn.namespace,
                         f: fn.name,
-                        args: args,
+                        comp,
                         attrs: fn.attributes,
-                        handlerArgs,
                         isExtensionMethod: instance,
                         isExpression: fn.retType && fn.retType !== "void",
                         imageLiteral: fn.attributes.imageLiteral,
-                        hasHandler: !!handlerArgs.length || fn.parameters && fn.parameters.some(p => (p.type == "() => void" || !!p.properties)),
+                        hasHandler: !!comp.handlerArgs.length || fn.parameters && fn.parameters.some(p => (p.type == "() => void" || !!p.properties)),
                         property: !fn.parameters,
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
@@ -1449,9 +1444,9 @@ namespace pxt.blocks {
 
             let stdFunc = e.stdCallTable[b.type];
 
-            if (stdFunc && stdFunc.handlerArgs.length) {
+            if (stdFunc && stdFunc.comp.handlerArgs.length) {
                 let foundIt = false;
-                stdFunc.handlerArgs.forEach(arg => {
+                stdFunc.comp.handlerArgs.forEach(arg => {
                     if (foundIt) return;
                     let varName = b.getFieldValue("HANDLER_" + arg.name);
                     if (varName != null && escapeVarName(varName, e) === name) {
@@ -1499,8 +1494,8 @@ namespace pxt.blocks {
             }
 
             let stdFunc = e.stdCallTable[b.type];
-            if (stdFunc && stdFunc.handlerArgs.length) {
-                stdFunc.handlerArgs.forEach(arg => {
+            if (stdFunc && stdFunc.comp.handlerArgs.length) {
+                stdFunc.comp.handlerArgs.forEach(arg => {
                     let varName = b.getFieldValue("HANDLER_" + arg.name)
                     if (varName != null) {
                         trackLocalDeclaration(escapeVarName(varName, e), arg.type);
@@ -1627,7 +1622,7 @@ namespace pxt.blocks {
         const call = e.stdCallTable[b.type];
         if (call) {
             // detect if same event is registered already
-            const compiledArgs = eventArgs(call).map(arg => compileArg(e, b, arg, []));
+            const compiledArgs = eventArgs(call, b).map(arg => compileArg(e, b, arg, []));
             const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs })
                 .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
             return key;
@@ -1783,5 +1778,35 @@ namespace pxt.blocks {
             return false;
         }
         return text.substr(text.length - suffix.length) === suffix;
+    }
+
+    function countOptionals(b: Blockly.Block) {
+        if ((b as MutatingBlock).mutationToDom) {
+            const el = (b as MutatingBlock).mutationToDom();
+            if (el.hasAttribute("_expanded")) {
+                const val = parseInt(el.getAttribute("_expanded"));
+                return isNaN(val) ? 0 : Math.max(val, 0);
+            }
+        }
+        return 0;
+    }
+
+    function visibleParams({ comp }: StdFunc, optionalCount: number) {
+        const res: pxt.blocks.BlockParameter[] = [];
+        if (comp.thisParameter) {
+            res.push(comp.thisParameter);
+        }
+
+        comp.parameters.forEach(p => {
+            if (p.isOptional && optionalCount > 0) {
+                res.push(p);
+                --optionalCount;
+            }
+            else if (!p.isOptional) {
+                res.push(p);
+            }
+        });
+
+        return res;
     }
 }

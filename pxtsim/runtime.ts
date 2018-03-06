@@ -247,6 +247,8 @@ namespace pxsim {
         globals: any = {};
         currFrame: StackFrame;
         entry: LabelFn;
+        loopLock: Object = null;
+        loopLockWaitList: (() => void)[] = [];
 
         public refCountingDebug = false;
         public refCounting = true;
@@ -388,10 +390,18 @@ namespace pxsim {
                     lastYield = now
                     s.pc = pc;
                     s.r0 = r0;
+                    let lock = new Object();
+                    __this.loopLock = lock;
                     let cont = () => {
                         if (__this.dead) return;
                         U.assert(s.pc == pc);
-                        return loop(s)
+                        U.assert(__this.loopLock === lock);
+                        __this.loopLock = null;
+                        loop(s)
+                        while (__this.loopLockWaitList.length > 0 && !__this.loopLock) {
+                            let f = __this.loopLockWaitList.shift()
+                            f()
+                        }
                     }
                     //U.nextTick(cont)
                     setTimeout(cont, 5)
@@ -500,6 +510,7 @@ namespace pxsim {
                     console.log("Runtime terminated")
                     return
                 }
+                U.assert(!__this.loopLock)
                 try {
                     runtime = __this
                     while (!!p) {
@@ -587,8 +598,12 @@ namespace pxsim {
             function buildResume(s: StackFrame, retPC: number) {
                 if (currResume) oops("already has resume")
                 s.pc = retPC;
-                return (v: any) => {
+                let fn = (v: any) => {
                     if (__this.dead) return;
+                    if (__this.loopLock) {
+                        __this.loopLockWaitList.push(() => fn(v))
+                        return;
+                    }
                     runtime = __this;
                     U.assert(s.pc == retPC);
                     // TODO should loop() be called here using U.nextTick?
@@ -610,6 +625,7 @@ namespace pxsim {
                     s.retval = v;
                     return loop(s)
                 }
+                return fn
             }
 
             // tslint:disable-next-line

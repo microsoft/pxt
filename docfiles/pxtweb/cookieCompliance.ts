@@ -1,4 +1,7 @@
 /// <reference path="../../localtypings/mscc.d.ts" />
+/// <reference path="../../pxtwinrt/winrtrefs.d.ts"/>
+
+declare var process: any;
 
 namespace pxt {
     type Map<T> = {[index: string]: T};
@@ -68,6 +71,11 @@ namespace pxt {
     let exceptionLogger: TelemetryQueue<any, string, Map<string>>;
 
     export function initAnalyticsAsync() {
+        if (isNativeApp()) {
+            initializeAppInsights(true);
+            return;
+        }
+
         getCookieBannerAsync(document.domain, detectLocale(), (bannerErr, info) => {
             if (bannerErr || info.Error) {
                 // Start app insights, just don't drop any cookies
@@ -238,6 +246,13 @@ namespace pxt {
         else {
             throw new Error("Bad call to injectScriptAsync")
         }
+    }
+
+    /**
+     * Checks for winrt
+     */
+    function isNativeApp(): boolean {
+        return typeof Windows !== "undefined";
     }
 
     // No promises, so here we are

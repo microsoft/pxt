@@ -275,12 +275,14 @@ export class Editor extends srceditor.Editor {
         }
 
         core.infoNotification(lf("Exporting data...."));
-        pxt.commands.browserDownloadAsync(csv, lf("{id:csvfilename}data") + ".csv", "text/csv");
+    const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
+    pxt.commands.browserDownloadAsync(csv, pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
     }
 
     downloadRaw() {
         core.infoNotification(lf("Exporting data...."));
-        pxt.commands.browserDownloadAsync(this.rawDataBuffer, lf("{id:csvfilename}data") + ".txt", "text/plain");
+        const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
+        pxt.commands.browserDownloadAsync(this.rawDataBuffer, pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".txt", "text/plain")
     }
 
     goBack() {

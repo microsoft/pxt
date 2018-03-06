@@ -141,7 +141,7 @@ function notify(ce: CacheEntry) {
     }
 
     if (ce.components.length > 0)
-        Util.nextTick(() => ce.components.forEach(c => c.forceUpdate()))
+        ce.components.forEach(c => Util.nextTick(() =>  c.forceUpdate()))
 }
 
 function getVirtualApi(path: string) {
@@ -304,7 +304,8 @@ export function wrapWorkspace(ws: pxt.workspace.WorkspaceProvider): pxt.workspac
         }),
         saveToCloudAsync: ws.saveToCloudAsync,
         saveScreenshotAsync: ws.saveScreenshotAsync,
-        installAsync: ws.installAsync
+        installAsync: ws.installAsync,
+        loadedAsync: ws.loadedAsync
     };
 }
 

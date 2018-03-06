@@ -11,6 +11,14 @@ namespace pxsim {
             super();
         }
 
+        toArray(): any[] {
+            return this.data.slice(0);
+        }
+
+        toAny(): any[] {
+            return this.data.map(v => RefObject.toAny(v));
+        }
+
         destroy() {
             let data = this.data
             for (let i = 0; i < data.length; ++i) {

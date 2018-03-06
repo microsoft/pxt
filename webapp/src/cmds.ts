@@ -59,7 +59,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
 }
 
 function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (options: any) => Promise<number>): Promise<void> {
-    const boardName = pxt.appTarget.appTheme.boardName || "???";
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
 
     // https://msdn.microsoft.com/en-us/library/cc848897.aspx
@@ -101,12 +101,149 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
 }
 
 function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.debug('HID deployment...');
-    core.infoNotification(lf("Flashing device..."));
+    pxt.tickEvent(`hid.deploy`)
+    // error message handled in browser download
+    if (!resp.success)
+        return browserDownloadDeployCoreAsync(resp);
+    core.infoNotification(lf("Downloading..."));
     let f = resp.outfiles[pxtc.BINARY_UF2]
     let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
     return hidbridge.initAsync()
         .then(dev => dev.reflashAsync(blocks))
+}
+
+let askPairingCount = 0;
+function askWebUSBPairAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.tickEvent(`webusb.askpair`);
+    askPairingCount++;
+    if (askPairingCount > 3) { // looks like this is not working, don't ask anymore
+        pxt.tickEvent(`webusb.askpaircancel`);
+        return browserDownloadDeployCoreAsync(resp);
+    }
+
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+    return core.confirmAsync({
+        header: lf("No device detected..."),
+        htmlBody: `
+<p><strong>${lf("Do you want to pair your {0} to the editor?", boardName)}</strong>
+${lf("You will get instant downloads and data logging.")}</p>
+<p class="ui font small">The pairing experience is a one-time process.</p>
+        `,
+    }).then(r => r ? showFirmwareUpdateInstructionsAsync(resp) : browserDownloadDeployCoreAsync(resp));
+}
+
+function showFirmwareUpdateInstructionsAsync(resp: pxtc.CompileResult): Promise<void> {
+    return pxt.targetConfigAsync()
+        .then(config => {
+            const firmwareUrl = (config.firmwareUrls || {})[pxt.appTarget.simulator.boardDefinition.id];
+            if (!firmwareUrl) // skip firmware update
+                return showWebUSBPairingInstructionsAsync(resp)
+            pxt.tickEvent(`webusb.upgradefirmware`);
+            const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+            const driveName = pxt.appTarget.appTheme.driveDisplayName || "DRIVE";
+            const htmlBody = `
+    <div class="ui three column grid stackable">
+        <div class="column">
+            <div class="ui">
+                <div class="content">
+                    <div class="description">
+                        <span class="ui yellow circular label">1</span>
+                        <strong>${lf("Connect {0} to computer with USB cable", boardName)}</strong>
+                        <br/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="ui">
+                <div class="content">
+                    <div class="description">
+                        <span class="ui blue circular label">2</span>
+                        <strong>${lf("Download the latest firmware")}</strong>
+                        <br/>
+                        <a href="${firmwareUrl}" target="_blank">${lf("Click here to update to latest firmware")}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="ui">
+                <div class="content">
+                    <div class="description">
+                        <span class="ui blue circular label">3</span>
+                        ${lf("Move the .uf2 file to your board")}
+                        <br/>
+                        ${lf("Locate the downloaded .uf2 file and drag it to the {0} drive", driveName)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>`;
+            return core.confirmAsync({
+                header: lf("Upgrade firmware"),
+                htmlBody,
+                agreeLbl: lf("Upgraded!")
+            })
+                .then(r => r ? showWebUSBPairingInstructionsAsync(resp) : browserDownloadDeployCoreAsync(resp));
+        });
+}
+
+function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.tickEvent(`webusb.pair`);
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+    const htmlBody = `
+    <div class="ui three column grid stackable">
+        <div class="column">
+            <div class="ui">
+                <div class="content">
+                    <div class="description">
+                        <span class="ui yellow circular label">1</span>
+                        <strong>${lf("Connect {0} to computer with USB cable", boardName)}</strong>
+                        <br/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="ui">
+                <div class="content">
+                    <div class="description">
+                        <span class="ui blue circular label">2</span>
+                        ${lf("Select the device in the pairing dialog")}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="ui">
+                <div class="content">
+                    <div class="description">
+                        <span class="ui blue circular label">3</span>
+                        ${lf("Press \"Connect\"")}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    return core.confirmAsync({
+        header: lf("Pair your {0}", boardName),
+        agreeLbl: lf("Let's pair it!"),
+        htmlBody,
+    }).then(r => {
+        pxt.usb.pairAsync()
+            .then(() => {
+                pxt.tickEvent(`webusb.pair.success`);
+                return hidDeployCoreAsync(resp)
+            })
+            .catch(e => browserDownloadDeployCoreAsync(resp));
+    })
+}
+
+function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.tickEvent(`webusb.deploy`)
+    return hidDeployCoreAsync(resp)
+        .catch(e => askWebUSBPairAsync(resp));
 }
 
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
@@ -135,16 +272,17 @@ export function initCommandsAsync(): Promise<void> {
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
 
-    if (pxt.usb.isAvailable() && /webusb=1/i.test(window.location.href)) {
+    if (pxt.usb.isAvailable() && (pxt.appTarget.compile.webUSB || /webusb=1/i.test(window.location.href))) {
+        pxt.log(`enabled webusb`)
         pxt.usb.setEnabled(true)
         pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync
     }
 
     if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
-        pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+        pxt.commands.deployCoreAsync = webUsbDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
-            pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => {}), () => hidbridge.disconnectWrapperAsync());
+            pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => { }), () => hidbridge.disconnectWrapperAsync());
             pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployCoreAsync = hidDeployCoreAsync;
         } else {

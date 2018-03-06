@@ -12,6 +12,8 @@ declare namespace pxt {
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
         windowsStoreLink?: string;
+        // link to the latest firmware urls (boardid -> url)
+        firmwareUrls?: pxt.Map<string>;
     }
 
     interface PackagesConfig {
@@ -176,7 +178,7 @@ declare namespace pxt {
         portraitLogo?: string;
         highContrastLogo?: string;
         highContrastPortraitLogo?: string;
-        rightLogo?: string; 
+        rightLogo?: string;
         docsLogo?: string;
         organization?: string;
         organizationUrl?: string;
@@ -186,7 +188,6 @@ declare namespace pxt {
         shareUrl?: string;
         embedUrl?: string;
         betaUrl?: string;
-        legacyDomain?: string;
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
@@ -247,7 +248,7 @@ declare namespace pxt {
         blocklyColors?: Blockly.Colours; // Blockly workspace, flyout and other colors
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
-        appPathNames?: string[]; // Authorized URL paths in electron or UWP, all other paths will display a warning banner
+        appPathNames?: string[]; // Authorized URL paths in UWP, all other paths will display a warning banner
         defaultBlockGap?: number; // For targets to override block gap
         hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
         hideNewProjectButton?: boolean; // do not show the "new project" button in home page
@@ -297,7 +298,9 @@ declare namespace ts.pxtc {
         useUF2?: boolean;
         useMkcd?: boolean;
         useELF?: boolean;
+        saveAsPNG?: boolean;
         useModulator?: boolean;
+        webUSB?: boolean; // use WebUSB when supported
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
@@ -337,6 +340,7 @@ declare namespace ts.pxtc {
         trace?: boolean;
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
+        name?: string;
 
         alwaysDecompileOnStart?: boolean; // decompiler only
 

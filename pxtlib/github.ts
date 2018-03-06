@@ -206,6 +206,10 @@ namespace pxt.github {
     export function repoIconUrl(repo: GitRepo): string {
         if (repo.status != GitRepoStatus.Approved) return undefined;
 
+        return mkRepoIconUrl(repo)
+    }
+
+    export function mkRepoIconUrl(repo: ParsedRepo): string {
         return Cloud.apiRoot + `gh/${repo.fullName}/icon`;
     }
 
@@ -364,6 +368,8 @@ namespace pxt.github {
                     .then(refsRes => {
                         let tags = Object.keys(refsRes.refs)
                         tags.reverse()
+                        // only look for vxx.xx.xx tags
+                        tags = tags.filter(t => /^v\d+(\.\d+(\.\d+)?)?$/i.test(t));
                         if (tags[0])
                             return Promise.resolve(tags[0])
                         else

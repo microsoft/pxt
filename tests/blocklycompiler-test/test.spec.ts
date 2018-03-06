@@ -66,6 +66,30 @@ class BlocklyCompilerTestHost implements pxt.Host {
             })
             .then(res => {
                 BlocklyCompilerTestHost.cachedFiles["pxt-helpers.ts"] = res;
+                return pxt.Util.httpGetTextAsync(WEB_PREFIX + '/test-library/pxt.json')
+            })
+            .then(res => {
+                BlocklyCompilerTestHost.cachedFiles[`test-library/pxt.json`] = res;
+                let json: pxt.PackageConfig;
+
+                try {
+                    json = JSON.parse(res);
+                }
+                catch (e) { }
+
+                if (json && json.files && json.files.length) {
+                    return Promise.all(json.files.map(f => {
+                        return pxt.Util.httpGetTextAsync(WEB_PREFIX + '/test-library/' + f)
+                            .then(txt => {
+                                BlocklyCompilerTestHost.cachedFiles[`test-library/${f}`] = txt;
+                            });
+                    }))
+                    .then(() => {});
+                }
+
+                return Promise.resolve()
+            })
+            .then(() => {
                 return new BlocklyCompilerTestHost();
             })
         }
@@ -81,7 +105,9 @@ class BlocklyCompilerTestHost implements pxt.Host {
             if (filename == "pxt.json") {
                 return JSON.stringify({
                     "name": "blocklycompilertest",
-                    "dependencies": [],
+                    "dependencies": {
+                        "testlib": "file:."
+                    },
                     "description": "",
                     "files": [
                         "main.blocks",
@@ -99,6 +125,12 @@ class BlocklyCompilerTestHost implements pxt.Host {
             }
         } else if (pxt.appTarget && pxt.appTarget.bundledpkgs[module.id] && filename === pxt.CONFIG_NAME) {
             return pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME];
+        }
+
+        if (module.id == "testlib") {
+            const split = filename.split(/[/\\]/);
+            filename = "test-library/" + split[split.length - 1];
+            return BlocklyCompilerTestHost.cachedFiles[filename];
         }
 
         return "";
@@ -247,6 +279,10 @@ describe("blockly compiler", function() {
         it("should handle empty array blocks", (done: () => void) => {
             blockTestAsync("lists_empty_arrays").then(done, done);
         });
+
+        it("should handle functions with list return types", (done: () => void) => {
+            blockTestAsync("array_return_type").then(done, done);
+        });
     });
 
     describe("compiling logic", () => {
@@ -311,11 +347,21 @@ describe("blockly compiler", function() {
         it("should handle name collisions", (done: () => void) => {
             blockTestAsync("functions_names").then(done, done);
         });
-    })
+    });
 
     describe("compiling special blocks", () => {
         it("should compile the predicate in pause until", done => {
             blockTestAsync("pause_until").then(done, done);
+        });
+
+        it("should implicitly convert arguments marked as toString to a string", done => {
+            blockTestAsync("to_string_arg").then(done, done);
+        });
+    });
+
+    describe("compiling expandable blocks", () => {
+        it("should handle blocks with optional arguments", done => {
+            blockTestAsync("expandable_basic").then(done, done);
         });
     })
 });

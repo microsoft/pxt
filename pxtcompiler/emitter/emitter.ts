@@ -1765,11 +1765,15 @@ ${lbl}: .short 0xffff
                 let refSuff = ""
                 if (isRefCountedExpr(p.initializer))
                     refSuff = "Ref"
-                proc.emitExpr(ir.rtcall("pxtrt::mapSet" + refSuff, [
+                const keyName = p.name.getText();
+                const args = [
                     ir.op(EK.Incr, [expr]),
-                    ir.numlit(getIfaceMemberId(p.name.getText())),
+                    ir.numlit(getIfaceMemberId(keyName)),
                     emitExpr(p.initializer)
-                ]))
+                ];
+                if (!opts.target.isNative)
+                    args.push(emitStringLiteral(keyName));
+                proc.emitExpr(ir.rtcall("pxtrt::mapSet" + refSuff, args))
             })
             return expr
         }
@@ -2508,7 +2512,10 @@ ${lbl}: .short 0xffff
                         default:
                             let v = U.lookup(tbl, c)
                             if (v == null) {
-                                throw unhandled(node, lf("invalid character in image literal: '{0}'", v), 9273)
+                                if (attrs.groups.length == 2)
+                                    v = 1 // default anything non-zero to one
+                                else
+                                    throw unhandled(node, lf("invalid character in image literal: '{0}'", v), 9273)
                             }
                             line.push(v)
                             break
@@ -2522,19 +2529,35 @@ ${lbl}: .short 0xffff
 
                 let r = ""
 
-                if (attrs.groups.length > 16) {
-                    r = "f5" + hex2(maxLen)
-                    for (let l of matrix)
-                        for (let n of l)
-                            r += hex2(n)
-                } else {
-                    r = "f4" + hex2(maxLen)
+                if (attrs.groups.length <= 2) {
+                    r = "f1" + hex2(maxLen) + hex2(matrix.length)
+                    for (let l of matrix) {
+                        let mask = 0x80
+                        let v = 0
+                        for (let n of l) {
+                            if (mask == 0) {
+                                r += hex2(v)
+                                mask = 0x80
+                                v = 0
+                            }
+                            if (n) v |= mask
+                            mask >>= 1
+                        }
+                        r += hex2(v)
+                    }
+                } else if (attrs.groups.length <= 16) {
+                    r = "f4" + hex2(maxLen) + hex2(matrix.length)
                     for (let l of matrix) {
                         for (let n of l)
                             r += n.toString(16)
                         if (r.length & 1)
                             r += "0"
                     }
+                } else {
+                    r = "f8" + hex2(maxLen) + hex2(matrix.length)
+                    for (let l of matrix)
+                        for (let n of l)
+                            r += hex2(n)
                 }
 
                 return r

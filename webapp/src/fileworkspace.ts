@@ -230,6 +230,10 @@ function resetAsync() {
         })
 }
 
+function loadedAsync(): Promise<void> {
+    return Promise.resolve();
+}
+
 export const provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
@@ -240,5 +244,6 @@ export const provider: WorkspaceProvider = {
     saveToCloudAsync,
     syncAsync,
     resetAsync,
+    loadedAsync,
     saveScreenshotAsync
 }
