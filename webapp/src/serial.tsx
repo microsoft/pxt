@@ -147,10 +147,10 @@ export class Editor extends srceditor.Editor {
     }
 
     appendRawData(data: string) {
-       this.rawDataBuffer += data;
-       if (this.rawDataBuffer.length > this.maxBufferLength) {
-        this.rawDataBuffer.slice(this.rawDataBuffer.length / 4);
-       }
+        this.rawDataBuffer += data;
+        if (this.rawDataBuffer.length > this.maxBufferLength) {
+            this.rawDataBuffer.slice(this.rawDataBuffer.length / 4);
+        }
     }
 
     appendGraphEntry(source: string, variable: string, nvalue: number, receivedTime: number) {
@@ -275,8 +275,8 @@ export class Editor extends srceditor.Editor {
         }
 
         core.infoNotification(lf("Exporting data...."));
-    const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
-    pxt.commands.browserDownloadAsync(csv, pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
+        const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
+        pxt.commands.browserDownloadAsync(csv, pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
     }
 
     downloadRaw() {
@@ -306,18 +306,21 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button title={lf("Export data")} class="ui floating dropdown icon blue button" ariaLabel={lf("Export data")}>
+                        <sui.Button title={lf("Export data")} class="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => this.downloadCSV()}>
                             <sui.Icon icon="download" />
-                            <div className="menu">
-                                <div className="item"  onClick={() => this.downloadCSV()}>{lf("txt")}</div>
-                                <div className="item"  onClick={() => this.downloadRaw()}>{lf("csv")}</div>
-                            </div>
                         </sui.Button>
                         <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
                         <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                     </div>
                 </div>
                 <div id="serialCharts" className="noconsole" ref={e => this.chartRoot = e}></div>
+                <div id="consoleHeader" className="ui">
+                    <div className="rightHeader">
+                        <sui.Button title={lf("Export data")} class="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => this.downloadRaw()}>
+                            <sui.Icon icon="download" />
+                        </sui.Button>
+                    </div>
+                </div>
                 <div id="serialConsole" className="noconsole" ref={e => this.consoleRoot = e}></div>
             </div>
         )
