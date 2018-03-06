@@ -129,17 +129,30 @@ export class Editor extends srceditor.Editor {
         this.appendRawData(data);
 
         if (!this.sourceMap[source]) {
-            let sourceIdx = Object.keys(this.sourceMap).length + 1
+            const sourceIdx = Object.keys(this.sourceMap).length + 1
             this.sourceMap[source] = lf("source") + sourceIdx.toString()
         }
-        let niceSource = this.sourceMap[source]
+        const niceSource = this.sourceMap[source]
 
-        const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
-        if (m) {
-            const variable = m[2] || '';
-            const nvalue = parseFloat(m[3]);
-            if (!isNaN(nvalue)) {
-                this.appendGraphEntry(niceSource, variable, nvalue, receivedTime)
+        // is this a CSV entry
+        if (/^\s*,?\s*(-?\d+(\.\d*)?)(\s*,\s*(-?\d+(\.\d*)?))+\s*,?\s*$/.test(data)) {
+            const parts = data.split(/\s*,\s*/).map(s => parseFloat(s))
+                .filter(d => !isNaN(d))
+                .forEach((d, i) => {
+                    const variable = "data." + i;
+                    this.appendGraphEntry(niceSource, variable, d, receivedTime);
+                })
+
+        }
+        else {
+            // is this a key-value pair, or just a number?
+            const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
+            if (m) {
+                const variable = m[2] || '';
+                const nvalue = parseFloat(m[3]);
+                if (!isNaN(nvalue)) {
+                    this.appendGraphEntry(niceSource, variable, nvalue, receivedTime)
+                }
             }
         }
 
