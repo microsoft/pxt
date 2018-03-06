@@ -309,7 +309,7 @@ export class Editor extends srceditor.Editor {
                         <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                     </div>
                 </div>
-                <div id="serialCharts" className="noconsole" ref={e => this.chartRoot = e}></div>
+                <div id="serialCharts" ref={e => this.chartRoot = e}></div>
                 <div id="consoleHeader" className="ui serialHeader">
                     <div className="rightHeader">
                         <sui.Button title={lf("Export text")} class="ui icon blue button editorExport" ariaLabel={lf("Export text")} onClick={() => this.downloadRaw()}>
@@ -317,7 +317,7 @@ export class Editor extends srceditor.Editor {
                         </sui.Button>
                     </div>
                 </div>
-                <div id="serialConsole" className="noconsole" ref={e => this.consoleRoot = e}></div>
+                <div id="serialConsole" ref={e => this.consoleRoot = e}></div>
             </div>
         )
     }
