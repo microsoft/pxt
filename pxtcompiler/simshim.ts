@@ -86,7 +86,16 @@ namespace pxt {
 
             let decl = prevNs ? "" : "declare"
 
-            mainWr.write(`${decl} class ${cl.name.text} {`)
+            let ext = ""
+
+            if (cl.heritageClauses)
+                for (let h of cl.heritageClauses) {
+                    if (h.token == SK.ExtendsKeyword) {
+                        ext = " extends " + mapType(typeOf(h.types[0]))
+                    }
+                }
+
+            mainWr.write(`${decl} class ${cl.name.text}${ext} {`)
             mainWr.incrIndent()
 
             for (let mem of cl.members) {
