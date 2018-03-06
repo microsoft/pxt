@@ -963,7 +963,7 @@ export class ProjectView
     }
 
     private saveProjectAsPNG(): Promise<void> {
-        simulator.driver.postMessage({ type: "screenshot" })
+        simulator.driver.postMessage({ type: "screenshot", title: this.state.header.name } as pxsim.SimulatorScreenshotMessage);
         return new Promise<void>((resolve, reject) => {
             this.screenshotHandler = (img) => {
                 this.screenshotHandler = null
