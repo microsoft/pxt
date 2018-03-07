@@ -3417,9 +3417,9 @@ namespace pxt.blocks {
             namespaceId = namespaceId.toLowerCase();
         }
         const isNamespaceFiltered = filters.namespaces &&
-            filters.namespaces[namespaceId] === FilterState.Disabled || filters.namespaces[namespaceId] === FilterState.Hidden;
+            (filters.namespaces[namespaceId] === FilterState.Disabled || filters.namespaces[namespaceId] === FilterState.Hidden);
         const isBlockFiltered = filters.blocks &&
-            filters.blocks[blockId] === FilterState.Disabled || filters.blocks[blockId] === FilterState.Hidden;
+            (filters.blocks[blockId] === FilterState.Disabled || filters.blocks[blockId] === FilterState.Hidden);
         return !isNamespaceFiltered && !isBlockFiltered;
     }
 }
