@@ -91,7 +91,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         const targetTheme = pxt.appTarget.appTheme;
         const compile = pxt.appTarget.compile;
-        const compileBtn = compile.hasHex;
+        const compileBtn = compile.hasHex || compile.saveAsPNG;
         const simOpts = pxt.appTarget.simulator;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
         const compileLoading = !!compiling;
