@@ -84,7 +84,18 @@ namespace pxt {
             if (currNs) currNs += "."
             currNs += cl.name.text
 
-            mainWr.write(`declare class ${cl.name.text} {`)
+            let decl = prevNs ? "" : "declare"
+
+            let ext = ""
+
+            if (cl.heritageClauses)
+                for (let h of cl.heritageClauses) {
+                    if (h.token == SK.ExtendsKeyword) {
+                        ext = " extends " + mapType(typeOf(h.types[0]))
+                    }
+                }
+
+            mainWr.write(`${decl} class ${cl.name.text}${ext} {`)
             mainWr.incrIndent()
 
             for (let mem of cl.members) {
@@ -97,6 +108,10 @@ namespace pxt {
                         break
                     case SK.Constructor:
                         emitConstructorDeclaration(mem as ts.ConstructorDeclaration)
+                        break
+                    case SK.GetAccessor:
+                        let hasSetter = cl.members.some(m => m.kind == SK.SetAccessor && m.name.getText() == mem.name.getText())
+                        emitFunctionDeclaration(mem as ts.GetAccessorDeclaration, hasSetter)
                         break
                     default:
                         break;
@@ -136,11 +151,11 @@ namespace pxt {
             mainWr.write("")
         }
 
-        function emitFunctionDeclaration(fn: ts.FunctionLikeDeclaration) {
+        function emitFunctionDeclaration(fn: ts.FunctionLikeDeclaration, hasSetter = false) {
             let cmts = getExportComments(fn)
             if (!cmts) return
             let fnname = fn.name.getText()
-            let isMethod = fn.kind == SK.MethodDeclaration
+            let isMethod = fn.kind == SK.MethodDeclaration || fn.kind == SK.GetAccessor || fn.kind == SK.SetAccessor
             let attrs = "//% shim=" + (isMethod ? "." + fnname : currNs + "::" + fnname)
             let sig = checker.getSignatureFromDeclaration(fn)
             let rettp = checker.getReturnTypeOfSignature(sig)
@@ -154,18 +169,26 @@ namespace pxt {
             } else if (asyncName) {
                 U.userError(`${currNs}::${fnname} doesn't return a promise`)
             }
-            pxt.debug("emitFun: "+fnname)
+            pxt.debug("emitFun: " + fnname)
             let args = fn.parameters.map(p => {
                 return `${p.name.getText()}${p.questionToken ? "?" : ""}: ${mapType(typeOf(p))}`
             })
             let localname = fnname.replace(/Async$/, "")
             let defkw = isMethod ? "public" : "function"
 
+            let allArgs = `(${args.join(", ")})`
+
+            if (fn.kind == SK.GetAccessor) {
+                defkw = hasSetter ? "public" : "readonly"
+                allArgs = ""
+                attrs += " property"
+            }
+
             if (!isMethod)
                 mainWr.setNs(currNs)
             mainWr.write(cmts)
             mainWr.write(attrs)
-            mainWr.write(`${defkw} ${localname}(${args.join(", ")}): ${mapType(rettp)};`)
+            mainWr.write(`${defkw} ${localname}${allArgs}: ${mapType(rettp)};`)
             mainWr.write("")
         }
 

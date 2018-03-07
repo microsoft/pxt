@@ -233,6 +233,19 @@ namespace pxsim {
     export let initCurrentRuntime: (msg: SimulatorRunMessage) => void = undefined;
     export let handleCustomMessage: (message: pxsim.SimulatorCustomMessage) => void = undefined;
 
+
+    function _leave(s: StackFrame, v: any): StackFrame {
+        s.parent.retval = v;
+        if (s.finalCallback)
+            s.finalCallback(v);
+        return s.parent
+    }
+
+    // wraps simulator code as STS code - useful for default event handlers
+    export function syntheticRefAction(f: (s: StackFrame) => any) {
+        return pxtcore.mkAction(0, 0, s => _leave(s, f(s)))
+    }
+
     export class Runtime {
         public board: BaseBoard;
         numGlobals = 1000;
@@ -547,12 +560,7 @@ namespace pxsim {
                 return s;
             }
 
-            function leave(s: StackFrame, v: any): StackFrame {
-                s.parent.retval = v;
-                if (s.finalCallback)
-                    s.finalCallback(v);
-                return s.parent
-            }
+            const leave = _leave
 
             function setupTop(cb: ResumeFn) {
                 let s = setupTopCore(cb)

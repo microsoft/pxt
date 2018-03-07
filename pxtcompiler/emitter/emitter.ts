@@ -2460,7 +2460,8 @@ ${lbl}: .short 0xffff
                     addDefaultParametersAndTypeCheck(checker.getResolvedSignature(node), args, ctorAttrs)
                     let compiled = args.map((x) => emitExpr(x))
                     if (ctorAttrs.shim) {
-                        U.userError("shim=... on constructor not supported right now")
+                        if (!noRefCounting())
+                            U.userError("shim=... on constructor not supported right now")
                         // TODO need to deal with refMask and tagged ints here
                         // we drop 'obj' variable
                         return ir.rtcall(ctorAttrs.shim, compiled)
