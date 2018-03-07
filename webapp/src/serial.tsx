@@ -25,6 +25,9 @@ export class Editor extends srceditor.Editor {
     maxConsoleLineLength: number = 255
     maxConsoleEntries: number = 100
     active: boolean = true
+    rawDataBuffer: string = ""
+    maxBufferLength: number = 10000;
+    csvHeaders: string[] = [];
 
     lineColors = ["#f00", "#00f", "#0f0", "#ff0"]
     hcLineColors = ["000"]
@@ -124,23 +127,46 @@ export class Editor extends srceditor.Editor {
         const source = smsg.id || "?"
         const receivedTime = smsg.receivedTime || Util.now()
 
+        this.appendRawData(data);
+
         if (!this.sourceMap[source]) {
-            let sourceIdx = Object.keys(this.sourceMap).length + 1
+            const sourceIdx = Object.keys(this.sourceMap).length + 1
             this.sourceMap[source] = lf("source") + sourceIdx.toString()
         }
-        let niceSource = this.sourceMap[source]
+        const niceSource = this.sourceMap[source]
 
-        const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
-        if (m) {
-            const variable = m[2] || '';
-            const nvalue = parseFloat(m[3]);
-            if (!isNaN(nvalue)) {
-                this.appendGraphEntry(niceSource, variable, nvalue, receivedTime)
-                return;
+        // is this a CSV data entry
+        if (/^\s*(-?\d+(\.\d*)?)(\s*,\s*(-?\d+(\.\d*)?))+\s*,?\s*$/.test(data)) {
+            const parts = data.split(/\s*,\s*/).map(s => parseFloat(s))
+                .filter(d => !isNaN(d))
+                .forEach((d, i) => {
+                    const variable = "data." + (this.csvHeaders[i] || i);
+                    this.appendGraphEntry(niceSource, variable, d, receivedTime);
+                })
+            // is this a CSV header entry
+        } else if (/^\s*[\s\w]+(\s*,\s*[\w\s]+)+\s*,?\s*$/.test(data)) {
+            this.csvHeaders = data.split(/\s*,\s*/).map(h => h.trim());
+        }
+        else {
+            // is this a key-value pair, or just a number?
+            const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
+            if (m) {
+                const variable = m[2] || '';
+                const nvalue = parseFloat(m[3]);
+                if (!isNaN(nvalue)) {
+                    this.appendGraphEntry(niceSource, variable, nvalue, receivedTime)
+                }
             }
         }
 
         this.appendConsoleEntry(data)
+    }
+
+    appendRawData(data: string) {
+        this.rawDataBuffer += data;
+        if (this.rawDataBuffer.length > this.maxBufferLength) {
+            this.rawDataBuffer.slice(this.rawDataBuffer.length / 4);
+        }
     }
 
     appendGraphEntry(source: string, variable: string, nvalue: number, receivedTime: number) {
@@ -246,28 +272,68 @@ export class Editor extends srceditor.Editor {
         }
         this.charts = []
         this.consoleBuffer = ""
+        this.rawDataBuffer = ""
         this.savedMessageQueue = []
         this.sourceMap = {}
+        this.csvHeaders = [];
+    }
+
+    isCSV(nl: number, datas: number[][][]): boolean {
+        if (datas.length < 2) return false;
+        for (let i = 0; i < datas.length; ++i)
+            if (datas[i].length != nl) return false;
+
+        for (let l = 0; l < nl; ++l) {
+            let t = datas[0][l][0];
+            for (let d = 1; d < datas.length; ++d) {
+                if (datas[d][l][0] != t)
+                    return false;
+            }
+        }
+
+        return true;
     }
 
     downloadCSV() {
         const sep = lf("{id:csvseparator}\t");
-        const lines: { name: string; line: number[][]; }[] = [];
-        this.charts.forEach(chart => Object.keys(chart.datas).forEach(k => lines.push({ name: `${k} (${chart.source})`, line: chart.datas[k] })));
-        let csv = `sep=${sep}\r\n` +
-            lines.map(line => `time (s)${sep}${line.name}`).join(sep) + '\r\n';
+        let csv: string[] = [];
+        this.charts.forEach(chart => {
+            const lines: { name: string; line: number[][]; }[] = [];
+            Object.keys(chart.datas).forEach(k => lines.push({ name: k, line: chart.datas[k] }));
+            const datas = lines.map(line => line.line);
+            const nl = datas.length > 0 ? datas.map(data => data.length).reduce((l, c) => Math.max(l, c)) : 0;
+            // if all lines have same timestamp, condense output
+            let isCSV = this.isCSV(nl, datas);
+            if (isCSV) {
+                let h = `time (${chart.source})${sep}` + lines.map(line => line.name).join(sep) + sep;
+                csv[0] = csv[0] ? csv[0] + sep + h : h;
+                for (let i = 0; i < nl; ++i) {
+                    const t = (datas[0][i][0] - datas[0][0][0]) / 1000;
+                    const da = t + sep + datas.map(data => data[i][1]).join(sep) + sep;
+                    csv[i + 1] = csv[i + 1] ? csv[i + 1] + sep + da : da;
+                }
+            } else {
+                let h = lines.map(line => `time (${chart.source})${sep}${line.name}`).join(sep);
+                csv[0] = csv[0] ? csv[0] + sep + h : h;
+                for (let i = 0; i < nl; ++i) {
+                    const da = datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}${sep}${data[i][1]}` : sep).join(sep);
+                    csv[i + 1] = csv[i + 1] ? csv[i + 1] + sep + da : da;
+                }
+            }
+        });
 
-        const datas = lines.map(line => line.line);
-        const nl = datas.map(data => data.length).reduce((l, c) => Math.max(l, c));
-        const nc = this.charts.length;
-        for (let i = 0; i < nl; ++i) {
-            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}${sep}${data[i][1]}` : sep).join(sep);
-            csv += '\r\n';
-        }
+        csv.unshift(`sep=${sep}`)
+        const csvText = csv.join('\r\n');
 
         core.infoNotification(lf("Exporting data...."));
         const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
-        pxt.commands.browserDownloadAsync(csv, pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
+        pxt.commands.browserDownloadAsync(csvText, pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
+    }
+
+    downloadRaw() {
+        core.infoNotification(lf("Exporting data...."));
+        const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
+        pxt.commands.browserDownloadAsync(this.rawDataBuffer, pxt.appTarget.id + '-' + lf("{id:csvfilename}console") + '-' + time + ".txt", "text/plain")
     }
 
     goBack() {
@@ -278,7 +344,7 @@ export class Editor extends srceditor.Editor {
     display() {
         return (
             <div id="serialArea">
-                <div id="serialHeader" className="ui">
+                <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
                             <sui.Button title={lf("Go back")} class="ui icon circular small button editorBack" ariaLabel={lf("Go back")} onClick={this.goBack.bind(this)}>
@@ -294,8 +360,15 @@ export class Editor extends srceditor.Editor {
                         <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                     </div>
                 </div>
-                <div id="serialCharts" className="noconsole" ref={e => this.chartRoot = e}></div>
-                <div id="serialConsole" className="noconsole" ref={e => this.consoleRoot = e}></div>
+                <div id="serialCharts" ref={e => this.chartRoot = e}></div>
+                <div id="consoleHeader" className="ui serialHeader">
+                    <div className="rightHeader">
+                        <sui.Button title={lf("Export text")} class="ui icon blue button editorExport" ariaLabel={lf("Export text")} onClick={() => this.downloadRaw()}>
+                            <sui.Icon icon="download" />
+                        </sui.Button>
+                    </div>
+                </div>
+                <div id="serialConsole" ref={e => this.consoleRoot = e}></div>
             </div>
         )
     }
