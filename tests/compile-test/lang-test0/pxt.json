@@ -24,6 +24,7 @@
         "22lambdas.ts",
         "23generics.ts",
         "24arraymap.ts",
+        "241arrayforeach.ts",
         "25lamdacapture.ts",
         "26staticclasses.ts",
         "27accessors.ts",
