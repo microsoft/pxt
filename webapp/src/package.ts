@@ -113,6 +113,7 @@ export class EditorPackage {
 
     id: string;
     outputPkg: EditorPackage;
+    assetsPkg: EditorPackage;
 
     constructor(private ksPkg: pxt.Package, private topPkg: EditorPackage) {
         if (ksPkg && ksPkg.verProtocol() == "workspace")
@@ -123,10 +124,42 @@ export class EditorPackage {
         return this.topPkg.header;
     }
 
+    afterMainLoadAsync() {
+        if (this.assetsPkg)
+            return this.assetsPkg.loadAssetsAsync()
+        return Promise.resolve()
+    }
+
+    loadAssetsAsync() {
+        if (this.id != "assets" || !Cloud.localToken || !Cloud.isLocalHost())
+            return Promise.resolve()
+
+        return workspace.listAssetsAsync(this.topPkg.header.id)
+            .then(res => {
+                let removeMe = Util.flatClone(this.files)
+                for (let asset of res) {
+                    let fn = asset.name
+                    let ex = Util.lookup(this.files, fn)
+                    if (ex) {
+                        delete removeMe[fn]
+                    } else {
+                        this.files[fn] = new File(this, fn, `File size: ${asset.size}; URL: ${asset.url}`)
+                    }
+                }
+                for (let n of Object.keys(removeMe))
+                    delete this.files[n]
+            })
+    }
+
     makeTopLevel() {
         this.topPkg = this;
         this.outputPkg = new EditorPackage(null, this)
         this.outputPkg.id = "built"
+
+        if (pxt.appTarget.runtime && pxt.appTarget.runtime.assetExtensions) {
+            this.assetsPkg = new EditorPackage(null, this)
+            this.assetsPkg.id = "assets"
+        }
     }
 
     updateConfigAsync(update: (cfg: pxt.PackageConfig) => void) {
@@ -266,7 +299,11 @@ export class EditorPackage {
     pkgAndDeps(): EditorPackage[] {
         if (this.topPkg != this)
             return this.topPkg.pkgAndDeps();
-        return Util.values((this.ksPkg as pxt.MainPackage).deps).map(getEditorPkg).concat([this.outputPkg])
+        let res = Util.values((this.ksPkg as pxt.MainPackage).deps).map(getEditorPkg)
+        if (this.assetsPkg)
+            res.push(this.assetsPkg)
+        res.push(this.outputPkg)
+        return res
     }
 
     filterFiles(cond: (f: File) => boolean) {
@@ -398,6 +435,7 @@ export function loadPkgAsync(id: string) {
         .then(str => {
             if (!str) return Promise.resolve()
             return mainPkg.installAllAsync()
+                .then(() => mainEditorPkg().afterMainLoadAsync())
                 .catch(e => {
                     core.errorNotification(lf("Cannot load package: {0}", e.message))
                 })

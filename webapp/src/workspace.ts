@@ -225,6 +225,20 @@ export function loadedAsync() {
     return impl.loadedAsync();
 }
 
+export function saveAssetAsync(id: string, filename: string, data: Uint8Array): Promise<void> {
+    if (impl.saveAssetAsync)
+        return impl.saveAssetAsync(id, filename, data)
+    else
+        return Promise.reject(new Error(lf("Assets not supported here.")))
+}
+
+export function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
+    if (impl.listAssetsAsync)
+        return impl.listAssetsAsync(id)
+    return Promise.resolve([])
+}
+
+
 /*
     header:<guid>   - one header
     header:*        - all headers

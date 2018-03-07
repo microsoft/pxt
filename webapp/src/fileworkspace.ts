@@ -96,7 +96,7 @@ function initAsync(target: string) {
     allScripts = [];
     currentTarget = target;
     // TODO check that target is correct.
-    return syncAsync().then(() => {});
+    return syncAsync().then(() => { });
 }
 
 function fetchTextAsync(e: HeaderWithScript): Promise<ScriptText> {
@@ -234,6 +234,20 @@ function loadedAsync(): Promise<void> {
     return Promise.resolve();
 }
 
+function saveAssetAsync(id: string, filename: string, data: Uint8Array): Promise<void> {
+    return apiAsync("pkgasset/" + id, {
+        encoding: "base64",
+        name: filename,
+        data: btoa(Util.uint8ArrayToString(data))
+    }).then(resp => {
+    })
+}
+
+function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
+    return apiAsync("pkgasset/" + id).then(r => r.files)
+}
+
+
 export const provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
@@ -245,5 +259,7 @@ export const provider: WorkspaceProvider = {
     syncAsync,
     resetAsync,
     loadedAsync,
-    saveScreenshotAsync
+    saveScreenshotAsync,
+    saveAssetAsync,
+    listAssetsAsync
 }
