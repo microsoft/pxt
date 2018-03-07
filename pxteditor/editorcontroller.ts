@@ -47,12 +47,14 @@ namespace pxt.editor {
         | "undo"
         | "redo"
         | "renderblocks"
+        | "setscale"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
 
         | "workspacesync" // EditorWorspaceSyncRequest
         | "workspacereset"
         | "workspacesave" // EditorWorkspaceSaveRequest
+        | "workspaceloaded"
 
         | "event"
         | "simevent"
@@ -99,6 +101,11 @@ namespace pxt.editor {
         options?: ProjectCreationOptions;
     }
 
+    export interface EditorMessageSetScaleRequest extends EditorMessageRequest {
+        action: "setscale";
+        scale: number;
+    }
+
     export interface EditorMessageSimulatorMessageProxyRequest extends EditorMessageRequest {
         action: "proxytosim";
         /**
@@ -111,7 +118,7 @@ namespace pxt.editor {
         /**
          * Synching projects from host into
          */
-        action: "workspacesync" | "workspacereset";
+        action: "workspacesync" | "workspacereset" | "workspaceloaded";
     }
 
     // UI properties to sync on load
@@ -265,6 +272,11 @@ namespace pxt.editor {
                             if (editor && editor.hasUndo())
                                 editor.undo();
                         }); break;
+                        case "setscale": {
+                            const zoommsg = data as EditorMessageSetScaleRequest;
+                            p = p.then(() => projectView.editor.setScale(zoommsg.scale));
+                            break;
+                        }
                         case "stopsimulator": {
                             const stop = data as EditorMessageStopRequest;
                             p = p.then(() => projectView.stopSimulator(stop.unload));

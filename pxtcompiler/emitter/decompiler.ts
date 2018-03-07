@@ -1320,6 +1320,16 @@ ${output}</xml>`;
                             addInput(getValue(aName, e, param.shadowBlockId))
                         }
                         break;
+                    case SK.BinaryExpression:
+                        if (param && param.shadowOptions && param.shadowOptions.toString) {
+                            const be = e as BinaryExpression;
+                            if (be.operatorToken.kind === SK.PlusToken && isEmptyStringNode(be.left)) {
+                                addInput(getValue(U.htmlEscape(param.definitionName), be.right, param.shadowBlockId || "text"));
+                                break;
+                            }
+                        }
+                        addInput(getValue(U.htmlEscape(param.definitionName), e, param.shadowBlockId))
+                        break;
                     default:
                         let v: ValueNode;
                         const vName = U.htmlEscape(param.definitionName);
@@ -2060,6 +2070,13 @@ ${output}</xml>`;
 
             return undefined;
         }
+    }
+
+    function isEmptyStringNode(node: Node) {
+        if (node.kind === SK.StringLiteral || node.kind === SK.NoSubstitutionTemplateLiteral) {
+            return (node as LiteralLikeNode).text === "";
+        }
+        return false;
     }
 
     function isAutoDeclaration(decl: VariableDeclaration) {

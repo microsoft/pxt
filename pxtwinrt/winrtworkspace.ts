@@ -322,6 +322,10 @@ namespace pxt.winrt.workspace {
             }));
     }
 
+    function loadedAsync(): Promise<void> {
+        return Promise.resolve();
+    }
+
     export const provider: pxt.workspace.WorkspaceProvider = {
         getHeaders,
         getHeader,
@@ -331,6 +335,7 @@ namespace pxt.winrt.workspace {
         installAsync,
         saveToCloudAsync,
         syncAsync,
-        resetAsync
+        resetAsync,
+        loadedAsync
     }
 }

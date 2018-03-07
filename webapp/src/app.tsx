@@ -2366,6 +2366,7 @@ $(() => {
         })
         .done(() => {
             $("#loading").remove();
+            return workspace.loadedAsync();
         });
 
     document.addEventListener("visibilitychange", ev => {

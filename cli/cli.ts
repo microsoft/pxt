@@ -1418,8 +1418,8 @@ function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
 
     console.log(`building ${ksd}...`);
     return nodeutil.spawnAsync({
-        cmd: nodeutil.addCmd("jake"),
-        args: includeSourceMaps ? ["sourceMaps=true"] : [],
+        cmd: nodeutil.addCmd("npm"),
+        args: includeSourceMaps ? ["run", "build", "sourceMaps=true"] : ["run", "build"],
         cwd: ksd
     }).then(() => {
         console.log("local pxt-core built.")

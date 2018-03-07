@@ -304,7 +304,8 @@ export function wrapWorkspace(ws: pxt.workspace.WorkspaceProvider): pxt.workspac
         }),
         saveToCloudAsync: ws.saveToCloudAsync,
         saveScreenshotAsync: ws.saveScreenshotAsync,
-        installAsync: ws.installAsync
+        installAsync: ws.installAsync,
+        loadedAsync: ws.loadedAsync
     };
 }
 
