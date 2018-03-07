@@ -1059,7 +1059,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                     if (opts.localDir) {
                         for (let e of trg.appTheme.docMenu)
                             if (e.path[0] == "/") {
-                                e.path = opts.localDir + "docs" + e.path + ".html"
+                                e.path = opts.localDir + "docs" + e.path;
                             }
                         trg.appTheme.logoUrl = opts.localDir
                         trg.appTheme.homeUrl = opts.localDir
@@ -3830,6 +3830,10 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const minify = !!parsed.flags["minify"];
     const bump = !!parsed.flags["bump"];
 
+    if (!!parsed.flags["cloud"]) {
+        forceCloudBuild = true;
+    }
+
     pxt.log(`packaging editor to ${builtPackaged}`)
 
     let p = rimrafAsync(builtPackaged, {})
@@ -4653,6 +4657,9 @@ function initCommands() {
             },
             "bump": {
                 description: "bump version number prior to package"
+            },
+            "cloud": {
+                description: "Force build to happen in the cloud"
             }
         }
     }, staticpkgAsync);

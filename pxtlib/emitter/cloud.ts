@@ -81,9 +81,21 @@ namespace pxt.Cloud {
 
     export function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
         const packaged = pxt.webConfig && pxt.webConfig.isStatic;
-        let url = packaged
-            ? `docs/${docid}.md`
-            : `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(pxt.webConfig.targetVersion)}`;
+        let url: string;
+
+        if (packaged) {
+            url = docid;
+            const isUnderDocs = /\/docs\//.test(url);
+            const hasExt = /\.\w+$/.test(url);
+            if (!isUnderDocs) {
+                url = `docs/${url}`;
+            }
+            if (!hasExt) {
+                url = `${url}.md`;
+            }
+        } else {
+            url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(pxt.webConfig.targetVersion)}`;
+        }
         if (!packaged && locale != "en") {
             url += `&lang=${encodeURIComponent(Util.userLanguage())}`
             if (live) url += "&live=1"
@@ -373,7 +385,7 @@ namespace pxt.Cloud {
         artid: string; // where is it pointing to
         releaseid: string;
         redirect: string; // full URL or /something/on/the/same/host
-        description: string; // set to script title from the client        
+        description: string; // set to script title from the client
         htmlartid: string;
 
         scriptname: string;

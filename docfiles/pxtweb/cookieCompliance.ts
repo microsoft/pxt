@@ -249,10 +249,11 @@ namespace pxt {
     }
 
     /**
-     * Checks for winrt
+     * Checks for winrt and Electron
      */
     function isNativeApp(): boolean {
-        return typeof Windows !== "undefined";
+        return typeof Windows !== "undefined" ||
+            navigator && navigator.userAgent && navigator.userAgent.toLowerCase().indexOf(" electron/") > -1;
     }
 
     // No promises, so here we are
