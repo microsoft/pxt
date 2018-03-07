@@ -1170,8 +1170,10 @@ export class ProjectView
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
 
-        if (pxt.appTarget.compile.saveAsPNG)
-            return this.saveAndCompile();
+        if (pxt.appTarget.compile.saveAsPNG) {
+            this.saveAndCompile();
+            return;
+        }
 
         this.beforeCompile();
         let userContextWindow: Window = undefined;
