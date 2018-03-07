@@ -6,7 +6,7 @@ function testArrayForEach() {
     for (let s of strs) {
         r += s
     }
-    assert(r == "AX1X2X3", "map")
+    assert(r == "AX1X2X3", "forEach")
 }
 
 testArrayForEach()
