@@ -82,6 +82,14 @@ interface Array<T> {
     //% helper=arrayMap weight=40
     map<U>(callbackfn: (value: T, index: number) => U): U[];
 
+
+    /**
+      * Call a defined callback function on each element of an array.
+      * @param callbackfn A function that accepts up to two arguments. The forEach method calls the callbackfn function one time for each element in the array.
+      */
+    //% helper=arrayForEach weight=40
+    forEach(callbackfn: (value: T, index: number) => void): void;
+    
     /**
       * Return the elements of an array that meet the condition specified in a callback function.
       * @param callbackfn A function that accepts up to two arguments. The filter method calls the callbackfn function one time for each element in the array.
