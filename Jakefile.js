@@ -73,14 +73,14 @@ task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testlang', 'ka
 
 task('clean', function () {
     ["built", "temp"].forEach(d => {
-        expand(["temp"]).forEach(f => {
+        expand([d]).forEach(f => {
             try {
                 fs.unlinkSync(f)
             } catch (e) {
                 console.log("cannot unlink:", f, e.message)
             }
         })
-        jake.rmRf("temp")    
+        jake.rmRf(d)    
     })
 })
 
