@@ -329,7 +329,7 @@ export class Editor extends srceditor.Editor {
     }
 
     downloadRaw() {
-        core.infoNotification(lf("Exporting data...."));
+        core.infoNotification(lf("Exporting text...."));
         const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
         pxt.commands.browserDownloadAsync(this.rawDataBuffer, pxt.appTarget.id + '-' + lf("{id:csvfilename}console") + '-' + time + ".txt", "text/plain")
     }
@@ -361,8 +361,8 @@ export class Editor extends srceditor.Editor {
                 <div id="serialCharts" ref={e => this.chartRoot = e}></div>
                 <div id="consoleHeader" className="ui serialHeader">
                     <div className="rightHeader">
-                        <sui.Button title={lf("Export text")} class="ui icon blue button editorExport" ariaLabel={lf("Export text")} onClick={() => this.downloadRaw()}>
-                            <sui.Icon icon="download" />
+                        <sui.Button title={lf("Copy text")} class="ui icon blue button editorExport" ariaLabel={lf("Copy text")} onClick={() => this.downloadRaw()}>
+                            <sui.Icon icon="copy" />
                         </sui.Button>
                     </div>
                 </div>
