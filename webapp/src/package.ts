@@ -130,8 +130,13 @@ export class EditorPackage {
         return Promise.resolve()
     }
 
+    saveAssetAsync(filename: string, data: Uint8Array) {
+        return workspace.saveAssetAsync(this.header.id, filename, data)
+            .then(() => this.assetsPkg.loadAssetsAsync())
+    }
+
     loadAssetsAsync() {
-        if (this.id != "assets" || !Cloud.localToken || !Cloud.isLocalHost())
+        if (this.id != "assets")
             return Promise.resolve()
 
         return workspace.listAssetsAsync(this.topPkg.header.id)
@@ -143,11 +148,33 @@ export class EditorPackage {
                     if (ex) {
                         delete removeMe[fn]
                     } else {
-                        this.files[fn] = new File(this, fn, `File size: ${asset.size}; URL: ${asset.url}`)
+                        ex = new File(this, fn, `File size: ${asset.size}; URL: ${asset.url}`)
+                        this.files[fn] = ex
                     }
                 }
                 for (let n of Object.keys(removeMe))
                     delete this.files[n]
+                let assetsTs = ""
+                for (let f of this.sortedFiles()) {
+                    let asset = res.filter(a => a.name == f.name)[0]
+                    let bn = f.name.replace(/\..*/, "").replace(/[^a-zA-Z0-9_\-]/g, "_")
+                    assetsTs += `    export const ${bn} = "${asset.url}";\n`
+                }
+                let assetsFN = "assets.ts"
+                let f = this.topPkg.lookupFile(assetsFN)
+                if (f || assetsTs) {
+                    assetsTs = `namespace assets {\n${assetsTs}}\n`
+                    let cfg = this.topPkg.ksPkg.config
+                    if (cfg.files.indexOf(assetsFN) < 0) {
+                        cfg.files.push(assetsFN)
+                        this.topPkg.ksPkg.saveConfig()
+                    }
+                    if (!f)
+                        this.topPkg.setFile(assetsFN, assetsTs)
+                    else
+                        return f.setContentAsync(assetsTs)
+                }
+                return Promise.resolve()
             })
     }
 

@@ -863,7 +863,7 @@ export class ProjectView
         ts.pxtc.Util.fileReadAsBufferAsync(file)
             .then(buf => {
                 let basename = file.name.replace(/.*[\/\\]/, "")
-                return workspace.saveAssetAsync(pkg.mainEditorPkg().header.id, basename, buf)
+                return pkg.mainEditorPkg().saveAssetAsync(basename, buf)
             })
             .done()
     }
