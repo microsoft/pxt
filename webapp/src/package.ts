@@ -157,7 +157,7 @@ export class EditorPackage {
                 let assetsTs = ""
                 for (let f of this.sortedFiles()) {
                     let asset = res.filter(a => a.name == f.name)[0]
-                    let bn = f.name.replace(/\..*/, "").replace(/[^a-zA-Z0-9_\-]/g, "_")
+                    let bn = f.name.replace(/\..*/, "").replace(/[^a-zA-Z0-9_]/g, "_")
                     assetsTs += `    export const ${bn} = "${asset.url}";\n`
                 }
                 let assetsFN = "assets.ts"
