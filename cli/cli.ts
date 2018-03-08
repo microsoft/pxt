@@ -3858,6 +3858,7 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
 export function cleanAsync(parsed: commandParser.ParsedCommand) {
     pxt.log('cleaning built folders')
     return rimrafAsync("built", {})
+        .then(() => rimrafAsync("temp", {}))
         .then(() => rimrafAsync("libs/**/built", {}))
         .then(() => rimrafAsync("projects/**/built", {}))
         .then(() => { });
@@ -4337,7 +4338,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         // look for snippets
         getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => {
             snippets.push(snippet);
-            const dir = path.join("built/snippets", snippet.type);
+            const dir = path.join("temp/snippets", snippet.type);
             const fn = `${dir}/${entrypath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
             nodeutil.mkdirP(dir);
             fs.writeFileSync(fn, snippet.code);
