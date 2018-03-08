@@ -688,6 +688,7 @@ interface UploadOptions {
     githubOnly?: boolean;
     builtPackaged?: string;
     minify?: boolean;
+    noAppCache?: boolean;
 }
 
 interface BlobReq {
@@ -898,11 +899,11 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     let targetConfig = readLocalPxTarget();
     let defaultLocale = targetConfig.appTheme.defaultLocale;
-    let hexCache = path.join("built", "hexcache");
+    let compileCache = path.join("built", "compileCache");
     let hexFiles: string[] = [];
 
-    if (fs.existsSync(hexCache)) {
-        hexFiles = fs.readdirSync(hexCache)
+    if (fs.existsSync(compileCache)) {
+        hexFiles = fs.readdirSync(compileCache)
             .filter(f => /\.hex$/.test(f))
             .map((f) => `@cdnUrl@/compile/${f}`);
         pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
@@ -960,11 +961,13 @@ function uploadCoreAsync(opts: UploadOptions) {
             "@monacoworkerjs@": `${opts.localDir}monacoworker.js`,
             "@workerjs@": `${opts.localDir}worker.js`,
             "@timestamp@": `# ver ${new Date().toString()}`,
-            "data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
             "@defaultLocaleStrings@": "",
             "@cachedHexFiles@": "",
             "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : ""
+        }
+        if (!opts.noAppCache) {
+            replacements["data-manifest=\"\""] = `manifest="${opts.localDir}release.manifest"`;
         }
     }
 
@@ -1788,8 +1791,8 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         }
     }
 
-    let hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
-    nodeutil.mkdirP(hexCachePath);
+    let compileCachePath = path.resolve(process.cwd(), "built", "compileCache");
+    nodeutil.mkdirP(compileCachePath);
 
     pxt.log(`building target.json in ${process.cwd()}...`)
 
@@ -1820,7 +1823,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         // Place the base HEX image in the hex cache if necessary
                         let sha = compileOpts.extinfo.sha;
                         let hex: string[] = compileOpts.hexinfo.hex;
-                        let hexFile = path.join(hexCachePath, sha + (pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex"));
+                        let hexFile = path.join(compileCachePath, sha + (pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex"));
 
                         if (fs.existsSync(hexFile)) {
                             pxt.debug(`native image already in offline cache for project ${dirname}`);
@@ -3829,6 +3832,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
     const minify = !!parsed.flags["minify"];
     const bump = !!parsed.flags["bump"];
+    const disableAppCache = !!parsed.flags["no-appcache"];
 
     if (!!parsed.flags["cloud"]) {
         forceCloudBuild = true;
@@ -3840,10 +3844,10 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
         .then(() => bump ? bumpAsync() : Promise.resolve())
         .then(() => internalBuildTargetAsync({ packaged: true }));
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
-    else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify));
+    else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify, disableAppCache));
 }
 
-function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean) {
+function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean, disableAppCache?: boolean) {
     const pref = path.resolve(builtPackaged);
     const localDir = label == "./" ? "./" : label ? "/" + label + "/" : "/"
     return uploadCoreAsync({
@@ -3851,11 +3855,13 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
         pkgversion: "0.0.0",
         fileList: pxtFileList("node_modules/pxt-core/")
             .concat(targetFileList())
-            .concat(["targetconfig.json"]),
+            .concat(["targetconfig.json"])
+            .concat(nodeutil.allFiles("built/compileCache")),
         localDir,
         target: (pxt.appTarget.id || "unknownstatic"),
         builtPackaged,
-        minify
+        minify,
+        noAppCache: disableAppCache
     }).then(() => renderDocs(builtPackaged, localDir))
 }
 
@@ -4660,6 +4666,9 @@ function initCommands() {
             },
             "cloud": {
                 description: "Force build to happen in the cloud"
+            },
+            "no-appcache": {
+                description: "Strips out the applicationCache header from index.html"
             }
         }
     }, staticpkgAsync);

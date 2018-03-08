@@ -1228,7 +1228,7 @@ namespace pxt.hex {
     let cdnUrlPromise: Promise<string>;
 
     export let showLoading: (msg: string) => void = (msg) => { };
-    export let hideLoading: () => void = () => {};
+    export let hideLoading: () => void = () => { };
 
     function downloadHexInfoAsync(extInfo: pxtc.ExtensionInfo) {
         let cachePromise = Promise.resolve();
@@ -1286,10 +1286,10 @@ namespace pxt.hex {
                                                 resolve(U.httpGetTextAsync(hexurl + ".hex"))
                                             }
                                         },
-                                        e => {
-                                            setTimeout(tryGet, 1000)
-                                            return null
-                                        })
+                                            e => {
+                                                setTimeout(tryGet, 1000)
+                                                return null
+                                            })
                                 }
                                 tryGet();
                             })))
@@ -1307,6 +1307,27 @@ namespace pxt.hex {
     }
 
     function downloadHexInfoLocalAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
+        if (pxt.webConfig && pxt.webConfig.isStatic) {
+            const compileExt = pxt.appTarget.compile && pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex";
+            return Util.requestAsync({
+                url: `${pxt.webConfig.cdnUrl}compileCache/${extInfo.sha}${compileExt}`
+            })
+                .then((resp) => {
+                    if (resp.text) {
+                        const result: any = {
+                            enums: [],
+                            functions: [],
+                            hex: resp.text.split(/\r?\n/)
+                        }
+                        return Promise.resolve(result);
+                    }
+                    return Promise.resolve();
+                })
+                .catch((e) => {
+                    return Promise.resolve();
+                });
+        }
+
         if (!Cloud.localToken || !window || !Cloud.isLocalHost()) {
             return Promise.resolve();
         }
