@@ -530,26 +530,34 @@ namespace pxt {
                 const code = pxt.Util.userLanguage();
                 return Promise.all(filenames.map(
                     fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
-                        .then(tr => Util.jsonMergeFrom(r, tr))
-                        .catch(e => pxt.log(`error while downloading ${targetId}/${fn}-strings.json`)))
+                        .then(tr => Util.jsonMergeFrom(r, tr && Object.keys(tr).length ? tr : this.bundledStringsForFile(lang, fn)))
+                        .catch(e => {
+                            pxt.log(`error while downloading ${targetId}/${fn}-strings.json`);
+                            Util.jsonMergeFrom(r, this.bundledStringsForFile(lang, fn));
+                        }))
                 ).then(() => r);
             }
             else {
-                const files = this.config.files;
                 filenames.map(name => {
-                    let fn = `_locales/${lang.toLowerCase()}/${name}-strings.json`;
-                    if (files.indexOf(fn) > -1)
-                        return JSON.parse(this.readFile(fn)) as Map<string>;
-                    if (lang.length > 2) {
-                        fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${name}-strings.json`;
-                        if (files.indexOf(fn) > -1)
-                            return JSON.parse(this.readFile(fn)) as Map<string>;
-                    }
-                    return undefined;
+                    return this.bundledStringsForFile(lang, name);
                 }).filter(d => !!d).forEach(d => Util.jsonMergeFrom(r, d));
-
                 return Promise.resolve(r);
             }
+        }
+
+        bundledStringsForFile(lang: string, filename: string): Map<string> {
+            let r: Map<string> = {};
+            const files = this.config.files;
+            let fn = `_locales/${lang.toLowerCase()}/${filename}-strings.json`;
+            if (files.indexOf(fn) > -1)
+                r = JSON.parse(this.readFile(fn)) as Map<string>;
+            if (lang.length > 2) {
+                fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${filename}-strings.json`;
+                if (files.indexOf(fn) > -1)
+                    r = JSON.parse(this.readFile(fn)) as Map<string>;
+            }
+
+            return r;
         }
     }
 
