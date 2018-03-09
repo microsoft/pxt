@@ -1,3 +1,5 @@
+/// <reference path="tickEvent.ts" />
+
 namespace ts.pxtc {
     export var __dummy = 42;
 }
