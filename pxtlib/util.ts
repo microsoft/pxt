@@ -1,3 +1,5 @@
+/// <reference path="tickEvent.ts" />
+
 namespace ts.pxtc {
     export var __dummy = 42;
 }
@@ -7,12 +9,12 @@ import pxtc = ts.pxtc
 namespace ts.pxtc {
     /**
      * atob replacement
-     * @param s 
+     * @param s
      */
     export var decodeBase64 = function (s: string) { return atob(s); }
     /**
      * bota replacement
-     * @param s 
+     * @param s
      */
     export var encodeBase64 = function (s: string) { return btoa(s); }
 }
@@ -911,20 +913,27 @@ namespace ts.pxtc.Util {
         }
 
         if (live) {
-            let hadError = false;
+            let errorCount = 0;
 
             const pAll = Promise.mapSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path, file.branch)
                 .then(mergeTranslations, e => {
                     console.log(e.message);
-                    hadError = true;
+                    ++errorCount;
                 })
             );
 
             return pAll.then(() => {
                 // Cache translations unless there was an error for one of the files
-                if (!hadError) {
+                if (errorCount) {
                     _translationsCache[translationsCacheId] = translations;
                 }
+
+                if (errorCount === stringFiles.length || !translations) {
+                    // Retry with non-live translations by setting live to false
+                    pxt.tickEvent("translations.livetranslationsfailed");
+                    return downloadTranslationsAsync(targetId, simulator, baseUrl, code, pxtBranch, targetBranch, false);
+                }
+
                 return Promise.resolve(translations);
             });
         } else {

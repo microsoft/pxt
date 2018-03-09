@@ -4347,7 +4347,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         // look for snippets
         getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => {
             snippets.push(snippet);
-            const dir = path.join("built/docs/snippets", snippet.type);
+            const dir = path.join("built/snippets", snippet.type);
             const fn = `${dir}/${entrypath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
             nodeutil.mkdirP(dir);
             fs.writeFileSync(fn, snippet.code);
