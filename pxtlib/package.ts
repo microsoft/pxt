@@ -531,15 +531,15 @@ namespace pxt {
                 return Promise.all(filenames.map(
                     fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
                         .then(tr => {
-                            if(tr && Object.keys(tr).length){
+                            if (tr && Object.keys(tr).length) {
                                 Util.jsonMergeFrom(r, tr);
                             } else {
-                                pxt.tickEvent("translations.livetranslationsfailed", {"filename": fn});
+                                pxt.tickEvent("translations.livetranslationsfailed", { "filename": fn });
                                 Util.jsonMergeFrom(r, this.bundledStringsForFile(lang, fn));
                             }
                         })
                         .catch(e => {
-                            pxt.tickEvent("translations.livetranslationsfailed", {"filename": fn});
+                            pxt.tickEvent("translations.livetranslationsfailed", { "filename": fn });
                             pxt.log(`error while downloading ${targetId}/${fn}-strings.json`);
                             Util.jsonMergeFrom(r, this.bundledStringsForFile(lang, fn));
                         }))
