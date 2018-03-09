@@ -2,6 +2,7 @@
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 /// <reference path="../localtypings/pxtarget.d.ts"/>
 /// <reference path="util.ts"/>
+/// <reference path="tickEvent.ts"/>
 
 namespace pxt {
     export import U = pxtc.Util;
@@ -86,15 +87,6 @@ namespace pxt {
             }
         }
     }
-
-    export interface TelemetryEventOptions {
-        interactiveConsent: boolean;
-    }
-
-    /**
-     * Track an event.
-     */
-    export var tickEvent: (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions) => void = function (id) { }
 
     let activityEvents: Map<number> = {};
     const tickActivityDebounced = Util.debounce(() => {
