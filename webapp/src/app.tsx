@@ -1911,7 +1911,7 @@ function isProjectFile(filename: string): boolean {
 }
 
 function isPNGFile(filename: string): boolean {
-    return /\.png$/i.test(filename)
+    return pxt.appTarget && pxt.appTarget.compile && pxt.appTarget.compile.saveAsPNG && /\.png$/i.test(filename);
 }
 
 function initLogin() {
