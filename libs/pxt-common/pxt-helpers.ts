@@ -75,6 +75,14 @@ namespace helpers {
         return res
     }
 
+    export function arraySome<T>(arr: T[], callbackfn: (value: T, index: number) => boolean): boolean {
+        let len = arr.length // caching this seems to match V8
+        for (let i = 0; i < len; ++i)
+            if (callbackfn(arr[i], i))
+                return true;
+        return false;
+    }
+
     export function arrayForEach<T>(arr: T[], callbackfn: (value: T, index: number) => void): void {
         let len = arr.length // caching this seems to match V8
         for (let i = 0; i < len; ++i) {
