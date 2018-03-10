@@ -70,6 +70,13 @@ interface Array<T> {
     splice(start: number, deleteCount: number): void;
 
     /**
+      * joins all elements of an array into a string and returns this string.
+      * @param sep the string separator
+      */
+    //% helper=arrayJoin weight=40
+    join(sep: string): string;
+    
+    /**
       * Tests whether at least one element in the array passes the test implemented by the provided function.
       * @param callbackfn A function that accepts up to two arguments. The some method calls the callbackfn function one time for each element in the array.
       */
