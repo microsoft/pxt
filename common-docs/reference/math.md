@@ -77,6 +77,44 @@ Make up any number from a minimum value to a some maximum value. If you want a r
 let myRandom = Math.randomRange(0, 5);
 ```
 
+## Map
+
+Mathemaically translate a set of range (between top 2 numbers) to a new set of range (between bottom 2 numbers) proportionally
+
+```block
+Math.map(
+    item,
+    0,
+    255,
+    0,
+    10
+    )
+```
+
+The block on itself doesn't do much. But in conjuction with other functions, it conveniently sets up a mathematical relationship to correlate two variables.
+
+###Example #example
+
+#### Show Detected light level by Number of Pixels Turning White
+
+This program translates light level (0~255) proportionally to number of pixels (0~10). The CPX will read the light level, translating it to any number within the range from 0 to 10 proportionally. Then the number being translated into will be the number of pixels turning white. 
+
+```block
+let light_to_pixel = 0
+loops.forever(function () {
+    light_to_pixel = Math.map(
+    input.lightLevel(),
+    0,
+    255,
+    0,
+    10
+    )
+    for (let index = 0; index <= light_to_pixel; index++) {
+        light.setPixelColor(index, 0xFF0000)
+    }
+})
+```
+
 ## See also #seealso
 
 [abs](/reference/math/abs), [min](/reference/math/min), [max](/reference/math/max),
