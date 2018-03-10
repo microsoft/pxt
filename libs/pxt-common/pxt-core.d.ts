@@ -75,6 +75,13 @@ interface Array<T> {
       */
     //% helper=arraySome weight=40
     some(callbackfn: (value: T, index: number) => boolean): boolean;
+
+    /**
+      * Tests whether all elements in the array pass the test implemented by the provided function.
+      * @param callbackfn A function that accepts up to two arguments. The some method calls the callbackfn function one time for each element in the array.
+      */
+    //% helper=arraySome weight=40
+    every(callbackfn: (value: T, index: number) => boolean): boolean;
     
     /**
       * Sort the elements of an array in place and returns the array. The sort is not necessarily stable.
