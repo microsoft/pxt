@@ -26,8 +26,8 @@ function testArrayJoin() {
     let r = "A" + strs.join("X");
     assert(r == "AX1X2X3", "join");
 
-    let strs2 = ["a", "b", "c"];
-    let r = "B" + strs2.join("Y");
+    strs = ["a", "b", "c"];
+    r = "B" + strs.join("Y");
     assert(r == "BYaYbYc", "joinstr");
 }
 
