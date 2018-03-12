@@ -21,14 +21,18 @@ function testArrayMap() {
 testArrayMap()
 
 function testArrayJoin() {
-    msg("testArraySort")
-    let strs = [1, 2, 3];
-    let r = "A" + strs.join("X");
-    assert(r == "AX1X2X3", "join");
+    {
+        msg("testArraySort")
+        let strs = [1, 2, 3];
+        let r = "A" + strs.join("X");
+        assert(r == "AX1X2X3", "join");
+    }
 
-    strs = ["a", "b", "c"];
-    r = "B" + strs.join("Y");
-    assert(r == "BYaYbYc", "joinstr");
+    {
+        let strs = ["a", "b", "c"];
+        let r = "B" + strs.join("Y");
+        assert(r == "BYaYbYc", "joinstr");
+    }
 }
 
 testArraySort()
