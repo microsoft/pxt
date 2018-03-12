@@ -396,6 +396,13 @@ namespace pxsim {
                 return leave(s, s.parent.retval)
             }
 
+            function flushLoopLock() {
+                while (__this.loopLockWaitList.length > 0 && !__this.loopLock) {
+                    let f = __this.loopLockWaitList.shift()
+                    f()
+                }
+            }
+
             function maybeYield(s: StackFrame, pc: number, r0: any): boolean {
                 yieldSteps = yieldMaxSteps;
                 let now = Date.now()
@@ -411,10 +418,7 @@ namespace pxsim {
                         U.assert(__this.loopLock === lock);
                         __this.loopLock = null;
                         loop(s)
-                        while (__this.loopLockWaitList.length > 0 && !__this.loopLock) {
-                            let f = __this.loopLockWaitList.shift()
-                            f()
-                        }
+                        flushLoopLock()
                     }
                     //U.nextTick(cont)
                     setTimeout(cont, 5)
@@ -627,7 +631,14 @@ namespace pxsim {
                         }
                         // If the function we call never pauses, this would cause the stack
                         // to grow unbounded.
-                        return U.nextTick(() => loop(actionCall(frame)))
+                        let lock = {}
+                        __this.loopLock = lock
+                        return U.nextTick(() => {
+                            U.assert(__this.loopLock === lock)
+                            __this.loopLock = null
+                            loop(actionCall(frame))
+                            flushLoopLock()
+                        })
                     }
                     s.retval = v;
                     return loop(s)
