@@ -22,10 +22,23 @@ namespace helpers {
         return arr.removeAt(0);
     }
 
-/*TODO: Enable this multiple value unshift, after rest is enabled in our compiler.
-    export function arrayUnshift<T>(arr: T[], ...values: T[]) : number {
-        for(let i = values.length; i > 0; --i) {
-            arr.insertAt(0, values[i - 1]);
+    export function arrayJoin<T>(arr: T[], sep: string): string {
+        let r = "";
+        let len = arr.length // caching this seems to match V8
+        for (let i = 0; i < len; ++i) {
+            if (i > 0 && sep)
+                r += sep;
+            r += arr[i] || "";
+        }
+        return r;
+    }
+
+    /*TODO: Enable this multiple value unshift, after rest is enabled in our compiler.
+        export function arrayUnshift<T>(arr: T[], ...values: T[]) : number {
+            for(let i = values.length; i > 0; --i) {
+                arr.insertAt(0, values[i - 1]);
+            }
+            return arr.length;
         }
         return arr.length;
     }
@@ -75,6 +88,22 @@ namespace helpers {
             res.push(callbackfn(arr[i], i))
         }
         return res
+    }
+
+    export function arraySome<T>(arr: T[], callbackfn: (value: T, index: number) => boolean): boolean {
+        let len = arr.length // caching this seems to match V8
+        for (let i = 0; i < len; ++i)
+            if (callbackfn(arr[i], i))
+                return true;
+        return false;
+    }
+
+    export function arrayEvery<T>(arr: T[], callbackfn: (value: T, index: number) => boolean): boolean {
+        let len = arr.length // caching this seems to match V8
+        for (let i = 0; i < len; ++i)
+            if (!callbackfn(arr[i], i))
+                return false;
+        return true;
     }
 
     export function arrayForEach<T>(arr: T[], callbackfn: (value: T, index: number) => void): void {
