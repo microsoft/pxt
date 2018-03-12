@@ -8,7 +8,7 @@ Do you have a question about a specific editor? Try one of these first:
 
 Would you like to submit a bug or issue about the editor? Feel free to file an issue at
 
-https://github.com/Microbit/pxt
+https://github.com/Microsoft/pxt/issues
 
 # Email
 
