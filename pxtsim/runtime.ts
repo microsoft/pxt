@@ -614,9 +614,6 @@ namespace pxsim {
                     }
                     runtime = __this;
                     U.assert(s.pc == retPC);
-                    // TODO should loop() be called here using U.nextTick?
-                    // This matters if the simulator function calls cb()
-                    // synchronously.
                     if (v instanceof FnWrapper) {
                         let w = <FnWrapper>v
                         let frame: StackFrame = {
@@ -628,7 +625,9 @@ namespace pxsim {
                             depth: s.depth + 1,
                             finalCallback: w.cb,
                         }
-                        return loop(actionCall(frame))
+                        // If the function we call never pauses, this would cause the stack
+                        // to grow unbounded.
+                        return U.nextTick(() => loop(actionCall(frame)))
                     }
                     s.retval = v;
                     return loop(s)
