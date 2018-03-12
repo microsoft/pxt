@@ -35,7 +35,7 @@ function testArrayJoin() {
     }
 }
 
-testArraySort()
+testArrayJoin()
 
 function testArraySome() {
     let str = [1, 2, 3];
