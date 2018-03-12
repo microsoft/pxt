@@ -19,36 +19,3 @@ function testArrayMap() {
 }
 
 testArrayMap()
-
-function testArrayJoin() {
-    {
-        msg("testArraySort")
-        let strs = [1, 2, 3];
-        let r = "A" + strs.join("X");
-        assert(r == "AX1X2X3", "join");
-    }
-
-    {
-        let strs = ["a", "b", "c"];
-        let r = "B" + strs.join("Y");
-        assert(r == "BYaYbYc", "joinstr");
-    }
-}
-
-testArrayJoin()
-
-function testArraySome() {
-    let str = [1, 2, 3];
-    assert(str.some(x => x == 2), "sometrue");
-    assert(!str.some(x => x < 0), "somefalse");
-}
-
-testArraySome();
-
-function testArrayEvery() {
-    let str = [1, 2, 3];
-    assert(!str.every(x => x == 2), "everyfalse");
-    assert(str.every(x => x < 0), "everytrue");
-}
-
-testArrayEvery();
