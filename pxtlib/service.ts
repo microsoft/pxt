@@ -418,6 +418,7 @@ namespace ts.pxtc {
                         }
                     }
                 }
+                updateBlockDef(fn.attributes);
             }))
             .then(() => apis);
     }
@@ -574,15 +575,19 @@ namespace ts.pxtc {
                 res.groupIcons = undefined;
             }
         }
-        if (res.block) {
-            const parts = res.block.split("||");
-            res._def = parseBlockDefinition(parts[0]);
-            if (!res._def) pxt.debug("Unable to parse block def for id: " + res.blockId);
-            if (parts[1]) res._expandedDef = parseBlockDefinition(parts[1]);
-            if (parts[1] && !res._expandedDef) pxt.debug("Unable to parse expanded block def for id: " + res.blockId);
-        }
+        updateBlockDef(res);
 
         return res
+    }
+
+    export function updateBlockDef(attrs: CommentAttrs) {
+        if (attrs.block) {
+            const parts = attrs.block.split("||");
+            attrs._def = parseBlockDefinition(parts[0]);
+            if (!attrs._def) pxt.debug("Unable to parse block def for id: " + attrs.blockId);
+            if (parts[1]) attrs._expandedDef = parseBlockDefinition(parts[1]);
+            if (parts[1] && !attrs._expandedDef) pxt.debug("Unable to parse expanded block def for id: " + attrs.blockId);
+        }
     }
 
     export function parseBlockDefinition(def: string): ParsedBlockDef {
