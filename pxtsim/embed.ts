@@ -16,6 +16,7 @@ namespace pxsim {
         highContrast?: boolean;
         cdnUrl?: string;
         localizedStrings?: Map<string>;
+        version?: string;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
