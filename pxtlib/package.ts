@@ -462,6 +462,19 @@ namespace pxt {
                 .then(() => loadDepsRecursive(this.config.dependencies))
                 .then(() => {
                     if (this.level === 0) {
+                        let variant = ""
+                        for (let d of Util.values(this.parent.deps)) {
+                            if (!d.config) continue
+                            let v = d.config.compileServiceVariant
+                            if (!v) continue
+                            if (variant && v != variant) {
+                                U.userError(lf("Conflicting compile service variants '{0}' and '{1}'", v, variant))
+                            }
+                            variant = v
+                        }
+                        if (variant) pxt.log(`Setting compile service variant: ${variant}`)
+                        pxt.setAppTargetVariant(variant)
+
                         // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
                         const mainTs = this.readFile("main.ts");
                         if (!mainTs) return Promise.resolve(null);

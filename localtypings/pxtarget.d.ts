@@ -325,6 +325,7 @@ declare namespace ts.pxtc {
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
         vmOpCodes?: pxt.Map<number>;
         commonalize?: boolean;
+        variants?: pxt.Map<CompileTarget>;
     }
 
     interface CompileOptions {
@@ -376,7 +377,6 @@ declare namespace ts.pxtc {
         shimsDTS: string;
         enumsDTS: string;
         onlyPublic: boolean;
-        binaryName?: string;
     }
 
     interface HexInfo {

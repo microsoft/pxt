@@ -792,16 +792,6 @@ namespace pxt.cpp {
                 U.jsonCopyFrom(res.platformio.dependencies, j0.dependencies)
             }
 
-            let variant = pkg.config.compileServiceVariant
-            if (variant) {
-                let v = compileService.variants[variant]
-                if (v) {
-                    U.jsonMergeFrom(compileService, v)
-                } else {
-                    U.userError(lf("Compile service variant '{0}' missing in pxtarget.json", variant))
-                }
-            }
-
             if (res.npmDependencies && pkg.config.npmDependencies)
                 U.jsonCopyFrom(res.npmDependencies, pkg.config.npmDependencies)
 
@@ -1038,7 +1028,6 @@ int main() {
         res.compileData = ts.pxtc.encodeBase64(U.toUTF8(data))
         res.shimsDTS = shimsDTS.finish()
         res.enumsDTS = enumsDTS.finish()
-        res.binaryName = compileService.codalBinary
 
         prevSnapshot = pkgSnapshot
         prevExtInfo = res

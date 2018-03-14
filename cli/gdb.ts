@@ -75,7 +75,7 @@ function getOpenOcdPath() {
     return { args, gdbBin }
 }
 
-export function startAsync(c: commandParser.ParsedCommand) {
+export function startAsync(gdbArgs: string[]) {
     let cs = pxt.appTarget.compileService
 
     let f =
@@ -107,7 +107,7 @@ echo Use 'rst' command to re-run program from start (set your breakpoints first!
         detached: true,
     })
 
-    let gdbargs = ["--command=built/openocd.gdb", f].concat(c.arguments)
+    let gdbargs = ["--command=built/openocd.gdb", f].concat(gdbArgs)
 
     pxt.log("starting gdb with: " + toolPaths.gdbBin + " " + gdbargs.join(" "))
 

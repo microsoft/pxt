@@ -10,6 +10,8 @@ namespace pxt {
     const lf = U.lf;
 
     export let appTarget: TargetBundle;
+    let savedAppTarget: TargetBundle;
+    export let appTargetVariant: string;
 
     export function setAppTarget(trg: TargetBundle) {
         appTarget = trg || <TargetBundle>{};
@@ -44,6 +46,25 @@ namespace pxt {
         if (cs) {
             if (cs.yottaTarget && !cs.yottaBinary)
                 cs.yottaBinary = "pxt-microbit-app-combined.hex"
+        }
+
+        savedAppTarget = U.clone(appTarget)
+    }
+
+    export function setAppTargetVariant(variant: string) {
+        appTargetVariant = variant
+        appTarget = U.clone(savedAppTarget)
+        if (variant) {
+            if (appTarget.compile.variants) {
+                let v = appTarget.compile.variants[variant]
+                if (v)
+                    U.jsonMergeFrom(appTarget.compile, v)
+            }
+            if (appTarget.compileService && appTarget.compileService.variants) {
+                let v = appTarget.compileService.variants[variant]
+                if (v)
+                    U.jsonMergeFrom(appTarget.compileService, v)
+            }
         }
     }
 
