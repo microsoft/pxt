@@ -451,6 +451,8 @@ namespace pxt {
                     } else {
                         mod = new Package(id, ver, this.parent, this)
                         this.parent.deps[id] = mod
+                        // we can have "core---nrf52" to be used instead of "core" in other packages
+                        this.parent.deps[id.replace(/---.*/, "")] = mod
                         return mod.loadAsync(isInstall)
                     }
                 })
