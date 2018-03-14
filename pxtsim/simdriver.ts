@@ -41,6 +41,7 @@ namespace pxsim {
         cdnUrl?: string;
         localizedStrings?: pxsim.Map<string>;
         refCountingDebug?: boolean;
+        version?: string;
     }
 
     export interface HwDebugger {
