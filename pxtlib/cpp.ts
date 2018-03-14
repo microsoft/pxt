@@ -1038,6 +1038,7 @@ int main() {
         res.compileData = ts.pxtc.encodeBase64(U.toUTF8(data))
         res.shimsDTS = shimsDTS.finish()
         res.enumsDTS = enumsDTS.finish()
+        res.binaryName = compileService.codalBinary
 
         prevSnapshot = pkgSnapshot
         prevExtInfo = res
