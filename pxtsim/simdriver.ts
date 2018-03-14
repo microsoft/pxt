@@ -240,7 +240,8 @@ namespace pxsim {
                 highContrast: opts.highContrast,
                 cdnUrl: opts.cdnUrl,
                 localizedStrings: opts.localizedStrings,
-                refCountingDebug: opts.refCountingDebug
+                refCountingDebug: opts.refCountingDebug,
+                version: opts.version
             }
 
             this.applyAspectRatio();
