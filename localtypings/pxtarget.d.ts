@@ -164,6 +164,8 @@ declare namespace pxt {
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio
+
+        variants?: Map<TargetCompileService>;
     }
 
     interface AppTheme {

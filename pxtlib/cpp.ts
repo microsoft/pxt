@@ -155,6 +155,7 @@ namespace pxt.cpp {
                 gittag: "none",
                 serviceId: "nocompile"
             }
+        compileService = U.clone(compileService)
 
         let compile = appTarget.compile
         if (!compile)
@@ -791,6 +792,16 @@ namespace pxt.cpp {
                 U.jsonCopyFrom(res.platformio.dependencies, j0.dependencies)
             }
 
+            let variant = pkg.config.compileServiceVariant
+            if (variant) {
+                let v = compileService.variants[variant]
+                if (v) {
+                    U.jsonMergeFrom(compileService, v)
+                } else {
+                    U.userError(lf("Compile service variant '{0}' missing in pxtarget.json", variant))
+                }
+            }
+
             if (res.npmDependencies && pkg.config.npmDependencies)
                 U.jsonCopyFrom(res.npmDependencies, pkg.config.npmDependencies)
 
@@ -1228,7 +1239,7 @@ namespace pxt.hex {
     let cdnUrlPromise: Promise<string>;
 
     export let showLoading: (msg: string) => void = (msg) => { };
-    export let hideLoading: () => void = () => {};
+    export let hideLoading: () => void = () => { };
 
     function downloadHexInfoAsync(extInfo: pxtc.ExtensionInfo) {
         let cachePromise = Promise.resolve();
@@ -1286,10 +1297,10 @@ namespace pxt.hex {
                                                 resolve(U.httpGetTextAsync(hexurl + ".hex"))
                                             }
                                         },
-                                        e => {
-                                            setTimeout(tryGet, 1000)
-                                            return null
-                                        })
+                                            e => {
+                                                setTimeout(tryGet, 1000)
+                                                return null
+                                            })
                                 }
                                 tryGet();
                             })))
