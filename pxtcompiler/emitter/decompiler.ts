@@ -1329,7 +1329,7 @@ ${output}</xml>`;
                             }
                         }
                         addInput(getValue(U.htmlEscape(param.definitionName), e, param.shadowBlockId))
-                        break;
+                        break;                        
                     default:
                         let v: ValueNode;
                         const vName = U.htmlEscape(param.definitionName);
@@ -1358,6 +1358,10 @@ ${output}</xml>`;
                                     defaultV = false;
                                 }
                             }
+                        }
+                        else if (e.kind === SK.TaggedTemplateExpression) {
+                            addField(getField(vName, Util.htmlEscape(e.getText())));
+                            return;
                         }
                         if (defaultV) {
                             v = getValue(vName, e, param.shadowBlockId);
@@ -2001,6 +2005,30 @@ ${output}</xml>`;
                     }
                     if (!dl) {
                         return Util.lf("Field editor does not support literal arguments");
+                    }
+                }
+                else if (e.kind === SK.TaggedTemplateExpression) {
+                    let tagName = param.fieldOptions && param.fieldOptions["taggedTemplate"];
+
+                    if (!tagName) {
+                        return Util.lf("Tagged templates only supported in custom fields with param.fieldOptions.taggedTemplate set");
+                    }
+
+                    const tag = unwrapNode((e as ts.TaggedTemplateExpression).tag);
+
+                    if (tag.kind !== SK.Identifier) {
+                        return Util.lf("Tagged template literals must use an identifier as the tag");
+                    }
+
+                    const tagText = tag.getText();
+                    if (tagText.trim() != tagName.trim()) {
+                        return Util.lf("Function only supports template literals with tag '{0}'", tagName);
+                    }
+
+                    const template = (e as ts.TaggedTemplateExpression).template;
+
+                    if (template.kind !== SK.NoSubstitutionTemplateLiteral) {
+                        return Util.lf("Tagged template literals cannot have substitutions");
                     }
                 }
                 else if (e.kind === SK.ArrowFunction) {
