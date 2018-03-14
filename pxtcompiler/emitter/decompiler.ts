@@ -1329,7 +1329,7 @@ ${output}</xml>`;
                             }
                         }
                         addInput(getValue(U.htmlEscape(param.definitionName), e, param.shadowBlockId))
-                        break;                        
+                        break;
                     default:
                         let v: ValueNode;
                         const vName = U.htmlEscape(param.definitionName);
