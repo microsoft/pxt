@@ -334,12 +334,12 @@ function statsCrowdinAsync(prj: string, key: string): Promise<void> {
 function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
     return pxt.crowdin.languageStatsAsync(prj, key, lang)
         .then(stats => {
-            let r = ''
+            let r = 'sep=\t\r\n'
             r += `file\t language\t completion\t phrases\t translated\t approved\r\n`
             stats.forEach(stat => {
-                r += `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}\r\n`;
-                if (stat.fullName == "strings.json") {
-                    console.log(`strings.json\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
+                r += `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
+                if (stat.fullName == "strings.json" || /core-strings\.json$/.test(stat.fullName)) {
+                    console.log(`${stat.fullName}\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
                 }
             })
             const fn = `crowdinstats.csv`;
