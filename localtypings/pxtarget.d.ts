@@ -44,6 +44,7 @@ declare namespace pxt {
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
         ignoreDocsErrors?: boolean;
+        variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
     }
 
     interface ProjectTemplate {
@@ -164,8 +165,6 @@ declare namespace pxt {
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio
-
-        variants?: Map<TargetCompileService>;
     }
 
     interface AppTheme {
@@ -325,7 +324,6 @@ declare namespace ts.pxtc {
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
         vmOpCodes?: pxt.Map<number>;
         commonalize?: boolean;
-        variants?: pxt.Map<CompileTarget>;
     }
 
     interface CompileOptions {

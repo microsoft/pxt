@@ -55,16 +55,14 @@ namespace pxt {
         appTargetVariant = variant
         appTarget = U.clone(savedAppTarget)
         if (variant) {
-            if (appTarget.compile.variants) {
-                let v = appTarget.compile.variants[variant]
-                if (v)
-                    U.jsonMergeFrom(appTarget.compile, v)
+            if (appTarget.variants) {
+                let v = appTarget.variants[variant]
+                if (v) {
+                    U.jsonMergeFrom(appTarget, v)
+                    return
+                }
             }
-            if (appTarget.compileService && appTarget.compileService.variants) {
-                let v = appTarget.compileService.variants[variant]
-                if (v)
-                    U.jsonMergeFrom(appTarget.compileService, v)
-            }
+            U.userError(lf("Variant '{0}' not defined in pxtarget.json", variant))
         }
     }
 
