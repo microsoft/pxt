@@ -389,6 +389,7 @@ namespace ts.pxtc {
                 tp == "set" ? combinedSet : combinedChange
             let ex = U.lookup(m, s.namespace)
             if (!ex) {
+                let paramName = s.namespace.toLowerCase()
                 ex = m[s.namespace] = {
                     attributes: {
                         callingConvention: ir.CallingConvention.Plain,
@@ -418,10 +419,10 @@ namespace ts.pxtc {
                     retType: isGet ? "number" : "void",
                     combinedProperties: [],
                 }
-                ex.attributes.block = isGet ? "%object %property" :
+                ex.attributes.block = isGet ? `%${paramName} %property` :
                     tp == "set" ?
-                        "set %object %property to %value" :
-                        "change %object %property by %value"
+                        `set %${paramName} %property to %value` :
+                        `change %${paramName} %property by %value`
                 ex.attributes.blockId = ex.namespace + "_" + ex.name
                 ex.qName = ex.namespace + "." + ex.name
                 updateBlockDef(ex.attributes)
