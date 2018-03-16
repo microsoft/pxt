@@ -774,11 +774,19 @@ namespace pxt.blocks {
             case "void": break; // do nothing
             //TODO
             default:
-                if (isArrayType(fn.retType)) {
-                    block.setOutput(true, ["Array", fn.retType]);
-                }
-                else {
-                    block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
+                if (fn.retType !== "T") {
+                    const opt_check = isArrayType(fn.retType) ? ["Array"] : [];
+
+                    const si_r = info.apis.byQName[fn.retType];
+                    if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
+                        opt_check.push(...si_r.extendsTypes);
+                    } else {
+                        opt_check.push(fn.retType);
+                    }
+
+                    block.setOutput(true, opt_check);
+                } else {
+                    block.setOutput(true);
                 }
         }
 
