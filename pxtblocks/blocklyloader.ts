@@ -780,8 +780,7 @@ namespace pxt.blocks {
                     const si_r = info.apis.byQName[fn.retType];
                     if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
                         opt_check.push(...si_r.extendsTypes);
-                    } else
-                    {
+                    } else {
                         opt_check.push(fn.retType);
                     }
 
