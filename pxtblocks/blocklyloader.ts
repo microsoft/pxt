@@ -825,11 +825,12 @@ namespace pxt.blocks {
                         let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
                         let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowBlockId;
                         let isConstantShim = !!fn.attributes.constantShim;
+                        let isCombined = pr.type == "@combined@"
                         let customField = pr.fieldEditor;
                         let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
                         let fieldType = pr.type;
 
-                        if (isEnum || isFixed || isConstantShim) {
+                        if (isEnum || isFixed || isConstantShim || isCombined) {
                             let syms: pxtc.SymbolInfo[];
 
                             if (isEnum) {
@@ -837,6 +838,9 @@ namespace pxt.blocks {
                             }
                             else if (isFixed) {
                                 syms = getFixedInstanceDropdownValues(info.apis, typeInfo.qName);
+                            }
+                            else if (isCombined) {
+                                syms = fn.combinedProperties.map(p => U.lookup(info.apis.byQName, p))
                             }
                             else {
                                 syms = getConstantDropdownValues(info.apis, fn.qName);
@@ -846,7 +850,11 @@ namespace pxt.blocks {
                                 console.error(`no instances of ${typeInfo.qName} found`)
                             }
                             const dd = syms.map(v => {
-                                const k = v.attributes.block || v.attributes.blockId || v.name;
+                                let k = v.attributes.block || v.attributes.blockId || v.name;
+                                let comb = v.attributes.blockCombine
+                                if (comb) {
+                                    k = comb != "true" ? comb : k.replace(/@set/, "")
+                                }
                                 return [
                                     v.attributes.iconURL || v.attributes.blockImage ? {
                                         src: v.attributes.iconURL || Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
