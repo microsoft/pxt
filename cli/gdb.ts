@@ -97,6 +97,10 @@ define rst
   monitor reset halt
   continue
 end
+define irq
+  echo "Current IRQ: "
+  p (*(int*)0xE000ED04 & 0x1f) - 16
+end
 echo Use 'rst' command to re-run program from start (set your breakpoints first!).\\n
 `)
 
