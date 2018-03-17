@@ -837,12 +837,12 @@ namespace ts.pxtc {
 
         function eatToken(pred: (c: string) => boolean, skipCurrent = false) {
             let current = "";
-            if (skipCurrent)++strIndex
+            if (skipCurrent) strIndex++
             while (strIndex < def.length && pred(def[strIndex])) {
                 current += def[strIndex];
                 ++strIndex;
             }
-            if (current)--strIndex;
+            if (current) strIndex--;
             return current;
         }
 
