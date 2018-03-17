@@ -433,7 +433,20 @@ namespace ts.pxtc {
         }
 
         for (let s of pxtc.Util.values(info.byQName)) {
-            if (!!s.attributes.block && !!s.attributes.blockId && s.kind != pxtc.SymbolKind.EnumMember) {
+            if (!!s.attributes.block && s.kind != pxtc.SymbolKind.EnumMember) {
+                if (!s.attributes.blockId)
+                    s.attributes.blockId = s.qName.replace(/\./g, "_")
+                if (s.attributes.block == "true") {
+                    let b = U.uncapitalize(s.name)
+                    if (s.kind == SymbolKind.Method || s.kind == SymbolKind.Property) {
+                        b += " %" + s.namespace.toLowerCase()
+                    }
+                    for (let p of s.parameters || []) {
+                        b += " %" + p.name
+                    }
+                    s.attributes.block = b
+                    updateBlockDef(s.attributes)
+                }
                 blocks.push(s)
             } else if (s.attributes.blockCombine) {
                 if (!s.isReadOnly) {
