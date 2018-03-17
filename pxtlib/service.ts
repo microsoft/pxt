@@ -423,7 +423,7 @@ namespace ts.pxtc {
                     tp == "set" ?
                         `set %${paramName} %property to %value` :
                         `change %${paramName} %property by %value`
-                ex.attributes.blockId = ex.namespace + "_" + ex.name
+                ex.attributes.blockId = ex.namespace + "_blockCombine_" + tp
                 ex.qName = ex.namespace + "." + ex.name
                 updateBlockDef(ex.attributes)
                 blocks.push(ex)
