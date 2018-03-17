@@ -394,6 +394,9 @@ namespace ts.pxtc {
                     attributes: {
                         callingConvention: ir.CallingConvention.Plain,
                         paramDefl: {},
+                        jsDoc: isGet
+                            ? U.lf("Read value of a property on an object")
+                            : U.lf("Update value of property on an object")
                     },
                     name: "@" + tp + "@",
                     namespace: s.namespace,
