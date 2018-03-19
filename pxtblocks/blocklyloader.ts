@@ -22,7 +22,7 @@ namespace pxt.blocks {
         logic: '\uf074',
         math: '\uf1ec',
         variables: '\uf039',
-        functions: '\uf0cb',
+        functions: '\uf109',
         text: '\uf035',
         arrays: '\uf0cb'
     }
