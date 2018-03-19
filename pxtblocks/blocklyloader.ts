@@ -860,9 +860,8 @@ namespace pxt.blocks {
                             const dd = syms.map(v => {
                                 let k = v.attributes.block || v.attributes.blockId || v.name;
                                 let comb = v.attributes.blockCombine
-                                if (comb) {
-                                    k = comb != "true" ? comb : k.replace(/@set/, "")
-                                }
+                                if (!!comb)
+                                    k = k.replace(/@set/, "")
                                 return [
                                     v.attributes.iconURL || v.attributes.blockImage ? {
                                         src: v.attributes.iconURL || Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),

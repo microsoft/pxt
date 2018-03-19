@@ -122,7 +122,7 @@ namespace ts.pxtc {
         blockAllowMultiple?: boolean; // override single block behavior for events
         blockHidden?: boolean; // not available directly in toolbox
         blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
-        blockCombine?: string;
+        blockCombine?: boolean;
         fixedInstances?: boolean;
         fixedInstance?: boolean;
         constantShim?: boolean;
@@ -436,7 +436,14 @@ namespace ts.pxtc {
         }
 
         for (let s of pxtc.Util.values(info.byQName)) {
-            if (!!s.attributes.block
+            if (s.attributes.blockCombine) {
+                if (!s.isReadOnly) {
+                    addCombined("set", s)
+                    addCombined("change", s)
+                }
+                if (!/@set/.test(s.name))
+                    addCombined("get", s)
+            } else if (!!s.attributes.block
                 && !s.attributes.fixedInstance
                 && s.kind != pxtc.SymbolKind.EnumMember) {
                 if (!s.attributes.blockId)
@@ -453,13 +460,6 @@ namespace ts.pxtc {
                     updateBlockDef(s.attributes)
                 }
                 blocks.push(s)
-            } else if (s.attributes.blockCombine) {
-                if (!s.isReadOnly) {
-                    addCombined("set", s)
-                    addCombined("change", s)
-                }
-                if (!/@set/.test(s.name))
-                    addCombined("get", s)
             }
         }
 
@@ -544,7 +544,14 @@ namespace ts.pxtc {
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
-    const booleanAttributes = ["advanced", "handlerStatement", "afterOnStart", "optionalVariableArgs", "blockHidden", "constantShim"]
+    const booleanAttributes = [
+        "advanced",
+        "handlerStatement",
+        "afterOnStart",
+        "optionalVariableArgs",
+        "blockHidden",
+        "constantShim"
+    ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
         let res: CommentAttrs = {

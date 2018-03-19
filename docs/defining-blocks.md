@@ -400,7 +400,7 @@ class Foo {
     //% blockCombine
     y: number;
     // exposed with custom name
-    //% blockCombine="foo bar"
+    //% blockCombine block="foo bar"
     foo_bar: number;
     
     // not exposed
