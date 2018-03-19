@@ -550,7 +550,8 @@ namespace ts.pxtc {
         "afterOnStart",
         "optionalVariableArgs",
         "blockHidden",
-        "constantShim"
+        "constantShim",
+        "blockCombine"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
