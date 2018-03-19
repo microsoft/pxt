@@ -155,6 +155,7 @@ namespace pxt.cpp {
                 gittag: "none",
                 serviceId: "nocompile"
             }
+        compileService = U.clone(compileService)
 
         let compile = appTarget.compile
         if (!compile)
@@ -1228,7 +1229,7 @@ namespace pxt.hex {
     let cdnUrlPromise: Promise<string>;
 
     export let showLoading: (msg: string) => void = (msg) => { };
-    export let hideLoading: () => void = () => {};
+    export let hideLoading: () => void = () => { };
 
     function downloadHexInfoAsync(extInfo: pxtc.ExtensionInfo) {
         let cachePromise = Promise.resolve();
@@ -1286,10 +1287,10 @@ namespace pxt.hex {
                                                 resolve(U.httpGetTextAsync(hexurl + ".hex"))
                                             }
                                         },
-                                        e => {
-                                            setTimeout(tryGet, 1000)
-                                            return null
-                                        })
+                                            e => {
+                                                setTimeout(tryGet, 1000)
+                                                return null
+                                            })
                                 }
                                 tryGet();
                             })))

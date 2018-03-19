@@ -35,6 +35,7 @@ declare namespace pxt {
         public?: boolean;
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
+        compileServiceVariant?: string;
         yotta?: YottaConfig;
         npmDependencies?: Map<string>;
         card?: CodeCard;

@@ -3557,6 +3557,12 @@ interface BuildCoreOptions {
     createOnly?: boolean;
 }
 
+function gdbAsync(c: commandParser.ParsedCommand) {
+    ensurePkgDir()
+    return mainPkg.loadAsync()
+        .then(() => gdb.startAsync(c.arguments))
+}
+
 function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult> {
     let compileOptions: pxtc.CompileOptions;
     let compileResult: pxtc.CompileResult;
@@ -4843,7 +4849,7 @@ function initCommands() {
         argString: "[GDB_ARGUMNETS...]",
         anyArgs: true,
         advanced: true
-    }, gdb.startAsync);
+    }, gdbAsync);
 
     p.defineCommand({
         name: "pokerepo",

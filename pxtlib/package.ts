@@ -415,6 +415,7 @@ namespace pxt {
                     initPromise = initPromise.then(() => this.patchCorePackage());
                 initPromise = initPromise.then(() => {
                     if (this.config.files.indexOf("board.json") < 0) return
+                    pxt.setAppTargetVariant(this.config.compileServiceVariant)
                     const def = appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json")) as pxsim.BoardDefinition;
                     def.id = this.config.name;
                     appTarget.appTheme.boardName = def.boardName || lf("board");
@@ -451,6 +452,8 @@ namespace pxt {
                     } else {
                         mod = new Package(id, ver, this.parent, this)
                         this.parent.deps[id] = mod
+                        // we can have "core---nrf52" to be used instead of "core" in other packages
+                        this.parent.deps[id.replace(/---.*/, "")] = mod
                         return mod.loadAsync(isInstall)
                     }
                 })
