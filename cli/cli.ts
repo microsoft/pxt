@@ -334,12 +334,12 @@ function statsCrowdinAsync(prj: string, key: string): Promise<void> {
 function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
     return pxt.crowdin.languageStatsAsync(prj, key, lang)
         .then(stats => {
-            let r = ''
+            let r = 'sep=\t\r\n'
             r += `file\t language\t completion\t phrases\t translated\t approved\r\n`
             stats.forEach(stat => {
-                r += `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}\r\n`;
-                if (stat.fullName == "strings.json") {
-                    console.log(`strings.json\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
+                r += `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
+                if (stat.fullName == "strings.json" || /core-strings\.json$/.test(stat.fullName)) {
+                    console.log(`${stat.fullName}\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
                 }
             })
             const fn = `crowdinstats.csv`;
@@ -1578,7 +1578,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     nodeutil.mkdirP(path.join("built", "web"));
     return nodeutil.spawnAsync({
         cmd: "node",
-        args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
+        args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar", "--no-ie-compat"]
     }).then(() => {
         const fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff")
         const url = "url(data:application/font-woff;charset=utf-8;base64,"
@@ -1593,7 +1593,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
             return Promise.resolve();
         return nodeutil.spawnAsync({
             cmd: "node",
-            args: ["node_modules/less/bin/lessc", "theme/blockly.less", "built/web/blockly.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
+            args: ["node_modules/less/bin/lessc", "theme/blockly.less", "built/web/blockly.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar", "--no-ie-compat"]
         })
     }).then(() => {
         // run postcss with autoprefixer and rtlcss
@@ -3560,6 +3560,12 @@ interface BuildCoreOptions {
     createOnly?: boolean;
 }
 
+function gdbAsync(c: commandParser.ParsedCommand) {
+    ensurePkgDir()
+    return mainPkg.loadAsync()
+        .then(() => gdb.startAsync(c.arguments))
+}
+
 function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult> {
     let compileOptions: pxtc.CompileOptions;
     let compileResult: pxtc.CompileResult;
@@ -4859,7 +4865,7 @@ function initCommands() {
         argString: "[GDB_ARGUMNETS...]",
         anyArgs: true,
         advanced: true
-    }, gdb.startAsync);
+    }, gdbAsync);
 
     p.defineCommand({
         name: "pokerepo",
