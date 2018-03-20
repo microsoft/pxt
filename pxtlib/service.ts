@@ -445,7 +445,10 @@ namespace ts.pxtc {
                     addCombined("get", s)
             } else if (!!s.attributes.block
                 && !s.attributes.fixedInstance
-                && s.kind != pxtc.SymbolKind.EnumMember) {
+                && s.kind != pxtc.SymbolKind.EnumMember
+                && s.kind != pxtc.SymbolKind.Module
+                && s.kind != pxtc.SymbolKind.Interface
+                && s.kind != pxtc.SymbolKind.Class) {
                 if (!s.attributes.blockId)
                     s.attributes.blockId = s.qName.replace(/\./g, "_")
                 if (s.attributes.block == "true") {
