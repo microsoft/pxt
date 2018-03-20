@@ -109,6 +109,28 @@ function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         .then(dev => dev.reflashAsync(blocks))
 }
 
+function webKitHostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.debug(`webkit deploy`)
+    core.infoNotification(lf("Flashing device..."));
+    const out = resp.outfiles[pxt.outputName()]
+    const webkit = (<any>window).webkit;
+    webkit.messageHandlers.host.postMessage(<pxt.editor.WebKitHostMessage>{
+        download: out
+    })
+    return Promise.resolve();
+}
+
+function webKitSaveDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.debug(`webkit save`)
+    core.infoNotification(lf("Flashing device..."));
+    const out = resp.outfiles[pxt.outputName()]
+    const webkit = (<any>window).webkit;
+    webkit.messageHandlers.host.postMessage(<pxt.editor.WebKitHostMessage>{
+        save: out
+    })
+    return Promise.resolve();
+}
+
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('local deployment...');
     core.infoNotification(lf("Uploading .hex file..."));
@@ -133,13 +155,16 @@ export function initCommandsAsync(): Promise<void> {
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
-
-    if (pxt.usb.isAvailable() && /webusb=1/i.test(window.location.href)) {
+    if (pxt.BrowserUtils.hasWebKitHost()) {
+        pxt.debug(`deploy/save using webkit host`);
+        pxt.commands.deployCoreAsync = webKitHostDeployCoreAsync;
+        pxt.commands.saveOnlyAsync = webKitSaveDeployCoreAsync;
+    }
+    else if (pxt.usb.isAvailable() && /webusb=1/i.test(window.location.href)) {
         pxt.usb.setEnabled(true)
         pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync
     }
-
-    if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
+    else if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {

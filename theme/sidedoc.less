@@ -41,7 +41,7 @@
   top: 40%;
   bottom: 40%;
   height: 20%;
-  z-index: 10;
+  z-index: 95; // blockly scrollbar is 20
   padding: 0;
   margin: 0;
   background: grey;
@@ -112,6 +112,12 @@
 
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
+    .sideDocs #sidedocs, #sidedocsframe, .sideDocs #sidedocsframe-wrapper {
+        width: @sideBarWidthLarge !important;
+    }
+    .sideDocs #sidedocstoggle {
+        right: @sideBarWidthLarge !important;
+    }
 }
 
 /* Small Monitor */
@@ -147,17 +153,14 @@
     .sideDocs.collapsedEditorTools #sidedocs, .sideDocs.hideEditorFloats #sidedocs {
         padding-bottom: calc(@mobileMenuHeight + @editorToolsCollapsedHeight + 2rem);
     }
-    .sideDocs #sidedocsbar {
-        top: calc(@mobileMenuHeight + 1.5rem);
-    }
 }
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    .sideDocs #sidedocs, #sidedocsframe {
-        width: @sideBarWidthSmall;
+    .sideDocs #sidedocs, #sidedocsframe, .sideDocs #sidedocsframe-wrapper {
+        width: @sideBarWidthSmall !important;
     }
     .sideDocs #sidedocstoggle {
-        right: @sideBarWidthSmall;
+        right: @sideBarWidthSmall !important;
     }
 }

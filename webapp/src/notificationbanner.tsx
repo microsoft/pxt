@@ -6,7 +6,6 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
-import * as electron from "./electron";
 
 import Cloud = pxt.Cloud;
 
@@ -90,7 +89,7 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
 export class NotificationBanner extends data.Component<ISettingsProps, {}> {
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
-        const isApp = electron.isElectron || pxt.winrt.isWinRT();
+        const isApp = pxt.winrt.isWinRT();
         const isLocalServe = location.hostname === "localhost";
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;

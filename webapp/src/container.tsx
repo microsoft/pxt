@@ -23,30 +23,37 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 // lf("Support")
 // lf("Hardware")
 
+function openTutorial(parent: pxt.editor.IProjectView, path: string) {
+    pxt.tickEvent(`docs`, { path }, { interactiveConsent: true });
+    parent.setSideDoc(path);
+}
+
+function openDocs(parent: pxt.editor.IProjectView, path: string) {
+    pxt.tickEvent(`docs`, { path }, { interactiveConsent: true });
+    parent.setSideDoc(path);
+}
+
+export function renderDocItems(parent: pxt.editor.IProjectView, cls: string) {
+    const targetTheme = pxt.appTarget.appTheme;
+    return targetTheme.docMenu.map(m =>
+        m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class={"ui " + cls} onClick={() => openTutorial(parent, m.path)} />
+            : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{Util.rlf(m.name)}</a>
+                : <sui.Item key={"docsmenu" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class={"ui " + cls} onClick={() => openDocs(parent, m.path)} />
+    );
+}
 
 export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
     }
 
-    openTutorial(path: string) {
-        pxt.tickEvent(`docstutorial`, { path });
-        this.props.parent.startTutorial(path);
-    }
-
-    openDocs(path: string) {
-        pxt.tickEvent(`docs`, { path });
-        this.props.parent.setSideDoc(path);
+    shouldComponentUpdate(nextProps: ISettingsProps, nextState: any, nextContext: any): boolean {
+        return false;
     }
 
     render() {
-        const targetTheme = pxt.appTarget.appTheme;
-        return <sui.DropdownMenuItem icon="help circle large" class="help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help") }>
-            {targetTheme.docMenu.map(m =>
-                m.tutorial ? <sui.Item key={"docsmenu" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class="" onClick={() => this.openTutorial(m.path) } tabIndex={-1}/>
-                : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} className="ui item link" href={m.path} target="docs" tabIndex={-1}>{Util.rlf(m.name)}</a>
-                : <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class="" onClick={() => this.openDocs(m.path) } tabIndex={-1}/>
-            )}
+        return <sui.DropdownMenuItem icon="help circle large" class="ui mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")}>
+            {renderDocItems(this.props.parent, "")}
         </sui.DropdownMenuItem>
     }
 }
@@ -82,10 +89,7 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
     private setUrl(url: string) {
         let el = document.getElementById("sidedocsframe") as HTMLIFrameElement;
         if (el) el.src = url;
-        else this.props.parent.setState({ sideDocsLoadUrl: url });
-        let sideDocsCollapsed = this.firstLoad && (pxt.BrowserUtils.isMobile() || pxt.options.light);
-        this.props.parent.setState({ sideDocsCollapsed: sideDocsCollapsed });
-        this.firstLoad = false;
+        else this.props.parent.setState({ sideDocsLoadUrl: url, sideDocsCollapsed: false });
     }
 
     collapse() {

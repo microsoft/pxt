@@ -184,7 +184,7 @@ namespace pxt.runner {
                 if (options.snippetReplaceParent) c = c.parent();
                 const segment = $('<div class="ui segment"/>').append(s);
                 c.replaceWith(segment);
-            }, { package: options.package, snippetMode: false });
+            }, { package: options.package, snippetMode: false, aspectRatio: options.blocksAspectRatio });
         }
 
         let snippetCount = 0;
@@ -203,7 +203,7 @@ namespace pxt.runner {
                 hexname: hexname,
                 hex: hex,
             });
-        }, { package: options.package });
+        }, { package: options.package, aspectRatio: options.blocksAspectRatio });
     }
 
     function decompileCallInfo(stmt: ts.Statement): pxtc.CallInfo {
@@ -237,7 +237,7 @@ namespace pxt.runner {
             let js = $('<code class="lang-typescript highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(options, c, js, s, r, { showJs: true, hideGutter: true });
-        }, { package: options.package, snippetMode: true });
+        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
 
     function renderShuffleAsync(options: ClientRenderOptions): Promise<void> {
@@ -258,13 +258,13 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment"/>').append(s);
             c.replaceWith(segment);
-        }, { package: options.package, snippetMode: true });
+        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
 
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
         return pxt.runner.decompileToBlocksAsync('', options)
             .then((r) => {
-                let res: {[ns: string]: string} = {};
+                let res: pxt.Map<string> = {};
                 const info = r.compileBlocks.blocksInfo;
                 info.blocks.forEach(fn => {
                     const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
@@ -507,7 +507,7 @@ namespace pxt.runner {
 
             if (replaceParent) c = c.parent();
             c.replaceWith(ul)
-        }, { package: options.package })
+        }, { package: options.package, aspectRatio: options.blocksAspectRatio })
     }
 
     function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: pxt.docs.codeCard.CodeCardRenderOptions): Promise<void> {
@@ -520,7 +520,35 @@ namespace pxt.runner {
             let cd = document.createElement("div")
             cd.className = "ui cards";
             cd.setAttribute("role", "listbox")
-            cards.forEach(card => cd.appendChild(pxt.docs.codeCard.render(card, options)));
+            cards.forEach(card => {
+                const cardEl = pxt.docs.codeCard.render(card, options);
+                cd.appendChild(cardEl)
+                // automitcally display package icon for approved packages
+                if (card.cardType == "package") {
+                    const repoId = pxt.github.parseRepoId((card.url || "").replace(/^\/pkg\//, ''));
+                    if (repoId) {
+                        pxt.packagesConfigAsync()
+                            .then(pkgConfig => {
+                                const status = pxt.github.repoStatus(repoId, pkgConfig);
+                                switch (status) {
+                                    case pxt.github.GitRepoStatus.Banned:
+                                        cardEl.remove(); break;
+                                    case pxt.github.GitRepoStatus.Approved:
+                                        // update card info
+                                        card.imageUrl = pxt.github.mkRepoIconUrl(repoId);
+                                        // inject
+                                        cd.insertBefore(pxt.docs.codeCard.render(card, options), cardEl);
+                                        cardEl.remove();
+                                        break;
+                                }
+                            })
+                            .catch(e => {
+                                // swallow
+                                pxt.debug(`failed to load repo ${card.url}`)
+                            })
+                    }
+                }
+            });
             c.replaceWith(cd);
         }
 

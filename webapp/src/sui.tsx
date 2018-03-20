@@ -33,7 +33,7 @@ export interface SidebarProps extends UiProps {
 }
 
 export function cx(classes: string[]): string {
-    return classes.filter((c) => c && c.length !== 0 && c.trim() != '').join(' ');
+    return classes.filter((c) => !!c && c.trim() != '').join(' ');
 }
 
 function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = false): string {

@@ -123,7 +123,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const upd = (v: any) => {
             let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
 
-            // Hidden navigation, used to test /beta or other versions inside released Electron and UWP apps
+            // Hidden navigation, used to test /beta or other versions inside released UWP apps
             // Secret prefix is /@, e.g.: /@beta
             const urlPathExec = /^\/@(.*)$/.exec(str);
             let urlPath = urlPathExec && urlPathExec[1];
@@ -133,7 +133,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                     homeUrl += "/";
                 }
                 urlPath = urlPath.replace(/^\//, "");
-                window.location.href = homeUrl + urlPath;
+                pxt.winrt.releaseAllDevicesAsync()
+                    .then(() => {
+                        window.location.href = homeUrl + urlPath;
+                    })
+                    .done();
             }
             else {
                 this.setState({ searchFor: str })
@@ -259,6 +263,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 url={"/" + scr.installedVersion}
                                 imageUrl={scr.icon}
                                 onClick={() => addBundle(scr) }
+                                label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
                                 role="option"
                                 />
                         ) }

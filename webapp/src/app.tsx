@@ -40,7 +40,6 @@ import * as codecard from "./codecard"
 import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as hwdbg from "./hwdbg"
-import * as electron from "./electron";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 type IAppProps = pxt.editor.IAppProps;
@@ -746,13 +745,13 @@ export class ProjectView
             core.showLoading(lf("loading project..."))
             importer.importAsync(this, data)
                 .done(
-                () => core.hideLoading(),
-                e => {
-                    pxt.reportException(e, { importer: importer.id });
-                    core.hideLoading();
-                    core.errorNotification(lf("Oops, something went wrong when importing your project"));
-                    if (createNewIfFailed) this.newProject();
-                });
+                    () => core.hideLoading(),
+                    e => {
+                        pxt.reportException(e, { importer: importer.id });
+                        core.hideLoading();
+                        core.errorNotification(lf("Oops, something went wrong when importing your project"));
+                        if (createNewIfFailed) this.newProject();
+                    });
         }
         else {
             core.warningNotification(lf("Sorry, we could not import this project."))
@@ -946,8 +945,8 @@ export class ProjectView
         this.reload = true;
         workspace.resetAsync()
             .done(
-            () => window.location.reload(),
-            () => window.location.reload()
+                () => window.location.reload(),
+                () => window.location.reload()
             );
     }
 
@@ -962,11 +961,15 @@ export class ProjectView
             disagreeLbl: lf("Cancel")
         }).then(r => {
             if (!r) return Promise.resolve();
-            return hidbridge.disconnectWrapperAsync()
+            return Promise.resolve()
+                .then(() => {
+                    return pxt.winrt.releaseAllDevicesAsync();
+                })
                 .then(() => {
                     return this.resetWorkspace();
                 });
-        });
+        })
+            .done();
     }
 
     pair() {
@@ -1701,11 +1704,13 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
+        const isApp = pxt.BrowserUtils.hasWebKitHost() || pxt.winrt.isWinRT();
 
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         let rootClassList = [
+            "ui",
             (this.state.hideEditorFloats || this.state.collapseEditorTools) && !inTutorial ? " hideEditorFloats" : '',
             this.state.collapseEditorTools && !inTutorial ? " collapsedEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
@@ -1719,6 +1724,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             !showEditorToolbar ? 'hideEditorToolbar' : '',
             this.state.bannerVisible ? "notificationBannerVisible" : "",
             sandbox && simActive ? 'simView' : '',
+            isApp ? "app" : "",
             'full-abs'
         ];
         let jQueryClasses = ["dimmable", "dimmed"];
@@ -1779,11 +1785,12 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={uiHandler(this.reset)} tabIndex={-1} />
                                         {!pxt.usb.isEnabled ? undefined :
                                             <sui.Item role="menuitem" icon='usb' text={lf("Pair device") } onClick={uiHandler(this.pair)} tabIndex={-1} />}
+                                        {docMenu ? <div className="ui divider mobile only"></div> : undefined}
+                                        {docMenu ? container.renderDocItems(this, "mobile only") : undefined}
                                         <div className="ui divider"></div>
                                         {targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies")} target="_blank" tabIndex={-1}>{lf("Privacy & Cookies")}</a> : undefined}
                                         {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use")} target="_blank" tabIndex={-1}>{lf("Terms Of Use")}</a> : undefined}
                                         <sui.Item role="menuitem" text={lf("About...")} onClick={uiHandler(this.about)} tabIndex={-1} />
-                                        {electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...")} onClick={() => electron.checkForUpdate()} tabIndex={-1} /> : undefined}
                                         {targetTheme.feedbackUrl ? <div className="ui divider"></div> : undefined}
                                         {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener" tabIndex={-1} >{lf("Give Feedback")}</a> : undefined}
 
@@ -2262,7 +2269,6 @@ $(() => {
             }
             initScreenshots();
             initHashchange();
-            electron.init();
             return initExtensionsAsync();
         })
         .then(() => pxt.winrt.initAsync(importHex))
