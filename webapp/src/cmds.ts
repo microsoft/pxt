@@ -100,6 +100,23 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     }).then(() => { });
 }
 
+export function nativeHostPostMessageFunction(): (msg: pxt.editor.NativeHostMessage) => void {
+    const webkit = (<any>window).webkit;
+    if (webkit
+        && webkit.messageHandlers
+        && webkit.messageHandlers.host
+        && webkit.messageHandlers.host.postMessage)
+        return webkit.messageHandlers.host.postMessage;
+    const android = (<any>window).android;
+    if (android && android.postMessage)
+        return msg => android.postMessage(JSON.stringify(msg));
+    return undefined;
+}
+
+export function isNativeHost(): boolean {
+    return !!nativeHostPostMessageFunction();
+}
+
 function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('HID deployment...');
     core.infoNotification(lf("Flashing device..."));
@@ -109,23 +126,23 @@ function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         .then(dev => dev.reflashAsync(blocks))
 }
 
-function webKitHostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.debug(`webkit deploy`)
+function nativeHostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.debug(`native deploy`)
     core.infoNotification(lf("Flashing device..."));
-    const out = resp.outfiles[pxt.outputName()]
-    const webkit = (<any>window).webkit;
-    webkit.messageHandlers.host.postMessage(<pxt.editor.WebKitHostMessage>{
+    const out = resp.outfiles[pxt.outputName()];
+    const nativePostMessage = nativeHostPostMessageFunction();
+    nativePostMessage(<pxt.editor.NativeHostMessage>{
         download: out
     })
     return Promise.resolve();
 }
 
-function webKitSaveDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.debug(`webkit save`)
+function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.debug(`native save`)
     core.infoNotification(lf("Flashing device..."));
     const out = resp.outfiles[pxt.outputName()]
-    const webkit = (<any>window).webkit;
-    webkit.messageHandlers.host.postMessage(<pxt.editor.WebKitHostMessage>{
+    const nativePostMessage = nativeHostPostMessageFunction();
+    nativePostMessage(<pxt.editor.NativeHostMessage>{
         save: out
     })
     return Promise.resolve();
@@ -162,10 +179,10 @@ export function initCommandsAsync(): Promise<void> {
     }
 
     // decision logic to use various hosts
-    if (pxt.BrowserUtils.hasWebKitHost()) {
+    if (isNativeHost()) {
         pxt.debug(`deploy/save using webkit host`);
-        pxt.commands.deployCoreAsync = webKitHostDeployCoreAsync;
-        pxt.commands.saveOnlyAsync = webKitSaveDeployCoreAsync;
+        pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
+        pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
     }
     else if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
