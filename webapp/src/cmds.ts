@@ -179,7 +179,7 @@ export function initCommandsAsync(): Promise<void> {
     }
 
     // decision logic to use various hosts
-    if (isNativeHost) {
+    if (isNativeHost()) {
         pxt.debug(`deploy/save using webkit host`);
         pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
         pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
