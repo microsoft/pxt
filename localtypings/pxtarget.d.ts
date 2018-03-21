@@ -14,6 +14,12 @@ declare namespace pxt {
         windowsStoreLink?: string;
         // link to the latest firmware urls (boardid -> url)
         firmwareUrls?: pxt.Map<string>;
+        // release manifest for the electron app
+        electronRelease?: {
+            updateTo: pxt.Map<string>; // semver version range -> version to update to
+            bannedVersions: string[]; // Array of semver version ranges
+
+        }
     }
 
     interface PackagesConfig {
@@ -387,5 +393,10 @@ declare namespace ts.pxtc {
         pid: string;
         usagePage: string;
         usageId: string;
+    }
+
+    interface ElectronUpdateVersion {
+        version: string;
+        prompt: string; // Version below which (including this one) users will be prompted (modal) for update
     }
 }

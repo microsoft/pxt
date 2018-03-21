@@ -4,7 +4,7 @@
 declare var process: any;
 
 namespace pxt {
-    type Map<T> = {[index: string]: T};
+    type Map<T> = { [index: string]: T };
 
     interface CookieBannerInfo {
         /* Does the banner need to be shown? */
@@ -45,7 +45,7 @@ namespace pxt {
 
     class TelemetryQueue<A, B, C> {
         private q: [A, B, C][] = [];
-        constructor (private log: (a?: A, b?: B, c?: C) => void) {
+        constructor(private log: (a?: A, b?: B, c?: C) => void) {
             queues.push(this);
         }
 
@@ -133,7 +133,7 @@ namespace pxt {
     }
 
     function getCookieBannerAsync(domain: string, locale: string, cb: Callback<CookieBannerInfo>) {
-        httpGetAsync(`https://makecode.com/api/mscc/${domain}/${locale}`, function(err, resp) {
+        httpGetAsync(`https://makecode.com/api/mscc/${domain}/${locale}`, function (err, resp) {
             if (err) {
                 cb(err);
                 return;
@@ -249,11 +249,11 @@ namespace pxt {
     }
 
     /**
-     * Checks for winrt and Electron
+     * Checks for winrt and pxt-electron
      */
     function isNativeApp(): boolean {
         return typeof Windows !== "undefined" ||
-            navigator && navigator.userAgent && navigator.userAgent.toLowerCase().indexOf(" electron/") > -1;
+            !!(window as any).pxtElectron;
     }
 
     // No promises, so here we are
