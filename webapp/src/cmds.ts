@@ -155,14 +155,17 @@ export function initCommandsAsync(): Promise<void> {
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
+    // setup hf2 for webusb
+    if (pxt.usb.isAvailable() && /webusb=1/i.test(window.location.href)) {
+        pxt.usb.setEnabled(true)
+        pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync
+    }
+
+    // decision logic to use various hosts
     if (pxt.BrowserUtils.hasWebKitHost()) {
         pxt.debug(`deploy/save using webkit host`);
         pxt.commands.deployCoreAsync = webKitHostDeployCoreAsync;
         pxt.commands.saveOnlyAsync = webKitSaveDeployCoreAsync;
-    }
-    else if (pxt.usb.isAvailable() && /webusb=1/i.test(window.location.href)) {
-        pxt.usb.setEnabled(true)
-        pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync
     }
     else if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
