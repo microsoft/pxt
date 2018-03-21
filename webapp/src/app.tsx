@@ -972,6 +972,15 @@ export class ProjectView
             .done();
     }
 
+    pair() {
+        pxt.usb.pairAsync()
+            .then(() => {
+                core.infoNotification(lf("Device paired! Try downloading now."))
+            }, (err: Error) => {
+                core.errorNotification(lf("Failed to pair the device: {0}", err.message))
+            })
+    }
+
     promptRenameProjectAsync(): Promise<boolean> {
         if (!this.state.header) return Promise.resolve(false);
 
@@ -1014,10 +1023,6 @@ export class ProjectView
     }
 
     compile(saveOnly = false) {
-        // the USB init has to be called from an event handler
-        if (/webusb=1/i.test(window.location.href)) {
-            pxt.usb.initAsync().catch(e => { })
-        }
         let userContextWindow: Window = undefined;
         if (pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext())
             userContextWindow = window.open("");
@@ -1778,6 +1783,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                             // we always need a way to clear local storage, regardless if signed in or not
                                         }
                                         <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={uiHandler(this.reset)} tabIndex={-1} />
+                                        {!pxt.usb.isEnabled ? undefined :
+                                            <sui.Item role="menuitem" icon='usb' text={lf("Pair device") } onClick={uiHandler(this.pair)} tabIndex={-1} />}
                                         {docMenu ? <div className="ui divider mobile only"></div> : undefined}
                                         {docMenu ? container.renderDocItems(this, "mobile only") : undefined}
                                         <div className="ui divider"></div>
