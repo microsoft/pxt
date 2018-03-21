@@ -356,5 +356,11 @@ namespace pxt.editor {
     }
 
     export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;
+
+    export interface NativeHostMessage {
+        name?: string;
+        download?: string;
+        save?: string;
+    }
 }
 
