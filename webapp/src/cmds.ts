@@ -132,6 +132,7 @@ function nativeHostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     const out = resp.outfiles[pxt.outputName()];
     const nativePostMessage = nativeHostPostMessageFunction();
     nativePostMessage(<pxt.editor.NativeHostMessage>{
+        name: resp.downloadFileBaseName,
         download: out
     })
     return Promise.resolve();
@@ -143,6 +144,7 @@ function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     const out = resp.outfiles[pxt.outputName()]
     const nativePostMessage = nativeHostPostMessageFunction();
     nativePostMessage(<pxt.editor.NativeHostMessage>{
+        name: resp.downloadFileBaseName,
         save: out
     })
     return Promise.resolve();
