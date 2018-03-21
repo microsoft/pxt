@@ -1811,7 +1811,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 .then(() => testForBuildTargetAsync(isPrj))
                 .then((compileOpts) => {
                     // For the projects, we need to save the base HEX file to the offline HEX cache
-                    if (isPrj && pxt.appTarget.compile.hasHex) {
+                    if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
                         if (!compileOpts) {
                             console.error(`Failed to extract native image for project ${dirname}`);
                             return;
@@ -1820,13 +1820,13 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         // Place the base HEX image in the hex cache if necessary
                         let sha = compileOpts.extinfo.sha;
                         let hex: string[] = compileOpts.hexinfo.hex;
-                        let hexFile = path.join(hexCachePath, sha + (pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex"));
+                        let hexFile = path.join(hexCachePath, sha + ".hex");
 
                         if (fs.existsSync(hexFile)) {
-                            pxt.debug(`native image already in offline cache for project ${dirname}`);
+                            pxt.log(`native image already in offline cache for project ${dirname}: ${hexFile}`);
                         } else {
                             fs.writeFileSync(hexFile, hex.join(os.EOL));
-                            pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                            pxt.log(`created native image in offline cache for project ${dirname}: ${hexFile}`);
                         }
                     }
                 })
