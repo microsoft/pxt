@@ -15,6 +15,24 @@ namespace pxt.usb {
         NXP = 0x0d28, // aka Freescale, KL26 etc
     }
 
+    export interface USBDeviceFilter {
+        vendorId?: number;
+        productId?: number;
+        classCode?: number;
+        subclassCode?: number;
+        protocolCode?: number;
+        serialNumber?: string;
+    }
+
+    // this is for HF2
+    export let filters: USBDeviceFilter[] = [{
+        classCode: 255,
+        subclassCode: 42,
+    }]
+
+    export function setFilters(f: USBDeviceFilter[]) {
+        filters = f
+    }
 
     export type USBEndpointType = "bulk" | "interrupt" | "isochronous";
     export type USBRequestType = "standard" | "class" | "vendor"
@@ -111,10 +129,20 @@ namespace pxt.usb {
             throw new USBError(U.lf("USB error on device {0} ({1})", this.dev.productName, msg))
         }
 
+        log(msg: string) {
+            msg = "WebUSB: " + msg
+            //pxt.log(msg)
+            pxt.debug(msg)
+        }
+
         disconnectAsync() {
             if (!this.dev) return Promise.resolve()
             this.ready = false
+            this.log("close device")
             return this.dev.close()
+                .catch(e => {
+                    // just ignore errors closing, most likely device just disconnected
+                })
                 .then(() => {
                     this.dev = null
                     return Promise.delay(500)
@@ -122,9 +150,11 @@ namespace pxt.usb {
         }
 
         reconnectAsync() {
+            this.log("reconnect")
             return this.disconnectAsync()
-                .then(requestDeviceAsync)
+                .then(getDeviceAsync)
                 .then(dev => {
+                    this.log("got device: " + dev.manufacturerName + " " + dev.productName)
                     this.dev = dev
                     return this.initAsync()
                 })
@@ -170,28 +200,45 @@ namespace pxt.usb {
 
         initAsync() {
             let dev = this.dev
+            this.log("open device")
             return dev.open()
                 // assume one configuration; no one really does more
-                .then(() => dev.selectConfiguration(1))
                 .then(() => {
-                    let isHID = (iface: USBInterface) =>
-                        iface.alternates[0].interfaceClass == 0xff &&
-                        iface.alternates[0].interfaceSubclass == 42;
-                    //iface.alternates[0].endpoints[0].type == "interrupt";
-                    let hid = dev.configurations[0].interfaces.filter(isHID)[0]
+                    this.log("select configuration")
+                    return dev.selectConfiguration(1)
+                })
+                .then(() => {
+                    let matchesFilters = (iface: USBInterface) => {
+                        let a0 = iface.alternates[0]
+                        for (let f of filters) {
+                            if (f.classCode == null || a0.interfaceClass === f.classCode) {
+                                if (f.subclassCode == null || a0.interfaceSubclass === f.subclassCode) {
+                                    if (f.protocolCode == null || a0.interfaceProtocol === f.protocolCode) {
+                                        if (a0.endpoints.length == 2 &&
+                                            a0.endpoints.every(e => e.packetSize == 64))
+                                            return true
+                                    }
+                                }
+                            }
+                        }
+                        return false
+                    }
+                    this.log("got " + dev.configurations[0].interfaces.length + " interfaces")
+                    let hid = dev.configurations[0].interfaces.filter(matchesFilters)[0]
                     if (!hid)
-                        this.error("cannot find USB HID interface")
+                        this.error("cannot find supported USB interface")
                     this.altIface = hid.alternates[0]
                     this.epIn = this.altIface.endpoints.filter(e => e.direction == "in")[0]
                     this.epOut = this.altIface.endpoints.filter(e => e.direction == "out")[0]
                     Util.assert(this.epIn.packetSize == 64);
                     Util.assert(this.epOut.packetSize == 64);
-                    //Util.assert(this.epIn.type == "interrupt");
-                    //Util.assert(this.epOut.type == "interrupt");
-                    //console.log("USB-device", dev)
+                    this.log("claim interface")
                     return dev.claimInterface(hid.interfaceNumber)
                 })
-                .then(() => { this.ready = true })
+                .then(() => {
+                    this.log("device ready")
+                    this.ready = true
+                })
         }
     }
 
@@ -232,32 +279,50 @@ namespace pxt.usb {
         packets: USBIsochronousOutTransferPacket[];
     }
 
-    function requestDeviceAsync(): Promise<USBDevice> {
-        return (navigator as any).usb.requestDevice({ filters: [] })
+    export function pairAsync(): Promise<void> {
+        return ((navigator as any).usb.requestDevice({
+            filters: filters
+        }) as Promise<USBDevice>).then(dev => {
+            // try connecting to it
+            return mkPacketIOAsync()
+        }).then(io => io.reconnectAsync())
     }
 
-    function getHidAsync() {
-        return requestDeviceAsync()
-            .then(dev => {
-                let h = new HID(dev)
-                return h.initAsync()
-                    .then(() => h)
+    function getDeviceAsync(): Promise<USBDevice> {
+        return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
+            .then<USBDevice>((devs: USBDevice[]) => {
+                if (!devs || !devs.length)
+                    return Promise.reject(new USBError(U.lf("No USB device selected or connected; try pairing!")))
+                return devs[0]
             })
     }
 
-    function hf2Async() {
-        return getHidAsync()
-            .then(h => {
-                let w = new HF2.Wrapper(h)
-                return w.reconnectAsync(true)
-                    .then(() => w)
-            })
+    let getDevPromise: Promise<HF2.PacketIO>
+    export function mkPacketIOAsync() {
+        if (!getDevPromise)
+            getDevPromise = getDeviceAsync()
+                .then(dev => {
+                    let h = new HID(dev)
+                    return h.initAsync()
+                        .then(() => h)
+                })
+                .catch(e => {
+                    getDevPromise = null
+                    return Promise.reject(e)
+                })
+
+        return getDevPromise
     }
 
-    let initPromise: Promise<HF2.Wrapper>
-    export function initAsync() {
-        if (!initPromise)
-            initPromise = hf2Async()
-        return initPromise
+    export let isEnabled = false
+
+    export function setEnabled(v: boolean) {
+        if (!isAvailable()) v = false
+        isEnabled = v
+    }
+
+    export function isAvailable() {
+        // TODO check what Chrome on Win7 and Win8 does
+        return !!(navigator as any).usb
     }
 }

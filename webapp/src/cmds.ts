@@ -100,13 +100,21 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     }).then(() => { });
 }
 
-function webusbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.debug('webusb deployment...');
-    core.infoNotification(lf("Flashing device..."));
-    let f = resp.outfiles[pxtc.BINARY_UF2]
-    let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
-    return pxt.usb.initAsync()
-        .then(dev => dev.reflashAsync(blocks))
+export function nativeHostPostMessageFunction(): (msg: pxt.editor.NativeHostMessage) => void {
+    const webkit = (<any>window).webkit;
+    if (webkit
+        && webkit.messageHandlers
+        && webkit.messageHandlers.host
+        && webkit.messageHandlers.host.postMessage)
+        return webkit.messageHandlers.host.postMessage;
+    const android = (<any>window).android;
+    if (android && android.postMessage)
+        return msg => android.postMessage(JSON.stringify(msg));
+    return undefined;
+}
+
+export function isNativeHost(): boolean {
+    return !!nativeHostPostMessageFunction();
 }
 
 function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
@@ -118,23 +126,23 @@ function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         .then(dev => dev.reflashAsync(blocks))
 }
 
-function webKitHostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.debug(`webkit deploy`)
+function nativeHostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.debug(`native deploy`)
     core.infoNotification(lf("Flashing device..."));
-    const out = resp.outfiles[pxt.outputName()]
-    const webkit = (<any>window).webkit;
-    webkit.messageHandlers.host.postMessage(<pxt.editor.WebKitHostMessage>{
+    const out = resp.outfiles[pxt.outputName()];
+    const nativePostMessage = nativeHostPostMessageFunction();
+    nativePostMessage(<pxt.editor.NativeHostMessage>{
         download: out
     })
     return Promise.resolve();
 }
 
-function webKitSaveDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.debug(`webkit save`)
+function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.debug(`native save`)
     core.infoNotification(lf("Flashing device..."));
     const out = resp.outfiles[pxt.outputName()]
-    const webkit = (<any>window).webkit;
-    webkit.messageHandlers.host.postMessage(<pxt.editor.WebKitHostMessage>{
+    const nativePostMessage = nativeHostPostMessageFunction();
+    nativePostMessage(<pxt.editor.NativeHostMessage>{
         save: out
     })
     return Promise.resolve();
@@ -164,13 +172,20 @@ export function initCommandsAsync(): Promise<void> {
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
-    if (pxt.BrowserUtils.hasWebKitHost()) {
-        pxt.debug(`deploy/save using webkit host`);
-        pxt.commands.deployCoreAsync = webKitHostDeployCoreAsync;
-        pxt.commands.saveOnlyAsync = webKitSaveDeployCoreAsync;
+    // setup hf2 for webusb
+    if (pxt.usb.isAvailable() && /webusb=1/i.test(window.location.href)) {
+        pxt.usb.setEnabled(true)
+        pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync
     }
-    else if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
-        pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
+
+    // decision logic to use various hosts
+    if (isNativeHost()) {
+        pxt.debug(`deploy/save using webkit host`);
+        pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
+        pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
+    }
+    else if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
+        pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
             pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => { }), () => hidbridge.disconnectWrapperAsync());

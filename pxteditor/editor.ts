@@ -210,7 +210,7 @@ namespace pxt.editor {
 
     export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;
 
-    export interface WebKitHostMessage {
+    export interface NativeHostMessage {
         download?: string;
         save?: string;
     }
