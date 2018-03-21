@@ -113,7 +113,7 @@ export function nativeHostPostMessageFunction(): (msg: pxt.editor.NativeHostMess
     return undefined;
 }
 
-export function isNativeHost() : boolean {
+export function isNativeHost(): boolean {
     return !!nativeHostPostMessageFunction();
 }
 
