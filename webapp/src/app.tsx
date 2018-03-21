@@ -44,6 +44,7 @@ import * as codecard from "./codecard"
 import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
+import { isElectron } from "./electron";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 type IAppProps = pxt.editor.IAppProps;
@@ -1795,7 +1796,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
 
-        const isApp = pxt.winrt.isWinRT();
+        const isApp = pxt.winrt.isWinRT() || isElectron;
 
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;

@@ -5,6 +5,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
+import { isElectron } from "./electron";
 
 import Cloud = pxt.Cloud;
 
@@ -88,7 +89,7 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
     renderCore() {
         const cookies = !!(typeof mscc === "undefined" || mscc.hasConsent());
         const targetTheme = pxt.appTarget.appTheme;
-        const isApp = pxt.winrt.isWinRT();
+        const isApp = pxt.winrt.isWinRT() || isElectron;
         const isLocalServe = location.hostname === "localhost";
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
