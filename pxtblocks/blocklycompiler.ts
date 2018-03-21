@@ -473,7 +473,7 @@ namespace pxt.blocks {
 
     function getConcreteType(point: Point, found: Point[] = []) {
         const t = find(point)
-        if (found.indexOf(t)  === -1) {
+        if (found.indexOf(t) === -1) {
             found.push(t);
             if (!t.type || t.type === "Array") {
                 if (t.parentType) {
@@ -654,7 +654,7 @@ namespace pxt.blocks {
         const listExpr = compileExpression(e, listBlock, comments);
         const index = compileExpression(e, getInputTargetBlock(b, "INDEX"), comments);
         const value = compileExpression(e, getInputTargetBlock(b, "VALUE"), comments);
-        const res =  mkGroup([listExpr, mkText("["), index, mkText("] = "), value]);
+        const res = mkGroup([listExpr, mkText("["), index, mkText("] = "), value]);
 
         return listBlock.type === "lists_create_with" ? prefixWithSemicolon(res) : res;
 
@@ -1106,6 +1106,16 @@ namespace pxt.blocks {
             return args[0];
         else if (func.property) {
             return H.mkPropertyAccess(func.f, args[0]);
+        } else if (func.f == "@get@") {
+            return H.mkPropertyAccess(args[1].op.replace(/.*\./, ""), args[0]);
+        } else if (func.f == "@set@") {
+            return H.mkAssign(
+                H.mkPropertyAccess(args[1].op.replace(/.*\./, "").replace(/@set/, ""), args[0]),
+                args[2]);
+        } else if (func.f == "@change@") {
+            return mkStmt(H.mkSimpleCall("+=", [
+                H.mkPropertyAccess(args[1].op.replace(/.*\./, "").replace(/@set/, ""), args[0]),
+                args[2]]))
         } else if (func.isExtensionMethod) {
             if (func.attrs.defaultInstance) {
                 let instance: JsNode;
