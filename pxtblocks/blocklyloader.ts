@@ -239,7 +239,7 @@ namespace pxt.blocks {
         return result;
     }
 
-    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement, showCategories = CategoryMode.Basic, comp: pxt.blocks.BlockCompileInfo, filters?: BlockFilters) {
+    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: Element, showCategories = CategoryMode.Basic, comp: pxt.blocks.BlockCompileInfo, filters?: BlockFilters) {
         // identity function are just a trick to get an enum drop down in the block
         // while allowing the parameter to be a number
         if (fn.attributes.blockHidden)
@@ -362,6 +362,22 @@ namespace pxt.blocks {
                 });
             }
             else {
+                // if requested, wrap block into a "set variable block"
+                if (fn.attributes.blockSetVariable) {
+
+                    const setblock = Blockly.Xml.textToDom(`
+<block type="variables_set" gap="${fn.attributes.blockGap || 8}">
+<field name="VAR" variabletype="">${fn.retType.toLowerCase()}</field>
+</block>`);
+                    {
+                        let value = goog.dom.createDom('value');
+                        value.setAttribute('name', 'VALUE');
+                        value.appendChild(block.cloneNode(true));
+                        setblock.appendChild(value);
+                    }
+                    block = setblock;
+                }
+
                 if (showCategories !== CategoryMode.None && !(showCategories === CategoryMode.Basic && isAdvanced)) {
                     insertBlock(block, category, fn.attributes.weight, fn.attributes.group);
                     injectToolboxIconCss();
