@@ -443,6 +443,12 @@ this macro allows to define groups of blocks. The default ``blockGap`` value is 
 ...
 ```
 
+## Variable assignment
+
+If a block instantiates a custom object, like a sprite, it's most likely that the user
+will want to store in a variable. Add ``blockSetVariable`` to modify the toolbox entry
+to include the variable.
+
 ## Testing your Blocks
 
 We recommend to build your block APIs iteratively and try it out in the editor to get the "feel of it".
