@@ -899,11 +899,11 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     let targetConfig = readLocalPxTarget();
     let defaultLocale = targetConfig.appTheme.defaultLocale;
-    let compileCache = path.join("built", "compileCache");
+    let hexCache = path.join("built", "hexCache");
     let hexFiles: string[] = [];
 
-    if (fs.existsSync(compileCache)) {
-        hexFiles = fs.readdirSync(compileCache)
+    if (fs.existsSync(hexCache)) {
+        hexFiles = fs.readdirSync(hexCache)
             .filter(f => /\.hex$/.test(f))
             .map((f) => `@cdnUrl@/compile/${f}`);
         pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
@@ -1791,8 +1791,8 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         }
     }
 
-    let compileCachePath = path.resolve(process.cwd(), "built", "compileCache");
-    nodeutil.mkdirP(compileCachePath);
+    let hexCachePath = path.resolve(process.cwd(), "built", "hexCache");
+    nodeutil.mkdirP(hexCachePath);
 
     pxt.log(`building target.json in ${process.cwd()}...`)
 
@@ -3862,7 +3862,7 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
         fileList: pxtFileList("node_modules/pxt-core/")
             .concat(targetFileList())
             .concat(["targetconfig.json"])
-            .concat(nodeutil.allFiles("built/compileCache")),
+            .concat(nodeutil.allFiles("built/hexCache")),
         localDir,
         target: (pxt.appTarget.id || "unknownstatic"),
         builtPackaged,

@@ -1309,9 +1309,8 @@ namespace pxt.hex {
 
     function downloadHexInfoLocalAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
         if (pxt.webConfig && pxt.webConfig.isStatic) {
-            const compileExt = pxt.appTarget.compile && pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex";
             return Util.requestAsync({
-                url: `${pxt.webConfig.cdnUrl}compileCache/${extInfo.sha}${compileExt}`
+                url: `${pxt.webConfig.cdnUrl}hexCache/${extInfo.sha}.hex`
             })
                 .then((resp) => {
                     if (resp.text) {

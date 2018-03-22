@@ -21,7 +21,7 @@ let docfilesdirs = [""]
 let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let packagedDir = ""
-let localCompileCacheDir = path.join("built", "compileCache");
+let localHexCacheDir = path.join("built", "hexCache");
 
 function setupDocfilesdirs() {
     docfilesdirs = [
@@ -201,7 +201,7 @@ function getCachedHexAsync(sha: string): Promise<any> {
         return Promise.resolve();
     }
 
-    let hexFile = path.resolve(localCompileCacheDir, sha + ".hex");
+    let hexFile = path.resolve(localHexCacheDir, sha + ".hex");
 
     return existsAsync(hexFile)
         .then((results) => {
