@@ -363,7 +363,7 @@ namespace pxt.blocks {
             }
             else {
                 // if requested, wrap block into a "set variable block"
-                if (fn.attributes.blockSetVariable) {
+                if (fn.attributes.blockSetVariable && fn.retType) {
 
                     const setblock = Blockly.Xml.textToDom(`
 <block type="variables_set" gap="${fn.attributes.blockGap || 8}">
