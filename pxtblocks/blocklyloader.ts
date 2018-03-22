@@ -366,11 +366,11 @@ namespace pxt.blocks {
                 if (fn.attributes.blockSetVariable && fn.retType) {
 
                     const setblock = Blockly.Xml.textToDom(`
-<block type="variables_set" gap="${fn.attributes.blockGap || 8}">
-<field name="VAR" variabletype="">${fn.retType.toLowerCase()}</field>
+<block type="variables_set" gap="${Util.htmlEscape((fn.attributes.blockGap || 8) + "")}">
+<field name="VAR" variabletype="">${Util.htmlEscape(fn.retType.toLowerCase())}</field>
 </block>`);
                     {
-                        let value = goog.dom.createDom('value');
+                        let value = document.createElement('value');
                         value.setAttribute('name', 'VALUE');
                         value.appendChild(block.cloneNode(true));
                         setblock.appendChild(value);
