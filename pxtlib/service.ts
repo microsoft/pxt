@@ -556,7 +556,7 @@ namespace ts.pxtc {
         "blockHidden",
         "constantShim",
         "blockCombine",
-        "blockVariable"
+        "blockSetVariable"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
