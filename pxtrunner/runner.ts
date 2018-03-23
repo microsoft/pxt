@@ -494,11 +494,8 @@ ${files["main.ts"]}
         pxt.log(`rendering book from ${summaryid}`)
 
         // display loader
-        const loader = document.createElement("div")
-        const parent = content.parentElement;
-        loader.className = "loader";
-        if (parent)
-            parent.appendChild(loader)
+        const $loader = $("#loading").find(".loader");
+        $loader.addClass("text").text(lf("Compiling your book (this may take a minute)"));
 
         // start the work
         let toc: TOCMenuEntry[];
@@ -528,9 +525,6 @@ ${files["main.ts"]}
                         md += '\n\n' + entry.markdown
                 });
                 return renderMarkdownAsync(content, md);
-            })
-            .finally(() => {
-                if (loader && loader.parentElement) loader.parentElement.removeChild(loader);
             })
     }
 
