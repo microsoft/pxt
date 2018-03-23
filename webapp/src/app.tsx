@@ -44,7 +44,7 @@ import * as codecard from "./codecard"
 import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
-import { isElectron } from "./electron";
+import { initPxtElectronAsync, isElectron, isPxtElectron } from "./electron";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 type IAppProps = pxt.editor.IAppProps;
@@ -2298,7 +2298,7 @@ $(() => {
     else if (pxt.appTarget.appTheme.allowParentController) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
-    else if (Cloud.isLocalHost() || !!(window as any).pxtElectron) workspace.setupWorkspace("fs");
+    else if (Cloud.isLocalHost() || isPxtElectron) workspace.setupWorkspace("fs");
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -2349,6 +2349,7 @@ $(() => {
             initHashchange();
             return initExtensionsAsync();
         })
+        .then(() => initPxtElectronAsync())
         .then(() => pxt.winrt.initAsync(importHex))
         .then(() => pxt.winrt.hasActivationProjectAsync())
         .then((hasWinRTProject) => {
