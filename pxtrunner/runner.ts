@@ -492,8 +492,18 @@ ${files["main.ts"]}
         summaryid = summaryid.replace(/^\//, "");
         pxt.tickEvent('book', { id: summaryid });
         pxt.log(`rendering book from ${summaryid}`)
+
+        // display loader
+        const loader = document.createElement("div")
+        const parent = content.parentElement;
+        loader.className = "loader";
+        if (parent)
+            parent.appendChild(loader)
+
+        // start the work
         let toc: TOCMenuEntry[];
-        return pxt.Cloud.downloadMarkdownAsync(summaryid, editorLocale, pxt.Util.localizeLive)
+        return Promise.delay(100)
+            .then(() => pxt.Cloud.downloadMarkdownAsync(summaryid, editorLocale, pxt.Util.localizeLive))
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);
                 pxt.log(`TOC: ${JSON.stringify(toc, null, 2)}`)
@@ -518,6 +528,9 @@ ${files["main.ts"]}
                         md += '\n\n' + entry.markdown
                 });
                 return renderMarkdownAsync(content, md);
+            })
+            .finally(() => {
+                if (loader && loader.parentElement) loader.parentElement.removeChild(loader);
             })
     }
 
