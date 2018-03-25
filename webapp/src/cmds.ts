@@ -106,7 +106,7 @@ export function nativeHostPostMessageFunction(): (msg: pxt.editor.NativeHostMess
         && webkit.messageHandlers
         && webkit.messageHandlers.host
         && webkit.messageHandlers.host.postMessage)
-        return webkit.messageHandlers.host.postMessage;
+        return msg => webkit.messageHandlers.host.postMessage(msg);
     const android = (<any>window).android;
     if (android && android.postMessage)
         return msg => android.postMessage(JSON.stringify(msg));
