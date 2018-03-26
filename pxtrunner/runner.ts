@@ -463,8 +463,15 @@ ${files["main.ts"]}
         summaryid = summaryid.replace(/^\//, "");
         pxt.tickEvent('book', { id: summaryid });
         pxt.log(`rendering book from ${summaryid}`)
+
+        // display loader
+        const $loader = $("#loading").find(".loader");
+        $loader.addClass("text").text(lf("Compiling your book (this may take a minute)"));
+
+        // start the work
         let toc: TOCMenuEntry[];
-        return pxt.Cloud.downloadMarkdownAsync(summaryid, editorLocale, pxt.Util.localizeLive)
+        return Promise.delay(100)
+            .then(() => pxt.Cloud.downloadMarkdownAsync(summaryid, editorLocale, pxt.Util.localizeLive))
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);
                 pxt.log(`TOC: ${JSON.stringify(toc, null, 2)}`)
