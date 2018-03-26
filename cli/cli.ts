@@ -3887,7 +3887,7 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
             const jresources = nodeutil.readJson(f);
             const oldjr = JSON.stringify(jresources, null, 2);
             const dir = path.join('jres', path.basename(f, '.jres'));
-            // images or sounds?
+            // update existing fields
             const star = jresources["*"];
             if (!star.dataEncoding) star.dataEncoding = 'base64';
             Object.keys(jresources).filter(k => k != "*").forEach(k => {
@@ -3896,6 +3896,7 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
                 pxt.log(`expanding ${k}`);
                 // try to slurp icon
                 const iconn = path.join(dir, k + '-icon.png');
+                pxt.debug(`looking for ${iconn}`)
                 if (nodeutil.fileExistsSync(iconn)) {
                     pxt.log(`importing ${iconn}`);
                     jres.icon = 'data:image/png;base64,' + fs.readFileSync(iconn, 'base64');
@@ -3903,10 +3904,18 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
                 // try to find file
                 if (mime) {
                     const ext = mime.replace(/^.*\//, '');
-                    const fn = path.join(dir, k + '-data.' + ext);
+                    let fn = path.join(dir, k + '-data.' + ext);
+                    pxt.debug(`looking for ${fn}`)
                     if (nodeutil.fileExistsSync(fn)) {
                         pxt.log(`importing ${fn}`);
                         jres.data = fs.readFileSync(fn, 'base64');
+                    } else {
+                        let fn = path.join(dir, k + '.' + ext);
+                        pxt.debug(`looking for ${fn}`)
+                        if (nodeutil.fileExistsSync(fn)) {
+                            pxt.log(`importing ${fn}`);
+                            jres.data = fs.readFileSync(fn, 'base64');
+                        }
                     }
                 }
             })
