@@ -367,7 +367,8 @@ export class ProjectView
             let state = this.editor.snapshotState()
             compiler.typecheckAsync()
                 .done(resp => {
-                    this.editor.setDiagnostics(this.editorFile, state)
+                    this.editor.setDiagnostics(this.editorFile, state);
+                    data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
                     if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
                         let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                         if (output && !output.numDiagnosticsOverride
