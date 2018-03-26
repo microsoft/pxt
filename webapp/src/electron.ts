@@ -115,7 +115,9 @@ function handleCriticalUpdateAsync(releaseInfo: pxt.electron.MajorRelease): Prom
                 pxt.tickEvent("pxtelectron.update.refusedcritical");
                 pxtElectron.quitApp();
             } else {
-                pxt.tickEvent("pxtelectron.update.acceptedcritical");
+                pxt.tickEvent("pxtelectron.update.acceptedcritical", {
+                    isUrlUpdate
+                });
                 if (isUrlUpdate) {
                     window.open(releaseInfo.url, "_blank");
                     setTimeout(() => { // Use timeout to give enough time to open the web page and to handle telemetry
@@ -165,9 +167,13 @@ function handlePromptUpdateAsync(releaseInfo: pxt.electron.MajorRelease, isIniti
                 resolve();
             } else {
                 if (isInitialCheck) {
-                    pxt.tickEvent("pxtelectron.update.acceptedinitial");
+                    pxt.tickEvent("pxtelectron.update.acceptedinitial", {
+                        isUrlUpdate
+                    });
                 } else {
-                    pxt.tickEvent("pxtelectron.update.accepted");
+                    pxt.tickEvent("pxtelectron.update.accepted", {
+                        isUrlUpdate
+                    });
                 }
 
                 if (isUrlUpdate) {
