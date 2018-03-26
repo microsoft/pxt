@@ -79,40 +79,21 @@ let myRandom = Math.randomRange(0, 5);
 
 ## Map
 
-Mathemaically translate a set of range (between top 2 numbers) to a new set of range (between bottom 2 numbers) proportionally
+A _map_ is a conversion of one span (range) of numbers to another. If a dog can live to 16 years and a person lives to 87 years, how do you make a 16 year life span seem like a 87 year life span? You say that one dog year is like some number of people years. This is a _mapping_ of dog years to people years. 
 
-```block
-Math.map(
-    item,
-    0,
-    255,
-    0,
-    10
-    )
+Fahrenheit and Celsius are different ways to measure temperature. Celsius doesn't use the same amount of degrees as Fahrenheit. So, there is more energy in one degree of Celsius. If you want to convert a temperature value of Fahrenheit (something between freezing and boiling maybe) to Celsius, you can use ``Math.map(50, 32, 212, 0, 100)``. The map makes 50 degrees of Fahrenheit turn into 10 degrees of Celsius.
+
+```block 
+let dogsAge = 7
+let peoplesAge = Math.map(dogsAge, 1, 16, 15, 87)
 ```
 
-The block on itself doesn't do much. But in conjuction with other functions, it conveniently sets up a mathematical relationship to correlate two variables.
-
-###Example #example
-
-#### Show Detected light level by Number of Pixels Turning White
-
-This program translates light level (0~255) proportionally to number of pixels (0~10). The CPX will read the light level, translating it to any number within the range from 0 to 10 proportionally. Then the number being translated into will be the number of pixels turning white. 
+## Constrain 
+ 
+Make certain that the value of a number you give is no smaller and no bigger than two other numbers. So, ``Math.constrain(15, 6, 10)`` equals 10 and ``Math.constrain(3, 6, 10)`` equals 6.
 
 ```block
-let light_to_pixel = 0
-loops.forever(function () {
-    light_to_pixel = Math.map(
-    input.lightLevel(),
-    0,
-    255,
-    0,
-    10
-    )
-    for (let index = 0; index <= light_to_pixel; index++) {
-        light.setPixelColor(index, 0xFF0000)
-    }
-})
+let limited = Math.constrain(10, 0, 9);
 ```
 
 ## See also #seealso
