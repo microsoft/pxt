@@ -99,7 +99,7 @@ namespace pxt.github {
                     }
 
                     // load and cache
-                    const pref = "https://raw.githubusercontent.com/" + p.fullName + "/" + sha + "/"
+                    const pref = "https://raw.githubusercontent.com/" + repopath + "/" + sha + "/"
                     pxt.log(`Downloading ${repopath}/${tag} -> ${sha}`)
                     return U.httpGetTextAsync(pref + pxt.CONFIG_NAME)
                         .then(pkg => {
