@@ -33,8 +33,8 @@ namespace pxt.github {
     }
 
     export class MemoryGithubDb implements IGithubDb {
-        configs: pxt.Map<pxt.PackageConfig> = {};
-        packages: pxt.Map<CachedPackage> = {};
+        private configs: pxt.Map<pxt.PackageConfig> = {};
+        private packages: pxt.Map<CachedPackage> = {};
 
         private proxyLoadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
             // cache lookup
@@ -42,15 +42,12 @@ namespace pxt.github {
             let res = this.packages[key];
             if (res) {
                 pxt.debug(`github cache ${repopath}/${tag}/text`);
-                return Promise.resolve(U.clone(res));
+                return Promise.resolve(res);
             }
 
             // load and cache
             return U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/${tag}/text`)
-                .then(v => {
-                    this.packages[key] = { files: v };
-                    return v;
-                });
+                .then(v => this.packages[key] = { files: v });
         }
 
         loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
@@ -67,7 +64,7 @@ namespace pxt.github {
             const cacheConfig = (v: string) => {
                 const cfg = JSON.parse(v) as pxt.PackageConfig;
                 this.configs[key] = cfg;
-                return cfg;
+                return U.clone(cfg);
             }
 
             // download and cache
@@ -84,9 +81,8 @@ namespace pxt.github {
         loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
             if (!tag) tag = "master";
 
-            if (useProxy()) {
-                return this.proxyLoadPackageAsync(repopath, tag);
-            }
+            if (useProxy())
+                return this.proxyLoadPackageAsync(repopath, tag).then(v => U.clone(v));
 
             return tagToShaAsync(repopath, tag)
                 .then(sha => {
@@ -116,7 +112,7 @@ namespace pxt.github {
                                 .then(() => {
                                     // cache!
                                     this.packages[key] = current;
-                                    return current;
+                                    return U.clone(current);
                                 })
                         })
                 })
