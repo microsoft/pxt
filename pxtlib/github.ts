@@ -39,7 +39,7 @@ namespace pxt.github {
         private proxyLoadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
             // cache lookup
             const key = `${repopath}/${tag}`;
-            let res = this.packages[repopath];
+            let res = this.packages[key];
             if (res) {
                 pxt.debug(`github cache ${repopath}/${tag}/text`);
                 return Promise.resolve(U.clone(res));
@@ -58,7 +58,7 @@ namespace pxt.github {
 
             // cache lookup
             const key = `${repopath}/${tag}`;
-            let res = this.configs[repopath];
+            let res = this.configs[key];
             if (res) {
                 pxt.debug(`github cache ${repopath}/${tag}/config`);
                 return Promise.resolve(U.clone(res));
@@ -92,7 +92,7 @@ namespace pxt.github {
                 .then(sha => {
                     // cache lookup
                     const key = `${repopath}/${sha}`;
-                    let res = this.packages[repopath];
+                    let res = this.packages[key];
                     if (res) {
                         pxt.debug(`github cache ${repopath}/${tag}/text`);
                         return Promise.resolve(U.clone(res));
