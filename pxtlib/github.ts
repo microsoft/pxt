@@ -120,7 +120,7 @@ namespace pxt.github {
     }
 
     // overriden by client
-    let db: IGithubDb = new MemoryGithubDb();
+    export let db: IGithubDb = new MemoryGithubDb();
 
     export function listRefsAsync(repopath: string, namespace = "tags"): Promise<string[]> {
         return listRefsExtAsync(repopath, namespace)

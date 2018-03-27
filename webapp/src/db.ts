@@ -137,3 +137,50 @@ class TranslationDb implements ts.pxtc.Util.ITranslationDb {
 }
 
 ts.pxtc.Util.translationDb = new TranslationDb();
+
+class GithubDb implements pxt.github.IGithubDb {
+    // in memory cache
+    private mem = new pxt.github.MemoryGithubDb();
+    private table = new Table("github");
+
+    loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
+        const id = `config-${repopath}-${tag}`;
+        return this.table.getAsync(id).then(
+            entry => {
+                pxt.debug(`github offline cache hit ${id}`);
+                return entry.config as pxt.PackageConfig;
+            },
+            e => {
+                pxt.debug(`github offline cache miss ${id}`);
+                return this.mem.loadConfigAsync(repopath, tag)
+                    .then(config => {
+                        return this.table.forceSetAsync({
+                            id,
+                            config
+                        }).then(() => config, e => config);
+                    })
+            } // not found
+        );
+    }
+    loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
+        const id = `pkg-${repopath}-${tag}`;
+        return this.table.getAsync(id).then(
+            entry => {
+                pxt.debug(`github offline cache hit ${id}`);
+                return entry.package as pxt.github.CachedPackage;
+            },
+            e => {
+                pxt.debug(`github offline cache miss ${id}`);
+                return this.mem.loadPackageAsync(repopath, tag)
+                    .then(p => {
+                        return this.table.forceSetAsync({
+                            id,
+                            package: p
+                        }).then(() => p, e => p);
+                    })
+            } // not found
+        );
+    }
+}
+
+pxt.github.db = new GithubDb();
