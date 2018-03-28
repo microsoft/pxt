@@ -129,7 +129,7 @@ class TranslationDb implements ts.pxtc.Util.ITranslationDb {
         mem.cached = true;
         delete (<any>mem)._rev;
         this.memCache[id] = mem;
-        return this.table.forceSetAsync(entry).then(() => {}, e => {
+        return this.table.forceSetAsync(entry).then(() => { }, e => {
             pxt.log(`translate cache: conflict for ${id}`);
         });
     }
@@ -144,6 +144,10 @@ class GithubDb implements pxt.github.IGithubDb {
     private table = new Table("github");
 
     loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
+        // don't cache master
+        if (tag == "master")
+            return this.mem.loadConfigAsync(repopath, tag);
+
         const id = `config-${repopath}-${tag}`;
         return this.table.getAsync(id).then(
             entry => {
@@ -163,6 +167,10 @@ class GithubDb implements pxt.github.IGithubDb {
         );
     }
     loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
+        // don't cache master
+        if (tag == "master")
+            return this.mem.loadPackageAsync(repopath, tag);
+
         const id = `pkg-${repopath}-${tag}`;
         return this.table.getAsync(id).then(
             entry => {
