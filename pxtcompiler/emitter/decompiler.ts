@@ -1147,10 +1147,8 @@ ${output}</xml>`;
             const setter = env.blocks.blocks.find(b => b.namespace == sym.namespace && b.name == tp)
             const r = right ? mkStmt(setter.attributes.blockId) : mkExpr(setter.attributes.blockId)
             const pp = setter.attributes._def.parameters;
-            r.inputs = [
-                getValue(pp[0].name, left.expression),
-                getValue(pp[1].name, left.expression),
-            ];
+            r.inputs = [getValue(pp[0].name, left.expression)];
+            r.fields = [getField(pp[1].name, info.qName)];
             if (right)
                 r.inputs.push(getValue(pp[2].name, right));
             return r;
