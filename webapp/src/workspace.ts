@@ -119,7 +119,7 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         }
     }
     pxt.debug(`publishing script; ${stext.length} bytes`)
-    return Cloud.privatePostAsync("scripts", scrReq, /* ignoreStatic */ true) // Publishing always goes to the live API endpoint, not the static server
+    return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
         .then((inf: Cloud.JsonScript) => {
             if (inf.shortid) inf.id = inf.shortid;
             h.pubId = inf.shortid
@@ -191,7 +191,7 @@ export function getPublishedScriptAsync(id: string) {
 }
 
 export function installByIdAsync(id: string) {
-    return Cloud.privateGetAsync(id)
+    return Cloud.privateGetAsync(id, /* forceLiveEndpoint */ true)
         .then((scr: Cloud.JsonScript) =>
             getPublishedScriptAsync(scr.id)
                 .then(files => installAsync(

@@ -26,7 +26,7 @@ namespace pxt.Cloud {
     }
 
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
-        options.url = pxt.webConfig && pxt.webConfig.isStatic && !options.ignoreStatic ? pxt.webConfig.relprefix + options.url : apiRoot + options.url;
+        options.url = pxt.webConfig && pxt.webConfig.isStatic && !options.forceLiveEndpoint ? pxt.webConfig.relprefix + options.url : apiRoot + options.url;
         options.allowGzipPost = true
         if (!Cloud.isOnline()) {
             return offlineError(options.url);
@@ -53,8 +53,8 @@ namespace pxt.Cloud {
         return privateRequestAsync({ url: path }).then(resp => resp.text)
     }
 
-    export function privateGetAsync(path: string): Promise<any> {
-        return privateRequestAsync({ url: path }).then(resp => resp.json)
+    export function privateGetAsync(path: string, forceLiveEndpoint: boolean = false): Promise<any> {
+        return privateRequestAsync({ url: path, forceLiveEndpoint }).then(resp => resp.json)
     }
 
     export function downloadTargetConfigAsync(): Promise<pxt.TargetConfig> {
@@ -74,7 +74,7 @@ namespace pxt.Cloud {
     }
 
     export function downloadScriptFilesAsync(id: string) {
-        return privateRequestAsync({ url: id + "/text" }).then(resp => {
+        return privateRequestAsync({ url: id + "/text", forceLiveEndpoint: true }).then(resp => {
             return JSON.parse(resp.text)
         })
     }
@@ -118,8 +118,8 @@ namespace pxt.Cloud {
         return privateRequestAsync({ url: path, method: "DELETE" }).then(resp => resp.json)
     }
 
-    export function privatePostAsync(path: string, data: any, ignoreStatic: boolean = false) {
-        return privateRequestAsync({ url: path, data: data || {}, ignoreStatic }).then(resp => resp.json)
+    export function privatePostAsync(path: string, data: any, forceLiveEndpoint: boolean = false) {
+        return privateRequestAsync({ url: path, data: data || {}, forceLiveEndpoint }).then(resp => resp.json)
     }
 
     export function isLoggedIn() { return !!accessToken }
