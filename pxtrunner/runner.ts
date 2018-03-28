@@ -8,6 +8,8 @@ namespace pxt.runner {
     export interface SimulateOptions {
         id?: string;
         code?: string;
+        highContrast?: boolean;
+        light?: boolean;
     }
 
     class EditorPackage {
@@ -267,7 +269,9 @@ namespace pxt.runner {
                         parts: parts,
                         fnArgs: fnArgs,
                         cdnUrl: pxt.webConfig.commitCdnUrl,
-                        localizedStrings: Util.getLocalizedStrings()
+                        localizedStrings: Util.getLocalizedStrings(),
+                        highContrast: simOptions.highContrast,
+                        light: simOptions.light
                     };
                     if (pxt.appTarget.simulator)
                         runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio

@@ -14,6 +14,7 @@ namespace pxsim {
         code: string;
         mute?: boolean;
         highContrast?: boolean;
+        light?: boolean;
         cdnUrl?: string;
         localizedStrings?: Map<string>;
         version?: string;
