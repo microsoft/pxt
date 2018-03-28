@@ -26,7 +26,7 @@ namespace pxt.Cloud {
     }
 
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
-        options.url = pxt.webConfig && pxt.webConfig.isStatic ? pxt.webConfig.relprefix + options.url : apiRoot + options.url;
+        options.url = pxt.webConfig && pxt.webConfig.isStatic && !options.ignoreStatic ? pxt.webConfig.relprefix + options.url : apiRoot + options.url;
         options.allowGzipPost = true
         if (!Cloud.isOnline()) {
             return offlineError(options.url);
@@ -118,8 +118,8 @@ namespace pxt.Cloud {
         return privateRequestAsync({ url: path, method: "DELETE" }).then(resp => resp.json)
     }
 
-    export function privatePostAsync(path: string, data: any) {
-        return privateRequestAsync({ url: path, data: data || {} }).then(resp => resp.json)
+    export function privatePostAsync(path: string, data: any, ignoreStatic: boolean = false) {
+        return privateRequestAsync({ url: path, data: data || {}, ignoreStatic }).then(resp => resp.json)
     }
 
     export function isLoggedIn() { return !!accessToken }
