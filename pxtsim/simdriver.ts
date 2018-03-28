@@ -38,6 +38,7 @@ namespace pxsim {
         partDefinitions?: pxsim.Map<PartDefinition>;
         mute?: boolean;
         highContrast?: boolean;
+        light?: boolean;
         cdnUrl?: string;
         localizedStrings?: pxsim.Map<string>;
         refCountingDebug?: boolean;
@@ -120,7 +121,7 @@ namespace pxsim {
             }
         }
 
-        private createFrame(): HTMLDivElement {
+        private createFrame(light?: boolean): HTMLDivElement {
             const wrapper = document.createElement("div") as HTMLDivElement;
             wrapper.className = 'simframe';
 
@@ -130,6 +131,7 @@ namespace pxsim {
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             frame.sandbox.value = "allow-scripts allow-same-origin"
             let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
+            if (light) simUrl+= '?light=1';
             if (this.runOptions.aspectRatio)
                 wrapper.style.paddingBottom = (100 / this.runOptions.aspectRatio) + "%";
             frame.src = simUrl + '#' + frame.id;
@@ -238,6 +240,7 @@ namespace pxsim {
                 partDefinitions: opts.partDefinitions,
                 mute: opts.mute,
                 highContrast: opts.highContrast,
+                light: opts.light,
                 cdnUrl: opts.cdnUrl,
                 localizedStrings: opts.localizedStrings,
                 refCountingDebug: opts.refCountingDebug,
@@ -251,7 +254,7 @@ namespace pxsim {
             let frame = this.container.getElementsByTagName("iframe").item(0) as HTMLIFrameElement;
             // lazy allocate iframe
             if (!frame) {
-                let wrapper = this.createFrame();
+                let wrapper = this.createFrame(opts.light);
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
             } else this.startFrame(frame);

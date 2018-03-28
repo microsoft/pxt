@@ -275,7 +275,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
 
-        return <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
+        return <div id="homemenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
             <div className="left menu">
                 <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={() => this.brandIconClick()}>
                     {targetTheme.logo || targetTheme.portraitLogo
