@@ -534,6 +534,7 @@ namespace pxsim {
                         __this.currFrame = p;
                         __this.currFrame.overwrittenPC = false;
                         p = p.fn(p)
+                        //if (yieldSteps-- < 0 && maybeYield(p, p.pc, 0)) break;
                         __this.maybeUpdateDisplay()
                         if (__this.currFrame.overwrittenPC)
                             p = __this.currFrame
@@ -610,6 +611,7 @@ namespace pxsim {
             function buildResume(s: StackFrame, retPC: number) {
                 if (currResume) oops("already has resume")
                 s.pc = retPC;
+                let start = Date.now()
                 let fn = (v: any) => {
                     if (__this.dead) return;
                     if (__this.loopLock) {
@@ -617,6 +619,9 @@ namespace pxsim {
                         return;
                     }
                     runtime = __this;
+                    let now = Date.now()
+                    if (now - start > 3)
+                        lastYield = now
                     U.assert(s.pc == retPC);
                     if (v instanceof FnWrapper) {
                         let w = <FnWrapper>v
