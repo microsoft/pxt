@@ -372,7 +372,7 @@ export class ProjectView
             compiler.typecheckAsync()
                 .done(resp => {
                     let end = Util.now();
-                    // if typecheck is slow (>10s) 
+                    // if typecheck is slow (>10s)
                     // and it happened more than 2 times,
                     // it's a slow machine, go into light mode
                     if (!pxt.options.light && end - start > 10000 && this._slowTypeCheck++ > 1) {
@@ -2316,15 +2316,13 @@ $(() => {
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
     Promise.resolve()
         .then(() => {
-            const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+            const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
             if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
-                lang.setCookieLang(mlang[2]);
                 pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
             }
-            const useLang = mlang ? mlang[2] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+            const useLang = mlang ? mlang[3] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
-            if (useLang) pxt.tickEvent("locale." + useLang + (live ? ".live" : ""));
-            lang.setInitialLang(useLang);
+            const force = !!mlang && !!mlang[2];
             return Util.updateLocalizationAsync(
                 pxt.appTarget.id,
                 false,
@@ -2332,16 +2330,27 @@ $(() => {
                 useLang,
                 pxt.appTarget.versions.pxtCrowdinBranch,
                 pxt.appTarget.versions.targetCrowdinBranch,
-                live)
-                // Download sim translations and save them in the sim
-                .then(() => Util.downloadSimulatorLocalizationAsync(
-                    pxt.appTarget.id,
-                    config.commitCdnUrl,
-                    useLang,
-                    pxt.appTarget.versions.pxtCrowdinBranch,
-                    pxt.appTarget.versions.targetCrowdinBranch,
-                    live
-                )).then((simStrings) => {
+                live,
+                force)
+                .then(() => {
+                    if (pxt.Util.isLocaleEnabled(useLang)) {
+                        lang.setCookieLang(useLang);
+                    } else {
+                        pxt.tickEvent("unavailablelocale." + useLang + (force ? ".force" : ""));
+                    }
+                    pxt.tickEvent("locale." + pxt.Util.userLanguage() + (live ? ".live" : ""));
+
+                    // Download sim translations and save them in the sim
+                    return Util.downloadSimulatorLocalizationAsync(
+                        pxt.appTarget.id,
+                        config.commitCdnUrl,
+                        useLang,
+                        pxt.appTarget.versions.pxtCrowdinBranch,
+                        pxt.appTarget.versions.targetCrowdinBranch,
+                        live,
+                        force
+                    );
+                }).then((simStrings) => {
                     if (simStrings)
                         simulator.setTranslations(simStrings);
                 });
