@@ -797,7 +797,7 @@ namespace ts.pxtc.Util {
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0];
 
-        if (_localizeLang == code || !isLocaleEnabled(code) && !force)
+        if (_localizeLang == code || (!isLocaleEnabled(code) && !force))
             return Promise.resolve();
 
         const stringFiles: { branch: string, path: string }[] = simulator
