@@ -869,7 +869,7 @@ namespace ts.pxtc.Util {
 
     export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
         code = normalizeLanguageCode(code);
-        if (code === _localizeLang || !isLocaleEnabled(code) && !force)
+        if (code === _localizeLang || (!isLocaleEnabled(code) && !force))
             return Promise.resolve();
 
         return downloadTranslationsAsync(targetId, simulator, baseUrl, code, pxtBranch, targetBranch, live)
@@ -887,7 +887,7 @@ namespace ts.pxtc.Util {
 
     export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<pxt.Map<string>> {
         code = normalizeLanguageCode(code);
-        if (code === _localizeLang || !isLocaleEnabled(code) && !force)
+        if (code === _localizeLang || (!isLocaleEnabled(code) && !force))
             return Promise.resolve<pxt.Map<string>>(undefined);
 
         return downloadTranslationsAsync(targetId, true, baseUrl, code, pxtBranch, targetBranch, live)
