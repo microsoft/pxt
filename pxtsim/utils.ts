@@ -74,21 +74,21 @@ namespace pxsim.util {
         // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.fill
         if (!Uint8Array.prototype.fill) {
             Object.defineProperty(Uint8Array.prototype, 'fill', {
-                value: Array.prototype.slice,
+                value: Array.prototype.fill,
                 writable: true,
                 enumerable: true
             });
         }
         if (!Uint16Array.prototype.fill) {
             Object.defineProperty(Uint16Array.prototype, 'fill', {
-                value: Array.prototype.slice,
+                value: Array.prototype.fill,
                 writable: true,
                 enumerable: true
             });
         }
         if (!Uint32Array.prototype.fill) {
             Object.defineProperty(Uint32Array.prototype, 'fill', {
-                value: Array.prototype.slice,
+                value: Array.prototype.fill,
                 writable: true,
                 enumerable: true
             });
