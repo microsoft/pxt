@@ -61,7 +61,7 @@
 */
 
 @tallEditorBreakpoint: 44rem;
-@thinEditorBreakpoint: 24rem;
+@thinEditorBreakpoint: 50rem;
 
 /*--------------
    Form Input
