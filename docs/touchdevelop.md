@@ -10,8 +10,9 @@ We’d like to provide some history about TD, so you better understand our decis
 - In 2015, TD was used as the platform for the BBC micro:bit, a small microcontroller-based device deployed initially in UK schools and now around the world by the [micro:bit Education Foundation](http://microbit.org), as well as Microsoft’s Creative Computing for Games and Apps (CCGA) course.
 - In 2016, the learnings from TD, micro:bit, and CCGA informed the creation of a new programming experience called Microsoft MakeCode, based on Blockly and JavaScript. You can use MakeCode, free of charge, at https://www.makecode.com - it is a product supported by Microsoft’s Developer Division. For an introduction to MakeCode, see the MakeCode [blog](https://makecode.com/blog/makecode-overview).
 
-Come 2018, MakeCode is Microsoft’s programming environment for beginners. We are working hard to bring more courses to MakeCode, to make it a great place for educators and students. Currently, MakeCode supports programming of several devices, including the micro:bit, as well as Minecraft. We also are developing a [sprite-based game engine](https://makecode.com/td2mkcd) for MakeCode and a new course on gaming 
-programming, in the spirit of CCGA.
+Come 2018, MakeCode is Microsoft’s programming environment for beginners. We are working hard to bring more courses to MakeCode, to make it a great place for educators and students. Currently, MakeCode supports programming of the [micro:bit](https://makecode.microbit.org) and [Minecraft](https://minecraft.makecode.com), and has CS intro courses for both ([micro:bit course](https://makecode.microbit.org/courses/csintro), [Minecraft course](https://minecraft.makecode.com/courses/csintro)).
+
+We also are developing a [sprite-based game engine](https://makecode.com/td2mkcd) for MakeCode and a new course on gaming programming, in the spirit of CCGA.
 
 *The Touch Develop Team*
 
