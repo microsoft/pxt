@@ -215,8 +215,9 @@ switch (step) {
 
         function emitJmp(jmp: ir.Stmt) {
             if (jmp.lbl.lblNumUses == jumpToNextInstructionMarker) {
-                assert(jmp.jmpMode == ir.JmpMode.Always && jmp.expr != null)
-                emitExpr(jmp.expr)
+                assert(jmp.jmpMode == ir.JmpMode.Always)
+                if (jmp.expr)
+                    emitExpr(jmp.expr)
                 // no actual jump needed
                 return
             }
