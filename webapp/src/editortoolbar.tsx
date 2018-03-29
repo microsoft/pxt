@@ -103,7 +103,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const hasUndo = this.props.parent.editor.hasUndo();
         const hasRedo = this.props.parent.editor.hasRedo();
 
-        const showCollapsed = !tutorial;
+        const showCollapsed = !tutorial && !sandbox;
         const showProjectRename = !tutorial && !readOnly;
         const showUndoRedo = !tutorial && !readOnly;
         const showZoomControls = !tutorial;
