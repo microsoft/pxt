@@ -1,4 +1,5 @@
 /// <reference path="../typings/globals/bluebird/index.d.ts"/>
+/// <reference path="apptarget.ts"/>
 
 namespace ts.pxtc {
     export var __dummy = 42;
@@ -787,12 +788,16 @@ namespace ts.pxtc.Util {
         _localizeStrings = strs;
     }
 
-    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<void> {
+    export function isLocaleEnabled(code: string): boolean {
+        return pxt.appTarget.appTheme && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.indexOf(code) > -1;
+    }
+
+    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0];
 
-        if (_localizeLang == code) // nothing to do
+        if (_localizeLang == code || (!isLocaleEnabled(code) && !force))
             return Promise.resolve();
 
         const stringFiles: { branch: string, path: string }[] = simulator

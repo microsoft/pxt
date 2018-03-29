@@ -6,7 +6,6 @@ declare namespace pxt {
     // targetconfig.json
     interface TargetConfig {
         packages?: PackagesConfig;
-        languages?: string[];
         notifications?: Map<Notification>; // domain specific notifications to show users on load
         windowsStoreLink?: string;
     }
@@ -221,6 +220,7 @@ declare namespace pxt {
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
         selectLanguage?: boolean; // add language picker to settings menu
+        availableLocales?: string[]; // the list of enabled language codes
         defaultBlockGap?: number; // For targets to override block gap
         appPathNames?: string[]; // Authorized URL paths in UWP, all other paths will display a warning banner
     }

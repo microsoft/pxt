@@ -22,11 +22,12 @@ Looking to help translate **microbit.org**? Try http://translate.microbit.org/ t
 
 ## Live Translations
 
-To test your changes "live", use **beta** build and the ``?livelang=CODE`` query argument where ``CODE`` is your language ISO code. For example, to see the french translations:
+To test your changes "live", use **beta** build and the ``#liveforcelang=CODE`` hash argument where ``CODE`` is your language ISO code. For example, to see the french translations:
 
-* https://pxt.microbit.org/beta?livelang=fr
+* https://pxt.microbit.org/beta?liveforcelang=fr
 
 Note that there may be a delay of up to 5 minutes before your changes in Crowdin make it into the "live" view.
+Also, the language will only be available in the editor's language selection if the target has enabled that locale - which is why you need to use the hash mentioned above.
 
 ## Translating the editor interface
 
@@ -39,7 +40,7 @@ You will find target specific localization files under folders in crowdin. For e
 * ``core-strings.json``: contains the block definitions
 * ``core-jsdoc-strings.json``: contains the descriptions
 
-The block definition should be carefully translated using the [block definition syntax](https://makecode.com/defining-blocks). 
+The block definition should be carefully translated using the [block definition syntax](https://makecode.com/defining-blocks).
 Open the developer tools and watch the console, PXT wil validate the localized string and flag potential issues.
 
 ### Block localization guidance
