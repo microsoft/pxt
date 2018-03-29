@@ -118,12 +118,14 @@ export class ProjectView
         this.reload = false; //set to true in case of reset of the project where we are going to reload the page.
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         const shouldShowHomeScreen = this.shouldShowHomeScreen();
+        const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
 
         this.state = {
             showFiles: false,
             home: shouldShowHomeScreen,
             active: document.visibilityState == 'visible',
-            collapseEditorTools: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile()
+            collapseEditorTools: pxt.appTarget.simulator.headless || (!isSandbox && pxt.BrowserUtils.isMobile()),
+            embedSimView: isSandbox
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -361,12 +363,22 @@ export class ProjectView
         },
         2000, true);
 
+    _slowTypeCheck = 0;
     private typecheck = pxtc.Util.debounce(
         () => {
             if (this.editor.isIncomplete()) return;
+            let start = Util.now();
             let state = this.editor.snapshotState()
             compiler.typecheckAsync()
                 .done(resp => {
+                    let end = Util.now();
+                    // if typecheck is slow (>10s) 
+                    // and it happened more than 2 times,
+                    // it's a slow machine, go into light mode
+                    if (!pxt.options.light && end - start > 10000 && this._slowTypeCheck++ > 1) {
+                        pxt.tickEvent("light.typecheck")
+                        pxt.options.light = true;
+                    }
                     this.editor.setDiagnostics(this.editorFile, state);
                     data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
                     if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
