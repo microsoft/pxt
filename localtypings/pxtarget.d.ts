@@ -6,7 +6,6 @@ declare namespace pxt {
     // targetconfig.json
     interface TargetConfig {
         packages?: PackagesConfig;
-        languages?: string[];
         // common galleries
         galleries?: pxt.Map<string>;
         // localized galleries
@@ -174,6 +173,7 @@ declare namespace pxt {
         description?: string;
         twitter?: string;
         defaultLocale?: string;
+        availableLocales?: string[];
         logoUrl?: string;
         logo?: string;
         portraitLogo?: string;
