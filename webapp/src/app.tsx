@@ -1705,7 +1705,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
-        const isApp = cmds.isNativeHost()|| pxt.winrt.isWinRT();
+        const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT();
 
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
@@ -1785,7 +1785,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         }
                                         <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={uiHandler(this.reset)} tabIndex={-1} />
                                         {!pxt.usb.isEnabled ? undefined :
-                                            <sui.Item role="menuitem" icon='usb' text={lf("Pair device") } onClick={uiHandler(this.pair)} tabIndex={-1} />}
+                                            <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={uiHandler(this.pair)} tabIndex={-1} />}
                                         {docMenu ? <div className="ui divider mobile only"></div> : undefined}
                                         {docMenu ? container.renderDocItems(this, "mobile only") : undefined}
                                         <div className="ui divider"></div>
@@ -2235,15 +2235,13 @@ $(() => {
 
     Promise.resolve()
         .then(() => {
-            const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+            const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
             if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
-                lang.setCookieLang(mlang[2]);
                 window.location.hash = window.location.hash.replace(mlang[0], "");
             }
-            const useLang = mlang ? mlang[2] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+            const useLang = mlang ? mlang[3] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
-            if (useLang) pxt.tickEvent("locale." + useLang + (live ? ".live" : ""));
-            lang.initialLang = useLang;
+            const force = !!mlang && !!mlang[2];
             return Util.updateLocalizationAsync(
                 pxt.appTarget.id,
                 false,
@@ -2251,7 +2249,16 @@ $(() => {
                 useLang,
                 pxt.appTarget.versions.pxtCrowdinBranch,
                 pxt.appTarget.versions.targetCrowdinBranch,
-                live);
+                live,
+                force)
+                .then(() => {
+                    if (pxt.Util.isLocaleEnabled(useLang)) {
+                        lang.setCookieLang(useLang);
+                    } else {
+                        pxt.tickEvent("unavailablelocale." + useLang + (force ? ".force" : ""));
+                    }
+                    pxt.tickEvent("locale." + pxt.Util.userLanguage() + (live ? ".live" : ""))
+                });
         })
         .then(() => pxt.BrowserUtils.initTheme())
         .then(() => cmds.initCommandsAsync())

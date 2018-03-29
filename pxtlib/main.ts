@@ -3,13 +3,12 @@
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 /// <reference path="../localtypings/pxtarget.d.ts"/>
 /// <reference path="util.ts"/>
+/// <reference path="apptarget.ts"/>
 
 namespace pxt {
     export import U = pxtc.Util;
     export import Util = pxtc.Util;
     const lf = U.lf;
-
-    export let appTarget: TargetBundle;
 
     export function setAppTarget(trg: TargetBundle) {
         appTarget = trg || <TargetBundle>{};
