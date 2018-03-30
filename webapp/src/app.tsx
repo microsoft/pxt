@@ -592,10 +592,14 @@ export class ProjectView
         sd.setMarkdown(md);
     }
 
-    setSideDoc(path: string, blocksEditor = true) {
+    setSideDoc(path: string, blocksEditor = true, popOut = false) {
         let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
-        if (path) sd.setPath(path, blocksEditor);
+        if (path) {
+            sd.setPath(path, blocksEditor);
+            if (popOut)
+                setTimeout(() => sd.popOut(), 500);
+        }
         else sd.collapse();
     }
 
@@ -1363,36 +1367,9 @@ export class ProjectView
 
     printCode() {
         const p = pkg.mainEditorPkg();
-        pxt.tickEvent("menu.print");
-        let md = `
-# ${p.header.name}
-
-        `;
-        if (this.isJavaScriptActive())
-            md += `
-\`\`\`typescript
-${p.files["main.ts"].content}
-\`\`\`
-        `;
-        else if (p.files["main.blocks"])
-            md += `
-\`\`\`blockly
-${p.files["main.blocks"].content}
-\`\`\`
-`;
-
-        // add depedencies
-        md += `
-\`\`\`package
-${p.pkgAndDeps()
-    .filter(dep => dep.getPkgId() != "this" && dep != p.outputPkg)
-    .map(dep => `${dep.getPkgId()}=${dep.getKsPkg().verProtocol() == "embed" ? "*" : dep.getKsPkg().version()}`)
-    .join('\r\n')
-}
-\`\`\``;
-
+        const files = p.getAllFiles();
         // render in sidedocs
-        this.setSideMarkdown(md);
+        this.setSideDoc(`project:${encodeURIComponent(JSON.stringify(files))}`, true, true);
     }
 
     clearSerial() {

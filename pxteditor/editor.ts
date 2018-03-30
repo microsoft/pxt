@@ -151,7 +151,7 @@ namespace pxt.editor {
 
         setFile(fn: IFile): void;
         setSideFile(fn: IFile): void;
-        setSideDoc(path: string, blocksEditor?: boolean): void;
+        setSideDoc(path: string, blocksEditor?: boolean, popOut?: boolean): void;
         setSideMarkdown(md: string): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
         updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
