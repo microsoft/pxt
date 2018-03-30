@@ -489,20 +489,27 @@ namespace pxt.runner {
 
     export function renderProjectFilesAsync(content: HTMLElement, files: Map<string>, projectid: string = null, template = "blocks"): Promise<void> {
         const cfg = (JSON.parse(files[pxt.CONFIG_NAME]) || {}) as PackageConfig;
+
         let md = `# ${cfg.name} ${cfg.version ? cfg.version : ''}
 
 `;
         if (projectid)
-            md += `* ${pxt.appTarget.appTheme.shareUrl || "https://makecode.com/"}${projectid}`;
+            md += `* ${pxt.appTarget.appTheme.shareUrl || "https://makecode.com/"}${projectid}
+`;
         else
-            md += `* ${pxt.appTarget.appTheme.homeUrl}`;
+            md += `* ${pxt.appTarget.appTheme.homeUrl}
+`;
+        const readme = "README.md";
+        if (files[readme])
+            md += files[readme];
 
-        Object.keys(cfg.files).filter(f => f != pxt.CONFIG_NAME)
+        cfg.files.filter(f => f != pxt.CONFIG_NAME && f != readme)
             .forEach(f => {
-                md += `## ${f}
+                md += `
+## ${f}
 `;
                 if (/\.ts$/.test(f)) {
-                    md += `\`\`\`${template}
+                    md += `\`\`\`typescript
 ${files[f]}
 \`\`\`
 `;
@@ -511,7 +518,6 @@ ${files[f]}
 ${files[f]}
 \`\`\`
 `;
-
                 } else {
                     md += `\`\`\`${f.substr(f.indexOf('.'))}
 ${files[f]}
@@ -521,12 +527,13 @@ ${files[f]}
             });
 
         if (cfg && cfg.dependencies) {
-            md += `## Packages
+            md += `
+## Packages
 
-${Object.keys(cfg.dependencies).map(k => `* ${k}, ${cfg.dependencies[k]}`).join('\r\n')}}
+${Object.keys(cfg.dependencies).map(k => `* ${k}, ${cfg.dependencies[k]}`).join('\n')}
 
 \`\`\`package
-${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\r\n')}
+${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n')}
 \`\`\`
 `;
         }

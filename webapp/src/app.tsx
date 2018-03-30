@@ -1368,7 +1368,7 @@ export class ProjectView
         const files = p.getAllFiles();
         // render in sidedocs
         window.open(`${pxt.webConfig.docsUrl || '/--docs'}#project:${encodeURIComponent(JSON.stringify(files))}`, 'printcode');
-   }
+    }
 
     clearSerial() {
         this.serialEditor.clear()
