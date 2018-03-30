@@ -115,6 +115,10 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
         this.props.parent.about();
     }
 
+    print() {
+        this.props.parent.printCode();
+    }
+
     componentWillReceiveProps(nextProps: SettingsMenuItemProps) {
         const newState: SettingsMenuItemState = {};
         if (nextProps.highContrast != undefined) {
@@ -136,6 +140,7 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
         return <sui.DropdownMenuItem icon='setting large' title={lf("More...")} class="more-dropdown-menuitem">
             <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={() => this.openSettings()} tabIndex={-1} />
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={() => this.addPackage()} tabIndex={-1} /> : undefined}
+            <sui.Item role="menuitem" icon="print" text={lf("Print Code")} onClick={() => this.print()} tabIndex={-1} />
             <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={() => this.removeProject()} tabIndex={-1} />
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={() => this.showReportAbuse()} tabIndex={-1} /> : undefined}
             <div className="ui divider"></div>

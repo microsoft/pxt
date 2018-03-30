@@ -1361,6 +1361,40 @@ export class ProjectView
             })
     }
 
+    printCode() {
+        const p = pkg.mainEditorPkg();
+        pxt.tickEvent("menu.print");
+        let md = `
+# ${p.header.name}
+
+        `;
+        if (this.isJavaScriptActive())
+            md += `
+\`\`\`typescript
+${p.files["main.ts"].content}
+\`\`\`
+        `;
+        else if (p.files["main.blocks"])
+            md += `
+\`\`\`blockly
+${p.files["main.blocks"].content}
+\`\`\`
+`;
+
+        // add depedencies
+        md += `
+\`\`\`package
+${p.pkgAndDeps()
+    .filter(dep => dep.getPkgId() != "this" && dep != p.outputPkg)
+    .map(dep => `${dep.getPkgId()}=${dep.getKsPkg().verProtocol() == "embed" ? "*" : dep.getKsPkg().version()}`)
+    .join('\r\n')
+}
+\`\`\``;
+
+        // render in sidedocs
+        this.setSideMarkdown(md);
+    }
+
     clearSerial() {
         this.serialEditor.clear()
         const simIndicator = this.refs["simIndicator"] as serialindicator.SerialIndicator
