@@ -1,22 +1,37 @@
-# Retiring Touch Develop
+# Microsoft MakeCode is replacing Touch Develop 
+  
+## The Change Microsoft is Making 
 
-Dear Touch Develop Community:
+At Microsoft, we continually evaluate and invest in building the right tools to help every student learn the computer science skills they need to succeed in the future. Recently, we determined we needed to replace [Touch Develop](https://www.touchdevelop.com) with [Microsoft MakeCode](https://makecode.com) in order to provide a more holistic, hands-on computing education platform that will bring computer science to life through physical computing devices like the micro:bit and immersive experiences like Minecraft.  
+ 
+## What is Microsoft MakeCode? 
 
-We wish to inform you that the Touch Develop (TD) service will be shut down permanently on May 23, 2018. This means that all cloud hosted TD resources (scripts, images, etc.) will no longer be available from May 23, 2018 onward. See the [Touch Develop GitHub](https://github.com/microsoft/touchdevelop) for instructions on how to save scripts you wish to keep and run TD locally on your own machine (please note that this requires expertise with GitHub, Node.js and other technologies).
+MakeCode is Microsoft’s programming environment for beginners. We are working hard to bring more courses to MakeCode, to make it a great place for educators and students. Currently, MakeCode supports programming of several hardware devices and Minecraft.  
+ 
+## What is the impact of the change? 
 
-We’d like to provide some history about TD, so you better understand our decision to retire it:
-- In 2010, Microsoft Research (MSR) started the TD project. In the beginning, TD was a smartphone app for Windows Phone 7, using a cloud service to store and share scripts.
-- In 2012, we invested in a TD web app to serve users across more platforms - the TD smartphone app was eventually retired.
-- In 2015, TD was used as the platform for the BBC micro:bit, a small microcontroller-based device deployed initially in UK schools and now around the world by the [micro:bit Education Foundation](http://microbit.org), as well as Microsoft’s Creative Computing for Games and Apps (CCGA) course.
-- In 2016, the learnings from TD, micro:bit, and CCGA informed the creation of a new programming experience called Microsoft MakeCode, based on Blockly and JavaScript. You can use MakeCode, free of charge, at https://www.makecode.com - it is a product supported by Microsoft’s Developer Division. For an introduction to MakeCode, see the MakeCode [blog](https://makecode.com/blog/makecode-overview).
+Microsoft [Touch Develop](https://www.touchdevelop.com), a project developed by Microsoft Research to provide computing education to any student on any device, will no longer be available as of May 23, 2018.
+  
+As a result, customers using the “Creative Coding Through Games and Apps” (CCGA) course based on Touch Develop will no longer have access as of May 23, 2018. 
+ 
+## What if we are still using CCGA or Touch Develop this term? 
 
-Come 2018, MakeCode is Microsoft’s programming environment for beginners. We are working hard to bring more courses to MakeCode, to make it a great place for educators and students. Currently, MakeCode supports programming of the [micro:bit](https://makecode.microbit.org) and [Minecraft](https://minecraft.makecode.com), and has CS intro courses for both ([micro:bit course](https://makecode.microbit.org/courses/csintro), [Minecraft course](https://minecraft.makecode.com/courses/csintro)).
+Microsoft advises that all teachers have scripts graded by the 23rd of May.  
+  
+## What to expect next? 
 
-We also are developing a [sprite-based game engine](https://makecode.com/td2mkcd) for MakeCode and a new course on gaming programming, in the spirit of CCGA.
+We know that providing high quality curriculum that maps to real-world skills is vital to you. The good news is that we are building new curriculum based on Microsoft MakeCode (which will support a new sprite-based game engine). Some of the benefits of this new curriculum are: 
+* It will support coding with Blocks and TypeScript/JavaScript giving learners at different levels the flexibility to progress at their own pace;
+* It will be expanded to include the fundamentals of Beginning Computer Science, including events, coordinates, variables, iteration, conditionals, functions, arrays, algorithms, and more, through a variety of hands-on activities. 
+* It will be aligned with CSTA standards and can be used for the CS Principles Exam 
+ 
+This new Introductory Computer Science curriculum will be available to existing Microsoft Imagine Academy customers for feedback in late May, with an expected full product launch later this summer.  When the beta launches in May, we will include an initial set of lessons for each topic area, as well as an introduction, educator lessons, and even a few advanced topics. 
+  
+## Some handy links 
 
-*The Touch Develop Team*
+* The Touch Develop team tells more about the [retirement of Touch Develop](https://makecode.com/tdteam)
+* If you have questions about Touch Develop please talk to us on yammer at [Touch Develop](https://www.yammer.com/microsoftteachers/#/threads/inGroup?type=in_group&feedId=6287047&view=all)
+* For questions around CCGA please talk to us on Yammer at [CCGA Educators](https://www.yammer.com/microsoftteachers/#/threads/inGroup?type=in_group&feedId=6454453&view=all) 
+* Information on transitioning from Touch Develop to MakeCode (especially regarding the sprite-based game engine) can be found at https://makecode.com/td2mkcd. 
+* You can learn more about Microsoft MakeCode at [makecode.com](https://makecode.com)
 
-P.S. Both the Touch Develop web app and cloud backend are open source under the MIT license:
-
-- https://github.com/microsoft/touchdevelop
-- https://github.com/microsoft/touchdevelop-backend
