@@ -820,7 +820,6 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
         // code may be undefined or empty!!!
-
         const packageid = options && options.packageId ? "pub:" + options.packageId :
             options && options.package ? "docs:" + options.package
                 : null;
@@ -857,6 +856,28 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
                             compileJS: resp,
                             compileBlocks: bresp,
                             blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
+                        };
+                    })
+            });
+    }
+
+    export function compileBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
+        const packageid = options && options.packageId ? "pub:" + options.packageId :
+            options && options.package ? "docs:" + options.package
+                : null;
+        return loadPackageAsync(packageid, "")
+            .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
+            .then(opts => {
+                opts.ast = true
+                const resp = pxtc.compile(opts)
+                const apis = pxtc.getApiInfo(opts, resp.ast);
+                return ts.pxtc.localizeApisAsync(apis, mainPkg)
+                    .then(() => {
+                        const blocksInfo = pxtc.getBlocksInfo(apis);
+                        pxt.blocks.initBlocks(blocksInfo);
+                        return <DecompileResult>{
+                            package: mainPkg,
+                            blocksSvg: pxt.blocks.render(code, options)
                         };
                     })
             });
