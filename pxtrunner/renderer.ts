@@ -58,7 +58,7 @@ namespace pxt.runner {
         let images = cdn + "images"
         let $h = $('<div class="ui bottom attached tabular icon small compact menu hideprint">'
             + ' <div class="right icon menu"></div></div>');
-        let $c = $('<div class="ui top attached segment"></div>');
+        let $c = $('<div class="ui top attached segment nobreak"></div>');
         let $menu = $h.find('.right.menu');
 
         const theme = pxt.appTarget.appTheme || {};

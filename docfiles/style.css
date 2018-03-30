@@ -368,6 +368,10 @@ print only stuff
     display:none !important;
 }
 
+segment, .nobreak {
+    page-break-inside: avoid;
+}
+
 @media only print {
     .showprint {
         display:block !important;
