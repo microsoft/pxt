@@ -595,7 +595,9 @@ export class ProjectView
     setSideDoc(path: string, blocksEditor = true) {
         let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
-        if (path) sd.setPath(path, blocksEditor);
+        if (path) {
+            sd.setPath(path, blocksEditor);
+        }
         else sd.collapse();
     }
 
@@ -1359,6 +1361,13 @@ export class ProjectView
             .finally(() => {
                 if (running) this.startSimulator()
             })
+    }
+
+    printCode() {
+        const p = pkg.mainEditorPkg();
+        const files = p.getAllFiles();
+        // render in sidedocs
+        window.open(`${pxt.webConfig.docsUrl || '/--docs'}#project:${encodeURIComponent(JSON.stringify(files))}`, 'printcode');
     }
 
     clearSerial() {

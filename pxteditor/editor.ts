@@ -178,6 +178,7 @@ namespace pxt.editor {
         toggleMute(): void;
         openInstructions(): void;
         closeFlyout(): void;
+        printCode(): void;
 
         setBanner(b: boolean): void;
 
