@@ -368,15 +368,18 @@ print only stuff
     display:none !important;
 }
 
-ui.segment, .nobreak {
-    page-break-inside: avoid;
-}
-
-h1, h2, h3 {
-    page-break-after: avoid;
-}
-
 @media only print {
+    ui.segment, .nobreak, pre, code, blockquote {
+        page-break-inside: avoid;
+    }
+    h1, h2, h3, h4, h5, h6, img {
+        page-break-inside: avoid;
+        page-break-after: avoid;
+    }
+    ul, ol, dl {
+        page-break-before: avoid;
+    }
+        
     .showprint {
         display:block !important;
     }
