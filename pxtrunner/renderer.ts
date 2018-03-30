@@ -5,6 +5,7 @@ namespace pxt.runner {
         snippetClass?: string;
         signatureClass?: string;
         blocksClass?: string;
+        blocksXmlClass?: string;
         projectClass?: string;
         blocksAspectRatio?: number;
         simulatorClass?: string;
@@ -57,7 +58,7 @@ namespace pxt.runner {
         let images = cdn + "images"
         let $h = $('<div class="ui bottom attached tabular icon small compact menu hideprint">'
             + ' <div class="right icon menu"></div></div>');
-        let $c = $('<div class="ui top attached segment"></div>');
+        let $c = $('<div class="ui top attached segment nobreak"></div>');
         let $menu = $h.find('.right.menu');
 
         const theme = pxt.appTarget.appTheme || {};
@@ -246,6 +247,37 @@ namespace pxt.runner {
             const segment = $('<div class="ui segment"/>').append(s);
             c.replaceWith(segment);
         }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
+    }
+
+    function renderBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
+        if (!opts.blocksXmlClass) return Promise.resolve();
+        const cls = opts.blocksXmlClass;
+        function renderNextXmlAsync(cls: string,
+            render: (container: JQuery, r: pxt.runner.DecompileResult) => void,
+            options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
+            let $el = $("." + cls).first();
+            if (!$el[0]) return Promise.resolve();
+
+            if (!options.emPixels) options.emPixels = 14;
+            return pxt.runner.compileBlocksAsync($el.text(), options)
+                .then((r) => {
+                    try {
+                        render($el, r);
+                    } catch (e) {
+                        console.error('error while rendering ' + $el.html())
+                        $el.append($('<div/>').addClass("ui segment warning").text(e.message));
+                    }
+                    $el.removeClass(cls);
+                    return Promise.delay(1, renderNextXmlAsync(cls, render, options));
+                })
+        }
+
+        return renderNextXmlAsync(cls, (c, r) => {
+            const s = r.blocksSvg;
+            if (opts.snippetReplaceParent) c = c.parent();
+            const segment = $('<div class="ui segment"/>').append(s);
+            c.replaceWith(segment);
+        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
     }
 
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
@@ -644,6 +676,7 @@ namespace pxt.runner {
             .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
             .then(() => renderSnippetsAsync(options))
             .then(() => renderBlocksAsync(options))
+            .then(() => renderBlocksXmlAsync(options))
             .then(() => renderProjectAsync(options))
     }
 }

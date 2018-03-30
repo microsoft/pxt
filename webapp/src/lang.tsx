@@ -98,12 +98,11 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
         }
     }
 
-    fetchLanguages(): string[] {
-        if (!pxt.appTarget.appTheme.selectLanguage)
-            return undefined;
-
-        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
-        return targetConfig ? targetConfig.languages : undefined;
+    languageList(): string[] {
+        if (pxt.appTarget.appTheme.selectLanguage && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.length) {
+            return pxt.appTarget.appTheme.availableLocales;
+        }
+        return defaultLanguages;
     }
 
     changeLanguage(langId: string) {
@@ -139,9 +138,8 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
         if (!this.state.visible) return <div></div>;
 
         const targetTheme = pxt.appTarget.appTheme;
-        const fetchedLangs = this.fetchLanguages();
-        const languagesToShow = fetchedLangs && fetchedLangs.length ? fetchedLangs : defaultLanguages;
-        const modalSize = languagesToShow.length > 4 ? "large" : "small";
+        const languageList = this.languageList();
+        const modalSize = languageList.length > 4 ? "large" : "small";
 
         return (
             <sui.Modal open={this.state.visible}
@@ -155,11 +153,9 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 closeOnDocumentClick
                 closeOnEscape
             >
-                {!fetchedLangs ?
-                    <div className="ui message info">{lf("loading...")}</div> : undefined}
-                {fetchedLangs ? <div className="group">
+                <div className="group">
                     <div className="ui cards centered" role="listbox">
-                        {languagesToShow.map(langId =>
+                        {languageList.map(langId =>
                             <codecard.CodeCardView className={`card-selected focused`}
                                 key={langId}
                                 name={allLanguages[langId].localizedName}
@@ -169,8 +165,10 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                                 onClick={() => this.changeLanguage(langId)}
                             />
                         )}
-                    </div></div> : undefined}
-                <p><br /><br />
+                    </div>
+                </div>
+                <p>
+                    <br /><br />
                     <a href={`https://crowdin.com/project/${targetTheme.crowdinProject}`} target="_blank" aria-label={lf("Help us translate")}>{lf("Help us translate")}</a>
                 </p>
             </sui.Modal>

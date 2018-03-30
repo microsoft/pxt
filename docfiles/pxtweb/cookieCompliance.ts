@@ -76,6 +76,11 @@ namespace pxt {
             return;
         }
 
+        if (isSandboxMode()) {
+            initializeAppInsights(false);
+            return;
+        }
+
         getCookieBannerAsync(document.domain, detectLocale(), (bannerErr, info) => {
             if (bannerErr || info.Error) {
                 // Start app insights, just don't drop any cookies
@@ -253,6 +258,15 @@ namespace pxt {
      */
     function isNativeApp(): boolean {
         return typeof Windows !== "undefined";
+    }
+    /**
+     * checks for sandbox
+     */
+    function isSandboxMode(): boolean {
+        //This is restricted set from pxt.shell.isSandBoxMode and specific to share page
+        //We don't want cookie notification in the share page
+        const sandbox = /sandbox=1|#sandbox|#sandboxproject/i.test(window.location.href)
+        return sandbox;
     }
 
     // No promises, so here we are

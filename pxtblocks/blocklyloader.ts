@@ -105,7 +105,7 @@ namespace pxt.blocks {
         return b ? b.fn : undefined;
     }
 
-    function createShadowValue(p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
+    function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
         defaultV = defaultV || p.defaultValue;
         shadowId = shadowId || p.shadowBlockId;
         let defaultValue: any;
@@ -136,7 +136,7 @@ namespace pxt.blocks {
         shadow.setAttribute("type", shadowId || typeInfo && typeInfo.block || p.type);
         shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
-        if (typeInfo) {
+        if (typeInfo && (!shadowId || typeInfo.block === shadowId)) {
             const field = document.createElement("field");
             shadow.appendChild(field);
 
@@ -162,11 +162,26 @@ namespace pxt.blocks {
 
             field.appendChild(value);
         }
-        else if (isVariable && defaultValue) {
+        else if (defaultValue) {
             const field = document.createElement("field");
-            shadow.appendChild(field);
-            field.setAttribute("name", "VAR");
             field.textContent = defaultValue;
+
+            if (isVariable) {
+                field.setAttribute("name", "VAR");
+                shadow.appendChild(field);
+            }
+            else if (shadowId) {
+                const shadowInfo = info.blocksById[shadowId];
+                if (shadowInfo && shadowInfo.attributes._def && shadowInfo.attributes._def.parameters.length) {
+                    const shadowParam = shadowInfo.attributes._def.parameters[0];
+                    field.setAttribute("name", shadowParam.name);
+                    shadow.appendChild(field);
+                }
+            }
+            else {
+                field.setAttribute("name", p.definitionName);
+                shadow.appendChild(field);
+            }
         }
 
         return value;
@@ -184,7 +199,7 @@ namespace pxt.blocks {
             block.setAttribute("gap", pxt.appTarget.appTheme.defaultBlockGap.toString());
         if (comp.thisParameter) {
             const t = comp.thisParameter;
-            block.appendChild(createShadowValue(t, t.shadowBlockId || "variables_get", t.defaultValue || t.definitionName));
+            block.appendChild(createShadowValue(info, t, t.shadowBlockId || "variables_get", t.defaultValue || t.definitionName));
         }
         if (fn.parameters) {
             comp.parameters.filter(pr => !pr.isOptional &&
@@ -193,7 +208,7 @@ namespace pxt.blocks {
                     let shadowValue: Element;
                     let container: HTMLElement;
                     if (pr.range) {
-                        shadowValue = createShadowValue(pr, "math_number_minmax");
+                        shadowValue = createShadowValue(info, pr, "math_number_minmax");
                         container = document.createElement('mutation');
                         container.setAttribute('min', pr.range.min.toString());
                         container.setAttribute('max', pr.range.max.toString());
@@ -203,7 +218,7 @@ namespace pxt.blocks {
                             if (pr.fieldOptions['color']) container.setAttribute('color', pr.fieldOptions['color']);
                         }
                     } else {
-                        shadowValue = createShadowValue(pr);
+                        shadowValue = createShadowValue(info, pr);
                     }
                     if (pr.fieldOptions) {
                         if (!container) container = document.createElement('mutation');

@@ -2,6 +2,7 @@
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 /// <reference path="../localtypings/pxtarget.d.ts"/>
 /// <reference path="util.ts"/>
+/// <reference path="apptarget.ts"/>
 /// <reference path="tickEvent.ts"/>
 
 namespace pxt {
@@ -9,10 +10,7 @@ namespace pxt {
     export import Util = pxtc.Util;
     const lf = U.lf;
 
-    export let appTarget: TargetBundle;
     let savedAppTarget: TargetBundle;
-    export let appTargetVariant: string;
-
     export function setAppTarget(trg: TargetBundle) {
         appTarget = trg || <TargetBundle>{};
 
