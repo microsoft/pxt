@@ -372,6 +372,10 @@ ui.segment, .nobreak {
     page-break-inside: avoid;
 }
 
+h1, h2, h3 {
+    page-break-after: avoid;
+}
+
 @media only print {
     .showprint {
         display:block !important;
