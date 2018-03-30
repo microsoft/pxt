@@ -484,6 +484,14 @@ namespace pxt.runner {
                 let md = `\`\`\`${template}
 ${files["main.ts"]}
 \`\`\``;
+                const cfg = JSON.parse(files[pxt.CONFIG_NAME]) as PackageConfig;
+                if (cfg && cfg.dependencies) {
+                    md += `
+\`\`\`package
+${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\r\n')}
+\`\`\`
+`;
+                }
                 return renderMarkdownAsync(content, md);
             })
     }
