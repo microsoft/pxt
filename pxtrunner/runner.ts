@@ -501,7 +501,7 @@ namespace pxt.runner {
 `;
         const readme = "README.md";
         if (files[readme])
-            md += files[readme];
+            md += files[readme].replace(/^#+/, "$0#"); // bump all headers down 1
 
         cfg.files.filter(f => f != pxt.CONFIG_NAME && f != readme)
             .forEach(f => {

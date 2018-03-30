@@ -251,7 +251,6 @@ namespace pxt.runner {
 
     function renderBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
         if (!opts.blocksXmlClass) return Promise.resolve();
-
         const cls = opts.blocksXmlClass;
         function renderNextXmlAsync(cls: string,
             render: (container: JQuery, r: pxt.runner.DecompileResult) => void,
@@ -260,7 +259,6 @@ namespace pxt.runner {
             if (!$el[0]) return Promise.resolve();
 
             if (!options.emPixels) options.emPixels = 14;
-            if (!options.layout) options.layout = pxt.blocks.BlockLayout.Flow;
             return pxt.runner.compileBlocksAsync($el.text(), options)
                 .then((r) => {
                     try {
