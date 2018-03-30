@@ -417,6 +417,10 @@ namespace pxt.runner {
             Promise.delay(100) // allow UI to update
                 .then(() => {
                     switch (doctype) {
+                        case "project":
+                            return renderProjectFilesAsync(content, JSON.parse(src));
+                        case "projectid":
+                            return renderProjectAsync(content, JSON.parse(src));
                         case "doc":
                             return renderDocAsync(content, src);
                         case "tutorial":
@@ -454,7 +458,7 @@ namespace pxt.runner {
         }
 
         function renderHash() {
-            let m = /^#(doc|md|tutorial|book):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
+            let m = /^#(doc|md|tutorial|book|project|projectid):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
                 const p = m[4] ? setEditorContextAsync(
@@ -480,10 +484,10 @@ namespace pxt.runner {
     export function renderProjectAsync(content: HTMLElement, projectid: string, template = "blocks"): Promise<void> {
         return Cloud.privateGetTextAsync(projectid + "/text")
             .then(txt => JSON.parse(txt))
-            .then(files => renderProjectFiles(content, files, projectid, template));
+            .then(files => renderProjectFilesAsync(content, files, projectid, template));
     }
 
-    export function renderProjectFiles(content: HTMLElement, files: Map<string>, projectid: string = null, template = "blocks"): Promise<void> {
+    export function renderProjectFilesAsync(content: HTMLElement, files: Map<string>, projectid: string = null, template = "blocks"): Promise<void> {
         const cfg = (JSON.parse(files[pxt.CONFIG_NAME]) || {}) as PackageConfig;
         let md = `# ${cfg.name} ${cfg.version ? cfg.version : ''}
 

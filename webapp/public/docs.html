@@ -113,7 +113,7 @@
             }
             else if (project) {
                 const files = JSON.parse(project[1]);
-                pxt.runner.renderProjectFiles(content, files).done(function() {
+                pxt.runner.renderProjectFilesAsync(content, files).done(function() {
                     $(loading).hide();
                     $(content).show();
                 });
