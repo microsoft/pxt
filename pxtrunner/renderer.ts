@@ -251,34 +251,7 @@ namespace pxt.runner {
 
     function renderBlocksXmlAsync(options: ClientRenderOptions): Promise<void> {
         if (!options.blocksXmlClass) return Promise.resolve();
-
-        function render() {
-            let $el = $("." + options.blocksXmlClass).first();
-            if (!$el[0]) return Promise.resolve();
-
-            const code = $el.text();
-        return runner.loadPackageAsync(null, null)
-            .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
-            .then(opts => {
-                // decompile to blocks
-                let apis = pxtc.getApiInfo(opts, resp.ast);
-                return ts.pxtc.localizeApisAsync(apis, mainPkg)
-                    .then(() => {
-                        let blocksInfo = pxtc.getBlocksInfo(apis);
-                        pxt.blocks.initBlocks(blocksInfo);
-                        return <DecompileResult>{
-                            package: mainPkg,
-                            blocksSvg: pxt.blocks.render(code, options)
-                        };
-                    })
-            });            
-        }
-        return renderNextSnippetAsync(options.blocksXmlClass, (c, r) => {
-            const s = r.blocksSvg;
-            if (options.snippetReplaceParent) c = c.parent();
-            const segment = $('<div class="ui segment"/>').append(s);
-            c.replaceWith(segment);
-        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
+        return Promise.resolve();
     }
 
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {

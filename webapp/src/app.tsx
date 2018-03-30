@@ -592,13 +592,11 @@ export class ProjectView
         sd.setMarkdown(md);
     }
 
-    setSideDoc(path: string, blocksEditor = true, popOut = false) {
+    setSideDoc(path: string, blocksEditor = true) {
         let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
         if (path) {
             sd.setPath(path, blocksEditor);
-            if (popOut)
-                setTimeout(() => sd.popOut(), 500);
         }
         else sd.collapse();
     }
@@ -1369,8 +1367,8 @@ export class ProjectView
         const p = pkg.mainEditorPkg();
         const files = p.getAllFiles();
         // render in sidedocs
-        this.setSideDoc(`project:${encodeURIComponent(JSON.stringify(files))}`, true, true);
-    }
+        window.open(`${pxt.webConfig.docsUrl || '/--docs'}#project:${encodeURIComponent(JSON.stringify(files))}`, 'printcode');
+   }
 
     clearSerial() {
         this.serialEditor.clear()
