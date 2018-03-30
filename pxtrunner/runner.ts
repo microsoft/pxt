@@ -480,20 +480,53 @@ namespace pxt.runner {
     export function renderProjectAsync(content: HTMLElement, projectid: string, template = "blocks"): Promise<void> {
         return Cloud.privateGetTextAsync(projectid + "/text")
             .then(txt => JSON.parse(txt))
-            .then((files: Map<string>) => {
-                let md = `\`\`\`${template}
-${files["main.ts"]}
-\`\`\``;
-                const cfg = JSON.parse(files[pxt.CONFIG_NAME]) as PackageConfig;
-                if (cfg && cfg.dependencies) {
-                    md += `
+            .then(files => renderProjectFiles(content, files, projectid, template));
+    }
+
+    export function renderProjectFiles(content: HTMLElement, files: Map<string>, projectid: string = null, template = "blocks"): Promise<void> {
+        const cfg = (JSON.parse(files[pxt.CONFIG_NAME]) || {}) as PackageConfig;
+        let md = `# ${cfg.name} ${cfg.version ? cfg.version : ''}
+
+`;
+        if (projectid)
+            md += `* ${pxt.appTarget.appTheme.shareUrl || "https://makecode.com/"}${projectid}`;
+        else
+            md += `* ${pxt.appTarget.appTheme.homeUrl}`;
+
+        Object.keys(cfg.files).filter(f => f != pxt.CONFIG_NAME)
+            .forEach(f => {
+                md += `## ${f}
+`;
+                if (/\.ts$/.test(f)) {
+                    md += `\`\`\`${template}
+${files[f]}
+\`\`\`
+`;
+                } else if (/\.blocks?$/.test(f)) {
+                    md += `\`\`\`blocksxml
+${files[f]}
+\`\`\`
+`;
+
+                } else {
+                    md += `\`\`\`${f.substr(f.indexOf('.'))}
+${files[f]}
+\`\`\`
+`;
+                }
+            });
+
+        if (cfg && cfg.dependencies) {
+            md += `## Packages
+
+${Object.keys(cfg.dependencies).map(k => `* ${k}, ${cfg.dependencies[k]}`).join('\r\n')}}
+
 \`\`\`package
 ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\r\n')}
 \`\`\`
 `;
-                }
-                return renderMarkdownAsync(content, md);
-            })
+        }
+        return renderMarkdownAsync(content, md);
     }
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
@@ -636,6 +669,7 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\r
             snippetClass: 'lang-blocks',
             signatureClass: 'lang-sig',
             blocksClass: 'lang-block',
+            blocksXmlClass: 'lang-blocksxml',
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',
             namespacesClass: 'lang-namespaces',
