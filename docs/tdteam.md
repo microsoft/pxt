@@ -2,7 +2,9 @@
 
 Dear Touch Develop Community:
 
-We wish to inform you that the Touch Develop (TD) service will be shut down permanently on May 23, 2018. This means that all cloud hosted TD resources (scripts, images, etc.) will no longer be available from May 23, 2018 onward. See the [Touch Develop GitHub](https://github.com/microsoft/touchdevelop) for instructions on how to save scripts you wish to keep and run TD locally on your own machine (please note that this requires expertise with GitHub, Node.js and other technologies).
+We wish to inform you that the Touch Develop (TD) service will be shut down permanently on May 23, 2018. This means that all cloud hosted TD resources (scripts, images, etc.) will no longer be available from May 23, 2018 onward. 
+
+See the [Touch Develop GitHub](https://github.com/microsoft/touchdevelop) for instructions on how to save scripts you wish to keep and run TD locally on your own machine (please note that this requires expertise with GitHub, Node.js and other technologies).
 
 We’d like to provide some history about TD, so you better understand our decision to retire it:
 - In 2010, Microsoft Research (MSR) started the TD project. In the beginning, TD was a smartphone app for Windows Phone 7, using a cloud service to store and share scripts.
@@ -11,7 +13,7 @@ We’d like to provide some history about TD, so you better understand our decis
 - In 2016, the learnings from TD, micro:bit, and CCGA informed the creation of a new programming experience called Microsoft MakeCode, based on Blockly and JavaScript. You can use MakeCode, free of charge, at https://www.makecode.com - it is a product supported by Microsoft’s Developer Division. For an introduction to MakeCode, see the MakeCode [blog](https://makecode.com/blog/makecode-overview).
 
 Come 2018, [Microsoft MakeCode is replacing Touch Develop](https://makecode.com/touchdevelop) 
-as a beginning programming environment. We also are developing a [sprite-based game engine](https://makecode.com/td2mkcd) for MakeCode and a new course on gaming programming, in the spirit of CCGA.
+as a beginning programming environment. We also are developing a [sprite-based game engine](https://makecode.com/td2mkcd) for MakeCode and a new course on game programming, in the spirit of CCGA.
 
 *The Touch Develop Team*
 

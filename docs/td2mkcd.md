@@ -1,7 +1,7 @@
 # Moving from Touch Develop to MakeCode
 
 This page is primarily for users who previously used [Touch Develop](http://www.touchdevelop.com)
-and the [Creative Computing for Games and Apps](http://www.touchdevelop.com/ccga) course. 
+and the *Creative Computing for Games and Apps* course. 
 
 ## Your Scripts
 
