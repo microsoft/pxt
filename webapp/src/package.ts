@@ -433,6 +433,30 @@ data.mountVirtualApi("open-meta", {
     },
 })
 
+export interface PackageMeta {
+    numErrors: number;
+}
+
+/*
+    open-pkg-meta:<pkgName> - number of errors
+*/
+data.mountVirtualApi("open-pkg-meta", {
+    getSync: p => {
+        p = data.stripProtocol(p)
+        let f = allEditorPkgs().filter(pkg => pkg.getPkgId() == p)[0];
+        if (!f || f.getPkgId() == "built")
+            return {}
+
+        const files = f.sortedFiles();
+        const numErrors = files.reduce((n, file) => n + (file.numDiagnosticsOverride
+            || (file.diagnostics ? file.diagnostics.length : 0)
+            || 0), 0);
+        return <PackageMeta>{
+            numErrors
+        }
+    }
+})
+
 // pkg-status:<guid>
 data.mountVirtualApi("pkg-status", {
     getSync: p => {

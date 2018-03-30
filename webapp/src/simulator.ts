@@ -204,7 +204,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
         partDefinitions: pkg.computePartDefinitions(parts),
         cdnUrl: pxt.webConfig.commitCdnUrl,
         localizedStrings: simTranslations,
-        refCountingDebug: pxt.options.debug
+        refCountingDebug: pxt.options.debug,
+        version: pkg.version()
     }
     postSimEditorEvent("started");
 

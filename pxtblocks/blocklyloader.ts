@@ -22,7 +22,7 @@ namespace pxt.blocks {
         logic: '\uf074',
         math: '\uf1ec',
         variables: '\uf039',
-        functions: '\uf0cb',
+        functions: '\uf109',
         text: '\uf035',
         arrays: '\uf0cb'
     }
@@ -254,7 +254,7 @@ namespace pxt.blocks {
         return result;
     }
 
-    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement, showCategories = CategoryMode.Basic, comp: pxt.blocks.BlockCompileInfo, filters?: BlockFilters) {
+    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: Element, showCategories = CategoryMode.Basic, comp: pxt.blocks.BlockCompileInfo, filters?: BlockFilters) {
         // identity function are just a trick to get an enum drop down in the block
         // while allowing the parameter to be a number
         if (fn.attributes.blockHidden)
@@ -377,6 +377,22 @@ namespace pxt.blocks {
                 });
             }
             else {
+                // if requested, wrap block into a "set variable block"
+                if (fn.attributes.blockSetVariable && fn.retType) {
+
+                    const setblock = Blockly.Xml.textToDom(`
+<block type="variables_set" gap="${Util.htmlEscape((fn.attributes.blockGap || 8) + "")}">
+<field name="VAR" variabletype="">${Util.htmlEscape(fn.retType.toLowerCase())}</field>
+</block>`);
+                    {
+                        let value = document.createElement('value');
+                        value.setAttribute('name', 'VALUE');
+                        value.appendChild(block.cloneNode(true));
+                        setblock.appendChild(value);
+                    }
+                    block = setblock;
+                }
+
                 if (showCategories !== CategoryMode.None && !(showCategories === CategoryMode.Basic && isAdvanced)) {
                     insertBlock(block, category, fn.attributes.weight, fn.attributes.group);
                     injectToolboxIconCss();
@@ -789,11 +805,19 @@ namespace pxt.blocks {
             case "void": break; // do nothing
             //TODO
             default:
-                if (isArrayType(fn.retType)) {
-                    block.setOutput(true, ["Array", fn.retType]);
-                }
-                else {
-                    block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
+                if (fn.retType !== "T") {
+                    const opt_check = isArrayType(fn.retType) ? ["Array"] : [];
+
+                    const si_r = info.apis.byQName[fn.retType];
+                    if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
+                        opt_check.push(...si_r.extendsTypes);
+                    } else {
+                        opt_check.push(fn.retType);
+                    }
+
+                    block.setOutput(true, opt_check);
+                } else {
+                    block.setOutput(true);
                 }
         }
 
@@ -840,11 +864,12 @@ namespace pxt.blocks {
                         let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
                         let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowBlockId;
                         let isConstantShim = !!fn.attributes.constantShim;
+                        let isCombined = pr.type == "@combined@"
                         let customField = pr.fieldEditor;
                         let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
                         let fieldType = pr.type;
 
-                        if (isEnum || isFixed || isConstantShim) {
+                        if (isEnum || isFixed || isConstantShim || isCombined) {
                             let syms: pxtc.SymbolInfo[];
 
                             if (isEnum) {
@@ -852,6 +877,9 @@ namespace pxt.blocks {
                             }
                             else if (isFixed) {
                                 syms = getFixedInstanceDropdownValues(info.apis, typeInfo.qName);
+                            }
+                            else if (isCombined) {
+                                syms = fn.combinedProperties.map(p => U.lookup(info.apis.byQName, p))
                             }
                             else {
                                 syms = getConstantDropdownValues(info.apis, fn.qName);
@@ -861,7 +889,10 @@ namespace pxt.blocks {
                                 console.error(`no instances of ${typeInfo.qName} found`)
                             }
                             const dd = syms.map(v => {
-                                const k = v.attributes.block || v.attributes.blockId || v.name;
+                                let k = v.attributes.block || v.attributes.blockId || v.name;
+                                let comb = v.attributes.blockCombine
+                                if (!!comb)
+                                    k = k.replace(/@set/, "")
                                 return [
                                     v.attributes.iconURL || v.attributes.blockImage ? {
                                         src: v.attributes.iconURL || Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),

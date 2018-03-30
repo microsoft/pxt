@@ -44,6 +44,7 @@ declare namespace pxt {
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
         ignoreDocsErrors?: boolean;
+        variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
     }
 
     interface ProjectTemplate {

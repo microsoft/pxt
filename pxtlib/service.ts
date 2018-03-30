@@ -71,6 +71,8 @@ namespace ts.pxtc {
         pkg?: string;
         snippet?: string;
         blockFields?: ParsedBlockDef;
+        isReadOnly?: boolean;
+        combinedProperties?: string[];
     }
 
     export interface ApisInfo {
@@ -120,6 +122,8 @@ namespace ts.pxtc {
         blockAllowMultiple?: boolean; // override single block behavior for events
         blockHidden?: boolean; // not available directly in toolbox
         blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
+        blockCombine?: boolean;
+        blockSetVariable?: boolean; // show block with variable assigment in toolbox
         fixedInstances?: boolean;
         fixedInstance?: boolean;
         constantShim?: boolean;
@@ -307,19 +311,19 @@ namespace ts.pxtc {
 
     /* @internal */
     const enum TokenKind {
-        SingleAsterisk      = 1,
-        DoubleAsterisk      = 1 << 1,
-        SingleUnderscore    = 1 << 2,
-        DoubleUnderscore    = 1 << 3,
-        Escape              = 1 << 4,
-        Pipe                = 1 << 5,
-        Parameter           = 1 << 6,
-        Word                = 1 << 7,
-        Image               = 1 << 8,
-        TaggedText               = 1 << 9,
+        SingleAsterisk = 1,
+        DoubleAsterisk = 1 << 1,
+        SingleUnderscore = 1 << 2,
+        DoubleUnderscore = 1 << 3,
+        Escape = 1 << 4,
+        Pipe = 1 << 5,
+        Parameter = 1 << 6,
+        Word = 1 << 7,
+        Image = 1 << 8,
+        TaggedText = 1 << 9,
 
-        TripleUnderscore    = SingleUnderscore | DoubleUnderscore,
-        TripleAsterisk      = SingleAsterisk | DoubleAsterisk,
+        TripleUnderscore = SingleUnderscore | DoubleUnderscore,
+        TripleAsterisk = SingleAsterisk | DoubleAsterisk,
         StyleMarks = TripleAsterisk | TripleUnderscore,
         Bold = DoubleUnderscore | DoubleAsterisk,
         Italics = SingleUnderscore | SingleAsterisk
@@ -375,8 +379,107 @@ namespace ts.pxtc {
     }
 
     export function getBlocksInfo(info: ApisInfo): BlocksInfo {
-        const blocks = pxtc.Util.values(info.byQName)
-            .filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != pxtc.SymbolKind.EnumMember));
+        const blocks: SymbolInfo[] = []
+        const combinedSet: pxt.Map<SymbolInfo> = {}
+        const combinedGet: pxt.Map<SymbolInfo> = {}
+        const combinedChange: pxt.Map<SymbolInfo> = {}
+
+        function addCombined(tp: string, s: SymbolInfo) {
+            const isGet = tp == "get"
+            const m = isGet ? combinedGet :
+                tp == "set" ? combinedSet : combinedChange
+            let ex = U.lookup(m, s.namespace)
+            if (!ex) {
+                let paramName = s.namespace.toLowerCase()
+                ex = m[s.namespace] = {
+                    attributes: {
+                        callingConvention: ir.CallingConvention.Plain,
+                        paramDefl: {},
+                        jsDoc: isGet
+                            ? U.lf("Read value of a property on an object")
+                            : U.lf("Update value of property on an object")
+                    },
+                    name: "@" + tp + "@",
+                    namespace: s.namespace,
+                    pkg: s.pkg,
+                    kind: SymbolKind.Property,
+                    parameters: [
+                        {
+                            name: "property",
+                            description: isGet ?
+                                U.lf("the name of the property to read") :
+                                U.lf("the name of the property to change"),
+                            isEnum: true,
+                            type: "@combined@"
+                        },
+                        {
+                            name: "value",
+                            description: tp == "set" ?
+                                U.lf("the new value of the property") :
+                                U.lf("the amount by which to change the property"),
+                            type: "number"
+                        }
+                    ].slice(0, isGet ? 1 : 2),
+                    retType: isGet ? "number" : "void",
+                    combinedProperties: [],
+                }
+                ex.attributes.block = isGet ? `%${paramName} %property` :
+                    tp == "set" ?
+                        `set %${paramName} %property to %value` :
+                        `change %${paramName} %property by %value`
+                ex.attributes.blockId = ex.namespace + "_blockCombine_" + tp
+                ex.qName = ex.namespace + "." + ex.name
+                updateBlockDef(ex.attributes)
+                blocks.push(ex)
+            }
+
+            ex.combinedProperties.push(s.qName)
+        }
+
+        for (let s of pxtc.Util.values(info.byQName)) {
+            if (s.attributes.blockCombine) {
+                if (!s.isReadOnly) {
+                    addCombined("set", s)
+                    addCombined("change", s)
+                }
+                if (!/@set/.test(s.name))
+                    addCombined("get", s)
+            } else if (!!s.attributes.block
+                && !s.attributes.fixedInstance
+                && s.kind != pxtc.SymbolKind.EnumMember
+                && s.kind != pxtc.SymbolKind.Module
+                && s.kind != pxtc.SymbolKind.Interface
+                && s.kind != pxtc.SymbolKind.Class) {
+                if (!s.attributes.blockId)
+                    s.attributes.blockId = s.qName.replace(/\./g, "_")
+                if (s.attributes.block == "true") {
+                    let b = U.uncapitalize(s.name)
+                    if (s.kind == SymbolKind.Method || s.kind == SymbolKind.Property) {
+                        b += " %" + s.namespace.toLowerCase()
+                    }
+                    for (let p of s.parameters || []) {
+                        b += " %" + p.name
+                    }
+                    s.attributes.block = b
+                    updateBlockDef(s.attributes)
+                }
+                blocks.push(s)
+            }
+        }
+
+        // derive common block properties from namespace
+        for (let b of blocks) {
+            let parent = U.lookup(info.byQName, b.namespace)
+            if (!parent) continue
+            let pattr = parent.attributes as any
+            let battr = b.attributes as any
+
+            for (let n of ["blockNamespace", "color", "blockGap"]) {
+                if (battr[n] === undefined && pattr[n])
+                    battr[n] = pattr[n]
+            }
+        }
+
         return {
             apis: info,
             blocks,
@@ -418,6 +521,7 @@ namespace ts.pxtc {
                         }
                     }
                 }
+                updateBlockDef(fn.attributes);
             }))
             .then(() => apis);
     }
@@ -444,7 +548,16 @@ namespace ts.pxtc {
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
-    const booleanAttributes = ["advanced", "handlerStatement", "afterOnStart", "optionalVariableArgs", "blockHidden", "constantShim"]
+    const booleanAttributes = [
+        "advanced",
+        "handlerStatement",
+        "afterOnStart",
+        "optionalVariableArgs",
+        "blockHidden",
+        "constantShim",
+        "blockCombine",
+        "blockSetVariable"
+    ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
         let res: CommentAttrs = {
@@ -574,15 +687,19 @@ namespace ts.pxtc {
                 res.groupIcons = undefined;
             }
         }
-        if (res.block) {
-            const parts = res.block.split("||");
-            res._def = parseBlockDefinition(parts[0]);
-            if (!res._def) pxt.debug("Unable to parse block def for id: " + res.blockId);
-            if (parts[1]) res._expandedDef = parseBlockDefinition(parts[1]);
-            if (parts[1] && !res._expandedDef) pxt.debug("Unable to parse expanded block def for id: " + res.blockId);
-        }
+        updateBlockDef(res);
 
         return res
+    }
+
+    export function updateBlockDef(attrs: CommentAttrs) {
+        if (attrs.block) {
+            const parts = attrs.block.split("||");
+            attrs._def = parseBlockDefinition(parts[0]);
+            if (!attrs._def) pxt.debug("Unable to parse block def for id: " + attrs.blockId);
+            if (parts[1]) attrs._expandedDef = parseBlockDefinition(parts[1]);
+            if (parts[1] && !attrs._expandedDef) pxt.debug("Unable to parse expanded block def for id: " + attrs.blockId);
+        }
     }
 
     export function parseBlockDefinition(def: string): ParsedBlockDef {
@@ -733,12 +850,12 @@ namespace ts.pxtc {
 
         function eatToken(pred: (c: string) => boolean, skipCurrent = false) {
             let current = "";
-            if (skipCurrent) ++strIndex
+            if (skipCurrent) strIndex++
             while (strIndex < def.length && pred(def[strIndex])) {
                 current += def[strIndex];
                 ++strIndex;
             }
-            if (current) --strIndex;
+            if (current) strIndex--;
             return current;
         }
 
