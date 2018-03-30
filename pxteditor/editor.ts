@@ -158,6 +158,7 @@ namespace pxt.editor {
         toggleSimulatorCollapse(): void;
         proxySimulatorMessage(content: string): void;
         toggleTrace(): void;
+        printCode(): void;
 
         setBanner(b: boolean): void;
 

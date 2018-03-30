@@ -387,6 +387,10 @@ namespace pxt.runner {
             Promise.delay(100) // allow UI to update
                 .then(() => {
                     switch (doctype) {
+                        case "project":
+                            return renderProjectFilesAsync(content, JSON.parse(src));
+                        case "projectid":
+                            return renderProjectAsync(content, JSON.parse(src));
                         case "doc":
                             return renderDocAsync(content, src);
                         case "tutorial":
@@ -423,7 +427,7 @@ namespace pxt.runner {
         }
 
         function renderHash() {
-            let m = /^#(doc|md|tutorial|book):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
+            let m = /^#(doc|md|tutorial|book|project|projectid):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
                 const p = m[4] ? setEditorContextAsync(
@@ -447,12 +451,62 @@ namespace pxt.runner {
     export function renderProjectAsync(content: HTMLElement, projectid: string, template = "blocks"): Promise<void> {
         return Cloud.privateGetTextAsync(projectid + "/text")
             .then(txt => JSON.parse(txt))
-            .then((files: Map<string>) => {
-                let md = `\`\`\`${template}
-${files["main.ts"]}
-\`\`\``;
-                return renderMarkdownAsync(content, md);
-            })
+            .then(files => renderProjectFilesAsync(content, files, projectid, template));
+    }
+
+    export function renderProjectFilesAsync(content: HTMLElement, files: Map<string>, projectid: string = null, template = "blocks"): Promise<void> {
+        const cfg = (JSON.parse(files[pxt.CONFIG_NAME]) || {}) as PackageConfig;
+
+        let md = `# ${cfg.name} ${cfg.version ? cfg.version : ''}
+
+`;
+        if (projectid)
+            md += `* ${pxt.appTarget.appTheme.shareUrl || "https://makecode.com/"}${projectid}
+
+`;
+        else
+            md += `* ${pxt.appTarget.appTheme.homeUrl}
+
+`;
+        const readme = "README.md";
+        if (files[readme])
+            md += files[readme].replace(/^#+/, "$0#") + '\n'; // bump all headers down 1
+
+        cfg.files.filter(f => f != pxt.CONFIG_NAME && f != readme)
+            .forEach(f => {
+                md += `
+## ${f}
+`;
+                if (/\.ts$/.test(f)) {
+                    md += `\`\`\`typescript
+${files[f]}
+\`\`\`
+`;
+                } else if (/\.blocks?$/.test(f)) {
+                    md += `\`\`\`blocksxml
+${files[f]}
+\`\`\`
+`;
+                } else {
+                    md += `\`\`\`${f.substr(f.indexOf('.'))}
+${files[f]}
+\`\`\`
+`;
+                }
+            });
+
+        if (cfg && cfg.dependencies) {
+            md += `
+## Packages
+
+${Object.keys(cfg.dependencies).map(k => `* ${k}, ${cfg.dependencies[k]}`).join('\n')}
+
+\`\`\`package
+${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n')}
+\`\`\`
+`;
+        }
+        return renderMarkdownAsync(content, md);
     }
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
@@ -596,6 +650,7 @@ ${files["main.ts"]}
             signatureClass: 'lang-sig',
             blocksClass: 'lang-block',
             shuffleClass: 'lang-shuffle',
+            blocksXmlClass: 'lang-blocksxml',
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',
             namespacesClass: 'lang-namespaces',
@@ -700,7 +755,11 @@ ${files["main.ts"]}
     }
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
-        return loadPackageAsync(options && options.package ? "docs:" + options.package : null, code)
+        // code may be undefined or empty!!!
+        const packageid = options && options.packageId ? "pub:" + options.packageId :
+            options && options.package ? "docs:" + options.package
+                : null;
+        return loadPackageAsync(packageid, code)
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
             .then(opts => {
                 // compile
@@ -735,6 +794,39 @@ ${files["main.ts"]}
                         };
                     })
             });
+    }
+
+    export function compileBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
+        const packageid = options && options.packageId ? "pub:" + options.packageId :
+            options && options.package ? "docs:" + options.package
+                : null;
+        return loadPackageAsync(packageid, "")
+            .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
+            .then(opts => {
+                opts.ast = true
+                const resp = pxtc.compile(opts)
+                const apis = pxtc.getApiInfo(opts, resp.ast);
+                return ts.pxtc.localizeApisAsync(apis, mainPkg)
+                    .then(() => {
+                        const blocksInfo = pxtc.getBlocksInfo(apis);
+                        pxt.blocks.initBlocks(blocksInfo);
+                        return <DecompileResult>{
+                            package: mainPkg,
+                            blocksSvg: pxt.blocks.render(code, options)
+                        };
+                    })
+            });
+    }
+
+    let pendingLocalToken: (() => void)[] = [];
+
+    function waitForLocalTokenAsync() {
+        if (pxt.Cloud.localToken) {
+            return Promise.resolve();
+        }
+        return new Promise<void>((resolve, reject) => {
+            pendingLocalToken.push(resolve);
+        });
     }
 
     export var initCallbacks: (() => void)[] = [];

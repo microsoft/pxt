@@ -533,7 +533,9 @@ export class ProjectView
     setSideDoc(path: string, blocksEditor = true) {
         let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
-        if (path) sd.setPath(path, blocksEditor);
+        if (path) {
+            sd.setPath(path, blocksEditor);
+        }
         else sd.collapse();
     }
 
@@ -1238,6 +1240,13 @@ export class ProjectView
             });
     }
 
+    printCode() {
+        const p = pkg.mainEditorPkg();
+        const files = p.getAllFiles();
+        // render in sidedocs
+        window.open(`${pxt.webConfig.docsUrl || '/--docs'}#project:${encodeURIComponent(JSON.stringify(files))}`, 'printcode');
+    }
+
     clearSerial() {
         this.serialEditor.clear()
         const simIndicator = this.refs["simIndicator"] as serialindicator.SerialIndicator
@@ -1775,6 +1784,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                     <sui.DropdownMenuItem icon='setting large' title={lf("More...")} class="more-dropdown-menuitem">
                                         {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={uiHandler(() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")))} tabIndex={-1} /> : undefined}
                                         {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...")} onClick={uiHandler(this.addPackage)} tabIndex={-1} /> : undefined}
+                                        {this.state.header ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={uiHandler(this.printCode)}} />: undefined }
                                         {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={uiHandler(this.removeProject)} tabIndex={-1} /> : undefined}
                                         {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={uiHandler(this.showReportAbuse)} tabIndex={-1} /> : undefined}
                                         <div className="ui divider"></div>
