@@ -368,7 +368,7 @@ print only stuff
     display:none !important;
 }
 
-segment, .nobreak {
+ui.segment, .nobreak {
     page-break-inside: avoid;
 }
 
