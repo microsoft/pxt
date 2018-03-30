@@ -495,13 +495,15 @@ namespace pxt.runner {
 `;
         if (projectid)
             md += `* ${pxt.appTarget.appTheme.shareUrl || "https://makecode.com/"}${projectid}
+
 `;
         else
             md += `* ${pxt.appTarget.appTheme.homeUrl}
+
 `;
         const readme = "README.md";
         if (files[readme])
-            md += files[readme].replace(/^#+/, "$0#"); // bump all headers down 1
+            md += files[readme].replace(/^#+/, "$0#") + '\n'; // bump all headers down 1
 
         cfg.files.filter(f => f != pxt.CONFIG_NAME && f != readme)
             .forEach(f => {
