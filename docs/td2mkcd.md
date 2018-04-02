@@ -1,7 +1,8 @@
 # Moving from Touch Develop to MakeCode
 
 This page is primarily for users who previously used [Touch Develop](http://www.touchdevelop.com)
-and the *Creative Computing for Games and Apps* (CCGA) course. 
+and the *Creative Computing for Games and Apps* (CCGA) course.  You also can read more about
+[MakeCode replacing Touch Develop](/touchdevelop) and [the retirement of Touch Develop](/tdteam).
 
 ## Your Scripts
 

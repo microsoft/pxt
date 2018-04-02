@@ -29,9 +29,9 @@ This new Introductory Computer Science curriculum will be available to existing 
   
 ## More information
 
-* Read more about the [retirement of Touch Develop](https://makecode.com/tdteam), from the Touch Develop team;
+* Read more about the [retirement of Touch Develop](/tdteam), from the Touch Develop team;
 * If you have questions about Touch Develop please talk to us on yammer at [Touch Develop](https://www.yammer.com/microsoftteachers/#/threads/inGroup?type=in_group&feedId=6287047&view=all);
 * For questions around CCGA please talk to us on Yammer at [CCGA Educators](https://www.yammer.com/microsoftteachers/#/threads/inGroup?type=in_group&feedId=6454453&view=all);
-* Information on transitioning from Touch Develop to MakeCode can be found at https://makecode.com/td2mkcd;
+* Read more about [transitioning from Touch Develop to MakeCode](/td2mkcd);
 * Learn more about Microsoft MakeCode at [makecode.com](https://makecode.com).
 
