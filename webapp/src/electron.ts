@@ -1,31 +1,6 @@
 import Cloud = pxt.Cloud;
 import * as core from "./core";
 
-enum UpdateEventType {
-    Critical = 1,
-    Notification,
-    Prompt
-}
-
-interface UpdateEventInfo {
-    type: UpdateEventType;
-    appName?: string;
-    isInitialCheck?: boolean;
-    targetVersion?: string;
-}
-
-interface TelemetryEventInfo {
-    event: string;
-    data: pxt.Map<string | number>;
-}
-
-interface ElectronMessage {
-    type: string;
-    args?: UpdateEventInfo | TelemetryEventInfo;
-}
-
-let electronSocket: WebSocket = null;
-
 const pxtElectron: pxt.electron.PxtElectron = (window as any).pxtElectron;
 export const isPxtElectron = !!pxtElectron;
 export const isIpcRenderer = !!(window as any).ipcRenderer;
@@ -38,6 +13,8 @@ export function initPxtElectronAsync(): Promise<void> {
     if (!isPxtElectron) {
         return Promise.resolve();
     }
+
+    pxtElectron.initTelemetry(pxt.tickEvent);
 
     return Cloud.downloadTargetConfigAsync()
         .then((targetConfig) => {

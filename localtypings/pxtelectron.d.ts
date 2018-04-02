@@ -15,9 +15,17 @@ declare namespace pxt.electron {
         majorReleases: { [majorVersion: number]: MajorRelease };
     }
 
+    export interface TelemetryEvent {
+        event: string;
+        data: pxt.Map<string | number>;
+    }
+
+    export type TelemetryHandler = (id: string, data?: Map<string | number>) => void;
+
     // The object that gets injected into the window
     export interface PxtElectron {
         updateApp: (version: string, errorHandler: () => void) => void;
         quitApp: () => void;
+        initTelemetry: (telemetryHandler: TelemetryHandler) => void;
     }
 }
