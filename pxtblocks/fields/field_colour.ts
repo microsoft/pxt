@@ -53,7 +53,7 @@ namespace pxtblockly {
                         return this.colour_;
                     }
                 case "index":
-                    return (this as any).colours_.indexOf(this.colour_).toString();
+                    return this.getColours_().indexOf(this.colour_).toString();
             }
             return this.colour_;
         }
@@ -67,12 +67,16 @@ namespace pxtblockly {
                 colour = `#${colour.substr(2)}`;
             }
             else if (this.valueMode_ === "index") {
-                const i = parseInt(colour);
-                if (!isNaN(i) && i >= 0 && i < (this as any).colours_.length) {
-                    colour = (this as any).colours_[i];
-                }
-                else {
-                    colour = (this as any).colours_[0];
+                const allColors = this.getColours_();
+                if (allColors.indexOf(colour) === -1) {
+                    // Might be the index and not the color
+                    const i = parseInt(colour);
+                    if (!isNaN(i) && i >= 0 && i < allColors.length) {
+                        colour = allColors[i];
+                    }
+                    else {
+                        colour = allColors[0];
+                    }
                 }
             }
 
@@ -91,6 +95,10 @@ namespace pxtblockly {
             super.showEditor_();
             if (this.className_ && this.colorPicker_)
                 Blockly.utils.addClass((this.colorPicker_.getElement()), this.className_);
+        }
+
+        getColours_(): string[] {
+            return (this as any).colours_;
         }
     }
 }
