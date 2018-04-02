@@ -23,6 +23,7 @@ import * as serial from './serial';
 import * as gdb from './gdb';
 import * as clidbg from './clidbg';
 import * as pyconv from './pyconv';
+import * as gitfs from './gitfs';
 
 const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
@@ -675,6 +676,21 @@ export function uploadTargetAsync(label: string) {
         pkgversion: pkgVersion(),
         fileContent: {}
     })
+}
+
+export function uploadTargetRefsAsync(repoPath: string) {
+    if (repoPath) process.chdir(repoPath);
+    return nodeutil.needsGitCleanAsync()
+        .then(() => Promise.all([
+            nodeutil.gitInfoAsync(["rev-parse", "HEAD"]),
+            nodeutil.gitInfoAsync(["config", "--get", "remote.origin.url"])
+        ]))
+        .then(info => {
+            return gitfs.uploadRefs(info[0], info[1])
+                .then(() => {
+                    return Promise.resolve();
+                });
+        })
 }
 
 interface UploadOptions {
@@ -4775,6 +4791,13 @@ function initCommands() {
         argString: "<label>",
         advanced: true,
     }, pc => uploadTargetAsync(pc.arguments[0]));
+    p.defineCommand({
+        name: "uploadrefs",
+        aliases: [],
+        help: "Upload refs directly to the cloud",
+        argString: "<repo>",
+        advanced: true,
+    }, pc => uploadTargetRefsAsync(pc.arguments[0]));
     advancedCommand("uploadtt", "upload tagged release", uploadTaggedTargetAsync, "");
     advancedCommand("downloadtrgtranslations", "download translations from bundled projects", downloadTargetTranslationsAsync, "<package>");
 
