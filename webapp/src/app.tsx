@@ -119,12 +119,14 @@ export class ProjectView
         this.reload = false; //set to true in case of reset of the project where we are going to reload the page.
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         const shouldShowHomeScreen = this.shouldShowHomeScreen();
+        const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
 
         this.state = {
             showFiles: false,
             home: shouldShowHomeScreen,
             active: document.visibilityState == 'visible',
-            collapseEditorTools: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile()
+            collapseEditorTools: pxt.appTarget.simulator.headless || (!isSandbox && pxt.BrowserUtils.isMobile()),
+            embedSimView: isSandbox
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -362,12 +364,22 @@ export class ProjectView
         },
         2000, true);
 
+    _slowTypeCheck = 0;
     private typecheck = pxtc.Util.debounce(
         () => {
             if (this.editor.isIncomplete()) return;
+            let start = Util.now();
             let state = this.editor.snapshotState()
             compiler.typecheckAsync()
                 .done(resp => {
+                    let end = Util.now();
+                    // if typecheck is slow (>10s)
+                    // and it happened more than 2 times,
+                    // it's a slow machine, go into light mode
+                    if (!pxt.options.light && end - start > 10000 && this._slowTypeCheck++ > 1) {
+                        pxt.tickEvent("light.typecheck")
+                        pxt.options.light = true;
+                    }
                     this.editor.setDiagnostics(this.editorFile, state);
                     data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
                     if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
@@ -584,7 +596,9 @@ export class ProjectView
     setSideDoc(path: string, blocksEditor = true) {
         let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
-        if (path) sd.setPath(path, blocksEditor);
+        if (path) {
+            sd.setPath(path, blocksEditor);
+        }
         else sd.collapse();
     }
 
@@ -1350,6 +1364,13 @@ export class ProjectView
             })
     }
 
+    printCode() {
+        const p = pkg.mainEditorPkg();
+        const files = p.getAllFiles();
+        // render in sidedocs
+        window.open(`${pxt.webConfig.docsUrl || '/--docs'}#project:${encodeURIComponent(JSON.stringify(files))}`, 'printcode');
+    }
+
     clearSerial() {
         this.serialEditor.clear()
         const simIndicator = this.refs["simIndicator"] as serialindicator.SerialIndicator
@@ -1394,7 +1415,7 @@ export class ProjectView
                 this.clearSerial();
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles[pxtc.BINARY_JS]) {
-                    simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast)
+                    simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light)
                     this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
                 } else if (!opts.background) {
                     core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
@@ -2245,6 +2266,9 @@ $(() => {
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
+    if (pxt.options.light) {
+        $('body.main').addClass('light');
+    }
     const wsPortMatch = /wsport=(\d+)/i.exec(window.location.href);
     if (wsPortMatch) {
         pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
@@ -2302,15 +2326,13 @@ $(() => {
     else if (Cloud.isLocalHost() || isPxtElectron) workspace.setupWorkspace("fs");
     Promise.resolve()
         .then(() => {
-            const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+            const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
             if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
-                lang.setCookieLang(mlang[2]);
                 pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
             }
-            const useLang = mlang ? mlang[2] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+            const useLang = mlang ? mlang[3] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
-            if (useLang) pxt.tickEvent("locale." + useLang + (live ? ".live" : ""));
-            lang.setInitialLang(useLang);
+            const force = !!mlang && !!mlang[2];
             return Util.updateLocalizationAsync(
                 pxt.appTarget.id,
                 false,
@@ -2318,16 +2340,27 @@ $(() => {
                 useLang,
                 pxt.appTarget.versions.pxtCrowdinBranch,
                 pxt.appTarget.versions.targetCrowdinBranch,
-                live)
-                // Download sim translations and save them in the sim
-                .then(() => Util.downloadSimulatorLocalizationAsync(
-                    pxt.appTarget.id,
-                    config.commitCdnUrl,
-                    useLang,
-                    pxt.appTarget.versions.pxtCrowdinBranch,
-                    pxt.appTarget.versions.targetCrowdinBranch,
-                    live
-                )).then((simStrings) => {
+                live,
+                force)
+                .then(() => {
+                    if (pxt.Util.isLocaleEnabled(useLang)) {
+                        lang.setCookieLang(useLang);
+                    } else {
+                        pxt.tickEvent("unavailablelocale." + useLang + (force ? ".force" : ""));
+                    }
+                    pxt.tickEvent("locale." + pxt.Util.userLanguage() + (live ? ".live" : ""));
+
+                    // Download sim translations and save them in the sim
+                    return Util.downloadSimulatorLocalizationAsync(
+                        pxt.appTarget.id,
+                        config.commitCdnUrl,
+                        useLang,
+                        pxt.appTarget.versions.pxtCrowdinBranch,
+                        pxt.appTarget.versions.targetCrowdinBranch,
+                        live,
+                        force
+                    );
+                }).then((simStrings) => {
                     if (simStrings)
                         simulator.setTranslations(simStrings);
                 });

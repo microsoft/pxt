@@ -38,7 +38,7 @@ function renderDocItems(parent: pxt.editor.IProjectView, cls: string) {
     const targetTheme = pxt.appTarget.appTheme;
     return targetTheme.docMenu.map(m =>
         m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class={"ui " + cls} onClick={() => openTutorial(parent, m.path)} />
-            : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{Util.rlf(m.name)}</a>
+            : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} title={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{Util.rlf(m.name)}</a>
                 : <sui.Item key={"docsmenu" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class={"ui " + cls} onClick={() => openDocs(parent, m.path)} />
     );
 }
@@ -116,6 +116,10 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
         this.props.parent.about();
     }
 
+    print() {
+        this.props.parent.printCode();
+    }
+
     componentWillReceiveProps(nextProps: SettingsMenuItemProps) {
         const newState: SettingsMenuItemState = {};
         if (nextProps.highContrast != undefined) {
@@ -137,6 +141,7 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
         return <sui.DropdownMenuItem icon='setting large' title={lf("More...")} class="more-dropdown-menuitem">
             <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={() => this.openSettings()} tabIndex={-1} />
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={() => this.addPackage()} tabIndex={-1} /> : undefined}
+            <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={() => this.print()} tabIndex={-1} />
             <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={() => this.removeProject()} tabIndex={-1} />
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={() => this.showReportAbuse()} tabIndex={-1} /> : undefined}
             <div className="ui divider"></div>

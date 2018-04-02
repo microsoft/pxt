@@ -1,4 +1,5 @@
 /// <reference path="tickEvent.ts" />
+/// <reference path="apptarget.ts"/>
 
 namespace ts.pxtc {
     export var __dummy = 42;
@@ -862,9 +863,14 @@ namespace ts.pxtc.Util {
         return code;
     }
 
-    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<void> {
+    export function isLocaleEnabled(code: string): boolean {
         code = normalizeLanguageCode(code);
-        if (code === _localizeLang)
+        return pxt.appTarget.appTheme && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.indexOf(code) > -1;
+    }
+
+    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
+        code = normalizeLanguageCode(code);
+        if (code === _localizeLang || (!isLocaleEnabled(code) && !force))
             return Promise.resolve();
 
         return downloadTranslationsAsync(targetId, simulator, baseUrl, code, pxtBranch, targetBranch, live)
@@ -880,9 +886,9 @@ namespace ts.pxtc.Util {
             });
     }
 
-    export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
+    export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<pxt.Map<string>> {
         code = normalizeLanguageCode(code);
-        if (code === _localizeLang)
+        if (code === _localizeLang || (!isLocaleEnabled(code) && !force))
             return Promise.resolve<pxt.Map<string>>(undefined);
 
         return downloadTranslationsAsync(targetId, true, baseUrl, code, pxtBranch, targetBranch, live)
