@@ -6,11 +6,11 @@ At Microsoft, we continually evaluate and invest in building the right tools to 
  
 ## What is Microsoft MakeCode? 
 
-MakeCode is Microsoft’s programming environment for beginners. We are working hard to bring more courses to MakeCode, to make it a great place for educators and students. Currently, MakeCode supports programming of several hardware devices and Minecraft.  
+[MakeCode](https://makecode.com) is Microsoft’s programming environment for beginners. We are working hard to bring more courses to MakeCode, to make it a great place for educators and students. Currently, MakeCode supports programming of several hardware devices and Minecraft.  
  
 ## What is the impact of the change? 
 
-Microsoft [Touch Develop](https://www.touchdevelop.com), a project developed by Microsoft Research to provide computing education to any student on any device, will no longer be available as of May 23, 2018.
+Microsoft [Touch Develop](https://www.touchdevelop.com), a project developed by Microsoft Research to provide computing education to any student on any device, will no longer be available as of May 23, 2018
   
 As a result, customers using the “Creative Coding Through Games and Apps” (CCGA) course based on Touch Develop will no longer have access as of May 23, 2018. 
  
@@ -27,11 +27,11 @@ We know that providing high quality curriculum that maps to real-world skills is
  
 This new Introductory Computer Science curriculum will be available to existing Microsoft Imagine Academy customers for feedback in late May, with an expected full product launch later this summer.  When the beta launches in May, we will include an initial set of lessons for each topic area, as well as an introduction, educator lessons, and even a few advanced topics. 
   
-## Some handy links 
+## More information
 
-* The Touch Develop team tells more about the [retirement of Touch Develop](https://makecode.com/tdteam)
-* If you have questions about Touch Develop please talk to us on yammer at [Touch Develop](https://www.yammer.com/microsoftteachers/#/threads/inGroup?type=in_group&feedId=6287047&view=all)
-* For questions around CCGA please talk to us on Yammer at [CCGA Educators](https://www.yammer.com/microsoftteachers/#/threads/inGroup?type=in_group&feedId=6454453&view=all) 
-* Information on transitioning from Touch Develop to MakeCode (especially regarding the sprite-based game engine) can be found at https://makecode.com/td2mkcd. 
-* You can learn more about Microsoft MakeCode at [makecode.com](https://makecode.com)
+* Read more about the [retirement of Touch Develop](https://makecode.com/tdteam), from the Touch Develop team;
+* If you have questions about Touch Develop please talk to us on yammer at [Touch Develop](https://www.yammer.com/microsoftteachers/#/threads/inGroup?type=in_group&feedId=6287047&view=all);
+* For questions around CCGA please talk to us on Yammer at [CCGA Educators](https://www.yammer.com/microsoftteachers/#/threads/inGroup?type=in_group&feedId=6454453&view=all);
+* Information on transitioning from Touch Develop to MakeCode can be found at https://makecode.com/td2mkcd;
+* Learn more about Microsoft MakeCode at [makecode.com](https://makecode.com).
 

@@ -1,7 +1,7 @@
 # Moving from Touch Develop to MakeCode
 
 This page is primarily for users who previously used [Touch Develop](http://www.touchdevelop.com)
-and the *Creative Computing for Games and Apps* course. 
+and the *Creative Computing for Games and Apps* (CCGA) course. 
 
 ## Your Scripts
 
@@ -41,7 +41,6 @@ The following material about the MakeCode game engine is subject to change.
 
 Both Touch Develop and MakeCode have sprite-based 2D game engines, with some minor differences. 
 Both include a simple 2D game engine with basic physics, sprites, sounds, scoring, and keyboard control.
-
 
 ### Coordinates
 
