@@ -2591,6 +2591,15 @@ ${lbl}: .short 0xffff
             let attrs = parseComments(decl)
             let res: ir.Expr
 
+            let callInfo: CallInfo = {
+                decl,
+                qName: decl ? getFullName(checker, decl.symbol) : "?",
+                attrs,
+                args: [node.template],
+                isExpression: true
+            };
+            (node as any).callInfo = callInfo;
+
             function handleHexLike(pp: (s: string) => string) {
                 if (node.template.kind != SK.NoSubstitutionTemplateLiteral)
                     throw unhandled(node, lf("substitution not supported in hex literal", attrs.shim), 9265);

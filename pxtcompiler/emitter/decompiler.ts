@@ -573,6 +573,8 @@ ${output}</xml>`;
                         return getArrayLiteralExpression(n as ts.ArrayLiteralExpression);
                     case SK.ElementAccessExpression:
                         return getElementAccessExpression(n as ts.ElementAccessExpression);
+                    case SK.TaggedTemplateExpression:
+                        return getTaggedTemplateExpression(n as ts.TaggedTemplateExpression);
                     case SK.CallExpression:
                         return getStatementBlock(n, undefined, undefined, true) as any;
                     default:
@@ -816,6 +818,21 @@ ${output}</xml>`;
         function getElementAccessExpression(n: ts.ElementAccessExpression): ExpressionNode {
             const r = mkExpr("lists_index_get");
             r.inputs = [getValue("LIST", n.expression), getValue("INDEX", n.argumentExpression, numberType)]
+            return r;
+        }
+
+        function getTaggedTemplateExpression(t: ts.TaggedTemplateExpression): ExpressionNode {
+            const callInfo: pxtc.CallInfo = (t as any).callInfo;
+            const api = env.blocks.apis.byQName[callInfo.attrs.blockIdentity];
+            const comp = pxt.blocks.compileInfo(api);
+
+            const r = mkExpr(api.attributes.blockId);
+
+            const text = (t.template as ts.NoSubstitutionTemplateLiteral).text;
+
+            // This will always be a field and not a value because we only allow no-substitution templates
+            r.fields = [getField(comp.parameters[0].actualName, text)];
+
             return r;
         }
 
@@ -2246,6 +2263,9 @@ ${output}</xml>`;
                 return checkPropertyAccessExpression(n as ts.PropertyAccessExpression, env);
             case SK.CallExpression:
                 return checkStatement(n, env, true);
+            case SK.TaggedTemplateExpression:
+                return checkTaggedTemplateExpression(n as ts.TaggedTemplateExpression, env);
+
         }
         return Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]);
 
@@ -2308,6 +2328,32 @@ ${output}</xml>`;
             }
             return Util.lf("No call info found");
         }
+    }
+
+    function checkTaggedTemplateExpression(t: ts.TaggedTemplateExpression, env: DecompilerEnv) {
+        const callInfo: pxtc.CallInfo = (t as any).callInfo;
+
+        if (!callInfo) {
+            return Util.lf("Invalid tagged template");
+        }
+
+        if (!callInfo.attrs.blockIdentity) {
+            return Util.lf("Tagged template does not have blockIdentity set");
+        }
+
+        const api = env.blocks.apis.byQName[callInfo.attrs.blockIdentity];
+
+        if (!api) {
+            return Util.lf("Could not find blockIdentity for tagged template")
+        }
+
+        const comp = pxt.blocks.compileInfo(api);
+        if (comp.parameters.length !== 1) {
+            return Util.lf("Tagged template functions must have 1 argument");
+        }
+
+        // The compiler will have already caught any invalid tags or templates
+        return undefined;
     }
 
     function getParent(node: Node): [Node, Node] {
@@ -2433,6 +2479,7 @@ ${output}</xml>`;
             case SK.TrueKeyword:
             case SK.FalseKeyword:
             case SK.NullKeyword:
+            case SK.TaggedTemplateExpression:
                 return true;
             default: return false;
         }
