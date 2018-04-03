@@ -41,4 +41,22 @@ namespace template {
     export function imageEditor(img: Image): Image {
         return img;
     }
+
+    /**
+     * Image editor...
+     * @param img the iamge
+     */
+    //% blockId=nofieldeditor_template block="%img"
+    export function noFieldEditorTemplate(img: Image): void {
+
+    }
+
+    /**
+     * Image editor...
+     * @param img the iamge
+     */
+    //% blockId=shadow_template block="%img=imageeditor"
+    export function shadowBlockTemplate(img: Image): void {
+
+    }
 }

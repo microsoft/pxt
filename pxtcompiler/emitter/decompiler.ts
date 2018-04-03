@@ -1411,7 +1411,7 @@ ${output}</xml>`;
                                 }
                             }
                         }
-                        else if (e.kind === SK.TaggedTemplateExpression) {
+                        else if (e.kind === SK.TaggedTemplateExpression && param.fieldOptions && param.fieldOptions["taggedTemplate"]) {
                             addField(getField(vName, Util.htmlEscape(e.getText())));
                             return;
                         }
@@ -2064,7 +2064,7 @@ ${output}</xml>`;
                         return Util.lf("Field editor does not support literal arguments");
                     }
                 }
-                else if (e.kind === SK.TaggedTemplateExpression) {
+                else if (e.kind === SK.TaggedTemplateExpression && param.fieldEditor) {
                     let tagName = param.fieldOptions && param.fieldOptions["taggedTemplate"];
 
                     if (!tagName) {
