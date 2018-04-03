@@ -3878,17 +3878,56 @@ export function cleanGenAsync(parsed: commandParser.ParsedCommand) {
         .then(() => { });
 }
 
+interface PNGImage {
+    width: number;
+    height: number;
+    depth: number; // 8
+    colorType: number; // 6
+    data: Buffer;
+}
+
 export function buildJResAsync(parsed: commandParser.ParsedCommand) {
+    let PNG: any
     ensurePkgDir();
     nodeutil.allFiles(".")
         .filter(f => /\.jres$/i.test(f))
         .forEach(f => {
             pxt.log(`expanding jres resources in ${f}`);
-            const jresources = nodeutil.readJson(f);
+            const jresources = nodeutil.readJson(f) as pxt.Map<pxt.JRes>;
             const oldjr = JSON.stringify(jresources, null, 2);
             const dir = path.join('jres', path.basename(f, '.jres'));
             // update existing fields
             const star = jresources["*"];
+
+            let palette: number[][] = null
+            let bpp = 4
+            if (star.palette) {
+                palette = star.palette.map(s => {
+                    let v = parseInt(s.replace(/#/, ""), 16)
+                    return [(v >> 16) & 0xff, (v >> 8) & 0xff, (v >> 0) & 0xff]
+                })
+            }
+
+            // use geometric distance on colors
+            function scale(v: number) {
+                return v * v
+            }
+
+            function closestColor(buf: Buffer, pix: number) {
+                if (buf[pix + 3] < 100)
+                    return 0 // transparent
+                let mindelta = 0
+                let idx = -1
+                for (let i = 1; i < palette.length; ++i) {
+                    let delta = scale(palette[i][0] - buf[pix + 0]) + scale(palette[i][1] - buf[pix + 1]) + scale(palette[i][1] - buf[pix + 2])
+                    if (idx < 0 || delta < mindelta) {
+                        idx = i
+                        mindelta = delta
+                    }
+                }
+                return idx
+            }
+
             if (!star.dataEncoding) star.dataEncoding = 'base64';
             Object.keys(jresources).filter(k => k != "*").forEach(k => {
                 const jres = jresources[k];
@@ -3899,7 +3938,45 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
                 pxt.debug(`looking for ${iconn}`)
                 if (nodeutil.fileExistsSync(iconn)) {
                     pxt.log(`importing ${iconn}`);
-                    jres.icon = 'data:image/png;base64,' + fs.readFileSync(iconn, 'base64');
+                    let iconF = fs.readFileSync(iconn)
+                    if (palette) {
+                        if (!PNG)
+                            PNG = require("pngjs").PNG;
+                        let img = PNG.sync.read(iconF) as PNGImage
+                        iconF = PNG.sync.write(img)
+                        if (img.colorType != 6)
+                            U.userError(`only RGBA png images supported`)
+                        if (img.depth != 8)
+                            U.userError(`only 8 bit per channel png images supported`)
+                        if (img.width > 255 || img.height > 255)
+                            U.userError(`PNG image too big`)
+                        if (bpp == 4) {
+                            let byteW = (img.width + 1) >> 1
+                            let outBuf = new Buffer(3 + byteW * img.height)
+                            outBuf.fill(0)
+                            outBuf[0] = 0xf4
+                            outBuf[1] = img.width
+                            outBuf[2] = img.height
+                            let outP = 3
+                            let lineP = 0
+                            for (let inP = 0; inP < img.data.length; inP += 4) {
+                                if (lineP >= img.width) {
+                                    if (lineP & 1)
+                                        outP++
+                                    lineP = 0
+                                }
+                                let idx = closestColor(img.data, inP)
+                                if (lineP & 1) {
+                                    outBuf[outP++] |= idx
+                                } else {
+                                    outBuf[outP] |= (idx << 4)
+                                }
+                                lineP++
+                            }
+                            jres.data = outBuf.toString("hex")
+                        }
+                    }
+                    jres.icon = 'data:image/png;base64,' + iconF.toString('base64');
                 }
                 // try to find file
                 if (mime) {
@@ -3927,6 +4004,8 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
             }
         })
     return Promise.resolve();
+
+
 }
 
 export function buildAsync(parsed: commandParser.ParsedCommand) {
