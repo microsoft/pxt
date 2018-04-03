@@ -1,10 +1,14 @@
+
 import * as child_process from "child_process";
+import * as util from 'util';
+
+import U = pxt.Util;
 
 export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
     let gitCatFile: child_process.ChildProcess
-    let gitCatFileBuf = new PromiseBuffer<Buffer>()
+    let gitCatFileBuf = new U.PromiseBuffer<Buffer>()
 
-    let apiLockAsync = promiseQueue()
+    let apiLockAsync = new U.PromiseQueue()
 
     let gitCache = new Cache<GitObject>()
 
@@ -152,7 +156,7 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
         if (cached)
             return Promise.resolve(cached)
 
-        return apiLockAsync("cat-file", () => {
+        return apiLockAsync.enqueue("cat-file", () => {
             // check again, maybe the object has been cached while we were waiting
             cached = gitCache.get(id)
             if (cached)
@@ -279,38 +283,6 @@ interface QEntry {
     reject: (err: any) => void;
 }
 
-export function promiseQueue() {
-    let awaiting: SMap<QEntry[]> = {}
-
-    function poke(id: string) {
-        let lst = awaiting[id]
-        if (!lst) return
-        let ent = lst[0]
-        let shift = () => {
-            lst.shift()
-            if (lst.length == 0) delete awaiting[id]
-            else Promise.resolve().then(() => poke(id))
-        }
-        ent.run().then(v => {
-            shift()
-            ent.resolve(v)
-        }, e => {
-            shift()
-            ent.reject(e)
-        })
-    }
-
-    function enq<T>(id: string, run: () => Promise<T>): Promise<T> {
-        return new Promise<T>((resolve, reject) => {
-            let lst = awaiting[id]
-            if (!lst) lst = awaiting[id] = []
-            lst.push({ resolve, reject, run })
-            if (lst.length == 1) poke(id)
-        })
-    }
-    return enq
-}
-
 const maxCacheSize = 32 * 1024 * 1024
 const maxCacheEltSize = 256 * 1024
 
@@ -338,47 +310,6 @@ export class Cache<T> {
     flush() {
         this.size = 0
         this.cache = {}
-    }
-}
-
-export class PromiseBuffer<T> {
-    private waiting: ((v: (T | Error)) => void)[] = [];
-    private available: (T | Error)[] = [];
-
-    drain() {
-        for (let f of this.waiting) {
-            f(new Error("Promise Buffer Reset"))
-        }
-        this.waiting = []
-        this.available = []
-    }
-
-
-    pushError(v: Error) {
-        this.push(v as any)
-    }
-
-    push(v: T) {
-        let f = this.waiting.shift()
-        if (f) f(v)
-        else this.available.push(v)
-    }
-
-    shiftAsync() {
-        if (this.available.length > 0) {
-            let v = this.available.shift()
-            if (v instanceof Error)
-                return Promise.reject<T>(v)
-            else
-                return Promise.resolve<T>(v)
-        } else
-            return new Promise<T>((resolve, reject) => {
-                let f = (v: (T | Error)) => {
-                    if (v instanceof Error) reject(v)
-                    else resolve(v)
-                }
-                this.waiting.push(f)
-            })
     }
 }
 
