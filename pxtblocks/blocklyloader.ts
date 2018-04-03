@@ -136,7 +136,7 @@ namespace pxt.blocks {
         shadow.setAttribute("type", shadowId || typeInfo && typeInfo.block || p.type);
         shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
-        if (typeInfo && (!shadowId || typeInfo.block === shadowId)) {
+        if (typeInfo && (!shadowId || typeInfo.block === shadowId || shadowId === "math_number_minmax")) {
             const field = document.createElement("field");
             shadow.appendChild(field);
 
