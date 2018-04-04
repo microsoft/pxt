@@ -4066,7 +4066,7 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
                 pxt.debug(`looking for ${iconn}`)
                 if (nodeutil.fileExistsSync(iconn)) {
                     pxt.log(`importing ${iconn}`);
-                    jres.icon = 'data:image/png;base64,' + fs.readFileSync(iconn);
+                    jres.icon = 'data:image/png;base64,' + fs.readFileSync(iconn, 'base64');
                 }
                 // try to find file
                 if (mime) {
