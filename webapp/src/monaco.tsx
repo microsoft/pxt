@@ -751,6 +751,8 @@ export class Editor extends srceditor.Editor {
         return namespaces;
     }
 
+    private uniqueBlockId = 0; // Used for hex blocks
+
     private createMonacoBlocks(
         monacoEditor: Editor,
         monacoFlyout: HTMLElement,
@@ -760,7 +762,6 @@ export class Editor extends srceditor.Editor {
         filters: pxt.editor.ProjectFilters,
         categoryState: pxt.editor.FilterState
     ) {
-        let uniqueBlockId = 0; // Used for hex blocks
         // Render the method blocks
         const monacoBlocks = fns.sort((f1, f2) => {
             // sort by fn weight
@@ -956,7 +957,7 @@ export class Editor extends srceditor.Editor {
                 // Show a hexagonal shape
                 monacoBlock.style.borderRadius = "0px";
                 const monacoBlockHeight = monacoBlock.offsetHeight - 2; /* Take 2 off to account for the missing border */
-                const monacoHexBlockId = uniqueBlockId++;
+                const monacoHexBlockId = monacoEditor.uniqueBlockId++;
                 monacoBlock.id = `monacoHexBlock${monacoHexBlockId}`;
                 monacoBlock.className += ' monacoHexBlock';
                 const styleBlock = document.createElement('style') as HTMLStyleElement;
