@@ -88,6 +88,10 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
 
 export class NotificationBanner extends data.Component<ISettingsProps, {}> {
     renderCore() {
+        // don't show any banner when cookie is up.
+        if (pxt.analytics.isCookieBannerVisible())
+            return <div></div>;
+
         const targetTheme = pxt.appTarget.appTheme;
         const isApp = pxt.winrt.isWinRT();
         const isLocalServe = location.hostname === "localhost";

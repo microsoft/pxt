@@ -81,7 +81,7 @@
     "cssnano": "^3.10.0"
   },
   "optionalDependencies": {
-    "keytar": "^3.0.2",
+    "keytar": "4.2.1",
     "node-hid": "^0.5.2",
     "serialport": "^6.0.5"
   },
