@@ -68,25 +68,29 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
 
     renderCore() {
         return (
-            (this.props.parent.state.bannerVisible  && this.doneSleeping) ?
-            <div id="notificationBanner" className={`ui attached ${this.bannerType} message`}>
-                <div className="bannerLeft">
-                    <div className="content">
-                        {this.props.children}
+            (this.props.parent.state.bannerVisible && this.doneSleeping) ?
+                <div id="notificationBanner" className={`ui attached ${this.bannerType} message`}>
+                    <div className="bannerLeft">
+                        <div className="content">
+                            {this.props.children}
+                        </div>
                     </div>
-                </div>
-                <div className="bannerRight">
-                    <sui.Icon icon="close" tabIndex={0} onClick={() => {this.hide("manual"); clearTimeout(this.timer)}}/>
-                </div>
-            </div> :
-            <div></div>
+                    <div className="bannerRight">
+                        <sui.Icon icon="close" tabIndex={0} onClick={() => { this.hide("manual"); clearTimeout(this.timer) }} />
+                    </div>
+                </div> :
+                <div></div>
         );
     }
 }
 
 export class NotificationBanner extends data.Component<ISettingsProps, {}> {
     renderCore() {
-        const cookies = !!(typeof mscc === "undefined" || mscc.hasConsent());
+        if (pxt.analytics.isCookieBannerVisible()) {
+            // don't show any banner while cookie banner is up
+            return <div></div>;
+        }
+
         const targetTheme = pxt.appTarget.appTheme;
         const isApp = pxt.winrt.isWinRT();
         const isLocalServe = location.hostname === "localhost";
@@ -96,11 +100,6 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         const isWindows10 = pxt.BrowserUtils.isWindows10();
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
         const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetConfig && targetConfig.windowsStoreLink && !isApp;
-
-        if (cookies) {
-            // don't show any banner while cookie banner is up
-            return <div></div>;
-        }
 
         if (showWindowsStoreBanner) {
             return (
@@ -120,7 +119,7 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
             return (
                 <GenericBanner parent={this.props.parent} bannerType={"negative"} >
                     <sui.Icon icon="warning circle" />
-                    <div className="header">{lf("You are viewing an experimental version of the editor") }</div>
+                    <div className="header">{lf("You are viewing an experimental version of the editor")}</div>
                     <sui.Link class="link" ariaLabel={lf("Go back to live editor")} href={liveUrl}>{lf("Take me back")}</sui.Link>
                 </GenericBanner>
             );
