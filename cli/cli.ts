@@ -4002,6 +4002,10 @@ export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
         if (sheet.width > 255 || sheet.height > 255)
             U.userError(`PNG image too big`)
 
+        let nx = (sheet.width / info.width) | 0
+        let ny = (sheet.height / info.height) | 0
+        let numSprites = nx * ny
+
         for (let y = 0; y + info.height - 1 < sheet.height; y += info.height)
             for (let x = 0; x + info.width - 1 < sheet.width; x += info.width) {
                 let img = U.flatClone(sheet)
@@ -4018,6 +4022,8 @@ export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
                     if (/^[a-z]/.test(suff))
                         suff = "_" + suff
                     key = basename + suff
+                } else if (numSprites == 1) {
+                    key = basename
                 }
 
                 let jres = jresources[key]
