@@ -236,7 +236,7 @@ export class Editor extends srceditor.Editor {
             rules.push({ token: `identifier.ts else`, foreground: '5B80A5', });
             rules.push({ token: `identifier.ts while`, foreground: '5BA55B', });
             rules.push({ token: `identifier.ts for`, foreground: '5BA55B', });
-
+            
             const pauseUntil = pxt.appTarget.runtime && pxt.appTarget.runtime.pauseUntilBlock;
             if (pauseUntil) {
                 const call = pauseUntil.callName || "pauseUntil";
@@ -289,8 +289,9 @@ export class Editor extends srceditor.Editor {
 
     isIncomplete() {
         return this.editor && (this.editor as any)._view ?
-            (this.editor as any)._view.contentWidgets._widgets["editor.widget.suggestWidget"].isVisible :
-            false;
+            (this.editor as any)._view.contentWidgets._widgets["editor.widget.suggestWidget"]
+            && (this.editor as any)._view.contentWidgets._widgets["editor.widget.suggestWidget"].isVisible
+            : false;
     }
 
     resize(e?: Event) {
@@ -464,11 +465,10 @@ export class Editor extends srceditor.Editor {
                 this.editor.pushUndoStop();
                 this.editor.executeEdits("", [
                     {
-                        identifier: { major: 0, minor: 0 },
                         range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
                         text: insertText,
-                        forceMoveMarkers: true,
-                        isAutoWhitespaceEdit: true
+                        forceMoveMarkers: true
+                        //isAutoWhitespaceEdit: true
                     }
                 ]);
                 this.beforeCompile();
@@ -492,7 +492,7 @@ export class Editor extends srceditor.Editor {
 
     protected dragCurrentPos = { x: 0, y: 0 };
     protected onDragBlockThrottled = Util.throttle(() => {
-        const {x, y} = this.dragCurrentPos;
+        const { x, y } = this.dragCurrentPos;
         let mouseTarget = this.editor.getTargetAtClientPoint(x, y);
         if (mouseTarget && mouseTarget.position && this.editor.getPosition() != mouseTarget.position)
             this.editor.setPosition(mouseTarget.position);
@@ -711,7 +711,7 @@ export class Editor extends srceditor.Editor {
         let appTheme = pxt.appTarget.appTheme;
         if (!appTheme.monacoToolbox || pxt.shell.isReadOnly()) return;
         // Move the monaco editor to make room for the toolbox div
-        this.editor.getLayoutInfo().glyphMarginLeft = 200;
+        (this.editor.getLayoutInfo() as any).glyphMarginLeft = 200;
         this.editor.layout();
 
         const namespaces = this.getNamespaces().map(ns => [ns, this.getNamespaceAttrs(ns)] as [string, pxtc.CommentAttrs]);
@@ -798,11 +798,11 @@ export class Editor extends srceditor.Editor {
                     const nsInfo = this.blockInfo.apis.byQName[element.namespace];
                     if (nsInfo.attributes.fixedInstances) {
                         let instances = Util.values(this.blockInfo.apis.byQName)
-                        let getExtendsTypesFor = function(name: string) {
+                        let getExtendsTypesFor = function (name: string) {
                             return instances
-                                    .filter(v => v.extendsTypes)
-                                    .filter(v => v.extendsTypes.reduce((x, y) => x || y.indexOf(name) != -1, false))
-                                    .reduce((x, y) => x.concat(y.extendsTypes), [])
+                                .filter(v => v.extendsTypes)
+                                .filter(v => v.extendsTypes.reduce((x, y) => x || y.indexOf(name) != -1, false))
+                                .reduce((x, y) => x.concat(y.extendsTypes), [])
                         }
                         // if blockNamespace exists, e.g., "pins", use it for snippet
                         // else use nsInfo.namespace, e.g., "motors"
@@ -879,7 +879,6 @@ export class Editor extends srceditor.Editor {
                     monacoEditor.editor.pushUndoStop();
                     monacoEditor.editor.executeEdits("", [
                         {
-                            identifier: { major: 0, minor: 0 },
                             range: new monaco.Range(currPos.lineNumber, currPos.column, currPos.lineNumber, currPos.column),
                             text: insertText,
                             forceMoveMarkers: false
@@ -1333,8 +1332,8 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
     }
 
     setSelection(treeRow: TreeRowProperties, index: number) {
-        const {parent} = this.props;
-        const {ns, icon, color, category, groups, labelLineWidth} = treeRow;
+        const { parent } = this.props;
+        const { ns, icon, color, category, groups, labelLineWidth } = treeRow;
         pxt.tickEvent("monaco.toolbox.click");
 
         if (this.state.selectedNs == ns) {
@@ -1343,7 +1342,7 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
             // Hide flyout
             parent.closeFlyout();
         } else {
-            this.setState({ selectedNs: ns})
+            this.setState({ selectedNs: ns })
             this.selectedIndex = index;
             if (treeRow.advanced && !this.state.showAdvanced) this.showAdvanced();
 
@@ -1365,17 +1364,17 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
     }
 
     moveFocusToFlyout() {
-        const {parent} = this.props;
+        const { parent } = this.props;
         parent.moveFocusToFlyout();
     }
 
     closeFlyout() {
-        const {parent} = this.props;
+        const { parent } = this.props;
         parent.closeFlyout();
     }
 
     addPackage() {
-        const {parent} = this.props;
+        const { parent } = this.props;
         parent.addPackage();
     }
 
@@ -1390,14 +1389,14 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
     }
 
     showAdvanced() {
-        const {parent} = this.props;
+        const { parent } = this.props;
         this.setState({ showAdvanced: !this.state.showAdvanced });
         parent.resize();
     }
 
     renderCore() {
-        const {parent} = this.props;
-        const {namespaces, showAdvanced, visible, selectedNs} = this.state;
+        const { parent } = this.props;
+        const { namespaces, showAdvanced, visible, selectedNs } = this.state;
         if (!namespaces || !visible) return <div style={{ display: 'none' }} />
 
         // Filter toolbox categories
@@ -1477,14 +1476,14 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
             <div className="blocklyTreeRoot">
                 <div role="tree">
                     {nonAdvancedCategories.map((treeRow) => (
-                        <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
-                    )) }
+                        <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this)} />
+                    ))}
                     {hasAdvanced ? <TreeSeparator key="advancedseparator" /> : undefined}
-                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ ns: "", category: pxt.blocks.advancedTitle(), color: pxt.blocks.getNamespaceColor('advanced'), icon: showAdvanced ? 'advancedexpanded' : 'advancedcollapsed' }} onCategoryClick={this.advancedClicked.bind(this) }/> : undefined}
+                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ ns: "", category: pxt.blocks.advancedTitle(), color: pxt.blocks.getNamespaceColor('advanced'), icon: showAdvanced ? 'advancedexpanded' : 'advancedcollapsed' }} onCategoryClick={this.advancedClicked.bind(this)} /> : undefined}
                     {showAdvanced ? advancedCategories.map((treeRow) => (
-                        <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
+                        <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this)} />
                     )) : undefined}
-                    {hasPackages && showAdvanced ? <TreeRow treeRow={{ ns: "", category: pxt.blocks.addPackageTitle(), color: '#717171', icon: "addpackage" }} onClick={this.addPackage.bind(this) } /> : undefined }
+                    {hasPackages && showAdvanced ? <TreeRow treeRow={{ ns: "", category: pxt.blocks.addPackageTitle(), color: '#717171', icon: "addpackage" }} onClick={this.addPackage.bind(this)} /> : undefined}
                 </div>
             </div>
         </div>
@@ -1534,8 +1533,8 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
     }
 
     renderCore() {
-        const {toolbox} = this.props;
-        const {selected} = this.state;
+        const { toolbox } = this.props;
+        const { selected } = this.state;
 
         const previousItem = () => {
             pxt.tickEvent("monaco.toolbox.keyboard.prev");
@@ -1564,7 +1563,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         }
 
         return <TreeItem>
-            <TreeRow ref={e => this.treeRowElement = e} {...this.props} selected={selected} onClick={this.handleClick} onKeyDown={onKeyDown.bind(this) }/>
+            <TreeRow ref={e => this.treeRowElement = e} {...this.props} selected={selected} onClick={this.handleClick} onKeyDown={onKeyDown.bind(this)} />
         </TreeItem>
     }
 }
@@ -1597,13 +1596,13 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
     }
 
     getProperties() {
-        const {treeRow} = this.props;
+        const { treeRow } = this.props;
         return treeRow;
     }
 
     renderCore() {
-        const {selected, onClick, onKeyDown} = this.props;
-        const {ns, icon, color, category, injectIconClass} = this.props.treeRow;
+        const { selected, onClick, onKeyDown } = this.props;
+        const { ns, icon, color, category, injectIconClass } = this.props.treeRow;
         const appTheme = pxt.appTarget.appTheme;
         let metaColor = pxt.blocks.convertColour(color);
 
