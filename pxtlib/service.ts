@@ -123,7 +123,7 @@ namespace ts.pxtc {
         blockHidden?: boolean; // not available directly in toolbox
         blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
         blockCombine?: boolean;
-        blockSetVariable?: boolean; // show block with variable assigment in toolbox
+        blockSetVariable?: string; // show block with variable assigment in toolbox. Set equal to a name to control the var name
         fixedInstances?: boolean;
         fixedInstance?: boolean;
         constantShim?: boolean;
@@ -556,8 +556,7 @@ namespace ts.pxtc {
         "optionalVariableArgs",
         "blockHidden",
         "constantShim",
-        "blockCombine",
-        "blockSetVariable"
+        "blockCombine"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {

@@ -378,16 +378,30 @@ namespace pxt.blocks {
             }
             else {
                 // if requested, wrap block into a "set variable block"
-                if (fn.attributes.blockSetVariable && fn.retType) {
+                if (fn.attributes.blockSetVariable != undefined && fn.retType) {
+                    const rawName = fn.attributes.blockSetVariable;
+
+                    let varName: string;
+
+                    // By default if the API author does not put any value for blockSetVariable
+                    // then our comment parser will fill in the string "true". This gets caught
+                    // by isReservedWord() so no need to do a separate check.
+                    if (!rawName || isReservedWord(rawName)) {
+                        varName = Util.htmlEscape(fn.retType.toLowerCase());
+                    }
+                    else {
+                        varName = Util.htmlEscape(rawName);
+                    }
 
                     const setblock = Blockly.Xml.textToDom(`
 <block type="variables_set" gap="${Util.htmlEscape((fn.attributes.blockGap || 8) + "")}">
-<field name="VAR" variabletype="">${Util.htmlEscape(fn.retType.toLowerCase())}</field>
+<field name="VAR" variabletype="">${varName}</field>
 </block>`);
                     {
                         let value = document.createElement('value');
                         value.setAttribute('name', 'VALUE');
                         value.appendChild(block.cloneNode(true));
+                        value.appendChild(mkFieldBlock("math_number", "NUM", "0", true));
                         setblock.appendChild(value);
                     }
                     block = setblock;
@@ -3354,16 +3368,22 @@ namespace pxt.blocks {
         value.setAttribute("name", "PREDICATE");
         block.appendChild(value);
 
-        const shadow = document.createElement("shadow");
-        shadow.setAttribute("type", "logic_boolean");
+        const shadow = mkFieldBlock("logic_boolean", "BOOL", "TRUE", true);
         value.appendChild(shadow);
 
-        const field = document.createElement("field");
-        field.setAttribute("name", "BOOL");
-        field.textContent = "TRUE";
-        shadow.appendChild(field);
-
         return block;
+    }
+
+    function mkFieldBlock(type: string, fieldName: string, fieldValue: string, isShadow: boolean) {
+        const fieldBlock = document.createElement(isShadow ? "shadow" : "block");
+        fieldBlock.setAttribute("type", Util.htmlEscape(type));
+
+        const field = document.createElement("field");
+        field.setAttribute("name", Util.htmlEscape(fieldName));
+        field.textContent = Util.htmlEscape(fieldValue);
+        fieldBlock.appendChild(field);
+
+        return fieldBlock;
     }
 
     let jresIconCache: Map<string> = {};
