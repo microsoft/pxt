@@ -414,7 +414,7 @@ export class Editor extends srceditor.Editor {
                         // sure that this event only fires as the result of user action. Use
                         // Blockly.Events.disable() and Blockly.Events.enable() to prevent
                         // UI events from firing.
-                        pxt.analytics.setConsent();
+                        pxt.analytics.enableCookies();
                     }
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
                     if (ev.newValue == lf("{id:category}Add Package")) {
