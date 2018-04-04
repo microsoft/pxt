@@ -3915,6 +3915,9 @@ export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
 
     let bpp = 4
 
+    if (/-f1/.test(star.mimeType))
+        bpp = 1
+
     if (!metaInfo.star || !metaInfo.star.palette)
         U.userError(`invalid meta.json`)
 
@@ -3930,12 +3933,24 @@ export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
         return [(v >> 16) & 0xff, (v >> 8) & 0xff, (v >> 0) & 0xff]
     })
 
+
+    let ts = `namespace ${metaInfo.star.namespace} {\n`
+
     for (let fn of nodeutil.allFiles(dir, 1)) {
         fn = fn.replace(/\\/g, "/")
         let m = /(.*\/)(.*)\.png$/i.exec(fn)
-        if (m)
-            processImage(m[2], fn, m[1] + m[2] + ".json")
+        if (!m) continue
+        let bn = m[2]
+        let jn = m[1] + m[2] + ".json"
+        bn = bn.replace(/-1bpp/, "").replace(/[^\w]/g, "_")
+        processImage(bn, fn, jn)
     }
+
+    ts += "}\n"
+
+    pxt.log(`save ${metaInfo.basename}.jres and .ts`)
+    fs.writeFileSync(metaInfo.basename + ".jres", JSON.stringify(jresources, null, 2));
+    fs.writeFileSync(metaInfo.basename + ".ts", ts);
 
     return Promise.resolve()
 
@@ -3944,12 +3959,12 @@ export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
         return v * v
     }
 
-    function closestColor(buf: Buffer, pix: number) {
-        if (buf[pix + 3] < 100)
+    function closestColor(buf: Buffer, pix: number, alpha = true) {
+        if (alpha && buf[pix + 3] < 100)
             return 0 // transparent
         let mindelta = 0
         let idx = -1
-        for (let i = 1; i < palette.length; ++i) {
+        for (let i = alpha ? 1 : 0; i < palette.length; ++i) {
             let delta = scale(palette[i][0] - buf[pix + 0]) + scale(palette[i][1] - buf[pix + 1]) + scale(palette[i][1] - buf[pix + 2])
             if (idx < 0 || delta < mindelta) {
                 idx = i
@@ -3968,7 +3983,17 @@ export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
 
         let sheet = PNG.sync.read(fs.readFileSync(pngName)) as PNGImage
         let imgIdx = 0
-        let ts = `namespace ${metaInfo.star.namespace} {\n`
+
+        // add alpha channel
+        if (sheet.colorType == 0) {
+            sheet.colorType = 6
+            sheet.depth = 8
+            let transparent = palette[0][0] < 10 ? 0x00 : 0xff
+            for (let i = 0; i < sheet.data.length; i += 4) {
+                if (closestColor(sheet.data, i, false) == 0)
+                    sheet.data[i + 3] = 0x00
+            }
+        }
 
         if (sheet.colorType != 6)
             U.userError(`only RGBA png images supported`)
@@ -4024,6 +4049,34 @@ export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
                         lineP++
                     }
                     jres.data = outBuf.toString(star.dataEncoding)
+                } else if (bpp == 1) {
+                    let byteW = (img.width + 7) >> 3
+                    let outBuf = new Buffer(3 + byteW * img.height)
+                    outBuf.fill(0)
+                    outBuf[0] = 0xf1
+                    outBuf[1] = img.width
+                    outBuf[2] = img.height
+                    let outP = 3
+                    let mask = 0x80
+                    let lineP = 0
+                    for (let inP = 0; inP < img.data.length; inP += 4) {
+                        if (lineP >= img.width) {
+                            if (mask != 0x80)
+                                outP++
+                            mask = 0x80
+                            lineP = 0
+                        }
+                        let idx = closestColor(img.data, inP)
+                        if (idx)
+                            outBuf[outP] |= mask
+                        mask >>= 1
+                        if (mask == 0) {
+                            mask = 0x80
+                            outP++
+                        }
+                        lineP++
+                    }
+                    jres.data = outBuf.toString(star.dataEncoding)
                 }
 
                 jres.icon = 'data:image/png;base64,' + PNG.sync.write(img).toString('base64');
@@ -4035,14 +4088,7 @@ export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
 
                 imgIdx++
             }
-
-        ts += "}\n"
-
-        pxt.log(`save ${metaInfo.basename}.jres and .ts`)
-        fs.writeFileSync(metaInfo.basename + ".jres", JSON.stringify(jresources, null, 2));
-        fs.writeFileSync(metaInfo.basename + ".ts", ts);
     }
-
 }
 
 export function buildJResAsync(parsed: commandParser.ParsedCommand) {
