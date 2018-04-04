@@ -3886,8 +3886,166 @@ interface PNGImage {
     data: Buffer;
 }
 
+interface SpriteGlobalMeta {
+    star: pxt.JRes;
+    basename?: string;
+    width?: number;
+    height?: number;
+    blockIdentity: string;
+    creator: string;
+}
+
+interface SpriteInfo {
+    width?: number;
+    height?: number;
+    frames?: string[];
+}
+
+
+
+export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
+    const PNG: any = require("pngjs").PNG;
+
+    const dir = parsed.arguments[0]
+    const metaInfo: SpriteGlobalMeta = nodeutil.readJson(dir + "/meta.json")
+    const jresources: pxt.Map<pxt.JRes> = {}
+    const star = metaInfo.star
+
+    jresources["*"] = metaInfo.star
+
+    let bpp = 4
+
+    if (!metaInfo.star || !metaInfo.star.palette)
+        U.userError(`invalid meta.json`)
+
+    if (!metaInfo.basename) metaInfo.basename = star.namespace
+
+    if (!metaInfo.basename)
+        U.userError(`invalid meta.json`)
+
+    star.dataEncoding = star.dataEncoding || "base64"
+
+    const palette = star.palette.map(s => {
+        let v = parseInt(s.replace(/#/, ""), 16)
+        return [(v >> 16) & 0xff, (v >> 8) & 0xff, (v >> 0) & 0xff]
+    })
+
+    for (let fn of nodeutil.allFiles(dir, 1)) {
+        fn = fn.replace(/\\/g, "/")
+        let m = /(.*\/)(.*)\.png$/i.exec(fn)
+        if (m)
+            processImage(m[2], fn, m[1] + m[2] + ".json")
+    }
+
+    return Promise.resolve()
+
+    // use geometric distance on colors
+    function scale(v: number) {
+        return v * v
+    }
+
+    function closestColor(buf: Buffer, pix: number) {
+        if (buf[pix + 3] < 100)
+            return 0 // transparent
+        let mindelta = 0
+        let idx = -1
+        for (let i = 1; i < palette.length; ++i) {
+            let delta = scale(palette[i][0] - buf[pix + 0]) + scale(palette[i][1] - buf[pix + 1]) + scale(palette[i][1] - buf[pix + 2])
+            if (idx < 0 || delta < mindelta) {
+                idx = i
+                mindelta = delta
+            }
+        }
+        return idx
+    }
+
+    function processImage(basename: string, pngName: string, jsonName: string) {
+        let info: SpriteInfo = {}
+        if (nodeutil.fileExistsSync(jsonName))
+            info = nodeutil.readJson(jsonName)
+        if (!info.width) info.width = metaInfo.width
+        if (!info.height) info.height = metaInfo.height
+
+        let sheet = PNG.sync.read(fs.readFileSync(pngName)) as PNGImage
+        let imgIdx = 0
+        let ts = `namespace ${metaInfo.star.namespace} {\n`
+
+        if (sheet.colorType != 6)
+            U.userError(`only RGBA png images supported`)
+        if (sheet.depth != 8)
+            U.userError(`only 8 bit per channel png images supported`)
+        if (sheet.width > 255 || sheet.height > 255)
+            U.userError(`PNG image too big`)
+
+        for (let y = 0; y + info.height - 1 < sheet.height; y += info.height)
+            for (let x = 0; x + info.width - 1 < sheet.width; x += info.width) {
+                let img = U.flatClone(sheet)
+                img.data = new Buffer(info.width * info.height * 4)
+                img.width = info.width
+                img.height = info.height
+                for (let i = 0; i < info.height; ++i) {
+                    let src = x * 4 + (y + i) * sheet.width * 4
+                    sheet.data.copy(img.data, i * info.width * 4, src, src + info.width * 4)
+                }
+                let key = basename + imgIdx
+                if (info.frames && info.frames[imgIdx]) {
+                    let suff = info.frames[imgIdx]
+                    if (/^[a-z]/.test(suff))
+                        suff = "_" + suff
+                    key = basename + suff
+                }
+
+                let jres = jresources[key]
+                if (!jres) {
+                    jres = jresources[key] = {} as any
+                }
+
+                if (bpp == 4) {
+                    let byteW = (img.width + 1) >> 1
+                    let outBuf = new Buffer(3 + byteW * img.height)
+                    outBuf.fill(0)
+                    outBuf[0] = 0xf4
+                    outBuf[1] = img.width
+                    outBuf[2] = img.height
+                    let outP = 3
+                    let lineP = 0
+                    for (let inP = 0; inP < img.data.length; inP += 4) {
+                        if (lineP >= img.width) {
+                            if (lineP & 1)
+                                outP++
+                            lineP = 0
+                        }
+                        let idx = closestColor(img.data, inP)
+                        if (lineP & 1) {
+                            outBuf[outP++] |= idx
+                        } else {
+                            outBuf[outP] |= (idx << 4)
+                        }
+                        lineP++
+                    }
+                    jres.data = outBuf.toString(star.dataEncoding)
+                }
+
+                jres.icon = 'data:image/png;base64,' + PNG.sync.write(img).toString('base64');
+
+                ts += `    //% fixedInstance jres blockIdentity=${metaInfo.blockIdentity}\n`
+                ts += `    export const ${key} = ${metaInfo.creator}(hex\`\`);\n`
+
+                pxt.log(`add ${key}; ${JSON.stringify(jres).length} bytes`)                
+
+                imgIdx++
+            }
+        
+        ts += "}\n"
+
+        pxt.log(`save ${metaInfo.basename}.jres and .ts`)
+        fs.writeFileSync(metaInfo.basename + ".jres", JSON.stringify(jresources, null, 2));
+        fs.writeFileSync(metaInfo.basename + ".ts", ts);
+    }
+
+}
+
 export function buildJResAsync(parsed: commandParser.ParsedCommand) {
-    let PNG: any
     ensurePkgDir();
     nodeutil.allFiles(".")
         .filter(f => /\.jres$/i.test(f))
@@ -3898,35 +4056,6 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
             const dir = path.join('jres', path.basename(f, '.jres'));
             // update existing fields
             const star = jresources["*"];
-
-            let palette: number[][] = null
-            let bpp = 4
-            if (star.palette) {
-                palette = star.palette.map(s => {
-                    let v = parseInt(s.replace(/#/, ""), 16)
-                    return [(v >> 16) & 0xff, (v >> 8) & 0xff, (v >> 0) & 0xff]
-                })
-            }
-
-            // use geometric distance on colors
-            function scale(v: number) {
-                return v * v
-            }
-
-            function closestColor(buf: Buffer, pix: number) {
-                if (buf[pix + 3] < 100)
-                    return 0 // transparent
-                let mindelta = 0
-                let idx = -1
-                for (let i = 1; i < palette.length; ++i) {
-                    let delta = scale(palette[i][0] - buf[pix + 0]) + scale(palette[i][1] - buf[pix + 1]) + scale(palette[i][1] - buf[pix + 2])
-                    if (idx < 0 || delta < mindelta) {
-                        idx = i
-                        mindelta = delta
-                    }
-                }
-                return idx
-            }
 
             if (!star.dataEncoding) star.dataEncoding = 'base64';
             Object.keys(jresources).filter(k => k != "*").forEach(k => {
@@ -3939,43 +4068,6 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
                 if (nodeutil.fileExistsSync(iconn)) {
                     pxt.log(`importing ${iconn}`);
                     let iconF = fs.readFileSync(iconn)
-                    if (palette) {
-                        if (!PNG)
-                            PNG = require("pngjs").PNG;
-                        let img = PNG.sync.read(iconF) as PNGImage
-                        iconF = PNG.sync.write(img)
-                        if (img.colorType != 6)
-                            U.userError(`only RGBA png images supported`)
-                        if (img.depth != 8)
-                            U.userError(`only 8 bit per channel png images supported`)
-                        if (img.width > 255 || img.height > 255)
-                            U.userError(`PNG image too big`)
-                        if (bpp == 4) {
-                            let byteW = (img.width + 1) >> 1
-                            let outBuf = new Buffer(3 + byteW * img.height)
-                            outBuf.fill(0)
-                            outBuf[0] = 0xf4
-                            outBuf[1] = img.width
-                            outBuf[2] = img.height
-                            let outP = 3
-                            let lineP = 0
-                            for (let inP = 0; inP < img.data.length; inP += 4) {
-                                if (lineP >= img.width) {
-                                    if (lineP & 1)
-                                        outP++
-                                    lineP = 0
-                                }
-                                let idx = closestColor(img.data, inP)
-                                if (lineP & 1) {
-                                    outBuf[outP++] |= idx
-                                } else {
-                                    outBuf[outP] |= (idx << 4)
-                                }
-                                lineP++
-                            }
-                            jres.data = outBuf.toString("hex")
-                        }
-                    }
                     jres.icon = 'data:image/png;base64,' + iconF.toString('base64');
                 }
                 // try to find file
@@ -4813,6 +4905,12 @@ function initCommands() {
         name: "buildjres",
         help: "embeds resources into jres files"
     }, buildJResAsync);
+
+    p.defineCommand({
+        name: "buildsprites",
+        help: "collects sprites into a .jres file",
+        argString: "<directory>",
+    }, buildJResSpritesAsync);
 
     p.defineCommand({
         name: "gist",
