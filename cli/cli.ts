@@ -4034,10 +4034,7 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
                     key = basename
                 }
 
-                let jres = jresources[key]
-                if (!jres) {
-                    jres = jresources[key] = {} as any
-                }
+                let data = ""
 
                 if (bpp == 4) {
                     let byteW = (img.width + 1) >> 1
@@ -4062,7 +4059,7 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
                         }
                         lineP++
                     }
-                    jres.data = outBuf.toString(star.dataEncoding)
+                    data = outBuf.toString(star.dataEncoding)
                 } else if (bpp == 1) {
                     let byteW = (img.width + 7) >> 3
                     let outBuf = new Buffer(3 + byteW * img.height)
@@ -4090,15 +4087,27 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
                         }
                         lineP++
                     }
-                    jres.data = outBuf.toString(star.dataEncoding)
+                    data = outBuf.toString(star.dataEncoding)
                 }
 
-                jres.icon = 'data:image/png;base64,' + PNG.sync.write(img).toString('base64');
+                let storeIcon = false
+
+                if (storeIcon) {
+                    let jres = jresources[key]
+                    if (!jres) {
+                        jres = jresources[key] = {} as any
+                    }
+                    jres.data = data
+                    jres.icon = 'data:image/png;base64,' + PNG.sync.write(img).toString('base64');
+                } else {
+                    // use the short form
+                    jresources[key] = data as any
+                }
 
                 ts += `    //% fixedInstance jres blockIdentity=${metaInfo.blockIdentity}\n`
                 ts += `    export const ${key} = ${metaInfo.creator}(hex\`\`);\n`
 
-                pxt.log(`add ${key}; ${JSON.stringify(jres).length} bytes`)
+                pxt.log(`add ${key}; ${JSON.stringify(jresources[key]).length} bytes`)
 
                 imgIdx++
             }

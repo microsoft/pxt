@@ -56,6 +56,91 @@ namespace pxt.blocks {
         }
     }
 
+    function htmlColorToUint32(hexColor: string) {
+        const ca = new Uint8ClampedArray(4)
+        const ui = new Uint32Array(ca.buffer)
+        const v = parseInt(hexColor.replace(/#/, ""), 16)
+        ca[0] = (v >> 16) & 0xff;
+        ca[1] = (v >> 8) & 0xff;
+        ca[2] = (v >> 0) & 0xff;
+        ca[3] = 0xff; // alpha
+        // convert to uint32 using target endian
+        return new Uint32Array(ca.buffer)[0]
+    }
+
+    // this keeps a bit of state for perf reasons
+    class ImageConverter {
+        private canvas: HTMLCanvasElement
+        private palette: Uint32Array
+        private screen: Uint32Array
+        private flush: () => void
+
+        convert(jresURL: string): string {
+            const data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
+            const magic = data.charCodeAt(0)
+            const w = data.charCodeAt(1)
+            const h = data.charCodeAt(2)
+            if (magic != 0xf1 && magic != 0xf4)
+                return null
+
+            if (!this.palette)
+                this.palette = new Uint32Array(pxt.appTarget.runtime.palette.map(htmlColorToUint32))
+
+            if (!this.canvas || this.canvas.width != w || this.canvas.height != h) {
+                const canvas = document.createElement("canvas")
+                canvas.width = w
+                canvas.height = h
+                this.canvas = canvas
+                const ctx = canvas.getContext("2d")
+                const imgdata = ctx.getImageData(0, 0, w, h)
+                this.screen = new Uint32Array(imgdata.data.buffer)
+                this.flush = () => {
+                    ctx.putImageData(imgdata, 0, 0)
+                }
+            }
+
+            const bpp = magic & 0xf
+            const byteW = (w * bpp + 7) >> 8
+
+            let inP = 3
+            let outP = 0
+            const pal = this.palette
+            const scr = this.screen
+
+            if (magic == 0xf1) {
+                let mask = 0x80
+                let v = data.charCodeAt(inP++)
+                for (let y = 0; y < h; ++y) {
+                    for (let x = 0; x < w; ++x) {
+                        scr[outP++] = (v & mask) ? pal[1] : pal[0]
+                        mask >>= 1
+                        if (mask == 0) {
+                            mask = 0x80
+                            v = data.charCodeAt(inP++)
+                        }
+                    }
+                    if (mask != 0x80) {
+                        mask = 0x80
+                        v = data.charCodeAt(inP++)
+                    }
+                }
+            } else {
+                for (let y = 0; y < h; ++y) {
+                    for (let x = 0; x < w; x += 2) {
+                        let v = data.charCodeAt(inP++)
+                        scr[outP++] = pal[(v >> 4) & 0xf]
+                        if (x != w - 1)
+                            scr[outP++] = pal[v & 0xf]
+                    }
+                }
+            }
+
+            this.flush()
+
+            return this.canvas.toDataURL("image/png")
+        }
+    }
+
     export function advancedTitle() { return Util.lf("{id:category}Advanced"); }
     export function addPackageTitle() { return Util.lf("{id:category}Extensions"); }
 
@@ -833,6 +918,7 @@ namespace pxt.blocks {
             let firstParam = !expanded && !!comp.thisParameter;
 
             const inputs = splitInputs(def);
+            const imgConv = new ImageConverter()
 
             inputs.forEach(inputParts => {
                 const fields: NamedField[] = [];
@@ -891,6 +977,9 @@ namespace pxt.blocks {
                             const dd = syms.map(v => {
                                 let k = v.attributes.block || v.attributes.blockId || v.name;
                                 let comb = v.attributes.blockCombine
+                                if (v.attributes.jresURL && !v.attributes.iconURL && U.startsWith(v.attributes.jresURL, "data:image/x-mkcd-f")) {
+                                    v.attributes.iconURL = imgConv.convert(v.attributes.jresURL)
+                                }
                                 if (!!comb)
                                     k = k.replace(/@set/, "")
                                 return [
