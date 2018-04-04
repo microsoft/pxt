@@ -462,6 +462,10 @@ namespace pxt {
             return initPromise
                 .then(() => loadDepsRecursive(this.config.dependencies))
                 .then(() => {
+                    // get paletter config loading deps, so the more higher level packages take precedence
+                    if (this.config.palette && appTarget.runtime)
+                        appTarget.runtime.palette = U.clone(this.config.palette)
+
                     if (this.level === 0) {
                         // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
                         const mainTs = this.readFile("main.ts");
