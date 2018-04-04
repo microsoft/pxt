@@ -78,7 +78,7 @@ namespace pxt.analytics {
         return (cb: () => void) => {
             return () => {
                 cb.bind(that)();
-                enableCookies();
+                setConsent();
             };
         };
     }
