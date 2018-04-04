@@ -4031,11 +4031,11 @@ export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
                 ts += `    //% fixedInstance jres blockIdentity=${metaInfo.blockIdentity}\n`
                 ts += `    export const ${key} = ${metaInfo.creator}(hex\`\`);\n`
 
-                pxt.log(`add ${key}; ${JSON.stringify(jres).length} bytes`)                
+                pxt.log(`add ${key}; ${JSON.stringify(jres).length} bytes`)
 
                 imgIdx++
             }
-        
+
         ts += "}\n"
 
         pxt.log(`save ${metaInfo.basename}.jres and .ts`)
