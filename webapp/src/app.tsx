@@ -1378,7 +1378,14 @@ export class ProjectView
         if (devIndicator) devIndicator.clear()
     }
 
+    simDebug() {
+        pxt.tickEvent("menu.debug.sim")
+        this.stopSimulator();
+        this.runSimulator({ debug: true });
+    }
+
     hwDebug() {
+        pxt.tickEvent("menu.debug.hw")
         let start = Promise.resolve()
         if (!this.state.running || !simulator.driver.runOptions.debug)
             start = this.runSimulator({ debug: true })
@@ -1806,6 +1813,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header;
+        const simDebug = targetTheme.debugger || pxt.options.debug;
 
         const { hideMenuBar, hideEditorToolbar } = targetTheme;
         const isHeadless = pxt.appTarget.simulator.headless;
@@ -1865,7 +1873,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                         </div>
                         <simtoolbar.SimulatorToolbar parent={this} />
                         <div className="ui item portrait hide">
-                            {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true })} /> : ''}
+                            {simDebug ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Debug"} onClick={() => this.simDebug()} /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
                         {useSerialEditor ?
