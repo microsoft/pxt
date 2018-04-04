@@ -128,6 +128,5 @@ declare namespace pxt {
         icon?: string; // URL (usually data-URI) for the icon
         namespace?: string; // used to construct id
         mimeType: string;
-        palette?: string[];
     }
 }

@@ -3904,6 +3904,12 @@ interface SpriteInfo {
 
 
 export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
+    ensurePkgDir()
+    return loadPkgAsync()
+        .then(() => buildJResSpritesCoreAsync(parsed))
+}
+
+function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
     const PNG: any = require("pngjs").PNG;
 
     const dir = parsed.arguments[0]
@@ -3918,7 +3924,7 @@ export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
     if (/-f1/.test(star.mimeType))
         bpp = 1
 
-    if (!metaInfo.star || !metaInfo.star.palette)
+    if (!metaInfo.star)
         U.userError(`invalid meta.json`)
 
     if (!metaInfo.basename) metaInfo.basename = star.namespace
@@ -3928,11 +3934,13 @@ export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
 
     star.dataEncoding = star.dataEncoding || "base64"
 
-    const palette = star.palette.map(s => {
+    if (!pxt.appTarget.runtime || !pxt.appTarget.runtime.palette)
+        U.userError(`palette not defined in pxt.json`)
+
+    const palette = pxt.appTarget.runtime.palette.map(s => {
         let v = parseInt(s.replace(/#/, ""), 16)
         return [(v >> 16) & 0xff, (v >> 8) & 0xff, (v >> 0) & 0xff]
     })
-
 
     let ts = `namespace ${metaInfo.star.namespace} {\n`
 
