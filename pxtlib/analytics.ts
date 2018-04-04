@@ -60,8 +60,12 @@ namespace pxt.analytics {
         };
     }
 
-    export function setConsent() {
-        if (typeof mscc !== "undefined" && !mscc.hasConsent()) {
+    export function isCookieBannerVisible() {
+        return typeof mscc !== "undefined" && !mscc.hasConsent();
+    }
+
+    export function enableCookies() {
+        if (isCookieBannerVisible()) {
             mscc.setConsent();
         }
     }
