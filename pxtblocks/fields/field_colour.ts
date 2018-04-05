@@ -29,7 +29,14 @@ namespace pxtblockly {
         constructor(text: string, params: FieldColourNumberOptions, opt_validator?: Function) {
             super(text, opt_validator);
 
-            if (params.colours) this.setColours(JSON.parse(params.colours));
+            if (params.colours)
+                this.setColours(JSON.parse(params.colours));
+            else if (pxt.appTarget.runtime && pxt.appTarget.runtime.palette) {
+                let p = Util.clone(pxt.appTarget.runtime.palette);
+                p[0] = "#dedede";
+                this.setColours(p);
+            }
+
             if (params.columns) this.setColumns(parseInt(params.columns));
             if (params.className) this.className_ = params.className;
             if (params.valueMode) this.valueMode_ = params.valueMode;

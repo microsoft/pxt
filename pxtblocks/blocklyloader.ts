@@ -56,6 +56,103 @@ namespace pxt.blocks {
         }
     }
 
+    // this keeps a bit of state for perf reasons
+    class ImageConverter {
+        private palette: Uint8Array
+        private start: number
+
+        logTime() {
+            if (this.start) {
+                let d = Date.now() - this.start
+                pxt.debug("Icon cration: " + d + "ms")
+            }
+        }
+
+        convert(jresURL: string): string {
+            if (!this.start)
+                this.start = Date.now()
+            const data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
+            const magic = data.charCodeAt(0)
+            const w = data.charCodeAt(1)
+            const h = data.charCodeAt(2)
+            if (magic != 0xf1 && magic != 0xf4)
+                return null
+
+            function htmlColorToBytes(hexColor: string) {
+                const v = parseInt(hexColor.replace(/#/, ""), 16)
+                return [(v >> 0) & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, 0]
+            }
+
+
+            if (!this.palette) {
+                let arrs = pxt.appTarget.runtime.palette.map(htmlColorToBytes)
+                this.palette = new Uint8Array(arrs.length * 4)
+                for (let i = 0; i < arrs.length; ++i) {
+                    this.palette[i * 4 + 0] = arrs[i][0]
+                    this.palette[i * 4 + 1] = arrs[i][1]
+                    this.palette[i * 4 + 2] = arrs[i][2]
+                    this.palette[i * 4 + 3] = arrs[i][3]
+                }
+            }
+
+            const bpp = magic & 0xf
+            const byteW = (w * bpp + 7) >> 8
+
+            let outByteW = (w + 3) & ~3
+
+            let bmpHeaderSize = 14 + 40 + this.palette.length
+            let bmpSize = bmpHeaderSize + outByteW * h
+            let bmp = new Uint8Array(bmpSize)
+
+            bmp[0] = 66
+            bmp[1] = 77
+            HF2.write32(bmp, 2, bmpSize)
+            HF2.write32(bmp, 10, bmpHeaderSize)
+            HF2.write32(bmp, 14, 40) // size of this header
+            HF2.write32(bmp, 18, w)
+            HF2.write32(bmp, 22, -h) // not upside down
+            HF2.write16(bmp, 26, 1) // 1 color plane
+            HF2.write16(bmp, 28, 8) // 8bpp
+            HF2.write32(bmp, 38, 2835) // 72dpi
+            HF2.write32(bmp, 42, 2835)
+            HF2.write32(bmp, 46, this.palette.length >> 2)
+
+            bmp.set(this.palette, 54)
+
+            let inP = 3
+            let outP = bmpHeaderSize
+            let pad = outByteW - w
+
+            if (magic == 0xf1) {
+                let mask = 0x80
+                let v = data.charCodeAt(inP++)
+                for (let y = 0; y < h; ++y) {
+                    for (let x = 0; x < w; ++x) {
+                        bmp[outP++] = (v & mask) ? 1 : 0
+                        mask >>= 1
+                        if (mask == 0) {
+                            mask = 0x80
+                            v = data.charCodeAt(inP++)
+                        }
+                    }
+                    outP += pad
+                }
+            } else {
+                for (let y = 0; y < h; ++y) {
+                    for (let x = 0; x < w; x += 2) {
+                        let v = data.charCodeAt(inP++)
+                        bmp[outP++] = (v >> 4) & 0xf
+                        if (x != w - 1)
+                            bmp[outP++] = v & 0xf
+                    }
+                    outP += pad
+                }
+            }
+
+            return "data:image/bmp;base64," + btoa(U.uint8ArrayToString(bmp))
+        }
+    }
+
     export function advancedTitle() { return Util.lf("{id:category}Advanced"); }
     export function addPackageTitle() { return Util.lf("{id:category}Extensions"); }
 
@@ -847,6 +944,7 @@ namespace pxt.blocks {
             let firstParam = !expanded && !!comp.thisParameter;
 
             const inputs = splitInputs(def);
+            const imgConv = new ImageConverter()
 
             inputs.forEach(inputParts => {
                 const fields: NamedField[] = [];
@@ -905,6 +1003,9 @@ namespace pxt.blocks {
                             const dd = syms.map(v => {
                                 let k = v.attributes.block || v.attributes.blockId || v.name;
                                 let comb = v.attributes.blockCombine
+                                if (v.attributes.jresURL && !v.attributes.iconURL && U.startsWith(v.attributes.jresURL, "data:image/x-mkcd-f")) {
+                                    v.attributes.iconURL = imgConv.convert(v.attributes.jresURL)
+                                }
                                 if (!!comb)
                                     k = k.replace(/@set/, "")
                                 return [
@@ -1005,6 +1106,8 @@ namespace pxt.blocks {
 
                 fields.forEach(f => input.appendField(f.field, f.name));
             });
+
+            imgConv.logTime()
         }
     }
 

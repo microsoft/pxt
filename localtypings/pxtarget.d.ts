@@ -83,6 +83,7 @@ declare namespace pxt {
         onStartUnDeletable?: boolean;
         pauseUntilBlock?: BlockOptions;
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
+        palette?: string[];
     }
 
     interface AppAnalytics {

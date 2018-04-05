@@ -371,6 +371,8 @@ namespace ts.pxtc {
                 if (mod.body.kind == SK.ModuleBlock) {
                     let blk = <ModuleBlock>mod.body
                     blk.statements.forEach(collectDecls)
+                } else if (mod.body.kind == SK.ModuleDeclaration) {
+                    collectDecls(mod.body)
                 }
             } else if (stmt.kind == SK.InterfaceDeclaration) {
                 let iface = stmt as InterfaceDeclaration
