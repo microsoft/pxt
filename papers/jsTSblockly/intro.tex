@@ -1,22 +1,49 @@
 \section{Introduction}
 
+% set up the context and constraints
+% we are looking at an easy on-ramp to coding on the web for complete beginners
+% leverage JavaScript and TypeScript
+
+Introducing programming to beginners used to be a process fraught with
+accidental complexity, due to installation of tool chains and IDEs, which
+typically were created with the experienced developer in mind. Today, 
+the web has made a plethora of environments for beginning program available 
+to anyone with a web browser and internet connection. Most any programming
+language can be experienced via the web. Examples
+\begin{itemize}
+\item JavaScript \url{https://jsfiddle.net/}
+\item Python
+\end{itemize}
+
+% https://www.khanacademy.org/computing/computer-programming/programming/drawing-basics/p/making-drawings-with-code
+% http://tryruby.org/levels/1/challenges/0
+
+
 Blockly~\cite{Blocky2015} (\url{www.github.com/google/blockly}) 
 is a JavaScript framework for creating visual block-based editing environments, 
-inspired by MIT's Scratch programming environment~\cite{ScratchCACM2009}.  Visual blocks represent structured 
-control-flow statements such as while loops and if-then-else conditionals, as well as program expressions,
-values and variables. 
-Blocks also represent function calls to domain-specific APIS. Blocky supports the creation of \emph{custom 
-blocks} for domain-specific APIs. Blockly can be compiled to a variety of languages, the main target 
+inspired by MIT's Scratch programming environment~\cite{ScratchCACM2009}.  
+Visual blocks represent structured control-flow statements such as while loops 
+and if-then-else conditionals, as well as program expressions, values and variables. 
+Blocks also represent function calls to domain-specific APIS, via Blockly's support for \emph{custom 
+blocks}. Blockly can be compiled to a variety of languages, the main target 
 being JavaScript, as Blockly itself is written in JavaScript and hosted in a web browser.
 
 TypeScript (\url{www.typescriptlang.org}) is superset of the JavaScript language that is gradually typed, 
-meaning that types may 
-optionally be added to JavaScript code to provide for a more productive programming and debugging experience. 
-We describe a mapping from TypeScript annotated JavaScript APIs to Blockly that greatly simplifies 
+meaning that types may optionally be added to JavaScript code to provide for a more productive programming 
+and debugging experience.  Many JavaScript frameworks provide TypeScript declaration files, as
+can be found at the Definitely Typed GitHub repo.~\footnote{\url{https://github.com/DefinitelyTyped/DefinitelyTyped}}.
+
+[need a running example]
+
+The contribution of this paper is to describe a mapping from TypeScript annotated 
+JavaScript APIs to Blockly that greatly simplifies 
 the process of making existing JavaScript frameworks and libraries available via Blockly.
 
-Our goal is not to have a mapping of every TypeScript programming construct into Blockly 
-(i.e., a one-to-one mapping of the TypeScript abstract syntax tree nodes to blocks).
+It is not our goal to map every TypeScript programming construct into Blockly.
+For example, a one-to-one mapping of the TypeScript abstract syntax tree (AST) 
+nodes to blocks would provide no abstraction, exposing the beginner to a visual 
+representation ofTypeScript in its full glory.
+
 Rather, it is support common programming paradigms with a simple mapping
 from TypeScript to blocks and back.  This mapping may, in fact, be many-to-one, 
 abstracting over multiple TypeScript elements to provide a single block abstraction.
