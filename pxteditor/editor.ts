@@ -178,6 +178,7 @@ namespace pxt.editor {
         toggleMute(): void;
         openInstructions(): void;
         closeFlyout(): void;
+        printCode(): void;
 
         setBanner(b: boolean): void;
 
@@ -356,5 +357,11 @@ namespace pxt.editor {
     }
 
     export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;
+
+    export interface NativeHostMessage {
+        name?: string;
+        download?: string;
+        save?: string;
+    }
 }
 

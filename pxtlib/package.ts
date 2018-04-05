@@ -415,6 +415,7 @@ namespace pxt {
                     initPromise = initPromise.then(() => this.patchCorePackage());
                 initPromise = initPromise.then(() => {
                     if (this.config.files.indexOf("board.json") < 0) return
+                    pxt.setAppTargetVariant(this.config.compileServiceVariant)
                     const def = appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json")) as pxsim.BoardDefinition;
                     def.id = this.config.name;
                     appTarget.appTheme.boardName = def.boardName || lf("board");
@@ -451,6 +452,8 @@ namespace pxt {
                     } else {
                         mod = new Package(id, ver, this.parent, this)
                         this.parent.deps[id] = mod
+                        // we can have "core---nrf52" to be used instead of "core" in other packages
+                        this.parent.deps[id.replace(/---.*/, "")] = mod
                         return mod.loadAsync(isInstall)
                     }
                 })
@@ -459,6 +462,10 @@ namespace pxt {
             return initPromise
                 .then(() => loadDepsRecursive(this.config.dependencies))
                 .then(() => {
+                    // get paletter config loading deps, so the more higher level packages take precedence
+                    if (this.config.palette && appTarget.runtime)
+                        appTarget.runtime.palette = U.clone(this.config.palette)
+
                     if (this.level === 0) {
                         // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
                         const mainTs = this.readFile("main.ts");
@@ -530,26 +537,42 @@ namespace pxt {
                 const code = pxt.Util.userLanguage();
                 return Promise.all(filenames.map(
                     fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
-                        .then(tr => Util.jsonMergeFrom(r, tr))
-                        .catch(e => pxt.log(`error while downloading ${targetId}/${fn}-strings.json`)))
+                        .then(tr => {
+                            if (tr && Object.keys(tr).length) {
+                                Util.jsonMergeFrom(r, tr);
+                            } else {
+                                pxt.tickEvent("translations.livetranslationsfailed", { "filename": fn });
+                                Util.jsonMergeFrom(r, this.bundledStringsForFile(lang, fn));
+                            }
+                        })
+                        .catch(e => {
+                            pxt.tickEvent("translations.livetranslationsfailed", { "filename": fn });
+                            pxt.log(`error while downloading ${targetId}/${fn}-strings.json`);
+                            Util.jsonMergeFrom(r, this.bundledStringsForFile(lang, fn));
+                        }))
                 ).then(() => r);
             }
             else {
-                const files = this.config.files;
                 filenames.map(name => {
-                    let fn = `_locales/${lang.toLowerCase()}/${name}-strings.json`;
-                    if (files.indexOf(fn) > -1)
-                        return JSON.parse(this.readFile(fn)) as Map<string>;
-                    if (lang.length > 2) {
-                        fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${name}-strings.json`;
-                        if (files.indexOf(fn) > -1)
-                            return JSON.parse(this.readFile(fn)) as Map<string>;
-                    }
-                    return undefined;
+                    return this.bundledStringsForFile(lang, name);
                 }).filter(d => !!d).forEach(d => Util.jsonMergeFrom(r, d));
-
                 return Promise.resolve(r);
             }
+        }
+
+        bundledStringsForFile(lang: string, filename: string): Map<string> {
+            let r: Map<string> = {};
+            const files = this.config.files;
+            let fn = `_locales/${lang.toLowerCase()}/${filename}-strings.json`;
+            if (files.indexOf(fn) > -1)
+                r = JSON.parse(this.readFile(fn)) as Map<string>;
+            if (lang.length > 2) {
+                fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${filename}-strings.json`;
+                if (files.indexOf(fn) > -1)
+                    r = JSON.parse(this.readFile(fn)) as Map<string>;
+            }
+
+            return r;
         }
     }
 
@@ -609,6 +632,17 @@ namespace pxt {
                 this._jres = {}
                 for (const pkg of this.sortedDeps()) {
                     pkg.parseJRes(this._jres)
+                }
+                if (appTarget.runtime && appTarget.runtime.palette) {
+                    const palBuf = appTarget.runtime.palette
+                        .map(s => ("000000" + parseInt(s.replace(/#/, ""), 16).toString(16)).slice(-6))
+                        .join("")
+                    this._jres["__palette"] = {
+                        id: "__palette",
+                        data: palBuf,
+                        dataEncoding: "hex",
+                        mimeType: "application/x-palette"
+                    }
                 }
             }
             return this._jres

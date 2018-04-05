@@ -396,6 +396,13 @@ namespace pxsim {
                 return leave(s, s.parent.retval)
             }
 
+            function flushLoopLock() {
+                while (__this.loopLockWaitList.length > 0 && !__this.loopLock) {
+                    let f = __this.loopLockWaitList.shift()
+                    f()
+                }
+            }
+
             function maybeYield(s: StackFrame, pc: number, r0: any): boolean {
                 yieldSteps = yieldMaxSteps;
                 let now = Date.now()
@@ -411,10 +418,7 @@ namespace pxsim {
                         U.assert(__this.loopLock === lock);
                         __this.loopLock = null;
                         loop(s)
-                        while (__this.loopLockWaitList.length > 0 && !__this.loopLock) {
-                            let f = __this.loopLockWaitList.shift()
-                            f()
-                        }
+                        flushLoopLock()
                     }
                     //U.nextTick(cont)
                     setTimeout(cont, 5)
@@ -530,6 +534,7 @@ namespace pxsim {
                         __this.currFrame = p;
                         __this.currFrame.overwrittenPC = false;
                         p = p.fn(p)
+                        //if (yieldSteps-- < 0 && maybeYield(p, p.pc, 0)) break;
                         __this.maybeUpdateDisplay()
                         if (__this.currFrame.overwrittenPC)
                             p = __this.currFrame
@@ -606,6 +611,7 @@ namespace pxsim {
             function buildResume(s: StackFrame, retPC: number) {
                 if (currResume) oops("already has resume")
                 s.pc = retPC;
+                let start = Date.now()
                 let fn = (v: any) => {
                     if (__this.dead) return;
                     if (__this.loopLock) {
@@ -613,10 +619,10 @@ namespace pxsim {
                         return;
                     }
                     runtime = __this;
+                    let now = Date.now()
+                    if (now - start > 3)
+                        lastYield = now
                     U.assert(s.pc == retPC);
-                    // TODO should loop() be called here using U.nextTick?
-                    // This matters if the simulator function calls cb()
-                    // synchronously.
                     if (v instanceof FnWrapper) {
                         let w = <FnWrapper>v
                         let frame: StackFrame = {
@@ -628,7 +634,16 @@ namespace pxsim {
                             depth: s.depth + 1,
                             finalCallback: w.cb,
                         }
-                        return loop(actionCall(frame))
+                        // If the function we call never pauses, this would cause the stack
+                        // to grow unbounded.
+                        let lock = {}
+                        __this.loopLock = lock
+                        return U.nextTick(() => {
+                            U.assert(__this.loopLock === lock)
+                            __this.loopLock = null
+                            loop(actionCall(frame))
+                            flushLoopLock()
+                        })
                     }
                     s.retval = v;
                     return loop(s)

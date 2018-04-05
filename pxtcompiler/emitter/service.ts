@@ -54,6 +54,8 @@ namespace ts.pxtc {
                 return SymbolKind.Method;
             case SK.PropertyDeclaration:
             case SK.PropertySignature:
+            case SK.GetAccessor:
+            case SK.SetAccessor:
                 return SymbolKind.Property;
             case SK.FunctionDeclaration:
                 return SymbolKind.Function;
@@ -164,7 +166,7 @@ namespace ts.pxtc {
                     }
             }
 
-            return {
+            let r: SymbolInfo = {
                 kind,
                 namespace: m ? m[1] : "",
                 name: m ? m[2] : qName,
@@ -228,6 +230,11 @@ namespace ts.pxtc {
                 }),
                 snippet: service.getSnippet(decl, attributes)
             }
+
+            if (stmt.kind == SK.GetAccessor)
+                r.isReadOnly = true
+
+            return r
         }
         return null;
     }
@@ -337,6 +344,8 @@ namespace ts.pxtc {
                     return;
                 }
                 let qName = getFullName(typechecker, stmt.symbol)
+                if (stmt.kind == SK.SetAccessor)
+                    qName += "@set" // otherwise we get a clash with the getter
                 let si = createSymbolInfo(typechecker, qName, stmt)
                 if (si) {
                     let existing = U.lookup(res.byQName, qName)
@@ -362,6 +371,8 @@ namespace ts.pxtc {
                 if (mod.body.kind == SK.ModuleBlock) {
                     let blk = <ModuleBlock>mod.body
                     blk.statements.forEach(collectDecls)
+                } else if (mod.body.kind == SK.ModuleDeclaration) {
+                    collectDecls(mod.body)
                 }
             } else if (stmt.kind == SK.InterfaceDeclaration) {
                 let iface = stmt as InterfaceDeclaration

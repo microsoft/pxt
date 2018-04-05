@@ -20,6 +20,7 @@ interface Language {
 const allLanguages: pxt.Map<Language> = {
     "af": { englishName: "Afrikaans", localizedName: "Afrikaans" },
     "ar": { englishName: "Arabic", localizedName: "العربية" },
+    "bg": { englishName: "Bulgarian", localizedName: "български" },
     "ca": { englishName: "Catalan", localizedName: "Català" },
     "cs": { englishName: "Czech", localizedName: "Čeština" },
     "da": { englishName: "Danish", localizedName: "Dansk" },
@@ -27,13 +28,20 @@ const allLanguages: pxt.Map<Language> = {
     "el": { englishName: "Greek", localizedName: "Ελληνικά" },
     "en": { englishName: "English", localizedName: "English" },
     "es-ES": { englishName: "Spanish (Spain)", localizedName: "Español (España)" },
+    "es-MX": { englishName: "Spanish (Mexico)", localizedName: "Español (México)" },
     "fi": { englishName: "Finnish", localizedName: "Suomi" },
     "fr": { englishName: "French", localizedName: "Français" },
+    "fr-CA": { englishName: "French (Canada)", localizedName: "Français (Canada)" },
     "he": { englishName: "Hebrew", localizedName: "עברית" },
+    "hr": { englishName: "Croatian", localizedName: "Hrvatski" },
     "hu": { englishName: "Hungarian", localizedName: "Magyar" },
+    "hy-AM": { englishName: "Armenian (Armenia)", localizedName: "Հայերէն (Հայաստան)" },
+    "id": { englishName: "Indonesian", localizedName: "Bahasa Indonesia" },
+    "is": { englishName: "Icelandic", localizedName: "Íslenska" },
     "it": { englishName: "Italian", localizedName: "Italiano" },
     "ja": { englishName: "Japanese", localizedName: "日本語" },
     "ko": { englishName: "Korean", localizedName: "한국어" },
+    "lt": { englishName: "Lithuanian", localizedName: "Lietuvių" },
     "nl": { englishName: "Dutch", localizedName: "Nederlands" },
     "no": { englishName: "Norwegian", localizedName: "Norsk" },
     "pl": { englishName: "Polish", localizedName: "Polski" },
@@ -41,10 +49,12 @@ const allLanguages: pxt.Map<Language> = {
     "pt-PT": { englishName: "Portuguese (Portugal)", localizedName: "Português (Portugal)" },
     "ro": { englishName: "Romanian", localizedName: "Română" },
     "ru": { englishName: "Russian", localizedName: "Русский" },
-    "ta": { englishName: "Tamil", localizedName: "தமிழ்" },
     "si-LK": { englishName: "Sinhala (Sri Lanka)", localizedName: "සිංහල (ශ්රී ලංකා)" },
+    "sk": { englishName: "Slovak", localizedName: "Slovenčina" },
+    "sl": { englishName: "Slovenian", localizedName: "Slovenski" },
     "sr": { englishName: "Serbian", localizedName: "Srpski" },
     "sv-SE": { englishName: "Swedish (Sweden)", localizedName: "Svenska (Sverige)" },
+    "ta": { englishName: "Tamil", localizedName: "தமிழ்" },
     "tr": { englishName: "Turkish", localizedName: "Türkçe" },
     "uk": { englishName: "Ukrainian", localizedName: "Українська" },
     "vi": { englishName: "Vietnamese", localizedName: "Tiếng việt" },
@@ -88,12 +98,11 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
         }
     }
 
-    fetchLanguages(): string[] {
-        if (!pxt.appTarget.appTheme.selectLanguage)
-            return undefined;
-
-        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
-        return targetConfig ? targetConfig.languages : undefined;
+    languageList(): string[] {
+        if (pxt.appTarget.appTheme.selectLanguage && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.length) {
+            return pxt.appTarget.appTheme.availableLocales;
+        }
+        return defaultLanguages;
     }
 
     changeLanguage(langId: string) {
@@ -129,39 +138,38 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
         if (!this.state.visible) return <div></div>;
 
         const targetTheme = pxt.appTarget.appTheme;
-        const fetchedLangs = this.fetchLanguages();
-        const languagesToShow = fetchedLangs && fetchedLangs.length ? fetchedLangs : defaultLanguages;
-        const modalSize = languagesToShow.length > 4 ? "large" : "small";
+        const languageList = this.languageList();
+        const modalSize = languageList.length > 4 ? "large" : "small";
 
         return (
             <sui.Modal open={this.state.visible}
-                header={lf("Select Language") }
+                header={lf("Select Language")}
                 size={modalSize}
-                onClose={() => this.hide() }
+                onClose={() => this.hide()}
                 dimmer={true}
                 closeIcon={true}
                 allowResetFocus={true}
                 closeOnDimmerClick
                 closeOnDocumentClick
                 closeOnEscape
-                >
-                {!fetchedLangs ?
-                    <div className="ui message info">{lf("loading...") }</div> : undefined}
-                {fetchedLangs ? <div className="group">
+            >
+                <div className="group">
                     <div className="ui cards centered" role="listbox">
-                        {languagesToShow.map(langId =>
+                        {languageList.map(langId =>
                             <codecard.CodeCardView className={`card-selected focused`}
                                 key={langId}
                                 name={allLanguages[langId].localizedName}
                                 ariaLabel={allLanguages[langId].englishName}
                                 role="option"
                                 description={allLanguages[langId].englishName}
-                                onClick={() => this.changeLanguage(langId) }
-                                />
-                        ) }
-                    </div></div> : undefined }
-                <p><br/><br/>
-                    <a href={`https://crowdin.com/project/${targetTheme.crowdinProject}`} target="_blank" aria-label={lf("Help us translate")}>{lf("Help us translate") }</a>
+                                onClick={() => this.changeLanguage(langId)}
+                            />
+                        )}
+                    </div>
+                </div>
+                <p>
+                    <br /><br />
+                    <a href={`https://crowdin.com/project/${targetTheme.crowdinProject}`} target="_blank" aria-label={lf("Help us translate")}>{lf("Help us translate")}</a>
                 </p>
             </sui.Modal>
         );

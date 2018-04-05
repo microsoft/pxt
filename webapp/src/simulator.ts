@@ -41,6 +41,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     $debugger = $('#debugger')
     let options: pxsim.SimulatorDriverOptions = {
         revealElement: (el) => {
+            if (pxt.options.light) return;
             ($(el) as any).transition({
                 animation: pxt.appTarget.appTheme.simAnimationEnter || 'fly right in',
                 duration: '0.5s',
@@ -49,9 +50,14 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         removeElement: (el, completeHandler) => {
             if (pxt.appTarget.simulator.headless) {
                 $(el).addClass('simHeadless');
-                completeHandler();
+                if (completeHandler) completeHandler();
             }
             else {
+                if (pxt.options.light) {
+                    if (completeHandler) completeHandler();
+                    $(el).remove();
+                    return;
+                }
                 ($(el) as any).transition({
                     animation: pxt.appTarget.appTheme.simAnimationExit || 'fly right out',
                     duration: '0.5s',
@@ -185,7 +191,7 @@ export function isDirty(): boolean { // in need of a restart?
     return dirty;
 }
 
-export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult, mute?: boolean, highContrast?: boolean) {
+export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult, mute?: boolean, highContrast?: boolean, light?: boolean) {
     makeClean();
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
@@ -200,11 +206,13 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
         debug,
         fnArgs,
         highContrast,
+        light,
         aspectRatio: parts.length ? pxt.appTarget.simulator.partsAspectRatio : pxt.appTarget.simulator.aspectRatio,
         partDefinitions: pkg.computePartDefinitions(parts),
         cdnUrl: pxt.webConfig.commitCdnUrl,
         localizedStrings: simTranslations,
-        refCountingDebug: pxt.options.debug
+        refCountingDebug: pxt.options.debug,
+        version: pkg.version()
     }
     postSimEditorEvent("started");
 

@@ -201,69 +201,34 @@ export const maths: BuiltinCategoryDefinition = {
     }
 };
 
-export const text: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Text"),
-    nameid: 'text',
-    custom: true,
+export const functions: BuiltinCategoryDefinition = {
+    name: lf("{id:category}Functions"),
+    nameid: 'functions',
     blocks: [
         {
-            name: "length",
-            snippet: `"".length`,
-            snippetOnly: true,
+            name: "function doSomething",
+            snippet: `function doSomething() {\n\n}`,
             attributes: {
-                jsDoc: lf("Returns the number of characters in a string")
-            },
-            retType: "number"
+                jsDoc: lf("Define a function")
+            }
         },
         {
-            name: "concat",
-            snippet: `"" + 5`,
-            snippetOnly: true,
+            name: "doSomething",
+            snippet: `doSomething()`,
             attributes: {
-                jsDoc: lf("Combines a string with a number, boolean, string, or other object into one string")
-            },
-            retType: "string"
-        },
-        {
-            name: "compare",
-            snippet: `"".compare("")`,
-            attributes: {
-                jsDoc: lf("Compares one string against another alphabetically and returns a number")
-            },
-            retType: "number"
-        },
-        {
-            name: "parseInt",
-            snippet: `parseInt("5")`,
-            attributes: {
-                jsDoc: lf("Converts a number written as text into a number")
-            },
-            retType: "number"
-        },
-        {
-            name: "substr",
-            snippet: `"".substr(0, 0)`,
-            attributes: {
-                jsDoc: lf("Returns the part of a string starting at a given index with the given length")
-            },
-            retType: "string"
-        },
-        {
-            name: "charAt",
-            snippet: `"".charAt(0)`,
-            attributes: {
-                jsDoc: lf("Returns the character at the given index")
-            },
-            retType: "string"
+                jsDoc: lf("Call a function")
+            }
         },
     ],
     attributes: {
         advanced: true,
-        icon: "text",
+        weight: 50.08,
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+        color: pxt.blocks.blockColors["functions"].toString(),
+        icon: "functions",
         paramDefl: {}
     }
-}
+};
 
 export const arrays: BuiltinCategoryDefinition = {
     name: lf("{id:category}Arrays"),
@@ -384,6 +349,7 @@ export const arrays: BuiltinCategoryDefinition = {
     ],
     attributes: {
         advanced: true,
+        weight: 50.07,
         color: pxt.blocks.blockColors["arrays"].toString(),
         icon: "arrays",
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
@@ -391,33 +357,70 @@ export const arrays: BuiltinCategoryDefinition = {
     }
 }
 
-export const functions: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Functions"),
-    nameid: 'functions',
+export const text: BuiltinCategoryDefinition = {
+    name: lf("{id:category}Text"),
+    nameid: 'text',
+    custom: true,
     blocks: [
         {
-            name: "function doSomething",
-            snippet: `function doSomething() {\n\n}`,
+            name: "length",
+            snippet: `"".length`,
+            snippetOnly: true,
             attributes: {
-                jsDoc: lf("Define a function")
-            }
+                jsDoc: lf("Returns the number of characters in a string")
+            },
+            retType: "number"
         },
         {
-            name: "doSomething",
-            snippet: `doSomething()`,
+            name: "concat",
+            snippet: `"" + 5`,
+            snippetOnly: true,
             attributes: {
-                jsDoc: lf("Call a function")
-            }
+                jsDoc: lf("Combines a string with a number, boolean, string, or other object into one string")
+            },
+            retType: "string"
+        },
+        {
+            name: "compare",
+            snippet: `"".compare("")`,
+            attributes: {
+                jsDoc: lf("Compares one string against another alphabetically and returns a number")
+            },
+            retType: "number"
+        },
+        {
+            name: "parseInt",
+            snippet: `parseInt("5")`,
+            attributes: {
+                jsDoc: lf("Converts a number written as text into a number")
+            },
+            retType: "number"
+        },
+        {
+            name: "substr",
+            snippet: `"".substr(0, 0)`,
+            attributes: {
+                jsDoc: lf("Returns the part of a string starting at a given index with the given length")
+            },
+            retType: "string"
+        },
+        {
+            name: "charAt",
+            snippet: `"".charAt(0)`,
+            attributes: {
+                jsDoc: lf("Returns the character at the given index")
+            },
+            retType: "string"
         },
     ],
     attributes: {
         advanced: true,
+        weight: 50.06,
+        icon: "text",
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-        color: pxt.blocks.blockColors["functions"].toString(),
-        icon: "functions",
         paramDefl: {}
     }
-};
+}
 
 let pauseUntil: MonacoBlockDefinition;
 

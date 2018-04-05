@@ -14,8 +14,10 @@ namespace pxsim {
         code: string;
         mute?: boolean;
         highContrast?: boolean;
+        light?: boolean;
         cdnUrl?: string;
         localizedStrings?: Map<string>;
+        version?: string;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
@@ -301,7 +303,10 @@ namespace pxsim {
     }
 
     export function reload() {
-        Runtime.postMessage({ type: "simulator", command: "reload" } as SimulatorCommandMessage)
+        // Continuously send message just in case the editor isn't ready to handle it yet
+        setInterval(() => {
+            Runtime.postMessage({ type: "simulator", command: "reload" } as SimulatorCommandMessage)
+        }, 500)
     }
 }
 

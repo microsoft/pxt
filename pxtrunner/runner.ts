@@ -8,6 +8,8 @@ namespace pxt.runner {
     export interface SimulateOptions {
         id?: string;
         code?: string;
+        highContrast?: boolean;
+        light?: boolean;
     }
 
     class EditorPackage {
@@ -140,9 +142,10 @@ namespace pxt.runner {
         Util.assert(!!pxt.appTarget);
 
         const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
-        const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-        const lang = mlang ? mlang[2] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+        const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+        const lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
         const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
+        const force = !!mlang && !!mlang[2];
         const versions = pxt.appTarget.versions;
 
         patchSemantic();
@@ -153,7 +156,8 @@ namespace pxt.runner {
             cfg.commitCdnUrl, lang,
             versions ? versions.pxtCrowdinBranch : "",
             versions ? versions.targetCrowdinBranch : "",
-            live)
+            live,
+            force)
             .then(() => {
                 mainPkg = new pxt.MainPackage(new Host());
             })
@@ -267,7 +271,9 @@ namespace pxt.runner {
                         parts: parts,
                         fnArgs: fnArgs,
                         cdnUrl: pxt.webConfig.commitCdnUrl,
-                        localizedStrings: Util.getLocalizedStrings()
+                        localizedStrings: Util.getLocalizedStrings(),
+                        highContrast: simOptions.highContrast,
+                        light: simOptions.light
                     };
                     if (pxt.appTarget.simulator)
                         runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
@@ -411,6 +417,10 @@ namespace pxt.runner {
             Promise.delay(100) // allow UI to update
                 .then(() => {
                     switch (doctype) {
+                        case "project":
+                            return renderProjectFilesAsync(content, JSON.parse(src));
+                        case "projectid":
+                            return renderProjectAsync(content, JSON.parse(src));
                         case "doc":
                             return renderDocAsync(content, src);
                         case "tutorial":
@@ -448,7 +458,7 @@ namespace pxt.runner {
         }
 
         function renderHash() {
-            let m = /^#(doc|md|tutorial|book):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
+            let m = /^#(doc|md|tutorial|book|project|projectid):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
                 const p = m[4] ? setEditorContextAsync(
@@ -474,12 +484,62 @@ namespace pxt.runner {
     export function renderProjectAsync(content: HTMLElement, projectid: string, template = "blocks"): Promise<void> {
         return Cloud.privateGetTextAsync(projectid + "/text")
             .then(txt => JSON.parse(txt))
-            .then((files: Map<string>) => {
-                let md = `\`\`\`${template}
-${files["main.ts"]}
-\`\`\``;
-                return renderMarkdownAsync(content, md);
-            })
+            .then(files => renderProjectFilesAsync(content, files, projectid, template));
+    }
+
+    export function renderProjectFilesAsync(content: HTMLElement, files: Map<string>, projectid: string = null, template = "blocks"): Promise<void> {
+        const cfg = (JSON.parse(files[pxt.CONFIG_NAME]) || {}) as PackageConfig;
+
+        let md = `# ${cfg.name} ${cfg.version ? cfg.version : ''}
+
+`;
+        if (projectid)
+            md += `* ${pxt.appTarget.appTheme.shareUrl || "https://makecode.com/"}${projectid}
+
+`;
+        else
+            md += `* ${pxt.appTarget.appTheme.homeUrl}
+
+`;
+        const readme = "README.md";
+        if (files[readme])
+            md += files[readme].replace(/^#+/, "$0#") + '\n'; // bump all headers down 1
+
+        cfg.files.filter(f => f != pxt.CONFIG_NAME && f != readme)
+            .forEach(f => {
+                md += `
+## ${f}
+`;
+                if (/\.ts$/.test(f)) {
+                    md += `\`\`\`typescript
+${files[f]}
+\`\`\`
+`;
+                } else if (/\.blocks?$/.test(f)) {
+                    md += `\`\`\`blocksxml
+${files[f]}
+\`\`\`
+`;
+                } else {
+                    md += `\`\`\`${f.substr(f.indexOf('.'))}
+${files[f]}
+\`\`\`
+`;
+                }
+            });
+
+        if (cfg && cfg.dependencies) {
+            md += `
+## Packages
+
+${Object.keys(cfg.dependencies).map(k => `* ${k}, ${cfg.dependencies[k]}`).join('\n')}
+
+\`\`\`package
+${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n')}
+\`\`\`
+`;
+        }
+        return renderMarkdownAsync(content, md);
     }
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
@@ -492,8 +552,15 @@ ${files["main.ts"]}
         summaryid = summaryid.replace(/^\//, "");
         pxt.tickEvent('book', { id: summaryid });
         pxt.log(`rendering book from ${summaryid}`)
+
+        // display loader
+        const $loader = $("#loading").find(".loader");
+        $loader.addClass("text").text(lf("Compiling your book (this may take a minute)"));
+
+        // start the work
         let toc: TOCMenuEntry[];
-        return pxt.Cloud.downloadMarkdownAsync(summaryid, editorLocale, pxt.Util.localizeLive)
+        return Promise.delay(100)
+            .then(() => pxt.Cloud.downloadMarkdownAsync(summaryid, editorLocale, pxt.Util.localizeLive))
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);
                 pxt.log(`TOC: ${JSON.stringify(toc, null, 2)}`)
@@ -615,6 +682,7 @@ ${files["main.ts"]}
             snippetClass: 'lang-blocks',
             signatureClass: 'lang-sig',
             blocksClass: 'lang-block',
+            blocksXmlClass: 'lang-blocksxml',
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',
             namespacesClass: 'lang-namespaces',
@@ -754,7 +822,6 @@ ${files["main.ts"]}
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
         // code may be undefined or empty!!!
-
         const packageid = options && options.packageId ? "pub:" + options.packageId :
             options && options.package ? "docs:" + options.package
                 : null;
@@ -791,6 +858,28 @@ ${files["main.ts"]}
                             compileJS: resp,
                             compileBlocks: bresp,
                             blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
+                        };
+                    })
+            });
+    }
+
+    export function compileBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
+        const packageid = options && options.packageId ? "pub:" + options.packageId :
+            options && options.package ? "docs:" + options.package
+                : null;
+        return loadPackageAsync(packageid, "")
+            .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
+            .then(opts => {
+                opts.ast = true
+                const resp = pxtc.compile(opts)
+                const apis = pxtc.getApiInfo(opts, resp.ast);
+                return ts.pxtc.localizeApisAsync(apis, mainPkg)
+                    .then(() => {
+                        const blocksInfo = pxtc.getBlocksInfo(apis);
+                        pxt.blocks.initBlocks(blocksInfo);
+                        return <DecompileResult>{
+                            package: mainPkg,
+                            blocksSvg: pxt.blocks.render(code, options)
                         };
                     })
             });

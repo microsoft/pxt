@@ -61,7 +61,7 @@
 */
 
 @tallEditorBreakpoint: 44rem;
-@thinEditorBreakpoint: 24rem;
+@thinEditorBreakpoint: 50rem;
 
 /*--------------
    Form Input
@@ -109,10 +109,15 @@
 @loaderImageUrl: "../docs/static/loader.svg";
 @loaderImage: data-uri(@loaderImageUrl);
 
+@includePoweredByLogos: false;
 @poweredBySmallUrl: "../docs/static/logo/Powered-By-Microsoft-logo-small.png";
-@poweredBySmall: data-uri(@poweredBySmallUrl);
+@poweredBySmall: none;
 @poweredByLargeUrl: "../docs/static/logo/Powered-By-Microsoft-logo.png";
-@poweredByLarge: data-uri(@poweredByLargeUrl);
+@poweredByLarge: none;
+.includePoweredByLogos() when not (@includePoweredByLogos = false) {
+  @poweredBySmall: data-uri(@poweredBySmallUrl);
+  @poweredByLarge: data-uri(@poweredByLargeUrl);
+}
 
 @docsAvatarImageUrl: none;
 @docsAvatarImage: none;

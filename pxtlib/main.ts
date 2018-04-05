@@ -2,14 +2,15 @@
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 /// <reference path="../localtypings/pxtarget.d.ts"/>
 /// <reference path="util.ts"/>
+/// <reference path="apptarget.ts"/>
+/// <reference path="tickEvent.ts"/>
 
 namespace pxt {
     export import U = pxtc.Util;
     export import Util = pxtc.Util;
     const lf = U.lf;
 
-    export let appTarget: TargetBundle;
-
+    let savedAppTarget: TargetBundle;
     export function setAppTarget(trg: TargetBundle) {
         appTarget = trg || <TargetBundle>{};
 
@@ -43,6 +44,23 @@ namespace pxt {
         if (cs) {
             if (cs.yottaTarget && !cs.yottaBinary)
                 cs.yottaBinary = "pxt-microbit-app-combined.hex"
+        }
+
+        savedAppTarget = U.clone(appTarget)
+    }
+
+    export function setAppTargetVariant(variant: string) {
+        appTargetVariant = variant
+        appTarget = U.clone(savedAppTarget)
+        if (variant) {
+            if (appTarget.variants) {
+                let v = appTarget.variants[variant]
+                if (v) {
+                    U.jsonMergeFrom(appTarget, v)
+                    return
+                }
+            }
+            U.userError(lf("Variant '{0}' not defined in pxtarget.json", variant))
         }
     }
 
@@ -86,15 +104,6 @@ namespace pxt {
             }
         }
     }
-
-    export interface TelemetryEventOptions {
-        interactiveConsent: boolean;
-    }
-
-    /**
-     * Track an event.
-     */
-    export var tickEvent: (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions) => void = function (id) { }
 
     let activityEvents: Map<number> = {};
     const tickActivityDebounced = Util.debounce(() => {

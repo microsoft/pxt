@@ -6,7 +6,6 @@ declare namespace pxt {
     // targetconfig.json
     interface TargetConfig {
         packages?: PackagesConfig;
-        languages?: string[];
         // common galleries
         galleries?: pxt.Map<string>;
         // localized galleries
@@ -44,6 +43,7 @@ declare namespace pxt {
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
         ignoreDocsErrors?: boolean;
+        variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
     }
 
     interface ProjectTemplate {
@@ -84,6 +84,7 @@ declare namespace pxt {
         pauseUntilBlock?: BlockOptions;
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
         assetExtensions?: string[];
+        palette?: string[];
     }
 
     interface AppAnalytics {
@@ -140,6 +141,7 @@ declare namespace pxt {
         trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
         invalidatedClass?: string; // CSS class to be applied to the sim iFrame when it needs to be updated (defaults to sepia filter)
         stoppedClass?: string; // CSS class to be applied to the sim iFrame when it isn't running (defaults to grayscale filter)
+        debugger?: boolean; // enable debugger by default
     }
 
     interface TargetCompileService {
@@ -242,6 +244,7 @@ declare namespace pxt {
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
         selectLanguage?: boolean; // add language picker to settings menu
+        availableLocales?: string[]; // the list of enabled language codes
         useUploadMessage?: boolean; // change "Download" text to "Upload"
         downloadIcon?: string; // which icon io use for download
         blockColors?: Map<string>; // block namespace colors, used for build in categories
