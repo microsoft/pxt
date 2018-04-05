@@ -126,8 +126,13 @@ For example:
 % mutateText - defines the text that appears in the top block of the Blockly mutator dialog (the dialog that appears when you click the blue gear)
 % mutateDefaults - defines the versions of this block that should appear in the toolbox. Block definitions are separated by semicolons and property names should be separated by commas
 
-\subsection{Collections}
-
-\subsection{Monads}
-
 \subsection{Lexical Scoping}
+
+% to be implemented
+% in most blockly programs, variables are used without being declared
+% we use the block structure to determine where to place declaration
+% given a set of uses U(X) of variable X, we take the least common ancestor
+% of U(X) and place the declaration for X there when translating from
+% blockly to typescript
+
+% this means we won't preserve
