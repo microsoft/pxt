@@ -2,6 +2,14 @@
 
 namespace pxt.blocks {
     const THIS_NAME = "this";
+
+    // The JS Math functions supported in the blocks. The order of this array
+    // determines the order of the dropdown in the math_js_op block
+    export const MATH_FUNCTIONS = {
+        unary: ["sqrt", "sin", "cos", "tan", "ceil", "floor"],
+        binary: ["atan2"]
+    };
+
     export interface BlockParameter {
         // Declared parameter name as it appears in the code. This is the name used
         // when customizing the field in the comment attributes
@@ -270,7 +278,7 @@ namespace pxt.blocks {
                 name: Util.lf("{id:block}number"),
                 url: '/blocks/math/random',
                 category: 'math',
-                tooltip: (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ?
+                tooltip: (pxt.appTarget && pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ?
                     Util.lf("a decimal number") : Util.lf("an integer number")
             },
             'math_integer': {
@@ -319,6 +327,32 @@ namespace pxt.blocks {
                 category: 'math',
                 block: {
                     MATH_MODULO_TITLE: Util.lf("remainder of %1 ÷ %2")
+                }
+            },
+            'math_js_op': {
+                name: Util.lf("math function"),
+                tooltip: {
+                    "sin": Util.lf("Returns the sine of the argument"),
+                    "cos": Util.lf("Returns the cosine of the argument"),
+                    "tan": Util.lf("Returns the tangent of the argument"),
+                    "sqrt": Util.lf("Returns the square root of the argument"),
+                    "ceil": Util.lf("Returns the lowest integer value greater than or equal to the argument"),
+                    "floor": Util.lf("Returns the highest integer value lesser than or equal to the argument"),
+                    "atan2": Util.lf("Returns the arctangent of the quotient of the two arguments"),
+                },
+                url: '/blocks/math',
+                operators: {
+                    'OP': ["sqrt", "sin", "cos", "tan", "ceil", "floor", "atan2"]
+                },
+                category: 'math',
+                block: {
+                    "sin": Util.lf("{id:op}sin"),
+                    "cos": Util.lf("{id:op}cos"),
+                    "tan": Util.lf("{id:op}tan"),
+                    "sqrt": Util.lf("{id:op}square root"),
+                    "ceil": Util.lf("{id:op}ceiling"),
+                    "floor": Util.lf("{id:op}floor"),
+                    "atan2": Util.lf("{id:op}atan2"),
                 }
             },
             'variables_change': {

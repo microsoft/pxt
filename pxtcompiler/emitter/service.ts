@@ -54,6 +54,8 @@ namespace ts.pxtc {
                 return SymbolKind.Method;
             case SK.PropertyDeclaration:
             case SK.PropertySignature:
+            case SK.GetAccessor:
+            case SK.SetAccessor:
                 return SymbolKind.Property;
             case SK.FunctionDeclaration:
                 return SymbolKind.Function;
@@ -118,7 +120,15 @@ namespace ts.pxtc {
             if (stripParams) {
                 t = t.getCallSignatures()[0].getReturnType()
             }
-            return typechecker.typeToString(t, undefined, TypeFormatFlags.UseFullyQualifiedType)
+            const readableName = typechecker.typeToString(t, undefined, TypeFormatFlags.UseFullyQualifiedType)
+
+            // TypeScript 2.0.0+ will assign constant variables numeric literal types which breaks the
+            // type checking we do in the blocks
+            if (!isNaN(Number(readableName))) {
+                return "number";
+            }
+
+            return readableName;
         }
 
         let kind = getSymbolKind(stmt)
@@ -156,7 +166,7 @@ namespace ts.pxtc {
                     }
             }
 
-            return {
+            let r: SymbolInfo = {
                 kind,
                 namespace: m ? m[1] : "",
                 name: m ? m[2] : qName,
@@ -220,6 +230,11 @@ namespace ts.pxtc {
                 }),
                 snippet: service.getSnippet(decl, attributes)
             }
+
+            if (stmt.kind == SK.GetAccessor)
+                r.isReadOnly = true
+
+            return r
         }
         return null;
     }
@@ -329,6 +344,8 @@ namespace ts.pxtc {
                     return;
                 }
                 let qName = getFullName(typechecker, stmt.symbol)
+                if (stmt.kind == SK.SetAccessor)
+                    qName += "@set" // otherwise we get a clash with the getter
                 let si = createSymbolInfo(typechecker, qName, stmt)
                 if (si) {
                     let existing = U.lookup(res.byQName, qName)
@@ -354,6 +371,8 @@ namespace ts.pxtc {
                 if (mod.body.kind == SK.ModuleBlock) {
                     let blk = <ModuleBlock>mod.body
                     blk.statements.forEach(collectDecls)
+                } else if (mod.body.kind == SK.ModuleDeclaration) {
+                    collectDecls(mod.body)
                 }
             } else if (stmt.kind == SK.InterfaceDeclaration) {
                 let iface = stmt as InterfaceDeclaration
@@ -528,7 +547,7 @@ namespace ts.pxtc.service {
     let lastFuse: Fuse<SearchInfo>;
     let builtinItems: SearchInfo[];
     let blockDefinitions: pxt.Map<pxt.blocks.BlockDefinition>;
-    let tbSubset: pxt.Map<boolean>;
+    let tbSubset: pxt.Map<boolean | string>;
 
     function fileDiags(fn: string) {
         if (!/\.ts$/.test(fn))
@@ -720,11 +739,11 @@ namespace ts.pxtc.service {
 
                 if (search.subset) {
                     tbSubset = search.subset;
-                    builtinSearchSet = builtinItems.filter(s => tbSubset[s.id]);
+                    builtinSearchSet = builtinItems.filter(s => !!tbSubset[s.id]);
                 }
 
                 if (tbSubset) {
-                    subset = blockInfo.blocks.filter(s => tbSubset[s.attributes.blockId]);
+                    subset = blockInfo.blocks.filter(s => !!tbSubset[s.attributes.blockId]);
                 }
                 else {
                     subset = blockInfo.blocks;
@@ -732,14 +751,17 @@ namespace ts.pxtc.service {
                 }
 
                 let searchSet: SearchInfo[] = subset.map(s => {
-                    return {
+                    const mappedSi: SearchInfo = {
                         id: s.attributes.blockId,
                         qName: s.qName,
                         name: s.name,
-                        nameSpace: s.namespace,
+                        namespace: s.namespace,
                         block: s.attributes.block,
-                        jsDoc: s.attributes.jsDoc
+                        jsdoc: s.attributes.jsDoc,
+                        localizedCategory: tbSubset && typeof tbSubset[s.attributes.blockId] === "string"
+                            ? tbSubset[s.attributes.blockId] as string : undefined
                     };
+                    return mappedSi;
                 });
 
 
@@ -761,10 +783,11 @@ namespace ts.pxtc.service {
                     findAllMatches: false,
                     caseSensitive: false,
                     keys: [
-                        { name: 'name', weight: 0.3125 },
-                        { name: 'namespace', weight: 0.1875 },
+                        { name: 'name', weight: 0.3 },
+                        { name: 'namespace', weight: 0.1 },
+                        { name: 'localizedCategory', weight: 0.1 },
                         { name: 'block', weight: 0.4375 },
-                        { name: 'jsDoc', weight: 0.0625 }
+                        { name: 'jsdoc', weight: 0.0625 }
                     ],
                     sortFn: function (a: any, b: any): number {
                         const wa = a.qName ? 1 - weights[a.item.qName] / mw : 1;

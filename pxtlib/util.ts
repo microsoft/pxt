@@ -1,3 +1,6 @@
+/// <reference path="tickEvent.ts" />
+/// <reference path="apptarget.ts"/>
+
 namespace ts.pxtc {
     export var __dummy = 42;
 }
@@ -7,12 +10,12 @@ import pxtc = ts.pxtc
 namespace ts.pxtc {
     /**
      * atob replacement
-     * @param s 
+     * @param s
      */
     export var decodeBase64 = function (s: string) { return atob(s); }
     /**
      * bota replacement
-     * @param s 
+     * @param s
      */
     export var encodeBase64 = function (s: string) { return btoa(s); }
 }
@@ -859,9 +862,14 @@ namespace ts.pxtc.Util {
         return code;
     }
 
-    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<void> {
+    export function isLocaleEnabled(code: string): boolean {
         code = normalizeLanguageCode(code);
-        if (code === _localizeLang)
+        return pxt.appTarget.appTheme && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.indexOf(code) > -1;
+    }
+
+    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
+        code = normalizeLanguageCode(code);
+        if (code === _localizeLang || (!isLocaleEnabled(code) && !force))
             return Promise.resolve();
 
         return downloadTranslationsAsync(targetId, simulator, baseUrl, code, pxtBranch, targetBranch, live)
@@ -877,9 +885,9 @@ namespace ts.pxtc.Util {
             });
     }
 
-    export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
+    export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<pxt.Map<string>> {
         code = normalizeLanguageCode(code);
-        if (code === _localizeLang)
+        if (code === _localizeLang || (!isLocaleEnabled(code) && !force))
             return Promise.resolve<pxt.Map<string>>(undefined);
 
         return downloadTranslationsAsync(targetId, true, baseUrl, code, pxtBranch, targetBranch, live)
@@ -911,20 +919,27 @@ namespace ts.pxtc.Util {
         }
 
         if (live) {
-            let hadError = false;
+            let errorCount = 0;
 
             const pAll = Promise.mapSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path, file.branch)
                 .then(mergeTranslations, e => {
                     console.log(e.message);
-                    hadError = true;
+                    ++errorCount;
                 })
             );
 
             return pAll.then(() => {
                 // Cache translations unless there was an error for one of the files
-                if (!hadError) {
+                if (errorCount) {
                     _translationsCache[translationsCacheId] = translations;
                 }
+
+                if (errorCount === stringFiles.length || !translations) {
+                    // Retry with non-live translations by setting live to false
+                    pxt.tickEvent("translations.livetranslationsfailed");
+                    return downloadTranslationsAsync(targetId, simulator, baseUrl, code, pxtBranch, targetBranch, false);
+                }
+
                 return Promise.resolve(translations);
             });
         } else {

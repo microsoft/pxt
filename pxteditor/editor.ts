@@ -8,6 +8,7 @@ namespace pxt.editor {
         zoomIn(): void;
         zoomOut(): void;
         resize(): void;
+        setScale(scale: number): void;
     }
 
     export interface IFile {
@@ -62,6 +63,7 @@ namespace pxt.editor {
     export interface EditorState {
         filters?: pxt.editor.ProjectFilters;
         searchBar?: boolean; // show the search bar in editor
+        hasCategories?: boolean; // show categories in toolbox
     }
 
     export interface ProjectCreationOptions {
@@ -73,6 +75,7 @@ namespace pxt.editor {
         temporary?: boolean;
         inTutorial?: boolean;
         dependencies?: pxt.Map<string>;
+        tsOnly?: boolean;
     }
 
     export interface ProjectFilters {
@@ -175,6 +178,7 @@ namespace pxt.editor {
         toggleMute(): void;
         openInstructions(): void;
         closeFlyout(): void;
+        printCode(): void;
 
         setBanner(b: boolean): void;
 
@@ -353,5 +357,11 @@ namespace pxt.editor {
     }
 
     export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;
+
+    export interface NativeHostMessage {
+        name?: string;
+        download?: string;
+        save?: string;
+    }
 }
 

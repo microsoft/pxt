@@ -6,7 +6,6 @@ declare namespace pxt {
     // targetconfig.json
     interface TargetConfig {
         packages?: PackagesConfig;
-        languages?: string[];
         // common galleries
         galleries?: pxt.Map<string>;
         // localized galleries
@@ -44,6 +43,7 @@ declare namespace pxt {
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
         ignoreDocsErrors?: boolean;
+        variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
     }
 
     interface ProjectTemplate {
@@ -83,6 +83,7 @@ declare namespace pxt {
         onStartUnDeletable?: boolean;
         pauseUntilBlock?: BlockOptions;
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
+        palette?: string[];
     }
 
     interface AppAnalytics {
@@ -139,6 +140,7 @@ declare namespace pxt {
         trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
         invalidatedClass?: string; // CSS class to be applied to the sim iFrame when it needs to be updated (defaults to sepia filter)
         stoppedClass?: string; // CSS class to be applied to the sim iFrame when it isn't running (defaults to grayscale filter)
+        debugger?: boolean; // enable debugger by default
     }
 
     interface TargetCompileService {
@@ -178,7 +180,7 @@ declare namespace pxt {
         portraitLogo?: string;
         highContrastLogo?: string;
         highContrastPortraitLogo?: string;
-        rightLogo?: string; 
+        rightLogo?: string;
         docsLogo?: string;
         organization?: string;
         organizationUrl?: string;
@@ -241,6 +243,7 @@ declare namespace pxt {
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
         selectLanguage?: boolean; // add language picker to settings menu
+        availableLocales?: string[]; // the list of enabled language codes
         useUploadMessage?: boolean; // change "Download" text to "Upload"
         downloadIcon?: string; // which icon io use for download
         blockColors?: Map<string>; // block namespace colors, used for build in categories
@@ -248,7 +251,7 @@ declare namespace pxt {
         blocklyColors?: Blockly.Colours; // Blockly workspace, flyout and other colors
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
-        appPathNames?: string[]; // Authorized URL paths in electron or UWP, all other paths will display a warning banner
+        appPathNames?: string[]; // Authorized URL paths in UWP, all other paths will display a warning banner
         defaultBlockGap?: number; // For targets to override block gap
         hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
         hideNewProjectButton?: boolean; // do not show the "new project" button in home page
@@ -298,8 +301,9 @@ declare namespace ts.pxtc {
         useUF2?: boolean;
         useMkcd?: boolean;
         useELF?: boolean;
+        saveAsPNG?: boolean;
         useModulator?: boolean;
-        webUSB?: boolean; // use WebUSB when supported        
+        webUSB?: boolean; // use WebUSB when supported
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
@@ -339,6 +343,7 @@ declare namespace ts.pxtc {
         trace?: boolean;
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
+        name?: string;
 
         alwaysDecompileOnStart?: boolean; // decompiler only
 

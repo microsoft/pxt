@@ -22,7 +22,7 @@ namespace pxt.blocks {
         logic: '\uf074',
         math: '\uf1ec',
         variables: '\uf039',
-        functions: '\uf0cb',
+        functions: '\uf109',
         text: '\uf035',
         arrays: '\uf0cb'
     }
@@ -56,6 +56,103 @@ namespace pxt.blocks {
         }
     }
 
+    // this keeps a bit of state for perf reasons
+    class ImageConverter {
+        private palette: Uint8Array
+        private start: number
+
+        logTime() {
+            if (this.start) {
+                let d = Date.now() - this.start
+                pxt.debug("Icon cration: " + d + "ms")
+            }
+        }
+
+        convert(jresURL: string): string {
+            if (!this.start)
+                this.start = Date.now()
+            const data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
+            const magic = data.charCodeAt(0)
+            const w = data.charCodeAt(1)
+            const h = data.charCodeAt(2)
+            if (magic != 0xf1 && magic != 0xf4)
+                return null
+
+            function htmlColorToBytes(hexColor: string) {
+                const v = parseInt(hexColor.replace(/#/, ""), 16)
+                return [(v >> 0) & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, 0]
+            }
+
+
+            if (!this.palette) {
+                let arrs = pxt.appTarget.runtime.palette.map(htmlColorToBytes)
+                this.palette = new Uint8Array(arrs.length * 4)
+                for (let i = 0; i < arrs.length; ++i) {
+                    this.palette[i * 4 + 0] = arrs[i][0]
+                    this.palette[i * 4 + 1] = arrs[i][1]
+                    this.palette[i * 4 + 2] = arrs[i][2]
+                    this.palette[i * 4 + 3] = arrs[i][3]
+                }
+            }
+
+            const bpp = magic & 0xf
+            const byteW = (w * bpp + 7) >> 8
+
+            let outByteW = (w + 3) & ~3
+
+            let bmpHeaderSize = 14 + 40 + this.palette.length
+            let bmpSize = bmpHeaderSize + outByteW * h
+            let bmp = new Uint8Array(bmpSize)
+
+            bmp[0] = 66
+            bmp[1] = 77
+            HF2.write32(bmp, 2, bmpSize)
+            HF2.write32(bmp, 10, bmpHeaderSize)
+            HF2.write32(bmp, 14, 40) // size of this header
+            HF2.write32(bmp, 18, w)
+            HF2.write32(bmp, 22, -h) // not upside down
+            HF2.write16(bmp, 26, 1) // 1 color plane
+            HF2.write16(bmp, 28, 8) // 8bpp
+            HF2.write32(bmp, 38, 2835) // 72dpi
+            HF2.write32(bmp, 42, 2835)
+            HF2.write32(bmp, 46, this.palette.length >> 2)
+
+            bmp.set(this.palette, 54)
+
+            let inP = 3
+            let outP = bmpHeaderSize
+            let pad = outByteW - w
+
+            if (magic == 0xf1) {
+                let mask = 0x80
+                let v = data.charCodeAt(inP++)
+                for (let y = 0; y < h; ++y) {
+                    for (let x = 0; x < w; ++x) {
+                        bmp[outP++] = (v & mask) ? 1 : 0
+                        mask >>= 1
+                        if (mask == 0) {
+                            mask = 0x80
+                            v = data.charCodeAt(inP++)
+                        }
+                    }
+                    outP += pad
+                }
+            } else {
+                for (let y = 0; y < h; ++y) {
+                    for (let x = 0; x < w; x += 2) {
+                        let v = data.charCodeAt(inP++)
+                        bmp[outP++] = (v >> 4) & 0xf
+                        if (x != w - 1)
+                            bmp[outP++] = v & 0xf
+                    }
+                    outP += pad
+                }
+            }
+
+            return "data:image/bmp;base64," + btoa(U.uint8ArrayToString(bmp))
+        }
+    }
+
     export function advancedTitle() { return Util.lf("{id:category}Advanced"); }
     export function addPackageTitle() { return Util.lf("{id:category}Extensions"); }
 
@@ -71,7 +168,7 @@ namespace pxt.blocks {
 
     type NamedField = { field: Blockly.Field, name?: string };
 
-    let usedBlocks: Map<boolean> = {};
+    let usedBlocks: Map<boolean | string> = {}; // Maps a block ID to its translated category name, or to true if not in category mode
     let updateUsedBlocks = false;
 
     // list of built-in blocks, should be touched.
@@ -105,7 +202,7 @@ namespace pxt.blocks {
         return b ? b.fn : undefined;
     }
 
-    function createShadowValue(p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
+    function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
         defaultV = defaultV || p.defaultValue;
         shadowId = shadowId || p.shadowBlockId;
         let defaultValue: any;
@@ -136,7 +233,7 @@ namespace pxt.blocks {
         shadow.setAttribute("type", shadowId || typeInfo && typeInfo.block || p.type);
         shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
-        if (typeInfo) {
+        if (typeInfo && (!shadowId || typeInfo.block === shadowId || shadowId === "math_number_minmax")) {
             const field = document.createElement("field");
             shadow.appendChild(field);
 
@@ -162,11 +259,26 @@ namespace pxt.blocks {
 
             field.appendChild(value);
         }
-        else if (isVariable && defaultValue) {
+        else if (defaultValue) {
             const field = document.createElement("field");
-            shadow.appendChild(field);
-            field.setAttribute("name", "VAR");
             field.textContent = defaultValue;
+
+            if (isVariable) {
+                field.setAttribute("name", "VAR");
+                shadow.appendChild(field);
+            }
+            else if (shadowId) {
+                const shadowInfo = info.blocksById[shadowId];
+                if (shadowInfo && shadowInfo.attributes._def && shadowInfo.attributes._def.parameters.length) {
+                    const shadowParam = shadowInfo.attributes._def.parameters[0];
+                    field.setAttribute("name", shadowParam.name);
+                    shadow.appendChild(field);
+                }
+            }
+            else {
+                field.setAttribute("name", p.definitionName);
+                shadow.appendChild(field);
+            }
         }
 
         return value;
@@ -184,7 +296,7 @@ namespace pxt.blocks {
             block.setAttribute("gap", pxt.appTarget.appTheme.defaultBlockGap.toString());
         if (comp.thisParameter) {
             const t = comp.thisParameter;
-            block.appendChild(createShadowValue(t, t.shadowBlockId || "variables_get", t.defaultValue || t.definitionName));
+            block.appendChild(createShadowValue(info, t, t.shadowBlockId || "variables_get", t.defaultValue || t.definitionName));
         }
         if (fn.parameters) {
             comp.parameters.filter(pr => !pr.isOptional &&
@@ -193,7 +305,7 @@ namespace pxt.blocks {
                     let shadowValue: Element;
                     let container: HTMLElement;
                     if (pr.range) {
-                        shadowValue = createShadowValue(pr, "math_number_minmax");
+                        shadowValue = createShadowValue(info, pr, "math_number_minmax");
                         container = document.createElement('mutation');
                         container.setAttribute('min', pr.range.min.toString());
                         container.setAttribute('max', pr.range.max.toString());
@@ -203,7 +315,7 @@ namespace pxt.blocks {
                             if (pr.fieldOptions['color']) container.setAttribute('color', pr.fieldOptions['color']);
                         }
                     } else {
-                        shadowValue = createShadowValue(pr);
+                        shadowValue = createShadowValue(info, pr);
                     }
                     if (pr.fieldOptions) {
                         if (!container) container = document.createElement('mutation');
@@ -239,7 +351,7 @@ namespace pxt.blocks {
         return result;
     }
 
-    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement, showCategories = CategoryMode.Basic, comp: pxt.blocks.BlockCompileInfo) {
+    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: Element, showCategories = CategoryMode.Basic, comp: pxt.blocks.BlockCompileInfo, filters?: BlockFilters) {
         // identity function are just a trick to get an enum drop down in the block
         // while allowing the parameter to be a number
         if (fn.attributes.blockHidden)
@@ -321,9 +433,10 @@ namespace pxt.blocks {
                 }
             }
 
-            if (showCategories === CategoryMode.Basic && isAdvanced) {
-                const type = block.getAttribute("type");
-                usedBlocks[type] = true;
+            if (showCategories === CategoryMode.Basic && isAdvanced &&
+                shouldUseBlockInSearch(fn.attributes.blockId, catName, filters)) {
+                usedBlocks[fn.attributes.blockId] = ns; // ns is localized already
+                updateUsedBlocks = true;
             }
 
             if (fn.attributes.optionalVariableArgs && fn.attributes.toolboxVariableArgs) {
@@ -361,6 +474,36 @@ namespace pxt.blocks {
                 });
             }
             else {
+                // if requested, wrap block into a "set variable block"
+                if (fn.attributes.blockSetVariable != undefined && fn.retType) {
+                    const rawName = fn.attributes.blockSetVariable;
+
+                    let varName: string;
+
+                    // By default if the API author does not put any value for blockSetVariable
+                    // then our comment parser will fill in the string "true". This gets caught
+                    // by isReservedWord() so no need to do a separate check.
+                    if (!rawName || isReservedWord(rawName)) {
+                        varName = Util.htmlEscape(fn.retType.toLowerCase());
+                    }
+                    else {
+                        varName = Util.htmlEscape(rawName);
+                    }
+
+                    const setblock = Blockly.Xml.textToDom(`
+<block type="variables_set" gap="${Util.htmlEscape((fn.attributes.blockGap || 8) + "")}">
+<field name="VAR" variabletype="">${varName}</field>
+</block>`);
+                    {
+                        let value = document.createElement('value');
+                        value.setAttribute('name', 'VALUE');
+                        value.appendChild(block.cloneNode(true));
+                        value.appendChild(mkFieldBlock("math_number", "NUM", "0", true));
+                        setblock.appendChild(value);
+                    }
+                    block = setblock;
+                }
+
                 if (showCategories !== CategoryMode.None && !(showCategories === CategoryMode.Basic && isAdvanced)) {
                     insertBlock(block, category, fn.attributes.weight, fn.attributes.group);
                     injectToolboxIconCss();
@@ -616,17 +759,23 @@ namespace pxt.blocks {
         if (part.kind === "image") {
             return iconToFieldImage(part.uri);
         }
-        else if (part.cssClass) {
-            return new Blockly.FieldLabel(part.text, part.cssClass);
+
+        const txt = removeOuterSpace(part.text)
+        if (!txt) {
+            return undefined;
+        }
+
+        if (part.cssClass) {
+            return new Blockly.FieldLabel(txt, part.cssClass);
         }
         else if (part.style.length) {
-            return new pxtblockly.FieldStyledLabel(part.text, {
+            return new pxtblockly.FieldStyledLabel(txt, {
                 bold: part.style.indexOf("bold") !== -1,
                 italics: part.style.indexOf("italics") !== -1
             })
         }
         else {
-            return new Blockly.FieldLabel(part.text, undefined);
+            return new Blockly.FieldLabel(txt, undefined);
         }
     }
 
@@ -750,7 +899,7 @@ namespace pxt.blocks {
             block.setInputsInline(true);
         }
         else {
-            block.setInputsInline(fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+            block.setInputsInline(!fn.parameters || (fn.parameters.length < 4 && !fn.attributes.imageLiteral));
         }
 
         const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
@@ -767,11 +916,19 @@ namespace pxt.blocks {
             case "void": break; // do nothing
             //TODO
             default:
-                if (isArrayType(fn.retType)) {
-                    block.setOutput(true, "Array");
-                }
-                else {
-                    block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
+                if (fn.retType !== "T") {
+                    const opt_check = isArrayType(fn.retType) ? ["Array"] : [];
+
+                    const si_r = info.apis.byQName[fn.retType];
+                    if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
+                        opt_check.push(...si_r.extendsTypes);
+                    } else {
+                        opt_check.push(fn.retType);
+                    }
+
+                    block.setOutput(true, opt_check);
+                } else {
+                    block.setOutput(true);
                 }
         }
 
@@ -787,16 +944,20 @@ namespace pxt.blocks {
             let firstParam = !expanded && !!comp.thisParameter;
 
             const inputs = splitInputs(def);
+            const imgConv = new ImageConverter()
 
             inputs.forEach(inputParts => {
                 const fields: NamedField[] = [];
                 let inputName: string;
-                let inputCheck: string;
+                let inputCheck: string | string[];
                 let hasParameter = false;
 
                 inputParts.forEach(part => {
                     if (part.kind !== "param") {
-                        fields.push({ field: newLabel(part) });
+                        const f = newLabel(part);
+                        if (f) {
+                            fields.push({ field: f });
+                        }
                     }
                     else {
                         // find argument
@@ -814,22 +975,39 @@ namespace pxt.blocks {
 
                         let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
                         let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowBlockId;
+                        let isConstantShim = !!fn.attributes.constantShim;
+                        let isCombined = pr.type == "@combined@"
                         let customField = pr.fieldEditor;
                         let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
                         let fieldType = pr.type;
 
-                        if (isEnum || isFixed) {
-                            const syms = Util.values(info.apis.byQName)
-                                .filter(e =>
-                                    isEnum ? e.namespace == pr.type
-                                        : (e.kind == pxtc.SymbolKind.Variable
-                                            && e.attributes.fixedInstance
-                                            && isSubtype(info.apis, e.retType, typeInfo.qName)))
+                        if (isEnum || isFixed || isConstantShim || isCombined) {
+                            let syms: pxtc.SymbolInfo[];
+
+                            if (isEnum) {
+                                syms = getEnumDropdownValues(info.apis, pr.type);
+                            }
+                            else if (isFixed) {
+                                syms = getFixedInstanceDropdownValues(info.apis, typeInfo.qName);
+                            }
+                            else if (isCombined) {
+                                syms = fn.combinedProperties.map(p => U.lookup(info.apis.byQName, p))
+                            }
+                            else {
+                                syms = getConstantDropdownValues(info.apis, fn.qName);
+                            }
+
                             if (syms.length == 0) {
                                 console.error(`no instances of ${typeInfo.qName} found`)
                             }
                             const dd = syms.map(v => {
-                                const k = v.attributes.block || v.attributes.blockId || v.name;
+                                let k = v.attributes.block || v.attributes.blockId || v.name;
+                                let comb = v.attributes.blockCombine
+                                if (v.attributes.jresURL && !v.attributes.iconURL && U.startsWith(v.attributes.jresURL, "data:image/x-mkcd-f")) {
+                                    v.attributes.iconURL = imgConv.convert(v.attributes.jresURL)
+                                }
+                                if (!!comb)
+                                    k = k.replace(/@set/, "")
                                 return [
                                     v.attributes.iconURL || v.attributes.blockImage ? {
                                         src: v.attributes.iconURL || Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
@@ -895,9 +1073,14 @@ namespace pxt.blocks {
                             } else if (pr.type == "boolean") {
                                 inputCheck = "Boolean"
                             } else if (pr.type == "string") {
-                                inputCheck = "String"
+                                if (pr.shadowOptions && pr.shadowOptions.toString) {
+                                    inputCheck = undefined;
+                                }
+                                else {
+                                    inputCheck = "String"
+                                }
                             } else {
-                                inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? "Array" : pr.type);
+                                inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? ["Array", pr.type] : pr.type);
                             }
                         }
                     }
@@ -911,7 +1094,7 @@ namespace pxt.blocks {
                 }
                 else if (expanded) {
                     const prefix = hasParameter ? optionalInputWithFieldPrefix : optionalDummyInputPrefix;
-                    input = block.appendDummyInput(prefix + (anonIndex ++));
+                    input = block.appendDummyInput(prefix + (anonIndex++));
                 }
                 else {
                     input = block.appendDummyInput();
@@ -923,6 +1106,8 @@ namespace pxt.blocks {
 
                 fields.forEach(f => input.appendField(f.field, f.name));
             });
+
+            imgConv.logTime()
         }
     }
 
@@ -1226,7 +1411,14 @@ namespace pxt.blocks {
             const blocks = tb.getElementsByTagName("block");
 
             for (let i = 0; i < blocks.length; i++) {
-                usedBlocks[blocks.item(i).getAttribute("type")] = true;
+                const b = blocks.item(i);
+                const bId = b.getAttribute("type");
+                const bCategoryId = b.parentElement && b.parentElement.nodeName === "category" ? b.parentElement.getAttribute("nameid") : undefined;
+                const bTranslatedCat = bCategoryId ? b.parentElement.getAttribute("name") : undefined;
+                if (shouldUseBlockInSearch(bId, bCategoryId, filters)) {
+                    usedBlocks[bId] = bTranslatedCat || true;
+                    updateUsedBlocks = true;
+                }
             }
 
             updateUsedBlocks = true;
@@ -1427,7 +1619,11 @@ namespace pxt.blocks {
                     const blockElements = cat.getElementsByTagName("block");
                     for (let i = 0; i < blockElements.length; i++) {
                         const b = blockElements.item(i);
-                        usedBlocks[b.getAttribute("type")] = true;
+                        const bId = b.getAttribute("type");
+                        const translatedCatName = Util.rlf(`{id:category}${name}`, []);
+                        if (shouldUseBlockInSearch(bId, name, filters)) {
+                            usedBlocks[bId] = translatedCatName;
+                        }
                     }
 
                     if (showCategories === CategoryMode.Basic) {
@@ -1748,7 +1944,7 @@ namespace pxt.blocks {
         };
     }
 
-    function installHelpResources(id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string) {
+    export function installHelpResources(id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string) {
         let block = Blockly.Blocks[id];
         let old = block.init;
         if (!old) return;
@@ -1978,7 +2174,7 @@ namespace pxt.blocks {
             const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
             const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
-            if (trashIcon) {
+            if (trashIcon && blocklyTreeRoot) {
                 trashIcon.style.display = 'none';
                 blocklyTreeRoot.style.opacity = '1';
                 blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');
@@ -2348,7 +2544,7 @@ namespace pxt.blocks {
         };
 
         if (pxt.appTarget.runtime && pxt.appTarget.runtime.pauseUntilBlock) {
-            const blockOptions =  pxt.appTarget.runtime.pauseUntilBlock;
+            const blockOptions = pxt.appTarget.runtime.pauseUntilBlock;
             const blockDef = pxt.blocks.getBlockDefinition(ts.pxtc.PAUSE_UNTIL_TYPE);
             Blockly.Blocks[pxtc.PAUSE_UNTIL_TYPE] = {
                 init: function () {
@@ -2358,9 +2554,9 @@ namespace pxt.blocks {
                         "message0": blockDef.block["message0"],
                         "args0": [
                             {
-                              "type": "input_value",
-                              "name": "PREDICATE",
-                              "check": "Boolean"
+                                "type": "input_value",
+                                "name": "PREDICATE",
+                                "check": "Boolean"
                             }
                         ],
                         "inputsInline": true,
@@ -2604,6 +2800,8 @@ namespace pxt.blocks {
         const mathModuloDef = pxt.blocks.getBlockDefinition(mathModuloId);
         msg.MATH_MODULO_TITLE = mathModuloDef.block["MATH_MODULO_TITLE"];
         installBuiltinHelpInfo(mathModuloId);
+
+        initMathOpBlock();
     }
 
     export function getNamespaceColor(ns: string): string {
@@ -3273,16 +3471,22 @@ namespace pxt.blocks {
         value.setAttribute("name", "PREDICATE");
         block.appendChild(value);
 
-        const shadow = document.createElement("shadow");
-        shadow.setAttribute("type", "logic_boolean");
+        const shadow = mkFieldBlock("logic_boolean", "BOOL", "TRUE", true);
         value.appendChild(shadow);
 
-        const field = document.createElement("field");
-        field.setAttribute("name", "BOOL");
-        field.textContent = "TRUE";
-        shadow.appendChild(field);
-
         return block;
+    }
+
+    function mkFieldBlock(type: string, fieldName: string, fieldValue: string, isShadow: boolean) {
+        const fieldBlock = document.createElement(isShadow ? "shadow" : "block");
+        fieldBlock.setAttribute("type", Util.htmlEscape(type));
+
+        const field = document.createElement("field");
+        field.setAttribute("name", Util.htmlEscape(fieldName));
+        field.textContent = Util.htmlEscape(fieldValue);
+        fieldBlock.appendChild(field);
+
+        return fieldBlock;
     }
 
     let jresIconCache: Map<string> = {};
@@ -3341,5 +3545,50 @@ namespace pxt.blocks {
 
     function namedField(field: Blockly.Field, name: string): NamedField {
         return { field, name };
+    }
+
+    function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string) {
+        return pxt.Util.values(apis.byQName).filter(sym => sym.namespace === enumName);
+    }
+
+    function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
+        return pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
+            && sym.attributes.fixedInstance
+            && isSubtype(apis, sym.retType, qName));
+    }
+
+    function getConstantDropdownValues(apis: pxtc.ApisInfo, qName: string) {
+        return pxt.Util.values(apis.byQName).filter(sym => sym.attributes.blockIdentity === qName);
+    }
+
+    // Trims off a single space from beginning and end (if present)
+    function removeOuterSpace(str: string) {
+        if (str === " ") {
+            return "";
+        }
+        else if (str.length > 1) {
+            const startSpace = str.charAt(0) == " ";
+            const endSpace = str.charAt(str.length - 1) == " ";
+
+            if (startSpace || endSpace) {
+                return str.substring(startSpace ? 1 : 0, endSpace ? str.length - 1 : str.length);
+            }
+        }
+
+        return str;
+    }
+
+    function shouldUseBlockInSearch(blockId: string, namespaceId: string, filters: BlockFilters): boolean {
+        if (!filters) {
+            return true;
+        }
+        if (namespaceId) {
+            namespaceId = namespaceId.toLowerCase();
+        }
+        const isNamespaceFiltered = filters.namespaces &&
+            (filters.namespaces[namespaceId] === FilterState.Disabled || filters.namespaces[namespaceId] === FilterState.Hidden);
+        const isBlockFiltered = filters.blocks &&
+            (filters.blocks[blockId] === FilterState.Disabled || filters.blocks[blockId] === FilterState.Hidden);
+        return !isNamespaceFiltered && !isBlockFiltered;
     }
 }

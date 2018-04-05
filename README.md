@@ -56,16 +56,13 @@ If you run `npm i` afterwards (in either the target or pxt), you might need to r
 
 ## Build
 
-First, install [Node](https://nodejs.org/en/): minimum version 8. Then install the following:
-```
-npm install -g jake
-```
+First, install [Node](https://nodejs.org/en/): minimum version 8. 
 
 To build the PXT command line tools:
 
 ```
 npm install
-jake
+npm run build
 ```
 
 Then install the `pxt` command line tool (only need to do it once):
@@ -78,10 +75,6 @@ After this you can run `pxt` from anywhere within the build tree.
 
 To start the local web server, run `pxt serve` from within the root
 of an app target (e.g. pxt-microbit). PXT will open the editor in your default web browser.
-
-Alternatively, if you clone your pxt and pxt-microbit directories next to each
-other, you can serve your local pxt-microbit repo from within the pxt repo by
-running `jake serve`.
 
 ### Icons
 
@@ -100,7 +93,7 @@ svgo svgicons/myicon.svg
 ## Tests
 
 The tests are located in the `tests/` subdirectory and are a combination of node and
-browser tests. To execute them, run `jake test` in the root directory.
+browser tests. To execute them, run `npm run test:all` in the root directory.
 
 ## License
 

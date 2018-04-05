@@ -174,7 +174,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             }
         }
 
-        const chgCode = (scr: pxt.CodeCard, loadBlocks?: boolean, prj?: pxt.ProjectTemplate) => {
+        const chgCode = (scr: pxt.CodeCard, loadBlocks: boolean, prj?: pxt.ProjectTemplate) => {
             core.showLoading("changingcode", lf("loading..."));
             gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
                 .done(opts => {
@@ -196,6 +196,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                     core.hideLoading("changingcode");
                                 })
                         } else {
+                            opts.tsOnly = true
                             return this.props.parent.createProjectAsync(opts)
                                 .then(() => Promise.delay(500))
                                 .done(() => core.hideLoading("changingcode"));
@@ -274,7 +275,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
 
-        return <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
+        return <div id="homemenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
             <div className="left menu">
                 <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={() => this.brandIconClick()}>
                     {targetTheme.logo || targetTheme.portraitLogo
@@ -479,7 +480,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     renderCore() {
         const { name, description, imageUrl, largeImageUrl, youTubeId, url, onClick, cardType } = this.props;
 
-        const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/maxresdefault.jpg` : undefined);
+        const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/0.jpg` : undefined);
 
         let clickLabel = lf("Show Instructions");
         if (cardType == "tutorial") clickLabel = lf("Start Tutorial");

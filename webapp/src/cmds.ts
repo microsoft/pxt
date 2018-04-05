@@ -100,6 +100,47 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
     }).then(() => { });
 }
 
+export function nativeHostPostMessageFunction(): (msg: pxt.editor.NativeHostMessage) => void {
+    const webkit = (<any>window).webkit;
+    if (webkit
+        && webkit.messageHandlers
+        && webkit.messageHandlers.host
+        && webkit.messageHandlers.host.postMessage)
+        return msg => webkit.messageHandlers.host.postMessage(msg);
+    const android = (<any>window).android;
+    if (android && android.postMessage)
+        return msg => android.postMessage(JSON.stringify(msg));
+    return undefined;
+}
+
+export function isNativeHost(): boolean {
+    return !!nativeHostPostMessageFunction();
+}
+
+function nativeHostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.debug(`native deploy`)
+    core.infoNotification(lf("Flashing device..."));
+    const out = resp.outfiles[pxt.outputName()];
+    const nativePostMessage = nativeHostPostMessageFunction();
+    nativePostMessage(<pxt.editor.NativeHostMessage>{
+        name: resp.downloadFileBaseName,
+        download: out
+    })
+    return Promise.resolve();
+}
+
+function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.debug(`native save`)
+    core.infoNotification(lf("Flashing device..."));
+    const out = resp.outfiles[pxt.outputName()]
+    const nativePostMessage = nativeHostPostMessageFunction();
+    nativePostMessage(<pxt.editor.NativeHostMessage>{
+        name: resp.downloadFileBaseName,
+        save: out
+    })
+    return Promise.resolve();
+}
+
 function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.tickEvent(`hid.deploy`)
     // error message handled in browser download
@@ -278,7 +319,11 @@ export function initCommandsAsync(): Promise<void> {
         pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync
     }
 
-    if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
+    if (isNativeHost()) {
+        pxt.debug(`deploy/save using webkit host`);
+        pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
+        pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
+    } else if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = webUsbDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {

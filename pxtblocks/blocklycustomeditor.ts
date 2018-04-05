@@ -38,6 +38,7 @@ namespace pxt.blocks {
         registerFieldEditor('toggledownup', pxtblockly.FieldToggleDownUp);
         registerFieldEditor('togglehighlow', pxtblockly.FieldToggleHighLow);
         registerFieldEditor('colornumber', pxtblockly.FieldColorNumber);
+        registerFieldEditor('images', pxtblockly.FieldImages);
     }
 
     export function registerFieldEditor(selector: string, field: Blockly.FieldCustomConstructor, validator?: any) {

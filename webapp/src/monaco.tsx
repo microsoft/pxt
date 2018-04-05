@@ -745,11 +745,13 @@ export class Editor extends srceditor.Editor {
         if (config.variablesBlocks && !snippets.variables.removed) namespaces.push(snippets.variables.nameid);
         if (config.mathBlocks && !snippets.maths.removed) namespaces.push(snippets.maths.nameid);
         if (config.functionBlocks && !snippets.functions.removed) namespaces.push(snippets.functions.nameid);
-        if (config.textBlocks && !snippets.text.removed) namespaces.push(snippets.text.nameid);
         if (config.listsBlocks && !snippets.arrays.removed) namespaces.push(snippets.arrays.nameid);
+        if (config.textBlocks && !snippets.text.removed) namespaces.push(snippets.text.nameid);
 
         return namespaces;
     }
+
+    private uniqueBlockId = 0; // Used for hex blocks
 
     private createMonacoBlocks(
         monacoEditor: Editor,
@@ -760,13 +762,12 @@ export class Editor extends srceditor.Editor {
         filters: pxt.editor.ProjectFilters,
         categoryState: pxt.editor.FilterState
     ) {
-        let uniqueBlockId = 0; // Used for hex blocks
         // Render the method blocks
         const monacoBlocks = fns.sort((f1, f2) => {
             // sort by fn weight
             const w2 = (f2.attributes.weight || 50) + (f2.attributes.advanced ? 0 : 1000);
             const w1 = (f1.attributes.weight || 50) + (f1.attributes.advanced ? 0 : 1000);
-            return w2 - w1;
+            return w2 >= w1 ? 1 : -1;
         }).map(fn => {
             let monacoBlockDisabled = false;
             const fnState = filters ? (filters.fns && filters.fns[fn.name] != undefined ? filters.fns[fn.name] : (categoryState != undefined ? categoryState : filters.defaultState)) : undefined;
@@ -956,7 +957,7 @@ export class Editor extends srceditor.Editor {
                 // Show a hexagonal shape
                 monacoBlock.style.borderRadius = "0px";
                 const monacoBlockHeight = monacoBlock.offsetHeight - 2; /* Take 2 off to account for the missing border */
-                const monacoHexBlockId = uniqueBlockId++;
+                const monacoHexBlockId = monacoEditor.uniqueBlockId++;
                 monacoBlock.id = `monacoHexBlock${monacoHexBlockId}`;
                 monacoBlock.className += ' monacoHexBlock';
                 const styleBlock = document.createElement('style') as HTMLStyleElement;
@@ -1426,7 +1427,7 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
                     // sort by fn weight
                     const w2 = (md2 ? md2.weight || 50 : 50);
                     const w1 = (md1 ? md1.weight || 50 : 50);
-                    return w2 - w1;
+                    return w2 >= w1 ? 1 : -1;
                 }).map(([ns, md]) => {
                     if (!snippets.isBuiltin(ns)) {
                         const blocks = parent.nsMap[ns].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated));

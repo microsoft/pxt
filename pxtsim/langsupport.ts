@@ -12,6 +12,7 @@ namespace pxsim {
 
     export let floatingPoint = false;
     export let refCounting = true;
+    export let title = "";
     let cfgKey: Map<number> = {}
     let cfg: Map<number> = {}
 
@@ -59,6 +60,10 @@ namespace pxsim {
         floatingPoint = true
     }
 
+    export function setTitle(t: string) {
+        title = t;
+    }
+
     export class RefObject {
         id: number;
         refcnt: number = 1;
@@ -75,6 +80,14 @@ namespace pxsim {
         print() {
             if (runtime && runtime.refCountingDebug)
                 console.log(`RefObject id:${this.id} refs:${this.refcnt}`)
+        }
+
+        static toAny(o: any): any {
+            if (o instanceof RefMap)
+                return (<RefMap>o).toAny();
+            if (o instanceof RefCollection)
+                return (<RefCollection>o).toAny();
+            return o;
         }
     }
 
@@ -207,6 +220,7 @@ namespace pxsim {
     export interface MapEntry {
         key: number;
         val: any;
+        keyName?: string; // for object literals + !isNative
     }
 
     export class RefMap extends RefObject {
@@ -235,6 +249,14 @@ namespace pxsim {
         print() {
             if (runtime && runtime.refCountingDebug)
                 console.log(`RefMap id:${this.id} refs:${this.refcnt} size:${this.data.length}`)
+        }
+
+        toAny(): any {
+            const r: any = {};
+            this.data.forEach(d => {
+                r[d.keyName] = RefObject.toAny(d.val);
+            })
+            return r;
         }
     }
 
@@ -510,12 +532,13 @@ namespace pxsim {
             return r;
         }
 
-        export function mapSet(map: RefMap, key: number, val: any) {
+        export function mapSet(map: RefMap, key: number, val: any, keyName?: string) {
             let i = map.findIdx(key);
             if (i < 0) {
                 map.data.push({
                     key: key << 1,
-                    val: val
+                    val: val,
+                    keyName: keyName
                 });
             } else {
                 if (map.data[i].key & 1) {
@@ -523,16 +546,18 @@ namespace pxsim {
                     map.data[i].key = key << 1;
                 }
                 map.data[i].val = val;
+                map.data[i].keyName = keyName;
             }
             decr(map)
         }
 
-        export function mapSetRef(map: RefMap, key: number, val: any) {
+        export function mapSetRef(map: RefMap, key: number, val: any, keyName?: string) {
             let i = map.findIdx(key);
             if (i < 0) {
                 map.data.push({
                     key: (key << 1) | 1,
-                    val: val
+                    val: val,
+                    keyName: keyName
                 });
             } else {
                 if (map.data[i].key & 1) {
@@ -541,6 +566,7 @@ namespace pxsim {
                     map.data[i].key = (key << 1) | 1;
                 }
                 map.data[i].val = val;
+                map.data[i].keyName = keyName;
             }
             decr(map)
         }

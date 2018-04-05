@@ -8,6 +8,8 @@
 
 ## #examples
 
+## #courses
+
 ## #reference
 
 ## #packages

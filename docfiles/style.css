@@ -111,6 +111,7 @@ code {
 code.lang-config, code.lang-package { display: none;}
 code.lang-block::before,
 code.lang-blocks::before,
+code.lang-blocksxml::before,
 code.lang-sig::before,
 code.lang-block::before,
 code.lang-sim::before,
@@ -125,6 +126,7 @@ code.lang-codecard::before
 }
 code.lang-block,
 code.lang-blocks,
+code.lang-blocksxml,
 code.lang-sig,
 code.lang-block,
 code.lang-sim,
@@ -367,6 +369,17 @@ print only stuff
 }
 
 @media only print {
+    ui.segment, .nobreak, pre, code, blockquote {
+        page-break-inside: avoid;
+    }
+    h1, h2, h3, h4, h5, h6, img {
+        page-break-inside: avoid;
+        page-break-after: avoid;
+    }
+    ul, ol, dl {
+        page-break-before: avoid;
+    }
+        
     .showprint {
         display:block !important;
     }

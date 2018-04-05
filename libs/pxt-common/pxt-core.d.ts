@@ -70,6 +70,27 @@ interface Array<T> {
     splice(start: number, deleteCount: number): void;
 
     /**
+      * joins all elements of an array into a string and returns this string.
+      * @param sep the string separator
+      */
+    //% helper=arrayJoin weight=40
+    join(sep: string): string;
+    
+    /**
+      * Tests whether at least one element in the array passes the test implemented by the provided function.
+      * @param callbackfn A function that accepts up to two arguments. The some method calls the callbackfn function one time for each element in the array.
+      */
+    //% helper=arraySome weight=40
+    some(callbackfn: (value: T, index: number) => boolean): boolean;
+
+    /**
+      * Tests whether all elements in the array pass the test implemented by the provided function.
+      * @param callbackfn A function that accepts up to two arguments. The some method calls the callbackfn function one time for each element in the array.
+      */
+    //% helper=arrayEvery weight=40
+    every(callbackfn: (value: T, index: number) => boolean): boolean;
+    
+    /**
       * Sort the elements of an array in place and returns the array. The sort is not necessarily stable.
       * @param specifies a function that defines the sort order. If omitted, the array is sorted according to the prmitive type
       */
@@ -83,6 +104,13 @@ interface Array<T> {
     //% helper=arrayMap weight=40
     map<U>(callbackfn: (value: T, index: number) => U): U[];
 
+    /**
+      * Call a defined callback function on each element of an array.
+      * @param callbackfn A function that accepts up to two arguments. The forEach method calls the callbackfn function one time for each element in the array.
+      */
+    //% helper=arrayForEach weight=40
+    forEach(callbackfn: (value: T, index: number) => void): void;
+    
     /**
       * Return the elements of an array that meet the condition specified in a callback function.
       * @param callbackfn A function that accepts up to two arguments. The filter method calls the callbackfn function one time for each element in the array.

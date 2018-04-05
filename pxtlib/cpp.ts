@@ -155,6 +155,7 @@ namespace pxt.cpp {
                 gittag: "none",
                 serviceId: "nocompile"
             }
+        compileService = U.clone(compileService)
 
         let compile = appTarget.compile
         if (!compile)

@@ -66,6 +66,12 @@ MakeCode's support for embedding the MakeCode editor inside of a web app. For mo
 * [Editor](https://samelhusseini.github.io/pxt-holidays/controller.html)
 * [GitHub](https://github.com/samelhusseini/pxt-holidays)
 
+## Johnny-FIve
+
+A small wrapper around the **Johnny-Five** library.
+
+* [GitHub](https://github.com/Microsoft/pxt-johnny-five)
+
 ## Documentation
 
 * [Create your own editor](/target-creation)

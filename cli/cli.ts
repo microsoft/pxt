@@ -17,13 +17,13 @@ import Map = pxt.Map;
 
 import * as server from './server';
 import * as build from './buildengine';
-import * as electron from "./electron";
 import * as commandParser from './commandparser';
 import * as hid from './hid';
 import * as serial from './serial';
 import * as gdb from './gdb';
 import * as clidbg from './clidbg';
 import * as pyconv from './pyconv';
+import * as gitfs from './gitfs';
 
 const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
@@ -335,12 +335,12 @@ function statsCrowdinAsync(prj: string, key: string): Promise<void> {
 function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
     return pxt.crowdin.languageStatsAsync(prj, key, lang)
         .then(stats => {
-            let r = ''
+            let r = 'sep=\t\r\n'
             r += `file\t language\t completion\t phrases\t translated\t approved\r\n`
             stats.forEach(stat => {
-                r += `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}, ${stat.phrases}, ${stat.translated}, ${stat.approved}\r\n`;
-                if (stat.fullName == "strings.json") {
-                    console.log(`strings.json\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
+                r += `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
+                if (stat.fullName == "strings.json" || /core-strings\.json$/.test(stat.fullName)) {
+                    console.log(`${stat.fullName}\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
                 }
             })
             const fn = `crowdinstats.csv`;
@@ -676,6 +676,21 @@ export function uploadTargetAsync(label: string) {
         pkgversion: pkgVersion(),
         fileContent: {}
     })
+}
+
+export function uploadTargetRefsAsync(repoPath: string) {
+    if (repoPath) process.chdir(repoPath);
+    return nodeutil.needsGitCleanAsync()
+        .then(() => Promise.all([
+            nodeutil.gitInfoAsync(["rev-parse", "HEAD"]),
+            nodeutil.gitInfoAsync(["config", "--get", "remote.origin.url"])
+        ]))
+        .then(info => {
+            return gitfs.uploadRefs(info[0], info[1])
+                .then(() => {
+                    return Promise.resolve();
+                });
+        })
 }
 
 interface UploadOptions {
@@ -1419,8 +1434,8 @@ function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
 
     console.log(`building ${ksd}...`);
     return nodeutil.spawnAsync({
-        cmd: nodeutil.addCmd("jake"),
-        args: includeSourceMaps ? ["sourceMaps=true"] : [],
+        cmd: nodeutil.addCmd("npm"),
+        args: includeSourceMaps ? ["run", "build", "sourceMaps=true"] : ["run", "build"],
         cwd: ksd
     }).then(() => {
         console.log("local pxt-core built.")
@@ -1576,7 +1591,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     nodeutil.mkdirP(path.join("built", "web"));
     return nodeutil.spawnAsync({
         cmd: "node",
-        args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
+        args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar", "--no-ie-compat"]
     }).then(() => {
         const fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff")
         const url = "url(data:application/font-woff;charset=utf-8;base64,"
@@ -1591,7 +1606,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
             return Promise.resolve();
         return nodeutil.spawnAsync({
             cmd: "node",
-            args: ["node_modules/less/bin/lessc", "theme/blockly.less", "built/web/blockly.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
+            args: ["node_modules/less/bin/lessc", "theme/blockly.less", "built/web/blockly.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar", "--no-ie-compat"]
         })
     }).then(() => {
         // run postcss with autoprefixer and rtlcss
@@ -1812,7 +1827,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 .then(() => testForBuildTargetAsync(isPrj))
                 .then((compileOpts) => {
                     // For the projects, we need to save the base HEX file to the offline HEX cache
-                    if (isPrj && pxt.appTarget.compile.hasHex) {
+                    if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
                         if (!compileOpts) {
                             console.error(`Failed to extract native image for project ${dirname}`);
                             return;
@@ -1821,13 +1836,13 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         // Place the base HEX image in the hex cache if necessary
                         let sha = compileOpts.extinfo.sha;
                         let hex: string[] = compileOpts.hexinfo.hex;
-                        let hexFile = path.join(hexCachePath, sha + (pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex"));
+                        let hexFile = path.join(hexCachePath, sha + ".hex");
 
                         if (fs.existsSync(hexFile)) {
-                            pxt.debug(`native image already in offline cache for project ${dirname}`);
+                            pxt.log(`native image already in offline cache for project ${dirname}: ${hexFile}`);
                         } else {
                             fs.writeFileSync(hexFile, hex.join(os.EOL));
-                            pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                            pxt.log(`created native image in offline cache for project ${dirname}: ${hexFile}`);
                         }
                     }
                 })
@@ -2071,10 +2086,8 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync(includeSourceMaps))
         .then(() => server.serveAsync({
             autoStart: !globalConfig.noAutoStart,
-            electron: !!parsed.flags["electron"],
             localToken,
             packaged,
-            electronHandlers,
             port: parsed.flags["port"] as number || 0,
             wsPort: parsed.flags["wsport"] as number || 0,
             hostname: parsed.flags["hostname"] as string || "",
@@ -2892,6 +2905,9 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
         sources.push("built/common-sim.d.ts")
     }
 
+    if (!fs.existsSync(sources[0]))
+        return // simulator not yet built; will try next time
+
     let opts: pxtc.CompileOptions = {
         fileSystem: {},
         sourceFiles: sources,
@@ -3557,6 +3573,12 @@ interface BuildCoreOptions {
     createOnly?: boolean;
 }
 
+function gdbAsync(c: commandParser.ParsedCommand) {
+    ensurePkgDir()
+    return mainPkg.loadAsync()
+        .then(() => gdb.startAsync(c.arguments))
+}
+
 function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult> {
     let compileOptions: pxtc.CompileOptions;
     let compileResult: pxtc.CompileResult;
@@ -3872,16 +3894,252 @@ export function cleanGenAsync(parsed: commandParser.ParsedCommand) {
         .then(() => { });
 }
 
+interface PNGImage {
+    width: number;
+    height: number;
+    depth: number; // 8
+    colorType: number; // 6
+    data: Buffer;
+}
+
+interface SpriteGlobalMeta {
+    star: pxt.JRes;
+    basename?: string;
+    width?: number;
+    height?: number;
+    blockIdentity: string;
+    creator: string;
+}
+
+interface SpriteInfo {
+    width?: number;
+    height?: number;
+    frames?: string[];
+}
+
+
+
+export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
+    ensurePkgDir()
+    return loadPkgAsync()
+        .then(() => buildJResSpritesCoreAsync(parsed))
+}
+
+function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
+    const PNG: any = require("pngjs").PNG;
+
+    const dir = parsed.arguments[0]
+    const metaInfo: SpriteGlobalMeta = nodeutil.readJson(dir + "/meta.json")
+    const jresources: pxt.Map<pxt.JRes> = {}
+    const star = metaInfo.star
+
+    jresources["*"] = metaInfo.star
+
+    let bpp = 4
+
+    if (/-f1/.test(star.mimeType))
+        bpp = 1
+
+    if (!metaInfo.star)
+        U.userError(`invalid meta.json`)
+
+    if (!metaInfo.basename) metaInfo.basename = star.namespace
+
+    if (!metaInfo.basename)
+        U.userError(`invalid meta.json`)
+
+    star.dataEncoding = star.dataEncoding || "base64"
+
+    if (!pxt.appTarget.runtime || !pxt.appTarget.runtime.palette)
+        U.userError(`palette not defined in pxt.json`)
+
+    const palette = pxt.appTarget.runtime.palette.map(s => {
+        let v = parseInt(s.replace(/#/, ""), 16)
+        return [(v >> 16) & 0xff, (v >> 8) & 0xff, (v >> 0) & 0xff]
+    })
+
+    let ts = `namespace ${metaInfo.star.namespace} {\n`
+
+    for (let fn of nodeutil.allFiles(dir, 1)) {
+        fn = fn.replace(/\\/g, "/")
+        let m = /(.*\/)(.*)\.png$/i.exec(fn)
+        if (!m) continue
+        let bn = m[2]
+        let jn = m[1] + m[2] + ".json"
+        bn = bn.replace(/-1bpp/, "").replace(/[^\w]/g, "_")
+        processImage(bn, fn, jn)
+    }
+
+    ts += "}\n"
+
+    pxt.log(`save ${metaInfo.basename}.jres and .ts`)
+    fs.writeFileSync(metaInfo.basename + ".jres", JSON.stringify(jresources, null, 2));
+    fs.writeFileSync(metaInfo.basename + ".ts", ts);
+
+    return Promise.resolve()
+
+    // use geometric distance on colors
+    function scale(v: number) {
+        return v * v
+    }
+
+    function closestColor(buf: Buffer, pix: number, alpha = true) {
+        if (alpha && buf[pix + 3] < 100)
+            return 0 // transparent
+        let mindelta = 0
+        let idx = -1
+        for (let i = alpha ? 1 : 0; i < palette.length; ++i) {
+            let delta = scale(palette[i][0] - buf[pix + 0]) + scale(palette[i][1] - buf[pix + 1]) + scale(palette[i][1] - buf[pix + 2])
+            if (idx < 0 || delta < mindelta) {
+                idx = i
+                mindelta = delta
+            }
+        }
+        return idx
+    }
+
+    function processImage(basename: string, pngName: string, jsonName: string) {
+        let info: SpriteInfo = {}
+        if (nodeutil.fileExistsSync(jsonName))
+            info = nodeutil.readJson(jsonName)
+        if (!info.width) info.width = metaInfo.width
+        if (!info.height) info.height = metaInfo.height
+
+        let sheet = PNG.sync.read(fs.readFileSync(pngName)) as PNGImage
+        let imgIdx = 0
+
+        // add alpha channel
+        if (sheet.colorType == 0) {
+            sheet.colorType = 6
+            sheet.depth = 8
+            let transparent = palette[0][0] < 10 ? 0x00 : 0xff
+            for (let i = 0; i < sheet.data.length; i += 4) {
+                if (closestColor(sheet.data, i, false) == 0)
+                    sheet.data[i + 3] = 0x00
+            }
+        }
+
+        if (sheet.colorType != 6)
+            U.userError(`only RGBA png images supported`)
+        if (sheet.depth != 8)
+            U.userError(`only 8 bit per channel png images supported`)
+        if (sheet.width > 255 || sheet.height > 255)
+            U.userError(`PNG image too big`)
+
+        let nx = (sheet.width / info.width) | 0
+        let ny = (sheet.height / info.height) | 0
+        let numSprites = nx * ny
+
+        for (let y = 0; y + info.height - 1 < sheet.height; y += info.height)
+            for (let x = 0; x + info.width - 1 < sheet.width; x += info.width) {
+                let img = U.flatClone(sheet)
+                img.data = new Buffer(info.width * info.height * 4)
+                img.width = info.width
+                img.height = info.height
+                for (let i = 0; i < info.height; ++i) {
+                    let src = x * 4 + (y + i) * sheet.width * 4
+                    sheet.data.copy(img.data, i * info.width * 4, src, src + info.width * 4)
+                }
+                let key = basename + imgIdx
+                if (info.frames && info.frames[imgIdx]) {
+                    let suff = info.frames[imgIdx]
+                    if (/^[a-z]/.test(suff))
+                        suff = "_" + suff
+                    key = basename + suff
+                } else if (numSprites == 1) {
+                    key = basename
+                }
+
+                let data = ""
+
+                if (bpp == 4) {
+                    let byteW = (img.width + 1) >> 1
+                    let outBuf = new Buffer(3 + byteW * img.height)
+                    outBuf.fill(0)
+                    outBuf[0] = 0xf4
+                    outBuf[1] = img.width
+                    outBuf[2] = img.height
+                    let outP = 3
+                    let lineP = 0
+                    for (let inP = 0; inP < img.data.length; inP += 4) {
+                        if (lineP >= img.width) {
+                            if (lineP & 1)
+                                outP++
+                            lineP = 0
+                        }
+                        let idx = closestColor(img.data, inP)
+                        if (lineP & 1) {
+                            outBuf[outP++] |= idx
+                        } else {
+                            outBuf[outP] |= (idx << 4)
+                        }
+                        lineP++
+                    }
+                    data = outBuf.toString(star.dataEncoding)
+                } else if (bpp == 1) {
+                    let byteW = (img.width + 7) >> 3
+                    let outBuf = new Buffer(3 + byteW * img.height)
+                    outBuf.fill(0)
+                    outBuf[0] = 0xf1
+                    outBuf[1] = img.width
+                    outBuf[2] = img.height
+                    let outP = 3
+                    let mask = 0x80
+                    let lineP = 0
+                    for (let inP = 0; inP < img.data.length; inP += 4) {
+                        if (lineP >= img.width) {
+                            if (mask != 0x80)
+                                outP++
+                            mask = 0x80
+                            lineP = 0
+                        }
+                        let idx = closestColor(img.data, inP)
+                        if (idx)
+                            outBuf[outP] |= mask
+                        mask >>= 1
+                        if (mask == 0) {
+                            mask = 0x80
+                            outP++
+                        }
+                        lineP++
+                    }
+                    data = outBuf.toString(star.dataEncoding)
+                }
+
+                let storeIcon = false
+
+                if (storeIcon) {
+                    let jres = jresources[key]
+                    if (!jres) {
+                        jres = jresources[key] = {} as any
+                    }
+                    jres.data = data
+                    jres.icon = 'data:image/png;base64,' + PNG.sync.write(img).toString('base64');
+                } else {
+                    // use the short form
+                    jresources[key] = data as any
+                }
+
+                ts += `    //% fixedInstance jres blockIdentity=${metaInfo.blockIdentity}\n`
+                ts += `    export const ${key} = ${metaInfo.creator}(hex\`\`);\n`
+
+                pxt.log(`add ${key}; ${JSON.stringify(jresources[key]).length} bytes`)
+
+                imgIdx++
+            }
+    }
+}
+
 export function buildJResAsync(parsed: commandParser.ParsedCommand) {
     ensurePkgDir();
     nodeutil.allFiles(".")
         .filter(f => /\.jres$/i.test(f))
         .forEach(f => {
             pxt.log(`expanding jres resources in ${f}`);
-            const jresources = nodeutil.readJson(f);
+            const jresources = nodeutil.readJson(f) as pxt.Map<pxt.JRes>;
             const oldjr = JSON.stringify(jresources, null, 2);
             const dir = path.join('jres', path.basename(f, '.jres'));
-            // images or sounds?
+            // update existing fields
             const star = jresources["*"];
             if (!star.dataEncoding) star.dataEncoding = 'base64';
             Object.keys(jresources).filter(k => k != "*").forEach(k => {
@@ -3890,6 +4148,7 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
                 pxt.log(`expanding ${k}`);
                 // try to slurp icon
                 const iconn = path.join(dir, k + '-icon.png');
+                pxt.debug(`looking for ${iconn}`)
                 if (nodeutil.fileExistsSync(iconn)) {
                     pxt.log(`importing ${iconn}`);
                     jres.icon = 'data:image/png;base64,' + fs.readFileSync(iconn, 'base64');
@@ -3897,10 +4156,18 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
                 // try to find file
                 if (mime) {
                     const ext = mime.replace(/^.*\//, '');
-                    const fn = path.join(dir, k + '-data.' + ext);
+                    let fn = path.join(dir, k + '-data.' + ext);
+                    pxt.debug(`looking for ${fn}`)
                     if (nodeutil.fileExistsSync(fn)) {
                         pxt.log(`importing ${fn}`);
                         jres.data = fs.readFileSync(fn, 'base64');
+                    } else {
+                        let fn = path.join(dir, k + '.' + ext);
+                        pxt.debug(`looking for ${fn}`)
+                        if (nodeutil.fileExistsSync(fn)) {
+                            pxt.log(`importing ${fn}`);
+                            jres.data = fs.readFileSync(fn, 'base64');
+                        }
                     }
                 }
             })
@@ -4337,7 +4604,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         // look for snippets
         getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => {
             snippets.push(snippet);
-            const dir = path.join("built/docs/snippets", snippet.type);
+            const dir = path.join("built/snippets", snippet.type);
             const fn = `${dir}/${entrypath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
             nodeutil.mkdirP(dir);
             fs.writeFileSync(fn, snippet.code);
@@ -4711,8 +4978,7 @@ function initCommands() {
                 aliases: ["w"],
                 type: "number",
                 argument: "wsport"
-            },
-            electron: { description: "used to indicate that the server is being started in the context of an electron app" }
+            }
         }
     }, serveAsync);
 
@@ -4722,47 +4988,18 @@ function initCommands() {
     }, buildJResAsync);
 
     p.defineCommand({
+        name: "buildsprites",
+        help: "collects sprites into a .jres file",
+        argString: "<directory>",
+    }, buildJResSpritesAsync);
+
+    p.defineCommand({
         name: "gist",
         help: "publish current package to a gist",
         flags: {
             new: { description: "force the creation of a new gist" },
         }
     }, publishGistAsync)
-
-    p.defineCommand({
-        name: "electron",
-        help: "SUBCOMMANDS: 'init': prepare target for running inside Electron app; 'run': runs current target inside Electron app; 'package': generates a packaged Electron app for current target",
-        onlineHelp: true,
-        flags: {
-            appsrc: {
-                description: "path to the root of the PXT Electron app in the pxt repo",
-                aliases: ["a"],
-                type: "string",
-                argument: "appsrc"
-            },
-            installer: {
-                description: "('package' only) Also build the installer / zip redistributable for the built app",
-                aliases: ["i"]
-            },
-            just: {
-                description: "During 'run': skips TS compilation of app; During 'package': skips npm install and rebuilding native modules",
-                aliases: ["j"]
-            },
-            product: {
-                description: "path to a product.json file to use instead of the target's default one",
-                aliases: ["p"],
-                type: "string",
-                argument: "product"
-            },
-            release: {
-                description: "('package' only) Instead of using the current local target, use the published target from NPM (value format: <Target's NPM package>[@<Package version>])",
-                aliases: ["r"],
-                type: "string",
-                argument: "release"
-            }
-        },
-        argString: "<subcommand>"
-    }, electron.electronAsync);
 
     p.defineCommand({
         name: "init",
@@ -4796,6 +5033,13 @@ function initCommands() {
         argString: "<label>",
         advanced: true,
     }, pc => uploadTargetAsync(pc.arguments[0]));
+    p.defineCommand({
+        name: "uploadrefs",
+        aliases: [],
+        help: "Upload refs directly to the cloud",
+        argString: "<repo>",
+        advanced: true,
+    }, pc => uploadTargetRefsAsync(pc.arguments[0]));
     advancedCommand("uploadtt", "upload tagged release", uploadTaggedTargetAsync, "");
     advancedCommand("downloadtrgtranslations", "download translations from bundled projects", downloadTargetTranslationsAsync, "<package>");
 
@@ -4879,7 +5123,7 @@ function initCommands() {
         argString: "[GDB_ARGUMNETS...]",
         anyArgs: true,
         advanced: true
-    }, gdb.startAsync);
+    }, gdbAsync);
 
     p.defineCommand({
         name: "pokerepo",
@@ -4985,9 +5229,8 @@ function errorHandler(reason: any) {
     process.exit(20)
 }
 
-let electronHandlers: pxt.Map<server.ElectronHandler>;
 // called from pxt npm package
-export function mainCli(targetDir: string, args: string[] = process.argv.slice(2), handlers?: pxt.Map<server.ElectronHandler>): Promise<void> {
+export function mainCli(targetDir: string, args: string[] = process.argv.slice(2)): Promise<void> {
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
@@ -4998,7 +5241,6 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         return Promise.resolve();
     }
 
-    electronHandlers = handlers;
     nodeutil.setTargetDir(targetDir);
 
     let trg = nodeutil.getPxtTarget()
@@ -5065,10 +5307,6 @@ function initGlobals() {
 
 initGlobals();
 initCommands();
-
-export function sendElectronMessage(message: server.ElectronMessage) {
-    server.sendElectronMessage(message);
-}
 
 if (require.main === module) {
     let targetdir = process.cwd()

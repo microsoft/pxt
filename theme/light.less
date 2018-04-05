@@ -1,0 +1,36 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+
+/*******************************
+    Light Mode
+*******************************/
+
+.light * {
+    /*CSS transitions*/
+  -webkit-transition: none!important;
+  -moz-transition: none!important;
+  -ms-transition: none!important;
+  transition: none!important;
+}
+
+.light .ui.dimmer {
+    animation-duration: 0s !important;
+}
+
+.light .ui.loader:after {
+    animation: none !important;
+}
+
+/* Remove blockly filter on drag */
+.light svg.blocklyBlockDragSurface > g {
+    filter: none !important;
+}
+
+.light .blocklyMainBackground {
+    fill: @blocklySvgColor !important;
+}
