@@ -74,8 +74,18 @@ namespace pxt.blocks {
         private palette: Uint32Array
         private screen: Uint32Array
         private flush: () => void
+        private start: number
+
+        logTime() {
+            if (this.start) {
+                let d = Date.now() - this.start
+                pxt.debug("Icon cration: " + d + "ms")
+            }
+        }
 
         convert(jresURL: string): string {
+            if (!this.start)
+                this.start = Date.now()
             const data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
             const magic = data.charCodeAt(0)
             const w = data.charCodeAt(1)
@@ -1080,6 +1090,8 @@ namespace pxt.blocks {
 
                 fields.forEach(f => input.appendField(f.field, f.name));
             });
+
+            imgConv.logTime()
         }
     }
 
