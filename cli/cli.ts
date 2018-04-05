@@ -4009,6 +4009,9 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
             U.userError(`only 8 bit per channel png images supported`)
         if (sheet.width > 255 || sheet.height > 255)
             U.userError(`PNG image too big`)
+        
+        if (!info.width) info.width = sheet.width
+        if (!info.height) info.height = sheet.height
 
         let nx = (sheet.width / info.width) | 0
         let ny = (sheet.height / info.height) | 0
