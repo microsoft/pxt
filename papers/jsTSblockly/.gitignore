@@ -1,5 +1,5 @@
 paper.*
 !paper.tex
 !paper.bib
-
+*.fls
 
