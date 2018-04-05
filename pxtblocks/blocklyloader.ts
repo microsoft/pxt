@@ -56,24 +56,9 @@ namespace pxt.blocks {
         }
     }
 
-    function htmlColorToUint32(hexColor: string) {
-        const ca = new Uint8ClampedArray(4)
-        const ui = new Uint32Array(ca.buffer)
-        const v = parseInt(hexColor.replace(/#/, ""), 16)
-        ca[0] = (v >> 16) & 0xff;
-        ca[1] = (v >> 8) & 0xff;
-        ca[2] = (v >> 0) & 0xff;
-        ca[3] = 0xff; // alpha
-        // convert to uint32 using target endian
-        return new Uint32Array(ca.buffer)[0]
-    }
-
     // this keeps a bit of state for perf reasons
     class ImageConverter {
-        private canvas: HTMLCanvasElement
-        private palette: Uint32Array
-        private screen: Uint32Array
-        private flush: () => void
+        private palette: Uint8Array
         private start: number
 
         logTime() {
@@ -93,61 +78,78 @@ namespace pxt.blocks {
             if (magic != 0xf1 && magic != 0xf4)
                 return null
 
-            if (!this.palette)
-                this.palette = new Uint32Array(pxt.appTarget.runtime.palette.map(htmlColorToUint32))
+            function htmlColorToBytes(hexColor: string) {
+                const v = parseInt(hexColor.replace(/#/, ""), 16)
+                return [(v >> 0) & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, 0]
+            }
 
-            if (!this.canvas || this.canvas.width != w || this.canvas.height != h) {
-                const canvas = document.createElement("canvas")
-                canvas.width = w
-                canvas.height = h
-                this.canvas = canvas
-                const ctx = canvas.getContext("2d")
-                const imgdata = ctx.getImageData(0, 0, w, h)
-                this.screen = new Uint32Array(imgdata.data.buffer)
-                this.flush = () => {
-                    ctx.putImageData(imgdata, 0, 0)
+
+            if (!this.palette) {
+                let arrs = pxt.appTarget.runtime.palette.map(htmlColorToBytes)
+                this.palette = new Uint8Array(arrs.length * 4)
+                for (let i = 0; i < arrs.length; ++i) {
+                    this.palette[i * 4 + 0] = arrs[i][0]
+                    this.palette[i * 4 + 1] = arrs[i][1]
+                    this.palette[i * 4 + 2] = arrs[i][2]
+                    this.palette[i * 4 + 3] = arrs[i][3]
                 }
             }
 
             const bpp = magic & 0xf
             const byteW = (w * bpp + 7) >> 8
 
+            let outByteW = (w + 3) & ~3
+
+            let bmpHeaderSize = 14 + 40 + this.palette.length
+            let bmpSize = bmpHeaderSize + outByteW * h
+            let bmp = new Uint8Array(bmpSize)
+
+            bmp[0] = 66
+            bmp[1] = 77
+            HF2.write32(bmp, 2, bmpSize)
+            HF2.write32(bmp, 10, bmpHeaderSize)
+            HF2.write32(bmp, 14, 40) // size of this header
+            HF2.write32(bmp, 18, w)
+            HF2.write32(bmp, 22, -h) // not upside down
+            HF2.write16(bmp, 26, 1) // 1 color plane
+            HF2.write16(bmp, 28, 8) // 8bpp
+            HF2.write32(bmp, 38, 2835) // 72dpi
+            HF2.write32(bmp, 42, 2835)
+            HF2.write32(bmp, 46, this.palette.length >> 2)
+
+            bmp.set(this.palette, 54)
+
             let inP = 3
-            let outP = 0
-            const pal = this.palette
-            const scr = this.screen
+            let outP = bmpHeaderSize
+            let pad = outByteW - w
 
             if (magic == 0xf1) {
                 let mask = 0x80
                 let v = data.charCodeAt(inP++)
                 for (let y = 0; y < h; ++y) {
                     for (let x = 0; x < w; ++x) {
-                        scr[outP++] = (v & mask) ? pal[1] : pal[0]
+                        bmp[outP++] = (v & mask) ? 1 : 0
                         mask >>= 1
                         if (mask == 0) {
                             mask = 0x80
                             v = data.charCodeAt(inP++)
                         }
                     }
-                    if (mask != 0x80) {
-                        mask = 0x80
-                        v = data.charCodeAt(inP++)
-                    }
+                    outP += pad
                 }
             } else {
                 for (let y = 0; y < h; ++y) {
                     for (let x = 0; x < w; x += 2) {
                         let v = data.charCodeAt(inP++)
-                        scr[outP++] = pal[(v >> 4) & 0xf]
+                        bmp[outP++] = (v >> 4) & 0xf
                         if (x != w - 1)
-                            scr[outP++] = pal[v & 0xf]
+                            bmp[outP++] = v & 0xf
                     }
+                    outP += pad
                 }
             }
 
-            this.flush()
-
-            return this.canvas.toDataURL("image/png")
+            return "data:image/bmp;base64," + btoa(U.uint8ArrayToString(bmp))
         }
     }
 
