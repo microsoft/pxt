@@ -16,50 +16,52 @@ export function initPxtElectronAsync(): Promise<void> {
 
     pxtElectron.initTelemetry(pxt.tickEvent);
 
-    return Cloud.downloadTargetConfigAsync()
-        .then((targetConfig) => {
-            const manifest = targetConfig.electronManifest;
-            const currentVersion = pxt.appTarget.versions.target;
-            const currentSemver = pxt.semver.parse(currentVersion);
+    return Promise.resolve();
 
-            if (!manifest || !manifest.majorReleases || !manifest.majorReleases[currentSemver.major]) {
-                return Promise.resolve();
-            }
+    // return Cloud.downloadTargetConfigAsync()
+    //     .then((targetConfig) => {
+    //         const manifest = targetConfig.electronManifest;
+    //         const currentVersion = pxt.appTarget.versions.target;
+    //         const currentSemver = pxt.semver.parse(currentVersion);
 
-            const releaseInfo = manifest.majorReleases[currentSemver.major];
-            let isBanned = false;
+    //         if (!manifest || !manifest.majorReleases || !manifest.majorReleases[currentSemver.major]) {
+    //             return Promise.resolve();
+    //         }
 
-            // Banned version check
-            if (releaseInfo.bannedVersions) {
-                isBanned = !!releaseInfo.bannedVersions.find((range) => {
-                    return isInRangeInclusive(currentSemver, range);
-                });
-            }
+    //         const releaseInfo = manifest.majorReleases[currentSemver.major];
+    //         let isBanned = false;
 
-            if (isBanned) {
-                return handleCriticalUpdateAsync(releaseInfo);
-            } else {
-                if (pxt.semver.cmp(currentSemver, pxt.semver.parse(releaseInfo.latest)) >= 0) {
-                    // No update available
-                    pxt.tickEvent("pxtelectron.update.uptodate");
-                    return Promise.resolve();
-                }
+    //         // Banned version check
+    //         if (releaseInfo.bannedVersions) {
+    //             isBanned = !!releaseInfo.bannedVersions.find((range) => {
+    //                 return isInRangeInclusive(currentSemver, range);
+    //             });
+    //         }
 
-                // An update is available, check whether we should prompt or notify
-                updateReleaseInfo = releaseInfo;
+    //         if (isBanned) {
+    //             return handleCriticalUpdateAsync(releaseInfo);
+    //         } else {
+    //             if (pxt.semver.cmp(currentSemver, pxt.semver.parse(releaseInfo.latest)) >= 0) {
+    //                 // No update available
+    //                 pxt.tickEvent("pxtelectron.update.uptodate");
+    //                 return Promise.resolve();
+    //             }
 
-                if (releaseInfo.promptVersion && pxt.semver.cmp(currentSemver, pxt.semver.parse(releaseInfo.promptVersion)) <= 0) {
-                    return handlePromptUpdateAsync(releaseInfo, /* isInitialCheck */ true);
-                } else {
-                    handleNotifyUpdate();
-                    return Promise.resolve();
-                }
-            }
-        })
-        .catch((e) => {
-            // Be permissive
-            pxt.tickEvent("pxtelectron.init.initfailed");
-        });
+    //             // An update is available, check whether we should prompt or notify
+    //             updateReleaseInfo = releaseInfo;
+
+    //             if (releaseInfo.promptVersion && pxt.semver.cmp(currentSemver, pxt.semver.parse(releaseInfo.promptVersion)) <= 0) {
+    //                 return handlePromptUpdateAsync(releaseInfo, /* isInitialCheck */ true);
+    //             } else {
+    //                 handleNotifyUpdate();
+    //                 return Promise.resolve();
+    //             }
+    //         }
+    //     })
+    //     .catch((e) => {
+    //         // Be permissive
+    //         pxt.tickEvent("pxtelectron.init.initfailed");
+    //     });
 }
 
 function isInRangeInclusive(v: pxt.semver.Version, range: pxt.electron.VersionRange): boolean {
