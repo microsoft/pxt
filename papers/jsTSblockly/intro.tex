@@ -24,8 +24,9 @@ improve the experience, but the starting point still is not the most welcoming.
 % going larger
 
 The ``Hour of Code'' experience,\footnote{\url{https://hourofcode.com/learn}} 
-has introduced over half a billion people to coding, with the express purpose 
-of demystifying and breaking stereotypes about coding.
+has introduced over three hundred million students to coding,\footnote{https://code.org/about/2016} 
+with the express 
+purpose of demystifying and breaking stereotypes about coding.
 In order to reach this many people, \url{code.org} used
 Google's Blockly~\cite{Blocky2015}~\footnote{\url{www.github.com/google/blockly}},
 a JavaScript framework inspired by MIT's Scratch programming 
@@ -40,6 +41,23 @@ free of the possibility of syntax errors.
 
 Figure~\ref{fig:hoc} shows a screen snapshot from one of the many 
 ``Hour of Code'' tutorials, in the family of ``maze solving'' problems.
+In this example, the goal is to program the Minecraft avatar ``Steve''
+on the left to move to the sheep on the right. To create a program,
+the user selects from a simple palette of three blocks
+(shown under the ``Blocks'' heading) and drags these blocks into
+the workspace. In this very simple example, the
+program is simply a sequence of commands. In later steps, 
+concepts such as loops and XYZ are introduced.
+
+In Blockly, visual blocks represent structured control-flow statements such as loops 
+and if-then-else conditionals, as well as program expressions, values and variables. 
+Blocks also represent function calls to domain-specific APIS, via Blockly's support for \emph{custom 
+blocks}.  In the case of Figure~\ref{fig:hoc}, the domain-specific APIs are the commands
+for moving ``Steve''.
+
+% Blockly can be compiled to a variety of languages, the main target 
+% being JavaScript, as Blockly itself is written in JavaScript and hosted in a web browser.
+
 
 Two goals: 
 \begin{itemize}
@@ -51,12 +69,6 @@ Two goals:
 % http://tryruby.org/levels/1/challenges/0
 
 [goal: bring simplicity of blocky to more domains, to leverage all the JavaSript]
-
-Visual blocks represent structured control-flow statements such as while loops 
-and if-then-else conditionals, as well as program expressions, values and variables. 
-Blocks also represent function calls to domain-specific APIS, via Blockly's support for \emph{custom 
-blocks}. Blockly can be compiled to a variety of languages, the main target 
-being JavaScript, as Blockly itself is written in JavaScript and hosted in a web browser.
 
 TypeScript (\url{www.typescriptlang.org}) is superset of the JavaScript language that is gradually typed, 
 meaning that types may optionally be added to JavaScript code to provide for a more productive programming 
