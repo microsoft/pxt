@@ -9,8 +9,8 @@ namespace pxt.blocks.layout {
     }
 
     function injectDisabledBlocks(oldWs: B.Workspace, newWs: B.Workspace): string {
-        const oldDom = Blockly.Xml.workspaceToDom(oldWs);
-        const newDom = Blockly.Xml.workspaceToDom(newWs);
+        const oldDom = Blockly.Xml.workspaceToDom(oldWs, true);
+        const newDom = Blockly.Xml.workspaceToDom(newWs, true);
         Util.toArray(oldDom.childNodes)
             .filter(n => n.nodeType == Node.ELEMENT_NODE && n.localName == "block" && (<Element>n).getAttribute("disabled") == "true")
             .forEach(n => newDom.appendChild(newDom.ownerDocument.importNode(n, true)));

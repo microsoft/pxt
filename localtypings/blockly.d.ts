@@ -813,7 +813,7 @@ declare namespace Blockly {
         function domToPrettyText(dom: Element): string;
         function domToWorkspace(dom: Element, workspace: Workspace): string[];
         function textToDom(text: string): Element;
-        function workspaceToDom(workspace: Workspace): Element;
+        function workspaceToDom(workspace: Workspace, noid?: boolean): Element;
     }
 
     interface Options {
