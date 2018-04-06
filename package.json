@@ -26,6 +26,7 @@
     "built/buildengine.js",
     "built/hid.js",
     "built/gdb.js",
+    "built/gitfs.js",
     "built/serial.js",
     "built/clidbg.js",
     "built/pxt.js",
