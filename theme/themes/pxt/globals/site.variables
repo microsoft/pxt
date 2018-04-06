@@ -179,7 +179,7 @@
    Editor
 --------------------*/
 
-@blocklyToolboxColor: rgba(0, 0, 0, 0.05);
+@blocklyToolboxColor: white;
 @trashIconColor: @primaryColor;
 
 /*-------------------
