@@ -951,7 +951,7 @@ export class Editor extends srceditor.Editor {
 
             // Draw the shape of the block
             monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
-            monacoBlock.style.lineHeight = `${monacoEditor.parent.settings.editorFontSize}px`;
+            monacoBlock.style.lineHeight = `${monacoEditor.parent.settings.editorFontSize + 1}px`;
             monacoBlock.style.backgroundColor = monacoBlockDisabled ?
                 `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.8, false)}` :
                 `${color}`;
