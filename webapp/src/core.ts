@@ -353,7 +353,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
         options.buttons.push({
             label: options.agreeLbl || lf("Go ahead!"),
             class: options.agreeClass,
-            icon: options.agreeIcon,
+            icon: options.agreeIcon || "checkmark",
             onclick: () => {
                 result = 1
             }
@@ -398,7 +398,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
         options.buttons.push({
             label: options.agreeLbl || lf("Go ahead!"),
             class: options.agreeClass,
-            icon: options.agreeIcon,
+            icon: options.agreeIcon || "checkmark",
             onclick: () => {
                 let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
                 result = dialogInput.value;
