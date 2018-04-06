@@ -220,7 +220,8 @@ export class Editor extends srceditor.Editor {
             const colors: pxt.Map<string> = {};
             this.getNamespaces().forEach((ns) => {
                 const metaData = this.getNamespaceAttrs(ns);
-                const blocks = snippets.isBuiltin(ns) ? snippets.getBuiltinCategory(ns).blocks : this.nsMap[ns];
+                const blocks = snippets.isBuiltin(ns) ?
+                    snippets.getBuiltinCategory(ns).blocks.concat(this.nsMap[ns] || []) : this.nsMap[ns];
 
                 if (metaData.color && blocks) {
                     let hexcolor = fixColor(metaData.color);
