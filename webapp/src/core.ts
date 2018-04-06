@@ -266,9 +266,9 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     let btnno = 0
     for (let b of buttons) {
         html += `
-      <${b.url ? "a" : "button"} class="ui right labeled icon button approve ${b.class || "positive"} focused" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} ${b.fileName ? `download="${Util.htmlEscape(b.fileName)}"` : ''} target="_blank">
+      <${b.url ? "a" : "button"} class="ui right labeled icon button ${b.class || "approve positive"} focused" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} ${b.fileName ? `download="${Util.htmlEscape(b.fileName)}"` : ''} target="_blank">
         ${Util.htmlEscape(b.label)}
-        <i class="${b.icon || "checkmark"} icon"></i>
+        ${b.icon ? `<i class="${b.icon || "checkmark"} icon"></i>` : '' }
       </${b.url ? "a" : "button"}>`
     }
 
@@ -353,7 +353,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
         options.buttons.push({
             label: options.agreeLbl || lf("Go ahead!"),
             class: options.agreeClass,
-            icon: options.agreeIcon,
+            icon: options.agreeIcon || "checkmark",
             onclick: () => {
                 result = 1
             }
@@ -398,7 +398,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
         options.buttons.push({
             label: options.agreeLbl || lf("Go ahead!"),
             class: options.agreeClass,
-            icon: options.agreeIcon,
+            icon: options.agreeIcon || "checkmark",
             onclick: () => {
                 let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
                 result = dialogInput.value;

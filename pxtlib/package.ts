@@ -462,6 +462,10 @@ namespace pxt {
             return initPromise
                 .then(() => loadDepsRecursive(this.config.dependencies))
                 .then(() => {
+                    // get paletter config loading deps, so the more higher level packages take precedence
+                    if (this.config.palette && appTarget.runtime)
+                        appTarget.runtime.palette = U.clone(this.config.palette)
+
                     if (this.level === 0) {
                         // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
                         const mainTs = this.readFile("main.ts");
@@ -628,6 +632,17 @@ namespace pxt {
                 this._jres = {}
                 for (const pkg of this.sortedDeps()) {
                     pkg.parseJRes(this._jres)
+                }
+                if (appTarget.runtime && appTarget.runtime.palette) {
+                    const palBuf = appTarget.runtime.palette
+                        .map(s => ("000000" + parseInt(s.replace(/#/, ""), 16).toString(16)).slice(-6))
+                        .join("")
+                    this._jres["__palette"] = {
+                        id: "__palette",
+                        data: palBuf,
+                        dataEncoding: "hex",
+                        mimeType: "application/x-palette"
+                    }
                 }
             }
             return this._jres

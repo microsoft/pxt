@@ -23,7 +23,7 @@ Microsoft advises that all teachers have scripts graded by the 23rd of May.
 We know that providing high quality curriculum that maps to real-world skills is vital to you. The good news is that we are building new curriculum based on Microsoft MakeCode (which will support a new sprite-based game engine). Some of the benefits of this new curriculum are: 
 * It will support coding with Blocks and TypeScript/JavaScript giving learners at different levels the flexibility to progress at their own pace;
 * It will be expanded to include the fundamentals of Beginning Computer Science, including events, coordinates, variables, iteration, conditionals, functions, arrays, algorithms, and more, through a variety of hands-on activities. 
-* It will be aligned with CSTA standards and can be used for the CS Principles Exam 
+* It will be aligned with CSTA standards.
  
 This new Introductory Computer Science curriculum will be available to existing Microsoft Imagine Academy customers for feedback in late May, with an expected full product launch later this summer.  When the beta launches in May, we will include an initial set of lessons for each topic area, as well as an introduction, educator lessons, and even a few advanced topics. 
   

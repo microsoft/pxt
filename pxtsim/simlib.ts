@@ -21,8 +21,8 @@ namespace pxsim {
         return res;
     }
 
-    export class EventBus {
-        private queues: Map<EventQueue<number>> = {};
+    export class EventBusGeneric<T> {
+        private queues: Map<EventQueue<T>> = {};
         private notifyID: number;
         private notifyOneID: number;
 
@@ -32,12 +32,12 @@ namespace pxsim {
             this.notifyOneID = notifyOneID;
         }
 
-        constructor(private runtime: Runtime) { }
+        constructor(private runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
         private start(id: number | string, evid: number | string, create: boolean) {
             let k = id + ":" + evid;
             let queue = this.queues[k];
-            if (!queue) queue = this.queues[k] = new EventQueue<number>(this.runtime);
+            if (!queue) queue = this.queues[k] = new EventQueue<T>(this.runtime, this.valueToArgs);
             return queue;
         }
 
@@ -46,7 +46,7 @@ namespace pxsim {
             q.handler = handler;
         }
 
-        queue(id: number | string, evid: number | string, value: number = 0) {
+        queue(id: number | string, evid: number | string, value: T = null) {
             // special handling for notify one
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
@@ -54,12 +54,20 @@ namespace pxsim {
 
             // grab queue and handle
             let q = this.start(id, evid, false);
-            if (q) q.push(value, notifyOne);
+            if (q) {
+                q.push(value, notifyOne);
+            }
         }
 
-        wait(id: number | string, evid: number | string, cb: (v?: any) => void) {
+        wait(id: number | string, evid: number | string, cb: (value?: any) => void) {
             let q = this.start(id, evid, true);
             q.addAwaiter(cb);
+        }
+    }
+
+    export class EventBus extends EventBusGeneric<number> {
+        queue(id: number | string, evid: number | string, value: number = 0) {
+            super.queue(id, evid, value);
         }
     }
 

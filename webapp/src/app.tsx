@@ -1379,7 +1379,14 @@ export class ProjectView
         if (devIndicator) devIndicator.clear()
     }
 
+    simDebug() {
+        pxt.tickEvent("menu.debug.sim")
+        this.stopSimulator();
+        this.runSimulator({ debug: true });
+    }
+
     hwDebug() {
+        pxt.tickEvent("menu.debug.hw")
         let start = Promise.resolve()
         if (!this.state.running || !simulator.driver.runOptions.debug)
             start = this.runSimulator({ debug: true })
@@ -1799,6 +1806,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         //  ${targetTheme.accentColor ? "inverted accent " : ''}
         const settings: Cloud.UserSettings = (Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {}) || {}
         const targetTheme = pxt.appTarget.appTheme;
+        const simOpts = pxt.appTarget.simulator;
         const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
         const sandbox = pxt.shell.isSandboxMode();
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
@@ -1807,9 +1815,10 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header;
+        const simDebug = (simOpts && simOpts.debugger) || pxt.options.debug;
 
         const { hideMenuBar, hideEditorToolbar } = targetTheme;
-        const isHeadless = pxt.appTarget.simulator.headless;
+        const isHeadless = simOpts && simOpts.headless;
         const selectLanguage = targetTheme.selectLanguage;
         const showEditorToolbar = !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
@@ -1866,7 +1875,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                         </div>
                         <simtoolbar.SimulatorToolbar parent={this} />
                         <div className="ui item portrait hide">
-                            {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true })} /> : ''}
+                            {simDebug ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Debug"} onClick={() => this.simDebug()} /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
                         {useSerialEditor ?

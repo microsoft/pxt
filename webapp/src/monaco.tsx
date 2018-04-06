@@ -220,7 +220,8 @@ export class Editor extends srceditor.Editor {
             const colors: pxt.Map<string> = {};
             this.getNamespaces().forEach((ns) => {
                 const metaData = this.getNamespaceAttrs(ns);
-                const blocks = snippets.isBuiltin(ns) ? snippets.getBuiltinCategory(ns).blocks : this.nsMap[ns];
+                const blocks = snippets.isBuiltin(ns) ?
+                    snippets.getBuiltinCategory(ns).blocks.concat(this.nsMap[ns] || []) : this.nsMap[ns];
 
                 if (metaData.color && blocks) {
                     let hexcolor = fixColor(metaData.color);
@@ -634,6 +635,7 @@ export class Editor extends srceditor.Editor {
             monacoHeadingText.className = `monacoFlyoutHeadingText`;
             monacoHeadingText.style.display = 'inline-block';
             monacoHeadingText.style.fontSize = `${fontSize + 5}px`;
+            monacoHeadingText.style.lineHeight = `${fontSize + 5}px`;
             monacoHeadingText.textContent = category ? category : `${Util.capitalize(ns)}`;
 
             monacoHeadingLabel.appendChild(monacoHeadingIcon);
@@ -672,6 +674,7 @@ export class Editor extends srceditor.Editor {
                 groupLabelText.className = 'monacoFlyoutLabelText';
                 groupLabelText.style.display = 'inline-block';
                 groupLabelText.style.fontSize = `${fontSize}px`;
+                groupLabelText.style.lineHeight = `${fontSize + 5}px`;
                 groupLabelText.textContent = pxt.Util.rlf(`{id:group}${group}`);
                 groupLabel.appendChild(groupLabelText);
                 monacoFlyout.appendChild(groupLabel);
@@ -751,6 +754,8 @@ export class Editor extends srceditor.Editor {
         return namespaces;
     }
 
+    private uniqueBlockId = 0; // Used for hex blocks
+
     private createMonacoBlocks(
         monacoEditor: Editor,
         monacoFlyout: HTMLElement,
@@ -760,7 +765,6 @@ export class Editor extends srceditor.Editor {
         filters: pxt.editor.ProjectFilters,
         categoryState: pxt.editor.FilterState
     ) {
-        let uniqueBlockId = 0; // Used for hex blocks
         // Render the method blocks
         const monacoBlocks = fns.sort((f1, f2) => {
             // sort by fn weight
@@ -948,6 +952,7 @@ export class Editor extends srceditor.Editor {
 
             // Draw the shape of the block
             monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
+            monacoBlock.style.lineHeight = `${monacoEditor.parent.settings.editorFontSize + 1}px`;
             monacoBlock.style.backgroundColor = monacoBlockDisabled ?
                 `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.8, false)}` :
                 `${color}`;
@@ -956,7 +961,7 @@ export class Editor extends srceditor.Editor {
                 // Show a hexagonal shape
                 monacoBlock.style.borderRadius = "0px";
                 const monacoBlockHeight = monacoBlock.offsetHeight - 2; /* Take 2 off to account for the missing border */
-                const monacoHexBlockId = uniqueBlockId++;
+                const monacoHexBlockId = monacoEditor.uniqueBlockId++;
                 monacoBlock.id = `monacoHexBlock${monacoHexBlockId}`;
                 monacoBlock.className += ' monacoHexBlock';
                 const styleBlock = document.createElement('style') as HTMLStyleElement;
@@ -1225,6 +1230,7 @@ export class Editor extends srceditor.Editor {
 
     private highlightDecorations: string[] = [];
     highlightStatement(brk: pxtc.LocationInfo) {
+        if (!brk) this.clearHighlightedStatements();
         if (!brk || !this.currFile || this.currFile.name != brk.fileName || !this.editor) return;
         let position = this.editor.getModel().getPositionAt(brk.start);
         let end = this.editor.getModel().getPositionAt(brk.start + brk.length);
@@ -1238,7 +1244,7 @@ export class Editor extends srceditor.Editor {
     }
 
     clearHighlightedStatements() {
-        if (this.highlightDecorations)
+        if (this.editor && this.highlightDecorations)
             this.editor.deltaDecorations(this.highlightDecorations, []);
     }
 
