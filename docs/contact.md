@@ -20,7 +20,7 @@ Let's get you to the right place.
 - For any assistance regarding Cue or MakeCode for Cue, check out the [Wonder Workshop Support Forums](https://help.makewonder.com/).
 
 # I'm a developer!
-- Have a question, ask it on [Stack overflow](https://stackoverflow.com/), we monitor the "makecode" and "pxt" tags.
+- Have a question, ask it on [Stack overflow](https://stackoverflow.com/), we monitor the "makecode" tag.
 - Think you've found a bug that affects the entire MakeCode platform, file your issue [here](https://github.com/Microsoft/pxt/issues/new?labels=bug).
 - Have an idea you'd like to share with us, file a feature request [here](https://github.com/Microsoft/pxt/issues/new?labels=enhancement).
 - Want to speak directly to the team, ask your question on [![Join the chat at https://gitter.im/makecode-community/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/makecode-community/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
