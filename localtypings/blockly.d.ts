@@ -752,6 +752,7 @@ declare namespace Blockly {
         setTooltip(newTip: string | (() => void)): void;
         // Passing null will delete current text
         setWarningText(text: string): void;
+        setHighlightWarning(isHighlightingWarning: boolean): void;
         isEditable(): boolean;
         isInsertionMarker(): boolean;
         isShadow(): boolean;
@@ -762,6 +763,18 @@ declare namespace Blockly {
         getRelativeToSurfaceXY(): goog.math.Coordinate;
         getOutputShape(): number;
         getSvgRoot(): Element;
+    }
+
+    class WorkspaceComment {
+        getContent(): string;
+
+        getRelativeToSurfaceXY(): goog.math.Coordinate;
+        moveBy(x: number, y: number): void;
+        getHeightWidth(): { width: number; height: number; };
+        getBoundingRectangle(): {
+            topLeft: goog.math.Coordinate;
+            bottomRight: goog.math.Coordinate;
+        }
     }
 
     class Comment extends Icon {
@@ -893,6 +906,7 @@ declare namespace Blockly {
         clear(): void;
         dispose(): void;
         getTopBlocks(ordered: boolean): Block[];
+        getTopComments(ordered: boolean): WorkspaceComment[];
         getBlockById(id: string): Block;
         getAllBlocks(): Block[];
         traceOn(armed: boolean): void;
@@ -905,6 +919,7 @@ declare namespace Blockly {
         zoomCenter(type: number): void;
         scrollCenter(): void;
         highlightBlock(id: string): void;
+        centerOnBlock(id: string): void;
         glowBlock(id: string, state: boolean): void;
         glowStack(id: string, state: boolean): void;
         undo(redo?: boolean): void;
@@ -983,7 +998,7 @@ declare namespace Blockly {
         };
         enableRealTime?: boolean;
         rtl?: boolean;
-        // PXT specific:
+        // PXT specific: 
         toolboxOptions?: ToolboxOptions;
     }
 
@@ -1087,6 +1102,7 @@ declare namespace Blockly {
         class BlockChange extends Abstract {
             constructor(block: Block, element: String, name: String, oldValue: String, newValue: String);
         }
+
     }
 
     class Toolbox {

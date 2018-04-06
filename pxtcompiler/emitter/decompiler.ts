@@ -311,6 +311,7 @@ namespace ts.pxtc.decompiler {
         let output = ""
 
         const varUsages: pxt.Map<ReferenceType> = {};
+        const workspaceComments: string[] = [];
         const autoDeclarations: [string, ts.Node][] = [];
 
         ts.forEachChild(file, topLevelNode => {
@@ -343,6 +344,10 @@ namespace ts.pxtc.decompiler {
         if (n) {
             emitStatementNode(n);
         }
+
+        workspaceComments.forEach(c => {
+            emitWorkspaceComment(c);
+        })
 
         result.outfiles[file.fileName.replace(/(\.blocks)?\.\w*$/i, '') + '.blocks'] = `<xml xmlns="http://www.w3.org/1999/xhtml">
 ${output}</xml>`;
@@ -539,6 +544,10 @@ ${output}</xml>`;
 
         function closeBlockTag() {
             write(`</block>`)
+        }
+
+        function emitWorkspaceComment(text: string) {
+            write(`<comment h="120" w="160">${text}</comment>`);
         }
 
         function getOutputBlock(n: ts.Node): OutputNode {
@@ -912,7 +921,7 @@ ${output}</xml>`;
 
             const commentRanges = ts.getLeadingCommentRangesOfNode(parent || node, file)
             if (commentRanges) {
-                const commentText = getCommentText(commentRanges)
+                const commentText = getCommentText(commentRanges, node)
 
                 if (commentText && stmt) {
                     stmt.comment = commentText;
@@ -1603,19 +1612,31 @@ ${output}</xml>`;
          * by empty lines between comments (a commented empty line, not an empty line
          * between two separate comment blocks)
          */
-        function getCommentText(commentRanges: ts.CommentRange[]) {
+        function getCommentText(commentRanges: ts.CommentRange[], node: Node) {
             let text = ""
             let currentLine = ""
+
+            const isTopLevel = isTopLevelComment(node);
 
             for (const commentRange of commentRanges) {
                 const commentText = fileText.substr(commentRange.pos, commentRange.end - commentRange.pos)
                 if (commentRange.kind === SyntaxKind.SingleLineCommentTrivia) {
-                    appendMatch(commentText, singleLineCommentRegex)
+                    appendMatch(commentText, 1, 3, singleLineCommentRegex)
+                }
+                else if (commentRange.kind === SyntaxKind.MultiLineCommentTrivia && isTopLevel) {
+                    const lines = commentText.split("\n")
+                    for (let i = 0; i < lines.length; i++) {
+                        appendMatch(lines[i], i, lines.length, multiLineCommentRegex);
+                    }
+                    if (currentLine) text += currentLine
+                    workspaceComments.push(text);
+                    text  = '';
+                    currentLine = '';
                 }
                 else {
                     const lines = commentText.split("\n")
-                    for (const line of lines) {
-                        appendMatch(line, multiLineCommentRegex)
+                    for (let i = 0; i < lines.length; i++) {
+                        appendMatch(lines[i], i, lines.length, multiLineCommentRegex)
                     }
                 }
             }
@@ -1624,7 +1645,17 @@ ${output}</xml>`;
 
             return text.trim()
 
-            function appendMatch(line: string, regex: RegExp) {
+            function isTopLevelComment(n: Node): boolean {
+                const [parent,] = getParent(n);
+                if (!parent || parent.kind == SK.SourceFile) return true;
+                // Expression statement
+                if (parent.kind == SK.ExpressionStatement) return isTopLevelComment(parent);
+                // Variable statement
+                if (parent.kind == SK.VariableDeclarationList) return isTopLevelComment(parent.parent);
+                return false;
+            }
+
+            function appendMatch(line: string, lineno: number, lineslen: number, regex: RegExp) {
                 const match = regex.exec(line)
                 if (match) {
                     const matched = match[1].trim()
@@ -1636,8 +1667,10 @@ ${output}</xml>`;
                     if (matched) {
                         currentLine += currentLine ? " " + matched : matched
                     } else {
-                        text += currentLine + "\n"
-                        currentLine = ""
+                        if (lineno && lineno < lineslen - 1) {
+                            text += currentLine + "\n"
+                            currentLine = ""
+                        }
                     }
                 }
             }
