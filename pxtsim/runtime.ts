@@ -164,14 +164,16 @@ namespace pxsim {
         }
     }
 
+    export type EventValueToActionArgs<T> = (value: T) => any[];
+
     export class EventQueue<T> {
         max: number = 5;
         events: T[] = [];
         private awaiters: ((v?: any) => void)[] = [];
-        private mHandler: RefAction;
         private lock: boolean;
+        private _handler: RefAction;
 
-        constructor(public runtime: Runtime) { }
+        constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
         public push(e: T, notifyOne: boolean) {
             if (this.awaiters.length > 0) {
@@ -195,8 +197,8 @@ namespace pxsim {
 
         private poke() {
             this.lock = true;
-            let top = this.events.shift()
-            this.runtime.runFiberAsync(this.handler, top)
+            const value = this.events.shift();
+            this.runtime.runFiberAsync(this.handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
                 .done(() => {
                     // we're done processing the current event, if there is still something left to do, do it
                     if (this.events.length > 0) {
@@ -209,18 +211,18 @@ namespace pxsim {
         }
 
         get handler() {
-            return this.mHandler;
+            return this._handler;
         }
 
         set handler(a: RefAction) {
-            if (this.mHandler) {
-                pxtcore.decr(this.mHandler);
+            if (this._handler) {
+                pxtcore.decr(this._handler);
             }
 
-            this.mHandler = a;
+            this._handler = a;
 
-            if (this.mHandler) {
-                pxtcore.incr(this.mHandler);
+            if (this._handler) {
+                pxtcore.incr(this._handler);
             }
         }
 
