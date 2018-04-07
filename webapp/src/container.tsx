@@ -1,10 +1,8 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as core from "./core";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
 

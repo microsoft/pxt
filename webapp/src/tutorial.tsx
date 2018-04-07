@@ -1,15 +1,12 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
-import * as workspace from "./workspace";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as sounds from "./sounds";
 import * as core from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
-type TutorialOptions = pxt.editor.TutorialOptions;
 
 export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
@@ -24,9 +21,7 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     render() {
-        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialName } = this.props.parent.state.tutorialOptions;
-        const state = this.props.parent.state;
-        const targetTheme = pxt.appTarget.appTheme;
+        const { tutorialReady, tutorialStepInfo, tutorialStep } = this.props.parent.state.tutorialOptions;
         const currentStep = tutorialStep;
         if (!tutorialReady) return <div />;
 
@@ -240,7 +235,6 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
 
         const currentStep = tutorialStep;
         const maxSteps = tutorialStepInfo.length;
-        const hasPrevious = tutorialReady && currentStep != 0;
         const hasNext = tutorialReady && currentStep != maxSteps - 1;
         const hasFinish = currentStep == maxSteps - 1;
         const hasHint = tutorialStepInfo[tutorialStep].hasHint;

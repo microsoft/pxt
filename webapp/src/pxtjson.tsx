@@ -3,9 +3,7 @@ import * as pkg from "./package";
 import * as srceditor from "./srceditor"
 import * as sui from "./sui";
 import * as core from "./core";
-import * as codecard from "./codecard"
 
-import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
 const lf = Util.lf
@@ -54,13 +52,6 @@ export class Editor extends srceditor.Editor {
             c.name = v;
             this.parent.forceUpdate();
         }
-        const deleteProject = () => {
-            this.parent.removeProject();
-        }
-        const initCard = () => {
-            if (!c.card) c.card = {}
-        }
-        const card = c.card || {};
         let userConfigs: pxt.CompilationConfig[] = [];
         pkg.allEditorPkgs().map(ep => ep.getKsPkg())
             .filter(dep => !!dep && dep.isLoaded && !!dep.config && !!dep.config.yotta && !!dep.config.yotta.userConfigs)

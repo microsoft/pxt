@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as workspace from "./workspace";
 import * as core from "./core";
 import * as gallery from "./gallery";
 

@@ -2,14 +2,12 @@
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import * as workspace from "./workspace";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
 
 import * as codecard from "./codecard"
-import * as gallery from "./gallery";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -24,7 +22,6 @@ interface ScriptSearchState {
 export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     private prevGhData: pxt.github.GitRepo[] = [];
     private prevUrlData: Cloud.JsonScript[] = [];
-    private prevGalleries: pxt.CodeCard[] = [];
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -102,7 +99,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     renderCore() {
         if (!this.state.visible) return <div></div>;
 
-        const targetTheme = pxt.appTarget.appTheme;
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
@@ -156,7 +152,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const installGh = (scr: pxt.github.GitRepo) => {
             pxt.tickEvent("packages.github", { name: scr.fullName });
             this.hide();
-            let p = pkg.mainEditorPkg();
             core.showLoading("downloadingpackage", lf("downloading package..."));
             pxt.packagesConfigAsync()
                 .then(config => pxt.github.latestVersionAsync(scr.fullName, config))

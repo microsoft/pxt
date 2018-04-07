@@ -69,20 +69,20 @@ namespace pxt {
         light?: boolean; // low resource device
         wsPort?: number;
     }
-    export var options: PxtOptions = {};
+    export let options: PxtOptions = {};
 
     // general error reported
-    export var debug: (msg: any) => void = typeof console !== "undefined" && !!console.debug
+    export let debug: (msg: any) => void = typeof console !== "undefined" && !!console.debug
         ? (msg) => {
             if (pxt.options.debug)
                 console.debug(msg);
         } : () => { };
-    export var log: (msg: any) => void = typeof console !== "undefined" && !!console.log
+    export let log: (msg: any) => void = typeof console !== "undefined" && !!console.log
         ? (msg) => {
             console.log(msg);
         } : () => { };
 
-    export var reportException: (err: any, data?: Map<string>) => void = function (e, d) {
+    export let reportException: (err: any, data?: Map<string>) => void = function (e, d) {
         if (console) {
             console.error(e);
             if (d) {
@@ -94,7 +94,7 @@ namespace pxt {
             }
         }
     }
-    export var reportError: (cat: string, msg: string, data?: Map<string>) => void = function (cat, msg, data) {
+    export let reportError: (cat: string, msg: string, data?: Map<string>) => void = function (cat, msg, data) {
         if (console) {
             console.error(`${cat}: ${msg}`);
             if (data) {
@@ -163,7 +163,7 @@ namespace pxt {
         return r
     }
 
-    export var webConfig: WebConfig;
+    export let webConfig: WebConfig;
 
     export function getOnlineCdnUrl(): string {
         if (!webConfig) return null
