@@ -157,9 +157,10 @@ namespace custom {
 
     renderCore() {
         const show = !!this.props.parent.state.showFiles;
+        const targetTheme = pxt.appTarget.appTheme;
         const plus = show && !pkg.mainEditorPkg().files[customFile]
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
-        return <div role="tree" className={`ui tiny vertical menu filemenu landscape only hidefullscreen`}>
+        return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only`}>
             <div role="treeitem" aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={() => this.toggleVisibility()} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                 {lf("Explorer")}
                 <sui.Icon icon={`chevron ${show ? "down" : "right"} icon`} />
