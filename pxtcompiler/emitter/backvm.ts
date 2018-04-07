@@ -20,6 +20,7 @@ namespace ts.pxtc {
         return vtableToAsm(info)
     }
 
+    /* tslint:disable:no-trailing-whitespace */
     export function vmEmit(bin: Binary, opts: CompileOptions) {
         let vmsource = `; VM start
 ${hex.hexPrelude()}        
@@ -70,6 +71,8 @@ ${hex.hexPrelude()}
             bin.writeFile(pxt.outputName(target), myhex)
         }
     }
+    /* tslint:enable */
+
 
     function irToVM(bin: Binary, proc: ir.Procedure): string {
         let resText = ""
