@@ -1014,8 +1014,6 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 dimmerClassName
             ]);
 
-        const blurring = dimmer === 'blurring';
-
         return (
             <Portal
                 closeOnRootNodeClick={closeOnDimmerClick}
@@ -1173,7 +1171,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
     }
 
     renderPortal() {
-        const { children, className, open, allowResetFocus } = this.props;
+        const { children, className, allowResetFocus } = this.props;
 
         this.mountPortal();
 

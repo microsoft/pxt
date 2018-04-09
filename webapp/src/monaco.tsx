@@ -1,7 +1,6 @@
 /// <reference path="../../localtypings/monaco.d.ts" />
 /// <reference path="../../built/pxteditor.d.ts" />
 
-
 import * as React from "react";
 import * as pkg from "./package";
 import * as core from "./core";
@@ -9,8 +8,6 @@ import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
 import * as data from "./data";
-import * as codecard from "./codecard";
-import * as blocks from "./blocks"
 import * as snippets from "./monacoSnippets"
 
 import Util = pxt.Util;
@@ -271,21 +268,6 @@ export class Editor extends srceditor.Editor {
     beforeCompile() {
         if (this.editor)
             this.editor.getAction('editor.action.formatDocument').run();
-    }
-
-    private textAndPosition(pos: monaco.IPosition) {
-        let programText = this.editor.getValue()
-        let lines = pos.lineNumber
-        let chars = pos.column
-        let charNo = 0;
-        for (; charNo < programText.length; ++charNo) {
-            if (lines == 0) {
-                if (chars-- == 0)
-                    break;
-            } else if (programText[charNo] == '\n') lines--;
-        }
-
-        return { programText, charNo }
     }
 
     isIncomplete() {
@@ -611,7 +593,6 @@ export class Editor extends srceditor.Editor {
         else {
             let cat = snippets.getBuiltinCategory(ns);
             let blocks = cat.blocks || [];
-            let categoryName = cat.name;
             blocks.forEach(b => { b.noNamespace = true })
             if (!cat.custom && this.nsMap[ns.toLowerCase()]) blocks = blocks.concat(this.nsMap[ns.toLowerCase()].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
             if (!blocks || !blocks.length) return;
@@ -898,8 +879,6 @@ export class Editor extends srceditor.Editor {
                 };
                 monacoBlock.ondragstart = (e: DragEvent) => {
                     pxt.tickEvent("monaco.toolbox.itemdrag", undefined, { interactiveConsent: true });
-                    let clone = monacoBlock.cloneNode(true) as HTMLDivElement;
-
                     setTimeout(function () {
                         monacoFlyout.style.transform = "translateX(-9999px)";
                     });
@@ -1176,7 +1155,6 @@ export class Editor extends srceditor.Editor {
     private diagSnapshot: string[];
     private annotationLines: number[];
     private editorViewZones: number[];
-    private errorLines: number[];
 
     updateDiagnostics() {
         if (this.needsDiagUpdate())

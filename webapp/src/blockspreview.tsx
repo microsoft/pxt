@@ -1,7 +1,5 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom"
-import * as pkg from "./package";
-import * as core from "./core";
 
 export interface BlocksPreviewProps {
     xml: string;
@@ -10,7 +8,6 @@ export interface BlocksPreviewProps {
 export interface BlocksPreviewState {
 
 }
-
 
 export class BlocksPreview extends React.Component<BlocksPreviewProps, BlocksPreviewState> {
     workspace: Blockly.Workspace;
@@ -36,6 +33,6 @@ export class BlocksPreview extends React.Component<BlocksPreviewProps, BlocksPre
     }
 
     render() {
-        return (<div style={ { width: "100%", minHeight: "10em", direction:"ltr" } }></div>)
+        return (<div style={ { width: "100%", minHeight: "10em", direction: "ltr" } }></div>)
     }
 }

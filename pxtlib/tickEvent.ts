@@ -8,5 +8,5 @@ namespace pxt {
     /**
      * Track an event.
      */
-    export var tickEvent: (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions) => void = function (id) { }
+    export let tickEvent: (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions) => void = function (id) { }
 }

@@ -102,7 +102,7 @@ export const buildEngines: Map<BuildEngine> = {
 }
 
 // once we have a different build engine, set this appropriately
-export var thisBuild = buildEngines['yotta']
+export let thisBuild = buildEngines['yotta']
 
 export function setThisBuild(b: BuildEngine) {
     thisBuild = b;

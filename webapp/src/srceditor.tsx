@@ -1,9 +1,5 @@
 import * as pkg from "./package";
-import * as core from "./core";
-import * as data from "./data";
-import * as app from "./app";
 import * as React from "react";
-
 
 export type ViewState = any;
 export type ProjectView = pxt.editor.IProjectView;

@@ -1,8 +1,6 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
-import * as workspace from "./workspace";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";

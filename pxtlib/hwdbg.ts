@@ -50,7 +50,7 @@ namespace pxt.HWDBG {
     export const taggedFalse = taggedSpecialValue(2)
     export const taggedTrue = taggedSpecialValue(16)
 
-    export var postMessage: (msg: pxsim.DebuggerMessage) => void = msg => console.log(msg)
+    export let postMessage: (msg: pxsim.DebuggerMessage) => void = msg => console.log(msg)
 
     function clearAsync() {
         isHalted = false

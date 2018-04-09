@@ -107,7 +107,7 @@
     "react-dom": "^0.14.8",
     "less": "2.7.3",
     "semantic-ui-less": "2.2.14",
-    "tslint": "^3.9.0",
+    "tslint": "^5.9.1",
     "typescript": "2.6.1",
     "webfonts-generator": "^0.4.0",
     "@types/chai": "4.0.6",

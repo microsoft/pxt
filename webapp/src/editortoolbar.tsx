@@ -1,11 +1,8 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
-import * as workspace from "./workspace";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as simulator from "./simulator";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -78,7 +75,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     render() {
-        const {home, tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, showParts, compiling, isSaving, running } = this.props.parent.state;
+        const {home, tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, compiling, isSaving, running } = this.props.parent.state;
 
         if (home) return <div />; // Don't render if we're in the home screen
 

@@ -5,7 +5,7 @@ import * as hidbridge from "./hidbridge";
 import Cloud = pxt.Cloud;
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
-    let url = pxt.BrowserUtils.browserDownloadBinText(
+    pxt.BrowserUtils.browserDownloadBinText(
         text,
         name,
         contentType,

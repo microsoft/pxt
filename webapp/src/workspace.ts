@@ -4,7 +4,6 @@
 
 import * as db from "./db";
 import * as core from "./core";
-import * as pkg from "./package";
 import * as data from "./data";
 import * as cloudworkspace from "./cloudworkspace"
 import * as fileworkspace from "./fileworkspace"
@@ -20,8 +19,6 @@ let scripts = new db.Table("script")
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
-let lf = U.lf
-
 
 let impl: WorkspaceProvider;
 

@@ -108,7 +108,7 @@ namespace pxt.runner {
         }
     }
 
-    export var mainPkg: pxt.MainPackage;
+    export let mainPkg: pxt.MainPackage;
 
     function getEditorPkg(p: pxt.Package) {
         let r: EditorPackage = (p as any)._editorPkg
@@ -289,8 +289,8 @@ namespace pxt.runner {
         TypeScript
     }
 
-    export var languageMode = LanguageMode.Blocks;
-    export var editorLocale = "en";
+    export let languageMode = LanguageMode.Blocks;
+    export let editorLocale = "en";
 
     export function setEditorContextAsync(mode: LanguageMode, locale: string) {
         languageMode = mode;
@@ -896,7 +896,7 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
         });
     }
 
-    export var initCallbacks: (() => void)[] = [];
+    export let initCallbacks: (() => void)[] = [];
     export function init() {
         initInnerAsync()
             .done(() => {

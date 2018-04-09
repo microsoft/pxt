@@ -141,7 +141,7 @@ namespace pxt.blocks.layout {
 
     export function serializeNode(sg: Node): string {
         const xmlString = new XMLSerializer().serializeToString(sg)
-            .replace(new RegExp('&nbsp;','g'), '&#160;'); // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml     
+            .replace(new RegExp('&nbsp;','g'), '&#160;'); // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml
         return xmlString;
     }
 

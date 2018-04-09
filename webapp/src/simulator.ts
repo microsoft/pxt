@@ -13,7 +13,7 @@ interface SimulatorConfig {
 export const FAST_TRACE_INTERVAL = 100;
 export const SLOW_TRACE_INTERVAL = 500;
 
-export var driver: pxsim.SimulatorDriver;
+export let driver: pxsim.SimulatorDriver;
 let nextFrameId: number = 0;
 const themes = ["blue", "red", "green", "yellow"];
 let config: SimulatorConfig;

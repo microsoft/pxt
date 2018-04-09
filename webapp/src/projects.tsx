@@ -2,12 +2,9 @@
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import * as workspace from "./workspace";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as pkg from "./package";
 import * as core from "./core";
-import * as accessibility from "./accessibility";
 import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
@@ -15,8 +12,6 @@ import * as gallery from "./gallery";
 import * as carousel from "./carousel";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
-
-import Cloud = pxt.Cloud;
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ProjectsState {
@@ -27,48 +22,12 @@ interface ProjectsState {
 }
 
 export class Projects extends data.Component<ISettingsProps, ProjectsState> {
-    private prevUrlData: Cloud.JsonScript[] = [];
-    private prevGalleries: pxt.Map<pxt.CodeCard[]> = {};
-    private galleryFetchErrors: { [tab: string]: boolean } = {};
 
     constructor(props: ISettingsProps) {
         super(props)
         this.state = {
             visible: false
         }
-    }
-
-    fetchGallery(tab: string, path: string): pxt.CodeCard[] {
-        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as gallery.Gallery[];
-        if (res) {
-            if (res instanceof Error) {
-                this.galleryFetchErrors[tab] = true;
-            } else {
-                this.prevGalleries[path] = Util.concat(res.map(g => g.cards));
-            }
-        }
-        return this.prevGalleries[path] || [];
-    }
-
-    fetchUrlData(): Cloud.JsonScript[] {
-        let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
-        if (scriptid) {
-            let res = this.getData(`cloud-search:${scriptid}`)
-            if (res) {
-                if (res.statusCode !== 404) {
-                    if (!this.prevUrlData) this.prevUrlData = [res]
-                    else this.prevUrlData.push(res)
-                }
-            }
-        }
-        return this.prevUrlData;
-    }
-
-    fetchLocalData(): pxt.workspace.Header[] {
-        let headers: pxt.workspace.Header[] = this.getData("header:*")
-        if (this.state.searchFor)
-            headers = headers.filter(hdr => hdr.name.toLowerCase().indexOf(this.state.searchFor.toLowerCase()) > -1);
-        return headers;
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ProjectsState, nextContext: any): boolean {
@@ -111,7 +70,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     renderCore() {
-        const { visible, selectedCategory, selectedIndex } = this.state;
+        const { selectedCategory, selectedIndex } = this.state;
 
         const targetTheme = pxt.appTarget.appTheme;
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
@@ -128,11 +87,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         // lf("Projects")
         // lf("Examples")
         // lf("Tutorials")
-
-        const headers = this.fetchLocalData();
-        const urldata = this.fetchUrlData();
-        this.galleryFetchErrors = {};
-        const gals = Util.mapMap(galleries, k => this.fetchGallery(k, galleries[k]));
 
         const chgHeader = (hdr: pxt.workspace.Header) => {
             pxt.tickEvent("projects.header");
@@ -216,7 +170,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         }
 
         const showHeroBanner = !!targetTheme.homeScreenHero;
-        const betaUrl = targetTheme.betaUrl;
 
         const tabClasses = sui.cx([
             'ui segment bottom attached tab active tabsegment'
@@ -273,7 +226,6 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
 
     render() {
         const targetTheme = pxt.appTarget.appTheme;
-        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
 
         return <div id="homemenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
             <div className="left menu">
@@ -312,10 +264,7 @@ interface ProjectsCarouselState {
 
 export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, ProjectsCarouselState> {
     private prevGalleries: pxt.CodeCard[] = [];
-    private prevHeaders: pxt.workspace.Header[] = [];
     private hasFetchErrors = false;
-    private node: any;
-    private carousel: any;
     private latestProject: codecard.CodeCardView
 
     constructor(props: ProjectsCarouselProps) {
@@ -346,7 +295,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
     fetchLocalData(): pxt.workspace.Header[] {
         let headers: pxt.workspace.Header[] = this.getData("header:*")
-        this.prevHeaders = headers || [];
         return headers;
     }
 
@@ -371,8 +319,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     }
 
     renderCore() {
-        const { name, path, selectedIndex } = this.props;
-        const theme = pxt.appTarget.appTheme;
+        const { path, selectedIndex } = this.props;
 
         const onClick = (scr: any, index?: number) => {
             if (this.props.setSelected) {
@@ -478,7 +425,7 @@ export interface ProjectsDetailState {
 export class ProjectsDetail extends data.Component<ProjectsDetailProps, ProjectsDetailState> {
 
     renderCore() {
-        const { name, description, imageUrl, largeImageUrl, youTubeId, url, onClick, cardType } = this.props;
+        const { name, description, imageUrl, largeImageUrl, youTubeId, onClick, cardType } = this.props;
 
         const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/0.jpg` : undefined);
 
@@ -561,7 +508,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         }
 
         return (
-            <sui.Modal open={this.state.visible} className="importdialog" header={lf("Import")} size="small"
+            <sui.Modal open={visible} className="importdialog" header={lf("Import")} size="small"
                 onClose={() => this.close()} dimmer={true}
                 closeIcon={true}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
