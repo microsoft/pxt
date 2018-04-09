@@ -15,7 +15,6 @@ import * as simulator from "./simulator";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as tdlegacy from "./tdlegacy"
-import * as db from "./db"
 import * as cmds from "./cmds"
 import * as appcache from "./appcache";
 import * as screenshot from "./screenshot";
@@ -40,13 +39,11 @@ import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
 import * as serial from "./serial"
 import * as blocks from "./blocks"
-import * as codecard from "./codecard"
 import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
 import { initPxtElectronAsync, isElectron, isPxtElectron } from "./electron";
 
-type ISettingsProps = pxt.editor.ISettingsProps;
 type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
 type IProjectView = pxt.editor.IProjectView;
@@ -1718,7 +1715,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
     startTutorialAsync(tutorialId: string, tutorialTitle?: string): Promise<void> {
         let title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
-        let result: string[] = [];
 
         sounds.initTutorial(); // pre load sounds
         return Promise.resolve()
@@ -2098,11 +2094,9 @@ let myexports: any = {
 };
 (window as any).E = myexports;
 
-export var ksVersion: string;
+export let ksVersion: string;
 
 function parseHash(): { cmd: string; arg: string } {
-    let hashCmd = ""
-    let hashArg = ""
     let hashM = /^#(\w+)(:([\/\-\+\=\w]+))?$/.exec(window.location.hash)
     if (hashM) {
         return { cmd: hashM[1], arg: hashM[3] || '' };

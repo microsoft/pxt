@@ -2118,7 +2118,7 @@ namespace pxt.blocks {
         };
     }
 
-    export var onShowContextMenu: (workspace: Blockly.Workspace,
+    export let onShowContextMenu: (workspace: Blockly.Workspace,
         items: Blockly.ContextMenu.MenuItem[]) => void = undefined;
 
     /**

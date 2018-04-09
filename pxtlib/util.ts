@@ -2,7 +2,7 @@
 /// <reference path="apptarget.ts"/>
 
 namespace ts.pxtc {
-    export var __dummy = 42;
+    export let __dummy = 42;
 }
 
 import pxtc = ts.pxtc
@@ -12,12 +12,12 @@ namespace ts.pxtc {
      * atob replacement
      * @param s
      */
-    export var decodeBase64 = function (s: string) { return atob(s); }
+    export let decodeBase64 = function (s: string) { return atob(s); }
     /**
      * bota replacement
      * @param s
      */
-    export var encodeBase64 = function (s: string) { return btoa(s); }
+    export let encodeBase64 = function (s: string) { return btoa(s); }
 }
 
 namespace ts.pxtc.Util {
@@ -753,7 +753,7 @@ namespace ts.pxtc.Util {
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
     let _translationsCache: pxt.Map<pxt.Map<string>> = {};
-    export var localizeLive = false;
+    export let localizeLive = false;
 
     class MemTranslationDb implements ITranslationDb {
         translations: pxt.Map<ITranslationDbEntry> = {};
@@ -774,7 +774,7 @@ namespace ts.pxtc.Util {
     }
 
     // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
-    export var translationDb: ITranslationDb = new MemTranslationDb();
+    export let translationDb: ITranslationDb = new MemTranslationDb();
 
     /**
      * Returns the current user language, prepended by "live-" if in live mode

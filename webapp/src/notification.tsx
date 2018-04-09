@@ -1,10 +1,9 @@
 /// <reference path="../../built/pxtlib.d.ts" />
-/// <reference path="../../localtypings/mscc" />
+/// <reference path="../../localtypings/mscc.d.ts" />
 
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as core from "./core";
 import { isElectron } from "./electron";
 
 import Cloud = pxt.Cloud;

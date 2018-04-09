@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 import * as codecard from "./codecard"
 import * as data from "./data"

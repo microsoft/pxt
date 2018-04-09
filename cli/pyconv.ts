@@ -433,6 +433,7 @@ import * as fs from 'fs';
 import U = pxt.Util;
 import B = pxt.blocks;
 
+/* tslint:disable:no-trailing-whitespace */
 const convPy = `
 import ast
 import sys
@@ -459,6 +460,7 @@ for fn in @files@:
     js[fn] = to_json(ast.parse(open(fn, "r").read()))
 print(json.dumps(js))
 `
+/* tslint:enable */
 
 const nameMap: Map<string> = {
     "Expr": "ExprStmt",

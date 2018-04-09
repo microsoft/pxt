@@ -1,8 +1,6 @@
 import * as db from "./db";
 import * as core from "./core";
-import * as pkg from "./package";
 import * as data from "./data";
-import * as ws from "./workspace"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;

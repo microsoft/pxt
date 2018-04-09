@@ -1,4 +1,3 @@
-import * as core from "./core";
 
 export interface Gallery {
     name: string;
