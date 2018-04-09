@@ -4987,6 +4987,7 @@ function initCommands() {
 
     p.defineCommand({
         name: "buildjres",
+        aliases: ["jres"],
         help: "embeds resources into jres files"
     }, buildJResAsync);
 
