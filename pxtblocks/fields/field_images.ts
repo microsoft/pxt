@@ -1,12 +1,17 @@
 namespace pxtblockly {
     export interface FieldImagesOptions extends pxtblockly.FieldImageDropdownOptions {
+        sort?: boolean;
     }
 
     export class FieldImages extends pxtblockly.FieldImageDropdown implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
 
+        private shouldSort_: boolean;
+
         constructor(text: string, options: FieldImagesOptions, validator?: Function) {
             super(text, options, validator);
+
+            this.shouldSort_ = options.sort;
         }
 
         /**
@@ -28,6 +33,7 @@ namespace pxtblockly {
             contentDiv.setAttribute('role', 'menu');
             contentDiv.setAttribute('aria-haspopup', 'true');
             const options = this.getOptions();
+            if (this.shouldSort_) options.sort();
             for (let i = 0, option: any; option = options[i]; i++) {
                 let content = (options[i] as any)[0]; // Human-readable text or image.
                 const value = (options[i] as any)[1]; // Language-neutral value.
