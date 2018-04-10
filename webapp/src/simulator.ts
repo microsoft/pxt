@@ -77,7 +77,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             $(el).removeClass("simHeadless");
         },
         onDebuggerBreakpoint: function (brk) {
-            //updateDebuggerButtons(brk)
+            updateDebuggerButtons(brk)
             let brkInfo = lastCompileResult.breakpoints[brk.breakpointId]
             if (config) config.highlightStatement(brkInfo, brk)
             if (brk.exceptionMessage) {
@@ -103,7 +103,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onDebuggerResume: function () {
             postSimEditorEvent("resumed");
             if (config) config.highlightStatement(null)
-            //updateDebuggerButtons()
+            updateDebuggerButtons()
         },
         onStateChanged: function (state) {
             if (state === pxsim.SimulatorState.Stopped) {
@@ -111,7 +111,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             } else if (state === pxsim.SimulatorState.Running) {
                 this.onDebuggerResume();
             }
-            //updateDebuggerButtons()
+            updateDebuggerButtons()
             cfg.onStateChanged(state);
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
@@ -162,7 +162,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     };
     driver = new pxsim.SimulatorDriver($('#simulators')[0], options);
     config = cfg
-    //updateDebuggerButtons();
+    updateDebuggerButtons();
 }
 
 function postSimEditorEvent(subtype: string, exception?: string) {
@@ -180,7 +180,7 @@ export function setState(editor: string, tutMode?: boolean) {
     if (config && config.editor != editor) {
         config.editor = editor;
         config.highlightStatement(null)
-        //updateDebuggerButtons();
+        updateDebuggerButtons();
     }
 
     tutorialMode = tutMode;
@@ -305,6 +305,10 @@ function getStoppedClass() {
 }
 
 function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {
+    //updateDebuggerButtonsInternal(brk);
+}
+
+function updateDebuggerButtonsInternal(brk: pxsim.DebuggerBreakpointMessage = null) {
     function btn(icon: string, name: string, label: string, click: () => void) {
         let b = $(`<button class="ui mini button teal" title="${Util.htmlEscape(label)}"></button>`)
         if (icon) b.addClass("icon").append(`<i class="${icon} icon"></i>`)

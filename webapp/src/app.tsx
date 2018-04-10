@@ -1270,7 +1270,7 @@ export class ProjectView
 
     restartSimulator(debug?: boolean) {
         this.stopSimulator();
-        this.startSimulator();
+        this.startSimulator(debug);
     }
 
     toggleTrace(intervalSpeed?: number) {
