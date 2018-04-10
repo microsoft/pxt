@@ -421,7 +421,7 @@ file('built/webapp/src/app.js', expand([
 })
 
 file('built/web/main.js', ["built/webapp/src/app.js"], { async: true }, function () {
-    if (process.env.NODE_ENV == 'production') {
+    if (process.env.PXT_ENV == 'production') {
         cmdIn(this, ".", 'node node_modules/browserify/bin/cmd ./built/webapp/src/app.js -g ' + 
         '[ envify --NODE_ENV production ] -g uglifyify -o ./built/web/main.js')
     } else {
