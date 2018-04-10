@@ -54,7 +54,6 @@ namespace pxt.editor {
         embedSimView?: boolean;
         tracing?: boolean;
         debugging?: boolean;
-        paused?: boolean;
         bannerVisible?: boolean;
 
         highContrast?: boolean;
@@ -181,6 +180,11 @@ namespace pxt.editor {
         openInstructions(): void;
         closeFlyout(): void;
         printCode(): void;
+
+        toggleDebugging(): void;
+        dbgPauseResume(): void;
+        dbgStepInto(): void;
+        dbgStepOver(): void;
 
         setBanner(b: boolean): void;
 

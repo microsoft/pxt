@@ -434,8 +434,8 @@ export class ProjectView
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
         simulator.init($("#boardview")[0], {
-            highlightStatement: stmt => {
-                if (this.editor) this.editor.highlightStatement(stmt)
+            highlightStatement: (stmt, brk) => {
+                if (this.editor) this.editor.highlightStatement(stmt, brk)
             },
             restartSimulator: () => {
                 core.hideDialog();
@@ -1268,7 +1268,7 @@ export class ProjectView
         }
     }
 
-    restartSimulator() {
+    restartSimulator(debug?: boolean) {
         this.stopSimulator();
         this.startSimulator();
     }
@@ -1285,10 +1285,27 @@ export class ProjectView
         this.restartSimulator();
     }
 
-    startSimulator() {
+    toggleDebugging() {
+        this.setState({debugging: !this.state.debugging});
+        this.restartSimulator(!this.state.debugging);
+    }
+
+    dbgPauseResume() {
+        simulator.dbgPauseResume();
+    }
+
+    dbgStepOver() {
+        simulator.dbgStepOver();
+    }
+
+    dbgStepInto() {
+        simulator.dbgStepInto();
+    }
+
+    startSimulator(debug?: boolean) {
         pxt.tickEvent('simulator.start')
         this.saveFileAsync()
-            .then(() => this.runSimulator());
+            .then(() => this.runSimulator(debug ? { debug: true } : {}));
     }
 
     stopSimulator(unload?: boolean) {
@@ -1881,7 +1898,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                         </div>
                         <simtoolbar.SimulatorToolbar debug={simDebug} parent={this} />
                         <div className="ui item portrait hide hidefullscreen">
-                            {simDebug ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Debug"} onClick={() => this.simDebug()} /> : ''}
+                            {simDebug ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Debug"} onClick={() => this.toggleDebugging()} /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
                         {useSerialEditor ?
