@@ -22,4 +22,5 @@ addons:
       - g++-4.8
       - libusb-1.0-0-dev
 env:
+  - NODE_ENV=production
   - CXX=g++-4.8
