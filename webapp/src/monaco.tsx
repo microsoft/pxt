@@ -1207,11 +1207,11 @@ export class Editor extends srceditor.Editor {
     }
 
     private highlightDecorations: string[] = [];
-    highlightStatement(brk: pxtc.LocationInfo) {
-        if (!brk) this.clearHighlightedStatements();
-        if (!brk || !this.currFile || this.currFile.name != brk.fileName || !this.editor) return;
-        let position = this.editor.getModel().getPositionAt(brk.start);
-        let end = this.editor.getModel().getPositionAt(brk.start + brk.length);
+    highlightStatement(stmt: pxtc.LocationInfo) {
+        if (!stmt) this.clearHighlightedStatements();
+        if (!stmt || !this.currFile || this.currFile.name != stmt.fileName || !this.editor) return;
+        let position = this.editor.getModel().getPositionAt(stmt.start);
+        let end = this.editor.getModel().getPositionAt(stmt.start + stmt.length);
         if (!position || !end) return;
         this.highlightDecorations = this.editor.deltaDecorations(this.highlightDecorations, [
             {

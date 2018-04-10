@@ -717,8 +717,7 @@ p.ui.font.small {
         background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
         background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
     }
-    .fullscreensim #simulator .ui.item:not(.simtoolbar),
-        .fullscreensim #simulator .ui.menu,
+    .fullscreensim #simulator .hidefullscreen,
         .fullscreensim .menubar .ui.item:not(.logo),
         .fullscreensim #maineditor,
         .fullscreensim #editortools,
@@ -730,14 +729,14 @@ p.ui.font.small {
         z-index: @sandboxFooterZIndex;
         bottom: 1rem;
     }
-    .fullscreensim .ui.menu {
+    .fullscreensim #mainmenu {
         background: transparent !important;
     }
     .fullscreensim #filelist .simtoolbar {
         position: fixed;
         bottom: 1rem;
-        left:auto;
-        right:auto;
+        left: auto;
+        right: auto;
     }
     .fullscreensim #simulators {
         position: relative;

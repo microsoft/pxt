@@ -53,6 +53,8 @@ namespace pxt.editor {
         mute?: boolean;
         embedSimView?: boolean;
         tracing?: boolean;
+        debugging?: boolean;
+        paused?: boolean;
         bannerVisible?: boolean;
 
         highContrast?: boolean;
@@ -166,8 +168,8 @@ namespace pxt.editor {
 
         startStopSimulator(): void;
         stopSimulator(unload?: boolean): void;
-        restartSimulator(): void;
-        startSimulator(): void;
+        restartSimulator(debug?: boolean): void;
+        startSimulator(debug?: boolean): void;
         runSimulator(): void;
         expandSimulator(): void;
         collapseSimulator(): void;

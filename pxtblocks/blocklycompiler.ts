@@ -1303,6 +1303,9 @@ namespace pxt.blocks {
             case pxtc.PAUSE_UNTIL_TYPE:
                 r = compilePauseUntilBlock(e, b, comments);
                 break;
+            case pxtc.TS_DEBUGGER_TYPE:
+                r = compileDebuggeStatementBlock(e, b);
+                break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) r = [compileCall(e, b, comments)];
@@ -1371,6 +1374,15 @@ namespace pxt.blocks {
         }
 
         return res;
+    }
+
+    function compileDebuggeStatementBlock(e: Environment, b: B.Block) {
+        if (b.getFieldValue("ON_OFF") == "1") {
+            return [
+                mkText("debugger;")
+            ]
+        }
+        return [];
     }
 
     function prefixWithSemicolon(n: JsNode) {

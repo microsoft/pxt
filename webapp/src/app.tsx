@@ -25,6 +25,7 @@ import * as accessibility from "./accessibility";
 import * as tutorial from "./tutorial";
 import * as editortoolbar from "./editortoolbar";
 import * as simtoolbar from "./simtoolbar";
+import * as debug from "./debugger";
 import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
@@ -440,6 +441,13 @@ export class ProjectView
                 core.hideDialog();
                 this.runSimulator();
             },
+            onStateChanged: (state) => {
+                if (state == pxsim.SimulatorState.Paused) {
+                    this.setState({ running: false });
+                } else if (state == pxsim.SimulatorState.Running) {
+                    this.setState({ running: true });
+                }
+            },
             editor: this.state.header ? this.state.header.editor : ''
         })
         if (pxt.appTarget.appTheme.allowParentController || pxt.appTarget.appTheme.allowPackageExtensions || pxt.appTarget.appTheme.allowSimulatorTelemetry)
@@ -691,7 +699,8 @@ export class ProjectView
                     header: h,
                     projectName: h.name,
                     currFile: file,
-                    sideDocsLoadUrl: ''
+                    sideDocsLoadUrl: '',
+                    debugging: false
                 })
 
                 if (file.name === "main.ts") {
@@ -1842,6 +1851,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             hideMenuBar ? 'hideMenuBar' : '',
             !showEditorToolbar ? 'hideEditorToolbar' : '',
             this.state.bannerVisible ? "notificationBannerVisible" : "",
+            this.state.debugging ? "debugging" : "",
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
             isApp ? "app" : "",
             'full-abs'
@@ -1864,17 +1874,18 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     <tutorial.TutorialCard ref="tutorialcard" parent={this} />
                 </div> : undefined}
                 <div id="simulator">
+                    {simDebug ? <debug.DebuggerToolbar parent={this} /> : undefined}
                     <aside id="filelist" className="ui items">
                         <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden" aria-hidden="true">{lf("Simulator")}</label>
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-labelledby="boardviewLabel">
                         </div>
-                        <simtoolbar.SimulatorToolbar parent={this} />
-                        <div className="ui item portrait hide">
+                        <simtoolbar.SimulatorToolbar debug={simDebug} parent={this} />
+                        <div className="ui item portrait hide hidefullscreen">
                             {simDebug ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Debug"} onClick={() => this.simDebug()} /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
                         {useSerialEditor ?
-                            <div id="serialPreview" className="ui editorFloat portrait hide">
+                            <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
                                 <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={() => this.openSerial(true)} />
                                 <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={() => this.openSerial(false)} />
                             </div> : undefined}
