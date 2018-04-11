@@ -58,8 +58,8 @@ const allLanguages: pxt.Map<Language> = {
     "tr": { englishName: "Turkish", localizedName: "Türkçe" },
     "uk": { englishName: "Ukrainian", localizedName: "Українська" },
     "vi": { englishName: "Vietnamese", localizedName: "Tiếng việt" },
-    "zh-CN": { englishName: "Chinese (Simplified, China)", localizedName: "简体中文 (中国)" },
-    "zh-TW": { englishName: "Chinese (Traditional, Taiwan)", localizedName: "中文 (台湾)" },
+    "zh-CN": { englishName: "Chinese (Simplified)", localizedName: "简体中文" },
+    "zh-TW": { englishName: "Chinese (Traditional)", localizedName: "繁体中文" },
 };
 const pxtLangCookieId = "PXT_LANG";
 const langCookieExpirationDays = 30;
