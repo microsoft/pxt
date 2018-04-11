@@ -27,9 +27,6 @@ namespace ts.pxtc {
 
     */
 
-    export const vtableShift = 2;
-
-
     // TODO should be internal
     export namespace hex {
         let funcInfo: pxt.Map<FuncInfo> = {};
@@ -136,9 +133,9 @@ namespace ts.pxtc {
         }
 
         export function encodeVTPtr(ptr: number) {
-            let vv = ptr >> vtableShift
+            let vv = ptr >> pxt.appTarget.compile.vtableShift
             assert(vv < 0xffff)
-            assert(vv << vtableShift == ptr)
+            assert(vv << pxt.appTarget.compile.vtableShift == ptr)
             return vv
         }
 
@@ -541,7 +538,7 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_NUMBER}
 
     export function vtableToAsm(info: ClassInfo) {
         let s = `
-        .balign ${1 << vtableShift}
+        .balign ${1 << pxt.appTarget.compile.vtableShift}
 ${info.id}_VT:
         .short ${info.refmask.length * 4 + 4}  ; size in bytes
         .byte ${info.vtable.length + 2}, 0  ; num. methods

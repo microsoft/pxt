@@ -37,6 +37,8 @@ namespace pxt {
             comp.floatingPoint = true
             comp.needsUnboxing = true
         }
+        if (!comp.vtableShift)
+            comp.vtableShift = 2
         if (!appTarget.appTheme) appTarget.appTheme = {}
         if (!appTarget.appTheme.embedUrl)
             appTarget.appTheme.embedUrl = appTarget.appTheme.homeUrl
