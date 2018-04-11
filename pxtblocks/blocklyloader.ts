@@ -3396,7 +3396,7 @@ namespace pxt.blocks {
                     pxtc.TS_DEBUGGER_TYPE,
                     lf("Debugger statement"),
                     lf("A debugger statement invokes any available debugging functionality"),
-                    '/blocks/javascript-blocks',
+                    '/javascript/debugger',
                     getNamespaceColor('debug')
                 );
             }

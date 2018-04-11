@@ -21,6 +21,8 @@ interface DebuggerVariablesProps extends ISettingsProps {
 
 export class DebuggerVariables extends data.Component<DebuggerVariablesProps, DebuggerVariablesState> {
 
+    private static MAX_VARIABLE_CHARS = 20;
+
     private nextVariables: pxt.Map<pxsim.Variables> = {};
 
     constructor(props: DebuggerVariablesProps) {
@@ -55,6 +57,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                     else sv = "(unknown)"
                     break;
             }
+            sv = capLength(sv);
             variables[k] = {
                 value: sv,
                 type: type,
@@ -64,6 +67,22 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         })
         this.setState({ variables: variables });
         this.nextVariables = {};
+
+        function capLength(varstr: string) {
+            let remaining = DebuggerVariables.MAX_VARIABLE_CHARS - 3; // acount for ...
+            let hasQuotes = false;
+            if (varstr.indexOf('"') == 0) {
+                remaining - 2;
+                hasQuotes = true;
+                varstr = varstr.substring(1, varstr.length - 1);
+            }
+            if (varstr.length > remaining)
+                varstr = varstr.substring(0, remaining) + '...';
+            if (hasQuotes) {
+                varstr = '"' + varstr + '"'
+            }
+            return varstr;
+        }
     }
 
     renderCore() {
@@ -77,7 +96,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                                 <span className="varname">{variable}</span>
                                 <div className="detail">
                                     <span className="varval">{variables[variable].value + ' '}</span>
-                                    <span className="previousval">{variables[variable].prevValue ? '(' + variables[variable].prevValue + ')' : ''}</span>
+                                    <span className="previousval">{variables[variable].prevValue ? variables[variable].prevValue : ''}</span>
                                 </div>
                             </div>
                         </div>
