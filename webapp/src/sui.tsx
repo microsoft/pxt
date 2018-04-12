@@ -55,7 +55,7 @@ function removeClass(el: HTMLElement, cls: string) {
 }
 
 export function fireClickOnEnter(e: React.KeyboardEvent<HTMLElement>): void {
-    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+    const charCode = core.keyCodeFromEvent(e);
     if (charCode === core.ENTER_KEY || charCode === core.SPACE_KEY) {
         e.preventDefault();
         (e.currentTarget as HTMLElement).click();
@@ -123,7 +123,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
 
     private selectFirstElementOnDown(e: KeyboardEvent, first: HTMLElement) {
         // When the dropdown menu item is selected, an Enter Space or Down arrow opens the menu
-        let charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+        const charCode = core.keyCodeFromEvent(e);
         if (charCode === core.SPACE_KEY || charCode === core.ENTER_KEY) {
             e.preventDefault();
             this.toggle();
@@ -137,7 +137,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     private navigateToNextElement(e: KeyboardEvent, prev: HTMLElement, next: HTMLElement) {
-        let charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+        const charCode = core.keyCodeFromEvent(e);
         const current = e.currentTarget as HTMLElement;
         if (charCode === 40 /* Down arrow */
             || (!e.shiftKey && charCode === core.TAB_KEY)) {
@@ -188,8 +188,6 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             })
             child.addEventListener('focus', (e) => {
                 this.setActive(child);
-                console.log("Current focused element: ")
-                console.log(e.currentTarget);
             })
             child.addEventListener('blur', (e) => {
                 this.blur(child);
@@ -663,7 +661,7 @@ export class Menu extends data.Component<MenuProps, MenuState> {
     }
 
     private handleKeyboardNavigation = (e: KeyboardEvent) => {
-        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        const charCode = core.keyCodeFromEvent(e);
         let leftOrUpKey = charCode === 37 || charCode === 38
         let rightorBottomKey = charCode === 39 || charCode === 40
 
@@ -927,7 +925,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             {header ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
                 {header}
                 {helpUrl ?
-                    <a className={`ui huge icon clear focused`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)}>
+                    <a className={`ui huge icon clear`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)}>
                         <Icon icon="help" />
                     </a>
                     : undefined}
@@ -943,7 +941,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                             key={`action_${action.label}`}
                             icon={action.icon}
                             text={action.label}
-                            className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} focused`}
+                            className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""}`}
                             onClick={() => {
                                 action.onclick();
                             }}
@@ -962,13 +960,15 @@ export class Modal extends React.Component<ModalProps, ModalState> {
 ////////////             Dimmer               /////////////
 ///////////////////////////////////////////////////////////
 
-export interface DimmerProps {
+export interface DimmerProps extends ReactModal.Props {
     className?: string;
     disabled?: boolean;
     inverted?: boolean;
     page?: boolean;
     simple?: boolean;
     active?: boolean;
+    onClose?: () => void;
+    closable?: boolean;
 }
 
 export interface DimmerState {
@@ -977,7 +977,8 @@ export interface DimmerState {
 export class Dimmer extends UIElement<DimmerProps, DimmerState> {
 
     render() {
-        const { disabled, inverted, page, simple, className, active, children } = this.props;
+        const { disabled, inverted, page, simple,
+            closable, className, onClose, active, children, ...rest } = this.props;
         const portalClasses = cx([
             'ui dimmer',
             active ? 'active transition visible' : '',
@@ -996,7 +997,10 @@ export class Dimmer extends UIElement<DimmerProps, DimmerState> {
         return <ReactModal
             appElement={appElement}
             style={customStyles}
-            overlayClassName={portalClasses} isOpen={true}>
+            shouldCloseOnOverlayClick={closable}
+            onRequestClose={onClose}
+            overlayClassName={portalClasses}
+            {...rest}>
             {children}
         </ReactModal>
     }

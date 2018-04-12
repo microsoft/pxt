@@ -161,72 +161,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
             icon: options.disagreeIcon || "cancel"
         })
     }
-
-    // let modal = $(html)
-    // if (options.copyable) enableCopyable(modal);
-    // if (options.input) {
-    //     const ip = modal.find('.userinput');
-    //     ip.on('change', e => options.inputValue = ip.val() as string)
-    // }
-    // let done = false
-    // let modalContext = options.modalContext || '#root';
-    // $(modalContext).append(modal)
-    // if (options.onLoaded) options.onLoaded(modal)
-
-    // modal.find('img').on('load', () => {
-    //     modal.modal('refresh')
-    // });
-    // (modal.find(".ui.accordion") as any).accordion()
-
     return coretsx.renderConfirmDialogAsync(options);
-
-    // return new Promise<void>((resolve, reject) => {
-    //     let focusedNodeBeforeOpening = document.activeElement as HTMLElement;
-    //     let mo: JQuery;
-    //     let timer = options.timeout ? setTimeout(() => {
-    //         timer = 0;
-    //         mo.modal("hide");
-    //     }, options.timeout) : 0;
-
-    //     let onfinish = (elt: JQuery) => {
-    //         if (!done) {
-    //             done = true
-    //             if (timer) clearTimeout(timer);
-    //             let id = elt.attr("data-btnid")
-    //             if (id) {
-    //                 let btn = buttons[+id]
-    //                 if (btn.onclick)
-    //                     return resolve(btn.onclick())
-    //             }
-    //             return resolve()
-    //         }
-    //     }
-    //     mo = modal.modal({
-    //         observeChanges: true,
-    //         closeable: !options.hideCancel,
-    //         context: modalContext,
-    //         onHidden: () => {
-    //             modal.remove();
-    //             mo.remove();
-    //             if (focusedNodeBeforeOpening != null) {
-    //                 focusedNodeBeforeOpening.focus();
-    //             }
-    //         },
-    //         onApprove: onfinish,
-    //         onDeny: onfinish,
-    //         onHide: () => {
-    //             if (!done) {
-    //                 done = true
-    //                 if (timer) clearTimeout(timer);
-    //                 resolve()
-    //             }
-    //         },
-    //         onVisible: () => {
-    //             initializeFocusTabIndex(mo.get(0), true);
-    //         }
-    //     });
-    //     mo.modal("show")
-    // })
 }
 
 export function hideDialog() {
@@ -296,7 +231,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     }
 
     options.htmlBody = `<div class="ui fluid icon input">
-                            <input class="focused" type="text" id="promptDialogInput" value="${options.defaultValue}">
+                            <input type="text" id="promptDialogInput" value="${options.defaultValue}">
                         </div>`;
 
     options.onLoaded = (ref: HTMLElement) => {
@@ -304,7 +239,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
         if (dialogInput) {
             dialogInput.setSelectionRange(0, 9999);
             dialogInput.onkeyup = (e: KeyboardEvent) => {
-                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                const charCode = keyCodeFromEvent(e);
                 if (charCode === ENTER_KEY) {
                     e.preventDefault();
                     const firstButton = ref.getElementsByClassName("approve positive").item(0) as HTMLElement;
@@ -340,101 +275,8 @@ export function resetFocus() {
     content.tabIndex = -1;
 }
 
-interface FocusDataEventInfo {
-    firstTag: HTMLElement;
-    lastTag: HTMLElement;
-    targetArea: any;
-    giveFocusToLastTagBinding: (e: UIEvent) => any;
-    giveFocusToFirstTagBinding: (e: UIEvent) => any;
-    noKeyboardNavigation: (e: UIEvent) => any;
-}
-
-function unregisterFocusTracking(data: FocusDataEventInfo): void {
-    if (!data) {
-        return;
-    }
-
-    data.firstTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToLastTagBinding);
-    data.lastTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToFirstTagBinding);
-    if (data.firstTag === data.lastTag) {
-        data.firstTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToFirstTagBinding);
-        data.lastTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToLastTagBinding);
-    }
-}
-
-function giveFocusToFirstTag(e: KeyboardEvent) {
-    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-    if (charCode === TAB_KEY && !e.shiftKey) {
-        e.preventDefault();
-        unregisterFocusTracking(this);
-        initializeFocusTabIndex(this.targetArea, true);
-    } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
-        unregisterFocusTracking(this);
-        initializeFocusTabIndex(this.targetArea, true, false);
-    }
-}
-
-function giveFocusToLastTag(e: KeyboardEvent) {
-    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-    if (charCode === TAB_KEY && e.shiftKey) {
-        e.preventDefault();
-        unregisterFocusTracking(this);
-        initializeFocusTabIndex(this.targetArea, true, false);
-        this.lastTag.focus();
-    } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
-        unregisterFocusTracking(this);
-        initializeFocusTabIndex(this.targetArea, true, false);
-    }
-}
-
-function noKeyboardNavigation(e: KeyboardEvent) {
-    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-    if (charCode === TAB_KEY) {
-        e.preventDefault();
-    }
-}
-
-export function initializeFocusTabIndex(element: Element, allowResetFocus = false, giveFocusToFirstElement = true, unregisterOnly = false) {
-    if (!allowResetFocus && element !== document.activeElement && element.contains(document.activeElement)) {
-        return;
-    }
-
-    unregisterFocusTracking((element as any).focusDataInfo);
-    if (unregisterOnly) {
-        return;
-    }
-
-    const focusable = element.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-    //const focused = element.getElementsByClassName("focused");
-    if (focusable.length == 0) {
-        return;
-    }
-
-    const firstFocusable = focusable[0] as HTMLElement;
-    const lastFocusable = focusable.length > 1 ? focusable[focusable.length - 1] as HTMLElement : firstFocusable;
-
-    // const firstTag = focused[0] as HTMLElement;
-    // const lastTag = focused.length > 1 ? focused[focused.length - 1] as HTMLElement : firstTag;
-
-    let data = <FocusDataEventInfo>{};
-    data.firstTag = firstFocusable;
-    data.lastTag = lastFocusable;
-    data.targetArea = element;
-    data.giveFocusToLastTagBinding = giveFocusToLastTag.bind(data);
-    data.giveFocusToFirstTagBinding = giveFocusToFirstTag.bind(data);
-    data.noKeyboardNavigation = noKeyboardNavigation.bind(data);
-    (element as any).focusDataInfo = data;
-
-    if (firstFocusable !== lastFocusable) {
-        firstFocusable.addEventListener('keydown', data.giveFocusToLastTagBinding);
-        lastFocusable.addEventListener('keydown', data.giveFocusToFirstTagBinding);
-    } else {
-        firstFocusable.addEventListener('keydown', data.noKeyboardNavigation);
-    }
-
-    if (giveFocusToFirstElement) {
-        firstFocusable.focus();
-    }
+export function keyCodeFromEvent(e: any) {
+    return (typeof e.which == "number") ? e.which : e.keyCode;
 }
 
 ///////////////////////////////////////////////////////////

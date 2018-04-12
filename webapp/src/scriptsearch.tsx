@@ -192,7 +192,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             .then(() => core.confirmAsync({
                                 header: lf("Some packages will be removed"),
                                 agreeLbl: lf("Remove package(s) and add {0}", config.name),
-                                agreeClass: "pink focused",
+                                agreeClass: "pink",
                                 body
                             }))
                             .then((buttonPressed) => {

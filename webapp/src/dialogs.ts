@@ -11,10 +11,10 @@ export function showAboutDialog() {
         header: lf("About {0}", pxt.appTarget.name),
         hideCancel: true,
         agreeLbl: lf("Ok"),
-        agreeClass: "positive focused",
+        agreeClass: "positive",
         htmlBody: `
 ${description ? `<p>${Util.htmlEscape(description)}</p>` : ``}
-${githubUrl ? `<p>${lf("{0} version:", Util.htmlEscape(pxt.appTarget.name))} <a class="focused" href="${Util.htmlEscape(githubUrl)}/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.target)}" aria-label="${lf("{0} version : {1}", Util.htmlEscape(pxt.appTarget.name), Util.htmlEscape(pxt.appTarget.versions.target))}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>` : ``}
+${githubUrl ? `<p>${lf("{0} version:", Util.htmlEscape(pxt.appTarget.name))} <a href="${Util.htmlEscape(githubUrl)}/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.target)}" aria-label="${lf("{0} version : {1}", Util.htmlEscape(pxt.appTarget.name), Util.htmlEscape(pxt.appTarget.versions.target))}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>` : ``}
 <p>${lf("{0} version:", "Microsoft MakeCode")} <a href="https://github.com/Microsoft/pxt/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.pxt)}" aria-label="${lf("{0} version: {1}", "Microsoft MakeCode", Util.htmlEscape(pxt.appTarget.versions.pxt))}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
 ${compileService && compileService.githubCorePackage && compileService.gittag ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}" aria-label="${lf("{0} version: {1}", "C++ runtime", Util.htmlEscape(compileService.gittag))}" target="_blank">${Util.htmlEscape(compileService.gittag)}</a></p>` : ""}
 `
@@ -76,7 +76,7 @@ export function showImportFileDialog() {
         htmlBody: `<div class="ui form">
 <div class="ui field">
 <label id="selectFileToOpenLabel">${lf("Select a {0} file to open.", ext)}</label>
-<input type="file" tabindex="0" autofocus aria-describedby="selectFileToOpenLabel" class="ui blue fluid focused"></input>
+<input type="file" tabindex="0" autofocus aria-describedby="selectFileToOpenLabel" class="ui blue fluid"></input>
 </div>
 </div>`,
     }).done(res => {
@@ -103,7 +103,7 @@ export function showReportAbuse(pubId?: string) {
         htmlBody: `<div class="ui form">
 <div class="ui field">
 <label>${lf("What is the URL of the offensive project?")}</label>
-<input type="url" class="focused" tabindex="0" autofocus placeholder="Enter project URL here..."></input>
+<input type="url" tabindex="0" autofocus placeholder="Enter project URL here..."></input>
 </div>
 <div class="ui field">
 <label>${lf("Why do you find it offensive?")}</label>
@@ -140,7 +140,7 @@ export function showResetDialog() {
         header: lf("Reset"),
         body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),
         agreeLbl: lf("Reset"),
-        agreeClass: "red focused",
+        agreeClass: "red",
         agreeIcon: "sign out",
         disagreeLbl: lf("Cancel")
     }).then(r => {

@@ -1,6 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as sounds from "./sounds";
@@ -143,11 +144,20 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
     }
 }
 
-export class TutorialCard extends data.Component<ISettingsProps, {}> {
+interface TutorialCardState {
+    popout?: boolean;
+}
+
+export class TutorialCard extends data.Component<ISettingsProps, TutorialCardState> {
     public focusInitialized: boolean;
 
     constructor(props: ISettingsProps) {
         super(props);
+        this.state = {
+        }
+
+        this.tutorialCardKeyDown = this.tutorialCardKeyDown.bind(this);
+        this.okButtonKeyDown = this.okButtonKeyDown.bind(this);
     }
 
     previousTutorialStep() {
@@ -177,37 +187,63 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
         this.props.parent.completeTutorial();
     }
 
-    closeLightboxOnEscape = (e: KeyboardEvent) => {
-        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+    private closeLightboxOnEscape = (e: KeyboardEvent) => {
+        const charCode = core.keyCodeFromEvent(e);
         if (charCode === 27) {
             this.closeLightbox();
         }
     }
 
-    closeLightbox() {
+    setPopout() {
+        this.setState({ popout: true });
+    }
+
+    private closeLightbox() {
         sounds.tutorialNext();
         document.documentElement.removeEventListener("keydown", this.closeLightboxOnEscape);
-        core.initializeFocusTabIndex(document.getElementById('tutorialcard'), true, undefined, true);
-        let tutorialmessage = document.getElementsByClassName("tutorialmessage");
-        if (tutorialmessage.length > 0) {
-            (tutorialmessage.item(0) as HTMLElement).focus();
-        }
 
         // Hide lightbox
         this.props.parent.hideLightbox();
+        this.setState({ popout: false });
     }
 
     componentWillUpdate() {
         document.documentElement.addEventListener("keydown", this.closeLightboxOnEscape);
     }
 
-    componentDidUpdate() {
-        if (!this.focusInitialized) {
-            let tutorialCard = document.getElementById('tutorialcard');
-            if (tutorialCard !== null) {
-                this.focusInitialized = true;
-                core.initializeFocusTabIndex(tutorialCard, true, false);
-            }
+    private tutorialCardKeyDown(e: KeyboardEvent) {
+        const charCode = core.keyCodeFromEvent(e);
+        if (charCode == core.TAB_KEY) {
+            e.preventDefault();
+            const tutorialOkRef = this.refs["tutorialok"] as sui.Button;
+            const okButton = ReactDOM.findDOMNode(tutorialOkRef) as HTMLElement;
+            okButton.focus();
+        }
+    }
+
+    private okButtonKeyDown(e: KeyboardEvent) {
+        const charCode = core.keyCodeFromEvent(e);
+        if (charCode == core.TAB_KEY) {
+            e.preventDefault();
+            const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
+            tutorialCard.focus();
+        }
+    }
+
+    componentDidUpdate(prevProps: ISettingsProps, prevState: TutorialCardState) {
+        const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
+        const tutorialOkRef = this.refs["tutorialok"] as sui.Button;
+        const okButton = ReactDOM.findDOMNode(tutorialOkRef) as HTMLElement;
+        if (prevState.popout != this.state.popout && this.state.popout) {
+            // Setup focus trap around the tutorial card and the ok button
+            tutorialCard.addEventListener('keydown', this.tutorialCardKeyDown);
+            okButton.addEventListener('keydown', this.okButtonKeyDown);
+            tutorialCard.focus();
+        } else if (prevState.popout != this.state.popout && !this.state.popout) {
+            // Unregister event handlers
+            tutorialCard.removeEventListener('keydown', this.tutorialCardKeyDown);
+            okButton.removeEventListener('keydown', this.okButtonKeyDown);
+            tutorialCard.focus();
         }
     }
 
@@ -238,13 +274,13 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
                 <div className="ui segment attached tutorialsegment">
                     <div className='avatar-image' onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter}></div>
                     {hasHint ? <sui.Button className="mini blue hintbutton hidelightbox" text={lf("Hint")} tabIndex={-1} onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                    <div className={`tutorialmessage ${hasHint ? 'focused' : undefined}`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1} onClick={() => { if (hasHint) this.showHint(); }} onKeyDown={sui.fireClickOnEnter}>
+                    <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1} onClick={() => { if (hasHint) this.showHint(); }} onKeyDown={sui.fireClickOnEnter}>
                         <div className="content" dangerouslySetInnerHTML={{ __html: tutorialHeaderContent }} />
                     </div>
-                    <sui.Button id="tutorialOkButton" className="large green okbutton showlightbox focused" text={lf("Ok")} onClick={() => this.closeLightbox()} onKeyDown={sui.fireClickOnEnter} />
+                    <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={() => this.closeLightbox()} onKeyDown={sui.fireClickOnEnter} />
                 </div>
                 {hasNext ? <sui.Button icon="right chevron" rightIcon className={`nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} ariaLabel={lf("Go to the next step of the tutorial.")} onClick={() => this.nextTutorialStep()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : 'focused'}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={() => this.finishTutorial()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={() => this.finishTutorial()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
     }

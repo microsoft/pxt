@@ -586,7 +586,7 @@ export class ProjectView
         let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
         if (!tc) return;
         if (step > -1) {
-            tc.focusInitialized = false;
+            tc.setPopout();
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
             this.setState({ tutorialOptions: tutorialOptions });
@@ -1768,7 +1768,7 @@ export class ProjectView
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
-                {/* {lightbox ? <sui.Dimmer active={lightbox} onClickOutside={this.hideLightbox.bind(this)} /> : undefined} */}
+                {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox.bind(this)} /> : undefined}
             </div>
         );
     }

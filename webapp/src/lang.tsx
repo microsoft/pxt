@@ -154,7 +154,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 <div className="group">
                     <div className="ui cards centered" role="listbox">
                         {languageList.map(langId =>
-                            <codecard.CodeCardView className={`card-selected focused`}
+                            <codecard.CodeCardView className={`card-selected`}
                                 key={langId}
                                 name={allLanguages[langId].localizedName}
                                 ariaLabel={allLanguages[langId].englishName}

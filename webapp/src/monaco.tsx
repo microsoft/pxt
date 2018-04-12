@@ -971,7 +971,7 @@ export class Editor extends srceditor.Editor {
             // Accessibility
             const isRtl = Util.isUserLanguageRtl();
             monacoBlock.onkeydown = (e: KeyboardEvent) => {
-                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                const charCode = core.keyCodeFromEvent(e);
                 if (charCode == 40) { //  DOWN
                     // Next item
                     if (index < monacoBlocks.length - 1) monacoBlocks[index + 1].focus();
@@ -1531,7 +1531,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         }
         const isRtl = Util.isUserLanguageRtl();
         const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-            let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+            const charCode = core.keyCodeFromEvent(e);
             if (charCode == 40) { //  DOWN
                 nextItem();
             } else if (charCode == 38) { // UP

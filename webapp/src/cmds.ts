@@ -87,7 +87,7 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
         buttons: [downloadAgain ? {
             label: userDownload ? lf("Download") : fn,
             icon: "download",
-            class: `${userDownload ? "primary" : "lightgrey"} focused`,
+            class: `${userDownload ? "primary" : "lightgrey"}`,
             url,
             fileName: fn
         } : undefined, docUrl ? {

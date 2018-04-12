@@ -201,10 +201,10 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 </div>
             )}
             {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl ? <div className="ui horizontal small divided link list homefooter">
-                {targetTheme.organizationUrl && targetTheme.organization ? <a className="item focused" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                {targetTheme.selectLanguage ? <sui.Link className="item focused" text={lf("Language")} onClick={() => showLanguagePicker()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                {targetTheme.termsOfUseUrl ? <a target="_blank" className="item focused" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use")}</a> : undefined}
-                {targetTheme.privacyUrl ? <a target="_blank" className="item focused" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy")}</a> : undefined}
+                {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
+                {targetTheme.selectLanguage ? <sui.Link className="item" text={lf("Language")} onClick={() => showLanguagePicker()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use")}</a> : undefined}
+                {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy")}</a> : undefined}
             </div> : undefined}
         </div>;
     }
@@ -383,7 +383,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const headers = this.fetchLocalData();
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
             return <carousel.Carousel bleedPercent={20}>
-                {showNewProject ? <div className="ui card link newprojectcard focused" tabIndex={0} title={lf("Creates a new empty project")} onClick={() => this.newProject()} onKeyDown={sui.fireClickOnEnter} >
+                {showNewProject ? <div className="ui card link newprojectcard" tabIndex={0} title={lf("Creates a new empty project")} onClick={() => this.newProject()} onKeyDown={sui.fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge add circle" />
                         <span className="header">{lf("New Project")}</span>
@@ -517,7 +517,6 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                     {pxt.appTarget.compile ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
-                            className="focused"
                             role="button"
                             key={'import'}
                             icon="upload"
@@ -529,7 +528,6 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                     {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Open a shared project URL")}
-                            className="focused"
                             role="button"
                             key={'importurl'}
                             icon="cloud download"
@@ -571,7 +569,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         if (dialogInput) {
             dialogInput.setSelectionRange(0, 9999);
             dialogInput.onkeydown = (e: KeyboardEvent) => {
-                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                const charCode = core.keyCodeFromEvent(e);
                 if (charCode === core.ENTER_KEY) {
                     e.preventDefault();
                     const approveButton = ref.getElementsByClassName("approve positive").item(0) as HTMLElement;
@@ -621,7 +619,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 modalDidUpdate={this.modalDidUpdate}
             >
                 <div className="ui form">
-                    <sui.Input id={"projectNameInput"} class="focused" label={lf("Project Name")} ariaLabel={lf("Type a name for your project")} value={projectName} onChange={onChange} />
+                    <sui.Input id={"projectNameInput"} label={lf("Project Name")} ariaLabel={lf("Type a name for your project")} value={projectName} onChange={onChange} />
                 </div>
             </sui.Modal>
         )
