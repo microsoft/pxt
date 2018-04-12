@@ -65,7 +65,7 @@
     height: calc(30% - 2.5rem);
     overflow-y: auto;
     color: @serialTextColor;
-    background-color: @simulatorBackground;
+    background-color: @serialConsoleBackground;
     border-radius: 5px;
     border: 1px solid @serialGraphBackground;
     padding: 0.4rem;
@@ -141,9 +141,13 @@
     cursor: pointer;
 }
 
-.ui.button.editorBack {
-    color: @editorCloseColor;
-    background: transparent none;
+.ui.button.labeled.icon.editorBack {
+    color: @editorCloseColor !important;
+    background: transparent !important;
+    padding-left: 2.5em !important;
+    .icon {
+        background: none !important;
+    }
 }
 
 .ui.button.editorBack:hover,

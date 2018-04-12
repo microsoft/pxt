@@ -625,20 +625,25 @@ namespace pxt.runner {
             run: !!options.simulator
         }
 
-        function render(e: Node) {
+        function render(e: Node, ignored: boolean) {
             if (typeof hljs !== "undefined") {
                 $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
             }
-            fillWithWidget(options, $(e).parent(), $(e), undefined, undefined, woptions);
+            const opts = pxt.U.clone(woptions);
+            if (ignored) {
+                opts.run = false;
+                opts.showEdit = false;
+            }
+            fillWithWidget(options, $(e).parent(), $(e), undefined, undefined, opts);
         }
 
         $('code.lang-typescript').each((i, e) => {
-            render(e);
+            render(e, false);
             $(e).removeClass('lang-typescript');
         });
         $('code.lang-typescript-ignore').each((i, e) => {
-            render(e);
+            render(e, true);
             $(e).removeClass('lang-typescript-ignore')
         });
     }
@@ -646,7 +651,7 @@ namespace pxt.runner {
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         if (!options) options = {}
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
-        options.showEdit = !pxt.BrowserUtils.isIFrame();
+        if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
 
         mergeConfig(options);
         if (options.simulatorClass) {

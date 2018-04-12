@@ -329,6 +329,7 @@ declare namespace ts.pxtc {
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
         vmOpCodes?: pxt.Map<number>;
         commonalize?: boolean;
+        vtableShift?: number; // defaults to 2, i.e., (1<<2) == 4 byte alignment of vtables, and thus 256k max program size; increase for chips with more flash!
     }
 
     interface CompileOptions {

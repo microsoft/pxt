@@ -379,6 +379,10 @@ export class Input extends data.Component<{
     ariaLabel?: string;
 }, { value: string }> {
 
+    clearValue() {
+        this.setState({ value: undefined });
+    }
+
     copy() {
         const p = this.props
         const el = ReactDOM.findDOMNode(this);
