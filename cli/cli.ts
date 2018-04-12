@@ -987,7 +987,8 @@ function uploadCoreAsync(opts: UploadOptions) {
             "@defaultLocaleStrings@": "",
             "@cachedHexFiles@": "",
             "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : "",
-            "@targetImages@": targetImages.length ? targetImages.map(i => `${opts.localDir}${i}`).join('\n') : ''
+            "@targetImages@": targetImages.length ? targetImages.map(k =>
+                `${opts.localDir}${path.join('./docs', logos[k])}`).join('\n') : ''
         }
     }
 
@@ -1521,11 +1522,20 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
     return webmanifest;
 }
 
-function saveThemeJson(cfg: pxt.TargetBundle) {
+function saveThemeJson(cfg: pxt.TargetBundle, packaged?: boolean) {
     cfg.appTheme.id = cfg.id
     cfg.appTheme.title = cfg.title
     cfg.appTheme.name = cfg.name
     cfg.appTheme.description = cfg.description
+
+    if (packaged) {
+        let logos = (cfg.appTheme as any as Map<string>);
+        Object.keys(logos)
+            .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
+            .forEach(k => {
+                logos[k] = path.join('./docs', logos[k]);
+            })
+    }
 
     if (!cfg.appTheme.htmlDocIncludes)
         cfg.appTheme.htmlDocIncludes = {}
@@ -1863,7 +1873,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 pxtCrowdinBranch: pxtCrowdinBranch(),
                 targetCrowdinBranch: targetCrowdinBranch()
             }
-            saveThemeJson(cfg)
+            saveThemeJson(cfg, options.packaged)
 
             const webmanifest = buildWebManifest(cfg)
             const targetjson = JSON.stringify(cfg, null, 2)
