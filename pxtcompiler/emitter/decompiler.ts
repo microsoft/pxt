@@ -547,7 +547,7 @@ ${output}</xml>`;
         }
 
         function emitWorkspaceComment(text: string) {
-            write(`<comment h="120" w="160">${text}</comment>`);
+            write(`<comment h="120" w="160">${U.htmlEscape(text)}</comment>`);
         }
 
         function getOutputBlock(n: ts.Node): OutputNode {
