@@ -646,7 +646,7 @@ namespace pxt.runner {
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         if (!options) options = {}
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
-        options.showEdit = !pxt.BrowserUtils.isIFrame();
+        if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
 
         mergeConfig(options);
         if (options.simulatorClass) {
