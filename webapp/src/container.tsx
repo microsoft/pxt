@@ -34,25 +34,64 @@ function openDocs(parent: pxt.editor.IProjectView, path: string) {
 function renderDocItems(parent: pxt.editor.IProjectView, cls: string) {
     const targetTheme = pxt.appTarget.appTheme;
     return targetTheme.docMenu.map(m =>
-        m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class={"ui " + cls} onClick={() => openTutorial(parent, m.path)} />
+        m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={Util.rlf(m.name)} text={Util.rlf(m.name)} className={"ui " + cls} onClick={() => openTutorial(parent, m.path)} />
             : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} title={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{Util.rlf(m.name)}</a>
-                : <sui.Item key={"docsmenu" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class={"ui " + cls} onClick={() => openDocs(parent, m.path)} />
+                : <sui.Item key={"docsmenu" + m.path} role="menuitem" ariaLabel={Util.rlf(m.name)} text={Util.rlf(m.name)} className={"ui " + cls} onClick={() => openDocs(parent, m.path)} />
     );
 }
 
-export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
+export class DocsMenuItem extends data.PureComponent<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
     }
 
-    shouldComponentUpdate(nextProps: ISettingsProps, nextState: any, nextContext: any): boolean {
-        return false;
+    private docMenuCache: pxt.Map<pxt.DocMenuEntry>; // path -> docEntry
+    private lookUpByPath(path: string) {
+        if (!this.docMenuCache) {
+            this.docMenuCache = {};
+            // Populate the cache
+            const targetTheme = pxt.appTarget.appTheme;
+            targetTheme.docMenu.forEach(m => {
+                this.docMenuCache[m.path] = m;
+            })
+        }
+        return this.docMenuCache[path];
     }
 
-    render() {
-        return <sui.DropdownMenuItem icon="help circle large" class="ui mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")}>
+    private doDocEntryAction(parent: pxt.editor.IProjectView, m: pxt.DocMenuEntry) {
+        if (m.tutorial) {
+            return () => { openTutorial(parent, m.path) };
+        } else if (!/^\//.test(m.path)) {
+            return () => { window.open(m.path, "docs"); };
+        } else {
+            return () => { openDocs(parent, m.path) };
+        }
+    }
+
+    renderCore() {
+        const parent = this.props.parent;
+        const targetTheme = pxt.appTarget.appTheme;
+        const options = targetTheme.docMenu.map(m => {
+            return {
+                key: "docsmenu" + m.path,
+                content: Util.rlf(m.name),
+                role: "menuitem",
+                'aria-label': Util.rlf(m.name),
+                onClick: this.doDocEntryAction(parent, m),
+                value: m.path,
+                onKeyDown: () => {
+                    console.log("Key DOWN");
+                }
+            }
+        })
+        const onChange = (e: any, data: any) => {
+            const m = this.lookUpByPath(data.value);
+            this.doDocEntryAction(parent, m)();
+        };
+        return <sui.DropdownMenu role="menuitem" icon="help circle large"
+            className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")}>
             {renderDocItems(this.props.parent, "")}
-        </sui.DropdownMenuItem>
+        </sui.DropdownMenu>
     }
 }
 
@@ -72,9 +111,9 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
         this.props.parent.openSettings();
     }
 
-    addPackage() {
+    showPackageDialog() {
         pxt.tickEvent("menu.addpackage", undefined, { interactiveConsent: true });
-        this.props.parent.addPackage();
+        this.props.parent.showPackageDialog();
     }
 
     removeProject() {
@@ -87,9 +126,9 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
         this.props.parent.showReportAbuse();
     }
 
-    selectLang() {
+    showLanguagePicker() {
         pxt.tickEvent("menu.langpicker", undefined, { interactiveConsent: true });
-        this.props.parent.selectLang();
+        this.props.parent.showLanguagePicker();
     }
 
     toggleHighContrast() {
@@ -97,10 +136,10 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
         this.props.parent.toggleHighContrast();
     }
 
-    reset() {
+    showResetDialog() {
         pxt.tickEvent("menu.reset", undefined, { interactiveConsent: true });
         pxt.tickEvent("reset"); // Deprecated, will Feb 2018.
-        this.props.parent.reset();
+        this.props.parent.showResetDialog();
     }
 
     pair() {
@@ -108,9 +147,9 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
         this.props.parent.pair();
     }
 
-    about() {
+    showAboutDialog() {
         pxt.tickEvent("menu.about");
-        this.props.parent.about();
+        this.props.parent.showAboutDialog();
     }
 
     print() {
@@ -129,25 +168,25 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
         return this.state.highContrast != nextState.highContrast;
     }
 
-    render() {
+    renderCore() {
         const { highContrast } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing;
 
-        return <sui.DropdownMenuItem icon='setting large' title={lf("More...")} class="more-dropdown-menuitem">
+        return <sui.DropdownMenu icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={() => this.openSettings()} tabIndex={-1} />
-            {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={() => this.addPackage()} tabIndex={-1} /> : undefined}
+            {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={() => this.showPackageDialog()} tabIndex={-1} /> : undefined}
             <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={() => this.print()} tabIndex={-1} />
             <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={() => this.removeProject()} tabIndex={-1} />
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={() => this.showReportAbuse()} tabIndex={-1} /> : undefined}
             <div className="ui divider"></div>
-            {targetTheme.selectLanguage ? <sui.Item icon="xicon globe" role="menuitem" text={lf("Language")} onClick={() => this.selectLang()} tabIndex={-1} /> : undefined}
+            {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={() => this.showLanguagePicker()} tabIndex={-1} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={() => this.toggleHighContrast()} tabIndex={-1} /> : undefined}
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }
-            <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={() => this.reset()} tabIndex={-1} />
+            <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={() => this.showResetDialog()} tabIndex={-1} />
             {!pxt.usb.isEnabled ? undefined :
                 <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={() => this.pair()} tabIndex={-1} />}
             <div className="ui mobile only divider"></div>
@@ -155,10 +194,10 @@ export class SettingsMenuItem extends data.Component<SettingsMenuItemProps, Sett
             <div className="ui divider"></div>
             {targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies")} target="_blank" tabIndex={-1}>{lf("Privacy & Cookies")}</a> : undefined}
             {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use")} target="_blank" tabIndex={-1}>{lf("Terms Of Use")}</a> : undefined}
-            <sui.Item role="menuitem" text={lf("About...")} onClick={() => this.about()} tabIndex={-1} />
+            <sui.Item role="menuitem" text={lf("About...")} onClick={() => this.showAboutDialog()} tabIndex={-1} />
             {targetTheme.feedbackUrl ? <div className="ui divider"></div> : undefined}
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener" tabIndex={-1}>{lf("Give Feedback")}</a> : undefined}
-        </sui.DropdownMenuItem>;
+        </sui.DropdownMenu>;
     }
 }
 
@@ -166,7 +205,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
 
     brandIconClick() {
         pxt.tickEvent("menu.brand", undefined, { interactiveConsent: true });
-        this.props.parent.exitAndSave();
+        this.props.parent.showExitAndSaveDialog();
     }
 
     orgIconClick() {
@@ -175,12 +214,12 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
 
     goHome() {
         pxt.tickEvent("menu.home", undefined, { interactiveConsent: true });
-        this.props.parent.exitAndSave();
+        this.props.parent.showExitAndSaveDialog();
     }
 
-    share() {
+    showShareDialog() {
         pxt.tickEvent("menu.share", undefined, { interactiveConsent: true });
-        this.props.parent.share();
+        this.props.parent.showShareDialog();
     }
 
     launchFullEditor() {
@@ -208,7 +247,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         this.props.parent.exitTutorial();
     }
 
-    render() {
+    renderCore() {
         const { home, header, highContrast } = this.props.parent.state;
         if (home) return <div />; // Don't render if we're on the home screen
 
@@ -240,19 +279,19 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                     {portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(portraitLogo)} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
                 </a>
                 {targetTheme.betaUrl ? <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
-                {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={() => this.goHome()} /> : null}
-                {!inTutorial && header && sharingEnabled ? <sui.Item class="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={() => this.share()} /> : null}
-                {inTutorial ? <sui.Item class="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
+                {!inTutorial ? <sui.Item className="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={() => this.goHome()} /> : null}
+                {!inTutorial && header && sharingEnabled ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={() => this.showShareDialog()} /> : null}
+                {inTutorial ? <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
             </div> : <div className="left menu">
                     <span id="logo" className="ui item logo">
-                        <img className="ui mini image" src={Util.toDataUri(rightLogo)} tabIndex={0} onClick={() => this.launchFullEditor()} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
+                        <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={() => this.launchFullEditor()} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
                     </span>
                 </div>}
             {!inTutorial && !targetTheme.blocksOnly ? <div className="ui item link editor-menuitem">
                 <div className="ui grid padded">
-                    {sandbox ? <sui.Item class="sim-menuitem thin portrait only" role="menuitem" textClass="landscape only" text={lf("Simulator")} icon={simActive && isRunning ? "stop" : "play"} active={simActive} onClick={() => this.openSimView()} title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined}
-                    <sui.Item class="blocks-menuitem" role="menuitem" textClass="landscape only" text={lf("Blocks")} icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks()} title={lf("Convert code to Blocks")} />
-                    <sui.Item class="javascript-menuitem" role="menuitem" textClass="landscape only" text={lf("JavaScript")} icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript(false)} title={lf("Convert code to JavaScript")} />
+                    {sandbox ? <sui.Item className="sim-menuitem thin portrait only" role="menuitem" textClass="landscape only" text={lf("Simulator")} icon={simActive && isRunning ? "stop" : "play"} active={simActive} onClick={() => this.openSimView()} title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined}
+                    <sui.Item className="blocks-menuitem" role="menuitem" textClass="landscape only" text={lf("Blocks")} icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks()} title={lf("Convert code to Blocks")} />
+                    <sui.Item className="javascript-menuitem" role="menuitem" textClass="landscape only" text={lf("JavaScript")} icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript(false)} title={lf("Convert code to JavaScript")} />
                     <div className="ui item toggle"></div>
                 </div>
             </div> : undefined}
@@ -262,7 +301,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {sandbox || inTutorial ? undefined : <container.SettingsMenuItem parent={this.props.parent} highContrast={highContrast} />}
 
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={() => this.launchFullEditor()} /> : undefined}
-                {inTutorial ? <sui.ButtonMenuItem class="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={() => this.exitTutorial()} /> : undefined}
+                {inTutorial ? <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={() => this.exitTutorial()} /> : undefined}
 
                 {!sandbox ? <a href={targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={() => this.orgIconClick()}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
@@ -383,15 +422,11 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 export interface SandboxFooterProps extends ISettingsProps {
 }
 
-export class SandboxFooter extends data.Component<SandboxFooterProps, {}> {
+export class SandboxFooter extends data.PureComponent<SandboxFooterProps, {}> {
 
     compile() {
         pxt.tickEvent("sandboxfooter.compile", undefined, { interactiveConsent: true });
         this.props.parent.compile();
-    }
-
-    shouldComponentUpdate(nextProps: SandboxFooterProps, nextState: any, nextContext: any): boolean {
-        return false;
     }
 
     renderCore() {

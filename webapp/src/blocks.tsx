@@ -35,12 +35,12 @@ export class Editor extends srceditor.Editor {
         this.isVisible = v;
         let classes = '#blocksEditor .blocklyToolboxDiv, #blocksEditor .blocklyWidgetDiv, #blocksEditor .blocklyToolboxDiv';
         if (this.isVisible) {
-            $(classes).show();
+            document.querySelectorAll(classes).forEach((el: HTMLElement) => el.style.display = '');
             // Fire a resize event since the toolbox may have changed width and height.
             this.parent.fireResize();
         }
         else {
-            $(classes).hide();
+            document.querySelectorAll(classes).forEach((el: HTMLElement) => el.style.display = 'none');
             Blockly.hideChaff();
         }
     }
@@ -393,7 +393,7 @@ export class Editor extends srceditor.Editor {
                     }
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
                     if (ev.newValue == pxt.blocks.addPackageTitle()) {
-                        this.addPackage();
+                        this.showPackageDialog();
                     }
                     else if (ev.newValue == pxt.blocks.advancedTitle()) {
                         if (this.showToolboxCategories === CategoryMode.All) {
@@ -523,10 +523,10 @@ export class Editor extends srceditor.Editor {
         )
     }
 
-    addPackage() {
+    showPackageDialog() {
         pxt.tickEvent("blocks.addpackage");
         (this.editor as any).toolbox_.clearSelection();
-        this.parent.addPackage();
+        this.parent.showPackageDialog();
     }
 
     getViewState() {

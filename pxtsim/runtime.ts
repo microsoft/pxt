@@ -2,14 +2,28 @@
 
 namespace pxsim {
     export namespace U {
-        export function addClass(el: HTMLElement, cls: string) {
-            if (el.classList) el.classList.add(cls);
-            else if (el.className.indexOf(cls) < 0) el.className += ' ' + cls;
+        export function addClass(element: HTMLElement, classes: string) {
+            if (!element) return;
+            if (!classes || classes.length == 0) return;
+            function addSingleClass(el: HTMLElement, singleCls: string) {
+                if (el.classList) el.classList.add(singleCls);
+                else if (el.className.indexOf(singleCls) < 0) el.className += ' ' + singleCls;
+            }
+            classes.split(' ').forEach((cls) => {
+                addSingleClass(element, cls);
+            });
         }
 
-        export function removeClass(el: HTMLElement, cls: string) {
-            if (el.classList) el.classList.remove(cls);
-            else el.className = el.className.replace(cls, '').replace(/\s{2,}/, ' ');
+        export function removeClass(element: HTMLElement, classes: string) {
+            if (!element) return;
+            if (!classes || classes.length == 0) return;
+            function removeSingleClass(el: HTMLElement, singleCls: string) {
+                if (el.classList) el.classList.remove(singleCls);
+                else el.className = el.className.replace(singleCls, '').replace(/\s{2,}/, ' ');
+            }
+            classes.split(' ').forEach((cls) => {
+                removeSingleClass(element, cls);
+            });
         }
 
         export function assert(cond: boolean, msg = "Assertion failed") {

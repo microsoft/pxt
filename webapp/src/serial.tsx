@@ -343,13 +343,13 @@ export class Editor extends srceditor.Editor {
                 <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <sui.Button text={lf("Go back")} title={lf("Go back to the previous editor")} class="icon circular small editorBack left labeled" ariaLabel={lf("Go back")} onClick={this.goBack.bind(this)}>
+                            <sui.Button text={lf("Go back")} title={lf("Go back to the previous editor")} className="icon circular small editorBack left labeled" ariaLabel={lf("Go back")} onClick={this.goBack.bind(this)}>
                                 <sui.Icon icon="arrow left" />
                             </sui.Button>
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button title={lf("Export data")} class="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => this.downloadCSV()}>
+                        <sui.Button title={lf("Export data")} className="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => this.downloadCSV()}>
                             <sui.Icon icon="download" />
                         </sui.Button>
                         <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
@@ -359,7 +359,7 @@ export class Editor extends srceditor.Editor {
                 <div id="serialCharts" ref={e => this.chartRoot = e}></div>
                 <div id="consoleHeader" className="ui serialHeader">
                     <div className="rightHeader">
-                        <sui.Button title={lf("Copy text")} class="ui icon button editorExport" ariaLabel={lf("Copy text")} onClick={() => this.downloadRaw()}>
+                        <sui.Button title={lf("Copy text")} className="ui icon button editorExport" ariaLabel={lf("Copy text")} onClick={() => this.downloadRaw()}>
                             <sui.Icon icon="copy" />
                         </sui.Button>
                     </div>
@@ -382,7 +382,7 @@ export interface StartPauseButtonState {
     active?: boolean;
 }
 
-export class StartPauseButton extends data.Component<StartPauseButtonProps, StartPauseButtonState> {
+export class StartPauseButton extends data.PureComponent<StartPauseButtonProps, StartPauseButtonState> {
     constructor(props: StartPauseButtonProps) {
         super(props);
         this.state = {
@@ -394,7 +394,7 @@ export class StartPauseButton extends data.Component<StartPauseButtonProps, Star
         const { toggle } = this.props;
         const { active } = this.state;
 
-        return <sui.Button title={active ? lf("Pause recording") : lf("Start recording")} class={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
+        return <sui.Button title={active ? lf("Pause recording") : lf("Start recording")} className={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
             <sui.Icon icon={active ? "pause icon" : "circle icon"} />
         </sui.Button>
     }

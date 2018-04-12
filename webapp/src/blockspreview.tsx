@@ -1,5 +1,6 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom"
+import * as ReactDOM from "react-dom";
+import * as data from "./data";
 
 export interface BlocksPreviewProps {
     xml: string;
@@ -9,12 +10,8 @@ export interface BlocksPreviewState {
 
 }
 
-export class BlocksPreview extends React.Component<BlocksPreviewProps, BlocksPreviewState> {
+export class BlocksPreview extends data.Component<BlocksPreviewProps, BlocksPreviewState> {
     workspace: Blockly.Workspace;
-    constructor(props: BlocksPreviewProps) {
-        super(props);
-        this.state = {};
-    }
 
     renderSvg() {
         let el = $(ReactDOM.findDOMNode(this));
@@ -32,7 +29,7 @@ export class BlocksPreview extends React.Component<BlocksPreviewProps, BlocksPre
         this.renderSvg();
     }
 
-    render() {
+    renderCore() {
         return (<div style={ { width: "100%", minHeight: "10em", direction: "ltr" } }></div>)
     }
 }

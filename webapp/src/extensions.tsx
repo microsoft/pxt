@@ -184,7 +184,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         frame.className = `extension-frame extension-frame-${name}`;
         frame.allowFullscreen = true;
         frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-        frame.sandbox.value = "allow-scripts allow-same-origin"
+        (frame as any).sandbox.value = "allow-scripts allow-same-origin"
         frame.frameBorder = "0";
         frame.style.display = "none";
 
@@ -230,18 +230,17 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         const actionClick = () => {
             this.submitConsent();
         };
-        const actions = action ? [{ label: action, onClick: actionClick }] : undefined;
+        const actions: sui.ModalButton[] = action ? [{ label: action, onclick: actionClick }] : undefined;
         if (!needsConsent && visible) this.initializeFrame();
         return (
-            <sui.Modal open={visible} className={`${needsConsent ? 'extensionconsentdialog' : 'extensiondialog'}`} size="fullscreen" closeIcon={false}
-                onClose={() => this.hide()} dimmer={true}
-                actions={actions}
+            <sui.Modal isOpen={visible} className={`${needsConsent ? 'extensionconsentdialog' : 'extensiondialog'}`} size="fullscreen" closeIcon={false}
+                onClose={() => this.hide()} dimmer={true} buttons={actions}
                 onPositionChanged={() => this.updateDimensions()}
                 closeOnDimmerClick>
                 {consent ?
                     <div id="extensionWrapper" data-frame={extension} ref={v => this.extensionWrapper = v}>
                         {permissionRequest ?
-                            <sui.Modal className="extensionpermissiondialog basic" size="fullscreen" closeIcon={false} dimmer={true} open={true} dimmerClassName="permissiondimmer">
+                            <sui.Modal isOpen={true} className="extensionpermissiondialog basic" size="fullscreen" closeIcon={false} dimmer={true} dimmerClassName="permissiondimmer">
                                 <div className="permissiondialoginner">
                                     <div className="permissiondialogheader">
                                         {lf("Permission Request")}
@@ -262,9 +261,9 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                                     </div>
                                 </div>
                                 <div className="actions">
-                                    <sui.Button text={lf("Deny")} class={`deny inverted`}
+                                    <sui.Button text={lf("Deny")} className={`deny inverted`}
                                         onClick={() => this.onPermissionDecision(false)} />
-                                    <sui.Button text={lf("Approve")} class={`approve inverted green`}
+                                    <sui.Button text={lf("Approve")} className={`approve inverted green`}
                                         onClick={() => this.onPermissionDecision(true)} />
                                 </div>
                             </sui.Modal>
@@ -277,7 +276,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                                 <sui.Icon icon="user" />
                                 <div className="content">
                                     <h3 className="header">
-                                        User-provided content
+                                        {lf("User-provided content")}
                                     </h3>
                                     <p>
                                         {lf("This content is provided by a user, and is not endorsed by Microsoft.")}

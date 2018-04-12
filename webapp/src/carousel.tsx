@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as sui from "./sui";
+import * as data from "./data";
 
 export interface ICarouselProps extends React.Props<Carousel> {
     // Percentage of child width to bleed over either edge of the page
@@ -14,7 +15,7 @@ export interface ICarouselState {
 
 const OUT_OF_BOUND_MARGIN = 300;
 
-export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
+export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
     private dragSurface: HTMLDivElement;
     private container: HTMLDivElement;
     private arrows: HTMLSpanElement[] = [];
@@ -44,7 +45,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         }
     }
 
-    public render() {
+    public renderCore() {
         this.childrenElements = [];
         this.arrows = [];
         const { rightDisabled, leftDisabled } = this.state || {} as any;

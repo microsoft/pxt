@@ -164,9 +164,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             this.props.parent.importProjectDialog();
         }
 
-        const selectLang = () => {
+        const showLanguagePicker = () => {
             pxt.tickEvent("projects.langpicker");
-            this.props.parent.selectLang();
+            this.props.parent.showLanguagePicker();
         }
 
         const showHeroBanner = !!targetTheme.homeScreenHero;
@@ -185,7 +185,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     </div>
                     <div className="column right aligned">
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing) ?
-                            <sui.Button key="import" icon="upload" class="mini import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={() => importProject()} /> : undefined}
+                            <sui.Button key="import" icon="upload" className="mini import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={() => importProject()} /> : undefined}
                     </div>
                 </div>
                 <div className="content">
@@ -202,7 +202,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             )}
             {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl ? <div className="ui horizontal small divided link list homefooter">
                 {targetTheme.organizationUrl && targetTheme.organization ? <a className="item focused" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                {targetTheme.selectLanguage ? <sui.Link class="item focused" text={lf("Language")} onClick={() => selectLang()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {targetTheme.selectLanguage ? <sui.Link className="item focused" text={lf("Language")} onClick={() => showLanguagePicker()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {targetTheme.termsOfUseUrl ? <a target="_blank" className="item focused" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use")}</a> : undefined}
                 {targetTheme.privacyUrl ? <a target="_blank" className="item focused" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy")}</a> : undefined}
             </div> : undefined}
@@ -224,7 +224,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
         return false;
     }
 
-    render() {
+    renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
 
         return <div id="homemenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
@@ -456,7 +456,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                                 key={`action_${action.label}`}
                                 icon={action.icon}
                                 text={action.label}
-                                class={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
+                                className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
                                 onClick={() => {
                                     action.onClick();
                                 }}
@@ -499,18 +499,18 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         const importHex = () => {
             pxt.tickEvent("projects.import", undefined, { interactiveConsent: true });
             this.hide();
-            this.props.parent.importFileDialog();
+            this.props.parent.showImportFileDialog();
         }
         const importUrl = () => {
             pxt.tickEvent("projects.importurl", undefined, { interactiveConsent: true });
             this.hide();
-            this.props.parent.importUrlDialog();
+            this.props.parent.showImportUrlDialog();
         }
 
         return (
-            <sui.Modal open={visible} className="importdialog" header={lf("Import")} size="small"
+            <sui.Modal isOpen={visible} className="importdialog" size="small"
                 onClose={() => this.close()} dimmer={true}
-                closeIcon={true}
+                closeIcon={true} header={lf("Import")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 <div className="ui cards">
@@ -565,17 +565,17 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         this.setState({ visible: true });
     }
 
-    componentDidUpdate() {
-        if (!this.state.visible) return;
+    modalDidUpdate(ref: HTMLElement) {
         // Save on enter typed
         let dialogInput = document.getElementById('projectNameInput') as HTMLInputElement;
         if (dialogInput) {
             dialogInput.setSelectionRange(0, 9999);
-            dialogInput.onkeyup = (e: KeyboardEvent) => {
+            dialogInput.onkeydown = (e: KeyboardEvent) => {
                 let charCode = (typeof e.which == "number") ? e.which : e.keyCode
                 if (charCode === core.ENTER_KEY) {
                     e.preventDefault();
-                    (document.getElementsByClassName("approve positive").item(0) as HTMLElement).click();
+                    const approveButton = ref.getElementsByClassName("approve positive").item(0) as HTMLElement;
+                    if (approveButton) approveButton.click();
                 }
             }
         }
@@ -602,23 +602,23 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             newName = name;
         };
 
-        const actions = [{
+        const actions: sui.ModalButton[] = [{
             label: lf("Done"),
-            onClick: save,
+            onclick: save,
             icon: 'check',
-            className: 'positive'
+            className: 'approve positive'
         }, {
             label: lf("Cancel"),
             icon: 'cancel',
-            onClick: cancel
+            onclick: cancel
         }]
 
         return (
-            <sui.Modal open={visible} className="exitandsave" header={lf("Exit Project")} size="tiny"
-                onClose={() => this.hide()} dimmer={true}
-                actions={actions}
-                closeIcon={true}
+            <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
+                onClose={() => this.hide()} dimmer={true} buttons={actions}
+                closeIcon={true} header={lf("Exit Project")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
+                modalDidUpdate={this.modalDidUpdate}
             >
                 <div className="ui form">
                     <sui.Input id={"projectNameInput"} class="focused" label={lf("Project Name")} ariaLabel={lf("Type a name for your project")} value={projectName} onChange={onChange} />
