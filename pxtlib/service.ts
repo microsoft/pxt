@@ -388,6 +388,7 @@ namespace ts.pxtc {
         function addCombined(rtp: string, s: SymbolInfo) {
             const isGet = rtp == "get"
             const isSet = rtp == "set"
+            const isNumberType = s.retType == "number"
             const m = isGet ? combinedGet : (isSet ? combinedSet : combinedChange)
             const mkey = `${s.namespace}.${s.retType}`
 
@@ -399,7 +400,7 @@ namespace ts.pxtc {
 
                 ex = m[mkey] = {
                     attributes: {
-                        blockId: `${mkey}_blockCombine_${rtp}`,
+                        blockId: `${isNumberType ? s.namespace : mkey}_blockCombine_${rtp}`,
                         callingConvention: ir.CallingConvention.Plain,
                         group: s.attributes.group, // first %blockCombine defines
                         paramDefl: {},
