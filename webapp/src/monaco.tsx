@@ -758,6 +758,11 @@ export class Editor extends srceditor.Editor {
             monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
             if (fnState == pxt.editor.FilterState.Hidden) return undefined;
 
+            const snippet = fn.snippet;
+            if (!snippet) {
+                return undefined;
+            }
+
             let monacoBlockArea = document.createElement('div');
             monacoBlockArea.className = `monacoBlock ${monacoBlockDisabled ? 'monacoDisabledBlock' : ''}`;
             monacoFlyout.appendChild(monacoBlockArea);
@@ -766,7 +771,6 @@ export class Editor extends srceditor.Editor {
             monacoBlock.tabIndex = 0;
             monacoBlockArea.appendChild(monacoBlock);
 
-            const snippet = fn.snippet;
             const comment = fn.attributes.jsDoc;
 
             let snippetPrefix = fn.noNamespace ? "" : ns;

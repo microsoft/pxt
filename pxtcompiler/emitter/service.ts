@@ -113,6 +113,10 @@ namespace ts.pxtc {
         return false
     }
 
+    function isReadonly(decl: Declaration) {
+        return decl.modifiers && decl.modifiers.some(m => m.kind == SK.ReadonlyKeyword)
+    }
+
     function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
         function typeOf(tn: TypeNode, n: Node, stripParams = false) {
             let t = typechecker.getTypeAtLocation(n)
@@ -174,7 +178,7 @@ namespace ts.pxtc {
                 pkg,
                 extendsTypes,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
-                parameters: !hasParams ? null : (Util.toArray(decl.parameters)).map((p, i) => {
+                parameters: !hasParams ? null : Util.toArray(decl.parameters).map((p, i) => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
                     let minVal = attributes.paramMin && attributes.paramMin[n];
@@ -231,8 +235,10 @@ namespace ts.pxtc {
                 snippet: service.getSnippet(decl, attributes)
             }
 
-            if (stmt.kind == SK.GetAccessor)
+            if ((stmt.kind === SK.GetAccessor && !getDeclarationOfKind(decl.symbol, SK.SetAccessor)) ||
+                (stmt.kind === SK.PropertyDeclaration && isReadonly(stmt as Declaration))) {
                 r.isReadOnly = true
+            }
 
             return r
         }
@@ -335,8 +341,6 @@ namespace ts.pxtc {
                 vs.declarationList.declarations.forEach(collectDecls)
                 return
             }
-
-            // if (!isExported(stmt as Declaration)) return; ?
 
             if (isExported(stmt as Declaration)) {
                 if (!stmt.symbol) {
