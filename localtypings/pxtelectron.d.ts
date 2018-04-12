@@ -1,3 +1,5 @@
+/// <reference path="pxtpackage.d.ts" />
+
 declare namespace pxt.electron {
     export interface VersionRange {
         from: string; // Semver version
@@ -13,6 +15,7 @@ declare namespace pxt.electron {
 
     export interface ElectronManifest {
         majorReleases: { [majorVersion: number]: MajorRelease };
+        timeStamp?: string;
     }
 
     export interface TelemetryEvent {
@@ -20,7 +23,7 @@ declare namespace pxt.electron {
         data: pxt.Map<string | number>;
     }
 
-    export type TelemetryHandler = (id: string, data?: Map<string | number>) => void;
+    export type TelemetryHandler = (id: string, data?: pxt.Map<string | number>) => void;
 
     // The object that gets injected into the window
     export interface PxtElectron {
