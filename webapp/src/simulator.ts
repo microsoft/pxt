@@ -225,7 +225,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
 
 export function mute(mute: boolean) {
     driver.mute(mute);
-    while (debuggerDOM.firstChild) debuggerDOM.removeChild(debuggerDOM.firstChild);
+    pxsim.U.removeChildren(debuggerDOM);
 }
 
 export function stop(unload?: boolean) {
@@ -233,7 +233,7 @@ export function stop(unload?: boolean) {
 
     makeClean();
     driver.stop(unload);
-    while (debuggerDOM.firstChild) debuggerDOM.removeChild(debuggerDOM.firstChild);
+    pxsim.U.removeChildren(debuggerDOM);
 }
 
 export function hide(completeHandler?: () => void) {
@@ -241,7 +241,7 @@ export function hide(completeHandler?: () => void) {
         makeDirty();
     }
     driver.hide(completeHandler);
-    while (debuggerDOM.firstChild) debuggerDOM.removeChild(debuggerDOM.firstChild);
+    pxsim.U.removeChildren(debuggerDOM);
 }
 
 export function unhide() {
@@ -256,7 +256,7 @@ export function proxy(message: pxsim.SimulatorCustomMessage) {
     if (!driver) return;
 
     driver.postMessage(message);
-    while (debuggerDOM.firstChild) debuggerDOM.removeChild(debuggerDOM.firstChild);
+    pxsim.U.removeChildren(debuggerDOM);
 }
 
 function makeClean() {
@@ -293,7 +293,7 @@ function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {
         return b;
     }
 
-    while (debuggerDOM.firstChild) debuggerDOM.removeChild(debuggerDOM.firstChild);
+    pxsim.U.removeChildren(debuggerDOM);
     if (!driver.runOptions.debug) return;
     let advanced = config.editor == 'tsprj';
 

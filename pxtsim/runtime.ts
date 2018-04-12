@@ -26,6 +26,10 @@ namespace pxsim {
             });
         }
 
+        export function removeChildren(element: HTMLElement) {
+            while (element.firstChild) element.removeChild(element.firstChild);
+        }
+
         export function assert(cond: boolean, msg = "Assertion failed") {
             if (!cond) {
                 debugger
