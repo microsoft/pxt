@@ -1,11 +1,6 @@
-import * as workspace from "./workspace";
-import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
-import * as srceditor from "./srceditor"
 
-
-import Cloud = pxt.Cloud;
 import U = pxt.Util;
 
 function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {

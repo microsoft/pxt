@@ -1,7 +1,6 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 
@@ -53,7 +52,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const isFullscreen = parentState.fullscreen;
         const isTracing = parentState.tracing;
         const isMuted = parentState.mute;
-        const isCompiling = parentState.compiling;
         const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
 
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
@@ -61,12 +59,9 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const trace = run && simOpts.enableTrace;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
-        const { hideMenuBar, hideEditorToolbar } = targetTheme;
         const isHeadless = simOpts.headless;
         if (isHeadless) return <div />;
 
-        const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
-        const compileLoading = !!isCompiling;
         const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");

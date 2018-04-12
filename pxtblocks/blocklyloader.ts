@@ -2119,7 +2119,7 @@ namespace pxt.blocks {
         };
     }
 
-    export var onShowContextMenu: (workspace: Blockly.Workspace,
+    export let onShowContextMenu: (workspace: Blockly.Workspace,
         items: Blockly.ContextMenu.MenuItem[]) => void = undefined;
 
     /**
@@ -2875,17 +2875,6 @@ namespace pxt.blocks {
         Blockly.Variables.flyoutCategoryBlocks = function (workspace) {
             let variableModelList = workspace.getVariablesOfType('');
             variableModelList.sort(Blockly.VariableModel.compareByName);
-            // In addition to the user's variables, we also want to display the default
-            // variable name at the top.  We also don't want this duplicated if the
-            // user has created a variable of the same name.
-            for (let i = 0, tempVar: any; tempVar = variableModelList[i]; i++) {
-                if (tempVar.name == varname) {
-                    variableModelList.splice(i, 1);
-                    break;
-                }
-            }
-            const defaultVar = new Blockly.VariableModel(workspace, varname, undefined, 'ITEM');
-            variableModelList.unshift(defaultVar);
 
             let xmlList: HTMLElement[] = [];
             if (variableModelList.length > 0) {

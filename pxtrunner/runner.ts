@@ -108,7 +108,7 @@ namespace pxt.runner {
         }
     }
 
-    export var mainPkg: pxt.MainPackage;
+    export let mainPkg: pxt.MainPackage;
 
     function getEditorPkg(p: pxt.Package) {
         let r: EditorPackage = (p as any)._editorPkg
@@ -289,8 +289,8 @@ namespace pxt.runner {
         TypeScript
     }
 
-    export var languageMode = LanguageMode.Blocks;
-    export var editorLocale = "en";
+    export let languageMode = LanguageMode.Blocks;
+    export let editorLocale = "en";
 
     export function setEditorContextAsync(mode: LanguageMode, locale: string) {
         languageMode = mode;
@@ -418,9 +418,11 @@ namespace pxt.runner {
                 .then(() => {
                     switch (doctype) {
                         case "project":
-                            return renderProjectFilesAsync(content, JSON.parse(src));
+                            return renderProjectFilesAsync(content, JSON.parse(src))
+                                .then(() => pxsim.print(1000));
                         case "projectid":
-                            return renderProjectAsync(content, JSON.parse(src));
+                            return renderProjectAsync(content, JSON.parse(src))
+                                .then(() => pxsim.print(1000));
                         case "doc":
                             return renderDocAsync(content, src);
                         case "tutorial":
@@ -539,7 +541,10 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
 \`\`\`
 `;
         }
-        return renderMarkdownAsync(content, md);
+        const options: RenderMarkdownOptions = {
+            print: true
+        }
+        return renderMarkdownAsync(content, md, options);
     }
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
@@ -662,6 +667,7 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
         path?: string;
         tutorial?: boolean;
         blocksAspectRatio?: number;
+        print?: boolean; // render for print
     }
 
     export function renderMarkdownAsync(content: HTMLElement, md: string, options: RenderMarkdownOptions = {}): Promise<void> {
@@ -677,7 +683,7 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
             || window.innerHeight < window.innerWidth ? 1.62 : 1 / 1.62;
         $(content).html(html);
         $(content).find('a').attr('target', '_blank');
-        return pxt.runner.renderAsync({
+        const renderOptions: ClientRenderOptions = {
             blocksAspectRatio: blocksAspectRatio,
             snippetClass: 'lang-blocks',
             signatureClass: 'lang-sig',
@@ -695,7 +701,12 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
             tutorial: !!options.tutorial,
             showJavaScript: languageMode == LanguageMode.TypeScript,
             hexName: pxt.appTarget.id
-        }).then(() => {
+        }
+        if (options.print) {
+            renderOptions.showEdit = false;
+            renderOptions.simulator = false;
+        }
+        return pxt.runner.renderAsync(renderOptions).then(() => {
             // patch a elements
             $(content).find('a[href^="/"]').removeAttr('target').each((i, a) => {
                 $(a).attr('href', '#doc:' + $(a).attr('href').replace(/^\//, ''));
@@ -896,7 +907,7 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
         });
     }
 
-    export var initCallbacks: (() => void)[] = [];
+    export let initCallbacks: (() => void)[] = [];
     export function init() {
         initInnerAsync()
             .done(() => {

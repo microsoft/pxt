@@ -107,7 +107,7 @@ namespace pxt.BrowserUtils {
 
     export function isTouchEnabled(): boolean {
         return typeof window !== "undefined" &&
-            ('ontouchstart' in window               // works on most browsers 
+            ('ontouchstart' in window               // works on most browsers
                 || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
     }
 
@@ -443,7 +443,7 @@ namespace pxt.BrowserUtils {
     }
 
     /**
-     * Utility method to change the hash. 
+     * Utility method to change the hash.
      * Pass keepHistory to retain an entry of the change in the browser history.
      */
     export function changeHash(hash: string, keepHistory?: boolean) {

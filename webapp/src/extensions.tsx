@@ -1,16 +1,8 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
-import * as workspace from "./workspace";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as pkg from "./package";
-import * as core from "./core";
-import * as compiler from "./compiler";
-
-import * as codecard from "./codecard"
-import * as gallery from "./gallery";
 import * as ext from "./extensionManager";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -28,7 +20,6 @@ interface ExtensionsState {
 }
 
 export class Extensions extends data.Component<ISettingsProps, ExtensionsState> implements ext.ExtensionHost {
-    private packagesConfig: pxt.PackagesConfig;
     private extensionWrapper: HTMLDivElement;
     private manager: ext.ExtensionManager;
 
@@ -194,7 +185,6 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         frame.allowFullscreen = true;
         frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
         frame.sandbox.value = "allow-scripts allow-same-origin"
-        let frameUrl = '';
         frame.frameBorder = "0";
         frame.style.display = "none";
 
@@ -233,9 +223,8 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
     }
 
     renderCore() {
-        const { visible, extension, url, consent, permissionRequest, permissionExtName } = this.state;
+        const { visible, extension, consent, permissionRequest, permissionExtName } = this.state;
         const needsConsent = !consent;
-        const theme = pxt.appTarget.appTheme;
 
         const action = needsConsent ? lf("Agree") : undefined;
         const actionClick = () => {

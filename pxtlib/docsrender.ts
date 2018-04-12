@@ -75,7 +75,7 @@ namespace pxt.docs {
         href: string;
     }
 
-    export var requireMarked = () => {
+    export let requireMarked = () => {
         if (typeof marked !== "undefined") return marked;
         if (typeof require === "undefined") return undefined;
         return require("marked") as typeof marked;

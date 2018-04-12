@@ -20,7 +20,6 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     private arrows: HTMLSpanElement[] = [];
     private isDragging = false;
     private definitelyDragging = false;
-    private cancelClick = false;
 
     private childWidth: number;
     private containerWidth: number;
@@ -51,19 +50,19 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         const { rightDisabled, leftDisabled } = this.state || {} as any;
         return <div className="ui carouselouter">
             <span className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")} tabIndex={leftDisabled ? -1 : 0} onClick={() => this.onArrowClick(true)} ref={r => this.arrows.push(r)}>
-                <sui.Icon icon="circle angle left"/>
+                <sui.Icon icon="circle angle left" />
             </span>
             <div className="carouselcontainer" ref={r => this.container = r}>
                 <div className="carouselbody" ref={r => this.dragSurface = r}>
-                {
-                    React.Children.map(this.props.children, (child, index) => child ? <div className={`carouselitem ${this.props.selectedIndex == index ? 'selected' : ''}`} ref={r => r && this.childrenElements.push(r)}>
-                        {child}
-                    </div> : undefined)
-                }
+                    {
+                        React.Children.map(this.props.children, (child, index) => child ? <div className={`carouselitem ${this.props.selectedIndex == index ? 'selected' : ''}`} ref={r => r && this.childrenElements.push(r)}>
+                            {child}
+                        </div> : undefined)
+                    }
                 </div>
             </div>
             <span className={"carouselarrow right aligned" + (rightDisabled ? " arrowdisabled" : "")} tabIndex={rightDisabled ? -1 : 0} onClick={() => this.onArrowClick(false)} ref={r => this.arrows.push(r)}>
-                <sui.Icon icon="circle angle right"/>
+                <sui.Icon icon="circle angle right" />
             </span>
         </div>
     }
@@ -262,7 +261,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     }
 
     private totalLength() {
-        return React.Children.count(this.props.children) * this.childWidth  + OUT_OF_BOUND_MARGIN;
+        return React.Children.count(this.props.children) * this.childWidth + OUT_OF_BOUND_MARGIN;
     }
 
     private getArrowWidth() {
@@ -303,7 +302,7 @@ class AnimationState {
     private startTime: number;
     public isComplete = false;
 
-    constructor (private start: number, private end: number, private millis: number) {
+    constructor(private start: number, private end: number, private millis: number) {
         this.slope = (end - start) / millis;
     }
 

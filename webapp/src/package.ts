@@ -3,7 +3,6 @@ import * as data from "./data";
 import * as core from "./core";
 import * as db from "./db";
 
-import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 const lf = Util.lf
 
@@ -350,7 +349,7 @@ function resolvePath(p: string) {
 }
 
 const theHost = new Host();
-export var mainPkg: pxt.MainPackage = new pxt.MainPackage(theHost);
+export let mainPkg: pxt.MainPackage = new pxt.MainPackage(theHost);
 
 export function getEditorPkg(p: pxt.Package): EditorPackage {
     let r: EditorPackage = (p as any)._editorPkg

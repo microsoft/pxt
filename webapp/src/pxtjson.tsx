@@ -3,9 +3,7 @@ import * as pkg from "./package";
 import * as srceditor from "./srceditor"
 import * as sui from "./sui";
 import * as core from "./core";
-import * as codecard from "./codecard"
 
-import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
 const lf = Util.lf
@@ -14,6 +12,8 @@ export class Editor extends srceditor.Editor {
     config: pxt.PackageConfig = {} as any;
     isSaving: boolean;
     changeMade: boolean = false;
+
+    private nameInput: sui.Input;
 
     prepare() {
         this.isReady = true
@@ -54,13 +54,6 @@ export class Editor extends srceditor.Editor {
             c.name = v;
             this.parent.forceUpdate();
         }
-        const deleteProject = () => {
-            this.parent.removeProject();
-        }
-        const initCard = () => {
-            if (!c.card) c.card = {}
-        }
-        const card = c.card || {};
         let userConfigs: pxt.CompilationConfig[] = [];
         pkg.allEditorPkgs().map(ep => ep.getKsPkg())
             .filter(dep => !!dep && dep.isLoaded && !!dep.config && !!dep.config.yotta && !!dep.config.yotta.userConfigs)
@@ -102,7 +95,7 @@ export class Editor extends srceditor.Editor {
                     </div>
                 </h3>
                 <div className="ui segment form text">
-                    <sui.Input id={"fileNameInput"} label={lf("Name") } ariaLabel={lf("Type a name for your project") } value={c.name} onChange={setFileName}/>
+                    <sui.Input ref={e => this.nameInput = e} id={"fileNameInput"} label={lf("Name") } ariaLabel={lf("Type a name for your project") } value={c.name} onChange={setFileName}/>
                     {userConfigs.map(uc =>
                         <sui.Checkbox
                             key={`userconfig-${uc.description}`}
@@ -151,6 +144,7 @@ export class Editor extends srceditor.Editor {
 
     loadFileAsync(file: pkg.File): Promise<void> {
         this.config = JSON.parse(file.content)
+        if (this.nameInput) this.nameInput.clearValue();
         this.setDiagnostics(file, this.snapshotState())
         this.changeMade = false;
         return Promise.resolve();

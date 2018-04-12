@@ -5,15 +5,11 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
-import * as sui from "./sui";
-import * as data from "./data";
 import * as baseToolbox from "./toolbox";
 
 import CategoryMode = pxt.blocks.CategoryMode;
 import Util = pxt.Util;
 let lf = Util.lf
-
-let iface: pxt.worker.Iface
 
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
@@ -79,7 +75,6 @@ export class Editor extends srceditor.Editor {
 
             let loading = document.createElement("div");
             loading.className = "ui inverted loading";
-            let editorArea = document.getElementById('blocksArea');
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loading);
 
@@ -350,64 +345,6 @@ export class Editor extends srceditor.Editor {
         return this.editor ? pxt.blocks.blocksMetrics(this.editor) : undefined;
     }
 
-    /**
-     * Takes the XML definition of the block that will be shown on the help card and modifies the XML
-     * so that the field names are updated to match any field names of dropdowns on the selected block
-     */
-    private updateFields(originalXML: string, newFieldValues?: any, mutation?: Element): string {
-        let parser = new DOMParser();
-        let doc = parser.parseFromString(originalXML, "application/xml");
-        let blocks = doc.getElementsByTagName("block");
-        if (blocks.length >= 1) {
-            //Setting innerText doesn't work if there are no children on the node
-            let setInnerText = (c: any, newValue: string) => {
-                //Remove any existing children
-                while (c.firstChild) {
-                    c.removeChild(c.firstChild);
-                }
-                let tn = doc.createTextNode(newValue);
-                c.appendChild(tn)
-            };
-
-            let block = blocks[0];
-
-            if (newFieldValues) {
-                //Depending on the source, the nodeName may be capitalised
-                let fieldNodes = Array.prototype.filter.call(block.childNodes, (c: any) => c.nodeName == 'field' || c.nodeName == 'FIELD');
-
-                for (let i = 0; i < fieldNodes.length; i++) {
-                    if (newFieldValues.hasOwnProperty(fieldNodes[i].getAttribute('name'))) {
-                        setInnerText(fieldNodes[i], newFieldValues[fieldNodes[i].getAttribute('name')]);
-                        delete newFieldValues[fieldNodes[i].getAttribute('name')];
-                    }
-                }
-
-                //Now that existing field values have been reset, we can create new field values as appropriate
-                for (let p in newFieldValues) {
-                    let c = doc.createElement('field');
-                    c.setAttribute('name', p);
-                    setInnerText(c, newFieldValues[p]);
-                    block.appendChild(c);
-                }
-            }
-            else if (mutation) {
-                const existingMutation = Array.prototype.filter.call(block.childNodes, (c: any) => c.nodeName == 'mutation' || c.nodeName == 'MUTATION');
-                if (existingMutation.length) {
-                    block.replaceChild(mutation, existingMutation[0]);
-                }
-                else {
-                    block.appendChild(mutation);
-                }
-            }
-
-            let serializer = new XMLSerializer();
-            return serializer.serializeToString(doc);
-        }
-        else {
-            return originalXML;
-        }
-    }
-
     isIncomplete() {
         return this.editor ? this.editor.isDragging() : false;
     }
@@ -449,11 +386,6 @@ export class Editor extends srceditor.Editor {
                 this.changeCallback();
             }
             if (ev.type == 'create') {
-                let lastCategory = (this.editor as any).toolbox_ ?
-                    ((this.editor as any).toolbox_.lastCategory_ ?
-                        (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim()
-                        : 'unknown')
-                    : 'flyout';
                 let blockId = ev.xml.getAttribute('type');
                 pxt.tickActivity("blocks.create", "blocks.create." + blockId);
                 if (ev.xml.tagName == 'SHADOW')
@@ -787,7 +719,7 @@ export class Editor extends srceditor.Editor {
     private getDefaultToolbox(showCategories = this.showToolboxCategories): HTMLElement {
         return showCategories !== CategoryMode.None ?
             baseToolbox.getBaseToolboxDom().documentElement
-            :  baseToolbox.getBaseNoCategoryToolboxDom().documentElement;
+            : baseToolbox.getBaseNoCategoryToolboxDom().documentElement;
     }
 
     filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories = this.showToolboxCategories): Element {

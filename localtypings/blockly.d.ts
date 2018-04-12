@@ -998,7 +998,7 @@ declare namespace Blockly {
         };
         enableRealTime?: boolean;
         rtl?: boolean;
-        // PXT specific: 
+        // PXT specific:
         toolboxOptions?: ToolboxOptions;
     }
 
@@ -1102,7 +1102,6 @@ declare namespace Blockly {
         class BlockChange extends Abstract {
             constructor(block: Block, element: String, name: String, oldValue: String, newValue: String);
         }
-
     }
 
     class Toolbox {

@@ -1,8 +1,3 @@
-import * as db from "./db";
-import * as core from "./core";
-import * as pkg from "./package";
-import * as data from "./data";
-import * as ws from "./workspace";
 
 type Header = pxt.workspace.Header;
 type Project = pxt.workspace.Project;
@@ -10,7 +5,6 @@ type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 type InstallHeader = pxt.workspace.InstallHeader;
 import U = pxt.Util;
-import Cloud = pxt.Cloud;
 
 export let projects: pxt.Map<Project> = {};
 let target = "";
