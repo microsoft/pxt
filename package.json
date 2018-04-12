@@ -109,7 +109,6 @@
     "uglifyify": "4.0.5",
     "less": "2.7.3",
     "semantic-ui-less": "2.2.14",
-    "semantic-ui-react": "^0.79.1",
     "react-modal": "^3.3.2",
     "tslint": "^5.9.1",
     "typescript": "2.6.1",
