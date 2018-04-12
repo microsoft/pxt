@@ -1364,7 +1364,11 @@ export class ProjectView
         const p = pkg.mainEditorPkg();
         const files = p.getAllFiles();
         // render in sidedocs
-        window.open(`${pxt.webConfig.docsUrl || '/--docs'}#project:${encodeURIComponent(JSON.stringify(files))}`, 'printcode');
+        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        const mode = "blocks"
+        const path = encodeURIComponent(JSON.stringify(files));
+        const url = `${docsUrl}#project:${path}:${mode}:${pxt.Util.localeInfo()}`;
+        window.open(url, "_blank");
     }
 
     clearSerial() {
