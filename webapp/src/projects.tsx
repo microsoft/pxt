@@ -130,7 +130,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         const chgCode = (scr: pxt.CodeCard, loadBlocks: boolean, prj?: pxt.ProjectTemplate) => {
             core.showLoading("changingcode", lf("loading..."));
-            const name = scr.name.toLowerCase().replace(/\W/, '');
+            const name = scr.name.toLowerCase().replace(/\W/g, '');
             gallery.loadExampleAsync(name, scr.url)
                 .done(opts => {
                     if (opts) {
