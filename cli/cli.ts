@@ -924,6 +924,11 @@ function uploadCoreAsync(opts: UploadOptions) {
         pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
     }
 
+    let logos = (targetConfig.appTheme as any as Map<string>);
+    let targetImages = Object.keys(logos)
+        .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]));
+    let targetImagesHashed = targetImages.map(k => uploadArtFile(logos[k]));
+
     let targetEditorJs = "";
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor)
         targetEditorJs = "@commitCdnUrl@editor.js";
@@ -942,7 +947,8 @@ function uploadCoreAsync(opts: UploadOptions) {
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
         "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
-        "@targetEditorJs@": targetEditorJs
+        "@targetEditorJs@": targetEditorJs,
+        "@targetImages@": targetImagesHashed.length ? targetImagesHashed.join('\n') : ''
     }
 
     if (opts.localDir) {
@@ -980,7 +986,8 @@ function uploadCoreAsync(opts: UploadOptions) {
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
             "@defaultLocaleStrings@": "",
             "@cachedHexFiles@": "",
-            "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : ""
+            "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : "",
+            "@targetImages@": targetImages.length ? targetImages.map(i => `${opts.localDir}${i}`).join('\n') : ''
         }
     }
 
@@ -1519,23 +1526,6 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     cfg.appTheme.title = cfg.title
     cfg.appTheme.name = cfg.name
     cfg.appTheme.description = cfg.description
-
-    // expand logo
-    let logos = (cfg.appTheme as any as Map<string>);
-    Object.keys(logos)
-        .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
-        .forEach(k => {
-            let fn = path.join('./docs', logos[k]);
-            pxt.debug(`importing ${fn}`)
-            logos[k + "CDN"] = uploadArtFile(logos[k])
-            let b = fs.readFileSync(fn)
-            let mimeType = '';
-            if (/\.svg$/i.test(fn)) mimeType = "image/svg+xml";
-            else if (/\.png$/i.test(fn)) mimeType = "image/png";
-            else if (/\.jpe?g$/i.test(fn)) mimeType = "image/jpeg";
-            if (mimeType) logos[k] = `data:${mimeType};base64,${b.toString('base64')}`;
-            else logos[k] = b.toString('utf8');
-        })
 
     if (!cfg.appTheme.htmlDocIncludes)
         cfg.appTheme.htmlDocIncludes = {}
