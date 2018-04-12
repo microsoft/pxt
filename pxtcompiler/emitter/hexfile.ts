@@ -824,4 +824,42 @@ __flash_checksums:
     }
 
     export let validateShim = hex.validateShim;
+
+    export function f4EncodeImg(w: number, h: number, bpp: number, getPix: (x: number, y: number) => number) {
+        let r = hex2(0xe0 | bpp) + hex2(w) + hex2(h) + "00"
+        let ptr = 4
+        let curr = 0
+        let shift = 8 - bpp
+
+        let pushBits = (n: number) => {
+            curr |= n << shift
+            if (shift == 0) {
+                r += hex2(curr)
+                ptr++
+                curr = 0
+                shift = 8 - bpp
+            } else {
+                shift -= bpp
+            }
+        }
+
+        for (let i = 0; i < w; ++i) {
+            for (let j = 0; j < h; ++j)
+                pushBits(getPix(i, j))
+            if (bpp == 1) {
+                while (shift != 7)
+                    pushBits(0)
+            } else {
+                while (ptr & 3)
+                    pushBits(0)
+            }
+        }
+
+        return r
+
+        function hex2(n: number) {
+            return ("0" + n.toString(16)).slice(-2)
+        }
+
+    }
 }

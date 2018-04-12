@@ -75,7 +75,7 @@ namespace pxt.blocks {
             const magic = data.charCodeAt(0)
             const w = data.charCodeAt(1)
             const h = data.charCodeAt(2)
-            if (magic != 0xf1 && magic != 0xf4)
+            if (magic != 0xe1 && magic != 0xe4)
                 return null
 
             function htmlColorToBytes(hexColor: string) {
@@ -96,7 +96,7 @@ namespace pxt.blocks {
             }
 
             const bpp = magic & 0xf
-            const byteW = (w * bpp + 7) >> 8
+            const byteH = bpp == 1 ? (h + 7) >> 8 : ((h * 4 + 31) >> 5) << 2
 
             let outByteW = (w + 3) & ~3
 
@@ -119,33 +119,36 @@ namespace pxt.blocks {
 
             bmp.set(this.palette, 54)
 
-            let inP = 3
+            let inP = 4
             let outP = bmpHeaderSize
-            let pad = outByteW - w
 
-            if (magic == 0xf1) {
+            if (magic == 0xe1) {
                 let mask = 0x80
                 let v = data.charCodeAt(inP++)
-                for (let y = 0; y < h; ++y) {
-                    for (let x = 0; x < w; ++x) {
-                        bmp[outP++] = (v & mask) ? 1 : 0
+                for (let x = 0; x < w; ++x) {
+                    outP = bmpHeaderSize + x
+                    for (let y = 0; y < h; ++y) {
+                        bmp[outP] = (v & mask) ? 1 : 0
+                        outP += outByteW
                         mask >>= 1
                         if (mask == 0) {
                             mask = 0x80
                             v = data.charCodeAt(inP++)
                         }
                     }
-                    outP += pad
                 }
             } else {
-                for (let y = 0; y < h; ++y) {
-                    for (let x = 0; x < w; x += 2) {
+                for (let x = 0; x < w; x++) {
+                    outP = bmpHeaderSize + x
+                    for (let y = 0; y < h; y += 2) {
                         let v = data.charCodeAt(inP++)
-                        bmp[outP++] = (v >> 4) & 0xf
-                        if (x != w - 1)
-                            bmp[outP++] = v & 0xf
+                        bmp[outP] = (v >> 4) & 0xf
+                        outP += outByteW
+                        if (y != h - 1) {
+                            bmp[outP] = v & 0xf
+                            outP += outByteW
+                        }
                     }
-                    outP += pad
                 }
             }
 
