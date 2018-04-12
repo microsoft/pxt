@@ -2859,7 +2859,7 @@ namespace pxt.blocks {
             }
 
             let button = goog.dom.createDom('button') as HTMLElement;
-            button.setAttribute('text', lf("Make a Variable"));
+            button.setAttribute('text', lf("Make a Variable..."));
             button.setAttribute('callbackkey', 'CREATE_VARIABLE');
 
             workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
@@ -3172,7 +3172,7 @@ namespace pxt.blocks {
                 xmlList.push(headingLabel as HTMLElement);
             }
 
-            const newFunction = lf("Make a Function");
+            const newFunction = lf("Make a Function...");
             const newFunctionTitle = lf("New function name:");
 
             // Add the "Make a function" button
