@@ -391,7 +391,7 @@ namespace pxt.BrowserUtils {
             }
 
             let targetImages = Object.keys(theme as any as Map<string>)
-                .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test((theme as any)[k]))
+                .filter(k => /(logo|hero)$/i.test(k) && /^@cdnUrl@/.test((theme as any)[k]))
                 .forEach(k => (theme as any)[k] = patchCdn((theme as any)[k]));
         }
         // RTL languages

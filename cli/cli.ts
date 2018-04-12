@@ -1110,8 +1110,6 @@ function uploadCoreAsync(opts: UploadOptions) {
                         })
                         data = new Buffer((isJs ? targetJsPrefix : '') + JSON.stringify(trg, null, 2), "utf8")
                     } else {
-                        trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
-                        trg.appTheme.cardLogo = uploadArtFile(trg.appTheme.cardLogo)
                         if (trg.simulator
                             && trg.simulator.boardDefinition
                             && trg.simulator.boardDefinition.visual) {
@@ -1319,6 +1317,7 @@ function maxMTimeAsync(dirs: string[]) {
 }
 
 export interface BuildTargetOptions {
+    localDir?: boolean;
     packaged?: boolean;
 }
 
@@ -1535,18 +1534,24 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
     return webmanifest;
 }
 
-function saveThemeJson(cfg: pxt.TargetBundle, packaged?: boolean) {
+function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boolean) {
     cfg.appTheme.id = cfg.id
     cfg.appTheme.title = cfg.title
     cfg.appTheme.name = cfg.name
     cfg.appTheme.description = cfg.description
 
+    let logos = (cfg.appTheme as any as Map<string>);
     if (packaged) {
-        let logos = (cfg.appTheme as any as Map<string>);
         Object.keys(logos)
             .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
             .forEach(k => {
                 logos[k] = path.join('./docs', logos[k]);
+            })
+    } else if (!localDir) {
+        Object.keys(logos)
+            .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
+            .forEach(k => {
+                logos[k] = uploadArtFile(logos[k]);
             })
     }
 
@@ -1886,12 +1891,13 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 pxtCrowdinBranch: pxtCrowdinBranch(),
                 targetCrowdinBranch: targetCrowdinBranch()
             }
-            saveThemeJson(cfg, options.packaged)
+            saveThemeJson(cfg, options.localDir, options.packaged)
 
             const webmanifest = buildWebManifest(cfg)
             const targetjson = JSON.stringify(cfg, null, 2)
             fs.writeFileSync("built/target.json", targetjson)
             fs.writeFileSync("built/target.js", targetJsPrefix + targetjson)
+            console.log(`size of target.json is ${Buffer.byteLength(targetjson, 'utf8') / 1000} kb`);
             pxt.setAppTarget(cfg) // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs
@@ -1977,7 +1983,7 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
 
     return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
         .then(buildCommonSimAsync, e => buildFailed("common sim build failed: " + e.message, e))
-        .then(() => internalBuildTargetAsync().then(r => { }, e => {
+        .then(() => internalBuildTargetAsync({ localDir: true }).then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
         .then(() => {
