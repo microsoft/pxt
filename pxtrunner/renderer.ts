@@ -631,7 +631,10 @@ namespace pxt.runner {
                 hljs.highlightBlock(e)
             }
             const opts = pxt.U.clone(woptions);
-            if (ignored) opts.run = false;
+            if (ignored) {
+                opts.run = false;
+                opts.showEdit = false;
+            }
             fillWithWidget(options, $(e).parent(), $(e), undefined, undefined, opts);
         }
 
