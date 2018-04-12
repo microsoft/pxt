@@ -1161,7 +1161,8 @@ ${output}</xml>`;
                 error(left);
                 return undefined;
             }
-            const setter = env.blocks.blocks.find(b => b.namespace == sym.namespace && b.name == tp)
+            const qName = `${sym.namespace}.${sym.retType}.${tp}`;
+            const setter = env.blocks.blocks.find(b => b.qName == qName)
             const r = right ? mkStmt(setter.attributes.blockId) : mkExpr(setter.attributes.blockId)
             const pp = setter.attributes._def.parameters;
             r.inputs = [getValue(pp[0].name, left.expression)];
