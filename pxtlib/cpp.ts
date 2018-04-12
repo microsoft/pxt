@@ -542,7 +542,7 @@ namespace pxt.cpp {
                 m = /^#define\s+PXT_COMM_BASE\s+([0-9a-fx]+)/.exec(ln)
                 if (m)
                     res.commBase = parseInt(m[1])
-                    
+
                 // function definition
                 m = /^\s*(\w+)([\*\&]*\s+[\*\&]*)(\w+)\s*\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
                 if (currAttrs && m) {
