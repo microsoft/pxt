@@ -379,6 +379,10 @@ export class Input extends data.Component<{
     ariaLabel?: string;
 }, { value: string }> {
 
+    clearValue() {
+        this.setState({ value: undefined });
+    }
+
     copy() {
         const p = this.props
         const el = ReactDOM.findDOMNode(this);
@@ -1014,8 +1018,6 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 dimmerClassName
             ]);
 
-        const blurring = dimmer === 'blurring';
-
         return (
             <Portal
                 closeOnRootNodeClick={closeOnDimmerClick}
@@ -1173,7 +1175,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
     }
 
     renderPortal() {
-        const { children, className, open, allowResetFocus } = this.props;
+        const { children, className, allowResetFocus } = this.props;
 
         this.mountPortal();
 

@@ -24,8 +24,8 @@ export interface SpawnOptions {
 }
 
 //This should be correct at startup when running from command line
-export var targetDir: string = process.cwd();
-export var pxtCoreDir: string = path.join(__dirname, "..");
+export let targetDir: string = process.cwd();
+export let pxtCoreDir: string = path.join(__dirname, "..");
 
 export function setTargetDir(dir: string) {
     targetDir = dir;

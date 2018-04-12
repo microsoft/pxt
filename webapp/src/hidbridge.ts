@@ -1,11 +1,7 @@
-import * as core from "./core";
-
 import Cloud = pxt.Cloud;
 import U = pxt.Util;
 
 let iface: pxt.worker.Iface
-let devPath: Promise<string>
-
 
 interface HidDevice {
     vendorId: number; // 9025,

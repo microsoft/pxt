@@ -110,57 +110,66 @@ function saveConfig() {
     fs.writeFileSync(configPath(), JSON.stringify(globalConfig, null, 4) + "\n")
 }
 
-function initConfig() {
+function initConfigAsync(): Promise<void> {
+    let p = Promise.resolve();
     let atok: string = process.env["PXT_ACCESS_TOKEN"]
     if (fs.existsSync(configPath())) {
         let config = <UserConfig>readJson(configPath())
-        globalConfig = config
-        const token = passwordGet(PXT_KEY);
-        if (!atok && token) {
-            atok = token
-        }
+        globalConfig = config;
+        if (!atok)
+            p = p.then(() => passwordGetAsync(PXT_KEY))
+                .then(token => {
+                    if (!atok && token) {
+                        atok = token
+                    }
+                });
     }
 
-    if (atok) {
-        let mm = /^(https?:.*)\?access_token=([\w\.]+)/.exec(atok)
-        if (!mm) {
-            console.error("Invalid accessToken format, expecting something like 'https://example.com/?access_token=0abcd.XXXX'")
-            return
+    p.then(() => {
+        if (atok) {
+            let mm = /^(https?:.*)\?access_token=([\w\.]+)/.exec(atok)
+            if (!mm) {
+                console.error("Invalid accessToken format, expecting something like 'https://example.com/?access_token=0abcd.XXXX'")
+                return
+            }
+            Cloud.apiRoot = mm[1].replace(/\/$/, "").replace(/\/api$/, "") + "/api/"
+            Cloud.accessToken = mm[2]
         }
-        Cloud.apiRoot = mm[1].replace(/\/$/, "").replace(/\/api$/, "") + "/api/"
-        Cloud.accessToken = mm[2]
-    }
+    });
+    return p;
 }
 
 interface KeyTar {
-    replacePassword(service: string, account: string, password: string): void;
-    getPassword(service: string, account: string): string;
-    deletePassword(service: string, account: string): void;
+    setPassword(service: string, account: string, password: string): Promise<void>;
+    getPassword(service: string, account: string): Promise<string>;
+    deletePassword(service: string, account: string): Promise<void>;
 }
 
-function passwordGet(account: string): string {
+function passwordGetAsync(account: string): Promise<string> {
     try {
         const keytar = require("keytar") as KeyTar;
-        return keytar.getPassword("pxt/" + pxt.appTarget.id, account);
+        return keytar.getPassword("pxt/" + pxt.appTarget.id, account)
     } catch (e) {
-        return undefined;
+        return Promise.resolve(undefined);
     }
 }
 
-function passwordDelete(account: string): void {
+function passwordDeleteAsync(account: string): Promise<void> {
     try {
         const keytar = require("keytar") as KeyTar;
-        keytar.deletePassword("pxt/" + pxt.appTarget.id, account);
+        return keytar.deletePassword("pxt/" + pxt.appTarget.id, account);
     } catch (e) {
+        return Promise.resolve(undefined);
     }
 }
 
-function passwordUpdate(account: string, password: string) {
+function passwordUpdateAsync(account: string, password: string): Promise<void> {
     try {
         const keytar = require("keytar") as KeyTar;
-        keytar.replacePassword("pxt/" + pxt.appTarget.id, account, password);
+        return keytar.setPassword("pxt/" + pxt.appTarget.id, account, password);
     } catch (e) {
         console.error(e)
+        return Promise.resolve(undefined)
     }
 }
 
@@ -168,7 +177,7 @@ const PXT_KEY = "pxt";
 const GITHUB_KEY = "github";
 const CROWDIN_KEY = "crowdin";
 const LOGIN_PROVIDERS = [PXT_KEY, GITHUB_KEY, CROWDIN_KEY];
-export function loginAsync(parsed: commandParser.ParsedCommand) {
+export function loginAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     const service = parsed.arguments[0] as string;
     const token = parsed.arguments[1] as string;
 
@@ -191,15 +200,13 @@ export function loginAsync(parsed: commandParser.ParsedCommand) {
     if (service == PXT_KEY && !/^https:\/\//.test(token))
         return usage("invalid token");
 
-    passwordUpdate(service, token);
-    console.log(`${service} password saved.`)
-    return Promise.resolve()
+    return passwordUpdateAsync(service, token)
+        .then(() => { pxt.log(`${service} password saved.`); });
 }
 
 export function logoutAsync() {
-    LOGIN_PROVIDERS.forEach(key => passwordDelete(key));
-    console.log('access tokens removed');
-    return Promise.resolve();
+    return Promise.all(LOGIN_PROVIDERS.map(key => passwordDeleteAsync(key)))
+        .then(() => pxt.log('access tokens removed'));
 }
 
 function searchAsync(...query: string[]) {
@@ -276,39 +283,43 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
         return Promise.resolve();
     }
     const branch = pxt.appTarget.appTheme.crowdinBranch;
-    const key = passwordGet(CROWDIN_KEY) || process.env[pxt.crowdin.KEY_VARIABLE] as string;
-    if (!key) {
-        console.log(`crowdin operation skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
-        return Promise.resolve();
-    }
+    return passwordGetAsync(CROWDIN_KEY)
+        .then(key => {
+            if (!key)
+                process.env[pxt.crowdin.KEY_VARIABLE] as string;
+            if (!key) {
+                console.log(`crowdin operation skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+                return Promise.resolve();
+            }
 
-    cmd = cmd.toLowerCase();
-    if (!args[0] && (cmd != "clean" && cmd != "stats")) throw new Error(cmd == "status" ? "language missing" : "filename missing");
-    switch (cmd) {
-        case "stats": return statsCrowdinAsync(prj, key);
-        case "clean": return cleanCrowdinAsync(prj, key, args[0] || "docs");
-        case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
-        case "download": {
-            if (!args[1]) throw new Error("output path missing");
-            const fn = path.basename(args[0]);
-            return pxt.crowdin.downloadTranslationsAsync(branch, prj, key, args[0], { translatedOnly: true, validatedOnly: true })
-                .then(r => {
-                    Object.keys(r).forEach(k => {
-                        const rtranslations = stringifyTranslations(r[k]);
-                        if (!rtranslations) return;
+            cmd = cmd.toLowerCase();
+            if (!args[0] && (cmd != "clean" && cmd != "stats")) throw new Error(cmd == "status" ? "language missing" : "filename missing");
+            switch (cmd) {
+                case "stats": return statsCrowdinAsync(prj, key);
+                case "clean": return cleanCrowdinAsync(prj, key, args[0] || "docs");
+                case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
+                case "download": {
+                    if (!args[1]) throw new Error("output path missing");
+                    const fn = path.basename(args[0]);
+                    return pxt.crowdin.downloadTranslationsAsync(branch, prj, key, args[0], { translatedOnly: true, validatedOnly: true })
+                        .then(r => {
+                            Object.keys(r).forEach(k => {
+                                const rtranslations = stringifyTranslations(r[k]);
+                                if (!rtranslations) return;
 
-                        nodeutil.mkdirP(path.join(args[1], k));
-                        const outf = path.join(args[1], k, fn);
-                        console.log(`writing ${outf}`)
-                        fs.writeFileSync(
-                            outf,
-                            rtranslations,
-                            { encoding: "utf8" });
-                    })
-                })
-        }
-        default: throw new Error("unknown command");
-    }
+                                nodeutil.mkdirP(path.join(args[1], k));
+                                const outf = path.join(args[1], k, fn);
+                                console.log(`writing ${outf}`)
+                                fs.writeFileSync(
+                                    outf,
+                                    rtranslations,
+                                    { encoding: "utf8" });
+                            })
+                        })
+                }
+                default: throw new Error("unknown command");
+            }
+        })
 }
 
 function cleanCrowdinAsync(prj: string, key: string, dir: string): Promise<void> {
@@ -353,7 +364,7 @@ function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string,
     let fn = path.basename(p);
     if (dir) fn = dir.replace(/[\\/]*$/g, '') + '/' + fn;
     const data = JSON.parse(fs.readFileSync(p, "utf8")) as Map<string>;
-    console.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}${branch ? `?branch=${branch}` : ''}`);
+    pxt.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}${branch ? `?branch=${branch}` : ''}`);
     return pxt.crowdin.uploadTranslationAsync(branch, prj, key, fn, JSON.stringify(data));
 }
 
@@ -619,39 +630,41 @@ function bumpAsync(parsed?: commandParser.ParsedCommand) {
 
 function uploadTaggedTargetAsync() {
     forceCloudBuild = true
-    const token = passwordGet(GITHUB_KEY);
-    if (!token) {
-        fatal("GitHub token not found, please use 'pxt login' to login with your GitHub account to push releases.");
-        return Promise.resolve();
-    }
-    return nodeutil.needsGitCleanAsync()
-        .then(() => Promise.all([
-            nodeutil.currGitTagAsync(),
-            nodeutil.gitInfoAsync(["rev-parse", "--abbrev-ref", "HEAD"]),
-            nodeutil.gitInfoAsync(["rev-parse", "HEAD"])
-        ]))
-        // only build target after getting all the info
-        .then(info =>
-            internalBuildTargetAsync()
-                .then(() => internalCheckDocsAsync(true))
-                .then(() => info))
-        .then(info => {
-            process.env["TRAVIS_TAG"] = info[0]
-            process.env['TRAVIS_BRANCH'] = info[1]
-            process.env['TRAVIS_COMMIT'] = info[2]
-            let repoSlug = "microsoft/pxt-" + pxt.appTarget.id
-            process.env['TRAVIS_REPO_SLUG'] = repoSlug
-            process.env['PXT_RELEASE_REPO'] = "https://git:" + token + "@github.com/" + repoSlug + "-built"
-            let v = pkgVersion()
-            pxt.log("uploading " + v)
-            return uploadCoreAsync({
-                label: "v" + v,
-                fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
-                pkgversion: v,
-                githubOnly: true,
-                fileContent: {}
-            })
-        })
+    return passwordGetAsync(GITHUB_KEY)
+        .then(token => {
+            if (!token) {
+                fatal("GitHub token not found, please use 'pxt login' to login with your GitHub account to push releases.");
+                return Promise.resolve();
+            }
+            return nodeutil.needsGitCleanAsync()
+                .then(() => Promise.all([
+                    nodeutil.currGitTagAsync(),
+                    nodeutil.gitInfoAsync(["rev-parse", "--abbrev-ref", "HEAD"]),
+                    nodeutil.gitInfoAsync(["rev-parse", "HEAD"])
+                ]))
+                // only build target after getting all the info
+                .then(info =>
+                    internalBuildTargetAsync()
+                        .then(() => internalCheckDocsAsync(true))
+                        .then(() => info))
+                .then(info => {
+                    process.env["TRAVIS_TAG"] = info[0]
+                    process.env['TRAVIS_BRANCH'] = info[1]
+                    process.env['TRAVIS_COMMIT'] = info[2]
+                    let repoSlug = "microsoft/pxt-" + pxt.appTarget.id
+                    process.env['TRAVIS_REPO_SLUG'] = repoSlug
+                    process.env['PXT_RELEASE_REPO'] = "https://git:" + token + "@github.com/" + repoSlug + "-built"
+                    let v = pkgVersion()
+                    pxt.log("uploading " + v)
+                    return uploadCoreAsync({
+                        label: "v" + v,
+                        fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
+                        pkgversion: v,
+                        githubOnly: true,
+                        fileContent: {}
+                    })
+                })
+        });
 }
 
 function pkgVersion() {
@@ -924,6 +937,11 @@ function uploadCoreAsync(opts: UploadOptions) {
         pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
     }
 
+    let logos = (targetConfig.appTheme as any as Map<string>);
+    let targetImages = Object.keys(logos)
+        .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]));
+    let targetImagesHashed = targetImages.map(k => uploadArtFile(logos[k]));
+
     let targetEditorJs = "";
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor)
         targetEditorJs = "@commitCdnUrl@editor.js";
@@ -942,7 +960,8 @@ function uploadCoreAsync(opts: UploadOptions) {
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
         "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
-        "@targetEditorJs@": targetEditorJs
+        "@targetEditorJs@": targetEditorJs,
+        "@targetImages@": targetImagesHashed.length ? targetImagesHashed.join('\n') : ''
     }
 
     if (opts.localDir) {
@@ -980,7 +999,9 @@ function uploadCoreAsync(opts: UploadOptions) {
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
             "@defaultLocaleStrings@": "",
             "@cachedHexFiles@": "",
-            "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : ""
+            "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : "",
+            "@targetImages@": targetImages.length ? targetImages.map(k =>
+                `${opts.localDir}${path.join('./docs', logos[k])}`).join('\n') : ''
         }
     }
 
@@ -1089,8 +1110,6 @@ function uploadCoreAsync(opts: UploadOptions) {
                         })
                         data = new Buffer((isJs ? targetJsPrefix : '') + JSON.stringify(trg, null, 2), "utf8")
                     } else {
-                        trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
-                        trg.appTheme.cardLogo = uploadArtFile(trg.appTheme.cardLogo)
                         if (trg.simulator
                             && trg.simulator.boardDefinition
                             && trg.simulator.boardDefinition.visual) {
@@ -1298,6 +1317,7 @@ function maxMTimeAsync(dirs: string[]) {
 }
 
 export interface BuildTargetOptions {
+    localDir?: boolean;
     packaged?: boolean;
 }
 
@@ -1514,28 +1534,26 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
     return webmanifest;
 }
 
-function saveThemeJson(cfg: pxt.TargetBundle) {
+function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boolean) {
     cfg.appTheme.id = cfg.id
     cfg.appTheme.title = cfg.title
     cfg.appTheme.name = cfg.name
     cfg.appTheme.description = cfg.description
 
-    // expand logo
     let logos = (cfg.appTheme as any as Map<string>);
-    Object.keys(logos)
-        .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
-        .forEach(k => {
-            let fn = path.join('./docs', logos[k]);
-            pxt.debug(`importing ${fn}`)
-            logos[k + "CDN"] = uploadArtFile(logos[k])
-            let b = fs.readFileSync(fn)
-            let mimeType = '';
-            if (/\.svg$/i.test(fn)) mimeType = "image/svg+xml";
-            else if (/\.png$/i.test(fn)) mimeType = "image/png";
-            else if (/\.jpe?g$/i.test(fn)) mimeType = "image/jpeg";
-            if (mimeType) logos[k] = `data:${mimeType};base64,${b.toString('base64')}`;
-            else logos[k] = b.toString('utf8');
-        })
+    if (packaged) {
+        Object.keys(logos)
+            .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
+            .forEach(k => {
+                logos[k] = path.join('./docs', logos[k]);
+            })
+    } else if (!localDir) {
+        Object.keys(logos)
+            .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
+            .forEach(k => {
+                logos[k] = uploadArtFile(logos[k]);
+            })
+    }
 
     if (!cfg.appTheme.htmlDocIncludes)
         cfg.appTheme.htmlDocIncludes = {}
@@ -1873,12 +1891,13 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 pxtCrowdinBranch: pxtCrowdinBranch(),
                 targetCrowdinBranch: targetCrowdinBranch()
             }
-            saveThemeJson(cfg)
+            saveThemeJson(cfg, options.localDir, options.packaged)
 
             const webmanifest = buildWebManifest(cfg)
             const targetjson = JSON.stringify(cfg, null, 2)
             fs.writeFileSync("built/target.json", targetjson)
             fs.writeFileSync("built/target.js", targetJsPrefix + targetjson)
+            console.log(`size of target.json is ${Buffer.byteLength(targetjson, 'utf8') / 1000} kb`);
             pxt.setAppTarget(cfg) // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs
@@ -1964,7 +1983,7 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
 
     return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
         .then(buildCommonSimAsync, e => buildFailed("common sim build failed: " + e.message, e))
-        .then(() => internalBuildTargetAsync().then(r => { }, e => {
+        .then(() => internalBuildTargetAsync({ localDir: true }).then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
         .then(() => {
@@ -3666,19 +3685,23 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
 }
 
 
-function crowdinCredentials(): { prj: string; key: string; branch: string; } {
+function crowdinCredentialsAsync(): Promise<{ prj: string; key: string; branch: string; }> {
     const prj = pxt.appTarget.appTheme.crowdinProject;
     if (!prj) {
         pxt.log(`crowdin upload skipped, Crowdin project missing in target theme`);
-        return null;
+        return undefined;
     }
-    const key = passwordGet(CROWDIN_KEY) || process.env[pxt.crowdin.KEY_VARIABLE] as string;
-    if (!key) {
-        pxt.log(`crowdin upload skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
-        return null;
-    }
-    const branch = pxt.appTarget.appTheme.crowdinBranch;
-    return { prj, key, branch };
+    return passwordGetAsync(CROWDIN_KEY)
+        .then(key => {
+            if (!key)
+                key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
+            if (!key) {
+                pxt.log(`crowdin upload skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+                return undefined;
+            }
+            const branch = pxt.appTarget.appTheme.crowdinBranch;
+            return { prj, key, branch };
+        });
 }
 
 export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
@@ -3687,31 +3710,33 @@ export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedComma
 }
 
 function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
-    const cred = crowdinCredentials();
-    if (!cred) return Promise.resolve();
-    const crowdinDir = pxt.appTarget.id;
-    if (crowdinDir == "core") {
-        if (!uploadDocs) {
-            pxt.log('missing --docs flag, skipping')
-            return Promise.resolve();
-        }
-        return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
-            .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
-    } else {
-        return execCrowdinAsync("upload", "built/target-strings.json", crowdinDir)
-            .then(() => execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir))
-            .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key))
-            .then(() => uploadDocs
-                ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
-                    // scan for docs in bundled packages
-                    .then(() => Promise.all(pxt.appTarget.bundleddirs
-                        // there must be a folder under .../docs
-                        .filter(pkgDir => nodeutil.existsDirSync(path.join(pkgDir, "docs")))
-                        // upload to crowdin
-                        .map(pkgDir => uploadDocsTranslationsAsync(path.join(pkgDir, "docs"), crowdinDir, cred.branch, cred.prj, cred.key)
-                        )).then(() => { }))
-                : Promise.resolve());
-    }
+    return crowdinCredentialsAsync()
+        .then(cred => {
+            if (!cred) return Promise.resolve();
+            const crowdinDir = pxt.appTarget.id;
+            if (crowdinDir == "core") {
+                if (!uploadDocs) {
+                    pxt.log('missing --docs flag, skipping')
+                    return Promise.resolve();
+                }
+                return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
+                    .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
+            } else {
+                return execCrowdinAsync("upload", "built/target-strings.json", crowdinDir)
+                    .then(() => execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir))
+                    .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key))
+                    .then(() => uploadDocs
+                        ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
+                            // scan for docs in bundled packages
+                            .then(() => Promise.all(pxt.appTarget.bundleddirs
+                                // there must be a folder under .../docs
+                                .filter(pkgDir => nodeutil.existsDirSync(path.join(pkgDir, "docs")))
+                                // upload to crowdin
+                                .map(pkgDir => uploadDocsTranslationsAsync(path.join(pkgDir, "docs"), crowdinDir, cred.branch, cred.prj, cred.key)
+                                )).then(() => { }))
+                        : Promise.resolve());
+            }
+        });
 }
 
 function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
@@ -3774,65 +3799,67 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
 }
 
 export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedCommand) {
-    const cred = crowdinCredentials();
-    if (!cred) return Promise.resolve();
+    return crowdinCredentialsAsync()
+        .then(cred => {
+            if (!cred) return Promise.resolve();
 
-    const crowdinDir = pxt.appTarget.id;
-    const name = parsed.arguments[0] || "";
-    const todo: string[] = [];
-    pxt.appTarget.bundleddirs
-        .filter(dir => !name || dir == "libs/" + name)
-        .forEach(dir => {
-            const locdir = path.join(dir, "_locales");
-            if (fs.existsSync(locdir))
-                fs.readdirSync(locdir)
-                    .filter(f => /\.json$/i.test(f))
-                    .forEach(f => todo.push(path.join(locdir, f)))
+            const crowdinDir = pxt.appTarget.id;
+            const name = parsed.arguments[0] || "";
+            const todo: string[] = [];
+            pxt.appTarget.bundleddirs
+                .filter(dir => !name || dir == "libs/" + name)
+                .forEach(dir => {
+                    const locdir = path.join(dir, "_locales");
+                    if (fs.existsSync(locdir))
+                        fs.readdirSync(locdir)
+                            .filter(f => /\.json$/i.test(f))
+                            .forEach(f => todo.push(path.join(locdir, f)))
+                });
+
+            const nextFileAsync = (): Promise<void> => {
+                const f = todo.pop();
+                if (!f) return Promise.resolve();
+
+                const fn = path.basename(f);
+                const crowdf = path.join(crowdinDir, fn);
+                const locdir = path.dirname(f);
+                const projectdir = path.dirname(locdir);
+                pxt.log(`downloading ${crowdf}`);
+                pxt.log(`projectdir: ${projectdir}`)
+                const locFiles: Map<string> = {};
+                return pxt.crowdin.downloadTranslationsAsync(cred.branch, cred.prj, cred.key, crowdf, { translatedOnly: true, validatedOnly: true })
+                    .then(data => {
+                        Object.keys(data)
+                            .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
+                            .forEach(lang => {
+                                const langTranslations = stringifyTranslations(data[lang]);
+                                if (!langTranslations) return;
+
+                                const tfdir = path.join(locdir, lang);
+                                const tf = path.join(tfdir, fn);
+                                nodeutil.mkdirP(tfdir)
+                                pxt.log(`writing ${tf}`);
+                                fs.writeFileSync(tf, langTranslations, { encoding: "utf8" });
+
+                                locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
+                            })
+                        // update pxt.json
+                        const pxtJson = nodeutil.readPkgConfig(projectdir)
+                        const missingFiles = Object.keys(locFiles).filter(f => pxtJson.files.indexOf(f) < 0)
+                        if (missingFiles.length) {
+                            U.pushRange(pxtJson.files, missingFiles)
+                            // note that pxtJson might result from additionalFilePath, so we read the local file again
+                            const pxtJsonf = path.join(projectdir, "pxt.json");
+                            let local: pxt.PackageConfig = nodeutil.readJson(pxtJsonf)
+                            local.files = pxtJson.files
+                            pxt.log(`writing ${pxtJsonf}`);
+                            fs.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), { encoding: "utf8" });
+                        }
+                        return nextFileAsync()
+                    });
+            }
+            return nextFileAsync();
         });
-
-    const nextFileAsync = (): Promise<void> => {
-        const f = todo.pop();
-        if (!f) return Promise.resolve();
-
-        const fn = path.basename(f);
-        const crowdf = path.join(crowdinDir, fn);
-        const locdir = path.dirname(f);
-        const projectdir = path.dirname(locdir);
-        pxt.log(`downloading ${crowdf}`);
-        pxt.log(`projectdir: ${projectdir}`)
-        const locFiles: Map<string> = {};
-        return pxt.crowdin.downloadTranslationsAsync(cred.branch, cred.prj, cred.key, crowdf, { translatedOnly: true, validatedOnly: true })
-            .then(data => {
-                Object.keys(data)
-                    .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
-                    .forEach(lang => {
-                        const langTranslations = stringifyTranslations(data[lang]);
-                        if (!langTranslations) return;
-
-                        const tfdir = path.join(locdir, lang);
-                        const tf = path.join(tfdir, fn);
-                        nodeutil.mkdirP(tfdir)
-                        pxt.log(`writing ${tf}`);
-                        fs.writeFileSync(tf, langTranslations, { encoding: "utf8" });
-
-                        locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
-                    })
-                // update pxt.json
-                const pxtJson = nodeutil.readPkgConfig(projectdir)
-                const missingFiles = Object.keys(locFiles).filter(f => pxtJson.files.indexOf(f) < 0)
-                if (missingFiles.length) {
-                    U.pushRange(pxtJson.files, missingFiles)
-                    // note that pxtJson might result from additionalFilePath, so we read the local file again
-                    const pxtJsonf = path.join(projectdir, "pxt.json");
-                    let local: pxt.PackageConfig = nodeutil.readJson(pxtJsonf)
-                    local.files = pxtJson.files
-                    pxt.log(`writing ${pxtJsonf}`);
-                    fs.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), { encoding: "utf8" });
-                }
-                return nextFileAsync()
-            });
-    }
-    return nextFileAsync();
 }
 
 function stringifyTranslations(strings: pxt.Map<string>): string {
@@ -4025,6 +4052,9 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
             U.userError(`only 8 bit per channel png images supported`)
         if (sheet.width > 255 || sheet.height > 255)
             U.userError(`PNG image too big`)
+
+        if (!info.width) info.width = sheet.width
+        if (!info.height) info.height = sheet.height
 
         let nx = (sheet.width / info.width) | 0
         let ny = (sheet.height / info.height) | 0
@@ -4628,64 +4658,66 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
 }
 
 function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {
-    const token = passwordGet(GITHUB_KEY);
-    if (!token) {
-        fatal("GitHub token not found, please use 'pxt login' to login with your GitHub account to push gists.");
-        return Promise.resolve();
-    }
-    return mainPkg.loadAsync()
-        .then(() => {
-            const pxtConfig = U.clone(mainPkg.config);
-            if (pxtConfig.gistId && !token && !forceNewGist) {
-                console.warn("You are trying to update an existing project but no GitHub token was provided, publishing a new anonymous project instead.")
-                forceNewGist = true;
+    return passwordGetAsync(GITHUB_KEY)
+        .then(token => {
+            if (!token) {
+                fatal("GitHub token not found, please use 'pxt login' to login with your GitHub account to push gists.");
+                return Promise.resolve();
             }
-            const gistId = pxtConfig.gistId;
-            const files: string[] = mainPkg.getFiles()
-            const filesMap: Map<{ content: string; }> = {};
-
-            files.forEach((fn) => {
-                let fileContent = fs.readFileSync(fn, "utf8");
-                if (fileContent) {
-                    filesMap[fn] = {
-                        "content": fileContent
+            return mainPkg.loadAsync()
+                .then(() => {
+                    const pxtConfig = U.clone(mainPkg.config);
+                    if (pxtConfig.gistId && !token && !forceNewGist) {
+                        console.warn("You are trying to update an existing project but no GitHub token was provided, publishing a new anonymous project instead.")
+                        forceNewGist = true;
                     }
-                } else {
-                    // Cannot publish empty files, go through and remove empty file references from pxt.json
-                    if (pxtConfig.files && pxtConfig.files.indexOf(fn) > -1) {
-                        pxtConfig.files.splice(pxtConfig.files.indexOf(fn), 1);
-                    } else if (pxtConfig.testFiles && pxtConfig.testFiles.indexOf(fn) > -1) {
-                        pxtConfig.testFiles.splice(pxtConfig.testFiles.indexOf(fn), 1);
-                    }
-                }
-            })
-            // Strip gist fields from config
-            delete pxtConfig.gistId;
-            // Add pxt.json
-            filesMap['pxt.json'] = {
-                "content": JSON.stringify(pxtConfig, null, 4)
-            }
-            pxt.log("Uploading....")
-            return pxt.github.publishGistAsync(token, forceNewGist, filesMap, pxtConfig.name, gistId)
-        })
-        .then((published_id) => {
-            pxt.log(`Success, view your gist at`);
-            pxt.log(``)
-            pxt.log(`    https://gist.github.com/${published_id}`);
-            pxt.log(``)
-            pxt.log(`To share your project, go to ${pxt.appTarget.appTheme.embedUrl}#pub:gh/gists/${published_id}`)
-            if (!token) pxt.log(`Hint: Use "pxt login" with a GitHub token to publish gists under your GitHub account`);
+                    const gistId = pxtConfig.gistId;
+                    const files: string[] = mainPkg.getFiles()
+                    const filesMap: Map<{ content: string; }> = {};
 
-            // Save gist id to pxt.json
-            if (token) mainPkg.config.gistId = published_id;
-            mainPkg.saveConfig();
-        })
-        .catch((e) => {
-            if (e == '404') {
-                console.error("Unable to access the existing project. --new to publish a new gist.")
-            } else {
-                console.error(e);
-            }
+                    files.forEach((fn) => {
+                        let fileContent = fs.readFileSync(fn, "utf8");
+                        if (fileContent) {
+                            filesMap[fn] = {
+                                "content": fileContent
+                            }
+                        } else {
+                            // Cannot publish empty files, go through and remove empty file references from pxt.json
+                            if (pxtConfig.files && pxtConfig.files.indexOf(fn) > -1) {
+                                pxtConfig.files.splice(pxtConfig.files.indexOf(fn), 1);
+                            } else if (pxtConfig.testFiles && pxtConfig.testFiles.indexOf(fn) > -1) {
+                                pxtConfig.testFiles.splice(pxtConfig.testFiles.indexOf(fn), 1);
+                            }
+                        }
+                    })
+                    // Strip gist fields from config
+                    delete pxtConfig.gistId;
+                    // Add pxt.json
+                    filesMap['pxt.json'] = {
+                        "content": JSON.stringify(pxtConfig, null, 4)
+                    }
+                    pxt.log("Uploading....")
+                    return pxt.github.publishGistAsync(token, forceNewGist, filesMap, pxtConfig.name, gistId)
+                })
+                .then((published_id) => {
+                    pxt.log(`Success, view your gist at`);
+                    pxt.log(``)
+                    pxt.log(`    https://gist.github.com/${published_id}`);
+                    pxt.log(``)
+                    pxt.log(`To share your project, go to ${pxt.appTarget.appTheme.embedUrl}#pub:gh/gists/${published_id}`)
+                    if (!token) pxt.log(`Hint: Use "pxt login" with a GitHub token to publish gists under your GitHub account`);
+
+                    // Save gist id to pxt.json
+                    if (token) mainPkg.config.gistId = published_id;
+                    mainPkg.saveConfig();
+                })
+                .catch((e) => {
+                    if (e == '404') {
+                        console.error("Unable to access the existing project. --new to publish a new gist.")
+                    } else {
+                        console.error(e);
+                    }
+                });
         });
 }
 
@@ -4984,6 +5016,7 @@ function initCommands() {
 
     p.defineCommand({
         name: "buildjres",
+        aliases: ["jres"],
         help: "embeds resources into jres files"
     }, buildJResAsync);
 
@@ -5272,29 +5305,31 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
 
-    initConfig();
-
-    if (args[0] != "buildtarget") {
-        initTargetCommands();
-    }
-
-    if (!pxt.commands.deployCoreAsync && build.thisBuild.deployAsync)
-        pxt.commands.deployCoreAsync = build.thisBuild.deployAsync
-
-    if (!args[0]) {
-        if (pxt.commands.deployCoreAsync) {
-            console.log("running 'pxt deploy' (run 'pxt help' for usage)")
-            args = ["deploy"]
-        } else {
-            console.log("running 'pxt build' (run 'pxt help' for usage)")
-            args = ["build"]
-        }
-    }
-
-    return p.parseCommand(args)
+    return initConfigAsync()
         .then(() => {
-            if (readlineCount)
-                (process.stdin as any).unref();
+
+            if (args[0] != "buildtarget") {
+                initTargetCommands();
+            }
+
+            if (!pxt.commands.deployCoreAsync && build.thisBuild.deployAsync)
+                pxt.commands.deployCoreAsync = build.thisBuild.deployAsync
+
+            if (!args[0]) {
+                if (pxt.commands.deployCoreAsync) {
+                    console.log("running 'pxt deploy' (run 'pxt help' for usage)")
+                    args = ["deploy"]
+                } else {
+                    console.log("running 'pxt build' (run 'pxt help' for usage)")
+                    args = ["build"]
+                }
+            }
+
+            return p.parseCommand(args)
+                .then(() => {
+                    if (readlineCount)
+                        (process.stdin as any).unref();
+                });
         });
 }
 

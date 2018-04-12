@@ -1,12 +1,17 @@
 namespace pxtblockly {
     export interface FieldImagesOptions extends pxtblockly.FieldImageDropdownOptions {
+        sort?: boolean;
     }
 
     export class FieldImages extends pxtblockly.FieldImageDropdown implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
 
+        private shouldSort_: boolean;
+
         constructor(text: string, options: FieldImagesOptions, validator?: Function) {
             super(text, options, validator);
+
+            this.shouldSort_ = options.sort;
         }
 
         /**
@@ -28,6 +33,7 @@ namespace pxtblockly {
             contentDiv.setAttribute('role', 'menu');
             contentDiv.setAttribute('aria-haspopup', 'true');
             const options = this.getOptions();
+            if (this.shouldSort_) options.sort();
             for (let i = 0, option: any; option = options[i]; i++) {
                 let content = (options[i] as any)[0]; // Human-readable text or image.
                 const value = (options[i] as any)[1]; // Language-neutral value.
@@ -61,8 +67,8 @@ namespace pxtblockly {
                 }
                 button.style.backgroundColor = backgroundColor;
                 button.style.borderColor = this.sourceBlock_.getColourTertiary();
-                Blockly.bindEvent_(button, 'click', this, (this as any).buttonClick_);
-                Blockly.bindEvent_(button, 'mouseup', this, (this as any).buttonClick_);
+                Blockly.bindEvent_(button, 'click', this, this.buttonClick_);
+                Blockly.bindEvent_(button, 'mouseup', this, this.buttonClick_);
                 // These are applied manually instead of using the :hover pseudoclass
                 // because Android has a bad long press "helper" menu and green highlight
                 // that we must prevent with ontouchstart preventDefault
@@ -106,7 +112,16 @@ namespace pxtblockly {
             // Set bounds to workspace; show the drop-down.
             (Blockly.DropDownDiv as any).setBoundsElement(this.sourceBlock_.workspace.getParentSvg().parentNode);
             (Blockly.DropDownDiv as any).show(this, primaryX, primaryY, secondaryX, secondaryY,
-                (this as any).onHide_.bind(this));
+                this.onHide_.bind(this));
+
+            // Update colour to look selected.
+            if (this.sourceBlock_.isShadow()) {
+                this.savedPrimary_ = this.sourceBlock_.getColour();
+                this.sourceBlock_.setColour(this.sourceBlock_.getColourTertiary(),
+                    this.sourceBlock_.getColourSecondary(), this.sourceBlock_.getColourTertiary());
+            } else if (this.box_) {
+                this.box_.setAttribute('fill', this.sourceBlock_.getColourTertiary());
+            }
         }
     }
 }

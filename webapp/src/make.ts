@@ -1,6 +1,5 @@
 import * as pkg from "./package";
 import * as core from "./core";
-import * as sui from "./sui";
 import * as compiler from "./compiler"
 
 const FRAME_ID = 'instructions'

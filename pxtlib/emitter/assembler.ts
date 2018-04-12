@@ -2,6 +2,8 @@
 
 namespace ts.pxtc.assembler {
 
+    export let debug = false
+
     export interface InlineError {
         scope: string;
         message: string;
@@ -946,7 +948,7 @@ namespace ts.pxtc.assembler {
                     text = text.replace(/; WAS: .*/, "")
                     if (!text.trim()) return;
                 }
-                if (this.location() == this.buf.length)
+                if (debug)
                     if (ln.type == "label" || ln.type == "instruction")
                         text += ` \t; 0x${(ln.location + this.baseOffset).toString(16)}`
                 res += text + "\n"

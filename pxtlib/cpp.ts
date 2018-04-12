@@ -985,6 +985,9 @@ namespace pxt.cpp {
             pxtConfig += "#define PXT_MEMLEAK_DEBUG 1\n"
         }
 
+        if (compile.vtableShift)
+            pxtConfig += `#define PXT_VTABLE_SHIFT ${compile.vtableShift}\n`
+
         if (compile.nativeType == pxtc.NATIVE_TYPE_AVRVM) {
             pxtConfig += "#define PXT_VM 1\n"
         } else {

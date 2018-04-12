@@ -5,10 +5,8 @@ import * as pkg from "./package"
 import * as core from "./core"
 import * as srceditor from "./srceditor"
 import * as sui from "./sui"
-import * as codecard from "./codecard"
 import * as data from "./data";
 
-import Cloud = pxt.Cloud
 import Util = pxt.Util
 
 const lf = Util.lf
@@ -137,7 +135,7 @@ export class Editor extends srceditor.Editor {
 
         // is this a CSV data entry
         if (/^\s*(-?\d+(\.\d*)?)(\s*,\s*(-?\d+(\.\d*)?))+\s*,?\s*$/.test(data)) {
-            const parts = data.split(/\s*,\s*/).map(s => parseFloat(s))
+            data.split(/\s*,\s*/).map(s => parseFloat(s))
                 .filter(d => !isNaN(d))
                 .forEach((d, i) => {
                     const variable = "data." + (this.csvHeaders[i] || i);
@@ -345,7 +343,7 @@ export class Editor extends srceditor.Editor {
                 <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <sui.Button title={lf("Go back")} class="ui icon circular small button editorBack" ariaLabel={lf("Go back")} onClick={this.goBack.bind(this)}>
+                            <sui.Button text={lf("Go back")} title={lf("Go back to the previous editor")} class="icon circular small editorBack left labeled" ariaLabel={lf("Go back")} onClick={this.goBack.bind(this)}>
                                 <sui.Icon icon="arrow left" />
                             </sui.Button>
                         </div>

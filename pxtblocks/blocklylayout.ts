@@ -14,8 +14,8 @@ namespace pxt.blocks.layout {
     }
 
     function injectDisabledBlocks(oldWs: B.Workspace, newWs: B.Workspace): string {
-        const oldDom = Blockly.Xml.workspaceToDom(oldWs);
-        const newDom = Blockly.Xml.workspaceToDom(newWs);
+        const oldDom = Blockly.Xml.workspaceToDom(oldWs, true);
+        const newDom = Blockly.Xml.workspaceToDom(newWs, true);
         Util.toArray(oldDom.childNodes)
             .filter(n => n.nodeType == Node.ELEMENT_NODE && n.localName == "block" && (<Element>n).getAttribute("disabled") == "true")
             .forEach(n => newDom.appendChild(newDom.ownerDocument.importNode(n, true)));
@@ -141,7 +141,7 @@ namespace pxt.blocks.layout {
 
     export function serializeNode(sg: Node): string {
         const xmlString = new XMLSerializer().serializeToString(sg)
-            .replace(new RegExp('&nbsp;','g'), '&#160;'); // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml     
+            .replace(new RegExp('&nbsp;','g'), '&#160;'); // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml
         return xmlString;
     }
 
