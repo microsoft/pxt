@@ -169,13 +169,19 @@ namespace pxsim {
         height?: number;
     }
 
-    function print() {
-        try {
-            window.print();
+    export function print(delay: number = 0) {
+        function p() {
+            try {
+                window.print();
+            }
+            catch (e) {
+                // oops
+            }
         }
-        catch (e) {
-            // oops
-        }
+
+        if (delay)
+            setTimeout(p, delay);
+        else p();
     }
 
     export namespace Embed {
