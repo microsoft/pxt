@@ -625,20 +625,22 @@ namespace pxt.runner {
             run: !!options.simulator
         }
 
-        function render(e: Node) {
+        function render(e: Node, ignored: boolean) {
             if (typeof hljs !== "undefined") {
                 $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
             }
-            fillWithWidget(options, $(e).parent(), $(e), undefined, undefined, woptions);
+            const opts = pxt.U.clone(woptions);
+            if (ignored) opts.run = false;
+            fillWithWidget(options, $(e).parent(), $(e), undefined, undefined, opts);
         }
 
         $('code.lang-typescript').each((i, e) => {
-            render(e);
+            render(e, false);
             $(e).removeClass('lang-typescript');
         });
         $('code.lang-typescript-ignore').each((i, e) => {
-            render(e);
+            render(e, true);
             $(e).removeClass('lang-typescript-ignore')
         });
     }
