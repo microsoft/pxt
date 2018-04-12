@@ -3689,7 +3689,7 @@ function crowdinCredentialsAsync(): Promise<{ prj: string; key: string; branch: 
     const prj = pxt.appTarget.appTheme.crowdinProject;
     if (!prj) {
         pxt.log(`crowdin upload skipped, Crowdin project missing in target theme`);
-        return undefined;
+        return Promise.resolve(undefined);
     }
     return passwordGetAsync(CROWDIN_KEY)
         .then(key => {
