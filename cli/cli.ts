@@ -937,6 +937,11 @@ function uploadCoreAsync(opts: UploadOptions) {
         pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
     }
 
+    let logos = (targetConfig.appTheme as any as Map<string>);
+    let targetImages = Object.keys(logos)
+        .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]));
+    let targetImagesHashed = targetImages.map(k => uploadArtFile(logos[k]));
+
     let targetEditorJs = "";
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor)
         targetEditorJs = "@commitCdnUrl@editor.js";
@@ -955,7 +960,8 @@ function uploadCoreAsync(opts: UploadOptions) {
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
         "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
-        "@targetEditorJs@": targetEditorJs
+        "@targetEditorJs@": targetEditorJs,
+        "@targetImages@": targetImagesHashed.length ? targetImagesHashed.join('\n') : ''
     }
 
     if (opts.localDir) {
@@ -993,7 +999,9 @@ function uploadCoreAsync(opts: UploadOptions) {
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
             "@defaultLocaleStrings@": "",
             "@cachedHexFiles@": "",
-            "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : ""
+            "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : "",
+            "@targetImages@": targetImages.length ? targetImages.map(k =>
+                `${opts.localDir}${path.join('./docs', logos[k])}`).join('\n') : ''
         }
     }
 
@@ -1102,8 +1110,6 @@ function uploadCoreAsync(opts: UploadOptions) {
                         })
                         data = new Buffer((isJs ? targetJsPrefix : '') + JSON.stringify(trg, null, 2), "utf8")
                     } else {
-                        trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
-                        trg.appTheme.cardLogo = uploadArtFile(trg.appTheme.cardLogo)
                         if (trg.simulator
                             && trg.simulator.boardDefinition
                             && trg.simulator.boardDefinition.visual) {
@@ -1311,6 +1317,7 @@ function maxMTimeAsync(dirs: string[]) {
 }
 
 export interface BuildTargetOptions {
+    localDir?: boolean;
     packaged?: boolean;
 }
 
@@ -1527,28 +1534,26 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
     return webmanifest;
 }
 
-function saveThemeJson(cfg: pxt.TargetBundle) {
+function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boolean) {
     cfg.appTheme.id = cfg.id
     cfg.appTheme.title = cfg.title
     cfg.appTheme.name = cfg.name
     cfg.appTheme.description = cfg.description
 
-    // expand logo
     let logos = (cfg.appTheme as any as Map<string>);
-    Object.keys(logos)
-        .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
-        .forEach(k => {
-            let fn = path.join('./docs', logos[k]);
-            pxt.debug(`importing ${fn}`)
-            logos[k + "CDN"] = uploadArtFile(logos[k])
-            let b = fs.readFileSync(fn)
-            let mimeType = '';
-            if (/\.svg$/i.test(fn)) mimeType = "image/svg+xml";
-            else if (/\.png$/i.test(fn)) mimeType = "image/png";
-            else if (/\.jpe?g$/i.test(fn)) mimeType = "image/jpeg";
-            if (mimeType) logos[k] = `data:${mimeType};base64,${b.toString('base64')}`;
-            else logos[k] = b.toString('utf8');
-        })
+    if (packaged) {
+        Object.keys(logos)
+            .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
+            .forEach(k => {
+                logos[k] = path.join('./docs', logos[k]);
+            })
+    } else if (!localDir) {
+        Object.keys(logos)
+            .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
+            .forEach(k => {
+                logos[k] = uploadArtFile(logos[k]);
+            })
+    }
 
     if (!cfg.appTheme.htmlDocIncludes)
         cfg.appTheme.htmlDocIncludes = {}
@@ -1886,12 +1891,13 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 pxtCrowdinBranch: pxtCrowdinBranch(),
                 targetCrowdinBranch: targetCrowdinBranch()
             }
-            saveThemeJson(cfg)
+            saveThemeJson(cfg, options.localDir, options.packaged)
 
             const webmanifest = buildWebManifest(cfg)
             const targetjson = JSON.stringify(cfg, null, 2)
             fs.writeFileSync("built/target.json", targetjson)
             fs.writeFileSync("built/target.js", targetJsPrefix + targetjson)
+            console.log(`size of target.json is ${Buffer.byteLength(targetjson, 'utf8') / 1000} kb`);
             pxt.setAppTarget(cfg) // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs
@@ -1977,7 +1983,7 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
 
     return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
         .then(buildCommonSimAsync, e => buildFailed("common sim build failed: " + e.message, e))
-        .then(() => internalBuildTargetAsync().then(r => { }, e => {
+        .then(() => internalBuildTargetAsync({ localDir: true }).then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
         .then(() => {

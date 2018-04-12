@@ -59,6 +59,9 @@ https://az416426.vo.msecnd.net/scripts/a/ai.0.js
 
 @timestamp@
 
+# target
+@targetImages@
+
 /blb/target.js
   
 NETWORK:
