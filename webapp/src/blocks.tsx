@@ -417,39 +417,6 @@ export class Editor extends srceditor.Editor {
                         this.refreshToolbox();
                     }
                 }
-                // else if (ev.element == 'commentOpen'
-                //     || ev.element == 'warningOpen') {
-                //     /*
-                //      * We override the default selection behavior so that when a block is selected, its
-                //      * comment is expanded. However, if a user selects a block by clicking on its comment
-                //      * icon (the blue question mark), there is a chance that the comment will be expanded
-                //      * and immediately collapse again because the icon click toggled the state. This hack
-                //      * prevents two events caused by the same click from opening and then closing a comment
-                //      */
-                //     if (ev.group) {
-                //         // newValue is true if the comment has been expanded
-                //         if (ev.newValue) {
-                //             this.selectedEventGroup = ev.group
-                //         }
-                //         else if (ev.group == this.selectedEventGroup && this.currentCommentOrWarning) {
-                //             this.currentCommentOrWarning.setVisible(true)
-                //             this.selectedEventGroup = undefined
-                //         }
-                //     }
-                // }
-                // else if (ev.element == 'selected') {
-                //     if (this.currentCommentOrWarning) {
-                //         this.currentCommentOrWarning.setVisible(false)
-                //     }
-                //     const selected = Blockly.selected
-                //     if (selected && selected.warning && typeof (selected.warning) !== "string") {
-                //         (selected.warning as Blockly.Icon).setVisible(true)
-                //         this.currentCommentOrWarning = selected.warning
-                //     } else if (selected && selected.comment && typeof (selected.comment) !== "string") {
-                //         (selected.comment as Blockly.Icon).setVisible(true)
-                //         this.currentCommentOrWarning = selected.comment
-                //     }
-                // }
             }
         })
         this.initPrompts();
