@@ -123,16 +123,16 @@ namespace pxt.blocks {
             let outP = bmpHeaderSize
 
             if (magic == 0xe1) {
-                let mask = 0x80
+                let mask = 0x01
                 let v = data.charCodeAt(inP++)
                 for (let x = 0; x < w; ++x) {
                     outP = bmpHeaderSize + x
                     for (let y = 0; y < h; ++y) {
                         bmp[outP] = (v & mask) ? 1 : 0
                         outP += outByteW
-                        mask >>= 1
-                        if (mask == 0) {
-                            mask = 0x80
+                        mask <<= 1
+                        if (mask == 0x100) {
+                            mask = 0x01
                             v = data.charCodeAt(inP++)
                         }
                     }
@@ -142,10 +142,10 @@ namespace pxt.blocks {
                     outP = bmpHeaderSize + x
                     for (let y = 0; y < h; y += 2) {
                         let v = data.charCodeAt(inP++)
-                        bmp[outP] = (v >> 4) & 0xf
+                        bmp[outP] = v & 0xf
                         outP += outByteW
                         if (y != h - 1) {
-                            bmp[outP] = v & 0xf
+                            bmp[outP] = (v >> 4) & 0xf
                             outP += outByteW
                         }
                     }

@@ -829,17 +829,17 @@ __flash_checksums:
         let r = hex2(0xe0 | bpp) + hex2(w) + hex2(h) + "00"
         let ptr = 4
         let curr = 0
-        let shift = 8 - bpp
+        let shift = 0
 
         let pushBits = (n: number) => {
             curr |= n << shift
-            if (shift == 0) {
+            if (shift == 8 - bpp) {
                 r += hex2(curr)
                 ptr++
                 curr = 0
-                shift = 8 - bpp
+                shift = 0
             } else {
-                shift -= bpp
+                shift += bpp
             }
         }
 
@@ -847,7 +847,7 @@ __flash_checksums:
             for (let j = 0; j < h; ++j)
                 pushBits(getPix(i, j))
             if (bpp == 1) {
-                while (shift != 7)
+                while (shift != 0)
                     pushBits(0)
             } else {
                 while (ptr & 3)
