@@ -9,60 +9,6 @@
             margin-bottom: 3rem !important;
             margin-top: 0.5rem !important;
         }
-        
-        svg {
-            max-width: 100%;
-        }
-        
-        .blocklyText {
-            font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
-        }
-        
-        .blocklyCheckbox,
-        .blocklyLed {
-            fill: #ff3030 !important;
-            text-shadow: 0px 0px 6px #f00;
-            font-size: 17pt !important;
-        }
-        
-        .ui.card .blocklyPreview {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: calc(100% - 1em);
-            max-height: calc(100% - 1em);
-        }
-        
-        code {
-            white-space: pre-wrap;
-        }
-        code.lang-config, code.lang-package { display:none; }
-
-        code.lang-block::before,
-        code.lang-blocks::before,
-        code.lang-blocksxml::before,
-        code.lang-sig::before,
-        code.lang-sim::before,
-        code.lang-cards::before,
-        code.lang-namespaces::before,
-        code.lang-codecard::before {
-            content: "...";
-            position: absolute;
-            top: calc(50% - 0.5em);
-            left: calc(50% - 5em);
-        }
-        
-        code.lang-block,
-        code.lang-blocks,
-        code.lang-blocksxml,
-        code.lang-sig,
-        code.lang-sim,
-        code.lang-cards,
-        code.lang-namespaces,
-        code.lang-codecard {
-            color: transparent;
-        }
     </style>
     <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" type="text/css">
     <link id="blocklycss" rel="stylesheet" data-rtl="/blb/rtlblockly.css" href="/blb/blockly.css" type="text/css">
@@ -70,7 +16,6 @@
 
 <body id="docs">
     <style type="text/css">
-        @import "/docfiles/style.css";
         @import "/blb/highlight.js/styles/vs.css";
         @import "/blb/icons.css";
     </style>
