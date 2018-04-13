@@ -190,12 +190,18 @@ namespace pxt.blocks {
     let updateUsedBlocks = false;
 
     // list of built-in blocks, should be touched.
-    const builtinBlocks: Map<{
-        block: B.BlockDefinition;
+    let _builtinBlocks: Map<{
+        block: Blockly.BlockDefinition;
         symbol?: pxtc.SymbolInfo;
     }> = {};
-    Object.keys(Blockly.Blocks)
-        .forEach(k => builtinBlocks[k] = { block: Blockly.Blocks[k] });
+    export function builtinBlocks() {
+        if (!_builtinBlocks) {
+            _builtinBlocks = {};
+            Object.keys(Blockly.Blocks)
+                .forEach(k => _builtinBlocks[k] = { block: Blockly.Blocks[k] });
+        }
+        return _builtinBlocks;
+    }
     export const buildinBlockStatements: Map<boolean> = {
         "controls_if": true,
         "controls_for": true,
@@ -743,7 +749,7 @@ namespace pxt.blocks {
     function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo, blockXml: HTMLElement): boolean {
         let id = fn.attributes.blockId;
 
-        if (builtinBlocks[id]) {
+        if (builtinBlocks()[id]) {
             pxt.reportError("blocks", 'trying to override builtin block', { "details": id });
             return false;
         }
@@ -1184,8 +1190,8 @@ namespace pxt.blocks {
             .filter(fn => !tb || !getFirstChildWithAttr(tb, "block", "type", fn.attributes.blockId))
             .forEach(fn => {
                 if (fn.attributes.blockBuiltin) {
-                    Util.assert(!!builtinBlocks[fn.attributes.blockId]);
-                    builtinBlocks[fn.attributes.blockId].symbol = fn;
+                    Util.assert(!!builtinBlocks()[fn.attributes.blockId]);
+                    builtinBlocks()[fn.attributes.blockId].symbol = fn;
                 } else {
                     let comp = compileInfo(fn);
                     let block = createToolboxBlock(blockInfo, fn, comp);
