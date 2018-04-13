@@ -5,7 +5,6 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
-import * as baseToolbox from "./toolbox";
 
 import CategoryMode = pxt.blocks.CategoryMode;
 import Util = pxt.Util;
@@ -711,8 +710,8 @@ export class Editor extends srceditor.Editor {
 
     private getDefaultToolbox(showCategories = this.showToolboxCategories): HTMLElement {
         return showCategories !== CategoryMode.None ?
-            baseToolbox.getBaseToolboxDom().documentElement
-            : baseToolbox.getBaseNoCategoryToolboxDom().documentElement;
+            pxt.blocks.getBaseToolboxDom().documentElement
+            : pxt.blocks.getBaseNoCategoryToolboxDom().documentElement;
     }
 
     filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories = this.showToolboxCategories): Element {
