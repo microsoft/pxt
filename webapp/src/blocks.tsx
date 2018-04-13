@@ -557,6 +557,19 @@ export class Editor extends srceditor.Editor {
                     }
                     this.prepareBlockly();
                 })
+                .then(() => {
+                    if (pxt.appTarget.appTheme && !pxt.appTarget.appTheme.extendEditor) {
+                        return pxt.editor.initFieldExtensionsAsync(opts)
+                            .then(res => {
+                                if (res.fieldEditors) {
+                                    res.fieldEditors.forEach(fi => {
+                                        pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                                    })
+                                }
+                            });
+                    }
+                    return Promise.resolve();
+                })
         return this.loadBlocklyPromise;
     }
 

@@ -1364,6 +1364,16 @@ export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Prom
             }
             return Promise.resolve();
         })
+        .then(() => {
+            if (fs.existsSync(path.join("fieldeditors", "tsconfig.json"))) {
+                const tsConfig = JSON.parse(fs.readFileSync(path.join("fieldeditors", "tsconfig.json"), "utf8"));
+                if (tsConfig.compilerOptions.module)
+                    return buildFolderAndBrowserifyAsync('fieldeditors', true, 'fieldeditors');
+                else
+                    return buildFolderAsync('fieldeditors', true, 'fieldeditors');
+            }
+            return Promise.resolve();
+        })
         .then(() => buildFolderAsync('server', true, 'server'))
 
     function inCommonPkg(p: string) {
@@ -1813,6 +1823,8 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         }
         if (fs.existsSync("editor"))
             dirsToWatch.push("editor");
+        if (fs.existsSync("fieldeditors"))
+            dirsToWatch.push("fieldeditors");
         if (fs.existsSync("sim")) {
             dirsToWatch.push("sim"); // simulator
             dirsToWatch = dirsToWatch.concat(

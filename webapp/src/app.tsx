@@ -2248,11 +2248,6 @@ function initExtensionsAsync(): Promise<void> {
             if (res.beforeCompile) {
                 theEditor.beforeCompile = res.beforeCompile;
             }
-            if (res.fieldEditors) {
-                res.fieldEditors.forEach(fi => {
-                    pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                })
-            }
             if (res.toolboxOptions) {
                 if (res.toolboxOptions.blocklyXml) {
                     pxt.blocks.overrideBaseToolbox(res.toolboxOptions.blocklyXml);

@@ -259,8 +259,15 @@ namespace pxt.editor {
         beforeCompile?: () => void;
         deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
-        fieldEditors?: IFieldCustomOptions[];
         toolboxOptions?: IToolboxOptions;
+    }
+
+    export interface FieldExtensionOptions {
+
+    }
+
+    export interface FieldExtensionResult {
+        fieldEditors?: IFieldCustomOptions[];
     }
 
     export interface MonacoToolboxDefinition {
@@ -357,6 +364,8 @@ namespace pxt.editor {
     }
 
     export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;
+
+    export let initFieldExtensionsAsync: (opts: FieldExtensionOptions) => Promise<FieldExtensionResult>;
 
     export interface NativeHostMessage {
         name?: string;
