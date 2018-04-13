@@ -5,6 +5,24 @@ import Util = pxt.Util;
 let lf = Util.lf;
 
 namespace pxt.blocks {
+    let loadBlocklyPromise: Promise<void>;
+    export function loadBlocklyAsync(): Promise<void> {
+        if (!loadBlocklyPromise) {
+            const paths: Map<string> = (window as any).MonacoPaths
+            pxt.debug(`blockly: delay load`);
+            loadBlocklyPromise = Promise.all(
+                [
+                    "blockly/blockly_compressed.js",
+                    "blockly/blocks_compressed.js",
+                    "blockly/msg/js/en.js"
+                ].map(p => pxt.BrowserUtils.loadScriptAsync(paths[p]))
+            ).then(() => {
+                pxt.debug(`blockly: loaded`)
+            })
+        }
+        return loadBlocklyPromise;
+    }
+
     export const blockColors: Map<number | string> = {
         loops: '#107c10',
         logic: '#006970',

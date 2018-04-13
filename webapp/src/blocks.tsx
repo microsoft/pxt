@@ -78,7 +78,8 @@ export class Editor extends srceditor.Editor {
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loading);
 
-            this.loadingXmlPromise = compiler.getBlocksAsync()
+            this.loadingXmlPromise = pxt.blocks.loadBlocklyAsync()
+                .then(() => compiler.getBlocksAsync())
                 .then(bi => {
                     this.blockInfo = bi;
                     let showSearch = this.showSearch;
