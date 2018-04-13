@@ -440,7 +440,7 @@ export function getPauseUntil() {
             snippet,
             attributes: {
                 weight: opts.weight == null ? 0 : opts.weight,
-                jsDoc: pxt.blocks.blockDefinitions()[pxtc.PAUSE_UNTIL_TYPE].tooltip  as string,
+                jsDoc: Util.lf("Pause execution of code until the given boolean expression is true"),
                 advanced: false
             },
             noNamespace: true
