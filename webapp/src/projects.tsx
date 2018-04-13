@@ -271,6 +271,8 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         super(props)
         this.state = {
         }
+
+        this.closeDetailOnEscape = this.closeDetailOnEscape.bind(this);
     }
 
     componentDidMount() {
@@ -318,6 +320,21 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         return detailDom;
     }
 
+    closeDetailOnEscape(e: KeyboardEvent) {
+        const charCode = core.keyCodeFromEvent(e);
+        if (charCode != core.ESC_KEY) return;
+        this.closeDetail();
+
+        document.removeEventListener('keydown', this.closeDetailOnEscape);
+        e.preventDefault();
+    }
+
+    componentWillReceiveProps(nextProps?: ProjectsCarouselProps) {
+        if (nextProps.selectedIndex != undefined) {
+            document.addEventListener('keydown', this.closeDetailOnEscape);
+        }
+    }
+
     renderCore() {
         const { path, selectedIndex } = this.props;
 
@@ -346,23 +363,24 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 return <div>
                     <carousel.Carousel ref="carousel" bleedPercent={20} selectedIndex={selectedIndex}>
                         {cards.map((scr, index) =>
-                            <div key={path + scr.name}>
-                                <codecard.CodeCardView
-                                    className="example"
-                                    key={'gallery' + scr.name}
-                                    name={scr.name}
-                                    url={scr.url}
-                                    imageUrl={scr.imageUrl}
-                                    youTubeId={scr.youTubeId}
-                                    label={scr.label}
-                                    labelClass={scr.labelClass}
-                                    onClick={() => onClick(scr, index)}
-                                />
-                            </div>
+                            <codecard.CodeCardView
+                                className="example"
+                                key={path + scr.name}
+                                name={scr.name}
+                                url={scr.url}
+                                imageUrl={scr.imageUrl}
+                                youTubeId={scr.youTubeId}
+                                label={scr.label}
+                                labelClass={scr.labelClass}
+                                onClick={() => onClick(scr, index)}
+                            />
                         )}
                     </carousel.Carousel>
                     <div ref="detailView" className={`detailview ${cards.filter((scr, index) => index == selectedIndex).length > 0 ? 'visible' : ''}`}>
-                        {cards.filter((scr, index) => index == selectedIndex).length > 0 ? <div tabIndex={0} className="close"><sui.Icon icon="remove circle" onClick={() => this.closeDetail()} /> </div> : undefined}
+                        {cards.filter((scr, index) => index == selectedIndex).length > 0 ?
+                            <div className="close">
+                                <sui.Icon tabIndex={0} icon="remove circle" onClick={() => this.closeDetail()} />
+                            </div> : undefined}
                         {cards.filter((scr, index) => index == selectedIndex).map(scr =>
                             <ProjectsDetail parent={this.props.parent}
                                 name={scr.name}
@@ -383,24 +401,23 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const headers = this.fetchLocalData();
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
             return <carousel.Carousel bleedPercent={20}>
-                {showNewProject ? <div className="ui card link newprojectcard" tabIndex={0} title={lf("Creates a new empty project")} onClick={() => this.newProject()} onKeyDown={sui.fireClickOnEnter} >
+                {showNewProject ? <div className="ui card link newprojectcard" title={lf("Creates a new empty project")} onClick={() => this.newProject()} onKeyDown={sui.fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge add circle" />
                         <span className="header">{lf("New Project")}</span>
                     </div>
                 </div> : undefined}
                 {headers.map((scr, index) =>
-                    <div key={'local' + scr.id + scr.recentUse}>
-                        <codecard.CodeCardView
-                            ref={(view) => { if (index === 1) this.latestProject = view }}
-                            cardType="file"
-                            className="file"
-                            name={scr.name}
-                            time={scr.recentUse}
-                            url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                            onClick={() => onClick(scr)}
-                        />
-                    </div>
+                    <codecard.CodeCardView
+                        key={'local' + scr.id + scr.recentUse}
+                        ref={(view) => { if (index === 1) this.latestProject = view }}
+                        cardType="file"
+                        className="file"
+                        name={scr.name}
+                        time={scr.recentUse}
+                        url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
+                        onClick={() => onClick(scr)}
+                    />
                 )}
             </carousel.Carousel>
         }
@@ -513,7 +530,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                 closeIcon={true} header={lf("Import")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
-                <div className="ui cards">
+                <div className="ui two cards">
                     {pxt.appTarget.compile ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}

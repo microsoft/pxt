@@ -1239,7 +1239,8 @@ export class ProjectView
 
     // Close on escape
     closeOnEscape = (e: KeyboardEvent) => {
-        if (e.keyCode !== 27) return
+        const charCode = core.keyCodeFromEvent(e);
+        if (charCode !== core.ESC_KEY) return
         e.preventDefault()
         this.toggleSimulatorFullscreen();
     }
