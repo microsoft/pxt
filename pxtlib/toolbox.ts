@@ -1,6 +1,4 @@
-const lf = pxt.Util.lf;
-
-namespace pxt.blocks {
+namespace pxt.toolbox {
     export const blockColors: Map<number | string> = {
         loops: '#107c10',
         logic: '#006970',
@@ -56,7 +54,10 @@ namespace pxt.blocks {
         }
     }
 
-    export function injectToolboxIconCss(): void {
+    export function injectToolboxIconCss(extraCss?: string): void {
+        if (extraCss)
+            toolboxStyleBuffer += extraCss;
+
         if (!toolboxStyle) {
             toolboxStyle = document.createElement('style');
             toolboxStyle.id = "blocklyToolboxIcons";

@@ -9,7 +9,6 @@ import * as data from "./data";
 
 import Util = pxt.Util
 
-const lf = Util.lf
 const maxEntriesPerChart: number = 4000;
 
 export class Editor extends srceditor.Editor {

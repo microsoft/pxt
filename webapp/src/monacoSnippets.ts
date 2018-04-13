@@ -224,7 +224,7 @@ export const functions: BuiltinCategoryDefinition = {
         advanced: true,
         weight: 50.08,
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-        color: pxt.blocks.blockColors["functions"].toString(),
+        color: pxt.toolbox.blockColors["functions"].toString(),
         icon: "functions",
         paramDefl: {}
     }
@@ -350,7 +350,7 @@ export const arrays: BuiltinCategoryDefinition = {
     attributes: {
         advanced: true,
         weight: 50.07,
-        color: pxt.blocks.blockColors["arrays"].toString(),
+        color: pxt.toolbox.blockColors["arrays"].toString(),
         icon: "arrays",
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         paramDefl: {}

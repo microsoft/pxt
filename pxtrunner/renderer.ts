@@ -308,8 +308,8 @@ namespace pxt.runner {
                 return nsStyleBuffer;
             })
             .then((nsStyleBuffer) => {
-                Object.keys(pxt.blocks.blockColors).forEach((ns) => {
-                    const color = pxt.blocks.blockColors[ns] as string;
+                Object.keys(pxt.toolbox.blockColors).forEach((ns) => {
+                    const color = pxt.toolbox.blockColors[ns] as string;
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;

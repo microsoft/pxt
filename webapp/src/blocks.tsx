@@ -6,7 +6,7 @@ import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 
-import CategoryMode = pxt.blocks.CategoryMode;
+import CategoryMode = pxt.toolbox.CategoryMode;
 import Util = pxt.Util;
 let lf = Util.lf
 

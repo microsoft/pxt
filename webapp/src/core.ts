@@ -11,8 +11,6 @@ import Util = pxt.Util;
 
 export let highContrast: boolean;
 
-const lf = Util.lf;
-
 export type Component<S, T> = data.Component<S, T>;
 
 let dimmerInitialized = false;

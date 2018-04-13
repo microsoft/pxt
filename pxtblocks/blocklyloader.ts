@@ -481,7 +481,7 @@ namespace pxt.blocks {
 
                 if (showCategories !== CategoryMode.None && !(showCategories === CategoryMode.Basic && isAdvanced)) {
                     insertBlock(block, category, fn.attributes.weight, fn.attributes.group);
-                    injectToolboxIconCss();
+                    pxt.toolbox.injectToolboxIconCss();
                 } else if (showCategories === CategoryMode.None) {
                     tb.appendChild(block);
                 }
@@ -1255,16 +1255,15 @@ namespace pxt.blocks {
                             if (iconClass) headingLabel.setAttribute('web-icon-class', iconClass);
                         }
                         else {
-                            toolboxStyleBuffer += `
-                                .blocklyFlyoutLabelIcon.blocklyFlyoutIcon${topCats[i].getAttribute('name')} {
-                                    display: inline-block !important;
-                                    background-image: url("${Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon))}")!important;
-                                    width: 1em;
-                                    height: 1em;
-                                    background-size: 1em!important;
-                                }
-                            `;
-                            injectToolboxIconCss();
+                            pxt.toolbox.injectToolboxIconCss(`
+                            .blocklyFlyoutLabelIcon.blocklyFlyoutIcon${topCats[i].getAttribute('name')} {
+                                display: inline-block !important;
+                                background-image: url("${Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon))}")!important;
+                                width: 1em;
+                                height: 1em;
+                                background-size: 1em!important;
+                            }
+                        `);
                             headingLabel.setAttribute('web-icon-class', `blocklyFlyoutIcon${topCats[i].getAttribute('name')}`);
                         }
                     }

@@ -11,7 +11,6 @@ import * as data from "./data";
 import * as snippets from "./monacoSnippets"
 
 import Util = pxt.Util;
-const lf = Util.lf
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -1366,7 +1365,7 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
 
     componentDidUpdate(prevProps: MonacoToolboxProps, prevState: MonacoToolboxState) {
         // Inject toolbox icon css
-        pxt.blocks.injectToolboxIconCss();
+        pxt.toolbox.injectToolboxIconCss();
     }
 
     advancedClicked() {
@@ -1637,7 +1636,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         // Icon
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
         if (icon && injectIconClass) {
-            pxt.blocks.appendToolboxIconCss(iconClass, icon);
+            pxt.toolbox.appendToolboxIconCss(iconClass, icon);
         }
 
         return <div ref={e => this.treeRow = e} className={treeRowClass}

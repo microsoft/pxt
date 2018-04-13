@@ -8,7 +8,6 @@
 namespace pxt {
     export import U = pxtc.Util;
     export import Util = pxtc.Util;
-    const lf = U.lf;
 
     let savedAppTarget: TargetBundle;
     export function setAppTarget(trg: TargetBundle) {

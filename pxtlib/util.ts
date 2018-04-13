@@ -1320,3 +1320,4 @@ namespace ts.pxtc.BrowserImpl {
     }
 }
 
+const lf = ts.pxtc.Util.lf;

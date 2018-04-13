@@ -4,7 +4,6 @@
 namespace pxt.docs {
     declare var require: any;
     import U = pxtc.Util;
-    const lf = U.lf;
 
     let markedInstance: typeof marked;
 
