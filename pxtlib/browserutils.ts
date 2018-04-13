@@ -379,6 +379,25 @@ namespace pxt.BrowserUtils {
         })
     }
 
+    let loadBlocklyPromise: Promise<void>;
+    export function loadBlocklyAsync(): Promise<void> {
+        if (!loadBlocklyPromise) {
+            const paths: Map<string> = (window as any).MonacoPaths
+            pxt.debug(`blockly: delay load`);
+            loadBlocklyPromise = Promise.all(
+                [
+                    "blockly/blockly_compressed.js",
+                    "blockly/blocks_compressed.js",
+                    "blockly/msg/js/en.js",
+                    "pxtblocks.js"
+                ].map(p => pxt.BrowserUtils.loadScriptAsync(paths[p]))
+            ).then(() => {
+                pxt.debug(`blockly: loaded`)
+            })
+        }
+        return loadBlocklyPromise;
+    }
+
     export function initTheme() {
         function patchCdn(url: string): string {
             if (!url) return url;

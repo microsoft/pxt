@@ -538,7 +538,7 @@ export class Editor extends srceditor.Editor {
     private loadBlocklyPromise: Promise<void>;
     loadBlocklyAsync() {
         if (!this.loadBlocklyPromise)
-            this.loadBlocklyPromise = pxt.blocks.loadBlocklyAsync()
+            this.loadBlocklyPromise = pxt.BrowserUtils.loadBlocklyAsync()
                 .then(() => {
                     pxt.blocks.openHelpUrl = (url: string) => {
                         pxt.tickEvent("blocks.help", { url }, { interactiveConsent: true });
