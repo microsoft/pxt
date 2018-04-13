@@ -40,7 +40,8 @@ export class Editor extends srceditor.Editor {
         }
         else {
             $(classes).hide();
-            Blockly.hideChaff();
+            if (this.editor)
+                Blockly.hideChaff();
         }
     }
 
