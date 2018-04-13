@@ -19,14 +19,12 @@ Typically, an id correlates to a specific software component, which may be as si
 
 Continuing the example of detecting the brightness of a room used in Section~\ref{sec:shim-gen}, a listen call to the MessageBus with a component ID of the light sensor and a threshold event is the underlying mechanism enabled by the runtime, as illustrated by the equivalent C++ code snippet in Figure~\ref{fig:messageBus}.
 
-\begin{figure}
+\begin{figure}[h]
     \begin{lstlisting}
     #include "CircuitPlayground.h"
     CircuitPlayground cplay;
 
-    void onBright() {
-        // user defined code
-    }
+    void onBright() { // user defined code }
 
     int main() {
         cplay.messageBus.listen(ID_LIGHT_SENSOR, LIGHT_THRESHOLD_HIGH, onBright);
@@ -62,7 +60,6 @@ When invoking an APC, the scheduler snapshots the current processor context and 
     \item[1.] a hardware agnostic abstract specification of a driver model (e.g. a Button, or an Accelerometer). This is provided as a C++ base class.
     \item[2.] the concrete implementation of the abstract driver model, which is typically hardware specific. This is implemented as a subclass of a driver model, such as a LIS3DH accelerometer, as manufactured by ST Microelectronics.
     \item[3.] a high level driver that relies only on the interfaces specified in a driver model (e.g. a gesture recognizer based on an Accelerometer model).
-
 \end{itemize}
 
 This approach brings the benefits of abstraction and reusability to \CON, but without losing the hardware specific benefits seen in flat abstraction models where every MCU is made to look the same, even though their capabilities are different. This can be seen in the Arduino and mbed APIs, for example.

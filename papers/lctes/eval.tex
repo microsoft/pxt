@@ -54,7 +54,7 @@ to ensure logging does not affect time-related measurements.
 \subsection{Tight Loop Performance}
 
 To place the performance of \MC in context, we perform a comparative evaluation of \MC against two state-of-the-art
-solutions, using native C++ as our baseline. The two points of comparison are MicroPython~\cite{MicroPython}, an implementation
+solutions adopted by educators in the classroom, using native C++ as our baseline. The two points of comparison are MicroPython~\cite{MicroPython}, an implementation
 of Python for MCUs, and Espruino~\cite{espruinoBook}, an implementation of JavaScript for MCUs.
 For the CPX, a fork of MicroPython known as ``CircuitPython'' was used. Both MicroPython and Espruino use virtual machine (VM) approaches.
 
@@ -66,7 +66,8 @@ On AVR we only count to 25000, to fit in the 16 bit \texttt{int}, and scale up t
 For the micro:bit, MicroPython and Espruino are \emph{two or more orders of magnitude slower} than a native \CO program.
 \MC performs only 2x slower. The slowdown reflects the simple code generator of our STS compiler.
 It should be noted that \MC for the CPX uses the tagged approach, which allows for seamless runtime switching to floating point numbers,
-resulting in a further 3x slowdown. For both devices, we can observe that \MC outperforms both the VM-based solutions of MicroPython and
+resulting in a further 3x slowdown. For MicroPython there are two modes of execution, pre-compiled bytecode, and real-time
+interpretation of programs. For both devices, we can observe that \MC outperforms both the VM-based solutions of MicroPython and
 Espruino by at least an order of magnitude.
 
 MicroPython and similar environment cannot run on Arduino Uno due to flash and RAM size limitations.
@@ -89,14 +90,15 @@ into space issues.
     \multicolumn{1}{|c|}{\CO}         & 171ms  & 102ms     & 31ms  \\ \hline
     \multicolumn{1}{|c|}{\MC}         & 2.4x   & 2.1x      & 7.3x  \\ \hline
     \multicolumn{1}{|c|}{\MC VM}      & 15.3x  & -         & -     \\ \hline
-    \multicolumn{1}{|c|}{MicroPython} & -      & 101x      & 183x  \\ \hline
+    \multicolumn{1}{|c|}{MicroPython} & -      & 101x      & -  \\ \hline
+    \multicolumn{1}{|c|}{MicroPython Interpretted} & -      & 285x      & 183x  \\ \hline
     \multicolumn{1}{|c|}{Espruino}    & -      & 1139x     & -     \\ \hline
     \end{tabular}
     \caption{\label{table:vm-comparison} A comparison of execution speed between native C++ with \CO, \MC compiled
     to native machine code, \MC compiled to AVR VM, MicroPython and Espruino.
     First line lists C++ time, while subsequent lines are slowdowns with respect to the C++ time.
     The 6.4x slowdown of \MC VM compared to native \MC on AVR is compensated with 5x better code density.}
-    \end{table}
+\end{table}
 
 
 \subsection{Context Switch Performance}
@@ -131,7 +133,7 @@ The vertical band indicates typical stack sizes for \MC programs based on a repr
 
 \subsection{Performance of Asynchronous Operations}
 
-\begin{table}[]
+\begin{table}[h]
 \centering
 \begin{tabular}{c|c|c|}
     \cline{2-3}
@@ -149,7 +151,7 @@ These results highlight the performance gains of the opportunistic fork-on-block
 
 \subsection{Flash Memory Usage}
 
-\begin{table}[]
+\begin{table}[h]
 \centering
 \begin{tabular}{c|c|c|c|}
 \cline{2-4}
@@ -172,7 +174,7 @@ The size of \CO and \MC scales linearly with the amount of functionality a devic
 
 \subsection{RAM Memory Usage}
 
-\begin{table}[]
+\begin{table}[h]
 \centering
 \begin{tabular}{c|c|c|c|}
 \cline{2-4}
