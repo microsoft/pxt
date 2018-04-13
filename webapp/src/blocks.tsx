@@ -580,6 +580,8 @@ export class Editor extends srceditor.Editor {
 
         return this.loadBlocklyAsync()
             .then(() => {
+                pxt.blocks.cleanBlocks();
+
                 this.blockInfo = undefined;
                 this.currSource = file.content;
                 this.typeScriptSaveable = false;

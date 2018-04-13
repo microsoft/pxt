@@ -1798,7 +1798,7 @@ namespace pxt.blocks {
 
     export function cleanBlocks() {
         pxt.debug('removing all custom blocks')
-        for (let b in cachedBlocks)
+        for (const b in cachedBlocks)
             removeBlock(cachedBlocks[b].fn);
     }
 
