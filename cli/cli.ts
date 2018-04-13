@@ -2081,7 +2081,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
         includeSourceMaps = true;
     }
     if (!globalConfig.localToken) {
-        globalConfig.localToken = U.guidGen();
+        globalConfig.localToken = ts.pxtc.Util.guidGen();
         saveConfig()
     }
     let localToken = globalConfig.localToken;

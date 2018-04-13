@@ -80,7 +80,7 @@ export function initAsync() {
     if (!impl) impl = cloudworkspace.provider;
 
     // generate new workspace session id to avoid races with other tabs
-    sessionID = Util.guidGen();
+    sessionID = ts.pxtc.Util.guidGen();
     pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
     pxt.debug(`workspace session: ${sessionID}`);
 

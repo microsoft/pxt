@@ -1,6 +1,5 @@
 /// <reference path="../localtypings/blockly.d.ts" />
 /// <reference path="../built/pxtlib.d.ts" />
-import Util = pxt.Util;
 
 namespace pxt.blocks {
     export enum CategoryMode {

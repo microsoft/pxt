@@ -820,7 +820,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
     animationId: number;
     constructor(props: ModalProps) {
         super(props)
-        this.id = Util.guidGen();
+        this.id = ts.pxtc.Util.guidGen();
         this.state = {
             open: this.props.open,
             scrolling: false
