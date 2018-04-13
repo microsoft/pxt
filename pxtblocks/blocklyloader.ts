@@ -193,7 +193,7 @@ namespace pxt.blocks {
     let _builtinBlocks: Map<{
         block: Blockly.BlockDefinition;
         symbol?: pxtc.SymbolInfo;
-    }> = {};
+    }>;
     export function builtinBlocks() {
         if (!_builtinBlocks) {
             _builtinBlocks = {};

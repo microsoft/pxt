@@ -122,7 +122,7 @@ function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult
     return workerOpAsync("compile", { options: opts })
 }
 
-export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: B.Workspace, blockFile?: string): Promise<pxtc.CompileResult> {
+export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: Blockly.Workspace, blockFile?: string): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {

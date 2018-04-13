@@ -21,7 +21,7 @@ export class Editor extends srceditor.Editor {
     blockInfo: pxtc.BlocksInfo;
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
-    currentCommentOrWarning: B.Comment | B.Warning;
+    currentCommentOrWarning: Blockly.Comment | Blockly.Warning;
     selectedEventGroup: string;
     currentHelpCardType: string;
     showToolboxCategories: CategoryMode = CategoryMode.Basic;
@@ -78,7 +78,7 @@ export class Editor extends srceditor.Editor {
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loading);
 
-            this.loadingXmlPromise = pxt.blocks.loadBlocklyAsync()
+            this.loadingXmlPromise = this.loadBlocklyAsync()
                 .then(() => compiler.getBlocksAsync())
                 .then(bi => {
                     this.blockInfo = bi;
@@ -339,25 +339,6 @@ export class Editor extends srceditor.Editor {
     }
 
     prepare() {
-        pxt.blocks.openHelpUrl = (url: string) => {
-            pxt.tickEvent("blocks.help", { url }, { interactiveConsent: true });
-            const m = /^\/pkg\/([^#]+)#(.+)$/.exec(url);
-            if (m) {
-                const dep = pkg.mainPkg.deps[m[1]];
-                if (dep && dep.verProtocol() == "github") {
-                    // rewrite url to point to current endpoint
-                    url = `/pkg/${dep.verArgument().replace(/#.*$/, '')}#${m[2]}`;
-                    window.open(url, m[1]);
-                    return; // TODO support serving package docs in docs frame.
-                }
-            };
-            if (/^\//.test(url))
-                this.parent.setSideDoc(url);
-            else window.open(url, 'docs');
-        }
-
-        this.prepareBlockly();
-
         this.isReady = true
     }
 
@@ -554,50 +535,77 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    private loadBlocklyPromise: Promise<void>;
+    loadBlocklyAsync() {
+        if (!this.loadBlocklyPromise)
+            this.loadBlocklyPromise = pxt.blocks.loadBlocklyAsync()
+                .then(() => {
+                    pxt.blocks.openHelpUrl = (url: string) => {
+                        pxt.tickEvent("blocks.help", { url }, { interactiveConsent: true });
+                        const m = /^\/pkg\/([^#]+)#(.+)$/.exec(url);
+                        if (m) {
+                            const dep = pkg.mainPkg.deps[m[1]];
+                            if (dep && dep.verProtocol() == "github") {
+                                // rewrite url to point to current endpoint
+                                url = `/pkg/${dep.verArgument().replace(/#.*$/, '')}#${m[2]}`;
+                                window.open(url, m[1]);
+                                return; // TODO support serving package docs in docs frame.
+                            }
+                        };
+                        if (/^\//.test(url))
+                            this.parent.setSideDoc(url);
+                        else window.open(url, 'docs');
+                    }
+                    this.prepareBlockly();
+                })
+        return this.loadBlocklyPromise;
+    }
+
     loadFileAsync(file: pkg.File): Promise<void> {
         Util.assert(!this.delayLoadXml);
         Util.assert(!this.loadingXmlPromise);
 
-        this.blockInfo = undefined;
-        this.currSource = file.content;
-        this.typeScriptSaveable = false;
-        this.setDiagnostics(file)
-        this.delayLoadXml = file.content;
-        this.editor.clear();
-        this.editor.clearUndo();
+        return this.loadBlocklyAsync()
+            .then(() => {
+                this.blockInfo = undefined;
+                this.currSource = file.content;
+                this.typeScriptSaveable = false;
+                this.setDiagnostics(file)
+                this.delayLoadXml = file.content;
+                this.editor.clear();
+                this.editor.clearUndo();
 
-        if (this.currFile && this.currFile != file) {
-            this.filterToolbox(null);
-        }
-        if (this.parent.state.editorState && this.parent.state.editorState.filters) {
-            this.filterToolbox(this.parent.state.editorState.filters);
-        } else {
-            this.filters = null;
-        }
-        if (this.parent.state.editorState && this.parent.state.editorState.searchBar != undefined) {
-            this.showSearch = this.parent.state.editorState.searchBar;
-        } else {
-            this.showSearch = true;
-        }
-        if (this.parent.state.editorState && this.parent.state.editorState.hasCategories != undefined) {
-            this.showToolboxCategories = this.parent.state.editorState.hasCategories ? CategoryMode.Basic : CategoryMode.None;
-        } else {
-            this.showToolboxCategories = CategoryMode.Basic;
-        }
-        this.currFile = file;
-        // Clear the search field if a value exists
-        let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
-        if (searchField && searchField.value) {
-            searchField.value = '';
-        }
-        // Get extension packages
-        this.extensions = pkg.allEditorPkgs()
-            .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
-            // Make sure the package has extensions enabled, and is a github package.
-            // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
-            .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
-
-        return Promise.resolve();
+                if (this.currFile && this.currFile != file) {
+                    this.filterToolbox(null);
+                }
+                if (this.parent.state.editorState && this.parent.state.editorState.filters) {
+                    this.filterToolbox(this.parent.state.editorState.filters);
+                } else {
+                    this.filters = null;
+                }
+                if (this.parent.state.editorState && this.parent.state.editorState.searchBar != undefined) {
+                    this.showSearch = this.parent.state.editorState.searchBar;
+                } else {
+                    this.showSearch = true;
+                }
+                if (this.parent.state.editorState && this.parent.state.editorState.hasCategories != undefined) {
+                    this.showToolboxCategories = this.parent.state.editorState.hasCategories ? CategoryMode.Basic : CategoryMode.None;
+                } else {
+                    this.showToolboxCategories = CategoryMode.Basic;
+                }
+                this.currFile = file;
+                // Clear the search field if a value exists
+                let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+                if (searchField && searchField.value) {
+                    searchField.value = '';
+                }
+                // Get extension packages
+                this.extensions = pkg.allEditorPkgs()
+                    .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
+                    // Make sure the package has extensions enabled, and is a github package.
+                    // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
+                    .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
+            })
     }
 
     public switchToTypeScript() {
