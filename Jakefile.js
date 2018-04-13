@@ -16,10 +16,17 @@ function tscIn(task, dir, builtDir) {
     cmdIn(task, dir, command)
 }
 
-function compileDir(name, deps) {
+function compileDir(name, deps, extras) {
     if (!deps) deps = []
     let dd = expand([name].concat(deps))
-    file('built/' + name + '.js', dd, { async: true }, function () { tscIn(this, name, "built") })
+    let out = 'built/' + name + '.js';
+    file(out, dd, { async: true }, function () { 
+        tscIn(this, name, "built")
+     }).on('close', function() {
+        if (extras) {
+            ju.cat(out, extras.concat(out))
+        }
+     })
 }
 
 function loadText(filename) {
@@ -130,7 +137,7 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
 compileDir("pxtlib", "built/typescriptServices.d.ts")
 compileDir("pxtcompiler", ["built/pxtlib.js"])
 compileDir("pxtwinrt", ["built/pxtlib.js"])
-compileDir("pxtblocks", ["built/pxtlib.js"])
+compileDir("pxtblocks", ["built/pxtlib.js"], ["webapp/public/blockly/blockly_compressed.js", "webapp/public/blockly/blocks_compressed.js", "webapp/public/blockly/msg/js/en.js"])
 compileDir("pxtrunner", ["built/pxtlib.js", "built/pxteditor.js", "built/pxtcompiler.js", "built/pxtsim.js", "built/pxtblocks.js"])
 compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblocks.js"])
 compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js"])

@@ -326,7 +326,7 @@ namespace pxt.blocks {
         return result;
     }
 
-    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: Element, showCategories = CategoryMode.Basic, comp: pxt.blocks.BlockCompileInfo, filters?: BlockFilters) {
+    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: Element, showCategories = pxt.toolbox.CategoryMode.Basic, comp: pxt.blocks.BlockCompileInfo, filters?: BlockFilters) {
         // identity function are just a trick to get an enum drop down in the block
         // while allowing the parameter to be a number
         if (fn.attributes.blockHidden)
@@ -344,7 +344,7 @@ namespace pxt.blocks {
 
             let category = categoryElement(tb, catName);
 
-            if (showCategories === CategoryMode.All || showCategories == CategoryMode.Basic && !isAdvanced) {
+            if (showCategories === pxt.toolbox.CategoryMode.All || showCategories == pxt.toolbox.CategoryMode.Basic && !isAdvanced) {
                 if (!category) {
                     let categories = getChildCategories(tb)
                     let parentCategoryList = tb;
@@ -363,7 +363,7 @@ namespace pxt.blocks {
                     }
                     if (nsn && nsn.attributes.icon) {
                         const nsnIconClassName = `blocklyTreeIcon${nsn.name.toLowerCase()}`.replace(/\s/g, '');
-                        appendToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
+                        pxt.toolbox.appendToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
                         category.setAttribute("iconclass", nsnIconClassName);
                         category.setAttribute("expandedclass", nsnIconClassName);
                         category.setAttribute("web-icon", nsn.attributes.icon);
@@ -408,7 +408,7 @@ namespace pxt.blocks {
                 }
             }
 
-            if (showCategories === CategoryMode.Basic && isAdvanced &&
+            if (showCategories === pxt.toolbox.CategoryMode.Basic && isAdvanced &&
                 shouldUseBlockInSearch(fn.attributes.blockId, catName, filters)) {
                 usedBlocks[fn.attributes.blockId] = ns; // ns is localized already
                 updateUsedBlocks = true;
@@ -429,7 +429,7 @@ namespace pxt.blocks {
                     }
                     mutatedBlock.appendChild(mutation);
 
-                    if (showCategories !== CategoryMode.None) {
+                    if (showCategories !== pxt.toolbox.CategoryMode.None) {
                         insertBlock(mutatedBlock, category, fn.attributes.weight);
                     } else {
                         tb.appendChild(mutatedBlock);
@@ -441,7 +441,7 @@ namespace pxt.blocks {
                 mutationValues.forEach(mutation => {
                     const mutatedBlock = block.cloneNode(true) as HTMLElement;
                     mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
-                    if (showCategories !== CategoryMode.None) {
+                    if (showCategories !== pxt.toolbox.CategoryMode.None) {
                         insertBlock(mutatedBlock, category, fn.attributes.weight);
                     } else {
                         tb.appendChild(mutatedBlock);
@@ -479,10 +479,10 @@ namespace pxt.blocks {
                     block = setblock;
                 }
 
-                if (showCategories !== CategoryMode.None && !(showCategories === CategoryMode.Basic && isAdvanced)) {
+                if (showCategories !== pxt.toolbox.CategoryMode.None && !(showCategories === pxt.toolbox.CategoryMode.Basic && isAdvanced)) {
                     insertBlock(block, category, fn.attributes.weight, fn.attributes.group);
                     pxt.toolbox.injectToolboxIconCss();
-                } else if (showCategories === CategoryMode.None) {
+                } else if (showCategories === pxt.toolbox.CategoryMode.None) {
                     tb.appendChild(block);
                 }
             }
@@ -491,7 +491,7 @@ namespace pxt.blocks {
     }
 
     function insertBlock(bl: Element, cat: Element, weight?: number, group?: string) {
-        const isBuiltin = !!blockColors[cat.getAttribute("nameid")];
+        const isBuiltin = !!pxt.toolbox.blockColors[cat.getAttribute("nameid")];
         if (group) {
             bl.setAttribute("group", group)
         }
@@ -1056,7 +1056,7 @@ namespace pxt.blocks {
         Disabled = 2
     }
 
-    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters, extensions?: pxt.PackageConfig[]): Element {
+    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = pxt.toolbox.CategoryMode.Basic, filters?: BlockFilters, extensions?: pxt.PackageConfig[]): Element {
         init();
 
         // create new toolbox and update block definitions
@@ -1130,7 +1130,7 @@ namespace pxt.blocks {
                         el.appendChild(fe);
                     }
                 }
-                if (showCategories !== CategoryMode.None) {
+                if (showCategories !== pxt.toolbox.CategoryMode.None) {
                     let cat = categoryElement(tb, eb.namespace);
                     if (cat) {
                         insertBlock(el, cat, eb.weight)
@@ -1172,8 +1172,8 @@ namespace pxt.blocks {
                     }
                 }
 
-                if (showCategories !== CategoryMode.None) {
-                    if (showCategories === CategoryMode.All || showCategories == CategoryMode.Basic && !isAdvanced) {
+                if (showCategories !== pxt.toolbox.CategoryMode.None) {
+                    if (showCategories === pxt.toolbox.CategoryMode.All || showCategories == pxt.toolbox.CategoryMode.Basic && !isAdvanced) {
                         let cat = categoryElement(tb, namespace);
                         if (cat) {
                             insertButtonAtTop(button, cat)
@@ -1190,7 +1190,7 @@ namespace pxt.blocks {
             })
         }
 
-        if (tb && showCategories !== CategoryMode.None) {
+        if (tb && showCategories !== pxt.toolbox.CategoryMode.None) {
             // remove unused categories
             let config = pxt.appTarget.runtime || {};
             initBuiltinCategoryXml("Math", !config.mathBlocks);
@@ -1221,7 +1221,7 @@ namespace pxt.blocks {
                 cats[i].setAttribute('name',
                     Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
                 // Append Namespace CSS
-                appendNamespaceCss(cats[i].getAttribute('name'), cats[i].getAttribute('colour'));
+                pxt.toolbox.appendNamespaceCss(cats[i].getAttribute('name'), cats[i].getAttribute('colour'));
             }
 
             // update category colors and add heading
@@ -1312,13 +1312,13 @@ namespace pxt.blocks {
         }
 
         // Add the "Advanced" category
-        if (showAdvanced && tb && showCategories !== CategoryMode.None) {
-            const cat = createCategoryElement(advancedTitle(), "Advanced", 1, getNamespaceColor('advanced'), showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
+        if (showAdvanced && tb && showCategories !== pxt.toolbox.CategoryMode.None) {
+            const cat = createCategoryElement(advancedTitle(), "Advanced", 1, getNamespaceColor('advanced'), showCategories === pxt.toolbox.CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
             insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             insertTopLevelCategory(cat, tb, 1, false);
         }
 
-        if (tb && (!showAdvanced || showCategories === CategoryMode.All) && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
+        if (tb && (!showAdvanced || showCategories === pxt.toolbox.CategoryMode.All) && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
             if (!showAdvanced) {
                 insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             }
@@ -1363,7 +1363,7 @@ namespace pxt.blocks {
                 return hasChild;
             }
 
-            if (showCategories !== CategoryMode.None) {
+            if (showCategories !== pxt.toolbox.CategoryMode.None) {
                 // Go through namespaces and keep the ones with an override
                 let categories = tb.getElementsByTagName(`category`);
                 for (let ci = 0; ci < categories.length; ++ci) {
@@ -1425,7 +1425,7 @@ namespace pxt.blocks {
                 filterBlocks(blocks);
             }
 
-            if (showCategories !== CategoryMode.None) {
+            if (showCategories !== pxt.toolbox.CategoryMode.None) {
                 // Go through all categories, hide the ones that have no blocks inside
                 let categories = tb.getElementsByTagName(`category`);
                 for (let ci = 0; ci < categories.length; ++ci) {
@@ -1545,7 +1545,7 @@ namespace pxt.blocks {
                         }
                     }
 
-                    if (showCategories === CategoryMode.Basic) {
+                    if (showCategories === pxt.toolbox.CategoryMode.Basic) {
                         removeCategory(tb, name);
                     }
                 }
@@ -1563,7 +1563,7 @@ namespace pxt.blocks {
         insertBlock(block, cat, weight, options.group);
     }
 
-    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters, extensions?: pxt.PackageConfig[]): Element {
+    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = pxt.toolbox.CategoryMode.Basic, filters?: BlockFilters, extensions?: pxt.PackageConfig[]): Element {
         init();
         initTooltip(blockInfo);
         initJresIcons(blockInfo);
@@ -2523,7 +2523,7 @@ namespace pxt.blocks {
                     ],
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": blockColors['loops'],
+                    "colour": pxt.toolbox.blockColors['loops'],
                     "inputsInline": true
                 });
 
@@ -2562,7 +2562,7 @@ namespace pxt.blocks {
                             "check": "Number"
                         }
                     ],
-                    "colour": blockColors['arrays'],
+                    "colour": pxt.toolbox.blockColors['arrays'],
                     "inputsInline": true
                 });
 
@@ -2599,7 +2599,7 @@ namespace pxt.blocks {
                     ],
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": blockColors['arrays'],
+                    "colour": pxt.toolbox.blockColors['arrays'],
                     "inputsInline": true
                 });
                 setBuiltinHelpInfo(this, listsIndexSetId);
@@ -2726,8 +2726,8 @@ namespace pxt.blocks {
     export function getNamespaceColor(ns: string): string {
         if (pxt.appTarget.appTheme.blockColors && pxt.appTarget.appTheme.blockColors[ns])
             return pxt.appTarget.appTheme.blockColors[ns] as string;
-        if (blockColors[ns])
-            return blockColors[ns] as string;
+        if (pxt.toolbox.blockColors[ns])
+            return pxt.toolbox.blockColors[ns] as string;
         return "";
     }
 
@@ -2735,8 +2735,8 @@ namespace pxt.blocks {
         if (pxt.appTarget.appTheme.blockIcons && pxt.appTarget.appTheme.blockIcons[ns]) {
             return pxt.appTarget.appTheme.blockIcons[ns] as string;
         }
-        if (blockIcons[ns]) {
-            return blockIcons[ns] as string;
+        if (pxt.toolbox.blockIcons[ns]) {
+            return pxt.toolbox.blockIcons[ns] as string;
         }
         return "";
     }
