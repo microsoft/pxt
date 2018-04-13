@@ -22,9 +22,9 @@ Fahrenheit and Celsius are different ways to measure temperature. Celsius doesn'
 
 * a new value that is a [number](/types/number) converted from original **value** using a mapping of the **from** range into the **to** range.
 
-# Example
+# Example #example
 
-Find out the age in "people years" of a dog that's `7` years old.
+Use a lifespan map to find out the age in "people years" of a dog that's `7` years old.
 
 ```block 
 let dogsAge = 7 
