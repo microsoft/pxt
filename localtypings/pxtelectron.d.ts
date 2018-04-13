@@ -15,6 +15,7 @@ declare namespace pxt.electron {
 
     // The object that gets injected into the window
     export interface PxtElectron {
-        initTelemetry: (telemetryHandler: TelemetryHandler) => void;
+        registerTelemetryHandler: (telemetryHandler: TelemetryHandler) => void;
+        registerUpdateHandler: (updateHandler: () => void) => void;
     }
 }

@@ -8,11 +8,11 @@ export const isElectron = isPxtElectron || isIpcRenderer;
 
 const downloadingUpdateLoadingName = "pxtelectron-downloadingupdate";
 
-export function initPxtElectronAsync(): Promise<void> {
+export function initPxtElectron(): void {
     if (!isPxtElectron) {
-        return Promise.resolve();
+        return;
     }
 
-    pxtElectron.initTelemetry(pxt.tickEvent);
-    return Promise.resolve();
+    pxtElectron.registerTelemetryHandler(pxt.tickEvent);
+    pxtElectron.registerUpdateHandler(() => core.infoNotification(Util.lf("An update will take effect after the app restarts")));
 }
