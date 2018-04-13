@@ -13,8 +13,7 @@ section we break down results into the two basic layers (\CO and \MCN)
 to give an insight into how each layer performs:
 \begin{itemize}
 \item \emph{\CO}: the device runtime, against which we write C++ programs;
-\item \emph{\MC}: the C++ and STS wrapping \CO
-to expose it to \MC, against which we write STS programs.
+\item \emph{\MC}: the C++ and STS wrapping \CO to expose it to \MC, against which we write STS programs.
 \end{itemize}
 
 \subsection{Benchmarks, Devices, and Methodology}
@@ -92,7 +91,7 @@ into space issues.
     \multicolumn{1}{|c|}{MicroPython} & -      & 101x      & 183x  \\ \hline
     \multicolumn{1}{|c|}{Espruino}    & -      & 1139x     & -     \\ \hline
     \end{tabular}
-    \caption{\label{table:vm-comparison} A comparison of execution speed between native C++ with \CO, \MC compiled
+    \caption{\label{table:vm-comparison} A comparison of execution speed between native C++ with \CON, \MC compiled
     to native machine code, \MC compiled to AVR VM, MicroPython and Espruino.
     First line lists C++ time, while subsequent lines are slowdowns with respect to the C++ time.
     The 6.4x slowdown of \MC VM compared to native \MC on AVR is compensated with 5x better code density.}
@@ -114,7 +113,7 @@ into space issues.
 To evaluate the performance of \CON's scheduler we conducted a test that created two fibers, continuously swapped context, and measured the time taken to complete the context switch.
 We performed this test in both STS and C++ and the resulting profiles can be seen in Figure~\ref{fig:context-switch}, which
 breaks the context switch down into three phases:
-(1) \CO, the time it takes to perform a context switch in \CO;
+(1) \CON, the time it takes to perform a context switch in \CON;
 (2) Stack, the time taken to page out the \MC stack; and
 (3) \MCN, the overhead added by the \MC wrappers.
 
