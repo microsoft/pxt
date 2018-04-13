@@ -32,7 +32,6 @@ import * as projects from "./projects";
 import * as extensions from "./extensions";
 import * as sounds from "./sounds";
 import * as make from "./make";
-import * as baseToolbox from "./toolbox";
 import * as monacoToolbox from "./monacoSnippets"
 
 import * as monaco from "./monaco"
@@ -2257,7 +2256,7 @@ function initExtensionsAsync(): Promise<void> {
             }
             if (res.toolboxOptions) {
                 if (res.toolboxOptions.blocklyXml) {
-                    baseToolbox.overrideBaseToolbox(res.toolboxOptions.blocklyXml);
+                    pxt.blocks.overrideBaseToolbox(res.toolboxOptions.blocklyXml);
                 }
                 if (res.toolboxOptions.monacoToolbox) {
                     monacoToolbox.overrideToolbox(res.toolboxOptions.monacoToolbox);
