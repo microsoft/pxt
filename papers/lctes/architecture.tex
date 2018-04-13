@@ -1,8 +1,9 @@
  \section{Architecture}
 
 \begin{figure}[t]
-    \includegraphics[width=4.8in]{makecodeFig.pdf}
-\caption{\label{fig:makecode}The \MC and \CO Architecture}
+    \includegraphics[width=\columnwidth]{images/arch-diagram.png}
+    \setlength{\belowcaptionskip}{-10pt}
+    \caption{\label{fig:makecode}The \MC and \CO Architecture}
 \end{figure}
 
 Figure~\ref{fig:makecode} illustrates the architecture of our platform. The \MC web application (Section~\ref{sec:makecode}) is the primary entry point to the platform. \MC requires no installation, and supports the simplified asynchronous programming of MCUs via editors for visual blocks and textual TypeScript languages. Supporting these higher level languages is \CO (Section~\ref{sec:codal}), a component-oriented, event-driven, fiber-based C++ runtime environment that bridges the semantic gap between higher-level languages (such as TypeScript) and the hardware, modelling each hardware component as a software component. Enabling the programming of the microcontroller is \UF (Section~\ref{sec:uf2}), a new file format and bootloader for simplified transfer of serial data (such as programs) to the device, using a driverless USB mass storage abstraction.
@@ -11,4 +12,4 @@ Figure~\ref{fig:makecode} illustrates the architecture of our platform. The \MC 
 
 \MC devices appear as USB pen drives when plugged into a computer. After a user has finished developing a program, the compiled binary is ``downloaded'' locally to the users computer and then transferred (flashed) to the MCU by a simple file copy operation. No additional installation is required to program the MCU as drivers for pen drive come pre-installed on all common operating systems (MacOS, Windows, Linux, Android, ChromeOS).
 
-These advances enable beginners to get started programming MCUs from any modern web browser, and offer a safe environment for hardware vendors to innovate and add new components using Static TypeScript as a high level language. All of the platform's components are open source on GitHub (\emph{\href{https://github.com/microsoft/pxt}{\MCN}}, \emph{\href{https://github.com/lancaster-university/codal}{\CON}}, \emph{\href{https://github.com/microsoft/UF2}{\UFN}}).
+These advances enable beginners to get started programming MCUs from any modern web browser, and offer a safe environment for hardware vendors to innovate and add new components using Static TypeScript as a high level language. \emph{\href{https://github.com/microsoft/pxt}{\MCN}}, \emph{\href{https://github.com/lancaster-university/codal}{\CON}}, \emph{\href{https://github.com/microsoft/UF2}{\UFN}} are open source on GitHub.
