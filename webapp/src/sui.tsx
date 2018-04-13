@@ -220,12 +220,22 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         })
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(nextProps: DropdownProps, nextState: DropdownState) {
         // Remove active from all menu items on any update
         const menu = this.refs["menu"] as HTMLElement;
         for (let i = 0; i < menu.childNodes.length; i++) {
             const child = menu.childNodes[i] as HTMLElement;
             this.blur(child);
+        }
+
+        // Check if dropdown width exceeds the bounds, add the left class to the menu
+        if (nextState.open != this.state.open && this.state.open) {
+            const dropdown = this.refs["dropdown"] as HTMLElement;
+            const menu = this.refs["menu"] as HTMLElement;
+            if (dropdown.offsetLeft + menu.offsetWidth > window.innerWidth) {
+                // Add left class to the menu
+                pxsim.U.addClass(menu, 'left');
+            }
         }
     }
 
