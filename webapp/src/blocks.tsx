@@ -558,8 +558,9 @@ export class Editor extends srceditor.Editor {
                     this.prepareBlockly();
                 })
                 .then(() => {
-                    if (pxt.appTarget.appTheme && !pxt.appTarget.appTheme.extendEditor) {
-                        return pxt.editor.initFieldExtensionsAsync(opts)
+                    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
+                        return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "fieldeditors.js")
+                            .then(() => pxt.editor.initFieldExtensionsAsync({}))
                             .then(res => {
                                 if (res.fieldEditors) {
                                     res.fieldEditors.forEach(fi => {
