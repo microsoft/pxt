@@ -34,7 +34,7 @@ export function merge(prj: Project) {
 }
 
 function getHeaders(): Header[] {
-    return Util.values(projects).map(p => p.header);
+    return pxt.Util.values(projects).map(p => p.header);
 }
 
 function getHeader(id: string): Header {

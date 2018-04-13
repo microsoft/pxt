@@ -195,7 +195,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             </div>
             {Object.keys(galleries).map(galleryName =>
                 <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
-                    <h2 className="ui header heading">{Util.rlf(galleryName)} </h2>
+                    <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
                     <div className="content">
                         <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`} key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} onClick={(scr: any) => chgGallery(scr)} setSelected={(index: number) => this.setSelected(galleryName, index)} selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined} />
                     </div>
@@ -288,7 +288,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             if (res instanceof Error) {
                 this.hasFetchErrors = true;
             } else {
-                this.prevGalleries = Util.concat(res.map(g => g.cards));
+                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards));
             }
         }
         return this.prevGalleries || [];

@@ -276,9 +276,9 @@ function getStoppedClass() {
 
 function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {
     function btn(icon: string, name: string, label: string, click: () => void) {
-        let b = $(`<button class="ui mini button teal" title="${Util.htmlEscape(label)}"></button>`)
+        let b = $(`<button class="ui mini button teal" title="${pxt.Util.htmlEscape(label)}"></button>`)
         if (icon) b.addClass("icon").append(`<i class="${icon} icon"></i>`)
-        if (name) b.append(Util.htmlEscape(name));
+        if (name) b.append(pxt.Util.htmlEscape(name));
         return b.click(click)
     }
 

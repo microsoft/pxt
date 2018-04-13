@@ -148,7 +148,7 @@ function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         return browserDownloadDeployCoreAsync(resp);
     core.infoNotification(lf("Downloading..."));
     let f = resp.outfiles[pxtc.BINARY_UF2]
-    let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
+    let blocks = pxtc.UF2.parseFile(pxt.Util.stringToUint8Array(atob(f)))
     return hidbridge.initAsync()
         .then(dev => dev.reflashAsync(blocks))
 }
@@ -290,7 +290,7 @@ function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('local deployment...');
     core.infoNotification(lf("Uploading .hex file..."));
-    let deploy = () => Util.requestAsync({
+    let deploy = () => pxt.Util.requestAsync({
         url: "/api/deploy",
         headers: { "Authorization": Cloud.localToken },
         method: "POST",

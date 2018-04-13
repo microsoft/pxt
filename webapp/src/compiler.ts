@@ -194,7 +194,7 @@ export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
     return ensureApisInfoAsync()
         .then(() => {
             searchFor.localizedApis = cachedApis;
-            searchFor.localizedStrings = Util.getLocalizedStrings();
+            searchFor.localizedStrings = pxt.Util.getLocalizedStrings();
             return workerOpAsync("apiSearch", { search: searchFor })
         });
 }
