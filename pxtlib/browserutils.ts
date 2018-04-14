@@ -382,11 +382,13 @@ namespace pxt.BrowserUtils {
         if (document.getElementById(id))
             return Promise.resolve(); // already in DOM
 
+        pxt.debug(`script: loading ${url}`);
         return new Promise<void>((resolve, reject) => {
             const script = document.createElement('script');
             script.type = 'text/javascript';
             script.src = url;
             script.id = id;
+            script.async = false;
             script.addEventListener('load', () => resolve());
             script.addEventListener('error', (e) => reject(e));
             document.body.appendChild(script);
