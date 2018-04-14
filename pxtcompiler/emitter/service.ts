@@ -235,7 +235,7 @@ namespace ts.pxtc {
                 snippet: service.getSnippet(decl, attributes)
             }
 
-            if ((stmt.kind === SK.GetAccessor && !getDeclarationOfKind(decl.symbol, SK.SetAccessor)) ||
+            if (stmt.kind === SK.GetAccessor ||
                 (stmt.kind === SK.PropertyDeclaration && isReadonly(stmt as Declaration))) {
                 r.isReadOnly = true
             }
