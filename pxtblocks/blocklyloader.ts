@@ -358,8 +358,8 @@ namespace pxt.blocks {
                     if (nsn && nsn.attributes.color) {
                         category.setAttribute("colour", nsn.attributes.color);
                     }
-                    else if (getNamespaceColor(ns)) {
-                        category.setAttribute("colour", getNamespaceColor(ns));
+                    else if (pxt.toolbox.getNamespaceColor(ns)) {
+                        category.setAttribute("colour", pxt.toolbox.getNamespaceColor(ns));
                     }
                     if (nsn && nsn.attributes.icon) {
                         const nsnIconClassName = `blocklyTreeIcon${nsn.name.toLowerCase()}`.replace(/\s/g, '');
@@ -729,7 +729,7 @@ namespace pxt.blocks {
         const color =
             fn.attributes.color
             || (nsinfo ? nsinfo.attributes.color : undefined)
-            || getNamespaceColor(ns.toLowerCase())
+            || pxt.toolbox.getNamespaceColor(ns.toLowerCase())
             || 255;
 
         if (fn.attributes.help)
@@ -1228,7 +1228,7 @@ namespace pxt.blocks {
             let topCats = getDirectChildren(tb, "category")
 
             for (let i = 0; i < topCats.length; i++) {
-                const nsColor = getNamespaceColor(topCats[i].getAttribute('nameid'));
+                const nsColor = pxt.toolbox.getNamespaceColor(topCats[i].getAttribute('nameid'));
                 if (nsColor && nsColor != "") {
                     topCats[i].setAttribute('colour', nsColor);
                     // Update subcategory colours
@@ -1237,7 +1237,7 @@ namespace pxt.blocks {
                         subCats[j].setAttribute('colour', nsColor);
                     }
                 }
-                const nsIcon = getNamespaceIcon(topCats[i].getAttribute('nameid'));
+                const nsIcon = pxt.toolbox.getNamespaceIcon(topCats[i].getAttribute('nameid'));
                 if (nsIcon && nsIcon != "") {
                     topCats[i].setAttribute('web-icon', nsIcon);
                 }
@@ -1313,7 +1313,7 @@ namespace pxt.blocks {
 
         // Add the "Advanced" category
         if (showAdvanced && tb && showCategories !== pxt.toolbox.CategoryMode.None) {
-            const cat = createCategoryElement(advancedTitle(), "Advanced", 1, getNamespaceColor('advanced'), showCategories === pxt.toolbox.CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
+            const cat = createCategoryElement(advancedTitle(), "Advanced", 1, pxt.toolbox.getNamespaceColor('advanced'), showCategories === pxt.toolbox.CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
             insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             insertTopLevelCategory(cat, tb, 1, false);
         }
@@ -1838,12 +1838,12 @@ namespace pxt.blocks {
 
     function setBuiltinHelpInfo(block: any, id: string) {
         const info = pxt.blocks.getBlockDefinition(id);
-        setHelpResources(block, id, info.name, info.tooltip, info.url, getNamespaceColor(info.category));
+        setHelpResources(block, id, info.name, info.tooltip, info.url, pxt.toolbox.getNamespaceColor(info.category));
     }
 
     function installBuiltinHelpInfo(id: string) {
         const info = pxt.blocks.getBlockDefinition(id);
-        installHelpResources(id, info.name, info.tooltip, info.url, getNamespaceColor(info.category));
+        installHelpResources(id, info.name, info.tooltip, info.url, pxt.toolbox.getNamespaceColor(info.category));
     }
 
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string, undeletable?: boolean) {
@@ -1942,7 +1942,7 @@ namespace pxt.blocks {
                     ],
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": getNamespaceColor('loops')
+                    "colour": pxt.toolbox.getNamespaceColor('loops')
                 });
                 this.appendStatementInput("DO")
                     .appendField(deviceWhileDef.block["appendField"]);
@@ -1980,7 +1980,7 @@ namespace pxt.blocks {
                     ],
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": getNamespaceColor('loops'),
+                    "colour": pxt.toolbox.getNamespaceColor('loops'),
                     "inputsInline": true
                 });
                 this.appendStatementInput('DO')
@@ -1994,7 +1994,7 @@ namespace pxt.blocks {
                         return U.rlf(<string>controlsSimpleForDef.tooltip, thisBlock.getFieldValue('VAR'));
                     },
                     controlsSimpleForDef.url,
-                    String(getNamespaceColor('loops'))
+                    String(pxt.toolbox.getNamespaceColor('loops'))
                 );
             },
             /**
@@ -2383,7 +2383,7 @@ namespace pxt.blocks {
                             "name": "HANDLER"
                         }
                     ],
-                    "colour": (pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || getNamespaceColor('loops')
+                    "colour": (pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || pxt.toolbox.getNamespaceColor('loops')
                 });
 
                 setHelpResources(this,
@@ -2391,7 +2391,7 @@ namespace pxt.blocks {
                     onStartDef.name,
                     onStartDef.tooltip,
                     onStartDef.url,
-                    String((pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || getNamespaceColor('loops')),
+                    String((pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || pxt.toolbox.getNamespaceColor('loops')),
                     undefined, undefined,
                     pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartUnDeletable : false
                 );
@@ -2474,7 +2474,7 @@ namespace pxt.blocks {
             const blockDef = pxt.blocks.getBlockDefinition(ts.pxtc.PAUSE_UNTIL_TYPE);
             Blockly.Blocks[pxtc.PAUSE_UNTIL_TYPE] = {
                 init: function () {
-                    const color = blockOptions.color || getNamespaceColor('loops');
+                    const color = blockOptions.color || pxt.toolbox.getNamespaceColor('loops');
 
                     this.jsonInit({
                         "message0": blockDef.block["message0"],
@@ -2545,7 +2545,7 @@ namespace pxt.blocks {
                         return U.rlf(<string>controlsForOfDef.tooltip, thisBlock.getFieldValue('VAR'));
                     },
                     controlsForOfDef.url,
-                    String(getNamespaceColor('loops'))
+                    String(pxt.toolbox.getNamespaceColor('loops'))
                 );
             }
         };
@@ -2645,7 +2645,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "colour": getNamespaceColor('math')
+                    "colour": pxt.toolbox.getNamespaceColor('math')
                 });
 
                 let thisBlock = this;
@@ -2656,7 +2656,7 @@ namespace pxt.blocks {
                         return mathOp2Tooltips[block.getFieldValue('op')];
                     },
                     mathOp2Def.url,
-                    getNamespaceColor(mathOp2Def.category)
+                    pxt.toolbox.getNamespaceColor(mathOp2Def.category)
                 );
             }
         };
@@ -2677,7 +2677,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "colour": getNamespaceColor('math')
+                    "colour": pxt.toolbox.getNamespaceColor('math')
                 });
 
                 setBuiltinHelpInfo(this, mathOp3Id);
@@ -2718,7 +2718,7 @@ namespace pxt.blocks {
                 return mathArithmeticTooltips[block.getFieldValue('OP')];
             },
             mathArithmeticDef.url,
-            getNamespaceColor(mathArithmeticDef.category)
+            pxt.toolbox.getNamespaceColor(mathArithmeticDef.category)
         );
 
         // builtin math_modulo
@@ -2728,24 +2728,6 @@ namespace pxt.blocks {
         installBuiltinHelpInfo(mathModuloId);
 
         initMathOpBlock();
-    }
-
-    export function getNamespaceColor(ns: string): string {
-        if (pxt.appTarget.appTheme.blockColors && pxt.appTarget.appTheme.blockColors[ns])
-            return pxt.appTarget.appTheme.blockColors[ns] as string;
-        if (pxt.toolbox.blockColors[ns])
-            return pxt.toolbox.blockColors[ns] as string;
-        return "";
-    }
-
-    export function getNamespaceIcon(ns: string): string {
-        if (pxt.appTarget.appTheme.blockIcons && pxt.appTarget.appTheme.blockIcons[ns]) {
-            return pxt.appTarget.appTheme.blockIcons[ns] as string;
-        }
-        if (pxt.toolbox.blockIcons[ns]) {
-            return pxt.toolbox.blockIcons[ns] as string;
-        }
-        return "";
     }
 
     export function initFlyouts(workspace: Blockly.Workspace) {
@@ -2772,8 +2754,8 @@ namespace pxt.blocks {
                 let headingLabel = goog.dom.createDom('label') as HTMLElement;
                 headingLabel.setAttribute('text', lf("Variables"));
                 headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
-                headingLabel.setAttribute('web-icon', getNamespaceIcon('variables'));
-                headingLabel.setAttribute('web-icon-color', getNamespaceColor('variables'));
+                headingLabel.setAttribute('web-icon', pxt.toolbox.getNamespaceIcon('variables'));
+                headingLabel.setAttribute('web-icon-color', pxt.toolbox.getNamespaceColor('variables'));
                 xmlList.push(headingLabel);
             }
 
@@ -2907,7 +2889,7 @@ namespace pxt.blocks {
                     "inputsInline": true,
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": getNamespaceColor('variables')
+                    "colour": pxt.toolbox.getNamespaceColor('variables')
                 });
 
                 setBuiltinHelpInfo(this, variablesChangeId);
@@ -2936,7 +2918,7 @@ namespace pxt.blocks {
                 .appendField((Blockly as any).Msg.PROCEDURES_DEFNORETURN_TITLE)
                 .appendField(nameField, 'NAME')
                 .appendField('', 'PARAMS');
-            this.setColour(getNamespaceColor('functions'));
+            this.setColour(pxt.toolbox.getNamespaceColor('functions'));
             this.arguments_ = [];
             this.argumentVarModels_ = [];
             this.setStartHat(true);
@@ -2960,7 +2942,7 @@ namespace pxt.blocks {
                     .appendField(nameField, 'NAME');
                 this.setPreviousStatement(true);
                 this.setNextStatement(true);
-                this.setColour(getNamespaceColor('functions'));
+                this.setColour(pxt.toolbox.getNamespaceColor('functions'));
                 this.arguments_ = [];
                 this.quarkConnections_ = {};
                 this.quarkIds_ = null;
@@ -3085,9 +3067,9 @@ namespace pxt.blocks {
                 let headingLabel = goog.dom.createDom('label');
                 headingLabel.setAttribute('text', lf("Functions"));
                 headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
-                headingLabel.setAttribute('web-icon', getNamespaceIcon('functions'));
+                headingLabel.setAttribute('web-icon', pxt.toolbox.getNamespaceIcon('functions'));
                 headingLabel.setAttribute('web-icon-class', 'blocklyFlyoutIconfunctions');
-                headingLabel.setAttribute('web-icon-color', getNamespaceColor('functions'));
+                headingLabel.setAttribute('web-icon-color', pxt.toolbox.getNamespaceColor('functions'));
                 xmlList.push(headingLabel as HTMLElement);
             }
 
@@ -3179,7 +3161,7 @@ namespace pxt.blocks {
                     let block = goog.dom.createDom('block');
                     block.setAttribute('type', templateName);
                     block.setAttribute('gap', '16');
-                    block.setAttribute('colour', getNamespaceColor('functions'));
+                    block.setAttribute('colour', pxt.toolbox.getNamespaceColor('functions'));
                     let field = goog.dom.createDom('field', null, name);
                     field.setAttribute('name', 'NAME');
                     block.appendChild(field);

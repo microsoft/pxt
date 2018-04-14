@@ -85,4 +85,22 @@ namespace pxt.toolbox {
             }
         `;
     }
+
+    export function getNamespaceColor(ns: string): string {
+        if (pxt.appTarget.appTheme.blockColors && pxt.appTarget.appTheme.blockColors[ns])
+            return pxt.appTarget.appTheme.blockColors[ns] as string;
+        if (pxt.toolbox.blockColors[ns])
+            return pxt.toolbox.blockColors[ns] as string;
+        return "";
+    }
+
+    export function getNamespaceIcon(ns: string): string {
+        if (pxt.appTarget.appTheme.blockIcons && pxt.appTarget.appTheme.blockIcons[ns]) {
+            return pxt.appTarget.appTheme.blockIcons[ns] as string;
+        }
+        if (pxt.toolbox.blockIcons[ns]) {
+            return pxt.toolbox.blockIcons[ns] as string;
+        }
+        return "";
+    }
 }
