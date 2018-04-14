@@ -52,7 +52,7 @@ namespace pxtblockly {
 
             this.backgroundColour_ = pxtblockly.parseColour(options.colour);
             this.itemColour_ = options.itemColour || "rgba(255, 255, 255, 0.6)";
-            this.borderColour_ = Blockly.PXTUtils.fadeColour(this.backgroundColour_, 0.4, false);
+            this.borderColour_ = pxt.toolbox.fadeColor(this.backgroundColour_, 0.4, false);
 
             let tooltipCfg: FieldGridPickerToolTipConfig = {
                 xOffset: parseInt(options.tooltipsXOffset) || 15,

@@ -301,7 +301,7 @@ namespace pxt.runner {
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
-                            border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
+                            border-color: ${pxt.toolbox.fadeColor(color, 0.2, true)} !important;
                         }
                     `;
                 })
@@ -313,7 +313,7 @@ namespace pxt.runner {
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
-                            border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
+                            border-color: ${pxt.toolbox.fadeColor(color, 0.2, true)} !important;
                         }
                     `;
                 })

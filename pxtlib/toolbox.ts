@@ -81,7 +81,7 @@ namespace pxt.toolbox {
         namespaceStyleBuffer += `
             span.docs.${ns} {
                 background-color: ${color} !important;
-                border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
+                border-color: ${fadeColor(color, 0.2, true)} !important;
             }
         `;
     }
@@ -119,7 +119,7 @@ namespace pxt.toolbox {
         return colour;
     }
 
-    export function fadeColor(hex: string, luminosity: number, lighten: number) {
+    export function fadeColor(hex: string, luminosity: number, lighten: boolean): string {
         // #ABC => ABC
         hex = hex.replace(/[^0-9a-f]/gi, '');
 
