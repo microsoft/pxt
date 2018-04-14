@@ -1632,6 +1632,8 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
 
     if (!dirty && !forceRedbuild) return Promise.resolve();
 
+    let pkg = readJson("package.json")
+
     nodeutil.mkdirP(path.join("built", "web"));
     return nodeutil.spawnAsync({
         cmd: "node",
@@ -1643,6 +1645,12 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
         semCss = semCss.replace('src: url("fonts/icons.eot");', "")
             .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
+        return semCss;
+    }).then((semCss) => {
+        // Append icons.css to semantic.css (custom pxt icons)
+        const iconsFile = (pkg["name"] == "pxt-core") ? 'built/web/icons.css' : 'node_modules/pxt-core/built/web/icons.css';
+        const iconsCss = fs.readFileSync(iconsFile, "utf-8");
+        semCss = semCss + "\n" + iconsCss;
         fs.writeFileSync('built/web/semantic.css', semCss);
     }).then(() => {
         // generate blockly css
