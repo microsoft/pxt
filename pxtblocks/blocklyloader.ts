@@ -14,7 +14,8 @@ namespace pxt.blocks {
         functions: '#005a9e',
         text: '#996600',
         arrays: '#A94400',
-        advanced: '#3c3c3c'
+        advanced: '#3c3c3c',
+        debug: '#95A5A6'
     }
 
     export const blockIcons: Map<number | string> = {
@@ -1197,6 +1198,12 @@ namespace pxt.blocks {
                 weight: pxt.appTarget.runtime.onStartWeight || 10,
                 type: ts.pxtc.ON_START_TYPE
             })
+            // TODO:(debugger) Create a configuration for the breakpoint block and add it to the toolbox
+            // extraBlocks.push({
+            //     namespace: pxt.appTarget.runtime.onStartNamespace || "loops",
+            //     weight: pxt.appTarget.runtime.onStartWeight || 10,
+            //     type: ts.pxtc.TS_DEBUGGER_TYPE
+            // })
             extraBlocks.forEach(eb => {
                 let el = document.createElement("block");
                 el.setAttribute("type", eb.type);
@@ -1914,6 +1921,7 @@ namespace pxt.blocks {
         initLogic();
         initText();
         initDrag();
+        initDebugger();
         initComments();
     }
 
@@ -3366,6 +3374,30 @@ namespace pxt.blocks {
         const textJoinDef = pxt.blocks.getBlockDefinition(textJoinId);
         msg.TEXT_JOIN_TITLE_CREATEWITH = textJoinDef.block["TEXT_JOIN_TITLE_CREATEWITH"];
         installBuiltinHelpInfo(textJoinId);
+    }
+
+    function initDebugger() {
+
+        Blockly.Blocks[pxtc.TS_DEBUGGER_TYPE] = {
+            init: function () {
+                let that: Blockly.Block = this;
+                that.setColour(getNamespaceColor('debug'))
+                that.setPreviousStatement(true);
+                that.setNextStatement(true);
+                that.setInputsInline(false);
+                that.appendDummyInput('ON_OFF')
+                    .appendField(new Blockly.FieldLabel(lf("breakpoint"), undefined), "DEBUGGER")
+                    .appendField(new pxtblockly.FieldBreakpoint("1", {'type': 'number'}), "ON_OFF");
+
+                setHelpResources(this,
+                    pxtc.TS_DEBUGGER_TYPE,
+                    lf("Debugger statement"),
+                    lf("A debugger statement invokes any available debugging functionality"),
+                    '/javascript/debugger',
+                    getNamespaceColor('debug')
+                );
+            }
+        };
     }
 
     function initTooltip(blockInfo: pxtc.BlocksInfo) {

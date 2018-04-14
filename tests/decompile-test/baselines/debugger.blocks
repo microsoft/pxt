@@ -1,0 +1,8 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="debugger_keyword">
+</block>
+</statement>
+</block>
+</xml>
