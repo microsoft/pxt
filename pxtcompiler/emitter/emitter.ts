@@ -4371,6 +4371,7 @@ ${lbl}: .short 0xffff
         sourceHash = "";
         checksumBlock: number[];
         numStmts = 1;
+        commSize = 0;
 
         strings: pxt.Map<string> = {};
         hexlits: pxt.Map<string> = {};
