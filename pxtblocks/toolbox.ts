@@ -1,4 +1,5 @@
-const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display: none">
+namespace pxt.blocks {
+    export const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display: none">
     <category name="Loops" nameid="loops" colour="#107c10" category="50" web-icon="\uf01e" iconclass="blocklyTreeIconloops" expandedclass="blocklyTreeIconloops">
         <block type="controls_repeat_ext">
             <value name="TIMES">
@@ -266,24 +267,25 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
     </category>
 </xml>`;
 
-const defaultNoCategoryToolboxString = `<xml id="blocklyToolboxDefinition" style="display: none"></xml>`;
+    const defaultNoCategoryToolboxString = `<xml id="blocklyToolboxDefinition" style="display: none"></xml>`;
 
-let cachedToolboxDom: Document;
+    let cachedToolboxDom: Document;
 
-export function getBaseToolboxDom() {
-    if (!cachedToolboxDom) {
-        overrideBaseToolbox(defaultToolboxString);
+    export function getBaseToolboxDom() {
+        if (!cachedToolboxDom) {
+            overrideBaseToolbox(defaultToolboxString);
+        }
+        return cachedToolboxDom;
     }
-    return cachedToolboxDom;
-}
 
-export function getBaseNoCategoryToolboxDom() {
-    if (!cachedToolboxDom) {
-        overrideBaseToolbox(defaultNoCategoryToolboxString);
+    export function getBaseNoCategoryToolboxDom() {
+        if (!cachedToolboxDom) {
+            overrideBaseToolbox(defaultNoCategoryToolboxString);
+        }
+        return cachedToolboxDom;
     }
-    return cachedToolboxDom;
-}
 
-export function overrideBaseToolbox(xml: string) {
-    cachedToolboxDom = new DOMParser().parseFromString(xml, 'text/xml');
+    export function overrideBaseToolbox(xml: string) {
+        cachedToolboxDom = new DOMParser().parseFromString(xml, 'text/xml');
+    }
 }

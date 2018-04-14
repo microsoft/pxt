@@ -25,7 +25,7 @@ namespace pxt.blocks {
         }
     }
 
-    export function initVariableArgsBlock(b: B.Block, handlerArgs: pxt.blocks.HandlerArg[]) {
+    export function initVariableArgsBlock(b: Blockly.Block, handlerArgs: pxt.blocks.HandlerArg[]) {
         let currentlyVisible = 0;
         let actuallyVisible = 0;
 

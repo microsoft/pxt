@@ -201,6 +201,7 @@ namespace pxt.editor {
         fireResize(): void;
         updateEditorLogo(left: number, rgba?: string): void;
 
+        loadBlocklyAsync(): Promise<void>;
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;
         renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<string>;
@@ -267,8 +268,15 @@ namespace pxt.editor {
         beforeCompile?: () => void;
         deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
-        fieldEditors?: IFieldCustomOptions[];
         toolboxOptions?: IToolboxOptions;
+    }
+
+    export interface FieldExtensionOptions {
+
+    }
+
+    export interface FieldExtensionResult {
+        fieldEditors?: IFieldCustomOptions[];
     }
 
     export interface MonacoToolboxDefinition {
@@ -364,7 +372,11 @@ namespace pxt.editor {
         retType?: string;
     }
 
-    export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;
+    export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>
+        = opts => Promise.resolve<ExtensionResult>({});
+
+    export let initFieldExtensionsAsync: (opts: FieldExtensionOptions) => Promise<FieldExtensionResult>
+        = opts => Promise.resolve<FieldExtensionResult>({});
 
     export interface NativeHostMessage {
         name?: string;

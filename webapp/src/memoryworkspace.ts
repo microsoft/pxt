@@ -13,7 +13,7 @@ export function merge(prj: Project) {
     let h: Header = prj.header;
     if (!h) {
         prj.header = h = {
-            id: U.guidGen(),
+            id: ts.pxtc.Util.guidGen(),
             recentUse: U.nowSeconds(),
             modificationTime: U.nowSeconds(),
             target: target,
@@ -34,7 +34,7 @@ export function merge(prj: Project) {
 }
 
 function getHeaders(): Header[] {
-    return Util.values(projects).map(p => p.header);
+    return pxt.Util.values(projects).map(p => p.header);
 }
 
 function getHeader(id: string): Header {
@@ -62,7 +62,7 @@ function saveAsync(h: Header, text?: ScriptText): Promise<void> {
 
 function installAsync(h0: InstallHeader, text: ScriptText): Promise<Header> {
     let h = <Header>h0
-    h.id = U.guidGen();
+    h.id = ts.pxtc.Util.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
     h.target = pxt.appTarget.id;

@@ -12,7 +12,7 @@ function loadSoundAsync(id: string): Promise<AudioBuffer> {
     if (buffer) return Promise.resolve(buffer);
 
     const url = pxt.webConfig.commitCdnUrl + "sounds/" + path;
-    return Util.requestAsync({
+    return pxt.Util.requestAsync({
         url,
         headers: {
             "Accept": "audio/" + path.slice(-3)

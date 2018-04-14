@@ -345,11 +345,23 @@ namespace pxt.BrowserUtils {
         });
     }
 
-    export function loadScriptAsync(url: string): Promise<void> {
+    function resolveCdnUrl(path: string): string {
+        const monacoPaths: Map<string> = (window as any).MonacoPaths || {};
+        const url = monacoPaths[path] || (pxt.webConfig.commitCdnUrl + path);
+        return url;
+    }
+
+    export function loadScriptAsync(path: string): Promise<void> {
+        const url = resolveCdnUrl(path);
+        const id = "script-" + url;
+        if (document.getElementById(id))
+            return Promise.resolve(); // already in DOM
+
         return new Promise<void>((resolve, reject) => {
             const script = document.createElement('script');
             script.type = 'text/javascript';
             script.src = url;
+            script.id = id;
             script.addEventListener('load', () => resolve());
             script.addEventListener('error', (e) => reject(e));
             document.body.appendChild(script);
@@ -372,6 +384,21 @@ namespace pxt.BrowserUtils {
             httprequest.open("GET", url, true);
             httprequest.send();
         })
+    }
+
+    let loadBlocklyPromise: Promise<void>;
+    export function loadBlocklyAsync(): Promise<void> {
+        if (!loadBlocklyPromise) {
+            if (typeof Blockly === "undefined") { // not loaded yet?
+                pxt.debug(`blockly: delay load`);
+                loadBlocklyPromise = pxt.BrowserUtils.loadScriptAsync("pxtblockly.js")
+                    .then(() => {
+                        pxt.debug(`blockly: loaded`)
+                    })
+            } else
+                loadBlocklyPromise = Promise.resolve();
+        }
+        return loadBlocklyPromise;
     }
 
     export function initTheme() {

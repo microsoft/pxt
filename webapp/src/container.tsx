@@ -34,9 +34,9 @@ function openDocs(parent: pxt.editor.IProjectView, path: string) {
 function renderDocItems(parent: pxt.editor.IProjectView, cls: string) {
     const targetTheme = pxt.appTarget.appTheme;
     return targetTheme.docMenu.map(m =>
-        m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class={"ui " + cls} onClick={() => openTutorial(parent, m.path)} />
-            : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} title={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{Util.rlf(m.name)}</a>
-                : <sui.Item key={"docsmenu" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class={"ui " + cls} onClick={() => openDocs(parent, m.path)} />
+        m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={m.name} text={pxt.Util.rlf(m.name)} class={"ui " + cls} onClick={() => openTutorial(parent, m.path)} />
+            : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} title={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{pxt.Util.rlf(m.name)}</a>
+                : <sui.Item key={"docsmenu" + m.path} role="menuitem" ariaLabel={m.name} text={pxt.Util.rlf(m.name)} class={"ui " + cls} onClick={() => openDocs(parent, m.path)} />
     );
 }
 
@@ -245,7 +245,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {inTutorial ? <sui.Item class="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
             </div> : <div className="left menu">
                     <span id="logo" className="ui item logo">
-                        <img className="ui mini image" src={Util.toDataUri(rightLogo)} tabIndex={0} onClick={() => this.launchFullEditor()} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
+                        <img className="ui mini image" src={pxt.Util.toDataUri(rightLogo)} tabIndex={0} onClick={() => this.launchFullEditor()} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
                     </span>
                 </div>}
             {!inTutorial && !targetTheme.blocksOnly ? <div className="ui item link editor-menuitem">

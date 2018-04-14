@@ -5,8 +5,6 @@ import * as data from "./data"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-const lf = pxt.Util.lf;
-
 interface LanguagesState {
     visible?: boolean;
 }

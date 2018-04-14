@@ -4,9 +4,6 @@
 /// <reference path="util.ts"/>
 
 namespace pxt {
-
-    const lf = U.lf;
-
     export class Package {
         static getConfigAsync(id: string, fullVers: string): Promise<pxt.PackageConfig> {
             return Promise.resolve().then(() => {

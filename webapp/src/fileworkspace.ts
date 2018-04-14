@@ -4,7 +4,6 @@ import * as data from "./data";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
-const lf = U.lf
 let allScripts: HeaderWithScript[] = [];
 let currentTarget: string;
 

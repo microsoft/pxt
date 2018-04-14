@@ -62,7 +62,7 @@ export class ExtensionManager {
 
     getExtId(name: string): string {
         if (!this.nameToExtId[name]) {
-            this.nameToExtId[name] = Util.guidGen();
+            this.nameToExtId[name] = ts.pxtc.Util.guidGen();
             this.extIdToName[this.nameToExtId[name]] = name;
         }
         return this.nameToExtId[name];

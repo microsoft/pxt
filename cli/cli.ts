@@ -945,6 +945,9 @@ function uploadCoreAsync(opts: UploadOptions) {
     let targetEditorJs = "";
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor)
         targetEditorJs = "@commitCdnUrl@editor.js";
+    let targetFieldEditorsJs = "";
+    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors)
+        targetFieldEditorsJs = "@commitCdnUrl@fieldeditors.js";
 
     let replacements: Map<string> = {
         "/sim/simulator.html": "@simUrl@",
@@ -961,6 +964,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
         "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
         "@targetEditorJs@": targetEditorJs,
+        "@targetFieldEditorsJs@": targetFieldEditorsJs,
         "@targetImages@": targetImagesHashed.length ? targetImagesHashed.join('\n') : ''
     }
 
@@ -1000,6 +1004,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "@defaultLocaleStrings@": "",
             "@cachedHexFiles@": "",
             "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : "",
+            "@targetFieldEditorsJs@": targetFieldEditorsJs ? `${opts.localDir}fieldeditors.js` : "",
             "@targetImages@": targetImages.length ? targetImages.map(k =>
                 `${opts.localDir}${path.join('./docs', logos[k])}`).join('\n') : ''
         }
@@ -1355,12 +1360,24 @@ export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Prom
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildSemanticUIAsync())
         .then(() => {
-            if (fs.existsSync(path.join("editor", "tsconfig.json"))) {
+            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor &&
+                fs.existsSync(path.join("editor", "tsconfig.json"))) {
                 const tsConfig = JSON.parse(fs.readFileSync(path.join("editor", "tsconfig.json"), "utf8"));
                 if (tsConfig.compilerOptions.module)
                     return buildFolderAndBrowserifyAsync('editor', true, 'editor');
                 else
                     return buildFolderAsync('editor', true, 'editor');
+            }
+            return Promise.resolve();
+        })
+        .then(() => {
+            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors &&
+                fs.existsSync(path.join("fieldeditors", "tsconfig.json"))) {
+                const tsConfig = JSON.parse(fs.readFileSync(path.join("fieldeditors", "tsconfig.json"), "utf8"));
+                if (tsConfig.compilerOptions.module)
+                    return buildFolderAndBrowserifyAsync('fieldeditors', true, 'fieldeditors');
+                else
+                    return buildFolderAsync('fieldeditors', true, 'fieldeditors');
             }
             return Promise.resolve();
         })
@@ -1813,6 +1830,8 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         }
         if (fs.existsSync("editor"))
             dirsToWatch.push("editor");
+        if (fs.existsSync("fieldeditors"))
+            dirsToWatch.push("fieldeditors");
         if (fs.existsSync("sim")) {
             dirsToWatch.push("sim"); // simulator
             dirsToWatch = dirsToWatch.concat(
@@ -2081,7 +2100,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
         includeSourceMaps = true;
     }
     if (!globalConfig.localToken) {
-        globalConfig.localToken = U.guidGen();
+        globalConfig.localToken = ts.pxtc.Util.guidGen();
         saveConfig()
     }
     let localToken = globalConfig.localToken;

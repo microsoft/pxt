@@ -92,7 +92,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 <div className="ui middle aligned list">
                     {Object.keys(variables).map(variable =>
                         <div key={variable} className="item">
-                            <div className="ui label image variable" style={{ backgroundColor: pxt.blocks.getNamespaceColor('variables') }}>
+                            <div className="ui label image variable" style={{ backgroundColor: pxt.toolbox.getNamespaceColor('variables') }}>
                                 <span className="varname">{variable}</span>
                                 <div className="detail">
                                     <span className="varval">{variables[variable].value + ' '}</span>

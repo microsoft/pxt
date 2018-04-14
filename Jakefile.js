@@ -19,7 +19,10 @@ function tscIn(task, dir, builtDir) {
 function compileDir(name, deps) {
     if (!deps) deps = []
     let dd = expand([name].concat(deps))
-    file('built/' + name + '.js', dd, { async: true }, function () { tscIn(this, name, "built") })
+    let out = 'built/' + name + '.js';
+    file(out, dd, { async: true }, function () { 
+        tscIn(this, name, "built")
+     })
 }
 
 function loadText(filename) {
@@ -131,9 +134,10 @@ compileDir("pxtlib", "built/typescriptServices.d.ts")
 compileDir("pxtcompiler", ["built/pxtlib.js"])
 compileDir("pxtwinrt", ["built/pxtlib.js"])
 compileDir("pxtblocks", ["built/pxtlib.js"])
-compileDir("pxtrunner", ["built/pxtlib.js", "built/pxteditor.js", "built/pxtcompiler.js", "built/pxtsim.js", "built/pxtblocks.js"])
-compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblocks.js"])
-compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js"])
+ju.catFiles("built/pxtblockly.js", expand(["webapp/public/blockly/blockly_compressed.js", "webapp/public/blockly/blocks_compressed.js", "webapp/public/blockly/msg/js/en.js", "built/pxtblocks.js"]), "")
+compileDir("pxtrunner", ["built/pxtlib.js", "built/pxteditor.js", "built/pxtcompiler.js", "built/pxtsim.js", "built/pxtblockly.js"])
+compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblockly.js"])
+compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblockly.js"])
 compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js"])
 compileDir("backendutils", ['pxtlib/util.ts', 'pxtlib/docsrender.ts'])
 file("built/web/pxtweb.js", expand(["docfiles/pxtweb"]), { async: true }, function () { tscIn(this, "docfiles/pxtweb", "built") })
@@ -271,7 +275,7 @@ task('wapp', [
     "built/web/pxtlib.js",
     "built/web/pxtcompiler.js",
     "built/web/pxtsim.js",
-    "built/web/pxtblocks.js",
+    "built/web/pxtblockly.js",
     "built/web/pxteditor.js",
     "built/web/pxtwinrt.js",
     'built/web/main.js',
@@ -286,7 +290,7 @@ task('wapp', [
 file("built/web/pxtlib.js", [
     "built/pxtlib.js",
     "built/pxtcompiler.js",
-    "built/pxtblocks.js",
+    "built/pxtblockly.js",
     "built/pxtsim.js",
     "built/pxtrunner.js",
     "built/pxteditor.js",
@@ -299,7 +303,7 @@ file("built/web/pxtlib.js", [
 
     jake.cpR("built/pxtlib.js", "built/web/")
     jake.cpR("built/pxtcompiler.js", "built/web/")
-    jake.cpR("built/pxtblocks.js", "built/web/")
+    jake.cpR("built/pxtblockly.js", "built/web/")
     jake.cpR("built/pxtsim.js", "built/web/")
     jake.cpR("built/pxtrunner.js", "built/web/")
     jake.cpR("built/pxteditor.js", "built/web/")
@@ -413,7 +417,7 @@ file('built/webapp/src/app.js', expand([
     "webapp",
     "built/web/pxtlib.js",
     "built/web/pxtsim.js",
-    "built/web/pxtblocks.js",
+    "built/web/pxtblockly.js",
     "built/web/pxteditor.js",
     "built/web/pxtwinrt.js"
 ]), { async: true }, function () {

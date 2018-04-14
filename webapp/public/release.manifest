@@ -11,7 +11,7 @@ CACHE:
 /blb/jquery.js
 /blb/pxtlib.js
 /blb/pxtcompiler.js
-/blb/pxtblocks.js
+/blb/pxtblockly.js
 /blb/pxtwinrt.js
 /blb/pxteditor.js
 /blb/pxtsim.js
@@ -23,11 +23,9 @@ CACHE:
 @defaultLocaleStrings@
 @cachedHexFiles@
 @targetEditorJs@
+@targetFieldEditorsJs@
 
 # blockly
-/blb/blockly/blockly_compressed.js
-/blb/blockly/blocks_compressed.js
-/blb/blockly/msg/js/en.js
 /cdn/blockly/media/sprites.png
 /cdn/blockly/media/click.mp3
 /cdn/blockly/media/disconnect.wav

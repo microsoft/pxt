@@ -33,7 +33,6 @@ import * as projects from "./projects";
 import * as extensions from "./extensions";
 import * as sounds from "./sounds";
 import * as make from "./make";
-import * as baseToolbox from "./toolbox";
 import * as monacoToolbox from "./monacoSnippets"
 
 import * as monaco from "./monaco"
@@ -53,8 +52,7 @@ type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
-import CategoryMode = pxt.blocks.CategoryMode;
-const lf = Util.lf
+import CategoryMode = pxt.toolbox.CategoryMode;
 
 pxsim.util.injectPolyphils();
 
@@ -672,7 +670,6 @@ export class ProjectView
             return Promise.resolve()
 
         this.stopSimulator(true);
-        pxt.blocks.cleanBlocks();
         this.clearSerial()
         Util.jsonMergeFrom(editorState || {}, this.state.editorState || {});
         return pkg.loadPkgAsync(h.id)
@@ -1698,6 +1695,10 @@ export class ProjectView
         return this.editor == this.blocksEditor;
     }
 
+    loadBlocklyAsync(): Promise<void> {
+        return this.blocksEditor.loadBlocklyAsync();
+    }
+
     about() {
         const compileService = pxt.appTarget.compileService;
         const description = pxt.appTarget.description || pxt.appTarget.title;
@@ -2254,7 +2255,7 @@ function initExtensionsAsync(): Promise<void> {
 
     pxt.debug('loading editor extensions...');
     const opts: pxt.editor.ExtensionOptions = {};
-    return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
+    return pxt.BrowserUtils.loadScriptAsync("editor.js")
         .then(() => pxt.editor.initExtensionsAsync(opts))
         .then(res => {
             if (res.hexFileImporters) {
@@ -2280,14 +2281,9 @@ function initExtensionsAsync(): Promise<void> {
             if (res.beforeCompile) {
                 theEditor.beforeCompile = res.beforeCompile;
             }
-            if (res.fieldEditors) {
-                res.fieldEditors.forEach(fi => {
-                    pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                })
-            }
             if (res.toolboxOptions) {
                 if (res.toolboxOptions.blocklyXml) {
-                    baseToolbox.overrideBaseToolbox(res.toolboxOptions.blocklyXml);
+                    pxt.blocks.overrideBaseToolbox(res.toolboxOptions.blocklyXml);
                 }
                 if (res.toolboxOptions.monacoToolbox) {
                     monacoToolbox.overrideToolbox(res.toolboxOptions.monacoToolbox);

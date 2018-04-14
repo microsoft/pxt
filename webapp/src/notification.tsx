@@ -45,7 +45,7 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
             return true;
         }
         const lastBannerClosedTime = parseInt(pxt.storage.getLocal("lastBannerClosedTime") || "0");
-        const now = Util.nowSeconds();
+        const now = pxt.Util.nowSeconds();
         return (now - lastBannerClosedTime) > this.props.sleepTime;
     }
 
@@ -60,7 +60,7 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
 
     hide(mode: string) {
         pxt.tickEvent("notificationBanner." + mode + "Close");
-        pxt.storage.setLocal("lastBannerClosedTime", Util.nowSeconds().toString());
+        pxt.storage.setLocal("lastBannerClosedTime", pxt.Util.nowSeconds().toString());
         this.props.parent.setBanner(false);
         this.renderCore();
     }
@@ -104,7 +104,7 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
             return (
                 <GenericBanner parent={this.props.parent} delayTime={10000} displayTime={45000} sleepTime={604800}>
                     <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked", undefined, { interactiveConsent: true })}>
-                        <img className="bannerIcon" src={Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)}></img>
+                        <img className="bannerIcon" src={pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)}></img>
                     </sui.Link>
                     <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked", undefined, { interactiveConsent: true })}>
                         {lf("Want a faster download? Get the app!")}

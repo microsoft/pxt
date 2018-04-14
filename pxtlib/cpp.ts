@@ -8,8 +8,7 @@ namespace pxt {
         else {
             let lz = (<any>window).LZMA;
             if (lz) return Promise.resolve(lz);
-            const monacoPaths: Map<string> = (window as any).MonacoPaths
-            return BrowserUtils.loadScriptAsync(monacoPaths['lzma/lzma_worker-min.js'])
+            return BrowserUtils.loadScriptAsync('lzma/lzma_worker-min.js')
                 .then(() => (<any>window).LZMA);
         }
     }

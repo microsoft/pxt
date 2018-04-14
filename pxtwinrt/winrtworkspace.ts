@@ -10,7 +10,6 @@ namespace pxt.winrt.workspace {
     type InstallHeader = pxt.workspace.InstallHeader;
     import U = pxt.Util;
     import Cloud = pxt.Cloud;
-    const lf = U.lf
 
     let folder: Windows.Storage.StorageFolder;
     let allScripts: HeaderWithScript[] = [];

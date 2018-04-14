@@ -689,13 +689,13 @@ export class Menu extends data.Component<MenuProps, MenuState> {
         }
 
         let selectedTab: HTMLElement;
-        if ((leftOrUpKey && !Util.isUserLanguageRtl()) || (rightorBottomKey && Util.isUserLanguageRtl())) {
+        if ((leftOrUpKey && !pxt.Util.isUserLanguageRtl()) || (rightorBottomKey && pxt.Util.isUserLanguageRtl())) {
             if (activeNodeIndex === 0) {
                 selectedTab = menuItems.get(menuItems.length - 1) as HTMLElement
             } else {
                 selectedTab = menuItems.get(activeNodeIndex - 1) as HTMLElement
             }
-        } else if ((rightorBottomKey && !Util.isUserLanguageRtl()) || (leftOrUpKey && Util.isUserLanguageRtl())) {
+        } else if ((rightorBottomKey && !pxt.Util.isUserLanguageRtl()) || (leftOrUpKey && pxt.Util.isUserLanguageRtl())) {
             if (activeNodeIndex === menuItems.length - 1) {
                 selectedTab = menuItems.get(0) as HTMLElement
             } else {
@@ -820,7 +820,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
     animationId: number;
     constructor(props: ModalProps) {
         super(props)
-        this.id = Util.guidGen();
+        this.id = ts.pxtc.Util.guidGen();
         this.state = {
             open: this.props.open,
             scrolling: false
