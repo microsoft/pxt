@@ -103,4 +103,19 @@ namespace pxt.toolbox {
         }
         return "";
     }
+
+    export function advancedTitle() { return Util.lf("{id:category}Advanced"); }
+    export function addPackageTitle() { return Util.lf("{id:category}Extensions"); }
+
+    /**
+     * Convert blockly hue to rgb
+     */
+    export function convertColor(colour: string): string {
+        const hue = parseInt(colour);
+        if (!isNaN(hue)) {
+            console.error('hue style color not supported anymore, use #rrggbb')
+        }
+        // TODO: HSV support
+        return colour;
+    }
 }

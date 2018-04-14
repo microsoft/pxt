@@ -123,9 +123,6 @@ namespace pxt.blocks {
         }
     }
 
-    export function advancedTitle() { return Util.lf("{id:category}Advanced"); }
-    export function addPackageTitle() { return Util.lf("{id:category}Extensions"); }
-
     // Add numbers before input names to prevent clashes with the ones added by BlocklyLoader
     export const optionalDummyInputPrefix = "0_optional_dummy";
     export const optionalInputWithFieldPrefix = "0_optional_field";
@@ -1320,7 +1317,7 @@ namespace pxt.blocks {
 
         // Add the "Advanced" category
         if (showAdvanced && tb && showCategories !== pxt.toolbox.CategoryMode.None) {
-            const cat = createCategoryElement(advancedTitle(), "Advanced", 1, pxt.toolbox.getNamespaceColor('advanced'), showCategories === pxt.toolbox.CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
+            const cat = createCategoryElement(pxt.toolbox.advancedTitle(), "Advanced", 1, pxt.toolbox.getNamespaceColor('advanced'), showCategories === pxt.toolbox.CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
             insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             insertTopLevelCategory(cat, tb, 1, false);
         }
@@ -1330,7 +1327,7 @@ namespace pxt.blocks {
                 insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             }
             // Add the "Add package" category
-            getOrAddSubcategoryByWeight(tb, addPackageTitle(), "Extensions", 1, "#717171", 'blocklyTreeIconaddpackage')
+            getOrAddSubcategoryByWeight(tb, pxt.toolbox.addPackageTitle(), "Extensions", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
         if (tb) {
@@ -3282,7 +3279,7 @@ namespace pxt.blocks {
         Blockly.Blocks[pxtc.TS_DEBUGGER_TYPE] = {
             init: function () {
                 let that: Blockly.Block = this;
-                that.setColour(getNamespaceColor('debug'))
+                that.setColour(pxt.toolbox.getNamespaceColor('debug'))
                 that.setPreviousStatement(true);
                 that.setNextStatement(true);
                 that.setInputsInline(false);
@@ -3295,7 +3292,7 @@ namespace pxt.blocks {
                     lf("Debugger statement"),
                     lf("A debugger statement invokes any available debugging functionality"),
                     '/javascript/debugger',
-                    getNamespaceColor('debug')
+                    pxt.toolbox.getNamespaceColor('debug')
                 );
             }
         };

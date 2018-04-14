@@ -256,7 +256,7 @@ export class Editor extends srceditor.Editor {
         monaco.editor.setTheme('pxtTheme');
 
         function fixColor(hexcolor: string) {
-            hexcolor = pxt.blocks.convertColour(hexcolor);
+            hexcolor = pxt.toolbox.convertColor(hexcolor);
             return (inverted ? Blockly.PXTUtils.fadeColour(hexcolor, invertedColorluminosityMultipler, true) : hexcolor).replace('#', '');
         }
     }
@@ -1464,11 +1464,11 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
                         <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
                     )) }
                     {hasAdvanced ? <TreeSeparator key="advancedseparator" /> : undefined}
-                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ ns: "", category: pxt.blocks.advancedTitle(), color: pxt.toolbox.getNamespaceColor('advanced'), icon: showAdvanced ? 'advancedexpanded' : 'advancedcollapsed' }} onCategoryClick={this.advancedClicked.bind(this) }/> : undefined}
+                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ ns: "", category: pxt.toolbox.advancedTitle(), color: pxt.toolbox.getNamespaceColor('advanced'), icon: showAdvanced ? 'advancedexpanded' : 'advancedcollapsed' }} onCategoryClick={this.advancedClicked.bind(this) }/> : undefined}
                     {showAdvanced ? advancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
                     )) : undefined}
-                    {hasPackages && showAdvanced ? <TreeRow treeRow={{ ns: "", category: pxt.blocks.addPackageTitle(), color: '#717171', icon: "addpackage" }} onClick={this.addPackage.bind(this) } /> : undefined }
+                    {hasPackages && showAdvanced ? <TreeRow treeRow={{ ns: "", category: pxt.toolbox.addPackageTitle(), color: '#717171', icon: "addpackage" }} onClick={this.addPackage.bind(this) } /> : undefined }
                 </div>
             </div>
         </div>
@@ -1589,7 +1589,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         const {selected, onClick, onKeyDown} = this.props;
         const {ns, icon, color, category, injectIconClass} = this.props.treeRow;
         const appTheme = pxt.appTarget.appTheme;
-        let metaColor = pxt.blocks.convertColour(color);
+        let metaColor = pxt.toolbox.convertColor(color);
 
         const invertedMultipler = appTheme.blocklyOptions
             && appTheme.blocklyOptions.toolboxOptions

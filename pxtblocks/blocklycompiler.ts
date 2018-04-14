@@ -1375,7 +1375,7 @@ namespace pxt.blocks {
         return res;
     }
 
-    function compileDebuggeStatementBlock(e: Environment, b: B.Block) {
+    function compileDebuggeStatementBlock(e: Environment, b: Blockly.Block) {
         if (b.getFieldValue("ON_OFF") == "1") {
             return [
                 mkText("debugger;")
