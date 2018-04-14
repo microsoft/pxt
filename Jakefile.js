@@ -279,6 +279,7 @@ task('wapp', [
     "built/web/pxteditor.js",
     "built/web/pxtwinrt.js",
     'built/web/main.js',
+    'built/web/pxtapp.js',
     'built/web/worker.js',
     'built/web/fonts/icons.woff2',
     'built/web/icons.css',
@@ -424,7 +425,7 @@ file('built/webapp/src/app.js', expand([
     tscIn(this, "webapp", "built/webapp")
 })
 
-file('built/web/main.js', ["built/webapp/src/app.js"], { async: true }, function () {
+file('built/web/main.js', ["built/web/pxtapp.js", "built/webapp/src/app.js"], { async: true }, function () {
     if (process.env.PXT_ENV == 'production') {
         cmdIn(this, ".", 'node node_modules/browserify/bin/cmd ./built/webapp/src/app.js -g ' + 
         '[ envify --NODE_ENV production ] -g uglifyify -o ./built/web/main.js')
@@ -432,6 +433,13 @@ file('built/web/main.js', ["built/webapp/src/app.js"], { async: true }, function
         cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js')
     }
 })
+
+ju.catFiles('built/web/pxtapp.js', [
+    "built/web/pxtlib.js",
+    "built/web/pxtwinrt.js",
+    "built/web/pxteditor.js",
+    "built/web/pxtsim.js"
+])
 
 file('built/web/worker.js', ["built/webapp/src/app.js"], function () {
     jake.cpR("built/webapp/src/worker.js", "built/web/")
