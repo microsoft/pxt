@@ -3,14 +3,26 @@
 namespace pxt {
     declare var require: any;
 
+    let lzmaPromise: Promise<any>;
     function getLzmaAsync() {
-        if (U.isNodeJS) return Promise.resolve(require("lzma"));
-        else {
-            let lz = (<any>window).LZMA;
-            if (lz) return Promise.resolve(lz);
-            return BrowserUtils.loadScriptAsync('lzma/lzma_worker-min.js')
-                .then(() => (<any>window).LZMA);
+        let lzmaPromise: Promise<any>;
+        if (!lzmaPromise) {
+            if (U.isNodeJS)
+                lzmaPromise = Promise.resolve(require("lzma"));
+            else {
+                let lz = (<any>window).LZMA;
+                if (lz)
+                    lzmaPromise = Promise.resolve(lz);
+                else
+                    lzmaPromise = pxt.BrowserUtils.loadScriptAsync('lzma/lzma_worker-min.js')
+                        .then(() => (<any>window).LZMA);
+            }
+            lzmaPromise.then(res => {
+                if (!res) pxt.reportError('lzma', 'failed to load');
+                return res;
+            })
         }
+        return lzmaPromise;
     }
 
     export function lzmaDecompressAsync(buf: Uint8Array): Promise<string> { // string
@@ -18,10 +30,12 @@ namespace pxt {
             .then(lzma => new Promise<string>((resolve, reject) => {
                 try {
                     lzma.decompress(buf, (res: string, error: any) => {
+                        if (error) pxt.debug(`lzma decompression failed`);
                         resolve(error ? undefined : res);
                     })
                 }
                 catch (e) {
+                    if (e) pxt.debug(`lzma decompression failed`);
                     resolve(undefined);
                 }
             }));
@@ -32,10 +46,12 @@ namespace pxt {
             .then(lzma => new Promise<Uint8Array>((resolve, reject) => {
                 try {
                     lzma.compress(text, 7, (res: any, error: any) => {
+                        if (error) pxt.reportException(error);
                         resolve(error ? undefined : new Uint8Array(res));
                     })
                 }
                 catch (e) {
+                    pxt.reportException(e)
                     resolve(undefined);
                 }
             }));
