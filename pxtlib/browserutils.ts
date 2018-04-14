@@ -401,12 +401,12 @@ namespace pxt.BrowserUtils {
         return loadBlocklyPromise;
     }
 
-    export function initTheme() {
-        function patchCdn(url: string): string {
-            if (!url) return url;
-            return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
-        }
+    export function patchCdn(url: string): string {
+        if (!url) return url;
+        return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
+    }
 
+    export function initTheme() {
         const theme = pxt.appTarget.appTheme;
         if (theme) {
             if (theme.accentColor) {
@@ -416,10 +416,6 @@ namespace pxt.BrowserUtils {
                 .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${theme.accentColor}; }`;
                 document.getElementsByTagName('head')[0].appendChild(style);
             }
-
-            let targetImages = Object.keys(theme as any as Map<string>)
-                .filter(k => /(logo|hero)$/i.test(k) && /^@cdnUrl@/.test((theme as any)[k]))
-                .forEach(k => (theme as any)[k] = patchCdn((theme as any)[k]));
         }
         // RTL languages
         if (Util.isUserLanguageRtl()) {
