@@ -34,9 +34,9 @@ function openDocs(parent: pxt.editor.IProjectView, path: string) {
 function renderDocItems(parent: pxt.editor.IProjectView, cls: string) {
     const targetTheme = pxt.appTarget.appTheme;
     return targetTheme.docMenu.map(m =>
-        m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={Util.rlf(m.name)} text={Util.rlf(m.name)} className={"ui " + cls} onClick={() => openTutorial(parent, m.path)} />
-            : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} title={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{Util.rlf(m.name)}</a>
-                : <sui.Item key={"docsmenu" + m.path} role="menuitem" ariaLabel={Util.rlf(m.name)} text={Util.rlf(m.name)} className={"ui " + cls} onClick={() => openDocs(parent, m.path)} />
+        m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={pxt.Util.rlf(m.name)} text={pxt.Util.rlf(m.name)} className={"ui " + cls} onClick={() => openTutorial(parent, m.path)} />
+            : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} title={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{pxt.Util.rlf(m.name)}</a>
+                : <sui.Item key={"docsmenu" + m.path} role="menuitem" ariaLabel={pxt.Util.rlf(m.name)} text={pxt.Util.rlf(m.name)} className={"ui " + cls} onClick={() => openDocs(parent, m.path)} />
     );
 }
 
@@ -74,9 +74,9 @@ export class DocsMenuItem extends data.PureComponent<ISettingsProps, {}> {
         const options = targetTheme.docMenu.map(m => {
             return {
                 key: "docsmenu" + m.path,
-                content: Util.rlf(m.name),
+                content: pxt.Util.rlf(m.name),
                 role: "menuitem",
-                'aria-label': Util.rlf(m.name),
+                'aria-label': pxt.Util.rlf(m.name),
                 onClick: this.doDocEntryAction(parent, m),
                 value: m.path,
                 onKeyDown: () => {

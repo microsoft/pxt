@@ -5,7 +5,7 @@ namespace pxt.blocks.layout {
         useViewWidth?: boolean;
     }
 
-    export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newXml: string): string {
+    export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, newXml: string): string {
         const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
         // position blocks
         alignBlocks(blockInfo, oldWs, newWs);
@@ -13,7 +13,7 @@ namespace pxt.blocks.layout {
         return injectDisabledBlocks(oldWs, newWs);
     }
 
-    function injectDisabledBlocks(oldWs: B.Workspace, newWs: B.Workspace): string {
+    function injectDisabledBlocks(oldWs: Blockly.Workspace, newWs: Blockly.Workspace): string {
         const oldDom = Blockly.Xml.workspaceToDom(oldWs, true);
         const newDom = Blockly.Xml.workspaceToDom(newWs, true);
         Util.toArray(oldDom.childNodes)
@@ -23,9 +23,9 @@ namespace pxt.blocks.layout {
         return updatedXml;
     }
 
-    function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newWs: B.Workspace) {
+    function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, newWs: Blockly.Workspace) {
         let env: pxt.blocks.Environment;
-        let newBlocks: pxt.Map<B.Block[]>; // support for multiple events with similar name
+        let newBlocks: pxt.Map<Blockly.Block[]>; // support for multiple events with similar name
         oldWs.getTopBlocks(false).filter(ob => !ob.disabled)
             .forEach(ob => {
                 const otp = ob.xy_;
@@ -50,7 +50,7 @@ namespace pxt.blocks.layout {
 
     declare function unescape(escapeUri: string): string;
 
-    export function verticalAlign(ws: B.Workspace, emPixels: number) {
+    export function verticalAlign(ws: Blockly.Workspace, emPixels: number) {
         let y = 0
         let comments = ws.getTopComments(true);
         comments.forEach(comment => {
@@ -66,7 +66,7 @@ namespace pxt.blocks.layout {
         })
     };
 
-    export function flow(ws: B.Workspace, opts?: FlowOptions) {
+    export function flow(ws: Blockly.Workspace, opts?: FlowOptions) {
         if (opts) {
             if (opts.useViewWidth) {
                 const metrics = ws.getMetrics();
@@ -89,11 +89,11 @@ namespace pxt.blocks.layout {
             && !BrowserUtils.isUwpEdge(); // TODO figure out why screenshots are not working in UWP; disable for now
     }
 
-    export function screenshotAsync(ws: B.Workspace): Promise<string> {
+    export function screenshotAsync(ws: Blockly.Workspace): Promise<string> {
         return toPngAsync(ws);
     }
 
-    export function toPngAsync(ws: B.Workspace): Promise<string> {
+    export function toPngAsync(ws: Blockly.Workspace): Promise<string> {
         return toSvgAsync(ws)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
@@ -132,7 +132,7 @@ namespace pxt.blocks.layout {
 
     const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
 
-    export function toSvgAsync(ws: B.Workspace): Promise<{
+    export function toSvgAsync(ws: Blockly.Workspace): Promise<{
         width: number; height: number; xml: string;
     }> {
         if (!ws)

@@ -13,9 +13,9 @@ export function showAboutDialog() {
         agreeLbl: lf("Ok"),
         agreeClass: "positive focused",
         htmlBody: `
-${githubUrl ? `<p>${lf("{0} version:", Util.htmlEscape(pxt.appTarget.name))} <a class="focused" href="${Util.htmlEscape(githubUrl)}/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.target)}" aria-label="${lf("{0} version : {1}", Util.htmlEscape(pxt.appTarget.name), Util.htmlEscape(pxt.appTarget.versions.target))}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>` : ``}
-<p>${lf("{0} version:", "Microsoft MakeCode")} <a href="https://github.com/Microsoft/pxt/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.pxt)}" aria-label="${lf("{0} version: {1}", "Microsoft MakeCode", Util.htmlEscape(pxt.appTarget.versions.pxt))}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
-${compileService && compileService.githubCorePackage && compileService.gittag ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}" aria-label="${lf("{0} version: {1}", "C++ runtime", Util.htmlEscape(compileService.gittag))}" target="_blank">${Util.htmlEscape(compileService.gittag)}</a></p>` : ""}
+${githubUrl ? `<p>${lf("{0} version:", pxt.Util.htmlEscape(pxt.appTarget.name))} <a class="focused" href="${pxt.Util.htmlEscape(githubUrl)}/releases/tag/v${pxt.Util.htmlEscape(pxt.appTarget.versions.target)}" aria-label="${lf("{0} version : {1}", pxt.Util.htmlEscape(pxt.appTarget.name), pxt.Util.htmlEscape(pxt.appTarget.versions.target))}" target="_blank">${pxt.Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>` : ``}
+<p>${lf("{0} version:", "Microsoft MakeCode")} <a href="https://github.com/Microsoft/pxt/releases/tag/v${pxt.Util.htmlEscape(pxt.appTarget.versions.pxt)}" aria-label="${lf("{0} version: {1}", "Microsoft MakeCode", pxt.Util.htmlEscape(pxt.appTarget.versions.pxt))}" target="_blank">${pxt.Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
+${compileService && compileService.githubCorePackage && compileService.gittag ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${pxt.Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}" aria-label="${lf("{0} version: {1}", "C++ runtime", pxt.Util.htmlEscape(compileService.gittag))}" target="_blank">${pxt.Util.htmlEscape(compileService.gittag)}</a></p>` : ""}
 `
     }).done();
 }

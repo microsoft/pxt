@@ -109,7 +109,7 @@ export class Editor implements pxt.editor.IEditor {
 
     clearHighlightedStatements() { }
 
-    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories = pxt.blocks.CategoryMode.All): Element {
+    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories = pxt.toolbox.CategoryMode.All): Element {
         return null
     }
 

@@ -6,8 +6,6 @@ import * as core from "./core";
 
 import Util = pxt.Util;
 
-const lf = Util.lf
-
 export class Editor extends srceditor.Editor {
     config: pxt.PackageConfig = {} as any;
     isSaving: boolean;

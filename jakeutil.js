@@ -63,13 +63,17 @@ function expand(dir, ext) {
     return res
 }
 
-function catFiles(out, files, pref, addDep) {
+function cat(out, files, pref) {
     if (pref == null) pref = '"use strict";'
+    console.log("[cat] " + out + " <- " + files.join(" "))
+    let cont = files.map(f => fs.readFileSync(f, "utf8").replace(/\r/g, ""))
+    cont.unshift(pref)
+    fs.writeFileSync(out, cont.join("\n"))
+}
+
+function catFiles(out, files, pref, addDep) {
     file(out, files.concat(addDep || []), function () {
-        console.log("[cat] " + out + " <- " + files.join(" "))
-        let cont = files.map(f => fs.readFileSync(f, "utf8").replace(/\r/g, ""))
-        cont.unshift(pref)
-        fs.writeFileSync(out, cont.join("\n"))
+        cat(out, files, pref)
     })
 }
 
@@ -132,6 +136,7 @@ function strpSrcMap(task, dir) {
 exports.execCallback = execCallback;
 exports.expand = expand;
 exports.expand1 = expand1;
+exports.cat = cat;
 exports.catFiles = catFiles;
 exports.cmdIn = cmdIn;
 exports.cmdsIn = cmdsIn;

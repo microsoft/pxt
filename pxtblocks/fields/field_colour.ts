@@ -32,7 +32,7 @@ namespace pxtblockly {
             if (params.colours)
                 this.setColours(JSON.parse(params.colours));
             else if (pxt.appTarget.runtime && pxt.appTarget.runtime.palette) {
-                let p = Util.clone(pxt.appTarget.runtime.palette);
+                let p = pxt.Util.clone(pxt.appTarget.runtime.palette);
                 p[0] = "#dedede";
                 this.setColours(p);
             }

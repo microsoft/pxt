@@ -699,13 +699,13 @@ export class Menu extends data.Component<MenuProps, MenuState> {
         }
 
         let selectedTab: HTMLElement;
-        if ((leftOrUpKey && !Util.isUserLanguageRtl()) || (rightorBottomKey && Util.isUserLanguageRtl())) {
+        if ((leftOrUpKey && !pxt.Util.isUserLanguageRtl()) || (rightorBottomKey && pxt.Util.isUserLanguageRtl())) {
             if (activeNodeIndex === 0) {
                 selectedTab = menuItems.item(menuItems.length - 1) as HTMLElement
             } else {
                 selectedTab = menuItems.item(activeNodeIndex - 1) as HTMLElement
             }
-        } else if ((rightorBottomKey && !Util.isUserLanguageRtl()) || (leftOrUpKey && Util.isUserLanguageRtl())) {
+        } else if ((rightorBottomKey && !pxt.Util.isUserLanguageRtl()) || (leftOrUpKey && pxt.Util.isUserLanguageRtl())) {
             if (activeNodeIndex === menuItems.length - 1) {
                 selectedTab = menuItems.item(0) as HTMLElement
             } else {
@@ -836,7 +836,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
 
     constructor(props: ModalProps) {
         super(props);
-        this.id = Util.guidGen();
+        this.id = ts.pxtc.Util.guidGen();
         this.state = {
         }
     }

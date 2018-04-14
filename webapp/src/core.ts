@@ -10,8 +10,6 @@ import * as coretsx from "./coretsx";
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
-const lf = Util.lf;
-
 export type Component<S, T> = data.Component<S, T>;
 
 

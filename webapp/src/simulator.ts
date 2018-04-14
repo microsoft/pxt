@@ -316,13 +316,13 @@ function updateDebuggerButtonsInternal(brk: pxsim.DebuggerBreakpointMessage = nu
     function btn(icon: string, name: string, label: string, click: () => void) {
         let b = document.createElement('button');
         b.className = `ui mini button teal ${icon ? 'icon' : ''}`;
-        b.title = Util.htmlEscape(label);
+        b.title = pxt.Util.htmlEscape(label);
         if (icon) {
             let i = document.createElement('i');
             i.className = `${icon} icon`;
             b.appendChild(i);
         }
-        if (name) b.appendChild(document.createTextNode(Util.htmlEscape(name)));
+        if (name) b.appendChild(document.createTextNode(pxt.Util.htmlEscape(name)));
         b.addEventListener('click', click);
         return b;
     }

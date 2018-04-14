@@ -178,7 +178,7 @@ export class NotificationMessages extends React.Component<NotificationMessagePro
 
     push(notification: NotificationOptions) {
         const notifications = this.state.notifications;
-        const id = Util.guidGen();
+        const id = ts.pxtc.Util.guidGen();
         Object.keys(notifications).filter(e => notifications[e].kind == notification.kind)
             .forEach(previousNotification => this.remove(previousNotification));
         notifications[id] = notification;

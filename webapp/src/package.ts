@@ -4,7 +4,6 @@ import * as core from "./core";
 import * as db from "./db";
 
 import Util = pxt.Util;
-const lf = Util.lf
 
 let hostCache = new db.Table("hostcache")
 
