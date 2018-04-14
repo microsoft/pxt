@@ -365,11 +365,11 @@ namespace pxt.BrowserUtils {
         }
 
         const el = document.createElement("link");
-        link.href = url;
-        link.rel = "stylesheet";
-        link.type = "text/css";
-        link.id = id;
-        document.head.appendChild(link);
+        el.href = url;
+        el.rel = "stylesheet";
+        el.type = "text/css";
+        el.id = id;
+        document.head.appendChild(el);
 
         return Promise.resolve();
     }
