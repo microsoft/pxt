@@ -107,7 +107,7 @@ export class Editor extends srceditor.Editor {
             // 3) check that decompiled js == current js % white space
             let blocksInfo: pxtc.BlocksInfo;
             return this.parent.saveFileAsync()
-                .then(() => pxt.BrowserUtils.loadBlocklyAsync())
+                .then(() => this.parent.loadBlocklyAsync())
                 .then(() => compiler.getBlocksAsync())
                 .then((bi: pxtc.BlocksInfo) => {
                     blocksInfo = bi;

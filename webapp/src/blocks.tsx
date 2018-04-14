@@ -519,10 +519,10 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    private loadBlocklyPromise: Promise<void>;
+    private _loadBlocklyPromise: Promise<void>;
     loadBlocklyAsync() {
-        if (!this.loadBlocklyPromise)
-            this.loadBlocklyPromise = pxt.BrowserUtils.loadBlocklyAsync()
+        if (!this._loadBlocklyPromise)
+            this._loadBlocklyPromise = pxt.BrowserUtils.loadBlocklyAsync()
                 .then(() => {
                     pxt.blocks.openHelpUrl = (url: string) => {
                         pxt.tickEvent("blocks.help", { url }, { interactiveConsent: true });
@@ -556,7 +556,7 @@ export class Editor extends srceditor.Editor {
                     }
                     return Promise.resolve();
                 })
-        return this.loadBlocklyPromise;
+        return this._loadBlocklyPromise;
     }
 
     loadFileAsync(file: pkg.File): Promise<void> {

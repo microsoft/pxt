@@ -201,6 +201,7 @@ namespace pxt.editor {
         fireResize(): void;
         updateEditorLogo(left: number, rgba?: string): void;
 
+        loadBlocklyAsync(): Promise<void>;
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;
         renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<string>;

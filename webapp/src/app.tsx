@@ -1695,6 +1695,10 @@ export class ProjectView
         return this.editor == this.blocksEditor;
     }
 
+    loadBlocklyAsync(): Promise<void> {
+        return this.blocksEditor.loadBlocklyAsync();
+    }
+
     about() {
         const compileService = pxt.appTarget.compileService;
         const description = pxt.appTarget.description || pxt.appTarget.title;
