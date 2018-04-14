@@ -364,14 +364,16 @@ namespace pxt.BrowserUtils {
             return Promise.resolve();
         }
 
-        const el = document.createElement("link");
-        el.href = url;
-        el.rel = "stylesheet";
-        el.type = "text/css";
-        el.id = id;
-        document.head.appendChild(el);
-
-        return Promise.resolve();
+        return new Promise<void>((resolve, reject) => {
+            const el = document.createElement("link");
+            el.href = url;
+            el.rel = "stylesheet";
+            el.type = "text/css";
+            el.id = id;
+            el.addEventListener('load', () => resolve());
+            el.addEventListener('error', (e) => reject(e));
+            document.head.appendChild(el);
+        });
     }
 
     export function loadScriptAsync(path: string): Promise<void> {

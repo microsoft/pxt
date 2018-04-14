@@ -304,7 +304,8 @@ export class Editor extends srceditor.Editor {
         let editorArea = document.getElementById("monacoEditorArea");
         let editorElement = document.getElementById("monacoEditorInner");
 
-        return pxt.vs.initMonacoAsync(editorElement).then((editor) => {
+        return pxt.BrowserUtils.loadStyleAsync("blockly.css") // toolbox style
+            .then(() => pxt.vs.initMonacoAsync(editorElement).then((editor) => {
             this.editor = editor;
             this.loadingMonaco = false;
 
@@ -470,7 +471,7 @@ export class Editor extends srceditor.Editor {
             this.editorViewZones = [];
 
             this.setupToolbox(editorArea);
-        })
+        }));
     }
 
     protected dragCurrentPos = { x: 0, y: 0 };
