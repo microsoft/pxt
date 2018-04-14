@@ -351,6 +351,29 @@ namespace pxt.BrowserUtils {
         return url;
     }
 
+    export function loadStyleAsync(path: string, rtl?: boolean): Promise<void> {
+        if (rtl) path = "rtl" + path;
+        const id = "style-" + path;
+        if (document.getElementById(id)) return Promise.resolve();
+
+        const url = resolveCdnUrl(path);
+        const links = Util.toArray(document.head.getElementsByTagName("link"));
+        const link = links.filter(l => l.getAttribute("href") == url)[0];
+        if (link) {
+            if (!link.id) link.id = id;
+            return Promise.resolve();
+        }
+
+        const el = document.createElement("link");
+        link.href = url;
+        link.rel = "stylesheet";
+        link.type = "text/css";
+        link.id = id;
+        document.head.appendChild(link);
+
+        return Promise.resolve();
+    }
+
     export function loadScriptAsync(path: string): Promise<void> {
         const url = resolveCdnUrl(path);
         const id = "script-" + url;
@@ -391,12 +414,13 @@ namespace pxt.BrowserUtils {
         if (!loadBlocklyPromise) {
             if (typeof Blockly === "undefined") { // not loaded yet?
                 pxt.debug(`blockly: delay load`);
-                loadBlocklyPromise = pxt.BrowserUtils.loadScriptAsync("pxtblockly.js")
-                    .then(() => {
-                        pxt.debug(`blockly: loaded`)
-                    })
-            } else
-                loadBlocklyPromise = Promise.resolve();
+                loadBlocklyPromise =
+                    pxt.BrowserUtils.loadStyleAsync("blockly.css", ts.pxtc.Util.isUserLanguageRtl())
+                        .then(() => pxt.BrowserUtils.loadScriptAsync("pxtblockly.js"))
+                        .then(() => {
+                            pxt.debug(`blockly: loaded`)
+                        })
+            } else loadBlocklyPromise = Promise.resolve();
         }
         return loadBlocklyPromise;
     }
@@ -433,13 +457,14 @@ namespace pxt.BrowserUtils {
                     semanticLink.setAttribute("href", semanticHref);
                 }
             }
-            // replace blockly.css with rtlblockly.css
+            // replace blockly.css with rtlblockly.css if possible
             const blocklyLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "blockly.css"))[0];
             if (blocklyLink) {
                 const blocklyHref = blocklyLink.getAttribute("data-rtl");
                 if (blocklyHref) {
                     pxt.debug(`swapping to ${blocklyHref}`)
                     blocklyLink.setAttribute("href", blocklyHref);
+                    blocklyLink.removeAttribute("data-rtl");
                 }
             }
         }
