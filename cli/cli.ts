@@ -682,13 +682,22 @@ function targetFileList() {
     return lst;
 }
 
-export function uploadTargetAsync(label: string) {
+function uploadTargetAsync(label: string) {
     return uploadCoreAsync({
         label,
         fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
         pkgversion: pkgVersion(),
         fileContent: {}
     })
+}
+
+export function uploadTargetReleaseAsync(parsed?: commandParser.ParsedCommand) {
+    if (parsed.flags && parsed.flags["cloud"]) forceCloudBuild = true;
+    const label = parsed.arguments[0];
+    return internalBuildTargetAsync()
+        .then(() => {
+            return uploadTargetAsync(label);
+        });
 }
 
 export function uploadTargetRefsAsync(repoPath: string) {
@@ -3897,6 +3906,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
     const minify = !!parsed.flags["minify"];
     const bump = !!parsed.flags["bump"];
+    if (parsed.flags["cloud"]) forceCloudBuild = true;
 
     pxt.log(`packaging editor to ${builtPackaged}`)
 
@@ -4971,7 +4981,8 @@ function initCommands() {
             },
             "bump": {
                 description: "bump version number prior to package"
-            }
+            },
+            cloud: { description: "forces build to happen in the cloud" }
         }
     }, staticpkgAsync);
 
@@ -5084,7 +5095,10 @@ function initCommands() {
         help: "Upload target release",
         argString: "<label>",
         advanced: true,
-    }, pc => uploadTargetAsync(pc.arguments[0]));
+        flags: {
+            cloud: { description: "forces build to happen in the cloud" }
+        }
+    }, uploadTargetReleaseAsync);
     p.defineCommand({
         name: "uploadrefs",
         aliases: [],
