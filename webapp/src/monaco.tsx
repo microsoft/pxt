@@ -257,7 +257,7 @@ export class Editor extends srceditor.Editor {
 
         function fixColor(hexcolor: string) {
             hexcolor = pxt.toolbox.convertColor(hexcolor);
-            return (inverted ? Blockly.PXTUtils.fadeColour(hexcolor, invertedColorluminosityMultipler, true) : hexcolor).replace('#', '');
+            return (inverted ? pxt.toolbox.fadeColor(hexcolor, invertedColorluminosityMultipler, true) : hexcolor).replace('#', '');
         }
     }
 
@@ -894,12 +894,12 @@ export class Editor extends srceditor.Editor {
                 // Highlight on hover
                 const highlightBlock = () => {
                     monacoBlock.style.backgroundColor = monacoBlockDisabled ?
-                        `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.8, false)}` :
-                        `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.1, false)}`;
+                        `${pxt.toolbox.fadeColor(color || '#ddd', 0.8, false)}` :
+                        `${pxt.toolbox.fadeColor(color || '#ddd', 0.1, false)}`;
                 }
                 const unhighlightBlock = () => {
                     monacoBlock.style.backgroundColor = monacoBlockDisabled ?
-                        `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.8, false)}` :
+                        `${pxt.toolbox.fadeColor(color || '#ddd', 0.8, false)}` :
                         `${color}`;
                 }
                 monacoBlock.onmouseenter = (e: MouseEvent) => {
@@ -933,9 +933,9 @@ export class Editor extends srceditor.Editor {
             monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
             monacoBlock.style.lineHeight = `${monacoEditor.parent.settings.editorFontSize + 1}px`;
             monacoBlock.style.backgroundColor = monacoBlockDisabled ?
-                `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.8, false)}` :
+                `${pxt.toolbox.fadeColor(color || '#ddd', 0.8, false)}` :
                 `${color}`;
-            monacoBlock.style.borderColor = `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.2, false)}`;
+            monacoBlock.style.borderColor = `${pxt.toolbox.fadeColor(color || '#ddd', 0.2, false)}`;
             if (fn.retType && fn.retType == "boolean") {
                 // Show a hexagonal shape
                 monacoBlock.style.borderRadius = "0px";
@@ -1597,7 +1597,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
 
         let onmouseenter = () => {
             if (appTheme.invertedToolbox) {
-                this.treeRow.style.backgroundColor = Blockly.PXTUtils.fadeColour(metaColor || '#ddd', invertedMultipler, false);
+                this.treeRow.style.backgroundColor = pxt.toolbox.fadeColor(metaColor || '#ddd', invertedMultipler, false);
             }
         }
         let onmouseleave = () => {
@@ -1626,7 +1626,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         if (selected) {
             treeRowClass += ' blocklyTreeSelected';
             if (appTheme.invertedToolbox) {
-                treeRowStyle.backgroundColor = `${Blockly.PXTUtils.fadeColour(color, (Blockly as any).Options.invertedMultiplier, false)}`;
+                treeRowStyle.backgroundColor = `${pxt.toolbox.fadeColor(color, (Blockly as any).Options.invertedMultiplier, false)}`;
             } else {
                 treeRowStyle.backgroundColor = (metaColor || '#ddd');
             }
