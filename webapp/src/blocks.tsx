@@ -637,7 +637,8 @@ export class Editor extends srceditor.Editor {
     }
 
     updateDebuggerVariables(globals: pxsim.Variables) {
-        const vars = Blockly.Variables.allVariables(this.editor).map((variable: any) => {
+        if (!this.parent.state.debugging) return;
+        const vars = this.editor.getAllVariables().map((variable: any) => {
             return variable.name as string;
         })
         if (!globals || vars.length == 0) {

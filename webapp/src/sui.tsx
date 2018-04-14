@@ -129,7 +129,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             this.toggle();
         } else if (charCode === core.ESC_KEY) {
             e.preventDefault();
-            this.hide();  
+            this.hide();
         } else if (charCode === 40 /* Down arrow key */) {
             e.preventDefault();
             if (!this.state.open) this.show();
@@ -842,12 +842,21 @@ export class Modal extends React.Component<ModalProps, ModalState> {
     }
 
     private afterOpen() {
+        const { modalDidUpdate } = this.props;
         this.setState({ scrolling: false });
         this.setPositionAndClassNames();
+        if (modalDidUpdate) modalDidUpdate(this.getRef());
     }
 
     private onClose() {
         cancelAnimationFrame(this.animationRequestId);
+    }
+
+    private getRef() {
+        const modal = this.refs["modal"];
+        const ref = modal && (modal as any).node
+            && (modal as any).node.firstChild && (modal as any).node.firstChild.firstChild;
+        return ref;
     }
 
     setPositionAndClassNames = () => {
@@ -863,9 +872,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
         }
 
         const newState: ModalState = {}
-        const modal = this.refs["modal"];
-        const ref = modal && (modal as any).node
-            && (modal as any).node.firstChild && (modal as any).node.firstChild.firstChild;
+        const ref = this.getRef();
 
         if (ref) {
             const { height } = ref.getBoundingClientRect();
