@@ -119,7 +119,7 @@ namespace pxt.toolbox {
         return colour;
     }
 
-    export function fadeColour(hex: string, luminosity: number, lighten: number) {
+    export function fadeColor(hex: string, luminosity: number, lighten: number) {
         // #ABC => ABC
         hex = hex.replace(/[^0-9a-f]/gi, '');
 
