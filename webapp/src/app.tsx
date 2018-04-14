@@ -414,7 +414,7 @@ export class ProjectView
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
         simulator.init(document.getElementById("boardview"), {
-            highlightStatement: (stmt) => {
+            highlightStatement: (stmt, brk) => {
                 if (this.editor) this.editor.highlightStatement(stmt, brk)
             },
             restartSimulator: () => {
