@@ -945,6 +945,9 @@ function uploadCoreAsync(opts: UploadOptions) {
     let targetEditorJs = "";
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor)
         targetEditorJs = "@commitCdnUrl@editor.js";
+    let targetFieldEditorsJs = "";
+    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors)
+        targetFieldEditorsJs = "@commitCdnUrl@fieldeditors.js";
 
     let replacements: Map<string> = {
         "/sim/simulator.html": "@simUrl@",
@@ -961,6 +964,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
         "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
         "@targetEditorJs@": targetEditorJs,
+        "@targetFieldEditorsJs@": targetFieldEditorsJs,
         "@targetImages@": targetImagesHashed.length ? targetImagesHashed.join('\n') : ''
     }
 
@@ -1000,6 +1004,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "@defaultLocaleStrings@": "",
             "@cachedHexFiles@": "",
             "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : "",
+            "@targetFieldEditorsJs@": targetFieldEditorsJs ? `${opts.localDir}fieldeditors.js` : "",
             "@targetImages@": targetImages.length ? targetImages.map(k =>
                 `${opts.localDir}${path.join('./docs', logos[k])}`).join('\n') : ''
         }
