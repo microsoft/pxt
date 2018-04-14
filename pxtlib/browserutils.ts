@@ -382,12 +382,16 @@ namespace pxt.BrowserUtils {
     let loadBlocklyPromise: Promise<void>;
     export function loadBlocklyAsync(): Promise<void> {
         if (!loadBlocklyPromise) {
-            const paths: Map<string> = (window as any).MonacoPaths
-            pxt.debug(`blockly: delay load`);
-            loadBlocklyPromise = pxt.BrowserUtils.loadScriptAsync(paths["pxtblockly.js"])
-                .then(() => {
-                    pxt.debug(`blockly: loaded`)
-                })
+            if (typeof Blockly === "undefined") { // not loaded yet?
+                const paths: Map<string> = (window as any).MonacoPaths;
+                pxt.debug(`blockly: delay load`);
+                loadBlocklyPromise = pxt.BrowserUtils.loadScriptAsync(
+                    paths["pxtblockly.js"])
+                    .then(() => {
+                        pxt.debug(`blockly: loaded`)
+                    })
+            } else
+                loadBlocklyPromise = Promise.resolve();
         }
         return loadBlocklyPromise;
     }
