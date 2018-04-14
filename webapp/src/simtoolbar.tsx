@@ -7,6 +7,7 @@ import * as sui from "./sui";
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface SimulatorProps extends ISettingsProps {
+    debug?: boolean;
 }
 
 export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
@@ -72,7 +73,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         return <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar") }>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                 {make ? <sui.Button icon='configure' className="secondary" title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
-                {run ? <sui.Button key='runbtn' className={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
+                {run ? <sui.Button key='runbtn' className={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
                 {restart ? <sui.Button key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
                 {trace ? <sui.Button key='debug' className={`trace-button ${isTracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace() } /> : undefined}
             </div>

@@ -5,8 +5,9 @@ import * as core from "./core";
 import U = pxt.U
 
 interface SimulatorConfig {
-    highlightStatement(stmt: pxtc.LocationInfo): void;
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): void;
     restartSimulator(): void;
+    onStateChanged(state: pxsim.SimulatorState): void;
     editor: string;
 }
 
@@ -82,7 +83,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onDebuggerBreakpoint: function (brk) {
             updateDebuggerButtons(brk)
             let brkInfo = lastCompileResult.breakpoints[brk.breakpointId]
-            if (config) config.highlightStatement(brkInfo)
+            if (config) config.highlightStatement(brkInfo, brk)
             if (brk.exceptionMessage) {
                 core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
             }
@@ -111,8 +112,11 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onStateChanged: function (state) {
             if (state === pxsim.SimulatorState.Stopped) {
                 postSimEditorEvent("stopped");
+            } else if (state === pxsim.SimulatorState.Running) {
+                this.onDebuggerResume();
             }
             updateDebuggerButtons()
+            cfg.onStateChanged(state);
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
             switch (msg.command) {
@@ -259,6 +263,32 @@ export function proxy(message: pxsim.SimulatorCustomMessage) {
     pxsim.U.removeChildren(debuggerDOM);
 }
 
+export function dbgPauseResume() {
+    if (driver.state == pxsim.SimulatorState.Paused) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.Resume);
+    } else if (driver.state == pxsim.SimulatorState.Running) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.Pause);
+    }
+}
+
+export function dbgStepOver() {
+    if (driver.state == pxsim.SimulatorState.Paused) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.StepOver);
+    }
+}
+
+export function dbgStepInto() {
+    if (driver.state == pxsim.SimulatorState.Paused) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.StepInto);
+    }
+}
+
+export function dbgStepOut() {
+    if (driver.state == pxsim.SimulatorState.Paused) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.StepOut);
+    }
+}
+
 function makeClean() {
     pxsim.U.removeClass(driver.container, getInvalidatedClass());
     dirty = false;
@@ -279,6 +309,10 @@ function getStoppedClass() {
 }
 
 function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {
+    //updateDebuggerButtonsInternal(brk);
+}
+
+function updateDebuggerButtonsInternal(brk: pxsim.DebuggerBreakpointMessage = null) {
     function btn(icon: string, name: string, label: string, click: () => void) {
         let b = document.createElement('button');
         b.className = `ui mini button teal ${icon ? 'icon' : ''}`;

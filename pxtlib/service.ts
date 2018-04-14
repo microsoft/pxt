@@ -10,6 +10,7 @@ namespace ts.pxtc {
     export const ON_START_COMMENT = U.lf("on start");
     export const HANDLER_COMMENT = U.lf("code goes here");
     export const TS_STATEMENT_TYPE = "typescript_statement";
+    export const TS_DEBUGGER_TYPE = "debugger_keyword";
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const PAUSE_UNTIL_TYPE = "pxt_pause_until";
     export const BINARY_JS = "binary.js";

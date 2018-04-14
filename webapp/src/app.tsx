@@ -27,6 +27,7 @@ import * as editortoolbar from "./editortoolbar";
 import * as simtoolbar from "./simtoolbar";
 import * as dialogs from "./dialogs";
 import * as importhelpers from "./import";
+import * as debug from "./debugger";
 import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
@@ -98,8 +99,7 @@ export class ProjectView
             showFiles: false,
             home: shouldShowHomeScreen,
             active: document.visibilityState == 'visible',
-            collapseEditorTools: pxt.appTarget.simulator.headless || (!isSandbox && pxt.BrowserUtils.isMobile()),
-            embedSimView: isSandbox
+            collapseEditorTools: pxt.appTarget.simulator.headless || (!isSandbox && pxt.BrowserUtils.isMobile())
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -415,11 +415,18 @@ export class ProjectView
         this.allEditors.forEach(e => e.prepare())
         simulator.init(document.getElementById("boardview"), {
             highlightStatement: (stmt) => {
-                if (this.editor) this.editor.highlightStatement(stmt)
+                if (this.editor) this.editor.highlightStatement(stmt, brk)
             },
             restartSimulator: () => {
                 core.hideDialog();
                 this.runSimulator();
+            },
+            onStateChanged: (state) => {
+                if (state == pxsim.SimulatorState.Paused) {
+                    this.setState({ running: false });
+                } else if (state == pxsim.SimulatorState.Running) {
+                    this.setState({ running: true });
+                }
             },
             editor: this.state.header ? this.state.header.editor : ''
         })
@@ -682,7 +689,8 @@ export class ProjectView
                     header: h,
                     projectName: h.name,
                     currFile: file,
-                    sideDocsLoadUrl: ''
+                    sideDocsLoadUrl: '',
+                    debugging: false
                 })
 
                 if (file.name === "main.ts") {
@@ -936,6 +944,11 @@ export class ProjectView
         pxt.tickEvent('app.editor');
     }
 
+    reloadEditor() {
+        if (this.state.home) location.hash = `#reload`;
+        location.reload();
+    }
+
     getPreferredEditor(): string {
         return this.editor == this.blocksEditor ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME;
     }
@@ -1045,8 +1058,8 @@ export class ProjectView
         this.reload = true;
         return workspace.resetAsync()
             .done(
-                () => window.location.reload(),
-                () => window.location.reload()
+                () => this.reloadEditor(),
+                () => this.reloadEditor()
             );
     }
 
@@ -1346,6 +1359,23 @@ export class ProjectView
                 hidbridge.initAsync()
             ).then(vals => pxt.HWDBG.startDebugAsync(vals[0], vals[1]))
         })
+    }
+
+    toggleDebugging() {
+        this.setState({debugging: !this.state.debugging});
+        this.restartSimulator(!this.state.debugging);
+    }
+
+    dbgPauseResume() {
+        simulator.dbgPauseResume();
+    }
+
+    dbgStepOver() {
+        simulator.dbgStepOver();
+    }
+
+    dbgStepInto() {
+        simulator.dbgStepInto();
     }
 
     editText() {
@@ -1713,6 +1743,7 @@ export class ProjectView
             hideMenuBar ? 'hideMenuBar' : '',
             !showEditorToolbar ? 'hideEditorToolbar' : '',
             this.state.bannerVisible ? "notificationBannerVisible" : "",
+            this.state.debugging ? "debugging" : "",
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
             isApp ? "app" : "",
             'full-abs'
@@ -1730,17 +1761,18 @@ export class ProjectView
                     <tutorial.TutorialCard ref="tutorialcard" parent={this} />
                 </div> : undefined}
                 <div id="simulator">
+                    {simDebug ? <debug.DebuggerToolbar parent={this} /> : undefined}
                     <aside id="filelist" className="ui items">
                         <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden" aria-hidden="true">{lf("Simulator")}</label>
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-labelledby="boardviewLabel">
                         </div>
-                        <simtoolbar.SimulatorToolbar parent={this} />
-                        <div className="ui item portrait hide">
-                            {simDebug ? <sui.Button key='debugbtn' className='teal' icon="xicon bug" text={"Debug"} onClick={() => this.simDebug()} /> : ''}
+                        <simtoolbar.SimulatorToolbar debug={simDebug} parent={this} />
+                        <div className="ui item portrait hide hidefullscreen">
+                            {simDebug ? <sui.Button key='debugbtn' className='teal' icon="xicon bug" text={"Debug"} onClick={() => this.toggleDebugging()} /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
                         {useSerialEditor ?
-                            <div id="serialPreview" className="ui editorFloat portrait hide">
+                            <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
                                 <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={() => this.openSerial(true)} />
                                 <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={() => this.openSerial(false)} />
                             </div> : undefined}
@@ -2010,7 +2042,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             const fileContents = Util.stringToUint8Array(atob(hash.arg));
             pxt.BrowserUtils.changeHash("");
             core.showLoading("loadingproject", lf("loading project..."));
-            theEditor.importProjectFromFileAsync(fileContents)
+            editor.importProjectFromFileAsync(fileContents)
                 .done(() => core.hideLoading("loadingproject"));
             return true;
         case "reload": // need to reload last project - handled later in the load process
@@ -2038,7 +2070,6 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "edit":
         case "sandboxproject":
         case "project":
-        case "reload":
             return true;
         default:
             return false;

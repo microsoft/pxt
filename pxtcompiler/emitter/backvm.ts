@@ -16,8 +16,8 @@ namespace ts.pxtc {
         return JSON.stringify(s)
     }
 
-    function vtableToVM(info: ClassInfo) {
-        return vtableToAsm(info)
+    function vtableToVM(info: ClassInfo, opts: CompileOptions) {
+        return vtableToAsm(info, opts)
     }
 
     /* tslint:disable:no-trailing-whitespace */
@@ -39,7 +39,7 @@ ${hex.hexPrelude()}
             vmsource += "\n" + irToVM(bin, p) + "\n"
         })
         bin.usedClassInfos.forEach(info => {
-            vmsource += vtableToVM(info)
+            vmsource += vtableToVM(info, opts)
         })
         U.iterMap(bin.hexlits, (k, v) => {
             vmsource += snip.hex_literal(v, k)

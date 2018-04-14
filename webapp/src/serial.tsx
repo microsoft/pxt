@@ -92,6 +92,15 @@ export class Editor extends srceditor.Editor {
         this.lineColors = (serialTheme && serialTheme.lineColors) || this.lineColors;
     }
 
+    private loadSmoothieChartsPromise: Promise<void>
+    private loadSmoothieChartsAsync(): Promise<void> {
+        if (!this.loadSmoothieChartsPromise) {
+            const monacoPaths: pxt.Map<string> = (window as any).MonacoPaths;
+            this.loadSmoothieChartsPromise = pxt.BrowserUtils.loadScriptAsync(monacoPaths["smoothie/smoothie_compressed.js"]);
+        }
+        return this.loadSmoothieChartsPromise;
+    }
+
     saveMessageForLater(m: pxsim.SimulatorSerialMessage) {
         this.savedMessageQueue.push(m);
         if (this.savedMessageQueue.length > this.maxSavedMessages) {
@@ -168,23 +177,26 @@ export class Editor extends srceditor.Editor {
     }
 
     appendGraphEntry(source: string, variable: string, nvalue: number, receivedTime: number) {
-        //See if there is a "home chart" that this point belongs to -
-        //if not, create a new chart
-        let homeChart: Chart = undefined
-        for (let i = 0; i < this.charts.length; ++i) {
-            let chart = this.charts[i]
-            if (chart.shouldContain(source, variable)) {
-                homeChart = chart
-                break
-            }
-        }
-        if (!homeChart) {
-            homeChart = new Chart(source, variable, this.chartIdx, this.currentLineColors)
-            this.chartIdx++;
-            this.charts.push(homeChart)
-            this.chartRoot.appendChild(homeChart.getElement());
-        }
-        homeChart.addPoint(variable, nvalue, receivedTime)
+        this.loadSmoothieChartsAsync()
+            .then(() => {
+                //See if there is a "home chart" that this point belongs to -
+                //if not, create a new chart
+                let homeChart: Chart = undefined
+                for (let i = 0; i < this.charts.length; ++i) {
+                    let chart = this.charts[i]
+                    if (chart.shouldContain(source, variable)) {
+                        homeChart = chart
+                        break
+                    }
+                }
+                if (!homeChart) {
+                    homeChart = new Chart(source, variable, this.chartIdx, this.currentLineColors)
+                    this.chartIdx++;
+                    this.charts.push(homeChart)
+                    this.chartRoot.appendChild(homeChart.getElement());
+                }
+                homeChart.addPoint(variable, nvalue, receivedTime)
+            })
     }
 
     appendConsoleEntry(data: string) {

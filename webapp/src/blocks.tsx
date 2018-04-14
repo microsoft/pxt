@@ -7,6 +7,8 @@ import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as baseToolbox from "./toolbox";
 
+import * as debug from "./debugger";
+
 import CategoryMode = pxt.blocks.CategoryMode;
 import Util = pxt.Util;
 let lf = Util.lf
@@ -29,6 +31,8 @@ export class Editor extends srceditor.Editor {
     filters: pxt.editor.ProjectFilters;
     extensions: pxt.PackageConfig[];
     showSearch: boolean;
+
+    private debugVariables: debug.DebuggerVariables;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -193,6 +197,17 @@ export class Editor extends srceditor.Editor {
         let needsLayout = false;
         let flyoutOnly = !(this.editor as any).toolbox_ && (this.editor as any).flyout_;
 
+        this.editor.getTopComments(false).forEach(b => {
+            const tp = b.getBoundingRectangle().topLeft;
+            if (minX === undefined || tp.x < minX) {
+                minX = tp.x;
+            }
+            if (minY === undefined || tp.y < minY) {
+                minY = tp.y;
+            }
+
+            needsLayout = needsLayout || (tp.x == 0 && tp.y == 0);
+        });
         this.editor.getTopBlocks(false).forEach(b => {
             const tp = b.getBoundingRectangle().topLeft;
             if (minX === undefined || tp.x < minX) {
@@ -211,6 +226,7 @@ export class Editor extends srceditor.Editor {
         }
         else {
             // Otherwise translate the blocks so that they are positioned on the top left
+            this.editor.getTopComments(false).forEach(c => c.moveBy(-minX, -minY));
             this.editor.getTopBlocks(false).forEach(b => b.moveBy(-minX, -minY));
             this.editor.scrollX = flyoutOnly ? (this.editor as any).flyout_.width_ + 10 : 10;
             this.editor.scrollY = 10;
@@ -405,39 +421,6 @@ export class Editor extends srceditor.Editor {
                         this.refreshToolbox();
                     }
                 }
-                else if (ev.element == 'commentOpen'
-                    || ev.element == 'warningOpen') {
-                    /*
-                     * We override the default selection behavior so that when a block is selected, its
-                     * comment is expanded. However, if a user selects a block by clicking on its comment
-                     * icon (the blue question mark), there is a chance that the comment will be expanded
-                     * and immediately collapse again because the icon click toggled the state. This hack
-                     * prevents two events caused by the same click from opening and then closing a comment
-                     */
-                    if (ev.group) {
-                        // newValue is true if the comment has been expanded
-                        if (ev.newValue) {
-                            this.selectedEventGroup = ev.group
-                        }
-                        else if (ev.group == this.selectedEventGroup && this.currentCommentOrWarning) {
-                            this.currentCommentOrWarning.setVisible(true)
-                            this.selectedEventGroup = undefined
-                        }
-                    }
-                }
-                else if (ev.element == 'selected') {
-                    if (this.currentCommentOrWarning) {
-                        this.currentCommentOrWarning.setVisible(false)
-                    }
-                    const selected = Blockly.selected
-                    if (selected && selected.warning && typeof (selected.warning) !== "string") {
-                        (selected.warning as Blockly.Icon).setVisible(true)
-                        this.currentCommentOrWarning = selected.warning
-                    } else if (selected && selected.comment && typeof (selected.comment) !== "string") {
-                        (selected.comment as Blockly.Icon).setVisible(true)
-                        this.currentCommentOrWarning = selected.comment
-                    }
-                }
             }
         })
         this.initPrompts();
@@ -518,7 +501,10 @@ export class Editor extends srceditor.Editor {
     display() {
         return (
             <div>
-                <div id="blocksEditor"></div>
+                <div id="blocksEditor">
+                </div>
+                {this.parent.state.debugging ?
+                    <debug.DebuggerVariables ref={e => this.debugVariables = e} parent={this.parent} /> : undefined}
             </div>
         )
     }
@@ -611,7 +597,10 @@ export class Editor extends srceditor.Editor {
             return;
 
         // clear previous warnings on non-disabled blocks
-        this.editor.getAllBlocks().filter(b => !b.disabled).forEach(b => b.setWarningText(null));
+        this.editor.getAllBlocks().filter(b => !b.disabled).forEach(b => {
+            b.setWarningText(null);
+            b.setHighlightWarning(false);
+        });
         let tsfile = file.epkg.files[file.getVirtualFileName()];
         if (!tsfile || !tsfile.diagnostics) return;
 
@@ -626,19 +615,53 @@ export class Editor extends srceditor.Editor {
                 if (b) {
                     let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt);
+                    b.setHighlightWarning(true);
                 }
             }
         })
     }
 
-    highlightStatement(brk: pxtc.LocationInfo) {
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage) {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return;
-        if (brk) {
-            let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: brk.line, length: brk.endLine - brk.line });
+        if (stmt) {
+            let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
                 this.editor.highlightBlock(bid);
+                if (brk) this.updateDebuggerVariables(brk.globals);
             }
+        } else {
+            this.editor.highlightBlock(null);
+            this.updateDebuggerVariables(null);
+        }
+    }
+
+    updateDebuggerVariables(globals: pxsim.Variables) {
+        const vars = Blockly.Variables.allVariables(this.editor).map((variable: any) => {
+            return variable.name as string;
+        })
+        if (!globals || vars.length == 0) {
+            if (this.debugVariables) this.debugVariables.clear();
+            return;
+        }
+
+        for (let k in vars) {
+            const variable = vars[k];
+            const value = getValueOfVariable(variable);
+            if (this.debugVariables && value != undefined) this.debugVariables.set(variable, value);
+        }
+
+        if (this.debugVariables) this.debugVariables.update();
+
+        function getValueOfVariable(name: string): pxsim.Variables {
+            for (let k of Object.keys(globals)) {
+                let n = k.replace(/___\d+$/, "");
+                if (name === n) {
+                    let v = globals[k]
+                    return v;
+                }
+            }
+            return undefined;
         }
     }
 
