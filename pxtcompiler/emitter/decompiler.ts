@@ -901,6 +901,9 @@ ${output}</xml>`;
                     case SK.CallExpression:
                         stmt = getCallStatement(node as ts.CallExpression, asExpression) as StatementNode;
                         break;
+                    case SK.DebuggerStatement:
+                        stmt = getDebuggerStatementBlock(node);
+                        break;
                     default:
                         if (next) {
                             error(node, Util.lf("Unsupported statement in block: {0}", SK[node.kind]))
@@ -983,6 +986,11 @@ ${output}</xml>`;
                 r.mutation[`line${i}`] = U.htmlEscape(p);
             });
 
+            return r;
+        }
+
+        function getDebuggerStatementBlock(node: ts.Node): StatementNode {
+            const r = mkStmt(pxtc.TS_DEBUGGER_TYPE);
             return r;
         }
 
@@ -1731,6 +1739,8 @@ ${output}</xml>`;
                 return checkForOfStatement(node as ts.ForOfStatement);
             case SK.FunctionDeclaration:
                 return checkFunctionDeclaration(node as ts.FunctionDeclaration, topLevel);
+            case SK.DebuggerStatement:
+                return undefined;
         }
 
         return Util.lf("Unsupported statement in block: {0}", SK[node.kind]);

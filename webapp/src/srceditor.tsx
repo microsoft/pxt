@@ -105,7 +105,7 @@ export class Editor implements pxt.editor.IEditor {
         return Promise.resolve('');
     }
 
-    highlightStatement(brk: pxtc.LocationInfo) { }
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage) { }
 
     clearHighlightedStatements() { }
 

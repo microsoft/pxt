@@ -5,10 +5,10 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
+import * as debug from "./debugger";
 
 import CategoryMode = pxt.toolbox.CategoryMode;
 import Util = pxt.Util;
-let lf = Util.lf
 
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
@@ -28,6 +28,8 @@ export class Editor extends srceditor.Editor {
     filters: pxt.editor.ProjectFilters;
     extensions: pxt.PackageConfig[];
     showSearch: boolean;
+
+    private debugVariables: debug.DebuggerVariables;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -479,7 +481,10 @@ export class Editor extends srceditor.Editor {
     display() {
         return (
             <div>
-                <div id="blocksEditor"></div>
+                <div id="blocksEditor">
+                </div>
+                {this.parent.state.debugging ?
+                    <debug.DebuggerVariables ref={e => this.debugVariables = e} parent={this.parent} /> : undefined}
             </div>
         )
     }
@@ -639,14 +644,47 @@ export class Editor extends srceditor.Editor {
         })
     }
 
-    highlightStatement(brk: pxtc.LocationInfo) {
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage) {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return;
-        if (brk) {
-            let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: brk.line, length: brk.endLine - brk.line });
+        if (stmt) {
+            let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
                 this.editor.highlightBlock(bid);
+                if (brk) this.updateDebuggerVariables(brk.globals);
             }
+        } else {
+            this.editor.highlightBlock(null);
+            this.updateDebuggerVariables(null);
+        }
+    }
+
+    updateDebuggerVariables(globals: pxsim.Variables) {
+        const vars = Blockly.Variables.allVariables(this.editor).map((variable: any) => {
+            return variable.name as string;
+        })
+        if (!globals || vars.length == 0) {
+            if (this.debugVariables) this.debugVariables.clear();
+            return;
+        }
+
+        for (let k in vars) {
+            const variable = vars[k];
+            const value = getValueOfVariable(variable);
+            if (this.debugVariables && value != undefined) this.debugVariables.set(variable, value);
+        }
+
+        if (this.debugVariables) this.debugVariables.update();
+
+        function getValueOfVariable(name: string): pxsim.Variables {
+            for (let k of Object.keys(globals)) {
+                let n = k.replace(/___\d+$/, "");
+                if (name === n) {
+                    let v = globals[k]
+                    return v;
+                }
+            }
+            return undefined;
         }
     }
 
