@@ -72,6 +72,6 @@ export function importPNGFile(file: File) {
     if (!file) return;
     ts.pxtc.Util.fileReadAsBufferAsync(file)
         .then(buf => screenshot.decodeBlobAsync("data:image/png;base64," +
-            btoa(Util.uint8ArrayToString(buf))))
+            btoa(pxt.Util.uint8ArrayToString(buf))))
         .then(buf => this.importProjectCoreAsync(buf))
 }
