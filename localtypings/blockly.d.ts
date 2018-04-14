@@ -902,6 +902,7 @@ declare namespace Blockly {
         newBlock(prototypeName: string, opt_id?: string): Block;
         addTopBlock(block: Block): void;
         getAllBlocks(): Block[];
+        getAllVariables(): Blockly.VariableModel[];
         render(): void;
         clear(): void;
         dispose(): void;
@@ -1028,7 +1029,6 @@ declare namespace Blockly {
 
     namespace Variables {
         function generateVariableFieldXml_(variableModel: VariableModel): void;
-        function allVariables(wp: Workspace): string[];
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
         let flyoutCategoryBlocks: (wp: Workspace) => HTMLElement[];
         function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;
