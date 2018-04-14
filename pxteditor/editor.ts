@@ -365,9 +365,11 @@ namespace pxt.editor {
         retType?: string;
     }
 
-    export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;
+    export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>
+        = opts => Promise.resolve<ExtensionResult>({});
 
-    export let initFieldExtensionsAsync: (opts: FieldExtensionOptions) => Promise<FieldExtensionResult>;
+    export let initFieldExtensionsAsync: (opts: FieldExtensionOptions) => Promise<FieldExtensionResult>
+        = opts => Promise.resolve<FieldExtensionResult>({});
 
     export interface NativeHostMessage {
         name?: string;

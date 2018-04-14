@@ -346,7 +346,7 @@ namespace pxt.runner {
 
     function initEditorExtensionsAsync(): Promise<void> {
         let promise = Promise.resolve();
-        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
+        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
             const opts: pxt.editor.FieldExtensionOptions = {};
             promise = promise
                 .then(() => pxt.BrowserUtils.loadBlocklyAsync())

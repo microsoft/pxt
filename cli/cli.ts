@@ -1355,7 +1355,8 @@ export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Prom
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildSemanticUIAsync())
         .then(() => {
-            if (fs.existsSync(path.join("editor", "tsconfig.json"))) {
+            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor &&
+                fs.existsSync(path.join("editor", "tsconfig.json"))) {
                 const tsConfig = JSON.parse(fs.readFileSync(path.join("editor", "tsconfig.json"), "utf8"));
                 if (tsConfig.compilerOptions.module)
                     return buildFolderAndBrowserifyAsync('editor', true, 'editor');
@@ -1365,7 +1366,8 @@ export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Prom
             return Promise.resolve();
         })
         .then(() => {
-            if (fs.existsSync(path.join("fieldeditors", "tsconfig.json"))) {
+            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors &&
+                fs.existsSync(path.join("fieldeditors", "tsconfig.json"))) {
                 const tsConfig = JSON.parse(fs.readFileSync(path.join("fieldeditors", "tsconfig.json"), "utf8"));
                 if (tsConfig.compilerOptions.module)
                     return buildFolderAndBrowserifyAsync('fieldeditors', true, 'fieldeditors');
