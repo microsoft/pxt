@@ -10,5 +10,5 @@
 </block>
 </statement>
 </block>
-<comment h="120" w="160">/ <reference path="./testBlocks/basic.ts" /> More</comment>
+<comment h="120" w="160">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62; More</comment>
 </xml>

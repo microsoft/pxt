@@ -120,9 +120,7 @@
 <comment h="120" w="160">Comment</comment>
 <comment h="120" w="160">Mixing it up</comment>
 <comment h="120" w="160">Single multi-line</comment>
-<comment h="120" w="160">Text at the top
-
-and the bottom</comment>
+<comment h="120" w="160">Text at the top&#10;&#10;and the bottom</comment>
 <comment h="120" w="160">Multi-line with double asterisks</comment>
 <comment h="120" w="160">Multi-line with asterisks</comment>
 <comment h="120" w="160">Multi line with no asterisks on body</comment>
