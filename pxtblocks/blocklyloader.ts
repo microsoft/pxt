@@ -1914,6 +1914,7 @@ namespace pxt.blocks {
         initLogic();
         initText();
         initDrag();
+        initComments();
     }
 
     function setBuiltinHelpInfo(block: any, id: string) {
@@ -2216,6 +2217,12 @@ namespace pxt.blocks {
             let menuOptions: Blockly.ContextMenu.MenuItem[] = [];
             let topBlocks = this.getTopBlocks(true);
             let eventGroup = Blockly.utils.genUid();
+            let ws = this;
+
+            // Option to add a workspace comment.
+            if (this.options.comments) {
+                menuOptions.push((Blockly.ContextMenu as any).workspaceCommentOption(ws, e));
+            }
 
             // Add a little animation to collapsing and expanding.
             const DELAY = 10;
@@ -3012,6 +3019,7 @@ namespace pxt.blocks {
                 .appendField('', 'PARAMS');
             this.setColour(getNamespaceColor('functions'));
             this.arguments_ = [];
+            this.argumentVarModels_ = [];
             this.setStartHat(true);
             this.setStatements_(true);
             this.statementConnection_ = null;
@@ -3579,5 +3587,9 @@ namespace pxt.blocks {
         const isBlockFiltered = filters.blocks &&
             (filters.blocks[blockId] === FilterState.Disabled || filters.blocks[blockId] === FilterState.Hidden);
         return !isNamespaceFiltered && !isBlockFiltered;
+    }
+
+    function initComments() {
+        (Blockly.Msg as any).WORKSPACE_COMMENT_DEFAULT_TEXT = '';
     }
 }

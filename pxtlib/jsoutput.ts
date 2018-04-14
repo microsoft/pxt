@@ -183,6 +183,28 @@ namespace pxt.blocks {
             return mkStmt(mkText("// " + text))
         }
 
+        export function mkMultiComment(text: string) {
+            let group = [
+                mkText("/**"),
+                mkNewLine()
+            ];
+            text.split("\n").forEach((c, i, arr) => {
+                if (c) {
+                    group.push(mkText(" * " + c));
+                    group.push(mkNewLine());
+                    // Add an extra line so we can convert it back to new lines
+                    if (i < arr.length - 1) {
+                        group.push(mkText(" * "));
+                        group.push(mkNewLine());
+                    }
+                }
+            });
+            return mkGroup(group.concat([
+                mkText(" */"),
+                mkNewLine()
+            ]));
+        }
+
         export function mkAssign(x: JsNode, e: JsNode): JsNode {
             return mkStmt(mkSimpleCall("=", [x, e]))
         }
