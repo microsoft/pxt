@@ -350,7 +350,7 @@ namespace pxt.runner {
             const opts: pxt.editor.FieldExtensionOptions = {};
             promise = promise
                 .then(() => pxt.BrowserUtils.loadBlocklyAsync())
-                .then(() => pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "fieldeditors.js"))
+                .then(() => pxt.BrowserUtils.loadScriptAsync("fieldeditors.js")
                 .then(() => pxt.editor.initFieldExtensionsAsync(opts))
                 .then(res => {
                     if (res.fieldEditors)

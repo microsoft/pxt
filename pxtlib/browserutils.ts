@@ -345,7 +345,14 @@ namespace pxt.BrowserUtils {
         });
     }
 
-    export function loadScriptAsync(url: string): Promise<void> {
+    function resolveCdnUrl(path: string): string {
+        const monacoPaths: Map<string> = (window as any).MonacoPaths || {};
+        const url = monacoPaths[path] || (pxt.webConfig.commitCdnUrl + path);
+        return url;
+    }
+
+    export function loadScriptAsync(path: string): Promise<void> {
+        const url = resolveCdnUrl(path);
         const id = "script-" + url;
         if (document.getElementById(id))
             return Promise.resolve(); // already in DOM
@@ -383,10 +390,8 @@ namespace pxt.BrowserUtils {
     export function loadBlocklyAsync(): Promise<void> {
         if (!loadBlocklyPromise) {
             if (typeof Blockly === "undefined") { // not loaded yet?
-                const paths: Map<string> = (window as any).MonacoPaths;
                 pxt.debug(`blockly: delay load`);
-                loadBlocklyPromise = pxt.BrowserUtils.loadScriptAsync(
-                    paths["pxtblockly.js"])
+                loadBlocklyPromise = pxt.BrowserUtils.loadScriptAsync("pxtblockly.js")
                     .then(() => {
                         pxt.debug(`blockly: loaded`)
                     })

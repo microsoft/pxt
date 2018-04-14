@@ -94,8 +94,7 @@ export class Editor extends srceditor.Editor {
     private loadSmoothieChartsPromise: Promise<void>
     private loadSmoothieChartsAsync(): Promise<void> {
         if (!this.loadSmoothieChartsPromise) {
-            const monacoPaths: pxt.Map<string> = (window as any).MonacoPaths;
-            this.loadSmoothieChartsPromise = pxt.BrowserUtils.loadScriptAsync(monacoPaths["smoothie/smoothie_compressed.js"]);
+            this.loadSmoothieChartsPromise = pxt.BrowserUtils.loadScriptAsync("smoothie/smoothie_compressed.js");
         }
         return this.loadSmoothieChartsPromise;
     }

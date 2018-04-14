@@ -2224,7 +2224,7 @@ function initExtensionsAsync(): Promise<void> {
 
     pxt.debug('loading editor extensions...');
     const opts: pxt.editor.ExtensionOptions = {};
-    return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
+    return pxt.BrowserUtils.loadScriptAsync("editor.js")
         .then(() => pxt.editor.initExtensionsAsync(opts))
         .then(res => {
             if (res.hexFileImporters) {
