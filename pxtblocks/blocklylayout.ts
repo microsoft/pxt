@@ -19,7 +19,7 @@ namespace pxt.blocks.layout {
         Util.toArray(oldDom.childNodes)
             .filter(n => n.nodeType == Node.ELEMENT_NODE && n.localName == "block" && (<Element>n).getAttribute("disabled") == "true")
             .forEach(n => newDom.appendChild(newDom.ownerDocument.importNode(n, true)));
-        const updatedXml = Blockly.Xml.domToPrettyText(newDom);
+        const updatedXml = Blockly.Xml.domToText(newDom);
         return updatedXml;
     }
 
@@ -51,8 +51,14 @@ namespace pxt.blocks.layout {
     declare function unescape(escapeUri: string): string;
 
     export function verticalAlign(ws: Blockly.Workspace, emPixels: number) {
-        let blocks = ws.getTopBlocks(true);
         let y = 0
+        let comments = ws.getTopComments(true);
+        comments.forEach(comment => {
+            comment.moveBy(0, y)
+            y += comment.getHeightWidth().height
+            y += emPixels; //buffer
+        })
+        let blocks = ws.getTopBlocks(true);
         blocks.forEach(block => {
             block.moveBy(0, y)
             y += block.getHeightWidth().height
@@ -67,14 +73,14 @@ namespace pxt.blocks.layout {
 
                 // Only use the width if in portrait, otherwise the blocks are too spread out
                 if (metrics.viewHeight > metrics.viewWidth) {
-                    flowBlocks(ws.getTopBlocks(true), undefined, metrics.viewWidth)
+                    flowBlocks(ws.getTopComments(true), ws.getTopBlocks(true), undefined, metrics.viewWidth)
                     return;
                 }
             }
-            flowBlocks(ws.getTopBlocks(true), opts.ratio);
+            flowBlocks(ws.getTopComments(true), ws.getTopBlocks(true), opts.ratio);
         }
         else {
-            flowBlocks(ws.getTopBlocks(true));
+            flowBlocks(ws.getTopComments(true), ws.getTopBlocks(true));
         }
     }
 
@@ -221,7 +227,7 @@ namespace pxt.blocks.layout {
         return Promise.all(p).then(() => { })
     }
 
-    function flowBlocks(blocks: Blockly.Block[], ratio: number = 1.62, maxWidth?: number) {
+    function flowBlocks(comments: Blockly.WorkspaceComment[], blocks: Blockly.Block[], ratio: number = 1.62, maxWidth?: number) {
         const gap = 16;
         const marginx = 20;
         const marginy = 20;
@@ -232,28 +238,39 @@ namespace pxt.blocks.layout {
         }
         else {
             // compute total block surface and infer width
-            let surface = 0;
+            let commentSurface = 0;
+            let blockSurface = 0;
+            for (let comment of comments) {
+                let s = comment.getHeightWidth();
+                commentSurface += s.width * s.height;
+            }
             for (let block of blocks) {
                 let s = block.getHeightWidth();
-                surface += s.width * s.height;
+                blockSurface += s.width * s.height;
             }
-            maxx = Math.sqrt(surface) * ratio;
+            maxx = Math.sqrt(Math.max(commentSurface, blockSurface)) * ratio;
         }
 
         let insertx = marginx;
         let inserty = marginy;
         let endy = 0;
-        for (let block of blocks) {
-            let r = block.getBoundingRectangle();
-            let s = block.getHeightWidth();
-            // move block to insertion point
-            block.moveBy(insertx - r.topLeft.x, inserty - r.topLeft.y);
-            insertx += s.width + gap;
-            endy = Math.max(endy, inserty + s.height + gap);
-            if (insertx > maxx) { // start new line
-                insertx = marginx;
-                inserty = endy;
+        function flowBlocksInternal(blocks: Blockly.Block[] | Blockly.WorkspaceComment[]) {
+            for (let block of blocks) {
+                let r = block.getBoundingRectangle();
+                let s = block.getHeightWidth();
+                // move block to insertion point
+                block.moveBy(insertx - r.topLeft.x, inserty - r.topLeft.y);
+                insertx += s.width + gap;
+                endy = Math.max(endy, inserty + s.height + gap);
+                if (insertx > maxx) { // start new line
+                    insertx = marginx;
+                    inserty = endy;
+                }
             }
         }
+        flowBlocksInternal(comments);
+        insertx = marginx;
+        inserty = endy || marginy;
+        flowBlocksInternal(blocks);
     }
 }

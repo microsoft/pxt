@@ -88,7 +88,6 @@
 <field name="NUM">10</field>
 </shadow>
 </value>
-<comment pinned="false">More&#10;&#10;than one&#10;&#10;Comment</comment>
 </block>
 </next>
 <comment pinned="false">Paragraphs from&#10;single-line comments</comment>
@@ -97,22 +96,16 @@
 <comment pinned="false">Whitespace between comments and statement</comment>
 </block>
 </next>
-<comment pinned="false">Mixing it up</comment>
 </block>
 </next>
-<comment pinned="false">Single multi-line</comment>
 </block>
 </next>
-<comment pinned="false">Text at the top&#10;&#10;and the bottom</comment>
 </block>
 </next>
-<comment pinned="false">Multi-line with double asterisks</comment>
 </block>
 </next>
-<comment pinned="false">Multi-line with asterisks</comment>
 </block>
 </next>
-<comment pinned="false">Multi line with no asterisks on body</comment>
 </block>
 </next>
 <comment pinned="false">Multiple Single-line Comments</comment>
@@ -122,4 +115,13 @@
 </block>
 </statement>
 </block>
+<comment h="120" w="160">More</comment>
+<comment h="120" w="160">than one</comment>
+<comment h="120" w="160">Comment</comment>
+<comment h="120" w="160">Mixing it up</comment>
+<comment h="120" w="160">Single multi-line</comment>
+<comment h="120" w="160">Text at the top&#10;&#10;and the bottom</comment>
+<comment h="120" w="160">Multi-line with double asterisks</comment>
+<comment h="120" w="160">Multi-line with asterisks</comment>
+<comment h="120" w="160">Multi line with no asterisks on body</comment>
 </xml>

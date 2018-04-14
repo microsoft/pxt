@@ -150,7 +150,7 @@ namespace pxt.blocks {
             return find((<any>b).p);
 
         if (b.type == "variables_get")
-            return find(lookup(e, escapeVarName(b.getFieldValue("VAR"), e)).type);
+            return find(lookup(e, escapeVarName(b.getField("VAR").getText(), e)).type);
 
         if (!b.outputConnection) {
             return ground(pUnit.type);
@@ -340,12 +340,12 @@ namespace pxt.blocks {
                     case "controls_for_of":
                         unionParam(e, b, "LIST", ground("Array"));
                         const listTp = returnType(e, getInputTargetBlock(b, "LIST"));
-                        const elementTp = lookup(e, escapeVarName(b.getFieldValue("VAR"), e)).type;
+                        const elementTp = lookup(e, escapeVarName(b.getField("VAR").getText(), e)).type;
                         genericLink(listTp, elementTp);
                         break;
                     case "variables_set":
                     case "variables_change":
-                        let x = escapeVarName(b.getFieldValue("VAR"), e);
+                        let x = escapeVarName(b.getField("VAR").getText(), e);
                         let p1 = lookup(e, x).type;
                         attachPlaceholderIf(e, b, "VALUE");
                         let rhs = getInputTargetBlock(b, "VALUE");
@@ -679,6 +679,11 @@ namespace pxt.blocks {
         return mkStmt(mkText(name + "()"));
     }
 
+    function compileWorkspaceComment(c: Blockly.WorkspaceComment): JsNode {
+        const content = c.getContent();
+        return Helpers.mkMultiComment(content);
+    }
+
     function defaultValueForType(t: Point): JsNode {
         if (t.type == null) {
             union(t, ground(pNumber.type));
@@ -900,7 +905,7 @@ namespace pxt.blocks {
     }
 
     function compileControlsFor(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
-        let bVar = escapeVarName(b.getFieldValue("VAR"), e);
+        let bVar = escapeVarName(b.getField("VAR").getText(), e);
         let bTo = getInputTargetBlock(b, "TO");
         let bDo = getInputTargetBlock(b, "DO");
         let bBy = getInputTargetBlock(b, "BY");
@@ -949,7 +954,7 @@ namespace pxt.blocks {
     }
 
     function compileControlsForOf(e: Environment, b: Blockly.Block, comments: string[]) {
-        let bVar = escapeVarName(b.getFieldValue("VAR"), e);
+        let bVar = escapeVarName(b.getField("VAR").getText(), e);
         let bOf = getInputTargetBlock(b, "LIST");
         let bDo = getInputTargetBlock(b, "DO");
 
@@ -1006,7 +1011,7 @@ namespace pxt.blocks {
     }
 
     function compileVariableGet(e: Environment, b: Blockly.Block): JsNode {
-        let name = escapeVarName(b.getFieldValue("VAR"), e);
+        let name = escapeVarName(b.getField("VAR").getText(), e);
         let binding = lookup(e, name);
         if (!binding.assigned)
             binding.assigned = VarUsage.Read;
@@ -1015,7 +1020,7 @@ namespace pxt.blocks {
     }
 
     function compileSet(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
-        let bVar = escapeVarName(b.getFieldValue("VAR"), e);
+        let bVar = escapeVarName(b.getField("VAR").getText(), e);
         let bExpr = getInputTargetBlock(b, "VALUE");
         let binding = lookup(e, bVar);
         let isDef = false
@@ -1035,7 +1040,7 @@ namespace pxt.blocks {
     }
 
     function compileChange(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
-        let bVar = escapeVarName(b.getFieldValue("VAR"), e);
+        let bVar = escapeVarName(b.getField("VAR").getText(), e);
         let bExpr = getInputTargetBlock(b, "VALUE");
         let binding = lookup(e, bVar);
         if (!binding.assigned)
@@ -1441,7 +1446,7 @@ namespace pxt.blocks {
             if (!b)
                 return false;
             else if ((b.type == "controls_for" || b.type == "controls_simple_for" || b.type == "controls_for_of")
-                && escapeVarName(b.getFieldValue("VAR"), e) == name)
+                && escapeVarName(b.getField("VAR").getText(), e) == name)
                 return true;
             else if (isMutatingBlock(b) && b.mutation.isDeclaredByMutation(name))
                 return true;
@@ -1480,7 +1485,7 @@ namespace pxt.blocks {
         // collect local variables.
         if (w) w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
             if (b.type == "controls_for" || b.type == "controls_simple_for" || b.type == "controls_for_of") {
-                let x = escapeVarName(b.getFieldValue("VAR"), e);
+                let x = escapeVarName(b.getField("VAR").getText(), e);
                 if (b.type == "controls_for_of") {
                     trackLocalDeclaration(x, null);
                 }
@@ -1512,7 +1517,7 @@ namespace pxt.blocks {
         // set block, 1) make sure that the variable is bound, then 2) mark the variable if needed.
         if (w) w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
             if (b.type == "variables_get" || b.type == "variables_set" || b.type == "variables_change") {
-                let x = escapeVarName(b.getFieldValue("VAR"), e);
+                let x = escapeVarName(b.getField("VAR").getText(), e);
                 if (lookup(e, x) == null)
                     e = extend(e, x, null);
 
@@ -1602,7 +1607,16 @@ namespace pxt.blocks {
                     return mkStmt(mkText("let " + b.name + tp + " = "), defl)
                 });
 
-            return stmtsVariables.concat(stmtsMain)
+            const allStmts = stmtsVariables.concat(stmtsMain);
+
+            // compile workspace comments, add them to the top
+            const commentStmts: JsNode[] = [];
+            const topComments = w.getTopComments(true)
+            topComments.forEach(c => {
+                append(commentStmts, compileWorkspaceComment(c).children);
+            })
+
+            return commentStmts.concat(allStmts);
         } catch (err) {
             let be: Blockly.Block = (err as any).block;
             if (be) {
