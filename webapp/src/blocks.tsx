@@ -388,10 +388,10 @@ export class Editor extends srceditor.Editor {
                         pxt.analytics.enableCookies();
                     }
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
-                    if (ev.newValue == pxt.blocks.addPackageTitle()) {
+                    if (ev.newValue == pxt.toolbox.addPackageTitle()) {
                         this.addPackage();
                     }
-                    else if (ev.newValue == pxt.blocks.advancedTitle()) {
+                    else if (ev.newValue == pxt.toolbox.advancedTitle()) {
                         if (this.showToolboxCategories === CategoryMode.All) {
                             this.showToolboxCategories = CategoryMode.Basic;
                         }
