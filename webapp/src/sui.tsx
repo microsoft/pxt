@@ -127,6 +127,9 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         if (charCode === core.SPACE_KEY || charCode === core.ENTER_KEY) {
             e.preventDefault();
             this.toggle();
+        } else if (charCode === core.ESC_KEY) {
+            e.preventDefault();
+            this.hide();  
         } else if (charCode === 40 /* Down arrow key */) {
             e.preventDefault();
             if (!this.state.open) this.show();
