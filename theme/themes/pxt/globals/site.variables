@@ -192,6 +192,7 @@
 @editorCloseColor: black;
 @editorCloseColorHover: darken(@editorCloseColor, 25%);
 @serialConsoleFont: @blocklyFont;
+@serialConsoleBackground: @simulatorBackground;
 
 /*-------------------
    Blockly

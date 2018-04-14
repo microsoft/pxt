@@ -53,9 +53,12 @@ svg.blocklySvg {
     overflow: visible;
 }
 
-span.blocklyTreeLabel, text.blocklyText, input.blocklyHtmlInput, .blocklyDropDownDiv .goog-menuitem {
+span.blocklyTreeLabel, text.blocklyText, input.blocklyHtmlInput, .blocklyDropDownDiv .goog-menuitem, textarea.blocklyCommentTextarea {
     font-family: @blocklyFont !important;
     font-weight: normal;
+}
+text.blocklyFlyoutLabelText, .blocklyFlyoutButton text.blocklyText {
+    font-family: @pageFont !important;
 }
 text.blocklyText.blocklyBoldText {
     font-weight: bold;
@@ -87,6 +90,21 @@ span.blocklyTreeLabel, text.blocklyText {
     -webkit-user-drag: none;
     -webkit-user-select: none;
     -ms-user-select: none;
+}
+
+/* Flyout button */
+.blocklyFlyoutButton {
+    fill: none;
+}
+.blocklyFlyoutButton:hover {
+    fill: @primaryColor;
+}
+.blocklyFlyoutButtonBackground {
+    stroke: @primaryColor;
+    stroke-width: 3px;
+}
+.blocklyFlyoutButton .blocklyText {
+    fill: white;
 }
 
 .blocklyFlyoutButtonShadow {

@@ -122,8 +122,7 @@ export class ProjectView
             showFiles: false,
             home: shouldShowHomeScreen,
             active: document.visibilityState == 'visible',
-            collapseEditorTools: pxt.appTarget.simulator.headless || (!isSandbox && pxt.BrowserUtils.isMobile()),
-            embedSimView: isSandbox
+            collapseEditorTools: pxt.appTarget.simulator.headless || (!isSandbox && pxt.BrowserUtils.isMobile())
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -947,6 +946,11 @@ export class ProjectView
         pxt.tickEvent('app.editor');
     }
 
+    reloadEditor() {
+        if (this.state.home) location.hash = `#reload`;
+        location.reload();
+    }
+
     exitAndSave() {
         if (this.state.projectName !== lf("Untitled")) {
             this.openHome();
@@ -1109,8 +1113,8 @@ export class ProjectView
         this.reload = true;
         return workspace.resetAsync()
             .done(
-                () => window.location.reload(),
-                () => window.location.reload()
+                () => this.reloadEditor(),
+                () => this.reloadEditor()
             );
     }
 
@@ -1390,7 +1394,11 @@ export class ProjectView
         const p = pkg.mainEditorPkg();
         const files = p.getAllFiles();
         // render in sidedocs
-        window.open(`${pxt.webConfig.docsUrl || '/--docs'}#project:${encodeURIComponent(JSON.stringify(files))}`, 'printcode');
+        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        const mode = "blocks"
+        const path = encodeURIComponent(JSON.stringify(files));
+        const url = `${docsUrl}#project:${path}:${mode}:${pxt.Util.localeInfo()}`;
+        window.open(url, "_blank");
     }
 
     clearSerial() {
@@ -2190,7 +2198,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             const fileContents = Util.stringToUint8Array(atob(hash.arg));
             pxt.BrowserUtils.changeHash("");
             core.showLoading("loadingproject", lf("loading project..."));
-            theEditor.importProjectFromFileAsync(fileContents)
+            editor.importProjectFromFileAsync(fileContents)
                 .done(() => core.hideLoading("loadingproject"));
             return true;
         case "reload": // need to reload last project - handled later in the load process
@@ -2218,7 +2226,6 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "edit":
         case "sandboxproject":
         case "project":
-        case "reload":
             return true;
         default:
             return false;

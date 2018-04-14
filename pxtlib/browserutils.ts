@@ -388,11 +388,11 @@ namespace pxt.BrowserUtils {
                 style.innerHTML = `.ui.accent { color: ${theme.accentColor}; }
                 .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${theme.accentColor}; }`;
                 document.getElementsByTagName('head')[0].appendChild(style);
-
             }
-            theme.appLogo = patchCdn(theme.appLogo)
-            theme.cardLogo = patchCdn(theme.cardLogo)
-            theme.homeScreenHero = patchCdn(theme.homeScreenHero)
+
+            let targetImages = Object.keys(theme as any as Map<string>)
+                .filter(k => /(logo|hero)$/i.test(k) && /^@cdnUrl@/.test((theme as any)[k]))
+                .forEach(k => (theme as any)[k] = patchCdn((theme as any)[k]));
         }
         // RTL languages
         if (Util.isUserLanguageRtl()) {
