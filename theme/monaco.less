@@ -164,6 +164,54 @@
 }
 
 /*******************************
+    (Do not override)
+*******************************/
+
+#monacoEditor {
+    direction:ltr;
+}
+
+/* Monaco Editor Errors */
+.monaco-editor .error-view-zone {
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    width: initial !important;
+}
+.monaco-editor.vs-dark .error-view-zone {
+    color:white;
+}
+.monaco-editor .error-view-zone .marker-widget {
+    border-radius: 2px !important;
+    padding-left: 10px !important;
+    padding-right: 20px !important;
+}
+
+/* Fix for monaco editor Signature bug in Safari */
+.monaco-editor .parameter-hints-widget {
+    flex-direction: row !important;
+}
+
+.line-numbers {
+    display:none;
+}
+
+.monacoToolboxDiv {
+    position: absolute;
+    display: inline-block;
+    overflow-x: visible;
+    overflow-y: auto;
+    vertical-align: top;
+}
+.monacoToolboxDiv.hide {
+    display: none;
+}
+
+#monacoEditorInner {
+    position: relative !important;
+    display: inline-block;
+    float: right;
+}
+
+/*******************************
         Monaco Accessibility
 *******************************/
 

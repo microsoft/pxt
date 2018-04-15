@@ -9,6 +9,22 @@
              Layout
 *******************************/
 
+html {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-size:16px;
+}
+  
+body {
+    height: 100%;
+    padding: 0;
+    overflow: auto;
+    margin: 0;
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+}
+
 * {
   min-height: 0;
   min-width: 0;
@@ -504,6 +520,33 @@ Avatar
 /* Json editor */
 #pxtJsonEditor .ui.content {
     padding: 1rem;
+}
+
+.rtl #fileNameInput {
+    text-align: right;
+}
+
+/* Simulator effects */
+
+.grayscale {
+    -moz-filter: grayscale(1);
+    -webkit-filter: grayscale(1);
+    filter: grayscale(1);
+}
+
+.sepia {
+    -webkit-filter: sepia(1);
+    filter: sepia(1);
+}
+
+.blur {
+    -moz-filter: blur(1);
+    -webkit-filter: blur(1);
+    filter: blur(1);
+}
+
+.highlight {
+    border-bottom: 2px solid #FFC107;
 }
 
 /* Modulator */
