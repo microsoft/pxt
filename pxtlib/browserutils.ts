@@ -378,17 +378,12 @@ namespace pxt.BrowserUtils {
 
     export function loadScriptAsync(path: string): Promise<void> {
         const url = resolveCdnUrl(path);
-        const id = "script-" + url;
-        if (document.getElementById(id))
-            return Promise.resolve(); // already in DOM
-
         pxt.debug(`script: loading ${url}`);
         return new Promise<void>((resolve, reject) => {
             const script = document.createElement('script');
             script.type = 'text/javascript';
             script.src = url;
-            script.id = id;
-            script.async = false;
+            script.async = true;
             script.addEventListener('load', () => resolve());
             script.addEventListener('error', (e) => reject(e));
             document.body.appendChild(script);
