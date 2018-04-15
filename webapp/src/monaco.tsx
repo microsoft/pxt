@@ -304,8 +304,7 @@ export class Editor extends srceditor.Editor {
         let editorArea = document.getElementById("monacoEditorArea");
         let editorElement = document.getElementById("monacoEditorInner");
 
-        return pxt.BrowserUtils.loadStyleAsync("blockly.css") // toolbox style
-            .then(() => pxt.vs.initMonacoAsync(editorElement).then((editor) => {
+        return pxt.vs.initMonacoAsync(editorElement).then((editor) => {
             this.editor = editor;
             this.loadingMonaco = false;
 
@@ -471,7 +470,7 @@ export class Editor extends srceditor.Editor {
             this.editorViewZones = [];
 
             this.setupToolbox(editorArea);
-        }));
+        });
     }
 
     protected dragCurrentPos = { x: 0, y: 0 };
@@ -1627,7 +1626,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         if (selected) {
             treeRowClass += ' blocklyTreeSelected';
             if (appTheme.invertedToolbox) {
-                treeRowStyle.backgroundColor = `${pxt.toolbox.fadeColor(color, (Blockly as any).Options.invertedMultiplier, false)}`;
+                treeRowStyle.backgroundColor = `${pxt.toolbox.fadeColor(color, invertedMultipler, false)}`;
             } else {
                 treeRowStyle.backgroundColor = (metaColor || '#ddd');
             }
