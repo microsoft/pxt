@@ -26,6 +26,7 @@
 @docsCardHoverBorderColor: #1dacf4;
 
 #docs {
+    font-size: 12pt;
     background-color: @docsBackgroundColor;
     font-family: @docsPageFont !important;
     color: @docsTextColor;
@@ -36,6 +37,22 @@
     /* Text color */
     p, ul li {
         color: @docsTextColor;
+    }
+    /* Lists */
+    ul li {
+        padding: 0rem;
+        list-style-type: none;
+    }
+    ul li:before {
+      margin: 0 1em; 
+      content: "\25CF";
+    }
+    
+    ul li.checked:before {
+      content: "\25C9";
+    }    
+    ul li.unchecked:before {
+      content: "\25CE";
     }
     /* Link color */
     a {
@@ -76,7 +93,6 @@
     .ui.card:hover {
         border: 2px solid @docsCardHoverBorderColor;
     }
-
     /* Breadcrumb */
     .ui.breadcrumb .divider {
         color: black;
@@ -99,6 +115,98 @@
     .ui.primary.button p {
         color: white;
     }
+    /* Code sections */
+    pre {
+        padding: 16px;
+        overflow: auto;
+        font-size: 85%;
+        line-height: 1.45;
+        background-color: #f7f7f7;
+        border-radius: 3px;
+    }
+    
+    code {
+        padding: 0;
+        padding-top: 0.2em;
+        padding-bottom: 0.2em;
+        margin: 0;
+        font-size: 85%;
+        border-radius: 3px;
+    }
+    
+    p code, li code {
+        background-color: rgba(0,0,0,0.04);    
+    }
+    
+    p code:before, p code:after,
+    li code:before, li code:after {
+        letter-spacing: -0.2em;
+        padding: 0 !important;
+        content: "\00a0";
+    }
+    
+    code.hljs {
+        padding: 0 !important;
+    }
+    
+    .ui[class*="5:3"].embed {
+        padding-bottom: 83%;
+        background:transparent !important;
+    }
+    
+    code {
+            white-space: pre-wrap;
+    }
+    code.lang-config, code.lang-package { display: none;}
+    code.lang-block::before,
+    code.lang-blocks::before,
+    code.lang-blocksxml::before,
+    code.lang-sig::before,
+    code.lang-block::before,
+    code.lang-sim::before,
+    code.lang-cards::before,
+    code.lang-namespaces::before,
+    code.lang-codecard::before
+    {
+        content:"...";
+        position: absolute;
+        top:calc(50% - 0.5em);
+        left:calc(50% - 5em);
+    }
+    code.lang-block,
+    code.lang-blocks,
+    code.lang-blocksxml,
+    code.lang-sig,
+    code.lang-block,
+    code.lang-sim,
+    code.lang-cards,
+    code.lang-namespaces,
+    code.lang-codecard
+    {
+        background-color: rgba(0,0,0,0.04);
+        color:transparent;   
+    }  
+    /* Blockly */
+    svg {
+        max-width: 100%;
+    }
+    .blocklyText {
+        font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
+    }
+    .blocklyCheckbox,
+    .blocklyLed {
+        fill: #ff3030 !important;
+        text-shadow: 0px 0px 6px #f00;
+        font-size: 17pt !important;
+    }    
+    .ui.card .blocklyPreview {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: calc(100% - 1em);
+        max-height: calc(100% - 1em);
+    }          
 }
 
 .sideDocs #sidedocsbar a {
