@@ -234,7 +234,6 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
 
         const isRunning = parentState.running;
         const isDebugging = parentState.debugging;
-        const isTracing = parentState.tracing;
         if (!isDebugging) return <div />;
 
         const isDebuggerRunning = simulator.driver && simulator.driver.state == pxsim.SimulatorState.Running;
@@ -249,7 +248,6 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         const dbgStepIntoTooltip = lf("Step into");
         const dbgStepOverTooltip = lf("Step over");
         const dbgStepOutTooltip = lf("Step out");
-        const traceTooltip = parentState.tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo");
 
         return <aside className="debugtoolbar" style={{ left: xPos }} role="complementary" aria-label={lf("Debugger toolbar")}>
             {!isDebugging ? undefined :
