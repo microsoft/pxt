@@ -435,6 +435,7 @@ file('built/web/main.js', ["built/web/pxtapp.js", "built/webapp/src/app.js"], { 
 })
 
 ju.catFiles('built/web/pxtapp.js', [
+    "node_modules/lzma/src/lzma_worker-min.js",
     "built/web/pxtlib.js",
     "built/web/pxtwinrt.js",
     "built/web/pxteditor.js",
@@ -442,8 +443,9 @@ ju.catFiles('built/web/pxtapp.js', [
 ])
 
 ju.catFiles('built/web/worker.js', [
-    "built/web/typescript.js",
-    "built/web/fuse.min.js",
+    "node_modules/typescript/lib/typescript.js",
+    "node_modules/fuse.js/src/fuse.min.js",
+    "node_modules/lzma/src/lzma_worker-min.js",
     "built/web/pxtlib.js",
     "built/web/pxtcompiler.js",
     "built/webapp/src/worker.js"     

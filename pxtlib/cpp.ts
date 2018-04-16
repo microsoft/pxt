@@ -9,14 +9,8 @@ namespace pxt {
         if (!lzmaPromise) {
             if (U.isNodeJS)
                 lzmaPromise = Promise.resolve(require("lzma"));
-            else {
-                let lz = (<any>window).LZMA;
-                if (lz)
-                    lzmaPromise = Promise.resolve(lz);
-                else
-                    lzmaPromise = pxt.BrowserUtils.loadScriptAsync('lzma/lzma_worker-min.js')
-                        .then(() => (<any>window).LZMA);
-            }
+            else
+                lzmaPromise = Promise.resolve((<any>window).LZMA);
             lzmaPromise.then(res => {
                 if (!res) pxt.reportError('lzma', 'failed to load');
                 return res;
