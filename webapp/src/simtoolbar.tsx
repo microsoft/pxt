@@ -7,7 +7,6 @@ import * as sui from "./sui";
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface SimulatorProps extends ISettingsProps {
-    debug?: boolean;
 }
 
 export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
@@ -57,8 +56,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
-        const debug = (run && simOpts.debugger) || pxt.options.debug;
-        const debugging = debug && parentState.debugging;
+        const debugging = parentState.debugging;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
         const isHeadless = simOpts.headless;
@@ -76,7 +74,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 {make ? <sui.Button disabled={debugging} icon='configure' class="secondary" title={makeTooltip} onClick={() => this.openInstructions()} /> : undefined}
                 {run ? <sui.Button disabled={debugging} key='runbtn' class={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={() => this.startStopSimulator()} /> : undefined}
                 {restart ? <sui.Button disabled={debugging} key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator()} /> : undefined}
-                {debug ? <sui.Button key='debug' class={`debug-button ${isDebugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onClick={() => this.toggleDebug()} /> : undefined}
+                {run ? <sui.Button key='debug' class={`debug-button ${isDebugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onClick={() => this.toggleDebug()} /> : undefined}
             </div>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                 {audio ? <sui.Button key='mutebtn' class={`mute-button ${isMuted ? 'red' : ''}`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute()} /> : undefined}
