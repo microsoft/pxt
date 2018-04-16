@@ -251,9 +251,6 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         const dbgStepOutTooltip = lf("Step out");
         const traceTooltip = parentState.tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo");
 
-        //                     <sui.Item key='dbgstop' class={`dbg-btn dbg-stop ${!restart ? 'right' : ''}`} icon={`stop red`} title={debugTooltip} onClick={() => this.exitDebugging()} />
-//                     {advancedDebugging ? <sui.Item key='dbgtrace' class={`trace-button ${isTracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace()} /> : undefined}
-
         return <aside className="debugtoolbar" style={{ left: xPos }} role="complementary" aria-label={lf("Debugger toolbar")}>
             {!isDebugging ? undefined :
                 <div className={`ui compact borderless menu icon mini`}>

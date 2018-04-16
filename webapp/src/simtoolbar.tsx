@@ -26,6 +26,11 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         this.props.parent.restartSimulator();
     }
 
+    toggleTrace() {
+        pxt.tickEvent("simulator.trace", undefined, { interactiveConsent: true });
+        this.props.parent.toggleTrace();        
+    }
+
     toggleDebug() {
         pxt.tickEvent("simulator.debug", undefined, { interactiveConsent: true });
         this.props.parent.toggleDebugging();
@@ -50,12 +55,15 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
         const isRunning = parentState.running;
         const isFullscreen = parentState.fullscreen;
-        const isDebugging = parentState.debugging;
         const isMuted = parentState.mute;
         const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
 
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
+        const trace = run && !!simOpts.enableTrace;
+        const tracing = this.props.parent.state.tracing;
+        const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
+        const debug = !trace;
         const debugging = parentState.debugging;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
@@ -74,7 +82,8 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 {make ? <sui.Button disabled={debugging} icon='configure' class="secondary" title={makeTooltip} onClick={() => this.openInstructions()} /> : undefined}
                 {run ? <sui.Button disabled={debugging} key='runbtn' class={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={() => this.startStopSimulator()} /> : undefined}
                 {restart ? <sui.Button disabled={debugging} key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator()} /> : undefined}
-                {run ? <sui.Button key='debug' class={`debug-button ${isDebugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onClick={() => this.toggleDebug()} /> : undefined}
+                {trace ? <sui.Button key='trace' class={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace()} /> : undefined}
+                {debug ? <sui.Button key='debug' class={`debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onClick={() => this.toggleDebug()} /> : undefined}
             </div>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                 {audio ? <sui.Button key='mutebtn' class={`mute-button ${isMuted ? 'red' : ''}`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute()} /> : undefined}
