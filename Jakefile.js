@@ -300,7 +300,6 @@ file("built/web/pxtlib.js", [
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.min.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
-    jake.cpR("node_modules/fuse.js/src/fuse.min.js", "built/web/fuse.min.js")
 
     jake.cpR("built/pxtlib.js", "built/web/")
     jake.cpR("built/pxtcompiler.js", "built/web/")
@@ -443,7 +442,7 @@ ju.catFiles('built/web/pxtapp.js', [
 ])
 
 ju.catFiles('built/web/worker.js', [
-    "node_modules/typescript/lib/typescript.js",
+    "built/web/typescript.js",
     "node_modules/fuse.js/src/fuse.min.js",
     "node_modules/lzma/src/lzma_worker-min.js",
     "built/web/pxtlib.js",
