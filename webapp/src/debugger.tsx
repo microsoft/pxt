@@ -33,7 +33,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     }
 
     clear() {
-        //this.setState({ variables: {} });
+        this.nextVariables = {};
+        this.setState({ variables: {} });
     }
 
     set(name: string, value: pxsim.Variables) {
