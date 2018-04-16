@@ -345,7 +345,7 @@ export class ProjectView
             if (Util.now() - this.lastChangeTime < 1000) return;
             if (!this.state.active)
                 return;
-            this.runSimulator({ background: true });
+            this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
         1000, true);
 
@@ -354,7 +354,7 @@ export class ProjectView
             if (Util.now() - this.lastChangeTime < 1000) return;
             if (!this.state.active)
                 return;
-            this.runSimulator({ background: true });
+            this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
         2000, true);
 
@@ -379,8 +379,8 @@ export class ProjectView
                     if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
                         let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                         if (output && !output.numDiagnosticsOverride
-                            && !simulator.driver.runOptions.debug
                             && (simulator.driver.state == pxsim.SimulatorState.Running
+                                || simulator.driver.state == pxsim.SimulatorState.Paused
                                 || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
                             if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
                             else this.autoRunSimulator();

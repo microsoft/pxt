@@ -661,10 +661,12 @@ export class Editor extends srceditor.Editor {
 
     updateDebuggerVariables(globals: pxsim.Variables) {
         if (!this.parent.state.debugging) return;
-        const vars = this.editor.getAllVariables().map((variable: any) => {
-            return variable.name as string;
-        })
-        if (!globals || vars.length == 0) {
+        if (!globals) {
+            if (this.debugVariables) this.debugVariables.clear();
+            return;
+        }
+        const vars = this.editor.getAllVariables().map((variable: any) => variable.name as string);
+        if (!vars.length) {
             if (this.debugVariables) this.debugVariables.clear();
             return;
         }
