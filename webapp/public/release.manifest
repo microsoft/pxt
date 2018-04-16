@@ -7,7 +7,6 @@ CACHE:
 /blb/typescript.js
 /blb/marked/marked.min.js
 /blb/highlight.js/highlight.pack.js
-/blb/lzma/lzma_worker-min.js
 /blb/jquery.js
 /blb/pxtlib.js
 /blb/pxtcompiler.js
