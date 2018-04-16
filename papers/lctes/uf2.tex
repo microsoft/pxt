@@ -1,16 +1,16 @@
 \section{\UF}
 \label{sec:uf2}
 
-The \UF bootloader enables efficient, universal microcontroller programming through a USB pen drive interface --- no drivers are required, as operating systems support pen drives out of the box. The \UF bootloader builds upon the work of DAPLink~\cite{GitHubAR5:online}, but offers a more efficient implementation through the creation of a new flashing format, \UF.
+The \UF bootloader enables efficient, universal microcontroller programming through a USB pen drive interface --- no drivers are required, as operating systems support pen drives out of the box. The \UF bootloader builds upon the work of DAPLink~\cite{GitHubAR5:online}, but offers a more efficient implementation through the creation of a new flashing format, \UFN.
 
 DAPLink exposes a small virtual 512-byte block FAT file system (VFS), with an empty file allocation table and root directory. When the OS tries to read a block, DAPLink computes what should be there. During file system writes, DAPLink detects blocks of files in Intel HEX format~\cite{IntelHEX}, decodes them, and flashes the file's contents into the target microcontroller's memory. Other file systems writes are ignored.
 
 DAPLink implements many heuristics to deal with quirks of FAT file
 system implementations in various operating systems (order of writes, various meta-data files that are created and need to be ignored, etc.).  However, we have found that the heuristics are fragile with respect to operating system changes, which are not infrequent.
 
-Our new file format, \UF, consists of one or more 512-byte self-contained blocks (aligned to the block size of the VFS), removing the need for the complex heuristics. The blocks have magic numbers, the payload data to be written to flash, and the address where it should be written. Thus, on every 512-byte write via the USB controller, the bootloader can quickly and easily check if the block being written is part of a \UF file (by comparing magic numbers) and if so, write it immediately in a streaming fashion.
+Our new file format, \UFN, consists of one or more 512-byte self-contained blocks (aligned to the block size of the VFS), removing the need for the complex heuristics. The blocks have magic numbers, the payload data to be written to flash, and the address where it should be written. Thus, on every 512-byte write via the USB controller, the bootloader can quickly and easily check if the block being written is part of a \UF file (by comparing magic numbers) and if so, write it immediately in a streaming fashion.
 
-For simplicity, the 512-byte \UF blocks usually contain 256 bytes of payload data. While 50\% density might seem low, the industry standard 16-byte-per-line HEX format has a density of around 35\%. Regardless, we have not found this to be a problem, since the files are small by standard of modern computers (under 1000k), and on the MCU side the bottleneck is speed of flash erase, not the USB bus (which reaches 1000k/s).
+For simplicity, the 512-byte \UF blocks usually contain 256 bytes of payload data. While 50\% density might seem low, the industry standard 16-byte-per-line HEX format has a density of around 35\%. Regardless, since the files are small by modern computer standards (under 1000k), we have not found this to be a problem. On the MCU side the bottleneck is speed of flash erase, not the USB bus (which reaches 1000k/s).
 
 The minimal implementation of the \UF bootloader consumes \emph{just 1 - 2k bytes of flash memory}, and \emph{less than 100 bytes of RAM}, with some variability due to the microcontroller instruction set and USB hardware interfaces in use.
 

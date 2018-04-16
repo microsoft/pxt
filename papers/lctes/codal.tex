@@ -36,9 +36,9 @@ Continuing the example of detecting the brightness of a room used in Section~\re
 Unlike simple function pointers, \CO event handlers can be parameterized by the event listener to provide decoupling between the context of the code raising the event. The receiver of an event can choose to either receive an event in context of the fiber that created it, or be decoupled and executed via an Asynchronous Procedure Call (APC). The former provides performance, while the latter provides elegant decoupling of low level code (that may be executing, say, in an interrupt context) from user code. Each event handler may also define a threading model, so they can be reentrant or run-to-completion, depending upon the semantics required.
 
 \subsection{Fiber Scheduler}
-\CO provides a \emph{non-preemptive} fiber scheduler with an elegant asynchronous semantics and power efficient implementation. \CO fibers can be created at any time, but will only be descheduled as a result of an explicit call to yield(), sleep() or wait\_for\_event() on the MessageBus. The latter enables condition synchronization between fibers through a wait/notify mechanism. A round-robin approach is used to schedule runnable fibers. If at any time all fibers are descheduled, the MCU hardware is placed into a power efficient sleep state.
+\CO provides a \emph{non-preemptive} fiber scheduler with elegant asynchronous semantics and a power efficient implementation. \CO fibers can be created at any time, but will only be descheduled as a result of an explicit call to yield(), sleep() or wait\_for\_event() on the MessageBus. The latter enables condition synchronization between fibers through a wait/notify mechanism. A round-robin approach is used to schedule runnable fibers. If at any time all fibers are descheduled, the MCU hardware is placed into a power efficient sleep state.
 
-The \CO scheduler makes use of two novel mechanisms to optimize for MCU hardware. Firstly, \CO adopts a stack paging approach to fiber management. MCUs do not support virtual memory and are heavily RAM constrained, but relatively cycle rich. Therefore, instead of overprovisioning stack memory for each fiber (which would waste valuable RAM), we instead dynamically allocate stack memory from heap space as necessary and copy the physical stack into this space at the point at which a fiber is descheduled (and similarly restored when a fiber is scheduled). This copy operation clearly brings a small CPU overhead, but brings greater benefits of RAM efficiency - especially given that MCU stack sizes are typically quite small (~200 bytes is typical).
+The \CO scheduler makes use of two novel mechanisms to optimize for MCU hardware. Firstly, \CO adopts a stack paging approach to fiber management. MCUs do not support virtual memory and are heavily RAM constrained, but relatively cycle rich. Therefore, instead of overprovisioning stack memory for each fiber (which would waste valuable RAM), we instead dynamically allocate stack memory from heap space as necessary and copy the physical stack into this space at the point at which a fiber is descheduled (and similarly restored when a fiber is scheduled). This copy operation clearly brings a small CPU overhead, but brings greater benefits of RAM efficiency - especially given that MCU stack sizes are typically quite small (\textasciitilde200 bytes is typical).
 
 Secondly, the \CO scheduler supports transparent APCs. Any function can be \emph{invoked} as an APC. Conceptually, this is equivalent to calling the given function in its own fiber. However, the \CO runtime provides a common-case transparent optimization for APCs we call \emph{fork-on-block} - whereby a fiber will only be created at the point at which the given function attempts a blocking operation such as sleep() or wait\_for\_event(). Any functions which do not block therefore do not incur a full context switch overhead.
 
@@ -64,30 +64,30 @@ When invoking an APC, the scheduler snapshots the current processor context and 
 
 This approach brings the benefits of abstraction and reusability to \CON, but without losing the hardware specific benefits seen in flat abstraction models where every MCU is made to look the same, even though their capabilities are different. This can be seen in the Arduino and mbed APIs, for example.
 
-Finally, we group together the components of a physical device to form a \emph{device model}. This is a singleton C++ class that, through composition of device driver components, provides a configured representation of the capabilities of a device. Such a model provides for an elegant OO API for programming a device and also a static representation that forms an ideal target for the \MC linker to bind high level STS interfaces to low level optimized code. An example device model for the CPX is shown in Figure~\ref{fig:codalDeviceModel} for reference.
+Finally, we group together the components of a physical device to form a \emph{device model}. This is a singleton C++ class that, through composition of device driver components, provides a configured representation of the capabilities of a device. Such a model provides for an elegant OO API for programming a device and also a static representation that forms an ideal target for the \MC linker to bind high level STS interfaces to low level optimized code.
+
+% An example device model for the CPX is shown in Figure~\ref{fig:codalDeviceModel} for reference.
 
  \MC is further supported by an annotated C++ library (\emph{\MC wrappers}) defining and abstracting the mapping from \CO to TypeScript. The use of \MC wrappers ensures that different \MC targets that use \CO share a common TypeScript and block API vocabulary.
 
-\begin{figure}
-% TODO: shrink width
-\begin{lstlisting}
-class CircuitPlayground : public CodalDevice
-{
-  public:
-    MessageBus                  messageBus;
-    CPlayTimer                  timer;
-    SAMD21Serial                serial;
-    CircuitPlaygroundIO         io;
-    Button                      buttonA;
-    SAMD21I2C                   i2c;
-    LIS3DH                      accelerometer;
-    NonLinearAnalogSensor       thermometer;
-    AnalogSensor                lightSensor;
-    ...
-};
-\end{lstlisting}
-\caption{\label{fig:codalDeviceModel}Device Model for the Adafruit CPX}
-\end{figure}
+% \begin{figure}
+% % TODO: shrink width
+% \begin{lstlisting}
+% class CircuitPlayground : public CodalDevice {
+%   public:
+%     MessageBus                  messageBus;
+%     CPlayTimer                  timer;
+%     SAMD21Serial                serial;
+%     CircuitPlaygroundIO         io;
+%     Button                      buttonA;
+%     SAMD21I2C                   i2c;
+%     LIS3DH                      accelerometer;
+%     NonLinearAnalogSensor       thermometer;
+%     AnalogSensor                lightSensor;
+%     ...
+% \end{lstlisting}
+% \caption{\label{fig:codalDeviceModel}Device Model for the Adafruit CPX}
+% \end{figure}
 
 
 

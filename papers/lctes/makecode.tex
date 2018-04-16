@@ -1,37 +1,15 @@
 \section{\MC}
 \label{sec:makecode}
-% @TOM REVIEW:
-The key technical contribution of \MC is to provide users with a safe environment to write programs for MCUs, enabling a simple progression from block-based
-programming, to text-based programming in Static TypeScript (STS),
-while leveraging C++ on the backend for efficient use of MCU resources.
-Both C++ and TypeScript APIs can be specially annotated (minimally via
-the \emph{//\% block} comment) so that the \MC compiler generates the required
-Blocky metadata,
-\MC uses the Blockly and Monaco editors to allow the user to code with
-visual blocks or STS. The editing experience is parameterized by the full-typed device
-runtime, which provides a set of categorized APIs to the end-user.
 
-Figure~\ref{fig:screenSnap} shows a screen snapshot of the \MC web app for the Adafruit Circuit Playground Express (CPX), which has five sections:
-(A) the menu bar allows switching between the two editors;
-(B) the simulator shows the CPX board and provides feedback on user code executed in the browser;
-(C) the toolbar provides access to device-specific APIs and programming elements;
-(D) the programming canvas;
-(E) the download button invokes the compiler to produce a binary executable.
-
-The web app encapsulates all the components needed to deliver a programming experience
-for MCUs, free of the need for a C++ compiler for the compilation of user code.
-The web app is written in TypeScript and incorporates the TypeScript compiler and
-language service as well.
-The app is built from a \MC ``target''
-which parameterizes the \MC framework for a particular device.
-The remaining subsections describe the essential components of the web app
-from Figure~\ref{fig:makecode}.
-
-
-\begin{figure}[t]
+\begin{figure}[ht]
     \includegraphics[width=\columnwidth]{images/CPXFig}
 \caption{\label{fig:screenSnap}Screen snapshot of the \MC web app.}
 \end{figure}
+The key technical contribution of \MC is to provide users with a safe environment to write programs for MCUs, enabling a simple progression from block-based programming, to text-based programming in Static TypeScript (STS), while leveraging C++ on the backend for efficient use of MCU resources. Both C++ and TypeScript APIs can be specially annotated (minimally via the \emph{//\% block} comment) so that the \MC compiler generates the required Blocky metadata, \MC uses the Blockly and Monaco editors to allow the user to code with visual blocks or STS. The editing experience is parameterized by the full-typed device runtime, which provides a set of categorized APIs to the end-user.
+
+Figure~\ref{fig:screenSnap} is a screenshot of the \MC web app for the Circuit Playground Express (CPX), which has five sections: (A) the menu bar allows switching between the two editors; (B) the simulator shows the CPX board and provides feedback on user code executed in the browser; (C) the toolbar provides access to device-specific APIs and programming elements; (D) the programming canvas; (E) the download button invokes the compiler, producing a binary executable.
+
+The web app encapsulates all the components needed to deliver a programming experience for MCUs, free of the need for a C++ compiler for the compilation of user code. The web app is written in TypeScript and incorporates the TypeScript compiler and language service as well. The app is built from a \MC ``target'' which parameterizes the \MC framework for a particular device. The remaining subsections describe the essential components of the web app from Figure~\ref{fig:makecode}.
 
 \subsection{Static TypeScript (STS)}
 
@@ -41,40 +19,21 @@ As a starting point, every JavaScript program is a TypeScript program.  Types ca
 Java/C\#, their semantics are quite different, as they are based on JavaScript. Classes are simply syntactic sugar for creating objects that have code associated with them, but these objects are
 JavaScript objects with all their dynamic semantics intact
 
-Static TypeScript is closely related to  StrongScript~\cite{StrongScriptECOOP15},
-which extends TypeScript with a type constructor
-for \emph{concrete} types, allowing the programmer to choose between untyped
-code, optionally-typed code, and concretely typed code, which provides traditional
-type soundness guarantees, as in Java and C\#.
-STS can be seen to be StrongScript where every variable and
-expression has a concrete type. As in StrongScript, classes are nominally typed,
-which permits a more efficient and traditional property lookup for class instances.
-STS goes further than StrongScript by outlawing downcasts.
+Static TypeScript is closely related to  StrongScript~\cite{StrongScriptECOOP15}, which extends TypeScript with a type constructor for \emph{concrete} types, allowing the programmer to choose between untyped, optionally-typed, and concretely typed code, which provides traditional type soundness guarantees, as in Java and C\#. STS can be seen to be StrongScript where every variable and expression has a concrete type. As in StrongScript, classes are nominally typed, which permits a more efficient and traditional property lookup for class instances. STS goes further than StrongScript by outlawing downcasts.
 
 \subsection{Device runtime and Shim Generation}
 \label{sec:shim-gen}
-A \MC target is defined, in part, by its device runtime, which is a combination of C++
-and STS code, as shown in the lower-left of Figure~\ref{fig:makecode}.
-All the target's C++ files are precompiled (by a C++ compiler in the cloud)
-into a binary, which is stored in the cloud in a single blob, as well as in the HTML5 application cache. Additional runtime
-components may be authored in STS, which allows the device runtime to be extended with or without the use of C++, and permits components of the device runtime to be shared by both the device
-and simulator runtimes. The ability to author the device runtime in both STS and C++ is
-a unique aspect of \MCN's design.
+A \MC target is defined, in part, by its device runtime, which is a combination of C++ and STS code, as shown in the lower-left of Figure~\ref{fig:makecode}. All the target's C++ files are precompiled (by a C++ compiler in the cloud) into a single binary, which is stored in the cloud, as well as in the HTML5 application cache. Additional runtime components may be authored in STS, which allows the device runtime to be extended with or without the use of C++, and permits components of the device runtime to be shared by both the device and simulator runtimes. The ability to author the device runtime in both STS and C++ is a unique aspect of \MCN's design.
 
-Whether runtime components are authored in C++ or STS, all runtime APIs are exposed as fully-typed
-TypeScript definitions. A fully-typed runtime improves the end-user experience
-by making it easier to discover APIs; it also enables the type inference provided by the TypeScript
-compiler to infer types for (unannotated) user programs.
+Whether runtime components are authored in C++ or STS, all runtime APIs are exposed as fully-typed TypeScript definitions. A fully-typed runtime improves the end-user experience by making it easier to discover APIs; it also enables the type inference provided by the TypeScript compiler to infer types for (unannotated) user programs.
 
-\MC supports a simple foreign function interface from STS to C++ based on namespaces,
-enumerations, functions, and basic type mappings. \MC uses top-level namespaces to organize sets of related functions.  Preceding a C++ namespace, enumeration, or function
-with a comment starting with \emph{//\%} indicates that \MC should map the C++ construct to STS.
-Within the \emph{//\%} comment, attributes are used to define the visual appearance for that
-language construct, such as for the input namespace in the C++ for the CPX:
+\MC supports a simple foreign function interface from STS to C++ based on namespaces, enumerations, functions, and basic type mappings. \MC uses top-level namespaces to organize sets of related functions. Preceding a C++ namespace, enumeration, or function
+with a comment starting with \emph{//\%} indicates that \MC should map the C++ construct to STS. Within the \emph{//\%} comment, attributes specify the visual appearance for that
+language construct, such as for the input namespace in C++ for the CPX:
+
 \begin{lstlisting}
 //% color="#B4009E" weight=98 icon="\uf192"
-namespace input {
-    ...
+namespace input { ...
 \end{lstlisting}
 
 Figure~\ref{fig:screenSnap}(C) shows the toolbox of API and language categories, where the
@@ -135,14 +94,7 @@ The reduced AST then is compiled to an intermediate representation (IR) that mak
 flow among a sequence of instructions with conditional and unconditional jumps; heap cells; field accesses; store operations,
 and reference counting.
 
-There are three backends for code generation from the IR. The first backend generates JavaScript,
-for execution against the simulator runtime.  A second backend generates assembler, parameterized by a
-processor description.  Currently supported processors include ARM's Cortex class (Thumb instructions)
-and Atmel's ATmega class (AVR instructions). A separate assembler, also parameterized by an instruction
-encoder/decoder, generates machine code and resolves runtime references, producing a final binary executable. A third backend generates bytecode instructions.
-\MC can encode the resulting binary in several formats,
-including Intel's HEX format~\cite{IntelHEX} and the \UF format (created by
-the authors for faster device flashing) documented in the Appendix (Section~\ref{sec:uf2}).
+There are three backends for code generation from the IR. The first backend generates JavaScript, for execution against the simulator runtime.  A second backend generates assembler, parameterized by a processor description.  Currently supported processors include ARM's Cortex class (Thumb instructions) and Atmel's ATmega class (AVR instructions). A separate assembler, also parameterized by an instruction encoder/decoder, generates machine code and resolves runtime references, producing a final binary executable. A third backend generates bytecode instructions. \MC can encode the resulting binary in several formats, including Intel's HEX format~\cite{IntelHEX} and the \UF format (created by the authors for faster device flashing) documented in Section~\ref{sec:uf2}.
 
 \label{sec:untagged-tagged}
 The \MC compiler supports the STS language subset of TypeScript
@@ -152,7 +104,4 @@ to statically distinguish primitive values from boxed values. As a result, the u
 strategy is not fully faithful to JavaScript semantics: there is no support for floating
 point and the \texttt{null} and \texttt{undefined} values are represented by the default integer value of zero. The untagged strategy is used for the micro:bit and Arduino Uno targets.
 
-In the tagged strategy, numbers are either tagged 31-bit signed integers, or if they do not fit,
-boxed doubles. Special constants like \texttt{false}, \texttt{null} and \texttt{undefined} are given special values
-and can be distinguished. The tagged execution strategy has the capability to fully support
-JavaScript semantics. This strategy is used for all SAMD21 targets, including the CPX.
+In the tagged strategy, numbers are either tagged 31-bit signed integers, or if they do not fit, boxed doubles. Special constants like \texttt{false}, \texttt{null} and \texttt{undefined} are given special values and can be distinguished. The tagged execution strategy has the capability to fully support JavaScript semantics and by all SAMD21 targets, including the CPX.
