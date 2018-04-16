@@ -1276,10 +1276,13 @@ export class ProjectView
     }
 
     toggleTrace(intervalSpeed?: number) {
-        if (this.state.tracing)
+        if (this.state.tracing) {
+            this.editor.clearHighlightedStatements();
             simulator.setTraceInterval(0);
-        else
+        }
+        else {
             simulator.setTraceInterval(intervalSpeed != undefined ? intervalSpeed : simulator.SLOW_TRACE_INTERVAL);
+        }
         this.setState({ tracing: !this.state.tracing })
         this.restartSimulator();
     }
