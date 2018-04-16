@@ -281,6 +281,7 @@ task('wapp', [
     'built/web/main.js',
     'built/web/pxtapp.js',
     'built/web/worker.js',
+    'built/web/pxtembed.js',
     'built/web/fonts/icons.woff2',
     'built/web/icons.css',
     'built/web/blockly.css',
@@ -449,6 +450,17 @@ ju.catFiles('built/web/worker.js', [
     "built/web/pxtcompiler.js",
     "built/webapp/src/worker.js"     
 ], `"use strict";`, ["built/webapp/src/app.js"]);
+
+ju.catFiles('built/web/pxtembed.js', [
+    "built/web/typescript.js",
+    "node_modules/lzma/src/lzma_worker-min.js",
+    "built/web/pxtlib.js",
+    "built/web/pxtcompiler.js",
+    "built/web/pxtblockly.js",
+    "built/web/pxteditor.js",
+    "built/web/pxtsim.js",
+    "built/web/pxtrunner.js"
+]);
 
 file('built/web/fonts/icons.woff2', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes/default/assets/fonts", "built/web/")
