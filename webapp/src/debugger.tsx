@@ -102,8 +102,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                                 </div>
                             </div>
                         </div>
-                    }
-                    )}
+                    })}
                 </div>
             </div>;
     }
