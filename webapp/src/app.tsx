@@ -1284,8 +1284,9 @@ export class ProjectView
     }
 
     toggleDebugging() {
-        this.setState({ debugging: !this.state.debugging, tracing: false });
-        this.restartSimulator(!this.state.debugging);
+        const state = !this.state.debugging;
+        this.setState({ debugging: state, tracing: state });
+        this.restartSimulator(state);
     }
 
     dbgPauseResume() {
