@@ -713,8 +713,8 @@ export class ProjectView
 
     hexFileImporters: pxt.editor.IHexFileImporter[] = [{
         id: "default",
-        canImport: data => data.meta.cloudId == "ks/" + pxt.appTarget.id || data.meta.cloudId == pxt.CLOUD_ID + pxt.appTarget.id // match on targetid
-            || (Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + pxt.appTarget.id)) // trying to load white-label file into main target
+        canImport: data => pxt.cpp.matchTargetId(data, pxt.appTarget.id)
+            || (pxt.appTarget.aliases && pxt.appTarget.aliases.some(alias => pxt.cpp.matchTargetId(data, alias)))  
         ,
         importAsync: (project, data) => {
             let h: pxt.workspace.InstallHeader = {

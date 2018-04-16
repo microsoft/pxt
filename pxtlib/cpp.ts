@@ -863,6 +863,13 @@ int main() {
         source: string;
     }
 
+    export function matchTargetId(data: pxt.cpp.HexFile, id: string): boolean {
+        return data.meta.cloudId == "ks/" + id
+            || data.meta.cloudId == pxt.CLOUD_ID + id
+            // trying to load white-label file into main target
+            || (Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + id))
+    }
+
     export function unpackSourceFromHexFileAsync(file: File): Promise<HexFile> { // string[] (guid)
         if (!file) return undefined;
 
@@ -989,10 +996,10 @@ namespace pxt.hex {
                                                 resolve(U.httpGetTextAsync(hexurl + ".hex"))
                                             }
                                         },
-                                        e => {
-                                            setTimeout(tryGet, 1000)
-                                            return null
-                                        })
+                                            e => {
+                                                setTimeout(tryGet, 1000)
+                                                return null
+                                            })
                                 }
                                 tryGet();
                             })))

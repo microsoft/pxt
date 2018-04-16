@@ -31,6 +31,7 @@ declare namespace pxt {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
         platformid?: string; // eg "codal"; used when search for gh packages ("for PXT/codal"); defaults to id
         nickname?: string; // friendly id used when generating files, folders, etc... id is used instead if missing
+        aliases?: string[]; // allows to import scripts from other editor with different ids 
         name: string;
         description?: string;
         corepkg: string;
