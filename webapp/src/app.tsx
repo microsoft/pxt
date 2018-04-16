@@ -432,7 +432,8 @@ export class ProjectView
         this.allEditors.forEach(e => e.prepare())
         simulator.init($("#boardview")[0], {
             highlightStatement: (stmt, brk) => {
-                if (this.editor) this.editor.highlightStatement(stmt, brk)
+                if (this.editor) return this.editor.highlightStatement(stmt, brk);
+                return false;
             },
             restartSimulator: () => {
                 core.hideDialog();

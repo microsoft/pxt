@@ -644,19 +644,22 @@ export class Editor extends srceditor.Editor {
         })
     }
 
-    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage) {
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
-            return;
+            return false;
         if (stmt) {
             let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
                 this.editor.highlightBlock(bid);
                 if (brk) this.updateDebuggerVariables(brk.globals);
+                return true;
             }
         } else {
             this.editor.highlightBlock(null);
             this.updateDebuggerVariables(null);
+            return false;
         }
+        return false;
     }
 
     updateDebuggerVariables(globals: pxsim.Variables) {

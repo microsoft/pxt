@@ -5,7 +5,8 @@ import * as core from "./core";
 import U = pxt.U
 
 interface SimulatorConfig {
-    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): void;
+    // return true if a visible breakpoint was found
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean;
     restartSimulator(): void;
     onStateChanged(state: pxsim.SimulatorState): void;
     editor: string;
@@ -77,11 +78,18 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             $(el).removeClass("simHeadless");
         },
         onDebuggerBreakpoint: function (brk) {
-            updateDebuggerButtons(brk)
-            let brkInfo = lastCompileResult.breakpoints[brk.breakpointId]
-            if (config) config.highlightStatement(brkInfo, brk)
+            updateDebuggerButtons(brk);
             if (brk.exceptionMessage) {
                 core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
+            }
+            if (config) {
+                let brkInfo = lastCompileResult.breakpoints[brk.breakpointId];
+                // is there a breakpoint to stop?
+                if (!config.highlightStatement(brkInfo, brk) && !brk.exceptionMessage) {
+                    // keep going
+                    driver.resume(pxsim.SimulatorDebuggerCommand.StepInto);
+                    return;
+                }
             }
             postSimEditorEvent("stopped", brk.exceptionMessage);
         },
