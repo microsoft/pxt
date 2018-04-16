@@ -234,7 +234,6 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         const isTracing = parentState.tracing;
         if (!isDebugging) return <div />;
 
-        const restart = !simOpts.hideRestart;
         const isDebuggerRunning = simulator.driver && simulator.driver.state == pxsim.SimulatorState.Running;
         const advancedDebugging = this.props.parent.isJavaScriptActive();
 
@@ -258,13 +257,13 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
                         onMouseDown={this.toolbarHandleDown.bind(this)}>
                         <sui.Icon key='iconkey' icon={`icon ellipsis vertical`} />
                     </div>
-                    <sui.Item key='dbgtrace' class={`trace-button ${isTracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace()} />
                     <sui.Item key='dbgpauseresume' class={`dbg-btn dbg-pause-resume ${isDebuggerRunning ? "pause" : "play"}`} icon={`${isDebuggerRunning ? "pause blue" : "step forward green"}`} title={dbgPauseResumeTooltip} onClick={() => this.dbgPauseResume()} />
                     {!advancedDebugging ? <sui.Item key='dbgstep' class={`dbg-btn dbg-step`} icon={`arrow right ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepIntoTooltip} onClick={() => this.dbgStepInto()} /> : undefined}
                     {advancedDebugging ? <sui.Item key='dbgstepover' class={`dbg-btn dbg-step-over`} icon={`xicon stepover ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepOverTooltip} onClick={() => this.dbgStepOver()} /> : undefined}
                     {advancedDebugging ? <sui.Item key='dbgstepinto' class={`dbg-btn dbg-step-into`} icon={`xicon stepinto ${isDebuggerRunning ? "disabled" : ""}`} title={dbgStepIntoTooltip} onClick={() => this.dbgStepInto()} /> : undefined}
                     {advancedDebugging ? <sui.Item key='dbgstepout' class={`dbg-btn dbg-step-out`} icon={`xicon stepout ${isDebuggerRunning ? "disabled" : ""}`} title={dbgStepOutTooltip} onClick={() => this.dbgStepOut()} /> : undefined}
-                    {restart ? <sui.Item key='dbgrestart' class={`dbg-btn dbg-restart right`} icon={`refresh green`} title={restartTooltip} onClick={() => this.restartSimulator(true)} /> : undefined}
+                    <sui.Item key='dbgrestart' class={`dbg-btn dbg-restart right`} icon={`refresh green`} title={restartTooltip} onClick={() => this.restartSimulator(true)} />
+                    <sui.Item key='dbgtrace' class={`trace-button ${isTracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace()} />
                 </div>}
         </aside>;
     }

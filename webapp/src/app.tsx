@@ -1275,19 +1275,16 @@ export class ProjectView
     }
 
     toggleTrace(intervalSpeed?: number) {
-        if (this.state.tracing) {
-            this.editor.clearHighlightedStatements();
+        if (this.state.tracing)
             simulator.setTraceInterval(0);
-        }
-        else {
+        else
             simulator.setTraceInterval(intervalSpeed != undefined ? intervalSpeed : simulator.SLOW_TRACE_INTERVAL);
-        }
         this.setState({ tracing: !this.state.tracing })
         this.restartSimulator();
     }
 
     toggleDebugging() {
-        this.setState({debugging: !this.state.debugging});
+        this.setState({ debugging: !this.state.debugging, tracing: false });
         this.restartSimulator(!this.state.debugging);
     }
 
