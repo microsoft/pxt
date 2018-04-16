@@ -105,7 +105,14 @@ namespace pxt {
             }
 
             all(info.Js || [], injectScriptAsync, msccError => {
-                initializeAppInsights(!msccError && typeof mscc !== "undefined" && mscc.hasConsent());
+                if (!msccError && typeof mscc !== "undefined") {
+                    if (mscc.hasConsent()) {
+                        initializeAppInsights(true)
+                    }
+                    else {
+                        mscc.on("consent", () => initializeAppInsights(true));
+                    }
+                }
             });
         });
     }
