@@ -196,7 +196,8 @@ declare namespace pxt {
         sideDoc?: string; // deprecated
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
         feedbackUrl?: string; // is set: a feedback link will show in the settings menu
-        boardName?: string;
+        boardName?: string; // official branded name for the board or product
+        boardNickname?: string; // common nickname to use for the board or product
         driveDisplayName?: string; // name of the drive as it shows in the explorer
         privacyUrl?: string;
         termsOfUseUrl?: string;

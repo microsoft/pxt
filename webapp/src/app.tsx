@@ -1860,9 +1860,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
 
         const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT();
 
-        // update window title
-        document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
-
         let rootClassList = [
             "ui",
             shouldHideEditorFloats ? " hideEditorFloats" : '',

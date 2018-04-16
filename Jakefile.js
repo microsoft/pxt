@@ -281,6 +281,7 @@ task('wapp', [
     'built/web/main.js',
     'built/web/pxtapp.js',
     'built/web/worker.js',
+    'built/web/pxtembed.js',
     'built/web/fonts/icons.woff2',
     'built/web/icons.css',
     'built/web/blockly.css',
@@ -300,7 +301,6 @@ file("built/web/pxtlib.js", [
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.min.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
-    jake.cpR("node_modules/fuse.js/src/fuse.min.js", "built/web/fuse.min.js")
 
     jake.cpR("built/pxtlib.js", "built/web/")
     jake.cpR("built/pxtcompiler.js", "built/web/")
@@ -435,15 +435,32 @@ file('built/web/main.js', ["built/web/pxtapp.js", "built/webapp/src/app.js"], { 
 })
 
 ju.catFiles('built/web/pxtapp.js', [
+    "node_modules/lzma/src/lzma_worker-min.js",
     "built/web/pxtlib.js",
     "built/web/pxtwinrt.js",
     "built/web/pxteditor.js",
     "built/web/pxtsim.js"
 ])
 
-file('built/web/worker.js', ["built/webapp/src/app.js"], function () {
-    jake.cpR("built/webapp/src/worker.js", "built/web/")
-})
+ju.catFiles('built/web/worker.js', [
+    "built/web/typescript.js",
+    "node_modules/fuse.js/src/fuse.min.js",
+    "node_modules/lzma/src/lzma_worker-min.js",
+    "built/web/pxtlib.js",
+    "built/web/pxtcompiler.js",
+    "built/webapp/src/worker.js"     
+], `"use strict";`, ["built/webapp/src/app.js"]);
+
+ju.catFiles('built/web/pxtembed.js', [
+    "built/web/typescript.js",
+    "node_modules/lzma/src/lzma_worker-min.js",
+    "built/web/pxtlib.js",
+    "built/web/pxtcompiler.js",
+    "built/web/pxtblockly.js",
+    "built/web/pxteditor.js",
+    "built/web/pxtsim.js",
+    "built/web/pxtrunner.js"
+]);
 
 file('built/web/fonts/icons.woff2', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes/default/assets/fonts", "built/web/")
