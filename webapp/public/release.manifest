@@ -7,8 +7,6 @@ CACHE:
 /blb/typescript.js
 /blb/marked/marked.min.js
 /blb/highlight.js/highlight.pack.js
-/blb/lzma/lzma_worker-min.js
-/blb/fuse.min.js
 /blb/jquery.js
 /blb/pxtlib.js
 /blb/pxtcompiler.js
@@ -16,6 +14,7 @@ CACHE:
 /blb/pxtwinrt.js
 /blb/pxteditor.js
 /blb/pxtsim.js
+/blb/pxtembed.js
 /blb/blockly.css
 /blb/semantic.css
 /blb/rtlsemantic.css

@@ -7,17 +7,10 @@
     var scripts = [
         "/blb/highlight.js/highlight.pack.js",
         "/blb/bluebird.min.js",
-        "/blb/typescript.js",
         "/blb/semantic.js",
         "/blb/marked/marked.min.js",
-        "/blb/lzma/lzma_worker-min.js",
-        "/blb/pxtlib.js",
-        "/blb/pxtcompiler.js",
-        "/blb/pxtblockly.js",
-        "/blb/pxteditor.js",
-        "/blb/pxtsim.js",
         "/blb/target.js",
-        "/blb/pxtrunner.js"
+        "/blb/pxtembed.js"
     ]
 
     if (typeof jQuery == "undefined")
