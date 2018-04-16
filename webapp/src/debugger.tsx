@@ -251,6 +251,7 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         const traceTooltip = parentState.tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo");
 
         //                     <sui.Item key='dbgstop' class={`dbg-btn dbg-stop ${!restart ? 'right' : ''}`} icon={`stop red`} title={debugTooltip} onClick={() => this.exitDebugging()} />
+//                     {advancedDebugging ? <sui.Item key='dbgtrace' class={`trace-button ${isTracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace()} /> : undefined}
 
         return <aside className="debugtoolbar" style={{ left: xPos }} role="complementary" aria-label={lf("Debugger toolbar")}>
             {!isDebugging ? undefined :
@@ -260,7 +261,6 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
                         <sui.Icon key='iconkey' icon={`icon ellipsis vertical`} />
                     </div>
                     <sui.Item key='dbgpauseresume' class={`dbg-btn dbg-pause-resume ${isDebuggerRunning ? "pause" : "play"}`} icon={`${isDebuggerRunning ? "pause blue" : "step forward green"}`} title={dbgPauseResumeTooltip} onClick={() => this.dbgPauseResume()} />
-                    {advancedDebugging ? <sui.Item key='dbgtrace' class={`trace-button ${isTracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace()} /> : undefined}
                     {!advancedDebugging ? <sui.Item key='dbgstep' class={`dbg-btn dbg-step`} icon={`arrow right ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepIntoTooltip} onClick={() => this.dbgStepInto()} /> : undefined}
                     {advancedDebugging ? <sui.Item key='dbgstepover' class={`dbg-btn dbg-step-over`} icon={`xicon stepover ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepOverTooltip} onClick={() => this.dbgStepOver()} /> : undefined}
                     {advancedDebugging ? <sui.Item key='dbgstepinto' class={`dbg-btn dbg-step-into`} icon={`xicon stepinto ${isDebuggerRunning ? "disabled" : ""}`} title={dbgStepIntoTooltip} onClick={() => this.dbgStepInto()} /> : undefined}
