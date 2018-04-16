@@ -261,7 +261,7 @@ namespace pxt.docs {
         if (theme.boardName)
             params["boardname"] = html2Quote(theme.boardName);
         if (theme.boardNickname)
-            params["nickname"] = html2Quote(theme.boardNickname);
+            params["boardnickname"] = html2Quote(theme.boardNickname);
         if (theme.driveDisplayName)
             params["drivename"] = html2Quote(theme.driveDisplayName);
         if (theme.homeUrl)
