@@ -1906,7 +1906,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                         </div>
                         <simtoolbar.SimulatorToolbar debug={simDebug} parent={this} />
                         <div className="ui item portrait hide hidefullscreen">
-                            {simDebug ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Debug"} onClick={() => this.toggleDebugging()} /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
                         {useSerialEditor ?

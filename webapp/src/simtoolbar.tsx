@@ -27,9 +27,9 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         this.props.parent.restartSimulator();
     }
 
-    toggleTrace() {
-        pxt.tickEvent("simulator.trace", undefined, { interactiveConsent: true });
-        this.props.parent.toggleTrace();
+    toggleDebug() {
+        pxt.tickEvent("simulator.debug", undefined, { interactiveConsent: true });
+        this.props.parent.toggleDebugging();
     }
 
     toggleMute() {
@@ -51,13 +51,14 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
         const isRunning = parentState.running;
         const isFullscreen = parentState.fullscreen;
-        const isTracing = parentState.tracing;
+        const isDebugging = parentState.debugging;
         const isMuted = parentState.mute;
         const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
 
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
-        const trace = run && simOpts.enableTrace;
+        const debug = (run && simOpts.debugger) || pxt.options.debug;
+        const debugging = debug && parentState.debugging;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
         const isHeadless = simOpts.headless;
@@ -66,20 +67,20 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");
-        const traceTooltip = parentState.tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo");
+        const debugTooltip = debugging ? lf("Disable Debugging") : lf("Debugging")
         const fullscreenTooltip = isFullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
         const muteTooltip = isMuted ? lf("Unmute audio") : lf("Mute audio");
 
-        return <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar") }>
+        return <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                {make ? <sui.Button icon='configure' class="secondary" title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
-                {run ? <sui.Button key='runbtn' class={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
-                {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
-                {trace ? <sui.Button key='debug' class={`trace-button ${isTracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace() } /> : undefined}
+                {make ? <sui.Button disabled={debugging} icon='configure' class="secondary" title={makeTooltip} onClick={() => this.openInstructions()} /> : undefined}
+                {run ? <sui.Button disabled={debugging} key='runbtn' class={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={() => this.startStopSimulator()} /> : undefined}
+                {restart ? <sui.Button disabled={debugging} key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator()} /> : undefined}
+                {debug ? <sui.Button key='debug' class={`debug-button ${isDebugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onClick={() => this.toggleDebug()} /> : undefined}
             </div>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                {audio ? <sui.Button key='mutebtn' class={`mute-button ${isMuted ? 'red' : ''}`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
-                {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`xicon ${isFullscreen ? 'fullscreencollapse' : 'fullscreen'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined}
+                {audio ? <sui.Button key='mutebtn' class={`mute-button ${isMuted ? 'red' : ''}`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute()} /> : undefined}
+                {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`xicon ${isFullscreen ? 'fullscreencollapse' : 'fullscreen'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen()} /> : undefined}
             </div>
         </aside>;
     }
