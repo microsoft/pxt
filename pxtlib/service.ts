@@ -124,6 +124,7 @@ namespace ts.pxtc {
         blockHidden?: boolean; // not available directly in toolbox
         blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
         blockCombine?: boolean;
+        blockCombineShadow?: string;
         blockSetVariable?: string; // show block with variable assigment in toolbox. Set equal to a name to control the var name
         fixedInstances?: boolean;
         fixedInstance?: boolean;
@@ -385,23 +386,32 @@ namespace ts.pxtc {
         const combinedGet: pxt.Map<SymbolInfo> = {}
         const combinedChange: pxt.Map<SymbolInfo> = {}
 
-        function addCombined(tp: string, s: SymbolInfo) {
-            const isGet = tp == "get"
-            const m = isGet ? combinedGet :
-                tp == "set" ? combinedSet : combinedChange
-            let ex = U.lookup(m, s.namespace)
+        function addCombined(rtp: string, s: SymbolInfo) {
+            const isGet = rtp == "get"
+            const isSet = rtp == "set"
+            const isNumberType = s.retType == "number"
+            const m = isGet ? combinedGet : (isSet ? combinedSet : combinedChange)
+            const mkey = `${s.namespace}.${s.retType}`
+
+            let ex = U.lookup(m, mkey)
             if (!ex) {
-                let paramName = s.namespace.toLowerCase()
-                ex = m[s.namespace] = {
+                const tp = `@${rtp}@`
+                const paramName = s.namespace.toLowerCase()
+                const paramValue = `value=${s.attributes.blockCombineShadow || ""}`;
+
+                ex = m[mkey] = {
                     attributes: {
+                        blockId: `${isNumberType ? s.namespace : mkey}_blockCombine_${rtp}`,
                         callingConvention: ir.CallingConvention.Plain,
+                        group: s.attributes.group, // first %blockCombine defines
                         paramDefl: {},
                         jsDoc: isGet
                             ? U.lf("Read value of a property on an object")
                             : U.lf("Update value of property on an object")
                     },
-                    name: "@" + tp + "@",
+                    name: tp,
                     namespace: s.namespace,
+                    qName: `${mkey}.${tp}`,
                     pkg: s.pkg,
                     kind: SymbolKind.Property,
                     parameters: [
@@ -415,22 +425,19 @@ namespace ts.pxtc {
                         },
                         {
                             name: "value",
-                            description: tp == "set" ?
+                            description: isSet ?
                                 U.lf("the new value of the property") :
                                 U.lf("the amount by which to change the property"),
-                            type: "number"
+                            type: s.retType,
                         }
                     ].slice(0, isGet ? 1 : 2),
-                    retType: isGet ? "number" : "void",
-                    combinedProperties: [],
+                    retType: isGet ? s.retType : "void",
+                    combinedProperties: []
                 }
-                ex.attributes.block = isGet ? `%${paramName} %property` :
-                    tp == "set" ?
-                        `set %${paramName} %property to %value` :
-                        `change %${paramName} %property by %value`
-                ex.attributes.blockId = ex.namespace + "_blockCombine_" + tp
-                ex.attributes.group = s.attributes.group; // first group wins
-                ex.qName = ex.namespace + "." + ex.name
+                ex.attributes.block =
+                    isGet ? `%${paramName} %property` :
+                    isSet ? `set %${paramName} %property to %${paramValue}` :
+                            `change %${paramName} %property by %${paramValue}`
                 updateBlockDef(ex.attributes)
                 blocks.push(ex)
             }
@@ -440,12 +447,16 @@ namespace ts.pxtc {
 
         for (let s of pxtc.Util.values(info.byQName)) {
             if (s.attributes.blockCombine) {
-                if (!s.isReadOnly) {
-                    addCombined("set", s)
-                    addCombined("change", s)
-                }
-                if (!/@set/.test(s.name))
+                if (!/@set/.test(s.name)) {
                     addCombined("get", s)
+                }
+
+                if (!s.isReadOnly) {
+                    if (s.retType == 'number') {
+                        addCombined("change", s)
+                    }
+                    addCombined("set", s)
+                }
             } else if (!!s.attributes.block
                 && !s.attributes.fixedInstance
                 && s.kind != pxtc.SymbolKind.EnumMember
