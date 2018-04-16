@@ -87,19 +87,22 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
     renderCore() {
         const { variables } = this.state;
+        const varcolor = pxt.toolbox.getNamespaceColor('variables');
         return Object.keys(variables).length == 0 ? <div /> :
             <div className="ui segment debugvariables">
                 <div className="ui middle aligned list">
-                    {Object.keys(variables).map(variable =>
-                        <div key={variable} className="item">
-                            <div className="ui label image variable" style={{ backgroundColor: pxt.toolbox.getNamespaceColor('variables') }}>
+                    {Object.keys(variables).map(variable => {
+                        const v = variables[variable];
+                        return <div key={variable} className="item">
+                            <div className={`ui label image variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ backgroundColor: varcolor }}>
                                 <span className="varname">{variable}</span>
                                 <div className="detail">
-                                    <span className="varval">{variables[variable].value + ' '}</span>
-                                    <span className="previousval">{variables[variable].prevValue ? variables[variable].prevValue : ''}</span>
+                                    <span className="varval">{v.value + ' '}</span>
+                                    <span className="previousval">{v.prevValue ? `(${v.prevValue})` : ''}</span>
                                 </div>
                             </div>
                         </div>
+                    }
                     )}
                 </div>
             </div>;
