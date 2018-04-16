@@ -345,7 +345,7 @@ export class ProjectView
             if (Util.now() - this.lastChangeTime < 1000) return;
             if (!this.state.active)
                 return;
-            this.runSimulator({ background: true });
+            this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
         1000, true);
 
@@ -354,7 +354,7 @@ export class ProjectView
             if (Util.now() - this.lastChangeTime < 1000) return;
             if (!this.state.active)
                 return;
-            this.runSimulator({ background: true });
+            this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
         2000, true);
 
@@ -379,8 +379,8 @@ export class ProjectView
                     if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
                         let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                         if (output && !output.numDiagnosticsOverride
-                            && !simulator.driver.runOptions.debug
                             && (simulator.driver.state == pxsim.SimulatorState.Running
+                                || simulator.driver.state == pxsim.SimulatorState.Paused
                                 || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
                             if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
                             else this.autoRunSimulator();
@@ -432,7 +432,8 @@ export class ProjectView
         this.allEditors.forEach(e => e.prepare())
         simulator.init($("#boardview")[0], {
             highlightStatement: (stmt, brk) => {
-                if (this.editor) this.editor.highlightStatement(stmt, brk)
+                if (this.editor) return this.editor.highlightStatement(stmt, brk);
+                return false;
             },
             restartSimulator: () => {
                 core.hideDialog();
@@ -1287,8 +1288,9 @@ export class ProjectView
     }
 
     toggleDebugging() {
-        this.setState({debugging: !this.state.debugging});
-        this.restartSimulator(!this.state.debugging);
+        const state = !this.state.debugging;
+        this.setState({ debugging: state, tracing: false });
+        this.restartSimulator(state);
     }
 
     dbgPauseResume() {
@@ -1844,7 +1846,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header;
-        const simDebug = (simOpts && simOpts.debugger) || pxt.options.debug;
+        const simDebug = (simOpts && !simOpts.enableTrace) || pxt.options.debug;
 
         const { hideMenuBar, hideEditorToolbar } = targetTheme;
         const isHeadless = simOpts && simOpts.headless;
@@ -1901,9 +1903,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                         <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden" aria-hidden="true">{lf("Simulator")}</label>
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-labelledby="boardviewLabel">
                         </div>
-                        <simtoolbar.SimulatorToolbar debug={simDebug} parent={this} />
+                        <simtoolbar.SimulatorToolbar parent={this} />
                         <div className="ui item portrait hide hidefullscreen">
-                            {simDebug ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Debug"} onClick={() => this.toggleDebugging()} /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
                         </div>
                         {useSerialEditor ?

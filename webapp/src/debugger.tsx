@@ -33,7 +33,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     }
 
     clear() {
-        //this.setState({ variables: {} });
+        this.nextVariables = {};
+        this.setState({ variables: {} });
     }
 
     set(name: string, value: pxsim.Variables) {
@@ -87,20 +88,22 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
     renderCore() {
         const { variables } = this.state;
+        const varcolor = pxt.toolbox.getNamespaceColor('variables');
         return Object.keys(variables).length == 0 ? <div /> :
             <div className="ui segment debugvariables">
                 <div className="ui middle aligned list">
-                    {Object.keys(variables).map(variable =>
-                        <div key={variable} className="item">
-                            <div className="ui label image variable" style={{ backgroundColor: pxt.toolbox.getNamespaceColor('variables') }}>
+                    {Object.keys(variables).map(variable => {
+                        const v = variables[variable];
+                        return <div key={variable} className="item">
+                            <div className={`ui label image variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ backgroundColor: varcolor }}>
                                 <span className="varname">{variable}</span>
                                 <div className="detail">
-                                    <span className="varval">{variables[variable].value + ' '}</span>
-                                    <span className="previousval">{variables[variable].prevValue ? variables[variable].prevValue : ''}</span>
+                                    <span className="varval">{v.value + ' '}</span>
+                                    <span className="previousval">{v.prevValue ? `(${v.prevValue})` : ''}</span>
                                 </div>
                             </div>
                         </div>
-                    )}
+                    })}
                 </div>
             </div>;
     }
@@ -228,7 +231,6 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         const isDebugging = parentState.debugging;
         if (!isDebugging) return <div />;
 
-        const restart = !simOpts.hideRestart;
         const isDebuggerRunning = simulator.driver && simulator.driver.state == pxsim.SimulatorState.Running;
         const advancedDebugging = this.props.parent.isJavaScriptActive();
 
@@ -254,8 +256,7 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
                     {advancedDebugging ? <sui.Item key='dbgstepover' class={`dbg-btn dbg-step-over`} icon={`xicon stepover ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepOverTooltip} onClick={() => this.dbgStepOver()} /> : undefined}
                     {advancedDebugging ? <sui.Item key='dbgstepinto' class={`dbg-btn dbg-step-into`} icon={`xicon stepinto ${isDebuggerRunning ? "disabled" : ""}`} title={dbgStepIntoTooltip} onClick={() => this.dbgStepInto()} /> : undefined}
                     {advancedDebugging ? <sui.Item key='dbgstepout' class={`dbg-btn dbg-step-out`} icon={`xicon stepout ${isDebuggerRunning ? "disabled" : ""}`} title={dbgStepOutTooltip} onClick={() => this.dbgStepOut()} /> : undefined}
-                    {restart ? <sui.Item key='dbgrestart' class={`dbg-btn dbg-restart right`} icon={`refresh green`} title={restartTooltip} onClick={() => this.restartSimulator(true)} /> : undefined}
-                    <sui.Item key='dbgstop' class={`dbg-btn dbg-stop ${!restart ? 'right' : ''}`} icon={`stop red`} title={debugTooltip} onClick={() => this.exitDebugging()} />
+                    <sui.Item key='dbgrestart' class={`dbg-btn dbg-restart right`} icon={`refresh green`} title={restartTooltip} onClick={() => this.restartSimulator(true)} />
                 </div>}
         </aside>;
     }

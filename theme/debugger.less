@@ -54,16 +54,20 @@
 .ui.segment.debugvariables {
     position: absolute;
     right: 1rem;
-    top: 1rem;
+    top: 3rem;
     margin-top: 0rem;
     .variable {
         color: white;
+    }
+    .variable.changed {
+        outline: solid 2px yellow;
     }
     .varname {
         font-weight: bold;
     }
     .previousval {
         text-decoration: line-through;
+        font-size: 90%;
     }
 }
 

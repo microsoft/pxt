@@ -644,27 +644,32 @@ export class Editor extends srceditor.Editor {
         })
     }
 
-    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage) {
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
-            return;
+            return false;
         if (stmt) {
             let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
                 this.editor.highlightBlock(bid);
                 if (brk) this.updateDebuggerVariables(brk.globals);
+                return true;
             }
         } else {
             this.editor.highlightBlock(null);
             this.updateDebuggerVariables(null);
+            return false;
         }
+        return false;
     }
 
     updateDebuggerVariables(globals: pxsim.Variables) {
         if (!this.parent.state.debugging) return;
-        const vars = this.editor.getAllVariables().map((variable: any) => {
-            return variable.name as string;
-        })
-        if (!globals || vars.length == 0) {
+        if (!globals) {
+            if (this.debugVariables) this.debugVariables.clear();
+            return;
+        }
+        const vars = this.editor.getAllVariables().map((variable: any) => variable.name as string);
+        if (!vars.length) {
             if (this.debugVariables) this.debugVariables.clear();
             return;
         }

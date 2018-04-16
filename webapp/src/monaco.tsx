@@ -1213,16 +1213,18 @@ export class Editor extends srceditor.Editor {
     private highlightDecorations: string[] = [];
     highlightStatement(stmt: pxtc.LocationInfo) {
         if (!stmt) this.clearHighlightedStatements();
-        if (!stmt || !this.currFile || this.currFile.name != stmt.fileName || !this.editor) return;
+        if (!stmt || !this.currFile || this.currFile.name != stmt.fileName || !this.editor) 
+            return false;
         let position = this.editor.getModel().getPositionAt(stmt.start);
         let end = this.editor.getModel().getPositionAt(stmt.start + stmt.length);
-        if (!position || !end) return;
+        if (!position || !end) return false;
         this.highlightDecorations = this.editor.deltaDecorations(this.highlightDecorations, [
             {
                 range: new monaco.Range(position.lineNumber, position.column, end.lineNumber, end.column),
                 options: { inlineClassName: 'highlight-statement' }
             },
         ]);
+        return true;
     }
 
     clearHighlightedStatements() {
