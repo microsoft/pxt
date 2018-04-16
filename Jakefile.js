@@ -441,9 +441,13 @@ ju.catFiles('built/web/pxtapp.js', [
     "built/web/pxtsim.js"
 ])
 
-file('built/web/worker.js', ["built/webapp/src/app.js"], function () {
-    jake.cpR("built/webapp/src/worker.js", "built/web/")
-})
+ju.catFiles('built/web/worker.js', [
+    "built/web/typescript.js",
+    "built/web/fuse.min.js",
+    "built/web/pxtlib.js",
+    "built/web/pxtcompiler.js",
+    "built/webapp/src/worker.js"     
+], `"use strict";`, ["built/webapp/src/app.js"]);
 
 file('built/web/fonts/icons.woff2', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes/default/assets/fonts", "built/web/")

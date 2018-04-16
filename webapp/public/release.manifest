@@ -8,7 +8,6 @@ CACHE:
 /blb/marked/marked.min.js
 /blb/highlight.js/highlight.pack.js
 /blb/lzma/lzma_worker-min.js
-/blb/fuse.min.js
 /blb/jquery.js
 /blb/pxtlib.js
 /blb/pxtcompiler.js
