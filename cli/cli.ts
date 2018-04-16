@@ -3634,6 +3634,12 @@ function gdbAsync(c: commandParser.ParsedCommand) {
         .then(() => gdb.startAsync(c.arguments))
 }
 
+function buildDalDTSAsync() {
+    ensurePkgDir()
+    return mainPkg.loadAsync()
+        .then(() => build.buildDalConst(build.thisBuild, mainPkg, true))
+}
+
 function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult> {
     let compileOptions: pxtc.CompileOptions;
     let compileResult: pxtc.CompileResult;
@@ -4117,61 +4123,9 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
                     key = basename
                 }
 
-                let data = ""
-
-                if (bpp == 4) {
-                    let byteW = (img.width + 1) >> 1
-                    let outBuf = new Buffer(3 + byteW * img.height)
-                    outBuf.fill(0)
-                    outBuf[0] = 0xf4
-                    outBuf[1] = img.width
-                    outBuf[2] = img.height
-                    let outP = 3
-                    let lineP = 0
-                    for (let inP = 0; inP < img.data.length; inP += 4) {
-                        if (lineP >= img.width) {
-                            if (lineP & 1)
-                                outP++
-                            lineP = 0
-                        }
-                        let idx = closestColor(img.data, inP)
-                        if (lineP & 1) {
-                            outBuf[outP++] |= idx
-                        } else {
-                            outBuf[outP] |= (idx << 4)
-                        }
-                        lineP++
-                    }
-                    data = outBuf.toString(star.dataEncoding)
-                } else if (bpp == 1) {
-                    let byteW = (img.width + 7) >> 3
-                    let outBuf = new Buffer(3 + byteW * img.height)
-                    outBuf.fill(0)
-                    outBuf[0] = 0xf1
-                    outBuf[1] = img.width
-                    outBuf[2] = img.height
-                    let outP = 3
-                    let mask = 0x80
-                    let lineP = 0
-                    for (let inP = 0; inP < img.data.length; inP += 4) {
-                        if (lineP >= img.width) {
-                            if (mask != 0x80)
-                                outP++
-                            mask = 0x80
-                            lineP = 0
-                        }
-                        let idx = closestColor(img.data, inP)
-                        if (idx)
-                            outBuf[outP] |= mask
-                        mask >>= 1
-                        if (mask == 0) {
-                            mask = 0x80
-                            outP++
-                        }
-                        lineP++
-                    }
-                    data = outBuf.toString(star.dataEncoding)
-                }
+                let hex = pxtc.f4EncodeImg(img.width, img.height, bpp, (x, y) =>
+                    closestColor(img.data, 4 * (x + y * img.width)))
+                let data = new Buffer(hex, "hex").toString(star.dataEncoding)
 
                 let storeIcon = false
 
@@ -5198,6 +5152,12 @@ function initCommands() {
         anyArgs: true,
         advanced: true
     }, gdbAsync);
+
+    p.defineCommand({
+        name: "builddaldts",
+        help: "build dal.d.ts in current directory (might need to move)",
+        advanced: true
+    }, buildDalDTSAsync);
 
     p.defineCommand({
         name: "pokerepo",

@@ -231,7 +231,8 @@ namespace userconfig {
 
 Both of these refer to constants from the `DAL` namespace. There is typically one
 `dal.d.ts` file per target which defines the `DAL` namespace, and it is generated 
-automatically from the C++ sources.
+automatically from the C++ sources. Once all the C++ files are in place, and you
+want to force re-generation of `dal.d.ts` use `pxt builddaldts` command.
 
 For every constant `FOO` in `config` (or `userconfig`), there has to be a corresponding
 `DAL.CFG_FOO` which defines an index under which the configuration setting is stored.
