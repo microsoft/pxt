@@ -43,6 +43,8 @@ namespace pxtblockly {
         private hasSearchBar_: boolean;
         private hideRect_: boolean;
 
+        protected dropDownOpen_: boolean;
+
         constructor(text: string, options: FieldGridPickerOptions, validator?: Function) {
             super(options.data);
 
@@ -277,6 +279,7 @@ namespace pxtblockly {
          * @private
          */
         public showEditor_() {
+            this.dropDownOpen_ = true;
             Blockly.WidgetDiv.show(this, this.sourceBlock_.RTL, null);
 
             this.disposeTooltips();
