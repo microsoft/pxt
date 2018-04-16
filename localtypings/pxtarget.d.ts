@@ -127,10 +127,10 @@ declare namespace pxt {
         autoRun?: boolean;
         stopOnChange?: boolean;
         hideRestart?: boolean;
+        enableTrace?: boolean;
         hideFullscreen?: boolean;
         streams?: boolean;
         aspectRatio?: number; // width / height
-        enableTrace?: boolean;
         boardDefinition?: pxsim.BoardDefinition;
         dynamicBoardDefinition?: boolean; // if true, boardDefinition comes from board package
         parts?: boolean; // parts enabled?
