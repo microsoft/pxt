@@ -3,7 +3,14 @@
 declare namespace pxt.electron {
     export interface ElectronManifest {
         latest: string;
+        banned?: string[];
         timeStamp?: string;
+    }
+
+    export const enum UpdateStatus {
+        UpdatingCritical = "updating-critical",
+        BannedWithoutUpdate = "banned-without-update",
+        Ok = "ok"
     }
 
     export interface TelemetryEvent {
