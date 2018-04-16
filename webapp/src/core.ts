@@ -63,7 +63,7 @@ export function showLoading(id: string, msg: string) {
     $('.ui.dimmer.loading').dimmer('show');
     $('.ui.dimmer.loading').html(`
   <div class="content loadingcontent">
-    <div class="ui text large loader msg" aria-live="assertive">${lf("Please wait")}</div>
+    <div class="ui text large loader main msg" aria-live="assertive">${lf("Please wait")}</div>
   </div>
 `)
     loadingQueue.push(id);
