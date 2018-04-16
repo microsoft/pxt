@@ -3579,6 +3579,12 @@ function gdbAsync(c: commandParser.ParsedCommand) {
         .then(() => gdb.startAsync(c.arguments))
 }
 
+function buildDalDTSAsync() {
+    ensurePkgDir()
+    return mainPkg.loadAsync()
+        .then(() => build.buildDalConst(build.thisBuild, mainPkg, true))
+}
+
 function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult> {
     let compileOptions: pxtc.CompileOptions;
     let compileResult: pxtc.CompileResult;
@@ -5076,6 +5082,12 @@ function initCommands() {
         anyArgs: true,
         advanced: true
     }, gdbAsync);
+
+    p.defineCommand({
+        name: "builddaldts",
+        help: "build dal.d.ts in current directory (might need to move)",
+        advanced: true
+    }, buildDalDTSAsync);
 
     p.defineCommand({
         name: "pokerepo",
