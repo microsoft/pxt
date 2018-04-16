@@ -155,11 +155,6 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         simulator.dbgStepOut();
     }
 
-    toggleTrace() {
-        pxt.tickEvent("debugger.trace", undefined, { interactiveConsent: true });
-        this.props.parent.toggleTrace();
-    }
-
     componentDidUpdate(props: DebuggerToolbarProps, state: DebuggerToolbarState) {
         if (this.state.isDragging && !state.isDragging) {
             document.addEventListener('mousemove', this.toolbarHandleMove.bind(this));
