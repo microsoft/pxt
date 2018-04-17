@@ -4906,7 +4906,7 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
         pxt.log(`  ${pkgpgh}`)
         // clone or sync package
         const pkgdir = path.join(pkgsroot, pkgpgh);
-        return gitAsync(".", "clone", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
+        return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
             .then(() => pxtAsync(pkgdir, "install"))
             .then(() => pxtAsync(pkgdir, "build"))
             .catch(e => {
