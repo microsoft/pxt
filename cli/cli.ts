@@ -2134,7 +2134,7 @@ class Host
                 }
                 let proto = pkg.verProtocol()
                 if (proto == "file") {
-                    pxt.log(`skipping download of local pkg: ${pkg.version()}`)
+                    pxt.debug(`skipping download of local pkg: ${pkg.version()}`)
                     return Promise.resolve()
                 } else {
                     return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
@@ -4367,6 +4367,124 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
     return Promise.resolve();
 }
 
+function testGithubPackagesAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    const cloud = parsed && parsed.flags["cloud"];
+
+    pxt.log(`testing github packages`);
+    if (!fs.existsSync("targetconfig.json")) {
+        pxt.log(`targetconfig.json not found`);
+        return Promise.resolve();
+    }
+    const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
+    const packages = targetConfig.packages;
+    if (!packages) {
+        pxt.log(`packages section not found in targetconfig.json`)
+    }
+    let errors: string[] = [];
+    let warnings: string[] = [];
+    let todo: string[];
+    const repos: pxt.Map<{ fullname: string; tag: string }> = {};
+    const pkgsroot = path.join("built", "ghpkgs");
+
+    function gitAsync(dir: string, ...args: string[]) {
+        return nodeutil.spawnAsync({
+            cmd: "git",
+            args: args,
+            cwd: dir
+        })
+    }
+
+    function pxtAsync(dir: string, ...args: string[]) {
+        return nodeutil.spawnAsync({
+            cmd: "node",
+            args: [path.join(process.cwd(), "node_modules/pxt-core/pxt-cli/cli.js")].concat(args),
+            cwd: dir
+        })
+    }
+
+
+    function nextAsync(): Promise<void> {
+        const pkgpgh = todo.pop();
+        if (!pkgpgh) {
+            pxt.log(`------------------------`)
+            pxt.log(`${Object.keys(repos).length} packages, ${errors.length} errors, ${warnings.length} warnings`);
+            pxt.log(`errors (${errors.length})`)
+            errors.forEach(error => pxt.log(`    ${error}`))
+            pxt.log("")
+            pxt.log(`warnings (${warnings.length})`)
+            warnings.forEach(warnings => pxt.log(`    ${warnings}`))
+            pxt.log("")
+            return Promise.resolve();
+        }
+
+        const pkgdir = path.join(pkgsroot, pkgpgh);
+        pxt.log(`  ${pkgpgh} -> ${pkgdir}`)
+        const shimsdtsn = path.join(pkgdir, "shims.d.ts");
+        const enumsdtsn = path.join(pkgdir, "enums.d.ts");
+        let shimsdts: string;
+        let enumsdts: string;
+        // clone or sync package
+        return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
+            .then(() => pxtAsync(pkgdir, "install"))
+            .then(() => {
+                shimsdts = fs.existsSync(shimsdtsn) ? fs.readFileSync(shimsdtsn, { encoding: "utf8" }) : "";
+                enumsdts = fs.existsSync(enumsdtsn) ? fs.readFileSync(enumsdtsn, { encoding: "utf8" }) : "";
+            })
+            .then(() => pxtAsync(pkgdir, "build", cloud ? "--cloud" : ""))
+            .then(() => {
+                // did shims.d.ts or enums.d.ts regenerate?
+                if (shimsdts != (fs.existsSync(shimsdtsn) ? fs.readFileSync(shimsdtsn, { encoding: "utf8" }) : ""))
+                    warnings.push(`${pkgpgh}: shims.d.ts outdated`);
+                if (enumsdts != (fs.existsSync(enumsdtsn) ? fs.readFileSync(enumsdtsn, { encoding: "utf8" }) : ""))
+                    warnings.push(`${pkgpgh}: enums.d.ts outdated`);
+
+                // is there a readme?
+                const readme = path.join(pkgdir, "README.md");
+                if (!fs.existsSync(readme))
+                    warnings.push(`${pkgpgh}: missing README.md`);
+                else {
+                    // compie readme
+                }
+                // is there an icon.png?
+                const iconpng = path.join(pkgdir, "icon.png");
+                if (!fs.existsSync(iconpng))
+                    warnings.push(`${pkgpgh}: missing icon.png`);
+                else if (fs.statSync(iconpng).size > 100 * 1024)
+                    warnings.push(`${pkgpgh}: icon.png > 100kb`);
+            }).catch(e => {
+                errors.push(`${pkgpgh}: ${e}`);
+                pxt.log(e);
+                return Promise.resolve();
+            })
+            .then(() => nextAsync());
+    }
+
+    // 1. collect packages
+    return rimrafAsync(pkgsroot, {})
+        .then(() => nodeutil.mkdirP(pkgsroot))
+        .then(() => pxt.github.searchAsync("", packages))
+        .then(ghrepos => U.unique(ghrepos
+            .filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved
+                && (!pxt.appTarget.appTheme.githubUrl || `https://github.com/${ghrepo.fullName}`.toLowerCase() != pxt.appTarget.appTheme.githubUrl.replace(/\/$/, "").toLowerCase()))
+            .map(ghrepo => ghrepo.fullName)
+            .concat(packages.approvedRepos || []), (s: string) => s)
+            .sort()
+        )
+        .then(fullnames => Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
+            .then(tags => {
+                const tag = tags.reverse()[0] || "master";
+                pxt.log(`${fullname}#${tag}`);
+                repos[fullname] = { fullname, tag };
+            }))
+        ).then(() => {
+            todo = Object.keys(repos);
+            pxt.log(`found ${todo.length} packages`);
+            // 2. process each repo
+            return nextAsync();
+        })
+        );
+}
+
 function initCommands() {
     // Top level commands
     simpleCmd("help", "display this message or info about a command", pc => {
@@ -4657,6 +4775,15 @@ function initCommands() {
         },
         advanced: true
     }, gendocsAsync);
+
+    p.defineCommand({
+        name: "testghpkgs",
+        aliases: ["test-github-packages"],
+        help: "Downloads and compiles approved packages",
+        flags: {
+            cloud: { description: "use cloud to build native packages" }
+        }
+    }, testGithubPackagesAsync);
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);
