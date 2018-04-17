@@ -4367,7 +4367,9 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
     return Promise.resolve();
 }
 
-function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void> {
+function testGithubPackagesAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    const cloud = parsed && parsed.flags["cloud"];
+
     pxt.log(`testing github packages`);
     if (!fs.existsSync("targetconfig.json")) {
         pxt.log(`targetconfig.json not found`);
@@ -4378,7 +4380,7 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
     if (!packages) {
         pxt.log(`packages section not found in targetconfig.json`)
     }
-    let errors = 0;
+    let errors: string[] = [];
     let todo: string[];
     const repos: pxt.Map<{ fullname: string; tag: string }> = {};
     const pkgsroot = path.join("built", "ghpkgs");
@@ -4404,7 +4406,8 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
         const pkgpgh = todo.pop();
         if (!pkgpgh) {
             pxt.log(`------------------------`)
-            pxt.log(`${errors} packages with errors`);
+            pxt.log(`${errors.length} packages with errors`);
+            errors.forEach(error => pxt.log(`    ${error}`))
             return Promise.resolve();
         }
 
@@ -4413,9 +4416,9 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
         const pkgdir = path.join(pkgsroot, pkgpgh);
         return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
             .then(() => pxtAsync(pkgdir, "install"))
-            .then(() => pxtAsync(pkgdir, "build"))
+            .then(() => pxtAsync(pkgdir, "build", cloud ? "--cloud" : ""))
             .catch(e => {
-                errors++;
+                errors.push(pkgpgh);
                 pxt.log(e);
                 return Promise.resolve();
             })
@@ -4427,20 +4430,20 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
         .then(() => nodeutil.mkdirP(pkgsroot))
         .then(() => pxt.github.searchAsync("", packages))
         .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
-                            .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
+            .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
         .then(fullnames => Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
-                .then(tags => {
-                    const tag = tags.reverse()[0] || "master";
-                    pxt.log(`${fullname}#${tag}`);
-                    repos[fullname] = { fullname, tag };
-                }))
+            .then(tags => {
+                const tag = tags.reverse()[0] || "master";
+                pxt.log(`${fullname}#${tag}`);
+                repos[fullname] = { fullname, tag };
+            }))
         ).then(() => {
             todo = Object.keys(repos);
             pxt.log(`found ${todo.length} packages`);
             // 2. process each repo
             return nextAsync();
         })
-    );
+        );
 }
 
 function initCommands() {
@@ -4734,7 +4737,14 @@ function initCommands() {
         advanced: true
     }, gendocsAsync);
 
-    simpleCmd("testghpkgs", "Download and build github packages", testGithubPackagesAsync);
+    p.defineCommand({
+        name: "testghpkgs",
+        aliases: ["test-github-packages"],
+        help: "Downloads and compiles approved packages",
+        flags: {
+            cloud: { description: "use cloud to build native packages" }
+        }
+    }, testGithubPackagesAsync);
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);
