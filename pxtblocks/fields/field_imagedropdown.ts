@@ -155,7 +155,7 @@ namespace pxtblockly {
         /**
          * Callback for when the drop-down is hidden.
          */
-        protected onHide_ = function () {
+        protected onHide_() {
             Blockly.DropDownDiv.content_.removeAttribute('role');
             Blockly.DropDownDiv.content_.removeAttribute('aria-haspopup');
             Blockly.DropDownDiv.content_.removeAttribute('aria-activedescendant');
