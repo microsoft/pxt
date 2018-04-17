@@ -1211,9 +1211,9 @@ export class Editor extends srceditor.Editor {
     }
 
     private highlightDecorations: string[] = [];
-    highlightStatement(stmt: pxtc.LocationInfo) {
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage) {
         if (!stmt) this.clearHighlightedStatements();
-        if (!stmt || !this.currFile || this.currFile.name != stmt.fileName || !this.editor) 
+        if (!stmt || !this.currFile || this.currFile.name != stmt.fileName || !this.editor)
             return false;
         let position = this.editor.getModel().getPositionAt(stmt.start);
         let end = this.editor.getModel().getPositionAt(stmt.start + stmt.length);
@@ -1224,6 +1224,10 @@ export class Editor extends srceditor.Editor {
                 options: { inlineClassName: 'highlight-statement' }
             },
         ]);
+        if (brk) {
+            // center on statement
+            this.editor.revealPositionInCenter(position);
+        }
         return true;
     }
 
