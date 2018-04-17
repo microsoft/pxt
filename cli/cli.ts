@@ -4877,7 +4877,6 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
     let todo: string[];
     const repos: pxt.Map<{ fullname: string; tag: string }> = {};
     const pkgsroot = path.join("built", "ghpkgs");
-    nodeutil.mkdirP(pkgsroot);
 
     function gitAsync(dir: string, ...args: string[]) {
         return nodeutil.spawnAsync({
@@ -4907,13 +4906,7 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
         pxt.log(`  ${pkgpgh}`)
         // clone or sync package
         const pkgdir = path.join(pkgsroot, pkgpgh);
-        let p = fs.existsSync(pkgdir)
-            ? Promise.resolve()
-            : gitAsync(".", "clone", `https://github.com/${pkgpgh}`, pkgdir);            
-        return p
-            .then(() => gitAsync(pkgdir, "checkout", repos[pkgpgh].tag))
-            .then(() => gitAsync(pkgdir, "pull"))
-            .then(() => pxtAsync(pkgdir, "clean"))
+        return gitAsync(".", "clone", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
             .then(() => pxtAsync(pkgdir, "install"))
             .then(() => pxtAsync(pkgdir, "build"))
             .catch(e => {
@@ -4925,13 +4918,15 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
     }
 
     // 1. collect packages
-    return pxt.github.searchAsync("", packages)
+    return rimrafAsync(pkgsroot, {})
+        .then(() => nodeutil.mkdirP(pkgsroot))
+        .then(() => pxt.github.searchAsync("", packages))
         .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
                             .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
         .then(fullnames => Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
                 .then(tags => {
-                    const tag = tags[0] || "master";
-                    pxt.log(`${fullname}#${tags[0]}`);
+                    const tag = tags.reverse()[0] || "master";
+                    pxt.log(`${fullname}#${tag}`);
                     repos[fullname] = { fullname, tag };
                 }))
         ).then(() => {
