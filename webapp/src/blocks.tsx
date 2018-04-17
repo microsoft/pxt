@@ -651,7 +651,10 @@ export class Editor extends srceditor.Editor {
             let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
                 this.editor.highlightBlock(bid);
-                if (brk) this.updateDebuggerVariables(brk.globals);
+                if (brk) {
+                    this.editor.centerOnBlock(bid);
+                    this.updateDebuggerVariables(brk.globals);
+                }
                 return true;
             }
         } else {
