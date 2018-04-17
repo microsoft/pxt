@@ -4862,6 +4862,81 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
     return Promise.resolve();
 }
 
+function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void> {
+    pxt.log(`testing github packages`);
+    if (!fs.existsSync("targetconfig.json")) {
+        pxt.log(`targetconfig.json not found`);
+        return Promise.resolve();
+    }
+    const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
+    const packages = targetConfig.packages;
+    if (!packages) {
+        pxt.log(`packages section not found in targetconfig.json`)
+    }
+    let errors = 0;
+    let todo: string[];
+    const repos: pxt.Map<string> = {};
+    const pkgsroot = path.join("built", "ghpkgs");
+    nodeutil.mkdirP(pkgsroot);
+
+    function gitAsync(dir: string, ...args: string[]) {
+        return nodeutil.spawnAsync({
+            cmd: "git",
+            args: args,
+            cwd: dir
+        })
+    }
+
+    function pxtAsync(dir: string, ...args: string[]) {
+        return nodeutil.spawnAsync({
+            cmd: "node",
+            args: [path.join(process.cwd(), "node_modules/pxt-core/built/cli.js")].concat(args),
+            cwd: dir
+        })
+    }
+
+
+    function nextAsync(): Promise<void> {
+        const pkgpgh = todo.pop();
+        if (!pkgpgh) {
+            pxt.log(`${errors} packages with errors`);
+            return Promise.resolve();
+        }
+
+        pxt.log(`  ${pkgpgh}`)
+        // clone or sync package
+        const pkgdir = path.join(pkgsroot, pkgpgh);
+        let p = fs.existsSync(pkgdir)
+            ? gitAsync(pkgdir, "pull")
+            : gitAsync(".", "clone", `https://github.com/${pkgpgh}`, pkgdir);
+        return p    
+            .then(() => pxtAsync(pkgdir, "install"))
+            .then(() => pxtAsync(pkgdir, "build"))
+            .catch(e => {
+                errors++;
+                pxt.log(e);
+                return Promise.resolve();
+            })
+            .then(() => nextAsync());
+    }
+
+    // 1. collect packages
+    if (packages.approvedRepos)
+        packages.approvedRepos.forEach(rp => repos[rp] = rp);
+    return pxt.github.searchAsync("", packages).then(ghrepos => {
+        ghrepos.forEach(ghrepo => {
+            pxt.log(`${ghrepo.fullName}: ${ghrepo.status}`);
+            if (ghrepo.status == pxt.github.GitRepoStatus.Approved)
+                repos[ghrepo.fullName] = ghrepo.fullName;
+        })
+        todo = Object.keys(repos);
+        pxt.log(`found ${todo.length} packages`);
+
+        // 2. process each repo
+        return nextAsync();
+    })
+}
+
 function initCommands() {
     // Top level commands
     simpleCmd("help", "display this message or info about a command", pc => {
@@ -5200,6 +5275,8 @@ function initCommands() {
         },
         advanced: true
     }, gendocsAsync);
+
+    simpleCmd("testghpkgs", "Download and build github packages", testGithubPackagesAsync);
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);
