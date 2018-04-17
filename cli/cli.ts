@@ -4875,7 +4875,7 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
     }
     let errors = 0;
     let todo: string[];
-    const repos: pxt.Map<string> = {};
+    const repos: pxt.Map<{ fullname: string; tag: string }> = {};
     const pkgsroot = path.join("built", "ghpkgs");
     nodeutil.mkdirP(pkgsroot);
 
@@ -4899,6 +4899,7 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
     function nextAsync(): Promise<void> {
         const pkgpgh = todo.pop();
         if (!pkgpgh) {
+            pxt.log(`------------------------`)
             pxt.log(`${errors} packages with errors`);
             return Promise.resolve();
         }
@@ -4907,9 +4908,12 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
         // clone or sync package
         const pkgdir = path.join(pkgsroot, pkgpgh);
         let p = fs.existsSync(pkgdir)
-            ? gitAsync(pkgdir, "pull")
-            : gitAsync(".", "clone", `https://github.com/${pkgpgh}`, pkgdir);
-        return p    
+            ? Promise.resolve()
+            : gitAsync(".", "clone", `https://github.com/${pkgpgh}`, pkgdir);            
+        return p
+            .then(() => gitAsync(pkgdir, "checkout", repos[pkgpgh].tag))
+            .then(() => gitAsync(pkgdir, "pull"))
+            .then(() => pxtAsync(pkgdir, "clean"))
             .then(() => pxtAsync(pkgdir, "install"))
             .then(() => pxtAsync(pkgdir, "build"))
             .catch(e => {
@@ -4921,20 +4925,22 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
     }
 
     // 1. collect packages
-    if (packages.approvedRepos)
-        packages.approvedRepos.forEach(rp => repos[rp] = rp);
-    return pxt.github.searchAsync("", packages).then(ghrepos => {
-        ghrepos.forEach(ghrepo => {
-            pxt.log(`${ghrepo.fullName}: ${ghrepo.status}`);
-            if (ghrepo.status == pxt.github.GitRepoStatus.Approved)
-                repos[ghrepo.fullName] = ghrepo.fullName;
+    return pxt.github.searchAsync("", packages)
+        .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
+                            .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
+        .then(fullnames => Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
+                .then(tags => {
+                    const tag = tags[0] || "master";
+                    pxt.log(`${fullname}#${tags[0]}`);
+                    repos[fullname] = { fullname, tag };
+                }))
+        ).then(() => {
+            todo = Object.keys(repos);
+            pxt.log(`found ${todo.length} packages`);
+            // 2. process each repo
+            return nextAsync();
         })
-        todo = Object.keys(repos);
-        pxt.log(`found ${todo.length} packages`);
-
-        // 2. process each repo
-        return nextAsync();
-    })
+    );
 }
 
 function initCommands() {
