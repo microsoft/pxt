@@ -4890,7 +4890,7 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
     function pxtAsync(dir: string, ...args: string[]) {
         return nodeutil.spawnAsync({
             cmd: "node",
-            args: [path.join(process.cwd(), "node_modules/pxt-core/built/cli.js")].concat(args),
+            args: [path.join(process.cwd(), "node_modules/pxt-core/pxt-cli/cli.js")].concat(args),
             cwd: dir
         })
     }
