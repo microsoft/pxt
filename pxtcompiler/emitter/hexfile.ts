@@ -856,10 +856,9 @@ __flash_checksums:
         for (let i = 0; i < w; ++i) {
             for (let j = 0; j < h; ++j)
                 pushBits(getPix(i, j))
-            if (bpp == 1) {
-                while (shift != 0)
-                    pushBits(0)
-            } else {
+            while (shift != 0)
+                pushBits(0)
+            if (bpp > 1) {
                 while (ptr & 3)
                     pushBits(0)
             }
