@@ -9,7 +9,8 @@
         "fixedInstance.ts",
         "constantShim.ts",
         "cp.ts",
-        "templateStrings.ts"
+        "templateStrings.ts",
+        "classHandlerParameter.ts"
     ],
     "public": true,
     "dependencies": {},
