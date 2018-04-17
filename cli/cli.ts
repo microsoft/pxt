@@ -4417,8 +4417,22 @@ function testGithubPackagesAsync(parsed?: commandParser.ParsedCommand): Promise<
         return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
             .then(() => pxtAsync(pkgdir, "install"))
             .then(() => pxtAsync(pkgdir, "build", cloud ? "--cloud" : ""))
-            .catch(e => {
-                errors.push(pkgpgh);
+            .then(() => {
+                // is there a readme?
+                const readme = path.join(pkgdir, "README.md");
+                if (!fs.existsSync(readme))
+                    errors.push(`${pkgpgh}: missing README.md`);
+                else {
+                    // compie readme
+                }
+                // is there an icon.png?
+                const iconpng = path.join(pkgdir, "icon.png");
+                if (!fs.existsSync(iconpng))
+                    errors.push(`${pkgpgh}: missing icon.png`);
+                else if (fs.statSync(iconpng).size > 100 * 1024)
+                    errors.push(`${pkgpgh}: icon.png > 100kb`);
+            }).catch(e => {
+                errors.push(`${pkgpgh}: ${e}`);
                 pxt.log(e);
                 return Promise.resolve();
             })
@@ -4430,7 +4444,7 @@ function testGithubPackagesAsync(parsed?: commandParser.ParsedCommand): Promise<
         .then(() => nodeutil.mkdirP(pkgsroot))
         .then(() => pxt.github.searchAsync("", packages))
         .then(ghrepos => U.unique(ghrepos
-            .filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved 
+            .filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved
                 && (!pxt.appTarget.appTheme.githubUrl || `https://github.com/${ghrepo.fullName}`.toLowerCase() != pxt.appTarget.appTheme.githubUrl.replace(/\/$/, "").toLowerCase()))
             .map(ghrepo => ghrepo.fullName)
             .concat(packages.approvedRepos || []), (s: string) => s)
