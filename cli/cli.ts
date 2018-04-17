@@ -4410,18 +4410,34 @@ function testGithubPackagesAsync(parsed?: commandParser.ParsedCommand): Promise<
             pxt.log(`${Object.keys(repos).length} packages, ${errors.length} errors, ${warnings.length} warnings`);
             pxt.log(`errors (${errors.length})`)
             errors.forEach(error => pxt.log(`    ${error}`))
+            pxt.log("")
             pxt.log(`warnings (${warnings.length})`)
-            errors.forEach(error => pxt.log(`    ${error}`))
+            warnings.forEach(warnings => pxt.log(`    ${warnings}`))
+            pxt.log("")
             return Promise.resolve();
         }
 
-        pxt.log(`  ${pkgpgh}`)
-        // clone or sync package
         const pkgdir = path.join(pkgsroot, pkgpgh);
+        pxt.log(`  ${pkgpgh} -> ${pkgdir}`)
+        const shimsdtsn = path.join(pkgdir, "shims.d.ts");
+        const enumsdtsn = path.join(pkgdir, "enums.d.ts");
+        let shimsdts: string;
+        let enumsdts: string;
+        // clone or sync package
         return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
             .then(() => pxtAsync(pkgdir, "install"))
+            .then(() => {
+                shimsdts = fs.existsSync(shimsdtsn) ? fs.readFileSync(shimsdtsn, { encoding: "utf8" }) : "";
+                enumsdts = fs.existsSync(enumsdtsn) ? fs.readFileSync(enumsdtsn, { encoding: "utf8" }) : "";
+            })
             .then(() => pxtAsync(pkgdir, "build", cloud ? "--cloud" : ""))
             .then(() => {
+                // did shims.d.ts or enums.d.ts regenerate?
+                if (shimsdts != (fs.existsSync(shimsdtsn) ? fs.readFileSync(shimsdtsn, { encoding: "utf8" }) : ""))
+                    warnings.push(`${pkgpgh}: shims.d.ts outdated`);
+                if (enumsdts != (fs.existsSync(enumsdtsn) ? fs.readFileSync(enumsdtsn, { encoding: "utf8" }) : ""))
+                    warnings.push(`${pkgpgh}: enums.d.ts outdated`);
+
                 // is there a readme?
                 const readme = path.join(pkgdir, "README.md");
                 if (!fs.existsSync(readme))
