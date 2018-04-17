@@ -4429,8 +4429,13 @@ function testGithubPackagesAsync(parsed?: commandParser.ParsedCommand): Promise<
     return rimrafAsync(pkgsroot, {})
         .then(() => nodeutil.mkdirP(pkgsroot))
         .then(() => pxt.github.searchAsync("", packages))
-        .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
-            .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
+        .then(ghrepos => U.unique(ghrepos
+            .filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved 
+                && (!pxt.appTarget.appTheme.githubUrl || `https://github.com/${ghrepo.fullName}`.toLowerCase() != pxt.appTarget.appTheme.githubUrl.replace(/\/$/, "").toLowerCase()))
+            .map(ghrepo => ghrepo.fullName)
+            .concat(packages.approvedRepos || []), (s: string) => s)
+            .sort()
+        )
         .then(fullnames => Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
             .then(tags => {
                 const tag = tags.reverse()[0] || "master";
