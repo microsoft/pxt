@@ -1366,7 +1366,7 @@ ${output}</xml>`;
                                 }
                                 else {
                                     const sym = blocksInfo.blocksById[info.attrs.blockId];
-                                    const paramDesc = sym.parameters[i];
+                                    const paramDesc = sym.parameters[comp.thisParameter ? i - 1 : i];
                                     arrow.parameters.forEach((parameter, i) => {
                                         const arg = paramDesc.handlerParameters[i];
                                         addField(getField("HANDLER_" + arg.name, (parameter.name as ts.Identifier).text));
