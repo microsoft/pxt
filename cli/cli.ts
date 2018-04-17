@@ -4381,6 +4381,7 @@ function testGithubPackagesAsync(parsed?: commandParser.ParsedCommand): Promise<
         pxt.log(`packages section not found in targetconfig.json`)
     }
     let errors: string[] = [];
+    let warnings: string[] = [];
     let todo: string[];
     const repos: pxt.Map<{ fullname: string; tag: string }> = {};
     const pkgsroot = path.join("built", "ghpkgs");
@@ -4406,7 +4407,10 @@ function testGithubPackagesAsync(parsed?: commandParser.ParsedCommand): Promise<
         const pkgpgh = todo.pop();
         if (!pkgpgh) {
             pxt.log(`------------------------`)
-            pxt.log(`${errors.length} packages with errors`);
+            pxt.log(`${Object.keys(repos).length} packages, ${errors.length} errors, ${warnings.length} warnings`);
+            pxt.log(`errors (${errors.length})`)
+            errors.forEach(error => pxt.log(`    ${error}`))
+            pxt.log(`warnings (${warnings.length})`)
             errors.forEach(error => pxt.log(`    ${error}`))
             return Promise.resolve();
         }
@@ -4421,16 +4425,16 @@ function testGithubPackagesAsync(parsed?: commandParser.ParsedCommand): Promise<
                 // is there a readme?
                 const readme = path.join(pkgdir, "README.md");
                 if (!fs.existsSync(readme))
-                    errors.push(`${pkgpgh}: missing README.md`);
+                    warnings.push(`${pkgpgh}: missing README.md`);
                 else {
                     // compie readme
                 }
                 // is there an icon.png?
                 const iconpng = path.join(pkgdir, "icon.png");
                 if (!fs.existsSync(iconpng))
-                    errors.push(`${pkgpgh}: missing icon.png`);
+                    warnings.push(`${pkgpgh}: missing icon.png`);
                 else if (fs.statSync(iconpng).size > 100 * 1024)
-                    errors.push(`${pkgpgh}: icon.png > 100kb`);
+                    warnings.push(`${pkgpgh}: icon.png > 100kb`);
             }).catch(e => {
                 errors.push(`${pkgpgh}: ${e}`);
                 pxt.log(e);
