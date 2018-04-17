@@ -1,5 +1,19 @@
 
 namespace ts.pxtc.decompiler {
+    export enum DecompileParamKeys {
+        // Field editor should decompile literal expressions in addition to
+        // call expressions
+        DecompileLiterals = "decompileLiterals",
+
+        // Tagged template name expected by a field editor for a parameter
+        // (i.e. for tagged templates with blockIdentity set)
+        TaggedTemplate = "taggedTemplate",
+
+        // Allow for arguments for which fixed instances exist to be decompiled
+        // even if the expression is not a direct reference to a fixed instance
+        DecompileIndirectFixedInstances = "decompileIndirectFixedInstances"
+    }
+
     export const FILE_TOO_LARGE_CODE = 9266;
     const SK = ts.SyntaxKind;
 
@@ -1429,7 +1443,7 @@ ${output}</xml>`;
                                 }
                             }
                         }
-                        else if (e.kind === SK.TaggedTemplateExpression && param.fieldOptions && param.fieldOptions["taggedTemplate"]) {
+                        else if (e.kind === SK.TaggedTemplateExpression && param.fieldOptions && param.fieldOptions[DecompileParamKeys.TaggedTemplate]) {
                             addField(getField(vName, Util.htmlEscape(e.getText())));
                             return;
                         }
@@ -1461,7 +1475,7 @@ ${output}</xml>`;
         }
 
         function decompileLiterals(param: pxt.blocks.BlockParameter) {
-            return param && param.fieldOptions && param.fieldOptions["decompileLiterals"]
+            return param && param.fieldOptions && param.fieldOptions[DecompileParamKeys.DecompileLiterals];
         }
 
         // function openCallExpressionBlockWithRestParameter(call: ts.CallExpression, info: pxtc.CallInfo) {
@@ -2088,13 +2102,13 @@ ${output}</xml>`;
                     return Util.lf("Enum arguments may only be literal property access expressions");
                 }
                 else if (isLiteralNode(e) && (param.fieldEditor || param.shadowBlockId)) {
-                    let dl: boolean = !!(param.fieldOptions && param.fieldOptions["decompileLiterals"]);
+                    let dl: boolean = !!(param.fieldOptions && param.fieldOptions[DecompileParamKeys.DecompileLiterals]);
                     if (!dl && param.shadowBlockId) {
                         const shadowInfo = env.blocks.blocksById[param.shadowBlockId];
                         if (shadowInfo && shadowInfo.parameters && shadowInfo.parameters.length) {
                             const name = shadowInfo.parameters[0].name;
                             if (shadowInfo.attributes.paramFieldEditorOptions && shadowInfo.attributes.paramFieldEditorOptions[name]) {
-                                dl = !!(shadowInfo.attributes.paramFieldEditorOptions[name]["decompileLiterals"]);
+                                dl = !!(shadowInfo.attributes.paramFieldEditorOptions[name][DecompileParamKeys.DecompileLiterals]);
                             }
                             else {
                                 dl = true;
@@ -2109,7 +2123,7 @@ ${output}</xml>`;
                     }
                 }
                 else if (e.kind === SK.TaggedTemplateExpression && param.fieldEditor) {
-                    let tagName = param.fieldOptions && param.fieldOptions["taggedTemplate"];
+                    let tagName = param.fieldOptions && param.fieldOptions[DecompileParamKeys.TaggedTemplate];
 
                     if (!tagName) {
                         return Util.lf("Tagged templates only supported in custom fields with param.fieldOptions.taggedTemplate set");
@@ -2153,6 +2167,19 @@ ${output}</xml>`;
                 else if (env.blocks.apis.byQName[paramInfo.type]) {
                     const typeInfo = env.blocks.apis.byQName[paramInfo.type];
                     if (typeInfo.attributes.fixedInstances) {
+                        if (decompileFixedInst(param)) {
+                            return undefined;
+                        }
+                        else if (param.shadowBlockId) {
+                            const shadowSym = env.blocks.blocksById[param.shadowBlockId];
+                            if (shadowSym) {
+                                const shadowInfo = pxt.blocks.compileInfo(shadowSym);
+                                if (shadowInfo.parameters && decompileFixedInst(shadowInfo.parameters[0])) {
+                                    return undefined;
+                                }
+                            }
+                        }
+
                         const callInfo: pxtc.CallInfo = (e as any).callInfo;
 
                         if (callInfo && callInfo.attrs.fixedInstance) {
@@ -2540,6 +2567,10 @@ ${output}</xml>`;
             default:
                 return false;
         }
+    }
+
+    function decompileFixedInst(param: pxt.blocks.BlockParameter) {
+        return param && param.fieldOptions && param.fieldOptions[DecompileParamKeys.DecompileIndirectFixedInstances];
     }
 
     function isSupportedMathFunction(op: string) {

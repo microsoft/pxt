@@ -85,15 +85,18 @@ function decompileTestAsync(filename: string) {
             baselineExists = false
         }
 
-        if (!baselineExists) {
-            return reject("Baseline does not exist for " + basename);
-        }
-
         return decompileAsyncWorker(filename, testBlocksDir)
             .then(decompiled => {
+                const outFile = path.join(replaceFileExtension(filename, ".local.blocks"));
+
+                if (!baselineExists) {
+                    fs.writeFileSync(outFile, decompiled)
+                    fail(`no baseline found for ${basename}, output written to ${outFile}`);
+                    return;
+                }
+
                 const baseline = fs.readFileSync(baselineFile, "utf8")
                 if (!compareBaselines(decompiled, baseline)) {
-                    const outFile = path.join(replaceFileExtension(filename, ".local.blocks"))
                     fs.writeFileSync(outFile, decompiled)
                     fail(`${basename} did not match baseline, output written to ${outFile}`);
                 }
