@@ -79,18 +79,36 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         onDebuggerBreakpoint: function (brk) {
             updateDebuggerButtons(brk);
-            if (brk.exceptionMessage) {
-                core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
-            }
+            // walk stack until breakpoint is found
+            // and can be highlighted
+            let highlighted = false;
             if (config) {
-                let brkInfo = lastCompileResult.breakpoints[brk.breakpointId];
-                // is there a breakpoint to stop?
-                if (!config.highlightStatement(brkInfo, brk) && !brk.exceptionMessage) {
-                    // keep going
-                    driver.resume(pxsim.SimulatorDebuggerCommand.StepInto);
-                    return;
+                let frameid = 0;
+                let brkid = brk.breakpointId;
+                while (!highlighted) {
+                    // try highlight current statement
+                    if (brkid) {
+                        const brkInfo = lastCompileResult.breakpoints[brkid];
+                        highlighted = config.highlightStatement(brkInfo, brk);
+                    }
+                    // try next frame
+                    if (!highlighted) {
+                        frameid++;
+                        const frame = brk.stackframes ? brk.stackframes[frameid] : undefined;
+                        // no more frames, done
+                        if (!frame) break;
+                        brkid = frame.breakpointId;
+                    }
                 }
             }
+            // no exception and no highlighting, keep going
+            if (!brk.exceptionMessage && config && !highlighted) {
+                // keep going until breakpoint is hit
+                driver.resume(pxsim.SimulatorDebuggerCommand.StepInto);
+            }
+            // we had an expected but could not find a block
+            if (!highlighted && brk.exceptionMessage)
+                core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
             postSimEditorEvent("stopped", brk.exceptionMessage);
         },
         onTraceMessage: function (msg) {
@@ -155,7 +173,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                         core.confirmAsync(modalOpts)
                             .then((selection) => {
                                 if (hasTrustedLink && selection == 1) {
-                                    window.open(msg.linkButtonHref,'_blank');
+                                    window.open(msg.linkButtonHref, '_blank');
                                 }
                             })
                             .done();
