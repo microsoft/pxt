@@ -52,7 +52,15 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             case "object":
                 if (v == null) sv = "null";
                 else if (Array.isArray(v)) return `[${v.map(vi => this.renderValue(vi)).join(',')}]`;
-                else if (v.id && v.value) return DebuggerVariables.renderValue(v.value);
+                else if (v.id && v.value) {
+                    try {
+                        const vobj = JSON.parse(v.value);
+                        return DebuggerVariables.renderValue(vobj);
+                    }
+                    catch(e) {
+                        return "(object)";
+                    }
+                }
                 else if (v.id !== undefined) sv = "(object)"
                 else if (v.text) sv = v.text;
                 else sv = "(unknown)"

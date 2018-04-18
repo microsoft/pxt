@@ -96,11 +96,17 @@ namespace pxsim {
                     return null;
                 case "object":
                     if (!v) return null;
-                    if (v instanceof RefObject)
+                    if (v instanceof RefObject) {
+                        let value: any = undefined;
+                        try {
+                            value = JSON.stringify(RefObject.toAny(v));
+                        }
+                        catch (e) { }
                         return {
                             id: (v as RefObject).id,
-                            value: RefObject.toAny(v)
+                            value
                         }
+                    }
                     return { text: "(object)" }
                 default:
                     throw new Error();
