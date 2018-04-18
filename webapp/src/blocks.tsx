@@ -647,7 +647,7 @@ export class Editor extends srceditor.Editor {
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return false;
-        this.updateDebuggerVariables(brk ? brk.globals : undefined);        
+        this.updateDebuggerVariables(brk ? brk.globals : undefined);
         if (stmt) {
             let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
@@ -656,7 +656,18 @@ export class Editor extends srceditor.Editor {
                 b.setWarningText(brk ? brk.exceptionMessage : undefined);
                 // TODO: make warning mode look good
                 // b.setHighlightWarning(brk && !!brk.exceptionMessage);
-                this.editor.centerOnBlock(bid);
+                const p = b.getRelativeToSurfaceXY();
+                const c = b.getHeightWidth();
+                const s = this.editor.scale;
+                const m = this.editor.getMetrics();
+                // don't center if block is still on the screen
+                const marginx = 4;
+                const marginy = 4;
+                if (p.x * s < marginx
+                    || (p.x + c.width) * s > m.viewWidth - marginx
+                    || p.y * s < marginy
+                    || (p.y + c.height) * s > m.viewHeight - marginy)
+                    this.editor.centerOnBlock(bid);
                 return true;
             }
         } else {
@@ -667,14 +678,14 @@ export class Editor extends srceditor.Editor {
     }
 
     clearDebuggerVariables() {
-        if (this.debugVariables) this.debugVariables.clear();    
+        if (this.debugVariables) this.debugVariables.clear();
     }
 
     updateDebuggerVariables(globals: pxsim.Variables) {
         if (!this.parent.state.debugging) return;
         if (!globals) {
             // freeze the ui
-            if(this.debugVariables) this.debugVariables.update(true);
+            if (this.debugVariables) this.debugVariables.update(true);
             return;
         }
         const vars = this.editor.getAllVariables().map((variable: any) => variable.name as string);
