@@ -285,10 +285,9 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
     const branch = pxt.appTarget.appTheme.crowdinBranch;
     return passwordGetAsync(CROWDIN_KEY)
         .then(key => {
-            if (!key)
-                process.env[pxt.crowdin.KEY_VARIABLE] as string;
+            key = key || process.env[pxt.crowdin.KEY_VARIABLE] as string;
             if (!key) {
-                console.log(`crowdin operation skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+                pxt.log(`crowdin operation skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
                 return Promise.resolve();
             }
 
