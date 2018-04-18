@@ -1573,7 +1573,7 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
         Object.keys(logos)
             .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
             .forEach(k => {
-                logos[k] = path.join('./docs', logos[k]);
+                logos[k] = path.join('./docs', logos[k]).replace("\\", "/");
             })
     } else if (!localDir) {
         Object.keys(logos)
