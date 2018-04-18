@@ -1,0 +1,14 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="shadow_fixed_template">
+<value name="img">
+<shadow type="fixshim">
+<field name="f">1234</field>
+</shadow>
+</value>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;templateStrings.ts&#34; &#47;&#62;</comment>
+</block>
+</statement>
+</block>
+</xml>
