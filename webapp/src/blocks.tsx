@@ -683,7 +683,7 @@ export class Editor extends srceditor.Editor {
         for (const k in vars) {
             const variable = vars[k];
             const value = getValueOfVariable(variable);
-            if (this.debugVariables && value != undefined) this.debugVariables.set(variable, value);
+            if (this.debugVariables) this.debugVariables.set(variable, value);
         }
 
         if (this.debugVariables) this.debugVariables.update();

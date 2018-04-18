@@ -48,6 +48,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             let sv = '';
             let type = typeof (v);
             switch (type) {
+                case "undefined": sv = "undefined"; break;
                 case "number": sv = v + ""; break;
                 case "boolean": sv = v + ""; break;
                 case "string": sv = JSON.stringify(v); break;
