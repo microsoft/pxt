@@ -1999,7 +1999,7 @@ namespace pxt.blocks {
                     controlsSimpleForId,
                     controlsSimpleForDef.name,
                     function () {
-                        return U.rlf(<string>controlsSimpleForDef.tooltip, thisBlock.getFieldValue('VAR'));
+                        return U.rlf(<string>controlsSimpleForDef.tooltip, thisBlock.getField('VAR').getText());
                     },
                     controlsSimpleForDef.url,
                     String(pxt.toolbox.getNamespaceColor('loops'))
@@ -2011,7 +2011,7 @@ namespace pxt.blocks {
              * @this Blockly.Block
              */
             getVars: function (): any[] {
-                return [this.getFieldValue('VAR')];
+                return [this.getField('VAR').getText()];
             },
             /**
              * Notification that a variable is renaming.
@@ -2021,8 +2021,10 @@ namespace pxt.blocks {
              * @this Blockly.Block
              */
             renameVar: function (oldName: string, newName: string) {
-                if (Blockly.Names.equals(oldName, this.getFieldValue('VAR'))) {
-                    this.setFieldValue(newName, 'VAR');
+                const varField = this.getField('VAR');
+                if (Blockly.Names.equals(oldName, varField.getText())) {
+
+                    varField.setText(newName);
                 }
             },
             /**
@@ -2033,7 +2035,7 @@ namespace pxt.blocks {
             customContextMenu: function (options: any[]) {
                 if (!this.isCollapsed()) {
                     let option: any = { enabled: true };
-                    let name = this.getFieldValue('VAR');
+                    let name = this.getField('VAR').getText();
                     option.text = lf("Create 'get {0}'", name);
                     let xmlField = goog.dom.createDom('field', null, name);
                     xmlField.setAttribute('name', 'VAR');
@@ -2550,7 +2552,7 @@ namespace pxt.blocks {
                     controlsForOfId,
                     controlsForOfDef.name,
                     function () {
-                        return U.rlf(<string>controlsForOfDef.tooltip, thisBlock.getFieldValue('VAR'));
+                        return U.rlf(<string>controlsForOfDef.tooltip, thisBlock.getField('VAR').getText());
                     },
                     controlsForOfDef.url,
                     String(pxt.toolbox.getNamespaceColor('loops'))
@@ -3506,6 +3508,32 @@ namespace pxt.blocks {
         }
 
         return str;
+    }
+
+    /**
+     * Blockly variable fields can't be set directly; you either have to use the
+     * variable ID or set the value of the model and not the field
+     */
+    export function setVarFieldValue(block: Blockly.Block, fieldName: string, newName: string) {
+        const varField = block.getField(fieldName);
+
+        // Check for an existing model with this name; otherwise we'll create
+        // a second variable with the same name and it will show up twice in the UI
+        const vars = block.workspace.getAllVariables();
+        let foundIt = false;
+        if (vars && vars.length) {
+            for (let v = 0; v < vars.length; v++) {
+                const model = vars[v];
+                if (model.name === newName) {
+                    varField.setValue(model.getId());
+                    foundIt = true;
+                }
+            }
+        }
+        if (!foundIt) {
+            (varField as any).initModel();
+            (varField as any).getVariable().name = newName;
+        }
     }
 
     function shouldUseBlockInSearch(blockId: string, namespaceId: string, filters: BlockFilters): boolean {
