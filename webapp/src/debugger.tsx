@@ -8,6 +8,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 interface DebuggerVariablesState {
     variables?: pxt.Map<Variable>;
+    frozen?: boolean;
 }
 
 interface Variable {
@@ -76,6 +77,12 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         return varstr;
     }
 
+    freeze() {
+        const variables = this.state.variables;
+        Object.keys(variables).forEach(v => delete variables[v].prevValue);
+        this.setState({ variables, frozen: true })
+    }
+
     update() {
         const variables = this.state.variables;
         Object.keys(this.nextVariables).forEach(k => {
@@ -87,15 +94,15 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                     variables[k].value : undefined
             }
         })
-        this.setState({ variables: variables });
+        this.setState({ variables: variables, frozen: false });
         this.nextVariables = {};
     }
 
     renderCore() {
-        const { variables } = this.state;
+        const { variables, frozen } = this.state;
         const varcolor = pxt.toolbox.getNamespaceColor('variables');
         return Object.keys(variables).length == 0 ? <div /> :
-            <div className="ui segment debugvariables">
+            <div className={`ui segment debugvariables ${frozen ? "frozen" : ""}`}>
                 <div className="ui middle aligned list">
                     {Object.keys(variables).map(variable => {
                         const v = variables[variable];
