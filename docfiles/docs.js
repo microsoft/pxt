@@ -199,7 +199,7 @@ function setupBlocklyAsync() {
                 })
         })
     // backward compatibility
-    } else if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditors) {
+    } else if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
         let opts = {};
         promise = promise.then(function () {
             return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editors.js")
