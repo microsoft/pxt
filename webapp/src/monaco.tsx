@@ -1210,10 +1210,6 @@ export class Editor extends srceditor.Editor {
 
     }
 
-    breakpointMessage(brk: pxsim.DebuggerBreakpointMessage) { 
-        
-    }
-    
     private highlightDecorations: string[] = [];
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage) {
         if (!stmt) this.clearHighlightedStatements();

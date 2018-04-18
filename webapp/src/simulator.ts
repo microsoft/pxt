@@ -6,7 +6,7 @@ import U = pxt.U
 
 interface SimulatorConfig {
     // return true if a visible breakpoint was found
-    breakpointMessage(brk: pxsim.DebuggerBreakpointMessage): void;
+    orphanException(brk: pxsim.DebuggerBreakpointMessage): void;
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean;
     restartSimulator(): void;
     onStateChanged(state: pxsim.SimulatorState): void;
@@ -83,8 +83,6 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             // and can be highlighted
             let highlighted = false;
             if (config) {
-                config.breakpointMessage(brk);
-
                 let frameid = 0;
                 let brkid = brk.breakpointId;
                 while (!highlighted) {
@@ -109,8 +107,9 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 driver.resume(pxsim.SimulatorDebuggerCommand.StepInto);
                 return;
             }
-            // we had an expected but could not find a block
+            // we had an expected but could not find a block            
             if (!highlighted && brk.exceptionMessage) {                
+                if (config) config.orphanException(brk);
                 core.errorNotification(lf("Oh snap, there is a bug!"));
             }
             postSimEditorEvent("stopped", brk.exceptionMessage);

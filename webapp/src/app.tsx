@@ -431,8 +431,8 @@ export class ProjectView
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
         simulator.init($("#boardview")[0], {
-            breakpointMessage: brk => {
-                if (this.editor) this.editor.breakpointMessage(brk);
+            orphanException: brk => {
+                // do something!
             },
             highlightStatement: (stmt, brk) => {
                 if (this.editor) return this.editor.highlightStatement(stmt, brk);
