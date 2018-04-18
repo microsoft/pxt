@@ -4222,7 +4222,7 @@ export function gendocsAsync(parsed: commandParser.ParsedCommand) {
 }
 
 function internalGenDocsAsync(docs: boolean, locs: boolean, fileFilter?: string, createOnly?: boolean) {
-    const build = () => buildCoreAsync({
+    const buildAsync = () => buildCoreAsync({
         mode: BuildOption.GenDocs,
         docs,
         locs,
@@ -4234,9 +4234,10 @@ function internalGenDocsAsync(docs: boolean, locs: boolean, fileFilter?: string,
     if (fs.existsSync("pxtarget.json") && !!readJson("pxtarget.json").appTheme)
         return forEachBundledPkgAsync((pkg, dirname) => {
             pxt.debug(`building docs in ${dirname}`);
-            return build();
+            return buildAsync();
         });
-    else return build();
+    else // from a project build 
+        return buildAsync();
 }
 
 export function deployAsync(parsed?: commandParser.ParsedCommand) {
