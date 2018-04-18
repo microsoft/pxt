@@ -644,6 +644,10 @@ export class Editor extends srceditor.Editor {
         })
     }
 
+    breakpointMessage(brk?: pxsim.DebuggerBreakpointMessage) { 
+
+    }
+    
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return false;
