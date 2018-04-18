@@ -178,6 +178,9 @@ namespace pxsim {
         export function stop() {
             if (_vca) _vca.gain.value = 0;
             _frequency = 0;
+            if (audio) {
+                audio.pause();
+            }
         }
 
         export function frequency(): number {
@@ -225,6 +228,7 @@ namespace pxsim {
             return res;
         }
 
+        let audio: HTMLAudioElement;
         export function playBufferAsync(buf: RefBuffer) {
             if (!buf) return Promise.resolve();
 
@@ -234,7 +238,7 @@ namespace pxsim {
                     resolve = undefined;
                 }
                 const url = "data:audio/wav;base64," + window.btoa(uint8ArrayToString(buf.data))
-                const audio = new Audio(url);
+                audio = new Audio(url);
                 if (_mute)
                     audio.volume = 0;
                 audio.onended = () => res();
