@@ -3689,7 +3689,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                         if (info.pkg &&
                             info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
                     }
-                    pxt.log(`generating api docs (${Object.keys(apiInfo.byQName).length})`);
+                    pxt.debug(`generating api docs (${Object.keys(apiInfo.byQName).length})`);
                     const md = pxtc.genDocs(mainPkg.config.name, apiInfo, {
                         package: mainPkg.config.name != pxt.appTarget.corepkg && !mainPkg.config.core,
                         locs: buildOpts.locs,
@@ -3705,13 +3705,13 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                         if (!buildOpts.createOnly || !fs.existsSync(ffn)) {
                             nodeutil.mkdirP(path.dirname(ffn));
                             mainPkg.host().writeFile(mainPkg, ffn, md[fn])
-                            pxt.log(`generated ${ffn}; size=${md[fn].length}`)
+                            pxt.debug(`generated ${ffn}; size=${md[fn].length}`)
                         }
                     }
                     return null
                 case BuildOption.Deploy:
                     if (!pxt.commands.deployCoreAsync) {
-                        console.log("no deploy functionality defined by this target")
+                        pxt.log("no deploy functionality defined by this target")
                         return null;
                     }
                     return pxt.commands.deployCoreAsync(res);
@@ -4938,7 +4938,6 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
         .then(fullnames => Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
             .then(tags => {
                 const tag = tags.reverse()[0] || "master";
-                pxt.log(`${fullname}#${tag}`);
                 repos[fullname] = { fullname, tag };
             }))
         ).then(() => {
