@@ -651,6 +651,9 @@ export class Editor extends srceditor.Editor {
             let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
                 this.editor.highlightBlock(bid);
+                const b = this.editor.getBlockById(bid);
+                b.setWarningText(brk ? brk.exceptionMessage : undefined);
+                b.setHighlightWarning(brk && !!brk.exceptionMessage);
                 if (brk) {
                     this.editor.centerOnBlock(bid);
                     this.updateDebuggerVariables(brk.globals);
@@ -677,7 +680,7 @@ export class Editor extends srceditor.Editor {
             return;
         }
 
-        for (let k in vars) {
+        for (const k in vars) {
             const variable = vars[k];
             const value = getValueOfVariable(variable);
             if (this.debugVariables && value != undefined) this.debugVariables.set(variable, value);

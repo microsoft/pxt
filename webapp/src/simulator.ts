@@ -106,7 +106,8 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 // keep going until breakpoint is hit
                 driver.resume(pxsim.SimulatorDebuggerCommand.StepInto);
             }
-            if (brk.exceptionMessage)
+            // we had an expected but could not find a block
+            if (!highlighted && brk.exceptionMessage)
                 core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
             postSimEditorEvent("stopped", brk.exceptionMessage);
         },
