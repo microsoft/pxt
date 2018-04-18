@@ -206,6 +206,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 {targetTheme.selectLanguage ? <sui.Link class="item focused" text={lf("Language")} onClick={() => selectLang()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {targetTheme.termsOfUseUrl ? <a target="_blank" className="item focused" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use")}</a> : undefined}
                 {targetTheme.privacyUrl ? <a target="_blank" className="item focused" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy")}</a> : undefined}
+                {pxt.appTarget.versions ? <span className="item focused">v{pxt.appTarget.versions.target}</span> : undefined}
             </div> : undefined}
         </div>;
     }
