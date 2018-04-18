@@ -18,11 +18,14 @@ declare namespace pxt.electron {
         data: pxt.Map<string | number>;
     }
 
-    export type TelemetryHandler = (id: string, data?: pxt.Map<string | number>) => void;
-
     // The object that gets injected into the window
     export interface PxtElectron {
-        registerTelemetryHandler: (telemetryHandler: TelemetryHandler) => void;
-        registerUpdateHandler: (updateHandler: () => void) => void;
+        onTelemetry: (handler: (ev: TelemetryEvent) => void) => void;
+        onUpdateInstalled: (handler: () => void) => void;
+        onUpdateStatus: (handler: (st: UpdateStatus) => void) => void;
+        onCriticalUpdateFailed: (handler: () => void) => void;
+
+        sendUpdateStatusCheck: () => void;
+        sendQuit: () => void;
     }
 }
