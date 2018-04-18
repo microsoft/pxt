@@ -5,7 +5,7 @@ namespace pxt.blocks.layout {
         useViewWidth?: boolean;
     }
 
-    export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newXml: string): string {
+    export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, newXml: string): string {
         const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
         // position blocks
         alignBlocks(blockInfo, oldWs, newWs);
@@ -13,19 +13,19 @@ namespace pxt.blocks.layout {
         return injectDisabledBlocks(oldWs, newWs);
     }
 
-    function injectDisabledBlocks(oldWs: B.Workspace, newWs: B.Workspace): string {
+    function injectDisabledBlocks(oldWs: Blockly.Workspace, newWs: Blockly.Workspace): string {
         const oldDom = Blockly.Xml.workspaceToDom(oldWs, true);
         const newDom = Blockly.Xml.workspaceToDom(newWs, true);
         Util.toArray(oldDom.childNodes)
             .filter(n => n.nodeType == Node.ELEMENT_NODE && n.localName == "block" && (<Element>n).getAttribute("disabled") == "true")
             .forEach(n => newDom.appendChild(newDom.ownerDocument.importNode(n, true)));
-        const updatedXml = Blockly.Xml.domToPrettyText(newDom);
+        const updatedXml = Blockly.Xml.domToText(newDom);
         return updatedXml;
     }
 
-    function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newWs: B.Workspace) {
+    function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, newWs: Blockly.Workspace) {
         let env: pxt.blocks.Environment;
-        let newBlocks: pxt.Map<B.Block[]>; // support for multiple events with similar name
+        let newBlocks: pxt.Map<Blockly.Block[]>; // support for multiple events with similar name
         oldWs.getTopBlocks(false).filter(ob => !ob.disabled)
             .forEach(ob => {
                 const otp = ob.xy_;
@@ -50,9 +50,15 @@ namespace pxt.blocks.layout {
 
     declare function unescape(escapeUri: string): string;
 
-    export function verticalAlign(ws: B.Workspace, emPixels: number) {
-        let blocks = ws.getTopBlocks(true);
+    export function verticalAlign(ws: Blockly.Workspace, emPixels: number) {
         let y = 0
+        let comments = ws.getTopComments(true);
+        comments.forEach(comment => {
+            comment.moveBy(0, y)
+            y += comment.getHeightWidth().height
+            y += emPixels; //buffer
+        })
+        let blocks = ws.getTopBlocks(true);
         blocks.forEach(block => {
             block.moveBy(0, y)
             y += block.getHeightWidth().height
@@ -60,21 +66,21 @@ namespace pxt.blocks.layout {
         })
     };
 
-    export function flow(ws: B.Workspace, opts?: FlowOptions) {
+    export function flow(ws: Blockly.Workspace, opts?: FlowOptions) {
         if (opts) {
             if (opts.useViewWidth) {
                 const metrics = ws.getMetrics();
 
                 // Only use the width if in portrait, otherwise the blocks are too spread out
                 if (metrics.viewHeight > metrics.viewWidth) {
-                    flowBlocks(ws.getTopBlocks(true), undefined, metrics.viewWidth)
+                    flowBlocks(ws.getTopComments(true), ws.getTopBlocks(true), undefined, metrics.viewWidth)
                     return;
                 }
             }
-            flowBlocks(ws.getTopBlocks(true), opts.ratio);
+            flowBlocks(ws.getTopComments(true), ws.getTopBlocks(true), opts.ratio);
         }
         else {
-            flowBlocks(ws.getTopBlocks(true));
+            flowBlocks(ws.getTopComments(true), ws.getTopBlocks(true));
         }
     }
 
@@ -83,11 +89,11 @@ namespace pxt.blocks.layout {
             && !BrowserUtils.isUwpEdge(); // TODO figure out why screenshots are not working in UWP; disable for now
     }
 
-    export function screenshotAsync(ws: B.Workspace): Promise<string> {
+    export function screenshotAsync(ws: Blockly.Workspace): Promise<string> {
         return toPngAsync(ws);
     }
 
-    export function toPngAsync(ws: B.Workspace): Promise<string> {
+    export function toPngAsync(ws: Blockly.Workspace): Promise<string> {
         return toSvgAsync(ws)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
@@ -126,7 +132,7 @@ namespace pxt.blocks.layout {
 
     const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
 
-    export function toSvgAsync(ws: B.Workspace): Promise<{
+    export function toSvgAsync(ws: Blockly.Workspace): Promise<{
         width: number; height: number; xml: string;
     }> {
         if (!ws)
@@ -221,7 +227,7 @@ namespace pxt.blocks.layout {
         return Promise.all(p).then(() => { })
     }
 
-    function flowBlocks(blocks: Blockly.Block[], ratio: number = 1.62, maxWidth?: number) {
+    function flowBlocks(comments: Blockly.WorkspaceComment[], blocks: Blockly.Block[], ratio: number = 1.62, maxWidth?: number) {
         const gap = 16;
         const marginx = 20;
         const marginy = 20;
@@ -232,28 +238,39 @@ namespace pxt.blocks.layout {
         }
         else {
             // compute total block surface and infer width
-            let surface = 0;
+            let commentSurface = 0;
+            let blockSurface = 0;
+            for (let comment of comments) {
+                let s = comment.getHeightWidth();
+                commentSurface += s.width * s.height;
+            }
             for (let block of blocks) {
                 let s = block.getHeightWidth();
-                surface += s.width * s.height;
+                blockSurface += s.width * s.height;
             }
-            maxx = Math.sqrt(surface) * ratio;
+            maxx = Math.sqrt(Math.max(commentSurface, blockSurface)) * ratio;
         }
 
         let insertx = marginx;
         let inserty = marginy;
         let endy = 0;
-        for (let block of blocks) {
-            let r = block.getBoundingRectangle();
-            let s = block.getHeightWidth();
-            // move block to insertion point
-            block.moveBy(insertx - r.topLeft.x, inserty - r.topLeft.y);
-            insertx += s.width + gap;
-            endy = Math.max(endy, inserty + s.height + gap);
-            if (insertx > maxx) { // start new line
-                insertx = marginx;
-                inserty = endy;
+        function flowBlocksInternal(blocks: Blockly.Block[] | Blockly.WorkspaceComment[]) {
+            for (let block of blocks) {
+                let r = block.getBoundingRectangle();
+                let s = block.getHeightWidth();
+                // move block to insertion point
+                block.moveBy(insertx - r.topLeft.x, inserty - r.topLeft.y);
+                insertx += s.width + gap;
+                endy = Math.max(endy, inserty + s.height + gap);
+                if (insertx > maxx) { // start new line
+                    insertx = marginx;
+                    inserty = endy;
+                }
             }
         }
+        flowBlocksInternal(comments);
+        insertx = marginx;
+        inserty = endy || marginy;
+        flowBlocksInternal(blocks);
     }
 }

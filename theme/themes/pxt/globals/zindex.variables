@@ -63,4 +63,7 @@
 @helpCardZIndex: 5;
 
 /* Sandbox mode */
-@sandboxFooterZIndex: @aboveEditorZIndex+1;
+@sandboxFooterZIndex: @aboveEditorZIndex+2;
+
+/* Debugger */
+@debuggerToolsZIndex: @aboveEditorZIndex+1;

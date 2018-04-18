@@ -346,10 +346,12 @@ namespace pxt.runner {
 
     function initEditorExtensionsAsync(): Promise<void> {
         let promise = Promise.resolve();
-        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
-            const opts: pxt.editor.ExtensionOptions = {};
-            promise = promise.then(() => pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js"))
-                .then(() => pxt.editor.initExtensionsAsync(opts))
+        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
+            const opts: pxt.editor.FieldExtensionOptions = {};
+            promise = promise
+                .then(() => pxt.BrowserUtils.loadBlocklyAsync())
+                .then(() => pxt.BrowserUtils.loadScriptAsync("fieldeditors.js"))
+                .then(() => pxt.editor.initFieldExtensionsAsync(opts))
                 .then(res => {
                     if (res.fieldEditors)
                         res.fieldEditors.forEach(fi => {

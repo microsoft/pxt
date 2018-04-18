@@ -4,7 +4,6 @@ import * as core from "./core";
 import * as db from "./db";
 
 import Util = pxt.Util;
-const lf = Util.lf
 
 let hostCache = new db.Table("hostcache")
 
@@ -370,7 +369,7 @@ export function mainEditorPkg() {
 }
 
 export function genFileName(extension: string): string {
-    const sanitizedName = mainEditorPkg().header.name.replace(/[\\\/.?*^:<>|"\x00-\x1F ]/g, "-")
+    const sanitizedName = mainEditorPkg().header.name.replace(/[\\\/.,?*^:<>!;'#$%^&|"\x00-\x1F ]/g, "-")
     const fn = `${pxt.appTarget.nickname || pxt.appTarget.id}-${sanitizedName}${extension}`;
     return fn;
 }

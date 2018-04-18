@@ -345,11 +345,45 @@ namespace pxt.BrowserUtils {
         });
     }
 
-    export function loadScriptAsync(url: string): Promise<void> {
+    function resolveCdnUrl(path: string): string {
+        const monacoPaths: Map<string> = (window as any).MonacoPaths || {};
+        const url = monacoPaths[path] || (pxt.webConfig.commitCdnUrl + path);
+        return url;
+    }
+
+    export function loadStyleAsync(path: string, rtl?: boolean): Promise<void> {
+        if (rtl) path = "rtl" + path;
+        const id = "style-" + path;
+        if (document.getElementById(id)) return Promise.resolve();
+
+        const url = resolveCdnUrl(path);
+        const links = Util.toArray(document.head.getElementsByTagName("link"));
+        const link = links.filter(l => l.getAttribute("href") == url)[0];
+        if (link) {
+            if (!link.id) link.id = id;
+            return Promise.resolve();
+        }
+
+        return new Promise<void>((resolve, reject) => {
+            const el = document.createElement("link");
+            el.href = url;
+            el.rel = "stylesheet";
+            el.type = "text/css";
+            el.id = id;
+            el.addEventListener('load', () => resolve());
+            el.addEventListener('error', (e) => reject(e));
+            document.head.appendChild(el);
+        });
+    }
+
+    export function loadScriptAsync(path: string): Promise<void> {
+        const url = resolveCdnUrl(path);
+        pxt.debug(`script: loading ${url}`);
         return new Promise<void>((resolve, reject) => {
             const script = document.createElement('script');
             script.type = 'text/javascript';
             script.src = url;
+            script.async = true;
             script.addEventListener('load', () => resolve());
             script.addEventListener('error', (e) => reject(e));
             document.body.appendChild(script);
@@ -374,12 +408,28 @@ namespace pxt.BrowserUtils {
         })
     }
 
-    export function initTheme() {
-        function patchCdn(url: string): string {
-            if (!url) return url;
-            return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
+    let loadBlocklyPromise: Promise<void>;
+    export function loadBlocklyAsync(): Promise<void> {
+        if (!loadBlocklyPromise) {
+            if (typeof Blockly === "undefined") { // not loaded yet?
+                pxt.debug(`blockly: delay load`);
+                loadBlocklyPromise =
+                    pxt.BrowserUtils.loadStyleAsync("blockly.css", ts.pxtc.Util.isUserLanguageRtl())
+                        .then(() => pxt.BrowserUtils.loadScriptAsync("pxtblockly.js"))
+                        .then(() => {
+                            pxt.debug(`blockly: loaded`)
+                        })
+            } else loadBlocklyPromise = Promise.resolve();
         }
+        return loadBlocklyPromise;
+    }
 
+    export function patchCdn(url: string): string {
+        if (!url) return url;
+        return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
+    }
+
+    export function initTheme() {
         const theme = pxt.appTarget.appTheme;
         if (theme) {
             if (theme.accentColor) {
@@ -388,11 +438,7 @@ namespace pxt.BrowserUtils {
                 style.innerHTML = `.ui.accent { color: ${theme.accentColor}; }
                 .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${theme.accentColor}; }`;
                 document.getElementsByTagName('head')[0].appendChild(style);
-
             }
-            theme.appLogo = patchCdn(theme.appLogo)
-            theme.cardLogo = patchCdn(theme.cardLogo)
-            theme.homeScreenHero = patchCdn(theme.homeScreenHero)
         }
         // RTL languages
         if (Util.isUserLanguageRtl()) {
@@ -410,13 +456,14 @@ namespace pxt.BrowserUtils {
                     semanticLink.setAttribute("href", semanticHref);
                 }
             }
-            // replace blockly.css with rtlblockly.css
+            // replace blockly.css with rtlblockly.css if possible
             const blocklyLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "blockly.css"))[0];
             if (blocklyLink) {
                 const blocklyHref = blocklyLink.getAttribute("data-rtl");
                 if (blocklyHref) {
                     pxt.debug(`swapping to ${blocklyHref}`)
                     blocklyLink.setAttribute("href", blocklyHref);
+                    blocklyLink.removeAttribute("data-rtl");
                 }
             }
         }

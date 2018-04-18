@@ -4,9 +4,6 @@
 /// <reference path="util.ts"/>
 
 namespace pxt {
-
-    const lf = U.lf;
-
     export class Package {
         static getConfigAsync(id: string, fullVers: string): Promise<pxt.PackageConfig> {
             return Promise.resolve().then(() => {
@@ -711,16 +708,18 @@ namespace pxt {
                         const programText = JSON.stringify(files)
                         return lzmaCompressAsync(headerString + programText)
                             .then(buf => {
-                                opts.embedMeta = JSON.stringify({
-                                    compression: "LZMA",
-                                    headerSize: headerString.length,
-                                    textSize: programText.length,
-                                    name: this.config.name,
-                                    eURL: pxt.appTarget.appTheme.embedUrl,
-                                    eVER: pxt.appTarget.versions ? pxt.appTarget.versions.target : "",
-                                    pxtTarget: appTarget.id,
-                                })
-                                opts.embedBlob = ts.pxtc.encodeBase64(U.uint8ArrayToString(buf))
+                                if (buf) {
+                                    opts.embedMeta = JSON.stringify({
+                                        compression: "LZMA",
+                                        headerSize: headerString.length,
+                                        textSize: programText.length,
+                                        name: this.config.name,
+                                        eURL: pxt.appTarget.appTheme.embedUrl,
+                                        eVER: pxt.appTarget.versions ? pxt.appTarget.versions.target : "",
+                                        pxtTarget: appTarget.id,
+                                    })
+                                    opts.embedBlob = ts.pxtc.encodeBase64(U.uint8ArrayToString(buf))
+                                }
                             });
                     } else {
                         return Promise.resolve()

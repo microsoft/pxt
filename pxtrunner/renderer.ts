@@ -301,19 +301,19 @@ namespace pxt.runner {
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
-                            border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
+                            border-color: ${pxt.toolbox.fadeColor(color, 0.2, true)} !important;
                         }
                     `;
                 })
                 return nsStyleBuffer;
             })
             .then((nsStyleBuffer) => {
-                Object.keys(pxt.blocks.blockColors).forEach((ns) => {
-                    const color = pxt.blocks.blockColors[ns] as string;
+                Object.keys(pxt.toolbox.blockColors).forEach((ns) => {
+                    const color = pxt.toolbox.blockColors[ns] as string;
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
-                            border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
+                            border-color: ${pxt.toolbox.fadeColor(color, 0.2, true)} !important;
                         }
                     `;
                 })

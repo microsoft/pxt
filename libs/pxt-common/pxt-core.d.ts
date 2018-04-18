@@ -85,7 +85,7 @@ interface Array<T> {
 
     /**
       * Tests whether all elements in the array pass the test implemented by the provided function.
-      * @param callbackfn A function that accepts up to two arguments. The some method calls the callbackfn function one time for each element in the array.
+      * @param callbackfn A function that accepts up to two arguments. The every method calls the callbackfn function one time for each element in the array.
       */
     //% helper=arrayEvery weight=40
     every(callbackfn: (value: T, index: number) => boolean): boolean;

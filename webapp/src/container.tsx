@@ -35,9 +35,9 @@ function openDocs(parent: pxt.editor.IProjectView, path: string) {
 function renderDocItems(parent: pxt.editor.IProjectView, cls: string) {
     const targetTheme = pxt.appTarget.appTheme;
     return targetTheme.docMenu.map(m =>
-        m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class={"ui " + cls} onClick={() => openTutorial(parent, m.path)} />
-            : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} title={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{Util.rlf(m.name)}</a>
-                : <sui.Item key={"docsmenu" + m.path} role="menuitem" ariaLabel={m.name} text={Util.rlf(m.name)} class={"ui " + cls} onClick={() => openDocs(parent, m.path)} />
+        m.tutorial ? <sui.Item key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={m.name} text={pxt.Util.rlf(m.name)} class={"ui " + cls} onClick={() => openTutorial(parent, m.path)} />
+            : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} title={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{pxt.Util.rlf(m.name)}</a>
+                : <sui.Item key={"docsmenu" + m.path} role="menuitem" ariaLabel={m.name} text={pxt.Util.rlf(m.name)} class={"ui " + cls} onClick={() => openDocs(parent, m.path)} />
     );
 }
 
@@ -236,9 +236,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             {!sandbox ? <div className="left menu">
                 <a aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={() => this.brandIconClick()} onKeyDown={sui.fireClickOnEnter}>
                     {logo || portraitLogo
-                        ? <img className={`ui logo ${logo ? " portrait hide" : ''}`} src={Util.toDataUri(logo || portraitLogo)} alt={lf("{0} Logo", targetTheme.boardName)} />
+                        ? <img className={`ui logo ${logo ? " portrait hide" : ''}`} src={logo || portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
                         : <span className="name">{targetTheme.boardName}</span>}
-                    {portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(portraitLogo)} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
+                    {portraitLogo ? (<img className='ui mini image portrait only' src={portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
                 </a>
                 {targetTheme.betaUrl ? <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
                 {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={() => this.goHome()} /> : null}
@@ -246,7 +246,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {inTutorial ? <sui.Item class="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
             </div> : <div className="left menu">
                     <span id="logo" className="ui item logo">
-                        <img className="ui mini image" src={Util.toDataUri(rightLogo)} tabIndex={0} onClick={() => this.launchFullEditor()} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
+                        <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={() => this.launchFullEditor()} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
                     </span>
                 </div>}
             {!inTutorial && !targetTheme.blocksOnly ? <div className="ui item link editor-menuitem">
@@ -267,9 +267,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
 
                 {!sandbox ? <a href={targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={() => this.orgIconClick()}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo)} alt={lf("{0} Logo", targetTheme.organization)} />
+                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
                         : <span className="name">{targetTheme.organization}</span>}
-                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo)} alt={lf("{0} Logo", targetTheme.organization)} />) : null}
+                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />) : null}
                 </a> : undefined}
             </div>
         </div>;

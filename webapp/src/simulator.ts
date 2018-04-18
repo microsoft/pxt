@@ -5,8 +5,10 @@ import * as core from "./core";
 import U = pxt.U
 
 interface SimulatorConfig {
-    highlightStatement(stmt: pxtc.LocationInfo): void;
+    // return true if a visible breakpoint was found
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean;
     restartSimulator(): void;
+    onStateChanged(state: pxsim.SimulatorState): void;
     editor: string;
 }
 
@@ -76,11 +78,18 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             $(el).removeClass("simHeadless");
         },
         onDebuggerBreakpoint: function (brk) {
-            updateDebuggerButtons(brk)
-            let brkInfo = lastCompileResult.breakpoints[brk.breakpointId]
-            if (config) config.highlightStatement(brkInfo)
+            updateDebuggerButtons(brk);
             if (brk.exceptionMessage) {
                 core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
+            }
+            if (config) {
+                let brkInfo = lastCompileResult.breakpoints[brk.breakpointId];
+                // is there a breakpoint to stop?
+                if (!config.highlightStatement(brkInfo, brk) && !brk.exceptionMessage) {
+                    // keep going
+                    driver.resume(pxsim.SimulatorDebuggerCommand.StepInto);
+                    return;
+                }
             }
             postSimEditorEvent("stopped", brk.exceptionMessage);
         },
@@ -107,8 +116,11 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onStateChanged: function (state) {
             if (state === pxsim.SimulatorState.Stopped) {
                 postSimEditorEvent("stopped");
+            } else if (state === pxsim.SimulatorState.Running) {
+                this.onDebuggerResume();
             }
             updateDebuggerButtons()
+            cfg.onStateChanged(state);
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
             switch (msg.command) {
@@ -255,6 +267,32 @@ export function proxy(message: pxsim.SimulatorCustomMessage) {
     $debugger.empty();
 }
 
+export function dbgPauseResume() {
+    if (driver.state == pxsim.SimulatorState.Paused) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.Resume);
+    } else if (driver.state == pxsim.SimulatorState.Running) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.Pause);
+    }
+}
+
+export function dbgStepOver() {
+    if (driver.state == pxsim.SimulatorState.Paused) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.StepOver);
+    }
+}
+
+export function dbgStepInto() {
+    if (driver.state == pxsim.SimulatorState.Paused) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.StepInto);
+    }
+}
+
+export function dbgStepOut() {
+    if (driver.state == pxsim.SimulatorState.Paused) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.StepOut);
+    }
+}
+
 function makeClean() {
     pxsim.U.removeClass(driver.container, getInvalidatedClass());
     dirty = false;
@@ -275,10 +313,14 @@ function getStoppedClass() {
 }
 
 function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {
+    //updateDebuggerButtonsInternal(brk);
+}
+
+function updateDebuggerButtonsInternal(brk: pxsim.DebuggerBreakpointMessage = null) {
     function btn(icon: string, name: string, label: string, click: () => void) {
-        let b = $(`<button class="ui mini button teal" title="${Util.htmlEscape(label)}"></button>`)
+        let b = $(`<button class="ui mini button teal" title="${pxt.Util.htmlEscape(label)}"></button>`)
         if (icon) b.addClass("icon").append(`<i class="${icon} icon"></i>`)
-        if (name) b.append(Util.htmlEscape(name));
+        if (name) b.append(pxt.Util.htmlEscape(name));
         return b.click(click)
     }
 

@@ -8,7 +8,6 @@
 namespace pxt {
     export import U = pxtc.Util;
     export import Util = pxtc.Util;
-    const lf = U.lf;
 
     let savedAppTarget: TargetBundle;
     export function setAppTarget(trg: TargetBundle) {
@@ -47,6 +46,12 @@ namespace pxt {
             if (cs.yottaTarget && !cs.yottaBinary)
                 cs.yottaBinary = "pxt-microbit-app-combined.hex"
         }
+
+        // patch cdn
+        const theme = appTarget.appTheme;
+        let targetImages = Object.keys(theme as any as Map<string>)
+            .filter(k => /(logo|hero)$/i.test(k) && /^@cdnUrl@/.test((theme as any)[k]))
+            .forEach(k => (theme as any)[k] = pxt.BrowserUtils.patchCdn((theme as any)[k]));
 
         savedAppTarget = U.clone(appTarget)
     }

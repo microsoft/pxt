@@ -130,7 +130,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         const chgCode = (scr: pxt.CodeCard, loadBlocks: boolean, prj?: pxt.ProjectTemplate) => {
             core.showLoading("changingcode", lf("loading..."));
-            gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
+            const name = scr.name.toLowerCase().replace(/\W/, '');
+            gallery.loadExampleAsync(name, scr.url)
                 .done(opts => {
                     if (opts) {
                         if (prj) opts.prj = prj;
@@ -194,7 +195,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             </div>
             {Object.keys(galleries).map(galleryName =>
                 <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
-                    <h2 className="ui header heading">{Util.rlf(galleryName)} </h2>
+                    <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
                     <div className="content">
                         <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`} key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]} onClick={(scr: any) => chgGallery(scr)} setSelected={(index: number) => this.setSelected(galleryName, index)} selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined} />
                     </div>
@@ -231,18 +232,18 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
             <div className="left menu">
                 <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={() => this.brandIconClick()}>
                     {targetTheme.logo || targetTheme.portraitLogo
-                        ? <img className={`ui logo ${targetTheme.logo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo)} alt={lf("{0} Logo", targetTheme.boardName)} />
+                        ? <img className={`ui logo ${targetTheme.logo ? " portrait hide" : ''}`} src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
                         : <span className="name">{targetTheme.boardName}</span>}
-                    {targetTheme.portraitLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo)} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
+                    {targetTheme.portraitLogo ? (<img className='ui mini image portrait only' src={targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
                 </a>
             </div>
             <div className="ui item"><sui.Icon icon={`icon home large`} /> {lf("Home")}</div>
             <div className="right menu">
                 <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={() => this.orgIconClick()}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo)} alt={lf("{0} Logo", targetTheme.organization)} />
+                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
                         : <span className="name">{targetTheme.organization}</span>}
-                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo)} alt={lf("{0} Logo", targetTheme.organization)} />) : null}
+                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />) : null}
                 </a>
             </div>
             {targetTheme.betaUrl ? <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
@@ -287,7 +288,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             if (res instanceof Error) {
                 this.hasFetchErrors = true;
             } else {
-                this.prevGalleries = Util.concat(res.map(g => g.cards));
+                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards));
             }
         }
         return this.prevGalleries || [];

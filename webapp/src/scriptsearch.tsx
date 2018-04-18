@@ -106,7 +106,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const coresFirst = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
             if (a.core != b.core)
                 return a.core ? -1 : 1;
-            return Util.strcmp(a.name, b.name)
+            return pxt.Util.strcmp(a.name, b.name)
         }
 
         bundles.sort(coresFirst)

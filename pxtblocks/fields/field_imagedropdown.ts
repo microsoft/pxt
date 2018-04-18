@@ -35,7 +35,7 @@ namespace pxtblockly {
 
             this.backgroundColour_ = pxtblockly.parseColour(options.colour);
             this.itemColour_ = options.itemColour || "rgba(255, 255, 255, 0.6)";
-            this.borderColour_ = Blockly.PXTUtils.fadeColour(this.backgroundColour_, 0.4, false);
+            this.borderColour_ = pxt.toolbox.fadeColor(this.backgroundColour_, 0.4, false);
         }
 
         /**
@@ -155,7 +155,7 @@ namespace pxtblockly {
         /**
          * Callback for when the drop-down is hidden.
          */
-        protected onHide_ = function () {
+        protected onHide_() {
             Blockly.DropDownDiv.content_.removeAttribute('role');
             Blockly.DropDownDiv.content_.removeAttribute('aria-haspopup');
             Blockly.DropDownDiv.content_.removeAttribute('aria-activedescendant');

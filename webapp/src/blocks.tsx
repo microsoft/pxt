@@ -5,11 +5,10 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
-import * as baseToolbox from "./toolbox";
+import * as debug from "./debugger";
 
-import CategoryMode = pxt.blocks.CategoryMode;
+import CategoryMode = pxt.toolbox.CategoryMode;
 import Util = pxt.Util;
-let lf = Util.lf
 
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
@@ -21,7 +20,7 @@ export class Editor extends srceditor.Editor {
     blockInfo: pxtc.BlocksInfo;
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
-    currentCommentOrWarning: B.Comment | B.Warning;
+    currentCommentOrWarning: Blockly.Comment | Blockly.Warning;
     selectedEventGroup: string;
     currentHelpCardType: string;
     showToolboxCategories: CategoryMode = CategoryMode.Basic;
@@ -29,6 +28,8 @@ export class Editor extends srceditor.Editor {
     filters: pxt.editor.ProjectFilters;
     extensions: pxt.PackageConfig[];
     showSearch: boolean;
+
+    private debugVariables: debug.DebuggerVariables;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -41,7 +42,8 @@ export class Editor extends srceditor.Editor {
         }
         else {
             $(classes).hide();
-            Blockly.hideChaff();
+            if (this.editor)
+                Blockly.hideChaff();
         }
     }
 
@@ -78,7 +80,8 @@ export class Editor extends srceditor.Editor {
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loading);
 
-            this.loadingXmlPromise = compiler.getBlocksAsync()
+            this.loadingXmlPromise = this.loadBlocklyAsync()
+                .then(() => compiler.getBlocksAsync())
                 .then(bi => {
                     this.blockInfo = bi;
                     let showSearch = this.showSearch;
@@ -193,6 +196,17 @@ export class Editor extends srceditor.Editor {
         let needsLayout = false;
         let flyoutOnly = !(this.editor as any).toolbox_ && (this.editor as any).flyout_;
 
+        this.editor.getTopComments(false).forEach(b => {
+            const tp = b.getBoundingRectangle().topLeft;
+            if (minX === undefined || tp.x < minX) {
+                minX = tp.x;
+            }
+            if (minY === undefined || tp.y < minY) {
+                minY = tp.y;
+            }
+
+            needsLayout = needsLayout || (tp.x == 0 && tp.y == 0);
+        });
         this.editor.getTopBlocks(false).forEach(b => {
             const tp = b.getBoundingRectangle().topLeft;
             if (minX === undefined || tp.x < minX) {
@@ -211,6 +225,7 @@ export class Editor extends srceditor.Editor {
         }
         else {
             // Otherwise translate the blocks so that they are positioned on the top left
+            this.editor.getTopComments(false).forEach(c => c.moveBy(-minX, -minY));
             this.editor.getTopBlocks(false).forEach(b => b.moveBy(-minX, -minY));
             this.editor.scrollX = flyoutOnly ? (this.editor as any).flyout_.width_ + 10 : 10;
             this.editor.scrollY = 10;
@@ -338,25 +353,6 @@ export class Editor extends srceditor.Editor {
     }
 
     prepare() {
-        pxt.blocks.openHelpUrl = (url: string) => {
-            pxt.tickEvent("blocks.help", { url }, { interactiveConsent: true });
-            const m = /^\/pkg\/([^#]+)#(.+)$/.exec(url);
-            if (m) {
-                const dep = pkg.mainPkg.deps[m[1]];
-                if (dep && dep.verProtocol() == "github") {
-                    // rewrite url to point to current endpoint
-                    url = `/pkg/${dep.verArgument().replace(/#.*$/, '')}#${m[2]}`;
-                    window.open(url, m[1]);
-                    return; // TODO support serving package docs in docs frame.
-                }
-            };
-            if (/^\//.test(url))
-                this.parent.setSideDoc(url);
-            else window.open(url, 'docs');
-        }
-
-        this.prepareBlockly();
-
         this.isReady = true
     }
 
@@ -392,10 +388,10 @@ export class Editor extends srceditor.Editor {
                         pxt.analytics.enableCookies();
                     }
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
-                    if (ev.newValue == pxt.blocks.addPackageTitle()) {
+                    if (ev.newValue == pxt.toolbox.addPackageTitle()) {
                         this.addPackage();
                     }
-                    else if (ev.newValue == pxt.blocks.advancedTitle()) {
+                    else if (ev.newValue == pxt.toolbox.advancedTitle()) {
                         if (this.showToolboxCategories === CategoryMode.All) {
                             this.showToolboxCategories = CategoryMode.Basic;
                         }
@@ -403,39 +399,6 @@ export class Editor extends srceditor.Editor {
                             this.showToolboxCategories = CategoryMode.All;
                         }
                         this.refreshToolbox();
-                    }
-                }
-                else if (ev.element == 'commentOpen'
-                    || ev.element == 'warningOpen') {
-                    /*
-                     * We override the default selection behavior so that when a block is selected, its
-                     * comment is expanded. However, if a user selects a block by clicking on its comment
-                     * icon (the blue question mark), there is a chance that the comment will be expanded
-                     * and immediately collapse again because the icon click toggled the state. This hack
-                     * prevents two events caused by the same click from opening and then closing a comment
-                     */
-                    if (ev.group) {
-                        // newValue is true if the comment has been expanded
-                        if (ev.newValue) {
-                            this.selectedEventGroup = ev.group
-                        }
-                        else if (ev.group == this.selectedEventGroup && this.currentCommentOrWarning) {
-                            this.currentCommentOrWarning.setVisible(true)
-                            this.selectedEventGroup = undefined
-                        }
-                    }
-                }
-                else if (ev.element == 'selected') {
-                    if (this.currentCommentOrWarning) {
-                        this.currentCommentOrWarning.setVisible(false)
-                    }
-                    const selected = Blockly.selected
-                    if (selected && selected.warning && typeof (selected.warning) !== "string") {
-                        (selected.warning as Blockly.Icon).setVisible(true)
-                        this.currentCommentOrWarning = selected.warning
-                    } else if (selected && selected.comment && typeof (selected.comment) !== "string") {
-                        (selected.comment as Blockly.Icon).setVisible(true)
-                        this.currentCommentOrWarning = selected.comment
                     }
                 }
             }
@@ -518,7 +481,10 @@ export class Editor extends srceditor.Editor {
     display() {
         return (
             <div>
-                <div id="blocksEditor"></div>
+                <div id="blocksEditor">
+                </div>
+                {this.parent.state.debugging ?
+                    <debug.DebuggerVariables ref={e => this.debugVariables = e} parent={this.parent} /> : undefined}
             </div>
         )
     }
@@ -553,50 +519,93 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    private _loadBlocklyPromise: Promise<void>;
+    loadBlocklyAsync() {
+        if (!this._loadBlocklyPromise)
+            this._loadBlocklyPromise = pxt.BrowserUtils.loadBlocklyAsync()
+                .then(() => {
+                    pxt.blocks.openHelpUrl = (url: string) => {
+                        pxt.tickEvent("blocks.help", { url }, { interactiveConsent: true });
+                        const m = /^\/pkg\/([^#]+)#(.+)$/.exec(url);
+                        if (m) {
+                            const dep = pkg.mainPkg.deps[m[1]];
+                            if (dep && dep.verProtocol() == "github") {
+                                // rewrite url to point to current endpoint
+                                url = `/pkg/${dep.verArgument().replace(/#.*$/, '')}#${m[2]}`;
+                                window.open(url, m[1]);
+                                return; // TODO support serving package docs in docs frame.
+                            }
+                        };
+                        if (/^\//.test(url))
+                            this.parent.setSideDoc(url);
+                        else window.open(url, 'docs');
+                    }
+                    this.prepareBlockly();
+                })
+                .then(() => {
+                    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
+                        return pxt.BrowserUtils.loadScriptAsync("fieldeditors.js")
+                            .then(() => pxt.editor.initFieldExtensionsAsync({}))
+                            .then(res => {
+                                if (res.fieldEditors) {
+                                    res.fieldEditors.forEach(fi => {
+                                        pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                                    })
+                                }
+                            });
+                    }
+                    return Promise.resolve();
+                })
+        return this._loadBlocklyPromise;
+    }
+
     loadFileAsync(file: pkg.File): Promise<void> {
         Util.assert(!this.delayLoadXml);
         Util.assert(!this.loadingXmlPromise);
 
-        this.blockInfo = undefined;
-        this.currSource = file.content;
-        this.typeScriptSaveable = false;
-        this.setDiagnostics(file)
-        this.delayLoadXml = file.content;
-        this.editor.clear();
-        this.editor.clearUndo();
+        return this.loadBlocklyAsync()
+            .then(() => {
+                pxt.blocks.cleanBlocks();
 
-        if (this.currFile && this.currFile != file) {
-            this.filterToolbox(null);
-        }
-        if (this.parent.state.editorState && this.parent.state.editorState.filters) {
-            this.filterToolbox(this.parent.state.editorState.filters);
-        } else {
-            this.filters = null;
-        }
-        if (this.parent.state.editorState && this.parent.state.editorState.searchBar != undefined) {
-            this.showSearch = this.parent.state.editorState.searchBar;
-        } else {
-            this.showSearch = true;
-        }
-        if (this.parent.state.editorState && this.parent.state.editorState.hasCategories != undefined) {
-            this.showToolboxCategories = this.parent.state.editorState.hasCategories ? CategoryMode.Basic : CategoryMode.None;
-        } else {
-            this.showToolboxCategories = CategoryMode.Basic;
-        }
-        this.currFile = file;
-        // Clear the search field if a value exists
-        let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
-        if (searchField && searchField.value) {
-            searchField.value = '';
-        }
-        // Get extension packages
-        this.extensions = pkg.allEditorPkgs()
-            .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
-            // Make sure the package has extensions enabled, and is a github package.
-            // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
-            .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
+                this.blockInfo = undefined;
+                this.currSource = file.content;
+                this.typeScriptSaveable = false;
+                this.setDiagnostics(file)
+                this.delayLoadXml = file.content;
+                this.editor.clear();
+                this.editor.clearUndo();
 
-        return Promise.resolve();
+                if (this.currFile && this.currFile != file) {
+                    this.filterToolbox(null);
+                }
+                if (this.parent.state.editorState && this.parent.state.editorState.filters) {
+                    this.filterToolbox(this.parent.state.editorState.filters);
+                } else {
+                    this.filters = null;
+                }
+                if (this.parent.state.editorState && this.parent.state.editorState.searchBar != undefined) {
+                    this.showSearch = this.parent.state.editorState.searchBar;
+                } else {
+                    this.showSearch = true;
+                }
+                if (this.parent.state.editorState && this.parent.state.editorState.hasCategories != undefined) {
+                    this.showToolboxCategories = this.parent.state.editorState.hasCategories ? CategoryMode.Basic : CategoryMode.None;
+                } else {
+                    this.showToolboxCategories = CategoryMode.Basic;
+                }
+                this.currFile = file;
+                // Clear the search field if a value exists
+                let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+                if (searchField && searchField.value) {
+                    searchField.value = '';
+                }
+                // Get extension packages
+                this.extensions = pkg.allEditorPkgs()
+                    .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
+                    // Make sure the package has extensions enabled, and is a github package.
+                    // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
+                    .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
+            })
     }
 
     public switchToTypeScript() {
@@ -611,7 +620,10 @@ export class Editor extends srceditor.Editor {
             return;
 
         // clear previous warnings on non-disabled blocks
-        this.editor.getAllBlocks().filter(b => !b.disabled).forEach(b => b.setWarningText(null));
+        this.editor.getAllBlocks().filter(b => !b.disabled).forEach(b => {
+            b.setWarningText(null);
+            b.setHighlightWarning(false);
+        });
         let tsfile = file.epkg.files[file.getVirtualFileName()];
         if (!tsfile || !tsfile.diagnostics) return;
 
@@ -626,19 +638,62 @@ export class Editor extends srceditor.Editor {
                 if (b) {
                     let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt);
+                    b.setHighlightWarning(true);
                 }
             }
         })
     }
 
-    highlightStatement(brk: pxtc.LocationInfo) {
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
-            return;
-        if (brk) {
-            let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: brk.line, length: brk.endLine - brk.line });
+            return false;
+        if (stmt) {
+            let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
                 this.editor.highlightBlock(bid);
+                if (brk) {
+                    this.editor.centerOnBlock(bid);
+                    this.updateDebuggerVariables(brk.globals);
+                }
+                return true;
             }
+        } else {
+            this.editor.highlightBlock(null);
+            this.updateDebuggerVariables(null);
+            return false;
+        }
+        return false;
+    }
+
+    updateDebuggerVariables(globals: pxsim.Variables) {
+        if (!this.parent.state.debugging) return;
+        if (!globals) {
+            if (this.debugVariables) this.debugVariables.clear();
+            return;
+        }
+        const vars = this.editor.getAllVariables().map((variable: any) => variable.name as string);
+        if (!vars.length) {
+            if (this.debugVariables) this.debugVariables.clear();
+            return;
+        }
+
+        for (let k in vars) {
+            const variable = vars[k];
+            const value = getValueOfVariable(variable);
+            if (this.debugVariables && value != undefined) this.debugVariables.set(variable, value);
+        }
+
+        if (this.debugVariables) this.debugVariables.update();
+
+        function getValueOfVariable(name: string): pxsim.Variables {
+            for (let k of Object.keys(globals)) {
+                let n = k.replace(/___\d+$/, "");
+                if (name === n) {
+                    let v = globals[k]
+                    return v;
+                }
+            }
+            return undefined;
         }
     }
 
@@ -702,8 +757,8 @@ export class Editor extends srceditor.Editor {
 
     private getDefaultToolbox(showCategories = this.showToolboxCategories): HTMLElement {
         return showCategories !== CategoryMode.None ?
-            baseToolbox.getBaseToolboxDom().documentElement
-            : baseToolbox.getBaseNoCategoryToolboxDom().documentElement;
+            pxt.blocks.getBaseToolboxDom().documentElement
+            : pxt.blocks.getBaseNoCategoryToolboxDom().documentElement;
     }
 
     filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories = this.showToolboxCategories): Element {

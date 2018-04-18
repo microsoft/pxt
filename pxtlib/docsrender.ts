@@ -4,7 +4,6 @@
 namespace pxt.docs {
     declare var require: any;
     import U = pxtc.Util;
-    const lf = U.lf;
 
     let markedInstance: typeof marked;
 
@@ -261,13 +260,15 @@ namespace pxt.docs {
 
         if (theme.boardName)
             params["boardname"] = html2Quote(theme.boardName);
+        if (theme.boardNickname)
+            params["boardnickname"] = html2Quote(theme.boardNickname);
         if (theme.driveDisplayName)
             params["drivename"] = html2Quote(theme.driveDisplayName);
         if (theme.homeUrl)
             params["homeurl"] = html2Quote(theme.homeUrl);
         params["targetid"] = theme.id || "???";
         params["targetname"] = theme.name || "Microsoft MakeCode";
-        params["targetlogo"] = theme.docsLogo ? `<img aria-hidden="true" role="presentation" class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
+        params["targetlogo"] = theme.docsLogo ? `<img aria-hidden="true" role="presentation" class="ui mini image" src="${theme.docsLogo}" />` : ""
         let ghURLs = d.ghEditURLs || []
         if (ghURLs.length) {
             let ghText = `<p style="margin-top:1em">\n`

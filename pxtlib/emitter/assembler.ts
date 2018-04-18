@@ -254,6 +254,7 @@ namespace ts.pxtc.assembler {
         private userLabelsCache: pxt.Map<number>;
         private stackpointers: pxt.Map<number> = {};
         private stack = 0;
+        public commPtr = 0;
         public peepOps = 0;
         public peepDel = 0;
         public peepCounts: pxt.Map<number> = {}
@@ -592,6 +593,14 @@ namespace ts.pxtc.assembler {
                         }
                     } else this.directiveError(lf("expecting number"));
                     break;
+                case ".p2align":
+                    expectOne();
+                    num0 = this.parseOneInt(words[1]);
+                    if (num0 != null) {
+                        this.align(1 << num0);
+                    } else this.directiveError(lf("expecting number"));
+                    break;
+
                 case ".byte":
                     this.emitBytes(words);
                     break;
@@ -611,6 +620,7 @@ namespace ts.pxtc.assembler {
                     break;
                 case ".word":
                 case ".4bytes":
+                case ".long":
                     // TODO: a word is machine-dependent (16-bit for AVR, 32-bit for ARM)
                     this.parseNumbers(words).forEach(n => {
                         // we allow negative numbers
@@ -648,10 +658,12 @@ namespace ts.pxtc.assembler {
                     break;
 
                 case "@stackempty":
-                    if (this.stackpointers[words[1]] == null)
-                        this.directiveError(lf("no such saved stack"))
-                    else if (this.stackpointers[words[1]] != this.stack)
-                        this.directiveError(lf("stack mismatch"))
+                    if (this.checkStack) {
+                        if (this.stackpointers[words[1]] == null)
+                            this.directiveError(lf("no such saved stack"))
+                        else if (this.stackpointers[words[1]] != this.stack)
+                            this.directiveError(lf("stack mismatch"))
+                    }
                     break;
 
                 case "@scope":
@@ -659,6 +671,7 @@ namespace ts.pxtc.assembler {
                     this.currLineNo = this.scope ? 0 : this.realCurrLineNo;
                     break;
 
+                case ".syntax":
                 case "@nostackcheck":
                     this.checkStack = false
                     break
@@ -675,6 +688,30 @@ namespace ts.pxtc.assembler {
                     this.scope = "$S" + this.scopeId++
                     break;
 
+                case ".comm": {
+                    words = words.filter(x => x != ",")
+                    words.shift()
+                    let sz = this.parseOneInt(words[1])
+                    let align = 0
+                    if (words[2])
+                        align = this.parseOneInt(words[2])
+                    else
+                        align = 4 // not quite what AS does...
+                    let val = this.lookupLabel(words[0])
+                    if (val == null) {
+                        if (!this.commPtr) {
+                            this.commPtr = this.lookupExternalLabel("_pxt_comm_base") || 0
+                            if (!this.commPtr)
+                                this.directiveError(lf("PXT_COMM_BASE not defined"))
+                        }
+                        while (this.commPtr & (align - 1))
+                            this.commPtr++
+                        this.labels[this.scopedName(words[0])] = this.commPtr - this.baseOffset
+                        this.commPtr += sz
+                    }
+                    break
+                }
+
                 case ".file":
                 case ".text":
                 case ".cpu":
@@ -683,6 +720,13 @@ namespace ts.pxtc.assembler {
                 case ".code":
                 case ".thumb_func":
                 case ".type":
+                case ".fnstart":
+                case ".save":
+                case ".size":
+                case ".fnend":
+                case ".pad":
+                case ".globl": // TODO might need this one
+                case ".local":
                     break;
 
                 case "@":
@@ -930,6 +974,11 @@ namespace ts.pxtc.assembler {
             }
         }
 
+        private clearLabels() {
+            this.labels = {}
+            this.commPtr = 0
+        }
+
         private peepPass(reallyFinal: boolean) {
             if (this.disablePeepHole)
                 return;
@@ -941,7 +990,7 @@ namespace ts.pxtc.assembler {
 
             this.throwOnError = true;
             this.finalEmit = false;
-            this.labels = {};
+            this.clearLabels();
             this.iterLines();
             assert(!this.checkStack || this.stack == 0);
             this.finalEmit = true;
@@ -966,7 +1015,7 @@ namespace ts.pxtc.assembler {
             if (this.errors.length > 0)
                 return;
 
-            this.labels = {};
+            this.clearLabels();
             this.iterLines();
 
             if (this.checkStack && this.stack != 0)
@@ -977,7 +1026,7 @@ namespace ts.pxtc.assembler {
 
             this.ei.expandLdlit(this);
             this.ei.commonalize(this);
-            this.labels = {};
+            this.clearLabels();
             this.iterLines();
 
             this.finalEmit = true;

@@ -3,15 +3,20 @@
 namespace pxt {
     declare var require: any;
 
+    let lzmaPromise: Promise<any>;
     function getLzmaAsync() {
-        if (U.isNodeJS) return Promise.resolve(require("lzma"));
-        else {
-            let lz = (<any>window).LZMA;
-            if (lz) return Promise.resolve(lz);
-            const monacoPaths: Map<string> = (window as any).MonacoPaths
-            return BrowserUtils.loadScriptAsync(monacoPaths['lzma/lzma_worker-min.js'])
-                .then(() => (<any>window).LZMA);
+        let lzmaPromise: Promise<any>;
+        if (!lzmaPromise) {
+            if (U.isNodeJS)
+                lzmaPromise = Promise.resolve(require("lzma"));
+            else
+                lzmaPromise = Promise.resolve((<any>window).LZMA);
+            lzmaPromise.then(res => {
+                if (!res) pxt.reportError('lzma', 'failed to load');
+                return res;
+            })
         }
+        return lzmaPromise;
     }
 
     export function lzmaDecompressAsync(buf: Uint8Array): Promise<string> { // string
@@ -19,10 +24,12 @@ namespace pxt {
             .then(lzma => new Promise<string>((resolve, reject) => {
                 try {
                     lzma.decompress(buf, (res: string, error: any) => {
+                        if (error) pxt.debug(`lzma decompression failed`);
                         resolve(error ? undefined : res);
                     })
                 }
                 catch (e) {
+                    if (e) pxt.debug(`lzma decompression failed`);
                     resolve(undefined);
                 }
             }));
@@ -33,10 +40,12 @@ namespace pxt {
             .then(lzma => new Promise<Uint8Array>((resolve, reject) => {
                 try {
                     lzma.compress(text, 7, (res: any, error: any) => {
+                        if (error) pxt.reportException(error);
                         resolve(error ? undefined : new Uint8Array(res));
                     })
                 }
                 catch (e) {
+                    pxt.reportException(e)
                     resolve(undefined);
                 }
             }));
@@ -176,6 +185,7 @@ namespace pxt.cpp {
 
         let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
+        let abiInc = ""
         let includesInc = `#include "pxt.h"\n`
         let fullCS = ""
         let thisErrors = ""
@@ -526,6 +536,21 @@ namespace pxt.cpp {
                     }
                     return
                 }
+
+                m = /^PXT_ABI\((\w+)\)/.exec(ln)
+                if (m) {
+                    pointersInc += `PXT_FNPTR(::${m[1]}),\n`
+                    abiInc += `extern "C" void ${m[1]}();\n`
+                    res.functions.push({
+                        name: m[1],
+                        argsFmt: "",
+                        value: 0
+                    })
+                }
+
+                m = /^#define\s+PXT_COMM_BASE\s+([0-9a-fx]+)/.exec(ln)
+                if (m)
+                    res.commBase = parseInt(m[1])
 
                 // function definition
                 m = /^\s*(\w+)([\*\&]*\s+[\*\&]*)(\w+)\s*\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
@@ -979,7 +1004,7 @@ namespace pxt.cpp {
         }
 
         if (!isCSharp) {
-            res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
+            res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + abiInc + pointersInc + "\nPXT_SHIMS_END\n"
             res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
             if (isYotta)
                 res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"

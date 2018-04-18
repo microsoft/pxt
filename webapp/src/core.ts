@@ -11,8 +11,6 @@ import Util = pxt.Util;
 
 export let highContrast: boolean;
 
-const lf = Util.lf;
-
 export type Component<S, T> = data.Component<S, T>;
 
 let dimmerInitialized = false;
@@ -65,7 +63,7 @@ export function showLoading(id: string, msg: string) {
     $('.ui.dimmer.loading').dimmer('show');
     $('.ui.dimmer.loading').html(`
   <div class="content loadingcontent">
-    <div class="ui text large loader msg" aria-live="assertive">${lf("Please wait")}</div>
+    <div class="ui text large loader main msg" aria-live="assertive">${lf("Please wait")}</div>
   </div>
 `)
     loadingQueue.push(id);
@@ -266,7 +264,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     let btnno = 0
     for (let b of buttons) {
         html += `
-      <${b.url ? "a" : "button"} class="ui right labeled icon button ${b.class || "approve positive"} focused" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} ${b.fileName ? `download="${Util.htmlEscape(b.fileName)}"` : ''} target="_blank">
+      <${b.url ? "a" : "button"} class="ui right labeled icon button approve ${b.class || "positive"} focused" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} ${b.fileName ? `download="${Util.htmlEscape(b.fileName)}"` : ''} target="_blank">
         ${Util.htmlEscape(b.label)}
         ${b.icon ? `<i class="${b.icon || "checkmark"} icon"></i>` : '' }
       </${b.url ? "a" : "button"}>`

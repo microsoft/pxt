@@ -143,7 +143,6 @@ declare namespace pxt {
         trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
         invalidatedClass?: string; // CSS class to be applied to the sim iFrame when it needs to be updated (defaults to sepia filter)
         stoppedClass?: string; // CSS class to be applied to the sim iFrame when it isn't running (defaults to grayscale filter)
-        debugger?: boolean; // enable debugger by default
     }
 
     interface TargetCompileService {
@@ -200,7 +199,8 @@ declare namespace pxt {
         sideDoc?: string; // deprecated
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
         feedbackUrl?: string; // is set: a feedback link will show in the settings menu
-        boardName?: string;
+        boardName?: string; // official branded name for the board or product
+        boardNickname?: string; // common nickname to use for the board or product
         driveDisplayName?: string; // name of the drive as it shows in the explorer
         privacyUrl?: string;
         termsOfUseUrl?: string;
@@ -244,6 +244,7 @@ declare namespace pxt {
         },
         disableLiveTranslations?: boolean; // don't load translations from crowdin
         extendEditor?: boolean; // whether a target specific editor.js is loaded
+        extendFieldEditors?: boolean; // wether a target specific fieldeditors.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
         selectLanguage?: boolean; // add language picker to settings menu
         availableLocales?: string[]; // the list of enabled language codes
@@ -381,6 +382,7 @@ declare namespace ts.pxtc {
         shimsDTS: string;
         enumsDTS: string;
         onlyPublic: boolean;
+        commBase?: number;
     }
 
     interface HexInfo {

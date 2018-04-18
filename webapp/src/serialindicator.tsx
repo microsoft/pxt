@@ -46,7 +46,7 @@ export class SerialIndicator extends React.Component<SerialIndicatorProps, Seria
         return (
             <div title={lf("Open console")} className="ui label circular" tabIndex={0} onClick={this.props.onClick} onKeyDown={sui.fireClickOnEnter}>
                 <div className="detail">
-                    <img alt={lf("Animated bar chart")} className="barcharticon" src={Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/Bars_black.gif`)}></img>
+                    <img alt={lf("Animated bar chart")} className="barcharticon" src={pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/Bars_black.gif`)}></img>
                 </div>
                 {lf("Show console")}
                 <div className="detail">

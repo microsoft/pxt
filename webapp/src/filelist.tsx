@@ -160,14 +160,14 @@ namespace custom {
         const targetTheme = pxt.appTarget.appTheme;
         const plus = show && !pkg.mainEditorPkg().files[customFile]
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
-        return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only`}>
+        return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
             <div role="treeitem" aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={() => this.toggleVisibility()} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                 {lf("Explorer")}
                 <sui.Icon icon={`chevron ${show ? "down" : "right"} icon`} />
                 {plus ? <sui.Button class="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={(e) => { this.addCustomBlocksFile(); e.stopPropagation(); }} onKeyDown={(e) => e.stopPropagation()} /> : undefined}
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
-            {show ? Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
+            {show ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
         </div>;
     }
 }

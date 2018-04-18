@@ -53,6 +53,7 @@ namespace pxt.editor {
         mute?: boolean;
         embedSimView?: boolean;
         tracing?: boolean;
+        debugging?: boolean;
         bannerVisible?: boolean;
 
         highContrast?: boolean;
@@ -115,6 +116,8 @@ namespace pxt.editor {
         setState(st: IAppState): void;
         forceUpdate(): void;
 
+        reloadEditor(): void;
+
         openBlocks(): void;
         openJavaScript(giveFocusOnLoading?: boolean): void;
         openSettings(): void;
@@ -166,8 +169,8 @@ namespace pxt.editor {
 
         startStopSimulator(): void;
         stopSimulator(unload?: boolean): void;
-        restartSimulator(): void;
-        startSimulator(): void;
+        restartSimulator(debug?: boolean): void;
+        startSimulator(debug?: boolean): void;
         runSimulator(): void;
         expandSimulator(): void;
         collapseSimulator(): void;
@@ -179,6 +182,11 @@ namespace pxt.editor {
         openInstructions(): void;
         closeFlyout(): void;
         printCode(): void;
+
+        toggleDebugging(): void;
+        dbgPauseResume(): void;
+        dbgStepInto(): void;
+        dbgStepOver(): void;
 
         setBanner(b: boolean): void;
 
@@ -193,6 +201,7 @@ namespace pxt.editor {
         fireResize(): void;
         updateEditorLogo(left: number, rgba?: string): void;
 
+        loadBlocklyAsync(): Promise<void>;
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;
         renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<string>;
@@ -259,8 +268,15 @@ namespace pxt.editor {
         beforeCompile?: () => void;
         deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
-        fieldEditors?: IFieldCustomOptions[];
         toolboxOptions?: IToolboxOptions;
+    }
+
+    export interface FieldExtensionOptions {
+
+    }
+
+    export interface FieldExtensionResult {
+        fieldEditors?: IFieldCustomOptions[];
     }
 
     export interface MonacoToolboxDefinition {
@@ -356,7 +372,11 @@ namespace pxt.editor {
         retType?: string;
     }
 
-    export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;
+    export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>
+        = opts => Promise.resolve<ExtensionResult>({});
+
+    export let initFieldExtensionsAsync: (opts: FieldExtensionOptions) => Promise<FieldExtensionResult>
+        = opts => Promise.resolve<FieldExtensionResult>({});
 
     export interface NativeHostMessage {
         name?: string;

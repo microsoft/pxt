@@ -105,11 +105,11 @@ export class Editor implements pxt.editor.IEditor {
         return Promise.resolve('');
     }
 
-    highlightStatement(brk: pxtc.LocationInfo) { }
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean { return false; }
 
     clearHighlightedStatements() { }
 
-    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories = pxt.blocks.CategoryMode.All): Element {
+    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories = pxt.toolbox.CategoryMode.All): Element {
         return null
     }
 

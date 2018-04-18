@@ -104,7 +104,7 @@ ${lbl}: .string ${asmStringLiteral(s)}
         hex_literal(lbl: string, data: string) {
             return `
 .balign 4
-${lbl}: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_BUFFER + "," : ""} ${data.length >> 1}
+${lbl}: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_BUFFER + "," : ""} ${data.length >> 1}${target.taggedInts ? ", 0x0000" : ""}
         .hex ${data}${data.length % 4 == 0 ? "" : "00"}
 `
         }

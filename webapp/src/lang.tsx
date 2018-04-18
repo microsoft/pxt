@@ -5,8 +5,6 @@ import * as data from "./data"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-const lf = pxt.Util.lf;
-
 interface LanguagesState {
     visible?: boolean;
 }
@@ -115,8 +113,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
             pxt.tickEvent(`menu.lang.changelang.${langId}`);
             pxt.winrt.releaseAllDevicesAsync()
                 .then(() => {
-                    location.hash = "#reload";
-                    window.location.reload();
+                    this.props.parent.reloadEditor();
                 })
                 .done();
         } else {

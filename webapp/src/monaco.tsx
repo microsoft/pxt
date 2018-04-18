@@ -11,7 +11,6 @@ import * as data from "./data";
 import * as snippets from "./monacoSnippets"
 
 import Util = pxt.Util;
-const lf = Util.lf
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -108,6 +107,7 @@ export class Editor extends srceditor.Editor {
             // 3) check that decompiled js == current js % white space
             let blocksInfo: pxtc.BlocksInfo;
             return this.parent.saveFileAsync()
+                .then(() => this.parent.loadBlocklyAsync())
                 .then(() => compiler.getBlocksAsync())
                 .then((bi: pxtc.BlocksInfo) => {
                     blocksInfo = bi;
@@ -133,7 +133,7 @@ export class Editor extends srceditor.Editor {
                     return [oldWorkspace, true];
                 }).then((values) => {
                     if (!values) return Promise.resolve();
-                    const oldWorkspace = values[0] as B.Workspace;
+                    const oldWorkspace = values[0] as Blockly.Workspace;
                     const shouldDecompile = values[1] as boolean;
                     if (!shouldDecompile) return Promise.resolve();
                     return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
@@ -256,8 +256,8 @@ export class Editor extends srceditor.Editor {
         monaco.editor.setTheme('pxtTheme');
 
         function fixColor(hexcolor: string) {
-            hexcolor = pxt.blocks.convertColour(hexcolor);
-            return (inverted ? Blockly.PXTUtils.fadeColour(hexcolor, invertedColorluminosityMultipler, true) : hexcolor).replace('#', '');
+            hexcolor = pxt.toolbox.convertColor(hexcolor);
+            return (inverted ? pxt.toolbox.fadeColor(hexcolor, invertedColorluminosityMultipler, true) : hexcolor).replace('#', '');
         }
     }
 
@@ -470,7 +470,7 @@ export class Editor extends srceditor.Editor {
             this.editorViewZones = [];
 
             this.setupToolbox(editorArea);
-        })
+        });
     }
 
     protected dragCurrentPos = { x: 0, y: 0 };
@@ -708,7 +708,7 @@ export class Editor extends srceditor.Editor {
     getNamespaceAttrs(ns: string) {
         const builtin = snippets.getBuiltinCategory(ns);
         if (builtin) {
-            builtin.attributes.color = pxt.blocks.getNamespaceColor(builtin.nameid);
+            builtin.attributes.color = pxt.toolbox.getNamespaceColor(builtin.nameid);
             return builtin.attributes;
         }
 
@@ -758,6 +758,11 @@ export class Editor extends srceditor.Editor {
             monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
             if (fnState == pxt.editor.FilterState.Hidden) return undefined;
 
+            const snippet = fn.snippet;
+            if (!snippet) {
+                return undefined;
+            }
+
             let monacoBlockArea = document.createElement('div');
             monacoBlockArea.className = `monacoBlock ${monacoBlockDisabled ? 'monacoDisabledBlock' : ''}`;
             monacoFlyout.appendChild(monacoBlockArea);
@@ -766,7 +771,6 @@ export class Editor extends srceditor.Editor {
             monacoBlock.tabIndex = 0;
             monacoBlockArea.appendChild(monacoBlock);
 
-            const snippet = fn.snippet;
             const comment = fn.attributes.jsDoc;
 
             let snippetPrefix = fn.noNamespace ? "" : ns;
@@ -894,12 +898,12 @@ export class Editor extends srceditor.Editor {
                 // Highlight on hover
                 const highlightBlock = () => {
                     monacoBlock.style.backgroundColor = monacoBlockDisabled ?
-                        `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.8, false)}` :
-                        `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.1, false)}`;
+                        `${pxt.toolbox.fadeColor(color || '#ddd', 0.8, false)}` :
+                        `${pxt.toolbox.fadeColor(color || '#ddd', 0.1, false)}`;
                 }
                 const unhighlightBlock = () => {
                     monacoBlock.style.backgroundColor = monacoBlockDisabled ?
-                        `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.8, false)}` :
+                        `${pxt.toolbox.fadeColor(color || '#ddd', 0.8, false)}` :
                         `${color}`;
                 }
                 monacoBlock.onmouseenter = (e: MouseEvent) => {
@@ -933,9 +937,9 @@ export class Editor extends srceditor.Editor {
             monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
             monacoBlock.style.lineHeight = `${monacoEditor.parent.settings.editorFontSize + 1}px`;
             monacoBlock.style.backgroundColor = monacoBlockDisabled ?
-                `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.8, false)}` :
+                `${pxt.toolbox.fadeColor(color || '#ddd', 0.8, false)}` :
                 `${color}`;
-            monacoBlock.style.borderColor = `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.2, false)}`;
+            monacoBlock.style.borderColor = `${pxt.toolbox.fadeColor(color || '#ddd', 0.2, false)}`;
             if (fn.retType && fn.retType == "boolean") {
                 // Show a hexagonal shape
                 monacoBlock.style.borderRadius = "0px";
@@ -1207,18 +1211,24 @@ export class Editor extends srceditor.Editor {
     }
 
     private highlightDecorations: string[] = [];
-    highlightStatement(brk: pxtc.LocationInfo) {
-        if (!brk) this.clearHighlightedStatements();
-        if (!brk || !this.currFile || this.currFile.name != brk.fileName || !this.editor) return;
-        let position = this.editor.getModel().getPositionAt(brk.start);
-        let end = this.editor.getModel().getPositionAt(brk.start + brk.length);
-        if (!position || !end) return;
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage) {
+        if (!stmt) this.clearHighlightedStatements();
+        if (!stmt || !this.currFile || this.currFile.name != stmt.fileName || !this.editor)
+            return false;
+        let position = this.editor.getModel().getPositionAt(stmt.start);
+        let end = this.editor.getModel().getPositionAt(stmt.start + stmt.length);
+        if (!position || !end) return false;
         this.highlightDecorations = this.editor.deltaDecorations(this.highlightDecorations, [
             {
                 range: new monaco.Range(position.lineNumber, position.column, end.lineNumber, end.column),
                 options: { inlineClassName: 'highlight-statement' }
             },
         ]);
+        if (brk) {
+            // center on statement
+            this.editor.revealPositionInCenter(position);
+        }
+        return true;
     }
 
     clearHighlightedStatements() {
@@ -1365,7 +1375,7 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
 
     componentDidUpdate(prevProps: MonacoToolboxProps, prevState: MonacoToolboxState) {
         // Inject toolbox icon css
-        pxt.blocks.injectToolboxIconCss();
+        pxt.toolbox.injectToolboxIconCss();
     }
 
     advancedClicked() {
@@ -1464,11 +1474,11 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
                         <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
                     )) }
                     {hasAdvanced ? <TreeSeparator key="advancedseparator" /> : undefined}
-                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ ns: "", category: pxt.blocks.advancedTitle(), color: pxt.blocks.getNamespaceColor('advanced'), icon: showAdvanced ? 'advancedexpanded' : 'advancedcollapsed' }} onCategoryClick={this.advancedClicked.bind(this) }/> : undefined}
+                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ ns: "", category: pxt.toolbox.advancedTitle(), color: pxt.toolbox.getNamespaceColor('advanced'), icon: showAdvanced ? 'advancedexpanded' : 'advancedcollapsed' }} onCategoryClick={this.advancedClicked.bind(this) }/> : undefined}
                     {showAdvanced ? advancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
                     )) : undefined}
-                    {hasPackages && showAdvanced ? <TreeRow treeRow={{ ns: "", category: pxt.blocks.addPackageTitle(), color: '#717171', icon: "addpackage" }} onClick={this.addPackage.bind(this) } /> : undefined }
+                    {hasPackages && showAdvanced ? <TreeRow treeRow={{ ns: "", category: pxt.toolbox.addPackageTitle(), color: '#717171', icon: "addpackage" }} onClick={this.addPackage.bind(this) } /> : undefined }
                 </div>
             </div>
         </div>
@@ -1589,7 +1599,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         const {selected, onClick, onKeyDown} = this.props;
         const {ns, icon, color, category, injectIconClass} = this.props.treeRow;
         const appTheme = pxt.appTarget.appTheme;
-        let metaColor = pxt.blocks.convertColour(color);
+        let metaColor = pxt.toolbox.convertColor(color);
 
         const invertedMultipler = appTheme.blocklyOptions
             && appTheme.blocklyOptions.toolboxOptions
@@ -1597,7 +1607,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
 
         let onmouseenter = () => {
             if (appTheme.invertedToolbox) {
-                this.treeRow.style.backgroundColor = Blockly.PXTUtils.fadeColour(metaColor || '#ddd', invertedMultipler, false);
+                this.treeRow.style.backgroundColor = pxt.toolbox.fadeColor(metaColor || '#ddd', invertedMultipler, false);
             }
         }
         let onmouseleave = () => {
@@ -1626,7 +1636,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         if (selected) {
             treeRowClass += ' blocklyTreeSelected';
             if (appTheme.invertedToolbox) {
-                treeRowStyle.backgroundColor = `${Blockly.PXTUtils.fadeColour(color, (Blockly as any).Options.invertedMultiplier, false)}`;
+                treeRowStyle.backgroundColor = `${pxt.toolbox.fadeColor(color, invertedMultipler, false)}`;
             } else {
                 treeRowStyle.backgroundColor = (metaColor || '#ddd');
             }
@@ -1636,7 +1646,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         // Icon
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
         if (icon && injectIconClass) {
-            pxt.blocks.appendToolboxIconCss(iconClass, icon);
+            pxt.toolbox.appendToolboxIconCss(iconClass, icon);
         }
 
         return <div ref={e => this.treeRow = e} className={treeRowClass}

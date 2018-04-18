@@ -752,6 +752,7 @@ declare namespace Blockly {
         setTooltip(newTip: string | (() => void)): void;
         // Passing null will delete current text
         setWarningText(text: string): void;
+        setHighlightWarning(isHighlightingWarning: boolean): void;
         isEditable(): boolean;
         isInsertionMarker(): boolean;
         isShadow(): boolean;
@@ -762,6 +763,18 @@ declare namespace Blockly {
         getRelativeToSurfaceXY(): goog.math.Coordinate;
         getOutputShape(): number;
         getSvgRoot(): Element;
+    }
+
+    class WorkspaceComment {
+        getContent(): string;
+
+        getRelativeToSurfaceXY(): goog.math.Coordinate;
+        moveBy(x: number, y: number): void;
+        getHeightWidth(): { width: number; height: number; };
+        getBoundingRectangle(): {
+            topLeft: goog.math.Coordinate;
+            bottomRight: goog.math.Coordinate;
+        }
     }
 
     class Comment extends Icon {
@@ -889,10 +902,12 @@ declare namespace Blockly {
         newBlock(prototypeName: string, opt_id?: string): Block;
         addTopBlock(block: Block): void;
         getAllBlocks(): Block[];
+        getAllVariables(): Blockly.VariableModel[];
         render(): void;
         clear(): void;
         dispose(): void;
         getTopBlocks(ordered: boolean): Block[];
+        getTopComments(ordered: boolean): WorkspaceComment[];
         getBlockById(id: string): Block;
         getAllBlocks(): Block[];
         traceOn(armed: boolean): void;
@@ -905,6 +920,7 @@ declare namespace Blockly {
         zoomCenter(type: number): void;
         scrollCenter(): void;
         highlightBlock(id: string): void;
+        centerOnBlock(id: string): void;
         glowBlock(id: string, state: boolean): void;
         glowStack(id: string, state: boolean): void;
         undo(redo?: boolean): void;
@@ -1013,7 +1029,6 @@ declare namespace Blockly {
 
     namespace Variables {
         function generateVariableFieldXml_(variableModel: VariableModel): void;
-        function allVariables(wp: Workspace): string[];
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
         let flyoutCategoryBlocks: (wp: Workspace) => HTMLElement[];
         function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;

@@ -4,7 +4,7 @@ export function setupDragAndDrop(r: HTMLElement, filter: (file: File) => boolean
     r.addEventListener('paste', function (e: ClipboardEvent) {
         if (e.clipboardData) {
             // has file?
-            let files = Util.toArray<File>(e.clipboardData.files).filter(filter)
+            let files = pxt.Util.toArray<File>(e.clipboardData.files).filter(filter)
             if (files.length > 0) {
                 e.stopPropagation(); // Stops some browsers from redirecting.
                 e.preventDefault();
@@ -35,7 +35,7 @@ export function setupDragAndDrop(r: HTMLElement, filter: (file: File) => boolean
         return true;
     }, false);
     r.addEventListener('drop', function (e: DragEvent) {
-        let files = Util.toArray<File>(e.dataTransfer.files);
+        let files = pxt.Util.toArray<File>(e.dataTransfer.files);
         if (files.length > 0) {
             e.stopPropagation(); // Stops some browsers from redirecting.
             e.preventDefault();

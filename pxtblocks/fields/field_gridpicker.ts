@@ -43,6 +43,8 @@ namespace pxtblockly {
         private hasSearchBar_: boolean;
         private hideRect_: boolean;
 
+        protected dropDownOpen_: boolean;
+
         constructor(text: string, options: FieldGridPickerOptions, validator?: Function) {
             super(options.data);
 
@@ -52,7 +54,7 @@ namespace pxtblockly {
 
             this.backgroundColour_ = pxtblockly.parseColour(options.colour);
             this.itemColour_ = options.itemColour || "rgba(255, 255, 255, 0.6)";
-            this.borderColour_ = Blockly.PXTUtils.fadeColour(this.backgroundColour_, 0.4, false);
+            this.borderColour_ = pxt.toolbox.fadeColor(this.backgroundColour_, 0.4, false);
 
             let tooltipCfg: FieldGridPickerToolTipConfig = {
                 xOffset: parseInt(options.tooltipsXOffset) || 15,
@@ -194,11 +196,11 @@ namespace pxtblockly {
             }
             this.value_ = newValue;
             // Look up and display the human-readable text.
-            var options = this.getOptions();
-            for (var i = 0; i < options.length; i++) {
+            let options = this.getOptions();
+            for (let i = 0; i < options.length; i++) {
                 // Options are tuples of human-readable text and language-neutral values.
                 if ((options[i] as any)[1] == newValue) {
-                    var content = (options[i] as any)[0];
+                    let content = (options[i] as any)[0];
                     if (typeof content == 'object') {
                         this.imageJson_ = content;
                         this.setText(content.alt); // Use setText() because it handles displaying image selection
@@ -277,6 +279,7 @@ namespace pxtblockly {
          * @private
          */
         public showEditor_() {
+            this.dropDownOpen_ = true;
             Blockly.WidgetDiv.show(this, this.sourceBlock_.RTL, null);
 
             this.disposeTooltips();
@@ -327,7 +330,7 @@ namespace pxtblockly {
                     searchBar.focus();
                     searchBar.setSelectionRange(0, searchBar.value.length);
                 });
-                searchBar.addEventListener("keyup", Util.debounce(() => {
+                searchBar.addEventListener("keyup", pxt.Util.debounce(() => {
                     let text = searchBar.value;
                     let re = new RegExp(text, "i");
                     let filteredOptions = options.filter((block) => {
