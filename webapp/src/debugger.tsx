@@ -77,24 +77,18 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         return varstr;
     }
 
-    freeze() {
-        const variables = this.state.variables;
-        Object.keys(variables).forEach(v => delete variables[v].prevValue);
-        this.setState({ variables, frozen: true })
-    }
-
-    update() {
+    update(frozen = false) {
         const variables = this.state.variables;
         Object.keys(this.nextVariables).forEach(k => {
             const v = this.nextVariables[k];
             const sv = DebuggerVariables.capLength(DebuggerVariables.renderValue(v));
             variables[k] = {
                 value: sv,
-                prevValue: variables[k] && sv != variables[k].value ?
+                prevValue: !frozen && variables[k] && sv != variables[k].value ?
                     variables[k].value : undefined
             }
         })
-        this.setState({ variables: variables, frozen: false });
+        this.setState({ variables: variables, frozen });
         this.nextVariables = {};
     }
 

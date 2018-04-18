@@ -674,7 +674,7 @@ export class Editor extends srceditor.Editor {
         if (!this.parent.state.debugging) return;
         if (!globals) {
             // freeze the ui
-            if(this.debugVariables) this.debugVariables.freeze()
+            if(this.debugVariables) this.debugVariables.update(true);
             return;
         }
         const vars = this.editor.getAllVariables().map((variable: any) => variable.name as string);
