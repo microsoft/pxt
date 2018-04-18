@@ -285,10 +285,9 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
     const branch = pxt.appTarget.appTheme.crowdinBranch;
     return passwordGetAsync(CROWDIN_KEY)
         .then(key => {
-            if (!key)
-                process.env[pxt.crowdin.KEY_VARIABLE] as string;
+            key = key || process.env[pxt.crowdin.KEY_VARIABLE] as string;
             if (!key) {
-                console.log(`crowdin operation skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+                pxt.log(`crowdin operation skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
                 return Promise.resolve();
             }
 
@@ -1864,6 +1863,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     pxt.log(`building target.json in ${process.cwd()}...`)
 
     return buildWebStringsAsync()
+        .then(() => internalGenDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
             const isPrj = /prj$/.test(dirname);
@@ -3059,7 +3059,7 @@ function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOption
             if (useNative)
                 return pxtc.compile(opts)
             else {
-                pxt.log("  skip native build of non-project")
+                pxt.debug("  skip native build of non-project")
                 return null
             }
         })
@@ -3678,7 +3678,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                 }));
             }
 
-            console.log(`Package built; written to ${pxt.outputName()}; size: ${(res.outfiles[pxt.outputName()] || "").length}`)
+            pxt.log(`Package built; written to ${pxt.outputName()}; size: ${(res.outfiles[pxt.outputName()] || "").length}`)
 
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:
@@ -3689,6 +3689,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                         if (info.pkg &&
                             info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
                     }
+                    pxt.debug(`generating api docs (${Object.keys(apiInfo.byQName).length})`);
                     const md = pxtc.genDocs(mainPkg.config.name, apiInfo, {
                         package: mainPkg.config.name != pxt.appTarget.corepkg && !mainPkg.config.core,
                         locs: buildOpts.locs,
@@ -3698,20 +3699,19 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                         const filterRx = new RegExp(buildOpts.fileFilter, "i");
                         Object.keys(md).filter(fn => !filterRx.test(fn)).forEach(fn => delete md[fn]);
                     }
-                    mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
                     for (const fn in md) {
                         const folder = /strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
                         const ffn = path.join(folder, fn);
                         if (!buildOpts.createOnly || !fs.existsSync(ffn)) {
                             nodeutil.mkdirP(path.dirname(ffn));
                             mainPkg.host().writeFile(mainPkg, ffn, md[fn])
-                            console.log(`generated ${ffn}; size=${md[fn].length}`)
+                            pxt.debug(`generated ${ffn}; size=${md[fn].length}`)
                         }
                     }
                     return null
                 case BuildOption.Deploy:
                     if (!pxt.commands.deployCoreAsync) {
-                        console.log("no deploy functionality defined by this target")
+                        pxt.log("no deploy functionality defined by this target")
                         return null;
                     }
                     return pxt.commands.deployCoreAsync(res);
@@ -3735,8 +3735,7 @@ function crowdinCredentialsAsync(): Promise<{ prj: string; key: string; branch: 
     }
     return passwordGetAsync(CROWDIN_KEY)
         .then(key => {
-            if (!key)
-                key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
+            key = key || process.env[pxt.crowdin.KEY_VARIABLE] as string;
             if (!key) {
                 pxt.log(`crowdin upload skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
                 return undefined;
@@ -4216,16 +4215,29 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
 
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
     const docs = !!parsed.flags["docs"];
-    const locs = !!parsed.flags["loc"];
+    const locs = !!parsed.flags["locs"];
     const fileFilter = parsed.flags["files"] as string;
     const createOnly = !!parsed.flags["create"];
-    return buildCoreAsync({
+    return internalGenDocsAsync(docs, locs, fileFilter, createOnly);
+}
+
+function internalGenDocsAsync(docs: boolean, locs: boolean, fileFilter?: string, createOnly?: boolean) {
+    const buildAsync = () => buildCoreAsync({
         mode: BuildOption.GenDocs,
         docs,
         locs,
         fileFilter,
         createOnly
     }).then((compileOpts) => { });
+
+    // from target location?
+    if (fs.existsSync("pxtarget.json") && !!readJson("pxtarget.json").appTheme)
+        return forEachBundledPkgAsync((pkg, dirname) => {
+            pxt.debug(`building docs in ${dirname}`);
+            return buildAsync();
+        });
+    else // from a project build 
+        return buildAsync();
 }
 
 export function deployAsync(parsed?: commandParser.ParsedCommand) {
@@ -4922,20 +4934,19 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
         .then(() => nodeutil.mkdirP(pkgsroot))
         .then(() => pxt.github.searchAsync("", packages))
         .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
-                            .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
+            .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
         .then(fullnames => Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
-                .then(tags => {
-                    const tag = tags.reverse()[0] || "master";
-                    pxt.log(`${fullname}#${tag}`);
-                    repos[fullname] = { fullname, tag };
-                }))
+            .then(tags => {
+                const tag = tags.reverse()[0] || "master";
+                repos[fullname] = { fullname, tag };
+            }))
         ).then(() => {
             todo = Object.keys(repos);
             pxt.log(`found ${todo.length} packages`);
             // 2. process each repo
             return nextAsync();
         })
-    );
+        );
 }
 
 function initCommands() {
