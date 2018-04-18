@@ -3735,8 +3735,7 @@ function crowdinCredentialsAsync(): Promise<{ prj: string; key: string; branch: 
     }
     return passwordGetAsync(CROWDIN_KEY)
         .then(key => {
-            if (!key)
-                key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
+            key = key || process.env[pxt.crowdin.KEY_VARIABLE] as string;
             if (!key) {
                 pxt.log(`crowdin upload skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
                 return undefined;
