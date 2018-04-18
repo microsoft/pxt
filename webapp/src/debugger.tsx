@@ -12,7 +12,6 @@ interface DebuggerVariablesState {
 
 interface Variable {
     value: string;
-    type: string;
     prevValue?: string;
 }
 
@@ -41,50 +40,55 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         this.nextVariables[name] = value;
     }
 
+    static renderValue(v: any): string {
+        let sv = '';
+        let type = typeof v;
+        switch (type) {
+            case "undefined": sv = "undefined"; break;
+            case "number": sv = v + ""; break;
+            case "boolean": sv = v + ""; break;
+            case "string": sv = JSON.stringify(v); break;
+            case "object":
+                if (v == null) sv = "null";
+                else if (Array.isArray(v)) return `[${v.map(vi => this.renderValue(vi)).join(',')}]`;
+                else if (v.id && v.value) return DebuggerVariables.renderValue(v.value);
+                else if (v.id !== undefined) sv = "(object)"
+                else if (v.text) sv = v.text;
+                else sv = "(unknown)"
+                break;
+        }
+        return sv;
+    }
+
+    static capLength(varstr: string) {
+        let remaining = DebuggerVariables.MAX_VARIABLE_CHARS - 3; // acount for ...
+        let hasQuotes = false;
+        if (varstr.indexOf('"') == 0) {
+            remaining - 2;
+            hasQuotes = true;
+            varstr = varstr.substring(1, varstr.length - 1);
+        }
+        if (varstr.length > remaining)
+            varstr = varstr.substring(0, remaining) + '...';
+        if (hasQuotes) {
+            varstr = '"' + varstr + '"'
+        }
+        return varstr;
+    }
+
     update() {
         const variables = this.state.variables;
         Object.keys(this.nextVariables).forEach(k => {
             const v = this.nextVariables[k];
-            let sv = '';
-            let type = typeof (v);
-            switch (type) {
-                case "undefined": sv = "undefined"; break;
-                case "number": sv = v + ""; break;
-                case "boolean": sv = v + ""; break;
-                case "string": sv = JSON.stringify(v); break;
-                case "object":
-                    if (v == null) sv = "null";
-                    else if (v.id !== undefined) sv = "(object)"
-                    else if (v.text) sv = v.text;
-                    else sv = "(unknown)"
-                    break;
-            }
-            sv = capLength(sv);
+            const sv = DebuggerVariables.capLength(DebuggerVariables.renderValue(v));
             variables[k] = {
                 value: sv,
-                type: type,
                 prevValue: variables[k] && sv != variables[k].value ?
                     variables[k].value : undefined
             }
         })
         this.setState({ variables: variables });
         this.nextVariables = {};
-
-        function capLength(varstr: string) {
-            let remaining = DebuggerVariables.MAX_VARIABLE_CHARS - 3; // acount for ...
-            let hasQuotes = false;
-            if (varstr.indexOf('"') == 0) {
-                remaining - 2;
-                hasQuotes = true;
-                varstr = varstr.substring(1, varstr.length - 1);
-            }
-            if (varstr.length > remaining)
-                varstr = varstr.substring(0, remaining) + '...';
-            if (hasQuotes) {
-                varstr = '"' + varstr + '"'
-            }
-            return varstr;
-        }
     }
 
     renderCore() {
