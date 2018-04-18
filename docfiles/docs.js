@@ -202,7 +202,7 @@ function setupBlocklyAsync() {
     } else if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
         let opts = {};
         promise = promise.then(function () {
-            return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editors.js")
+            return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
         }).then(function () {
             return pxt.editor.initExtensionsAsync(opts)
         }).then(function (res) {
