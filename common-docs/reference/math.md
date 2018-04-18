@@ -108,6 +108,25 @@ Make up any number from a minimum value to a some maximum value. If you want a r
 let myRandom = Math.randomRange(0, 5);
 ```
 
+## Map
+
+A _map_ is a conversion of one span (range) of numbers to another. If a dog can live to 16 years and a person lives to 87 years, how do you make a 16 year life span seem like a 87 year life span? You say that one dog year is like some number of people years. This is a _mapping_ of dog years to people years. 
+
+Fahrenheit and Celsius are different ways to measure temperature. Celsius doesn't use the same amount of degrees as Fahrenheit. So, there is more energy in one degree of Celsius. If you want to convert a temperature value of Fahrenheit (something between freezing and boiling maybe) to Celsius, you can use ``Math.map(50, 32, 212, 0, 100)``. The map makes 50 degrees of Fahrenheit turn into 10 degrees of Celsius.
+
+```block 
+let dogsAge = 7
+let peoplesAge = Math.map(dogsAge, 1, 16, 15, 87)
+```
+
+## Constrain 
+ 
+Make certain that the value of a number you give is no smaller and no bigger than two other numbers. So, ``Math.constrain(15, 6, 10)`` equals 10 and ``Math.constrain(3, 6, 10)`` equals 6.
+
+```block
+let limited = Math.constrain(10, 0, 9);
+```
+
 ## See also #seealso
 
 [abs](/reference/math/abs), [min](/reference/math/min), [max](/reference/math/max),
