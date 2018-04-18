@@ -108,9 +108,9 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 return;
             }
             // we had an expected but could not find a block            
-            if (!highlighted && brk.exceptionMessage) {  
+            if (!highlighted && brk.exceptionMessage) {
                 pxt.debug(`runtime error: ${brk.exceptionMessage}`);
-                pxt.debug(brk.exceptionStack);             
+                pxt.debug(brk.exceptionStack);
                 if (config) config.orphanException(brk);
             }
             postSimEditorEvent("stopped", brk.exceptionMessage);
