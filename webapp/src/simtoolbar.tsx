@@ -63,7 +63,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const trace = run && !!simOpts.enableTrace;
         const tracing = this.props.parent.state.tracing;
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
-        const debug = !trace && !!simOpts.debugger;
         const debugging = parentState.debugging;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
@@ -83,7 +82,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 {run ? <sui.Button disabled={debugging} key='runbtn' class={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={() => this.startStopSimulator()} /> : undefined}
                 {restart ? <sui.Button disabled={debugging} key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator()} /> : undefined}
                 {trace ? <sui.Button key='trace' class={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace()} /> : undefined}
-                {debug ? <sui.Button key='debug' class={`debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onClick={() => this.toggleDebug()} /> : undefined}
             </div>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                 {audio ? <sui.Button key='mutebtn' class={`mute-button ${isMuted ? 'red' : ''}`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute()} /> : undefined}

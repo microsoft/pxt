@@ -316,6 +316,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         </div> :
                         <div className="ui item">
                             {showCollapsed ? <sui.Button icon={`${collapseEditorTools ? 'toggle right' : 'toggle left'}`} class={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('computer')} /> : undefined}
+                            {debug ? <sui.Button key='debugbtn' icon="xicon bug" class={`large debug-button ${debugging ? 'orange' : ''}`} title={debugTooltip} onClick={() => this.toggleDebugging('computer')} /> : undefined}
                             {compileBtn ? <sui.Button icon={downloadIcon} class={`primary huge fluid download-button ${downloadButtonClasses}`} text={downloadText} title={compileTooltip} onClick={() => this.compile('computer')} /> : undefined}
                         </div>
                     }
