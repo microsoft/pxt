@@ -96,6 +96,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                     variables[k].value : undefined
             }
         })
+        if (frozen)
+            Object.keys(variables).forEach(k => delete variables[k].prevValue);
         this.setState({ variables: variables, frozen });
         this.nextVariables = {};
     }
