@@ -32,17 +32,17 @@ and our results.
 \label{sec:DesignChallenges}
 Enabling novice programmers to successfully develop embedded applications is a non-trivial task. Throughout our research we have identified a number of design challenges that we address through MakeCode and CODAL.
 
-\paragraph{High Level Languages}
+\paragraph{High Level Languages:}
 Programming languages for microcontroller units (MCUs) have not kept pace with advances in hardware and diversification of user domains. Despite active research in the field, the C/C++ languages remain the standard for embedded systems - and for good reasons: they provide a familiar imperative programming model, with compilers that produce highly efficient code, and enable low level access to hardware features when necessary. Popular examples include the Arduino project (\url{www.arduino.cc})~\cite{buildingArduino2014}, started in 2003, and ARM's Mbed platform (\url{www.mbed.org})~\cite{ARMmbed} --- both of which rely heavily on a C/C++ programming model. However, the limitations of using C/C++ as an application programming language for inexperienced developers are well understood~\cite{blikstein2013gears}. \emph{To address this, higher level languages such as JavaScript, Python, and even visual programming languages are required}.
 
-\paragraph{Zero Installation Architecture}
+\paragraph{Zero Installation Architecture:}
 The development environment for existing embedded systems typically requires the installation of complex (and often commercial) code editors, custom device drivers, compiler toolchains, and even additional programming hardware (such as a JLink programmer). For many (particularly in the field of education) this is an impossible task, due to the heterogeneity and policy constraints of their PCs. Often custom hardware and software is simply not permitted by policy and/or access to the necessary technical support. \emph{An effective solution must therefore provide a fully transparent, platform agnostic, zero installation experience to developing embedded software}.
 
-\paragraph{Optimisation for Code Efficiency}
+\paragraph{Optimisation for Code Efficiency:}
 The domains described previously are enabled by small, highly resource-limited programmable embedded microcontrollers (or MCUs), which may have as little as a few kilobytes of RAM and FLASH memory.
 Table~\ref{table:devices} compares the core capabilities of the class of MCU-based devices typically used in the education domain to a typical PC. Contrary to first impressions, these devices have a \emph{proportionally} large amount of processing power.
 
-\begin{table}[h]
+\begin{table}[t]
     \centering
     \begin{tabular}{|l|r|r|r|r|r|r|}
     \hline
@@ -60,10 +60,10 @@ Table~\ref{table:devices} compares the core capabilities of the class of MCU-bas
 
 Consider the BBC micro:bit vs. a typical PC. It has about 100 times less CPU power, but 10\textsuperscript{6} times less RAM, and 10\textsuperscript{6} times less storage. \emph{A language/runtime should therefore not only seek to provide high code density and spatial efficiency, but actively trade off temporal for spatial efficiency where possible}.
 
-\paragraph{Support for Asynchronous and Concurrent Programming}
+\paragraph{Asynchronous and Concurrent Programming:}
 It is already well understood that novice programmers benefit from  event based programming paradigms~\cite{maloney2008programming,maloney2010scratch,turbak2014events}. This is increasingly relevant when applied to embedded systems due to the typically asynchronous nature of the hardware. MCUs still follow Moore's law (the number of transistors doubles roughly every two years). However, this additional capacity is not typically invested in simply optimizing processing power. Instead, independent peripherals are integrated onto the same package as the CPU as a \emph{system-on-chip}. Examples  of such integrated hardware include Bluetooth/WiFi radio modules, audio inputs/outputs and simple graphical display hardware - all of which are capable of operating independently of the CPU. \emph{an effective language/runtime should directly support an asynchronous interaction model designed to cooperate with the independent nature of peripherals whilst remaining highly intuitive to the programmer}.
 
-\paragraph{Intuitive and Extensible APIs}
+\paragraph{Intuitive and Extensible APIs:}
 Intuitive APIs and programming models are required to support novice users, yet it is equally important that these APIs remain complete enough to realise the ambitious projects that are being undertaken. Providing simplicity through the reduction of functionality is not a valid approach. Also, embedded systems are becoming increasingly component based through wired and wireless interfaces such as I2C, Bluetooth Mesh, IEEE 802.15.4. \emph{An effective solution must therefore provide APIs that are consistent, easy to understand and use, extensible to new hardware and also progressive such that their complexity grows with the capabilities of the programmer.}
 
 \subsection{Paper Overview}
