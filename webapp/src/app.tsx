@@ -1017,9 +1017,12 @@ export class ProjectView
 
     saveProjectToFileAsync(): Promise<void> {
         const mpkg = pkg.mainPkg;
-        if (pxt.commands.saveProjectAsync)
+        if (pxt.commands.saveProjectAsync) {
+            core.showLoading("saveproject", lf("Saving..."));
             return pkg.mainPkg.saveToJsonAsync(this.getPreferredEditor())
-                .then(project => pxt.commands.saveProjectAsync(project));
+                .then(project => pxt.commands.saveProjectAsync(project))
+                .finally(() => core.hideLoading("saveproject"));
+        }
         if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNG();
         else return this.exportProjectToFileAsync()
             .then((buf: Uint8Array) => {
