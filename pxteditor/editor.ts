@@ -267,6 +267,7 @@ namespace pxt.editor {
         resourceImporters?: IResourceImporter[];
         beforeCompile?: () => void;
         deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
+        saveOnlyAsync?: (r: ts.pxtc.CompileResult) => Promise<void>;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
         toolboxOptions?: IToolboxOptions;
     }

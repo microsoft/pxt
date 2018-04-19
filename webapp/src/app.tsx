@@ -2296,6 +2296,10 @@ function initExtensionsAsync(): Promise<void> {
                 pxt.debug(`\tadded custom deploy core async`);
                 pxt.commands.deployCoreAsync = res.deployCoreAsync;
             }
+            if (res.saveOnlyAsync) {
+                pxt.debug(`\tadded custom save only async`);
+                pxt.commands.saveOnlyAsync = res.saveOnlyAsync;
+            }
             if (res.showUploadInstructionsAsync) {
                 pxt.debug(`\tadded custom upload instructions async`);
                 pxt.commands.showUploadInstructionsAsync = res.showUploadInstructionsAsync;
