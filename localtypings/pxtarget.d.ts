@@ -129,6 +129,7 @@ declare namespace pxt {
         stopOnChange?: boolean;
         hideRestart?: boolean;
         enableTrace?: boolean;
+        debugger?: boolean;
         hideFullscreen?: boolean;
         streams?: boolean;
         aspectRatio?: number; // width / height

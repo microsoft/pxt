@@ -235,7 +235,7 @@ function saveAssetAsync(id: string, filename: string, data: Uint8Array): Promise
     return apiAsync("pkgasset/" + id, {
         encoding: "base64",
         name: filename,
-        data: btoa(Util.uint8ArrayToString(data))
+        data: btoa(ts.pxtc.Util.uint8ArrayToString(data))
     }).then(resp => {
     })
 }
