@@ -63,7 +63,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const trace = run && !!simOpts.enableTrace;
         const tracing = this.props.parent.state.tracing;
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
-        const debug = !trace;
+        const debug = !trace && !!simOpts.debugger;
         const debugging = parentState.debugging;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
