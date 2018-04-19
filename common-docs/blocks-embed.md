@@ -20,7 +20,7 @@ The MakeCode approach to solve this issue is to render the **JavaScript** code s
 
 Here are sample of integration for various documentation/blogging engines.
 
-* [GitBook plugin](https://microsoft.github.io/pxt-gitbook-sample/)
+* [GitBook plugin](https://plugins.gitbook.com/plugin/pxt)
 * [MkDocs plugin](https://microsoft.github.io/pxt-mkdocs-sample/)
 
 ## Manual Implementation [try this fiddle](https://jsfiddle.net/ndyz1d57/1/)
