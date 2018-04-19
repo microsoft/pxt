@@ -12,13 +12,18 @@ A quick solution is take screenshots of the snippets but things can quickly beco
 * screenshots cannot be reloaded easily into the editor
 * screenshots don't play well with source control system - you cannot diff changes efficiently.
 
-If you're looking for a better solution, carry on reading.
-
 ## Rendering blocks on the spot
 
-The MakeCode approach to solve this issue is to render the code snippets on the client using the same block rendering engine as the editor. The idea is to load an IFrame from the MakeCode editor that will render the blocks for you.
+The MakeCode approach to solve this issue is to render the **JavaScript** code snippets on the client using the same block rendering engine as the editor. Under the hood, an IFrame from the MakeCode editor will render the blocks for you.
 
-## Implementation [try this fiddle](https://jsfiddle.net/ndyz1d57/1/)
+## Plugins
+
+Here are sample of integration for various documentation/blogging engines.
+
+* [GitBook plugin](https://plugins.gitbook.com/plugin/pxt)
+* [MkDocs plugin](https://microsoft.github.io/pxt-mkdocs-sample/)
+
+## Manual Implementation [try this fiddle](https://jsfiddle.net/ndyz1d57/1/)
 
 The first part is to register a message handler that will communicate with the rendering ``IFrame``.
 The renderer sends a ``renderready`` message when it is loaded and ready to receive messages.
