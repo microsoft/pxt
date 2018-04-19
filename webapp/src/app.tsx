@@ -412,6 +412,9 @@ export class ProjectView
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
         simulator.init(document.getElementById("boardview"), {
+            orphanException: brk => {
+                // do something!
+            },
             highlightStatement: (stmt, brk) => {
                 if (this.editor) return this.editor.highlightStatement(stmt, brk);
                 return false;
@@ -857,6 +860,9 @@ export class ProjectView
             importhelpers.importTypescriptFile(file);
         } else if (importhelpers.isProjectFile(file.name)) {
             importhelpers.importProjectFile(file);
+        } else if (importhelpers.isAssetFile(file.name)) {
+            // assets need to go before PNG source import below, since target might want PNG assets
+            importhelpers.importAssetFile(file)
         } else if (importhelpers.isPNGFile(file.name)) {
             importhelpers.importPNGFile(file);
         } else {
@@ -912,7 +918,12 @@ export class ProjectView
     }
 
     saveProjectToFileAsync(): Promise<void> {
-        const mpkg = pkg.mainPkg
+        const mpkg = pkg.mainPkg;
+        if (pxt.commands.saveProjectAsync) {
+            core.infoNotification(lf("Saving..."))
+            return pkg.mainPkg.saveToJsonAsync(this.getPreferredEditor())
+                .then(project => pxt.commands.saveProjectAsync(project));
+        }
         if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNG();
         else return this.exportProjectToFileAsync()
             .then((buf: Uint8Array) => {
@@ -2116,6 +2127,14 @@ function initExtensionsAsync(): Promise<void> {
             if (res.deployCoreAsync) {
                 pxt.debug(`\tadded custom deploy core async`);
                 pxt.commands.deployCoreAsync = res.deployCoreAsync;
+            }
+            if (res.saveOnlyAsync) {
+                pxt.debug(`\tadded custom save only async`);
+                pxt.commands.saveOnlyAsync = res.saveOnlyAsync;
+            }
+            if (res.saveProjectAsync) {
+                pxt.debug(`\tadded custom save project async`);
+                pxt.commands.saveProjectAsync = res.saveProjectAsync;
             }
             if (res.showUploadInstructionsAsync) {
                 pxt.debug(`\tadded custom upload instructions async`);

@@ -6,6 +6,7 @@ import U = pxt.U
 
 interface SimulatorConfig {
     // return true if a visible breakpoint was found
+    orphanException(brk: pxsim.DebuggerBreakpointMessage): void;
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean;
     restartSimulator(): void;
     onStateChanged(state: pxsim.SimulatorState): void;
@@ -82,7 +83,6 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             pxsim.U.removeClass(el, "simHeadless");
         },
         onDebuggerBreakpoint: function (brk) {
-            updateDebuggerButtons(brk);
             // walk stack until breakpoint is found
             // and can be highlighted
             let highlighted = false;
@@ -109,10 +109,14 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             if (!brk.exceptionMessage && config && !highlighted) {
                 // keep going until breakpoint is hit
                 driver.resume(pxsim.SimulatorDebuggerCommand.StepInto);
+                return;
             }
-            // we had an expected but could not find a block
-            if (!highlighted && brk.exceptionMessage)
-                core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
+            // we had an expected but could not find a block            
+            if (!highlighted && brk.exceptionMessage) {
+                pxt.debug(`runtime error: ${brk.exceptionMessage}`);
+                pxt.debug(brk.exceptionStack);
+                if (config) config.orphanException(brk);
+            }
             postSimEditorEvent("stopped", brk.exceptionMessage);
         },
         onTraceMessage: function (msg) {
@@ -133,7 +137,6 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onDebuggerResume: function () {
             postSimEditorEvent("resumed");
             if (config) config.highlightStatement(null)
-            updateDebuggerButtons()
         },
         onStateChanged: function (state) {
             if (state === pxsim.SimulatorState.Stopped) {
@@ -141,7 +144,6 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             } else if (state === pxsim.SimulatorState.Running) {
                 this.onDebuggerResume();
             }
-            updateDebuggerButtons()
             cfg.onStateChanged(state);
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
@@ -192,7 +194,6 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
-    updateDebuggerButtons();
 }
 
 function postSimEditorEvent(subtype: string, exception?: string) {
@@ -210,7 +211,6 @@ export function setState(editor: string, tutMode?: boolean) {
     if (config && config.editor != editor) {
         config.editor = editor;
         config.highlightStatement(null)
-        updateDebuggerButtons();
     }
 
     tutorialMode = tutMode;
@@ -334,10 +334,7 @@ function getStoppedClass() {
     return undefined;
 }
 
-function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {
-    //updateDebuggerButtonsInternal(brk);
-}
-
+/*
 function updateDebuggerButtonsInternal(brk: pxsim.DebuggerBreakpointMessage = null) {
     function btn(icon: string, name: string, label: string, click: () => void) {
         let b = document.createElement('button');
@@ -406,3 +403,4 @@ function updateDebuggerButtonsInternal(brk: pxsim.DebuggerBreakpointMessage = nu
     })
     debuggerDOM.appendChild(dbgView);
 }
+*/

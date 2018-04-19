@@ -1,6 +1,7 @@
 
 
 import * as core from "./core";
+import * as pkg from "./package";
 import * as screenshot from "./screenshot";
 
 export function isHexFile(filename: string): boolean {
@@ -21,6 +22,15 @@ export function isProjectFile(filename: string): boolean {
 
 export function isPNGFile(filename: string): boolean {
     return pxt.appTarget.compile.saveAsPNG && /\.png$/i.test(filename);
+}
+
+export function isAssetFile(filename: string): boolean {
+    let exts = pxt.appTarget.runtime ? pxt.appTarget.runtime.assetExtensions : null
+    if (exts) {
+        let ext = filename.replace(/.*\./, "").toLowerCase()
+        return exts.indexOf(ext) >= 0
+    }
+    return false
 }
 
 export function importProjectCoreAsync(buf: Uint8Array) {
@@ -74,4 +84,13 @@ export function importPNGFile(file: File) {
         .then(buf => screenshot.decodeBlobAsync("data:image/png;base64," +
             btoa(pxt.Util.uint8ArrayToString(buf))))
         .then(buf => this.importProjectCoreAsync(buf))
+}
+
+export function importAssetFile(file: File) {
+    ts.pxtc.Util.fileReadAsBufferAsync(file)
+        .then(buf => {
+            let basename = file.name.replace(/.*[\/\\]/, "")
+            return pkg.mainEditorPkg().saveAssetAsync(basename, buf)
+        })
+        .done()
 }
