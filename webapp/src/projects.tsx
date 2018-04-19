@@ -582,7 +582,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         this.setState({ visible: true });
     }
 
-    modalDidUpdate(ref: HTMLElement) {
+    modalDidOpen(ref: HTMLElement) {
         // Save on enter typed
         let dialogInput = document.getElementById('projectNameInput') as HTMLInputElement;
         if (dialogInput) {
@@ -635,7 +635,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 onClose={() => this.hide()} dimmer={true} buttons={actions}
                 closeIcon={true} header={lf("Exit Project")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
-                modalDidUpdate={this.modalDidUpdate}
+                modalDidOpen={this.modalDidOpen}
             >
                 <div className="ui form">
                     <sui.Input id={"projectNameInput"} label={lf("Project Name")} ariaLabel={lf("Type a name for your project")} value={projectName} onChange={onChange} />

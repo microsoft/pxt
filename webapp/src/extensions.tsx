@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import * as data from "./data";
+import * as core from "./core";
 import * as sui from "./sui";
 import * as ext from "./extensionManager";
 
@@ -67,9 +68,11 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         frame.style.display = 'none';
 
         // reload project to update changes from the editor
+        core.showLoading("reloadproject", lf("loading..."));
         this.props.parent.reloadHeaderAsync()
             .done(() => {
                 this.send(this.state.extension, { type: "pxtpkgext", event: "exthidden" } as pxt.editor.HiddenEvent);
+                core.hideLoading("reloadproject");
             });
     }
 
@@ -129,6 +132,16 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
     componentDidUpdate() {
         this.updateDimensions();
+        setTimeout(() => {
+            this.updateDimensions();
+        });
+    }
+
+    componentWillUpdate(nextProps: any, nextState: ExtensionsState) {
+        if (nextState.extension && nextState.visible) {
+            // Start rendering the iframe earlier
+            const frame = Extensions.getFrame(nextState.extension, true);
+        }
     }
 
     handleExtensionRequest(request: pxt.editor.ExtensionRequest) {
@@ -192,6 +205,24 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         return frame;
     }
 
+    static hideAllFrames() {
+        const customContent = this.getCustomContent();
+        if (customContent) {
+            Array.from(customContent.getElementsByClassName(`extension-frame`)).forEach((frame: HTMLIFrameElement) => {
+                frame.style.zIndex = '10';
+            })
+        }
+    }
+
+    static showAllFrames() {
+        const customContent = this.getCustomContent();
+        if (customContent) {
+            Array.from(customContent.getElementsByClassName(`extension-frame`)).forEach((frame: HTMLIFrameElement) => {
+                frame.style.zIndex = '';
+            })
+        }
+    }
+
     getIconForPermission(permission: ext.Permissions) {
         switch (permission) {
             case ext.Permissions.Console:
@@ -226,6 +257,12 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         const { visible, extension, consent, permissionRequest, permissionExtName } = this.state;
         const needsConsent = !consent;
 
+        if (permissionRequest) {
+            Extensions.hideAllFrames();
+        } else {
+            Extensions.showAllFrames();
+        }
+
         const action = needsConsent ? lf("Agree") : undefined;
         const actionClick = () => {
             this.submitConsent();
@@ -235,7 +272,8 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         return (
             <sui.Modal isOpen={visible} className={`${needsConsent ? 'extensionconsentdialog' : 'extensiondialog'}`} size="fullscreen" closeIcon={false}
                 onClose={() => this.hide()} dimmer={true} buttons={actions}
-                onPositionChanged={() => this.updateDimensions()}
+                modalDidOpen={this.updateDimensions.bind(this)} shouldFocusAfterRender={false}
+                onPositionChanged={this.updateDimensions.bind(this)}
                 closeOnDimmerClick>
                 {consent ?
                     <div id="extensionWrapper" data-frame={extension} ref={v => this.extensionWrapper = v}>
@@ -250,7 +288,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                                     </div>
                                     <div className="ui inverted list">
                                         {permissionRequest.map(permission =>
-                                            <div className="item">
+                                            <div key={permission.toString()} className="item">
                                                 <sui.Icon icon={`${this.getIconForPermission(permission)} icon`} />
                                                 <div className="content">
                                                     <div className="header">{this.getDisplayNameForPermission(permission)}</div>

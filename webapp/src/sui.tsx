@@ -820,7 +820,7 @@ export interface ModalProps extends ReactModal.Props {
     buttons?: ModalButton[];
     onPositionChanged?: Function;
     allowResetFocus?: boolean;
-    modalDidUpdate?: (ref: HTMLElement) => void;
+    modalDidOpen?: (ref: HTMLElement) => void;
 }
 
 interface ModalState {
@@ -842,10 +842,10 @@ export class Modal extends React.Component<ModalProps, ModalState> {
     }
 
     private afterOpen() {
-        const { modalDidUpdate } = this.props;
+        const { modalDidOpen } = this.props;
         this.setState({ scrolling: false });
         this.setPositionAndClassNames();
-        if (modalDidUpdate) modalDidUpdate(this.getRef());
+        if (modalDidOpen) modalDidOpen(this.getRef());
     }
 
     private onClose() {
@@ -906,7 +906,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             onClose, closeIcon, children,
             header, headerClass, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
-            shouldCloseOnEsc, shouldCloseOnOverlayClick, ...rest } = this.props;
+            shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, ...rest } = this.props;
         const { marginTop, scrolling, mountClasses } = this.state
 
         const classes = cx([
@@ -934,7 +934,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
         }
         return <ReactModal isOpen={isOpen} ref="modal" appElement={appElement}
             onRequestClose={onRequestClose} onAfterOpen={this.afterOpen.bind(this)}
-            shouldReturnFocusAfterClose={true} shouldFocusAfterRender={true}
+            shouldReturnFocusAfterClose={true} shouldFocusAfterRender={shouldFocusAfterRender}
             shouldCloseOnEsc={shouldCloseOnEsc || closeOnEscape}
             shouldCloseOnOverlayClick={shouldCloseOnOverlayClick || (closeOnDocumentClick || closeOnDimmerClick)}
             portalClassName={mountClasses}

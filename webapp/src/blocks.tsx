@@ -316,6 +316,16 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    private initWorkspaceSounds() {
+        const editor = this;
+
+        const oldAudioPlay = (Blockly as any).WorkspaceAudio.prototype.play;
+        (Blockly as any).WorkspaceAudio.prototype.play = function(name: string, opt_volume?: number) {
+            if (editor && editor.parent.state.mute) opt_volume = 0;
+            oldAudioPlay.call(this, name, opt_volume);
+        };
+    }
+
     private reportDeprecatedBlocks() {
         const deprecatedMap: pxt.Map<number> = {};
         let deprecatedBlocksFound = false;
@@ -405,6 +415,7 @@ export class Editor extends srceditor.Editor {
         })
         this.initPrompts();
         this.initToolboxPosition();
+        this.initWorkspaceSounds();
         this.resize();
     }
 

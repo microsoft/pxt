@@ -43,7 +43,7 @@ export class ConfirmDialog extends React.Component<core.ConfirmOptions, {}> {
         }
     }
 
-    modalDidUpdate(ref: HTMLElement) {
+    modalDidOpen(ref: HTMLElement) {
         const options = this.props;
         if (options.onLoaded) {
             options.onLoaded(ref);
@@ -73,7 +73,7 @@ export class ConfirmDialog extends React.Component<core.ConfirmOptions, {}> {
                 closeOnDimmerClick={!options.hideCancel}
                 closeOnDocumentClick={!options.hideCancel}
                 closeOnEscape={!options.hideCancel}
-                modalDidUpdate={this.modalDidUpdate.bind(this)}
+                modalDidOpen={this.modalDidOpen.bind(this)}
             >
                 {options.body ? <p>{options.body}</p> : undefined}
                 {options.htmlBody ? <div dangerouslySetInnerHTML={{ __html: options.htmlBody }} /> : undefined}
