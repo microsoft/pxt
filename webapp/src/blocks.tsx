@@ -663,11 +663,13 @@ export class Editor extends srceditor.Editor {
                 // don't center if block is still on the screen
                 const marginx = 4;
                 const marginy = 4;
-                if (p.x * s < marginx
-                    || (p.x + c.width) * s > m.viewWidth - marginx
-                    || p.y * s < marginy
-                    || (p.y + c.height) * s > m.viewHeight - marginy)
+                if (p.x * s < m.viewLeft + marginx
+                    || (p.x + c.width) * s > m.viewLeft + m.viewWidth - marginx
+                    || p.y * s < m.viewTop + marginy
+                    || (p.y + c.height) * s > m.viewTop + m.viewHeight - marginy) {
+                    // move the block towards the center
                     this.editor.centerOnBlock(bid);
+                }
                 return true;
             }
         } else {
