@@ -5,7 +5,8 @@ import * as core from "./core";
 import U = pxt.U
 
 interface SimulatorConfig {
-    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): void;
+    // return true if a visible breakpoint was found
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean;
     restartSimulator(): void;
     onStateChanged(state: pxsim.SimulatorState): void;
     editor: string;
@@ -81,12 +82,37 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             pxsim.U.removeClass(el, "simHeadless");
         },
         onDebuggerBreakpoint: function (brk) {
-            updateDebuggerButtons(brk)
-            let brkInfo = lastCompileResult.breakpoints[brk.breakpointId]
-            if (config) config.highlightStatement(brkInfo, brk)
-            if (brk.exceptionMessage) {
-                core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
+            updateDebuggerButtons(brk);
+            // walk stack until breakpoint is found
+            // and can be highlighted
+            let highlighted = false;
+            if (config) {
+                let frameid = 0;
+                let brkid = brk.breakpointId;
+                while (!highlighted) {
+                    // try highlight current statement
+                    if (brkid) {
+                        const brkInfo = lastCompileResult.breakpoints[brkid];
+                        highlighted = config.highlightStatement(brkInfo, brk);
+                    }
+                    // try next frame
+                    if (!highlighted) {
+                        frameid++;
+                        const frame = brk.stackframes ? brk.stackframes[frameid] : undefined;
+                        // no more frames, done
+                        if (!frame) break;
+                        brkid = frame.breakpointId;
+                    }
+                }
             }
+            // no exception and no highlighting, keep going
+            if (!brk.exceptionMessage && config && !highlighted) {
+                // keep going until breakpoint is hit
+                driver.resume(pxsim.SimulatorDebuggerCommand.StepInto);
+            }
+            // we had an expected but could not find a block
+            if (!highlighted && brk.exceptionMessage)
+                core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
             postSimEditorEvent("stopped", brk.exceptionMessage);
         },
         onTraceMessage: function (msg) {

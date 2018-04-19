@@ -202,10 +202,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 </div>
             )}
             {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl ? <div className="ui horizontal small divided link list homefooter">
-                {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                {targetTheme.selectLanguage ? <sui.Link className="item" text={lf("Language")} onClick={() => showLanguagePicker()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use")}</a> : undefined}
-                {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy")}</a> : undefined}
+                {targetTheme.organizationUrl && targetTheme.organization ? <a className="item focused" target="_blank" rel="noopener" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
+                {targetTheme.selectLanguage ? <sui.Link className="item focused" text={lf("Language")} onClick={() => showLanguagePicker()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {targetTheme.termsOfUseUrl ? <a target="_blank" className="item focused" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use")}</a> : undefined}
+                {targetTheme.privacyUrl ? <a target="_blank" className="item focused" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy")}</a> : undefined}
+                {pxt.appTarget.versions ? <span className="item focused">v{pxt.appTarget.versions.target}</span> : undefined}
             </div> : undefined}
         </div>;
     }

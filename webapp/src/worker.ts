@@ -4,12 +4,7 @@
 
 declare const importScripts: (...args: string[]) => void;
 
-importScripts(
-    "/blb/typescript.js",
-    "/blb/fuse.min.js",
-    "/blb/pxtlib.js",
-    "/blb/pxtcompiler.js"
-)
+importScripts("/blb/pxtworker.js");
 
 let pm: any = postMessage;
 

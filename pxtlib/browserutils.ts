@@ -351,17 +351,39 @@ namespace pxt.BrowserUtils {
         return url;
     }
 
+    export function loadStyleAsync(path: string, rtl?: boolean): Promise<void> {
+        if (rtl) path = "rtl" + path;
+        const id = "style-" + path;
+        if (document.getElementById(id)) return Promise.resolve();
+
+        const url = resolveCdnUrl(path);
+        const links = Util.toArray(document.head.getElementsByTagName("link"));
+        const link = links.filter(l => l.getAttribute("href") == url)[0];
+        if (link) {
+            if (!link.id) link.id = id;
+            return Promise.resolve();
+        }
+
+        return new Promise<void>((resolve, reject) => {
+            const el = document.createElement("link");
+            el.href = url;
+            el.rel = "stylesheet";
+            el.type = "text/css";
+            el.id = id;
+            el.addEventListener('load', () => resolve());
+            el.addEventListener('error', (e) => reject(e));
+            document.head.appendChild(el);
+        });
+    }
+
     export function loadScriptAsync(path: string): Promise<void> {
         const url = resolveCdnUrl(path);
-        const id = "script-" + url;
-        if (document.getElementById(id))
-            return Promise.resolve(); // already in DOM
-
+        pxt.debug(`script: loading ${url}`);
         return new Promise<void>((resolve, reject) => {
             const script = document.createElement('script');
             script.type = 'text/javascript';
             script.src = url;
-            script.id = id;
+            script.async = true;
             script.addEventListener('load', () => resolve());
             script.addEventListener('error', (e) => reject(e));
             document.body.appendChild(script);
@@ -391,12 +413,13 @@ namespace pxt.BrowserUtils {
         if (!loadBlocklyPromise) {
             if (typeof Blockly === "undefined") { // not loaded yet?
                 pxt.debug(`blockly: delay load`);
-                loadBlocklyPromise = pxt.BrowserUtils.loadScriptAsync("pxtblockly.js")
-                    .then(() => {
-                        pxt.debug(`blockly: loaded`)
-                    })
-            } else
-                loadBlocklyPromise = Promise.resolve();
+                loadBlocklyPromise =
+                    pxt.BrowserUtils.loadStyleAsync("blockly.css", ts.pxtc.Util.isUserLanguageRtl())
+                        .then(() => pxt.BrowserUtils.loadScriptAsync("pxtblockly.js"))
+                        .then(() => {
+                            pxt.debug(`blockly: loaded`)
+                        })
+            } else loadBlocklyPromise = Promise.resolve();
         }
         return loadBlocklyPromise;
     }
@@ -433,13 +456,14 @@ namespace pxt.BrowserUtils {
                     semanticLink.setAttribute("href", semanticHref);
                 }
             }
-            // replace blockly.css with rtlblockly.css
+            // replace blockly.css with rtlblockly.css if possible
             const blocklyLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "blockly.css"))[0];
             if (blocklyLink) {
                 const blocklyHref = blocklyLink.getAttribute("data-rtl");
                 if (blocklyHref) {
                     pxt.debug(`swapping to ${blocklyHref}`)
                     blocklyLink.setAttribute("href", blocklyHref);
+                    blocklyLink.removeAttribute("data-rtl");
                 }
             }
         }

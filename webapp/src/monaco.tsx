@@ -470,7 +470,7 @@ export class Editor extends srceditor.Editor {
             this.editorViewZones = [];
 
             this.setupToolbox(editorArea);
-        })
+        });
     }
 
     protected dragCurrentPos = { x: 0, y: 0 };
@@ -758,6 +758,11 @@ export class Editor extends srceditor.Editor {
             monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
             if (fnState == pxt.editor.FilterState.Hidden) return undefined;
 
+            const snippet = fn.snippet;
+            if (!snippet) {
+                return undefined;
+            }
+
             let monacoBlockArea = document.createElement('div');
             monacoBlockArea.className = `monacoBlock ${monacoBlockDisabled ? 'monacoDisabledBlock' : ''}`;
             monacoFlyout.appendChild(monacoBlockArea);
@@ -766,7 +771,6 @@ export class Editor extends srceditor.Editor {
             monacoBlock.tabIndex = 0;
             monacoBlockArea.appendChild(monacoBlock);
 
-            const snippet = fn.snippet;
             const comment = fn.attributes.jsDoc;
 
             let snippetPrefix = fn.noNamespace ? "" : ns;
@@ -1207,18 +1211,24 @@ export class Editor extends srceditor.Editor {
     }
 
     private highlightDecorations: string[] = [];
-    highlightStatement(stmt: pxtc.LocationInfo) {
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage) {
         if (!stmt) this.clearHighlightedStatements();
-        if (!stmt || !this.currFile || this.currFile.name != stmt.fileName || !this.editor) return;
+        if (!stmt || !this.currFile || this.currFile.name != stmt.fileName || !this.editor)
+            return false;
         let position = this.editor.getModel().getPositionAt(stmt.start);
         let end = this.editor.getModel().getPositionAt(stmt.start + stmt.length);
-        if (!position || !end) return;
+        if (!position || !end) return false;
         this.highlightDecorations = this.editor.deltaDecorations(this.highlightDecorations, [
             {
                 range: new monaco.Range(position.lineNumber, position.column, end.lineNumber, end.column),
                 options: { inlineClassName: 'highlight-statement' }
             },
         ]);
+        if (brk) {
+            // center on statement
+            this.editor.revealPositionInCenter(position);
+        }
+        return true;
     }
 
     clearHighlightedStatements() {
@@ -1626,7 +1636,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         if (selected) {
             treeRowClass += ' blocklyTreeSelected';
             if (appTheme.invertedToolbox) {
-                treeRowStyle.backgroundColor = `${pxt.toolbox.fadeColor(color, (Blockly as any).Options.invertedMultiplier, false)}`;
+                treeRowStyle.backgroundColor = `${pxt.toolbox.fadeColor(color, invertedMultipler, false)}`;
             } else {
                 treeRowStyle.backgroundColor = (metaColor || '#ddd');
             }

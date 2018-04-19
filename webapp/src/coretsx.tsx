@@ -146,7 +146,7 @@ export class LoadingDimmer extends React.Component<LoadingDimmerProps, LoadingDi
         if (!visible) return <div />;
 
         return <sui.Dimmer isOpen={true} active={visible} closable={false}>
-            <sui.Loader className="large msg no-select" aria-live="assertive">
+            <sui.Loader className="large main msg no-select" aria-live="assertive">
                 {content}
             </sui.Loader>
         </sui.Dimmer>;

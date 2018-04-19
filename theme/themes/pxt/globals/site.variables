@@ -180,6 +180,7 @@
 --------------------*/
 
 @blocklyToolboxColor: white;
+@blocklyToolboxText: #575E75;
 @trashIconColor: @primaryColor;
 
 /*-------------------
