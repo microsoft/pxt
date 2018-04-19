@@ -1016,7 +1016,12 @@ export class ProjectView
     }
 
     saveProjectToFileAsync(): Promise<void> {
-        const mpkg = pkg.mainPkg
+        const mpkg = pkg.mainPkg;
+        if (pxt.commands.saveProjectAsync) {
+            core.infoNotification(lf("Saving..."))
+            return pkg.mainPkg.saveToJsonAsync(this.getPreferredEditor())
+                .then(project => pxt.commands.saveProjectAsync(project));
+        }
         if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNG();
         else return this.exportProjectToFileAsync()
             .then((buf: Uint8Array) => {
@@ -2295,6 +2300,14 @@ function initExtensionsAsync(): Promise<void> {
             if (res.deployCoreAsync) {
                 pxt.debug(`\tadded custom deploy core async`);
                 pxt.commands.deployCoreAsync = res.deployCoreAsync;
+            }
+            if (res.saveOnlyAsync) {
+                pxt.debug(`\tadded custom save only async`);
+                pxt.commands.saveOnlyAsync = res.saveOnlyAsync;
+            }
+            if (res.saveProjectAsync) {
+                pxt.debug(`\tadded custom save project async`);
+                pxt.commands.saveProjectAsync = res.saveProjectAsync;
             }
             if (res.showUploadInstructionsAsync) {
                 pxt.debug(`\tadded custom upload instructions async`);
