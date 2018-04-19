@@ -52,7 +52,15 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             case "object":
                 if (v == null) sv = "null";
                 else if (Array.isArray(v)) return `[${v.map(vi => this.renderValue(vi)).join(',')}]`;
-                else if (v.id && v.value) return DebuggerVariables.renderValue(v.value);
+                else if (v.id && v.value) {
+                    try {
+                        const vobj = JSON.parse(v.value);
+                        return DebuggerVariables.renderValue(vobj);
+                    }
+                    catch(e) {
+                        return "(object)";
+                    }
+                }
                 else if (v.id !== undefined) sv = "(object)"
                 else if (v.text) sv = v.text;
                 else sv = "(unknown)"
@@ -88,6 +96,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                     variables[k].value : undefined
             }
         })
+        if (frozen)
+            Object.keys(variables).forEach(k => delete variables[k].prevValue);
         this.setState({ variables: variables, frozen });
         this.nextVariables = {};
     }
@@ -255,7 +265,7 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
                 <div className={`ui compact borderless menu icon mini`}>
                     <div className={`ui item link dbg-btn dbg-handle`} key={'toolbarhandle'}
                         onMouseDown={this.toolbarHandleDown.bind(this)}>
-                        <sui.Icon key='iconkey' icon={`icon ellipsis vertical`} />
+                        <sui.Icon key='iconkey' icon={`xicon bug`} />
                     </div>
                     <sui.Item key='dbgpauseresume' class={`dbg-btn dbg-pause-resume ${isDebuggerRunning ? "pause" : "play"}`} icon={`${isDebuggerRunning ? "pause blue" : "step forward green"}`} title={dbgPauseResumeTooltip} onClick={() => this.dbgPauseResume()} />
                     {!advancedDebugging ? <sui.Item key='dbgstep' class={`dbg-btn dbg-step`} icon={`arrow right ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepIntoTooltip} onClick={() => this.dbgStepInto()} /> : undefined}
