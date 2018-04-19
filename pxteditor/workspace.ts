@@ -33,6 +33,12 @@ namespace pxt.workspace {
         text?: ScriptText;
     }
 
+    export interface Asset {
+        name: string;
+        size: number;
+        url: string;
+    }
+
     export interface WorkspaceProvider {
         getHeaders(): Header[];
         getHeader(id: string): Header;
@@ -46,5 +52,8 @@ namespace pxt.workspace {
         loadedAsync(): Promise<void>;
         // optional screenshot support
         saveScreenshotAsync?: (h: Header, screenshot: string, icon: string) => Promise<void>;
+        // asset (large binary file) support
+        saveAssetAsync?: (id: string, filename: string, data: Uint8Array) => Promise<void>;
+        listAssetsAsync?: (id: string) => Promise<Asset[]>;
     }
 }
