@@ -115,7 +115,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const trace = run && !!simOpts.enableTrace;
         const tracing = this.props.parent.state.tracing;
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
-        const debug = !trace;
+        const debug = !trace && !!simOpts.debugger;
         const debugging = this.props.parent.state.debugging;
         const debugTooltip = debugging ? lf("Disable Debugging") : lf("Debugging")
         const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
@@ -207,7 +207,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class={`collapse-button ${collapsed ? 'collapsed' : ''} ${hideEditorFloats ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", collapseTooltip, hideEditorFloats ? lf("Disabled") : "")} title={collapseTooltip} onClick={() => this.toggleCollapse('tablet')} />
                                     {run ? <sui.Button role="menuitem" class={`play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('tablet')} /> : undefined}
                                     {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet')} /> : undefined}
-                                    <sui.Button key='debug' class={`debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onClick={() => this.toggleDebugging('table')} />
+                                    {debug ? <sui.Button key='debug' class={`debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onClick={() => this.toggleDebugging('table')} /> : undefined }
                                     {compileBtn ? <sui.Button class={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} onClick={() => this.compile('tablet')} /> : undefined}
                                 </div>
                             </div> :
@@ -316,6 +316,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         </div> :
                         <div className="ui item">
                             {showCollapsed ? <sui.Button icon={`${collapseEditorTools ? 'toggle right' : 'toggle left'}`} class={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('computer')} /> : undefined}
+                            {debug ? <sui.Button key='debugbtn' icon="xicon bug" class={`large debug-button ${debugging ? 'orange' : ''}`} title={debugTooltip} onClick={() => this.toggleDebugging('computer')} /> : undefined}
                             {compileBtn ? <sui.Button icon={downloadIcon} class={`primary huge fluid download-button ${downloadButtonClasses}`} text={downloadText} title={compileTooltip} onClick={() => this.compile('computer')} /> : undefined}
                         </div>
                     }

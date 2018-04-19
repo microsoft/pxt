@@ -432,6 +432,9 @@ export class ProjectView
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
         simulator.init($("#boardview")[0], {
+            orphanException: brk => {
+                // do something!
+            },
             highlightStatement: (stmt, brk) => {
                 if (this.editor) return this.editor.highlightStatement(stmt, brk);
                 return false;
@@ -878,6 +881,15 @@ export class ProjectView
             .then(buf => this.importProjectCoreAsync(buf))
     }
 
+    importAssetFile(file: File) {
+        ts.pxtc.Util.fileReadAsBufferAsync(file)
+            .then(buf => {
+                let basename = file.name.replace(/.*[\/\\]/, "")
+                return pkg.mainEditorPkg().saveAssetAsync(basename, buf)
+            })
+            .done()
+    }
+
     importFile(file: File) {
         if (!file || pxt.shell.isReadOnly()) return;
         if (isHexFile(file.name)) {
@@ -888,6 +900,9 @@ export class ProjectView
             this.importTypescriptFile(file);
         } else if (isProjectFile(file.name)) {
             this.importProjectFile(file);
+        } else if (isAssetFile(file.name)) {
+            // assets need to go before PNG source import below, since target might want PNG assets
+            this.importAssetFile(file)
         } else if (isPNGFile(file.name)) {
             this.importPNGFile(file);
         } else {
@@ -1974,6 +1989,15 @@ function isProjectFile(filename: string): boolean {
 
 function isPNGFile(filename: string): boolean {
     return pxt.appTarget.compile.saveAsPNG && /\.png$/i.test(filename);
+}
+
+function isAssetFile(filename: string): boolean {
+    let exts = pxt.appTarget.runtime ? pxt.appTarget.runtime.assetExtensions : null
+    if (exts) {
+        let ext = filename.replace(/.*\./, "").toLowerCase()
+        return exts.indexOf(ext) >= 0
+    }
+    return false
 }
 
 function initLogin() {

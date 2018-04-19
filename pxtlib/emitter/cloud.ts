@@ -25,6 +25,16 @@ namespace pxt.Cloud {
         } catch (e) { return false; }
     }
 
+    export function localRequestAsync(path: string, data?: any) {
+        return U.requestAsync({
+            url: "/api/" + path,
+            headers: { "Authorization": Cloud.localToken },
+            method: data ? "POST" : "GET",
+            data: data || undefined,
+            allowHttpErrors: true
+        })
+    }
+
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
         options.url = pxt.webConfig && pxt.webConfig.isStatic && !options.forceLiveEndpoint ? pxt.webConfig.relprefix + options.url : apiRoot + options.url;
         options.allowGzipPost = true
@@ -63,12 +73,7 @@ namespace pxt.Cloud {
 
         const url = pxt.webConfig && pxt.webConfig.isStatic ? `targetconfig.json` : `config/${pxt.appTarget.id}/targetconfig`;
         if (Cloud.isLocalHost())
-            return Util.requestAsync({
-                url: "/api/" + url,
-                headers: { "Authorization": Cloud.localToken },
-                method: "GET",
-                allowHttpErrors: true
-            }).then(resp => resp.json);
+            return localRequestAsync(url).then(r => r.json)
         else
             return Cloud.privateGetAsync(url);
     }
@@ -101,12 +106,7 @@ namespace pxt.Cloud {
             if (live) url += "&live=1"
         }
         if (Cloud.isLocalHost() && !live)
-            return Util.requestAsync({
-                url: "/api/" + url,
-                headers: { "Authorization": Cloud.localToken },
-                method: "GET",
-                allowHttpErrors: true
-            }).then(resp => {
+            return localRequestAsync(url).then(resp => {
                 if (resp.statusCode == 404)
                     return privateGetTextAsync(url);
                 else return resp.text

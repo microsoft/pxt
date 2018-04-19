@@ -647,28 +647,45 @@ export class Editor extends srceditor.Editor {
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return false;
+        this.updateDebuggerVariables(brk ? brk.globals : undefined);
         if (stmt) {
             let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
                 this.editor.highlightBlock(bid);
-                if (brk) {
+                const b = this.editor.getBlockById(bid);
+                b.setWarningText(brk ? brk.exceptionMessage : undefined);
+                // TODO: make warning mode look good
+                // b.setHighlightWarning(brk && !!brk.exceptionMessage);
+                const p = b.getRelativeToSurfaceXY();
+                const c = b.getHeightWidth();
+                const s = this.editor.scale;
+                const m = this.editor.getMetrics();
+                // don't center if block is still on the screen
+                const marginx = 4;
+                const marginy = 4;
+                if (p.x * s < marginx
+                    || (p.x + c.width) * s > m.viewWidth - marginx
+                    || p.y * s < marginy
+                    || (p.y + c.height) * s > m.viewHeight - marginy)
                     this.editor.centerOnBlock(bid);
-                    this.updateDebuggerVariables(brk.globals);
-                }
                 return true;
             }
         } else {
             this.editor.highlightBlock(null);
-            this.updateDebuggerVariables(null);
             return false;
         }
         return false;
     }
 
+    clearDebuggerVariables() {
+        if (this.debugVariables) this.debugVariables.clear();
+    }
+
     updateDebuggerVariables(globals: pxsim.Variables) {
         if (!this.parent.state.debugging) return;
         if (!globals) {
-            if (this.debugVariables) this.debugVariables.clear();
+            // freeze the ui
+            if (this.debugVariables) this.debugVariables.update(true);
             return;
         }
         const vars = this.editor.getAllVariables().map((variable: any) => variable.name as string);
@@ -677,10 +694,10 @@ export class Editor extends srceditor.Editor {
             return;
         }
 
-        for (let k in vars) {
+        for (const k in vars) {
             const variable = vars[k];
             const value = getValueOfVariable(variable);
-            if (this.debugVariables && value != undefined) this.debugVariables.set(variable, value);
+            if (this.debugVariables) this.debugVariables.set(variable, value);
         }
 
         if (this.debugVariables) this.debugVariables.update();
@@ -699,6 +716,7 @@ export class Editor extends srceditor.Editor {
 
     clearHighlightedStatements() {
         this.editor.highlightBlock(null);
+        this.clearDebuggerVariables();
     }
 
     openTypeScript() {
