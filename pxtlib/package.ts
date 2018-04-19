@@ -769,7 +769,7 @@ namespace pxt {
                 })
         }
 
-        compressToFileAsync(editor?: string): Promise<Uint8Array> {
+        saveToJsonAsync(editor?: string): Promise<pxt.cpp.HexFile> {
             return this.filesToBePublishedAsync(true)
                 .then(files => {
                     const project: pxt.cpp.HexFile = {
@@ -781,8 +781,13 @@ namespace pxt {
                         },
                         source: JSON.stringify(files, null, 2)
                     }
-                    return pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
+                    return project;
                 });
+        }
+
+        compressToFileAsync(editor?: string): Promise<Uint8Array> {
+            return this.saveToJsonAsync(editor)
+                .then(project => pxt.lzmaCompressAsync(JSON.stringify(project, null, 2)));
         }
 
         computePartDefinitions(parts: string[]): pxt.Map<pxsim.PartDefinition> {
