@@ -162,4 +162,14 @@ namespace pxsim.util {
         });
         return result;
     }
+
+    export function toArray<T>(a: ArrayLike<T> | ReadonlyArray<T>): T[] {
+        if (Array.isArray(a)) {
+            return a;
+        }
+        let r: T[] = []
+        for (let i = 0; i < a.length; ++i)
+            r.push(a[i])
+        return r
+    }
 }
