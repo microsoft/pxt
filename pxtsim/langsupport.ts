@@ -82,12 +82,22 @@ namespace pxsim {
                 console.log(`RefObject id:${this.id} refs:${this.refcnt}`)
         }
 
+        // render a debug preview string
+        toDebugString(): string {
+            return "(object)";
+        }
+
         static toAny(o: any): any {
-            if (o instanceof RefMap)
-                return (<RefMap>o).toAny();
-            if (o instanceof RefCollection)
-                return (<RefCollection>o).toAny();
+            if (o && o.toAny) return o.toAny();
             return o;
+        }
+
+        static toDebugString(o: any): string {
+            if (o === null) return "null";
+            if (o === undefined) return "undefined;"
+            if (o.toDebugString) return o.toDebugString();
+            if (typeof o == "string") return JSON.stringify(o);
+            return o.toString();
         }
     }
 

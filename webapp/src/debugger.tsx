@@ -13,7 +13,9 @@ interface DebuggerVariablesState {
 
 interface Variable {
     value: string;
+    id?: string;
     prevValue?: string;
+    chidren?: Variable[];
 }
 
 interface DebuggerVariablesProps extends ISettingsProps {
@@ -51,18 +53,9 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             case "string": sv = JSON.stringify(v); break;
             case "object":
                 if (v == null) sv = "null";
-                else if (Array.isArray(v)) return `[${v.map(vi => this.renderValue(vi)).join(',')}]`;
-                else if (v.id && v.value) {
-                    try {
-                        const vobj = JSON.parse(v.value);
-                        return DebuggerVariables.renderValue(vobj);
-                    }
-                    catch(e) {
-                        return "(object)";
-                    }
-                }
-                else if (v.id !== undefined) sv = "(object)"
                 else if (v.text) sv = v.text;
+                else if (v.id && v.preview) return v.preview;
+                else if (v.id !== undefined) sv = "(object)"
                 else sv = "(unknown)"
                 break;
         }
@@ -92,6 +85,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             const sv = DebuggerVariables.capLength(DebuggerVariables.renderValue(v));
             variables[k] = {
                 value: sv,
+                id: v ? v.id : undefined,
                 prevValue: !frozen && variables[k] && sv != variables[k].value ?
                     variables[k].value : undefined
             }
