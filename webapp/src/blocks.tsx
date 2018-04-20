@@ -652,10 +652,10 @@ export class Editor extends srceditor.Editor {
             let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
                 this.editor.highlightBlock(bid);
-                const b = this.editor.getBlockById(bid);
-                b.setWarningText(brk ? brk.exceptionMessage : undefined);
-                // ensure highlight is in the screen when a breakpoint info is available
                 if (brk) {
+                    const b = this.editor.getBlockById(bid);
+                    b.setWarningText(brk ? brk.exceptionMessage : undefined);
+                    // ensure highlight is in the screen when a breakpoint info is available
                     // TODO: make warning mode look good
                     // b.setHighlightWarning(brk && !!brk.exceptionMessage);
                     const p = b.getRelativeToSurfaceXY();
