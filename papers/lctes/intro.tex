@@ -83,19 +83,16 @@ Intuitive APIs and programming models are required to support novice users, yet 
 \end{figure}
 
 Figure~\ref{fig:makecode} illustrates the architecture of our platform.
-The \MC web app is the primary entry point for the end-user. \MC requires no installation, and supports the simplified asynchronous programming of MCUs via editors for visual blocks and textual JavaScript/TypeScript languages. Supporting these higher level languages is \CO,a component-oriented, event-driven, fiber-based C++ runtime environment that bridges the semantic gap between higher-level languages (such as TypeScript) and the hardware, modelling each hardware component as a software component. Enabling the programming of the microcontroller is \UF, a new file format and bootloader for simplified transfer of
-binaries to the device, using a driverless USB mass storage abstraction.
+The \MC web app is the primary entry point for the end-user. \MC supports 
+the simplified programming of MCUs via editors for visual blocks and textual JavaScript/TypeScript~\footnote{\url{typescriptlang.org}} languages. 
+On the bottom-edge lies CODAL, a component-oriented, event-driven, fiber-based C++ runtime environment that bridges the semantic gap between the higher-level languages (such
+as TypeScript) and the hardware. Enabling the flashing of the microcontroller is \UF, 
+a new file format and bootloader for simplified transfer of binaries to the device over USB.
 
-\MC can be accessed from any modern web browser and cached locally for \emph{entirely offline use}. The \MC web app incorporates the open source Blockly~\footnote{\url{https://github.com/google/blockly}} and Monaco~\footnote{\url{https://github.com/Microsoft/monaco-editor}} editors (Figure~\ref{fig:makecode}: upper-left), an in-browser device simulator (Figure~\ref{fig:makecode}: upper-right) for testing programs before transferring them to the physical device, as well as \emph{in-browser compilation} of TypeScript to machine code and linking against the
-CODAL C++ runtime, pre-compiled by a cloud service (Figure~\ref{fig:makecode}: lower-left).
+\MC can be accessed from any modern web browser and cached locally for \emph{entirely offline use}. The \MC web app incorporates the open source Blockly~\footnote{\url{https://github.com/google/blockly}} and Monaco~\footnote{\url{https://github.com/Microsoft/monaco-editor}} editors (Figure~\ref{fig:makecode}: upper-left), an in-browser device simulator (Figure~\ref{fig:makecode}: upper-right) for testing programs before transferring them to the physical device, as well as \emph{in-browser compilation} of TypeScript to machine code and linking against the pre-compiled
+CODAL C++ runtime (Figure~\ref{fig:makecode}: lower-left).
 
-\MC devices appear as USB pen drives when plugged into a computer. After a user has finished developing a program, the compiled binary is ``downloaded'' locally to the users computer and then transferred (flashed) to the MCU by a simple file copy operation. No additional installation is required to program the MCU as drivers for pen drive come pre-installed on all common operating systems (MacOS, Windows, Linux, Android, ChromeOS).
-
-These three advances enable beginners to get started programming MCUs from any modern web browser.
-
-%\emph{\href{https://github.com/microsoft/pxt}{\MCN}}, \emph{\href
-%{https://github.com/lancaster-university/codal}{\CON}}, and \emph{\href
-%{https://github.com/microsoft/UF2}{\UFN}} are open source on GitHub.
+\MC devices appear as USB pen drives when plugged into a computer, thanks to UF2. After a user has finished developing a program, the compiled binary is ``downloaded'' locally to the user's computer (Figure~\ref{fig:makecode}: lower-right) and then transferred (flashed) to the MCU by a simple file copy operation. This works out-of-the-box on any OS with built-in support for US pen drives (MacOS, Windows, Linux,ChromeOS).
 
 \subsection{Overview}
 
