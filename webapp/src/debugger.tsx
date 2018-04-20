@@ -267,10 +267,11 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
 
         return <aside className="debugtoolbar" style={{ left: xPos }} role="complementary" aria-label={lf("Debugger toolbar")}>
             {!isDebugging ? undefined :
-                <div className={`ui compact borderless menu icon mini`}>
+                <div className={`ui compact borderless menu icon`}>
                     <div className={`ui item link dbg-btn dbg-handle`} key={'toolbarhandle'}
                         onMouseDown={this.toolbarHandleDown.bind(this)}>
-                        <sui.Icon key='iconkey' icon={`xicon bug`} />
+                        <sui.Icon key='iconkey' icon={`icon ellipsis vertical`} />
+                        <sui.Icon key='iconkey2' icon={`xicon bug`} />
                     </div>
                     <sui.Item key='dbgpauseresume' class={`dbg-btn dbg-pause-resume ${isDebuggerRunning ? "pause" : "play"}`} icon={`${isDebuggerRunning ? "pause blue" : "step forward green"}`} title={dbgPauseResumeTooltip} onClick={() => this.dbgPauseResume()} />
                     {!advancedDebugging ? <sui.Item key='dbgstep' class={`dbg-btn dbg-step`} icon={`arrow right ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepIntoTooltip} onClick={() => this.dbgStepInto()} /> : undefined}
