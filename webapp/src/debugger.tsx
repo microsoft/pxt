@@ -13,7 +13,7 @@ interface DebuggerVariablesState {
 
 interface Variable {
     value: string;
-    id?: string;
+    id?: number;
     prevValue?: string;
     chidren?: Variable[];
 }
@@ -96,6 +96,16 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         this.nextVariables = {};
     }
 
+    private toggle(v: Variable) {
+        if (v.chidren) {
+            delete v.chidren;
+            this.setState({ variables: this.state.variables })
+        } else {
+            // TODO
+            simulator.driver.variables(v.id);
+        }
+    }
+
     renderCore() {
         const { variables, frozen } = this.state;
         const varcolor = pxt.toolbox.getNamespaceColor('variables');
@@ -105,7 +115,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                     {Object.keys(variables).map(variable => {
                         const v = variables[variable];
                         return <div key={variable} className="item">
-                            <div className={`ui label image variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ backgroundColor: varcolor }}>
+                            <div className={`ui label image variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ backgroundColor: varcolor }}
+                                onClick={v.id ? () => this.toggle(v) : undefined}>
                                 <span className="varname">{variable}</span>
                                 <div className="detail">
                                     <span className="varval">{v.value + ' '}</span>

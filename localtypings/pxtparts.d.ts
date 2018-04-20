@@ -189,5 +189,8 @@ declare namespace pxsim {
         [name: string]: any;
     }
 
-
+    export interface VariablesMessage extends DebuggerMessage {
+        variable: string;
+        variables: Variables;
+    }
 }
