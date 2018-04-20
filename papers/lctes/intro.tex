@@ -21,14 +21,15 @@ To drive this point home, in 2015 a consortium of industry and academic partners
 Figure~\ref{fig:projects} highlights two example educational projects based on the BBC micro:bit. The first is a data gathering experiment, where multiple sensor data were recorded to non-volatile memory as the device was launched into near space (32.5km altitude), along with an externally interfaced camera and GPS unit. The second highlights a live data telemetry application, where acceleration data was streamed in real-time via Bluetooth Low Energy to enable the profiling of chemical-rocket powered model vehicles. These projects are highly sophisticated and were undertaken by high school educators and their students.
 
 We introduce an open source~\footnote{
-MakeCode at \url{http://github.com/microsoft/pxt} and CODAL at
+MakeCode is open source at \url{http://github.com/microsoft/pxt}; CODAL is open source at
 \url{http://github.com/lancaster-university/codal}.} platform for embedded devices such as the micro:bit that enables the development of embedded applications by non-expert programmers. This platform consists of two major components: Microsoft MakeCode (\url{www.makecode.com}), a web app that consists of a beginner IDE for embedded
 systems; CODAL, an efficient component-oriented C++ runtime 
 providing high-level programming abstractions.
 
 In the remainder of the introduction, we present the major design challenges in
-bringing embedded systems into education and then give a brief overview of the paper
-and our results.
+bringing embedded systems into education, briefly describe the 
+architecture of our solution, and give an overview of the 
+paper and our results.
 
 \subsection{Design Challenges}
 \label{sec:DesignChallenges}
@@ -73,9 +74,32 @@ Intuitive APIs and programming models are required to support novice users, yet 
 %Also, embedded systems are becoming increasingly component based through wired and %wireless interfaces such as I2C, Bluetooth Mesh, IEEE 802.15.4. 
 \emph{An effective solution must provide APIs that are consistent, easy to understand/uses, and progressive, to address the growing capabilities of the programmer.}
 
-\subsection{Paper Overview}
+\subsection{Architecture}
 
-The remainder of the paper describes the design, implementation, and evaluation of MakeCode (Section~\ref{sec:makecode}), the CODAL C++ runtime (Section~\ref{sec:codal}), and the UF2 bootloader (Section~\ref{sec:uf2}) designed to address the above challenges for devices such as those listed in Table~\ref{table:devices}. Section~\ref{sec:evaluate} shows that together these technologies enable simplified programming while maintaining a relatively high degree of temporal and spatial efficiency. We demonstrate up to 50x better performance than other state-of-the-art implementations, in some cases nearing the performance of native C++. MakeCode has been live since the fall of 2016, at first supporting just the micro:bit, but now supporting many more devices, most of which are based on CODAL. Section~\ref{sec:related} discusses related work and Section~\ref{sec:conclude} concludes the paper.
+\begin{figure}[t]
+    \includegraphics[width=\columnwidth]{images/arch-diagram.png}
+    \setlength{\belowcaptionskip}{-10pt}
+    \caption{\label{fig:makecode}The \MC and \CO Architecture}
+\end{figure}
+
+Figure~\ref{fig:makecode} illustrates the architecture of our platform.
+The \MC web app is the primary entry point for the end-user. \MC requires no installation, and supports the simplified asynchronous programming of MCUs via editors for visual blocks and textual JavaScript/TypeScript languages. Supporting these higher level languages is \CO,a component-oriented, event-driven, fiber-based C++ runtime environment that bridges the semantic gap between higher-level languages (such as TypeScript) and the hardware, modelling each hardware component as a software component. Enabling the programming of the microcontroller is \UF, a new file format and bootloader for simplified transfer of
+binaries to the device, using a driverless USB mass storage abstraction.
+
+\MC can be accessed from any modern web browser and cached locally for \emph{entirely offline use}. The \MC web app incorporates the open source Blockly~\footnote{\url{https://github.com/google/blockly}} and Monaco~\footnote{\url{https://github.com/Microsoft/monaco-editor}} editors (Figure~\ref{fig:makecode}: upper-left), an in-browser device simulator (Figure~\ref{fig:makecode}: upper-right) for testing programs before transferring them to the physical device, as well as \emph{in-browser compilation} of TypeScript to machine code and linking against the
+CODAL C++ runtime, pre-compiled by a cloud service (Figure~\ref{fig:makecode}: lower-left).
+
+\MC devices appear as USB pen drives when plugged into a computer. After a user has finished developing a program, the compiled binary is ``downloaded'' locally to the users computer and then transferred (flashed) to the MCU by a simple file copy operation. No additional installation is required to program the MCU as drivers for pen drive come pre-installed on all common operating systems (MacOS, Windows, Linux, Android, ChromeOS).
+
+These three advances enable beginners to get started programming MCUs from any modern web browser.
+
+%\emph{\href{https://github.com/microsoft/pxt}{\MCN}}, \emph{\href
+%{https://github.com/lancaster-university/codal}{\CON}}, and \emph{\href
+%{https://github.com/microsoft/UF2}{\UFN}} are open source on GitHub.
+
+\subsection{Overview}
+
+The remainder of the paper describes the design, implementation, and evaluation of MakeCode (Section~\ref{sec:makecode}), the CODAL C++ runtime (Section~\ref{sec:codal}), and the UF2 bootloader (Section~\ref{sec:uf2}). Section~\ref{sec:evaluate} shows that together these technologies enable simplified programming while maintaining a relatively high degree of temporal and spatial efficiency. We demonstrate up to 50x better performance than other state-of-the-art implementations, in some cases nearing the performance of native C++. MakeCode has been live since the fall of 2016, at first supporting just the micro:bit, but now supporting many more devices, most of which are based on CODAL. Section~\ref{sec:related} discusses related work and Section~\ref{sec:conclude} concludes the paper.
 
 % Our platform was deployed about a year ago at \url{www.makecode.com} and sees daily use by thousands of users.
 
