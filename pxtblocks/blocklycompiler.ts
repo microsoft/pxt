@@ -1196,7 +1196,8 @@ namespace pxt.blocks {
             let handlerArgs: string[] = []; // = stdfun.handlerArgs.map(arg => escapeVarName(b.getFieldValue("HANDLER_" + arg.name), e));
             for (let i = 0; i < stdfun.comp.handlerArgs.length; i++) {
                 const arg = stdfun.comp.handlerArgs[i];
-                const varName = b.getFieldValue("HANDLER_" + arg.name);
+                const varField = b.getField("HANDLER_" + arg.name);
+                const varName = varField && varField.getText();
                 if (varName !== null) {
                     handlerArgs.push(escapeVarName(varName, e));
                 }
@@ -1469,7 +1470,8 @@ namespace pxt.blocks {
                 let foundIt = false;
                 stdFunc.comp.handlerArgs.forEach(arg => {
                     if (foundIt) return;
-                    let varName = b.getFieldValue("HANDLER_" + arg.name);
+                    const varField = b.getField("HANDLER_" + arg.name);
+                    let varName = varField && varField.getText();
                     if (varName != null && escapeVarName(varName, e) === name) {
                         foundIt = true;
                     }
@@ -1517,7 +1519,8 @@ namespace pxt.blocks {
             let stdFunc = e.stdCallTable[b.type];
             if (stdFunc && stdFunc.comp.handlerArgs.length) {
                 stdFunc.comp.handlerArgs.forEach(arg => {
-                    let varName = b.getFieldValue("HANDLER_" + arg.name)
+                    const varField = b.getField("HANDLER_" + arg.name)
+                    let varName = varField && varField.getText();
                     if (varName != null) {
                         trackLocalDeclaration(escapeVarName(varName, e), arg.type);
                     }

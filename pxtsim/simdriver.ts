@@ -92,8 +92,30 @@ namespace pxsim {
         private setState(state: SimulatorState) {
             if (this.state != state) {
                 this.state = state;
+                this.freeze(this.state == SimulatorState.Paused); // don't allow interaction when pause
                 if (this.options.onStateChanged)
                     this.options.onStateChanged(this.state);
+            }
+        }
+
+        private freeze(value: boolean) {
+            const cls = "pause-overlay";
+            if (!value) {
+                pxsim.util.toArray(this.container.querySelectorAll(`div.simframe div.${cls}`))
+                    .forEach(overlay => overlay.parentElement.removeChild(overlay));
+            } else {
+                pxsim.util.toArray(this.container.querySelectorAll("div.simframe"))
+                    .forEach(frame => {
+                        if (frame.querySelector(`div.${cls}`))
+                            return;
+                        const div = document.createElement("div");
+                        div.className = cls;
+                        div.onclick = (ev) => {
+                            ev.preventDefault();
+                            return false;
+                        };
+                        frame.appendChild(div);
+                    })
             }
         }
 
@@ -296,7 +318,7 @@ namespace pxsim {
                             this.options.revealElement(frame);
                     }
                     break;
-                case 'simulator':  this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
+                case 'simulator': this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
                 case 'serial': break; //handled elsewhere
                 case 'pxteditor':
                 case 'custom':
@@ -350,7 +372,7 @@ namespace pxsim {
                     return;
             }
 
-            this.postMessage({type: 'debugger', subtype: msg } as pxsim.DebuggerMessage)
+            this.postMessage({ type: 'debugger', subtype: msg } as pxsim.DebuggerMessage)
         }
 
         public setBreakpoints(breakPoints: number[]) {

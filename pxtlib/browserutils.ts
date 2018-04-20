@@ -346,6 +346,9 @@ namespace pxt.BrowserUtils {
     }
 
     function resolveCdnUrl(path: string): string {
+        // don't expand full urls
+        if (/^https?:\/\//i.test(path))
+            return path;
         const monacoPaths: Map<string> = (window as any).MonacoPaths || {};
         const url = monacoPaths[path] || (pxt.webConfig.commitCdnUrl + path);
         return url;

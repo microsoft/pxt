@@ -83,6 +83,7 @@ declare namespace pxt {
         onStartUnDeletable?: boolean;
         pauseUntilBlock?: BlockOptions;
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
+        assetExtensions?: string[];
         palette?: string[];
     }
 
@@ -128,6 +129,7 @@ declare namespace pxt {
         stopOnChange?: boolean;
         hideRestart?: boolean;
         enableTrace?: boolean;
+        debugger?: boolean;
         hideFullscreen?: boolean;
         streams?: boolean;
         aspectRatio?: number; // width / height

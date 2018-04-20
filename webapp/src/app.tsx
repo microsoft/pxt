@@ -431,6 +431,9 @@ export class ProjectView
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
         simulator.init($("#boardview")[0], {
+            orphanException: brk => {
+                // do something!
+            },
             highlightStatement: (stmt, brk) => {
                 if (this.editor) return this.editor.highlightStatement(stmt, brk);
                 return false;
@@ -877,6 +880,15 @@ export class ProjectView
             .then(buf => this.importProjectCoreAsync(buf))
     }
 
+    importAssetFile(file: File) {
+        ts.pxtc.Util.fileReadAsBufferAsync(file)
+            .then(buf => {
+                let basename = file.name.replace(/.*[\/\\]/, "")
+                return pkg.mainEditorPkg().saveAssetAsync(basename, buf)
+            })
+            .done()
+    }
+
     importFile(file: File) {
         if (!file || pxt.shell.isReadOnly()) return;
         if (isHexFile(file.name)) {
@@ -887,6 +899,9 @@ export class ProjectView
             this.importTypescriptFile(file);
         } else if (isProjectFile(file.name)) {
             this.importProjectFile(file);
+        } else if (isAssetFile(file.name)) {
+            // assets need to go before PNG source import below, since target might want PNG assets
+            this.importAssetFile(file)
         } else if (isPNGFile(file.name)) {
             this.importPNGFile(file);
         } else {
@@ -1001,7 +1016,12 @@ export class ProjectView
     }
 
     saveProjectToFileAsync(): Promise<void> {
-        const mpkg = pkg.mainPkg
+        const mpkg = pkg.mainPkg;
+        if (pxt.commands.saveProjectAsync) {
+            core.infoNotification(lf("Saving..."))
+            return pkg.mainPkg.saveToJsonAsync(this.getPreferredEditor())
+                .then(project => pxt.commands.saveProjectAsync(project));
+        }
         if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNG();
         else return this.exportProjectToFileAsync()
             .then((buf: Uint8Array) => {
@@ -1975,6 +1995,15 @@ function isPNGFile(filename: string): boolean {
     return pxt.appTarget.compile.saveAsPNG && /\.png$/i.test(filename);
 }
 
+function isAssetFile(filename: string): boolean {
+    let exts = pxt.appTarget.runtime ? pxt.appTarget.runtime.assetExtensions : null
+    if (exts) {
+        let ext = filename.replace(/.*\./, "").toLowerCase()
+        return exts.indexOf(ext) >= 0
+    }
+    return false
+}
+
 function initLogin() {
     {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
@@ -2272,6 +2301,14 @@ function initExtensionsAsync(): Promise<void> {
                 pxt.debug(`\tadded custom deploy core async`);
                 pxt.commands.deployCoreAsync = res.deployCoreAsync;
             }
+            if (res.saveOnlyAsync) {
+                pxt.debug(`\tadded custom save only async`);
+                pxt.commands.saveOnlyAsync = res.saveOnlyAsync;
+            }
+            if (res.saveProjectAsync) {
+                pxt.debug(`\tadded custom save project async`);
+                pxt.commands.saveProjectAsync = res.saveProjectAsync;
+            }
             if (res.showUploadInstructionsAsync) {
                 pxt.debug(`\tadded custom upload instructions async`);
                 pxt.commands.showUploadInstructionsAsync = res.showUploadInstructionsAsync;
@@ -2438,10 +2475,18 @@ $(() => {
             else theEditor.newProject();
             return Promise.resolve();
         })
-        .done(() => {
+        .then(() => {
             $("#loading").remove();
             return workspace.loadedAsync();
-        });
+        })
+        .done(() => {
+            // preload delay loaded resources
+            if ((window as any).requestIdleCallback) {
+                (window as any).requestIdleCallback(() => {
+                    if (theEditor) theEditor.loadBlocklyAsync().done();
+                })
+            }
+        })
 
     document.addEventListener("visibilitychange", ev => {
         if (theEditor)

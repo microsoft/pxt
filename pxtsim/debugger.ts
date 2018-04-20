@@ -20,8 +20,8 @@ namespace pxsim {
     }
 
     export class BreakpointMap {
-        public fileMap: {[index: string]: [number, DebugProtocol.Breakpoint][]} = {};
-        public idMap: {[index: number]: DebugProtocol.Breakpoint} = {};
+        public fileMap: { [index: string]: [number, DebugProtocol.Breakpoint][] } = {};
+        public idMap: { [index: number]: DebugProtocol.Breakpoint } = {};
 
         constructor(breakpoints: [number, DebugProtocol.Breakpoint][]) {
             breakpoints.forEach(tuple => {
@@ -96,8 +96,17 @@ namespace pxsim {
                     return null;
                 case "object":
                     if (!v) return null;
-                    if (v instanceof RefObject)
-                        return { id: (v as RefObject).id }
+                    if (v instanceof RefObject) {
+                        let value: any = undefined;
+                        try {
+                            value = JSON.stringify(RefObject.toAny(v));
+                        }
+                        catch (e) { }
+                        return {
+                            id: (v as RefObject).id,
+                            value
+                        }
+                    }
                     return { text: "(object)" }
                 default:
                     throw new Error();
@@ -268,7 +277,7 @@ namespace pxsim {
         }
 
         protected threadsRequest(response: DebugProtocol.ThreadsResponse): void {
-            response.body = { threads: [{ id: SimDebugSession.THREAD_ID, name: "main"}] }
+            response.body = { threads: [{ id: SimDebugSession.THREAD_ID, name: "main" }] }
             this.sendResponse(response);
         }
 
@@ -389,7 +398,7 @@ namespace pxsim {
          * Get stack frames for current breakpoint.
          */
         getFrames(): DebugProtocol.StackFrame[] {
-            return this._message.stackframes.map((s: SimFrame, i: number) => {;
+            return this._message.stackframes.map((s: SimFrame, i: number) => {
                 const bp = this._map.getById(s.breakpointId);
                 if (bp) {
                     this._frames[s.breakpointId] = s;

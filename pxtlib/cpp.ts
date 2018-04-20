@@ -1355,13 +1355,7 @@ namespace pxt.hex {
     }
 
     function apiAsync(path: string, data?: any) {
-        return U.requestAsync({
-            url: "/api/" + path,
-            headers: { "Authorization": Cloud.localToken },
-            method: data ? "POST" : "GET",
-            data: data || undefined,
-            allowHttpErrors: true
-        }).then(r => r.json);
+        return Cloud.localRequestAsync(path, data).then(r => r.json)
     }
 
     export function storeWithLimitAsync(host: Host, idxkey: string, newkey: string, newval: string, maxLen = 10) {

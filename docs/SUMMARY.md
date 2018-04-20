@@ -34,6 +34,7 @@
     * [Routing](/writing-docs/routing)
     * [Testing](/writing-docs/testing)
 * [Translations](/translate)
+* [Blocks Embedding](/blocks-embed)
 * [Command Line Interface](/cli)
     * [build](/cli/build)
     * [bump](/cli/bump)
