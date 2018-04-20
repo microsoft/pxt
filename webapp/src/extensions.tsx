@@ -131,10 +131,9 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
     }
 
     componentDidUpdate() {
-        this.updateDimensions();
         setTimeout(() => {
             this.updateDimensions();
-        });
+        }, 0);
     }
 
     componentWillUpdate(nextProps: any, nextState: ExtensionsState) {
