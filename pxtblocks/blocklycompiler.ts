@@ -1108,13 +1108,9 @@ namespace pxt.blocks {
         } else if (func.f == "@get@") {
             return H.mkPropertyAccess(args[1].op.replace(/.*\./, ""), args[0]);
         } else if (func.f == "@set@") {
-            return H.mkAssign(
-                H.mkPropertyAccess(args[1].op.replace(/.*\./, "").replace(/@set/, ""), args[0]),
-                args[2]);
+            return H.mkAssign(H.mkPropertyAccess(args[1].op.replace(/.*\./, "").replace(/@set/, ""), args[0]), args[2]);
         } else if (func.f == "@change@") {
-            return mkStmt(H.mkSimpleCall("+=", [
-                H.mkPropertyAccess(args[1].op.replace(/.*\./, "").replace(/@set/, ""), args[0]),
-                args[2]]))
+            return H.mkSimpleCall("+=", [H.mkPropertyAccess(args[1].op.replace(/.*\./, "").replace(/@set/, ""), args[0]), args[2]])
         } else if (func.isExtensionMethod) {
             if (func.attrs.defaultInstance) {
                 let instance: JsNode;
