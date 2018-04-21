@@ -14,7 +14,7 @@ To drive this point home, in 2015 a consortium of industry and academic partners
     \includegraphics[width=.49\columnwidth] {images/microbit-space.jpg}
     \includegraphics[width=.49\columnwidth]{images/bloodhound.jpg}
     \setlength{\belowcaptionskip}{-10pt}
-    \caption{\label{fig:projects} Example projects undertaken within education}
+    \caption{\label{fig:projects} Example projects undertaken within education: Rishworth School sent a micro:bit to space~\cite{microbit79:online} (left); The micro:bit placed in a custom-built rocket car for telemetry~\cite{microbit73:online, microsoft:online} (right).}
     \vspace{-5pt}
 \end{figure}
 
@@ -23,12 +23,12 @@ Figure~\ref{fig:projects} highlights two example educational projects based on t
 We introduce an open source~\footnote{
 MakeCode is open source at \url{http://github.com/microsoft/pxt}; CODAL is open source at
 \url{http://github.com/lancaster-university/codal}.} platform for embedded devices such as the micro:bit that enables the development of embedded applications by non-expert programmers. This platform consists of two major components: Microsoft MakeCode (\url{www.makecode.com}), a web app that consists of a beginner IDE for embedded
-systems; CODAL, an efficient component-oriented C++ runtime 
+systems; CODAL, an efficient component-oriented C++ runtime
 providing high-level programming abstractions.
 
 In the remainder of the introduction, we present the major design challenges in
-bringing embedded systems into education, briefly describe the 
-architecture of our solution, and give an overview of the 
+bringing embedded systems into education, briefly describe the
+architecture of our solution, and give an overview of the
 paper and our results.
 
 \subsection{Design Challenges}
@@ -64,14 +64,14 @@ Table~\ref{table:devices} compares the core capabilities of the class of MCU-bas
 Consider the BBC micro:bit vs. a typical PC: the micro:bit has about 100 times less CPU power, but 10\textsuperscript{6} times less RAM, and 10\textsuperscript{6} times less storage. \emph{A language/runtime should therefore not only seek to provide high code density and spatial efficiency, but actively trade off temporal for spatial efficiency where possible}.
 
 \paragraph{Asynchronous and Concurrent Programming:}
-It is already well understood that novice programmers benefit from event-based programming paradigms~\cite{maloney2008programming,maloney2010scratch,turbak2014events}. This is increasingly relevant for embedded systems due to the typically asynchronous nature of their hardware. MCUs still follow Moore's law, 
+It is already well understood that novice programmers benefit from event-based programming paradigms~\cite{maloney2008programming,maloney2010scratch,turbak2014events}. This is increasingly relevant for embedded systems due to the typically asynchronous nature of their hardware. MCUs still follow Moore's law,
 but this additional capacity is not typically invested in speeding
 up processors. Instead, more independent peripherals (such as Bluetooth/WiFi radio modules, audio inputs/output processors, etc.) are integrated onto the same package as the CPU as a \emph{system-on-chip}. Such peripherals often operate independently of the main CPU. \emph{An effective language/runtime should directly support an asynchronous interaction model designed to cooperate with the independent nature of peripherals while remaining highly intuitive to the programmer}.
 
 \paragraph{Intuitive and Extensible APIs:}
-Intuitive APIs and programming models are required to support novice users, yet it is equally important that these APIs remain complete enough to realise the ambitious projects that may be undertaken as students advance: simplification via the reduction of functionality is not a valid approach. 
+Intuitive APIs and programming models are required to support novice users, yet it is equally important that these APIs remain complete enough to realise the ambitious projects that may be undertaken as students advance: simplification via the reduction of functionality is not a valid approach.
 %TBALL: this sentence seems out of place - I couldn't really figure out how to make it fit.
-%Also, embedded systems are becoming increasingly component based through wired and %wireless interfaces such as I2C, Bluetooth Mesh, IEEE 802.15.4. 
+%Also, embedded systems are becoming increasingly component based through wired and %wireless interfaces such as I2C, Bluetooth Mesh, IEEE 802.15.4.
 \emph{An effective solution must provide APIs that are consistent, easy to understand/uses, and progressive, to address the growing capabilities of the programmer.}
 
 \subsection{Architecture}
@@ -83,10 +83,10 @@ Intuitive APIs and programming models are required to support novice users, yet 
 \end{figure}
 
 Figure~\ref{fig:makecode} illustrates the architecture of our platform.
-The \MC web app is the primary entry point for the end-user. \MC supports 
-the simplified programming of MCUs via editors for visual blocks and textual JavaScript/TypeScript~\footnote{\url{typescriptlang.org}} languages. 
+The \MC web app is the primary entry point for the end-user. \MC supports
+the simplified programming of MCUs via editors for visual blocks and textual JavaScript/TypeScript~\footnote{\url{typescriptlang.org}} languages.
 On the bottom-edge lies CODAL, a component-oriented, event-driven, fiber-based C++ runtime environment that bridges the semantic gap between the higher-level languages (such
-as TypeScript) and the hardware. Enabling the flashing of the microcontroller is \UF, 
+as TypeScript) and the hardware. Enabling the flashing of the microcontroller is \UF,
 a new file format and bootloader for simplified transfer of binaries to the device over USB.
 
 \MC can be accessed from any modern web browser and cached locally for \emph{entirely offline use}. The \MC web app incorporates the open source Blockly~\footnote{\url{https://github.com/google/blockly}} and Monaco~\footnote{\url{https://github.com/Microsoft/monaco-editor}} editors (Figure~\ref{fig:makecode}: upper-left), an in-browser device simulator (Figure~\ref{fig:makecode}: upper-right) for testing programs before transferring them to the physical device, as well as \emph{in-browser compilation} of TypeScript to machine code and linking against the pre-compiled
