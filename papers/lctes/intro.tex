@@ -41,10 +41,6 @@ Programming languages for microcontroller units (MCUs) have not kept pace with a
 \paragraph{Zero Installation Architecture:}
 The development environment for existing embedded systems typically requires the installation of code editors, custom device drivers, compiler toolchains, and even additional programming hardware (such as a JLink programmer). For many, particularly in the field of education, this presents a high adoption barrier as in many schools, custom hardware and software is simply not permitted by policy and/or access to the necessary technical support is not present. \emph{An effective solution must therefore provide a fully transparent, platform agnostic, zero installation experience to developing embedded software}.
 
-\paragraph{Optimisation for Code Efficiency:}
-The projects of Figure~\ref{fig:projects} are enabled by small, highly resource-limited programmable MCUs, which may have as little as a few kilobytes of RAM and FLASH memory.
-Table~\ref{table:devices} compares the core capabilities of the class of MCU-based devices typically used in the education domain to a typical PC. Note that these devices have a \emph{proportionally} large amount of processing power, relative to their storage.
-
 \begin{table}[t]
     \centering
     \begin{tabular}{|l|r|r|r|r|r|r|}
@@ -61,7 +57,9 @@ Table~\ref{table:devices} compares the core capabilities of the class of MCU-bas
     \vspace{-20pt}
 \end{table}
 
-Consider the BBC micro:bit vs. a typical PC: the micro:bit has about 100 times less CPU power, but 10\textsuperscript{6} times less RAM, and 10\textsuperscript{6} times less storage. \emph{A language/runtime should therefore not only seek to provide high code density and spatial efficiency, but actively trade off temporal for spatial efficiency where possible}.
+\paragraph{Optimisation for Code Efficiency:}
+The projects of Figure~\ref{fig:projects} are enabled by small, highly resource-limited programmable MCUs, which may have as little as a few kilobytes of RAM and FLASH memory.
+Table~\ref{table:devices} compares the core capabilities of the class of MCU-based devices typically used in the education domain to a typical PC. Note that these devices have a \emph{proportionally} large amount of processing power, relative to their storage. Consider the BBC micro:bit vs. a typical PC: the micro:bit has about 100 times less CPU power, but 10\textsuperscript{6} times less RAM, and 10\textsuperscript{6} times less storage. \emph{A language/runtime should therefore not only seek to provide high code density and spatial efficiency, but actively trade off temporal for spatial efficiency where possible}.
 
 \paragraph{Asynchronous and Concurrent Programming:}
 It is already well understood that novice programmers benefit from event-based programming paradigms~\cite{maloney2008programming,maloney2010scratch,turbak2014events}. This is increasingly relevant for embedded systems due to the typically asynchronous nature of their hardware. MCUs still follow Moore's law,
