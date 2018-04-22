@@ -143,6 +143,7 @@ declare namespace pxsim {
     export interface DebuggerMessage extends SimulatorMessage {
         subtype: string;
         seq?: number;
+        req_seq?: number;
     }
 
     // subtype=config
@@ -190,8 +191,11 @@ declare namespace pxsim {
         [name: string]: any;
     }
 
+    export interface VariablesRequestMessage extends DebuggerMessage {
+        variablesReference: string;
+    }
+
     export interface VariablesMessage extends DebuggerMessage {
-        variable: string;
         variables: Variables;
     }
 }

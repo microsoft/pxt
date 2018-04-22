@@ -101,33 +101,39 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             if (!v.value.id) return;
             simulator.driver.variablesAsync(v.value.id)
                 .then((msg: pxsim.VariablesMessage) => {
-                    if (msg)
+                    if (msg) {
                         v.children = pxt.Util.mapMap(msg.variables || {},
                             (k, v) => {
                                 return {
                                     value: msg.variables[k]
                                 }
                             });
+                        this.setState({ variables: this.state.variables })
+                    }
                 })
         }
     }
 
-    private renderVariables(variables: pxt.Map<Variable>): JSX.Element[] {
+    private renderVariables(variables: pxt.Map<Variable>, parent?: string): JSX.Element[] {
         const varcolor = pxt.toolbox.getNamespaceColor('variables');
-        return Object.keys(variables).map(variable => {
+        let r: JSX.Element[] = []
+        Object.keys(variables).forEach(variable => {
             const v = variables[variable];
-            return <div key={variable} className="item">
+            const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
+            r.push(<div key={(parent || "") + variable} className="item">
                 <div className={`ui label image variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ backgroundColor: varcolor }}
-                    onClick={v.value && v.value.id ? () => this.toggle(v) : undefined}>
+                    onClick={onClick}>
                     <span className="varname">{variable}</span>
                     <div className="detail">
                         <span className="varval">{DebuggerVariables.renderValue(v.value)}</span>
                         <span className="previousval">{v.prevValue !== undefined ? `(${DebuggerVariables.renderValue(v.prevValue)})` : ''}</span>
                     </div>
-                    {v.children ? this.renderVariables(v.children) : undefined }
                 </div>
-            </div>
+            </div>);
+            if (v.children)
+                r = r.concat(this.renderVariables(v.children, variable));
         })
+        return r;
     }
 
     renderCore() {

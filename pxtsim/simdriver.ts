@@ -438,6 +438,16 @@ namespace pxsim {
                         this.options.onTraceMessage(msg as pxsim.TraceMessage);
                     }
                     break;
+                default:
+                    const seq = msg.req_seq;
+                    if (seq) {
+                        const resolve = this.debuggerResolvers[seq];
+                        if (resolve) {
+                            delete this.debuggerResolvers[seq];
+                            resolve(msg)
+                        }
+                    }
+                    break;
             }
         }
 
