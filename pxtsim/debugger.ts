@@ -97,14 +97,9 @@ namespace pxsim {
                 case "object":
                     if (!v) return null;
                     if (v instanceof RefObject) {
-                        let value: any = undefined;
-                        try {
-                            value = JSON.stringify(RefObject.toAny(v));
-                        }
-                        catch (e) { }
                         return {
                             id: (v as RefObject).id,
-                            value
+                            preview: RefObject.toDebugString(v)
                         }
                     }
                     return { text: "(object)" }
@@ -114,10 +109,10 @@ namespace pxsim {
         }
 
         function frameVars(frame: Variables) {
-            let r: Variables = {}
+            const r: Variables = {}
             for (let k of Object.keys(frame)) {
                 if (/___\d+$/.test(k)) {
-                    r[k] = valToJSON(frame[k])
+                    r[k.replace(/___\d+$/, '')] = valToJSON(frame[k])
                 }
             }
             return r
@@ -310,7 +305,8 @@ namespace pxsim {
             this.state = new StoppedState(this.lastBreak, this.breakpoints, this.projectDir);
 
             if (breakMsg.exceptionMessage) {
-                this.sendEvent(new protocol.StoppedEvent("exception", SimDebugSession.THREAD_ID, breakMsg.exceptionMessage));
+                const message = breakMsg.exceptionMessage.replace(/___\d+/g, '');
+                this.sendEvent(new protocol.StoppedEvent("exception", SimDebugSession.THREAD_ID, message));
             }
             else {
                 this.sendEvent(new protocol.StoppedEvent("breakpoint", SimDebugSession.THREAD_ID));

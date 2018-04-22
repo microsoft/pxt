@@ -10,6 +10,7 @@ namespace pxsim {
         onStateChanged?: (state: SimulatorState) => void;
         onSimulatorCommand?: (msg: pxsim.SimulatorCommandMessage) => void;
         onTopLevelCodeEnd?: () => void;
+        onVariables?: (msg: pxsim.VariablesMessage) => void;
         simUrl?: string;
         stoppedClass?: string;
     }
@@ -384,6 +385,10 @@ namespace pxsim {
             this.postDebuggerMessage("traceConfig", { interval: intervalMs });
         }
 
+        public variables(id: number) {
+            this.postDebuggerMessage("variables", { variablesReference: id } as DebugProtocol.VariablesArguments)
+        }
+
         private handleSimulatorCommand(msg: pxsim.SimulatorCommandMessage) {
             if (this.options.onSimulatorCommand) this.options.onSimulatorCommand(msg);
         }
@@ -415,6 +420,10 @@ namespace pxsim {
                         this.options.onTraceMessage(msg as pxsim.TraceMessage);
                     }
                     break;
+                case "variables":
+                    if (this.options.onVariables) {
+                        this.options.onVariables(msg as pxsim.VariablesMessage);
+                    }
             }
         }
 
