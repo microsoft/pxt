@@ -83,12 +83,10 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             const v = this.nextVariables[k];
             variables[k] = {
                 value: v,
-                prevValue: !frozen && variables[k] && v !== variables[k].value ?
+                prevValue: v && !v.id && variables[k] && v !== variables[k].value ?
                     variables[k].value : undefined
             }
         })
-        if (frozen)
-            Object.keys(variables).forEach(k => delete variables[k].prevValue);
         this.setState({ variables: variables, frozen });
         this.nextVariables = {};
     }
@@ -126,7 +124,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                     <span className="varname">{variable}</span>
                     <div className="detail">
                         <span className="varval">{DebuggerVariables.renderValue(v.value)}</span>
-                        <span className="previousval">{v.prevValue !== undefined ? `(${DebuggerVariables.renderValue(v.prevValue)})` : ''}</span>
+                        <span className="previousval">{v.prevValue !== undefined ? `${DebuggerVariables.renderValue(v.prevValue)}` : ''}</span>
                     </div>
                 </div>
             </div>);
