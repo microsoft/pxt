@@ -202,7 +202,7 @@ function setupBlocklyAsync() {
 
     // backward compatibility: load editor
     if (pxt.appTarget.versions &&
-        pxt.semver.strcmp("v3.9", pxt.appTarget.versions.target) < 0 &&
+        pxt.semver.strcmp("v3.9", pxt.appTarget.versions.pxt) < 0 &&
         pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
         let opts = {};
         promise = promise.then(function () {
