@@ -103,7 +103,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 .then((msg: pxsim.VariablesMessage) => {
                     if (msg)
                         v.children = pxt.Util.mapMap(msg.variables || {},
-                                (k,v) => {
+                            (k, v) => {
                                 return {
                                     value: msg.variables[k]
                                 }
@@ -112,25 +112,31 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
     }
 
+    private renderVariables(variables: pxt.Map<Variable>): JSX.Element[] {
+        const varcolor = pxt.toolbox.getNamespaceColor('variables');
+        return Object.keys(variables).map(variable => {
+            const v = variables[variable];
+            return <div key={variable} className="item">
+                <div className={`ui label image variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ backgroundColor: varcolor }}
+                    onClick={v.value && v.value.id ? () => this.toggle(v) : undefined}>
+                    <span className="varname">{variable}</span>
+                    <div className="detail">
+                        <span className="varval">{DebuggerVariables.renderValue(v.value)}</span>
+                        <span className="previousval">{v.prevValue !== undefined ? `(${DebuggerVariables.renderValue(v.prevValue)})` : ''}</span>
+                    </div>
+                    {v.children ? this.renderVariables(v.children) : undefined }
+                </div>
+            </div>
+        })
+    }
+
     renderCore() {
         const { variables, frozen } = this.state;
-        const varcolor = pxt.toolbox.getNamespaceColor('variables');
+
         return Object.keys(variables).length == 0 ? <div /> :
             <div className={`ui segment debugvariables ${frozen ? "frozen" : ""}`}>
                 <div className="ui middle aligned list">
-                    {Object.keys(variables).map(variable => {
-                        const v = variables[variable];
-                        return <div key={variable} className="item">
-                            <div className={`ui label image variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ backgroundColor: varcolor }}
-                                onClick={v.value && v.value.id ? () => this.toggle(v) : undefined}>
-                                <span className="varname">{variable}</span>
-                                <div className="detail">
-                                    <span className="varval">{DebuggerVariables.renderValue(v.value)}</span>
-                                    <span className="previousval">{v.prevValue !== undefined ? `(${DebuggerVariables.renderValue(v.prevValue)})` : ''}</span>
-                                </div>
-                            </div>
-                        </div>
-                    })}
+                    {this.renderVariables(variables)}
                 </div>
             </div>;
     }
