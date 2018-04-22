@@ -21,8 +21,8 @@ To drive this point home, in 2015 a consortium of industry and academic partners
 Figure~\ref{fig:projects} highlights two example educational projects based on the BBC micro:bit. The first is a data gathering experiment, where multiple sensor data were recorded to non-volatile memory as the device was launched into near space (32.5km altitude), along with an externally interfaced camera and GPS unit. The second highlights a live data telemetry application, where acceleration data was streamed in real-time via Bluetooth Low Energy to enable the profiling of chemical-rocket powered model vehicles. These projects are highly sophisticated and were undertaken by high school educators and their students.
 
 We introduce an open source~\footnote{
-MakeCode is open source at \url{http://github.com/microsoft/pxt}; CODAL is open source at
-\url{http://github.com/lancaster-university/codal}.} platform for embedded devices such as the micro:bit that enables the development of embedded applications by non-expert programmers. This platform consists of two major components: Microsoft MakeCode (\url{www.makecode.com}), a web app that consists of a beginner IDE for embedded
+MakeCode is open source at \url{https://github.com/microsoft/pxt}; CODAL is open source at
+\url{https://github.com/lancaster-university/codal}.} platform for embedded devices such as the micro:bit that enables the development of embedded applications by non-expert programmers. This platform consists of two major components: Microsoft MakeCode (\url{https://makecode.com}), a web app that consists of a beginner IDE for embedded
 systems; CODAL, an efficient component-oriented C++ runtime
 providing high-level programming abstractions.
 
@@ -57,7 +57,7 @@ The development environment for existing embedded systems typically requires the
     \vspace{-20pt}
 \end{table}
 
-\paragraph{Optimisation for Code Efficiency:}
+\paragraph{Optimization for Code Efficiency:}
 The projects of Figure~\ref{fig:projects} are enabled by small, highly resource-limited programmable MCUs, which may have as little as a few kilobytes of RAM and FLASH memory.
 Table~\ref{table:devices} compares the core capabilities of the class of MCU-based devices typically used in the education domain to a typical PC. Note that these devices have a \emph{proportionally} large amount of processing power, relative to their storage. Consider the BBC micro:bit vs. a typical PC: the micro:bit has about 100 times less CPU power, but 10\textsuperscript{6} times less RAM, and 10\textsuperscript{6} times less storage. \emph{A language/runtime should therefore not only seek to provide high code density and spatial efficiency, but actively trade off temporal for spatial efficiency where possible}.
 
@@ -81,10 +81,11 @@ Intuitive APIs and programming models are required to support novice users, yet 
 \end{figure}
 
 Figure~\ref{fig:makecode} illustrates the architecture of our platform.
-The \MC web app is the primary entry point for the end-user (top). \MC supports
-the simplified programming of MCUs via editors for visual blocks and textual JavaScript/TypeScript~\footnote{\url{typescriptlang.org}} languages .
+The \MC web app is the primary entry point for the end-user. \MC supports
+the simplified programming of MCUs via editors for visual blocks and textual JavaScript/TypeScript~\footnote{\url{http://typescriptlang.org}} languages .
 CODAL, a component-oriented, event-driven, fiber-based C++ runtime environment that bridges the semantic gap between the higher-level languages (such
-as TypeScript) and the hardware (bottom-left). Enabling the flashing of the microcontroller is \UFN,
+as TypeScript) and the hardware (bottom-left of the Figure). 
+Enabling the flashing of the microcontroller is \UFN,
 a new file format and bootloader for simplified transfer of binaries to the device over USB (bottom-right).
 
 \MC can be accessed from any modern web browser and cached locally for \emph{entirely offline use}. The \MC web app incorporates the open source Blockly~\footnote{\url{https://github.com/google/blockly}} and Monaco~\footnote{\url{https://github.com/Microsoft/monaco-editor}} editors (upper-left), an in-browser device simulator (upper-right) for testing programs before transferring them to the physical device, as well as \emph{in-browser compilation} of TypeScript to machine code and linking against the pre-compiled
