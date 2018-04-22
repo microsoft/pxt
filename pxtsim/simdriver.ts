@@ -102,10 +102,10 @@ namespace pxsim {
         private freeze(value: boolean) {
             const cls = "pause-overlay";
             if (!value) {
-                this.container.querySelectorAll(`div.simframe div.${cls}`)
+                pxsim.util.toArray(this.container.querySelectorAll(`div.simframe div.${cls}`))
                     .forEach(overlay => overlay.parentElement.removeChild(overlay));
             } else {
-                this.container.querySelectorAll("div.simframe")
+                pxsim.util.toArray(this.container.querySelectorAll("div.simframe"))
                     .forEach(frame => {
                         if (frame.querySelector(`div.${cls}`))
                             return;

@@ -1848,7 +1848,7 @@ function stmt(e: py.Stmt): B.JsNode {
         currErrs = ""
     }
     if (cmts.length) {
-        r = B.mkGroup(cmts.map(c => B.H.mkComment(c)).concat(r))
+        r = B.mkGroup(cmts.map(c => B.mkStmt(B.H.mkComment(c))).concat(r))
     }
     return r
 }
