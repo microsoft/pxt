@@ -101,8 +101,9 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             delete v.chidren;
             this.setState({ variables: this.state.variables })
         } else {
-            // TODO
-            simulator.driver.variables(v.id);
+            simulator.driver.variablesAsync(v.id)
+                .then(msg => {
+                })
         }
     }
 

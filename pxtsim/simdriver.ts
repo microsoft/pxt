@@ -10,7 +10,6 @@ namespace pxsim {
         onStateChanged?: (state: SimulatorState) => void;
         onSimulatorCommand?: (msg: pxsim.SimulatorCommandMessage) => void;
         onTopLevelCodeEnd?: () => void;
-        onVariables?: (msg: pxsim.VariablesMessage) => void;
         simUrl?: string;
         stoppedClass?: string;
     }
@@ -167,6 +166,7 @@ namespace pxsim {
         }
 
         public stop(unload = false) {
+            this.clearDebugger();
             this.postMessage({ type: 'stop' });
             this.setState(SimulatorState.Stopped);
             if (unload) this.unload();
@@ -249,6 +249,7 @@ namespace pxsim {
         }
 
         public run(js: string, opts: SimulatorRunOptions = {}) {
+            this.clearDebugger();
             this.runOptions = opts;
             this.runId = this.nextId();
             this.addEventListeners();
@@ -385,18 +386,35 @@ namespace pxsim {
             this.postDebuggerMessage("traceConfig", { interval: intervalMs });
         }
 
-        public variables(id: number) {
-            this.postDebuggerMessage("variables", { variablesReference: id } as DebugProtocol.VariablesArguments)
+        public variablesAsync(id: number): Promise<VariablesMessage> {
+            return this.postDebuggerMessageAsync("variables", { variablesReference: id } as DebugProtocol.VariablesArguments)
+                .then(msg => msg as VariablesMessage);
         }
 
         private handleSimulatorCommand(msg: pxsim.SimulatorCommandMessage) {
             if (this.options.onSimulatorCommand) this.options.onSimulatorCommand(msg);
         }
 
+        private debuggerSeq = 1;
+        private debuggerResolvers: Map<(msg: DebuggerMessage | PromiseLike<DebuggerMessage>) => void> = {};
+
+        private clearDebugger() {
+            this.debuggerResolvers = {};
+            this.debuggerSeq++;
+        }
+
         private handleDebuggerMessage(msg: pxsim.DebuggerMessage) {
             if (msg.subtype !== "trace") {
                 console.log("DBG-MSG", msg.subtype, msg)
             }
+
+            // resolve any request
+            if (msg.seq) {
+                const resolve = this.debuggerResolvers[msg.seq];
+                if (resolve)
+                    resolve(msg);
+            }
+
             switch (msg.subtype) {
                 case "warning":
                     if (this.options.onDebuggerWarning)
@@ -420,18 +438,24 @@ namespace pxsim {
                         this.options.onTraceMessage(msg as pxsim.TraceMessage);
                     }
                     break;
-                case "variables":
-                    if (this.options.onVariables) {
-                        this.options.onVariables(msg as pxsim.VariablesMessage);
-                    }
             }
         }
 
-        private postDebuggerMessage(subtype: string, data: any = {}) {
-            let msg: pxsim.DebuggerMessage = JSON.parse(JSON.stringify(data))
+        private postDebuggerMessageAsync(subtype: string, data: any = {}): Promise<DebuggerMessage> {
+            return new Promise((resolve, reject) => {
+                const seq = this.debuggerSeq++;
+                this.debuggerResolvers[seq.toString()] = resolve;
+                this.postDebuggerMessage(subtype, data, seq);
+            })
+        }
+
+        private postDebuggerMessage(subtype: string, data: any = {}, seq?: number) {
+            const msg: pxsim.DebuggerMessage = JSON.parse(JSON.stringify(data))
             msg.type = "debugger"
-            msg.subtype = subtype
-            this.postMessage(msg)
+            msg.subtype = subtype;
+            if (seq)
+                msg.seq = seq;
+            this.postMessage(msg);
         }
 
         private nextId(): string {

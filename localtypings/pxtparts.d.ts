@@ -142,6 +142,7 @@ declare namespace pxsim {
     // type=debugger
     export interface DebuggerMessage extends SimulatorMessage {
         subtype: string;
+        seq?: number;
     }
 
     // subtype=config

@@ -118,7 +118,7 @@ namespace pxsim {
             return r
         }
 
-        let r: DebuggerBreakpointMessage = {
+        const r: DebuggerBreakpointMessage = {
             type: "debugger",
             subtype: "breakpoint",
             breakpointId: brkId,
