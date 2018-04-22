@@ -3059,6 +3059,7 @@ ${lbl}: .short 0xffff
                     case "numops::subs":
                     case "numops::eors":
                     case "numops::ands":
+                    case "numops::orrs":
                         return "@nomask@" + n
                 }
             }
