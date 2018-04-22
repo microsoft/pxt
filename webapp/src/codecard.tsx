@@ -20,6 +20,46 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
         ($('.ui.embed') as any).embed();
     }
 
+    private static observer: IntersectionObserver;
+    private static setupIntersectionObserver() {
+        if (this.observer) return;
+        // setup intersection observer for the image
+        const preloadImage = (el: HTMLImageElement) => {
+            const lazyImageUrl = el.getAttribute('data-src');
+            el.style.backgroundImage = `url(${lazyImageUrl})`
+        }
+        const config = {
+            // If the image gets within 50px in the Y axis, start the download.
+            rootMargin: '50px 0px',
+            threshold: 0.01
+        };
+        const onIntersection: IntersectionObserverCallback = (entries) => {
+            entries.forEach(entry => {
+                // Are we in viewport?
+                if (entry.intersectionRatio > 0) {
+                    // Stop watching and load the image
+                    this.observer.unobserve(entry.target);
+                    preloadImage(entry.target as HTMLImageElement);
+                }
+            })
+        }
+        this.observer = new IntersectionObserver(onIntersection, config);
+    }
+
+    componentDidMount() {
+        const lazyImage = this.refs.lazyimage as HTMLImageElement;
+        if (!lazyImage) return;
+
+        if (!('IntersectionObserver' in window)) {
+            // No intersection observer support, set the image url immediately
+            const lazyImageUrl = lazyImage.getAttribute('data-src');
+            lazyImage.style.backgroundImage = `url(${lazyImageUrl})`
+        } else {
+            CodeCardView.setupIntersectionObserver();
+            CodeCardView.observer.observe(lazyImage);
+        }
+    }
+
     render() {
         const card = this.props
         let color = card.color || "";
@@ -57,7 +97,9 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                 {card.label ? <label className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon"} label`}>{card.label}</label> : undefined}
                 {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
-                {imageUrl ? <div className="ui imagewrapper"><div className="ui cardimage" style={{ backgroundImage: `url("${imageUrl}")` }} /> </div> : undefined}
+                {imageUrl ? <div className="ui imagewrapper">
+                    <div className={`ui cardimage`} data-src={imageUrl} ref="lazyimage" />
+                </div> : undefined}
                 {card.cardType == "file" ? <div className="ui fileimage" /> : undefined}
             </div> : undefined}
             {card.icon || card.iconContent ?
