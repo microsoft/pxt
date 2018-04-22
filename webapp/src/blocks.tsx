@@ -205,7 +205,8 @@ export class Editor extends srceditor.Editor {
                 minY = tp.y;
             }
 
-            needsLayout = needsLayout || (tp.x == 0 && tp.y == 0);
+            needsLayout = needsLayout || (tp.x == 0 && tp.y == 0)
+                || (tp.x == 10 && tp.y == 10);
         });
         this.editor.getTopBlocks(false).forEach(b => {
             const tp = b.getBoundingRectangle().topLeft;
@@ -216,7 +217,9 @@ export class Editor extends srceditor.Editor {
                 minY = tp.y;
             }
 
-            needsLayout = needsLayout || (b.type != ts.pxtc.ON_START_TYPE && tp.x == 0 && tp.y == 0);
+            needsLayout = needsLayout || (b.type != ts.pxtc.ON_START_TYPE &&
+                ((tp.x == 0 && tp.y == 0) || (tp.x == 10 && tp.y == 10))
+            );
         });
 
         if (needsLayout && !flyoutOnly) {
