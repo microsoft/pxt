@@ -65,10 +65,27 @@ mountVirtualApi("gh-pkgcfg", {
     isOffline: () => !Cloud.isOnline(),
 })
 
+let targetConfigPromise: Promise<pxt.TargetConfig> = undefined;
 mountVirtualApi("target-config", {
-    getAsync: query =>
-        pxt.targetConfigAsync().catch(core.handleNetworkError),
-    expirationTime: p => 60 * 1000,
+    getAsync: query => {
+        if (!targetConfigPromise)
+            targetConfigPromise = pxt.targetConfigAsync()
+                .then(js => {
+                    if (js) {
+                        pxt.storage.setLocal("targetconfig", JSON.stringify(js))
+                        invalidate("target-config");
+                        invalidate("gh-search");
+                        invalidate("gh-pkgcfg");
+                    }
+                    return js;
+                })
+                .catch(core.handleNetworkError);
+        // return cached value or try again
+        const cfg = JSON.parse(pxt.storage.getLocal("targetconfig") || "null") as pxt.TargetConfig;
+        if (cfg) return Promise.resolve(cfg);
+        return targetConfigPromise;
+    },
+    expirationTime: p => 24 * 3600 * 1000,
     isOffline: () => !Cloud.isOnline()
 })
 
@@ -140,7 +157,7 @@ function notify(ce: CacheEntry) {
     }
 
     if (ce.components.length > 0)
-        ce.components.forEach(c => Util.nextTick(() =>  c.forceUpdate()))
+        ce.components.forEach(c => Util.nextTick(() => c.forceUpdate()))
 }
 
 function getVirtualApi(path: string) {
