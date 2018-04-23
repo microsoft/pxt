@@ -178,7 +178,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             const child = menu.childNodes[i] as HTMLElement;
             // Remove separators
             if (child.classList.contains("divider")) continue;
-            // TODO: Check if item is visible
+            // Check if item is intended for mobile only views
+            if (child.classList.contains("mobile") && !pxt.BrowserUtils.isMobile()) continue;
             children.push(child);
         }
         for (let i = 0; i < children.length; i++) {
@@ -915,6 +916,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             longer ? 'longer' : '',
             basic ? 'basic' : '',
             scrolling ? 'scrolling' : '',
+            closeIcon ? 'closable' : '',
             'modal transition visible active',
             className
         ]);
