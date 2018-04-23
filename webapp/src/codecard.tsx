@@ -1,12 +1,12 @@
 import * as React from "react";
-import * as sui from "./sui"
-import * as blockspreview from "./blockspreview"
+import * as sui from "./sui";
+import * as data from "./data";
 
 const repeat = pxt.Util.repeatMap;
 
 export interface CodeCardState { }
 
-export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
+export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
 
     public element: HTMLDivElement;
 
@@ -60,7 +60,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
         }
     }
 
-    render() {
+    renderCore() {
         const card = this.props
         let color = card.color || "";
         if (!color) {
@@ -81,7 +81,9 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
 
         const imageUrl = card.imageUrl || (card.youTubeId ? `https://img.youtube.com/vi/${card.youTubeId}/0.jpg` : undefined);
 
-        const cardDiv = <div ref={el => this.element = el} className={`ui card ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`} role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={card.ariaLabel || card.title} title={card.title} onClick={clickHandler} tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={card.onClick ? sui.fireClickOnEnter : null}>
+        const cardDiv = <div ref={el => this.element = el} className={`ui card ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`}
+            role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={card.ariaLabel || card.title} title={card.title}
+            onClick={clickHandler} tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={card.onClick ? sui.fireClickOnEnter : null}>
             {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
                 <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "")}>
                     <div className="right floated meta">
@@ -95,7 +97,6 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                 </div> : null}
             {card.label || card.blocksXml || card.typeScript || imageUrl || cardType == "file" ? <div className={"ui image"}>
                 {card.label ? <label className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon"} label`}>{card.label}</label> : undefined}
-                {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
                 {imageUrl ? <div className="ui imagewrapper">
                     <div className={`ui cardimage`} data-src={imageUrl} ref="lazyimage" />

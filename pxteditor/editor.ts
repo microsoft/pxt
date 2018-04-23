@@ -39,6 +39,7 @@ namespace pxt.editor {
         projectName?: string;
 
         tutorialOptions?: TutorialOptions;
+        lightbox?: boolean;
 
         running?: boolean;
         resumeOnVisibility?: boolean;
@@ -141,8 +142,6 @@ namespace pxt.editor {
         newProject(options?: ProjectCreationOptions): void;
         createProjectAsync(options: ProjectCreationOptions): Promise<void>;
         importProjectDialog(): void;
-        importFileDialog(): void;
-        importUrlDialog(): void;
         removeProject(): void;
         editText(): void;
 
@@ -188,11 +187,7 @@ namespace pxt.editor {
         dbgStepInto(): void;
         dbgStepOver(): void;
 
-        setBanner(b: boolean): void;
-
-        startTutorial(tutorialId: string, tutorialTitle?: string): void;
-
-        addPackage(): void;
+        setBannerVisible(b: boolean): void;
         typecheckNow(): void;
 
         openExtension(extension: string, url: string, consentRequired?: boolean): void;
@@ -209,14 +204,8 @@ namespace pxt.editor {
         // obsolete, may go away
         convertTouchDevelopToTypeScriptAsync(td: string): Promise<string>;
 
-        selectLang(): void;
         toggleHighContrast(): void;
-        share(): void;
-        about(): void;
-        reset(): void;
         pair(): void;
-        showReportAbuse(): void;
-        exitAndSave(): void;
         launchFullEditor(): void;
 
         settings: EditorSettings;
@@ -226,6 +215,23 @@ namespace pxt.editor {
         isJavaScriptActive(): boolean;
 
         editor: IEditor;
+
+        startTutorial(tutorialId: string, tutorialTitle?: string): void;
+        showLightbox(): void;
+        hideLightbox(): void;
+
+        showReportAbuse(): void;
+        showLanguagePicker(): void;
+        showShareDialog(): void;
+        showAboutDialog(): void;
+
+        showImportUrlDialog(): void;
+        showImportFileDialog(): void;
+
+        showResetDialog(): void;
+        showExitAndSaveDialog(): void;
+
+        showPackageDialog(): void;
     }
 
     export interface IHexFileImporter {
