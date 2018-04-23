@@ -207,7 +207,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
     static hideAllFrames() {
         const customContent = this.getCustomContent();
         if (customContent) {
-            Array.from(customContent.getElementsByClassName(`extension-frame`)).forEach((frame: HTMLIFrameElement) => {
+            pxt.Util.toArray(customContent.getElementsByClassName(`extension-frame`)).forEach((frame: HTMLIFrameElement) => {
                 frame.style.zIndex = '10';
             })
         }
@@ -216,7 +216,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
     static showAllFrames() {
         const customContent = this.getCustomContent();
         if (customContent) {
-            Array.from(customContent.getElementsByClassName(`extension-frame`)).forEach((frame: HTMLIFrameElement) => {
+            pxt.Util.toArray(customContent.getElementsByClassName(`extension-frame`)).forEach((frame: HTMLIFrameElement) => {
                 frame.style.zIndex = '';
             })
         }
