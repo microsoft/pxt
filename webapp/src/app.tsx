@@ -42,7 +42,7 @@ import * as blocks from "./blocks"
 import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
-import { initPxtElectronAsync, isElectron, isPxtElectron } from "./electron";
+import { initPxtElectron, isElectron, isPxtElectron } from "./electron";
 
 type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
@@ -2439,9 +2439,7 @@ $(() => {
             return initExtensionsAsync();
         })
         .then(() => {
-            return initPxtElectronAsync();
-        })
-        .then(() => {
+            initPxtElectron(theEditor);
             return pxt.winrt.initAsync(importHex);
         })
         .then(() => pxt.winrt.hasActivationProjectAsync())
