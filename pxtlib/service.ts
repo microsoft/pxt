@@ -396,8 +396,26 @@ namespace ts.pxtc {
             let ex = U.lookup(m, mkey)
             if (!ex) {
                 const tp = `@${rtp}@`
-                const paramName = s.namespace.toLowerCase()
-                const paramValue = `value=${s.attributes.blockCombineShadow || ""}`;
+
+                let paramNameShadow, paramValueShadow;
+
+                if (s.attributes.blockCombineShadow) {
+
+                    // allowable %blockCombineShadow strings:-
+                    //   '{name shadow},' or '{value shadow}' or ',{value shadow}' or '{name shadow},{value shadow}'
+                    const match = s.attributes.blockCombineShadow.match(/^([^,.]*),?([^,.]*)$/);
+                    if (match && match.length == 3) {
+                        paramNameShadow = match[1].trim();
+                        paramValueShadow = match[2].trim();
+                        if (paramValueShadow.length == 0 && !paramNameShadow.endsWith("=")) {
+                            paramValueShadow = paramNameShadow;
+                            paramNameShadow = "";
+                        }
+                    }
+                }
+
+                const paramName = `${s.namespace.toLowerCase()}=${paramNameShadow || ""}`
+                const paramValue = `value=${paramValueShadow || ""}`;
 
                 ex = m[mkey] = {
                     attributes: {
