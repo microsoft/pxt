@@ -16,10 +16,6 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         this.state = {};
     }
 
-    componentDidUpdate() {
-        ($('.ui.embed') as any).embed();
-    }
-
     private static observer: IntersectionObserver;
     private static setupIntersectionObserver() {
         if (this.observer) return;
