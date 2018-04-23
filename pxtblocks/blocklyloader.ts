@@ -1311,9 +1311,9 @@ namespace pxt.blocks {
 
         // update shadow types
         if (tb) {
-            $(tb).find('shadow:empty').each((i, shadow) => {
+            pxt.Util.toArray(tb.querySelectorAll('shadow:empty')).forEach((shadow, i) => {
                 let type = shadow.getAttribute('type');
-                let b = $(tb).find(`block[type="${type}"]`)[0];
+                let b = tb.querySelectorAll(`block[type="${type}"]`)[0];
                 if (b) shadow.innerHTML = b.innerHTML;
             })
         }

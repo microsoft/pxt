@@ -355,7 +355,7 @@ namespace pxt.BrowserUtils {
         if (blobPath)
             return blobPath;
         // might have been exanded already
-        if (path.startsWith(pxt.webConfig.commitCdnUrl))
+        if (U.startsWith(path, pxt.webConfig.commitCdnUrl))
             return path;
         // append CDN
         return pxt.webConfig.commitCdnUrl + path;

@@ -36,12 +36,12 @@ export class Editor extends srceditor.Editor {
         this.isVisible = v;
         let classes = '#blocksEditor .blocklyToolboxDiv, #blocksEditor .blocklyWidgetDiv, #blocksEditor .blocklyToolboxDiv';
         if (this.isVisible) {
-            $(classes).show();
+            pxt.Util.toArray(document.querySelectorAll(classes)).forEach((el: HTMLElement) => el.style.display = '');
             // Fire a resize event since the toolbox may have changed width and height.
             this.parent.fireResize();
         }
         else {
-            $(classes).hide();
+            pxt.Util.toArray(document.querySelectorAll(classes)).forEach((el: HTMLElement) => el.style.display = 'none');
             if (this.editor)
                 Blockly.hideChaff();
         }
@@ -319,6 +319,16 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    private initWorkspaceSounds() {
+        const editor = this;
+
+        const oldAudioPlay = (Blockly as any).WorkspaceAudio.prototype.play;
+        (Blockly as any).WorkspaceAudio.prototype.play = function(name: string, opt_volume?: number) {
+            if (editor && editor.parent.state.mute) opt_volume = 0;
+            oldAudioPlay.call(this, name, opt_volume);
+        };
+    }
+
     private reportDeprecatedBlocks() {
         const deprecatedMap: pxt.Map<number> = {};
         let deprecatedBlocksFound = false;
@@ -392,7 +402,7 @@ export class Editor extends srceditor.Editor {
                     }
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
                     if (ev.newValue == pxt.toolbox.addPackageTitle()) {
-                        this.addPackage();
+                        this.showPackageDialog();
                     }
                     else if (ev.newValue == pxt.toolbox.advancedTitle()) {
                         if (this.showToolboxCategories === CategoryMode.All) {
@@ -408,6 +418,7 @@ export class Editor extends srceditor.Editor {
         })
         this.initPrompts();
         this.initToolboxPosition();
+        this.initWorkspaceSounds();
         this.resize();
     }
 
@@ -492,10 +503,10 @@ export class Editor extends srceditor.Editor {
         )
     }
 
-    addPackage() {
+    showPackageDialog() {
         pxt.tickEvent("blocks.addpackage");
         (this.editor as any).toolbox_.clearSelection();
-        this.parent.addPackage();
+        this.parent.showPackageDialog();
     }
 
     getViewState() {

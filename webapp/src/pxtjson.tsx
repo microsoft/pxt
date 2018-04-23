@@ -102,7 +102,7 @@ export class Editor extends srceditor.Editor {
                             onChange={() => applyUserConfig(uc) } />
                     ) }
                     <sui.Field>
-                        <sui.Button text={lf("Save") } class={`green ${this.isSaving ? 'disabled' : ''}`} onClick={() => save() } />
+                        <sui.Button text={lf("Save") } className={`green ${this.isSaving ? 'disabled' : ''}`} onClick={() => save() } />
                         <sui.Button text={lf("Edit Settings As text") } onClick={() => this.editSettingsText() } />
                     </sui.Field>
                 </div>
