@@ -388,7 +388,7 @@ namespace pxsim {
 
         public variablesAsync(id: number): Promise<VariablesMessage> {
             return this.postDebuggerMessageAsync("variables", { variablesReference: id } as DebugProtocol.VariablesArguments)
-                .then(msg => msg as VariablesMessage);
+                .then(msg => msg as VariablesMessage, e => undefined)
         }
 
         private handleSimulatorCommand(msg: pxsim.SimulatorCommandMessage) {
@@ -396,9 +396,15 @@ namespace pxsim {
         }
 
         private debuggerSeq = 1;
-        private debuggerResolvers: Map<(msg: DebuggerMessage | PromiseLike<DebuggerMessage>) => void> = {};
+        private debuggerResolvers: Map<{ resolve: (msg: DebuggerMessage | PromiseLike<DebuggerMessage>) => void; reject: (error: any) => void; }> = {};
 
         private clearDebugger() {
+            const e = new Error("Debugging cancelled");
+            Object.keys(this.debuggerResolvers)
+                .forEach(k => {
+                    const { reject } = this.debuggerResolvers[k];
+                    reject(e);
+                })
             this.debuggerResolvers = {};
             this.debuggerSeq++;
         }
@@ -410,7 +416,7 @@ namespace pxsim {
 
             // resolve any request
             if (msg.seq) {
-                const resolve = this.debuggerResolvers[msg.seq];
+                const { resolve } = this.debuggerResolvers[msg.seq];
                 if (resolve)
                     resolve(msg);
             }
@@ -441,7 +447,7 @@ namespace pxsim {
                 default:
                     const seq = msg.req_seq;
                     if (seq) {
-                        const resolve = this.debuggerResolvers[seq];
+                        const { resolve } = this.debuggerResolvers[seq];
                         if (resolve) {
                             delete this.debuggerResolvers[seq];
                             resolve(msg)
@@ -454,7 +460,7 @@ namespace pxsim {
         private postDebuggerMessageAsync(subtype: string, data: any = {}): Promise<DebuggerMessage> {
             return new Promise((resolve, reject) => {
                 const seq = this.debuggerSeq++;
-                this.debuggerResolvers[seq.toString()] = resolve;
+                this.debuggerResolvers[seq.toString()] = { resolve, reject };
                 this.postDebuggerMessage(subtype, data, seq);
             })
         }
