@@ -346,9 +346,19 @@ namespace pxt.BrowserUtils {
     }
 
     function resolveCdnUrl(path: string): string {
+        // don't expand full urls
+        if (/^https?:\/\//i.test(path))
+            return path;
         const monacoPaths: Map<string> = (window as any).MonacoPaths || {};
-        const url = monacoPaths[path] || (pxt.webConfig.commitCdnUrl + path);
-        return url;
+        const blobPath = monacoPaths[path];
+        // find compute blob url
+        if (blobPath)
+            return blobPath;
+        // might have been exanded already
+        if (path.startsWith(pxt.webConfig.commitCdnUrl))
+            return path;
+        // append CDN
+        return pxt.webConfig.commitCdnUrl + path;
     }
 
     export function loadStyleAsync(path: string, rtl?: boolean): Promise<void> {

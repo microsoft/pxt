@@ -1028,7 +1028,7 @@ declare namespace Blockly {
     }
 
     namespace Variables {
-        function generateVariableFieldXml_(variableModel: VariableModel): void;
+        function generateVariableFieldXmlString(variableModel: VariableModel): string;
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
         let flyoutCategoryBlocks: (wp: Workspace) => HTMLElement[];
         function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;

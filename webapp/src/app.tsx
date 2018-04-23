@@ -2302,10 +2302,18 @@ document.addEventListener("DOMContentLoaded", () => {
             else theEditor.newProject();
             return Promise.resolve();
         })
-        .done(() => {
+        .then(() => {
             document.getElementById('loading').remove();
             return workspace.loadedAsync();
-        });
+        })
+        .done(() => {
+            // preload delay loaded resources
+            if ((window as any).requestIdleCallback) {
+                (window as any).requestIdleCallback(() => {
+                    if (theEditor) theEditor.loadBlocklyAsync().done();
+                })
+            }
+        })
 
     document.addEventListener("visibilitychange", ev => {
         if (theEditor)

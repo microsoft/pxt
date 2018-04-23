@@ -10,6 +10,7 @@ namespace pxsim {
         onStateChanged?: (state: SimulatorState) => void;
         onSimulatorCommand?: (msg: pxsim.SimulatorCommandMessage) => void;
         onTopLevelCodeEnd?: () => void;
+        onVariables?: (msg: pxsim.VariablesMessage) => void;
         simUrl?: string;
         stoppedClass?: string;
     }
@@ -101,10 +102,10 @@ namespace pxsim {
         private freeze(value: boolean) {
             const cls = "pause-overlay";
             if (!value) {
-                this.container.querySelectorAll(`div.simframe div.${cls}`)
+                pxsim.util.toArray(this.container.querySelectorAll(`div.simframe div.${cls}`))
                     .forEach(overlay => overlay.parentElement.removeChild(overlay));
             } else {
-                this.container.querySelectorAll("div.simframe")
+                pxsim.util.toArray(this.container.querySelectorAll("div.simframe"))
                     .forEach(frame => {
                         if (frame.querySelector(`div.${cls}`))
                             return;
@@ -384,6 +385,10 @@ namespace pxsim {
             this.postDebuggerMessage("traceConfig", { interval: intervalMs });
         }
 
+        public variables(id: number) {
+            this.postDebuggerMessage("variables", { variablesReference: id } as DebugProtocol.VariablesArguments)
+        }
+
         private handleSimulatorCommand(msg: pxsim.SimulatorCommandMessage) {
             if (this.options.onSimulatorCommand) this.options.onSimulatorCommand(msg);
         }
@@ -415,6 +420,10 @@ namespace pxsim {
                         this.options.onTraceMessage(msg as pxsim.TraceMessage);
                     }
                     break;
+                case "variables":
+                    if (this.options.onVariables) {
+                        this.options.onVariables(msg as pxsim.VariablesMessage);
+                    }
             }
         }
 

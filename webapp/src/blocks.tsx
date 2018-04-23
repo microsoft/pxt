@@ -205,7 +205,8 @@ export class Editor extends srceditor.Editor {
                 minY = tp.y;
             }
 
-            needsLayout = needsLayout || (tp.x == 0 && tp.y == 0);
+            needsLayout = needsLayout || (tp.x == 0 && tp.y == 0)
+                || (tp.x == 10 && tp.y == 10);
         });
         this.editor.getTopBlocks(false).forEach(b => {
             const tp = b.getBoundingRectangle().topLeft;
@@ -216,7 +217,9 @@ export class Editor extends srceditor.Editor {
                 minY = tp.y;
             }
 
-            needsLayout = needsLayout || (b.type != ts.pxtc.ON_START_TYPE && tp.x == 0 && tp.y == 0);
+            needsLayout = needsLayout || (b.type != ts.pxtc.ON_START_TYPE &&
+                ((tp.x == 0 && tp.y == 0) || (tp.x == 10 && tp.y == 10))
+            );
         });
 
         if (needsLayout && !flyoutOnly) {
@@ -663,23 +666,26 @@ export class Editor extends srceditor.Editor {
             let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
                 this.editor.highlightBlock(bid);
-                const b = this.editor.getBlockById(bid);
-                b.setWarningText(brk ? brk.exceptionMessage : undefined);
-                // TODO: make warning mode look good
-                // b.setHighlightWarning(brk && !!brk.exceptionMessage);
-                const p = b.getRelativeToSurfaceXY();
-                const c = b.getHeightWidth();
-                const s = this.editor.scale;
-                const m = this.editor.getMetrics();
-                // don't center if block is still on the screen
-                const marginx = 4;
-                const marginy = 4;
-                if (p.x * s < m.viewLeft + marginx
-                    || (p.x + c.width) * s > m.viewLeft + m.viewWidth - marginx
-                    || p.y * s < m.viewTop + marginy
-                    || (p.y + c.height) * s > m.viewTop + m.viewHeight - marginy) {
-                    // move the block towards the center
-                    this.editor.centerOnBlock(bid);
+                if (brk) {
+                    const b = this.editor.getBlockById(bid);
+                    b.setWarningText(brk ? brk.exceptionMessage : undefined);
+                    // ensure highlight is in the screen when a breakpoint info is available
+                    // TODO: make warning mode look good
+                    // b.setHighlightWarning(brk && !!brk.exceptionMessage);
+                    const p = b.getRelativeToSurfaceXY();
+                    const c = b.getHeightWidth();
+                    const s = this.editor.scale;
+                    const m = this.editor.getMetrics();
+                    // don't center if block is still on the screen
+                    const marginx = 4;
+                    const marginy = 4;
+                    if (p.x * s < m.viewLeft + marginx
+                        || (p.x + c.width) * s > m.viewLeft + m.viewWidth - marginx
+                        || p.y * s < m.viewTop + marginy
+                        || (p.y + c.height) * s > m.viewTop + m.viewHeight - marginy) {
+                        // move the block towards the center
+                        this.editor.centerOnBlock(bid);
+                    }
                 }
                 return true;
             }

@@ -13,7 +13,9 @@ interface DebuggerVariablesState {
 
 interface Variable {
     value: string;
+    id?: number;
     prevValue?: string;
+    chidren?: Variable[];
 }
 
 interface DebuggerVariablesProps extends ISettingsProps {
@@ -51,18 +53,9 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             case "string": sv = JSON.stringify(v); break;
             case "object":
                 if (v == null) sv = "null";
-                else if (Array.isArray(v)) return `[${v.map(vi => this.renderValue(vi)).join(',')}]`;
-                else if (v.id && v.value) {
-                    try {
-                        const vobj = JSON.parse(v.value);
-                        return DebuggerVariables.renderValue(vobj);
-                    }
-                    catch(e) {
-                        return "(object)";
-                    }
-                }
-                else if (v.id !== undefined) sv = "(object)"
                 else if (v.text) sv = v.text;
+                else if (v.id && v.preview) return v.preview;
+                else if (v.id !== undefined) sv = "(object)"
                 else sv = "(unknown)"
                 break;
         }
@@ -92,6 +85,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             const sv = DebuggerVariables.capLength(DebuggerVariables.renderValue(v));
             variables[k] = {
                 value: sv,
+                id: v ? v.id : undefined,
                 prevValue: !frozen && variables[k] && sv != variables[k].value ?
                     variables[k].value : undefined
             }
@@ -100,6 +94,16 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             Object.keys(variables).forEach(k => delete variables[k].prevValue);
         this.setState({ variables: variables, frozen });
         this.nextVariables = {};
+    }
+
+    private toggle(v: Variable) {
+        if (v.chidren) {
+            delete v.chidren;
+            this.setState({ variables: this.state.variables })
+        } else {
+            // TODO
+            simulator.driver.variables(v.id);
+        }
     }
 
     renderCore() {
@@ -111,7 +115,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                     {Object.keys(variables).map(variable => {
                         const v = variables[variable];
                         return <div key={variable} className="item">
-                            <div className={`ui label image variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ backgroundColor: varcolor }}>
+                            <div className={`ui label image variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ backgroundColor: varcolor }}
+                                onClick={v.id ? () => this.toggle(v) : undefined}>
                                 <span className="varname">{variable}</span>
                                 <div className="detail">
                                     <span className="varval">{v.value + ' '}</span>
@@ -262,10 +267,11 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
 
         return <aside className="debugtoolbar" style={{ left: xPos }} role="complementary" aria-label={lf("Debugger toolbar")}>
             {!isDebugging ? undefined :
-                <div className={`ui compact borderless menu icon mini`}>
+                <div className={`ui compact borderless menu icon`}>
                     <div className={`ui item link dbg-btn dbg-handle`} key={'toolbarhandle'}
                         onMouseDown={this.toolbarHandleDown.bind(this)}>
-                        <sui.Icon key='iconkey' icon={`xicon bug`} />
+                        <sui.Icon key='iconkey' icon={`icon ellipsis vertical`} />
+                        <sui.Icon key='iconkey2' icon={`xicon bug`} />
                     </div>
                     <sui.Item key='dbgpauseresume' className={`dbg-btn dbg-pause-resume ${isDebuggerRunning ? "pause" : "play"}`} icon={`${isDebuggerRunning ? "pause blue" : "step forward green"}`} title={dbgPauseResumeTooltip} onClick={() => this.dbgPauseResume()} />
                     {!advancedDebugging ? <sui.Item key='dbgstep' className={`dbg-btn dbg-step`} icon={`arrow right ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepIntoTooltip} onClick={() => this.dbgStepInto()} /> : undefined}
