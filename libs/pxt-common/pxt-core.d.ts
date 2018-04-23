@@ -246,7 +246,7 @@ declare interface String {
 }
 
 /**
-  * Convert A string to an integer.
+  * Convert a string to an integer.
   * @param s A string to convert into a number.
   */
 //% shim=String_::toNumber
