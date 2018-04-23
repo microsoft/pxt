@@ -13,7 +13,7 @@ Recently, virtual machines supporting most of the semantics of higher level lang
 
 In the research community, the motive to bring higher-level languages to microcontrollers exists~\cite{koshy2005vmstar,st2009picobit,vaugon2015programming}. Rather than running a full-featured VM, others enable higher level languages to run efficiently by stripping out advanced language features, in favour of efficient, native execution~\cite{varma2004java}. Comparing these solutions to our solution is challenging due to a misalignment in evaluation metrics and microcontrollers. For example PICOBit uses an 8-bit MCU, and evaluates the cost of a VM, without the cost of a runtime environment. Simply accounting for a 32-bit MCU in this case, results in factor of 4 multiplication of most metrics.
 
-Our approach bears most similarity to~\cite{varma2004java}, where we compile higher level languages to an \emph{optimised, event-driven} C++ runtime (\CON).
+Our approach bears most similarity to~\cite{varma2004java}, where we compile higher level languages to an \emph{optimized, event-driven} C++ runtime (\CON).
 
 \subsection{Embedded runtime environments}
 
@@ -27,7 +27,7 @@ Although the platforms above are widely used by C/C++ developers, none of these 
 
 \subsection{Flashing microcontrollers}
 
-There are two common ways to transfer a program to the flash of a microcontroller: for embedded developers, a specialized debugger chip; for hobbyists, a custom serial protocol~\cite{AVRDUDEA15:online}. Both approaches require operating system drivers. ARM's mbed platform provides DAPLink~\cite{GitHubAR5:online}, firmware that presents itself to an external computer as a USB pen drive. DAPLink exposes a virtual file system that caters for normal file system behaviour, and handles the decoding of Intel HEX files~\cite{IntelHEX} --- the firmware consumes 66 kB of flash and 13 kB RAM. \UF contributes a new file format that \emph{greatly simplifies} the virtual file system approach, reducing complexity of the firmware, and thusly code size.
+There are two common ways to transfer a program to the flash of a microcontroller: for embedded developers, a specialized debugger chip; for hobbyists, a custom serial protocol~\cite{AVRDUDEA15:online}. Both approaches require operating system drivers. ARM's mbed platform provides DAPLink~\cite{GitHubAR5:online}, firmware that presents itself to an external computer as a USB pen drive. DAPLink exposes a virtual file system that caters for normal file system behavior, and handles the decoding of Intel HEX files~\cite{IntelHEX} --- the firmware consumes 66 kB of flash and 13 kB RAM. \UF contributes a new file format that \emph{greatly simplifies} the virtual file system approach, reducing complexity of the firmware, and thusly code size.
 
 % talk about old protocols for flashing protocols, talk about mbed, talk about UF2
 
