@@ -44,7 +44,7 @@ Secondly, the \CO scheduler supports transparent APCs. Any function can be \emph
 
 When invoking an APC, the scheduler snapshots the current processor context and stack pointer (but not the whole stack). If the scheduler is re-entered before the APC completes, a new fiber context is created at the point of descheduling, and placed on the appropriate wait queue. The previously stored context is then restored, and execution continues from the point at which the APC was first invoked. This mechanism provides potentially high RAM savings for processing of MessageBus event handlers in particular.
 
-\CO's scheduling and eventing models are shared by both high and low level languages, and therefore handled uniformly. Therefore when a foreign function call is mapped to C++, that C++ function is capable of blocking the calling fiber without infringing on the concurrency model of the higher level language. This enables, for example, a C++ device driver to block a JavaScript program when awaiting data without changing the behavior of other JavaScript code acting asynchronously (as in Figure~\ref{fig:screenSnap}).
+\CON's scheduling and eventing models are shared by both high and low level languages, and therefore handled uniformly. Therefore when a foreign function call is mapped to C++, that C++ function is capable of blocking the calling fiber without infringing on the concurrency model of the higher level language. This enables, for example, a C++ device driver to block a JavaScript program when awaiting data without changing the behavior of other JavaScript code acting asynchronously (as in Figure~\ref{fig:screenSnap}).
 
 %To provide unity, \CO natively supports continuations in two ways. Firstly, through asynchronous procedure calls that may occur at any point in the future, where a condition and callback function are given (Figure~\ref{fig:messageBus}). Secondly, through the
 
@@ -61,7 +61,7 @@ When invoking an APC, the scheduler snapshots the current processor context and 
     \item[3.] a high level driver that relies only on the interfaces specified in a driver model (e.g. a gesture recognizer based on an Accelerometer model).
 \end{itemize}
 
-This approach brings the benefits of abstraction and reusability to \CON, without losing the hardware specific benefits seen in flat abstraction models where every MCU is made to look the same, even though their capabilities are different. This can be seen in the Arduino and mbed APIs, for example.
+This approach brings the benefits of abstraction and re\-usability to \CON, without losing the hardware specific benefits seen in flat abstraction models where every MCU is made to look the same, even though their capabilities are different. This can be seen in the Arduino and mbed APIs, for example.
 
 Finally, we group together the components of a physical device to form a \emph{device model}. This is a singleton C++ class that, through composition of device driver components, provides a configured representation of the capabilities of a device. Such a model provides for an elegant OO API for programming a device and a static representation that forms an ideal target for the \MC linker to bind high level STS interfaces to low level optimized code.
 

@@ -9,14 +9,14 @@ Our platform has been actively deployed for over a year, bringing the benefits o
 
 \subsection{Benchmarks, Devices, and Methodology}
 
-To analyze the performance of our solution, we have written a suite of programs to evaluate different aspects of \MC and \CO  on a representative selection of real hardware devices. Throughout, we use the C++ \CO benchmarks as a baseline; the STS benchmarks show the overhead added by \MC. These programs were written in both C++ and STS, and evaluated on the three devices listed in (Table~\ref{table:devices}): The micro:bit (Nordic nRF51 MCU), the CPX (Atmel SAMD21 MCU), and the Uno (Atmel Atmega MCU).
+To analyze the performance of our solution, we have written a suite of programs to evaluate different aspects of \MC and \CO  on a representative selection of real hardware devices. Throughout, we use the C++ \CO benchmarks as a baseline; the STS benchmarks show the overhead added by \MCN. These programs were written in both C++ and STS, and evaluated on the three devices listed in (Table~\ref{table:devices}): The micro:bit (Nordic nRF51 MCU), the CPX (Atmel ATSAMD21 MCU), and the Uno (Atmel ATmega MCU).
 
 The Uno is the simplest of these devices, 
 consisting of an 8-bit processor running at 16 MHz, with only 2kB of RAM and 32kB of flash.
 The micro:bit has a 32-bit Cortex-M0 clocked at 16MHz, with 16kB RAM and 256kB of flash. The CPX is a 32-bit Cortex-M0+, which offers greater energy efficiency and performance; it clocks at 48 MHz, has 32kB of RAM and 256kB of flash. The Uno and micro:bit \MC targets use the untagged compilation strategy, while the CPX target uses the tagged strategy (see Section~\ref{sec:untagged-tagged}). The benchmarks are classified into two types, each with their own methodology:
 
 \begin{enumerate}
-    \item \textit{Performance Analysis}: Tests that capture time taken to perform a given operation. For these benchmarks, toggle physical pins on the device at key points in
+    \item \textit{Performance Analysis}: Tests that capture time taken to perform a given operation. For these benchmarks, we toggle physical pins on the device at key points in
     the test code. We then measure the time to
    execute the operation, by using a calibrated oscilloscope observing these pins. This allows us to derive highly accurate real time
    measurements without biasing the experiment.
@@ -40,7 +40,7 @@ counts from 0 to 100,000 in a tight loop in each solutions' respective language;
 For the micro:bit, MicroPython and Espruino are \emph{two or more orders of magnitude slower} than a native \CO program.
 \MC performs only 2x slower. The slowdown reflects the simple code generator of our STS compiler. It should be noted that \MC for the CPX uses the tagged approach, which allows for seamless runtime switching to floating point numbers, resulting in a further 3x slowdown. For both devices, we can observe that \MC outperforms both the VM-based solutions of MicroPython and Espruino by at least an order of magnitude.
 
-MicroPython and similar environments cannot run on the Uno due to flash and RAM size limitations. We also ran into these limitations, and as a result developed two compilation modes for AVR. One compiles STS to AVR machine code, and the other (\MC VM) generates density-optimized byte code for a tiny interpreter (~500 bytes of code). The native strategy achieves code density of about 60.8 bytes per statement, which translates into space for 150 lines of STS user code. The VM achieves 12.3 bytes per statement allowing for about 800 lines. For comparison, the ARM Thumb code generator used in other targets achieves 37.5 bytes per statement, but due to the larger flash sizes we did not run into space issues.
+MicroPython and similar environments cannot run on the Uno due to flash and RAM size limitations. We also ran into these limitations, and as a result developed two compilation modes for AVR. One compiles STS to AVR machine code, and the other (\MC VM) generates density-optimized byte code for a tiny ({\textasciitilde}500 bytes of code) interpreter. The native strategy achieves code density of about 60.8 bytes per statement, which translates into space for 150 lines of STS user code. The VM achieves 12.3 bytes per statement allowing for about 800 lines. For comparison, the ARM Thumb code generator used in other targets achieves 37.5 bytes per statement, but due to the larger flash sizes we did not run into space issues.
 
 \begin{table}[]
     \centering
@@ -99,7 +99,7 @@ From these results, we observe that context switches generally take tens of micr
 % \caption{\label{table:time-ram-consumption}RAM consumption and processing time for various asynchronous operations in \CO.}
 % \end{table}
 
-To gauge the cost of asynchronous operations in \CON, we tested three commonly used code paths, designed to determine the efficiency of \CON's \emph{fork-on-block} Asynchronous Procedure Call (APC) mechanism that underpins all event handlers in \MC and \CON. We measured the RAM and processor cost of: (1) creating a fiber; (2) handling a non-blocking APC call; and (3) handling a blocking APC call. Again, the CPX was used for this experiment.
+To gauge the cost of asynchronous operations in \CON, we tested three commonly used code paths, designed to determine the efficiency of \CON's \emph{fork-on-block} Asynchronous Procedure Call (APC) mechanism that underpins all event handlers in \MC and \CON. We measured the RAM and processor cost of: (1) creating a fiber; (2) handling a non-blocking APC call; and (3) handling a blocking APC call. We used the CPX for this experiment.
 
 Non-blocking APC calls, the best case, have a small overhead of 32 bytes of RAM and 4.01 microseconds of processing time. Blocking APC calls, the worst case, incur a large overhead of 204 bytes of RAM and 32.4 microseconds of processor time. Creating a fiber costs 136 bytes of RAM and 35.4 microseconds of processing time. These results highlight the performance gains of the opportunistic fork-on-block mechanism over a naive approach that would execute every event handler in a separate fiber.
 
@@ -121,9 +121,9 @@ Non-blocking APC calls, the best case, have a small overhead of 32 bytes of RAM 
 \end{table}
 
 MCUs make use of internal non-volatile FLASH memory to store program code. Table~\ref{table:flash-consumption} shows the per device flash consumption of each software library used in the final \MC binary. To obtain these numbers, we analyzed the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library and supporting libraries.
-In comparison to other languages, \MC and \CO consume a small amount of flash: CircuitPython consumes 201.404 kB, MicroPython consumes 228.044 kB, and Espruino consumes 142.196 kB of flash. This means that users can write applications in \MCN, without the worry of running out of flash memory.
+In comparison to other languages, \MC and \CO consume a small amount of flash: CircuitPython consumes 201 kB, MicroPython consumes 228 kB, and Espruino consumes 142 kB of flash. This means that users can write applications in \MCN, without the worry of running out of flash memory.
 
-From the bottom up, the profile of the standard library changes dramatically for each device: The Uno has a very lightweight standard library; the microbit uses 64-bit integer operations (for timers) which requires extra standard library functions; and the CPX requires software floating point operations pulling in more standard library functions.
+From the bottom up, the profile of the standard library changes dramatically for each device: The Uno has a very lightweight standard library; the micro:bit uses 64-bit integer operations (for timers) which requires extra standard library functions; and the CPX requires software floating point operations pulling in more standard library functions.
 
 The size of \CO and \MC scales linearly with the amount of functionality a device has, due to the component oriented nature of \CO and transitively \MCN. For instance the Uno has few onboard components when compared to the CPX and micro:bit. The modular composition of \CO allows us to support multiple devices with a variety of feature sets, while maintaining the same API at the \MC layer.
 
@@ -145,7 +145,7 @@ The size of \CO and \MC scales linearly with the amount of functionality a devic
 
 Table~\ref{table:ram-consumption} shows the per device RAM consumption of each software library used in the final \MC binary. To obtain these numbers, we analyzed the final map file produced after compilation. At runtime \MC also dynamically allocates additional memory: 1.56 kB for the CPX, 560 bytes for the micro:bit, and 644 bytes for the Uno. We also can see that in all cases, the RAM consumption of \MC and \CO is well within the RAM available of each device.
 
-\MC and \CO consume a small amount of resources in comparison: CircuitPython (a derivative of MicroPython) consumes 12,802 kB, MicroPython consumes 9.472 kB, and Espruino consumes 5.270 kB of RAM. On the microbit the Bluetooth stack requires 8kB of RAM to run, due to MicroPython's RAM consumption this means that Bluetooth is inoperable. Comparatively, Espruino does enable the Bluetooth stack, but due to the overhead incurred, users have \textasciitilde300 bytes available for their programs.
+\MC and \CO consume a small amount of resources in comparison: CircuitPython (a derivative of MicroPython) consumes 12.8 kB, MicroPython consumes 9.5 kB, and Espruino consumes 5.3 kB of RAM. On the micro:bit the Bluetooth stack requires 8 kB of RAM to run, due to MicroPython's RAM consumption this means that Bluetooth is inoperable. Comparatively, Espruino does enable the Bluetooth stack, but due to the overhead incurred, users have \textasciitilde300 bytes available for their programs.
 
 % Add globals maps and profile of listener and fiber.
 
@@ -170,7 +170,8 @@ While the TS compiler has been optimized for speed, \MCN's native compilation pr
 
 \subsection{Extensibility}
 
-Creating a device in \CO is trivial once a processor has been ported. The porting of a processor is where we observe the largest overhead, as low-level implementations of drivers for I2C, Serial, and SPI may have to be re-written. Due to \CON's abstraction model, once low-level drivers have been implemented, drivers for higher level components like Accelerometers, which depend on high-level interfaces for low-level drivers, can be immediately adopted if hardware is present. A similar technique is used in \MC for simulators.
+% I think 'processor' could be understood as generic ARM or generic AVR, not a specific MCU with peripherals
+Creating a device in \CO is trivial once a MCU has been ported. The porting of a MCU is where we observe the largest overhead, as low-level implementations of drivers for I2C, Serial, and SPI may have to be re-written. Due to \CON's abstraction model, once low-level drivers have been implemented, drivers for higher level components like Accelerometers, which depend on high-level interfaces for low-level drivers, can be immediately adopted if hardware is present. A similar technique is used in \MC for simulators.
 
 % Not really a result, more of a description of design, with an anecdotal comment about speed.
 

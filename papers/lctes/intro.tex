@@ -7,7 +7,7 @@
 
 Recent years have witnessed expansive growth in the popularity and ubiquity of embedded systems. This growth can be primarily attributed to the emergence of new application domains ranging from wearables, to home automation, industrial automation, and smart grids - a phenomenon broadly referred to as the Internet of Things (IoT). As the IoT continues to grow, it has become more pervasive - far beyond the realm of domain experts and into the everyday lives of the public. This has led to growth in non-expert developers actively creating software for embedded systems. Small to medium sized business now create new products through \emph{rapid prototyping} of embedded devices. Hobbyist \emph{makers} create novel technical projects to inspire themselves and society. And now, more than ever before, \emph{educators} are making extensive use of \emph{physical computing} devices as a direct means to teach and inspire a generation of students - and to prepare them for a society where IoT will be the norm. These new developers all share a common characteristic - \emph{they are not professional software developers}~\cite{dougherty2012maker,bruce2015make,maksimovic2014raspberry}.
 
-To drive this point home, in 2015 a consortium of industry and academic partners came together to develop the BBC micro:bit - an embedded device designed specifically for education. One million of these devices were delivered to UK school children in 2016. The micro:bit is a highly capable IoT device containing a 32 bit ARM Cortex processor, integrated light level, temperature, acceleration and magnetic sensors, touch sensitive inputs and USB and 2.4GHz Radio communications.
+To drive this point home, in 2015 a consortium of industry and academic partners came together to develop the BBC micro:bit - an embedded device designed specifically for education. One million of these devices were delivered to UK school children in 2016. The micro:bit is a highly capable IoT device containing a 32-bit ARM Cortex-M0 processor, integrated light level, temperature, acceleration and magnetic sensors, touch sensitive inputs and USB and 2.4GHz radio communications.
 
 \begin{figure}[t]
     \centering
@@ -20,8 +20,8 @@ To drive this point home, in 2015 a consortium of industry and academic partners
 
 Figure~\ref{fig:projects} highlights two example educational projects based on the BBC micro:bit. The first is a data gathering experiment, where multiple sensor data were recorded to non-volatile memory as the device was launched into near space (32.5km altitude), along with an externally interfaced camera and GPS unit. The second highlights a live data telemetry application, where acceleration data was streamed in real-time via Bluetooth Low Energy to enable the profiling of chemical-rocket powered model vehicles. These projects are highly sophisticated and were undertaken by high school educators and their students.
 
-We introduce an open source~\footnote{
-MakeCode is open source at \url{https://github.com/microsoft/pxt}; CODAL is open source at
+We introduce an open-source\footnote{
+MakeCode is open-source at \url{https://github.com/microsoft/pxt}; CODAL is open-source at
 \url{https://github.com/lancaster-university/codal}.} platform for embedded devices such as the micro:bit that enables the development of embedded applications by non-expert programmers. This platform consists of two major components: Microsoft MakeCode (\url{https://makecode.com}), a web app that consists of a beginner IDE for embedded
 systems; CODAL, an efficient component-oriented C++ runtime
 providing high-level programming abstractions.
@@ -48,12 +48,12 @@ The development environment for existing embedded systems typically requires the
                            &          &              & \bf{Word}  & \bf{CPU} &            \\
     \bf{Device}            & \bf{RAM} & \bf{Flash}   & \bf{Size}  & \bf{Speed} & \bf{CPU}  \\ \hline
     Uno            & 2 kB       & 32 kB      & 8          & 16MHz & AVR       \\ \hline
-    micro:bit          & 16 kB      & 256 kB     & 32         & 16MHz & Cortex     \\ \hline
-    CPX           & 32 kB      & 256 kB     & 32         & 48MHz & Cortex    \\ \hline
-    PC             & 16 GB      & 1 TB       & 64         & 3GHz & Intel      \\ \hline
+    micro:bit          & 16 kB      & 256 kB     & 32         & 16MHz & ARMv6-M     \\ \hline
+    CPX           & 32 kB      & 256 kB     & 32         & 48MHz & ARMv6-M   \\ \hline
+    PC             & 16 GB      & 1 TB       & 64         & 3GHz & x86-64      \\ \hline
     \end{tabular}
     \setlength{\textfloatsep}{-10pt}
-    \caption{\label{table:devices}Example microcontroller devices in relationship to a typical PC. Device abbreviations: Uno (Arduino Uno), micro:bit (BBC micro:bit), CPX (Adafruit Circuit Playground Express); PC (Personal Computer).}
+    \caption{\label{table:devices}Example microcontroller devices in relationship to a typical PC. Device abbreviations: Uno (Arduino Uno), micro:bit (BBC micro:bit), CPX (Adafruit Circuit Playground Express), PC (Personal Computer).}
     \vspace{-20pt}
 \end{table}
 
@@ -70,7 +70,7 @@ up processors. Instead, more independent peripherals (such as Bluetooth/WiFi rad
 Intuitive APIs and programming models are required to support novice users, yet it is equally important that these APIs remain complete enough to realise the ambitious projects that may be undertaken as students advance: simplification via the reduction of functionality is not a valid approach.
 %TBALL: this sentence seems out of place - I couldn't really figure out how to make it fit.
 %Also, embedded systems are becoming increasingly component based through wired and %wireless interfaces such as I2C, Bluetooth Mesh, IEEE 802.15.4.
-\emph{An effective solution must provide APIs that are consistent, easy to understand/uses, and progressive, to address the growing capabilities of the programmer.}
+\emph{An effective solution must provide APIs that are consistent, easy to understand/use, and progressive, to address the growing capabilities of the programmer.}
 
 \subsection{Architecture}
 
@@ -82,16 +82,16 @@ Intuitive APIs and programming models are required to support novice users, yet 
 
 Figure~\ref{fig:makecode} illustrates the architecture of our platform.
 The \MC web app is the primary entry point for the end-user. \MC supports
-the simplified programming of MCUs via editors for visual blocks and textual JavaScript/TypeScript~\footnote{\url{http://typescriptlang.org}} languages .
-CODAL, a component-oriented, event-driven, fiber-based C++ runtime environment that bridges the semantic gap between the higher-level languages (such
+the simplified programming of MCUs via editors for visual blocks and the textual TypeScript\footnote{\url{https://www.typescriptlang.org}} language.
+CODAL, a component-oriented, event-dri\-ven, fiber-based C++ runtime environment that bridges the semantic gap between the higher-level languages (such
 as TypeScript) and the hardware (bottom-left of the Figure). 
 Enabling the flashing of the microcontroller is \UFN,
 a new file format and bootloader for simplified transfer of binaries to the device over USB (bottom-right).
 
-\MC can be accessed from any modern web browser and cached locally for \emph{entirely offline use}. The \MC web app incorporates the open source Blockly~\footnote{\url{https://github.com/google/blockly}} and Monaco~\footnote{\url{https://github.com/Microsoft/monaco-editor}} editors (upper-left), an in-browser device simulator (upper-right) for testing programs before transferring them to the physical device, as well as \emph{in-browser compilation} of TypeScript to machine code and linking against the pre-compiled
+\MC can be accessed from any modern web browser and cached locally for \emph{entirely offline use}. The \MC web app incorporates the open-source Blockly\footnote{\url{https://github.com/google/blockly}} and Monaco\footnote{\url{https://github.com/microsoft/monaco-editor}} editors (upper-left), an in-browser device simulator (upper-right) for testing programs before transferring them to the physical device, as well as \emph{in-browser compilation} of TypeScript to machine code and linking against the pre-compiled
 CODAL C++ runtime (lower-left).
 
-\MC devices appear as USB pen drives when plugged into a computer, thanks to UF2. After a user has finished developing a program, the compiled binary is ``downloaded'' locally to the user's computer (lower-right) and then transferred (flashed) to the MCU by a simple file copy operation. This works out-of-the-box on any OS with built-in support for US pen drives (MacOS, Windows, Linux,ChromeOS).
+\MC devices appear as USB pen drives when plugged into a computer, thanks to UF2. After a user has finished developing a program, the compiled binary is ``downloaded'' locally to the user's computer (lower-right) and then transferred (flashed) to the MCU by a simple file copy operation. This works out-of-the-box on any OS with built-in support for USB pen drives (MacOS, Windows, Linux, ChromeOS).
 
 \subsection{Overview}
 
