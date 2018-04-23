@@ -26,6 +26,10 @@ namespace pxsim {
             });
         }
 
+        export function remove(element: HTMLElement) {
+            element.parentElement.removeChild(element);
+        }
+
         export function removeChildren(element: HTMLElement) {
             while (element.firstChild) element.removeChild(element.firstChild);
         }

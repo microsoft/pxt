@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as sui from "./sui";
 import * as data from "./data";
-import * as blockspreview from "./blockspreview";
 
 const repeat = pxt.Util.repeatMap;
 
@@ -54,7 +53,6 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                 </div> : null}
             {card.label || card.blocksXml || card.typeScript || imageUrl || cardType == "file" ? <div className={"ui image"}>
                 {card.label ? <label className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon"} label`}>{card.label}</label> : undefined}
-                {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
                 {imageUrl ? <div className="ui imagewrapper"><div className="ui cardimage" style={{ backgroundImage: `url("${imageUrl}")` }} /> </div> : undefined}
                 {card.cardType == "file" ? <div className="ui fileimage" /> : undefined}

@@ -683,12 +683,12 @@ export class Menu extends data.Component<MenuProps, MenuState> {
             return
         }
 
-        let menuItems = core.findChild(this, ".item") as NodeList;
+        let menuItems = this.child(".item");
         let activeNodeIndex = -1
         let i = 0
 
         while (activeNodeIndex === -1 && i < menuItems.length) {
-            if ((menuItems.item(i) as HTMLElement).classList.contains("active")) {
+            if ((menuItems[i] as HTMLElement).classList.contains("active")) {
                 activeNodeIndex = i
             }
 
@@ -702,15 +702,15 @@ export class Menu extends data.Component<MenuProps, MenuState> {
         let selectedTab: HTMLElement;
         if ((leftOrUpKey && !pxt.Util.isUserLanguageRtl()) || (rightorBottomKey && pxt.Util.isUserLanguageRtl())) {
             if (activeNodeIndex === 0) {
-                selectedTab = menuItems.item(menuItems.length - 1) as HTMLElement
+                selectedTab = menuItems[menuItems.length - 1] as HTMLElement
             } else {
-                selectedTab = menuItems.item(activeNodeIndex - 1) as HTMLElement
+                selectedTab = menuItems[activeNodeIndex - 1] as HTMLElement
             }
         } else if ((rightorBottomKey && !pxt.Util.isUserLanguageRtl()) || (leftOrUpKey && pxt.Util.isUserLanguageRtl())) {
             if (activeNodeIndex === menuItems.length - 1) {
-                selectedTab = menuItems.item(0) as HTMLElement
+                selectedTab = menuItems[0] as HTMLElement
             } else {
-                selectedTab = menuItems.item(activeNodeIndex + 1) as HTMLElement
+                selectedTab = menuItems[activeNodeIndex + 1] as HTMLElement
             }
         }
 
@@ -721,7 +721,7 @@ export class Menu extends data.Component<MenuProps, MenuState> {
     }
 
     componentDidMount() {
-        let menuItems = core.findChild(this, ".item") as NodeList;
+        let menuItems = this.child(".item");
         menuItems.forEach((elem: HTMLElement, index: number) => {
             elem.onkeydown = this.handleKeyboardNavigation
         })

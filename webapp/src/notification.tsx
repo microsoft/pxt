@@ -55,14 +55,14 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
             this.timer = setTimeout(() => this.hide("automatic"), this.delayTime + this.props.displayTime);
         }
         this.props.parent.setBannerVisible(true);
-        this.forceUpdate();
+        this.render();
     }
 
     hide(mode: string) {
         pxt.tickEvent("notificationBanner." + mode + "Close");
         pxt.storage.setLocal("lastBannerClosedTime", pxt.Util.nowSeconds().toString());
         this.props.parent.setBannerVisible(false);
-        this.forceUpdate();
+        this.render();
     }
 
     renderCore() {

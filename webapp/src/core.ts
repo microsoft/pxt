@@ -285,10 +285,10 @@ export function navigateInWindow(url: string) {
     window.location.href = url;
 }
 
-export function findChild(c: React.Component<any, any>, selector: string) {
+export function findChild(c: React.Component<any, any>, selector: string): Element[] {
     let self = ReactDOM.findDOMNode(c);
-    if (!selector) return self
-    return self.querySelectorAll(selector);
+    if (!selector) return [self]
+    return pxt.Util.toArray(self.querySelectorAll(selector));
 }
 
 export function parseQueryString(qs: string) {

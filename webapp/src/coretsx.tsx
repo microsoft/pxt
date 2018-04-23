@@ -101,7 +101,7 @@ export function renderConfirmDialogAsync(options: core.ConfirmOptions): Promise<
             function cleanup() {
                 ReactDOM.unmountComponentAtNode(wrapper);
                 setTimeout(() => {
-                    wrapper.remove();
+                    wrapper.parentElement.removeChild(wrapper);
                 })
             }
             return currentDialog.promise.finally(() => cleanup());

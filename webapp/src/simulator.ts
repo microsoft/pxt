@@ -62,7 +62,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             else {
                 if (pxt.options.light) {
                     if (completeHandler) completeHandler();
-                    el.remove();
+                    pxsim.U.remove(el);
                     return;
                 }
                 // Play exit animation
@@ -75,7 +75,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                     el.style.animationDuration = '';
 
                     if (completeHandler) completeHandler();
-                    el.remove();
+                    pxsim.U.remove(el);
                 })
             }
         },

@@ -36,12 +36,12 @@ export class Editor extends srceditor.Editor {
         this.isVisible = v;
         let classes = '#blocksEditor .blocklyToolboxDiv, #blocksEditor .blocklyWidgetDiv, #blocksEditor .blocklyToolboxDiv';
         if (this.isVisible) {
-            document.querySelectorAll(classes).forEach((el: HTMLElement) => el.style.display = '');
+            pxt.Util.toArray(document.querySelectorAll(classes)).forEach((el: HTMLElement) => el.style.display = '');
             // Fire a resize event since the toolbox may have changed width and height.
             this.parent.fireResize();
         }
         else {
-            document.querySelectorAll(classes).forEach((el: HTMLElement) => el.style.display = 'none');
+            pxt.Util.toArray(document.querySelectorAll(classes)).forEach((el: HTMLElement) => el.style.display = 'none');
             if (this.editor)
                 Blockly.hideChaff();
         }

@@ -2303,7 +2303,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return Promise.resolve();
         })
         .then(() => {
-            document.getElementById('loading').remove();
+            pxsim.U.remove(document.getElementById('loading'));
             return workspace.loadedAsync();
         })
         .done(() => {
