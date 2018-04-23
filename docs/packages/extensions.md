@@ -19,11 +19,11 @@ The editor will automatically add an "Editor" button for the extension in the pa
 
 ## Protocol
 
-The editor and the extension IFrame communicate via a protocol of IFrame messages. 
+The editor and the extension &lt;iframe&gt; communicate using a protocol of IFrame messages. 
 
-* messages have a unique ``id`` used to correlate response to requests.
-* a ``response`` message can be requested. The ``id`` identifer can be used to correlate a receive response to the original query.
-* all message sent by the extension must contain the extension id, ``extId``. This identifier is passed when loading the IFrame (see **Initialization**)
+* Messages have a unique ``id`` to correlate responses to requests.
+* A ``response`` message can be requested. The ``id`` identifer can be used to correlate a receive response to the original query.
+* All messages sent by the extension must contain the extension id, ``extId``. This identifier is passed when loading the &lt;iframe&gt; (see [Initialization](#initialization)).
 
 ```typescript-ignore
 // sending message
@@ -50,13 +50,13 @@ window.addEventListener("message", function(ev) {
 
 ### Initialization
 
-When the user presses the extension button,
+When the user presses the extension button:
 
-* The GitHub pages site is loaded in an IFrame with an extension id in the hashmark, e.g. https://microsoft.github.io/pxt-neoanim/#extid for the package https://github.com/Microsoft/pxt-neoanim.
+* The GitHub pages site is loaded in an &lt;iframe&gt; with an extension id in the hashmark, e.g. https://microsoft.github.io/pxt-neoanim/#extid for the package https://github.com/Microsoft/pxt-neoanim.
 
 ### ~ hint
 
-Store the extension id as it needs to be used in every message.
+Store the extension id since it's needed in every message.
 
 ```typescript-ignore
 var extId = window.location.hash.substr(1);
@@ -64,7 +64,7 @@ var extId = window.location.hash.substr(1);
 
 ### ~
 
-* Once fully loaded, the extension sends a ``extinit`` message to the parent window
+* Once fully loaded, the extension sends a ``extinit`` message to the parent window.
 
 ```typescript-ignore
 var msg = {
@@ -76,15 +76,15 @@ var msg = {
 ...
 ```
 
-### Shown / Hidden
+### Shown / Hidden events
 
-The editor sends a ``extshown`` event when showing the editor frame, and a ``exthidden`` event after hiding the editor.
+The editor sends a ``extshown`` message when showing the editor frame, and a ``exthidden`` message after hiding the editor.
 
-### Read and write code
+### Read and Write code
 
 The extension can read (``extreadcode``) and write (``extwritecode``) a dedicated TypeScript and JSON file in the project. The JSON file is designed to store rich metadata while the TypeScript is the "code behind" that gets executed. This feature does not require permissions.
 
-* write code
+#### Write code
 
 ```typescript-ignore
 var msg = {
@@ -100,7 +100,7 @@ var msg = {
 ...
 ```
 
-* read code
+#### Read code
 
 ```typescript-ignore
 var id = Math.random().toString();
@@ -123,7 +123,7 @@ function receivedResponse(resp) {
 ...
 ```
 
-### Read and write user code
+### Read and Write user code
 
 The ``extusercode`` message requests to read the entire set of files in the project. The user will be prompted to give permission. If successfull, the response contains a ``resp`` field with a map of the file names to file contents.
 
@@ -136,7 +136,7 @@ export interface UserCodeResponse extends ExtensionResponse {
 
 ### Data streams
 
-When available, the editor may stream data coming from the devices. The ``extdatastream`` message requests to stream data. The user will be prompted to give permission. The following message requests for serial messages:
+When available, the editor may stream data coming from the devices. The ``extdatastream`` message requests to stream data. The user will be prompted to give permission. The following message sets a request for serial messages:
 
 ```typescript-ignore
 var msg {
@@ -149,4 +149,4 @@ var msg {
 ...
 ```
 
-If successful, the editor will proxy serial messages to the editor IFrame.
+If successful, the editor will proxy serial messages to the editor &lt;iframe&gt;.
