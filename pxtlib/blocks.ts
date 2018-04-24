@@ -448,8 +448,8 @@ namespace pxt.blocks {
                 category: 'arrays',
                 blockTextSearch: "LISTS_CREATE_WITH_INPUT_WITH",
                 block: {
-                    LISTS_CREATE_EMPTY_TITLE: Util.lf("create empty array"),
-                    LISTS_CREATE_WITH_INPUT_WITH: Util.lf("create array with"),
+                    LISTS_CREATE_EMPTY_TITLE: Util.lf("empty array"),
+                    LISTS_CREATE_WITH_INPUT_WITH: Util.lf("array of"),
                     LISTS_CREATE_WITH_CONTAINER_TITLE_ADD: Util.lf("array"),
                     LISTS_CREATE_WITH_ITEM_TITLE: Util.lf("value")
                 }

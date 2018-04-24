@@ -1999,9 +1999,8 @@ namespace pxt.blocks {
                     pxtControlsForId,
                     pxtControlsForDef.name,
                     function () {
-                        return "index";
-                        // return U.rlf(<string>pxtControlsForDef.tooltip,
-                        //     thisBlock.getInputTargetBlock('VAR').getField('VAR').getText());
+                        return U.rlf(<string>pxtControlsForDef.tooltip,
+                            thisBlock.getInputTargetBlock('VAR') ? thisBlock.getInputTargetBlock('VAR').getField('VAR').getText() : '');
                     },
                     pxtControlsForDef.url,
                     String(pxt.toolbox.getNamespaceColor('loops'))
@@ -2639,8 +2638,8 @@ namespace pxt.blocks {
                     pxtControlsForOfId,
                     pxtControlsForOfDef.name,
                     function () {
-                        return "index";
-                        //return U.rlf(<string>pxtControlsForOfDef.tooltip, thisBlock.getField('VAR').getText());
+                        return U.rlf(<string>pxtControlsForOfDef.tooltip,
+                            thisBlock.getInputTargetBlock('VAR') ? thisBlock.getInputTargetBlock('VAR').getField('VAR').getText() : '');
                     },
                     pxtControlsForOfDef.url,
                     String(pxt.toolbox.getNamespaceColor('loops'))
