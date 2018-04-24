@@ -1,8 +1,12 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
 <block type="pxt-on-start">
 <statement name="HANDLER">
-<block type="controls_simple_for">
+<block type="pxt_controls_for">
+<value name="VAR">
+<shadow type="variables_get_reporter">
 <field name="VAR">i</field>
+</shadow>
+</value>
 <value name="TO">
 <shadow type="math_whole_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
@@ -21,7 +25,7 @@
 </value>
 <statement name="DO">
 <block type="typescript_statement">
-<mutation numlines="1" line0="testNamespace.enumArgument&#40;i&#41;&#59;" />
+<mutation numlines="1" error="Enum arguments may only be literal property access expressions" line0="testNamespace.enumArgument&#40;i&#41;&#59;" />
 </block>
 </statement>
 <comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
