@@ -69,7 +69,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     {/\.ts$/.test(file.name) ? <sui.Icon icon="align left" /> : /\.blocks$/.test(file.name) ? <sui.Icon icon="puzzle" /> : undefined}
                     {meta.isReadonly ? <sui.Icon icon="lock" /> : null}
                     {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
-                    {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" title={lf("Delete file {0}", file.name)} onClick={(e) => this.removeFile(e, file)} onKeyDown={(e) => e.stopPropagation()} /> : ''}
+                    {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button className="primary label" icon="trash" title={lf("Delete file {0}", file.name)} onClick={(e) => this.removeFile(e, file)} onKeyDown={(e) => e.stopPropagation()} /> : ''}
                 </a>);
         })
     }
@@ -86,8 +86,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + p.getPkgId());
         return [<div key={"hd-" + p.getPkgId()} className="header link item" role="treeitem" aria-expanded={expands[p.getPkgId()]} aria-label={lf("{0}, {1}", p.getPkgId(), expands[p.getPkgId()] ? lf("expanded") : lf("collapsed"))} onClick={() => this.togglePkg(p)} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
             <sui.Icon icon={`chevron ${expands[p.getPkgId()] ? "down" : "right"} icon`} />
-            {upd ? <sui.Button class="primary label" icon="refresh" title={lf("Refresh package {0}", p.getPkgId())} onClick={(e) => this.updatePkg(e, p)} onKeyDown={(e) => e.stopPropagation()} /> : ''}
-            {del ? <sui.Button class="primary label" icon="trash" title={lf("Delete package {0}", p.getPkgId())} onClick={(e) => this.removePkg(e, p)} onKeyDown={(e) => e.stopPropagation()} /> : ''}
+            {upd ? <sui.Button className="primary label" icon="refresh" title={lf("Refresh package {0}", p.getPkgId())} onClick={(e) => this.updatePkg(e, p)} onKeyDown={(e) => e.stopPropagation()} /> : ''}
+            {del ? <sui.Button className="primary label" icon="trash" title={lf("Delete package {0}", p.getPkgId())} onClick={(e) => this.removePkg(e, p)} onKeyDown={(e) => e.stopPropagation()} /> : ''}
             {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             {p.getPkgId()}
         </div>
@@ -165,7 +165,7 @@ namespace custom {
             <div role="treeitem" aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={() => this.toggleVisibility()} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                 {lf("Explorer")}
                 <sui.Icon icon={`chevron ${show ? "down" : "right"} icon`} />
-                {plus ? <sui.Button class="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={(e) => { this.addCustomBlocksFile(); e.stopPropagation(); }} onKeyDown={(e) => e.stopPropagation()} /> : undefined}
+                {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={(e) => { this.addCustomBlocksFile(); e.stopPropagation(); }} onKeyDown={(e) => e.stopPropagation()} /> : undefined}
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
             {show ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}

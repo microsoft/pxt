@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as sui from "./sui";
+import * as data from "./data";
 
 export interface ICarouselProps extends React.Props<Carousel> {
     // Percentage of child width to bleed over either edge of the page
@@ -14,7 +15,7 @@ export interface ICarouselState {
 
 const OUT_OF_BOUND_MARGIN = 300;
 
-export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
+export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
     private dragSurface: HTMLDivElement;
     private container: HTMLDivElement;
     private arrows: HTMLSpanElement[] = [];
@@ -44,31 +45,44 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         }
     }
 
-    public render() {
+    public renderCore() {
         this.childrenElements = [];
         this.arrows = [];
         const { rightDisabled, leftDisabled } = this.state || {} as any;
         return <div className="ui carouselouter">
-            <span className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")} tabIndex={leftDisabled ? -1 : 0} onClick={() => this.onArrowClick(true)} ref={r => this.arrows.push(r)}>
+            <span className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")}
+                tabIndex={leftDisabled ? -1 : 0} onClick={() => this.onArrowClick(true)} onKeyDown={sui.fireClickOnEnter} ref={r => this.arrows.push(r)}>
                 <sui.Icon icon="circle angle left" />
             </span>
             <div className="carouselcontainer" ref={r => this.container = r}>
                 <div className="carouselbody" ref={r => this.dragSurface = r}>
                     {
-                        React.Children.map(this.props.children, (child, index) => child ? <div className={`carouselitem ${this.props.selectedIndex == index ? 'selected' : ''}`} ref={r => r && this.childrenElements.push(r)}>
-                            {child}
-                        </div> : undefined)
+                        React.Children.map(this.props.children, (child, index) => child ?
+                            <div className={`carouselitem ${this.props.selectedIndex == index ? 'selected' : ''}`} ref={r => r && this.childrenElements.push(r)}>
+                                {React.cloneElement(child as any, { tabIndex: this.isVisible(index) ? 0 : -1 })}
+                            </div> : undefined)
                     }
                 </div>
             </div>
-            <span className={"carouselarrow right aligned" + (rightDisabled ? " arrowdisabled" : "")} tabIndex={rightDisabled ? -1 : 0} onClick={() => this.onArrowClick(false)} ref={r => this.arrows.push(r)}>
+            <span className={"carouselarrow right aligned" + (rightDisabled ? " arrowdisabled" : "")}
+                tabIndex={rightDisabled ? -1 : 0} onClick={() => this.onArrowClick(false)} onKeyDown={sui.fireClickOnEnter} ref={r => this.arrows.push(r)}>
                 <sui.Icon icon="circle angle right" />
             </span>
         </div>
     }
 
     public onArrowClick(left: boolean) {
+        const prevIndex = this.index;
         this.setIndex(left ? this.index - this.actualPageLength : this.index + this.actualPageLength);
+        if (left) {
+            // Focus right most
+            const prevElement = this.index + this.actualPageLength < prevIndex ? this.index + this.actualPageLength : prevIndex - 1;
+            (this.childrenElements[prevElement].firstChild as HTMLElement).focus();
+        } else {
+            // Focus left most
+            const nextElement = this.index > prevIndex + this.actualPageLength ? this.index : prevIndex + this.actualPageLength;
+            (this.childrenElements[nextElement].firstChild as HTMLElement).focus();
+        }
     }
 
     public componentDidMount() {
@@ -235,6 +249,10 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         if (!this.animationId) {
             this.animationId = window.requestAnimationFrame(this.easeTowardsIndex.bind(this));
         }
+    }
+
+    private isVisible(index: number) {
+        return index >= this.index && index < this.index + (this.actualPageLength || 4);
     }
 
     private easeTowardsIndex(time: number) {

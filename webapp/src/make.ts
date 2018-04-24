@@ -78,7 +78,7 @@ export function makeAsync(): Promise<void> {
             <div id="makecontainer" style="position:relative;height:0;padding-bottom:40%;overflow:hidden;">
             </div>
         </div>`, onLoaded: (_) => {
-            renderAsync(_.find("#makecontainer")[0])
+            renderAsync(_.querySelectorAll("#makecontainer")[0] as HTMLElement)
                 .done(r => iframe = r);
         },
         buttons: [{
