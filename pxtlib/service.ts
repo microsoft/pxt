@@ -397,7 +397,7 @@ namespace ts.pxtc {
             if (!ex) {
                 const tp = `@${rtp}@`
 
-                let paramNameShadow, paramValueShadow;
+                let paramNameShadow: string, paramValueShadow: string;
 
                 if (s.attributes.blockCombineShadow) {
 
