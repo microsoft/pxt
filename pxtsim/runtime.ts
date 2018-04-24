@@ -404,6 +404,7 @@ namespace pxsim {
             // ---
 
             let currResume: ResumeFn;
+            let dbgHeap: Map<any>;
             let dbgResume: ResumeFn;
             let breakFrame: StackFrame = null // for step-over
             let lastYield = Date.now()
@@ -466,13 +467,17 @@ namespace pxsim {
 
             function breakpoint(s: StackFrame, retPC: number, brkId: number, r0: any): StackFrame {
                 U.assert(!dbgResume)
+                U.assert(!dbgHeap)
 
                 s.pc = retPC;
                 s.r0 = r0;
 
-                Runtime.postMessage(getBreakpointMsg(s, brkId))
+                const { msg, heap } = getBreakpointMsg(s, brkId);
+                dbgHeap = heap;
+                Runtime.postMessage(msg)
                 dbgResume = (m: DebuggerMessage) => {
                     dbgResume = null;
+                    dbgHeap = null;
                     if (__this.dead) return;
                     runtime = __this;
                     U.assert(s.pc == retPC);
@@ -543,6 +548,21 @@ namespace pxsim {
                         if (dbgResume)
                             dbgResume(msg);
                         break;
+                    case "variables":
+                        const vmsg = msg as VariablesRequestMessage;
+                        let vars: Variables = undefined;
+                        if (dbgHeap) {
+                            const v = dbgHeap[vmsg.variablesReference];
+                            if (v !== undefined)
+                                vars = dumpHeap(v, dbgHeap);
+                        }
+                        Runtime.postMessage(<pxsim.VariablesMessage>{
+                            type: "debugger",
+                            subtype: "variables",
+                            req_seq: msg.seq,
+                            variables: vars
+                        })
+                        break;
                 }
             }
 
@@ -568,7 +588,7 @@ namespace pxsim {
                         __this.errorHandler(e)
                     else {
                         console.error("Simulator crashed, no error handler", e.stack)
-                        let msg = getBreakpointMsg(p, p.lastBrkId)
+                        const { msg } = getBreakpointMsg(p, p.lastBrkId)
                         msg.exceptionMessage = e.message
                         msg.exceptionStack = e.stack
                         Runtime.postMessage(msg)
