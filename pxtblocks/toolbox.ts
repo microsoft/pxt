@@ -13,14 +13,24 @@ namespace pxt.blocks {
                 <shadow type="logic_boolean"></shadow>
             </value>
         </block>
-        <block type="controls_simple_for">
+        <block type="pxt_controls_for">
+            <value name="VAR">
+                <shadow type="variables_get_reporter">
+                    <field name="VAR">${lf("index")}</field>
+                </shadow>
+            </value>
             <value name="TO">
                 <shadow type="math_whole_number">
                     <field name="NUM">4</field>
                 </shadow>
             </value>
         </block>
-        <block type="controls_for_of">
+        <block type="pxt_controls_for_of">
+            <value name="VAR">
+                <shadow type="variables_get_reporter">
+                    <field name="VAR">${lf("value")}</field>
+                </shadow>
+            </value>
             <value name="LIST">
                 <shadow type="variables_get">
                     <field name="VAR">list</field>

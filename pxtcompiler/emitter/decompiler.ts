@@ -1111,10 +1111,12 @@ ${output}</xml>`;
                 r.handlers = [];
             }
             else {
-                r = mkStmt("controls_simple_for");
-                r.fields = [getField("VAR", renamed)];
+                r = mkStmt("pxt_controls_for");
+                r.fields = [];
                 r.inputs = [];
                 r.handlers = [];
+                r.inputs.push(mkValue("VAR",
+                    getFieldBlock("variables_get_reporter", "VAR", renamed, true), "variables_get_reporter"));
 
                 if (condition.operatorToken.kind === SK.LessThanToken) {
                     const ex = mkExpr("math_arithmetic");
