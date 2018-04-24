@@ -1,6 +1,6 @@
 import * as React from "react";
-import * as sui from "./sui"
 import * as codecard from "./codecard"
+import * as sui from "./sui"
 import * as data from "./data"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -138,11 +138,10 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
         const modalSize = languageList.length > 4 ? "large" : "small";
 
         return (
-            <sui.Modal open={this.state.visible}
-                header={lf("Select Language")}
+            <sui.Modal isOpen={this.state.visible}
                 size={modalSize}
                 onClose={() => this.hide()}
-                dimmer={true}
+                dimmer={true} header={lf("Select Language")}
                 closeIcon={true}
                 allowResetFocus={true}
                 closeOnDimmerClick
@@ -152,7 +151,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 <div className="group">
                     <div className="ui cards centered" role="listbox">
                         {languageList.map(langId =>
-                            <codecard.CodeCardView className={`card-selected focused`}
+                            <codecard.CodeCardView className={`card-selected`}
                                 key={langId}
                                 name={allLanguages[langId].localizedName}
                                 ariaLabel={allLanguages[langId].englishName}

@@ -26,57 +26,61 @@ let displayedModals: pxt.Map<boolean> = {};
 export let simTranslations: pxt.Map<string>;
 let dirty = false;
 
-let $debugger: JQuery;
+let debuggerDOM: HTMLElement;
 
 export function setTranslations(translations: pxt.Map<string>) {
     simTranslations = translations;
 }
 
 export function init(root: HTMLElement, cfg: SimulatorConfig) {
-    $(root).html(
+    root.innerHTML =
         `
         <div id="simulators" class='simulator'>
         </div>
         <div id="debugger" class="ui item landscape only">
         </div>
-        `
-    )
-    $debugger = $('#debugger')
+        `;
+    debuggerDOM = document.getElementById('debugger')
     let options: pxsim.SimulatorDriverOptions = {
         revealElement: (el) => {
             if (pxt.options.light) return;
-            ($(el) as any).transition({
-                animation: pxt.appTarget.appTheme.simAnimationEnter || 'fly right in',
-                duration: '0.5s',
+            // Play enter animation
+            const animation = pxt.appTarget.appTheme.simAnimationEnter || 'fly right in';
+            el.style.animationDuration = '500ms';
+            const animationClasses = `${animation} visible transition animating`;
+            pxsim.U.addClass(el, animationClasses);
+            Promise.resolve().delay(500).then(() => {
+                pxsim.U.removeClass(el, animationClasses);
+                el.style.animationDuration = '';
             })
         },
         removeElement: (el, completeHandler) => {
             if (pxt.appTarget.simulator.headless) {
-                $(el).addClass('simHeadless');
+                pxsim.U.addClass(el, 'simHeadless');
                 if (completeHandler) completeHandler();
             }
             else {
                 if (pxt.options.light) {
                     if (completeHandler) completeHandler();
-                    $(el).remove();
+                    pxsim.U.remove(el);
                     return;
                 }
-                ($(el) as any).transition({
-                    animation: pxt.appTarget.appTheme.simAnimationExit || 'fly right out',
-                    duration: '0.5s',
-                    onComplete: function () {
-                        if (completeHandler) completeHandler();
-                        $(el).remove();
-                    }
-                }).on('error', () => {
-                    // Problem with animation, still complete
+                // Play exit animation
+                const animation = pxt.appTarget.appTheme.simAnimationExit || 'fly right out';
+                el.style.animationDuration = '500ms';
+                const animationClasses = `${animation} visible transition animating`;
+                pxsim.U.addClass(el, animationClasses);
+                Promise.resolve().delay(500).then(() => {
+                    pxsim.U.removeClass(el, `animating`);
+                    el.style.animationDuration = '';
+
                     if (completeHandler) completeHandler();
-                    $(el).remove();
+                    pxsim.U.remove(el);
                 })
             }
         },
         unhideElement: (el) => {
-            $(el).removeClass("simHeadless");
+            pxsim.U.removeClass(el, "simHeadless");
         },
         onDebuggerBreakpoint: function (brk) {
             // walk stack until breakpoint is found
@@ -188,7 +192,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         stoppedClass: getStoppedClass()
     };
-    driver = new pxsim.SimulatorDriver($('#simulators')[0], options);
+    driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
 }
 
@@ -251,7 +255,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
 
 export function mute(mute: boolean) {
     driver.mute(mute);
-    $debugger.empty();
+    pxsim.U.removeChildren(debuggerDOM);
 }
 
 export function stop(unload?: boolean) {
@@ -259,7 +263,7 @@ export function stop(unload?: boolean) {
 
     makeClean();
     driver.stop(unload);
-    $debugger.empty();
+    pxsim.U.removeChildren(debuggerDOM);
 }
 
 export function hide(completeHandler?: () => void) {
@@ -267,7 +271,7 @@ export function hide(completeHandler?: () => void) {
         makeDirty();
     }
     driver.hide(completeHandler);
-    $debugger.empty();
+    pxsim.U.removeChildren(debuggerDOM);
 }
 
 export function unhide() {
@@ -282,7 +286,7 @@ export function proxy(message: pxsim.SimulatorCustomMessage) {
     if (!driver) return;
 
     driver.postMessage(message);
-    $debugger.empty();
+    pxsim.U.removeChildren(debuggerDOM);
 }
 
 export function dbgPauseResume() {
@@ -333,13 +337,20 @@ function getStoppedClass() {
 /*
 function updateDebuggerButtonsInternal(brk: pxsim.DebuggerBreakpointMessage = null) {
     function btn(icon: string, name: string, label: string, click: () => void) {
-        let b = $(`<button class="ui mini button teal" title="${pxt.Util.htmlEscape(label)}"></button>`)
-        if (icon) b.addClass("icon").append(`<i class="${icon} icon"></i>`)
-        if (name) b.append(pxt.Util.htmlEscape(name));
-        return b.click(click)
+        let b = document.createElement('button');
+        b.className = `ui mini button teal ${icon ? 'icon' : ''}`;
+        b.title = pxt.Util.htmlEscape(label);
+        if (icon) {
+            let i = document.createElement('i');
+            i.className = `${icon} icon`;
+            b.appendChild(i);
+        }
+        if (name) b.appendChild(document.createTextNode(pxt.Util.htmlEscape(name)));
+        b.addEventListener('click', click);
+        return b;
     }
 
-    $debugger.empty();
+    pxsim.U.removeChildren(debuggerDOM);
     if (!driver.runOptions.debug) return;
     let advanced = config.editor == 'tsprj';
 
@@ -347,23 +358,27 @@ function updateDebuggerButtonsInternal(brk: pxsim.DebuggerBreakpointMessage = nu
         let $resume = btn("play", lf("Resume"), lf("Resume execution"), () => driver.resume(pxsim.SimulatorDebuggerCommand.Resume));
         let $stepOver = btn("xicon stepover", lf("Step over"), lf("Step over next function call"), () => driver.resume(pxsim.SimulatorDebuggerCommand.StepOver));
         let $stepInto = btn("xicon stepinto", lf("Step into"), lf("Step into next function call"), () => driver.resume(pxsim.SimulatorDebuggerCommand.StepInto));
-        $debugger.append($resume).append($stepOver)
+        debuggerDOM.appendChild($resume).appendChild($stepOver)
         if (advanced)
-            $debugger.append($stepInto);
+            debuggerDOM.appendChild($stepInto);
     } else if (driver.state == pxsim.SimulatorState.Running) {
         let $pause = btn("pause", lf("Pause"), lf("Pause execution on the next instruction"), () => driver.resume(pxsim.SimulatorDebuggerCommand.Pause));
-        $debugger.append($pause);
+        debuggerDOM.appendChild($pause);
     }
 
-    if (!brk || !advanced) return
+    if (!brk || !advanced) return;
 
     function vars(hd: string, frame: pxsim.Variables) {
-        let frameView = $(`<div><h4>${U.htmlEscape(hd)}</h4></div>`)
+        let frameView = document.createElement('div');
+        let heading = document.createElement('h4');
+        heading.appendChild(document.createTextNode(hd));
+        frameView.appendChild(heading);
         for (let k of Object.keys(frame)) {
             let v = frame[k]
             let sv = ""
             switch (typeof (v)) {
                 case "number": sv = v + ""; break;
+                case "boolean": sv = v + ""; break;
                 case "string": sv = JSON.stringify(v); break;
                 case "object":
                     if (v == null) sv = "null";
@@ -374,17 +389,18 @@ function updateDebuggerButtonsInternal(brk: pxsim.DebuggerBreakpointMessage = nu
                 default: U.oops()
             }
             let n = k.replace(/___\d+$/, "")
-            frameView.append(`<div>${U.htmlEscape(n)}: ${U.htmlEscape(sv)}</div>`)
+            frameView.appendChild(document.createElement('div').appendChild(document.createTextNode(`${n}: ${sv}`)));
         }
         return frameView
     }
 
-    let dbgView = $(`<div class="ui segment debuggerview"></div>`)
-    dbgView.append(vars(U.lf("globals"), brk.globals))
+    let dbgView = document.createElement('div');
+    dbgView.className = "ui segment debuggerview";
+    dbgView.appendChild(vars(U.lf("globals"), brk.globals))
     brk.stackframes.forEach(sf => {
         let info = sf.funcInfo as pxtc.FunctionLocationInfo
-        dbgView.append(vars(info.functionName, sf.locals))
+        dbgView.appendChild(vars(info.functionName, sf.locals))
     })
-    $('#debugger').append(dbgView)
+    debuggerDOM.appendChild(dbgView);
 }
 */

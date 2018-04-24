@@ -300,6 +300,28 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
     }
 }
 
+export class PureComponent<TProps, TState> extends React.PureComponent<TProps, TState> {
+    renderCoreOk = false;
+
+    constructor(props: TProps) {
+        super(props);
+        this.state = <any>{}
+    }
+
+    child(selector: string) {
+        return core.findChild(this, selector)
+    }
+
+    renderCore(): JSX.Element {
+        return null;
+    }
+
+    render() {
+        this.renderCoreOk = true;
+        return this.renderCore();
+    }
+}
+
 export function wrapWorkspace(ws: pxt.workspace.WorkspaceProvider): pxt.workspace.WorkspaceProvider {
     return {
         initAsync: ws.initAsync,
