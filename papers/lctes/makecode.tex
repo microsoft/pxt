@@ -24,8 +24,8 @@ completion, static checking and refactoring made possible by types.
 As a starting point, every JavaScript program is a TypeScript program.  Types can be added gradually to
 JavaScript programs, supported by type inference. 
 While TypeScript provides classes and interfaces with syntax like
-Java/C\#, their semantics are quite different, as they are based on JavaScript. Classes are simply syntactic sugar for creating objects that have code associated with them, but these objects are
-JavaScript objects with all their dynamic semantics intact
+Java/C\#, their semantics are quite different, as they are based on JavaScript. Classes are simply syntactic sugar for creating objects that have code associated with them, but these objects are indeed
+JavaScript objects with all their dynamic semantics intact.
 
 Static TypeScript (STS) is closely related to Strong\-Script~\cite{StrongScriptECOOP15}, which extends TypeScript with a type constructor for \emph{concrete} types, allowing the programmer to choose between untyped, optionally-typed, and concretely typed code, which provides traditional type soundness guarantees, as in Java and C\#. STS can be seen to be StrongScript where every variable and expression has a concrete type. As in StrongScript, classes are nominally typed, which permits a more efficient and traditional property lookup for class instances. Currently, STS goes further than StrongScript by outlawing downcasts.
 

@@ -1,7 +1,7 @@
 \section{Evaluation}
 \label{sec:evaluate}
 
-Our platform has been actively deployed for over a year, bringing the benefits of a safe programming environment for MCUs to hundreds of thousands of active users. In this section we provide a broad, quantitative evaluation of the cost at which these benefits are realized. We do this with several micro-benchmarks that give insights into the performance of \MC and \CO across the Uno, micro:bit, and CPX devices. We break down results by layer (\CO and \MCN) to give an insight into how each performs:
+Our platform has been actively deployed for over a year, bringing the benefits of a safe programming environment for MCUs to hundreds of thousands of active users. In this section we provide a broad, quantitative evaluation of the cost at which these benefits are realized. We do this with several micro-benchmarks that give insight into the performance of \MC and \CO across the Uno, micro:bit, and CPX devices. We break down results by layer (\CO and \MCN) to give an insight into how each performs:
 \begin{itemize}
 \item \emph{\CON}: the device runtime, against which we write C++ programs;
 \item \emph{\MCN}: the C++ and STS wrapping \CO to expose it to \MCN, against which we write STS programs.
@@ -26,7 +26,7 @@ The micro:bit has a 32-bit Cortex-M0 clocked at 16MHz, with 16kB RAM and 256kB o
     A serial terminal captures the output of these tests.
 \end{enumerate}
 
-Note that memory and performance analysis are done in separate runs,
+Note that memory and performance analysis are done in separate runs
 to ensure logging does not affect time-related measurements.
 
 \subsection{Tight Loop Performance}
@@ -37,10 +37,10 @@ solutions adopted by educators in the classroom, using native C++ as our baselin
 To give an indicative general case execution time cost of each solution, we created a simple program that just
 counts from 0 to 100,000 in a tight loop in each solutions' respective language; the results are shown in Table~\ref{table:vm-comparison}. On AVR we only count to 25000, to fit in the 16 bit \texttt{int}, and scale up the results.
 
-For the micro:bit, MicroPython and Espruino are \emph{two or more orders of magnitude slower} than a native \CO program.
+For the micro:bit, MicroPython and Espruino, the run is \emph{two or more orders of magnitude slower} than a native \CO program.
 \MC performs only 2x slower. The slowdown reflects the simple code generator of our STS compiler. It should be noted that \MC for the CPX uses the tagged approach, which allows for seamless runtime switching to floating point numbers, resulting in a further 3x slowdown. For both devices, we can observe that \MC outperforms both the VM-based solutions of MicroPython and Espruino by at least an order of magnitude.
 
-MicroPython and similar environments cannot run on the Uno due to flash and RAM size limitations. We also ran into these limitations, and as a result developed two compilation modes for AVR. One compiles STS to AVR machine code, and the other (\MC VM) generates density-optimized byte code for a tiny ({\textasciitilde}500 bytes of code) interpreter. The native strategy achieves code density of about 60.8 bytes per statement, which translates into space for 150 lines of STS user code. The VM achieves 12.3 bytes per statement allowing for about 800 lines. For comparison, the ARM Thumb code generator used in other targets achieves 37.5 bytes per statement, but due to the larger flash sizes we did not run into space issues.
+MicroPython and similar environments cannot run on the Uno due to flash and RAM size limitations. We also ran into these limitations, and as a result, developed two compilation modes for AVR. One compiles STS to AVR machine code, and the other (\MC VM) generates density-optimized byte code for a tiny ({\textasciitilde}500 bytes of code) interpreter. The native strategy achieves code density of about 60.8 bytes per statement, which translates into space for 150 lines of STS user code. The VM achieves 12.3 bytes per statement allowing for about 800 lines. For comparison, the ARM Thumb code generator used in other targets achieves 37.5 bytes per statement, but due to the larger flash sizes we did not run into space issues.
 
 \begin{table}[]
     \centering
@@ -81,7 +81,7 @@ breaks the context switch down into three phases:
 (2) Stack, the time taken to page out the \MC stack; and
 (3) \MCN, the overhead added by the \MC wrappers.
 
-From these results, we observe that context switches generally take tens of microseconds. The cost of \CON's stack paging approach can also be a significant, but not dominant cost. The cost of stack paging would of course grow with stack depth. Figure~\ref{fig:context-vs-stack} therefore profiles the time a context switch takes with an increasing stack size across all three devices in \CON. This is similar to the previous test, except we placed bytes (in powers of 2) on the stack of each fiber, starting from 64 and finishing at 1024. The difference in gradients, and ranges of values can be put down to device capability. For instance, the Uno has an 8-bit word size, which means more instructions are required to copy the stack, therefore as the stack size increases, so does context switch time. The vertical band indicates typical stack sizes for \MC programs based on a representative set of examples.
+From these results, we observe that context switches generally take tens of microseconds. The cost of \CON's stack paging approach can also be a significant, but not dominant cost. The cost of stack paging would of course grow with stack depth. Figure~\ref{fig:context-vs-stack} profiles the time a context switch takes with an increasing stack size across all three devices in \CON. This is similar to the previous test, except we placed bytes (in powers of 2) on the stack of each fiber, starting from 64 and finishing at 1024. The difference in gradients, and ranges of values can be put down to device capability. For instance, the Uno has an 8-bit word size, which means more instructions are required to copy the stack, therefore as the stack size increases, so does context switch time. The vertical band indicates typical stack sizes for \MC programs based on a representative set of examples.
 
 %For the uno, the context switch profile is for the native implementation only.
 
@@ -125,7 +125,7 @@ In comparison to other languages, \MC and \CO consume a small amount of flash: C
 
 From the bottom up, the profile of the standard library changes dramatically for each device: The Uno has a very lightweight standard library; the micro:bit uses 64-bit integer operations (for timers) which requires extra standard library functions; and the CPX requires software floating point operations pulling in more standard library functions.
 
-The size of \CO and \MC scales linearly with the amount of functionality a device has, due to the component oriented nature of \CO and transitively \MCN. For instance the Uno has few onboard components when compared to the CPX and micro:bit. The modular composition of \CO allows us to support multiple devices with a variety of feature sets, while maintaining the same API at the \MC layer.
+The size of \CO and \MC scales linearly with the amount of functionality a device has, due to the component oriented nature of \CO and transitively \MCN. For instance, the Uno has few onboard components when compared to the CPX and micro:bit. The modular composition of \CO allows us to support multiple devices with a variety of feature sets, while maintaining the same API at the \MC layer.
 
 \subsection{RAM Memory Usage}
 
@@ -143,9 +143,9 @@ The size of \CO and \MC scales linearly with the amount of functionality a devic
 \vspace{-20pt}
 \end{table}
 
-Table~\ref{table:ram-consumption} shows the per device RAM consumption of each software library used in the final \MC binary. To obtain these numbers, we analyzed the final map file produced after compilation. At runtime \MC also dynamically allocates additional memory: 1.56 kB for the CPX, 560 bytes for the micro:bit, and 644 bytes for the Uno. We also can see that in all cases, the RAM consumption of \MC and \CO is well within the RAM available of each device.
+Table~\ref{table:ram-consumption} shows the per device RAM consumption of each software library used in the final \MC binary. To obtain these numbers, we analyzed the final map file produced after compilation. At runtime, \MC also dynamically allocates additional memory: 1.56 kB for the CPX, 560 bytes for the micro:bit, and 644 bytes for the Uno. We also can see that in all cases, the RAM consumption of \MC and \CO is well within the RAM available of each device.
 
-\MC and \CO consume a small amount of resources in comparison: CircuitPython (a derivative of MicroPython) consumes 12.8 kB, MicroPython consumes 9.5 kB, and Espruino consumes 5.3 kB of RAM. On the micro:bit the Bluetooth stack requires 8 kB of RAM to run, due to MicroPython's RAM consumption this means that Bluetooth is inoperable. Comparatively, Espruino does enable the Bluetooth stack, but due to the overhead incurred, users have \textasciitilde300 bytes available for their programs.
+\MC and \CO consume a small amount of resources in comparison: CircuitPython (a derivative of MicroPython) consumes 12.8 kB, MicroPython consumes 9.5 kB, and Espruino consumes 5.3 kB of RAM. On the micro:bit the Bluetooth stack requires 8 kB of RAM to run, due to MicroPython's RAM consumption this means that Bluetooth is inoperable. Comparatively, Espruino does enable the Bluetooth stack, but users have just \textasciitilde300 bytes available for their programs due to the overhead incurred.
 
 % Add globals maps and profile of listener and fiber.
 
@@ -166,12 +166,12 @@ Table~\ref{table:ram-consumption} shows the per device RAM consumption of each s
 \subsection{Compiling Static TypeScript}
 
 During compilation the entire STS program, including the STS runtime, is passed to the TypeScript (TS) language service for parsing. Then, only the remaining part of the program (after code shaking) is compiled to native code. On a modern laptop, using Node.js, TS parsing and analysis takes about 0.1 ms per statement, and \MC compilation to native code takes about 1 ms per statement.
-While the TS compiler has been optimized for speed, \MCN's native compilation process has not been. For example, the CPX TS pass is dominated by compilation of the device runtime and takes about 100ms, whereas the \MC pass typically only includes a small user program and a small bit of the runtime, resulting in less than 100ms. Thus, typical compilation times are under 200 ms for typical user programs of 100 lines or less.
+While the TS compiler has been optimized for speed, \MCN's native compilation process has not. For example, the CPX TS pass is dominated by compilation of the device runtime and takes about 100ms, whereas the \MC pass typically only includes a small user program and a small bit of the runtime, resulting in less than 100ms. Thus, typical compilation times are under 200 ms for typical user programs of 100 lines or less.
 
 \subsection{Extensibility}
 
 % I think 'processor' could be understood as generic ARM or generic AVR, not a specific MCU with peripherals
-Creating a device in \CO is trivial once a MCU has been ported. The porting of a MCU is where we observe the largest overhead, as low-level implementations of drivers for I2C, Serial, and SPI may have to be re-written. Due to \CON's abstraction model, once low-level drivers have been implemented, drivers for higher level components like Accelerometers, which depend on high-level interfaces for low-level drivers, can be immediately adopted if hardware is present. A similar technique is used in \MC for simulators.
+Creating a device in \CO is trivial once a MCU has been ported. The porting of a MCU is where we observe the largest development overhead, as low-level implementations of drivers for I2C, Serial, and SPI may have to be re-written. Due to \CON's abstraction model, once low-level drivers have been implemented, drivers for higher level components like Accelerometers, which depend on high-level interfaces for low-level drivers, can be immediately adopted if hardware is present. A similar technique is used in \MC for simulators.
 
 % Not really a result, more of a description of design, with an anecdotal comment about speed.
 
