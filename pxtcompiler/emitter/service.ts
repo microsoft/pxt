@@ -236,7 +236,7 @@ namespace ts.pxtc {
             }
 
             if (stmt.kind === SK.GetAccessor ||
-                (stmt.kind === SK.PropertyDeclaration && isReadonly(stmt as Declaration))) {
+                ((stmt.kind === SK.PropertyDeclaration || stmt.kind === SK.PropertySignature) && isReadonly(stmt as Declaration))) {
                 r.isReadOnly = true
             }
 
