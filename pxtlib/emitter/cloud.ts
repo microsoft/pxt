@@ -73,7 +73,7 @@ namespace pxt.Cloud {
 
         const url = pxt.webConfig && pxt.webConfig.isStatic ? `targetconfig.json` : `config/${pxt.appTarget.id}/targetconfig`;
         if (Cloud.isLocalHost())
-            return localRequestAsync(url).then(r => r.json)
+            return localRequestAsync(url).then(r => r ? r.json : undefined)
         else
             return Cloud.privateGetAsync(url);
     }

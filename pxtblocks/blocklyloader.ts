@@ -1311,9 +1311,9 @@ namespace pxt.blocks {
 
         // update shadow types
         if (tb) {
-            $(tb).find('shadow:empty').each((i, shadow) => {
+            pxt.Util.toArray(tb.querySelectorAll('shadow:empty')).forEach((shadow, i) => {
                 let type = shadow.getAttribute('type');
-                let b = $(tb).find(`block[type="${type}"]`)[0];
+                let b = tb.querySelectorAll(`block[type="${type}"]`)[0];
                 if (b) shadow.innerHTML = b.innerHTML;
             })
         }
@@ -2794,7 +2794,7 @@ namespace pxt.blocks {
                     if (Blockly.Blocks['variables_get']) {
                         let blockText = '<xml>' +
                             '<block type="variables_get" gap="8">' +
-                            Blockly.Variables.generateVariableFieldXml_(variable) +
+                            Blockly.Variables.generateVariableFieldXmlString(variable) +
                             '</block>' +
                             '</xml>';
                         let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
@@ -2808,7 +2808,7 @@ namespace pxt.blocks {
                     let gap = Blockly.Blocks['variables_change'] ? 8 : 24;
                     let blockText = '<xml>' +
                         '<block type="variables_set" gap="' + gap + '">' +
-                        Blockly.Variables.generateVariableFieldXml_(firstVariable) +
+                        Blockly.Variables.generateVariableFieldXmlString(firstVariable) +
                         '</block>' +
                         '</xml>';
                     let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
@@ -2830,7 +2830,7 @@ namespace pxt.blocks {
                     let gap = Blockly.Blocks['variables_get'] ? 20 : 8;
                     let blockText = '<xml>' +
                         '<block type="variables_change" gap="' + gap + '">' +
-                        Blockly.Variables.generateVariableFieldXml_(firstVariable) +
+                        Blockly.Variables.generateVariableFieldXmlString(firstVariable) +
                         '<value name="DELTA">' +
                         '<shadow type="math_number">' +
                         '<field name="NUM">1</field>' +

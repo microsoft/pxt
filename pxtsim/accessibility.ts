@@ -1,3 +1,4 @@
+
 // Helpers designed to help to make a simulator accessible.
 namespace pxsim.accessibility {
     let liveRegion: HTMLDivElement;
@@ -10,7 +11,7 @@ namespace pxsim.accessibility {
     export function enableKeyboardInteraction(elem: Element, handlerKeyDown?: () => void, handlerKeyUp?: () => void): void {
         if (handlerKeyDown) {
             elem.addEventListener('keydown', (e: KeyboardEvent) => {
-                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
                 if (charCode === 32 || charCode === 13) { // Enter or Space key
                     handlerKeyDown();
                 }
@@ -19,7 +20,7 @@ namespace pxsim.accessibility {
 
         if (handlerKeyUp) {
             elem.addEventListener('keyup', (e: KeyboardEvent) => {
-                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
                 if (charCode === 32 || charCode === 13) { // Enter or Space key
                     handlerKeyUp();
                 }

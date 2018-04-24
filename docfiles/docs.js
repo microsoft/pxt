@@ -198,8 +198,12 @@ function setupBlocklyAsync() {
                     pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
                 })
         })
-    // backward compatibility
-    } else if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
+    }
+
+    // backward compatibility: load editor
+    if (pxt.appTarget.versions &&
+        pxt.semver.strcmp("v3.9", pxt.appTarget.versions.pxt) < 0 &&
+        pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
         let opts = {};
         promise = promise.then(function () {
             return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")

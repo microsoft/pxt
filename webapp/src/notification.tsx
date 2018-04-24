@@ -55,15 +55,15 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
         if (this.props.displayTime) {
             this.timer = setTimeout(() => this.hide("automatic"), this.delayTime + this.props.displayTime);
         }
-        this.props.parent.setBanner(true);
-        this.renderCore();
+        this.props.parent.setBannerVisible(true);
+        this.render();
     }
 
     hide(mode: string) {
         pxt.tickEvent("notificationBanner." + mode + "Close");
         pxt.storage.setLocal("lastBannerClosedTime", pxt.Util.nowSeconds().toString());
-        this.props.parent.setBanner(false);
-        this.renderCore();
+        this.props.parent.setBannerVisible(false);
+        this.render();
     }
 
     renderCore() {
@@ -106,10 +106,10 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         if (showWindowsStoreBanner) {
             return (
                 <GenericBanner parent={this.props.parent} delayTime={10000} displayTime={45000} sleepTime={604800}>
-                    <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked", undefined, { interactiveConsent: true })}>
+                    <sui.Link className="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked", undefined, { interactiveConsent: true })}>
                         <img className="bannerIcon" src={pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)}></img>
                     </sui.Link>
-                    <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked", undefined, { interactiveConsent: true })}>
+                    <sui.Link className="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked", undefined, { interactiveConsent: true })}>
                         {lf("Want a faster download? Get the app!")}
                     </sui.Link>
                 </GenericBanner>
@@ -122,7 +122,7 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
                 <GenericBanner parent={this.props.parent} bannerType={"negative"} >
                     <sui.Icon icon="warning circle" />
                     <div className="header">{lf("You are viewing an experimental version of the editor")}</div>
-                    <sui.Link class="link" ariaLabel={lf("Go back to live editor")} href={liveUrl}>{lf("Take me back")}</sui.Link>
+                    <sui.Link className="link" ariaLabel={lf("Go back to live editor")} href={liveUrl}>{lf("Take me back")}</sui.Link>
                 </GenericBanner>
             );
         }

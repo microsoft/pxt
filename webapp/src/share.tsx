@@ -145,11 +145,11 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
             sui.popupWindow(twitterUrl, lf("Share on Twitter"), 600, 600);
         }
 
-        let actions: sui.ModalAction[] = [];
+        let actions: sui.ModalButton[] = [];
         if (action) {
             actions.push({
                 label: action,
-                onClick: publish,
+                onclick: publish,
                 icon: 'share alternate',
                 loading: actionLoading,
                 className: 'primary'
@@ -157,11 +157,10 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         }
 
         return (
-            <sui.Modal open={visible} className="sharedialog" header={lf("Share Project")} size="small"
+            <sui.Modal isOpen={visible} className="sharedialog" size="small"
                 onClose={() => this.setState({ visible: false })}
-                dimmer={true}
-                actions={actions}
-                closeIcon={true}
+                dimmer={true} header={lf("Share Project")}
+                closeIcon={true} buttons={actions}
                 closeOnDimmerClick
                 closeOnDocumentClick
                 closeOnEscape>
@@ -177,7 +176,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                         : undefined}
                     {url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
-                        <sui.Input id="projectUri" class="focused mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" />
+                        <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" />
                         <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
                         {showSocialIcons ? <div className="social-icons">
                             <a className="ui button large icon facebook" tabIndex={0} aria-label="Facebook" onClick={(e) => { showFbPopup(); e.preventDefault(); return false; }}><sui.Icon icon="facebook" /></a>
@@ -187,7 +186,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                         : undefined}
                     {ready && !hideEmbed ? <div>
                         <div className="ui divider"></div>
-                        <sui.Link class="focused" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed")} ariaExpanded={advancedMenu} onClick={() => this.setState({ advancedMenu: !advancedMenu })} />
+                        <sui.Link icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed")} ariaExpanded={advancedMenu} onClick={() => this.setState({ advancedMenu: !advancedMenu })} />
                         {advancedMenu ?
                             <sui.Menu pointing secondary>
                                 {formats.map(f =>

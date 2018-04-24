@@ -19,6 +19,21 @@ namespace pxsim {
             return this.data.map(v => RefObject.toAny(v));
         }
 
+        toDebugString(): string {
+            let s = "[";
+            for (let i = 0; i < this.data.length; ++i) {
+                if (i > 0)
+                    s += ",";
+                s += RefObject.toDebugString(this.data[i]);
+                if (s.length > 15) {
+                    s += "..."
+                    break;
+                }
+            }
+            s += "]"
+            return s;
+        }
+
         destroy() {
             let data = this.data
             for (let i = 0; i < data.length; ++i) {

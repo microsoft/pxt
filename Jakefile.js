@@ -449,7 +449,7 @@ file('built/web/worker.js', ["built/webapp/src/app.js"], function () {
 
 ju.catFiles('built/web/pxtworker.js', [
     "built/web/typescript.js",
-    "node_modules/fuse.js/src/fuse.min.js",
+    "node_modules/fuse.js/dist/fuse.min.js",
     "node_modules/lzma/src/lzma_worker-min.js",
     "built/web/pxtlib.js",
     "built/web/pxtcompiler.js"

@@ -180,7 +180,7 @@ namespace pxt.blocks {
         }
 
         export function mkComment(text: string) {
-            return mkStmt(mkText("// " + text))
+            return mkText("// " + text)
         }
 
         export function mkMultiComment(text: string) {
@@ -206,7 +206,7 @@ namespace pxt.blocks {
         }
 
         export function mkAssign(x: JsNode, e: JsNode): JsNode {
-            return mkStmt(mkSimpleCall("=", [x, e]))
+            return mkSimpleCall("=", [x, e])
         }
 
         export function mkParenthesizedExpression(expression: JsNode): JsNode {

@@ -68,6 +68,7 @@ export class Editor extends srceditor.Editor {
 
     public openBlocks() {
         pxt.tickEvent("typescript.showBlocks");
+        if (!this.currFile) return;
         const header = this.parent.state.header;
         if (header) {
             header.editor = pxt.BLOCKS_PROJECT_NAME;
@@ -174,7 +175,6 @@ export class Editor extends srceditor.Editor {
             disagreeLbl: lf("Stay in JavaScript"),
             disagreeClass: "positive",
             disagreeIcon: "checkmark",
-            size: "medium",
             hideCancel: !bf
         }).then(b => {
             // discard
@@ -203,10 +203,10 @@ export class Editor extends srceditor.Editor {
         )
     }
 
-    addPackage() {
+    public showPackageDialog() {
         pxt.tickEvent("monaco.addpackage", undefined, { interactiveConsent: true });
         this.hideFlyout();
-        this.parent.addPackage();
+        this.parent.showPackageDialog();
     }
 
     private defineEditorTheme(hc?: boolean, withNamespaces?: boolean) {
@@ -975,7 +975,7 @@ export class Editor extends srceditor.Editor {
             // Accessibility
             const isRtl = Util.isUserLanguageRtl();
             monacoBlock.onkeydown = (e: KeyboardEvent) => {
-                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                const charCode = core.keyCodeFromEvent(e);
                 if (charCode == 40) { //  DOWN
                     // Next item
                     if (index < monacoBlocks.length - 1) monacoBlocks[index + 1].focus();
@@ -1368,9 +1368,9 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
         parent.closeFlyout();
     }
 
-    addPackage() {
+    showPackageDialog() {
         const {parent} = this.props;
-        parent.addPackage();
+        parent.showPackageDialog();
     }
 
     componentDidUpdate(prevProps: MonacoToolboxProps, prevState: MonacoToolboxState) {
@@ -1478,7 +1478,7 @@ export class MonacoToolbox extends data.Component<MonacoToolboxProps, MonacoTool
                     {showAdvanced ? advancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.ns} toolbox={this} selected={selectedNs == treeRow.ns} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this) } />
                     )) : undefined}
-                    {hasPackages && showAdvanced ? <TreeRow treeRow={{ ns: "", category: pxt.toolbox.addPackageTitle(), color: '#717171', icon: "addpackage" }} onClick={this.addPackage.bind(this) } /> : undefined }
+                    {hasPackages && showAdvanced ? <TreeRow treeRow={{ ns: "", category: pxt.toolbox.addPackageTitle(), color: '#717171', icon: "addpackage" }} onClick={this.showPackageDialog.bind(this) } /> : undefined }
                 </div>
             </div>
         </div>
@@ -1541,7 +1541,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         }
         const isRtl = Util.isUserLanguageRtl();
         const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-            let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+            const charCode = core.keyCodeFromEvent(e);
             if (charCode == 40) { //  DOWN
                 nextItem();
             } else if (charCode == 38) { // UP
