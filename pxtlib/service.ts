@@ -403,11 +403,12 @@ namespace ts.pxtc {
 
                     // allowable %blockCombineShadow strings:-
                     //   '{name shadow},' or '{value shadow}' or ',{value shadow}' or '{name shadow},{value shadow}'
-                    const match = s.attributes.blockCombineShadow.match(/^([^,.]*),?([^,.]*)$/);
+                    const attribute = s.attributes.blockCombineShadow;
+                    const match = attribute.match(/^([^,.]*),?([^,.]*)$/);
                     if (match && match.length == 3) {
                         paramNameShadow = match[1].trim();
                         paramValueShadow = match[2].trim();
-                        if (paramValueShadow.length == 0 && !paramNameShadow.endsWith("=")) {
+                        if (paramValueShadow.length == 0 && !Util.endsWith(attribute, ",")) {
                             paramValueShadow = paramNameShadow;
                             paramNameShadow = "";
                         }
