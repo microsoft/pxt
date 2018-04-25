@@ -66,14 +66,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     updateBlocksInfo(bi: pxtc.BlocksInfo) {
         this.blockInfo = bi;
-        // Partition blocks into categories
-        this.nsMap = this.partitionBlocks();
-        // Get extension packages
-        this.extensions = pkg.allEditorPkgs()
-            .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
-            // Make sure the package has extensions enabled, and is a github package.
-            // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
-            .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
         this.refreshToolbox();
     }
 
@@ -99,7 +91,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                     // Initialize blocks in Blockly and update our toolbox
                     pxt.blocks.initialize(this.blockInfo);
-                    this.updateBlocksInfo(this.blockInfo);
+                    this.nsMap = this.partitionBlocks();
+                    this.refreshToolbox();
 
                     pxt.debug(`loading block workspace`)
                     let xml = this.delayLoadXml;
@@ -506,7 +499,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     showPackageDialog() {
         pxt.tickEvent("blocks.addpackage");
         if ((this.editor as any).toolbox_) (this.editor as any).toolbox_.clearSelection();
-        else if ((this.editor as any).flyout_) (this.editor as any).flyout_.hide();
         this.parent.showPackageDialog();
     }
 
@@ -624,6 +616,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (searchField && searchField.value) {
                     searchField.value = '';
                 }
+                // Get extension packages
+                this.extensions = pkg.allEditorPkgs()
+                    .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
+                    // Make sure the package has extensions enabled, and is a github package.
+                    // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
+                    .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
             })
     }
 
@@ -1129,9 +1127,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private showFlyoutInternal_(xmlList: Element[]) {
+        // Blockly internal methods to show a toolbox or a flyout
         if ((this.editor as any).toolbox_) {
             (this.editor as any).toolbox_.flyout_.show(xmlList);
             (this.editor as any).toolbox_.flyout_.scrollToStart();
+        } else if ((this.editor as any).flyout_) {
+            (this.editor as any).flyout_.show(xmlList);
+            (this.editor as any).flyout_.scrollToStart();
         }
     }
 
