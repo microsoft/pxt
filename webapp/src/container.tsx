@@ -5,7 +5,6 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
-import * as electron from "./electron";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 

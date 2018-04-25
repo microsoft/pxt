@@ -71,7 +71,7 @@ export function initPxtElectron(projectView: ProjectView): void {
                         });
                     });
 
-                // Do not resolve the promise; the app will restart after the update is ready
+                // Don't do anything; app will quit and restart once the update is ready
                 break;
             case pxt.electron.UpdateStatus.BannedWithoutUpdate:
                 // Current version is banned and there are no updates available; show a dialog explaining the
