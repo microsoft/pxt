@@ -166,12 +166,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
+        const isRtl = Util.isUserLanguageRtl();
         return (
             <div id="monacoEditorArea" className="full-abs" style={{ direction: 'ltr' }}>
                 <div className="monacoToolboxDiv">
                     <toolbox.Toolbox ref={e => this.toolbox = e} editorname="monaco" parent={this} />
                 </div>
-                <div id='monacoEditorInner' style={{float: 'left'}} />
+                <div id='monacoEditorInner' style={{float: isRtl ? 'left' : 'right'}} />
             </div>
         )
     }
