@@ -210,7 +210,7 @@ namespace pxsim {
         const bh = (b >>> 16) & 0xffff;
         const bl = b & 0xffff;
         // the shift by 0 fixes the sign on the high part
-        // the final |0 converts the unsigned value into a signed value 
+        // the final |0 converts the unsigned value into a signed value
         return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
     }
 
