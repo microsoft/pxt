@@ -30,7 +30,7 @@ export const loops: BuiltinCategoryDefinition = {
                 <shadow type="logic_boolean"></shadow>
             </value>
         </block>`
-        }, 
+        },
         // {
         //     name: "pxt_controls_for",
         //     attributes: {
