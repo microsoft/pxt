@@ -1515,9 +1515,12 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
         "display": "standalone",
         "orientation": "landscape"
     }
-    if (cfg.appTheme && cfg.appTheme.accentColor)
-        webmanifest["theme_color"] = cfg.appTheme.accentColor;
-    webmanifest["background_color"] = cfg.appTheme.backgroundColor || "#ffffff";
+    if (cfg.appTheme) {
+        if (cfg.appTheme.accentColor)
+            webmanifest["theme_color"] = cfg.appTheme.accentColor;
+        if (cfg.appTheme.backgroundColor)
+            webmanifest["background_color"] = cfg.appTheme.backgroundColor;
+    }
     [192, 512].forEach(sz => {
         const fn = `/static/icons/android-chrome-${sz}x${sz}.png`;
         if (fs.existsSync(path.join('docs', fn))) {
