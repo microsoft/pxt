@@ -184,8 +184,8 @@ namespace pxsim {
         export function round(n: number) { return Math.round(n) }
         export function ceil(n: number) { return Math.ceil(n) }
         export function floor(n: number) { return Math.floor(n) }
-        export function sqrt(n: number) { return Math.sqrt(n) }
-        export function pow(x: number, y: number) { return Math.pow(x, y) }
+        export function sqrt(n: number) { return Math.sqrt(n) >>> 0 }
+        export function pow(x: number, y: number) { return Math.pow(x, y) >>> 0 }
         export function trunc(x: number) {
             return x > 0 ? Math.floor(x) : Math.ceil(x);
         }
