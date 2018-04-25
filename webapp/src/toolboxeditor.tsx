@@ -275,7 +275,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     // To be extended by editor
     getNamespaceAttrs(ns: string): pxtc.CommentAttrs {
         const info = this.blockInfo.apis.byQName[ns];
-        if (info && info.attributes.color) {
+        if (info) {
             return info.attributes;
         }
 

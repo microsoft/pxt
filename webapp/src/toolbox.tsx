@@ -462,7 +462,9 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
             } else if (charCode == core.TAB_KEY
                 || charCode == 37 /* Left arrow key */
                 || charCode == 39 /* Left arrow key */
-                || charCode == 16 /* Shift Key */) {
+                || charCode == 17 /* Ctrl Key */
+                || charCode == 16 /* Shift Key */
+                || charCode == 91 /* Cmd Key */) {
                 // Escape tab and shift key
             } else {
                 toolbox.setSearch();
@@ -521,7 +523,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         const { selected, onClick, onKeyDown } = this.props;
         const { nameid, subns, name, icon, color } = this.props.treeRow;
         const appTheme = pxt.appTarget.appTheme;
-        let metaColor = pxt.toolbox.convertColor(color);
+        let metaColor = pxt.toolbox.convertColor(color) || pxt.toolbox.getNamespaceColor('default');
 
         const invertedMultipler = appTheme.blocklyOptions
             && appTheme.blocklyOptions.toolboxOptions

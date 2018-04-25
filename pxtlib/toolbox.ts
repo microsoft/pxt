@@ -10,7 +10,8 @@ namespace pxt.toolbox {
         arrays: '#A94400',
         advanced: '#3c3c3c',
         addpackage: '#717171',
-        search: '#000'
+        search: '#000',
+        default: '#dddddd'
     }
 
     export const blockIcons: Map<number | string> = {
@@ -21,12 +22,12 @@ namespace pxt.toolbox {
         functions: '\uf109',
         text: '\uf035',
         arrays: '\uf0cb',
-        default: '\uf12e',
         advancedcollapsed: '\uf078',
         advancedexpanded: '\uf077',
         more: '\uf141',
         addpackage: '\uf055',
-        search: '\uf002'
+        search: '\uf002',
+        default: '\uf12e'
     }
 
     export enum CategoryMode {
@@ -62,6 +63,7 @@ namespace pxt.toolbox {
         }
     }
 
+    let namespaceStyleBuffer: string = '';
     export function injectToolboxIconCss(extraCss?: string): void {
         if (extraCss)
             toolboxStyleBuffer += extraCss;
@@ -79,19 +81,6 @@ namespace pxt.toolbox {
         } else {
             toolboxStyle.appendChild(document.createTextNode(toolboxStyleBuffer + namespaceStyleBuffer));
         }
-    }
-
-    let namespaceStyleBuffer: string = '';
-    export function appendNamespaceCss(namespace: string, color: string) {
-        const ns = namespace.toLowerCase();
-        color = color || '#dddddd'; // Default toolbox color
-        if (namespaceStyleBuffer.indexOf(ns) > -1) return;
-        namespaceStyleBuffer += `
-            span.docs.${ns} {
-                background-color: ${color} !important;
-                border-color: ${fadeColor(color, 0.2, true)} !important;
-            }
-        `;
     }
 
     export function getNamespaceColor(ns: string): string {
