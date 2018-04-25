@@ -227,50 +227,172 @@ namespace pxt.blocks.layout {
         return Promise.all(p).then(() => { })
     }
 
+    interface Formattable {
+        value: Blockly.Block | Blockly.WorkspaceComment;
+        children?: Formattable[];
+        width: number;
+        height: number;
+
+        // Relative to parent (if any)
+        x?: number;
+        y?: number;
+    }
+
     function flowBlocks(comments: Blockly.WorkspaceComment[], blocks: Blockly.Block[], ratio: number = 1.62, maxWidth?: number) {
-        const gap = 16;
+        // Margin between blocks and their comments
+        const innerGroupMargin = 13;
+
+        // Margin between groups of blocks and comments
+        const outerGroupMargin = 45;
+
+        // Workspace margins
         const marginx = 20;
         const marginy = 20;
+
+        const groups: Formattable[] = [];
+        const commentMap: Map<Blockly.WorkspaceComment> = {};
+
+        comments.forEach(comment => {
+            const ref: string = (comment as any).data;
+            if (ref != undefined) {
+                commentMap[ref] = comment;
+            }
+            else {
+                groups.push(formattable(comment));
+            }
+        });
+
+        let onStart: Formattable;
+
+        blocks.forEach(block => {
+            const commentRefs = (block as any).data;
+            if (commentRefs) {
+                const refs = commentRefs.split(";");
+                const children: Formattable[] = [];
+                for (let i = 0; i < refs.length; i++) {
+                    const comment = commentMap[refs[i]];
+                    if (comment) {
+                        children.push(formattable(comment))
+                        delete commentMap[refs[i]];
+                    }
+                }
+
+                if (children.length) {
+                    groups.push({ value: block, width: -1, height: -1, children });
+                    return;
+                }
+            }
+            const f = formattable(block);
+
+            if (block.type === pxtc.ON_START_TYPE) {
+                onStart = f;
+            }
+            else {
+                groups.push(f);
+            }
+        });
+
+        if (onStart) {
+            groups.unshift(onStart);
+        }
+
+        // Collect the comments that were not linked to a top-level block
+        // and puth them in on start (if it exists)
+        Object.keys(commentMap).sort((a, b) => {
+            // These are strings of integers (eg "0", "17", etc.) with no duplicates
+            if (a.length === b.length) {
+                return a > b ? -1 : 1;
+            }
+            else {
+                return a.length > b.length ? -1 : 1;
+            }
+        }).forEach(key => {
+            if (commentMap[key]) {
+                if (onStart) {
+                    if (!onStart.children) {
+                        onStart.children = [];
+                    }
+                    onStart.children.push(formattable(commentMap[key]));
+                }
+                else {
+                    // Stick the comments in the front so that they show up in the top left
+                    groups.unshift(formattable(commentMap[key]));
+                }
+            }
+        });
+
+        let surfaceArea = 0;
+        for (let i = 0; i < groups.length; i++) {
+            const group = groups[i];
+            if (group.children) {
+                let x = 0;
+                let y = 0;
+
+                // Lay comments out above the parent node
+                for (let j = 0; j < group.children.length; j++) {
+                    const child = group.children[j];
+                    child.x = x;
+                    child.y = 0;
+                    x += child.width + innerGroupMargin;
+                    y = Math.max(child.height + innerGroupMargin, y);
+                }
+
+                // These are the coordinates of the parent (below the comments)
+                group.x = 0;
+                group.y = y;
+
+                const valueDimensions = group.value.getHeightWidth();
+
+                // These dimensions are for the entire group
+                group.width = Math.max(x - innerGroupMargin, valueDimensions.width);
+                group.height = y + innerGroupMargin + valueDimensions.height;
+            }
+
+            surfaceArea += (group.height + innerGroupMargin) * (group.width + innerGroupMargin);
+        }
 
         let maxx: number;
         if (maxWidth > marginx) {
             maxx = maxWidth - marginx;
         }
         else {
-            // compute total block surface and infer width
-            let commentSurface = 0;
-            let blockSurface = 0;
-            for (let comment of comments) {
-                let s = comment.getHeightWidth();
-                commentSurface += s.width * s.height;
-            }
-            for (let block of blocks) {
-                let s = block.getHeightWidth();
-                blockSurface += s.width * s.height;
-            }
-            maxx = Math.sqrt(Math.max(commentSurface, blockSurface)) * ratio;
+            maxx = Math.sqrt(surfaceArea) * ratio;
         }
 
         let insertx = marginx;
         let inserty = marginy;
-        let endy = 0;
-        function flowBlocksInternal(blocks: Blockly.Block[] | Blockly.WorkspaceComment[]) {
-            for (let block of blocks) {
-                let r = block.getBoundingRectangle();
-                let s = block.getHeightWidth();
-                // move block to insertion point
-                block.moveBy(insertx - r.topLeft.x, inserty - r.topLeft.y);
-                insertx += s.width + gap;
-                endy = Math.max(endy, inserty + s.height + gap);
-                if (insertx > maxx) { // start new line
-                    insertx = marginx;
-                    inserty = endy;
+        let rowBottom = 0;
+
+        for (let i = 0; i < groups.length; i++) {
+            const group = groups[i];
+            if (group.children) {
+                moveFormattable(group, insertx + group.x, inserty + group.y);
+                for (let j = 0; j < group.children.length; j++) {
+                    const child = group.children[j];
+                    moveFormattable(child, insertx + child.x, inserty + child.y);
                 }
             }
+            else {
+                moveFormattable(group, insertx, inserty);
+            }
+
+            insertx += group.width + outerGroupMargin;
+            rowBottom = Math.max(rowBottom, group.height + outerGroupMargin);
+
+            if (insertx > maxx) {
+                insertx = marginx;
+                inserty = rowBottom;
+            }
         }
-        flowBlocksInternal(comments);
-        insertx = marginx;
-        inserty = endy || marginy;
-        flowBlocksInternal(blocks);
+
+        function moveFormattable(f: Formattable, x: number, y: number) {
+            const bounds = f.value.getBoundingRectangle();
+            f.value.moveBy(x - bounds.topLeft.x, y - bounds.topLeft.y);
+        }
+    }
+
+    function formattable(entity: Blockly.Block | Blockly.WorkspaceComment): Formattable {
+        const hw = entity.getHeightWidth();
+        return { value: entity, height: hw.height, width: hw.width }
     }
 }
