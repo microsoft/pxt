@@ -55,11 +55,11 @@ When invoking an APC, the scheduler snapshots the current processor context and 
 
 \subsection{Device Driver Components}
 \CO drivers abstract away the complexities of the underlying hardware into reusable, extensible, easy-to-use components. For every hardware component there is a corresponding software component that encapsulates its behavior in a C++ object. \CO has three types of drivers:
-\begin{itemize}
-    \item[1.] a hardware agnostic abstract specification of a driver model (e.g. a Button, or an Accelerometer). This is provided as a C++ base class.
-    \item[2.] the concrete implementation of the abstract driver model, which is typically hardware specific. This is implemented as a subclass of a driver model, such as a LIS3DH accelerometer, as manufactured by ST Microelectronics.
-    \item[3.] a high level driver that relies only on the interfaces specified in a driver model (e.g. a gesture recognizer based on an Accelerometer model).
-\end{itemize}
+\begin{enumerate}
+    \item A hardware agnostic abstract specification of a driver model (e.g. a Button, or an Accelerometer). This is provided as a C++ base class.
+    \item The concrete implementation of the abstract driver model, which is typically hardware specific. This is implemented as a subclass of a driver model, such as a LIS3DH accelerometer, as manufactured by ST Microelectronics.
+    \item A high level driver that relies only on the interfaces specified in a driver model (e.g. a gesture recognizer based on an Accelerometer model).
+\end{enumerate}
 
 This approach brings the benefits of abstraction and re\-usability to \CON, without losing the hardware specific benefits seen in flat abstraction models where every MCU is made to look the same, even though their capabilities are different. This can be seen in the Arduino and mbed APIs, for example.
 
