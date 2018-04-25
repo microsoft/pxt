@@ -4,14 +4,14 @@
 Our platform has been actively deployed for over a year, bringing the benefits of a safe programming environment for MCUs to hundreds of thousands of active users. In this section we provide a broad, quantitative evaluation of the cost at which these benefits are realized. We do this with several micro-benchmarks that give insight into the performance of \MC and \CO across the Uno, micro:bit, and CPX devices. We break down results by layer (\CO and \MCN) to give an insight into how each performs:
 \begin{itemize}
 \item \emph{\CON}: the device runtime, against which we write C++ programs;
-\item \emph{\MCN}: the C++ and STS wrapping \CO to expose it to \MCN, against which we write STS programs.
+\item \emph{\MCN wrappers}: the C++ and STS wrapping \CO to expose it to \MCN, against which we write STS programs.
 \end{itemize}
 
 \subsection{Benchmarks, Devices, and Methodology}
 
 To analyze the performance of our solution, we have written a suite of programs to evaluate different aspects of \MC and \CO  on a representative selection of real hardware devices. Throughout, we use the C++ \CO benchmarks as a baseline; the STS benchmarks show the overhead added by \MCN. These programs were written in both C++ and STS, and evaluated on the three devices listed in (Table~\ref{table:devices}): The micro:bit (Nordic nRF51 MCU), the CPX (Atmel ATSAMD21 MCU), and the Uno (Atmel ATmega MCU).
 
-The Uno is the simplest of these devices, 
+The Uno is the simplest of these devices,
 consisting of an 8-bit processor running at 16 MHz, with only 2kB of RAM and 32kB of flash.
 The micro:bit has a 32-bit Cortex-M0 clocked at 16MHz, with 16kB RAM and 256kB of flash. The CPX is a 32-bit Cortex-M0+, which offers greater energy efficiency and performance; it clocks at 48 MHz, has 32kB of RAM and 256kB of flash. The Uno and micro:bit \MC targets use the untagged compilation strategy, while the CPX target uses the tagged strategy (see Section~\ref{sec:untagged-tagged}). The benchmarks are classified into two types, each with their own methodology:
 
@@ -34,8 +34,7 @@ to ensure logging does not affect time-related measurements.
 To place the performance of \MC in context, we perform a comparative evaluation of \MC against two state-of-the-art
 solutions adopted by educators in the classroom, using native C++ as our baseline. The two points of comparison are MicroPython~\cite{MicroPython}, an implementation of Python for MCUs, and Espruino~\cite{espruinoBook}, an implementation of JavaScript for MCUs. For the CPX, a fork of MicroPython known as ``CircuitPython'' was used. Both MicroPython and Espruino use virtual machine (VM) approaches.
 
-To give an indicative general case execution time cost of each solution, we created a simple program that just
-counts from 0 to 100,000 in a tight loop in each solutions' respective language; the results are shown in Table~\ref{table:vm-comparison}. On AVR we only count to 25000, to fit in the 16 bit \texttt{int}, and scale up the results.
+To give an indicative general case execution time cost of each solution, we created a simple program that counts from 0 to 100,000 in a tight loop in each solutions' respective language; the results are shown in Table~\ref{table:vm-comparison}. On AVR we count to 25,000 (to fit within a 16 bit \texttt{int}) and scale up the results.
 
 For the micro:bit, MicroPython and Espruino, the run is \emph{two or more orders of magnitude slower} than a native \CO program.
 \MC performs only 2x slower. The slowdown reflects the simple code generator of our STS compiler. It should be noted that \MC for the CPX uses the tagged approach, which allows for seamless runtime switching to floating point numbers, resulting in a further 3x slowdown. For both devices, we can observe that \MC outperforms both the VM-based solutions of MicroPython and Espruino by at least an order of magnitude.
@@ -79,7 +78,7 @@ We performed this test in both STS and C++ and the resulting profiles can be see
 breaks the context switch down into three phases:
 (1) \CON, the time it takes to perform a context switch in \CON;
 (2) Stack, the time taken to page out the \MC stack; and
-(3) \MCN, the overhead added by the \MC wrappers.
+(3) \MCN, the overhead added by \MC wrappers.
 
 From these results, we observe that context switches generally take tens of microseconds. The cost of \CON's stack paging approach can also be a significant, but not dominant cost. The cost of stack paging would of course grow with stack depth. Figure~\ref{fig:context-vs-stack} profiles the time a context switch takes with an increasing stack size across all three devices in \CON. This is similar to the previous test, except we placed bytes (in powers of 2) on the stack of each fiber, starting from 64 and finishing at 1024. The difference in gradients, and ranges of values can be put down to device capability. For instance, the Uno has an 8-bit word size, which means more instructions are required to copy the stack, therefore as the stack size increases, so does context switch time. The vertical band indicates typical stack sizes for \MC programs based on a representative set of examples.
 
@@ -116,8 +115,9 @@ Non-blocking APC calls, the best case, have a small overhead of 32 bytes of RAM 
 \multicolumn{1}{|c|}{C++ Standard Library}                                                     & 43.14 & 24        & 1.03 \\ \hline
 \end{tabular}
 
-\caption{\label{table:flash-consumption}The total flash consumption of code required to support \MC (kB).}
-\vspace{-20pt}
+\caption{\label{table:flash-consumption}
+Flash consumption of a \MC binary(kB)}
+\vspace{-30pt}
 \end{table}
 
 MCUs make use of internal non-volatile FLASH memory to store program code. Table~\ref{table:flash-consumption} shows the per device flash consumption of each software library used in the final \MC binary. To obtain these numbers, we analyzed the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library and supporting libraries.
@@ -139,7 +139,7 @@ The size of \CO and \MC scales linearly with the amount of functionality a devic
 \multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}Supporting Libraries\end{tabular}} & 0.312 & 0.923     & -     \\ \hline
 \multicolumn{1}{|c|}{C++ Standard Library}                                                     & 0.161 & 0.149     & 0.074 \\ \hline
 \end{tabular}
-\caption{\label{table:ram-consumption}The total static RAM consumption for an \MC binary (kB).}
+\caption{\label{table:ram-consumption}Static RAM consumption of a \MC binary(kB).}
 \vspace{-20pt}
 \end{table}
 
@@ -165,8 +165,8 @@ Table~\ref{table:ram-consumption} shows the per device RAM consumption of each s
 
 \subsection{Compiling Static TypeScript}
 
-During compilation the entire STS program, including the STS runtime, is passed to the TypeScript (TS) language service for parsing. Then, only the remaining part of the program (after code shaking) is compiled to native code. On a modern laptop, using Node.js, TS parsing and analysis takes about 0.1 ms per statement, and \MC compilation to native code takes about 1 ms per statement.
-While the TS compiler has been optimized for speed, \MCN's native compilation process has not. For example, the CPX TS pass is dominated by compilation of the device runtime and takes about 100ms, whereas the \MC pass typically only includes a small user program and a small bit of the runtime, resulting in less than 100ms. Thus, typical compilation times are under 200 ms for typical user programs of 100 lines or less.
+During compilation, the entire STS program (including the STS runtime), is passed to the TypeScript (TS) language service for parsing. Then, only the remaining part of the program (after code shaking) is compiled to native code. On a modern laptop, using Node.js, TS parsing and analysis takes about 0.1ms per statement, and \MC compilation to native code takes about 1ms per statement.
+While the TS compiler has been optimized for speed, \MCN's native compilation process has not. For example, the CPX TS pass is dominated by compilation of the device runtime and takes about 100ms, whereas the \MC pass typically only includes a small user program and a small bit of the runtime, resulting in less than 100ms. Thus, compilation times are under 200ms for typical user programs of 100 lines or less.
 
 \subsection{Extensibility}
 
