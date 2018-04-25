@@ -710,7 +710,8 @@ namespace ts.pxtc.service {
                                 name: blockDef.name,
                                 jsdoc: typeof blockDef.tooltip === "string" ? <string>blockDef.tooltip : (<pxt.Map<string>>blockDef.tooltip)[v],
                                 block: v,
-                                field: [op, v]
+                                field: [op, v],
+                                builtinBlock: true
                             }));
                         }
                     }
@@ -719,10 +720,10 @@ namespace ts.pxtc.service {
                             id,
                             name: blockDef.name,
                             jsdoc: computeSearchProperty(blockDef.tooltip, blockDef.tooltipSearch, blockDef),
-                            block: computeSearchProperty(blockDef.block, blockDef.blockTextSearch, blockDef)
+                            block: computeSearchProperty(blockDef.block, blockDef.blockTextSearch, blockDef),
+                            builtinBlock: true
                         });
                     }
-
                 }
             }
 

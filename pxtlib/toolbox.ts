@@ -8,7 +8,9 @@ namespace pxt.toolbox {
         functions: '#005a9e',
         text: '#996600',
         arrays: '#A94400',
-        advanced: '#3c3c3c'
+        advanced: '#3c3c3c',
+        addpackage: '#717171',
+        search: '#000'
     }
 
     export const blockIcons: Map<number | string> = {
@@ -18,13 +20,19 @@ namespace pxt.toolbox {
         variables: '\uf039',
         functions: '\uf109',
         text: '\uf035',
-        arrays: '\uf0cb'
+        arrays: '\uf0cb',
+        default: '\uf12e',
+        advancedcollapsed: '\uf078',
+        advancedexpanded: '\uf077',
+        more: '\uf141',
+        addpackage: '\uf055',
+        search: '\uf002'
     }
 
     export enum CategoryMode {
-        All,
-        None,
-        Basic
+        None = 1,
+        Basic = 2,
+        All = 3
     }
 
     let toolboxStyle: HTMLStyleElement;
