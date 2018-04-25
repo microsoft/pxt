@@ -235,7 +235,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     setHighContrast(hc: boolean) {
-        this.defineEditorTheme(hc);
+        this.defineEditorTheme(hc, true);
     }
 
     beforeCompile() {
