@@ -10,6 +10,7 @@ import * as compiler from "./compiler";
 import * as codecard from "./codecard"
 import * as gallery from "./gallery";
 import * as carousel from "./carousel";
+import { showAboutDialog } from "./dialogs";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -206,7 +207,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 {targetTheme.selectLanguage ? <sui.Link className="item focused" text={lf("Language")} onClick={() => showLanguagePicker()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {targetTheme.termsOfUseUrl ? <a target="_blank" className="item focused" href={targetTheme.termsOfUseUrl} rel="noopener">{lf("Terms of Use")}</a> : undefined}
                 {targetTheme.privacyUrl ? <a target="_blank" className="item focused" href={targetTheme.privacyUrl} rel="noopener">{lf("Privacy")}</a> : undefined}
-                {pxt.appTarget.versions ? <span className="item focused">v{pxt.appTarget.versions.target}</span> : undefined}
+                {pxt.appTarget.versions ? <sui.Link className="item focused"  text={`v${pxt.appTarget.versions.target}`} onClick={() => showAboutDialog()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div> : undefined}
         </div>;
     }
