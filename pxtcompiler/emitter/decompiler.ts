@@ -1115,8 +1115,8 @@ ${output}</xml>`;
                 r.fields = [];
                 r.inputs = [];
                 r.handlers = [];
-                r.inputs.push(mkValue("VAR",
-                    getFieldBlock("variables_get_reporter", "VAR", renamed, true), "variables_get_reporter"));
+                r.inputs = [mkValue("VAR",
+                    getFieldBlock("variables_get_reporter", "VAR", renamed, true), "variables_get_reporter")];
 
                 if (condition.operatorToken.kind === SK.LessThanToken) {
                     const ex = mkExpr("math_arithmetic");

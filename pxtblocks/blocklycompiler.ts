@@ -256,7 +256,7 @@ namespace pxt.blocks {
         }
     }
 
-    function getLoopBlockField(b: Blockly.Block) {
+    function getLoopVariableField(b: Blockly.Block) {
         return (b.type == "pxt_controls_for" || b.type == "pxt_controls_for_of") ?
             getInputTargetBlock(b, "VAR") : b;
     }
@@ -347,7 +347,7 @@ namespace pxt.blocks {
                     case "controls_for_of":
                         unionParam(e, b, "LIST", ground("Array"));
                         const listTp = returnType(e, getInputTargetBlock(b, "LIST"));
-                        const elementTp = lookup(e, escapeVarName(getLoopBlockField(b).getField("VAR").getText(), e)).type;
+                        const elementTp = lookup(e, escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e)).type;
                         genericLink(listTp, elementTp);
                         break;
                     case "variables_set":
@@ -912,7 +912,7 @@ namespace pxt.blocks {
     }
 
     function compileControlsFor(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
-        let bVar = escapeVarName(getLoopBlockField(b).getField("VAR").getText(), e);
+        let bVar = escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e);
         let bTo = getInputTargetBlock(b, "TO");
         let bDo = getInputTargetBlock(b, "DO");
         let bBy = getInputTargetBlock(b, "BY");
@@ -961,7 +961,7 @@ namespace pxt.blocks {
     }
 
     function compileControlsForOf(e: Environment, b: Blockly.Block, comments: string[]) {
-        let bVar = escapeVarName(getLoopBlockField(b).getField("VAR").getText(), e);
+        let bVar = escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e);
         let bOf = getInputTargetBlock(b, "LIST");
         let bDo = getInputTargetBlock(b, "DO");
 
@@ -1460,12 +1460,13 @@ namespace pxt.blocks {
 
         if (skipVariables) return e;
 
+        const loopBlocks = ["controls_for", "controls_simple_for", "controls_for_of", "pxt_controls_for", "pxt_controls_for_of"];
+
         const variableIsScoped = (b: Blockly.Block, name: string): boolean => {
             if (!b)
                 return false;
-            else if ((b.type == "controls_for" || b.type == "controls_simple_for" || b.type == "controls_for_of"
-                || b.type == "pxt_controls_for" || b.type == "pxt_controls_for_of")
-                && escapeVarName(getLoopBlockField(b).getField("VAR").getText(), e) == name)
+            else if (loopBlocks.filter(l => l == b.type).length > 0
+                && escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e) == name)
                 return true;
             else if (isMutatingBlock(b) && b.mutation.isDeclaredByMutation(name))
                 return true;
@@ -1504,9 +1505,8 @@ namespace pxt.blocks {
 
         // collect local variables.
         if (w) w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
-            if (b.type == "controls_for" || b.type == "controls_simple_for" || b.type == "controls_for_of"
-                || b.type == "pxt_controls_for" || b.type == "pxt_controls_for_of") {
-                let x = escapeVarName(getLoopBlockField(b).getField("VAR").getText(), e);
+            if (loopBlocks.filter(l => l == b.type).length > 0) {
+                let x = escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e);
                 if (b.type == "controls_for_of") {
                     trackLocalDeclaration(x, null);
                 }
