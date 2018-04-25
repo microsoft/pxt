@@ -1128,17 +1128,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private showFlyoutInternal_(xmlList: Element[]) {
-        // TODO: Change to just flyout on the workspace
         if ((this.editor as any).toolbox_) {
-
             (this.editor as any).toolbox_.flyout_.show(xmlList);
-
             (this.editor as any).toolbox_.flyout_.scrollToStart();
-        } else if ((this.editor as any).flyout_) {
-
-            (this.editor as any).flyout_.show(xmlList);
-
-            (this.editor as any).flyout_.scrollToStart();
         }
     }
 
