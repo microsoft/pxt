@@ -573,7 +573,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             onMouseEnter={onmouseenter} onMouseLeave={onmouseleave}
             onClick={onClick} onKeyDown={onKeyDown ? onKeyDown : sui.fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
-            <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass}`} role="presentation">{icon}</span>
+            <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass}`} role="presentation">{icon || pxt.toolbox.getNamespaceIcon('default')}</span>
             <span className="blocklyTreeLabel">{name ? name : `${Util.capitalize(subns || nameid)}`}</span>
         </div>
     }
