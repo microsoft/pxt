@@ -168,10 +168,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     display(): JSX.Element {
         return (
             <div id="monacoEditorArea" className="full-abs" style={{ direction: 'ltr' }}>
-                <div className="monacoToolboxDiv">
+                <div className={`monacoToolboxDiv ${this.toolbox && !this.toolbox.state.visible ? 'invisible' : ''}`}>
                     <toolbox.Toolbox ref={e => this.toolbox = e} editorname="monaco" parent={this} />
                 </div>
-                <div id='monacoEditorInner' style={{float: 'right'}} />
+                <div id='monacoEditorInner' style={{ float: 'right' }} />
             </div>
         )
     }
@@ -620,7 +620,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (model) this.editor.setModel(model);
 
                 this.defineEditorTheme(hc);
-                const shouldShowToolbox = (mode == "typescript" && pxt.appTarget.appTheme.monacoToolbox && !file.isReadonly());
+                const shouldShowToolbox = (mode == "typescript" && pxt.appTarget.appTheme.monacoToolbox && !readOnly);
                 if (shouldShowToolbox) {
                     this.beginLoadToolbox(file, hc);
                 } else {

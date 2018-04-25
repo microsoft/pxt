@@ -486,6 +486,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     renderToolbox(immediate?: boolean) {
+        if (pxt.shell.isReadOnly()) return;
         const blocklyArea = document.getElementById('blocksArea');
         const blocklyToolboxDiv = blocklyArea.getElementsByClassName('blocklyToolboxDiv')[0];
         const blocklyToolbox = <toolbox.Toolbox ref={e => this.toolbox = e} editorname="blocks" parent={this} />;
