@@ -1000,15 +1000,14 @@ export class Dimmer extends UIElement<DimmerProps, DimmerState> {
 
     render() {
         const { disabled, inverted, page, simple,
-            closable, className, onClose, active, children, ...rest } = this.props;
+            closable, onClose, active, children, ...rest } = this.props;
         const portalClasses = cx([
             'ui dimmer',
             active ? 'active transition visible' : '',
             disabled ? 'disabled' : '',
             inverted ? 'inverted' : '',
             page ? 'page' : '',
-            simple ? 'simple' : '',
-            className
+            simple ? 'simple' : ''
         ])
         const customStyles = {
             content: {

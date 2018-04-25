@@ -207,7 +207,8 @@ declare namespace pxt {
         privacyUrl?: string;
         termsOfUseUrl?: string;
         contactUrl?: string;
-        accentColor?: string;
+        accentColor?: string; // used in PWA manifest as theme color
+        backgroundColor?: string; // use in PWA manifest as background color
         cardLogo?: string;
         appLogo?: string;
         htmlDocIncludes?: Map<string>;

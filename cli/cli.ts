@@ -1511,50 +1511,29 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
         "lang": "en",
         "dir": "ltr",
         "name": cfg.name,
-        "short_name": cfg.name,
-        "icons": [
-            {
-                "src": "\/static\/icons\/android-chrome-36x36.png",
-                "sizes": "36x36",
-                "type": "image\/png",
-                "density": 0.75
-            },
-            {
-                "src": "\/static\/icons\/android-chrome-48x48.png",
-                "sizes": "48x48",
-                "type": "image\/png",
-                "density": 1
-            },
-            {
-                "src": "\/static\/icons\/android-chrome-72x72.png",
-                "sizes": "72x72",
-                "type": "image\/png",
-                "density": 1.5
-            },
-            {
-                "src": "\/static\/icons\/android-chrome-96x96.png",
-                "sizes": "96x96",
-                "type": "image\/png",
-                "density": 2
-            },
-            {
-                "src": "\/static\/icons\/android-chrome-144x144.png",
-                "sizes": "144x144",
-                "type": "image\/png",
-                "density": 3
-            },
-            {
-                "src": "\/static\/icons\/android-chrome-192x192.png",
-                "sizes": "192x192",
-                "type": "image\/png",
-                "density": 4
-            }
-        ],
+        "short_name": cfg.nickname || cfg.name,
+        "icons": [],
         "scope": "/",
         "start_url": "/",
         "display": "standalone",
         "orientation": "landscape"
     }
+    if (cfg.appTheme) {
+        if (cfg.appTheme.accentColor)
+            webmanifest["theme_color"] = cfg.appTheme.accentColor;
+        if (cfg.appTheme.backgroundColor)
+            webmanifest["background_color"] = cfg.appTheme.backgroundColor;
+    }
+    [192, 512].forEach(sz => {
+        const fn = `/static/icons/android-chrome-${sz}x${sz}.png`;
+        if (fs.existsSync(path.join('docs', fn))) {
+            webmanifest.icons.push({
+                "src": uploadArtFile(fn),
+                "sizes": `${sz}x${sz}`,
+                "types": `image/png`
+            })
+        }
+    });
     let diskManifest: any = {}
     if (fs.existsSync("webmanifest.json"))
         diskManifest = nodeutil.readJson("webmanifest.json")

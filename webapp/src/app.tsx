@@ -1816,7 +1816,8 @@ export class ProjectView
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
-                {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox.bind(this)} /> : undefined}
+                {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
+                    shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox.bind(this)} /> : undefined}
             </div>
         );
     }
