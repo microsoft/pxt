@@ -173,12 +173,23 @@ namespace pxsim {
     }
 
     export namespace Math_ {
-        export function sqrt(n: number) {
-            return Math.sqrt(n) >>> 0;
+        export function imul(x: number, y: number) {
+            return intMult(x, y)
         }
-        export function pow(x: number, y: number) {
-            return Math.pow(x, y) >>> 0;
+
+        export function idiv(x: number, y: number) {
+            return (x / y) >> 0
         }
+
+        export function round(n: number) { return Math.round(n) }
+        export function ceil(n: number) { return Math.ceil(n) }
+        export function floor(n: number) { return Math.floor(n) }
+        export function sqrt(n: number) { return Math.sqrt(n) >>> 0 }
+        export function pow(x: number, y: number) { return Math.pow(x, y) >>> 0 }
+        export function trunc(x: number) {
+            return x > 0 ? Math.floor(x) : Math.ceil(x);
+        }
+
         export function random(max: number): number {
             if (max < 1) return 0;
             let r = 0;
@@ -199,7 +210,7 @@ namespace pxsim {
         const bh = (b >>> 16) & 0xffff;
         const bl = b & 0xffff;
         // the shift by 0 fixes the sign on the high part
-        // the final |0 converts the unsigned value into a signed value 
+        // the final |0 converts the unsigned value into a signed value
         return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
     }
 

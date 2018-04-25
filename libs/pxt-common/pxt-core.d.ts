@@ -49,7 +49,7 @@ interface Array<T> {
     //% helper=arrayUnshift weight=69 advanced=true
     //% blockId="array_unshift" block="%list| insert %value| at beginning" blockNamespace="arrays"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
-    unshift(value:T): number;
+    unshift(value: T): number;
 
     /**
       * Return a section of an array.
@@ -130,7 +130,7 @@ interface Array<T> {
      * Remove the first occurence of an object. Return true if removed.
      */
     //% shim=Array_::removeElement weight=48
-    removeElement(element:T) : boolean;
+    removeElement(element: T): boolean;
 
     /** 
      * Remove the element at a certain index.
@@ -241,7 +241,6 @@ declare interface String {
     // block="%this=text| is empty"
     isEmpty(): boolean;
 
-
     [index: number]: string;
 }
 
@@ -254,10 +253,10 @@ declare interface String {
 //% blockId="string_parseint" block="parse to integer %text" blockNamespace="text"
 declare function parseInt(text: string): number;
 
-interface Object {}
-interface Function {}
-interface IArguments {}
-interface RegExp {}
+interface Object { }
+interface Function { }
+interface IArguments { }
+interface RegExp { }
 
 type uint8 = number;
 type uint16 = number;
@@ -311,7 +310,6 @@ declare namespace Array {
  * More complex operations with numbers.
  */
 declare namespace Math {
-
     /**
      * Return the value of a base expression taken to a specified power.
      * @param x The base value of the expression.
@@ -336,4 +334,47 @@ declare namespace Math {
     //% shim=Math_::sqrt
     function sqrt(x: number): number;
 
+    /**
+     * Returns the smallest number greater than or equal to its numeric argument. 
+     * @param x A numeric expression.
+     */
+    //% shim=Math_::ceil
+    function ceil(x: number): number;
+
+    /**
+      * Returns the greatest number less than or equal to its numeric argument. 
+      * @param x A numeric expression.
+      */
+    //% shim=Math_::floor
+    function floor(x: number): number;
+
+    /**
+      * Returns the number with the decimal part truncated.
+      * @param x A numeric expression.
+      */
+    //% shim=Math_::trunc
+    function trunc(x: number): number;
+    
+    /** 
+      * Returns a supplied numeric expression rounded to the nearest number.
+      * @param x The value to be rounded to the nearest number.
+      */
+    //% shim=Math_::round
+    function round(x: number): number;
+
+    /**
+     * Returns the value of integer signed 32 bit multiplication of two numbers.
+     * @param x The first number
+     * @param y The second number
+     */
+    //% shim=Math_::imul
+    function imul(x: number, y: number): number;
+
+    /**
+     * Returns the value of integer signed 32 bit division of two numbers.
+     * @param x The first number
+     * @param y The second number
+     */
+    //% shim=Math_::idiv
+    function idiv(x: number, y: number): number;
 }
