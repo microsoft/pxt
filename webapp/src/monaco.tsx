@@ -167,11 +167,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     display(): JSX.Element {
         return (
-            <div id="monacoEditorArea" className="full-abs">
+            <div id="monacoEditorArea" className="full-abs" style={{ direction: 'ltr' }}>
                 <div className="monacoToolboxDiv">
                     <toolbox.Toolbox ref={e => this.toolbox = e} editorname="monaco" parent={this} />
                 </div>
-                <div id='monacoEditorInner' />
+                <div id='monacoEditorInner' style={{float: 'left'}} />
             </div>
         )
     }
@@ -548,7 +548,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let appTheme = pxt.appTarget.appTheme;
         if (!appTheme.monacoToolbox || pxt.shell.isReadOnly()) return;
         // Move the monaco editor to make room for the toolbox div
-        this.editor.getLayoutInfo().glyphMarginLeft = 200;
+        //this.editor.getLayoutInfo().glyphMarginLeft = 200;
         this.editor.layout();
 
         this.toolbox.setState({
@@ -923,8 +923,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return blocks.filter((block => !(block.attributes.blockHidden || block.attributes.deprecated)
                 && (block.name.indexOf('_') != 0)
                 && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
-                || (subns && ((block.attributes.advanced && subns == 'more')
-                    || (block.attributes.subcategory && subns == block.attributes.subcategory))))));
+                    || (subns && ((block.attributes.advanced && subns == 'more')
+                        || (block.attributes.subcategory && subns == block.attributes.subcategory))))));
         }
 
         if (!snippets.isBuiltin(ns)) {

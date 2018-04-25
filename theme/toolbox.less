@@ -20,7 +20,7 @@
     transition-timing-function: ease-in;
 }
 
-.blocklyToolboxDiv text {
+.blocklyToolboxDiv text, .monacoToolboxDiv text {
     user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -28,7 +28,8 @@
     cursor: inherit;
 }
 
-.blocklyToolboxDiv[dir="RTL"] .blocklyTreeRow {
+.blocklyToolboxDiv[dir="RTL"] .blocklyTreeRow,
+.monacoToolboxDiv[dir="RTL"] .blocklyTreeRow {
     margin-left: 8px;
 }
 
