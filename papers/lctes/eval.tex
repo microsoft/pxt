@@ -64,12 +64,12 @@ MicroPython and similar environments cannot run on the Uno due to flash and RAM 
 \subsection{Context Switch Performance}
 
 \begin{figure}[ht]
-    \includegraphics[width=.7\columnwidth]{images/context-switch.png}
+    \includegraphics[width=.8\columnwidth]{images/context-switch.png}
 \caption{\label{fig:context-switch}Base context switch profiles per device.}
 \end{figure}
 
 \begin{figure}[ht]
-    \includegraphics[width=.99\columnwidth]{images/context-vs-stack.png}
+    \includegraphics[width=\columnwidth]{images/context-vs-stack.png}
 \caption{\label{fig:context-vs-stack}Time taken to perform a context switch against stack size.}
 \end{figure}
 
@@ -117,7 +117,7 @@ Non-blocking APC calls, the best case, have a small overhead of 32 bytes of RAM 
 
 \caption{\label{table:flash-consumption}
 Flash consumption of a \MC binary(kB)}
-\vspace{-30pt}
+\vspace{-25pt}
 \end{table}
 
 MCUs make use of internal non-volatile FLASH memory to store program code. Table~\ref{table:flash-consumption} shows the per device flash consumption of each software library used in the final \MC binary. To obtain these numbers, we analyzed the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library and supporting libraries.
