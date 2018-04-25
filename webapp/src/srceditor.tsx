@@ -114,4 +114,7 @@ export class Editor implements pxt.editor.IEditor {
     hasEditorToolbar() {
         return true
     }
+
+    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories?: boolean) {
+    }
 }

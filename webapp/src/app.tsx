@@ -623,6 +623,7 @@ export class ProjectView
                             this.setState({editorState: {
                                 searchBar: false,
                                 filters: { blocks: tt.toolboxSubset, defaultState: pxt.editor.FilterState.Hidden } } });
+                            this.editor.filterToolbox(tt.toolboxSubset, tt.showCategories);
                         }
                         let tutorialOptions = this.state.tutorialOptions;
                         tutorialOptions.tutorialReady = true;
