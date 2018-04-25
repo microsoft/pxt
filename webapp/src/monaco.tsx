@@ -1002,9 +1002,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (!block.name) {
                 if (block.attributes.blockId == pxtc.PAUSE_UNTIL_TYPE) {
                     const pauseUntilBlock = snippets.getPauseUntil();
-                    const ns = pauseUntilBlock.attributes.blockNamespace;
-                    const color = getNamespaceColor(ns);
-                    monacoBlocks.push(this.getMonacoBlock(pauseUntilBlock, ns, color));
+                    if (pauseUntilBlock) {
+                        const ns = pauseUntilBlock.attributes.blockNamespace;
+                        const color = getNamespaceColor(ns);
+                        monacoBlocks.push(this.getMonacoBlock(pauseUntilBlock, ns, color));
+                    }
                 } else {
                     // For built in blocks, let's search from monaco snippets
                     const builtin = snippets.allBuiltinBlocks()[block.attributes.blockId];
