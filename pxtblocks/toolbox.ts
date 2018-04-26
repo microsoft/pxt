@@ -13,14 +13,24 @@ namespace pxt.blocks {
                 <shadow type="logic_boolean"></shadow>
             </value>
         </block>
-        <block type="controls_simple_for">
+        <block type="pxt_controls_for">
+            <value name="VAR">
+                <shadow type="variables_get_reporter">
+                    <field name="VAR">${lf("index")}</field>
+                </shadow>
+            </value>
             <value name="TO">
                 <shadow type="math_whole_number">
                     <field name="NUM">4</field>
                 </shadow>
             </value>
         </block>
-        <block type="controls_for_of">
+        <block type="pxt_controls_for_of">
+            <value name="VAR">
+                <shadow type="variables_get_reporter">
+                    <field name="VAR">${lf("value")}</field>
+                </shadow>
+            </value>
             <value name="LIST">
                 <shadow type="variables_get">
                     <field name="VAR">list</field>
@@ -195,25 +205,45 @@ namespace pxt.blocks {
     <category name="Functions" nameid="functions" colour="#005a9e" custom="PROCEDURE" category="46" iconclass="blocklyTreeIconfunctions" expandedclass="blocklyTreeIconfunctions" advanced="true">
     </category>
     <category colour="#66672C" name="Arrays" nameid="arrays" category="45" web-icon="\uf0cb" iconclass="blocklyTreeIconarrays" expandedclass="blocklyTreeIconarrays" advanced="true">
-        <block type="lists_create_with">
-            <mutation items="1"></mutation>
-            <value name="ADD0">
-                <shadow type="math_number">
-                    <field name="NUM">0</field>
-                </shadow>
+        <block type="variables_set" gap="8">
+            <field name="VAR">${lf("{id:var}list")}</field>
+            <value name="VALUE">
+                <block type="lists_create_with">
+                    <mutation items="2"></mutation>
+                    <value name="ADD0">
+                        <shadow type="math_number">
+                            <field name="NUM">1</field>
+                        </shadow>
+                    </value>
+                    <value name="ADD1">
+                        <shadow type="math_number">
+                            <field name="NUM">2</field>
+                        </shadow>
+                    </value>
+                </block>
             </value>
         </block>
-        <block type="lists_create_with">
-            <mutation items="2"></mutation>
-            <value name="ADD0">
-                <shadow type="text">
-                    <field name="TEXT"></field>
-                </shadow>
-            </value>
-            <value name="ADD1">
-                <shadow type="text">
-                    <field name="TEXT"></field>
-                </shadow>
+        <block type="variables_set">
+            <field name="VAR">${lf("{id:var}text list")}</field>
+            <value name="VALUE">
+                <block type="lists_create_with">
+                    <mutation items="3"></mutation>
+                    <value name="ADD0">
+                        <shadow type="text">
+                            <field name="TEXT">${lf("a")}</field>
+                        </shadow>
+                    </value>
+                    <value name="ADD1">
+                        <shadow type="text">
+                            <field name="TEXT">${lf("b")}</field>
+                        </shadow>
+                    </value>
+                    <value name="ADD2">
+                        <shadow type="text">
+                            <field name="TEXT">${lf("c")}</field>
+                        </shadow>
+                    </value>
+                </block>
             </value>
         </block>
         <block type="lists_length"></block>

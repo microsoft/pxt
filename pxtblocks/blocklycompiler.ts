@@ -256,6 +256,11 @@ namespace pxt.blocks {
         }
     }
 
+    function getLoopVariableField(b: Blockly.Block) {
+        return (b.type == "pxt_controls_for" || b.type == "pxt_controls_for_of") ?
+            getInputTargetBlock(b, "VAR") : b;
+    }
+
     function getInputTargetBlock(b: Blockly.Block, n: string) {
         const res = b.getInputTargetBlock(n);
 
@@ -334,13 +339,15 @@ namespace pxt.blocks {
                             attachPlaceholderIf(e, b, "IF" + i, pBoolean.type);
                         break;
 
+                    case "pxt_controls_for":
                     case "controls_simple_for":
                         unionParam(e, b, "TO", ground(pNumber.type));
                         break;
+                    case "pxt_controls_for_of":
                     case "controls_for_of":
                         unionParam(e, b, "LIST", ground("Array"));
                         const listTp = returnType(e, getInputTargetBlock(b, "LIST"));
-                        const elementTp = lookup(e, escapeVarName(b.getField("VAR").getText(), e)).type;
+                        const elementTp = lookup(e, escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e)).type;
                         genericLink(listTp, elementTp);
                         break;
                     case "variables_set":
@@ -905,7 +912,7 @@ namespace pxt.blocks {
     }
 
     function compileControlsFor(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
-        let bVar = escapeVarName(b.getField("VAR").getText(), e);
+        let bVar = escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e);
         let bTo = getInputTargetBlock(b, "TO");
         let bDo = getInputTargetBlock(b, "DO");
         let bBy = getInputTargetBlock(b, "BY");
@@ -954,7 +961,7 @@ namespace pxt.blocks {
     }
 
     function compileControlsForOf(e: Environment, b: Blockly.Block, comments: string[]) {
-        let bVar = escapeVarName(b.getField("VAR").getText(), e);
+        let bVar = escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e);
         let bOf = getInputTargetBlock(b, "LIST");
         let bDo = getInputTargetBlock(b, "DO");
 
@@ -1262,10 +1269,12 @@ namespace pxt.blocks {
             case 'controls_if':
                 r = compileControlsIf(e, <Blockly.IfBlock>b, comments);
                 break;
+            case 'pxt_controls_for':
             case 'controls_for':
             case 'controls_simple_for':
                 r = compileControlsFor(e, b, comments);
                 break;
+            case 'pxt_controls_for_of':
             case 'controls_for_of':
                 r = compileControlsForOf(e, b, comments);
                 break;
@@ -1451,11 +1460,13 @@ namespace pxt.blocks {
 
         if (skipVariables) return e;
 
+        const loopBlocks = ["controls_for", "controls_simple_for", "controls_for_of", "pxt_controls_for", "pxt_controls_for_of"];
+
         const variableIsScoped = (b: Blockly.Block, name: string): boolean => {
             if (!b)
                 return false;
-            else if ((b.type == "controls_for" || b.type == "controls_simple_for" || b.type == "controls_for_of")
-                && escapeVarName(b.getField("VAR").getText(), e) == name)
+            else if (loopBlocks.filter(l => l == b.type).length > 0
+                && escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e) == name)
                 return true;
             else if (isMutatingBlock(b) && b.mutation.isDeclaredByMutation(name))
                 return true;
@@ -1494,8 +1505,8 @@ namespace pxt.blocks {
 
         // collect local variables.
         if (w) w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
-            if (b.type == "controls_for" || b.type == "controls_simple_for" || b.type == "controls_for_of") {
-                let x = escapeVarName(b.getField("VAR").getText(), e);
+            if (loopBlocks.filter(l => l == b.type).length > 0) {
+                let x = escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e);
                 if (b.type == "controls_for_of") {
                     trackLocalDeclaration(x, null);
                 }
