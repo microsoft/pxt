@@ -11,6 +11,12 @@ namespace pxt.blocks {
     let placeholders: Map<Map<any>> = {};
     const MAX_COMMENT_LINE_LENGTH = 50;
 
+
+    interface CommentMap {
+        orphans: Blockly.WorkspaceComment[];
+        idToComments: Map<Blockly.WorkspaceComment[]>;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Miscellaneous utility functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -1577,7 +1583,18 @@ namespace pxt.blocks {
 
             updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
 
+            // compile workspace comments, add them to the top
+            const topComments = w.getTopComments(true)
+            const commentMap = groupWorkspaceComments(topblocks, topComments);
+
+            commentMap.orphans.forEach(comment => append(stmtsMain, compileWorkspaceComment(comment).children));
+
             topblocks.forEach(b => {
+                if (commentMap.idToComments[b.id]) {
+                    commentMap.idToComments[b.id].forEach(comment => {
+                        append(stmtsMain, compileWorkspaceComment(comment).children);
+                    });
+                }
                 if (b.type == ts.pxtc.ON_START_TYPE)
                     append(stmtsMain, compileStartEvent(e, b).children);
                 else {
@@ -1618,16 +1635,7 @@ namespace pxt.blocks {
                     return mkStmt(mkText("let " + b.name + tp + " = "), defl)
                 });
 
-            const allStmts = stmtsVariables.concat(stmtsMain);
-
-            // compile workspace comments, add them to the top
-            const commentStmts: JsNode[] = [];
-            const topComments = w.getTopComments(true)
-            topComments.forEach(c => {
-                append(commentStmts, compileWorkspaceComment(c).children);
-            })
-
-            return commentStmts.concat(allStmts);
+            return stmtsVariables.concat(stmtsMain);
         } catch (err) {
             let be: Blockly.Block = (err as any).block;
             if (be) {
@@ -1837,5 +1845,81 @@ namespace pxt.blocks {
         });
 
         return res;
+    }
+
+    interface Rect {
+        id: string;
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    }
+
+    function groupWorkspaceComments(blocks: Blockly.Block[], comments: Blockly.WorkspaceComment[]) {
+        if (!blocks.length || blocks.some(b => !b.rendered)) {
+            return {
+                orphans: comments,
+                idToComments: {}
+            };
+        }
+        const blockBounds: Rect[] = blocks.map(block => {
+            const bounds = block.getBoundingRectangle();
+            const size = block.getHeightWidth();
+            return {
+                id: block.id,
+                x: bounds.topLeft.x,
+                y: bounds.topLeft.y,
+                width: size.width,
+                height: size.height
+            }
+        });
+
+        const map: CommentMap = {
+            orphans: [],
+            idToComments: {}
+        };
+
+        const radius = 20;
+        for (const comment of comments) {
+            const bounds = comment.getBoundingRectangle();
+            const size = comment.getHeightWidth();
+
+            const x = bounds.topLeft.x;
+            const y = bounds.topLeft.y;
+
+            let parent: Rect;
+
+            for (const rect of blockBounds) {
+                if (doesIntersect(x, y, size.width, size.height, rect)) {
+                    parent = rect;
+                }
+                else if (!parent && doesIntersect(x - radius, y - radius, size.width + radius * 2, size.height + radius * 2, rect)) {
+                    parent = rect;
+                }
+            }
+
+            if (parent) {
+                if (!map.idToComments[parent.id]) {
+                    map.idToComments[parent.id] = [];
+                }
+                map.idToComments[parent.id].push(comment);
+            }
+            else {
+                map.orphans.push(comment);
+            }
+        }
+
+        return map;
+    }
+
+
+    function doesIntersect(x: number, y: number, width: number, height: number, other: Rect) {
+        const xOverlap = between(x, other.x, other.x + other.width) || between(other.x, x, x + width);
+        const yOverlap = between(y, other.y, other.y + other.height) || between(other.y, y, y + height);
+        return xOverlap && yOverlap;
+
+        function between(val: number, lower: number, upper: number) {
+            return val >= lower && val <= upper;
+        }
     }
 }
