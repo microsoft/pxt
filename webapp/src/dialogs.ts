@@ -67,7 +67,7 @@ export function showImportFileDialog() {
     if (pxt.appTarget.compile.saveAsPNG) {
         ext = ".png";
     }
-    core.confirmAsync({
+    return core.confirmAsync({
         header: lf("Open {0} file", ext),
         onLoaded: (el) => {
             input = el.querySelectorAll('input')[0] as HTMLInputElement;
@@ -78,11 +78,11 @@ export function showImportFileDialog() {
 <input type="file" tabindex="0" autofocus aria-describedby="selectFileToOpenLabel" class="ui blue fluid"></input>
 </div>
 </div>`,
-    }).done(res => {
+    }).then(res => {
         if (res) {
-            pxt.tickEvent("app.open.file");
-            this.importFile(input.files[0]);
+            return input.files[0];
         }
+        return undefined;
     })
 }
 
@@ -135,22 +135,12 @@ export function showReportAbuse(pubId?: string) {
 }
 
 export function showResetDialog() {
-    core.confirmAsync({
+    return core.confirmAsync({
         header: lf("Reset"),
         body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),
         agreeLbl: lf("Reset"),
         agreeClass: "red",
         agreeIcon: "sign out",
         disagreeLbl: lf("Cancel")
-    }).then(r => {
-        if (!r) return Promise.resolve();
-        return Promise.resolve()
-            .then(() => {
-                return pxt.winrt.releaseAllDevicesAsync();
-            })
-            .then(() => {
-                return this.resetWorkspace();
-            });
     })
-        .done();
 }

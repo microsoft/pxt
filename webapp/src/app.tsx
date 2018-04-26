@@ -1555,11 +1555,25 @@ export class ProjectView
     }
 
     showImportFileDialog() {
-        dialogs.showImportFileDialog();
+        dialogs.showImportFileDialog().done(res => {
+            if (res) {
+                pxt.tickEvent("app.open.file");
+                this.importFile(res);
+            }
+        });
     }
 
     showResetDialog() {
-        dialogs.showResetDialog();
+        dialogs.showResetDialog().done(r => {
+            if (!r) return Promise.resolve();
+            return Promise.resolve()
+                .then(() => {
+                    return pxt.winrt.releaseAllDevicesAsync();
+                })
+                .then(() => {
+                    return this.resetWorkspace();
+                });
+        });
     }
 
     showExitAndSaveDialog() {
