@@ -444,6 +444,10 @@ export class ProjectView
         this.setState({ hasError: true });
         // Log critical error
         pxt.tickEvent('pxt.criticalerror', { error, info });
+        // Reload the page in 2 seconds
+        setTimeout(() => {
+            location.reload();
+        }, 2000)
     }
 
     private pickEditorFor(f: pkg.File): srceditor.Editor {
@@ -1774,9 +1778,9 @@ export class ProjectView
             return <div id="root" className="ui middle aligned center aligned grid" style={{ height: '100%', alignItems: 'center' }}>
                 <div className="ui raised segment inverted purple">
                     <h2>{lf("Oops") + "  😞😞😞"}</h2>
-                    {lf("This doesn't happen often, but looks like we messed up..")}
+                    {lf("This doesn't happen often, but looks like we've run into a problem..")}
                     <br /> <br />
-                    {lf("We're going to need you to refresh your page.")}
+                    {lf("Refreshing your page...")}
                 </div>
             </div>
         }

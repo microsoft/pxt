@@ -33,6 +33,7 @@ export function setTranslations(translations: pxt.Map<string>) {
 }
 
 export function init(root: HTMLElement, cfg: SimulatorConfig) {
+    if (!root) return;
     root.innerHTML =
         `
         <div id="simulators" class='simulator'>
