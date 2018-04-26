@@ -5369,7 +5369,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
 
     if (process.env["PXT_DEBUG"]) {
         pxt.options.debug = true;
-        pxt.debug = console.debug || console.log;
+        pxt.debug = pxt.log;
     }
 
     commonfiles = readJson(__dirname + "/pxt-common.json")

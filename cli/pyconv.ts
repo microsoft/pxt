@@ -1780,7 +1780,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
             let s = n.slice as py.Slice
             return B.mkInfix(expr(n.value), ".",
                 B.H.mkCall("slice", [s.lower ? expr(s.lower) : B.mkText("0"),
-                    s.upper ? expr(s.upper) : null].filter(x => !!x)))
+                s.upper ? expr(s.upper) : null].filter(x => !!x)))
         }
         else {
             return exprTODO(n)
@@ -1949,6 +1949,7 @@ export function convertAsync(fns: string[]) {
         .then(buf => {
             pxt.debug(`analyzing python AST (${buf.length} bytes)`)
             let js = JSON.parse(buf.toString("utf8"))
+            fs.writeFileSync("pyast.json", JSON.stringify(js, null, 2), { encoding: "utf8" })
             const rec = (v: any): any => {
                 if (Array.isArray(v)) {
                     for (let i = 0; i < v.length; ++i)
