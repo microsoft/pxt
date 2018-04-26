@@ -9,7 +9,7 @@ export const isElectron = isPxtElectron || isIpcRenderer;
 
 const downloadingUpdateLoadingName = "pxtelectron-downloadingupdate";
 
-export function initPxtElectron(projectView: ProjectView): void {
+export function initElectron(projectView: ProjectView): void {
     if (!isPxtElectron) {
         return;
     }
@@ -23,19 +23,18 @@ export function initPxtElectron(projectView: ProjectView): void {
 
     const criticalUpdateFailedPromise = new Promise((resolve) => {
         pxtElectron.onCriticalUpdateFailed(() => {
+            pxt.tickEvent("electron.criticalupdate.failed");
             resolve();
         });
     });
 
     // Asynchronously check what the update status is, which will let us know if the current version is banned
     pxtElectron.onUpdateStatus((status) => {
+        pxt.debug(`Electron app update status: ${status}`);
+        pxt.tickEvent(`electron.updatestatus.${status}`);
+
         if (status === pxt.electron.UpdateStatus.UpdatingCritical || status === pxt.electron.UpdateStatus.BannedWithoutUpdate) {
-            try {
-                projectView.stopSimulator();
-            }
-            catch (e) {
-                // Sim was not loaded; ignore
-            }
+            projectView.stopSimulator();
         }
 
         switch (status) {

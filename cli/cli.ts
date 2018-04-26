@@ -936,7 +936,7 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     let targetConfig = readLocalPxTarget();
     let defaultLocale = targetConfig.appTheme.defaultLocale;
-    let hexCache = path.join("built", "hexCache");
+    let hexCache = path.join("built", "hexcache");
     let hexFiles: string[] = [];
 
     if (fs.existsSync(hexCache)) {
@@ -1839,7 +1839,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         }
     }
 
-    let hexCachePath = path.resolve(process.cwd(), "built", "hexCache");
+    let hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
     nodeutil.mkdirP(hexCachePath);
 
     pxt.log(`building target.json in ${process.cwd()}...`)
@@ -3913,7 +3913,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify, disableAppCache));
 }
 
-function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean, disableAppCache?: boolean) {
+function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean, noAppCache?: boolean) {
     const pref = path.resolve(builtPackaged);
     const localDir = label == "./" ? "./" : label ? "/" + label + "/" : "/"
     return uploadCoreAsync({
@@ -3922,12 +3922,12 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
         fileList: pxtFileList("node_modules/pxt-core/")
             .concat(targetFileList())
             .concat(["targetconfig.json"])
-            .concat(nodeutil.allFiles("built/hexCache")),
+            .concat(nodeutil.allFiles("built/hexcache")),
         localDir,
         target: (pxt.appTarget.id || "unknownstatic"),
         builtPackaged,
         minify,
-        noAppCache: disableAppCache
+        noAppCache
     }).then(() => renderDocs(builtPackaged, localDir))
 }
 
@@ -5020,7 +5020,7 @@ function initCommands() {
                 description: "Force build to happen in the cloud"
             },
             "no-appcache": {
-                description: "Strips out the applicationCache header from index.html"
+                description: "Disables application cache"
             }
         }
     }, staticpkgAsync);

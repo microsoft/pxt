@@ -4,7 +4,7 @@ declare namespace pxt.electron {
     export interface ElectronManifest {
         latest: string;
         banned?: string[];
-        timeStamp?: string;
+        timeStamp?: string; // In the format of (new Date()).toISOString()
     }
 
     export const enum UpdateStatus {

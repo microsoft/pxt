@@ -21,7 +21,7 @@ let docfilesdirs = [""]
 let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let packagedDir = ""
-let localHexCacheDir = path.join("built", "hexCache");
+let localHexCacheDir = path.join("built", "hexcache");
 let serveOptions: ServeOptions;
 
 function setupDocfilesdirs() {

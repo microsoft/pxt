@@ -265,7 +265,7 @@ namespace pxt {
      */
     function isNativeApp(): boolean {
         return typeof Windows !== "undefined" ||
-            !!(window as any).pxtElectron;
+            (typeof window !== "undefined" && !!(window as any).pxtElectron);
     }
     /**
      * checks for sandbox

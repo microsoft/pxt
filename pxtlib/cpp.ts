@@ -1338,7 +1338,7 @@ namespace pxt.hex {
     function downloadHexInfoLocalAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
         if (pxt.webConfig && pxt.webConfig.isStatic) {
             return Util.requestAsync({
-                url: `${pxt.webConfig.cdnUrl}hexCache/${extInfo.sha}.hex`
+                url: `${pxt.webConfig.cdnUrl}hexcache/${extInfo.sha}.hex`
             })
                 .then((resp) => {
                     if (resp.text) {
@@ -1349,9 +1349,11 @@ namespace pxt.hex {
                         }
                         return Promise.resolve(result);
                     }
+                    pxt.log("Hex info not found in bundled hex cache");
                     return Promise.resolve();
                 })
                 .catch((e) => {
+                    pxt.log("Error fetching hex info from bundled hex cache");
                     return Promise.resolve();
                 });
         }
