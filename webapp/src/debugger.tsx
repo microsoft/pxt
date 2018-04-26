@@ -12,10 +12,9 @@ interface DebuggerVariablesState {
 }
 
 interface Variable {
-    value: string;
-    id?: number;
-    prevValue?: string;
-    chidren?: Variable[];
+    value: any;
+    prevValue?: any;
+    children?: pxt.Map<Variable>;
 }
 
 interface DebuggerVariablesProps extends ISettingsProps {
@@ -59,7 +58,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 else sv = "(unknown)"
                 break;
         }
-        return sv;
+        return DebuggerVariables.capLength(sv);
     }
 
     static capLength(varstr: string) {
@@ -82,49 +81,66 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         const variables = this.state.variables;
         Object.keys(this.nextVariables).forEach(k => {
             const v = this.nextVariables[k];
-            const sv = DebuggerVariables.capLength(DebuggerVariables.renderValue(v));
             variables[k] = {
-                value: sv,
-                id: v ? v.id : undefined,
-                prevValue: !frozen && variables[k] && sv != variables[k].value ?
+                value: v,
+                prevValue: v && !v.id && variables[k] && v !== variables[k].value ?
                     variables[k].value : undefined
             }
         })
-        if (frozen)
-            Object.keys(variables).forEach(k => delete variables[k].prevValue);
         this.setState({ variables: variables, frozen });
         this.nextVariables = {};
     }
 
     private toggle(v: Variable) {
-        if (v.chidren) {
-            delete v.chidren;
+        if (v.children) {
+            delete v.children;
             this.setState({ variables: this.state.variables })
         } else {
-            // TODO
-            simulator.driver.variables(v.id);
+            if (!v.value.id) return;
+            simulator.driver.variablesAsync(v.value.id)
+                .then((msg: pxsim.VariablesMessage) => {
+                    if (msg) {
+                        v.children = pxt.Util.mapMap(msg.variables || {},
+                            (k, v) => {
+                                return {
+                                    value: msg.variables[k]
+                                }
+                            });
+                        this.setState({ variables: this.state.variables })
+                    }
+                })
         }
+    }
+
+    private renderVariables(variables: pxt.Map<Variable>, parent?: string): JSX.Element[] {
+        const varcolor = pxt.toolbox.getNamespaceColor('variables');
+        let r: JSX.Element[] = []
+        Object.keys(variables).forEach(variable => {
+            const v = variables[variable];
+            const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
+            r.push(<div key={(parent || "") + variable} className="item">
+                <div className={`ui label image variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ backgroundColor: varcolor }}
+                    onClick={onClick}>
+                    <span className="varname">{variable}</span>
+                    <div className="detail">
+                        <span className="varval">{DebuggerVariables.renderValue(v.value)}</span>
+                        <span className="previousval">{v.prevValue !== undefined ? `${DebuggerVariables.renderValue(v.prevValue)}` : ''}</span>
+                    </div>
+                </div>
+            </div>);
+            if (v.children)
+                r = r.concat(this.renderVariables(v.children, variable));
+        })
+        return r;
     }
 
     renderCore() {
         const { variables, frozen } = this.state;
-        const varcolor = pxt.toolbox.getNamespaceColor('variables');
+
         return Object.keys(variables).length == 0 ? <div /> :
             <div className={`ui segment debugvariables ${frozen ? "frozen" : ""}`}>
                 <div className="ui middle aligned list">
-                    {Object.keys(variables).map(variable => {
-                        const v = variables[variable];
-                        return <div key={variable} className="item">
-                            <div className={`ui label image variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ backgroundColor: varcolor }}
-                                onClick={v.id ? () => this.toggle(v) : undefined}>
-                                <span className="varname">{variable}</span>
-                                <div className="detail">
-                                    <span className="varval">{v.value + ' '}</span>
-                                    <span className="previousval">{v.prevValue ? `(${v.prevValue})` : ''}</span>
-                                </div>
-                            </div>
-                        </div>
-                    })}
+                    {this.renderVariables(variables)}
                 </div>
             </div>;
     }
