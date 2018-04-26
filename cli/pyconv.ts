@@ -1080,6 +1080,8 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         if (!ctx.currClass && !ctx.currFun && nm[0] != "_")
             pref = "export "
         if (nm && ctx.currClass && !ctx.currFun) {
+            // class fields can't be const
+            isConstCall = false;
             let src = expr(n.value)
             let fd = getClassField(ctx.currClass, nm)
             let attrTp = typeOf(n.value)
@@ -1421,7 +1423,7 @@ let funMap: Map<FunOverride> = {
     "pins.I2CDevice.read_into": { n: ".readInto", t: tpVoid },
     "bool": { n: "!!", t: tpBoolean },
     "Array.index": { n: ".indexOf", t: tpNumber },
-    "time.sleep": { n: "loops.pause", t: tpVoid, scale: 1000 }
+    "time.sleep": { n: "pause", t: tpVoid, scale: 1000 }
 }
 
 function isSuper(v: py.Expr) {
