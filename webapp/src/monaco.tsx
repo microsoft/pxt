@@ -251,6 +251,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     resize(e?: Event) {
         let monacoArea = document.getElementById('monacoEditorArea');
+        if (!monacoArea) return;
         let monacoToolboxDiv = monacoArea.getElementsByClassName('monacoToolboxDiv')[0] as HTMLElement;
 
         if (monacoArea && this.editor) {
@@ -375,7 +376,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.forceDiagnosticsUpdate();
                 }
                 // Update widgets
-                const toolbox = document.getElementById('monacoEditorToolbox');
+                const toolbox = document.getElementById('monacoToolboxDiv');
                 if (toolbox) toolbox.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
                 const flyout = document.getElementById('monacoFlyoutWidget');
                 if (flyout) flyout.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
