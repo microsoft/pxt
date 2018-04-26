@@ -904,7 +904,7 @@ function setupScope(n: py.ScopeDef) {
 function typeAnnot(t: Type) {
     let s = t2s(t)
     if (s[0] == "?")
-        return B.mkText("")
+        return B.mkText(": any; /** TODO: type **/")
     return B.mkText(": " + t2s(t))
 }
 
@@ -1122,7 +1122,10 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         if (isConstCall || isUpperCase) {
             // first run would have "let" in it
             defvar(getName(n.targets[0]), {})
-            return B.mkStmt(B.mkText(pref + "const "), B.mkInfix(expr(n.targets[0]), "=", expr(n.value)))
+            let s = pref;
+            if (!/^static /.test(pref))
+                s += "const ";
+            return B.mkStmt(B.mkText(s), B.mkInfix(expr(n.targets[0]), "=", expr(n.value)))
         }
         if (!pref && n.targets[0].kind == "Tuple") {
             let res = [
