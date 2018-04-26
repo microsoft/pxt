@@ -71,21 +71,24 @@ namespace pxt.blocks {
 
             let metrics = workspace.getMetrics();
 
-            let svg = $(blocklyDiv).find('svg').clone(true, true);
-            svg.removeClass("blocklySvg").addClass('blocklyPreview');
-            svg.find('.blocklyBlockCanvas,.blocklyBubbleCanvas')
-                .attr('transform', `translate(${-metrics.contentLeft}, ${-metrics.contentTop}) scale(1)`)
-            svg.find('.blocklyMainBackground').remove();
-            svg[0].setAttribute('viewBox', `0 0 ${metrics.contentWidth} ${metrics.contentHeight}`)
-            svg.removeAttr('width');
-            svg.removeAttr('height');
+            let svg = blocklyDiv.querySelectorAll('svg')[0].cloneNode(true) as SVGSVGElement;
+            Blockly.utils.removeClass(svg as Element, "blocklySvg");
+            Blockly.utils.addClass(svg as Element, "blocklyPreview");
+
+            pxt.U.toArray(svg.querySelectorAll('.blocklyBlockCanvas,.blocklyBubbleCanvas'))
+                .forEach(el => el.setAttribute('transform', `translate(${-metrics.contentLeft}, ${-metrics.contentTop}) scale(1)`));
+            const blocklyMainBackground = svg.querySelectorAll('.blocklyMainBackground')[0];
+            blocklyMainBackground.parentElement.removeChild(blocklyMainBackground);
+            svg.setAttribute('viewBox', `0 0 ${metrics.contentWidth} ${metrics.contentHeight}`)
+            svg.removeAttribute('width');
+            svg.removeAttribute('height');
 
             if (options.emPixels) {
-                svg[0].style.width = (metrics.contentWidth / options.emPixels) + 'em';
-                svg[0].style.height = (metrics.contentHeight / options.emPixels) + 'em';
+                svg.style.width = (metrics.contentWidth / options.emPixels) + 'em';
+                svg.style.height = (metrics.contentHeight / options.emPixels) + 'em';
             }
 
-            return svg[0] as any;
+            return svg as any;
 
         } catch (e) {
             pxt.reportException(e);
