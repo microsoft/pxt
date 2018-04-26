@@ -639,7 +639,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 modalDidOpen={this.modalDidOpen}
             >
                 <div className="ui form">
-                    <sui.Input id={"projectNameInput"} label={lf("Project Name")} ariaLabel={lf("Type a name for your project")} value={projectName} onChange={onChange} />
+                    <sui.Input autoFocus id={"projectNameInput"} label={lf("Project Name")} ariaLabel={lf("Type a name for your project")} value={projectName} onChange={onChange} />
                 </div>
             </sui.Modal>
         )

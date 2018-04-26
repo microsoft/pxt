@@ -449,6 +449,7 @@ export class Input extends data.Component<{
     selectOnClick?: boolean;
     id?: string;
     ariaLabel?: string;
+    autoFocus?: boolean;
 }, { value: string }> {
 
     clearValue() {
@@ -498,6 +499,7 @@ export class Input extends data.Component<{
                 <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "")}>
                     {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
                     {!p.lines || p.lines == 1 ? <input
+                        autoFocus={p.autoFocus}
                         id={p.id}
                         className={p.class || ""}
                         type={p.type || "text"}
