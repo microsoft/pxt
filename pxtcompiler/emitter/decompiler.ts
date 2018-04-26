@@ -25,6 +25,12 @@ namespace ts.pxtc.decompiler {
     const lowerCaseAlphabetStartCode = 97;
     const lowerCaseAlphabetEndCode = 122;
 
+    // Bounds for decompilation of workspace comments
+    const minCommentWidth = 160;
+    const minCommentHeight = 120;
+    const maxCommentWidth = 480;
+    const maxCommentHeight = 360;
+
     const validStringRegex = /^[^\f\n\r\t\v\u00a0\u1680\u180e\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*$/;
 
     interface DecompilerEnv {
@@ -576,7 +582,15 @@ ${output}</xml>`;
         }
 
         function emitWorkspaceComment(comment: WorkspaceComment) {
-            write(`<comment h="120" w="160" data="${U.htmlEscape(comment.refId)}">`)
+            let maxLineLength = 0;
+            const lines = comment.text.split("\n");
+            lines.forEach(line => maxLineLength = Math.max(maxLineLength, line.length));
+
+            // These are just approximations but they are the best we can do outside the DOM
+            const width = Math.max(Math.min(maxLineLength * 10, maxCommentWidth), minCommentWidth);
+            const height = Math.max(Math.min(lines.length * 40, maxCommentHeight), minCommentHeight);
+
+            write(`<comment h="${height}" w="${width}" data="${U.htmlEscape(comment.refId)}">`)
             write(U.htmlEscape(comment.text))
             write(`</comment>`);
         }
