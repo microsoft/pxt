@@ -25,6 +25,12 @@ namespace ts.pxtc.decompiler {
     const lowerCaseAlphabetStartCode = 97;
     const lowerCaseAlphabetEndCode = 122;
 
+    // Bounds for decompilation of workspace comments
+    const minCommentWidth = 160;
+    const minCommentHeight = 120;
+    const maxCommentWidth = 480;
+    const maxCommentHeight = 360;
+
     const validStringRegex = /^[^\f\n\r\t\v\u00a0\u1680\u180e\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*$/;
 
     interface DecompilerEnv {
@@ -125,6 +131,9 @@ namespace ts.pxtc.decompiler {
         next?: StatementNode;
         prev?: StatementNode;
         comment?: string;
+
+        // Optional data that Blockly ignores. We use it to associate statements with workspace comments
+        data?: string;
     }
 
     interface EventHandlerNode extends BlockNode {
@@ -135,6 +144,13 @@ namespace ts.pxtc.decompiler {
     interface Handler {
         name: string,
         statement: StatementNode
+    }
+
+    interface WorkspaceComment {
+        text: string;
+
+        // Used for grouping comments and statements
+        refId: string;
     }
 
     type OutputNode = ExpressionNode | TextNode;
@@ -325,8 +341,10 @@ namespace ts.pxtc.decompiler {
         let output = ""
 
         const varUsages: pxt.Map<ReferenceType> = {};
-        const workspaceComments: string[] = [];
+        const workspaceComments: WorkspaceComment[] = [];
         const autoDeclarations: [string, ts.Node][] = [];
+
+        const getCommentRef = (() => {let currentCommentId = 0; return () => `${currentCommentId++}`})();
 
         ts.forEachChild(file, topLevelNode => {
             if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, env, false, true)) {
@@ -442,10 +460,13 @@ ${output}</xml>`;
             openBlockTag(n.type)
             emitBlockNodeCore(n);
 
+            if (n.data !== undefined) {
+                write(`<data>${U.htmlEscape(n.data)}</data>`)
+            }
+
             if (n.handlers) {
                 n.handlers.forEach(emitHandler);
             }
-
 
             if (n.next) {
                 write("<next>")
@@ -560,8 +581,18 @@ ${output}</xml>`;
             write(`</block>`)
         }
 
-        function emitWorkspaceComment(text: string) {
-            write(`<comment h="120" w="160">${U.htmlEscape(text)}</comment>`);
+        function emitWorkspaceComment(comment: WorkspaceComment) {
+            let maxLineLength = 0;
+            const lines = comment.text.split("\n");
+            lines.forEach(line => maxLineLength = Math.max(maxLineLength, line.length));
+
+            // These are just approximations but they are the best we can do outside the DOM
+            const width = Math.max(Math.min(maxLineLength * 10, maxCommentWidth), minCommentWidth);
+            const height = Math.max(Math.min(lines.length * 40, maxCommentHeight), minCommentHeight);
+
+            write(`<comment h="${height}" w="${width}" data="${U.htmlEscape(comment.refId)}">`)
+            write(U.htmlEscape(comment.text))
+            write(`</comment>`);
         }
 
         function getOutputBlock(n: ts.Node): OutputNode {
@@ -938,8 +969,12 @@ ${output}</xml>`;
 
             const commentRanges = ts.getLeadingCommentRangesOfNode(parent || node, file)
             if (commentRanges) {
-                const commentText = getCommentText(commentRanges, node)
+                const wsCommentRefs: string[] = [];
+                const commentText = getCommentText(commentRanges, node, wsCommentRefs)
 
+                if (wsCommentRefs.length) {
+                    stmt.data = wsCommentRefs.join(";")
+                }
                 if (commentText && stmt) {
                     stmt.comment = commentText;
                 }
@@ -1637,7 +1672,7 @@ ${output}</xml>`;
          * by empty lines between comments (a commented empty line, not an empty line
          * between two separate comment blocks)
          */
-        function getCommentText(commentRanges: ts.CommentRange[], node: Node) {
+        function getCommentText(commentRanges: ts.CommentRange[], node: Node, workspaceRefs?: string[]) {
             let text = ""
             let currentLine = ""
 
@@ -1654,7 +1689,11 @@ ${output}</xml>`;
                         appendMatch(lines[i], i, lines.length, multiLineCommentRegex);
                     }
                     if (currentLine) text += currentLine
-                    workspaceComments.push(text);
+                    const ref = getCommentRef();
+                    if (workspaceRefs) {
+                        workspaceRefs.push(ref);
+                    }
+                    workspaceComments.push({ text, refId: ref });
                     text  = '';
                     currentLine = '';
                 }
