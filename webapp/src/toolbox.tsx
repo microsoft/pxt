@@ -354,7 +354,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         const searchTreeRow = ToolboxSearch.getSearchTreeRow();
 
         let index = 0;
-        return <div ref={e => this.rootElement = e} id={`${name}EditorToolbox`}>
+        return <div ref={e => this.rootElement = e} id={`${editorname}EditorToolbox`}>
             {showSearchBox ? <ToolboxSearch ref="searchbox" parent={parent} toolbox={this} editorname={editorname} /> : undefined}
             <div className="blocklyTreeRoot">
                 <div role="tree">
