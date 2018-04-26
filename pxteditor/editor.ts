@@ -60,6 +60,7 @@ namespace pxt.editor {
         highContrast?: boolean;
 
         home?: boolean;
+        hasError?: boolean;
     }
 
     export interface EditorState {

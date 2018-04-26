@@ -437,6 +437,15 @@ export class ProjectView
         this.forceUpdate(); // we now have editors prepared
     }
 
+    // Add an error guard for the entire application
+    componentDidCatch(error: any, info: any) {
+        core.killLoadingQueue();
+        pxsim.U.remove(document.getElementById('loading'));
+        this.setState({ hasError: true });
+        // Log critical error
+        pxt.tickEvent('pxt.criticalerror', { error, info });
+    }
+
     private pickEditorFor(f: pkg.File): srceditor.Editor {
         return this.allEditors.filter(e => e.acceptsFile(f))[0]
     }
@@ -1760,6 +1769,17 @@ export class ProjectView
             'full-abs'
         ];
         const rootClasses = sui.cx(rootClassList);
+
+        if (this.state.hasError) {
+            return <div id="root" className="ui middle aligned center aligned grid" style={{ height: '100%', alignItems: 'center' }}>
+                <div className="ui raised segment inverted purple">
+                    <h2>{lf("Oops") + "  😞😞😞"}</h2>
+                    {lf("This doesn't happen often, but looks like we messed up..")}
+                    <br /> <br />
+                    {lf("We're going to need you to refresh your page.")}
+                </div>
+            </div>
+        }
         return (
             <div id='root' className={rootClasses}>
                 {hideMenuBar ? undefined :
