@@ -687,7 +687,7 @@ namespace pxt.blocks {
 
     function compileWorkspaceComment(c: Blockly.WorkspaceComment): JsNode {
         const content = c.getContent();
-        return Helpers.mkMultiComment(content);
+        return Helpers.mkMultiComment(content.trim());
     }
 
     function defaultValueForType(t: Point): JsNode {
