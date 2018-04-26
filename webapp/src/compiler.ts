@@ -182,6 +182,7 @@ function ensureApisInfoAsync(): Promise<void> {
     if (refreshApis || !cachedApis)
         return workerOpAsync("apiInfo", {})
             .then(apis => {
+                if (Object.keys(apis).length === 0) return undefined;
                 refreshApis = false;
                 return ts.pxtc.localizeApisAsync(apis, pkg.mainPkg);
             }).then(apis => {

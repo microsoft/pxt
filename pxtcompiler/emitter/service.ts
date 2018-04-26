@@ -667,6 +667,10 @@ namespace ts.pxtc.service {
         apiInfo: () => {
             lastBlocksInfo = undefined;
             lastFuse = undefined;
+            if (host.opts === emptyOptions) {
+                // Host was reset, don't load apis with empty options
+                return undefined;
+            }
             return lastApiInfo = getApiInfo(host.opts, service.getProgram());
         },
         blocksInfo: v => blocksInfoOp(v as any),

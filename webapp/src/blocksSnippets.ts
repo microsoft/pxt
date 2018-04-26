@@ -31,32 +31,18 @@ export const loops: BuiltinCategoryDefinition = {
             </value>
         </block>`
         },
-        // {
-        //     name: "pxt_controls_for",
-        //     attributes: {
-        //         blockId: "pxt_controls_for",
-        //         weight: 47
-        //     },
-        //     blockXml: `<block type="pxt_controls_for">
-        //     <value name="VAR">
-        //         <shadow type="variables_get_reporter">
-        //             <field name="VAR">${lf("{id:var}index")}</field>
-        //         </shadow>
-        //     </value>
-        //     <value name="TO">
-        //         <shadow type="math_whole_number">
-        //             <field name="NUM">4</field>
-        //         </shadow>
-        //     </value>
-        // </block>`
-        // },
         {
-            name: "controls_simple_for",
+            name: "pxt_controls_for",
             attributes: {
-                blockId: "controls_simple_for",
+                blockId: "pxt_controls_for",
                 weight: 47
             },
-            blockXml: `<block type="controls_simple_for">
+            blockXml: `<block type="pxt_controls_for">
+            <value name="VAR">
+                <shadow type="variables_get_reporter">
+                    <field name="VAR">${lf("{id:var}index")}</field>
+                </shadow>
+            </value>
             <value name="TO">
                 <shadow type="math_whole_number">
                     <field name="NUM">4</field>
@@ -64,32 +50,18 @@ export const loops: BuiltinCategoryDefinition = {
             </value>
         </block>`
         },
-        // {
-        //     name: "pxt_controls_for_of",
-        //     attributes: {
-        //         blockId: "pxt_controls_for_of",
-        //         weight: 46
-        //     },
-        //     blockXml: `<block type="pxt_controls_for_of">
-        //     <value name="VAR">
-        //         <shadow type="variables_get_reporter">
-        //             <field name="VAR">${lf("{id:var}value")}</field>
-        //         </shadow>
-        //     </value>
-        //     <value name="LIST">
-        //         <shadow type="variables_get">
-        //             <field name="VAR">list</field>
-        //         </shadow>
-        //     </value>
-        // </block>`
-        // },
         {
-            name: "controls_for_of",
+            name: "pxt_controls_for_of",
             attributes: {
-                blockId: "controls_for_of",
+                blockId: "pxt_controls_for_of",
                 weight: 46
             },
-            blockXml: `<block type="controls_for_of">
+            blockXml: `<block type="pxt_controls_for_of">
+            <value name="VAR">
+                <shadow type="variables_get_reporter">
+                    <field name="VAR">${lf("{id:var}value")}</field>
+                </shadow>
+            </value>
             <value name="LIST">
                 <shadow type="variables_get">
                     <field name="VAR">list</field>

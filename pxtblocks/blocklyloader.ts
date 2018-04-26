@@ -259,8 +259,8 @@ namespace pxt.blocks {
         return value;
     }
 
-    export function createFlyoutHeadingLabel(name: string, color?: string, icon?: string, iconClass?: string, shouldInject?: boolean) {
-        const headingLabel = createFlyoutLabel(name, color, icon, iconClass, shouldInject);
+    export function createFlyoutHeadingLabel(name: string, color?: string, icon?: string, iconClass?: string) {
+        const headingLabel = createFlyoutLabel(name, color, icon, iconClass);
         headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
         return headingLabel;
     }
@@ -273,7 +273,7 @@ namespace pxt.blocks {
         return groupLabel;
     }
 
-    function createFlyoutLabel(name: string, color?: string, icon?: string, iconClass?: string, shouldInject?: boolean): HTMLElement {
+    function createFlyoutLabel(name: string, color?: string, icon?: string, iconClass?: string): HTMLElement {
         // Add the Heading label
         let headingLabel = goog.dom.createDom('label') as HTMLElement;
         headingLabel.setAttribute('text', name);
@@ -286,17 +286,6 @@ namespace pxt.blocks {
                 if (iconClass) headingLabel.setAttribute('web-icon-class', iconClass);
             }
             else {
-                if (shouldInject) {
-                    pxt.toolbox.injectToolboxIconCss(`
-                        .blocklyFlyoutLabelIcon.blocklyFlyoutIcon${name} {
-                            display: inline-block !important;
-                            background-image: url("${Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon))}")!important;
-                            width: 1em;
-                            height: 1em;
-                            background-size: 1em!important;
-                        }
-                    `);
-                }
                 headingLabel.setAttribute('web-icon-class', `blocklyFlyoutIcon${name}`);
             }
         }

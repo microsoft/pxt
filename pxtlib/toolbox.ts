@@ -63,26 +63,6 @@ namespace pxt.toolbox {
         }
     }
 
-    let namespaceStyleBuffer: string = '';
-    export function injectToolboxIconCss(extraCss?: string): void {
-        if (extraCss)
-            toolboxStyleBuffer += extraCss;
-
-        if (!toolboxStyle) {
-            toolboxStyle = document.createElement('style');
-            toolboxStyle.id = "blocklyToolboxIcons";
-            toolboxStyle.type = 'text/css';
-            let head = document.head || document.getElementsByTagName('head')[0];
-            head.appendChild(toolboxStyle);
-        }
-
-        if (toolboxStyle.sheet) {
-            toolboxStyle.textContent = toolboxStyleBuffer + namespaceStyleBuffer;
-        } else {
-            toolboxStyle.appendChild(document.createTextNode(toolboxStyleBuffer + namespaceStyleBuffer));
-        }
-    }
-
     export function getNamespaceColor(ns: string): string {
         if (pxt.appTarget.appTheme.blockColors && pxt.appTarget.appTheme.blockColors[ns])
             return pxt.appTarget.appTheme.blockColors[ns] as string;
