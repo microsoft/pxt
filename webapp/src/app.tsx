@@ -766,10 +766,6 @@ export class ProjectView
     ////////////             Import               /////////////
     ///////////////////////////////////////////////////////////
 
-    convertTouchDevelopToTypeScriptAsync(td: string): Promise<string> {
-        return tdlegacy.td2tsAsync(td);
-    }
-
     hexFileImporters: pxt.editor.IHexFileImporter[] = [{
         id: "default",
         canImport: data => data.meta.cloudId == "ks/" + pxt.appTarget.id || data.meta.cloudId == pxt.CLOUD_ID + pxt.appTarget.id // match on targetid
