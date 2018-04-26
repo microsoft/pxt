@@ -325,27 +325,23 @@ namespace pxt.blocks.layout {
         for (let i = 0; i < groups.length; i++) {
             const group = groups[i];
             if (group.children) {
-                let x = 0;
+                const valueDimensions = group.value.getHeightWidth();
+                group.x = 0;
+                group.y = 0;
+
+                let x = valueDimensions.width + innerGroupMargin;
                 let y = 0;
 
-                // Lay comments out above the parent node
+                // Lay comments out to the right of the parent node
                 for (let j = 0; j < group.children.length; j++) {
                     const child = group.children[j];
                     child.x = x;
-                    child.y = 0;
-                    x += child.width + innerGroupMargin;
-                    y = Math.max(child.height + innerGroupMargin, y);
+                    child.y = y;
+                    y += child.height + innerGroupMargin;
+                    group.width = Math.max(group.width, x + child.width);
                 }
 
-                // These are the coordinates of the parent (below the comments)
-                group.x = 0;
-                group.y = y;
-
-                const valueDimensions = group.value.getHeightWidth();
-
-                // These dimensions are for the entire group
-                group.width = Math.max(x - innerGroupMargin, valueDimensions.width);
-                group.height = y + innerGroupMargin + valueDimensions.height;
+                group.height = Math.max(y - innerGroupMargin, valueDimensions.height);
             }
 
             surfaceArea += (group.height + innerGroupMargin) * (group.width + innerGroupMargin);
