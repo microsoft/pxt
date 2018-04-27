@@ -198,18 +198,19 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     abstract showFlyout(treeRow: toolbox.ToolboxCategory): void;
     moveFocusToFlyout() { }
 
-    abstractShowFlyout(treeRow: toolbox.ToolboxCategory,
-        createHeadingLabel: () => void, createGroupLabel: (group: string, icon?: string) => void,
-        createBlocks: (blocks: toolbox.BlockDefinition[]) => void): boolean {
-        const { nameid, subns, groups, groupIcons, blocks } = treeRow;
-        const ns = nameid;
+    protected abstract showFlyoutHeadingLabel(ns: string, subns: string, icon: string, color: string): void;
+    protected abstract showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string): void;
+    protected abstract showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]): void;
+
+    abstractShowFlyout(treeRow: toolbox.ToolboxCategory): boolean {
+        const { nameid: ns, subns, icon, color, groups, groupIcons, labelLineWidth, blocks } = treeRow;
 
         let fns = blocks;
         if (!fns || !fns.length) return false;
 
         if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
             // Add the Heading label
-            createHeadingLabel();
+            this.showFlyoutHeadingLabel(ns, subns, icon, color);
         }
 
         // Organize and rearrange methods into groups
@@ -252,17 +253,17 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
                 // Add the group label
                 if (group != 'other') {
-                    createGroupLabel(group, groupIconsDict[group]);
+                    this.showFlyoutGroupLabel(group, groupIconsDict[group], labelLineWidth);
                 }
 
                 // Add the blocks in that group
                 if (blockGroups[group]) {
-                    createBlocks(blockGroups[group]);
+                    this.showFlyoutBlocks(ns, color, blockGroups[group]);
                 }
             }
         } else if (groupLength == 1) {
             Object.keys(blockGroups).forEach(blockGroup => {
-                createBlocks(blockGroups[blockGroup]);
+                this.showFlyoutBlocks(ns, color, blockGroups[blockGroup]);
             })
         }
 

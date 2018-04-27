@@ -942,40 +942,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public showFlyout(treeRow: toolbox.ToolboxCategory) {
         if (!this.editor) return;
-        const { nameid, subns, icon, color, name, labelLineWidth } = treeRow;
-        const ns = nameid;
-        const category = name;
+        const { nameid: ns } = treeRow;
+
+        // Create a new flyout
+        let monacoFlyout = this.createMonacoFlyout();
 
         if (ns == 'search') {
             this.showSearchFlyout();
             return;
         }
 
-        let monacoFlyout = this.createMonacoFlyout();
-        const fontSize = this.parent.settings.editorFontSize;
-
-        let that = this;
-        function createHeadingLabel() {
-            const categoryName = name ? name :
-                `${subns ? `${Util.capitalize(ns)} > ${Util.capitalize(subns)}` : Util.capitalize(ns)}`;
-            const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
-
-            that.getMonacoLabel(categoryName,
-                'monacoFlyoutLabel monacoFlyoutHeading', true, icon, iconClass, color);
-        }
-
-        function createGroupLabel(group: string) {
-            that.getMonacoLabel(pxt.Util.rlf(`{id:group}${group}`),
-                'monacoFlyoutLabel blocklyFlyoutGroup', false, undefined, undefined, undefined, true, labelLineWidth);
-        }
-
-        const filters = that.parent.state.editorState ? this.parent.state.editorState.filters : undefined;
-        const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
-        function createBlocks(blocks: toolbox.BlockDefinition[]) {
-            that.createMonacoBlocks(that, monacoFlyout, ns, blocks, color, filters, categoryState);
-        }
-
-        if (this.abstractShowFlyout(treeRow, createHeadingLabel, createGroupLabel, createBlocks)) {
+        if (this.abstractShowFlyout(treeRow)) {
             // Hide editor floats
             this.parent.setState({ hideEditorFloats: true });
         } else {
@@ -983,11 +960,32 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    protected showFlyoutHeadingLabel(ns: string, subns: string, icon: string, color: string) {
+        const categoryName = name ? name :
+            `${subns ? `${Util.capitalize(ns)} > ${Util.capitalize(subns)}` : Util.capitalize(ns)}`;
+        const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
+
+        this.getMonacoLabel(categoryName,
+            'monacoFlyoutLabel monacoFlyoutHeading', true, icon, iconClass, color);
+    }
+
+    protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string) {
+        this.getMonacoLabel(pxt.Util.rlf(`{id:group}${group}`),
+            'monacoFlyoutLabel blocklyFlyoutGroup', false, undefined, undefined, undefined, true, labelLineWidth);
+    }
+
+    protected showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]) {
+        let monacoFlyout = this.getMonacoFlyout();
+        const filters = this.parent.state.editorState ? this.parent.state.editorState.filters : undefined;
+        const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
+        this.createMonacoBlocks(this, monacoFlyout, ns, blocks, color, filters, categoryState);
+    }
+
     private showSearchFlyout() {
         let monacoBlocks: HTMLDivElement[] = [];
         const searchBlocks = this.toolbox.getSearchBlocks();
 
-        const monacoFlyout = this.createMonacoFlyout();
+        const monacoFlyout = this.getMonacoFlyout();
 
         const that = this;
         function getNamespaceColor(ns: string) {

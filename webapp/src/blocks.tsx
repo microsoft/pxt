@@ -356,10 +356,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.isReady = true
     }
 
-    private prepareBlockly(showCategories?: boolean) {
+    private prepareBlockly(forceHasCategories?: boolean) {
         let blocklyDiv = document.getElementById('blocksEditor');
         blocklyDiv.innerHTML = '';
-        this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(showCategories));
+        this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories));
         // set Blockly Colors
         let blocklyColors = (Blockly as any).Colours;
         Util.jsonMergeFrom(blocklyColors, pxt.appTarget.appTheme.blocklyColors || {});
@@ -773,13 +773,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
     }
 
-    private getBlocklyOptions(showCategories?: boolean) {
+    private getBlocklyOptions(forceHasCategories?: boolean) {
         let blocklyOptions = this.getDefaultOptions();
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
-        const hasCategories = showCategories != undefined ? showCategories :
-            (blocklyOptions.hasCategories != undefined ? blocklyOptions.hasCategories : this.showCategories);
+        const hasCategories = (forceHasCategories != undefined) ? forceHasCategories :
+            (blocklyOptions.hasCategories != undefined ? blocklyOptions.hasCategories :
+                this.showCategories);
         blocklyOptions.hasCategories = hasCategories;
         if (!hasCategories) this.showCategories = false;
+        // If we're using categories, show the category toolbox, otherwise show the flyout toolbox
         const toolbox = hasCategories ?
             document.getElementById('blocklyToolboxDefinitionCategory')
             : document.getElementById('blocklyToolboxDefinitionFlyout');
@@ -835,7 +837,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (hasCategories) {
                 this.toolbox.setState({ loading: false, categories: this.getAllCategories(), showSearchBox: this.shouldShowSearch() });
             } else {
-                this.showFlyoutToolbox();
+                this.showFlyoutOnlyToolbox();
             }
         } else {
             // Toolbox mode is different, need to refresh.
@@ -1065,77 +1067,78 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private flyoutBlockXmlCache: pxt.Map<Element[]> = {};
+    private flyoutXmlList: Element[] = [];
     public showFlyout(treeRow: toolbox.ToolboxCategory) {
-        const { nameid: ns, subns, icon, color, name, labelLineWidth } = treeRow;
+        const { nameid: ns, subns } = treeRow;
 
         if (ns == 'search') {
             this.showSearchFlyout();
             return;
         }
 
-        let xmlList: Element[] = [];
+        this.flyoutXmlList = [];
         if (this.flyoutBlockXmlCache[ns + subns]) {
             pxt.debug("showing flyout with blocks from flyout blocks xml cache");
-            xmlList = this.flyoutBlockXmlCache[ns + subns];
-            this.showFlyoutInternal_(xmlList);
+            this.flyoutXmlList = this.flyoutBlockXmlCache[ns + subns];
+            this.showFlyoutInternal_(this.flyoutXmlList);
             return;
         }
 
-        function createHeadingLabel() {
-            const categoryName = name ? name :
-                subns ? `${Util.capitalize(ns)} > ${Util.capitalize(subns)}` : Util.capitalize(ns);
-            const iconClass = `blocklyTreeIcon${icon ? ns.toLowerCase() : 'Default'}`.replace(/\s/g, '');
-            let headingLabel = pxt.blocks.createFlyoutHeadingLabel(categoryName, color, icon, iconClass);
-            xmlList.push(headingLabel);
-        }
-        function createGroupLabel(group: string, groupicon?: string) {
-            let groupLabel = pxt.blocks.createFlyoutGroupLabel(pxt.Util.rlf(`{id:group}${group}`),
-                groupicon, labelLineWidth);
-            xmlList.push(groupLabel);
-        }
-
-        let that = this;
-        const filters = this.parent.state.editorState ? this.parent.state.editorState.filters : undefined;
-        const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
-        function createBlocks(blocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[]) {
-            blocks.sort((f1, f2) => {
-                // Sort the blocks
-                return (f2.attributes.weight != undefined ? f2.attributes.weight : 50)
-                    - (f1.attributes.weight != undefined ? f1.attributes.weight : 50);
-            }).forEach((block) => {
-                let blockXml: Element;
-                if (block.type == "button") {
-                    blockXml = that.getButtonXml(block as toolbox.ButtonDefinition);
-                } else {
-                    blockXml = that.getBlockXml(block as toolbox.BlockDefinition);
-                }
-                if (blockXml) xmlList.push(blockXml);
-            })
-        }
-
-        if (this.abstractShowFlyout(treeRow, createHeadingLabel, createGroupLabel, createBlocks)) {
+        if (this.abstractShowFlyout(treeRow)) {
             // Cache blocks xml list for later
-            this.flyoutBlockXmlCache[ns + subns] = xmlList;
+            this.flyoutBlockXmlCache[ns + subns] = this.flyoutXmlList;
 
-            this.showFlyoutInternal_(xmlList);
+            this.showFlyoutInternal_(this.flyoutXmlList);
         }
     }
 
+    protected showFlyoutHeadingLabel(ns: string, subns: string, icon: string, color: string) {
+        const categoryName = name ? name :
+            subns ? `${Util.capitalize(ns)} > ${Util.capitalize(subns)}` : Util.capitalize(ns);
+        const iconClass = `blocklyTreeIcon${icon ? ns.toLowerCase() : 'Default'}`.replace(/\s/g, '');
+        let headingLabel = pxt.blocks.createFlyoutHeadingLabel(categoryName, color, icon, iconClass);
+        this.flyoutXmlList.push(headingLabel);
+    }
+
+    protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string) {
+        let groupLabel = pxt.blocks.createFlyoutGroupLabel(pxt.Util.rlf(`{id:group}${group}`),
+            groupicon, labelLineWidth);
+        this.flyoutXmlList.push(groupLabel);
+    }
+
+    protected showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]) {
+        const filters = this.parent.state.editorState ? this.parent.state.editorState.filters : undefined;
+        const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
+        blocks.sort((f1, f2) => {
+            // Sort the blocks
+            return (f2.attributes.weight != undefined ? f2.attributes.weight : 50)
+                - (f1.attributes.weight != undefined ? f1.attributes.weight : 50);
+        }).forEach((block) => {
+            let blockXml: Element;
+            if (block.type == "button") {
+                blockXml = this.getButtonXml(block as toolbox.ButtonDefinition);
+            } else {
+                blockXml = this.getBlockXml(block as toolbox.BlockDefinition);
+            }
+            if (blockXml) this.flyoutXmlList.push(blockXml);
+        })
+    }
+
     private showSearchFlyout() {
-        let xmlList: Element[] = [];
+        this.flyoutXmlList = [];
         const searchBlocks = this.toolbox.getSearchBlocks();
 
         searchBlocks.forEach((block) => {
             const blockXml = this.getBlockXml(block);
-            if (blockXml) xmlList.push(blockXml);
+            if (blockXml) this.flyoutXmlList.push(blockXml);
         })
 
-        if (xmlList.length == 0) {
+        if (this.flyoutXmlList.length == 0) {
             let label = goog.dom.createDom('label');
             label.setAttribute('text', lf("No search results..."));
-            xmlList.push(label);
+            this.flyoutXmlList.push(label);
         }
-        this.showFlyoutInternal_(xmlList);
+        this.showFlyoutInternal_(this.flyoutXmlList);
     }
 
     private showFlyoutInternal_(xmlList: Element[]) {
@@ -1149,7 +1152,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    showFlyoutToolbox() {
+    // For editors that have no toolb
+    showFlyoutOnlyToolbox() {
         // Show a Flyout only with all the blocks
         const allCategories = this.getAllCategories();
         let allBlocks: toolbox.BlockDefinition[] = [];
