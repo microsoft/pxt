@@ -119,7 +119,6 @@ declare namespace pxt {
     interface AppCloud {
         workspaces?: boolean;
         packages?: boolean;
-        publishing?: boolean;
         sharing?: boolean; // uses cloud-based anonymous sharing
         importing?: boolean; // import url dialog
         embedding?: boolean;
