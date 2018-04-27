@@ -166,7 +166,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let minX: number;
         let minY: number;
         let needsLayout = false;
-        let flyoutOnly = !(this.editor as any).toolbox_ && (this.editor as any).flyout_;
+        let flyoutOnly = !this.editor.toolbox_ && this.editor.flyout_;
 
         this.editor.getTopComments(false).forEach(b => {
             const tp = b.getBoundingRectangle().topLeft;
@@ -199,7 +199,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // Otherwise translate the blocks so that they are positioned on the top left
             this.editor.getTopComments(false).forEach(c => c.moveBy(-minX, -minY));
             this.editor.getTopBlocks(false).forEach(b => b.moveBy(-minX, -minY));
-            this.editor.scrollX = flyoutOnly ? (this.editor as any).flyout_.width_ + 10 : 10;
+            this.editor.scrollX = flyoutOnly ? this.editor.flyout_.width_ + 10 : 10;
             this.editor.scrollY = 10;
 
             // Forces scroll to take effect
@@ -460,8 +460,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     setScale(scale: number) {
         if (!this.editor) return;
-        if (scale != (this.editor as any).scale) {
-            (this.editor as any).setScale(scale);
+        if (scale != this.editor.scale) {
+            this.editor.setScale(scale);
         }
     }
 
@@ -513,7 +513,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     showPackageDialog() {
         pxt.tickEvent("blocks.addpackage");
-        if ((this.editor as any).toolbox_) (this.editor as any).toolbox_.clearSelection();
+        if (this.editor.toolbox_) this.editor.toolbox_.clearSelection();
         this.parent.showPackageDialog();
     }
 
@@ -778,7 +778,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         const hasCategories = showCategories != undefined ? showCategories :
             (blocklyOptions.hasCategories != undefined ? blocklyOptions.hasCategories : this.showCategories);
-        (blocklyOptions as any).hasCategories = hasCategories;
+        blocklyOptions.hasCategories = hasCategories;
         if (!hasCategories) this.showCategories = false;
         const toolbox = hasCategories ?
             document.getElementById('blocklyToolboxDefinitionCategory')
@@ -829,9 +829,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         const hasCategories = this.shouldShowCategories();
 
-        const editor_ = (this.editor as any);
         // We might need to switch the toolbox type
-        if ((editor_.toolbox_ && hasCategories) || (editor_.flyout_ && !hasCategories)) {
+        if ((this.editor.toolbox_ && hasCategories) || (this.editor.flyout_ && !hasCategories)) {
             // Toolbox is consistent with current mode, safe to update
             if (hasCategories) {
                 this.toolbox.setState({ loading: false, categories: this.getAllCategories(), showSearchBox: this.shouldShowSearch() });
@@ -916,8 +915,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public hideFlyout() {
-        if ((this.editor as any).toolbox_) {
-            (this.editor as any).toolbox_.flyout_.hide();
+        if (this.editor.toolbox_) {
+            this.editor.toolbox_.flyout_.hide();
         }
         if (this.toolbox) this.toolbox.clear();
     }
@@ -1141,12 +1140,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private showFlyoutInternal_(xmlList: Element[]) {
         // Blockly internal methods to show a toolbox or a flyout
-        if ((this.editor as any).toolbox_) {
-            (this.editor as any).toolbox_.flyout_.show(xmlList);
-            (this.editor as any).toolbox_.flyout_.scrollToStart();
-        } else if ((this.editor as any).flyout_) {
-            (this.editor as any).flyout_.show(xmlList);
-            (this.editor as any).flyout_.scrollToStart();
+        if (this.editor.toolbox_) {
+            this.editor.toolbox_.flyout_.show(xmlList);
+            this.editor.toolbox_.flyout_.scrollToStart();
+        } else if (this.editor.flyout_) {
+            this.editor.flyout_.show(xmlList);
+            this.editor.flyout_.scrollToStart();
         }
     }
 
