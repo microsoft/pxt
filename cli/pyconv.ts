@@ -904,7 +904,7 @@ function setupScope(n: py.ScopeDef) {
 function typeAnnot(t: Type) {
     let s = t2s(t)
     if (s[0] == "?")
-        return B.mkText("")
+        return B.mkText(": any; /** TODO: type **/")
     return B.mkText(": " + t2s(t))
 }
 
@@ -1080,6 +1080,8 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         if (!ctx.currClass && !ctx.currFun && nm[0] != "_")
             pref = "export "
         if (nm && ctx.currClass && !ctx.currFun) {
+            // class fields can't be const
+            isConstCall = false;
             let src = expr(n.value)
             let fd = getClassField(ctx.currClass, nm)
             let attrTp = typeOf(n.value)
@@ -1120,7 +1122,10 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         if (isConstCall || isUpperCase) {
             // first run would have "let" in it
             defvar(getName(n.targets[0]), {})
-            return B.mkStmt(B.mkText(pref + "const "), B.mkInfix(expr(n.targets[0]), "=", expr(n.value)))
+            let s = pref;
+            if (!/^static /.test(pref))
+                s += "const ";
+            return B.mkStmt(B.mkText(s), B.mkInfix(expr(n.targets[0]), "=", expr(n.value)))
         }
         if (!pref && n.targets[0].kind == "Tuple") {
             let res = [
@@ -1421,7 +1426,7 @@ let funMap: Map<FunOverride> = {
     "pins.I2CDevice.read_into": { n: ".readInto", t: tpVoid },
     "bool": { n: "!!", t: tpBoolean },
     "Array.index": { n: ".indexOf", t: tpNumber },
-    "time.sleep": { n: "loops.pause", t: tpVoid, scale: 1000 }
+    "time.sleep": { n: "pause", t: tpVoid, scale: 1000 }
 }
 
 function isSuper(v: py.Expr) {
@@ -1778,7 +1783,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
             let s = n.slice as py.Slice
             return B.mkInfix(expr(n.value), ".",
                 B.H.mkCall("slice", [s.lower ? expr(s.lower) : B.mkText("0"),
-                    s.upper ? expr(s.upper) : null].filter(x => !!x)))
+                s.upper ? expr(s.upper) : null].filter(x => !!x)))
         }
         else {
             return exprTODO(n)
@@ -1947,6 +1952,7 @@ export function convertAsync(fns: string[]) {
         .then(buf => {
             pxt.debug(`analyzing python AST (${buf.length} bytes)`)
             let js = JSON.parse(buf.toString("utf8"))
+            fs.writeFileSync("pyast.json", JSON.stringify(js, null, 2), { encoding: "utf8" })
             const rec = (v: any): any => {
                 if (Array.isArray(v)) {
                     for (let i = 0; i < v.length; ++i)
