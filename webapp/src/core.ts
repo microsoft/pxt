@@ -229,7 +229,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     }
 
     options.htmlBody = `<div class="ui fluid icon input">
-                            <input type="text" id="promptDialogInput" value="${options.defaultValue}">
+                            <input autoFocus type="text" id="promptDialogInput" value="${options.defaultValue}">
                         </div>`;
 
     options.onLoaded = (ref: HTMLElement) => {

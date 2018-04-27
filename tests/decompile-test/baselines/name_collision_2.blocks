@@ -9,8 +9,12 @@
 </shadow>
 </value>
 <next>
-<block type="controls_simple_for">
+<block type="pxt_controls_for">
+<value name="VAR">
+<shadow type="variables_get_reporter">
 <field name="VAR">j</field>
+</shadow>
+</value>
 <value name="TO">
 <shadow type="math_whole_number">
 <field name="NUM">5</field>
@@ -35,12 +39,14 @@
 </shadow>
 </value>
 <next>
-<block type="controls_simple_for">
+<block type="pxt_controls_for">
+<value name="VAR">
+<shadow type="variables_get_reporter">
 <field name="VAR">k</field>
-<value name="TO">
-<shadow type="math_whole_number">
-<field name="NUM">0</field>
 </shadow>
+</value>
+<value name="TO">
+<shadow type="math_whole_number"><field name="NUM">0</field></shadow>
 <block type="variables_get">
 <field name="VAR">k</field>
 </block>

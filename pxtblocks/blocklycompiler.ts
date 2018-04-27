@@ -11,6 +11,12 @@ namespace pxt.blocks {
     let placeholders: Map<Map<any>> = {};
     const MAX_COMMENT_LINE_LENGTH = 50;
 
+
+    interface CommentMap {
+        orphans: Blockly.WorkspaceComment[];
+        idToComments: Map<Blockly.WorkspaceComment[]>;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Miscellaneous utility functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -256,6 +262,11 @@ namespace pxt.blocks {
         }
     }
 
+    function getLoopVariableField(b: Blockly.Block) {
+        return (b.type == "pxt_controls_for" || b.type == "pxt_controls_for_of") ?
+            getInputTargetBlock(b, "VAR") : b;
+    }
+
     function getInputTargetBlock(b: Blockly.Block, n: string) {
         const res = b.getInputTargetBlock(n);
 
@@ -334,13 +345,15 @@ namespace pxt.blocks {
                             attachPlaceholderIf(e, b, "IF" + i, pBoolean.type);
                         break;
 
+                    case "pxt_controls_for":
                     case "controls_simple_for":
                         unionParam(e, b, "TO", ground(pNumber.type));
                         break;
+                    case "pxt_controls_for_of":
                     case "controls_for_of":
                         unionParam(e, b, "LIST", ground("Array"));
                         const listTp = returnType(e, getInputTargetBlock(b, "LIST"));
-                        const elementTp = lookup(e, escapeVarName(b.getField("VAR").getText(), e)).type;
+                        const elementTp = lookup(e, escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e)).type;
                         genericLink(listTp, elementTp);
                         break;
                     case "variables_set":
@@ -681,7 +694,7 @@ namespace pxt.blocks {
 
     function compileWorkspaceComment(c: Blockly.WorkspaceComment): JsNode {
         const content = c.getContent();
-        return Helpers.mkMultiComment(content);
+        return Helpers.mkMultiComment(content.trim());
     }
 
     function defaultValueForType(t: Point): JsNode {
@@ -905,7 +918,7 @@ namespace pxt.blocks {
     }
 
     function compileControlsFor(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
-        let bVar = escapeVarName(b.getField("VAR").getText(), e);
+        let bVar = escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e);
         let bTo = getInputTargetBlock(b, "TO");
         let bDo = getInputTargetBlock(b, "DO");
         let bBy = getInputTargetBlock(b, "BY");
@@ -954,7 +967,7 @@ namespace pxt.blocks {
     }
 
     function compileControlsForOf(e: Environment, b: Blockly.Block, comments: string[]) {
-        let bVar = escapeVarName(b.getField("VAR").getText(), e);
+        let bVar = escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e);
         let bOf = getInputTargetBlock(b, "LIST");
         let bDo = getInputTargetBlock(b, "DO");
 
@@ -1262,10 +1275,12 @@ namespace pxt.blocks {
             case 'controls_if':
                 r = compileControlsIf(e, <Blockly.IfBlock>b, comments);
                 break;
+            case 'pxt_controls_for':
             case 'controls_for':
             case 'controls_simple_for':
                 r = compileControlsFor(e, b, comments);
                 break;
+            case 'pxt_controls_for_of':
             case 'controls_for_of':
                 r = compileControlsForOf(e, b, comments);
                 break;
@@ -1451,11 +1466,13 @@ namespace pxt.blocks {
 
         if (skipVariables) return e;
 
+        const loopBlocks = ["controls_for", "controls_simple_for", "controls_for_of", "pxt_controls_for", "pxt_controls_for_of"];
+
         const variableIsScoped = (b: Blockly.Block, name: string): boolean => {
             if (!b)
                 return false;
-            else if ((b.type == "controls_for" || b.type == "controls_simple_for" || b.type == "controls_for_of")
-                && escapeVarName(b.getField("VAR").getText(), e) == name)
+            else if (loopBlocks.filter(l => l == b.type).length > 0
+                && escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e) == name)
                 return true;
             else if (isMutatingBlock(b) && b.mutation.isDeclaredByMutation(name))
                 return true;
@@ -1494,8 +1511,8 @@ namespace pxt.blocks {
 
         // collect local variables.
         if (w) w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
-            if (b.type == "controls_for" || b.type == "controls_simple_for" || b.type == "controls_for_of") {
-                let x = escapeVarName(b.getField("VAR").getText(), e);
+            if (loopBlocks.filter(l => l == b.type).length > 0) {
+                let x = escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e);
                 if (b.type == "controls_for_of") {
                     trackLocalDeclaration(x, null);
                 }
@@ -1577,7 +1594,18 @@ namespace pxt.blocks {
 
             updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
 
+            // compile workspace comments, add them to the top
+            const topComments = w.getTopComments(true)
+            const commentMap = groupWorkspaceComments(topblocks, topComments);
+
+            commentMap.orphans.forEach(comment => append(stmtsMain, compileWorkspaceComment(comment).children));
+
             topblocks.forEach(b => {
+                if (commentMap.idToComments[b.id]) {
+                    commentMap.idToComments[b.id].forEach(comment => {
+                        append(stmtsMain, compileWorkspaceComment(comment).children);
+                    });
+                }
                 if (b.type == ts.pxtc.ON_START_TYPE)
                     append(stmtsMain, compileStartEvent(e, b).children);
                 else {
@@ -1618,16 +1646,7 @@ namespace pxt.blocks {
                     return mkStmt(mkText("let " + b.name + tp + " = "), defl)
                 });
 
-            const allStmts = stmtsVariables.concat(stmtsMain);
-
-            // compile workspace comments, add them to the top
-            const commentStmts: JsNode[] = [];
-            const topComments = w.getTopComments(true)
-            topComments.forEach(c => {
-                append(commentStmts, compileWorkspaceComment(c).children);
-            })
-
-            return commentStmts.concat(allStmts);
+            return stmtsVariables.concat(stmtsMain);
         } catch (err) {
             let be: Blockly.Block = (err as any).block;
             if (be) {
@@ -1837,5 +1856,81 @@ namespace pxt.blocks {
         });
 
         return res;
+    }
+
+    interface Rect {
+        id: string;
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    }
+
+    function groupWorkspaceComments(blocks: Blockly.Block[], comments: Blockly.WorkspaceComment[]) {
+        if (!blocks.length || blocks.some(b => !b.rendered)) {
+            return {
+                orphans: comments,
+                idToComments: {}
+            };
+        }
+        const blockBounds: Rect[] = blocks.map(block => {
+            const bounds = block.getBoundingRectangle();
+            const size = block.getHeightWidth();
+            return {
+                id: block.id,
+                x: bounds.topLeft.x,
+                y: bounds.topLeft.y,
+                width: size.width,
+                height: size.height
+            }
+        });
+
+        const map: CommentMap = {
+            orphans: [],
+            idToComments: {}
+        };
+
+        const radius = 20;
+        for (const comment of comments) {
+            const bounds = comment.getBoundingRectangle();
+            const size = comment.getHeightWidth();
+
+            const x = bounds.topLeft.x;
+            const y = bounds.topLeft.y;
+
+            let parent: Rect;
+
+            for (const rect of blockBounds) {
+                if (doesIntersect(x, y, size.width, size.height, rect)) {
+                    parent = rect;
+                }
+                else if (!parent && doesIntersect(x - radius, y - radius, size.width + radius * 2, size.height + radius * 2, rect)) {
+                    parent = rect;
+                }
+            }
+
+            if (parent) {
+                if (!map.idToComments[parent.id]) {
+                    map.idToComments[parent.id] = [];
+                }
+                map.idToComments[parent.id].push(comment);
+            }
+            else {
+                map.orphans.push(comment);
+            }
+        }
+
+        return map;
+    }
+
+
+    function doesIntersect(x: number, y: number, width: number, height: number, other: Rect) {
+        const xOverlap = between(x, other.x, other.x + other.width) || between(other.x, x, x + width);
+        const yOverlap = between(y, other.y, other.y + other.height) || between(other.y, y, y + height);
+        return xOverlap && yOverlap;
+
+        function between(val: number, lower: number, upper: number) {
+            return val >= lower && val <= upper;
+        }
     }
 }

@@ -201,9 +201,6 @@ namespace pxt.editor {
         isTextEditor(): boolean;
         renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<string>;
 
-        // obsolete, may go away
-        convertTouchDevelopToTypeScriptAsync(td: string): Promise<string>;
-
         toggleHighContrast(): void;
         pair(): void;
         launchFullEditor(): void;

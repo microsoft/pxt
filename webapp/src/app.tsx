@@ -14,7 +14,6 @@ import * as sui from "./sui";
 import * as simulator from "./simulator";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
-import * as tdlegacy from "./tdlegacy"
 import * as cmds from "./cmds"
 import * as appcache from "./appcache";
 import * as screenshot from "./screenshot";
@@ -766,10 +765,6 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
     ////////////             Import               /////////////
     ///////////////////////////////////////////////////////////
-
-    convertTouchDevelopToTypeScriptAsync(td: string): Promise<string> {
-        return tdlegacy.td2tsAsync(td);
-    }
 
     hexFileImporters: pxt.editor.IHexFileImporter[] = [{
         id: "default",
@@ -1529,11 +1524,11 @@ export class ProjectView
 
     showReportAbuse() {
         const pubId = this.state.header && this.state.header.pubCurrent && this.state.header.pubId;
-        dialogs.showReportAbuse(pubId);
+        dialogs.showReportAbuseAsync(pubId);
     }
 
     showAboutDialog() {
-        dialogs.showAboutDialog();
+        dialogs.showAboutDialogAsync();
     }
 
     showShareDialog() {
@@ -1546,7 +1541,7 @@ export class ProjectView
     }
 
     showImportUrlDialog() {
-        dialogs.showImportUrlDialog().done(id => {
+        dialogs.showImportUrlDialogAsync().done(id => {
             if (!id) {
                 core.errorNotification(lf("Sorry, the project url looks invalid."));
             } else {
@@ -1556,11 +1551,25 @@ export class ProjectView
     }
 
     showImportFileDialog() {
-        dialogs.showImportFileDialog();
+        dialogs.showImportFileDialogAsync().done(res => {
+            if (res) {
+                pxt.tickEvent("app.open.file");
+                this.importFile(res);
+            }
+        });
     }
 
     showResetDialog() {
-        dialogs.showResetDialog();
+        dialogs.showResetDialogAsync().done(r => {
+            if (!r) return Promise.resolve();
+            return Promise.resolve()
+                .then(() => {
+                    return pxt.winrt.releaseAllDevicesAsync();
+                })
+                .then(() => {
+                    return this.resetWorkspace();
+                });
+        });
     }
 
     showExitAndSaveDialog() {

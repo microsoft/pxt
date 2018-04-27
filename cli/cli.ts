@@ -981,7 +981,6 @@ function uploadCoreAsync(opts: UploadOptions) {
         let cfg: pxt.WebConfig = {
             "relprefix": opts.localDir,
             "workerjs": opts.localDir + "worker.js",
-            "tdworkerjs": opts.localDir + "tdworker.js",
             "monacoworkerjs": opts.localDir + "monacoworker.js",
             "pxtVersion": pxtVersion(),
             "pxtRelId": "",
@@ -1030,7 +1029,6 @@ function uploadCoreAsync(opts: UploadOptions) {
         "codeembed.html",
         "release.manifest",
         "worker.js",
-        "tdworker.js",
         "monacoworker.js",
         "simulator.html",
         "sim.manifest",
@@ -3102,48 +3100,6 @@ function getCachedAsync(url: string, path: string) {
                     .then(() => v)))
 }
 
-function testConverterAsync(parsed: commandParser.ParsedCommand) {
-    const url = parsed.arguments[0];
-    forceCloudBuild = true
-    let cachePath = "built/cache/"
-    nodeutil.mkdirP(cachePath)
-    let tdev = require("./web/tdast")
-    let errors: string[] = []
-    return getApiInfoAsync()
-        .then(astinfo => prepTestOptionsAsync()
-            .then(opts => {
-                fs.writeFileSync("built/apiinfo.json", JSON.stringify(astinfo, null, 1))
-                return getCachedAsync(url, cachePath + url.replace(/[^a-z0-9A-Z\.]/g, "-"))
-                    .then(text => {
-                        let srcs = JSON.parse(text)
-                        for (let id of Object.keys(srcs)) {
-                            let v = srcs[id]
-                            let tdopts = {
-                                text: v,
-                                useExtensions: true,
-                                apiInfo: astinfo
-                            }
-
-                            let r = tdev.AST.td2ts(tdopts)
-                            let src: string = r.text
-                            U.assert(!!src.trim(), "source is empty")
-                            if (!compilesOK(opts, id + ".ts", src)) {
-                                errors.push(id)
-                                fs.writeFileSync("built/" + id + ".ts.fail", src)
-                            }
-                        }
-                    })
-            }))
-        .then(() => {
-            if (errors.length) {
-                console.log("Errors: " + errors.join(", "))
-                process.exit(1)
-            } else {
-                console.log("All OK.")
-            }
-        })
-}
-
 function patchOpts(opts: pxtc.CompileOptions, fn: string, content: string) {
     console.log(`*** ${fn}, size=${content.length}`)
     let opts2 = U.flatClone(opts)
@@ -5115,7 +5071,6 @@ function initCommands() {
     advancedCommand("test", "run tests on current package", testAsync);
     advancedCommand("testassembler", "test the assemblers", testAssemblers);
     advancedCommand("testdir", "compile files in directory one by one", testDirAsync, "<dir>");
-    advancedCommand("testconv", "test TD->TS converter", testConverterAsync, "<jsonurl>");
     advancedCommand("testpkgconflicts", "tests package conflict detection logic", testPkgConflictsAsync);
     advancedCommand("testdbg", "tests hardware debugger", dbgTestAsync);
 
@@ -5380,7 +5335,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
 
     if (process.env["PXT_DEBUG"]) {
         pxt.options.debug = true;
-        pxt.debug = console.debug || console.log;
+        pxt.debug = pxt.log;
     }
 
     commonfiles = readJson(__dirname + "/pxt-common.json")

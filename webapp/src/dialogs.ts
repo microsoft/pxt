@@ -3,7 +3,7 @@ import * as core from "./core";
 
 import Cloud = pxt.Cloud;
 
-export function showAboutDialog() {
+export function showAboutDialogAsync() {
     const compileService = pxt.appTarget.compileService;
     const description = pxt.appTarget.description || pxt.appTarget.title;
     const githubUrl = pxt.appTarget.appTheme.githubUrl;
@@ -20,7 +20,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
     }).done();
 }
 
-export function showImportUrlDialog() {
+export function showImportUrlDialogAsync() {
     let input: HTMLInputElement;
     const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
     return core.confirmAsync({
@@ -55,7 +55,7 @@ export function showImportUrlDialog() {
     })
 }
 
-export function showImportFileDialog() {
+export function showImportFileDialogAsync() {
     let input: HTMLInputElement;
     let ext = ".mkcd";
     if (pxt.appTarget.compile.hasHex) {
@@ -67,7 +67,7 @@ export function showImportFileDialog() {
     if (pxt.appTarget.compile.saveAsPNG) {
         ext = ".png";
     }
-    core.confirmAsync({
+    return core.confirmAsync({
         header: lf("Open {0} file", ext),
         onLoaded: (el) => {
             input = el.querySelectorAll('input')[0] as HTMLInputElement;
@@ -78,15 +78,15 @@ export function showImportFileDialog() {
 <input type="file" tabindex="0" autofocus aria-describedby="selectFileToOpenLabel" class="ui blue fluid"></input>
 </div>
 </div>`,
-    }).done(res => {
+    }).then(res => {
         if (res) {
-            pxt.tickEvent("app.open.file");
-            this.importFile(input.files[0]);
+            return input.files[0];
         }
+        return undefined;
     })
 }
 
-export function showReportAbuse(pubId?: string) {
+export function showReportAbuseAsync(pubId?: string) {
     let urlInput: HTMLInputElement;
     let reasonInput: HTMLTextAreaElement;
     const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
@@ -134,23 +134,13 @@ export function showReportAbuse(pubId?: string) {
     })
 }
 
-export function showResetDialog() {
-    core.confirmAsync({
+export function showResetDialogAsync() {
+    return core.confirmAsync({
         header: lf("Reset"),
         body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),
         agreeLbl: lf("Reset"),
         agreeClass: "red",
         agreeIcon: "sign out",
         disagreeLbl: lf("Cancel")
-    }).then(r => {
-        if (!r) return Promise.resolve();
-        return Promise.resolve()
-            .then(() => {
-                return pxt.winrt.releaseAllDevicesAsync();
-            })
-            .then(() => {
-                return this.resetWorkspace();
-            });
     })
-        .done();
 }
