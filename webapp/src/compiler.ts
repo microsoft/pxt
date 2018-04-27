@@ -92,7 +92,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
 
             return ensureApisInfoAsync()
                 .then(() => {
-                    if (!resp.usedSymbols) return resp
+                    if (!resp.usedSymbols || !cachedApis) return resp
                     for (let k of Object.keys(resp.usedSymbols)) {
                         resp.usedSymbols[k] = U.lookup(cachedApis.byQName, k)
                     }
