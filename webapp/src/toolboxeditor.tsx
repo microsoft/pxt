@@ -198,7 +198,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     abstract showFlyout(treeRow: toolbox.ToolboxCategory): void;
     moveFocusToFlyout() { }
 
-    showFlyoutInternal(treeRow: toolbox.ToolboxCategory,
+    abstractShowFlyout(treeRow: toolbox.ToolboxCategory,
         createHeadingLabel: () => void, createGroupLabel: (group: string, icon?: string) => void,
         createBlocks: (blocks: toolbox.BlockDefinition[]) => void): boolean {
         const { nameid, subns, groups, groupIcons, blocks } = treeRow;

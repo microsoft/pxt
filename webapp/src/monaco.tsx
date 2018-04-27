@@ -975,7 +975,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             that.createMonacoBlocks(that, monacoFlyout, ns, blocks, color, filters, categoryState);
         }
 
-        if (this.showFlyoutInternal(treeRow, createHeadingLabel, createGroupLabel, createBlocks)) {
+        if (this.abstractShowFlyout(treeRow, createHeadingLabel, createGroupLabel, createBlocks)) {
             // Hide editor floats
             this.parent.setState({ hideEditorFloats: true });
         } else {

@@ -1114,7 +1114,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             })
         }
 
-        if (this.showFlyoutInternal(treeRow, createHeadingLabel, createGroupLabel, createBlocks)) {
+        if (this.abstractShowFlyout(treeRow, createHeadingLabel, createGroupLabel, createBlocks)) {
             // Cache blocks xml list for later
             this.flyoutBlockXmlCache[ns + subns] = xmlList;
 
