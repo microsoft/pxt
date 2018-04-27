@@ -3,7 +3,7 @@ import * as core from "./core";
 
 import Cloud = pxt.Cloud;
 
-export function showAboutDialog() {
+export function showAboutDialogAsync() {
     const compileService = pxt.appTarget.compileService;
     const description = pxt.appTarget.description || pxt.appTarget.title;
     const githubUrl = pxt.appTarget.appTheme.githubUrl;
@@ -20,7 +20,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
     }).done();
 }
 
-export function showImportUrlDialog() {
+export function showImportUrlDialogAsync() {
     let input: HTMLInputElement;
     const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
     return core.confirmAsync({
@@ -55,7 +55,7 @@ export function showImportUrlDialog() {
     })
 }
 
-export function showImportFileDialog() {
+export function showImportFileDialogAsync() {
     let input: HTMLInputElement;
     let ext = ".mkcd";
     if (pxt.appTarget.compile.hasHex) {
@@ -86,7 +86,7 @@ export function showImportFileDialog() {
     })
 }
 
-export function showReportAbuse(pubId?: string) {
+export function showReportAbuseAsync(pubId?: string) {
     let urlInput: HTMLInputElement;
     let reasonInput: HTMLTextAreaElement;
     const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
@@ -134,7 +134,7 @@ export function showReportAbuse(pubId?: string) {
     })
 }
 
-export function showResetDialog() {
+export function showResetDialogAsync() {
     return core.confirmAsync({
         header: lf("Reset"),
         body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),

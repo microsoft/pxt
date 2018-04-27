@@ -1528,11 +1528,11 @@ export class ProjectView
 
     showReportAbuse() {
         const pubId = this.state.header && this.state.header.pubCurrent && this.state.header.pubId;
-        dialogs.showReportAbuse(pubId);
+        dialogs.showReportAbuseAsync(pubId);
     }
 
     showAboutDialog() {
-        dialogs.showAboutDialog();
+        dialogs.showAboutDialogAsync();
     }
 
     showShareDialog() {
@@ -1545,7 +1545,7 @@ export class ProjectView
     }
 
     showImportUrlDialog() {
-        dialogs.showImportUrlDialog().done(id => {
+        dialogs.showImportUrlDialogAsync().done(id => {
             if (!id) {
                 core.errorNotification(lf("Sorry, the project url looks invalid."));
             } else {
@@ -1555,7 +1555,7 @@ export class ProjectView
     }
 
     showImportFileDialog() {
-        dialogs.showImportFileDialog().done(res => {
+        dialogs.showImportFileDialogAsync().done(res => {
             if (res) {
                 pxt.tickEvent("app.open.file");
                 this.importFile(res);
@@ -1564,7 +1564,7 @@ export class ProjectView
     }
 
     showResetDialog() {
-        dialogs.showResetDialog().done(r => {
+        dialogs.showResetDialogAsync().done(r => {
             if (!r) return Promise.resolve();
             return Promise.resolve()
                 .then(() => {
