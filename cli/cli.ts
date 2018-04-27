@@ -725,6 +725,7 @@ interface UploadOptions {
     githubOnly?: boolean;
     builtPackaged?: string;
     minify?: boolean;
+    noAppCache?: boolean;
 }
 
 interface BlobReq {
@@ -1006,7 +1007,6 @@ function uploadCoreAsync(opts: UploadOptions) {
             "@monacoworkerjs@": `${opts.localDir}monacoworker.js`,
             "@workerjs@": `${opts.localDir}worker.js`,
             "@timestamp@": `# ver ${new Date().toString()}`,
-            "data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
             "@defaultLocaleStrings@": "",
             "@cachedHexFiles@": "",
@@ -1014,6 +1014,9 @@ function uploadCoreAsync(opts: UploadOptions) {
             "@targetFieldEditorsJs@": targetFieldEditorsJs ? `${opts.localDir}fieldeditors.js` : "",
             "@targetImages@": targetImages.length ? targetImages.map(k =>
                 `${opts.localDir}${path.join('./docs', logos[k])}`).join('\n') : ''
+        }
+        if (!opts.noAppCache) {
+            replacements["data-manifest=\"\""] = `manifest="${opts.localDir}release.manifest"`;
         }
     }
 
@@ -1107,7 +1110,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                     if (opts.localDir) {
                         for (let e of trg.appTheme.docMenu)
                             if (e.path[0] == "/") {
-                                e.path = opts.localDir + "docs" + e.path + ".html"
+                                e.path = opts.localDir + "docs" + e.path;
                             }
                         trg.appTheme.logoUrl = opts.localDir
                         trg.appTheme.homeUrl = opts.localDir
@@ -1547,7 +1550,7 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
         Object.keys(logos)
             .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
             .forEach(k => {
-                logos[k] = path.join('./docs', logos[k]);
+                logos[k] = path.join('./docs', logos[k]).replace(/\\/g, "/");
             })
     } else if (!localDir) {
         Object.keys(logos)
@@ -3854,6 +3857,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
     const minify = !!parsed.flags["minify"];
     const bump = !!parsed.flags["bump"];
+    const disableAppCache = !!parsed.flags["no-appcache"];
     if (parsed.flags["cloud"]) forceCloudBuild = true;
 
     pxt.log(`packaging editor to ${builtPackaged}`)
@@ -3862,10 +3866,10 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
         .then(() => bump ? bumpAsync() : Promise.resolve())
         .then(() => internalBuildTargetAsync({ packaged: true }));
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
-    else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify));
+    else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify, disableAppCache));
 }
 
-function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean) {
+function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean, noAppCache?: boolean) {
     const pref = path.resolve(builtPackaged);
     const localDir = label == "./" ? "./" : label ? "/" + label + "/" : "/"
     return uploadCoreAsync({
@@ -3873,11 +3877,13 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
         pkgversion: "0.0.0",
         fileList: pxtFileList("node_modules/pxt-core/")
             .concat(targetFileList())
-            .concat(["targetconfig.json"]),
+            .concat(["targetconfig.json"])
+            .concat(nodeutil.allFiles("built/hexcache")),
         localDir,
         target: (pxt.appTarget.id || "unknownstatic"),
         builtPackaged,
-        minify
+        minify,
+        noAppCache
     }).then(() => renderDocs(builtPackaged, localDir))
 }
 
@@ -4171,7 +4177,7 @@ function internalGenDocsAsync(docs: boolean, locs: boolean, fileFilter?: string,
             pxt.debug(`building docs in ${dirname}`);
             return buildAsync();
         });
-    else // from a project build 
+    else // from a project build
         return buildAsync();
 }
 
@@ -4966,7 +4972,12 @@ function initCommands() {
             "bump": {
                 description: "bump version number prior to package"
             },
-            cloud: { description: "forces build to happen in the cloud" }
+            "cloud": {
+                description: "Force build to happen in the cloud"
+            },
+            "no-appcache": {
+                description: "Disables application cache"
+            }
         }
     }, staticpkgAsync);
 

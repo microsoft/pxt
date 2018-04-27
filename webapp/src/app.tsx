@@ -43,6 +43,7 @@ import * as blocks from "./blocks"
 import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
+import * as electron from "./electron";
 
 type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
@@ -1745,7 +1746,7 @@ export class ProjectView
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
 
-        const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT();
+        const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || electron.isElectron;
 
         let rootClassList = [
             "ui",
@@ -2227,7 +2228,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (pxt.appTarget.appTheme.allowParentController) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
-    else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
+    else if (Cloud.isLocalHost() || electron.isPxtElectron) workspace.setupWorkspace("fs");
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -2287,7 +2288,10 @@ document.addEventListener("DOMContentLoaded", () => {
             initHashchange();
             return initExtensionsAsync();
         })
-        .then(() => pxt.winrt.initAsync(importHex))
+        .then(() => {
+            electron.initElectron(theEditor);
+            return pxt.winrt.initAsync(importHex);
+        })
         .then(() => pxt.winrt.hasActivationProjectAsync())
         .then((hasWinRTProject) => {
             const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];

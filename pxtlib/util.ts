@@ -492,6 +492,7 @@ namespace ts.pxtc.Util {
         allowHttpErrors?: boolean; // don't treat non-200 responses as errors
         allowGzipPost?: boolean;
         responseArrayBuffer?: boolean;
+        forceLiveEndpoint?: boolean;
     }
 
     export interface HttpResponse {

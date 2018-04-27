@@ -1336,6 +1336,28 @@ namespace pxt.hex {
     }
 
     function downloadHexInfoLocalAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
+        if (pxt.webConfig && pxt.webConfig.isStatic) {
+            return Util.requestAsync({
+                url: `${pxt.webConfig.cdnUrl}hexcache/${extInfo.sha}.hex`
+            })
+                .then((resp) => {
+                    if (resp.text) {
+                        const result: any = {
+                            enums: [],
+                            functions: [],
+                            hex: resp.text.split(/\r?\n/)
+                        }
+                        return Promise.resolve(result);
+                    }
+                    pxt.log("Hex info not found in bundled hex cache");
+                    return Promise.resolve();
+                })
+                .catch((e) => {
+                    pxt.log("Error fetching hex info from bundled hex cache");
+                    return Promise.resolve();
+                });
+        }
+
         if (!Cloud.localToken || !window || !Cloud.isLocalHost()) {
             return Promise.resolve();
         }

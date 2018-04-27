@@ -4,6 +4,7 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
+import * as electron from "./electron";
 
 import Cloud = pxt.Cloud;
 
@@ -91,14 +92,14 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         }
 
         const targetTheme = pxt.appTarget.appTheme;
-        const isApp = pxt.winrt.isWinRT();
+        const isApp = pxt.winrt.isWinRT() || electron.isElectron;
         const isLocalServe = location.hostname === "localhost";
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
-        const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetConfig && targetConfig.windowsStoreLink 
+        const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetConfig && targetConfig.windowsStoreLink
             && !isApp
             && !pxt.shell.isSandboxMode();
 

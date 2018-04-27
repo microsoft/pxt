@@ -1,6 +1,7 @@
 /// <reference path="pxtpackage.d.ts" />
 /// <reference path="pxtparts.d.ts" />
 /// <reference path="pxtblockly.d.ts" />
+/// <reference path="pxtelectron.d.ts" />
 
 declare namespace pxt {
     // targetconfig.json
@@ -13,6 +14,8 @@ declare namespace pxt {
         windowsStoreLink?: string;
         // link to the latest firmware urls (boardid -> url)
         firmwareUrls?: pxt.Map<string>;
+        // release manifest for the electron app
+        electronManifest?: pxt.electron.ElectronManifest;
     }
 
     interface PackagesConfig {
