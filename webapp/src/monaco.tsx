@@ -920,24 +920,28 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     ///////////////////////////////////////////////////////////
 
     public getBlocksForCategory(ns: string, subns?: string): toolbox.BlockDefinition[] {
-        function filterBlocks(blocks: toolbox.BlockDefinition[]) {
-            return blocks.filter((block => !(block.attributes.blockHidden || block.attributes.deprecated)
-                && (block.name.indexOf('_') != 0)
-                && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
-                    || (subns && ((block.attributes.advanced && subns == 'more')
-                        || (block.attributes.subcategory && subns == block.attributes.subcategory))))));
-        }
-
         if (!snippets.isBuiltin(ns)) {
-            return filterBlocks(this.nsMap[ns]);
+            return this.filterBlocks(subns, this.nsMap[ns]);
         }
         else {
-            let cat = snippets.getBuiltinCategory(ns);
-            let blocks = cat.blocks || [];
-            blocks.forEach(b => { b.noNamespace = true })
-            if (!cat.custom && this.nsMap[ns.toLowerCase()]) blocks = blocks.concat(this.nsMap[ns.toLowerCase()].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
-            return filterBlocks(blocks);
+            return this.getBuiltinBlocks(ns, subns);
         }
+    }
+
+    private filterBlocks(subns: string, blocks: toolbox.BlockDefinition[]) {
+        return blocks.filter((block => !(block.attributes.blockHidden || block.attributes.deprecated)
+            && (block.name.indexOf('_') != 0)
+            && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
+                || (subns && ((block.attributes.advanced && subns == 'more')
+                    || (block.attributes.subcategory && subns == block.attributes.subcategory))))));
+    }
+
+    private getBuiltinBlocks(ns: string, subns: string) {
+        let cat = snippets.getBuiltinCategory(ns);
+        let blocks = cat.blocks || [];
+        blocks.forEach(b => { b.noNamespace = true })
+        if (!cat.custom && this.nsMap[ns.toLowerCase()]) blocks = blocks.concat(this.nsMap[ns.toLowerCase()].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
+        return this.filterBlocks(subns, blocks);
     }
 
     public showFlyout(treeRow: toolbox.ToolboxCategory) {

@@ -992,78 +992,76 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     ///////////////////////////////////////////////////////////
 
     public getBlocksForCategory(ns: string, subns?: string): (toolbox.BlockDefinition | toolbox.ButtonDefinition)[] {
-        let that = this;
-
-        function filterBlocks(blocks: toolbox.BlockDefinition[]) {
-            return blocks.filter((block => !(block.attributes.blockHidden || block.attributes.deprecated)
-                && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
-                || (subns && ((block.attributes.advanced && subns == 'more')
-                    || (block.attributes.subcategory && subns == block.attributes.subcategory))))));
-        }
-
-        function getBuiltInBlocks(ns: string) {
-            let cat = snippets.getBuiltinCategory(ns);
-            let blocks: toolbox.BlockDefinition[] = cat.blocks || [];
-            blocks.forEach(b => { b.noNamespace = true })
-            if (!cat.custom && that.nsMap[ns.toLowerCase()]) {
-                blocks = filterBlocks(blocks.concat(that.nsMap[ns.toLowerCase()]));
-            }
-            return blocks;
-        }
-
-        function getNonBuiltInBlocks(ns: string) {
-            return filterBlocks(that.nsMap[ns]) || [];
-        }
-
-        function getExtraBlocks(ns: string, subns: string) {
-            if (subns) return [];
-            let extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[] = [];
-            const onStartNamespace = pxt.appTarget.runtime.onStartNamespace || "loops";
-            if (ns == onStartNamespace) {
-                extraBlocks.push({
-                    name: ts.pxtc.ON_START_TYPE,
-                    attributes: {
-                        blockId: ts.pxtc.ON_START_TYPE,
-                        weight: pxt.appTarget.runtime.onStartWeight || 10
-                    },
-                    blockXml: `<block type="pxt-on-start"></block>`,
-                    noNamespace: true
-                });
-            }
-            // Inject pause until block
-            const pauseUntil = snippets.getPauseUntil();
-            if (pauseUntil && ns == pauseUntil.attributes.blockNamespace) {
-                extraBlocks.push(pauseUntil);
-            }
-            // Add extension buttons
-            if (!subns) {
-                that.extensions.forEach(config => {
-                    const name = config.name;
-                    const namespace = config.extension.namespace || name;
-                    if (ns == namespace) {
-                        extraBlocks.push({
-                            name: `EXT${name}_BUTTON`,
-                            type: "button",
-                            attributes: {
-                                blockId: `EXT${name}_BUTTON`,
-                                label: config.extension.label ? Util.rlf(config.extension.label) : Util.lf("Editor"),
-                                weight: 101
-                            },
-                            callback: () => {
-                                that.openExtension(name);
-                            }
-                        });
-                    }
-                })
-            }
-            return extraBlocks;
-        }
-
         if (!snippets.isBuiltin(ns)) {
-            return getNonBuiltInBlocks(ns).concat(getExtraBlocks(ns, subns));
+            return this.getNonBuiltInBlocks(ns, subns).concat(this.getExtraBlocks(ns, subns));
         } else {
-            return getBuiltInBlocks(ns).concat(getExtraBlocks(ns, subns));
+            return this.getBuiltInBlocks(ns, subns).concat(this.getExtraBlocks(ns, subns));
         }
+    }
+
+    private filterBlocks(subns: string, blocks: toolbox.BlockDefinition[]) {
+        return blocks.filter((block => !(block.attributes.blockHidden || block.attributes.deprecated)
+            && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
+            || (subns && ((block.attributes.advanced && subns == 'more')
+                || (block.attributes.subcategory && subns == block.attributes.subcategory))))));
+    }
+
+    private getBuiltInBlocks(ns: string, subns: string) {
+        let cat = snippets.getBuiltinCategory(ns);
+        let blocks: toolbox.BlockDefinition[] = cat.blocks || [];
+        blocks.forEach(b => { b.noNamespace = true })
+        if (!cat.custom && this.nsMap[ns.toLowerCase()]) {
+            blocks = this.filterBlocks(subns, blocks.concat(this.nsMap[ns.toLowerCase()]));
+        }
+        return blocks;
+    }
+
+    private getNonBuiltInBlocks(ns: string, subns: string) {
+        return this.filterBlocks(subns, this.nsMap[ns]) || [];
+    }
+
+    private getExtraBlocks(ns: string, subns: string) {
+        if (subns) return [];
+        let extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[] = [];
+        const onStartNamespace = pxt.appTarget.runtime.onStartNamespace || "loops";
+        if (ns == onStartNamespace) {
+            extraBlocks.push({
+                name: ts.pxtc.ON_START_TYPE,
+                attributes: {
+                    blockId: ts.pxtc.ON_START_TYPE,
+                    weight: pxt.appTarget.runtime.onStartWeight || 10
+                },
+                blockXml: `<block type="pxt-on-start"></block>`,
+                noNamespace: true
+            });
+        }
+        // Inject pause until block
+        const pauseUntil = snippets.getPauseUntil();
+        if (pauseUntil && ns == pauseUntil.attributes.blockNamespace) {
+            extraBlocks.push(pauseUntil);
+        }
+        // Add extension buttons
+        if (!subns) {
+            this.extensions.forEach(config => {
+                const name = config.name;
+                const namespace = config.extension.namespace || name;
+                if (ns == namespace) {
+                    extraBlocks.push({
+                        name: `EXT${name}_BUTTON`,
+                        type: "button",
+                        attributes: {
+                            blockId: `EXT${name}_BUTTON`,
+                            label: config.extension.label ? Util.rlf(config.extension.label) : Util.lf("Editor"),
+                            weight: 101
+                        },
+                        callback: () => {
+                            this.openExtension(name);
+                        }
+                    });
+                }
+            })
+        }
+        return extraBlocks;
     }
 
     private flyoutBlockXmlCache: pxt.Map<Element[]> = {};
