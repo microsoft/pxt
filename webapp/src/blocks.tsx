@@ -1260,7 +1260,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             blockXml = Blockly.Xml.textToDom(block.blockXml);
         }
         if (blockXml) {
-            pxt.Util.toArray(blockXml.querySelectorAll('shadow:empty')).forEach((shadow, i) => {
+            pxt.Util.toArray(blockXml.querySelectorAll('shadow'))
+                .filter(shadow => shadow.innerHTML === "")
+                .forEach((shadow, i) => {
                 let type = shadow.getAttribute('type');
                 const builtin = snippets.allBuiltinBlocks()[type];
                 let b = this.getBlockXml(builtin ? builtin : { name: type, attributes: { blockId: type } }, true);
