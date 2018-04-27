@@ -569,13 +569,13 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
 
         // Icon
         const iconClass = `blocklyTreeIcon${subns ? 'more' : icon ? (nameid || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
-
+        const iconContent = subns ? pxt.toolbox.getNamespaceIcon('more') : icon || pxt.toolbox.getNamespaceIcon('default');
         return <div ref={e => this.treeRow = e} className={treeRowClass}
             style={treeRowStyle} tabIndex={0}
             onMouseEnter={onmouseenter} onMouseLeave={onmouseleave}
             onClick={onClick} onKeyDown={onKeyDown ? onKeyDown : sui.fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
-            <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass}`} role="presentation">{icon || pxt.toolbox.getNamespaceIcon('default')}</span>
+            <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass}`} role="presentation">{iconContent}</span>
             <span className="blocklyTreeLabel">{name ? name : `${Util.capitalize(subns || nameid)}`}</span>
         </div>
     }

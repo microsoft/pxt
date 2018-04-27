@@ -1261,7 +1261,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         if (blockXml) {
             pxt.Util.toArray(blockXml.querySelectorAll('shadow'))
-                .filter(shadow => shadow.innerHTML === "")
+                .filter(shadow => !shadow.innerHTML)
                 .forEach((shadow, i) => {
                 let type = shadow.getAttribute('type');
                 const builtin = snippets.allBuiltinBlocks()[type];
