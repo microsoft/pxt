@@ -445,9 +445,15 @@ export class ProjectView
         // Log critical error
         pxt.tickEvent('pxt.criticalerror', { error, info });
         // Reload the page in 2 seconds
-        setTimeout(() => {
-            location.reload();
-        }, 2000)
+        const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") ?
+            Date.parse(pxt.storage.getLocal("lastcriticalerror")) : Date.now();
+        // don't refresh if we refreshed in the last minute
+        if (Date.now() - lastCriticalError > 60 * 1000) {
+            pxt.storage.setLocal("lastcriticalerror", new Date().toISOString());
+            setTimeout(() => {
+                location.reload();
+            }, 2000)
+        }
     }
 
     private pickEditorFor(f: pkg.File): srceditor.Editor {
@@ -1777,10 +1783,8 @@ export class ProjectView
         if (this.state.hasError) {
             return <div id="root" className="ui middle aligned center aligned grid" style={{ height: '100%', alignItems: 'center' }}>
                 <div className="ui raised segment inverted purple">
-                    <h2>{lf("Oops") + "  😞😞😞"}</h2>
-                    {lf("This doesn't happen often, but looks like we've run into a problem..")}
-                    <br /> <br />
-                    {lf("Refreshing your page...")}
+                    <h2>{lf("Oops")}</h2>
+                    {lf("We detected a problem and we will reload the editor in a few seconds..")}
                 </div>
             </div>
         }
