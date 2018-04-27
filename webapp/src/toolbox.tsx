@@ -54,17 +54,11 @@ export interface BuiltinCategoryDefinition {
     name: string;
     nameid: string;
     blocks: (BlockDefinition | ButtonDefinition)[];
-    //icon?: string;
     groups?: string[];
     attributes: pxtc.CommentAttrs;
     removed?: boolean;
     custom?: boolean; // Only add blocks defined in .blocks and don't query nsMap for more
     customClick?: (theEditor: editor.ToolboxEditor) => boolean; // custom handler
-}
-
-export interface Flyout {
-    show(): void;
-    hide(): void;
 }
 
 export interface ToolboxProps {
@@ -87,7 +81,7 @@ export interface ToolboxState {
     focusSearch?: boolean;
     searchBlocks?: pxtc.service.SearchInfo[]; // block ids
 
-    clientWidth?: number;
+    hasError?: boolean;
 }
 
 export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
@@ -237,6 +231,20 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         }
     }
 
+    componentDidCatch(error: any, info: any) {
+        // Log what happened
+        const { editorname } = this.props;
+        pxt.tickEvent(`${editorname}.toolbox.crashed`, { error: error });
+
+        // Update error state
+        this.setState({ hasError: true });
+    }
+
+    recoverToolbox() {
+        // Recover from above error state
+        this.setState({ hasError: false });
+    }
+
     advancedClicked() {
         const { editorname } = this.props;
         pxt.tickEvent(`${editorname}.advanced`, undefined, { interactiveConsent: true });
@@ -332,16 +340,21 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
     renderCore() {
         const { editorname, parent } = this.props;
-        const { showAdvanced, visible, loading, selectedItem, expandedItem, hasSearch, showSearchBox } = this.state;
+        const { showAdvanced, visible, loading, selectedItem, expandedItem, hasSearch, showSearchBox, hasError } = this.state;
         if (!visible) return <div style={{ display: 'none' }} />
 
-        if (loading) return <div>
+        if (loading || hasError) return <div>
             <div className="blocklyTreeRoot">
                 <div className="blocklyTreeRow" style={{ opacity: 0 }} />
             </div>
-            <div className="ui active dimmer">
+            {loading ? <div className="ui active dimmer">
                 <div className="ui loader indeterminate" />
-            </div>
+            </div> : undefined}
+            {hasError ? <div className="ui">
+                {lf("Toolbox crashed..")}
+                <sui.Button icon='refresh' onClick={this.recoverToolbox.bind(this)}
+                    text={lf("Reload")} className='fluid' />
+            </div> : undefined}
         </div>;
 
         const hasAdvanced = this.hasAdvancedCategories();
