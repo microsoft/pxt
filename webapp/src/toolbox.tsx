@@ -569,12 +569,29 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
 
         // Icon
         const iconClass = `blocklyTreeIcon${subns ? 'more' : icon ? (nameid || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
-        const iconContent = subns ? pxt.toolbox.getNamespaceIcon('more') : icon || pxt.toolbox.getNamespaceIcon('default');
+        let iconContent = subns ? pxt.toolbox.getNamespaceIcon('more') : icon || pxt.toolbox.getNamespaceIcon('default');
+        let iconImageStyle: JSX.Element;
+        if (iconContent.length > 1) {
+            // It's probably an image icon, and not an icon code
+            iconImageStyle = <style>
+                {`.blocklyTreeIcon.${iconClass} {
+                    background-image: url("${Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon))}")!important;
+                    width: 30px;
+                    height: 100%;
+                    background-size: 20px !important;
+                    background-repeat: no-repeat !important;
+                    background-position: 50% 50% !important;
+                }`}
+            </style>
+            iconContent = undefined;
+        }
+
         return <div ref={e => this.treeRow = e} className={treeRowClass}
             style={treeRowStyle} tabIndex={0}
             onMouseEnter={onmouseenter} onMouseLeave={onmouseleave}
             onClick={onClick} onKeyDown={onKeyDown ? onKeyDown : sui.fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
+            {iconImageStyle}
             <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass}`} role="presentation">{iconContent}</span>
             <span className="blocklyTreeLabel">{name ? name : `${Util.capitalize(subns || nameid)}`}</span>
         </div>
