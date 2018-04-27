@@ -402,10 +402,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     resize(e?: Event) {
-        const blocklyArea = document.getElementById('blocksArea');
-        const blocklyDiv = document.getElementById('blocksEditor');
+        const blocklyArea = this.getBlocksAreaDiv();
+        if (!blocklyArea) return;
+
+        const blocklyDiv = this.getBlocksEditorDiv();
         // Position blocklyDiv over blocklyArea.
-        if (blocklyArea && blocklyDiv && this.editor) {
+        if (blocklyDiv && this.editor) {
             blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
             blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
             Blockly.svgResize(this.editor);
@@ -414,11 +416,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     resizeToolbox() {
-        const blocklyArea = document.getElementById('blocksArea');
-        const blocklyDiv = document.getElementById('blocksEditor');
+        const blocklyDiv = this.getBlocksEditorDiv();
         if (!blocklyDiv) return;
 
-        const blocklyToolboxDiv = blocklyArea.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLDivElement;
+        const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
         if (!blocklyToolboxDiv) return;
         this.parent.updateEditorLogo(blocklyToolboxDiv.offsetWidth);
 
@@ -485,10 +486,23 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         )
     }
 
+    getBlocksAreaDiv() {
+        return document.getElementById('blocksArea');
+    }
+
+    getBlocksEditorDiv() {
+        const blocksArea = this.getBlocksAreaDiv();
+        return blocksArea ? document.getElementById('blocksEditor') : undefined;
+    }
+
+    getBlocklyToolboxDiv(): HTMLDivElement {
+        const blocksArea = this.getBlocksAreaDiv();
+        return blocksArea ? blocksArea.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLDivElement : undefined;
+    }
+
     renderToolbox(immediate?: boolean) {
         if (pxt.shell.isReadOnly()) return;
-        const blocklyArea = document.getElementById('blocksArea');
-        const blocklyToolboxDiv = blocklyArea.getElementsByClassName('blocklyToolboxDiv')[0];
+        const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
         const blocklyToolbox = <toolbox.Toolbox ref={e => this.toolbox = e} editorname="blocks" parent={this} />;
 
         Util.assert(!!blocklyToolboxDiv);
@@ -828,8 +842,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // Toolbox mode is different, need to refresh.
             if (!hasCategories) {
                 // If we're switching from a toolbox to no toolbox, unmount node
-                const blocklyArea = document.getElementById('blocksArea');
-                ReactDOM.unmountComponentAtNode(blocklyArea.getElementsByClassName('blocklyToolboxDiv')[0]);
+                ReactDOM.unmountComponentAtNode(this.getBlocklyToolboxDiv());
             }
             // Refresh Blockly
             this.delayLoadXml = this.getCurrentSource();
@@ -1054,8 +1067,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private flyoutBlockXmlCache: pxt.Map<Element[]> = {};
     public showFlyout(treeRow: toolbox.ToolboxCategory) {
-        const { nameid, subns, icon, color, name, labelLineWidth } = treeRow;
-        const ns = nameid;
+        const { nameid: ns, subns, icon, color, name, labelLineWidth } = treeRow;
 
         if (ns == 'search') {
             this.showSearchFlyout();
@@ -1072,7 +1084,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         function createHeadingLabel() {
             const categoryName = name ? name :
-                `${subns ? `${Util.capitalize(ns)} > ${Util.capitalize(subns)}` : Util.capitalize(ns)}`;
+                subns ? `${Util.capitalize(ns)} > ${Util.capitalize(subns)}` : Util.capitalize(ns);
             const iconClass = `blocklyTreeIcon${icon ? ns.toLowerCase() : 'Default'}`.replace(/\s/g, '');
             let headingLabel = pxt.blocks.createFlyoutHeadingLabel(categoryName, color, icon, iconClass);
             xmlList.push(headingLabel);
