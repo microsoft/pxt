@@ -35,7 +35,6 @@ pxt.setAppTarget({
 pxt.webConfig = {
     relprefix: undefined,
     workerjs: WEB_PREFIX + "/blb/worker.js",
-    tdworkerjs: undefined,
     monacoworkerjs: undefined,
     pxtVersion: undefined,
     pxtRelId: undefined,

@@ -14,7 +14,6 @@ import * as sui from "./sui";
 import * as simulator from "./simulator";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
-import * as tdlegacy from "./tdlegacy"
 import * as cmds from "./cmds"
 import * as appcache from "./appcache";
 import * as screenshot from "./screenshot";
@@ -765,10 +764,6 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
     ////////////             Import               /////////////
     ///////////////////////////////////////////////////////////
-
-    convertTouchDevelopToTypeScriptAsync(td: string): Promise<string> {
-        return tdlegacy.td2tsAsync(td);
-    }
 
     hexFileImporters: pxt.editor.IHexFileImporter[] = [{
         id: "default",

@@ -129,7 +129,6 @@ namespace pxt {
     export interface WebConfig {
         relprefix: string; // "/beta---",
         workerjs: string;  // "/beta---worker",
-        tdworkerjs: string;  // "/beta---tdworker",
         monacoworkerjs: string; // "/beta---monacoworker",
         pxtVersion: string; // "?",
         pxtRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",
@@ -152,7 +151,6 @@ namespace pxt {
         let r: WebConfig = {
             relprefix: "/--",
             workerjs: "/worker.js",
-            tdworkerjs: "/tdworker.js",
             monacoworkerjs: "/monacoworker.js",
             pxtVersion: "local",
             pxtRelId: "",
