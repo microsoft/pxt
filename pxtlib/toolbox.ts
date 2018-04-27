@@ -30,12 +30,6 @@ namespace pxt.toolbox {
         default: '\uf12e'
     }
 
-    export enum CategoryMode {
-        None = 1,
-        Basic = 2,
-        All = 3
-    }
-
     let toolboxStyle: HTMLStyleElement;
     let toolboxStyleBuffer: string = '';
     export function appendToolboxIconCss(className: string, i: string): void {

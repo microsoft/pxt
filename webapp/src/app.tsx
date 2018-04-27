@@ -55,7 +55,6 @@ type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
-import CategoryMode = pxt.toolbox.CategoryMode;
 
 pxsim.util.injectPolyphils();
 

@@ -10,7 +10,6 @@ import * as debug from "./debugger";
 import * as toolbox from "./toolbox";
 import * as snippets from "./blocksSnippets";
 
-import CategoryMode = pxt.toolbox.CategoryMode;
 import Util = pxt.Util;
 
 export class Editor extends toolboxeditor.ToolboxEditor {
