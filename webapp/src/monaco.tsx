@@ -1017,15 +1017,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         const attr = that.getNamespaceAttrs(ns);
                         monacoBlocks.push(this.getMonacoBlock(builtinBlock, ns, attr.color));
                     } else {
-                        pxt.log("couldn't find search qName for block: " + block.attributes.blockId);
+                        pxt.log("couldn't find buildin search qName for block: " + block.attributes.blockId);
                     }
                 }
             } else {
                 const fn = this.blockInfo.apis.byQName[block.name];
-                if (fn.name.indexOf('_') == 0) return;
-                const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-                const color = fn.attributes.color || getNamespaceColor(ns);
-                monacoBlocks.push(this.getMonacoBlock(fn, ns, color));
+                if (fn) {
+                    if (fn.name.indexOf('_') == 0) return;
+                    const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+                    const color = fn.attributes.color || getNamespaceColor(ns);
+                    monacoBlocks.push(this.getMonacoBlock(fn, ns, color));
+                } else {
+                    pxt.log("couldn't find non builtin search by qName: " + block.name);
+                }
             }
         })
 
