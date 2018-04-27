@@ -439,20 +439,23 @@ export class ProjectView
 
     // Add an error guard for the entire application
     componentDidCatch(error: any, info: any) {
-        core.killLoadingQueue();
-        pxsim.U.remove(document.getElementById('loading'));
-        this.setState({ hasError: true });
-        // Log critical error
-        pxt.tickEvent('pxt.criticalerror', { error, info });
-        // Reload the page in 2 seconds
-        const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") ?
-            Date.parse(pxt.storage.getLocal("lastcriticalerror")) : Date.now();
-        // don't refresh if we refreshed in the last minute
-        if (Date.now() - lastCriticalError > 60 * 1000) {
-            pxt.storage.setLocal("lastcriticalerror", new Date().toISOString());
-            setTimeout(() => {
-                location.reload();
-            }, 2000)
+        try {
+            core.killLoadingQueue();
+            pxsim.U.remove(document.getElementById('loading'));
+            this.setState({ hasError: true });
+            // Log critical error
+            pxt.tickEvent('pxt.criticalerror', { error, info });
+            // Reload the page in 2 seconds
+            const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") ?
+                Date.parse(pxt.storage.getLocal("lastcriticalerror")) : Date.now();
+            // don't refresh if we refreshed in the last minute
+            if (Date.now() - lastCriticalError > 60 * 1000) {
+                pxt.storage.setLocal("lastcriticalerror", new Date().toISOString());
+                setTimeout(() => {
+                    location.reload();
+                }, 2000)
+            }
+        } catch (e) {
         }
     }
 
