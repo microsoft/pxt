@@ -326,7 +326,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         if (hasSearch) categoriesList.push(ToolboxSearch.getSearchTreeRow());
         categories.forEach(category => {
             categoriesList.push(category);
-            if (category.subcategories && expandedItem == category.nameid) category.subcategories.forEach(subcategory => {
+            if (category.subcategories) category.subcategories.forEach(subcategory => {
                 categoriesList.push(subcategory);
             })
         })
