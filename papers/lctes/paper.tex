@@ -1,234 +1,179 @@
-\documentclass[sigplan]{acmart}
+\documentclass[sigplan, screen]{acmart}
 
-  %\settopmatter{printfolios=true,printccs=false,printacmref=false}
-  %\settopmatter{printfolios=false,printccs=false,printacmref=false}
-  \usepackage{graphicx}
-  \usepackage{listings}
-  \usepackage{enumitem}
+%\settopmatter{printfolios=true,printccs=false,printacmref=false}
+%\settopmatter{printfolios=false,printccs=false,printacmref=false}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{enumitem}
 
-  % URL PACKAGE HACK
-  \expandafter\def\expandafter\UrlBreaks\expandafter{\UrlBreaks%  save the current one
-  \do\a\do\b\do\c\do\d\do\e\do\f\do\g\do\h\do\i\do\j%
-  \do\k\do\l\do\m\do\n\do\o\do\p\do\q\do\r\do\s\do\t%
-  \do\u\do\v\do\w\do\x\do\y\do\z\do\A\do\B\do\C\do\D%
-  \do\E\do\F\do\G\do\H\do\I\do\J\do\K\do\L\do\M\do\N%
-  \do\O\do\P\do\Q\do\R\do\S\do\T\do\U\do\V\do\W\do\X%
-  \do\Y\do\Z}
+% URL PACKAGE HACK
+\expandafter\def\expandafter\UrlBreaks\expandafter{\UrlBreaks%  save the current one
+\do\a\do\b\do\c\do\d\do\e\do\f\do\g\do\h\do\i\do\j%
+\do\k\do\l\do\m\do\n\do\o\do\p\do\q\do\r\do\s\do\t%
+\do\u\do\v\do\w\do\x\do\y\do\z\do\A\do\B\do\C\do\D%
+\do\E\do\F\do\G\do\H\do\I\do\J\do\K\do\L\do\M\do\N%
+\do\O\do\P\do\Q\do\R\do\S\do\T\do\U\do\V\do\W\do\X%
+\do\Y\do\Z}
 
-  \newcommand{\MC}{MakeCode\ }
-  \newcommand{\MCN}{MakeCode}
-  \newcommand{\CO}{CODAL\ }
-  \newcommand{\CON}{CODAL}
-  \newcommand{\COLN}{codal}
-  \newcommand{\UF}{UF2\ }
-  \newcommand{\UFN}{UF2}
-  \newcommand{\flameon}[1]{\emph{#1}}
-  \def\dbhref#1#2{URL}
-  %\def\dbhref#1#2{\href{#1}{#2}}
-  \def\dburl#1{URL}
-  %\def\dburl#1{\url{#1}}
+\newcommand{\MC}{MakeCode\ }
+\newcommand{\MCN}{MakeCode}
+\newcommand{\CO}{CODAL\ }
+\newcommand{\CON}{CODAL}
+\newcommand{\COLN}{codal}
+\newcommand{\UF}{UF2\ }
+\newcommand{\UFN}{UF2}
+\newcommand{\flameon}[1]{\emph{#1}}
+\def\dbhref#1#2{URL}
+%\def\dbhref#1#2{\href{#1}{#2}}
+\def\dburl#1{URL}
+%\def\dburl#1{\url{#1}}
 
-  \setlist[itemize]{leftmargin=*}
-  \lstset{ %
-  language=C++,                % choose the language of the code
-  basicstyle=\footnotesize,       % the size of the fonts that are used for the code
-  numbers=left,                   % where to put the line-numbers
-  numberstyle=\footnotesize,      % the size of the fonts that are used for the line-numbers
-  stepnumber=1,                   % the step between two line-numbers. If it is 1 each line will be numbered
-  numbersep=5pt,                  % how far the line-numbers are from the code
-  backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
-  showspaces=false,               % show spaces adding particular underscores
-  showstringspaces=false,         % underline spaces within strings
-  showtabs=false,                 % show tabs within strings adding particular underscores
-  frame=single,           % adds a frame around the code
-  tabsize=2,          % sets default tabsize to 2 spaces
-  captionpos=b,           % sets the caption-position to bottom
-  breaklines=true,        % sets automatic line breaking
-  breakatwhitespace=false,    % sets if automatic breaks should only happen at whitespace
-  escapeinside={\%*}{*)}          % if you want to add a comment within your code
-  }
-
-    %% For double-blind review submission, w/ CCS and ACM Reference
-    %\documentclass[sigplan,10pt,review,anonymous]{acmart}\settopmatter{printfolios=true}
-    %% For single-blind review submission, w/o CCS and ACM Reference (max submission space)
-    %\documentclass[sigplan,10pt,review]{acmart}\settopmatter{printfolios=true,printccs=false,printacmref=false}
-    %% For single-blind review submission, w/ CCS and ACM Reference
-    %\documentclass[sigplan,10pt,review]{acmart}\settopmatter{printfolios=true}
-    %% For final camera-ready submission, w/ required CCS and ACM Reference
-    %\documentclass[sigplan,10pt]{acmart}\settopmatter{}
+\setlist[itemize]{leftmargin=*}
+\lstset{ %
+language=C++,                % choose the language of the code
+basicstyle=\footnotesize,       % the size of the fonts that are used for the code
+numbers=left,                   % where to put the line-numbers
+numberstyle=\footnotesize,      % the size of the fonts that are used for the line-numbers
+stepnumber=1,                   % the step between two line-numbers. If it is 1 each line will be numbered
+numbersep=5pt,                  % how far the line-numbers are from the code
+backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+showspaces=false,               % show spaces adding particular underscores
+showstringspaces=false,         % underline spaces within strings
+showtabs=false,                 % show tabs within strings adding particular underscores
+frame=single,           % adds a frame around the code
+tabsize=2,          % sets default tabsize to 2 spaces
+captionpos=b,           % sets the caption-position to bottom
+breaklines=true,        % sets automatic line breaking
+breakatwhitespace=false,    % sets if automatic breaks should only happen at whitespace
+escapeinside={\%*}{*)}          % if you want to add a comment within your code
+}
 
 
-    %% Conference information
-    %% Supplied to authors by publisher for camera-ready submission;
-    %% use defaults for review submission.
-    % \acmConference[PL'17]{ACM SIGPLAN Conference on Programming Languages}{January 01--03, 2017}{New York, NY, USA}
-    % \acmYear{2017}
-    % \acmISBN{} % \acmISBN{978-x-xxxx-xxxx-x/YY/MM}
-    % \acmDOI{} % \acmDOI{10.1145/nnnnnnn.nnnnnnn}
-    \startPage{1}
-    \settopmatter{printfolios=true}
+%% Bibliography style
+\bibliographystyle{ACM-Reference-Format}
 
-    %% Copyright information
-    %% Supplied to authors (based on authors' rights management selection;
-    %% see authors.acm.org) by publisher for camera-ready submission;
-    %% use 'none' for review submission.
-    % \setcopyright{acmlicensed}
-    %\setcopyright{acmcopyright}
-    %\setcopyright{acmlicensed}
-    \setcopyright{rightsretained}
-    %\copyrightyear{2017}           %% If different from \acmYear
+%% Some recommended packages.
+\usepackage{booktabs}   %% For formal tables:
+                        %% http://ctan.org/pkg/booktabs
+\usepackage{subcaption} %% For complex figures with subfigures/subcaptions
+                        %% http://ctan.org/pkg/subcaption
+\usepackage{balance}
+\usepackage{courier}
 
-    %% Bibliography style
-    \bibliographystyle{ACM-Reference-Format}
-    %% Citation style
-    %\citestyle{acmauthoryear}  %% For author/year citations
-    %\citestyle{acmnumeric}     %% For numeric citations
-    %\setcitestyle{nosort}      %% With 'acmnumeric', to disable automatic
-                                %% sorting of references within a single citation;
-                                %% e.g., \cite{Smith99,Carpenter05,Baker12}
-                                %% rendered as [14,5,2] rather than [2,5,14].
-    %\setcitesyle{nocompress}   %% With 'acmnumeric', to disable automatic
-                                %% compression of sequential references within a
-                                %% single citation;
-                                %% e.g., \cite{Baker12,Baker14,Baker16}
-                                %% rendered as [2,3,4] rather than [2-4].
+\begin{document}
 
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %% Note: Authors migrating a paper from traditional SIGPLAN
-    %% proceedings format to PACMPL format must update the
-    %% '\documentclass' and topmatter commands above; see
-    %% 'acmart-pacmpl-template.tex'.
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Title information
+\title[Embedded Systems Programming for Education]{\MC and \CON: Intuitive and Efficient Embedded Systems Programming for Education}         %% [Short Title] is optional;
+                                        %% when present, will be used in
+                                        %% header instead of Full Title.
+
+%% Copyright information
+%% Supplied to authors (based on authors' rights management selection;
+%% see authors.acm.org) by publisher for camera-ready submission;
+%% use 'none' for review submission.
+% \setcopyright{acmlicensed}
+%\setcopyright{acmcopyright}
+%\setcopyright{acmlicensed}
+\setcopyright{rightsretained}
+%\copyrightyear{2017}           %% If different from \acmYear
+\acmPrice{15.00}
+\acmDOI{10.1145/3211332.3211335}
+\acmYear{2018}
+\copyrightyear{2018}
+\acmISBN{978-1-4503-5803-3/18/06}
+\acmConference[LCTES'18]{19th ACM SIGPLAN/SIGBED Conference on Languages, Compilers, and Tools for Embedded Systems}{June 19--20, 2018}{Philadelphia, PA, USA}
+
+\startPage{1}
+\settopmatter{printfolios=true}
+
+%% Author with single affiliation.
+\author{James Devine}
+\affiliation{
+  \institution{Lancaster University, UK}            %% \institution is required
+}
+\email{j.devine@lancaster.ac.uk}
+
+\author{Joe Finney}
+\affiliation{
+  \institution{Lancaster University, UK}            %% \institution is required
+}
+\email{j.finney@lancaster.ac.uk}
+
+\author{Micha\l\ Moskal}
+\affiliation{
+  \institution{Microsoft, USA}            %% \institution is required
+}
+\email{mimoskal@microsoft.com}
+
+\author{Peli de Halleux}
+\affiliation{
+  \institution{Microsoft, USA}            %% \institution is required
+}
+\email{jhalleux@microsoft.com}
+
+\author{Thomas Ball}
+\affiliation{
+  \institution{Microsoft, USA}            %% \institution is required
+}
+\email{tball@microsoft.com}
+
+\author{Steve Hodges}
+\affiliation{
+  \institution{Microsoft, UK}            %% \institution is required
+}
+\email{shodges@microsoft.com}
+
+\input{abstract}
+
+\begin{CCSXML}
+  <ccs2012>
+  <concept>
+  <concept_id>10011007.10010940.10010971.10010564</concept_id>
+  <concept_desc>Software and its engineering~Embedded software</concept_desc>
+  <concept_significance>500</concept_significance>
+  </concept>
+  <concept>
+  <concept_id>10011007.10011006.10011041.10011048</concept_id>
+  <concept_desc>Software and its engineering~Runtime environments</concept_desc>
+  <concept_significance>300</concept_significance>
+  </concept>
+  <concept>
+  <concept_id>10011007.10011006.10011066.10011069</concept_id>
+  <concept_desc>Software and its engineering~Integrated and visual development environments</concept_desc>
+  <concept_significance>300</concept_significance>
+  </concept>
+  </ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Software and its engineering~Embedded software}
+\ccsdesc[300]{Software and its engineering~Runtime environments}
+\ccsdesc[300]{Software and its engineering~Integrated and visual development environments}
+
+%% Keywords
+%% comma separated list
+\keywords{education, classroom, embedded systems}
+
+\maketitle
+
+\renewcommand{\shortauthors}{J. Devine, J. Finney, M. Moskal, P. Halleux, T. Ball, S. Hodges}
+
+\input{intro}
+\input{makecode}
+\input{codal}
+\input{uf2}
+\input{eval}
+\input{related}
+\input{conclude}
+
+\section*{Acknowledgements}
+
+The authors would like to thank the members of the MakeCode team for their many contributions to the success of the platform: Abhijith Chatra, Sam El-Husseini, Caitlin Hennessy, Guillaume Jenkins, Richard Knoll, Galen Nickel, Jacqueline Russell, and Kesavan Shanmugam.
 
 
-    %% Some recommended packages.
-    \usepackage{booktabs}   %% For formal tables:
-                            %% http://ctan.org/pkg/booktabs
-    \usepackage{subcaption} %% For complex figures with subfigures/subcaptions
-                            %% http://ctan.org/pkg/subcaption
+\input{appendix}
 
-    \usepackage{courier}
+%% Bibliography
+\bibliography{paper}
 
-    \begin{document}
-
-    \acmConference[LCTES'18]{Languages, Compilers, and Tools for Embedded Systems}{June 19--20}{Philadelphia, PA, USA}
-
-    %% Title information
-    \title[Embedded Systems Programming for Education]{\MC and \CON: Intuitive and Efficient Embedded Systems Programming for Education}         %% [Short Title] is optional;
-                                            %% when present, will be used in
-                                            %% header instead of Full Title.
-    %\subtitle{Microsoft MakeCode and Lancaster University Teams}                     %% \subtitle is optional
-
-
-    %% Author information
-    %% Contents and number of authors suppressed with 'anonymous'.
-    %% Each author should be introduced by \author, followed by
-    %% \authornote (optional), \orcid (optional), \affiliation, and
-    %% \email.
-    %% An author may have multiple affiliations and/or emails; repeat the
-    %% appropriate command.
-    %% Many elements are not rendered, but should be provided for metadata
-    %% extraction tools.
-
-    %% Author with single affiliation.
-    \author{James Devine}
-    \affiliation{
-      \institution{Lancaster University, UK}            %% \institution is required
-    }
-    \email{j.devine@lancaster.ac.uk}
-
-    \author{Joe Finney}
-    \affiliation{
-      \institution{Lancaster University, UK}            %% \institution is required
-    }
-    \email{j.finney@lancaster.ac.uk}
-
-    \author{Micha\l\ Moskal}
-    \affiliation{
-      \institution{Microsoft, USA}            %% \institution is required
-    }
-    \email{mimoskal@microsoft.com}
-
-    \author{Peli de Halleux}
-    \affiliation{
-      \institution{Microsoft, USA}            %% \institution is required
-    }
-    \email{jhalleux@microsoft.com}
-
-    \author{Thomas Ball}
-    \affiliation{
-      \institution{Microsoft, USA}            %% \institution is required
-    }
-    \email{tball@microsoft.com}
-
-    \author{Steve Hodges}
-    \affiliation{
-      \institution{Microsoft, UK}            %% \institution is required
-    }
-    \email{shodges@microsoft.com}
-
-
-    %% Author with two affiliations and emails.
-    % \author{First2 Last2}
-    % \authornote{with author2 note}          %% \authornote is optional;
-    %                                         %% can be repeated if necessary
-    % \orcid{nnnn-nnnn-nnnn-nnnn}             %% \orcid is optional
-    % \affiliation{
-    %   \position{Position2a}
-    %   \department{Department2a}             %% \department is recommended
-    %   \institution{Institution2a}           %% \institution is required
-    %   \streetaddress{Street2a Address2a}
-    %   \city{City2a}
-    %   \state{State2a}
-    %   \postcode{Post-Code2a}
-    %   \country{Country2a}                   %% \country is recommended
-    % }
-    % \email{first2.last2@inst2a.com}         %% \email is recommended
-
-
-    %% Abstract
-    %% Note: \begin{abstract}...\end{abstract} environment must come
-    %% before \maketitle command
-    \input{abstract}
-
-    %% Keywords
-    %% comma separated list
-    \keywords{BBC micro:bit, education, classroom, MakeCode, CODAL, embedded systems}  %% \keywords are mandatory in final camera-ready submission
-
-
-    %% \maketitle
-    %% Note: \maketitle command must come after title commands, author
-    %% commands, abstract environment, Computing Classification System
-    %% environment and commands, and keywords command.
-    \maketitle
-
-    \renewcommand{\shortauthors}{J. Devine, J. Finney, M. Moskal, P. Halleux, T. Ball, S. Hodges}
-
-    \input{intro}
-    \input{makecode}
-    \input{codal}
-    \input{uf2}
-    \input{eval}
-    \input{related}
-    \input{conclude}
-
-    \section*{Acknowledgements}
-
-    The authors would like to thank the members of the MakeCode
-    team for their many contributions to the success of the platform:
-<<<<<<< HEAD
-    Abhijith Chatra, Sam El-Husseini, Caitlin Hennessy, Guillaume Jenkins, 
-    Richard Knoll, Galen Nickel, Jacqueline Russell, and Kesavan Shanmugam.
-=======
-    Abhijith Chatra, Sam El-Husseini, Caitlin Hennessy, Guillaume Jenkins,
-    Richard Knoll, Galen Nickel, Jacqueline Russell, and K7 Shanmugam.
->>>>>>> Added correct license, and keywords.
-
-
-    %% Bibliography
-    \bibliography{paper}
-
-    \input{appendix}
-
-    \end{document}
+\end{document}
