@@ -856,7 +856,7 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
-                        pxt.blocks.initBlocks(blocksInfo);
+                        pxt.blocks.initializeAndInject(blocksInfo);
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
                             resp.ast.getSourceFile("main.ts"),
@@ -889,7 +889,7 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         const blocksInfo = pxtc.getBlocksInfo(apis);
-                        pxt.blocks.initBlocks(blocksInfo);
+                        pxt.blocks.initializeAndInject(blocksInfo);
                         return <DecompileResult>{
                             package: mainPkg,
                             blocksSvg: pxt.blocks.render(code, options)

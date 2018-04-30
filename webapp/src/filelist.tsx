@@ -80,7 +80,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             && p.getPkgId() != "built"
             && p.getPkgId() != "assets"
             && p.getPkgId() != pxt.appTarget.corepkg
-            && !p.getKsPkg().config.core
+            && p.getKsPkg().config && !p.getKsPkg().config.core
             && p.getKsPkg().level <= 1;
         const upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + p.getPkgId());

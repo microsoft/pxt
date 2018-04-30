@@ -888,6 +888,8 @@ declare namespace Blockly {
     class Workspace {
         scale: number;
         svgGroup_: any;
+        toolbox_: Toolbox;
+        flyout_: any; // Blockly.Flyout
         scrollbar: ScrollbarPair;
         svgBlockCanvas_: SVGGElement;
         options: Blockly.Options;
@@ -919,6 +921,7 @@ declare namespace Blockly {
         zoom(x: number, y: number, type: number): void;
         zoomCenter(type: number): void;
         scrollCenter(): void;
+        setScale(scale: number): void;
         highlightBlock(id: string): void;
         centerOnBlock(id: string): void;
         glowBlock(id: string, state: boolean): void;
@@ -1106,12 +1109,14 @@ declare namespace Blockly {
 
     class Toolbox {
         workspace_: Blockly.Workspace;
+        flyout_: any; // Blockly.Flyout
         RTL: boolean;
         horizontalLayout_: boolean;
         toolboxPosition: number;
         hasColours_: boolean;
         tree_: Blockly.Toolbox.TreeNode;
 
+        clearSelection(): void;
         constructor(workspace: Blockly.Workspace);
     }
 

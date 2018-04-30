@@ -258,12 +258,13 @@ namespace pxt.editor {
 
 
     export interface ExtensionOptions {
-
+        blocklyToolbox: ToolboxDefinition;
+        monacoToolbox: ToolboxDefinition;
     }
 
     export interface IToolboxOptions {
-        blocklyXml?: string;
-        monacoToolbox?: MonacoToolboxDefinition;
+        blocklyToolbox?: ToolboxDefinition;
+        monacoToolbox?: ToolboxDefinition;
     }
 
     export interface ExtensionResult {
@@ -278,28 +279,37 @@ namespace pxt.editor {
     }
 
     export interface FieldExtensionOptions {
-
     }
 
     export interface FieldExtensionResult {
         fieldEditors?: IFieldCustomOptions[];
     }
 
-    export interface MonacoToolboxDefinition {
-        loops?: MonacoToolboxCategoryDefinition;
-        logic?: MonacoToolboxCategoryDefinition;
-        variables?: MonacoToolboxCategoryDefinition;
-        maths?: MonacoToolboxCategoryDefinition;
-        text?: MonacoToolboxCategoryDefinition;
-        arrays?: MonacoToolboxCategoryDefinition;
-        functions?: MonacoToolboxCategoryDefinition;
+    export interface ToolboxDefinition {
+        loops?: ToolboxCategoryDefinition;
+        logic?: ToolboxCategoryDefinition;
+        variables?: ToolboxCategoryDefinition;
+        maths?: ToolboxCategoryDefinition;
+        text?: ToolboxCategoryDefinition;
+        arrays?: ToolboxCategoryDefinition;
+        functions?: ToolboxCategoryDefinition;
     }
 
-    export interface MonacoToolboxCategoryDefinition {
+    export interface ToolboxCategoryDefinition {
         /**
          * The display name for the category
          */
         name?: string;
+
+        /**
+         * The icon of this category
+         */
+        icon?: string;
+
+        /**
+         * The color of this category
+         */
+        color?: string;
 
         /**
          * The weight of the category relative to other categories in the toolbox
@@ -312,52 +322,29 @@ namespace pxt.editor {
         advanced?: boolean;
 
         /**
-         * Whether or not the category should be removed
-         */
-        removed?: boolean;
-
-        /**
          * Blocks to appear in the category. Specifying this field will override
          * all existing blocks in the category. The ordering of the blocks is
          * determined by the ordering of this array.
          */
-        blocks?: MonacoToolboxBlockDefinition[];
+        blocks?: ToolboxBlockDefinition[];
 
         /**
-         * Whether or not to replace or append blocks
+         * Ordering of category groups
          */
-        appendBlocks?: boolean;
+        groups?: string[],
     }
 
-    export interface MonacoToolboxBlockDefinition {
+    export interface ToolboxBlockDefinition {
         /**
-         * Name of the API or construct, used in highlighting of snippet. For function
-         * calls, should match the name of the function
+         * Internal id used to refer to this block or snippet, must be unique
          */
         name: string;
-
-        /**
-         * Snippet of code to insert when dragged into editor
-         */
-        snippet: string;
 
         /**
          * Group label used to categorize block.  Blocks are arranged with other
          * blocks that share the same group.
          */
         group?: string,
-
-        /**
-         * Description of code to appear in the hover text
-         */
-        jsDoc?: string
-
-        /**
-         * Display just the snippet and nothing else. Should be set to true for
-         * language constructs (eg. for-loops) and to false for function
-         * calls (eg. Math.random())
-         */
-        snippetOnly?: boolean;
 
         /**
          * Indicates an advanced API. Advanced APIs appear after basic ones in the
@@ -373,9 +360,41 @@ namespace pxt.editor {
         weight?: number;
 
         /**
+         * Description of code to appear in the hover text
+         */
+        jsDoc?: string
+
+        /**
+         * Snippet of code to insert when dragged into editor
+         */
+        snippet?: string;
+
+        /**
+         * Name used for highlighting the snippet, uses name if not defined
+         */
+        snippetName?: string;
+
+        /**
+         * Display just the snippet and nothing else. Should be set to true for
+         * language constructs (eg. for-loops) and to false for function
+         * calls (eg. Math.random())
+         */
+        snippetOnly?: boolean;
+
+        /**
          * The return type of the block. This is used to determine the shape of the block rendered.
          */
         retType?: string;
+
+        /**
+         * The block definition in XML for the blockly toolbox.
+         */
+        blockXml?: string;
+
+        /**
+         * The Blockly block id used to identify this block.
+         */
+        blockId?: string;
     }
 
     export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>

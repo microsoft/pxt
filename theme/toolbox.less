@@ -20,7 +20,7 @@
     transition-timing-function: ease-in;
 }
 
-.blocklyToolboxDiv text {
+.blocklyToolboxDiv text, .monacoToolboxDiv text {
     user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -28,12 +28,17 @@
     cursor: inherit;
 }
 
-.blocklyToolboxDiv[dir="RTL"] .blocklyTreeRow {
+.blocklyToolboxDiv[dir="RTL"] .blocklyTreeRow,
+.monacoToolboxDiv[dir="RTL"] .blocklyTreeRow {
     margin-left: 8px;
 }
 
 .blocklyToolboxDiv.blocklyToolboxDeleting {
     background: lighten(@red, 10%) !important;
+}
+
+.monacoToolboxDiv.invisible {
+    display: none !important;
 }
 
 /*******************************
@@ -177,60 +182,8 @@ div.blocklyTreeIcon span {
     vertical-align: middle;
 }
 
-.blocklyTreeIcon.blocklyTreeIconsearch::before {
-    content: "\f002";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconDefault::before {
-    content: "\f12e";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconadvancedcollapsed::before {
-    content: "\f078";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconadvancedexpanded::before {
-    content: "\f077";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconmore::before {
-    content: "\f141";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconaddpackage::before {
-    content: "\f055";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconloops::before {
-    content: "\f01e";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconmath::before {
-    content: "\f1ec";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconlogic::before {
-    content: "\f074";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconvariables::before {
-    content: "\f039";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIcontext::before {
-    content: "\f035";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconarrays::before {
-    content: "\f0cb";
-    vertical-align: middle;
-}
 .blocklyTreeIcon.blocklyTreeIconfunctions {
     font-family: xicon !important;
-}
-.blocklyTreeIcon.blocklyTreeIconfunctions::before {
-    content: "\f109";
-    vertical-align: middle;
 }
 .blocklyFlyoutLabelIcon.blocklyFlyoutIconfunctions {
     font-family: xicon !important;

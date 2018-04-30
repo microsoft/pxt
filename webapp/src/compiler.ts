@@ -92,7 +92,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
 
             return ensureApisInfoAsync()
                 .then(() => {
-                    if (!resp.usedSymbols) return resp
+                    if (!resp.usedSymbols || !cachedApis) return resp
                     for (let k of Object.keys(resp.usedSymbols)) {
                         resp.usedSymbols[k] = U.lookup(cachedApis.byQName, k)
                     }
@@ -182,6 +182,7 @@ function ensureApisInfoAsync(): Promise<void> {
     if (refreshApis || !cachedApis)
         return workerOpAsync("apiInfo", {})
             .then(apis => {
+                if (Object.keys(apis).length === 0) return undefined;
                 refreshApis = false;
                 return ts.pxtc.localizeApisAsync(apis, pkg.mainPkg);
             }).then(apis => {

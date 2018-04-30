@@ -48,6 +48,8 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
     renderCore() {
         const parentState = this.props.parent.state;
+        if (!parentState.currFile) return <div />
+
         const targetTheme = pxt.appTarget.appTheme;
         const simOpts = pxt.appTarget.simulator;
         const sandbox = pxt.shell.isSandboxMode();

@@ -8,7 +8,10 @@ namespace pxt.toolbox {
         functions: '#005a9e',
         text: '#996600',
         arrays: '#A94400',
-        advanced: '#3c3c3c'
+        advanced: '#3c3c3c',
+        addpackage: '#717171',
+        search: '#000',
+        default: '#dddddd'
     }
 
     export const blockIcons: Map<number | string> = {
@@ -18,13 +21,13 @@ namespace pxt.toolbox {
         variables: '\uf039',
         functions: '\uf109',
         text: '\uf035',
-        arrays: '\uf0cb'
-    }
-
-    export enum CategoryMode {
-        All,
-        None,
-        Basic
+        arrays: '\uf0cb',
+        advancedcollapsed: '\uf078',
+        advancedexpanded: '\uf077',
+        more: '\uf141',
+        addpackage: '\uf055',
+        search: '\uf002',
+        default: '\uf12e'
     }
 
     let toolboxStyle: HTMLStyleElement;
@@ -52,38 +55,6 @@ namespace pxt.toolbox {
                 }
             `;
         }
-    }
-
-    export function injectToolboxIconCss(extraCss?: string): void {
-        if (extraCss)
-            toolboxStyleBuffer += extraCss;
-
-        if (!toolboxStyle) {
-            toolboxStyle = document.createElement('style');
-            toolboxStyle.id = "blocklyToolboxIcons";
-            toolboxStyle.type = 'text/css';
-            let head = document.head || document.getElementsByTagName('head')[0];
-            head.appendChild(toolboxStyle);
-        }
-
-        if (toolboxStyle.sheet) {
-            toolboxStyle.textContent = toolboxStyleBuffer + namespaceStyleBuffer;
-        } else {
-            toolboxStyle.appendChild(document.createTextNode(toolboxStyleBuffer + namespaceStyleBuffer));
-        }
-    }
-
-    let namespaceStyleBuffer: string = '';
-    export function appendNamespaceCss(namespace: string, color: string) {
-        const ns = namespace.toLowerCase();
-        color = color || '#dddddd'; // Default toolbox color
-        if (namespaceStyleBuffer.indexOf(ns) > -1) return;
-        namespaceStyleBuffer += `
-            span.docs.${ns} {
-                background-color: ${color} !important;
-                border-color: ${fadeColor(color, 0.2, true)} !important;
-            }
-        `;
     }
 
     export function getNamespaceColor(ns: string): string {

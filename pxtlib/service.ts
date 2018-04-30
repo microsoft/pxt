@@ -71,6 +71,7 @@ namespace ts.pxtc {
         qName?: string;
         pkg?: string;
         snippet?: string;
+        snippetName?: string;
         blockFields?: ParsedBlockDef;
         isReadOnly?: boolean;
         combinedProperties?: string[];
@@ -1275,6 +1276,7 @@ namespace ts.pxtc.service {
         jsdoc?: string;
         field?: [string, string];
         localizedCategory?: string;
+        builtinBlock?: boolean;
     }
 }
 

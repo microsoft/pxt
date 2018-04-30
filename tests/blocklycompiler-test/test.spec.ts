@@ -185,7 +185,7 @@ function getBlocksInfoAsync(): Promise<pxtc.BlocksInfo> {
             // decompile to blocks
             let apis = pxtc.getApiInfo(opts, resp.ast);
             let blocksInfo = pxtc.getBlocksInfo(apis);
-            pxt.blocks.initBlocks(blocksInfo);
+            pxt.blocks.initializeAndInject(blocksInfo);
 
             cachedBlocksInfo = blocksInfo;
 

@@ -34,7 +34,8 @@ import * as projects from "./projects";
 import * as extensions from "./extensions";
 import * as sounds from "./sounds";
 import * as make from "./make";
-import * as monacoToolbox from "./monacoSnippets"
+import * as blocklyToolbox from "./blocksSnippets";
+import * as monacoToolbox from "./monacoSnippets";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -54,7 +55,6 @@ type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
-import CategoryMode = pxt.toolbox.CategoryMode;
 
 pxsim.util.injectPolyphils();
 
@@ -257,7 +257,7 @@ export class ProjectView
                     return compiler.getBlocksAsync()
                 })
                 .done((bi: pxtc.BlocksInfo) => {
-                    pxt.blocks.initBlocks(bi);
+                    pxt.blocks.initializeAndInject(bi);
                     this.blocksEditor.updateBlocksInfo(bi);
                     this.setFile(pkg.mainEditorPkg().files["main.blocks"])
                 });
@@ -640,8 +640,12 @@ export class ProjectView
                 switch (t.subtype) {
                     case 'loaded':
                         let tt = msg as pxsim.TutorialLoadedMessage;
-                        if (tt.toolboxSubset && Object.keys(tt.toolboxSubset).length > 0)
-                            this.editor.filterToolbox({ blocks: tt.toolboxSubset, defaultState: pxt.editor.FilterState.Hidden }, CategoryMode.Basic);
+                        if (tt.toolboxSubset && Object.keys(tt.toolboxSubset).length > 0) {
+                            this.setState({editorState: {
+                                searchBar: false,
+                                filters: { blocks: tt.toolboxSubset, defaultState: pxt.editor.FilterState.Hidden } } });
+                            this.editor.filterToolbox(tt.toolboxSubset, tt.showCategories);
+                        }
                         let tutorialOptions = this.state.tutorialOptions;
                         tutorialOptions.tutorialReady = true;
                         tutorialOptions.tutorialStepInfo = tt.stepInfo;
@@ -956,6 +960,7 @@ export class ProjectView
 
     openHome() {
         this.stopSimulator();
+        if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
         this.setState({ home: true });
@@ -1761,7 +1766,7 @@ export class ProjectView
         const { hideMenuBar, hideEditorToolbar } = targetTheme;
         const isHeadless = simOpts && simOpts.headless;
         const selectLanguage = targetTheme.selectLanguage;
-        const showEditorToolbar = !hideEditorToolbar && this.editor.hasEditorToolbar();
+        const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
@@ -2150,7 +2155,10 @@ function initExtensionsAsync(): Promise<void> {
     if (!pxt.appTarget.appTheme || !pxt.appTarget.appTheme.extendEditor) return Promise.resolve();
 
     pxt.debug('loading editor extensions...');
-    const opts: pxt.editor.ExtensionOptions = {};
+    const opts: pxt.editor.ExtensionOptions = {
+        blocklyToolbox: blocklyToolbox.getToolboxDefinition(),
+        monacoToolbox: monacoToolbox.getToolboxDefinition()
+    };
     return pxt.BrowserUtils.loadScriptAsync("editor.js")
         .then(() => pxt.editor.initExtensionsAsync(opts))
         .then(res => {
@@ -2186,8 +2194,8 @@ function initExtensionsAsync(): Promise<void> {
                 theEditor.beforeCompile = res.beforeCompile;
             }
             if (res.toolboxOptions) {
-                if (res.toolboxOptions.blocklyXml) {
-                    pxt.blocks.overrideBaseToolbox(res.toolboxOptions.blocklyXml);
+                if (res.toolboxOptions.blocklyToolbox) {
+                    blocklyToolbox.overrideToolbox(res.toolboxOptions.blocklyToolbox);
                 }
                 if (res.toolboxOptions.monacoToolbox) {
                     monacoToolbox.overrideToolbox(res.toolboxOptions.monacoToolbox);

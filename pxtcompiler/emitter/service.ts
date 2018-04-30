@@ -662,6 +662,10 @@ namespace ts.pxtc.service {
         apiInfo: () => {
             lastBlocksInfo = undefined;
             lastFuse = undefined;
+            if (host.opts === emptyOptions) {
+                // Host was reset, don't load apis with empty options
+                return undefined;
+            }
             return lastApiInfo = getApiInfo(host.opts, service.getProgram());
         },
         blocksInfo: v => blocksInfoOp(v as any),
@@ -705,7 +709,8 @@ namespace ts.pxtc.service {
                                 name: blockDef.name,
                                 jsdoc: typeof blockDef.tooltip === "string" ? <string>blockDef.tooltip : (<pxt.Map<string>>blockDef.tooltip)[v],
                                 block: v,
-                                field: [op, v]
+                                field: [op, v],
+                                builtinBlock: true
                             }));
                         }
                     }
@@ -714,10 +719,10 @@ namespace ts.pxtc.service {
                             id,
                             name: blockDef.name,
                             jsdoc: computeSearchProperty(blockDef.tooltip, blockDef.tooltipSearch, blockDef),
-                            block: computeSearchProperty(blockDef.block, blockDef.blockTextSearch, blockDef)
+                            block: computeSearchProperty(blockDef.block, blockDef.blockTextSearch, blockDef),
+                            builtinBlock: true
                         });
                     }
-
                 }
             }
 
