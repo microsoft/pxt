@@ -73,7 +73,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     private renderSnippets(content: HTMLElement) {
         const { parent } = this.props;
 
-        pxt.Util.toArray(document.querySelectorAll(`.lang-blocks`))
+        pxt.Util.toArray(content.querySelectorAll(`.lang-blocks`))
             .forEach((langBlock: HTMLElement) => {
                 const code = langBlock.innerText;
                 langBlock.innerHTML = `<div class="ui segment raised loading"></div>`;
@@ -88,7 +88,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         .done((xml) => {
                             if (xml) {
                                 langBlock.innerHTML = `<div class="ui segment raised">
-                                    <img src="${this.html2Quote(xml)}" /></div>`;
+                                    <img src="${pxt.Util.htmlEscape(xml)}" /></div>`;
                                 MarkedContent.blockSnippetCache[code] = xml;
                             } else {
                                 // An error occured, show alternate message
@@ -101,7 +101,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
     private renderInlineBlocks(content: HTMLElement) {
-        pxt.Util.toArray(document.querySelectorAll(`:not(pre) > code`))
+        pxt.Util.toArray(content.querySelectorAll(`:not(pre) > code`))
             .forEach((inlineBlock: HTMLElement) => {
                 const text = inlineBlock.innerText;
                 const mbtn = /^(\|+)([^\|]+)\|+$/.exec(text);
@@ -110,7 +110,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     const ns = mtxt[2] ? mtxt[2].trim().toLowerCase() : '';
                     const txt = mtxt[3].trim();
                     const lev = mbtn[1].length == 1 ? `docs inlinebutton ui button ${txt.toLowerCase()}-button` : `docs inlineblock ${ns}`;
-                    inlineBlock.innerHTML = `<span class="${lev}">${this.html2Quote(pxt.U.rlf(txt))}</span>`
+                    inlineBlock.innerHTML = `<span class="${lev}">${pxt.Util.htmlEscape(pxt.U.rlf(txt))}</span>`
                 }
             })
     }
