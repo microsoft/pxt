@@ -48,6 +48,17 @@ export function hideLoading(id: string) {
     }
 }
 
+export function killLoadingQueue() {
+    // Use this with care, only when you want to kill the loading queue
+    // and force close them all
+    loadingQueue = [];
+    loadingQueueMsg = {};
+    // Hide loading
+    if (dimmerInitialized && loadingDimmer) {
+        loadingDimmer.hide();
+    }
+}
+
 export function showLoading(id: string, msg: string) {
     pxt.debug("showloading: " + id);
     if (loadingQueueMsg[id]) return; // already loading?

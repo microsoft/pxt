@@ -437,6 +437,28 @@ export class ProjectView
         this.forceUpdate(); // we now have editors prepared
     }
 
+    // Add an error guard for the entire application
+    componentDidCatch(error: any, info: any) {
+        try {
+            core.killLoadingQueue();
+            pxsim.U.remove(document.getElementById('loading'));
+            this.setState({ hasError: true });
+            // Log critical error
+            pxt.tickEvent('pxt.criticalerror', { error, info });
+            // Reload the page in 2 seconds
+            const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") ?
+                Date.parse(pxt.storage.getLocal("lastcriticalerror")) : Date.now();
+            // don't refresh if we refreshed in the last minute
+            if (!isNaN(lastCriticalError) && Date.now() - lastCriticalError > 60 * 1000) {
+                pxt.storage.setLocal("lastcriticalerror", new Date().toISOString());
+                setTimeout(() => {
+                    location.reload();
+                }, 2000)
+            }
+        } catch (e) {
+        }
+    }
+
     private pickEditorFor(f: pkg.File): srceditor.Editor {
         return this.allEditors.filter(e => e.acceptsFile(f))[0]
     }
@@ -1770,6 +1792,15 @@ export class ProjectView
             'full-abs'
         ];
         const rootClasses = sui.cx(rootClassList);
+
+        if (this.state.hasError) {
+            return <div id="root" className="ui middle aligned center aligned grid" style={{ height: '100%', alignItems: 'center' }}>
+                <div className="ui raised segment inverted purple">
+                    <h2>{lf("Oops")}</h2>
+                    {lf("We detected a problem and we will reload the editor in a few seconds..")}
+                </div>
+            </div>
+        }
         return (
             <div id='root' className={rootClasses}>
                 {hideMenuBar ? undefined :
