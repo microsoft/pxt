@@ -58,7 +58,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                             if (xml) {
                                 langBlock.innerHTML = `<div class="ui segment raised">
                                     <img src="${pxt.Util.htmlEscape(xml)}" /></div>`;
-                                MarkedContent.blockSnippetCache[code] = xml;
+                                MarkedContent.blockSnippetCache[code] = pxt.Util.htmlEscape(xml);
                             } else {
                                 // An error occured, show alternate message
                                 langBlock.innerHTML = `<div class="ui segment raised">
