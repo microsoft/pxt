@@ -449,7 +449,7 @@ export class ProjectView
             const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") ?
                 Date.parse(pxt.storage.getLocal("lastcriticalerror")) : Date.now();
             // don't refresh if we refreshed in the last minute
-            if (Date.now() - lastCriticalError > 60 * 1000) {
+            if (!isNaN(lastCriticalError) && Date.now() - lastCriticalError > 60 * 1000) {
                 pxt.storage.setLocal("lastcriticalerror", new Date().toISOString());
                 setTimeout(() => {
                     location.reload();
