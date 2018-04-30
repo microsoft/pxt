@@ -70,7 +70,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         return params;
     }
 
-    private renderSnippetsAsync(content: HTMLElement) {
+    private renderSnippets(content: HTMLElement) {
         const { parent } = this.props;
 
         pxt.Util.toArray(document.querySelectorAll(`.lang-blocks`))
@@ -85,16 +85,22 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     parent.renderBlocksAsync({
                         action: "renderblocks", ts: code
                     } as pxt.editor.EditorMessageRenderBlocksRequest)
-                        .then((xml) => {
-                            langBlock.innerHTML = `<div class="ui segment raised">
-                                <img src="${xml}" /></div>`;
-                            MarkedContent.blockSnippetCache[code] = xml;
+                        .done((xml) => {
+                            if (xml) {
+                                langBlock.innerHTML = `<div class="ui segment raised">
+                                    <img src="${this.html2Quote(xml)}" /></div>`;
+                                MarkedContent.blockSnippetCache[code] = xml;
+                            } else {
+                                // An error occured, show alternate message
+                                langBlock.innerHTML = `<div class="ui segment raised">
+                                    <span>${lf("Oops, something went wrong trying to render this block snippet.")}</span></div>`;
+                            }
                         })
                 }
             })
     }
 
-    private renderInlineBlocksAsync(content: HTMLElement) {
+    private renderInlineBlocks(content: HTMLElement) {
         pxt.Util.toArray(document.querySelectorAll(`:not(pre) > code`))
             .forEach((inlineBlock: HTMLElement) => {
                 const text = inlineBlock.innerText;
@@ -104,7 +110,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     const ns = mtxt[2] ? mtxt[2].trim().toLowerCase() : '';
                     const txt = mtxt[3].trim();
                     const lev = mbtn[1].length == 1 ? `docs inlinebutton ui button ${txt.toLowerCase()}-button` : `docs inlineblock ${ns}`;
-                    inlineBlock.innerHTML = `<span class="${lev}">${pxt.U.rlf(txt)}</span>`
+                    inlineBlock.innerHTML = `<span class="${lev}">${this.html2Quote(pxt.U.rlf(txt))}</span>`
                 }
             })
     }
@@ -120,8 +126,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         content.innerHTML = marked(markdown);
 
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
-        this.renderInlineBlocksAsync(content);
-        this.renderSnippetsAsync(content);
+        this.renderInlineBlocks(content);
+        this.renderSnippets(content);
     }
 
     componentDidMount() {
