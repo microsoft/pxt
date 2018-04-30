@@ -5,16 +5,6 @@ namespace pxt.blocks {
     let workspace: Blockly.Workspace;
     let blocklyDiv: HTMLElement;
 
-    function align(ws: Blockly.Workspace, emPixels: number) {
-        let blocks = ws.getTopBlocks(true);
-        let y = 0
-        blocks.forEach(block => {
-            block.moveBy(0, y)
-            y += block.getHeightWidth().height
-            y += emPixels; //buffer
-        })
-    }
-
     export enum BlockLayout {
         Align = 1,
         // Shuffle deprecated
@@ -59,7 +49,7 @@ namespace pxt.blocks {
 
             switch (options.layout) {
                 case BlockLayout.Align:
-                    pxt.blocks.layout.verticalAlign(workspace, options.emPixels); break;
+                    pxt.blocks.layout.verticalAlign(workspace, options.emPixels || 14); break;
                 case BlockLayout.Flow:
                     pxt.blocks.layout.flow(workspace, { ratio: options.aspectRatio, useViewWidth: options.useViewWidth }); break;
                 case BlockLayout.Clean:
@@ -67,7 +57,6 @@ namespace pxt.blocks {
                         (<any>workspace).cleanUp_();
                     break;
             }
-
 
             let metrics = workspace.getMetrics();
 
@@ -89,9 +78,13 @@ namespace pxt.blocks {
             }
 
             return svg as any;
-
         } catch (e) {
             pxt.reportException(e);
+
+            // We re-use the workspace across renders, catch any errors so we know to 
+            // create a new workspace if there was an error
+            if (workspace) workspace.dispose();
+            workspace = undefined;
             return undefined;
         }
     }
