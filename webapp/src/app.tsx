@@ -1670,14 +1670,17 @@ export class ProjectView
                 const stepInfo = tutorial.parseTutorialSteps(tutorialId, tutorialmd);
                 return tutorial.getUsedBlocksAsync(tutorialId, tutorialmd)
                     .then((usedBlocks) => {
+                        let editorState: pxt.editor.EditorState = {
+                            searchBar: false
+                        }
+                        if (usedBlocks && Object.keys(usedBlocks).length > 0) {
+                            editorState.filters = {
+                                blocks: usedBlocks,
+                                defaultState: pxt.editor.FilterState.Hidden
+                            }
+                        }
                         this.setState({
-                            editorState: {
-                                searchBar: false,
-                                filters: {
-                                    blocks: usedBlocks,
-                                    defaultState: pxt.editor.FilterState.Hidden
-                                }
-                            },
+                            editorState: editorState,
                             tutorialOptions: {
                                 tutorial: tutorialId,
                                 tutorialName: title,
@@ -1690,6 +1693,13 @@ export class ProjectView
                         const fullscreen = stepInfo[0].fullscreen;
                         if (fullscreen) this.showTutorialHint();
                         else this.showLightbox();
+                    })
+                    .catch(e => {
+                        // Failed to decompile
+                        pxt.tickEvent('tutorial.faileddecompile', {tutorialId: tutorialId});
+                        core.errorNotification(lf("Oops, an error occured as we were loading the tutorial."));
+                        // Reset state (delete the current project and exit the tutorial)
+                        this.exitTutorial(true);
                     })
             }).catch((e) => {
                 core.handleNetworkError(e);
@@ -1710,18 +1720,19 @@ export class ProjectView
             })
     }
 
-    exitTutorial() {
+    exitTutorial(removeProject?: boolean) {
         pxt.tickEvent("tutorial.exit");
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
-        this.exitTutorialAsync()
+        this.exitTutorialAsync(removeProject)
             .done(() => {
                 core.hideLoading("leavingtutorial");
                 this.openHome();
             })
     }
 
-    exitTutorialAsync() {
+    exitTutorialAsync(removeProject?: boolean) {
         let curr = pkg.mainEditorPkg().header;
+        curr.isDeleted = removeProject;
         let files = pkg.mainEditorPkg().getAllFiles();
         return workspace.saveAsync(curr, files)
             .then(() => Promise.delay(500))

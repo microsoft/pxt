@@ -76,8 +76,10 @@ export function getUsedBlocksAsync(tutorialId: string, tutorialmd: string): Prom
                             let blk = allblocks[bi];
                             usedBlocks[blk.type] = 1;
                         }
+                        return usedBlocks;
+                    } else {
+                        throw new Error("Empty blocksXml, failed to decompile");
                     }
-                    return usedBlocks;
                 }).catch(() => {
                     pxt.log(`Failed to decompile tutorial: ${tutorialId}`);
                     throw new Error(`Failed to decompile tutorial: ${tutorialId}`);
