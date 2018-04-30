@@ -6,12 +6,13 @@ export function init(updated: () => void) {
         return;
 
     appCache.addEventListener('updateready', () => {
-        if (appCache.status === window.applicationCache.UPDATEREADY) {
-            core.infoNotification(lf("Update download complete. Reloading... "));
-            setTimeout(() => {
-                pxt.tickEvent('appcache.updated')
-                updated();
-            }, 3000);
-        }
+        if (appCache.status !== window.applicationCache.UPDATEREADY)
+            return;
+
+        core.infoNotification(lf("Update download complete. Reloading... "));
+        setTimeout(() => {
+            pxt.tickEvent('appcache.updated')
+            updated();
+        }, 3000);
     }, false);
 }
