@@ -52,7 +52,7 @@ export function parseTutorialSteps(tutorialId: string, tutorialmd: string) {
  * We'll run this step when we first start the tutorial to figure out what blocks are used so we can
  * filter the toolbox. 
  */
-export function getUsedBlocks(tutorialId: string, tutorialmd: string): Promise<{ [index: string]: number }> {
+export function getUsedBlocksAsync(tutorialId: string, tutorialmd: string): Promise<{ [index: string]: number }> {
     tutorialmd = tutorialmd.replace(/((?!.)\s)+/g, "\n");
 
     const regex = /```(sim|block|blocks|filterblocks)\s*\n([\s\S]*?)\n```/gmi;

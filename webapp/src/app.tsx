@@ -1668,7 +1668,7 @@ export class ProjectView
             .then(() => pxt.Cloud.downloadMarkdownAsync(tutorialId))
             .then(tutorialmd => {
                 const stepInfo = tutorial.parseTutorialSteps(tutorialId, tutorialmd);
-                return tutorial.getUsedBlocks(tutorialId, tutorialmd)
+                return tutorial.getUsedBlocksAsync(tutorialId, tutorialmd)
                     .then((usedBlocks) => {
                         this.setState({
                             editorState: {
