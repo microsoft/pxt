@@ -6,6 +6,7 @@ export function init(updated: () => void) {
         return;
 
     appCache.addEventListener('updateready', () => {
+        console.log(`app cache update ready (${appCache.status})`)
         if (appCache.status !== window.applicationCache.UPDATEREADY)
             return;
 
