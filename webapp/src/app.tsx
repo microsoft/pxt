@@ -623,10 +623,7 @@ export class ProjectView
             this.setState({ tutorialOptions: tutorialOptions });
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
             if (fullscreen) this.showTutorialHint();
-            else {
-                tutorial.TutorialContent.refresh();
-                this.showLightbox();
-            }
+            else this.showLightbox();
         }
     }
 
@@ -641,9 +638,12 @@ export class ProjectView
                     case 'loaded':
                         let tt = msg as pxsim.TutorialLoadedMessage;
                         if (tt.toolboxSubset && Object.keys(tt.toolboxSubset).length > 0) {
-                            this.setState({editorState: {
-                                searchBar: false,
-                                filters: { blocks: tt.toolboxSubset, defaultState: pxt.editor.FilterState.Hidden } } });
+                            this.setState({
+                                editorState: {
+                                    searchBar: false,
+                                    filters: { blocks: tt.toolboxSubset, defaultState: pxt.editor.FilterState.Hidden }
+                                }
+                            });
                             this.editor.filterToolbox(tt.toolboxSubset, tt.showCategories);
                         }
                         let tutorialOptions = this.state.tutorialOptions;
@@ -653,7 +653,6 @@ export class ProjectView
                         const fullscreen = tutorialOptions.tutorialStepInfo[0].fullscreen;
                         if (fullscreen) this.showTutorialHint();
                         else {
-                            tutorial.TutorialContent.refresh();
                             this.showLightbox();
                         }
                         core.hideLoading("tutorial");
@@ -1428,7 +1427,7 @@ export class ProjectView
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileSnippetAsync(req.ts, blocksInfo))
             .then(resp => {
-                const svg = pxt.blocks.render(resp, { snippetMode: true });
+                const svg = pxt.blocks.render(resp, { snippetMode: true, layout: pxt.blocks.BlockLayout.Align });
                 const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
                 return pxt.blocks.layout.blocklyToSvgAsync(svg, viewBox[0], viewBox[1], viewBox[2], viewBox[3]);
             }).then(re => re.xml);
@@ -1652,22 +1651,50 @@ export class ProjectView
         sounds.initTutorial(); // pre load sounds
         return Promise.resolve()
             .then(() => {
-                let tutorialOptions: pxt.editor.TutorialOptions = {
-                    tutorial: tutorialId,
-                    tutorialName: title,
-                    tutorialStep: 0
-                };
-                this.setState({ tutorialOptions: tutorialOptions, editorState: { searchBar: false }, tracing: undefined })
-                let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
-                tc.setPath(tutorialId);
-            }).then(() => {
                 return this.createProjectAsync({
                     name: title,
                     inTutorial: true
                 });
+            })
+            .then(() => {
+                this.setState({
+                    tutorialOptions: {
+                        tutorial: tutorialId,
+                        tutorialName: title
+                    },
+                    tracing: undefined
+                });
+            })
+            .then(() => pxt.Cloud.downloadMarkdownAsync(tutorialId))
+            .then(tutorialmd => {
+                const stepInfo = tutorial.parseTutorialSteps(tutorialId, tutorialmd);
+                return tutorial.getUsedBlocks(tutorialId, tutorialmd)
+                    .then((usedBlocks) => {
+                        this.setState({
+                            editorState: {
+                                searchBar: false,
+                                filters: {
+                                    blocks: usedBlocks,
+                                    defaultState: pxt.editor.FilterState.Hidden
+                                }
+                            },
+                            tutorialOptions: {
+                                tutorial: tutorialId,
+                                tutorialName: title,
+                                tutorialStep: 0,
+                                tutorialReady: true,
+                                tutorialStepInfo: stepInfo
+                            }
+                        });
+                        this.editor.filterToolbox(usedBlocks, true);
+                        const fullscreen = stepInfo[0].fullscreen;
+                        if (fullscreen) this.showTutorialHint();
+                        else this.showLightbox();
+                    })
             }).catch((e) => {
-                core.hideLoading("tutorial");
                 core.handleNetworkError(e);
+            }).finally(() => {
+                core.hideLoading("tutorial");
             });
     }
 
@@ -1848,7 +1875,6 @@ export class ProjectView
                     </div>
                 </div> : undefined}
                 {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined}
-                {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined}
                 {showEditorToolbar ? <div id="editortools" role="complementary" aria-label={lf("Editor toolbar")}>
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
                 </div> : undefined}
@@ -2414,10 +2440,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (m.type === "sidedocready" && Cloud.isLocalHost() && Cloud.localToken) {
             container.SideDocs.notify({
-                type: "localtoken",
-                localToken: Cloud.localToken
-            } as pxsim.SimulatorDocMessage);
-            tutorial.TutorialContent.notify({
                 type: "localtoken",
                 localToken: Cloud.localToken
             } as pxsim.SimulatorDocMessage);
