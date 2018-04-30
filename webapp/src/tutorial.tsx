@@ -41,8 +41,8 @@ export function parseTutorialSteps(tutorialId: string, tutorialmd: string) {
     for (let i = 0; i < steps.length; i++) {
         const stepContent = steps[i].trim();
         const contentLines = stepContent.split('\n');
-        stepInfo[i].headerContent = contentLines[0];
-        stepInfo[i].content = stepContent;
+        stepInfo[i].headerContentMd = contentLines[0];
+        stepInfo[i].contentMd = stepContent;
         stepInfo[i].hasHint = contentLines.length > 1;
     }
     return stepInfo;
@@ -141,11 +141,11 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         if (!tutorialReady) return <div />;
 
         const step = tutorialStepInfo[tutorialStep];
-        const tutorialHint = step.content;
+        const tutorialHint = step.contentMd;
         const tutorialFullscreen = step.fullscreen;
         const tutorialUnplugged = !!step.unplugged && tutorialStep < tutorialStepInfo.length - 1;
 
-        const header = tutorialFullscreen ? (step.titleContent || tutorialName) : lf("Hint");
+        const header = tutorialFullscreen ? tutorialName : lf("Hint");
 
         const hide = () => this.setState({ visible: false });
         const next = () => {
@@ -301,7 +301,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
         if (!tutorialReady) return <div />
-        const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContent;
+        const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContentMd;
         let tutorialAriaLabel = '';
 
         const currentStep = tutorialStep;

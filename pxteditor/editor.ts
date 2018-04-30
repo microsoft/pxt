@@ -99,10 +99,8 @@ namespace pxt.editor {
         // no coding
         unplugged?: boolean;
         hasHint?: boolean;
-        content?: string;
-        titleContent?: string;
-        headerContent?: string;
-        ariaLabel?: string;
+        contentMd?: string;
+        headerContentMd?: string;
     }
 
     export interface TutorialOptions {

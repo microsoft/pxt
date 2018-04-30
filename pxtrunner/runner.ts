@@ -427,11 +427,6 @@ namespace pxt.runner {
                                 .then(() => pxsim.print(1000));
                         case "doc":
                             return renderDocAsync(content, src);
-                        case "tutorial":
-                            let body = $('body');
-                            body.addClass('tutorial');
-                            $(loading).hide();
-                            return renderTutorialAsync(content, src);
                         case "book":
                             return renderBookAsync(content, src);
                         default:
@@ -716,114 +711,6 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
             // enable embeds
             ($(content).find('.ui.embed') as any).embed();
         });
-    }
-
-    export function renderTutorialAsync(content: HTMLElement, tutorialid: string): Promise<void> {
-        tutorialid = tutorialid.replace(/^\//, "");
-
-        let initPromise = Promise.resolve();
-        if (pxt.Cloud.isLocalHost()) {
-            initPromise = waitForLocalTokenAsync();
-        }
-
-        return initPromise.then(() => pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive))
-            .then(tutorialmd => {
-                let steps = tutorialmd.split(/^##[^#].*$/gmi);
-                let newAuthoring = true;
-                if (steps.length <= 1) {
-                    // try again, using old logic.
-                    steps = tutorialmd.split(/^###[^#].*$/gmi);
-                    newAuthoring = false;
-                }
-                if (steps[0].indexOf("# Not found") == 0) {
-                    pxt.log(`Tutorial not found: ${tutorialid}`);
-                    throw new Error(`Tutorial not found: ${tutorialid}`);
-                }
-                let stepInfo: editor.TutorialStepInfo[] = [];
-                tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
-                    let info: editor.TutorialStepInfo = {
-                        fullscreen: /@(fullscreen|unplugged)/.test(s),
-                        unplugged: /@unplugged/.test(s)
-                    }
-                    stepInfo.push(info);
-                    return ""
-                });
-
-                if (steps.length < 1) return Promise.resolve();
-                let options = steps[0];
-                steps = steps.slice(1, steps.length); // Remove tutorial title
-
-                // Extract toolbox block ids
-                let toolboxSubset: { [index: string]: number } = {};
-                return Promise.resolve()
-                    .then(() => renderMarkdownAsync(content, tutorialmd, { tutorial: true }))
-                    .then(() => {
-                        let uptoSteps = steps.join();
-                        uptoSteps = uptoSteps.replace(/((?!.)\s)+/g, "\n");
-
-                        let regex = /```(sim|block|blocks|filterblocks)\s*\n([\s\S]*?)\n```/gmi;
-                        let match: RegExpExecArray;
-                        let code = '';
-                        while ((match = regex.exec(uptoSteps)) != null) {
-                            code += match[2] + "\n";
-                        }
-                        if (code != '') {
-                            return pxt.runner.decompileToBlocksAsync(code, {
-                                emPixels: 14,
-                                layout: pxt.blocks.BlockLayout.Flow,
-                                useViewWidth: true,
-                                package: undefined
-                            }).then((r) => {
-                                let blocksxml: string = r.compileBlocks.outfiles['main.blocks'];
-                                if (blocksxml) {
-                                    let headless = pxt.blocks.loadWorkspaceXml(blocksxml);
-                                    let allblocks = headless.getAllBlocks();
-                                    for (let bi = 0; bi < allblocks.length; ++bi) {
-                                        let blk = allblocks[bi];
-                                        toolboxSubset[blk.type] = 1;
-                                    }
-                                }
-                            }).catch(() => {
-                                pxt.log(`Failed to decompile tutorial: ${tutorialid}`);
-                                throw new Error(`Failed to decompile tutorial: ${tutorialid}`);
-                            })
-                        }
-                        return Promise.resolve();
-                    })
-                    .then(() => {
-                        // Split the steps
-                        const stepcontent = content.innerHTML.split(newAuthoring ? /<h2.*?>(.*?)<\/h2>/gi : /<h3.*?>(.*?)<\/h3>/gi);
-                        // drop first section
-                        stepcontent.shift();
-                        for (let i = 0; i < stepcontent.length; i += 2) {
-                            content.innerHTML = stepcontent[i + 1];
-                            stepInfo[i / 2].titleContent = (stepcontent[i] || "").replace(/@(fullscreen|unplugged)/g, "").trim();
-                            stepInfo[i / 2].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
-                            stepInfo[i / 2].ariaLabel = content.firstElementChild.textContent;
-                            stepInfo[i / 2].content = stepcontent[i + 1];
-                            stepInfo[i / 2].hasHint = content.childElementCount > 1;
-                        }
-                        content.innerHTML = '';
-                        // return the result
-                        window.parent.postMessage(<pxsim.TutorialLoadedMessage>{
-                            type: "tutorial",
-                            tutorial: tutorialid,
-                            subtype: "loaded",
-                            stepInfo: stepInfo,
-                            toolboxSubset: toolboxSubset
-                        }, "*");
-                    });
-            })
-            .catch((e: Error) => {
-                pxt.log(`Failed to load tutorial: ${tutorialid}`);
-                pxt.log(e.message);
-                // return the result
-                window.parent.postMessage(<pxsim.TutorialFailedMessage>{
-                    type: "tutorial",
-                    tutorial: tutorialid,
-                    subtype: "error"
-                }, "*");
-            })
     }
 
     export interface DecompileResult {
