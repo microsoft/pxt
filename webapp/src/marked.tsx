@@ -22,48 +22,17 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         this.blockSnippetCache = {};
     }
 
-    // This should probably be moved into some shared util between docsrenderer and the webapp
-    private replaceAll(replIn: string, x: string, y: string) {
-        return replIn.split(x).join(y)
-    }
-
-    private htmlQuote(s: string): string {
-        s = this.replaceAll(s, "&", "&amp;")
-        s = this.replaceAll(s, "<", "&lt;")
-        s = this.replaceAll(s, ">", "&gt;")
-        s = this.replaceAll(s, "\"", "&quot;")
-        s = this.replaceAll(s, "\'", "&#39;")
-        return s;
-    }
-
-    // the input already should be HTML-quoted but we want to make sure, and also quote quotes
-    private html2Quote(s: string) {
-        if (!s) return s;
-        return this.htmlQuote(s.replace(/\&([#a-z0-9A-Z]+);/g, (f, ent) => {
-            switch (ent) {
-                case "amp": return "&";
-                case "lt": return "<";
-                case "gt": return ">";
-                case "quot": return "\"";
-                default:
-                    if (ent[0] == "#")
-                        return String.fromCharCode(parseInt(ent.slice(1)));
-                    else return f
-            }
-        }))
-    }
-
     private getBuiltinMacros() {
         const params: pxt.Map<string> = {};
         const theme = pxt.appTarget.appTheme;
         if (theme.boardName)
-            params["boardname"] = this.html2Quote(theme.boardName);
+            params["boardname"] = pxt.Util.htmlEscape(theme.boardName);
         if (theme.boardNickname)
-            params["boardnickname"] = this.html2Quote(theme.boardNickname);
+            params["boardnickname"] = pxt.Util.htmlEscape(theme.boardNickname);
         if (theme.driveDisplayName)
-            params["drivename"] = this.html2Quote(theme.driveDisplayName);
+            params["drivename"] = pxt.Util.htmlEscape(theme.driveDisplayName);
         if (theme.homeUrl)
-            params["homeurl"] = this.html2Quote(theme.homeUrl);
+            params["homeurl"] = pxt.Util.htmlEscape(theme.homeUrl);
         params["targetid"] = theme.id || "???";
         params["targetname"] = theme.name || "Microsoft MakeCode";
         params["targetlogo"] = theme.docsLogo ? `<img aria-hidden="true" role="presentation" class="ui mini image" src="${theme.docsLogo}" />` : "";
