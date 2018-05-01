@@ -98,6 +98,7 @@ namespace ts.pxtc.thumb {
             this.addInst("ldr   $r5, [pc, $i1]", 0x4800, 0xf800);
             this.addInst("ldr   $r5, $la", 0x4800, 0xf800);
             this.addInst("ldr   $r5, [sp, $i1]", 0x9800, 0xf800).canBeShared = true;
+            this.addInst("ldr   $r5, [sp]", 0x9800, 0xf800).canBeShared = true;
             this.addInst("ldrb  $r0, [$r1, $i4]", 0x7800, 0xf800);
             this.addInst("ldrb  $r0, [$r1, $r4]", 0x5c00, 0xfe00);
             this.addInst("ldrh  $r0, [$r1, $i7]", 0x8800, 0xf800);
@@ -125,10 +126,14 @@ namespace ts.pxtc.thumb {
             this.addInst("rors  $r0, $r1", 0x41c0, 0xffc0);
             this.addInst("sbcs  $r0, $r1", 0x4180, 0xffc0);
             this.addInst("sev", 0xbf40, 0xffff);
-            this.addInst("stmia $r5!, $rl0", 0xc000, 0xf800);
+            this.addInst("stm   $r5!, $rl0", 0xc000, 0xf800);
+            this.addInst("stmia $r5!, $rl0", 0xc000, 0xf800); // alias for stm
+            this.addInst("stmea $r5!, $rl0", 0xc000, 0xf800); // alias for stm
             this.addInst("str   $r0, [$r1, $i5]", 0x6000, 0xf800).canBeShared = true;
+            this.addInst("str   $r0, [$r1]", 0x6000, 0xf800).canBeShared = true;
             this.addInst("str   $r0, [$r1, $r4]", 0x5000, 0xfe00);
             this.addInst("str   $r5, [sp, $i1]", 0x9000, 0xf800).canBeShared = true;
+            this.addInst("str   $r5, [sp]", 0x9000, 0xf800).canBeShared = true;
             this.addInst("strb  $r0, [$r1, $i4]", 0x7000, 0xf800);
             this.addInst("strb  $r0, [$r1, $r4]", 0x5400, 0xfe00);
             this.addInst("strh  $r0, [$r1, $i7]", 0x8000, 0xf800);
@@ -465,9 +470,19 @@ namespace ts.pxtc.thumb {
         }
 
         public peephole(ln: pxtc.assembler.Line, lnNext: pxtc.assembler.Line, lnNext2: pxtc.assembler.Line) {
-
             let lb11 = this.encoders["$lb11"]
             let lb = this.encoders["$lb"]
+
+            // +/-8 bytes is because the code size can slightly change due to .balign directives
+            // inserted by literal generation code; see https://github.com/Microsoft/pxt-adafruit/issues/514
+            // Most likely 4 would be enough, but we play it safe
+            function fits(enc: assembler.Encoder, ln: assembler.Line) {
+                return (
+                    enc.encode(ln.numArgs[0] + 8) != null &&
+                    enc.encode(ln.numArgs[0] - 8) != null &&
+                    enc.encode(ln.numArgs[0]) != null
+                )
+            }
 
             let lnop = ln.getOp()
             let isSkipBranch = false
@@ -478,17 +493,17 @@ namespace ts.pxtc.thumb {
                     isSkipBranch = true;
             }
 
-            if (lnop == "bb" && lb11.encode(ln.numArgs[0]) != null) {
+            if (lnop == "bb" && fits(lb11, ln)) {
                 // RULE: bb .somewhere -> b .somewhere (if fits)
                 ln.update("b " + ln.words[1])
             } else if (lnop == "b" && ln.numArgs[0] == -2) {
                 // RULE: b .somewhere; .somewhere: -> .somewhere:
                 ln.update("")
-            } else if (lnop == "bne" && isSkipBranch && lb.encode(lnNext.numArgs[0]) != null) {
+            } else if (lnop == "bne" && isSkipBranch && fits(lb, lnNext)) {
                 // RULE: bne .next; b .somewhere; .next: -> beq .somewhere
                 ln.update("beq " + lnNext.words[1])
                 lnNext.update("")
-            } else if (lnop == "beq" && isSkipBranch && lb.encode(lnNext.numArgs[0]) != null) {
+            } else if (lnop == "beq" && isSkipBranch && fits(lb, lnNext)) {
                 // RULE: beq .next; b .somewhere; .next: -> bne .somewhere
                 ln.update("bne " + lnNext.words[1])
                 lnNext.update("")

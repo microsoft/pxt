@@ -1,8 +1,8 @@
 # Boolean
 
-A Boolean has one of two possible values: `true`; `false`.  Boolean (logical) operators (*and*, *or*, *not*) take Boolean inputs and yields a Boolean value. Comparison operators on other types ([numbers](/types/number), [strings](/types/string) yields a Boolean value.
+A Boolean has one of two possible values: `true` or `false`. Boolean (logical) operators (*and*, *or*, *not*) take Boolean inputs and make another Boolean value. Comparison operators on other types ([numbers](/types/number), [strings](/types/string)) create Boolean values.
 
-The following blocks represent the true and false Boolean values, which can be plugged in anywhere a Boolean value is expected:
+These blocks represent the `true` and `false` Boolean values, which can plug into anyplace a Boolean value is expected:
 
 ```block
 let on = true;
@@ -19,8 +19,8 @@ let not = !true;
 The next six blocks represent comparison operators that yield a Boolean value. Most comparisons you will do involve [numbers](/types/number):
 
 ```block
-let equality = 42 == 0;
-let inequality = 42 != 0;
+let equality = 42 == 42;
+let inequality = 42 != 42;
 let lowerThan = 42 < 0;
 let greaterThan = 42 > 0;
 let lowerOrEqualThan =42 <= 0;

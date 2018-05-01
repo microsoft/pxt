@@ -1,10 +1,14 @@
 # Summary
 
+* [About](/about)
+
 ## #support
 
 ## #projects
 
 ## #examples
+
+## #courses
 
 ## #reference
 
@@ -57,18 +61,17 @@
 ## Miscellanous #misc
 
 * Miscellanous
+    * [About](/about)
     * [Support](/support)
     * [FAQ](/faq)
     * [Translate](/translate)
     * [Sharing projects](/share)
     * [Offline support](/offline)
-    * [Streaming](/streaming)
 
 ## Developers #devs
 
 * Developers
     * [Command Line Interface](/cli)
     * [Visual Studio Code support](/code)
-    * [Coding on Raspberry Pi](/raspberry-pi)
     * [Blocks Embed](/blocks-embed)
 

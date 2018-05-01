@@ -18,6 +18,7 @@ namespace ts.pxtc {
         "numops::adds": "_numops_adds",
         "numops::subs": "_numops_subs",
         "numops::orrs": "_numops_orrs",
+        "numops::eors": "_numops_eors",
         "numops::ands": "_numops_ands",
         "pxt::toInt": "_numops_toInt",
         "pxt::fromInt": "_numops_fromInt",
@@ -223,7 +224,9 @@ _numops_${op}:
     bl numops::${op}
     movs r4, r0
     pop {r0}
+    ${this.stackAligned() ? "push {r0} ; align" : ""}
     bl _pxt_decr
+    ${this.stackAligned() ? "pop {r0} ; unalign" : ""}
     pop {r0}
     bl _pxt_decr
     movs r0, r4
@@ -299,7 +302,9 @@ _cmp_${op}:
     bl numops::toBoolDecr
     movs r4, r0
     pop {r0}
+    ${this.stackAligned() ? "push {r0} ; align" : ""}
     bl _pxt_decr
+    ${this.stackAligned() ? "pop {r0} ; unalign" : ""}
     pop {r0}
     bl _pxt_decr
     movs r0, r4

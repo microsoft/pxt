@@ -1,16 +1,37 @@
-/// <reference path="../typings/globals/bluebird/index.d.ts"/>
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 
 namespace pxsim {
     export namespace U {
-        export function addClass(el: HTMLElement, cls: string) {
-            if (el.classList) el.classList.add(cls);
-            else if (el.className.indexOf(cls) < 0) el.className += ' ' + cls;
+        export function addClass(element: HTMLElement, classes: string) {
+            if (!element) return;
+            if (!classes || classes.length == 0) return;
+            function addSingleClass(el: HTMLElement, singleCls: string) {
+                if (el.classList) el.classList.add(singleCls);
+                else if (el.className.indexOf(singleCls) < 0) el.className += ' ' + singleCls;
+            }
+            classes.split(' ').forEach((cls) => {
+                addSingleClass(element, cls);
+            });
         }
 
-        export function removeClass(el: HTMLElement, cls: string) {
-            if (el.classList) el.classList.remove(cls);
-            else el.className = el.className.replace(cls, '').replace(/\s{2,}/, ' ');
+        export function removeClass(element: HTMLElement, classes: string) {
+            if (!element) return;
+            if (!classes || classes.length == 0) return;
+            function removeSingleClass(el: HTMLElement, singleCls: string) {
+                if (el.classList) el.classList.remove(singleCls);
+                else el.className = el.className.replace(singleCls, '').replace(/\s{2,}/, ' ');
+            }
+            classes.split(' ').forEach((cls) => {
+                removeSingleClass(element, cls);
+            });
+        }
+
+        export function remove(element: HTMLElement) {
+            element.parentElement.removeChild(element);
+        }
+
+        export function removeChildren(element: HTMLElement) {
+            while (element.firstChild) element.removeChild(element.firstChild);
         }
 
         export function assert(cond: boolean, msg = "Assertion failed") {
@@ -165,14 +186,16 @@ namespace pxsim {
         }
     }
 
+    export type EventValueToActionArgs<T> = (value: T) => any[];
+
     export class EventQueue<T> {
         max: number = 5;
         events: T[] = [];
         private awaiters: ((v?: any) => void)[] = [];
-        private mHandler: RefAction;
         private lock: boolean;
+        private _handler: RefAction;
 
-        constructor(public runtime: Runtime) { }
+        constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
         public push(e: T, notifyOne: boolean) {
             if (this.awaiters.length > 0) {
@@ -196,8 +219,8 @@ namespace pxsim {
 
         private poke() {
             this.lock = true;
-            let top = this.events.shift()
-            this.runtime.runFiberAsync(this.handler, top)
+            const value = this.events.shift();
+            this.runtime.runFiberAsync(this.handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
                 .done(() => {
                     // we're done processing the current event, if there is still something left to do, do it
                     if (this.events.length > 0) {
@@ -210,18 +233,18 @@ namespace pxsim {
         }
 
         get handler() {
-            return this.mHandler;
+            return this._handler;
         }
 
         set handler(a: RefAction) {
-            if (this.mHandler) {
-                pxtcore.decr(this.mHandler);
+            if (this._handler) {
+                pxtcore.decr(this._handler);
             }
 
-            this.mHandler = a;
+            this._handler = a;
 
-            if (this.mHandler) {
-                pxtcore.incr(this.mHandler);
+            if (this._handler) {
+                pxtcore.incr(this._handler);
             }
         }
 
@@ -233,6 +256,19 @@ namespace pxsim {
     // overriden at loadtime by specific implementation
     export let initCurrentRuntime: (msg: SimulatorRunMessage) => void = undefined;
     export let handleCustomMessage: (message: pxsim.SimulatorCustomMessage) => void = undefined;
+
+
+    function _leave(s: StackFrame, v: any): StackFrame {
+        s.parent.retval = v;
+        if (s.finalCallback)
+            s.finalCallback(v);
+        return s.parent
+    }
+
+    // wraps simulator code as STS code - useful for default event handlers
+    export function syntheticRefAction(f: (s: StackFrame) => any) {
+        return pxtcore.mkAction(0, 0, s => _leave(s, f(s)))
+    }
 
     export class Runtime {
         public board: BaseBoard;
@@ -248,6 +284,8 @@ namespace pxsim {
         globals: any = {};
         currFrame: StackFrame;
         entry: LabelFn;
+        loopLock: Object = null;
+        loopLockWaitList: (() => void)[] = [];
 
         public refCountingDebug = false;
         public refCounting = true;
@@ -366,6 +404,7 @@ namespace pxsim {
             // ---
 
             let currResume: ResumeFn;
+            let dbgHeap: Map<any>;
             let dbgResume: ResumeFn;
             let breakFrame: StackFrame = null // for step-over
             let lastYield = Date.now()
@@ -382,6 +421,13 @@ namespace pxsim {
                 return leave(s, s.parent.retval)
             }
 
+            function flushLoopLock() {
+                while (__this.loopLockWaitList.length > 0 && !__this.loopLock) {
+                    let f = __this.loopLockWaitList.shift()
+                    f()
+                }
+            }
+
             function maybeYield(s: StackFrame, pc: number, r0: any): boolean {
                 yieldSteps = yieldMaxSteps;
                 let now = Date.now()
@@ -389,10 +435,15 @@ namespace pxsim {
                     lastYield = now
                     s.pc = pc;
                     s.r0 = r0;
+                    let lock = new Object();
+                    __this.loopLock = lock;
                     let cont = () => {
                         if (__this.dead) return;
                         U.assert(s.pc == pc);
-                        return loop(s)
+                        U.assert(__this.loopLock === lock);
+                        __this.loopLock = null;
+                        loop(s)
+                        flushLoopLock()
                     }
                     //U.nextTick(cont)
                     setTimeout(cont, 5)
@@ -416,13 +467,17 @@ namespace pxsim {
 
             function breakpoint(s: StackFrame, retPC: number, brkId: number, r0: any): StackFrame {
                 U.assert(!dbgResume)
+                U.assert(!dbgHeap)
 
                 s.pc = retPC;
                 s.r0 = r0;
 
-                Runtime.postMessage(getBreakpointMsg(s, brkId))
+                const { msg, heap } = getBreakpointMsg(s, brkId);
+                dbgHeap = heap;
+                Runtime.postMessage(msg)
                 dbgResume = (m: DebuggerMessage) => {
                     dbgResume = null;
+                    dbgHeap = null;
                     if (__this.dead) return;
                     runtime = __this;
                     U.assert(s.pc == retPC);
@@ -493,6 +548,21 @@ namespace pxsim {
                         if (dbgResume)
                             dbgResume(msg);
                         break;
+                    case "variables":
+                        const vmsg = msg as VariablesRequestMessage;
+                        let vars: Variables = undefined;
+                        if (dbgHeap) {
+                            const v = dbgHeap[vmsg.variablesReference];
+                            if (v !== undefined)
+                                vars = dumpHeap(v, dbgHeap);
+                        }
+                        Runtime.postMessage(<pxsim.VariablesMessage>{
+                            type: "debugger",
+                            subtype: "variables",
+                            req_seq: msg.seq,
+                            variables: vars
+                        })
+                        break;
                 }
             }
 
@@ -501,12 +571,14 @@ namespace pxsim {
                     console.log("Runtime terminated")
                     return
                 }
+                U.assert(!__this.loopLock)
                 try {
                     runtime = __this
                     while (!!p) {
                         __this.currFrame = p;
                         __this.currFrame.overwrittenPC = false;
                         p = p.fn(p)
+                        //if (yieldSteps-- < 0 && maybeYield(p, p.pc, 0)) break;
                         __this.maybeUpdateDisplay()
                         if (__this.currFrame.overwrittenPC)
                             p = __this.currFrame
@@ -516,7 +588,7 @@ namespace pxsim {
                         __this.errorHandler(e)
                     else {
                         console.error("Simulator crashed, no error handler", e.stack)
-                        let msg = getBreakpointMsg(p, p.lastBrkId)
+                        const { msg } = getBreakpointMsg(p, p.lastBrkId)
                         msg.exceptionMessage = e.message
                         msg.exceptionStack = e.stack
                         Runtime.postMessage(msg)
@@ -537,12 +609,7 @@ namespace pxsim {
                 return s;
             }
 
-            function leave(s: StackFrame, v: any): StackFrame {
-                s.parent.retval = v;
-                if (s.finalCallback)
-                    s.finalCallback(v);
-                return s.parent
-            }
+            const leave = _leave
 
             function setupTop(cb: ResumeFn) {
                 let s = setupTopCore(cb)
@@ -588,13 +655,18 @@ namespace pxsim {
             function buildResume(s: StackFrame, retPC: number) {
                 if (currResume) oops("already has resume")
                 s.pc = retPC;
-                return (v: any) => {
+                let start = Date.now()
+                let fn = (v: any) => {
                     if (__this.dead) return;
+                    if (__this.loopLock) {
+                        __this.loopLockWaitList.push(() => fn(v))
+                        return;
+                    }
                     runtime = __this;
+                    let now = Date.now()
+                    if (now - start > 3)
+                        lastYield = now
                     U.assert(s.pc == retPC);
-                    // TODO should loop() be called here using U.nextTick?
-                    // This matters if the simulator function calls cb()
-                    // synchronously.
                     if (v instanceof FnWrapper) {
                         let w = <FnWrapper>v
                         let frame: StackFrame = {
@@ -606,15 +678,27 @@ namespace pxsim {
                             depth: s.depth + 1,
                             finalCallback: w.cb,
                         }
-                        return loop(actionCall(frame))
+                        // If the function we call never pauses, this would cause the stack
+                        // to grow unbounded.
+                        let lock = {}
+                        __this.loopLock = lock
+                        return U.nextTick(() => {
+                            U.assert(__this.loopLock === lock)
+                            __this.loopLock = null
+                            loop(actionCall(frame))
+                            flushLoopLock()
+                        })
                     }
                     s.retval = v;
                     return loop(s)
                 }
+                return fn
             }
 
             // tslint:disable-next-line
             eval(msg.code)
+
+            this.refCounting = refCounting
 
             this.run = (cb) => topCall(entryPoint, cb)
             this.getResume = () => {

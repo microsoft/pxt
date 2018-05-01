@@ -9,8 +9,20 @@
              Layout
 *******************************/
 
-html, body {
-    min-width: 320px;
+html {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-size:16px;
+}
+  
+body {
+    height: 100%;
+    padding: 0;
+    overflow: auto;
+    margin: 0;
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
 }
 
 * {
@@ -19,6 +31,24 @@ html, body {
 }
 
 /* Main Layout */
+#allcontent {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+}
+
+#msccBanner {
+    /* Don't change! This legal text should always be above everything else */
+    z-index: @aboveEverythingZIndex;
+}
+
+#editorcontent {
+    flex: 1 1 auto;
+    position: relative;
+}
+
 #filelist,
 #maineditor,
 #sidedocs {
@@ -331,12 +361,12 @@ div.simframe > iframe {
 }
 
 #msg > div {
-    display: inline-block;
+    display: inline-block !important;
     z-index: @editorMessageZIndex;
 }
 
 #msg > div:empty {
-   display: none;
+   display: none !important;
 }
 
 /* Scrollbars */
@@ -492,6 +522,33 @@ Avatar
     padding: 1rem;
 }
 
+.rtl #fileNameInput {
+    text-align: right;
+}
+
+/* Simulator effects */
+
+.grayscale {
+    -moz-filter: grayscale(1);
+    -webkit-filter: grayscale(1);
+    filter: grayscale(1);
+}
+
+.sepia {
+    -webkit-filter: sepia(1);
+    filter: sepia(1);
+}
+
+.blur {
+    -moz-filter: blur(1);
+    -webkit-filter: blur(1);
+    filter: blur(1);
+}
+
+.highlight {
+    border-bottom: 2px solid #FFC107;
+}
+
 /* Modulator */
 #modulatorWrapper, #modulatorAudioOutput {
     display: none;
@@ -531,6 +588,24 @@ Field editors
 .ui.mobile.only {
     display: none !important;
 }
+
+/*******************
+
+Font size
+
+*************************/
+
+p.ui.font.small {
+    font-size:0.8em;
+}
+
+/** App **/
+
+.ui.app .ui.app.hide {
+    display: none !important;
+}
+
+/** Screen modes **/
 
 @media only screen and (min-width: @largeMonitorBreakpoint) and (min-height:30em) {
     .ui.widedesktop.only {
@@ -685,8 +760,7 @@ Field editors
         background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
         background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
     }
-    .fullscreensim #simulator .ui.item:not(.simtoolbar),
-        .fullscreensim #simulator .ui.menu,
+    .fullscreensim #simulator .hidefullscreen,
         .fullscreensim .menubar .ui.item:not(.logo),
         .fullscreensim #maineditor,
         .fullscreensim #editortools,
@@ -698,14 +772,14 @@ Field editors
         z-index: @sandboxFooterZIndex;
         bottom: 1rem;
     }
-    .fullscreensim .ui.menu {
+    .fullscreensim #mainmenu {
         background: transparent !important;
     }
     .fullscreensim #filelist .simtoolbar {
         position: fixed;
         bottom: 1rem;
-        left:auto;
-        right:auto;
+        left: auto;
+        right: auto;
     }
     .fullscreensim #simulators {
         position: relative;

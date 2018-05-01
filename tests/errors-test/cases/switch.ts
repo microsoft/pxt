@@ -15,7 +15,7 @@ switch (salutation) { // ok now
 let message = ""
 
 // Switch statements with fallthroughs should compile
-switch (2) {
+switch (1+2) {
     case 0:
     case 1:
         message = "Zero or one"

@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/node/index.d.ts"/>
-
 import * as path from 'path';
 import * as nodeutil from './nodeutil';
 import * as child_process from 'child_process';
@@ -16,6 +14,22 @@ function fatal(msg: string) {
 }
 
 function getOpenOcdPath() {
+    function latest(tool: string) {
+        let dir = pkgDir + "tools/" + tool + "/"
+        if (!fs.existsSync(dir)) fatal(dir + " doesn't exists; " + tool + " not installed in Arduino?")
+
+        let subdirs = fs.readdirSync(dir)
+        if (!subdirs.length)
+            fatal("no sub-directories in " + dir)
+        subdirs.sort(pxt.semver.strcmp)
+        subdirs.reverse()
+
+        let thePath = dir + subdirs[0] + "/"
+        if (!fs.existsSync(thePath + "bin")) fatal("missing bindir in " + thePath)
+
+        return thePath
+    }
+
     let dirs = [
         process.env["HOME"] + "/Library/Arduino",
         process.env["USERPROFILE"] + "/AppData/Local/Arduino",
@@ -35,18 +49,9 @@ function getOpenOcdPath() {
 
     if (!pkgDir) fatal("cannot find Arduino packages directory")
 
-    let openocdParPath = pkgDir + "tools/openocd/"
-    if (!fs.existsSync(openocdParPath)) fatal(openocdParPath + " doesn't exists; openocd not installed in Arduino?")
 
-    let subdirs = fs.readdirSync(openocdParPath)
-    if (!subdirs.length)
-        fatal("no directories in " + openocdParPath)
-    subdirs.sort(pxt.semver.strcmp)
-    subdirs.reverse()
 
-    let openocdPath = openocdParPath + subdirs[0] + "/"
-    if (!fs.existsSync(openocdPath + "bin")) fatal("openocd not installed in Arduino")
-
+    let openocdPath = latest("openocd")
     let openocdBin = openocdPath + "bin/openocd"
 
     if (process.platform == "win32")
@@ -61,10 +66,16 @@ function getOpenOcdPath() {
         "-s", openocdPath + "/share/openocd/scripts/",
         "-c", cmd]
 
-    return args
+    let gccPath = latest("arm-none-eabi-gcc")
+    let gdbBin = gccPath + "bin/arm-none-eabi-gdb"
+
+    if (process.platform == "win32")
+        gdbBin += ".exe"
+
+    return { args, gdbBin }
 }
 
-export function startAsync(c: commandParser.ParsedCommand) {
+export function startAsync(gdbArgs: string[]) {
     let cs = pxt.appTarget.compileService
 
     let f =
@@ -75,7 +86,8 @@ export function startAsync(c: commandParser.ParsedCommand) {
     if (!fs.existsSync(f))
         fatal("compiled file not found: " + f)
 
-    let oargs = getOpenOcdPath()
+    let toolPaths = getOpenOcdPath()
+    let oargs = toolPaths.args
 
     fs.writeFileSync("built/openocd.gdb",
         `
@@ -84,6 +96,10 @@ define rst
   set {int}(0x20008000-4) = 0xf02669ef
   monitor reset halt
   continue
+end
+define irq
+  echo "Current IRQ: "
+  p (*(int*)0xE000ED04 & 0x1f) - 16
 end
 echo Use 'rst' command to re-run program from start (set your breakpoints first!).\\n
 `)
@@ -95,13 +111,13 @@ echo Use 'rst' command to re-run program from start (set your breakpoints first!
         detached: true,
     })
 
-    let gdbargs = ["--command=built/openocd.gdb", f].concat(c.arguments)
+    let gdbargs = ["--command=built/openocd.gdb", f].concat(gdbArgs)
 
-    pxt.log("starting gdb with: " + gdbargs.join(" "))
+    pxt.log("starting gdb with: " + toolPaths.gdbBin + " " + gdbargs.join(" "))
 
-    let proc = child_process.spawn("arm-none-eabi-gdb", gdbargs, {
+    let proc = child_process.spawn(toolPaths.gdbBin, gdbargs, {
         stdio: "inherit",
-        detached: true,
+        //detached: true,
     })
 
     process.on('SIGINT', function () {

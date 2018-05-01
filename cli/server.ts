@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/node/index.d.ts"/>
-
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
@@ -23,8 +21,8 @@ let docfilesdirs = [""]
 let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let packagedDir = ""
-let localHexDir = path.join("built", "hexcache");
-let electronHandlers: pxt.Map<ElectronHandler> = {};
+let localHexCacheDir = path.join("built", "hexcache");
+let serveOptions: ServeOptions;
 
 function setupDocfilesdirs() {
     docfilesdirs = [
@@ -56,33 +54,6 @@ function setupRootDir() {
 }
 
 function setupProjectsDir() {
-    if (serveOptions && serveOptions.electron) {
-        let projectsRootDir = process.cwd();
-
-        if (/^win/.test(os.platform())) {
-            // Use registry to query path of My Documents folder
-            let regQueryResult = "";
-
-            try {
-                let regQueryResult = child_process.execSync("reg query \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders\" /v Personal").toString();
-                let documentsPath = /personal(?:\s+\w+)\s+(.*)/gmi.exec(regQueryResult)[1];
-
-                if (documentsPath) {
-                    projectsRootDir = documentsPath;
-                } else {
-                    projectsRootDir = os.homedir();
-                }
-            } catch (e) {
-                // Fallback to Home directory
-                projectsRootDir = os.homedir();
-            }
-        } else {
-            projectsRootDir = os.homedir();
-        }
-
-        userProjectsDir = path.join(projectsRootDir, userProjectsDirName, pxt.appTarget.appTheme.id);
-    }
-
     nodeutil.mkdirP(userProjectsDir);
 }
 
@@ -110,6 +81,21 @@ function throwError(code: number, msg: string = null) {
 
 type FsFile = pxt.FsFile;
 type FsPkg = pxt.FsPkg;
+
+function readAssetsAsync(logicalDirname: string): Promise<any> {
+    let dirname = path.join(userProjectsDir, logicalDirname, "assets")
+    let pref = "http://" + serveOptions.hostname + ":" + serveOptions.port + "/assets/" + logicalDirname + "/"
+    return readdirAsync(dirname)
+        .catch(err => [])
+        .then(res => Promise.map(res, fn => statAsync(path.join(dirname, fn)).then(res => ({
+            name: fn,
+            size: res.size,
+            url: pref + fn
+        }))))
+        .then(res => ({
+            files: res
+        }))
+}
 
 function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
     let dirname = path.join(userProjectsDir, logicalDirname)
@@ -168,6 +154,16 @@ function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, ico
         writeUriAsync("screenshot", screenshotUri),
         writeUriAsync("icon", iconUri)
     ]).then(() => { });
+}
+
+function writePkgAssetAsync(logicalDirname: string, data: any) {
+    const dirname = path.join(userProjectsDir, logicalDirname, "assets")
+
+    nodeutil.mkdirP(dirname)
+    return writeFileAsync(dirname + "/" + data.name, new Buffer(data.data, data.encoding || "base64"))
+        .then(() => ({
+            name: data.name
+        }))
 }
 
 function writePkgAsync(logicalDirname: string, data: FsPkg) {
@@ -231,7 +227,7 @@ function getCachedHexAsync(sha: string): Promise<any> {
         return Promise.resolve();
     }
 
-    let hexFile = path.resolve(localHexDir, sha + ".hex");
+    let hexFile = path.resolve(localHexCacheDir, sha + ".hex");
 
     return existsAsync(hexFile)
         .then((results) => {
@@ -253,7 +249,7 @@ function getCachedHexAsync(sha: string): Promise<any> {
 }
 
 function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<any> {
-    const opts: pxt.Map<string> = querystring.parse(url.parse(req.url).query)
+    const opts: pxt.Map<string | string[]> = querystring.parse(url.parse(req.url).query)
     const innerPath = elts.slice(2).join("/").replace(/^\//, "")
     const filename = path.resolve(path.join(userProjectsDir, innerPath))
     const meth = req.method.toUpperCase()
@@ -283,6 +279,11 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     else if (cmd == "POST pkg")
         return readJsonAsync()
             .then(d => writePkgAsync(innerPath, d))
+    else if (cmd == "POST pkgasset")
+        return readJsonAsync()
+            .then(d => writePkgAssetAsync(innerPath, d))
+    else if (cmd == "GET pkgasset")
+        return readAssetsAsync(innerPath)
     else if (cmd == "POST deploy" && pxt.commands.deployCoreAsync)
         return readJsonAsync()
             .then(pxt.commands.deployCoreAsync)
@@ -354,13 +355,13 @@ export function expandHtml(html: string) {
 export function expandDocTemplateCore(template: string) {
     template = template
         .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
-        (full, fn) => {
-            return `
+            (full, fn) => {
+                return `
 <!-- include ${fn} -->
 ${expandDocFileTemplate(fn)}
 <!-- end include ${fn} -->
 `
-        })
+            })
     return template
 }
 
@@ -371,9 +372,7 @@ export function expandDocFileTemplate(name: string) {
 }
 
 let wsSerialClients: WebSocket[] = [];
-let electronSocket: WebSocket = null;
 let webappReady = false;
-let electronPendingMessages: ElectronMessage[] = [];
 
 function initSocketServer(wsPort: number, hostname: string) {
     console.log(`starting local ws server at ${wsPort}...`)
@@ -564,30 +563,6 @@ function initSocketServer(wsPort: number, hostname: string) {
         })
     }
 
-    function startElectronChannel(request: any, socket: any, body: any) {
-        electronSocket = new WebSocket(request, socket, body);
-        electronSocket.onmessage = function (event: any) {
-            let messageInfo = JSON.parse(event.data) as ElectronMessage;
-
-            if (messageInfo.type === "ready") {
-                webappReady = true;
-                electronPendingMessages.forEach((m) => {
-                    sendElectronMessage(m);
-                });
-            } else if (electronHandlers[messageInfo.type]) {
-                electronHandlers[messageInfo.type](messageInfo.args);
-            }
-        };
-        electronSocket.onclose = function (event: any) {
-            console.log('Electron socket connection closed')
-            electronSocket = null;
-        };
-        electronSocket.onerror = function () {
-            console.log('Electron socket connection closed')
-            electronSocket = null;
-        };
-    }
-
     let wsserver = http.createServer();
     wsserver.on('upgrade', function (request: http.IncomingMessage, socket: WebSocket, body: any) {
         try {
@@ -599,8 +574,6 @@ function initSocketServer(wsPort: number, hostname: string) {
                     startDebug(request, socket, body);
                 else if (request.url == "/" + serveOptions.localToken + "/hid")
                     startHID(request, socket, body);
-                else if (request.url == "/" + serveOptions.localToken + "/electron")
-                    startElectronChannel(request, socket, body);
                 else console.log('refused connection at ' + request.url);
             }
         } catch (e) {
@@ -635,32 +608,15 @@ function initSerialMonitor() {
     })
 }
 
-export interface ElectronMessage {
-    type: string;
-    args?: any
-}
-export interface ElectronHandler { (args?: any): void }
-
 export interface ServeOptions {
     localToken: string;
     autoStart: boolean;
     packaged?: boolean;
-    electron?: boolean;
     browser?: string;
-    electronHandlers?: pxt.Map<ElectronHandler>;
     port?: number;
     hostname?: string;
     wsPort?: number;
     serial?: boolean;
-}
-
-export function sendElectronMessage(message: ElectronMessage) {
-    if (!webappReady) {
-        electronPendingMessages.push(message);
-        return;
-    }
-
-    electronSocket.send(JSON.stringify(message));
 }
 
 // can use http://localhost:3232/streams/nnngzlzxslfu for testing
@@ -732,7 +688,6 @@ function readMd(pathname: string): string {
     return `# Not found ${pathname}\nChecked:\n` + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join("")
 }
 
-let serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
@@ -742,9 +697,6 @@ export function serveAsync(options: ServeOptions) {
     const wsServerPromise = initSocketServer(serveOptions.wsPort, serveOptions.hostname);
     if (serveOptions.serial)
         initSerialMonitor();
-    if (serveOptions.electronHandlers) {
-        electronHandlers = serveOptions.electronHandlers;
-    }
 
     const server = http.createServer((req, res) => {
         const error = (code: number, msg: string = null) => {
@@ -827,6 +779,19 @@ export function serveAsync(options: ServeOptions) {
                 .then(exists => exists ? sendFile(name) : error(404));
         }
 
+        if (elts[0] == "assets") {
+            if (/^[a-z0-9\-_]/.test(elts[1]) && !/[\/\\]/.test(elts[1]) && !/^[.]/.test(elts[2])) {
+                let filename = path.join(userProjectsDir, elts[1], "assets", elts[2])
+                if (nodeutil.fileExistsSync(filename)) {
+                    return sendFile(filename)
+                } else {
+                    return error(404, "Asset not found")
+                }
+            } else {
+                return error(400, "Invalid asset path")
+            }
+        }
+
         if (options.packaged) {
             let filename = path.resolve(path.join(packagedDir, pathname))
             if (nodeutil.fileExistsSync(filename)) {
@@ -856,6 +821,11 @@ export function serveAsync(options: ServeOptions) {
 
         if (pathname == "/--docs") {
             sendFile(path.join(publicDir, 'docs.html'));
+            return
+        }
+
+        if (pathname == "/--codeembed") {
+            sendFile(path.join(publicDir, 'codeembed.html'));
             return
         }
 

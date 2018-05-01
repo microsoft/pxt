@@ -1,225 +1,95 @@
-"use strict";
-
-import * as core from "./core";
 import Cloud = pxt.Cloud;
+import * as core from "./core";
+import { ProjectView } from "./srceditor";
 
-enum UpdateEventType {
-    Critical = 1,
-    Notification,
-    Prompt
-}
-
-interface UpdateEventInfo {
-    type: UpdateEventType;
-    appName?: string;
-    isInitialCheck?: boolean;
-    targetVersion?: string;
-}
-
-interface TelemetryEventInfo {
-    event: string;
-    data: pxt.Map<string | number>;
-}
-
-interface ElectronMessage {
-    type: string;
-    args?: UpdateEventInfo | TelemetryEventInfo;
-}
-
-let electronSocket: WebSocket = null;
-
-export const isPxtElectron = /[?&]electron=1/.test(window.location.href);
+const pxtElectron: pxt.electron.PxtElectron = (window as any).pxtElectron;
+export const isPxtElectron = !!pxtElectron;
 export const isIpcRenderer = !!(window as any).ipcRenderer;
 export const isElectron = isPxtElectron || isIpcRenderer;
 
-export function init() {
-    if (!isElectron || !Cloud.isLocalHost() || !Cloud.localToken) {
+const downloadingUpdateLoadingName = "pxtelectron-downloadingupdate";
+
+export function initElectron(projectView: ProjectView): void {
+    if (!isPxtElectron) {
         return;
     }
 
-    function onCriticalUpdate(args: UpdateEventInfo) {
-        const isUrl = /^https:\/\//.test(args.targetVersion);
-        let body = lf("To continue using {0}, you must install an update.", args.appName || lf("this application"));
-        let agreeLbl = lf("Update");
+    pxtElectron.onTelemetry((ev: pxt.electron.TelemetryEvent) => {
+        pxt.tickEvent(ev.event, ev.data);
+    });
+    pxtElectron.onUpdateInstalled(() => {
+        core.infoNotification(lf("An update will take effect after the app restarts"))
+    });
 
-        if (isUrl) {
-            body = lf("To continue using {0}, you must install an update from the website.", args.appName || lf("this application"));
-            agreeLbl = lf("Go to website");
+    const criticalUpdateFailedPromise = new Promise((resolve) => {
+        pxtElectron.onCriticalUpdateFailed(() => {
+            pxt.tickEvent("electron.criticalupdate.failed");
+            resolve();
+        });
+    });
+
+    // Asynchronously check what the update status is, which will let us know if the current version is banned
+    pxtElectron.onUpdateStatus((status) => {
+        pxt.debug(`Electron app update status: ${status}`);
+        pxt.tickEvent(`electron.updatestatus.${status}`);
+
+        if (status === pxt.electron.UpdateStatus.UpdatingCritical || status === pxt.electron.UpdateStatus.BannedWithoutUpdate) {
+            projectView.stopSimulator();
         }
 
-        core.confirmAsync({
-            header: lf("Critical update required"),
-            body,
-            agreeLbl,
-            disagreeLbl: lf("Quit"),
-            disagreeClass: "red",
-            size: "medium"
-        }).then(b => {
-            if (!b) {
-                pxt.tickEvent("update.refusedCritical");
-                sendMessage("quit");
-            } else {
-                pxt.tickEvent("update.acceptedCritical");
-                core.showLoading("downloadingupdate", lf("Downloading update..."));
-                sendMessage("update", {
-                    targetVersion: args.targetVersion,
-                    type: args.type
+        switch (status) {
+            case pxt.electron.UpdateStatus.Ok:
+                // No update available; nothing to do
+                return;
+            case pxt.electron.UpdateStatus.UpdatingCritical:
+                // App is installing a critical update; show a dialog asking the user to wait
+                core.confirmAsync({
+                    header: lf("Critical update required"),
+                    body: lf("A critical update is installing. Please do not quit the app. It will automatically restart when the update has completed."),
+                    hideAgree: true,
+                    disagreeLbl: lf("Ok"),
+                    disagreeClass: "green",
+                    size: "medium"
+                }).then(() => {
+                    core.showLoading("pxt-electron-update", lf("Installing update..."));
                 });
-            }
-        });
-    }
 
-    function onUpdateAvailable(args: UpdateEventInfo) {
-        const isUrl = /^https:\/\//.test(args.targetVersion);
-        let header = lf("Version {0} available", args.targetVersion);
-        let body = lf("A new version of {0} is ready to download and install. The app will restart during the update. Update now?", args.appName || lf("this application"));
-        let agreeLbl = lf("Update");
-
-        if (isUrl) {
-            header = lf("Update available from website");
-            body = lf("A new version of {0} is available from the website.", args.appName || lf("this application"));
-            agreeLbl = lf("Go to website");
-        }
-
-        if (args.type === UpdateEventType.Notification) {
-            core.infoNotification(lf("A new version is available. Select 'Check for updates...' in the menu.", args.targetVersion));
-        } else if (args.type === UpdateEventType.Prompt) {
-            core.confirmAsync({
-                header,
-                body,
-                agreeLbl,
-                disagreeLbl: lf("Not now"),
-                size: "medium"
-            }).then(b => {
-                if (!b) {
-                    if (args.isInitialCheck) {
-                        pxt.tickEvent("update.refusedInitial");
-                    } else {
-                        pxt.tickEvent("update.refused");
-                    }
-                } else {
-                    if (args.isInitialCheck) {
-                        pxt.tickEvent("update.acceptedInitial");
-                    } else {
-                        pxt.tickEvent("update.accepted");
-                    }
-
-                    if (!isUrl) {
-                        core.showLoading("downloadingupdate", lf("Downloading update..."));
-                    }
-
-                    sendMessage("update", {
-                        targetVersion: args.targetVersion,
-                        type: args.type
+                criticalUpdateFailedPromise
+                    .then(() => {
+                        core.hideLoading("pxt-electron-update");
+                        core.hideDialog();
+                        core.confirmAsync({
+                            header: lf("Critical update failed"),
+                            body: lf("There was an error installing the critical update. Please ensure you are connected to the Internet and try again later."),
+                            hideAgree: true,
+                            disagreeLbl: lf("Quit"),
+                            disagreeClass: "red",
+                            size: "medium"
+                        }).then(b => {
+                            pxtElectron.sendQuit();
+                        });
                     });
-                }
-            });
+
+                // Don't do anything; app will quit and restart once the update is ready
+                break;
+            case pxt.electron.UpdateStatus.BannedWithoutUpdate:
+                // Current version is banned and there are no updates available; show a dialog explaining the
+                // situation and quit
+                core.confirmAsync({
+                    header: lf("Critical update required"),
+                    body: lf("We have disabled this app for security reasons. Please ensure you are connected to the Internet and try again later. An update will be automatically installed as soon as it is available."),
+                    hideAgree: true,
+                    disagreeLbl: lf("Quit"),
+                    disagreeClass: "red",
+                    size: "medium"
+                }).then(b => {
+                    pxtElectron.sendQuit();
+                });
+            default:
+                // Unknown status; no-op
+                return;
         }
-    }
+    });
 
-    function onUpdateNotAvailable() {
-        core.confirmAsync({
-            body: lf("You are using the latest version available."),
-            header: lf("Good to go!"),
-            agreeLbl: lf("Ok"),
-            hideCancel: true
-        });
-    }
-
-    function onUpdateCheckError() {
-        displayUpdateError(lf("Unable to check for updates"), lf("Ok"));
-    }
-
-    function onUpdateDownloadError(args: UpdateEventInfo) {
-        const isCritical = args && args.type === UpdateEventType.Critical;
-
-        core.hideLoading("downloadingupdate");
-        displayUpdateError(lf("There was an error downloading the update"), isCritical ? lf("Quit") : lf("Ok"))
-            .finally(() => {
-                if (isCritical) {
-                    sendMessage("quit");
-                }
-            });
-    }
-
-    function displayUpdateError(header: string, btnLabel: string) {
-        return core.confirmAsync({
-            header,
-            body: lf("Please ensure you are connected to the Internet and try again later."),
-            agreeClass: "red",
-            agreeIcon: "cancel",
-            agreeLbl: btnLabel,
-            hideCancel: true
-        });
-    }
-
-    pxt.log('initializing electron socket');
-    electronSocket = new WebSocket(`ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/electron`);
-    electronSocket.onopen = (ev) => {
-        pxt.log('electron: socket opened');
-        sendMessage("ready");
-    }
-    electronSocket.onclose = (ev) => {
-        pxt.log('electron: socket closed');
-        electronSocket = null;
-    }
-    electronSocket.onmessage = (ev) => {
-        try {
-            const msg = JSON.parse(ev.data) as ElectronMessage;
-
-            switch (msg.type) {
-                case "critical-update":
-                    onCriticalUpdate(msg.args as UpdateEventInfo);
-                    break;
-                case "update-available":
-                    onUpdateAvailable(msg.args as UpdateEventInfo);
-                    break;
-                case "update-not-available":
-                    onUpdateNotAvailable();
-                    break;
-                case "update-check-error":
-                    onUpdateCheckError();
-                    break;
-                case "update-download-error":
-                    onUpdateDownloadError(msg.args as UpdateEventInfo);
-                    break;
-                case "telemetry":
-                    const telemetryInfo = msg.args as TelemetryEventInfo;
-
-                    if (!telemetryInfo) {
-                        pxt.debug('invalid telemetry message: ' + ev.data);
-                        return;
-                    }
-
-                    pxt.tickEvent(telemetryInfo.event, telemetryInfo.data);
-                default:
-                    pxt.debug('unknown electron message: ' + ev.data);
-                    break;
-            }
-        }
-        catch (e) {
-            pxt.debug('unknown electron message: ' + ev.data);
-        }
-    }
-}
-
-export function sendMessage(type: string, args?: UpdateEventInfo) {
-    if (!electronSocket) {
-        return;
-    }
-
-    const message: ElectronMessage = {
-        type,
-        args
-    };
-
-    // Sending messages to the web socket sometimes hangs the app briefly; use setTimeout to smoothen the UI animations a bit 
-    setTimeout(function () {
-        electronSocket.send(JSON.stringify(message));
-    }, 150);
-}
-
-export function checkForUpdate() {
-    pxt.tickEvent("menu.electronupdate");
-    sendMessage("check-for-update");
+    pxtElectron.sendUpdateStatusCheck();
 }

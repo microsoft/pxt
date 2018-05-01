@@ -1,24 +1,32 @@
 /// <reference path='../built/pxtlib.d.ts' />
 
 namespace pxt {
-    export function simshim(prog: ts.Program): Map<string> {
+    export function simshim(prog: ts.Program, pathParse: any): pxt.Map<string> {
         let SK = ts.SyntaxKind
         let checker = prog.getTypeChecker()
         let mainWr = cpp.nsWriter("declare namespace")
         let currNs = ""
+        let currMod: ts.ModuleDeclaration
 
         for (let src of prog.getSourceFiles()) {
-            if (!U.startsWith(src.fileName, "sim/"))
+            if (pathParse) {
+                let pp = pathParse(src.fileName);
+                pxt.debug("SimShim[1]: " + pp.dir)
+                if (!U.endsWith(pp.dir, "/sim") && !U.startsWith(src.fileName, "sim/"))
+                    continue;
+            } else if (!U.startsWith(src.fileName, "sim/"))
                 continue;
+            pxt.debug("SimShim[2]: " + src.fileName)
             for (let stmt of src.statements) {
                 let mod = stmt as ts.ModuleDeclaration
                 if (stmt.kind == SK.ModuleDeclaration && mod.name.text == "pxsim") {
-                    doStmt(mod.body)
+                    currMod = mod
+                    doStmt(mod.body as ts.ModuleBlock)
                 }
             }
         }
 
-        let res: Map<string> = {}
+        let res: pxt.Map<string> = {}
         res[appTarget.corepkg] = mainWr.finish()
         return res
 
@@ -43,21 +51,23 @@ namespace pxt {
             let prevNs = currNs
             if (currNs) currNs += "."
             currNs += mod.name.text
-            doStmt(mod.body)
+            doStmt(mod.body as ts.ModuleBlock)
             currNs = prevNs
         }
 
         function mapType(tp: ts.Type) {
-            let fn = checker.typeToString(tp, null, ts.TypeFormatFlags.UseFullyQualifiedType)
+            let fn = checker.typeToString(tp, currMod, ts.TypeFormatFlags.UseFullyQualifiedType)
+            fn = fn.replace(/^pxsim\./, "")
             switch (fn) {
-                case "pxsim.RefAction": return "() => void";
+                case "RefAction": return "() => void";
+                case "RefBuffer": return "Buffer";
                 default:
-                    return fn.replace(/^pxsim\./, "")
+                    return fn
             }
         }
 
         function promiseElementType(tp: ts.Type) {
-            if ((tp.flags & ts.TypeFlags.Reference) && tp.symbol.name == "Promise") {
+            if (pxtc.isObjectType(tp) && (tp.objectFlags & ts.ObjectFlags.Reference) && tp.symbol.name == "Promise") {
                 return (tp as ts.TypeReference).typeArguments[0]
             }
             return null
@@ -74,7 +84,18 @@ namespace pxt {
             if (currNs) currNs += "."
             currNs += cl.name.text
 
-            mainWr.write(`declare class ${cl.name.text} {`)
+            let decl = prevNs ? "" : "declare"
+
+            let ext = ""
+
+            if (cl.heritageClauses)
+                for (let h of cl.heritageClauses) {
+                    if (h.token == SK.ExtendsKeyword) {
+                        ext = " extends " + mapType(typeOf(h.types[0]))
+                    }
+                }
+
+            mainWr.write(`${decl} class ${cl.name.text}${ext} {`)
             mainWr.incrIndent()
 
             for (let mem of cl.members) {
@@ -87,6 +108,10 @@ namespace pxt {
                         break
                     case SK.Constructor:
                         emitConstructorDeclaration(mem as ts.ConstructorDeclaration)
+                        break
+                    case SK.GetAccessor:
+                        let hasSetter = cl.members.some(m => m.kind == SK.SetAccessor && m.name.getText() == mem.name.getText())
+                        emitFunctionDeclaration(mem as ts.GetAccessorDeclaration, hasSetter)
                         break
                     default:
                         break;
@@ -126,11 +151,11 @@ namespace pxt {
             mainWr.write("")
         }
 
-        function emitFunctionDeclaration(fn: ts.FunctionLikeDeclaration) {
+        function emitFunctionDeclaration(fn: ts.FunctionLikeDeclaration, hasSetter = false) {
             let cmts = getExportComments(fn)
             if (!cmts) return
             let fnname = fn.name.getText()
-            let isMethod = fn.kind == SK.MethodDeclaration
+            let isMethod = fn.kind == SK.MethodDeclaration || fn.kind == SK.GetAccessor || fn.kind == SK.SetAccessor
             let attrs = "//% shim=" + (isMethod ? "." + fnname : currNs + "::" + fnname)
             let sig = checker.getSignatureFromDeclaration(fn)
             let rettp = checker.getReturnTypeOfSignature(sig)
@@ -144,15 +169,26 @@ namespace pxt {
             } else if (asyncName) {
                 U.userError(`${currNs}::${fnname} doesn't return a promise`)
             }
-            let args = fn.parameters.map(p => `${p.name.getText()}${p.questionToken ? "?" : ""}: ${mapType(typeOf(p))}`)
+            pxt.debug("emitFun: " + fnname)
+            let args = fn.parameters.map(p => {
+                return `${p.name.getText()}${p.questionToken ? "?" : ""}: ${mapType(typeOf(p))}`
+            })
             let localname = fnname.replace(/Async$/, "")
             let defkw = isMethod ? "public" : "function"
+
+            let allArgs = `(${args.join(", ")})`
+
+            if (fn.kind == SK.GetAccessor) {
+                defkw = hasSetter ? "public" : "readonly"
+                allArgs = ""
+                attrs += " property"
+            }
 
             if (!isMethod)
                 mainWr.setNs(currNs)
             mainWr.write(cmts)
             mainWr.write(attrs)
-            mainWr.write(`${defkw} ${localname}(${args.join(", ")}): ${mapType(rettp)};`)
+            mainWr.write(`${defkw} ${localname}${allArgs}: ${mapType(rettp)};`)
             mainWr.write("")
         }
 

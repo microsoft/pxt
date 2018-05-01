@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/bluebird/index.d.ts"/>
-
 namespace pxsim {
     export type BoardPin = string;
     export interface BBLoc {
@@ -23,14 +21,8 @@ namespace pxsim {
         return res;
     }
 
-    export function parseQueryString(): (key: string) => string {
-        let qs = window.location.search.substring(1);
-        let getQsVal = (key: string) => decodeURIComponent((qs.split(`${key}=`)[1] || "").split("&")[0] || ""); //.replace(/\+/g, " ");
-        return getQsVal;
-    }
-
-    export class EventBus {
-        private queues: Map<EventQueue<number>> = {};
+    export class EventBusGeneric<T> {
+        private queues: Map<EventQueue<T>> = {};
         private notifyID: number;
         private notifyOneID: number;
 
@@ -40,12 +32,12 @@ namespace pxsim {
             this.notifyOneID = notifyOneID;
         }
 
-        constructor(private runtime: Runtime) { }
+        constructor(private runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
         private start(id: number | string, evid: number | string, create: boolean) {
             let k = id + ":" + evid;
             let queue = this.queues[k];
-            if (!queue) queue = this.queues[k] = new EventQueue<number>(this.runtime);
+            if (!queue) queue = this.queues[k] = new EventQueue<T>(this.runtime, this.valueToArgs);
             return queue;
         }
 
@@ -54,7 +46,7 @@ namespace pxsim {
             q.handler = handler;
         }
 
-        queue(id: number | string, evid: number | string, value: number = 0) {
+        queue(id: number | string, evid: number | string, value: T = null) {
             // special handling for notify one
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
@@ -62,12 +54,20 @@ namespace pxsim {
 
             // grab queue and handle
             let q = this.start(id, evid, false);
-            if (q) q.push(value, notifyOne);
+            if (q) {
+                q.push(value, notifyOne);
+            }
         }
 
-        wait(id: number | string, evid: number | string, cb: (v?: any) => void) {
+        wait(id: number | string, evid: number | string, cb: (value?: any) => void) {
             let q = this.start(id, evid, true);
             q.addAwaiter(cb);
+        }
+    }
+
+    export class EventBus extends EventBusGeneric<number> {
+        queue(id: number | string, evid: number | string, value: number = 0) {
+            super.queue(id, evid, value);
         }
     }
 
@@ -178,6 +178,9 @@ namespace pxsim {
         export function stop() {
             if (_vca) _vca.gain.value = 0;
             _frequency = 0;
+            if (audio) {
+                audio.pause();
+            }
         }
 
         export function frequency(): number {
@@ -216,18 +219,47 @@ namespace pxsim {
             _vco.frequency.value = frequency;
             _vca.gain.value = gain;
         }
+
+        function uint8ArrayToString(input: Uint8Array) {
+            let len = input.length;
+            let res = ""
+            for (let i = 0; i < len; ++i)
+                res += String.fromCharCode(input[i]);
+            return res;
+        }
+
+        let audio: HTMLAudioElement;
+        export function playBufferAsync(buf: RefBuffer) {
+            if (!buf) return Promise.resolve();
+
+            return new Promise<void>(resolve => {
+                function res() {
+                    if (resolve) resolve();
+                    resolve = undefined;
+                }
+                const url = "data:audio/wav;base64," + window.btoa(uint8ArrayToString(buf.data))
+                audio = new Audio(url);
+                if (_mute)
+                    audio.volume = 0;
+                audio.onended = () => res();
+                audio.onpause = () => res();
+                audio.onerror = () => res();
+                audio.play();
+            })
+        }
     }
 
     export interface IPointerEvents {
         up: string,
-        down: string,
+        down: string[],
         move: string,
+        enter: string,
         leave: string
     }
 
     export function isTouchEnabled(): boolean {
         return typeof window !== "undefined" &&
-                ('ontouchstart' in window                              // works on most browsers
+            ('ontouchstart' in window                              // works on most browsers
                 || (navigator && navigator.maxTouchPoints > 0));       // works on IE10/11 and Surface);
     }
 
@@ -235,24 +267,27 @@ namespace pxsim {
         return typeof window != "undefined" && !!(window as any).PointerEvent;
     }
 
-    export const pointerEvents = hasPointerEvents() ? {
-            up: "pointerup",
-            down: "pointerdown",
-            move: "pointermove",
-            leave: "pointerleave"
-        } : isTouchEnabled() ?
-        {
-            up: "mouseup",
-            down: "touchstart",
-            move: "touchmove",
-            leave: "touchend"
-        } :
-        {
-            up: "mouseup",
-            down: "mousedown",
-            move: "mousemove",
-            leave: "mouseleave"
-        };
+    export const pointerEvents: IPointerEvents = hasPointerEvents() ? {
+        up: "pointerup",
+        down: ["pointerdown"],
+        move: "pointermove",
+        enter: "pointerenter",
+        leave: "pointerleave"
+    } : isTouchEnabled() ?
+            {
+                up: "mouseup",
+                down: ["mousedown", "touchstart"],
+                move: "touchmove",
+                enter: "touchenter",
+                leave: "touchend"
+            } :
+            {
+                up: "mouseup",
+                down: ["mousedown"],
+                move: "mousemove",
+                enter: "mouseenter",
+                leave: "mouseleave"
+            };
 }
 
 namespace pxsim.visuals {

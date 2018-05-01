@@ -39,7 +39,7 @@ namespace ts.pxtc {
     }
 
     interface BlockToken extends Token {
-        stmts: Stmt[]; // for Block          
+        stmts: Stmt[]; // for Block
         endToken: Token; // if it has proper ending token, this is the text of it
     }
 
@@ -839,7 +839,7 @@ namespace ts.pxtc {
         }
     }
 
-    export function toStr(v: any) {
+    export function toStr(v: any): string {
         if (Array.isArray(v)) return "[[ " + v.map(toStr).join("  ") + " ]]"
         if (typeof v.text == "string")
             return JSON.stringify(v.text)

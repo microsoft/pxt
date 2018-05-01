@@ -22,12 +22,12 @@ Following is the lifetime of the data in the application insights.
 
 ### Telemetry Details
 
-Following section contains the information that the Application SDK attempts to extract from the environment about the device, location, and user. 
+Following section contains the information that the Application SDK attempts to extract from the environment about the device, location, and user.
 
  ### Device telemetry
 
 The device the website is running on.
-  
+
 Property | Description
 ---|---
 `device.type`  | Type of device
@@ -40,11 +40,11 @@ Property | Description
 `device.ip` | last 8 bits zeroed out to anonymise
 `device.language` |
 `device.os` |  OS running on the device
-`device.osversion` | 
+`device.osversion` |
 
 ### User telemetry
 
-Data about the current user. Users are identified by cookie, so one person can look like 
+Data about the current user. Users are identified by cookie, so one person can look like
 more than one user if they use different machines or browsers, or delete cookies.
 
 Property | Description
@@ -53,12 +53,12 @@ Property | Description
 `user.authenticatedId` | Not used by Microsoft MakeCode
 `user.accountId` | Not used by Microsoft MakeCode
 `user.accountAcquisitionDate` |
-`user.agent` | 
-`user.storeRegion` | 
+`user.agent` |
+`user.storeRegion` |
 
 
 ### User Session telemetry
-    
+
 A session represents a series of user actions. A session starts with a user action.
 It ends at the last user activity when there is no more activity for 30 minutes, or if it lasts longer than 30 minutes.
 
@@ -78,20 +78,20 @@ Property | Description
 `location.ip` | IP address
 
 ### Operation telemetry
-     
+
 Represents the user request. Operation id is used to tie together related events in diagnostic search.
 
 Property | Description
 ---|---
 `id` | Unique id
-`name` | 
+`name` |
 `parentId` |
 `rootId` |
 `syntheticSource` | String identifying the bot or test agent.
 
 Note: Please refer Application insights SDK documentation for further details: https://github.com/Microsoft/ApplicationInsights-JS/edit/master/API-reference.md
 
-## Microsoft MakeCode custom telemetry 
+## Microsoft MakeCode custom telemetry
 
 Microsoft MakeCode website's also send custom telemetry using AppInsights [trackEvent](https://github.com/Microsoft/ApplicationInsights-JS/blob/master/API-reference.md#trackevent). Each custom telemetry event will have additional following information:
 
@@ -113,11 +113,11 @@ Menu | Javascript tab, Blocks tab, open, add package, reset, report abuse, getti
 Typescript | keep text, discard text, toolbox click, item click, item drag
 Projects | new porject, rename, import, import url, tutorials
 Simulator | Start, stop, restart, fullscreen, screen, mute, make, screenshot
-Hex files | import success\failure, 
+Hex files | import success\failure,
 Share | publish, facebook, twitter
 Compile | Noemit, floating point information
 locale | change of language
-Packages | github search, bundled, 
+Packages | github search, bundled,
 Docs | doc usage
 
 Apart from this exceptions in the editor are sent through AppInsights [trackException](https://github.com/Microsoft/ApplicationInsights-JS/blob/master/API-reference.md#trackexception).

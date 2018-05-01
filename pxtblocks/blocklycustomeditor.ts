@@ -34,7 +34,12 @@ namespace pxt.blocks {
         registerFieldEditor('toggle', pxtblockly.FieldToggle);
         registerFieldEditor('toggleonoff', pxtblockly.FieldToggleOnOff);
         registerFieldEditor('toggleyesno', pxtblockly.FieldToggleYesNo);
+        registerFieldEditor('toggleupdown', pxtblockly.FieldToggleUpDown);
+        registerFieldEditor('toggledownup', pxtblockly.FieldToggleDownUp);
+        registerFieldEditor('togglehighlow', pxtblockly.FieldToggleHighLow);
         registerFieldEditor('colornumber', pxtblockly.FieldColorNumber);
+        registerFieldEditor('images', pxtblockly.FieldImages);
+        registerFieldEditor('sprite', pxtblockly.FieldSpriteEditor);
     }
 
     export function registerFieldEditor(selector: string, field: Blockly.FieldCustomConstructor, validator?: any) {

@@ -1,0 +1,17 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="test_boolean_argument">
+<value name="arg">
+<shadow type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</shadow>
+</value>
+<data>0</data>
+</block>
+</statement>
+</block>
+<comment h="120" w="480" data="0">
+&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62; More
+</comment>
+</xml>

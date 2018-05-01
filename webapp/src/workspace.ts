@@ -4,7 +4,6 @@
 
 import * as db from "./db";
 import * as core from "./core";
-import * as pkg from "./package";
 import * as data from "./data";
 import * as cloudworkspace from "./cloudworkspace"
 import * as fileworkspace from "./fileworkspace"
@@ -20,8 +19,6 @@ let scripts = new db.Table("script")
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
-let lf = U.lf
-
 
 let impl: WorkspaceProvider;
 
@@ -69,18 +66,13 @@ export function getHeader(id: string) {
     return null
 }
 
-export function importLegacyScriptsAsync(): Promise<void> {
-    checkSession();
-    return impl.importLegacyScriptsAsync ? impl.importLegacyScriptsAsync() : Promise.resolve();
-}
-
 let sessionID: string;
 export function isSessionOutdated() {
     return pxt.storage.getLocal('pxt_workspace_session_id') != sessionID;
 }
 function checkSession() {
     if (isSessionOutdated()) {
-        Util.assert(false, "trying to access outdated session")
+        pxt.Util.assert(false, "trying to access outdated session")
     }
 }
 
@@ -88,7 +80,7 @@ export function initAsync() {
     if (!impl) impl = cloudworkspace.provider;
 
     // generate new workspace session id to avoid races with other tabs
-    sessionID = Util.guidGen();
+    sessionID = ts.pxtc.Util.guidGen();
     pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
     pxt.debug(`workspace session: ${sessionID}`);
 
@@ -124,7 +116,7 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         }
     }
     pxt.debug(`publishing script; ${stext.length} bytes`)
-    return Cloud.privatePostAsync("scripts", scrReq)
+    return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
         .then((inf: Cloud.JsonScript) => {
             if (inf.shortid) inf.id = inf.shortid;
             h.pubId = inf.shortid
@@ -196,7 +188,7 @@ export function getPublishedScriptAsync(id: string) {
 }
 
 export function installByIdAsync(id: string) {
-    return Cloud.privateGetAsync(id)
+    return Cloud.privateGetAsync(id, /* forceLiveEndpoint */ true)
         .then((scr: Cloud.JsonScript) =>
             getPublishedScriptAsync(scr.id)
                 .then(files => installAsync(
@@ -224,6 +216,25 @@ export function resetAsync() {
     checkSession();
     return impl.resetAsync()
 }
+
+export function loadedAsync() {
+    checkSession();
+    return impl.loadedAsync();
+}
+
+export function saveAssetAsync(id: string, filename: string, data: Uint8Array): Promise<void> {
+    if (impl.saveAssetAsync)
+        return impl.saveAssetAsync(id, filename, data)
+    else
+        return Promise.reject(new Error(lf("Assets not supported here.")))
+}
+
+export function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
+    if (impl.listAssetsAsync)
+        return impl.listAssetsAsync(id)
+    return Promise.resolve([])
+}
+
 
 /*
     header:<guid>   - one header

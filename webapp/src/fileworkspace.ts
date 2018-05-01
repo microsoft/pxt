@@ -1,12 +1,9 @@
 import * as db from "./db";
 import * as core from "./core";
-import * as pkg from "./package";
 import * as data from "./data";
-import * as ws from "./workspace"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
-const lf = U.lf
 let allScripts: HeaderWithScript[] = [];
 let currentTarget: string;
 
@@ -96,7 +93,7 @@ function initAsync(target: string) {
     allScripts = [];
     currentTarget = target;
     // TODO check that target is correct.
-    return syncAsync().then(() => {});
+    return syncAsync().then(() => { });
 }
 
 function fetchTextAsync(e: HeaderWithScript): Promise<ScriptText> {
@@ -230,6 +227,24 @@ function resetAsync() {
         })
 }
 
+function loadedAsync(): Promise<void> {
+    return Promise.resolve();
+}
+
+function saveAssetAsync(id: string, filename: string, data: Uint8Array): Promise<void> {
+    return apiAsync("pkgasset/" + id, {
+        encoding: "base64",
+        name: filename,
+        data: btoa(ts.pxtc.Util.uint8ArrayToString(data))
+    }).then(resp => {
+    })
+}
+
+function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
+    return apiAsync("pkgasset/" + id).then(r => r.files)
+}
+
+
 export const provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
@@ -240,5 +255,8 @@ export const provider: WorkspaceProvider = {
     saveToCloudAsync,
     syncAsync,
     resetAsync,
-    saveScreenshotAsync
+    loadedAsync,
+    saveScreenshotAsync,
+    saveAssetAsync,
+    listAssetsAsync
 }

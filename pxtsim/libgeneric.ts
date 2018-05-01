@@ -11,6 +11,29 @@ namespace pxsim {
             super();
         }
 
+        toArray(): any[] {
+            return this.data.slice(0);
+        }
+
+        toAny(): any[] {
+            return this.data.map(v => RefObject.toAny(v));
+        }
+
+        toDebugString(): string {
+            let s = "[";
+            for (let i = 0; i < this.data.length; ++i) {
+                if (i > 0)
+                    s += ",";
+                s += RefObject.toDebugString(this.data[i]);
+                if (s.length > 15) {
+                    s += "..."
+                    break;
+                }
+            }
+            s += "]"
+            return s;
+        }
+
         destroy() {
             let data = this.data
             for (let i = 0; i < data.length; ++i) {
@@ -181,7 +204,12 @@ namespace pxsim {
         export function ceil(n: number) { return Math.ceil(n) }
         export function floor(n: number) { return Math.floor(n) }
         export function sqrt(n: number) { return Math.sqrt(n) }
-        export function pow(x: number, y: number) { return Math.pow(x, y) }
+        export function pow(x: number, y: number) {
+            if (pxsim.floatingPoint)
+                return Math.pow(x, y)
+            else
+                return Math.pow(x, y) | 0
+        }
         export function log(n: number) { return Math.log(n) }
         export function exp(n: number) { return Math.exp(n) }
         export function sin(n: number) { return Math.sin(n) }
@@ -222,7 +250,7 @@ namespace pxsim {
         const bh = (b >>> 16) & 0xffff;
         const bl = b & 0xffff;
         // the shift by 0 fixes the sign on the high part
-        // the final |0 converts the unsigned value into a signed value 
+        // the final |0 converts the unsigned value into a signed value
         return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
     }
 
@@ -231,10 +259,19 @@ namespace pxsim {
         export function le(x: number, y: number) { return x <= y; }
         export function neq(x: number, y: number) { return !eq(x, y); }
         export function eq(x: number, y: number) { return pxtrt.nullFix(x) == pxtrt.nullFix(y); }
+        export function eqDecr(x: number, y: number) {
+            if (pxtrt.nullFix(x) == pxtrt.nullFix(y)) {
+                decr(y);
+                return true;
+            } else {
+                return false
+            }
+        }
         export function gt(x: number, y: number) { return x > y; }
         export function ge(x: number, y: number) { return x >= y; }
         export function div(x: number, y: number) { return Math.floor(x / y) | 0; }
         export function mod(x: number, y: number) { return x % y; }
+        export function bnot(x: number) { return ~x; }
         export function toString(x: number) { return initString(x + ""); }
     }
 
@@ -249,6 +286,7 @@ namespace pxsim {
         export function lsls(x: number, y: number) { return x << y; }
         export function lsrs(x: number, y: number) { return x >>> y; }
         export function asrs(x: number, y: number) { return x >> y; }
+        export function bnot(x: number) { return ~x; }
 
         export function ignore(v: any) { return v; }
     }
@@ -267,6 +305,7 @@ namespace pxsim {
         export function lsls(x: number, y: number) { return toInt(x << y); }
         export function lsrs(x: number, y: number) { return (x & 0xffff) >>> y; }
         export function asrs(x: number, y: number) { return toInt(x >> y); }
+        export function bnot(x: number) { return ~x; }
 
         export function ignore(v: any) { return v; }
     }
@@ -301,6 +340,15 @@ namespace pxsim {
 
         export function compare(s1: string, s2: string) {
             if (s1 == s2) return 0;
+            if (s1 < s2) return -1;
+            return 1;
+        }
+
+        export function compareDecr(s1: string, s2: string) {
+            if (s1 == s2) {
+                decr(s2)
+                return 0;
+            }
             if (s1 < s2) return -1;
             return 1;
         }
@@ -348,7 +396,7 @@ namespace pxsim {
         }
 
         print() {
-            console.log(`RefBuffer id:${this.id} refs:${this.refcnt} len:${this.data.length} d0:${this.data[0]}`)
+            // console.log(`RefBuffer id:${this.id} refs:${this.refcnt} len:${this.data.length} d0:${this.data[0]}`)
         }
     }
 
@@ -515,10 +563,10 @@ namespace pxsim {
 
         export function toHex(buf: RefBuffer): string {
             const hex = "0123456789abcdef";
-            let res: string;
+            let res = "";
             for (let i = 0; i < buf.data.length; ++i) {
-                res[i << 1] = hex[buf.data[i] >> 4];
-                res[(i << 1) + 1] = hex[buf.data[i] & 0xf];
+                res += hex[buf.data[i] >> 4];
+                res += hex[buf.data[i] & 0xf];
             }
             return res;
         }

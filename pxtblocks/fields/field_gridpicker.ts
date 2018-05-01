@@ -43,6 +43,8 @@ namespace pxtblockly {
         private hasSearchBar_: boolean;
         private hideRect_: boolean;
 
+        protected dropDownOpen_: boolean;
+
         constructor(text: string, options: FieldGridPickerOptions, validator?: Function) {
             super(options.data);
 
@@ -52,7 +54,7 @@ namespace pxtblockly {
 
             this.backgroundColour_ = pxtblockly.parseColour(options.colour);
             this.itemColour_ = options.itemColour || "rgba(255, 255, 255, 0.6)";
-            this.borderColour_ = Blockly.PXTUtils.fadeColour(this.backgroundColour_, 0.4, false);
+            this.borderColour_ = pxt.toolbox.fadeColor(this.backgroundColour_, 0.4, false);
 
             let tooltipCfg: FieldGridPickerToolTipConfig = {
                 xOffset: parseInt(options.tooltipsXOffset) || 15,
@@ -121,16 +123,18 @@ namespace pxtblockly {
                 if (tooltipText) {
                     const tooltip = new goog.ui.Tooltip(elem, tooltipText);
                     const onShowOld = tooltip.onShow;
+                    const isRTL = this.sourceBlock_.RTL;
+                    const xOffset = (isRTL ? -this.tooltipConfig_.xOffset : this.tooltipConfig_.xOffset);
                     tooltip.onShow = () => {
                         onShowOld.call(tooltip);
-                        const newPos = new goog.positioning.ClientPosition(tooltip.cursorPosition.x + this.tooltipConfig_.xOffset,
+                        const newPos = new goog.positioning.ClientPosition(tooltip.cursorPosition.x + xOffset,
                             tooltip.cursorPosition.y + this.tooltipConfig_.yOffset);
                         tooltip.setPosition(newPos);
                     };
                     tooltip.setShowDelayMs(0);
                     tooltip.className = 'goog-tooltip blocklyGridPickerTooltip';
                     elem.addEventListener('mousemove', (e: MouseEvent) => {
-                        const newPos = new goog.positioning.ClientPosition(e.clientX + this.tooltipConfig_.xOffset,
+                        const newPos = new goog.positioning.ClientPosition(e.clientX + xOffset,
                             e.clientY + this.tooltipConfig_.yOffset);
                         tooltip.setPosition(newPos);
                     });
@@ -171,6 +175,46 @@ namespace pxtblockly {
                 this.close()
             }
         }
+
+        /**
+         * Set the language-neutral value for this dropdown menu.
+         * We have to override this from field.js because the grid picker needs to redraw the selected item's image.
+         * @param {string} newValue New value to set.
+         */
+        public setValue(newValue: string) {
+            if (newValue === null || newValue === this.value_) {
+                return;  // No change if null.
+            }
+            if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
+                Blockly.Events.fire(new Blockly.Events.BlockChange(
+                    this.sourceBlock_, 'field', this.name, this.value_, newValue));
+            }
+            // Clear menu item for old value.
+            if (this.selectedItem) {
+                this.selectedItem.setChecked(false);
+                this.selectedItem = null;
+            }
+            this.value_ = newValue;
+            // Look up and display the human-readable text.
+            let options = this.getOptions();
+            for (let i = 0; i < options.length; i++) {
+                // Options are tuples of human-readable text and language-neutral values.
+                if ((options[i] as any)[1] == newValue) {
+                    let content = (options[i] as any)[0];
+                    if (typeof content == 'object') {
+                        this.imageJson_ = content;
+                        this.setText(content.alt); // Use setText() because it handles displaying image selection
+                    } else {
+                        this.imageJson_ = null;
+                        this.setText(content); // Use setText() because it handles displaying image selection
+                    }
+                    return;
+                }
+            }
+            // Value not found.  Add it, maybe it will become valid once set
+            // (like variable names).
+            this.setText(newValue); // Use setText() because it handles displaying image selection
+        };
 
         /**
          * Closes the gridpicker.
@@ -235,6 +279,7 @@ namespace pxtblockly {
          * @private
          */
         public showEditor_() {
+            this.dropDownOpen_ = true;
             Blockly.WidgetDiv.show(this, this.sourceBlock_.RTL, null);
 
             this.disposeTooltips();
@@ -285,7 +330,7 @@ namespace pxtblockly {
                     searchBar.focus();
                     searchBar.setSelectionRange(0, searchBar.value.length);
                 });
-                searchBar.addEventListener("keyup", Util.debounce(() => {
+                searchBar.addEventListener("keyup", pxt.Util.debounce(() => {
                     let text = searchBar.value;
                     let re = new RegExp(text, "i");
                     let filteredOptions = options.filter((block) => {
@@ -319,12 +364,6 @@ namespace pxtblockly {
 
             paddingContainerDom.style.border = `solid 1px ${this.borderColour_}`;
 
-            // Resize the grid picker if width > screen width
-            if (this.width_ > windowSize.width) {
-                this.width_ = windowSize.width;
-            }
-
-            tableContainerDom.style.width = this.width_ + 'px';
             tableContainerDom.style.backgroundColor = this.backgroundColour_;
             scrollContainerDom.style.backgroundColor = this.backgroundColour_;
             paddingContainerDom.style.backgroundColor = this.backgroundColour_;
@@ -333,6 +372,12 @@ namespace pxtblockly {
             paddingContainerDom.className = 'blocklyGridPickerPadder';
 
             this.createTooltips(options, tableContainer);
+
+            // Resize the grid picker if width > screen width
+            if (this.width_ > windowSize.width) {
+                this.width_ = windowSize.width;
+            }
+            tableContainerDom.style.width = this.width_ + 'px';
 
             // Record current container sizes after adding menu.
             const paddingContainerSize = goog.style.getSize(paddingContainerDom);
@@ -382,22 +427,24 @@ namespace pxtblockly {
 
             // Position the menu.
             // Flip menu vertically if off the bottom.
-            if (xy.y + paddingContainerSize.height + borderBBox.height >=
+            const borderBBoxHeight = borderBBox.bottom - xy.y;
+            const borderBBoxWidth = borderBBox.right - xy.x;
+            if (xy.y + paddingContainerSize.height + borderBBoxHeight >=
                 windowSize.height + scrollOffset.y) {
                 xy.y -= paddingContainerSize.height + 2;
             } else {
-                xy.y += borderBBox.height;
+                xy.y += borderBBoxHeight;
             }
 
             if (this.sourceBlock_.RTL) {
-                xy.x += paddingContainerSize.width / 2 - borderBBox.width / 2;
+                xy.x -= paddingContainerSize.width / 2;
 
                 // Don't go offscreen left.
-                if (xy.x < scrollOffset.x + paddingContainerSize.width) {
-                    xy.x = scrollOffset.x + paddingContainerSize.width;
+                if (xy.x < scrollOffset.x) {
+                    xy.x = scrollOffset.x;
                 }
             } else {
-                xy.x += borderBBox.width / 2 - paddingContainerSize.width / 2;
+                xy.x += borderBBoxWidth / 2 - paddingContainerSize.width / 2;
 
                 // Don't go offscreen right.
                 if (xy.x > windowSize.width + scrollOffset.x - paddingContainerSize.width) {
@@ -407,7 +454,8 @@ namespace pxtblockly {
 
             Blockly.WidgetDiv.position(xy.x, xy.y, windowSize, scrollOffset,
                 this.sourceBlock_.RTL);
-            goog.style.setHeight(div, "auto");
+
+            (<any>tableContainerDom).focus();
         }
 
         private createRow(row: number, options: (Object | string[])[]): goog.ui.Menu {
@@ -551,17 +599,23 @@ namespace pxtblockly {
             }
 
             // Empty the text element.
-            goog.dom.removeChildren(/** @type {!Element} */ (this.textElement_));
+            goog.dom.removeChildren(/** @type {!Element} */(this.textElement_));
             goog.dom.removeNode(this.imageElement_);
             this.imageElement_ = null;
             if (this.imageJson_) {
                 // Image option is selected.
                 this.imageElement_ = Blockly.utils.createSvgElement('image',
-                    {'y': 5, 'x': 8, 'height': this.imageJson_.height + 'px',
-                    'width': this.imageJson_.width + 'px', cursor: 'pointer'});
+                    {
+                        'y': 5, 'x': 8, 'height': this.imageJson_.height + 'px',
+                        'width': this.imageJson_.width + 'px', cursor: 'pointer'
+                    });
                 this.imageElement_.setAttributeNS('http://www.w3.org/1999/xlink',
-                                                'xlink:href', this.imageJson_.src);
+                    'xlink:href', this.imageJson_.src);
                 this.size_.height = Number(this.imageJson_.height) + 10;
+                if (this.sourceBlock_.RTL)
+                    this.imageElement_.setAttribute('transform',
+                        'translate(' + this.arrowWidth_ + ', 0)'
+                    );
 
                 this.textElement_.parentNode.appendChild(this.imageElement_);
             } else {

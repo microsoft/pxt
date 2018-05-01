@@ -1,4 +1,9 @@
 namespace pxt.HF2 {
+    export interface MutableArrayLike<T> {
+        readonly length: number;
+        [n: number]: T;
+    }
+
     // http://www.linux-usb.org/usb.ids
     export const enum VID {
         ATMEL = 0x03EB,
@@ -21,6 +26,7 @@ namespace pxt.HF2 {
         error(msg: string): any;
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
+        isSwitchingToBootloader?: () => void;
 
         // these are implemneted by HID-bridge
         talksAsync?(cmds: TalkArgs[]): Promise<Uint8Array[]>;
@@ -114,14 +120,14 @@ namespace pxt.HF2 {
     // to the HF2_STATUS_EVENT above
     export const HF2_EV_MASK = 0x800000
 
-    export function write32(buf: ArrayLike<number>, pos: number, v: number) {
+    export function write32(buf: MutableArrayLike<number>, pos: number, v: number) {
         buf[pos + 0] = (v >> 0) & 0xff;
         buf[pos + 1] = (v >> 8) & 0xff;
         buf[pos + 2] = (v >> 16) & 0xff;
         buf[pos + 3] = (v >> 24) & 0xff;
     }
 
-    export function write16(buf: ArrayLike<number>, pos: number, v: number) {
+    export function write16(buf: MutableArrayLike<number>, pos: number, v: number) {
         buf[pos + 0] = (v >> 0) & 0xff;
         buf[pos + 1] = (v >> 8) & 0xff;
     }
@@ -376,7 +382,11 @@ namespace pxt.HF2 {
             if (this.bootloaderMode)
                 return Promise.resolve()
             log(`Switching into bootloader mode`)
-            return this.talkAsync(HF2_CMD_START_FLASH)
+            if (this.io.isSwitchingToBootloader) {
+                this.io.isSwitchingToBootloader();
+            }
+            return this.maybeReconnectAsync()
+                .then(() => this.talkAsync(HF2_CMD_START_FLASH))
                 .then(() => this.initAsync())
                 .then(() => {
                     if (!this.bootloaderMode)
@@ -411,6 +421,13 @@ namespace pxt.HF2 {
                 return Promise.resolve()
             return this.talkAsync(HF2_CMD_BININFO)
                 .then(buf => { })
+        }
+
+        maybeReconnectAsync() {
+            return this.pingAsync()
+                .catch(e =>
+                    this.reconnectAsync()
+                        .then(() => this.pingAsync()))
         }
 
         flashAsync(blocks: pxtc.UF2.Block[]) {

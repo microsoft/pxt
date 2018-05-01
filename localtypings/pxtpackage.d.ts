@@ -35,6 +35,8 @@ declare namespace pxt {
         public?: boolean;
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
+        compileServiceVariant?: string;
+        palette?: string[];
         yotta?: YottaConfig;
         npmDependencies?: Map<string>;
         card?: CodeCard;
@@ -100,7 +102,7 @@ declare namespace pxt {
         time?: number;
         url?: string;
         responsive?: boolean;
-        cardType?: "file" | "example" | "codeExample" | "tutorial" | "project";
+        cardType?: "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package";
 
         header?: string;
         any?: number;

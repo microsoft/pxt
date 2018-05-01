@@ -132,7 +132,7 @@ function saveAsync(h: Header, text: ScriptText) {
 
 function installAsync(h0: InstallHeader, text: ScriptText) {
     let h = <Header>h0
-    h.id = U.guidGen();
+    h.id = ts.pxtc.Util.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
     h.target = pxt.appTarget.id;
@@ -373,86 +373,7 @@ function resetAsync() {
         })
 }
 
-function importLegacyScriptsAsync(): Promise<void> {
-    const key = 'legacyScriptsImported';
-    const legacyDomain = pxt.appTarget.appTheme.legacyDomain;
-    if (!legacyDomain || !pxt.webConfig.targetUrl || !!pxt.storage.getLocal(key))
-        return Promise.resolve();
-
-    const targetDomain = pxt.webConfig.targetUrl.replace(/^https:\/\//i, '');
-    if (legacyDomain == targetDomain)
-        return Promise.resolve(); // nothing to do
-
-    if (window.applicationCache.status == window.applicationCache.DOWNLOADING
-        || window.applicationCache.status == window.applicationCache.UPDATEREADY) {
-        pxt.debug('import skipped, app cached updating');
-        return Promise.resolve();
-    }
-
-    pxt.debug('injecting import iframe');
-    let frame = document.createElement("iframe") as HTMLIFrameElement;
-    function clean(clear: boolean) {
-        if (frame) {
-            pxt.debug('cleaning import iframe')
-            window.removeEventListener('message', receiveMessage, false)
-            if (clear) {
-                pxt.debug(`sending clear command`)
-                frame.contentWindow.postMessage({
-                    type: "transfer",
-                    action: "clear"
-                }, `https://${legacyDomain}`);
-            }
-            let temp = frame;
-            setTimeout(() => document.documentElement.removeChild(temp), 2000);
-            frame = undefined;
-        }
-    }
-
-    function pushProjectAsync(dbdata: {
-        header: pxt.workspace.Header[];
-        text: { files: pxt.workspace.ScriptText; }[];
-    }): Promise<void> {
-        if (!dbdata.header.length) {
-            pxt.log('done importing scripts');
-            pxt.storage.setLocal(key, '1');
-            clean(true);
-            return Promise.resolve();
-        }
-        const hd = dbdata.header.pop();
-        const td = dbdata.text.pop();
-        const text = td.files;
-        delete (hd as any)._id;
-        delete (hd as any)._rev;
-        delete (hd as any).id;
-        pxt.log(`importing ${hd.name}`)
-        return installAsync(hd, text)
-            .then(() => pushProjectAsync(dbdata));
-    }
-
-    function receiveMessage(ev: MessageEvent) {
-        if (ev.data && ev.data.type == 'transfer' && ev.data.action == 'export' && ev.data.data) {
-            const dbdata: {
-                header: pxt.workspace.Header[];
-                text: { files: pxt.workspace.ScriptText}[];
-            } = ev.data.data;
-
-            pxt.debug(`received ${dbdata.header.length} projects`);
-            pushProjectAsync(dbdata).done();
-        }
-    }
-    window.addEventListener('message', receiveMessage, false)
-
-    frame.setAttribute("style", "position:absolute; width:1px; height:1px; right:0em; bottom:0em;");
-    const url = `https://${legacyDomain}/api/transfer/${targetDomain}?storageid=${pxt.storage.storageId()}`;
-    pxt.debug('transfer from ' + url);
-    frame.src = url;
-    frame.onerror = (e) => {
-        pxt.reportException(e);
-        clean(false);
-    };
-
-    document.documentElement.appendChild(frame);
-
+function loadedAsync(): Promise<void> {
     return Promise.resolve();
 }
 
@@ -466,5 +387,5 @@ export const provider: WorkspaceProvider = {
     saveToCloudAsync,
     syncAsync,
     resetAsync,
-    importLegacyScriptsAsync
+    loadedAsync
 }

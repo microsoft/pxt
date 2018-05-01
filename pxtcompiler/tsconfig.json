@@ -6,6 +6,8 @@
         "declaration": true,
         "out": "../built/pxtcompiler.js",
         "newLine": "LF",
-        "sourceMap": false
+        "sourceMap": false,
+        "lib": ["dom", "dom.iterable", "scripthost", "es6"],
+        "types": ["jquery", "fuse", "bluebird"]
     }
 }

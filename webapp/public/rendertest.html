@@ -19,7 +19,7 @@
             f.style.bottom = 0;
             f.style.width = "1px";
             f.style.height = "1px";
-            f.src = "/--docs?render=1"
+            f.src = "/--docs?render=1&lang=fr"
             document.body.appendChild(f);
         }
 
@@ -42,13 +42,21 @@
                     makeCodeRenderPre(document.getElementById("mycode2"))
                     break;
                 case "renderblocks":
-                    var svg = msg.svg;
+                    console.log(msg);
+
                     var id = msg.id;
-                    // replace text with svg
-                    var img = document.createElement("img");
-                    img.src = msg.uri;
-                    img.width = msg.width;
-                    img.height = msg.height;
+                    var img;
+
+                    var injectAsSvg = true;
+                    if (injectAsSvg) {
+                        var svg = new DOMParser().parseFromString(msg.svg, "image/svg+xml");
+                        img = svg.childNodes.item(0)
+                    } else {
+                        img = document.createElement("img");
+                        img.src = msg.uri;
+                        img.width = msg.width;
+                        img.height = msg.height;
+                    }
                     var code = document.getElementById(id)
                     code.parentElement.insertBefore(img, code)
                     code.parentElement.removeChild(code);

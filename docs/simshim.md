@@ -152,9 +152,9 @@ declare interface DevicePin {
 
 The `indexedInstanceShim` generates the `shim=...(no)` annotations.
 They instruct the access to the variable (which is read-only) to be
-compiled as call the the specified function with the specific literal
-argument. The `fixedInstance` annotation is automatically generated  
-[for blocks](/defining-blocks#Fixed-Instance-Set).
+compiled as a call to the specified function with the specific literal
+argument. The `fixedInstance` annotation is automatically generated 
+for [blocks](/defining-blocks#Fixed-Instance-Set).
 
 The namespace `FooMethods` is turned into an `interface Foo`. These
 are usually used to wrap native C++ classes that require no reference
@@ -166,7 +166,7 @@ interface DevicePin {
 }
 ```
 
-If you don't, the runtime will call method that do not exists and
+If you don't, the runtime will call methods that don't exist and
 chaos will prevail (even though you might not see it at the beginning).
 
 You can also specify inheritance in such a declaration:
@@ -180,10 +180,10 @@ interface AnalogPin extends DigitalPin {}
 The method above with `indexedInstanceShim` works well when the set of instances
 (eg. pins) is defined in C++. However, sometimes you will want to define these on the
 TypeScript side, potentially limiting code size, and allowing the definitions to be
-changed without altering the C++ code (and thus cloud recompilation).
+changed without altering the C++ code (and thus avoiding cloud recompilation).
 
 This comes in handy especially when there are multiple boards defined in one target.
-The [core board package](/targets/board) includes at least two configuration files, here
+The [core board package](/targets/board) includes at least two configuration files. Here,
 we use `device.d.ts` and `config.ts`, but you can call them something else.
 
 You would then use something like this:
@@ -215,8 +215,8 @@ namespace config {
 }
 ```
 
-You can configure pin names but also other hardware characteristics, like the number of
-on-board neopixels etc.
+You can configure pin names and other hardware characteristics too, like the number of
+on-board neopixels, etc.
 
 The user can override the constants using the `userconfig` namespace. For example:
 
@@ -231,10 +231,11 @@ namespace userconfig {
 
 Both of these refer to constants from the `DAL` namespace. There is typically one
 `dal.d.ts` file per target which defines the `DAL` namespace, and it is generated 
-automatically from the C++ sources.
+automatically from the C++ sources. Once all the C++ files are in place, and you
+want to force re-generation of `dal.d.ts`, use the `pxt builddaldts` command.
 
 For every constant `FOO` in `config` (or `userconfig`), there has to be a corresponding
-`DAL.CFG_FOO` which defines an index under which the configuration setting is stored.
+`DAL.CFG_FOO` that defines an index under which the configuration setting is stored.
 The indexes for settings can be any 32 bit number, but they should be unique within a target.
 These are typically defined in a C++ header file:
 
@@ -250,6 +251,5 @@ These are typically defined in a C++ header file:
 On the C++ side, the setting `PIN_A0` is accessed with `pxt::getConfig(CFG_PIN_A0)`.
 
 The arguments in annotations like `shim=pxt::getButtonByPin(PIN_A5,BUTTON_ACTIVE_LOW_PULL_UP)`
-are resolved in the `DAL` namespace, then in `userconfig` and then in `config`.
+are resolved in the `DAL` namespace, then in `userconfig` and in `config`.
 They must resolve to an integer constant.
-

@@ -5,25 +5,26 @@ import * as pkg from "./package"
 import * as core from "./core"
 import * as srceditor from "./srceditor"
 import * as sui from "./sui"
-import * as codecard from "./codecard"
 import * as data from "./data";
 
-import Cloud = pxt.Cloud
 import Util = pxt.Util
 
-const lf = Util.lf
+const maxEntriesPerChart: number = 4000;
 
 export class Editor extends srceditor.Editor {
+    savedMessageQueue: pxsim.SimulatorSerialMessage[] = []
+    maxSavedMessages: number = 1000;
     charts: Chart[] = []
     chartIdx: number = 0
     sourceMap: pxt.Map<string> = {}
     consoleBuffer: string = ""
     isSim: boolean = true
-    maxConsoleLineLength: number = 255
-    maxConsoleEntries: number = 100
+    maxConsoleLineLength: number = 255;
+    maxConsoleEntries: number = 500;
     active: boolean = true
-    maxChartTime: number = 18000
-    chartDropper: number
+    rawDataBuffer: string = ""
+    maxBufferLength: number = 10000;
+    csvHeaders: string[] = [];
 
     lineColors = ["#f00", "#00f", "#0f0", "#ff0"]
     hcLineColors = ["000"]
@@ -51,10 +52,12 @@ export class Editor extends srceditor.Editor {
         }
         this.isVisible = b
         if (this.isVisible) {
+            this.processQueuedMessages()
             this.startRecording()
         }
         else {
             this.pauseRecording()
+            this.clear()
         }
     }
 
@@ -75,65 +78,123 @@ export class Editor extends srceditor.Editor {
     }
 
     setSim(b: boolean) {
-        this.isSim = b
-        this.clear()
+        if (this.isSim != b) {
+            this.isSim = b
+            this.clear()
+        }
     }
 
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
-        window.addEventListener("message", this.processMessage.bind(this), false)
+        window.addEventListener("message", this.processEvent.bind(this), false)
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme;
         this.lineColors = (serialTheme && serialTheme.lineColors) || this.lineColors;
     }
 
-    processMessage(ev: MessageEvent) {
-        let msg = ev.data
-        if (!this.active || msg.type !== "serial") return;
+    private loadSmoothieChartsPromise: Promise<void>
+    private loadSmoothieChartsAsync(): Promise<void> {
+        if (!this.loadSmoothieChartsPromise) {
+            this.loadSmoothieChartsPromise = pxt.BrowserUtils.loadScriptAsync("smoothie/smoothie_compressed.js");
+        }
+        return this.loadSmoothieChartsPromise;
+    }
 
+    saveMessageForLater(m: pxsim.SimulatorSerialMessage) {
+        this.savedMessageQueue.push(m);
+        if (this.savedMessageQueue.length > this.maxSavedMessages) {
+            this.savedMessageQueue.shift();
+        }
+    }
+
+    processQueuedMessages() {
+        this.savedMessageQueue.forEach(m => this.processMessage(m));
+        this.savedMessageQueue = [];
+    }
+
+    processEvent(ev: MessageEvent) {
+        let msg = ev.data
+        if (msg.type !== "serial") return;
         const smsg = msg as pxsim.SimulatorSerialMessage
+
+        smsg.receivedTime = smsg.receivedTime || Util.now();
+        if (!this.active) {
+            this.saveMessageForLater(smsg);
+            return;
+        }
+        this.processMessage(smsg);
+    }
+
+    processMessage(smsg: pxsim.SimulatorSerialMessage) {
         const sim = !!smsg.sim
         if (sim != this.isSim) return;
 
         const data = smsg.data || ""
         const source = smsg.id || "?"
+        const receivedTime = smsg.receivedTime || Util.now()
+
+        this.appendRawData(data);
 
         if (!this.sourceMap[source]) {
-            let sourceIdx = Object.keys(this.sourceMap).length + 1
+            const sourceIdx = Object.keys(this.sourceMap).length + 1
             this.sourceMap[source] = lf("source") + sourceIdx.toString()
         }
-        let niceSource = this.sourceMap[source]
+        const niceSource = this.sourceMap[source]
 
-        const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
-        if (m) {
-            const variable = m[2] || '';
-            const nvalue = parseFloat(m[3]);
-            if (!isNaN(nvalue)) {
-                this.appendGraphEntry(niceSource, variable, nvalue)
-                return;
+        // is this a CSV data entry
+        if (/^\s*(-?\d+(\.\d*)?)(\s*,\s*(-?\d+(\.\d*)?))+\s*,?\s*$/.test(data)) {
+            data.split(/\s*,\s*/).map(s => parseFloat(s))
+                .filter(d => !isNaN(d))
+                .forEach((d, i) => {
+                    const variable = "data." + (this.csvHeaders[i] || i);
+                    this.appendGraphEntry(niceSource, variable, d, receivedTime);
+                })
+            // is this a CSV header entry
+        } else if (/^\s*[\s\w]+(\s*,\s*[\w\s]+)+\s*,?\s*$/.test(data)) {
+            this.csvHeaders = data.split(/\s*,\s*/).map(h => h.trim());
+        }
+        else {
+            // is this a key-value pair, or just a number?
+            const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
+            if (m) {
+                const variable = m[2] || '';
+                const nvalue = parseFloat(m[3]);
+                if (!isNaN(nvalue)) {
+                    this.appendGraphEntry(niceSource, variable, nvalue, receivedTime)
+                }
             }
         }
 
         this.appendConsoleEntry(data)
     }
 
-    appendGraphEntry(source: string, variable: string, nvalue: number) {
-        //See if there is a "home chart" that this point belongs to -
-        //if not, create a new chart
-        let homeChart: Chart = undefined
-        for (let i = 0; i < this.charts.length; ++i) {
-            let chart = this.charts[i]
-            if (chart.shouldContain(source, variable)) {
-                homeChart = chart
-                break
-            }
+    appendRawData(data: string) {
+        this.rawDataBuffer += data;
+        if (this.rawDataBuffer.length > this.maxBufferLength) {
+            this.rawDataBuffer.slice(this.rawDataBuffer.length / 4);
         }
-        if (!homeChart) {
-            homeChart = new Chart(source, variable, this.chartIdx, this.currentLineColors)
-            this.chartIdx++;
-            this.charts.push(homeChart)
-            this.chartRoot.appendChild(homeChart.getElement());
-        }
-        homeChart.addPoint(variable, nvalue)
+    }
+
+    appendGraphEntry(source: string, variable: string, nvalue: number, receivedTime: number) {
+        this.loadSmoothieChartsAsync()
+            .then(() => {
+                //See if there is a "home chart" that this point belongs to -
+                //if not, create a new chart
+                let homeChart: Chart = undefined
+                for (let i = 0; i < this.charts.length; ++i) {
+                    let chart = this.charts[i]
+                    if (chart.shouldContain(source, variable)) {
+                        homeChart = chart
+                        break
+                    }
+                }
+                if (!homeChart) {
+                    homeChart = new Chart(source, variable, this.chartIdx, this.currentLineColors)
+                    this.chartIdx++;
+                    this.charts.push(homeChart)
+                    this.chartRoot.appendChild(homeChart.getElement());
+                }
+                homeChart.addPoint(variable, nvalue, receivedTime)
+            })
     }
 
     appendConsoleEntry(data: string) {
@@ -182,33 +243,20 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    dropStaleCharts() {
-        let now = Util.now()
-        this.charts.forEach((chart) => {
-            if (now - chart.lastUpdatedTime > this.maxChartTime) {
-                this.chartRoot.removeChild(chart.rootElement)
-                chart.isStale = true
-            }
-        })
-        this.charts = this.charts.filter(c => !c.isStale)
-    }
-
     pauseRecording() {
         this.active = false
         if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.stop())
-        clearInterval(this.chartDropper)
     }
 
     startRecording() {
         this.active = true
         if (this.startPauseButton) this.startPauseButton.setState({ active: this.active });
         this.charts.forEach(s => s.start())
-        this.chartDropper = setInterval(this.dropStaleCharts.bind(this), 20000)
     }
 
     toggleRecording() {
-        pxt.tickEvent("serial.toggleRecording")
+        pxt.tickEvent("serial.toggleRecording", undefined, { interactiveConsent: true })
         if (this.active) this.pauseRecording()
         else this.startRecording()
     }
@@ -230,51 +278,103 @@ export class Editor extends srceditor.Editor {
         }
         this.charts = []
         this.consoleBuffer = ""
+        this.rawDataBuffer = ""
+        this.savedMessageQueue = []
+        this.sourceMap = {}
+        this.csvHeaders = [];
+    }
+
+    isCSV(nl: number, datas: number[][][]): boolean {
+        if (datas.length < 2) return false;
+        for (let i = 0; i < datas.length; ++i)
+            if (datas[i].length != nl) return false;
+
+        for (let l = 0; l < nl; ++l) {
+            let t = datas[0][l][0];
+            for (let d = 1; d < datas.length; ++d) {
+                if (datas[d][l][0] != t)
+                    return false;
+            }
+        }
+
+        return true;
     }
 
     downloadCSV() {
-        const lines: { name: string; line: TimeSeries; }[] = [];
-        this.charts.forEach(chart => Object.keys(chart.lines).forEach(k => lines.push({ name: `${k} (${chart.source})`, line: chart.lines[k] })));
-        let csv = lines.map(line => `time (s), ${line.name}`).join(', ') + '\r\n';
+        const sep = lf("{id:csvseparator}\t");
+        let csv: string[] = [];
+        this.charts.forEach(chart => {
+            const lines: { name: string; line: number[][]; }[] = [];
+            Object.keys(chart.datas).forEach(k => lines.push({ name: k, line: chart.datas[k] }));
+            const datas = lines.map(line => line.line);
+            const nl = datas.length > 0 ? datas.map(data => data.length).reduce((l, c) => Math.max(l, c)) : 0;
+            // if all lines have same timestamp, condense output
+            let isCSV = this.isCSV(nl, datas);
+            if (isCSV) {
+                let h = `time (${chart.source})${sep}` + lines.map(line => line.name).join(sep) + sep;
+                csv[0] = csv[0] ? csv[0] + sep + h : h;
+                for (let i = 0; i < nl; ++i) {
+                    const t = (datas[0][i][0] - datas[0][0][0]) / 1000;
+                    const da = t + sep + datas.map(data => data[i][1]).join(sep) + sep;
+                    csv[i + 1] = csv[i + 1] ? csv[i + 1] + sep + da : da;
+                }
+            } else {
+                let h = lines.map(line => `time (${chart.source})${sep}${line.name}`).join(sep);
+                csv[0] = csv[0] ? csv[0] + sep + h : h;
+                for (let i = 0; i < nl; ++i) {
+                    const da = datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}${sep}${data[i][1]}` : sep).join(sep);
+                    csv[i + 1] = csv[i + 1] ? csv[i + 1] + sep + da : da;
+                }
+            }
+        });
 
-        const datas = lines.map(line => line.line.data);
-        const nl = datas.map(data => data.length).reduce((l, c) => Math.max(l, c));
-        const nc = this.charts.length;
-        for (let i = 0; i < nl; ++i) {
-            csv += datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}, ${data[i][1]}` : ' , ').join(', ');
-            csv += '\r\n';
-        }
+        csv.unshift(`sep=${sep}`)
+        const csvText = csv.join('\r\n');
 
-        pxt.commands.browserDownloadAsync(csv, "data.csv", "text/csv")
         core.infoNotification(lf("Exporting data...."));
+        const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
+        pxt.commands.browserDownloadAsync(csvText, pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
+    }
+
+    downloadRaw() {
+        core.infoNotification(lf("Exporting text...."));
+        const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
+        pxt.commands.browserDownloadAsync(this.rawDataBuffer, pxt.appTarget.id + '-' + lf("{id:csvfilename}console") + '-' + time + ".txt", "text/plain")
     }
 
     goBack() {
-        pxt.tickEvent("serial.backButton")
+        pxt.tickEvent("serial.backButton", undefined, { interactiveConsent: true })
         this.parent.openPreviousEditor()
     }
 
     display() {
         return (
             <div id="serialArea">
-                <div id="serialHeader" className="ui">
+                <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <sui.Button title={lf("Go back")} class="ui icon circular small button editorBack" ariaLabel={lf("Go back")} onClick={this.goBack.bind(this)}>
+                            <sui.Button text={lf("Go back")} title={lf("Go back to the previous editor")} className="icon circular small editorBack left labeled" ariaLabel={lf("Go back")} onClick={this.goBack.bind(this)}>
                                 <sui.Icon icon="arrow left" />
                             </sui.Button>
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button title={lf("Export data")} class="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => this.downloadCSV()}>
+                        <sui.Button title={lf("Export data")} className="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => this.downloadCSV()}>
                             <sui.Icon icon="download" />
                         </sui.Button>
                         <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
                         <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                     </div>
                 </div>
-                <div id="serialCharts" className="noconsole" ref={e => this.chartRoot = e}></div>
-                <div id="serialConsole" className="noconsole" ref={e => this.consoleRoot = e}></div>
+                <div id="serialCharts" ref={e => this.chartRoot = e}></div>
+                <div id="consoleHeader" className="ui serialHeader">
+                    <div className="rightHeader">
+                        <sui.Button title={lf("Copy text")} className="ui icon button editorExport" ariaLabel={lf("Copy text")} onClick={() => this.downloadRaw()}>
+                            <sui.Icon icon="copy" />
+                        </sui.Button>
+                    </div>
+                </div>
+                <div id="serialConsole" ref={e => this.consoleRoot = e}></div>
             </div>
         )
     }
@@ -292,7 +392,7 @@ export interface StartPauseButtonState {
     active?: boolean;
 }
 
-export class StartPauseButton extends data.Component<StartPauseButtonProps, StartPauseButtonState> {
+export class StartPauseButton extends data.PureComponent<StartPauseButtonProps, StartPauseButtonState> {
     constructor(props: StartPauseButtonProps) {
         super(props);
         this.state = {
@@ -304,7 +404,7 @@ export class StartPauseButton extends data.Component<StartPauseButtonProps, Star
         const { toggle } = this.props;
         const { active } = this.state;
 
-        return <sui.Button title={active ? lf("Pause recording") : lf("Start recording")} class={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
+        return <sui.Button title={active ? lf("Pause recording") : lf("Start recording")} className={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
             <sui.Icon icon={active ? "pause icon" : "circle icon"} />
         </sui.Button>
     }
@@ -317,11 +417,10 @@ class Chart {
     canvas: HTMLCanvasElement;
     label: HTMLDivElement;
     lines: pxt.Map<TimeSeries> = {};
+    datas: pxt.Map<number[][]> = {};
     source: string;
     variable: string;
     chart: SmoothieChart;
-    isStale: boolean = false;
-    lastUpdatedTime: number = 0;
 
     constructor(source: string, variable: string, chartIdx: number, lineColors: string[]) {
         // Initialize chart
@@ -373,6 +472,7 @@ class Chart {
                 strokeStyle: lineColor,
                 lineWidth: 3
             })
+            this.datas[name] = [];
         }
         return line;
     }
@@ -404,10 +504,9 @@ class Chart {
             && this.variable == variable.replace(/\..*$/, '');
     }
 
-    addPoint(name: string, value: number) {
+    addPoint(name: string, value: number, timestamp: number) {
         const line = this.getLine(name);
-        line.append(Util.now(), value)
-        this.lastUpdatedTime = Util.now();
+        line.append(timestamp, value)
         if (Object.keys(this.lines).length == 1) {
             // update label with last value
             const valueText = Number(Math.round(Number(value + "e+2")) + "e-2").toString();
@@ -415,6 +514,12 @@ class Chart {
         } else {
             this.label.innerText = this.variable || '';
         }
+        // store data
+        const data = this.datas[name];
+        data.push([timestamp, value]);
+        // remove a third of the card
+        if (data.length > maxEntriesPerChart)
+            data.splice(0, data.length / 4);
     }
 
     start() {
@@ -423,5 +528,50 @@ class Chart {
 
     stop() {
         this.chart.stop()
+    }
+}
+
+export class ResourceImporter implements pxt.editor.IResourceImporter {
+    public id: "console";
+    public canImport(data: File): boolean {
+        return data.type == "text/plain";
+    }
+
+    public importAsync(project: pxt.editor.IProjectView, data: File): Promise<void> {
+        return ts.pxtc.Util.fileReadAsTextAsync(data)
+            .then(txt => {
+                if (!txt) {
+                    core.errorNotification(lf("Ooops, could not read file"));
+                    return;
+                }
+
+                // parse times
+                const lines = txt.split(/\n/g).map(line => {
+                    // extract timespace
+                    const t = /^\s*(\d+)>/.exec(line);
+                    if (t) line = line.substr(t[0].length);
+                    return {
+                        type: "serial",
+                        data: line + "\n",
+                        id: data.name,
+                        receivedTime: t ? parseFloat(t[1]) : undefined
+                    } as pxsim.SimulatorSerialMessage;
+                })
+                if (!lines.length)
+                    return;
+
+                // normalize timestamps
+                const now = Util.now();
+                const linest = lines.filter(line => !!line.receivedTime);
+                if (linest.length) {
+                    const tmax = linest[linest.length - 1].receivedTime || 0;
+                    linest.forEach(line => line.receivedTime += now - tmax);
+                }
+
+                // show console
+
+                // send as serial message
+                lines.forEach(line => window.postMessage(line, "*"));
+            });
     }
 }

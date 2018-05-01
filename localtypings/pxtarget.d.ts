@@ -1,17 +1,21 @@
 /// <reference path="pxtpackage.d.ts" />
 /// <reference path="pxtparts.d.ts" />
 /// <reference path="pxtblockly.d.ts" />
+/// <reference path="pxtelectron.d.ts" />
 
 declare namespace pxt {
     // targetconfig.json
     interface TargetConfig {
         packages?: PackagesConfig;
-        languages?: string[];
         // common galleries
         galleries?: pxt.Map<string>;
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
         windowsStoreLink?: string;
+        // link to the latest firmware urls (boardid -> url)
+        firmwareUrls?: pxt.Map<string>;
+        // release manifest for the electron app
+        electronManifest?: pxt.electron.ElectronManifest;
     }
 
     interface PackagesConfig {
@@ -42,6 +46,7 @@ declare namespace pxt {
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
         ignoreDocsErrors?: boolean;
+        variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
     }
 
     interface ProjectTemplate {
@@ -58,6 +63,15 @@ declare namespace pxt {
         fields?: pxt.Map<string>;
     }
 
+    interface BlockOptions {
+        category?: string;      // category in toolbox where the block should appear (defaults to "Loops")
+        group?: string;         // group in toolbox category where the block should appear (defaults to none)
+        color?: string;         // defaults to the color of the "Loops" category
+        weight?: number;        // defaults to 0
+        namespace?: string;     // namespace where the block's function lives (defaults to none)
+        callName?: string;      // name of the block's function if changed in target
+    }
+
     interface RuntimeOptions {
         mathBlocks?: boolean;
         textBlocks?: boolean;
@@ -70,7 +84,10 @@ declare namespace pxt {
         onStartColor?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
+        pauseUntilBlock?: BlockOptions;
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
+        assetExtensions?: string[];
+        palette?: string[];
     }
 
     interface AppAnalytics {
@@ -102,11 +119,11 @@ declare namespace pxt {
     interface AppCloud {
         workspaces?: boolean;
         packages?: boolean;
-        publishing?: boolean;
         sharing?: boolean; // uses cloud-based anonymous sharing
         importing?: boolean; // import url dialog
         embedding?: boolean;
         githubPackages?: boolean; // allow searching github for packages
+        noGithubProxy?: boolean;
     }
 
     interface AppSimulator {
@@ -114,6 +131,7 @@ declare namespace pxt {
         stopOnChange?: boolean;
         hideRestart?: boolean;
         enableTrace?: boolean;
+        debugger?: boolean;
         hideFullscreen?: boolean;
         streams?: boolean;
         aspectRatio?: number; // width / height
@@ -163,6 +181,8 @@ declare namespace pxt {
         logoUrl?: string;
         logo?: string;
         portraitLogo?: string;
+        highContrastLogo?: string;
+        highContrastPortraitLogo?: string;
         rightLogo?: string;
         docsLogo?: string;
         organization?: string;
@@ -173,7 +193,6 @@ declare namespace pxt {
         shareUrl?: string;
         embedUrl?: string;
         betaUrl?: string;
-        legacyDomain?: string;
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
@@ -181,12 +200,14 @@ declare namespace pxt {
         sideDoc?: string; // deprecated
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
         feedbackUrl?: string; // is set: a feedback link will show in the settings menu
-        boardName?: string;
+        boardName?: string; // official branded name for the board or product
+        boardNickname?: string; // common nickname to use for the board or product
         driveDisplayName?: string; // name of the drive as it shows in the explorer
         privacyUrl?: string;
         termsOfUseUrl?: string;
         contactUrl?: string;
-        accentColor?: string;
+        accentColor?: string; // used in PWA manifest as theme color
+        backgroundColor?: string; // use in PWA manifest as background color
         cardLogo?: string;
         appLogo?: string;
         htmlDocIncludes?: Map<string>;
@@ -214,7 +235,6 @@ declare namespace pxt {
         blocksOnly?: boolean; // blocks only workspace
         hideDocsSimulator?: boolean; // do not show simulator button in docs
         hideDocsEdit?: boolean; // do not show edit button in docs
-        hideCookieNotice?: boolean; // always hide cookie notice for targets that embed the editor in apps/chrome
         hideMenuBar?: boolean; // Hides the main menu bar
         hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
         appStoreID?: string; // Apple iTune Store ID if any
@@ -226,17 +246,21 @@ declare namespace pxt {
         },
         disableLiveTranslations?: boolean; // don't load translations from crowdin
         extendEditor?: boolean; // whether a target specific editor.js is loaded
+        extendFieldEditors?: boolean; // wether a target specific fieldeditors.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
         selectLanguage?: boolean; // add language picker to settings menu
+        availableLocales?: string[]; // the list of enabled language codes
         useUploadMessage?: boolean; // change "Download" text to "Upload"
         downloadIcon?: string; // which icon io use for download
         blockColors?: Map<string>; // block namespace colors, used for build in categories
+        blockIcons?: Map<string>;
         blocklyColors?: Blockly.Colours; // Blockly workspace, flyout and other colors
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
-        appPathNames?: string[]; // Authorized URL paths in electron or UWP, all other paths will display a warning banner
+        appPathNames?: string[]; // Authorized URL paths in UWP, all other paths will display a warning banner
         defaultBlockGap?: number; // For targets to override block gap
         hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
+        hideNewProjectButton?: boolean; // do not show the "new project" button in home page
     }
 
     interface SocialOptions {
@@ -283,7 +307,9 @@ declare namespace ts.pxtc {
         useUF2?: boolean;
         useMkcd?: boolean;
         useELF?: boolean;
+        saveAsPNG?: boolean;
         useModulator?: boolean;
+        webUSB?: boolean; // use WebUSB when supported
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
@@ -296,15 +322,17 @@ declare namespace ts.pxtc {
         shortPointers?: boolean; // set to true for 16 bit pointers
         flashCodeAlign?: number; // defaults to 1k
         flashEnd?: number;
+        flashUsableEnd?: number;
+        flashChecksumAddr?: number;
         upgrades?: UpgradePolicy[];
         openocdScript?: string;
-        flashChecksumAddr?: number;
         onStartText?: boolean;
         stackAlign?: number; // 1 word (default), or 2
         hidSelectors?: HidSelector[];
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
         vmOpCodes?: pxt.Map<number>;
         commonalize?: boolean;
+        vtableShift?: number; // defaults to 2, i.e., (1<<2) == 4 byte alignment of vtables, and thus 256k max program size; increase for chips with more flash!
     }
 
     interface CompileOptions {
@@ -322,6 +350,7 @@ declare namespace ts.pxtc {
         trace?: boolean;
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
+        name?: string;
 
         alwaysDecompileOnStart?: boolean; // decompiler only
 
@@ -333,7 +362,7 @@ declare namespace ts.pxtc {
     }
 
     interface UpgradePolicy {
-        type: "api" | "blockId" | "missingPackage" | "package";
+        type: "api" | "blockId" | "missingPackage" | "package" | "blockValue";
         map?: pxt.Map<string>;
     }
 
@@ -355,6 +384,7 @@ declare namespace ts.pxtc {
         shimsDTS: string;
         enumsDTS: string;
         onlyPublic: boolean;
+        commBase?: number;
     }
 
     interface HexInfo {

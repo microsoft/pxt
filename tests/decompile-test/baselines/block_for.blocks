@@ -1,20 +1,28 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
 <block type="pxt-on-start">
 <statement name="HANDLER">
-<block type="controls_simple_for">
+<block type="pxt_controls_for">
+<value name="VAR">
+<shadow type="variables_get_reporter">
 <field name="VAR">i</field>
+</shadow>
+</value>
 <value name="TO">
-<shadow type="math_number">
+<shadow type="math_whole_number">
 <field name="NUM">4</field>
 </shadow>
 </value>
 <statement name="DO">
 </statement>
 <next>
-<block type="controls_simple_for">
+<block type="pxt_controls_for">
+<value name="VAR">
+<shadow type="variables_get_reporter">
 <field name="VAR">j</field>
+</shadow>
+</value>
 <value name="TO">
-<shadow type="math_number">
+<shadow type="math_whole_number">
 <field name="NUM">4</field>
 </shadow>
 </value>
@@ -77,7 +85,7 @@
 <next>
 <block type="controls_repeat_ext">
 <value name="TIMES">
-<shadow type="math_number"><field name="NUM">0</field></shadow>
+<shadow type="math_whole_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">MINUS</field>
 <value name="A">
@@ -138,10 +146,14 @@
 <statement name="DO">
 </statement>
 <next>
-<block type="controls_simple_for">
+<block type="pxt_controls_for">
+<value name="VAR">
+<shadow type="variables_get_reporter">
 <field name="VAR">u</field>
+</shadow>
+</value>
 <value name="TO">
-<shadow type="math_number"><field name="NUM">0</field></shadow>
+<shadow type="math_whole_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">MINUS</field>
 <value name="A">

@@ -76,6 +76,10 @@
         color: @selected !important;
     }
 
+    .menubar .editor-menuitem {
+        border: none !important;
+    }
+
     .menubar .accessibleMenu > .item:focus,
     .menubar .editor-menuitem > .item:focus:not(.active) {
         i, span {
@@ -164,6 +168,12 @@
         }
     }
 
+    /** Top menu **/
+    #mainmenu, #downloadArea {
+        background-color: black !important;
+        color: white !important;
+    }
+    
     /* Items */
     .ui.item {
         background: black !important;
@@ -312,9 +322,8 @@
         color: white !important;
     }
 
-    .blocklyFlyoutBackground {
+    .blocklyFlyoutButtonBackground {
         fill: black !important;
-        border-right: 1px solid white !important;
     }
 
     .monacoFlyout {
@@ -379,5 +388,24 @@
         &:hover {
             border-color: darken(#fff, 10.0) !important;
         }
+    }
+
+    /* Blockly blocks */
+    .blocklyPath {
+        stroke-width: 4px !important;
+        fill: black;
+    }
+    .blocklyBlockBackground {
+        stroke-width: 2px;
+        fill: black;
+    }
+    .blocklyText {
+        fill: white;
+    }
+    path.blocklyFlyoutBackground {
+        fill: black !important;
+        stroke-width: 1px;
+        stroke: white;
+        border-right: 1px solid white !important;
     }
 }

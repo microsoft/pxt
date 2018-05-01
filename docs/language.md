@@ -1,7 +1,7 @@
 # MakeCode Language: Static TypeScript
 
 PXT programs are written in a subset of [TypeScript](https://www.typescriptlang.org)
-called Static TypeScript.  Currently, we are using TypeScript version 1.8.7.
+called Static TypeScript.  Currently, we are using TypeScript version 2.6.1.
 TypeScript itself is a superset of JavaScript, and many PXT programs,
 especially at the beginner's level, are also just plain JavaScript.
 

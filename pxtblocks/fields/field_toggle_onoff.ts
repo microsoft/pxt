@@ -1,4 +1,5 @@
 /// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="./field_toggle.ts" />
 
 namespace pxtblockly {
 

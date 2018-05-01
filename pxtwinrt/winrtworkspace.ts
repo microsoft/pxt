@@ -10,7 +10,6 @@ namespace pxt.winrt.workspace {
     type InstallHeader = pxt.workspace.InstallHeader;
     import U = pxt.Util;
     import Cloud = pxt.Cloud;
-    const lf = U.lf
 
     let folder: Windows.Storage.StorageFolder;
     let allScripts: HeaderWithScript[] = [];
@@ -322,6 +321,10 @@ namespace pxt.winrt.workspace {
             }));
     }
 
+    function loadedAsync(): Promise<void> {
+        return Promise.resolve();
+    }
+
     export const provider: pxt.workspace.WorkspaceProvider = {
         getHeaders,
         getHeader,
@@ -331,6 +334,7 @@ namespace pxt.winrt.workspace {
         installAsync,
         saveToCloudAsync,
         syncAsync,
-        resetAsync
+        resetAsync,
+        loadedAsync
     }
 }

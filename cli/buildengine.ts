@@ -1,4 +1,3 @@
-/// <reference path="../typings/globals/node/index.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
 
@@ -14,7 +13,7 @@ import * as hid from './hid';
 import U = pxt.Util;
 import Map = pxt.Map;
 
-// abstract over build engine 
+// abstract over build engine
 export interface BuildEngine {
     updateEngineAsync: () => Promise<void>;
     setPlatformAsync: () => Promise<void>;
@@ -78,7 +77,7 @@ export const buildEngines: Map<BuildEngine> = {
     },
 
     dockermake: {
-        updateEngineAsync: () => runBuildCmdAsync("npm", "install"),
+        updateEngineAsync: () => runBuildCmdAsync(nodeutil.addCmd("npm"), "install"),
         buildAsync: () => runDockerAsync(["make"]),
         setPlatformAsync: noopAsync,
         patchHexInfo: patchDockermakeHexInfo,
@@ -91,7 +90,7 @@ export const buildEngines: Map<BuildEngine> = {
 
     cs: {
         updateEngineAsync: noopAsync,
-        buildAsync: () => runBuildCmdAsync("mcs", "-t:library", "-out:pxtapp.dll", "lib.cs"),
+        buildAsync: () => runBuildCmdAsync(getCSharpCommand(), "-t:library", "-out:pxtapp.dll", "lib.cs"),
         setPlatformAsync: noopAsync,
         patchHexInfo: patchCSharpDll,
         prepBuildDirAsync: noopAsync,
@@ -103,7 +102,11 @@ export const buildEngines: Map<BuildEngine> = {
 }
 
 // once we have a different build engine, set this appropriately
-export var thisBuild = buildEngines['yotta']
+export let thisBuild = buildEngines['yotta']
+
+export function setThisBuild(b: BuildEngine) {
+    thisBuild = b;
+}
 
 function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
     let buildEngine = buildEngines['yotta']
@@ -116,7 +119,8 @@ function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
 }
 
 function patchCodalHexInfo(extInfo: pxtc.ExtensionInfo) {
-    let hexPath = thisBuild.buildPath + "/build/" + pxt.appTarget.compileService.codalBinary + ".hex"
+    let bin = pxt.appTarget.compileService.codalBinary
+    let hexPath = thisBuild.buildPath + "/build/" + bin + ".hex"
     return {
         hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
     }
@@ -426,22 +430,28 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         return outp
     }
 
-    if (mainPkg && mainPkg.getFiles().indexOf(constName) >= 0 &&
-        (force || !fs.existsSync(constName))) {
+    if (mainPkg && (force ||
+        (mainPkg.getFiles().indexOf(constName) >= 0 && !fs.existsSync(constName)))) {
         pxt.log(`rebuilding ${constName}...`)
         let files: string[] = []
+        let foundConfig = false
 
-        if (mainPkg.config.dalDTS) {
-            for (let dn of mainPkg.config.dalDTS.includeDirs) {
-                dn = buildEngine.buildPath + "/" + dn
-                if (U.endsWith(dn, ".h")) files.push(dn)
-                else {
-                    let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
-                    U.pushRange(files, here)
+        for (let d of mainPkg.sortedDeps()) {
+            if (d.config.dalDTS) {
+                for (let dn of d.config.dalDTS.includeDirs) {
+                    dn = buildEngine.buildPath + "/" + dn
+                    if (U.endsWith(dn, ".h")) files.push(dn)
+                    else {
+                        let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
+                        U.pushRange(files, here)
+                    }
                 }
+                excludeSyms = d.config.dalDTS.excludePrefix || excludeSyms
+                foundConfig = true
             }
-            excludeSyms = mainPkg.config.dalDTS.excludePrefix || excludeSyms
-        } else {
+        }
+
+        if (!foundConfig) {
             let incPath = buildEngine.buildPath + "/yotta_modules/microbit-dal/inc/"
             if (!fs.existsSync(incPath))
                 incPath = buildEngine.buildPath + "/yotta_modules/codal/inc/";
@@ -486,15 +496,19 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
 }
 
 const writeFileAsync: any = Promise.promisify(fs.writeFile)
-const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Promise.promisify(child_process.exec)
+const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer | string> = Promise.promisify(child_process.exec)
 const readDirAsync = Promise.promisify(fs.readdir)
 
 function buildFinalCsAsync(res: ts.pxtc.CompileResult) {
     return nodeutil.spawnAsync({
-        cmd: "mcs",
+        cmd: getCSharpCommand(),
         args: ["-out:pxtapp.exe", "binary.cs"],
         cwd: "built",
     })
+}
+
+function getCSharpCommand() {
+    return process.platform == "win32" ? "mcs.bat" : "mcs";
 }
 
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
@@ -529,7 +543,7 @@ function getBoardDrivesAsync(): Promise<string[]> {
     if (process.platform == "win32") {
         const rx = new RegExp("^([A-Z]:)\\s+(\\d+).* " + pxt.appTarget.compile.deployDrives)
         return execAsync("wmic PATH Win32_LogicalDisk get DeviceID, VolumeName, FileSystem, DriveType")
-            .then(buf => {
+            .then((buf: Buffer) => {
                 let res: string[] = []
                 buf.toString("utf8").split(/\n/).forEach(ln => {
                     let m = rx.exec(ln)

@@ -13,26 +13,23 @@ namespace ts.pxtc {
 
         A record (line of text) consists of six fields (parts) that appear in order from left to right:
         - Start code, one character, an ASCII colon ':'.
-        - Byte count, two hex digits, indicating the number of bytes (hex digit pairs) in the data field. 
+        - Byte count, two hex digits, indicating the number of bytes (hex digit pairs) in the data field.
           The maximum byte count is 255 (0xFF). 16 (0x10) and 32 (0x20) are commonly used byte counts.
-        - Address, four hex digits, representing the 16-bit beginning memory address offset of the data. 
-          The physical address of the data is computed by adding this offset to a previously established 
-          base address, thus allowing memory addressing beyond the 64 kilobyte limit of 16-bit addresses. 
-          The base address, which defaults to zero, can be changed by various types of records. 
+        - Address, four hex digits, representing the 16-bit beginning memory address offset of the data.
+          The physical address of the data is computed by adding this offset to a previously established
+          base address, thus allowing memory addressing beyond the 64 kilobyte limit of 16-bit addresses.
+          The base address, which defaults to zero, can be changed by various types of records.
           Base addresses and address offsets are always expressed as big endian values.
         - Record type (see record types below), two hex digits, 00 to 05, defining the meaning of the data field.
-        - Data, a sequence of n bytes of data, represented by 2n hex digits. Some records omit this field (n equals zero). 
+        - Data, a sequence of n bytes of data, represented by 2n hex digits. Some records omit this field (n equals zero).
           The meaning and interpretation of data bytes depends on the application.
         - Checksum, two hex digits, a computed value that can be used to verify the record has no errors.
 
     */
 
-    export const vtableShift = 2;
-
-
     // TODO should be internal
     export namespace hex {
-        let funcInfo: Map<FuncInfo> = {};
+        let funcInfo: pxt.Map<FuncInfo> = {};
         let hex: string[];
         let jmpStartAddr: number;
         let jmpStartIdx: number;
@@ -41,9 +38,10 @@ namespace ts.pxtc {
         let elfInfo: pxt.elf.Info;
         export let bytecodeStartAddrPadded: number;
         let bytecodeStartIdx: number;
-        let asmLabels: Map<boolean> = {};
+        let asmLabels: pxt.Map<boolean> = {};
         export let asmTotalSource: string = "";
         export const defaultPageSize = 0x400;
+        export let commBase = 0;
 
         // utility function
         function swapBytes(str: string) {
@@ -135,10 +133,10 @@ namespace ts.pxtc {
             }
         }
 
-        export function encodeVTPtr(ptr: number) {
-            let vv = ptr >> vtableShift
+        export function encodeVTPtr(ptr: number, opts: CompileOptions) {
+            let vv = ptr >> opts.target.vtableShift
             assert(vv < 0xffff)
-            assert(vv << vtableShift == ptr)
+            assert(vv << opts.target.vtableShift == ptr)
             return vv
         }
 
@@ -147,6 +145,8 @@ namespace ts.pxtc {
                 return;
 
             let funs: FuncInfo[] = extInfo.functions;
+
+            commBase = extInfo.commBase || 0
 
             currentSetup = extInfo.sha;
             currentHexInfo = hexinfo;
@@ -231,7 +231,7 @@ namespace ts.pxtc {
                 m = /^:..(....)00/.exec(hex[i])
                 if (m) {
                     let newAddr = parseInt(upperAddr + m[1], 16)
-                    if (newAddr >= 0x3C000)
+                    if (opts.flashUsableEnd && newAddr >= opts.flashUsableEnd)
                         hitEnd()
                     lastIdx = i
                     lastAddr = newAddr
@@ -338,6 +338,8 @@ namespace ts.pxtc {
         }
 
         export function lookupFunctionAddr(name: string) {
+            if (name == "_pxt_comm_base")
+                return commBase
             let inf = lookupFunc(name)
             if (inf)
                 return inf.value
@@ -364,7 +366,7 @@ namespace ts.pxtc {
         }
 
         function applyPatches(f: UF2.BlockFile, binfile: Uint8Array = null) {
-            // constant strings in the binary are 4-byte aligned, and marked 
+            // constant strings in the binary are 4-byte aligned, and marked
             // with "@PXT@:" at the beginning - this 6 byte string needs to be
             // replaced with proper reference count (0xffff to indicate read-only
             // flash location), string virtual table, and the length of the string
@@ -419,6 +421,8 @@ namespace ts.pxtc {
 
             // store the size of the program (in 16 bit words)
             buf[17] = buf.length
+            // store commSize
+            buf[20] = bin.commSize
 
             let zeros: number[] = []
             for (let i = 0; i < bytecodePaddingSize >> 1; ++i)
@@ -539,9 +543,9 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_NUMBER}
         }
     }
 
-    export function vtableToAsm(info: ClassInfo) {
+    export function vtableToAsm(info: ClassInfo, opts: CompileOptions) {
         let s = `
-        .balign ${1 << vtableShift}
+        .balign ${1 << opts.target.vtableShift}
 ${info.id}_VT:
         .short ${info.refmask.length * 4 + 4}  ; size in bytes
         .byte ${info.vtable.length + 2}, 0  ; num. methods
@@ -587,14 +591,15 @@ ${info.id}_IfaceVT:
 
     function serialize(bin: Binary, opts: CompileOptions) {
         let asmsource = `; start
-${hex.hexPrelude()}        
+${hex.hexPrelude()}
     .hex 708E3B92C615A841C49866C975EE5197 ; magic number
     .hex ${hex.hexTemplateHash()} ; hex template hash
     .hex 0000000000000000 ; @SRCHASH@
     .short ${bin.globalsWords}   ; num. globals
     .short 0 ; patched with number of words resulting from assembly
     .word _pxt_config_data
-    .word 0 ; reserved
+    .short 0 ; patched with comm section size
+    .short 0 ; reserved
     .word 0 ; reserved
 `
         let snippets: AssemblerSnippets = null;
@@ -608,7 +613,7 @@ ${hex.hexPrelude()}
         })
 
         bin.usedClassInfos.forEach(info => {
-            asmsource += vtableToAsm(info)
+            asmsource += vtableToAsm(info, opts)
         })
 
         U.iterMap(bin.codeHelpers, (code, lbl) => {
@@ -680,7 +685,7 @@ ${hex.hexPrelude()}
             b.errors.forEach(e => {
                 let m = /^user(\d+)/.exec(e.scope)
                 if (m) {
-                    // This generally shouldn't happen, but it may for certin kind of global 
+                    // This generally shouldn't happen, but it may for certin kind of global
                     // errors - jump range and label redefinitions
                     let no = parseInt(m[1]) // TODO lookup assembly file name
                     userErrors += U.lf("At inline assembly:\n")
@@ -754,7 +759,7 @@ _stored_program: .string "`
         let src = serialize(bin, opts)
         src = patchSrcHash(bin, src)
         if (opts.embedBlob)
-            src += addSource(opts.embedMeta, decodeBase64(opts.embedBlob))
+            src += addSource(opts.embedMeta, ts.pxtc.decodeBase64(opts.embedBlob))
         let checksumWords = 8
         let pageSize = hex.flashCodeAlign(opts.target)
         if (opts.target.flashChecksumAddr) {
@@ -792,6 +797,8 @@ __flash_checksums:
         bin.writeFile(pxtc.BINARY_ASM, src)
         bin.numStmts = cres.breakpoints.length
         let res = assemble(opts.target, bin, src)
+        if (res.thumbFile.commPtr)
+            bin.commSize = res.thumbFile.commPtr - hex.commBase
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
         if (res.buf) {
@@ -805,7 +812,7 @@ __flash_checksums:
                 bin.checksumBlock = chk;
             }
             if (!pxt.isOutputText(target)) {
-                const myhex = btoa(hex.patchHex(bin, res.buf, false, true)[0])
+                const myhex = ts.pxtc.encodeBase64(hex.patchHex(bin, res.buf, false, true)[0])
                 bin.writeFile(pxt.outputName(target), myhex)
             } else {
                 const myhex = hex.patchHex(bin, res.buf, false, false).join("\r\n") + "\r\n"
@@ -827,4 +834,41 @@ __flash_checksums:
     }
 
     export let validateShim = hex.validateShim;
+
+    export function f4EncodeImg(w: number, h: number, bpp: number, getPix: (x: number, y: number) => number) {
+        let r = hex2(0xe0 | bpp) + hex2(w) + hex2(h) + "00"
+        let ptr = 4
+        let curr = 0
+        let shift = 0
+
+        let pushBits = (n: number) => {
+            curr |= n << shift
+            if (shift == 8 - bpp) {
+                r += hex2(curr)
+                ptr++
+                curr = 0
+                shift = 0
+            } else {
+                shift += bpp
+            }
+        }
+
+        for (let i = 0; i < w; ++i) {
+            for (let j = 0; j < h; ++j)
+                pushBits(getPix(i, j))
+            while (shift != 0)
+                pushBits(0)
+            if (bpp > 1) {
+                while (ptr & 3)
+                    pushBits(0)
+            }
+        }
+
+        return r
+
+        function hex2(n: number) {
+            return ("0" + n.toString(16)).slice(-2)
+        }
+
+    }
 }

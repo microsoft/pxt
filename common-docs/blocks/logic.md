@@ -5,7 +5,7 @@ if(true) {}
 true;
 true && false;
 !true;
-1 != 0;
+1 != 1;
 ```
 ## See also #seealso
 

@@ -25,8 +25,18 @@ namespace pxt.Cloud {
         } catch (e) { return false; }
     }
 
+    export function localRequestAsync(path: string, data?: any) {
+        return U.requestAsync({
+            url: "/api/" + path,
+            headers: { "Authorization": Cloud.localToken },
+            method: data ? "POST" : "GET",
+            data: data || undefined,
+            allowHttpErrors: true
+        })
+    }
+
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
-        options.url = pxt.webConfig && pxt.webConfig.isStatic ? pxt.webConfig.relprefix + options.url : apiRoot + options.url;
+        options.url = pxt.webConfig && pxt.webConfig.isStatic && !options.forceLiveEndpoint ? pxt.webConfig.relprefix + options.url : apiRoot + options.url;
         options.allowGzipPost = true
         if (!Cloud.isOnline()) {
             return offlineError(options.url);
@@ -53,8 +63,8 @@ namespace pxt.Cloud {
         return privateRequestAsync({ url: path }).then(resp => resp.text)
     }
 
-    export function privateGetAsync(path: string): Promise<any> {
-        return privateRequestAsync({ url: path }).then(resp => resp.json)
+    export function privateGetAsync(path: string, forceLiveEndpoint: boolean = false): Promise<any> {
+        return privateRequestAsync({ url: path, forceLiveEndpoint }).then(resp => resp.json)
     }
 
     export function downloadTargetConfigAsync(): Promise<pxt.TargetConfig> {
@@ -63,38 +73,40 @@ namespace pxt.Cloud {
 
         const url = pxt.webConfig && pxt.webConfig.isStatic ? `targetconfig.json` : `config/${pxt.appTarget.id}/targetconfig`;
         if (Cloud.isLocalHost())
-            return Util.requestAsync({
-                url: "/api/" + url,
-                headers: { "Authorization": Cloud.localToken },
-                method: "GET",
-                allowHttpErrors: true
-            }).then(resp => resp.json);
+            return localRequestAsync(url).then(r => r ? r.json : undefined)
         else
             return Cloud.privateGetAsync(url);
     }
 
     export function downloadScriptFilesAsync(id: string) {
-        return privateRequestAsync({ url: id + "/text" }).then(resp => {
+        return privateRequestAsync({ url: id + "/text", forceLiveEndpoint: true }).then(resp => {
             return JSON.parse(resp.text)
         })
     }
 
     export function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
         const packaged = pxt.webConfig && pxt.webConfig.isStatic;
-        let url = packaged
-            ? `docs/${docid}.md`
-            : `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(pxt.webConfig.targetVersion)}`;
+        let url: string;
+
+        if (packaged) {
+            url = docid;
+            const isUnderDocs = /\/docs\//.test(url);
+            const hasExt = /\.\w+$/.test(url);
+            if (!isUnderDocs) {
+                url = `docs/${url}`;
+            }
+            if (!hasExt) {
+                url = `${url}.md`;
+            }
+        } else {
+            url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(pxt.webConfig.targetVersion)}`;
+        }
         if (!packaged && locale != "en") {
             url += `&lang=${encodeURIComponent(Util.userLanguage())}`
             if (live) url += "&live=1"
         }
         if (Cloud.isLocalHost() && !live)
-            return Util.requestAsync({
-                url: "/api/" + url,
-                headers: { "Authorization": Cloud.localToken },
-                method: "GET",
-                allowHttpErrors: true
-            }).then(resp => {
+            return localRequestAsync(url).then(resp => {
                 if (resp.statusCode == 404)
                     return privateGetTextAsync(url);
                 else return resp.text
@@ -106,8 +118,8 @@ namespace pxt.Cloud {
         return privateRequestAsync({ url: path, method: "DELETE" }).then(resp => resp.json)
     }
 
-    export function privatePostAsync(path: string, data: any) {
-        return privateRequestAsync({ url: path, data: data || {} }).then(resp => resp.json)
+    export function privatePostAsync(path: string, data: any, forceLiveEndpoint: boolean = false) {
+        return privateRequestAsync({ url: path, data: data || {}, forceLiveEndpoint }).then(resp => resp.json)
     }
 
     export function isLoggedIn() { return !!accessToken }
@@ -142,8 +154,6 @@ namespace pxt.Cloud {
             domains.push(target.appTheme.embedUrl);
         if (target.appTheme.shareUrl)
             domains.push(target.appTheme.shareUrl);
-        if (target.appTheme.legacyDomain)
-            domains.push(target.appTheme.legacyDomain);
         domains = Util.unique(domains, d => d).map(d => Util.escapeForRegex(Util.stripUrlProtocol(d).replace(/\/$/, '')).toLowerCase());
         const rx = `^((https:\/\/)?(?:${domains.join('|')})\/)?(api\/oembed\?url=.*%2F([^&]*)&.*?|([a-z0-9\-_]+))$`;
         const m = new RegExp(rx, 'i').exec(uri.trim());
@@ -375,7 +385,7 @@ namespace pxt.Cloud {
         artid: string; // where is it pointing to
         releaseid: string;
         redirect: string; // full URL or /something/on/the/same/host
-        description: string; // set to script title from the client        
+        description: string; // set to script title from the client
         htmlartid: string;
 
         scriptname: string;

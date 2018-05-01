@@ -44,6 +44,9 @@ function testNums(): void {
     assert((3 & 6) == 2, "&")
     assert((3 | 6) == 7, "|")
     assert((3 ^ 6) == 5, "^")
+    assert((~1) == -2, "~")
+    let k1 = 1;
+    assert((~k1) == -2, "~")
     assert((-10 >> 2) == -3, ">>")
     assert((-10 >>> 20) == 4095, ">>>")
     assert((-10 << 2) == -40, "<<")
@@ -61,6 +64,10 @@ function testNums(): void {
     msg("nums#4")
 
     assert(105 % 100 == 5, "perc")
+
+    assert((2 ** 3) == 8, "**")
+    let ke = 3;
+    assert((ke ** 3) == ke * ke * ke, "**")
 
     // test number->bool conversion, #1057
     // x==20 here

@@ -13,7 +13,7 @@ interface Array<T> {
       * @param items New elements of the Array.
       */
     //% help=arrays/push
-    //% shim=Array_::push weight=49
+    //% shim=Array_::push weight=50
     //% blockId="array_push" block="%list| add value %value| to end" blockNamespace="arrays"
     push(item: T): void;
 
@@ -21,8 +21,9 @@ interface Array<T> {
       * Remove the last element from an array and return it.
       */
     //% help=arrays/pop
-    //% shim=Array_::pop weight=48
+    //% shim=Array_::pop weight=45
     //% blockId="array_pop" block="get and remove last value from %list" blockNamespace="arrays"
+    //% blockGap=64
     pop(): T;
 
     /**
@@ -37,7 +38,7 @@ interface Array<T> {
       * Remove the first element from an array and return it. This method changes the length of the array.
       */
     //% help=arrays/shift
-    //% helper=arrayShift weight=70
+    //% helper=arrayShift weight=30
     //% blockId="array_shift" block="get and remove first value from %list" blockNamespace="arrays"
     shift(): T;
 
@@ -46,7 +47,7 @@ interface Array<T> {
       * @param element to insert at the start of the Array.
       */
     //% help=arrays/unshift
-    //% helper=arrayUnshift weight=69
+    //% helper=arrayUnshift weight=25
     //% blockId="array_unshift" block="%list| insert %value| at beginning" blockNamespace="arrays"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
     unshift(value: T): number;
@@ -69,6 +70,27 @@ interface Array<T> {
     splice(start: number, deleteCount: number): void;
 
     /**
+      * joins all elements of an array into a string and returns this string.
+      * @param sep the string separator
+      */
+    //% helper=arrayJoin weight=40
+    join(sep: string): string;
+    
+    /**
+      * Tests whether at least one element in the array passes the test implemented by the provided function.
+      * @param callbackfn A function that accepts up to two arguments. The some method calls the callbackfn function one time for each element in the array.
+      */
+    //% helper=arraySome weight=40
+    some(callbackfn: (value: T, index: number) => boolean): boolean;
+
+    /**
+      * Tests whether all elements in the array pass the test implemented by the provided function.
+      * @param callbackfn A function that accepts up to two arguments. The every method calls the callbackfn function one time for each element in the array.
+      */
+    //% helper=arrayEvery weight=40
+    every(callbackfn: (value: T, index: number) => boolean): boolean;
+    
+    /**
       * Sort the elements of an array in place and returns the array. The sort is not necessarily stable.
       * @param specifies a function that defines the sort order. If omitted, the array is sorted according to the prmitive type
       */
@@ -82,6 +104,13 @@ interface Array<T> {
     //% helper=arrayMap weight=40
     map<U>(callbackfn: (value: T, index: number) => U): U[];
 
+    /**
+      * Call a defined callback function on each element of an array.
+      * @param callbackfn A function that accepts up to two arguments. The forEach method calls the callbackfn function one time for each element in the array.
+      */
+    //% helper=arrayForEach weight=40
+    forEach(callbackfn: (value: T, index: number) => void): void;
+    
     /**
       * Return the elements of an array that meet the condition specified in a callback function.
       * @param callbackfn A function that accepts up to two arguments. The filter method calls the callbackfn function one time for each element in the array.
@@ -104,7 +133,7 @@ interface Array<T> {
 
     /** Remove the element at a certain index. */
     //% help=arrays/remove-at
-    //% shim=Array_::removeAt weight=49
+    //% shim=Array_::removeAt weight=15
     //% blockId="array_removeat" block="%list| remove value at %index" blockNamespace="arrays"
     removeAt(index: number): T;
 
@@ -114,7 +143,7 @@ interface Array<T> {
      * @param the value to insert, eg: 0
      */
     //% help=arrays/insert-at
-    //% shim=Array_::insertAt weight=84
+    //% shim=Array_::insertAt weight=20
     //% blockId="array_insertAt" block="%list| insert at %index| value %value" blockNamespace="arrays"
     insertAt(index: number, value: T): void;
 
@@ -124,7 +153,7 @@ interface Array<T> {
       * @param fromIndex The array index at which to begin the search. If fromIndex is omitted, the search starts at index 0.
       */
     //% help=arrays/index-of
-    //% shim=Array_::indexOf weight=50
+    //% shim=Array_::indexOf weight=40
     //% blockId="array_indexof" block="%list| find index of %value" blockNamespace="arrays"
     indexOf(item: T, fromIndex?: number): number;
 
@@ -225,6 +254,7 @@ interface Object { }
 interface Function { }
 interface IArguments { }
 interface RegExp { }
+type TemplateStringsArray = Array<string>;
 
 type uint8 = number;
 type uint16 = number;
@@ -289,17 +319,17 @@ declare namespace Math {
      * Returns a pseudorandom number between 0 and 1.
      */
     //% shim=Math_::random
-    //% helpUrl="/reference/math/random"
+    //% help=math/random
     function random(): number;
 
     /**
-     * Returns a pseudorandom number between min and max included. 
+     * Returns a pseudorandom number between min and max included.
      * If both numbers are integral, the result is integral.
      * @param min the lower inclusive bound, eg: 0
      * @param max the upper inclusive bound, eg: 10
      */
     //% blockId="device_random" block="pick random %min|to %limit"
-    //% helpUrl="/reference/math/random-range"
+    //% help=math/random-range
     //% shim=Math_::randomRange
     function randomRange(min: number, max: number): number;
 

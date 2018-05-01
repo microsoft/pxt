@@ -61,7 +61,9 @@ declare namespace goog {
             height: number;
             constructor(width: number, height: number);
         }
-        function clamp(n: number, min: number, max: number): void;
+        function clamp(n: number, min: number, max: number): number;
+        function toRadians(n: number): number;
+        function toDegrees(n: number): number;
     }
 
     namespace color {
@@ -508,6 +510,7 @@ declare namespace Blockly {
         function addClass(element: Element, className: string): boolean;
         function removeClass(element: Element, className: string): boolean;
         function createSvgElement(tag: string, options: any, fg?: any): any;
+        function getViewportBBox(): goog.math.Box;
     }
 
     class FieldImage extends Field {
@@ -549,7 +552,7 @@ declare namespace Blockly {
         init(block?: Block): void;
         static superClass_: Field;
         constructor(text: string, opt_validator?: Function);
-        callValidator(text: string): string;
+        callValidator<T>(text: T): T;
         getText(): string;
         setText(newText: any): void;
         updateEditable(): void;
@@ -557,8 +560,8 @@ declare namespace Blockly {
         render_(): void;
         showEditor_(): void;
         getAbsoluteXY_(): goog.math.Coordinate;
-        getScaledBBox_(): goog.math.Size;
-        setValue(newValue: string): void;
+        getScaledBBox_(): {top: number, bottom: number, left: number, right: number};
+        setValue(newValue: string | number): void;
         getValue(): string;
         isCurrentlyEditable(): boolean;
         setSourceBlock(block: Block): void;
@@ -567,6 +570,8 @@ declare namespace Blockly {
         updateTextNode_(): void;
         getSize(): goog.math.Size;
         getSvgRoot(): Element;
+        classValidator(text: string): string;
+        forceRerender(): void;
     }
 
     class FieldVariable extends Field {
@@ -604,6 +609,7 @@ declare namespace Blockly {
     }
 
     class FieldDropdown extends Field {
+        selectedItem: goog.ui.MenuItem;
         box_: Element;
         arrow_: Element;
         arrowY_: number;
@@ -619,12 +625,17 @@ declare namespace Blockly {
         onItemSelected(menu: goog.ui.Menu, menuItem: goog.ui.MenuItem): void;
         positionArrow(x: number): number;
         shouldShowRect_(): boolean;
+        getAnchorDimensions_(): goog.math.Box;
     }
 
     class FieldNumber extends FieldTextInput {
         constructor(value: string | number, opt_min?: any, opt_max?: any, opt_precision?: any, opt_validator?: Function);
         setConstraints(min: any, max: any, precision?: any): void;
         position_(): void;
+    }
+
+    class FieldLabel extends Field {
+        constructor(text: string, opt_class: string);
     }
 
     class FieldTextDropdown extends FieldTextInput {
@@ -635,9 +646,24 @@ declare namespace Blockly {
         constructor(value: string | number, menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], opt_min?: any, opt_max?: any, opt_precision?: any, opt_validator?: Function);
     }
 
+    class FieldAngle extends FieldTextInput {
+        static HALF: number;
+        static RADIUS: number;
+        static OFFSET: number;
+        static CENTER_RADIUS: number;
+        static ARROW_WIDTH: number;
+        static HANDLE_RADIUS: number;
+        static CLOCKWISE: boolean;
+        static ROUND: number;
+        static WRAP: number;
+        static ARROW_SVG_DATAURI: string;
+        constructor(opt_value?: string, opt_validator?: Function);
+    }
+
     class FieldSlider extends FieldNumber {
         min_: number;
         max_: number;
+        step_: number;
         labelText_: string;
         slider_: goog.ui.Slider;
         constructor(value_: any, opt_min?: string, opt_max?: string, opt_precision?: string, opt_step?: string, opt_labelText?: string, opt_validator?: Function);
@@ -726,6 +752,7 @@ declare namespace Blockly {
         setTooltip(newTip: string | (() => void)): void;
         // Passing null will delete current text
         setWarningText(text: string): void;
+        setHighlightWarning(isHighlightingWarning: boolean): void;
         isEditable(): boolean;
         isInsertionMarker(): boolean;
         isShadow(): boolean;
@@ -736,6 +763,18 @@ declare namespace Blockly {
         getRelativeToSurfaceXY(): goog.math.Coordinate;
         getOutputShape(): number;
         getSvgRoot(): Element;
+    }
+
+    class WorkspaceComment {
+        getContent(): string;
+
+        getRelativeToSurfaceXY(): goog.math.Coordinate;
+        moveBy(x: number, y: number): void;
+        getHeightWidth(): { width: number; height: number; };
+        getBoundingRectangle(): {
+            topLeft: goog.math.Coordinate;
+            bottomRight: goog.math.Coordinate;
+        }
     }
 
     class Comment extends Icon {
@@ -849,6 +888,8 @@ declare namespace Blockly {
     class Workspace {
         scale: number;
         svgGroup_: any;
+        toolbox_: Toolbox;
+        flyout_: any; // Blockly.Flyout
         scrollbar: ScrollbarPair;
         svgBlockCanvas_: SVGGElement;
         options: Blockly.Options;
@@ -863,10 +904,12 @@ declare namespace Blockly {
         newBlock(prototypeName: string, opt_id?: string): Block;
         addTopBlock(block: Block): void;
         getAllBlocks(): Block[];
+        getAllVariables(): Blockly.VariableModel[];
         render(): void;
         clear(): void;
         dispose(): void;
         getTopBlocks(ordered: boolean): Block[];
+        getTopComments(ordered: boolean): WorkspaceComment[];
         getBlockById(id: string): Block;
         getAllBlocks(): Block[];
         traceOn(armed: boolean): void;
@@ -878,7 +921,9 @@ declare namespace Blockly {
         zoom(x: number, y: number, type: number): void;
         zoomCenter(type: number): void;
         scrollCenter(): void;
+        setScale(scale: number): void;
         highlightBlock(id: string): void;
+        centerOnBlock(id: string): void;
         glowBlock(id: string, state: boolean): void;
         glowStack(id: string, state: boolean): void;
         undo(redo?: boolean): void;
@@ -923,12 +968,13 @@ declare namespace Blockly {
         function domToPrettyText(dom: Element): string;
         function domToWorkspace(dom: Element, workspace: Workspace): string[];
         function textToDom(text: string): Element;
-        function workspaceToDom(workspace: Workspace): Element;
+        function workspaceToDom(workspace: Workspace, noid?: boolean): Element;
     }
 
     interface Options {
         readOnly?: boolean;
         toolbox?: Element | string;
+        hasCategories?: boolean;
         trashcan?: boolean;
         collapse?: boolean;
         comments?: boolean;
@@ -937,6 +983,8 @@ declare namespace Blockly {
         sound?: boolean;
         css?: boolean;
         media?: string;
+        horizontalLayout?: boolean;
+        toolboxPosition?: string;
         grid?: {
             spacing?: number;
             length?: number;
@@ -954,6 +1002,8 @@ declare namespace Blockly {
         };
         enableRealTime?: boolean;
         rtl?: boolean;
+        // PXT specific:
+        toolboxOptions?: ToolboxOptions;
     }
 
     class Options {
@@ -971,10 +1021,6 @@ declare namespace Blockly {
         disabledOpacity?: number;
     }
 
-    interface ExtendedOptions extends Options {
-        toolboxOptions?: ToolboxOptions;
-    }
-
     // tslint:disable-next-line
     interface callbackHandler { }
 
@@ -985,8 +1031,7 @@ declare namespace Blockly {
     }
 
     namespace Variables {
-        function generateVariableFieldXml_(variableModel: VariableModel): void;
-        function allVariables(wp: Workspace): string[];
+        function generateVariableFieldXmlString(variableModel: VariableModel): string;
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
         let flyoutCategoryBlocks: (wp: Workspace) => HTMLElement[];
         function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;
@@ -1057,16 +1102,21 @@ declare namespace Blockly {
         class Change extends Abstract {
             constructor(block: Block, element: String, name: String, oldValue: String, newValue: String);
         }
+        class BlockChange extends Abstract {
+            constructor(block: Block, element: String, name: String, oldValue: String, newValue: String);
+        }
     }
 
     class Toolbox {
         workspace_: Blockly.Workspace;
+        flyout_: any; // Blockly.Flyout
         RTL: boolean;
         horizontalLayout_: boolean;
         toolboxPosition: number;
         hasColours_: boolean;
         tree_: Blockly.Toolbox.TreeNode;
 
+        clearSelection(): void;
         constructor(workspace: Blockly.Workspace);
     }
 
@@ -1103,6 +1153,7 @@ declare namespace Blockly {
         function hide(): void;
         function position(anchorX: number, anchorY: number, windowSize: goog.math.Size,
             scrollOffset: goog.math.Coordinate, rtl: boolean): void;
+        function positionWithAnchor(viewportBBox: goog.math.Box, anchorBBox: goog.math.Box, widgetSize: goog.math.Size, rtl: boolean): void;
     }
 
     namespace DropDownDiv {

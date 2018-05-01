@@ -221,7 +221,6 @@ Each target has one board (plus optional parts).
         // buttons and parts
         hideRestart?: boolean;      // hide the restart button 
         hideFullscreen?: boolean;   // hide the fullscreen button
-        enableTrace?: boolean;      // enable the slow-mode (snail) button
         parts?: boolean;            // parts enabled?
         instructions?: boolean;     // generate step-by-step wiring instructions (Make button)
 

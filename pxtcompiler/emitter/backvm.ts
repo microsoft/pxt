@@ -16,10 +16,11 @@ namespace ts.pxtc {
         return JSON.stringify(s)
     }
 
-    function vtableToVM(info: ClassInfo) {
-        return vtableToAsm(info)
+    function vtableToVM(info: ClassInfo, opts: CompileOptions) {
+        return vtableToAsm(info, opts)
     }
 
+    /* tslint:disable:no-trailing-whitespace */
     export function vmEmit(bin: Binary, opts: CompileOptions) {
         let vmsource = `; VM start
 ${hex.hexPrelude()}        
@@ -38,7 +39,7 @@ ${hex.hexPrelude()}
             vmsource += "\n" + irToVM(bin, p) + "\n"
         })
         bin.usedClassInfos.forEach(info => {
-            vmsource += vtableToVM(info)
+            vmsource += vtableToVM(info, opts)
         })
         U.iterMap(bin.hexlits, (k, v) => {
             vmsource += snip.hex_literal(v, k)
@@ -66,10 +67,12 @@ ${hex.hexPrelude()}
             let newBuf: number[] = []
             for (let i = 0; i < res.buf.length; i += 2)
                 newBuf.push(res.buf[i] | (res.buf[i + 1] << 8))
-            const myhex = btoa(hex.patchHex(bin, newBuf, false, true)[0])
+            const myhex = ts.pxtc.encodeBase64(hex.patchHex(bin, newBuf, false, true)[0])
             bin.writeFile(pxt.outputName(target), myhex)
         }
     }
+    /* tslint:enable */
+
 
     function irToVM(bin: Binary, proc: ir.Procedure): string {
         let resText = ""
