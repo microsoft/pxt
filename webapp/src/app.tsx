@@ -1872,10 +1872,8 @@ export class ProjectView
     }
 }
 
-export const appElement = document.getElementById('content');
-
 function render() {
-    ReactDOM.render(<ProjectView />, appElement);
+    ReactDOM.render(<ProjectView />, sui.appElement);
 }
 
 function getEditor() {

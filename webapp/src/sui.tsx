@@ -1,11 +1,10 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import * as ReactModal from 'react-modal';
 import * as data from "./data";
 import * as core from "./core";
 
-import { appElement } from "./app";
-
-import * as ReactModal from 'react-modal';
+export const appElement = document.getElementById('content');
 
 export interface UiProps {
     icon?: string;
