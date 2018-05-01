@@ -122,9 +122,8 @@ namespace pxsim {
     export interface TutorialStepInfo {
         fullscreen?: boolean;
         hasHint?: boolean;
-        content?: string;
-        headerContent?: string;
-        ariaLabel?: string;
+        contentMd?: string;
+        headerContentMd?: string;
     }
 
     export interface TutorialLoadedMessage extends TutorialMessage {

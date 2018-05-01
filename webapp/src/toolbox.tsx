@@ -368,6 +368,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
         let index = 0;
         return <div ref={e => this.rootElement = e} id={`${editorname}EditorToolbox`}>
+            <ToolboxStyle categories={this.items} />
             {showSearchBox ? <ToolboxSearch ref="searchbox" parent={parent} toolbox={this} editorname={editorname} /> : undefined}
             <div className="blocklyTreeRoot">
                 <div role="tree">
@@ -747,5 +748,25 @@ export class ToolboxTrashIcon extends data.Component<{}, {}> {
         return <div id="blocklyTrashIcon" style={{ opacity: 0, display: 'none' }}>
             <i className="trash icon" aria-hidden="true"></i>
         </div>
+    }
+}
+
+interface ToolboxStyleProps {
+    categories: ToolboxCategory[];
+}
+
+export class ToolboxStyle extends data.Component<ToolboxStyleProps, {}> {
+    renderCore() {
+        const { categories } = this.props;
+        // Add inline CSS for each category used so that the tutorial engine is able to render blocks
+        // and assosiate them with a specific category
+        return <style>
+            {categories.filter(c => !!c.color).map(category =>
+                `span.docs.inlineblock.${category.nameid} {
+                    background-color: ${category.color};
+                    border-color: ${pxt.toolbox.fadeColor(category.color, 0.1, false)};
+                }`
+            )}
+        </style>
     }
 }

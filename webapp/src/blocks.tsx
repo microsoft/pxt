@@ -833,6 +833,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // no toolbox when readonly
         if (pxt.shell.isReadOnly()) return;
 
+        // Dont show toolbox if we're in tutorial mode and we're not ready
+        if (this.parent.state.tutorialOptions != undefined &&
+            !this.parent.state.tutorialOptions.tutorialReady) {
+            return;
+        }
+
         this.clearCaches();
 
         const hasCategories = this.shouldShowCategories();
