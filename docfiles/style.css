@@ -187,11 +187,13 @@ svg {
 }
 
 #accessibleMenu .ui.item.link {
+    position: absolute;
     height: 4em;
     line-height: 4em;
     font-size: 1em;
     text-align: center;
-    color: white;
+    color: #387894;
+    background: hsla(0,0%,100%,.9)!important;
 }
 
 /* Styling the table of contents much like the Semantic UI documentation site: http://semantic-ui.com/introduction/getting-started.html */

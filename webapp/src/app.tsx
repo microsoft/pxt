@@ -1738,7 +1738,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             <div id='root' className={rootClasses}>
                 {hideMenuBar ? undefined :
                     <header id="menubar" role="banner" className={"ui menu"}>
-                        <div id="accessibleMenu" role="menubar">
+                        <div id="accessibleMenu" className="ui accessibleMenu borderless fixed menu" role="menubar">
                             <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor")} onClick={uiHandler(this.openJavaScript)} />
                             {selectLanguage ? <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language")} onClick={uiHandler(this.selectLang)} /> : undefined}
                             {targetTheme.highContrast ? <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={uiHandler(this.toggleHighContrast)} /> : undefined}
