@@ -1,0 +1,324 @@
+
+/*******************************
+        Blockly Toolbox
+*******************************/
+
+.blocklyToolboxDiv, .monacoToolboxDiv {
+    background: @blocklyToolboxColor !important;
+    color: @blocklyToolboxText;
+    overflow-x: visible;
+    overflow-y: auto;
+    position: absolute;
+    z-index: @blocklyToolboxZIndex;
+    /* so blocks go over toolbox when dragging */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-transition: width 1s, background 0.3s; /* Safari */
+    -moz-transition: width 1s, background 0.3s; /* Mozilla */
+    -webkit-transition-timing-function: ease-in; /* Mozilla */
+    -o-transition: width 1s, background 0.3s; /* Opera */
+    transition: width 1s, background 0.3s;
+    transition-timing-function: ease-in;
+}
+
+.blocklyToolboxDiv text, .monacoToolboxDiv text {
+    user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    cursor: inherit;
+}
+
+.blocklyToolboxDiv[dir="RTL"] .blocklyTreeRow,
+.monacoToolboxDiv[dir="RTL"] .blocklyTreeRow {
+    margin-left: 8px;
+}
+
+.blocklyToolboxDiv.blocklyToolboxDeleting {
+    background: lighten(@red, 10%) !important;
+}
+
+.monacoToolboxDiv.invisible {
+    display: none !important;
+}
+
+/*******************************
+        Toolbox root
+*******************************/
+
+div.blocklyTreeRoot {
+    padding: 0;
+}
+
+div.blocklyTreeRoot:focus {
+    outline: none;
+}
+
+/*******************************
+        Toolbox tree row
+*******************************/
+
+div.blocklyTreeRow {
+    line-height: 22px;
+    margin-bottom: 3px;
+    padding-right: 8px;
+    white-space: nowrap;
+    height: 100%;
+    cursor: pointer;
+}
+
+div.blocklyTreeRow:not(.blocklyTreeSelected):hover {
+    background-color: #e4e4e4;
+}
+
+div.blocklyTreeSeparator {
+    border-bottom: solid #e5e5e5 1px;
+    height: 0;
+    margin: 5px 0;
+}
+
+/* This horrendous selector and the next are for subcategories in the Blockly toolbox */
+div.blocklyTreeRoot div div div div div.blocklyTreeRow {
+    border-left-width: 12px !important;
+    padding-left: 0px !important;
+}
+
+div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
+    font-size: 1rem;
+}
+
+/*******************************
+        Toolbox tree label
+*******************************/
+
+/* Blockly toolbox font size same as the page font */
+span.blocklyTreeLabel {
+    padding: 0 3px;
+    vertical-align: middle;
+    font-family: @pageFont !important;
+    font-weight: 200;
+    font-size: 1.15rem;
+    cursor: pointer;
+}
+
+span.blocklyTreeLabel, text.blocklyText {
+    user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+/*******************************
+        Toolbox selected
+*******************************/
+
+.blocklyTreeSelected .blocklyTreeLabel {
+    color: #fff;
+}
+
+.blocklyTreeSelected .blocklyTreeIcon {
+    color: #fff;
+}
+
+/*******************************
+        Toolbox search
+*******************************/
+
+/* Blockly Search bar */
+.blocklySearchInputField {
+    border: 0 !important;
+    border-radius: 0 !important;
+}
+
+/*******************************
+        Toolbox delete
+*******************************/
+
+/* The trash icon inside the toolbox */
+#blocklyTrashIcon {
+    position: absolute;
+    top: 30%;
+    left: 0;
+    text-align: center;
+    width: 100px;
+    height: 80px;
+    z-index: @blocklyTrashIconZIndex;
+    font-size:5rem;
+    color: @trashIconColor;
+}
+
+.blocklyToolboxDelete .blocklyTreeLabel {
+    cursor: url("<<<PATH>>>/handdelete.cur") auto;
+}
+
+/*******************************
+        Toolbox tree icon
+*******************************/
+
+/* Blockly toolbox icons */
+span.blocklyTreeIcon {
+    background: none !important;
+    opacity: 1;
+    margin: 0.0em 0.25em 0.0em 0.25em;
+    width: 30px;
+    font-family: 'Icons';
+    font-style: normal;
+    font-weight: normal;
+    text-decoration: inherit;
+    text-align: center;
+    speak: none;
+    font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    backface-visibility: hidden;
+    font-size: 1.3rem;
+    height: 100%;
+    display: none;
+    vertical-align: middle;
+}
+
+div.blocklyTreeIcon span {
+    vertical-align: middle;
+}
+
+.blocklyTreeIcon.blocklyTreeIconfunctions {
+    font-family: xicon !important;
+}
+.blocklyFlyoutLabelIcon.blocklyFlyoutIconfunctions {
+    font-family: xicon !important;
+}
+
+/*******************************
+    Blockly Accessibility
+*******************************/
+
+.blocklyTreeRow:focus {
+    outline: none;
+}
+
+.blocklyTreeRow:not(.blocklyTreeSelected):focus {
+    background-color: #e4e4e4;
+}
+
+/*******************************
+        Media Adjustments
+*******************************/
+
+/* Large Monitor */
+@media only screen and (min-width: @largeMonitorBreakpoint) {
+    /* Blockly */
+    div.blocklyTreeRow {
+        min-width: @blocklyRowWidthWide;
+        min-height: @blocklyRowHeightWide;
+    }
+    span.blocklyTreeIcon {
+        line-height: @blocklyRowHeightWide;
+        min-height: @blocklyRowHeightWide;
+    }
+    #blocklyTrashIcon {
+        width: @blocklyRowWidthWide;
+    }
+}
+
+/* Small Monitor */
+@media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+    /* Blockly row */
+    div.blocklyTreeRow {
+        min-width: @blocklyRowWidthComputer;
+        min-height: @blocklyRowHeightComputer;
+    }
+    span.blocklyTreeIcon {
+        line-height: @blocklyRowHeightComputer;
+        min-height: @blocklyRowHeightComputer;
+    }
+    #blocklyTrashIcon {
+        width: @blocklyRowWidthComputer;
+    }
+}
+
+/* Tablet */
+@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
+    /* Blockly */
+    div.blocklyTreeRow {
+        min-width: @blocklyRowWidthTablet;
+        min-height: @blocklyRowHeightTablet;
+        border-left-width: 12px !important;
+    }
+    span.blocklyTreeIcon {
+        line-height: @blocklyRowHeightTablet;
+        min-height: @blocklyRowHeightTablet;
+    }
+    #blocklyTrashIcon {
+        width: @blocklyRowWidthTablet;
+    }
+    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
+        border-left-width: 18px !important;
+    }
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+    div.blocklyTreeRow {
+        min-width: @blocklyRowWidthMobile;
+        min-height: @blocklyRowHeightMobile;
+        border-left-width: 6px !important;
+    }
+    span.blocklyTreeIcon {
+        line-height: @blocklyRowHeightMobile;
+        min-height: @blocklyRowHeightMobile;
+    }
+    #blocklyTrashIcon {
+        width: @blocklyRowWidthMobile;
+    }
+}
+
+/* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
+@media only screen and (min-width: @computerBreakpoint) {
+    /* Blockly */
+    div.blocklyTreeRow {
+        border-left-width: 12px !important;
+    }
+    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
+        border-left-width: 18px !important;
+    }
+}
+
+/* <= Small Monitor (Mobile + Tablet + Small Monitor) */
+@media only screen and (max-width: @largestSmallMonitor) {
+    /* Blockly */
+    span.blocklyTreeLabel {
+        font-size:1rem;
+    }
+}
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+    /* Blockly */
+    span.blocklyTreeLabel {
+        font-size:1rem;
+    }
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+    /* Hide blockly tree labels on mobile */
+    span.blocklyTreeLabel, div.blocklyTreeRow:hover span.blocklyTreeLabel, div.blocklyTreeRow.blocklyTreeSelected:hover span.blocklyTreeLabel {
+        display: none !important;
+    }
+    div.blocklyTreeRow {
+        padding-right: 0;
+        text-align: center;
+    }
+    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
+        border-left-width: 8px !important;
+    }
+    /* Blockly trash icon */
+    #blocklyTrashIcon {
+        font-size: 3rem;
+    }
+    /* Hide the blockly toolbox search */
+    #blocklySearchArea {
+        display: none !important;
+    }
+}

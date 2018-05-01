@@ -14,8 +14,15 @@ namespace pxsim {
         code: string;
         mute?: boolean;
         highContrast?: boolean;
+        light?: boolean;
         cdnUrl?: string;
         localizedStrings?: Map<string>;
+        version?: string;
+    }
+
+    export interface SimulatorInstructionsMessage extends SimulatorMessage {
+        type: "instructions";
+        options: pxsim.instructions.RenderPartsOptions;
     }
 
     export interface SimulatorMuteMessage extends SimulatorMessage {
@@ -62,10 +69,11 @@ namespace pxsim {
         id: string;
         data: string;
         sim?: boolean;
+        receivedTime?: number;
     }
     export interface SimulatorCommandMessage extends SimulatorMessage {
         type: "simulator",
-        command: "modal" | "restart"
+        command: "modal" | "restart" | "reload"
         header?: string;
         body?: string;
         copyable?: string;
@@ -101,6 +109,7 @@ namespace pxsim {
 
     export interface SimulatorScreenshotMessage extends SimulatorMessage {
         type: "screenshot";
+        title?: string;
         data: string;
     }
 
@@ -113,9 +122,8 @@ namespace pxsim {
     export interface TutorialStepInfo {
         fullscreen?: boolean;
         hasHint?: boolean;
-        content?: string;
-        headerContent?: string;
-        ariaLabel?: string;
+        contentMd?: string;
+        headerContentMd?: string;
     }
 
     export interface TutorialLoadedMessage extends TutorialMessage {
@@ -143,8 +151,9 @@ namespace pxsim {
     export interface RenderBlocksRequestMessage extends SimulatorMessage {
         type: "renderblocks",
         id: string;
-        code: string;
+        code?: string;
         options?: {
+            packageId?: string;
             package?: string;
             snippetMode?: boolean;
         }
@@ -159,10 +168,26 @@ namespace pxsim {
         height?: number;
     }
 
+    export function print(delay: number = 0) {
+        function p() {
+            try {
+                window.print();
+            }
+            catch (e) {
+                // oops
+            }
+        }
+
+        if (delay)
+            setTimeout(p, delay);
+        else p();
+    }
+
     export namespace Embed {
         export function start() {
             window.addEventListener("message", receiveMessage, false);
             let frameid = window.location.hash.slice(1)
+            initAppcache();
             Runtime.postMessage(<SimulatorReadyMessage>{ type: 'ready', frameid: frameid });
         }
 
@@ -174,10 +199,12 @@ namespace pxsim {
             let type = data.type || '';
             if (!type) return;
             switch (type || '') {
-                case 'run': run(<SimulatorRunMessage>data); break;
-                case 'stop': stop(); break;
-                case 'mute': mute((<SimulatorMuteMessage>data).mute); break;
-                case 'custom':
+                case "run": run(<SimulatorRunMessage>data); break;
+                case "instructions": pxsim.instructions.renderInstructions(<SimulatorInstructionsMessage>data); break;
+                case "stop": stop(); break;
+                case "mute": mute((<SimulatorMuteMessage>data).mute); break;
+                case "print": print(); break;
+                case "custom":
                     if (handleCustomMessage) handleCustomMessage((<SimulatorCustomMessage>data));
                     break;
                 case 'pxteditor':
@@ -206,11 +233,11 @@ namespace pxsim {
         export function run(msg: SimulatorRunMessage) {
             stop();
 
-            if (msg.mute) mute(msg.mute);
-
-            if (msg.localizedStrings) {
+            if (msg.mute)
+                mute(msg.mute);
+            if (msg.localizedStrings)
                 pxsim.localization.setLocalizedStrings(msg.localizedStrings);
-            }
+
             runtime = new Runtime(msg);
             runtime.board.initAsync(msg)
                 .done(() => {
@@ -269,6 +296,24 @@ namespace pxsim {
         if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
             window.parent.postMessage(message, "*");
         }
+    }
+
+    function initAppcache() {
+        if (typeof window !== 'undefined') {
+            if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
+                reload();
+            window.applicationCache.addEventListener("updateready", () => {
+                if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
+                    reload();
+            });
+        }
+    }
+
+    export function reload() {
+        // Continuously send message just in case the editor isn't ready to handle it yet
+        setInterval(() => {
+            Runtime.postMessage({ type: "simulator", command: "reload" } as SimulatorCommandMessage)
+        }, 500)
     }
 }
 

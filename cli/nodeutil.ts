@@ -24,10 +24,8 @@ export interface SpawnOptions {
 }
 
 //This should be correct at startup when running from command line
-//When running inside Electron it gets updated to the correct path
-export var targetDir: string = process.cwd();
-//When running the Electron app, this will be updated based on targetDir
-export var pxtCoreDir: string = path.join(__dirname, "..");
+export let targetDir: string = process.cwd();
+export let pxtCoreDir: string = path.join(__dirname, "..");
 
 export function setTargetDir(dir: string) {
     targetDir = dir;
@@ -176,8 +174,6 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
     let data = options.data
     u.method = options.method || (data == null ? "GET" : "POST");
 
-    let mod = isHttps ? https : http;
-
     let buf: Buffer = null;
 
     u.headers["accept-encoding"] = "gzip"
@@ -209,7 +205,7 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
         u.headers['content-length'] = buf.length
 
     return new Promise<Util.HttpResponse>((resolve, reject) => {
-        let req = mod.request(u, res => {
+        const handleResponse = (res: http.IncomingMessage) => {
             let g: events.EventEmitter = res;
             if (/gzip/.test(res.headers['content-encoding'])) {
                 let tmp = zlib.createUnzip();
@@ -231,7 +227,9 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
                 }
                 return resp;
             }))
-        })
+        };
+
+        const req = isHttps ? https.request(u, handleResponse) : http.request(u, handleResponse);
         req.on('error', (err: any) => reject(err))
         req.end(buf)
     })
@@ -397,7 +395,6 @@ function getBrowserLocation(browser: string) {
     if (normalizedBrowser === "chrome") {
         switch (os.platform()) {
             case "win32":
-            case "win64":
                 browserPath = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe";
                 break;
             case "darwin":
@@ -414,7 +411,6 @@ function getBrowserLocation(browser: string) {
         browserPath = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe";
         switch (os.platform()) {
             case "win32":
-            case "win64":
                 browserPath = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe";
                 break;
             case "darwin":
@@ -469,7 +465,7 @@ export function resolveMd(root: string, pathname: string): string {
         return targetMd
 
     let dirs = [
-        path.join(root, "/node_modules/pxt-core/common-docs/"),
+        path.join(root, "/node_modules/pxt-core/common-docs"),
     ]
     lastResolveMdDirs = dirs
     for (let pkg of pxt.appTarget.bundleddirs) {
@@ -482,7 +478,7 @@ export function resolveMd(root: string, pathname: string): string {
             dirs.push(path.join(d, "..", cfg.additionalFilePath, "docs"))
     }
     for (let d of dirs) {
-        let template = tryRead(d + pathname)
+        let template = tryRead(path.join(d, pathname))
         if (template)
             return pxt.docs.augmentDocs(template, targetMd)
     }

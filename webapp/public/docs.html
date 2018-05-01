@@ -39,9 +39,10 @@
         }
         code.lang-config, code.lang-package { display:none; }
 
-        code.lang-blocks::before,
-        code.lang-sig::before,
         code.lang-block::before,
+        code.lang-blocks::before,
+        code.lang-blocksxml::before,
+        code.lang-sig::before,
         code.lang-sim::before,
         code.lang-cards::before,
         code.lang-namespaces::before,
@@ -52,9 +53,10 @@
             left: calc(50% - 5em);
         }
         
-        code.lang-blocks,
-        code.lang-sig,
         code.lang-block,
+        code.lang-blocks,
+        code.lang-blocksxml,
+        code.lang-sig,
         code.lang-sim,
         code.lang-cards,
         code.lang-namespaces,
@@ -69,10 +71,9 @@
 <body id="docs">
     <style type="text/css">
         @import "/blb/highlight.js/styles/vs.css";
-        @import "/blb/icons.css";
     </style>
     <div id='loading' class="ui active inverted dimmer">
-        <div class="ui large loader"></div>
+        <div class="ui loader"></div>
     </div>
     <div id="content" class="ui container">
         <i class="spinner loading icon"></i>
@@ -93,6 +94,7 @@
             pxt.BrowserUtils.initTheme();
             pxt.docs.requireMarked = function() { return marked; }
             var projectid = /projectid=([^&?]+)/i.exec(window.location.href); 
+            var project = /project=([^&?]+)/i.exec(window.location.href); 
             var code = /code=([^&?]+)/i.exec(window.location.href);
             var md = /md=([^&?]+)/i.exec(window.location.href);
             var markdown = code ? "```blocks\n" + decodeURIComponent(code[1]) + "```" : md ? decodeURIComponent(md[1]) : undefined;
@@ -106,6 +108,13 @@
                 });
             } else if (projectid) {                
                 pxt.runner.renderProjectAsync(content, projectid[1]).done(function() {
+                    $(loading).hide();
+                    $(content).show();
+                });
+            }
+            else if (project) {
+                const files = JSON.parse(project[1]);
+                pxt.runner.renderProjectFilesAsync(content, files).done(function() {
                     $(loading).hide();
                     $(content).show();
                 });

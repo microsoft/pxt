@@ -30,17 +30,22 @@ We have create a [tasks for each language and editor](https://crowdin.com/projec
 ![UI elements](/static/translationui.png)
 
 * **Minecraft / Blocks+description / Translation**: translating the blocks and block descriptions. Available to **translators** for a given language.
-* **Minecraft / Blocks+description / Proofreading**: proofreading translating the blocks and block descriptions. Available to **proof readers** for a given language.
+* **Minecraft / Blocks+description / Proofreading**: proofreading the blocks and block descriptions. Available to **proof readers** for a given language.
 
 * **micro:bit / Blocks+description / Translation**: translating the blocks and block descriptions. Available to **translators** for a given language.
-* **micro:bit / Blocks+description / Proofreading**: proofreading translating the blocks and block descriptions. Available to **proof readers** for a given language.
+* **micro:bit / Blocks+description / Proofreading**: proofreading the blocks and block descriptions. Available to **proof readers** for a given language.
 
 ![UI elements](/static/translationblocks.png)
 
 
 ## Live Translations
 
-All translations are "almost" live from the Crowdin project. Our cloud keeps a cache of the translated strings and updates to the **validated** strings will make it to production. Note that there may be a delay of up to 5 minutes before your changes in Crowdin make it into the "live" view.
+To test your changes "live", use **beta** build and the ``#liveforcelang=CODE`` hash argument where ``CODE`` is your language ISO code. For example, to see the french translations:
+
+* https://pxt.microbit.org/beta?liveforcelang=fr
+
+Note that there may be a delay of up to 5 minutes before your changes in Crowdin make it into the "live" view.
+Also, the language will only be available in the editor's language selection if the target has enabled that locale - which is why you need to use the hash mentioned above.
 
 ## Translating the editor interface
 
@@ -53,13 +58,13 @@ You will find target specific localization files under folders in crowdin. For e
 * ``core-strings.json``: contains the block definitions
 * ``core-jsdoc-strings.json``: contains the descriptions
 
-The block definition should be carefully translated using the [block definition syntax](https://makecode.com/defining-blocks). 
-Open the developer tools and watch the console, PXT wil validate the localized string and flag potential issues.
+The block definition should be carefully translated using the [block definition syntax](https://makecode.com/defining-blocks).
+Open the developer tools and watch the console, PXT will validate the localized string and flag potential issues.
 
 ### Block localization guidance
 
 * Do not capitalize blocks
-* Do not translalte ``%variable`` names
+* Do not translate ``%variable`` names
 * Do not reorder parameters
 * Maintain the same structure of ``|`` and ``%variables%``
 

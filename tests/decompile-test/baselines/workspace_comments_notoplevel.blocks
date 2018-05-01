@@ -1,0 +1,10 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="test_callback">
+<statement name="HANDLER">
+<block type="test_no_argument">
+<comment pinned="false">Not a workspace comment</comment>
+</block>
+</statement>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+</block>
+</xml>

@@ -3,9 +3,14 @@
     "description": "Project that defines a variety of blocks to be used in decopmiler test cases",
     "files": [
         "basic.ts",
+        "enums.ts",
         "mb.ts",
+        "expandableBlocks.ts",
         "fixedInstance.ts",
-        "cp.ts"
+        "constantShim.ts",
+        "cp.ts",
+        "templateStrings.ts",
+        "classHandlerParameter.ts"
     ],
     "public": true,
     "dependencies": {},

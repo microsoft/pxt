@@ -1,15 +1,10 @@
-import * as core from "./core";
-import * as pkg from "./package";
 import * as data from "./data";
-import * as ws from "./workspace";
 import * as mem from "./memoryworkspace";
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 type InstallHeader = pxt.workspace.InstallHeader;
-import U = pxt.Util;
-import Cloud = pxt.Cloud;
 
 function getHeaders(): Header[] {
     return mem.provider.getHeaders();
@@ -68,6 +63,15 @@ function resetAsync(): Promise<void> {
         })).then(() => { })
 }
 
+function loadedAsync(): Promise<void> {
+    return mem.provider.loadedAsync()
+        .then(() => pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
+            type: "pxthost",
+            action: "workspaceloaded",
+            response: true
+        })).then(() => { })
+}
+
 export const provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
@@ -77,5 +81,6 @@ export const provider: WorkspaceProvider = {
     installAsync,
     saveToCloudAsync,
     syncAsync,
-    resetAsync
+    resetAsync,
+    loadedAsync
 }

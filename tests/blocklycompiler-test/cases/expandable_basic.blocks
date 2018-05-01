@@ -1,0 +1,62 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+    <variables></variables>
+    <block type="pxt-on-start" id="7KJmaF;rXy%a9DJB0~P1" x="23" y="-22">
+      <statement name="HANDLER">
+        <block type="basicOpt" id=",m?p;JEH9);H3ZH)53L8">
+          <mutation _expanded="0"></mutation>
+          <value name="str">
+            <shadow type="text" id="q|`2M.@K5%X[f?30}8AJ">
+              <field name="TEXT">a</field>
+            </shadow>
+          </value>
+          <value name="ang">
+            <shadow type="math_number" id="XLN_GfLWQ1two{TTB0xU">
+              <field name="NUM">1</field>
+            </shadow>
+          </value>
+          <next>
+            <block type="basicOpt" id="}0|:at8o6aGkheWA,Xx^">
+              <mutation _expanded="1"></mutation>
+              <field name="enu">Direction.Left</field>
+              <value name="str">
+                <shadow type="text" id="+O{k1--{96{3R~M8,-TU">
+                  <field name="TEXT">b</field>
+                </shadow>
+              </value>
+              <value name="ang">
+                <shadow type="math_number" id="rc`?GE#=;+qTtUWeA+91">
+                  <field name="NUM">2</field>
+                </shadow>
+              </value>
+              <value name="opt">
+                <shadow type="logic_boolean" id="9(/,O4swNd)8iDc!xBB2">
+                  <field name="BOOL">TRUE</field>
+                </shadow>
+              </value>
+              <next>
+                <block type="basicOpt" id="%ER]?6:y!Wx;)^3^HFi?">
+                  <mutation _expanded="2"></mutation>
+                  <field name="enu">Direction.Right</field>
+                  <value name="str">
+                    <shadow type="text" id="R*eo@-rs}sn/xDZ{Cr:~">
+                      <field name="TEXT">c</field>
+                    </shadow>
+                  </value>
+                  <value name="ang">
+                    <shadow type="math_number" id="(N;50D@VDT/7rrZR@[!8">
+                      <field name="NUM">3</field>
+                    </shadow>
+                  </value>
+                  <value name="opt">
+                    <shadow type="logic_boolean" id="3v/nL_Y.*{myf#2;kR2!">
+                      <field name="BOOL">FALSE</field>
+                    </shadow>
+                  </value>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+  </xml>

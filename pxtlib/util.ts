@@ -1,16 +1,30 @@
-/// <reference path="../typings/globals/bluebird/index.d.ts"/>
+/// <reference path="tickEvent.ts" />
+/// <reference path="apptarget.ts"/>
 
 namespace ts.pxtc {
-    export var __dummy = 42;
+    export let __dummy = 42;
 }
 
 import pxtc = ts.pxtc
+
+namespace ts.pxtc {
+    /**
+     * atob replacement
+     * @param s
+     */
+    export let decodeBase64 = function (s: string) { return atob(s); }
+    /**
+     * bota replacement
+     * @param s
+     */
+    export let encodeBase64 = function (s: string) { return btoa(s); }
+}
 
 namespace ts.pxtc.Util {
     export function bufferSerial(buffers: pxt.Map<string>, data: string = "", source: string = "?", maxBufLen: number = 255) {
         for (let i = 0; i < data.length; ++i) {
             const char = data[i]
-            buffers[source] = buffers[source] ? buffers[source] + char : char
+            buffers[source] = (buffers[source] || "") + char;
             if (char === "\n" || buffers[source].length > maxBufLen) {
                 let buffer = buffers[source]
                 buffers[source] = ""
@@ -303,7 +317,10 @@ namespace ts.pxtc.Util {
         length: number;
     }
 
-    export function toArray<T>(a: ArrayLike<T>): T[] {
+    export function toArray<T>(a: ArrayLike<T> | ReadonlyArray<T>): T[] {
+        if (Array.isArray(a)) {
+            return a;
+        }
         let r: T[] = []
         for (let i = 0; i < a.length; ++i)
             r.push(a[i])
@@ -475,11 +492,12 @@ namespace ts.pxtc.Util {
         allowHttpErrors?: boolean; // don't treat non-200 responses as errors
         allowGzipPost?: boolean;
         responseArrayBuffer?: boolean;
+        forceLiveEndpoint?: boolean;
     }
 
     export interface HttpResponse {
         statusCode: number;
-        headers: pxt.Map<string>;
+        headers: pxt.Map<string | string[]>;
         buffer?: any;
         text?: string;
         json?: any;
@@ -495,7 +513,7 @@ namespace ts.pxtc.Util {
                     err.statusCode = resp.statusCode
                     return Promise.reject(err)
                 }
-                if (resp.text && /application\/json/.test(resp.headers["content-type"]))
+                if (resp.text && /application\/json/.test(resp.headers["content-type"] as string))
                     resp.json = JSON.parse(resp.text)
                 return resp
             })
@@ -735,7 +753,7 @@ namespace ts.pxtc.Util {
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
     let _translationsCache: pxt.Map<pxt.Map<string>> = {};
-    export var localizeLive = false;
+    export let localizeLive = false;
 
     class MemTranslationDb implements ITranslationDb {
         translations: pxt.Map<ITranslationDbEntry> = {};
@@ -756,7 +774,7 @@ namespace ts.pxtc.Util {
     }
 
     // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
-    export var translationDb: ITranslationDb = new MemTranslationDb();
+    export let translationDb: ITranslationDb = new MemTranslationDb();
 
     /**
      * Returns the current user language, prepended by "live-" if in live mode
@@ -803,7 +821,7 @@ namespace ts.pxtc.Util {
                     return undefined;
                 else if (resp.statusCode == 200) {
                     // store etag and translations
-                    etag = resp.headers["ETag"] || "";
+                    etag = resp.headers["ETag"] as string || "";
                     return translationDb.setAsync(lang, filename, branch, etag, resp.json)
                         .then(() => resp.json);
                 }
@@ -845,9 +863,14 @@ namespace ts.pxtc.Util {
         return code;
     }
 
-    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<void> {
+    export function isLocaleEnabled(code: string): boolean {
         code = normalizeLanguageCode(code);
-        if (code === _localizeLang)
+        return pxt.appTarget.appTheme && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.indexOf(code) > -1;
+    }
+
+    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
+        code = normalizeLanguageCode(code);
+        if (code === _localizeLang || (!isLocaleEnabled(code) && !force))
             return Promise.resolve();
 
         return downloadTranslationsAsync(targetId, simulator, baseUrl, code, pxtBranch, targetBranch, live)
@@ -863,9 +886,9 @@ namespace ts.pxtc.Util {
             });
     }
 
-    export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
+    export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<pxt.Map<string>> {
         code = normalizeLanguageCode(code);
-        if (code === _localizeLang)
+        if (code === _localizeLang || (!isLocaleEnabled(code) && !force))
             return Promise.resolve<pxt.Map<string>>(undefined);
 
         return downloadTranslationsAsync(targetId, true, baseUrl, code, pxtBranch, targetBranch, live)
@@ -897,20 +920,27 @@ namespace ts.pxtc.Util {
         }
 
         if (live) {
-            let hadError = false;
+            let errorCount = 0;
 
             const pAll = Promise.mapSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path, file.branch)
                 .then(mergeTranslations, e => {
                     console.log(e.message);
-                    hadError = true;
+                    ++errorCount;
                 })
             );
 
             return pAll.then(() => {
                 // Cache translations unless there was an error for one of the files
-                if (!hadError) {
+                if (errorCount) {
                     _translationsCache[translationsCacheId] = translations;
                 }
+
+                if (errorCount === stringFiles.length || !translations) {
+                    // Retry with non-live translations by setting live to false
+                    pxt.tickEvent("translations.livetranslationsfailed");
+                    return downloadTranslationsAsync(targetId, simulator, baseUrl, code, pxtBranch, targetBranch, false);
+                }
+
                 return Promise.resolve(translations);
             });
         } else {
@@ -1095,7 +1125,7 @@ namespace ts.pxtc.Util {
 
         // encode
         if (/xml|svg/.test(mimetype)) return `data:${mimetype},${encodeURIComponent(data)}`
-        else return `data:${mimetype || "image/png"};base64,${btoa(toUTF8(data))}`;
+        else return `data:${mimetype || "image/png"};base64,${encodeBase64(toUTF8(data))}`;
     }
 }
 
@@ -1129,7 +1159,7 @@ namespace ts.pxtc.BrowserImpl {
                     let res: Util.HttpResponse = {
                         statusCode: client.status,
                         headers: {},
-                        buffer: client.responseBody || client.response,
+                        buffer: (client as any).responseBody || client.response,
                         text: options.responseArrayBuffer ? undefined : client.responseText,
                     }
                     client.getAllResponseHeaders().split(/\r?\n/).forEach(l => {
@@ -1291,3 +1321,4 @@ namespace ts.pxtc.BrowserImpl {
     }
 }
 
+const lf = ts.pxtc.Util.lf;

@@ -5,6 +5,7 @@ namespace pxt.runner {
         snippetClass?: string;
         signatureClass?: string;
         blocksClass?: string;
+        blocksXmlClass?: string;
         projectClass?: string;
         blocksAspectRatio?: number;
         simulatorClass?: string;
@@ -57,14 +58,14 @@ namespace pxt.runner {
         let images = cdn + "images"
         let $h = $('<div class="ui bottom attached tabular icon small compact menu hideprint">'
             + ' <div class="right icon menu"></div></div>');
-        let $c = $('<div class="ui top attached segment"></div>');
+        let $c = $('<div class="ui top attached segment nobreak"></div>');
         let $menu = $h.find('.right.menu');
 
         const theme = pxt.appTarget.appTheme || {};
         if (woptions.showEdit && !theme.hideDocsEdit) { // edit button
             const $editBtn = $(`<a class="item" role="button" tabindex="0" aria-label="${lf("edit")}"><i role="presentation" aria-hidden="true" class="edit icon"></i></a>`).click(() => {
                 decompileResult.package.compressToFileAsync(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
-                    .done(buf => window.open(`${getEditUrl(options)}/#project:${window.btoa(Util.uint8ArrayToString(buf))}`, 'pxt'))
+                    .done(buf => window.open(`${getEditUrl(options)}/#project:${ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf))}`, 'pxt'))
             })
             $menu.append($editBtn);
         }
@@ -132,7 +133,7 @@ namespace pxt.runner {
         if ($menu.children().length) r.push($h);
 
         // inject container
-        $container.replaceWith(r);
+        $container.replaceWith(r as any);
 
         // download screenshots
         if (options.downloadScreenshots && woptions.hexname) {
@@ -183,7 +184,7 @@ namespace pxt.runner {
                 if (options.snippetReplaceParent) c = c.parent();
                 const segment = $('<div class="ui segment"/>').append(s);
                 c.replaceWith(segment);
-            }, { package: options.package, snippetMode: false });
+            }, { package: options.package, snippetMode: false, aspectRatio: options.blocksAspectRatio });
         }
 
         let snippetCount = 0;
@@ -202,7 +203,7 @@ namespace pxt.runner {
                 hexname: hexname,
                 hex: hex,
             });
-        }, { package: options.package });
+        }, { package: options.package, aspectRatio: options.blocksAspectRatio });
     }
 
     function decompileCallInfo(stmt: ts.Statement): pxtc.CallInfo {
@@ -236,7 +237,7 @@ namespace pxt.runner {
             let js = $('<code class="lang-typescript highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(options, c, js, s, r, { showJs: true, hideGutter: true });
-        }, { package: options.package, snippetMode: true });
+        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
 
     function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
@@ -245,13 +246,46 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment"/>').append(s);
             c.replaceWith(segment);
-        }, { package: options.package, snippetMode: true });
+        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
+    }
+
+    function renderBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
+        if (!opts.blocksXmlClass) return Promise.resolve();
+        const cls = opts.blocksXmlClass;
+        function renderNextXmlAsync(cls: string,
+            render: (container: JQuery, r: pxt.runner.DecompileResult) => void,
+            options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
+            let $el = $("." + cls).first();
+            if (!$el[0]) return Promise.resolve();
+
+            if (!options.emPixels) options.emPixels = 14;
+            return pxt.runner.compileBlocksAsync($el.text(), options)
+                .then((r) => {
+                    try {
+                        render($el, r);
+                    } catch (e) {
+                        console.error('error while rendering ' + $el.html())
+                        $el.append($('<div/>').addClass("ui segment warning").text(e.message));
+                    }
+                    $el.removeClass(cls);
+                    return Promise.delay(1, renderNextXmlAsync(cls, render, options));
+                })
+        }
+
+        return renderNextXmlAsync(cls, (c, r) => {
+            const s = r.blocksSvg;
+            if (opts.snippetReplaceParent) c = c.parent();
+            const segment = $('<div class="ui segment"/>').append(s);
+            c.replaceWith(segment);
+        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
     }
 
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
+        if (pxt.appTarget.id == "core") return Promise.resolve();
+
         return pxt.runner.decompileToBlocksAsync('', options)
             .then((r) => {
-                let res: {[ns: string]: string} = {};
+                let res: pxt.Map<string> = {};
                 const info = r.compileBlocks.blocksInfo;
                 info.blocks.forEach(fn => {
                     const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
@@ -267,19 +301,19 @@ namespace pxt.runner {
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
-                            border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
+                            border-color: ${pxt.toolbox.fadeColor(color, 0.2, true)} !important;
                         }
                     `;
                 })
                 return nsStyleBuffer;
             })
             .then((nsStyleBuffer) => {
-                Object.keys(pxt.blocks.blockColors).forEach((ns) => {
-                    const color = pxt.blocks.blockColors[ns] as string;
+                Object.keys(pxt.toolbox.blockColors).forEach((ns) => {
+                    const color = pxt.toolbox.blockColors[ns] as string;
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
-                            border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
+                            border-color: ${pxt.toolbox.fadeColor(color, 0.2, true)} !important;
                         }
                     `;
                 })
@@ -494,7 +528,7 @@ namespace pxt.runner {
 
             if (replaceParent) c = c.parent();
             c.replaceWith(ul)
-        }, { package: options.package })
+        }, { package: options.package, aspectRatio: options.blocksAspectRatio })
     }
 
     function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: pxt.docs.codeCard.CodeCardRenderOptions): Promise<void> {
@@ -507,7 +541,35 @@ namespace pxt.runner {
             let cd = document.createElement("div")
             cd.className = "ui cards";
             cd.setAttribute("role", "listbox")
-            cards.forEach(card => cd.appendChild(pxt.docs.codeCard.render(card, options)));
+            cards.forEach(card => {
+                const cardEl = pxt.docs.codeCard.render(card, options);
+                cd.appendChild(cardEl)
+                // automitcally display package icon for approved packages
+                if (card.cardType == "package") {
+                    const repoId = pxt.github.parseRepoId((card.url || "").replace(/^\/pkg\//, ''));
+                    if (repoId) {
+                        pxt.packagesConfigAsync()
+                            .then(pkgConfig => {
+                                const status = pxt.github.repoStatus(repoId, pkgConfig);
+                                switch (status) {
+                                    case pxt.github.GitRepoStatus.Banned:
+                                        cardEl.remove(); break;
+                                    case pxt.github.GitRepoStatus.Approved:
+                                        // update card info
+                                        card.imageUrl = pxt.github.mkRepoIconUrl(repoId);
+                                        // inject
+                                        cd.insertBefore(pxt.docs.codeCard.render(card, options), cardEl);
+                                        cardEl.remove();
+                                        break;
+                                }
+                            })
+                            .catch(e => {
+                                // swallow
+                                pxt.debug(`failed to load repo ${card.url}`)
+                            })
+                    }
+                }
+            });
             c.replaceWith(cd);
         }
 
@@ -563,20 +625,25 @@ namespace pxt.runner {
             run: !!options.simulator
         }
 
-        function render(e: Node) {
+        function render(e: Node, ignored: boolean) {
             if (typeof hljs !== "undefined") {
                 $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
             }
-            fillWithWidget(options, $(e).parent(), $(e), undefined, undefined, woptions);
+            const opts = pxt.U.clone(woptions);
+            if (ignored) {
+                opts.run = false;
+                opts.showEdit = false;
+            }
+            fillWithWidget(options, $(e).parent(), $(e), undefined, undefined, opts);
         }
 
         $('code.lang-typescript').each((i, e) => {
-            render(e);
+            render(e, false);
             $(e).removeClass('lang-typescript');
         });
         $('code.lang-typescript-ignore').each((i, e) => {
-            render(e);
+            render(e, true);
             $(e).removeClass('lang-typescript-ignore')
         });
     }
@@ -584,7 +651,7 @@ namespace pxt.runner {
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         if (!options) options = {}
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
-        options.showEdit = !pxt.BrowserUtils.isIFrame();
+        if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
 
         mergeConfig(options);
         if (options.simulatorClass) {
@@ -614,6 +681,7 @@ namespace pxt.runner {
             .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
             .then(() => renderSnippetsAsync(options))
             .then(() => renderBlocksAsync(options))
+            .then(() => renderBlocksXmlAsync(options))
             .then(() => renderProjectAsync(options))
     }
 }

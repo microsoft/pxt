@@ -3,9 +3,7 @@ import * as data from "./data";
 import * as core from "./core";
 import * as db from "./db";
 
-import Cloud = pxt.Cloud;
 import Util = pxt.Util;
-const lf = Util.lf
 
 let hostCache = new db.Table("hostcache")
 
@@ -113,6 +111,7 @@ export class EditorPackage {
 
     id: string;
     outputPkg: EditorPackage;
+    assetsPkg: EditorPackage;
 
     constructor(private ksPkg: pxt.Package, private topPkg: EditorPackage) {
         if (ksPkg && ksPkg.verProtocol() == "workspace")
@@ -123,10 +122,69 @@ export class EditorPackage {
         return this.topPkg.header;
     }
 
+    afterMainLoadAsync() {
+        if (this.assetsPkg)
+            return this.assetsPkg.loadAssetsAsync()
+        return Promise.resolve()
+    }
+
+    saveAssetAsync(filename: string, data: Uint8Array) {
+        return workspace.saveAssetAsync(this.header.id, filename, data)
+            .then(() => this.assetsPkg.loadAssetsAsync())
+    }
+
+    loadAssetsAsync() {
+        if (this.id != "assets")
+            return Promise.resolve()
+
+        return workspace.listAssetsAsync(this.topPkg.header.id)
+            .then(res => {
+                let removeMe = Util.flatClone(this.files)
+                for (let asset of res) {
+                    let fn = asset.name
+                    let ex = Util.lookup(this.files, fn)
+                    if (ex) {
+                        delete removeMe[fn]
+                    } else {
+                        ex = new File(this, fn, `File size: ${asset.size}; URL: ${asset.url}`)
+                        this.files[fn] = ex
+                    }
+                }
+                for (let n of Object.keys(removeMe))
+                    delete this.files[n]
+                let assetsTs = ""
+                for (let f of this.sortedFiles()) {
+                    let asset = res.filter(a => a.name == f.name)[0]
+                    let bn = f.name.replace(/\..*/, "").replace(/[^a-zA-Z0-9_]/g, "_")
+                    assetsTs += `    export const ${bn} = "${asset.url}";\n`
+                }
+                let assetsFN = "assets.ts"
+                let f = this.topPkg.lookupFile(assetsFN)
+                if (f || assetsTs) {
+                    assetsTs = `namespace assets {\n${assetsTs}}\n`
+                    let cfg = this.topPkg.ksPkg.config
+                    if (cfg.files.indexOf(assetsFN) < 0) {
+                        cfg.files.push(assetsFN)
+                        this.topPkg.ksPkg.saveConfig()
+                    }
+                    if (!f)
+                        this.topPkg.setFile(assetsFN, assetsTs)
+                    else
+                        return f.setContentAsync(assetsTs)
+                }
+                return Promise.resolve()
+            })
+    }
+
     makeTopLevel() {
         this.topPkg = this;
         this.outputPkg = new EditorPackage(null, this)
         this.outputPkg.id = "built"
+
+        if (pxt.appTarget.runtime && pxt.appTarget.runtime.assetExtensions) {
+            this.assetsPkg = new EditorPackage(null, this)
+            this.assetsPkg.id = "assets"
+        }
     }
 
     updateConfigAsync(update: (cfg: pxt.PackageConfig) => void) {
@@ -147,7 +205,7 @@ export class EditorPackage {
         if (!p || p.verProtocol() != "github") return Promise.resolve();
         let parsed = pxt.github.parseRepoId(p.verArgument())
         return pxt.targetConfigAsync()
-            .then(config => pxt.github.latestVersionAsync(parsed.fullName, config))
+            .then(config => pxt.github.latestVersionAsync(parsed.fullName, config.packages))
             .then(tag => { parsed.tag = tag })
             .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
             .catch(core.handleNetworkError)
@@ -266,7 +324,11 @@ export class EditorPackage {
     pkgAndDeps(): EditorPackage[] {
         if (this.topPkg != this)
             return this.topPkg.pkgAndDeps();
-        return Util.values((this.ksPkg as pxt.MainPackage).deps).map(getEditorPkg).concat([this.outputPkg])
+        let res = Util.values((this.ksPkg as pxt.MainPackage).deps).map(getEditorPkg)
+        if (this.assetsPkg)
+            res.push(this.assetsPkg)
+        res.push(this.outputPkg)
+        return res
     }
 
     filterFiles(cond: (f: File) => boolean) {
@@ -350,7 +412,7 @@ function resolvePath(p: string) {
 }
 
 const theHost = new Host();
-export var mainPkg = new pxt.MainPackage(theHost);
+export let mainPkg: pxt.MainPackage = new pxt.MainPackage(theHost);
 
 export function getEditorPkg(p: pxt.Package): EditorPackage {
     let r: EditorPackage = (p as any)._editorPkg
@@ -371,7 +433,7 @@ export function mainEditorPkg() {
 }
 
 export function genFileName(extension: string): string {
-    const sanitizedName = mainEditorPkg().header.name.replace(/[\\\/.?*^:<>|"\x00-\x1F ]/g, "-")
+    const sanitizedName = mainEditorPkg().header.name.replace(/[\\\/.,?*^:<>!;'#$%^&|"\x00-\x1F ]/g, "-")
     const fn = `${pxt.appTarget.nickname || pxt.appTarget.id}-${sanitizedName}${extension}`;
     return fn;
 }
@@ -398,6 +460,7 @@ export function loadPkgAsync(id: string) {
         .then(str => {
             if (!str) return Promise.resolve()
             return mainPkg.installAllAsync()
+                .then(() => mainEditorPkg().afterMainLoadAsync())
                 .catch(e => {
                     core.errorNotification(lf("Cannot load package: {0}", e.message))
                 })
@@ -431,6 +494,30 @@ data.mountVirtualApi("open-meta", {
 
         return fs
     },
+})
+
+export interface PackageMeta {
+    numErrors: number;
+}
+
+/*
+    open-pkg-meta:<pkgName> - number of errors
+*/
+data.mountVirtualApi("open-pkg-meta", {
+    getSync: p => {
+        p = data.stripProtocol(p)
+        let f = allEditorPkgs().filter(pkg => pkg.getPkgId() == p)[0];
+        if (!f || f.getPkgId() == "built")
+            return {}
+
+        const files = f.sortedFiles();
+        const numErrors = files.reduce((n, file) => n + (file.numDiagnosticsOverride
+            || (file.diagnostics ? file.diagnostics.length : 0)
+            || 0), 0);
+        return <PackageMeta>{
+            numErrors
+        }
+    }
 })
 
 // pkg-status:<guid>

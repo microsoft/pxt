@@ -1,7 +1,5 @@
 namespace ts.pxtc {
 
-    export var decodeBase64 = function (s: string) { return atob(s); }
-
     // supporting multiple sizes (byte, short, int, long)
     export interface BitSizeInfo {
         size: number;
@@ -106,7 +104,7 @@ ${lbl}: .string ${asmStringLiteral(s)}
         hex_literal(lbl: string, data: string) {
             return `
 .balign 4
-${lbl}: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_BUFFER + "," : ""} ${data.length >> 1}
+${lbl}: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_BUFFER + "," : ""} ${data.length >> 1}${target.taggedInts ? ", 0x0000" : ""}
         .hex ${data}${data.length % 4 == 0 ? "" : "00"}
 `
         }
@@ -167,9 +165,14 @@ ${lbl}: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_BUFFER + "," : ""} ${da
         }
 
         private work() {
+            let name = this.proc.getName()
+            if (assembler.debug && this.proc.action) {
+                let info = ts.pxtc.nodeLocationInfo(this.proc.action)
+                name += " " + info.fileName + ":" + (info.line + 1)
+            }
             this.write(`
 ;
-; Function ${this.proc.getName()}
+; Function ${name}
 ;
 `)
 
@@ -580,10 +583,10 @@ ${baseLabel}:
                     this.write(this.t.emit_int(procid.mapIdx, "r1"))
                     if (isSet)
                         this.write(this.t.emit_int(procid.ifaceIndex, "r2"))
-                    this.emitHelper(this.t.vcall(procid.mapMethod, isSet, vtableShift))
+                    this.emitHelper(this.t.vcall(procid.mapMethod, isSet, this.bin.options.target.vtableShift))
                     this.write(lbl + ":")
                 } else {
-                    this.write(this.t.prologue_vtable(topExpr.args.length - 1, vtableShift))
+                    this.write(this.t.prologue_vtable(topExpr.args.length - 1, this.bin.options.target.vtableShift))
 
                     let effIdx = procid.virtualIndex + 4
                     if (procid.ifaceIndex != null) {
@@ -681,7 +684,9 @@ ${baseLabel}:
             let parms = this.proc.args.map(a => a.def)
             this.write(this.t.proc_setup(0, true))
 
-            if (this.t.hasCommonalize())
+            let pushR7 = this.t.hasCommonalize() || !!target.stackAlign
+
+            if (pushR7)
                 this.write(this.t.push_fixed(["r5", "r6", "r7"]))
             else
                 this.write(this.t.push_fixed(["r5", "r6"]))
@@ -719,7 +724,7 @@ ${baseLabel}:
 
             if (numpop)
                 this.write(this.t.pop_locals(numpop))
-            if (this.t.hasCommonalize())
+            if (pushR7)
                 this.write(this.t.pop_fixed(["r6", "r5", "r7"]))
             else
                 this.write(this.t.pop_fixed(["r6", "r5"]))

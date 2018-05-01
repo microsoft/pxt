@@ -1,8 +1,5 @@
 /// <reference path="../../built/pxtcompiler.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
-/// <reference path="../../typings/globals/mocha/index.d.ts" />
-/// <reference path="../../typings/modules/chai/index.d.ts" />
-/// <reference path="../../typings/globals/node/index.d.ts"/>
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -74,11 +71,11 @@ class CompileHost extends TestHost {
                         "description": "",
                         "files": [
                             "lang-test0.ts",
-                            this.basename,
+                            "main.ts",
                         ]
                     })
             }
-            else if (filename === this.basename) {
+            else if (filename === "main.ts") {
                 return this.fileText;
             }
             else if (filename === "lang-test0.ts") {

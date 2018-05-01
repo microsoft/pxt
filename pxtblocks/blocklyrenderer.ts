@@ -1,20 +1,9 @@
 /// <reference path="../localtypings/pxtblockly.d.ts" />
 /// <reference path="../built/pxtlib.d.ts" />
-/// <reference path="../typings/globals/jquery/index.d.ts" />
 
 namespace pxt.blocks {
-    let workspace: B.Workspace;
+    let workspace: Blockly.Workspace;
     let blocklyDiv: HTMLElement;
-
-    function align(ws: B.Workspace, emPixels: number) {
-        let blocks = ws.getTopBlocks(true);
-        let y = 0
-        blocks.forEach(block => {
-            block.moveBy(0, y)
-            y += block.getHeightWidth().height
-            y += emPixels; //buffer
-        })
-    }
 
     export enum BlockLayout {
         Align = 1,
@@ -28,6 +17,7 @@ namespace pxt.blocks {
         layout?: BlockLayout;
         clean?: boolean;
         aspectRatio?: number;
+        packageId?: string;
         package?: string;
         snippetMode?: boolean;
         useViewWidth?: boolean;
@@ -45,7 +35,6 @@ namespace pxt.blocks {
             workspace = Blockly.inject(blocklyDiv, {
                 scrollbars: false,
                 readOnly: true,
-                zoom: false,
                 sound: false,
                 media: pxt.webConfig.commitCdnUrl + "blockly/media/",
                 rtl: Util.isUserLanguageRtl()
@@ -60,7 +49,7 @@ namespace pxt.blocks {
 
             switch (options.layout) {
                 case BlockLayout.Align:
-                    pxt.blocks.layout.verticalAlign(workspace, options.emPixels); break;
+                    pxt.blocks.layout.verticalAlign(workspace, options.emPixels || 14); break;
                 case BlockLayout.Flow:
                     pxt.blocks.layout.flow(workspace, { ratio: options.aspectRatio, useViewWidth: options.useViewWidth }); break;
                 case BlockLayout.Clean:
@@ -69,27 +58,33 @@ namespace pxt.blocks {
                     break;
             }
 
-
             let metrics = workspace.getMetrics();
 
-            let svg = $(blocklyDiv).find('svg').clone(true, true);
-            svg.removeClass("blocklySvg").addClass('blocklyPreview');
-            svg.find('.blocklyBlockCanvas,.blocklyBubbleCanvas')
-                .attr('transform', `translate(${-metrics.contentLeft}, ${-metrics.contentTop}) scale(1)`)
-            svg.find('.blocklyMainBackground').remove();
-            svg[0].setAttribute('viewBox', `0 0 ${metrics.contentWidth} ${metrics.contentHeight}`)
-            svg.removeAttr('width');
-            svg.removeAttr('height');
+            let svg = blocklyDiv.querySelectorAll('svg')[0].cloneNode(true) as SVGSVGElement;
+            Blockly.utils.removeClass(svg as Element, "blocklySvg");
+            Blockly.utils.addClass(svg as Element, "blocklyPreview");
+
+            pxt.U.toArray(svg.querySelectorAll('.blocklyBlockCanvas,.blocklyBubbleCanvas'))
+                .forEach(el => el.setAttribute('transform', `translate(${-metrics.contentLeft}, ${-metrics.contentTop}) scale(1)`));
+            const blocklyMainBackground = svg.querySelectorAll('.blocklyMainBackground')[0];
+            blocklyMainBackground.parentElement.removeChild(blocklyMainBackground);
+            svg.setAttribute('viewBox', `0 0 ${metrics.contentWidth} ${metrics.contentHeight}`)
+            svg.removeAttribute('width');
+            svg.removeAttribute('height');
 
             if (options.emPixels) {
-                svg[0].style.width = (metrics.contentWidth / options.emPixels) + 'em';
-                svg[0].style.height = (metrics.contentHeight / options.emPixels) + 'em';
+                svg.style.width = (metrics.contentWidth / options.emPixels) + 'em';
+                svg.style.height = (metrics.contentHeight / options.emPixels) + 'em';
             }
 
-            return svg[0] as any;
-
+            return svg as any;
         } catch (e) {
             pxt.reportException(e);
+
+            // We re-use the workspace across renders, catch any errors so we know to 
+            // create a new workspace if there was an error
+            if (workspace) workspace.dispose();
+            workspace = undefined;
             return undefined;
         }
     }

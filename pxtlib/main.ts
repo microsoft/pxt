@@ -1,16 +1,15 @@
-/// <reference path="../typings/globals/bluebird/index.d.ts"/>
 /// <reference path="../localtypings/pxtpackage.d.ts"/>
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 /// <reference path="../localtypings/pxtarget.d.ts"/>
 /// <reference path="util.ts"/>
+/// <reference path="apptarget.ts"/>
+/// <reference path="tickEvent.ts"/>
 
 namespace pxt {
     export import U = pxtc.Util;
     export import Util = pxtc.Util;
-    const lf = U.lf;
 
-    export let appTarget: TargetBundle;
-
+    let savedAppTarget: TargetBundle;
     export function setAppTarget(trg: TargetBundle) {
         appTarget = trg || <TargetBundle>{};
 
@@ -37,6 +36,8 @@ namespace pxt {
             comp.floatingPoint = true
             comp.needsUnboxing = true
         }
+        if (!comp.vtableShift)
+            comp.vtableShift = 2
         if (!appTarget.appTheme) appTarget.appTheme = {}
         if (!appTarget.appTheme.embedUrl)
             appTarget.appTheme.embedUrl = appTarget.appTheme.homeUrl
@@ -45,6 +46,29 @@ namespace pxt {
             if (cs.yottaTarget && !cs.yottaBinary)
                 cs.yottaBinary = "pxt-microbit-app-combined.hex"
         }
+
+        // patch cdn
+        const theme = appTarget.appTheme;
+        let targetImages = Object.keys(theme as any as Map<string>)
+            .filter(k => /(logo|hero)$/i.test(k) && /^@cdnUrl@/.test((theme as any)[k]))
+            .forEach(k => (theme as any)[k] = pxt.BrowserUtils.patchCdn((theme as any)[k]));
+
+        savedAppTarget = U.clone(appTarget)
+    }
+
+    export function setAppTargetVariant(variant: string) {
+        appTargetVariant = variant
+        appTarget = U.clone(savedAppTarget)
+        if (variant) {
+            if (appTarget.variants) {
+                let v = appTarget.variants[variant]
+                if (v) {
+                    U.jsonMergeFrom(appTarget, v)
+                    return
+                }
+            }
+            U.userError(lf("Variant '{0}' not defined in pxtarget.json", variant))
+        }
     }
 
     export interface PxtOptions {
@@ -52,20 +76,20 @@ namespace pxt {
         light?: boolean; // low resource device
         wsPort?: number;
     }
-    export var options: PxtOptions = {};
+    export let options: PxtOptions = {};
 
     // general error reported
-    export var debug: (msg: any) => void = typeof console !== "undefined" && !!console.debug
+    export let debug: (msg: any) => void = typeof console !== "undefined" && !!console.debug
         ? (msg) => {
             if (pxt.options.debug)
                 console.debug(msg);
         } : () => { };
-    export var log: (msg: any) => void = typeof console !== "undefined" && !!console.log
+    export let log: (msg: any) => void = typeof console !== "undefined" && !!console.log
         ? (msg) => {
             console.log(msg);
         } : () => { };
 
-    export var reportException: (err: any, data?: Map<string>) => void = function (e, d) {
+    export let reportException: (err: any, data?: Map<string>) => void = function (e, d) {
         if (console) {
             console.error(e);
             if (d) {
@@ -77,7 +101,7 @@ namespace pxt {
             }
         }
     }
-    export var reportError: (cat: string, msg: string, data?: Map<string>) => void = function (cat, msg, data) {
+    export let reportError: (cat: string, msg: string, data?: Map<string>) => void = function (cat, msg, data) {
         if (console) {
             console.error(`${cat}: ${msg}`);
             if (data) {
@@ -87,11 +111,6 @@ namespace pxt {
             }
         }
     }
-
-    /**
-     * Track an event.
-     */
-    export var tickEvent: (id: string, data?: Map<string | number>) => void = function (id) { }
 
     let activityEvents: Map<number> = {};
     const tickActivityDebounced = Util.debounce(() => {
@@ -110,7 +129,6 @@ namespace pxt {
     export interface WebConfig {
         relprefix: string; // "/beta---",
         workerjs: string;  // "/beta---worker",
-        tdworkerjs: string;  // "/beta---tdworker",
         monacoworkerjs: string; // "/beta---monacoworker",
         pxtVersion: string; // "?",
         pxtRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",
@@ -133,7 +151,6 @@ namespace pxt {
         let r: WebConfig = {
             relprefix: "/--",
             workerjs: "/worker.js",
-            tdworkerjs: "/tdworker.js",
             monacoworkerjs: "/monacoworker.js",
             pxtVersion: "local",
             pxtRelId: "",
@@ -151,7 +168,7 @@ namespace pxt {
         return r
     }
 
-    export var webConfig: WebConfig;
+    export let webConfig: WebConfig;
 
     export function getOnlineCdnUrl(): string {
         if (!webConfig) return null
@@ -170,7 +187,7 @@ namespace pxt {
     }
 
     export interface Host {
-        readFile(pkg: Package, filename: string): string;
+        readFile(pkg: Package, filename: string, skipAdditionalFiles?: boolean): string;
         writeFile(pkg: Package, filename: string, contents: string, force?: boolean): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
         getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo>;
@@ -205,13 +222,15 @@ namespace pxt {
         return U.lookup(appTarget.bundledpkgs || {}, id)
     }
 
-    let _targetConfig: pxt.TargetConfig = undefined;
+    let _targetConfigPromise: Promise<pxt.TargetConfig> = undefined;
     export function targetConfigAsync(): Promise<pxt.TargetConfig> {
-        return _targetConfig ? Promise.resolve(_targetConfig)
-            : Cloud.downloadTargetConfigAsync()
+        if (!_targetConfigPromise) // cached promise
+            _targetConfigPromise = Cloud.downloadTargetConfigAsync()
                 .then(
-                js => { _targetConfig = js; return _targetConfig; },
-                err => { _targetConfig = undefined; return undefined; });
+                    js => { return js || {}; },
+                    err => { return {}; }
+                );
+        return _targetConfigPromise;
     }
     export function packagesConfigAsync(): Promise<pxt.PackagesConfig> {
         return targetConfigAsync().then(config => config ? config.packages : undefined);
@@ -236,6 +255,6 @@ namespace pxt {
     }
 
     export function isOutputText(trg: CompileTarget = null) {
-        return outputName(trg) == ts.pxtc.BINARY_HEX
+        return outputName(trg) == ts.pxtc.BINARY_HEX || outputName(trg) == ts.pxtc.BINARY_CS
     }
 }

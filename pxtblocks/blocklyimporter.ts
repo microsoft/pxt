@@ -3,7 +3,7 @@
 
 namespace pxt.blocks {
     export function saveWorkspaceXml(ws: Blockly.Workspace): string {
-        let xml = Blockly.Xml.workspaceToDom(ws);
+        let xml = Blockly.Xml.workspaceToDom(ws, true);
         let text = Blockly.Xml.domToPrettyText(xml);
         return text;
     }
@@ -168,11 +168,11 @@ namespace pxt.blocks {
         let symbol = blockSymbol(type);
         if (!symbol || !b) return;
 
-        let params = parameterNames(symbol).attrNames;
+        let comp = compileInfo(symbol);
         symbol.parameters.forEach((p, i) => {
             let ptype = info.apis.byQName[p.type];
             if (ptype && ptype.kind == pxtc.SymbolKind.Enum) {
-                let field = getFirstChildWithAttr(block, "field", "name", params[p.name].name);
+                let field = getFirstChildWithAttr(block, "field", "name", comp.actualNameToParam[p.name].definitionName);
                 if (field) {
                     let en = enums[ptype.name + '.' + field.textContent];
                     if (en) field.textContent = en;
@@ -184,16 +184,5 @@ namespace pxt.blocks {
                   */
             }
         })
-    }
-
-    /**
-     * Convert blockly hue to rgb
-     */
-    export function convertColour(colour: string): string {
-        let hue = parseInt(colour);
-        if (!isNaN(hue)) {
-            return Blockly.hueToRgb(hue);
-        }
-        return colour;
     }
 }

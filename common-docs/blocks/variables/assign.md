@@ -21,13 +21,13 @@ let extra = 1;
 let extraPerfect = perfect + extra;
 ```
 
-### ~ hint
+## ~hint
 
 You can use the assignment operator with variables of 
 every [type](/types). A *type* is which kind of thing
 a variable can store, like a number or string.
 
-### ~
+## ~
 
 ## #examples
 

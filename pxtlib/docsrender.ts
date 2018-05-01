@@ -1,13 +1,11 @@
-/// <reference path='../typings/globals/marked/index.d.ts' />
-/// <reference path='../typings/globals/highlightjs/index.d.ts' />
 /// <reference path='../localtypings/pxtarget.d.ts' />
 /// <reference path="util.ts"/>
 
 namespace pxt.docs {
     declare var require: any;
-    let marked: MarkedStatic;
     import U = pxtc.Util;
-    const lf = U.lf;
+
+    let markedInstance: typeof marked;
 
     let stdboxes: Map<string> = {
     }
@@ -76,10 +74,10 @@ namespace pxt.docs {
         href: string;
     }
 
-    export var requireMarked = () => {
+    export let requireMarked = () => {
         if (typeof marked !== "undefined") return marked;
         if (typeof require === "undefined") return undefined;
-        return require("marked");
+        return require("marked") as typeof marked;
     }
 
     export interface RenderData {
@@ -249,12 +247,12 @@ namespace pxt.docs {
 
         if (currentTocEntry) {
             if (currentTocEntry.prevPath) {
-                params["prev"] = `<a href="${currentTocEntry.prevPath}" class="navigation navigation-prev " title="${'Previous page: {0}', currentTocEntry.prevName}">
+                params["prev"] = `<a href="${currentTocEntry.prevPath}" class="navigation navigation-prev " title="${currentTocEntry.prevName}">
                                     <i class="icon angle left"></i>
                                 </a>`;
             }
             if (currentTocEntry.nextPath) {
-                params["next"] = `<a href="${currentTocEntry.nextPath}" class="navigation navigation-next " title="${'Next page {0}', currentTocEntry.nextName}">
+                params["next"] = `<a href="${currentTocEntry.nextPath}" class="navigation navigation-next " title="${currentTocEntry.nextName}">
                                     <i class="icon angle right"></i>
                                 </a>`;
             }
@@ -262,13 +260,15 @@ namespace pxt.docs {
 
         if (theme.boardName)
             params["boardname"] = html2Quote(theme.boardName);
+        if (theme.boardNickname)
+            params["boardnickname"] = html2Quote(theme.boardNickname);
         if (theme.driveDisplayName)
             params["drivename"] = html2Quote(theme.driveDisplayName);
         if (theme.homeUrl)
             params["homeurl"] = html2Quote(theme.homeUrl);
         params["targetid"] = theme.id || "???";
         params["targetname"] = theme.name || "Microsoft MakeCode";
-        params["targetlogo"] = theme.docsLogo ? `<img aria-hidden="true" role="presentation" class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
+        params["targetlogo"] = theme.docsLogo ? `<img aria-hidden="true" role="presentation" class="ui mini image" src="${theme.docsLogo}" />` : ""
         let ghURLs = d.ghEditURLs || []
         if (ghURLs.length) {
             let ghText = `<p style="margin-top:1em">\n`
@@ -283,7 +283,7 @@ namespace pxt.docs {
             params["github"] = "";
         }
 
-        // Add accessiblity menu 
+        // Add accessiblity menu
         const accMenuHtml = `
             <a href="#maincontent" class="ui item link" tabindex="0" role="menuitem">${lf("Skip to main content")}</a>
         `
@@ -418,9 +418,9 @@ namespace pxt.docs {
         }
         prepTemplate(d)
 
-        if (!marked) {
-            marked = requireMarked();
-            let renderer = new marked.Renderer()
+        if (!markedInstance) {
+            markedInstance = requireMarked();
+            let renderer = new markedInstance.Renderer()
             renderer.image = function (href: string, title: string, text: string) {
                 let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
                 if (title) {
@@ -445,7 +445,7 @@ namespace pxt.docs {
                 }
                 return `<h${level} id="${this.options.headerPrefix}${id}">${text}</h${level}>`
             } as any
-            marked.setOptions({
+            markedInstance.setOptions({
                 renderer: renderer,
                 gfm: true,
                 tables: true,
@@ -483,7 +483,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         // replace pre-template in markdown
         markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
-        let html = marked(markdown)
+        let html = markedInstance(markdown)
 
         // support for breaks which somehow don't work out of the box
         html = html.replace(/&lt;br\s*\/&gt;/ig, "<br/>");
@@ -610,10 +610,10 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         return embed;
     }
 
-    export function docsEmbedUrl(rootUrl: string, id: string, height?: number): string {
-        const docurl = `${rootUrl}--docs?projectid=${id}`;
+    export function codeEmbedUrl(rootUrl: string, id: string, height?: number): string {
+        const docurl = `${rootUrl}---codeembed#pub:${id}`;
         height = Math.ceil(height || 300);
-        return `<div style="position:relative;height:calc(${height}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe></div>`
+        return `<div style="position:relative;height:calc(${height}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-scripts allow-same-origin"></iframe></div>`
     }
 
     const inlineTags: Map<number> = {
@@ -755,9 +755,9 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         if (!summaryMD)
             return null
 
-        const marked = pxt.docs.requireMarked();
+        const markedInstance = pxt.docs.requireMarked();
         const options = {
-            renderer: new marked.Renderer(),
+            renderer: new markedInstance.Renderer(),
             gfm: true,
             tables: false,
             breaks: false,
@@ -771,7 +771,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         let currentStack: pxt.TOCMenuEntry[] = [];
         currentStack.push(dummy);
 
-        let tokens = marked.lexer(summaryMD, options);
+        let tokens = markedInstance.lexer(summaryMD, options);
         tokens.forEach((token: any) => {
             switch (token.type) {
                 case "heading":

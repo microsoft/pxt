@@ -51,11 +51,10 @@ let abs = Math.abs(-42);
 
 ### Math functions
 
-The [math library](/blocks/math) includes math related functions. 
-For example, the `absolute` function returns the returns the absolute value of input parameter `x`:
+The [math library](/blocks/math) includes math related functions. For example, the `min` function returns the minimum value of two input parameters `x` and `y`:
 
 ```block
-let abs = Math.min(-42, 1000);
+let lowest = Math.min(-42, 1000);
 ```
 
 ### See also

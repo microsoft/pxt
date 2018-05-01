@@ -38,17 +38,40 @@
         Modal Close Icon
 *******************************/
 
-.ui.modal > .close {
-    top: @innerCloseTop;
-    right: @innerCloseRight;
-    color: @innerCloseColor;
-}
-
 .ui.modal .closeIcon {
     position: absolute;
     top: 0; 
     right: 0;
+    height: 4.5rem;
+    width: 4.5rem;
+    outline: none;
+    cursor: pointer;
 }
+
+.ui.modal > .closeIcon .close {
+    position: absolute;
+    top: @innerCloseTop;
+    right: @innerCloseRight;
+    color: @innerCloseColor;
+    border-radius: 50%;
+    font-size: 34px;
+    transition: all .15s ease-out;
+    height: 2.15rem;
+    width: 2.15rem;
+    padding: 0;
+}
+.ui.modal > .closeIcon:focus .close,
+.ui.modal > .closeIcon:hover  .close {
+    box-shadow: 0 0 0 4px rgba(0,0,0,.35);
+    outline: none;
+    transform: scale(1.1);
+}
+
+.ui.modal.closable > :nth-last-child(2) {
+  border-bottom-left-radius: @borderRadius;
+  border-bottom-right-radius: @borderRadius;
+}
+
 .ui.button.icon.clear {
     background: transparent;
     border: 0 !important;
@@ -60,4 +83,18 @@
 }
 .ui.button.icon.inverted.clear:hover, .ui.button.icon.inverted.clear:focus {
     color: @closeColorHover !important;
+}
+
+/* Mobile only */
+@media only screen and (max-width: @largestMobileScreen) {
+
+    .ui.modal .closeIcon {
+        height: 3rem;
+        width: 3rem;
+    }
+    .ui.modal > .closeIcon .close {
+        top: 0.5rem;
+        right: 0.5rem;
+        margin: 0;
+    }
 }

@@ -1,5 +1,3 @@
-/// <reference path="../../typings/globals/bluebird/index.d.ts"/>
-
 namespace pxsim.visuals {
     export const BOARD_SYTLE = `
         .noselect {
@@ -155,8 +153,9 @@ namespace pxsim.visuals {
             this.g.appendChild(img);
             this.background = img;
             svg.hydrate(img, { class: "sim-board" });
-            let backgroundCover = this.mkGrayCover(0, 0, this.width, this.height);
-            this.g.appendChild(backgroundCover);
+            // does not look great
+            //let backgroundCover = this.mkGrayCover(0, 0, this.width, this.height);
+            //this.g.appendChild(backgroundCover);
 
             // ----- pins
             const mkSquarePin = (): SVGElAndSize => {

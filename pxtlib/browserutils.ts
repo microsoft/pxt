@@ -107,7 +107,7 @@ namespace pxt.BrowserUtils {
 
     export function isTouchEnabled(): boolean {
         return typeof window !== "undefined" &&
-            ('ontouchstart' in window               // works on most browsers 
+            ('ontouchstart' in window               // works on most browsers
                 || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
     }
 
@@ -238,16 +238,24 @@ namespace pxt.BrowserUtils {
     }
 
     export function browserDownloadBinText(text: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
-        return browserDownloadBase64(btoa(text), name, contentType, userContextWindow, onError)
+        return browserDownloadBase64(ts.pxtc.encodeBase64(text), name, contentType, userContextWindow, onError)
     }
 
     export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
-        return browserDownloadBase64(btoa(Util.toUTF8(text)), name, contentType, userContextWindow, onError)
+        return browserDownloadBase64(ts.pxtc.encodeBase64(Util.toUTF8(text)), name, contentType, userContextWindow, onError)
     }
 
     export function isBrowserDownloadInSameWindow(): boolean {
         const windowOpen = isMobile() && isSafari() && !/downloadWindowOpen=0/i.test(window.location.href);
         return windowOpen;
+    }
+
+    // for browsers that strictly require that a download gets initiated within a user click
+    export function isBrowserDownloadWithinUserContext(): boolean {
+        const versionString = browserVersion();
+        const v = parseInt(versionString || "0")
+        const r = (isMobile() && isSafari() && v >= 11) || /downloadUserContext=1/i.test(window.location.href);
+        return r;
     }
 
     export function browserDownloadDataUri(uri: string, name: string, userContextWindow?: Window) {
@@ -297,21 +305,24 @@ namespace pxt.BrowserUtils {
     }
 
     export function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
-        return browserDownloadBase64(btoa(Util.uint8ArrayToString(buf)), name, contentType, userContextWindow, onError)
+        return browserDownloadBase64(ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf)), name, contentType, userContextWindow, onError)
+    }
+
+    export function toDownloadDataUri(b64: string, contentType: string): string {
+        let protocol = "data";
+        if (isMobile() && isSafari() && pxt.appTarget.appTheme.mobileSafariDownloadProtocol)
+            protocol = pxt.appTarget.appTheme.mobileSafariDownloadProtocol;
+        const m = /downloadProtocol=([a-z0-9:/?]+)/i.exec(window.location.href);
+        if (m) protocol = m[1];
+        const dataurl = protocol + ":" + contentType + ";base64," + b64
+        return dataurl;
     }
 
     export function browserDownloadBase64(b64: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
         pxt.debug('trigger download')
 
-        const isMobileBrowser = pxt.BrowserUtils.isMobile();
-        const saveBlob = (<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser;
-        let protocol = "data";
-        if (isMobile() && isSafari() && pxt.appTarget.appTheme.mobileSafariDownloadProtocol)
-            protocol = pxt.appTarget.appTheme.mobileSafariDownloadProtocol;
-
-        const m = /downloadProtocol=([a-z0-9:/?]+)/i.exec(window.location.href);
-        if (m) protocol = m[1];
-        const dataurl = protocol + ":" + contentType + ";base64," + b64
+        const saveBlob = (<any>window).navigator.msSaveOrOpenBlob && !pxt.BrowserUtils.isMobile();
+        const dataurl = toDownloadDataUri(b64, name);
         try {
             if (saveBlob) {
                 const b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType })
@@ -334,11 +345,55 @@ namespace pxt.BrowserUtils {
         });
     }
 
-    export function loadScriptAsync(url: string): Promise<void> {
+    function resolveCdnUrl(path: string): string {
+        // don't expand full urls
+        if (/^https?:\/\//i.test(path))
+            return path;
+        const monacoPaths: Map<string> = (window as any).MonacoPaths || {};
+        const blobPath = monacoPaths[path];
+        // find compute blob url
+        if (blobPath)
+            return blobPath;
+        // might have been exanded already
+        if (U.startsWith(path, pxt.webConfig.commitCdnUrl))
+            return path;
+        // append CDN
+        return pxt.webConfig.commitCdnUrl + path;
+    }
+
+    export function loadStyleAsync(path: string, rtl?: boolean): Promise<void> {
+        if (rtl) path = "rtl" + path;
+        const id = "style-" + path;
+        if (document.getElementById(id)) return Promise.resolve();
+
+        const url = resolveCdnUrl(path);
+        const links = Util.toArray(document.head.getElementsByTagName("link"));
+        const link = links.filter(l => l.getAttribute("href") == url)[0];
+        if (link) {
+            if (!link.id) link.id = id;
+            return Promise.resolve();
+        }
+
+        return new Promise<void>((resolve, reject) => {
+            const el = document.createElement("link");
+            el.href = url;
+            el.rel = "stylesheet";
+            el.type = "text/css";
+            el.id = id;
+            el.addEventListener('load', () => resolve());
+            el.addEventListener('error', (e) => reject(e));
+            document.head.appendChild(el);
+        });
+    }
+
+    export function loadScriptAsync(path: string): Promise<void> {
+        const url = resolveCdnUrl(path);
+        pxt.debug(`script: loading ${url}`);
         return new Promise<void>((resolve, reject) => {
             const script = document.createElement('script');
             script.type = 'text/javascript';
             script.src = url;
+            script.async = true;
             script.addEventListener('load', () => resolve());
             script.addEventListener('error', (e) => reject(e));
             document.body.appendChild(script);
@@ -363,12 +418,28 @@ namespace pxt.BrowserUtils {
         })
     }
 
-    export function initTheme() {
-        function patchCdn(url: string): string {
-            if (!url) return url;
-            return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
+    let loadBlocklyPromise: Promise<void>;
+    export function loadBlocklyAsync(): Promise<void> {
+        if (!loadBlocklyPromise) {
+            if (typeof Blockly === "undefined") { // not loaded yet?
+                pxt.debug(`blockly: delay load`);
+                loadBlocklyPromise =
+                    pxt.BrowserUtils.loadStyleAsync("blockly.css", ts.pxtc.Util.isUserLanguageRtl())
+                        .then(() => pxt.BrowserUtils.loadScriptAsync("pxtblockly.js"))
+                        .then(() => {
+                            pxt.debug(`blockly: loaded`)
+                        })
+            } else loadBlocklyPromise = Promise.resolve();
         }
+        return loadBlocklyPromise;
+    }
 
+    export function patchCdn(url: string): string {
+        if (!url) return url;
+        return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
+    }
+
+    export function initTheme() {
         const theme = pxt.appTarget.appTheme;
         if (theme) {
             if (theme.accentColor) {
@@ -377,11 +448,7 @@ namespace pxt.BrowserUtils {
                 style.innerHTML = `.ui.accent { color: ${theme.accentColor}; }
                 .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${theme.accentColor}; }`;
                 document.getElementsByTagName('head')[0].appendChild(style);
-
             }
-            theme.appLogo = patchCdn(theme.appLogo)
-            theme.cardLogo = patchCdn(theme.cardLogo)
-            theme.homeScreenHero = patchCdn(theme.homeScreenHero)
         }
         // RTL languages
         if (Util.isUserLanguageRtl()) {
@@ -399,13 +466,14 @@ namespace pxt.BrowserUtils {
                     semanticLink.setAttribute("href", semanticHref);
                 }
             }
-            // replace blockly.css with rtlblockly.css
+            // replace blockly.css with rtlblockly.css if possible
             const blocklyLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "blockly.css"))[0];
             if (blocklyLink) {
                 const blocklyHref = blocklyLink.getAttribute("data-rtl");
                 if (blocklyHref) {
                     pxt.debug(`swapping to ${blocklyHref}`)
                     blocklyLink.setAttribute("href", blocklyHref);
+                    blocklyLink.removeAttribute("data-rtl");
                 }
             }
         }
@@ -432,7 +500,7 @@ namespace pxt.BrowserUtils {
     }
 
     /**
-     * Utility method to change the hash. 
+     * Utility method to change the hash.
      * Pass keepHistory to retain an entry of the change in the browser history.
      */
     export function changeHash(hash: string, keepHistory?: boolean) {

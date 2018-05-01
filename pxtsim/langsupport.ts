@@ -1,7 +1,7 @@
 // APIs for language/runtime support (records, locals, function values)
 
 namespace pxsim {
-    export var quiet = false;
+    export let quiet = false;
 
     export function check(cond: boolean, msg: string = "sim: check failed") {
         if (!cond) {
@@ -10,11 +10,14 @@ namespace pxsim {
         }
     }
 
-    let floatingPoint = false;
+    export let floatingPoint = false;
+    export let refCounting = true;
+    export let title = "";
     let cfgKey: Map<number> = {}
     let cfg: Map<number> = {}
 
     export function noRefCounting() {
+        refCounting = false;
         if (runtime) runtime.refCounting = false;
     }
 
@@ -57,6 +60,10 @@ namespace pxsim {
         floatingPoint = true
     }
 
+    export function setTitle(t: string) {
+        title = t;
+    }
+
     export class RefObject {
         id: number;
         refcnt: number = 1;
@@ -73,6 +80,24 @@ namespace pxsim {
         print() {
             if (runtime && runtime.refCountingDebug)
                 console.log(`RefObject id:${this.id} refs:${this.refcnt}`)
+        }
+
+        // render a debug preview string
+        toDebugString(): string {
+            return "(object)";
+        }
+
+        static toAny(o: any): any {
+            if (o && o.toAny) return o.toAny();
+            return o;
+        }
+
+        static toDebugString(o: any): string {
+            if (o === null) return "null";
+            if (o === undefined) return "undefined;"
+            if (o.toDebugString) return o.toDebugString();
+            if (typeof o == "string") return JSON.stringify(o);
+            return o.toString();
         }
     }
 
@@ -205,6 +230,7 @@ namespace pxsim {
     export interface MapEntry {
         key: number;
         val: any;
+        keyName?: string; // for object literals + !isNative
     }
 
     export class RefMap extends RefObject {
@@ -233,6 +259,14 @@ namespace pxsim {
         print() {
             if (runtime && runtime.refCountingDebug)
                 console.log(`RefMap id:${this.id} refs:${this.refcnt} size:${this.data.length}`)
+        }
+
+        toAny(): any {
+            const r: any = {};
+            this.data.forEach(d => {
+                r[d.keyName] = RefObject.toAny(d.val);
+            })
+            return r;
         }
     }
 
@@ -296,11 +330,15 @@ namespace pxsim {
         export function toFloat(v: number) { return v }
 
         export function ignore(v: any) { return v; }
+
+        export function ptreqDecr(a: any, b: any) {
+            return Number_.eqDecr(a, b)
+        }
     }
 
     export namespace pxtcore {
-        export var incr = pxsim.incr;
-        export var decr = pxsim.decr;
+        export let incr = pxsim.incr;
+        export let decr = pxsim.decr;
 
         export function ptrOfLiteral(v: any) {
             return v;
@@ -350,8 +388,8 @@ namespace pxsim {
     }
 
     export namespace pxtrt {
-        export var incr = pxsim.incr;
-        export var decr = pxsim.decr;
+        export let incr = pxsim.incr;
+        export let decr = pxsim.decr;
 
         export function toInt8(v: number) {
             return ((v & 0xff) << 24) >> 24
@@ -504,12 +542,13 @@ namespace pxsim {
             return r;
         }
 
-        export function mapSet(map: RefMap, key: number, val: any) {
+        export function mapSet(map: RefMap, key: number, val: any, keyName?: string) {
             let i = map.findIdx(key);
             if (i < 0) {
                 map.data.push({
                     key: key << 1,
-                    val: val
+                    val: val,
+                    keyName: keyName
                 });
             } else {
                 if (map.data[i].key & 1) {
@@ -517,16 +556,18 @@ namespace pxsim {
                     map.data[i].key = key << 1;
                 }
                 map.data[i].val = val;
+                map.data[i].keyName = keyName;
             }
             decr(map)
         }
 
-        export function mapSetRef(map: RefMap, key: number, val: any) {
+        export function mapSetRef(map: RefMap, key: number, val: any, keyName?: string) {
             let i = map.findIdx(key);
             if (i < 0) {
                 map.data.push({
                     key: (key << 1) | 1,
-                    val: val
+                    val: val,
+                    keyName: keyName
                 });
             } else {
                 if (map.data[i].key & 1) {
@@ -535,12 +576,13 @@ namespace pxsim {
                     map.data[i].key = (key << 1) | 1;
                 }
                 map.data[i].val = val;
+                map.data[i].keyName = keyName;
             }
             decr(map)
         }
 
         // these are never used in simulator; silence the warnings
-        export var getGlobalsPtr: any;
+        export let getGlobalsPtr: any;
     }
 
 
@@ -565,19 +607,19 @@ namespace pxsim {
         }
 
         // these are never used in simulator; silence the warnings
-        export var getNumGlobals: any;
-        export var RefRecord_destroy: any;
-        export var RefRecord_print: any;
-        export var anyPrint: any;
-        export var dumpDmesg: any;
-        export var getVTable: any;
-        export var valType: any;
-        export var typeOf: any;
-        export var lookupPin: any;
+        export let getNumGlobals: any;
+        export let RefRecord_destroy: any;
+        export let RefRecord_print: any;
+        export let anyPrint: any;
+        export let dumpDmesg: any;
+        export let getVTable: any;
+        export let valType: any;
+        export let typeOf: any;
+        export let lookupPin: any;
     }
 
     export namespace thread {
-        export var panic = pxtrt.panic;
+        export let panic = pxtrt.panic;
 
         export function pause(ms: number) {
             let cb = getResume();

@@ -5,7 +5,7 @@ if (false) {} else if (true) {}
 
 let x = true || false
 
-if ((x || true) && 2 == 4) {}
+if ((x || true) && (2 + 3) == 4) {}
 if (x) {} else {}
 
 let y = 1

@@ -62,7 +62,7 @@ export class ExtensionManager {
 
     getExtId(name: string): string {
         if (!this.nameToExtId[name]) {
-            this.nameToExtId[name] = Util.guidGen();
+            this.nameToExtId[name] = ts.pxtc.Util.guidGen();
             this.extIdToName[this.nameToExtId[name]] = name;
         }
         return this.nameToExtId[name];
@@ -253,7 +253,8 @@ function handleReadCodeRequest(name: string, resp: e.ReadCodeResponse) {
     resp.resp = {
         json: files[fn + ".json"],
         code: files[fn + ".ts"],
-        jres: files[fn + ".jres"]
+        jres: files[fn + ".jres"],
+        asm: files[fn + ".asm"]
     };
 }
 
@@ -278,6 +279,10 @@ function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, fi
         needsUpdate = true;
         mainPackage.setFile(fn + ".jres", files.jres);
     }
+    if (shouldUpdate(files.asm, ".asm")) {
+        needsUpdate = true;
+        mainPackage.setFile(fn + ".asm", files.asm);
+    }
 
     return !needsUpdate ? Promise.resolve() : mainPackage.updateConfigAsync(cfg => {
         if (files.json !== undefined && cfg.files.indexOf(fn + ".json") < 0) {
@@ -288,6 +293,9 @@ function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, fi
         }
         if (files.jres !== undefined && cfg.files.indexOf(fn + ".jres") < 0) {
             cfg.files.push(fn + ".jres")
+        }
+        if (files.asm !== undefined && cfg.files.indexOf(fn + ".asm") < 0) {
+            cfg.files.push(fn + ".asm");
         }
         return mainPackage.savePkgAsync();
     });

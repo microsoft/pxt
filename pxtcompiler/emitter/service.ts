@@ -1,5 +1,3 @@
-/// <reference path="../../typings/globals/fusejs/index.d.ts" />
-
 namespace ts.pxtc {
 
     export const placeholderChar = "◊";
@@ -56,6 +54,8 @@ namespace ts.pxtc {
                 return SymbolKind.Method;
             case SK.PropertyDeclaration:
             case SK.PropertySignature:
+            case SK.GetAccessor:
+            case SK.SetAccessor:
                 return SymbolKind.Property;
             case SK.FunctionDeclaration:
                 return SymbolKind.Function;
@@ -113,6 +113,10 @@ namespace ts.pxtc {
         return false
     }
 
+    function isReadonly(decl: Declaration) {
+        return decl.modifiers && decl.modifiers.some(m => m.kind == SK.ReadonlyKeyword)
+    }
+
     function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
         function typeOf(tn: TypeNode, n: Node, stripParams = false) {
             let t = typechecker.getTypeAtLocation(n)
@@ -120,7 +124,15 @@ namespace ts.pxtc {
             if (stripParams) {
                 t = t.getCallSignatures()[0].getReturnType()
             }
-            return typechecker.typeToString(t, null, TypeFormatFlags.UseFullyQualifiedType)
+            const readableName = typechecker.typeToString(t, undefined, TypeFormatFlags.UseFullyQualifiedType)
+
+            // TypeScript 2.0.0+ will assign constant variables numeric literal types which breaks the
+            // type checking we do in the blocks
+            if (!isNaN(Number(readableName))) {
+                return "number";
+            }
+
+            return readableName;
         }
 
         let kind = getSymbolKind(stmt)
@@ -158,7 +170,7 @@ namespace ts.pxtc {
                     }
             }
 
-            return {
+            let r: SymbolInfo = {
                 kind,
                 namespace: m ? m[1] : "",
                 name: m ? m[2] : qName,
@@ -166,7 +178,7 @@ namespace ts.pxtc {
                 pkg,
                 extendsTypes,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
-                parameters: !hasParams ? null : (decl.parameters as ParameterDeclaration[] || []).map((p, i) => {
+                parameters: !hasParams ? null : Util.toArray(decl.parameters).map((p, i) => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
                     let minVal = attributes.paramMin && attributes.paramMin[n];
@@ -192,9 +204,9 @@ namespace ts.pxtc {
                             });
                         }
                     }
-                    let options: Map<PropertyOption> = {};
+                    let options: pxt.Map<PropertyOption> = {};
                     const paramType = typechecker.getTypeAtLocation(p);
-                    let isEnum = paramType && !!(paramType.flags & TypeFlags.Enum);
+                    let isEnum = paramType && !!(paramType.flags & (TypeFlags.Enum | TypeFlags.EnumLiteral));
 
                     if (attributes.block && attributes.paramShadowOptions) {
                         const argNames: string[] = []
@@ -222,6 +234,13 @@ namespace ts.pxtc {
                 }),
                 snippet: service.getSnippet(decl, attributes)
             }
+
+            if (stmt.kind === SK.GetAccessor ||
+                ((stmt.kind === SK.PropertyDeclaration || stmt.kind === SK.PropertySignature) && isReadonly(stmt as Declaration))) {
+                r.isReadOnly = true
+            }
+
+            return r
         }
         return null;
     }
@@ -323,14 +342,14 @@ namespace ts.pxtc {
                 return
             }
 
-            // if (!isExported(stmt as Declaration)) return; ?
-
             if (isExported(stmt as Declaration)) {
                 if (!stmt.symbol) {
                     console.warn("no symbol", stmt)
                     return;
                 }
                 let qName = getFullName(typechecker, stmt.symbol)
+                if (stmt.kind == SK.SetAccessor)
+                    qName += "@set" // otherwise we get a clash with the getter
                 let si = createSymbolInfo(typechecker, qName, stmt)
                 if (si) {
                     let existing = U.lookup(res.byQName, qName)
@@ -356,6 +375,8 @@ namespace ts.pxtc {
                 if (mod.body.kind == SK.ModuleBlock) {
                     let blk = <ModuleBlock>mod.body
                     blk.statements.forEach(collectDecls)
+                } else if (mod.body.kind == SK.ModuleDeclaration) {
+                    collectDecls(mod.body)
                 }
             } else if (stmt.kind == SK.InterfaceDeclaration) {
                 let iface = stmt as InterfaceDeclaration
@@ -396,11 +417,11 @@ namespace ts.pxtc {
         }
 
         // transitive closure of inheritance
-        let closed: Map<boolean> = {}
+        let closed: pxt.Map<boolean> = {}
         let closeSi = (si: SymbolInfo) => {
             if (U.lookup(closed, si.qName)) return;
             closed[si.qName] = true
-            let mine: Map<boolean> = {}
+            let mine: pxt.Map<boolean> = {}
             mine[si.qName] = true
             for (let e of si.extendsTypes || []) {
                 mine[e] = true
@@ -527,10 +548,10 @@ namespace ts.pxtc.service {
     let lastApiInfo: ApisInfo;
     let lastBlocksInfo: BlocksInfo;
     let lastLocBlocksInfo: BlocksInfo;
-    let lastFuse: Fuse;
+    let lastFuse: Fuse<SearchInfo>;
     let builtinItems: SearchInfo[];
     let blockDefinitions: pxt.Map<pxt.blocks.BlockDefinition>;
-    let tbSubset: Map<boolean>;
+    let tbSubset: pxt.Map<boolean | string>;
 
     function fileDiags(fn: string) {
         if (!/\.ts$/.test(fn))
@@ -606,11 +627,6 @@ namespace ts.pxtc.service {
         decompile: v => {
             return decompile(v.options, v.fileName);
         },
-        compileTd: v => {
-            let res = compile(v.options);
-            return getApiInfo(host.opts, res.ast, true);
-        },
-
         assemble: v => {
             return {
                 words: processorInlineAssemble(host.opts.target, v.fileContent)
@@ -622,7 +638,7 @@ namespace ts.pxtc.service {
         allDiags: () => {
             let global = service.getCompilerOptionsDiagnostics() || []
             let byFile = host.getScriptFileNames().map(fileDiags)
-            let allD = global.concat(Util.concat(byFile))
+            let allD: ReadonlyArray<Diagnostic> = global.concat(Util.concat(byFile))
 
             if (allD.length == 0) {
                 let res: CompileResult = {
@@ -631,7 +647,7 @@ namespace ts.pxtc.service {
                     success: true,
                     times: {}
                 }
-                const binOutput = compileBinary(service.getProgram(), null, host.opts, res);
+                const binOutput = compileBinary(service.getProgram(), null, host.opts, res, "main.ts");
                 allD = binOutput.diagnostics
             }
 
@@ -646,9 +662,13 @@ namespace ts.pxtc.service {
         apiInfo: () => {
             lastBlocksInfo = undefined;
             lastFuse = undefined;
+            if (host.opts === emptyOptions) {
+                // Host was reset, don't load apis with empty options
+                return undefined;
+            }
             return lastApiInfo = getApiInfo(host.opts, service.getProgram());
         },
-        blocksInfo: blocksInfoOp,
+        blocksInfo: v => blocksInfoOp(v as any),
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
@@ -659,9 +679,9 @@ namespace ts.pxtc.service {
             }
 
             // Computes the preferred tooltip or block text to use for search (used for blocks that have multiple tooltips or block texts)
-            const computeSearchProperty = (tooltipOrBlock: string | Map<string>, preferredSearch: string, blockDef: pxt.blocks.BlockDefinition): string => {
+            const computeSearchProperty = (tooltipOrBlock: string | pxt.Map<string>, preferredSearch: string, blockDef: pxt.blocks.BlockDefinition): string => {
                 if (!tooltipOrBlock) {
-                    return;
+                    return undefined;
                 }
                 if (typeof tooltipOrBlock === "string") {
                     // There is only one tooltip or block text; use it
@@ -672,7 +692,7 @@ namespace ts.pxtc.service {
                     return (<any>tooltipOrBlock)[preferredSearch];
                 }
                 // The block definition does not specify which tooltip or block text to use for search; join all values with a space
-                return Object.keys(tooltipOrBlock).map(k => (<Map<string>>tooltipOrBlock)[k]).join(" ");
+                return Object.keys(tooltipOrBlock).map(k => (<pxt.Map<string>>tooltipOrBlock)[k]).join(" ");
             };
 
             if (!builtinItems) {
@@ -687,9 +707,10 @@ namespace ts.pxtc.service {
                             opValues.forEach(v => builtinItems.push({
                                 id,
                                 name: blockDef.name,
-                                jsdoc: typeof blockDef.tooltip === "string" ? <string>blockDef.tooltip : (<Map<string>>blockDef.tooltip)[v],
+                                jsdoc: typeof blockDef.tooltip === "string" ? <string>blockDef.tooltip : (<pxt.Map<string>>blockDef.tooltip)[v],
                                 block: v,
-                                field: [op, v]
+                                field: [op, v],
+                                builtinBlock: true
                             }));
                         }
                     }
@@ -698,10 +719,10 @@ namespace ts.pxtc.service {
                             id,
                             name: blockDef.name,
                             jsdoc: computeSearchProperty(blockDef.tooltip, blockDef.tooltipSearch, blockDef),
-                            block: computeSearchProperty(blockDef.block, blockDef.blockTextSearch, blockDef)
+                            block: computeSearchProperty(blockDef.block, blockDef.blockTextSearch, blockDef),
+                            builtinBlock: true
                         });
                     }
-
                 }
             }
 
@@ -722,11 +743,11 @@ namespace ts.pxtc.service {
 
                 if (search.subset) {
                     tbSubset = search.subset;
-                    builtinSearchSet = builtinItems.filter(s => tbSubset[s.id]);
+                    builtinSearchSet = builtinItems.filter(s => !!tbSubset[s.id]);
                 }
 
                 if (tbSubset) {
-                    subset = blockInfo.blocks.filter(s => tbSubset[s.attributes.blockId]);
+                    subset = blockInfo.blocks.filter(s => !!tbSubset[s.attributes.blockId]);
                 }
                 else {
                     subset = blockInfo.blocks;
@@ -734,14 +755,17 @@ namespace ts.pxtc.service {
                 }
 
                 let searchSet: SearchInfo[] = subset.map(s => {
-                    return {
+                    const mappedSi: SearchInfo = {
                         id: s.attributes.blockId,
                         qName: s.qName,
                         name: s.name,
-                        nameSpace: s.namespace,
+                        namespace: s.namespace,
                         block: s.attributes.block,
-                        jsDoc: s.attributes.jsDoc
+                        jsdoc: s.attributes.jsDoc,
+                        localizedCategory: tbSubset && typeof tbSubset[s.attributes.blockId] === "string"
+                            ? tbSubset[s.attributes.blockId] as string : undefined
                     };
+                    return mappedSi;
                 });
 
 
@@ -763,10 +787,11 @@ namespace ts.pxtc.service {
                     findAllMatches: false,
                     caseSensitive: false,
                     keys: [
-                        { name: 'name', weight: 0.3125 },
-                        { name: 'namespace', weight: 0.1875 },
+                        { name: 'name', weight: 0.3 },
+                        { name: 'namespace', weight: 0.1 },
+                        { name: 'localizedCategory', weight: 0.1 },
                         { name: 'block', weight: 0.4375 },
-                        { name: 'jsDoc', weight: 0.0625 }
+                        { name: 'jsdoc', weight: 0.0625 }
                     ],
                     sortFn: function (a: any, b: any): number {
                         const wa = a.qName ? 1 - weights[a.item.qName] / mw : 1;
@@ -852,7 +877,7 @@ namespace ts.pxtc.service {
                                     }
                                 }
                                 return `0`;
-                            } else if (type.flags & ts.TypeFlags.Number) {
+                            } else if (type.flags & (ts.TypeFlags.Number | ts.TypeFlags.NumberLiteral)) {
                                 return `0`;
                             }
                         }
@@ -869,7 +894,7 @@ namespace ts.pxtc.service {
 
             const type = checker ? checker.getTypeAtLocation(param) : undefined;
             if (type) {
-                if (type.flags & ts.TypeFlags.Anonymous) {
+                if (isObjectType(type) && type.objectFlags & ts.ObjectFlags.Anonymous) {
                     const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
                     if (sigs.length) {
                         return getFunctionString(sigs[0]);
@@ -897,7 +922,7 @@ namespace ts.pxtc.service {
                 returnValue = "return 0;";
             else if (returnType.flags & ts.TypeFlags.StringLike)
                 returnValue = "return \"\";";
-            else if (returnType.flags & ts.TypeFlags.Boolean)
+            else if (returnType.flags & (ts.TypeFlags.Boolean | ts.TypeFlags.BooleanLiteral))
                 returnValue = "return false;";
 
             let displayPartsStr = ts.displayPartsToString(displayParts);

@@ -8,6 +8,7 @@ namespace ts.pxtc {
         "numops::ands": "&",
         "numops::orrs": "|",
         "numops::eors": "^",
+        "numops::bnot": "~", // unary
         "numops::lsls": "<<",
         "numops::asrs": ">>",
         "numops::lsrs": ">>>",
@@ -62,13 +63,14 @@ namespace ts.pxtc {
     }
 
     export function jsEmit(bin: Binary) {
-        let jssource = ""
+        let jssource = "'use strict';\n"
         if (!bin.target.jsRefCounting)
             jssource += "pxsim.noRefCounting();\n"
         if (bin.target.floatingPoint)
             jssource += "pxsim.enableFloatingPoint();\n"
-        let cfg: Map<number> = {}
-        let cfgKey: Map<number> = {}
+        jssource += "pxsim.setTitle(" + JSON.stringify(bin.options.name || "") + ");\n"
+        let cfg: pxt.Map<number> = {}
+        let cfgKey: pxt.Map<number> = {}
         for (let ce of bin.res.configData || []) {
             cfg[ce.key + ""] = ce.value
             cfgKey[ce.name] = ce.key
@@ -118,20 +120,32 @@ switch (step) {
         if (proc.args.length) {
             write(`if (s.lambdaArgs) {`)
             proc.args.forEach((l, i) => {
-                write(`  ${locref(l)} = ${l.isRef() ? "pxtrt.incr" : ""}(s.lambdaArgs[${i}]);`)
+                write(`  ${locref(l)} = ${refCounting && l.isRef() ? "pxtrt.incr" : ""}(s.lambdaArgs[${i}]);`)
             })
             write(`  s.lambdaArgs = null;`)
             write(`}`)
         }
+
+        const jumpToNextInstructionMarker = -1
 
 
         let exprStack: ir.Expr[] = []
 
         let lblIdx = 0
         let asyncContinuations: number[] = []
+        let prev: ir.Stmt
         for (let s of proc.body) {
+            // mark Jump-to-next-instruction
+            if (prev && prev.lbl == s &&
+                prev.stmtKind == ir.SK.Jmp &&
+                s.stmtKind == ir.SK.Label &&
+                prev.jmpMode == ir.JmpMode.Always &&
+                s.lblNumUses == 1) {
+                s.lblNumUses = jumpToNextInstructionMarker
+            }
             if (s.stmtKind == ir.SK.Label)
                 s.lblId = ++lblIdx;
+            prev = s
         }
 
         for (let s of proc.body) {
@@ -149,7 +163,8 @@ switch (step) {
                     emitJmp(s);
                     break;
                 case ir.SK.Label:
-                    writeRaw(`  case ${s.lblId}:`)
+                    if (s.lblNumUses > 0)
+                        writeRaw(`  case ${s.lblId}:`)
                     break;
                 case ir.SK.Breakpoint:
                     emitBreakpoint(s)
@@ -199,6 +214,15 @@ switch (step) {
         }
 
         function emitJmp(jmp: ir.Stmt) {
+            if (jmp.lbl.lblNumUses == jumpToNextInstructionMarker) {
+                assert(jmp.jmpMode == ir.JmpMode.Always)
+                if (jmp.expr)
+                    emitExpr(jmp.expr)
+                // no actual jump needed
+                return
+            }
+
+            assert(jmp.lbl.lblNumUses > 0)
             let trg = `{ step = ${jmp.lbl.lblId}; continue; }`
             if (jmp.jmpMode == ir.JmpMode.Always) {
                 if (jmp.expr)
@@ -246,6 +270,13 @@ switch (step) {
             }
         }
 
+        function fieldShimName(info: FieldAccessInfo) {
+            if (info.shimName) return info.shimName
+            if (!refCounting)
+                return `.${info.name}___${info.idx}`
+            return null
+        }
+
         // result in R0
         function emitExpr(e: ir.Expr): void {
             //console.log(`EMITEXPR ${e.sharingInfo()} E: ${e.toString()}`)
@@ -269,10 +300,11 @@ switch (step) {
                     break;
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
-                    if (info.shimName) {
+                    let shimName = fieldShimName(info)
+                    if (shimName) {
                         assert(!refCounting)
                         emitExpr(e.args[0])
-                        write(`r0 = r0${info.shimName};`)
+                        write(`r0 = r0${shimName};`)
                         return
                     }
                     // it does the decr itself, no mask
@@ -318,10 +350,12 @@ switch (step) {
             let text = ""
             if (name[0] == ".")
                 text = `${args[0]}${name}(${args.slice(1).join(", ")})`
+            else if (name[0] == "=")
+                text = `(${args[0]})${name.slice(1)} = (${args[1]})`
             else if (U.startsWith(name, "new "))
                 text = `new ${shimToJs(name.slice(4))}(${args.join(", ")})`
-            else if (args.length == 2 && bin.target.floatingPoint && U.lookup(jsOpMap, name))
-                text = `(${args[0]} ${U.lookup(jsOpMap, name)} ${args[1]})`
+            else if (bin.target.floatingPoint && U.lookup(jsOpMap, name))
+                text = args.length == 2 ? `(${args[0]} ${U.lookup(jsOpMap, name)} ${args[1]})` : `(${U.lookup(jsOpMap, name)} ${args[0]})`;
             else
                 text = `${shimToJs(name)}(${args.join(", ")})`
 
@@ -411,8 +445,13 @@ switch (step) {
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
-                    // it does the decr itself, no mask
-                    emitExpr(ir.rtcall(withRef("pxtrt::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
+                    let shimName = fieldShimName(info)
+                    if (shimName) {
+                        emitExpr(ir.rtcall("=" + shimName, [trg.args[0], src]))
+                    } else {
+                        // it does the decr itself, no mask
+                        emitExpr(ir.rtcall(withRef("pxtrt::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
+                    }
                     break;
                 default: oops();
             }

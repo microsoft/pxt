@@ -1,13 +1,12 @@
 language: node_js
 node_js:
-  - "5.7.0"
+  - "8.9.4"
 before_install:
   - export CHROME_BIN=chromium-browser
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
 before_script:
   - "npm install"
-  - "typings install"
 sudo: false
 notifications:
   email:
@@ -15,7 +14,6 @@ notifications:
 cache:
   directories:
     - node_modules
-    - typings
 addons:
   apt:
     sources:
@@ -24,4 +22,4 @@ addons:
       - g++-4.8
       - libusb-1.0-0-dev
 env:
-  - CXX=g++-4.8
+  - PXT_ENV=production CXX=g++-4.8

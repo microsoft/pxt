@@ -8,7 +8,7 @@ simulator files.
 
 ## Category
 
-Each top-level javascript namespace is used to populate a category in the Block Editor toolbox. The name will automatically be capitalized in the toolbox.
+Each top-level TypeScript namespace is used to populate a category in the Block Editor toolbox. The name will automatically be capitalized in the toolbox.
 
 ```typescript-ignore
 namespace basic {
@@ -16,7 +16,7 @@ namespace basic {
 }
 ```
 
-You can also provide a JsDoc comment, color and weight for the namespace, as well as a friendly name (in Unicode). 
+You can also provide a JsDoc comment, color and weight for the namespace, as well as a friendly name (in Unicode).
 We strongly recommend carefully picking colors as it dramatically impacts
 that appearance and readability of your blocks. All blocks within the same namespace have the same color so that users can find the category easily from
 samples.
@@ -54,7 +54,9 @@ you can specify the `blockId` and `block` parameters.
 export function showNumber(v: number, interval: number = 150): void
 { }
 ```
-* `blockId` is a constant, unique id for the block. This id is serialized in block code so changing it will break your users.
+* `blockId` is a constant, unique id for the block. This id is serialized in block code so changing 
+  it will break your users. If not specified, it is derived from namespace and function names, 
+  so renaming your functions or namespaces will break both your TypeScript and Blocks users.
 * `block` contains the syntax to build the block structure (more below).
 
 Other optional attributes can also be used:
@@ -89,6 +91,16 @@ The following types are supported in function signatures that are meant to be ex
 * enums (see below)
 * custom classes that are also exported
 * arrays of the above
+
+## Specifying min and max values
+
+For parameters of type ``number``, you can specify minimum and maximum values, as follows:
+```typescript-ignore
+//% block
+//% v.min=0 v.max= 42
+export function showNumber(v: number, interval: number = 150): void
+{ }
+```
 
 ## Callbacks with Parameters
 
@@ -209,6 +221,26 @@ export function readUntil(del: string) : string {
 }
 ```
 
+### Tip: implicit conversion for string parameters
+
+If you have an API that takes a string as an argument it is possible to bypass the usual
+type checking done in the blocks editor and allow any typed block to be placed in the input. PXT
+will automatically convert whatever block is connected to the argument's input into a string
+in the generated TypeScript. To enable that behavior, set `shadowOptions.toString` on the
+parameter like so:
+
+```
+    //% blockId=console_log block="console|log %msg"
+    //% text.shadowOptions.toString=true
+    export function log(text: string): void {
+        serial.writeString(text + "\r\n");
+    }
+```
+
+Note that the parameter is referred to using its declared name (`text`) and not the
+name in the block definition string (`msg`).
+
+
 ## Docs and default values
 
 The JSDoc comment is automatically used as the help for the block.
@@ -244,7 +276,7 @@ class Message {
 }
 ```
 
-* when annotating an instance method, you need to specify the ``%this`` parameter in the block syntax definition.
+* when annotating an instance method, you need to specify the ``%this`` parameter in the block syntax definition. It can be called something else, eg ``%msg``.
 
 You will need to expose a factory method to create your objects as needed. For the example above, we add a function that creates the message:
 
@@ -286,10 +318,10 @@ It is possible to expose these instances in a manner similar to an enum:
 
 ```typescript-ignore
 //% fixedInstances
+//% blockNamespace=pins
 class DigitalPin {
     ...
     //% blockId=device_set_digital_pin block="digital write|pin %name|to %value"
-    //% blockNamespace=pins
     digitalWrite(value: number): void { ... }
 }
 
@@ -333,6 +365,11 @@ even in different libraries or namespaces.
 
 This feature is often used with `indexedInstance*` attributes.
 
+The `blockNamespace` attribute specifies which drawer in the toolbox will
+be used for this block. It can be specified on methods or on classes (to apply
+to all methods in the class). Often, you will want to also set `color=...`,
+also either on class or method.
+
 It is also possible to define the instances to be used in blocks in TypeScript,
 for example:
 
@@ -341,13 +378,46 @@ namespace pins {
     //% fixedInstance whenUsed
     export const A7 = new AnalogPin(7);
 }
-``` 
+```
 
 The `whenUsed` annotation causes the variable to be only included in compilation
 when it is used, even though it is initialized with something that can possibly
 have side effects. This happens automatically when there is no initializer,
 or the initializer is a simple constant, but for function calls and constructors
 you have to include `whenUsed`.
+
+### Properties
+
+Fields and get/set accessors of classes defined in TypeScript can be exposed in blocks.
+Typically, you want a single block for all getters for a given type, a single block
+for setters, and possibly a single block for updates (compiling to the ``+=`` operator).
+This can be done automatically with `//% blockCombine` annotation, for example:
+
+```typescript
+class Foo {
+    //% blockCombine
+    x: number;
+    //% blockCombine
+    y: number;
+    // exposed with custom name
+    //% blockCombine block="foo bar"
+    foo_bar: number;
+    
+    // not exposed
+    _bar: number;
+    _qux: number;
+
+    // exposed as read-only (only in the getter block)
+    //% blockCombine
+    get bar() { return this._bar }
+
+    // exposed in both getter and setter
+    //% blockCombine
+    get qux() { return this._qux }
+    //% blockCombine
+    set qux(v: number) { if (v != 42) this._qux = v }
+}
+```
 
 ## Ordering
 
@@ -372,6 +442,12 @@ this macro allows to define groups of blocks. The default ``blockGap`` value is 
 //% blockGap=14
 ...
 ```
+
+## Variable assignment
+
+If a block instantiates a custom object, like a sprite, it's most likely that the user
+will want to store in a variable. Add ``blockSetVariable`` to modify the toolbox entry
+to include the variable.
 
 ## Testing your Blocks
 

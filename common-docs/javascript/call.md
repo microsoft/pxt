@@ -1,7 +1,7 @@
 # Call a function
 
 The simplest way to get started in JavaScript with your @boardname@ is to
-call one of the @boardname@'s built-in JavaScript functions. Just like Blocks
+call one of the @boardname@'s built-in JavaScript functions. Just like how Blocks
 are organized into categories/drawers, the @boardname@ functions are organized by
 namespaces, with names corresponding to the drawer names.
 
@@ -19,7 +19,7 @@ followed by `.` and a list of all the functions will appear.
 ## Left and right parentheses, please!
 
 Whenever you want to call a function, you give the name of the function
-followed by `(` and ending with `)`. Inbetween the left and right
+followed by `(` and ending with `)`. In between the left and right
 parentheses go the function arguments:
 
 ```typescript-ignore
@@ -33,8 +33,12 @@ Math.min(
 ```
 
 If a function has zero arguments, you still
-need the parentheses in order to call the function. For example
+need the parentheses in order to call the function.
+
+## Any results for me?
+
+Many functions return a result for you to use later in your program. This might be a number, a string, or another type of data.
 
 ```typescript-ignore
-Math.randomBoolean()
-```
+let greater = Math.max(5, 10)
+``` 

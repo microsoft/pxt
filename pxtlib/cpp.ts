@@ -3,15 +3,20 @@
 namespace pxt {
     declare var require: any;
 
+    let lzmaPromise: Promise<any>;
     function getLzmaAsync() {
-        if (U.isNodeJS) return Promise.resolve(require("lzma"));
-        else {
-            let lz = (<any>window).LZMA;
-            if (lz) return Promise.resolve(lz);
-            const monacoPaths: Map<string> = (window as any).MonacoPaths
-            return BrowserUtils.loadScriptAsync(monacoPaths['lzma/lzma_worker-min.js'])
-                .then(() => (<any>window).LZMA);
+        let lzmaPromise: Promise<any>;
+        if (!lzmaPromise) {
+            if (U.isNodeJS)
+                lzmaPromise = Promise.resolve(require("lzma"));
+            else
+                lzmaPromise = Promise.resolve((<any>window).LZMA);
+            lzmaPromise.then(res => {
+                if (!res) pxt.reportError('lzma', 'failed to load');
+                return res;
+            })
         }
+        return lzmaPromise;
     }
 
     export function lzmaDecompressAsync(buf: Uint8Array): Promise<string> { // string
@@ -19,10 +24,12 @@ namespace pxt {
             .then(lzma => new Promise<string>((resolve, reject) => {
                 try {
                     lzma.decompress(buf, (res: string, error: any) => {
+                        if (error) pxt.debug(`lzma decompression failed`);
                         resolve(error ? undefined : res);
                     })
                 }
                 catch (e) {
+                    if (e) pxt.debug(`lzma decompression failed`);
                     resolve(undefined);
                 }
             }));
@@ -33,10 +40,12 @@ namespace pxt {
             .then(lzma => new Promise<Uint8Array>((resolve, reject) => {
                 try {
                     lzma.compress(text, 7, (res: any, error: any) => {
+                        if (error) pxt.reportException(error);
                         resolve(error ? undefined : new Uint8Array(res));
                     })
                 }
                 catch (e) {
+                    pxt.reportException(e)
                     resolve(undefined);
                 }
             }));
@@ -155,6 +164,7 @@ namespace pxt.cpp {
                 gittag: "none",
                 serviceId: "nocompile"
             }
+        compileService = U.clone(compileService)
 
         let compile = appTarget.compile
         if (!compile)
@@ -175,6 +185,7 @@ namespace pxt.cpp {
 
         let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
+        let abiInc = ""
         let includesInc = `#include "pxt.h"\n`
         let fullCS = ""
         let thisErrors = ""
@@ -525,6 +536,21 @@ namespace pxt.cpp {
                     }
                     return
                 }
+
+                m = /^PXT_ABI\((\w+)\)/.exec(ln)
+                if (m) {
+                    pointersInc += `PXT_FNPTR(::${m[1]}),\n`
+                    abiInc += `extern "C" void ${m[1]}();\n`
+                    res.functions.push({
+                        name: m[1],
+                        argsFmt: "",
+                        value: 0
+                    })
+                }
+
+                m = /^#define\s+PXT_COMM_BASE\s+([0-9a-fx]+)/.exec(ln)
+                if (m)
+                    res.commBase = parseInt(m[1])
 
                 // function definition
                 m = /^\s*(\w+)([\*\&]*\s+[\*\&]*)(\w+)\s*\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
@@ -968,6 +994,9 @@ namespace pxt.cpp {
             pxtConfig += "#define PXT_MEMLEAK_DEBUG 1\n"
         }
 
+        if (compile.vtableShift)
+            pxtConfig += `#define PXT_VTABLE_SHIFT ${compile.vtableShift}\n`
+
         if (compile.nativeType == pxtc.NATIVE_TYPE_AVRVM) {
             pxtConfig += "#define PXT_VM 1\n"
         } else {
@@ -975,7 +1004,7 @@ namespace pxt.cpp {
         }
 
         if (!isCSharp) {
-            res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
+            res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + abiInc + pointersInc + "\nPXT_SHIMS_END\n"
             res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
             if (isYotta)
                 res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
@@ -1024,7 +1053,7 @@ int main() {
 
         let data = JSON.stringify(creq)
         res.sha = U.sha256(data)
-        res.compileData = btoa(U.toUTF8(data))
+        res.compileData = ts.pxtc.encodeBase64(U.toUTF8(data))
         res.shimsDTS = shimsDTS.finish()
         res.enumsDTS = enumsDTS.finish()
 
@@ -1227,6 +1256,9 @@ namespace pxt.hex {
     let downloadCache: Map<Promise<any>> = {};
     let cdnUrlPromise: Promise<string>;
 
+    export let showLoading: (msg: string) => void = (msg) => { };
+    export let hideLoading: () => void = () => { };
+
     function downloadHexInfoAsync(extInfo: pxtc.ExtensionInfo) {
         let cachePromise = Promise.resolve();
 
@@ -1255,6 +1287,7 @@ namespace pxt.hex {
     function downloadHexInfoCoreAsync(extInfo: pxtc.ExtensionInfo) {
         let hexurl = ""
 
+        showLoading(pxt.U.lf("Compiling (this may take a minute)..."));
         return downloadHexInfoLocalAsync(extInfo)
             .then((hex) => {
                 if (hex) {
@@ -1282,24 +1315,49 @@ namespace pxt.hex {
                                                 resolve(U.httpGetTextAsync(hexurl + ".hex"))
                                             }
                                         },
-                                        e => {
-                                            setTimeout(tryGet, 1000)
-                                            return null
-                                        })
+                                            e => {
+                                                setTimeout(tryGet, 1000)
+                                                return null
+                                            })
                                 }
                                 tryGet();
                             })))
                     .then(text => {
+                        hideLoading();
                         return {
                             enums: [],
                             functions: [],
                             hex: text.split(/\r?\n/)
                         };
                     })
+            }).finally(() => {
+                hideLoading();
             })
     }
 
     function downloadHexInfoLocalAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
+        if (pxt.webConfig && pxt.webConfig.isStatic) {
+            return Util.requestAsync({
+                url: `${pxt.webConfig.cdnUrl}hexcache/${extInfo.sha}.hex`
+            })
+                .then((resp) => {
+                    if (resp.text) {
+                        const result: any = {
+                            enums: [],
+                            functions: [],
+                            hex: resp.text.split(/\r?\n/)
+                        }
+                        return Promise.resolve(result);
+                    }
+                    pxt.log("Hex info not found in bundled hex cache");
+                    return Promise.resolve();
+                })
+                .catch((e) => {
+                    pxt.log("Error fetching hex info from bundled hex cache");
+                    return Promise.resolve();
+                });
+        }
+
         if (!Cloud.localToken || !window || !Cloud.isLocalHost()) {
             return Promise.resolve();
         }
@@ -1319,13 +1377,7 @@ namespace pxt.hex {
     }
 
     function apiAsync(path: string, data?: any) {
-        return U.requestAsync({
-            url: "/api/" + path,
-            headers: { "Authorization": Cloud.localToken },
-            method: data ? "POST" : "GET",
-            data: data || undefined,
-            allowHttpErrors: true
-        }).then(r => r.json);
+        return Cloud.localRequestAsync(path, data).then(r => r.json)
     }
 
     export function storeWithLimitAsync(host: Host, idxkey: string, newkey: string, newval: string, maxLen = 10) {
@@ -1431,7 +1483,7 @@ namespace pxt.hex {
                     buf += "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
                 }
             } else {
-                buf = pxtc.decodeBase64(nxt)
+                buf = ts.pxtc.decodeBase64(nxt)
             }
 
             Util.assert(buf.length > 0)
@@ -1510,7 +1562,7 @@ namespace pxt.hex {
                     let bin = ""
                     for (let k = 0; k < outln.length; k += 2)
                         bin += String.fromCharCode(parseInt(outln.slice(k, k + 2), 16))
-                    outp.push(btoa(bin))
+                    outp.push(ts.pxtc.encodeBase64(bin))
                 }
             }
         }
