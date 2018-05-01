@@ -107,6 +107,11 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         // replace pre-template in markdown
         markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
+        // Set markdown options
+        marked.setOptions({
+            sanitize: true
+        })
+
         // Render the markdown and add it to the content div
         content.innerHTML = marked(markdown);
 
