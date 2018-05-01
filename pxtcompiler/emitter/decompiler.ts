@@ -924,6 +924,7 @@ ${output}</xml>`;
                             // never get used in the blocks (and thus won't be emitted again)
 
                             trackAutoDeclaration(decl);
+                            getComments(parent || node);
                             return getNext();
                         }
                         stmt = getVariableDeclarationStatement(node as ts.VariableDeclaration);
@@ -967,21 +968,7 @@ ${output}</xml>`;
                 }
             }
 
-            const commentRanges = ts.getLeadingCommentRangesOfNode(parent || node, file)
-            if (commentRanges) {
-                const wsCommentRefs: string[] = [];
-                const commentText = getCommentText(commentRanges, node, wsCommentRefs)
-
-                if (wsCommentRefs.length) {
-                    stmt.data = wsCommentRefs.join(";")
-                }
-                if (commentText && stmt) {
-                    stmt.comment = commentText;
-                }
-                else {
-                    // ERROR TODO
-                }
-            }
+            getComments(parent || node);
 
             return stmt;
 
@@ -990,6 +977,27 @@ ${output}</xml>`;
                     return getStatementBlock(next.shift(), next, undefined, false, topLevel);
                 }
                 return undefined;
+            }
+
+            function getComments(commented: Node) {
+                const commentRanges = ts.getLeadingCommentRangesOfNode(commented, file)
+                if (commentRanges) {
+                    const wsCommentRefs: string[] = [];
+                    const commentText = getCommentText(commentRanges, node, wsCommentRefs)
+
+                    if (stmt) {
+                        if (wsCommentRefs.length) {
+                            stmt.data = wsCommentRefs.join(";")
+                        }
+                        if (commentText && stmt) {
+                            stmt.comment = commentText;
+                        }
+                        else {
+                            // ERROR TODO
+                        }
+                    }
+                }
+
             }
         }
 
