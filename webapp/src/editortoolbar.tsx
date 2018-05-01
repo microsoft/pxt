@@ -131,6 +131,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             saveButtonClasses = "disabled";
         }
 
+        const isRtl = pxt.Util.isUserLanguageRtl();
         return <div className="ui equal width grid right aligned padded">
             <div className="column mobile only">
                 {collapsed ?
@@ -306,7 +307,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     <div id="downloadArea" className="ui column items">{headless ?
                         <div className="ui item">
                             <div className="ui icon large buttons">
-                                {showCollapsed ? <sui.Button icon={`${collapseEditorTools ? 'toggle right' : 'toggle left'}`} className={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('computer')} /> : undefined}
+                                {showCollapsed ? <sui.Button icon={`${collapseEditorTools ? 'toggle ' + (isRtl ? 'left' : 'right') : 'toggle ' + (isRtl ? 'right' : 'left')}`} className={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('computer')} /> : undefined}
                                 {run ? <sui.Button role="menuitem" className={`large play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('computer')} /> : undefined}
                                 {restart ? <sui.Button key='restartbtn' className={`large restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('computer')} /> : undefined}
                                 {trace ? <sui.Button key='tracebtn' className={`large trace-button ${tracing ? 'orange' : ''}`} icon="xicon trace" title={traceTooltip} onClick={() => this.toggleTrace('computer')} /> : undefined}
@@ -315,7 +316,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             </div>
                         </div> :
                         <div className="ui item">
-                            {showCollapsed ? <sui.Button icon={`${collapseEditorTools ? 'toggle right' : 'toggle left'}`} className={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('computer')} /> : undefined}
+                            {showCollapsed ? <sui.Button icon={`${collapseEditorTools ? 'toggle ' + (isRtl ? 'left' : 'right') : 'toggle ' + (isRtl ? 'right' : 'left')}`} className={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('computer')} /> : undefined}
                             {debug ? <sui.Button key='debugbtn' icon="xicon bug" className={`large debug-button ${debugging ? 'orange' : ''}`} title={debugTooltip} onClick={() => this.toggleDebugging('computer')} /> : undefined}
                             {compileBtn ? <sui.Button icon={downloadIcon} className={`primary huge fluid download-button ${downloadButtonClasses}`} text={downloadText} title={compileTooltip} onClick={() => this.compile('computer')} /> : undefined}
                         </div>

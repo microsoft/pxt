@@ -314,6 +314,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
             tutorialAriaLabel += lf("Press Space or Enter to show a hint.");
         }
 
+        const isRtl = pxt.Util.isUserLanguageRtl();
         return <div id="tutorialcard" className={`ui ${tutorialReady ? 'tutorialReady' : ''}`} >
             <div className='ui buttons'>
                 <div className="ui segment attached tutorialsegment">
@@ -327,7 +328,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
                     </div>
                     <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={() => this.closeLightbox()} onKeyDown={sui.fireClickOnEnter} />
                 </div>
-                {hasNext ? <sui.Button icon="right chevron" rightIcon className={`nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} ariaLabel={lf("Go to the next step of the tutorial.")} onClick={() => this.nextTutorialStep()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron`} rightIcon className={`nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} ariaLabel={lf("Go to the next step of the tutorial.")} onClick={() => this.nextTutorialStep()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={() => this.finishTutorial()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
