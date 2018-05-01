@@ -37,11 +37,15 @@ namespace pxt.winrt {
         app.addEventListener("suspending", suspendingHandler);
         app.addEventListener("resuming", resumingHandler);
         navMgr.onbackrequested = (e) => {
-            // Ignore the built-in back button; it tries to back-navigate the sidedoc panel, but it crashes the
-            // app if the sidedoc has been closed since the navigation happened
-            pxt.log("BACK NAVIGATION");
-            navMgr.appViewBackButtonVisibility = uiCore.AppViewBackButtonVisibility.collapsed;
-            e.handled = true;
+            try {
+                // Ignore the built-in back button; it tries to back-navigate the sidedoc panel, but it crashes the
+                // app if the sidedoc has been closed since the navigation happened
+                console.log("BACK NAVIGATION");
+                navMgr.appViewBackButtonVisibility = uiCore.AppViewBackButtonVisibility.collapsed;
+                e.handled = true;
+            } catch (err) {
+                console.error(err);
+            }
         };
 
         initSerial();
