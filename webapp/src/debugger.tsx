@@ -177,6 +177,11 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         this.props.parent.dbgPauseResume();
     }
 
+    dbgInsertBreakpoint() {
+        pxt.tickEvent('debugger.breakpoint', undefined, { interactiveConsent: true });
+        this.props.parent.dbgInsertBreakpoint();
+    }
+
     dbgStepOver() {
         pxt.tickEvent('debugger.stepover', undefined, { interactiveConsent: true });
         this.props.parent.dbgStepOver();
@@ -285,11 +290,13 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
             {!isDebugging ? undefined :
                 <div className={`ui compact borderless menu icon`}>
                     <div className={`ui item link dbg-btn dbg-handle`} key={'toolbarhandle'}
+                        title={lf("Debugger buttons")}
                         onMouseDown={this.toolbarHandleDown.bind(this)}>
                         <sui.Icon key='iconkey' icon={`icon ellipsis vertical`} />
                         <sui.Icon key='iconkey2' icon={`xicon bug`} />
                     </div>
                     <sui.Item key='dbgpauseresume' className={`dbg-btn dbg-pause-resume ${isDebuggerRunning ? "pause" : "play"}`} icon={`${isDebuggerRunning ? "pause blue" : "step forward green"}`} title={dbgPauseResumeTooltip} onClick={() => this.dbgPauseResume()} />
+                    <sui.Item key='dbgbreakpoint' className={`dbg-btn dbg-breakpoint`} icon="circle red" title={lf("Insert debugger breakpoint")} onClick={() => this.dbgInsertBreakpoint()} />
                     {!advancedDebugging ? <sui.Item key='dbgstep' className={`dbg-btn dbg-step`} icon={`arrow right ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepIntoTooltip} onClick={() => this.dbgStepInto()} /> : undefined}
                     {advancedDebugging ? <sui.Item key='dbgstepover' className={`dbg-btn dbg-step-over`} icon={`xicon stepover ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepOverTooltip} onClick={() => this.dbgStepOver()} /> : undefined}
                     {advancedDebugging ? <sui.Item key='dbgstepinto' className={`dbg-btn dbg-step-into`} icon={`xicon stepinto ${isDebuggerRunning ? "disabled" : ""}`} title={dbgStepIntoTooltip} onClick={() => this.dbgStepInto()} /> : undefined}
