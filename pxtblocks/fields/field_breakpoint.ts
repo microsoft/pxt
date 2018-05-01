@@ -54,9 +54,7 @@ namespace pxtblockly {
             this.toggleThumb_ = Blockly.utils.createSvgElement('polygon',
                 {
                     'class': 'blocklyToggleRect',
-                    'points': '50,5 100,5 125,30 125,80 100,105 50,105 25,80 25,30',
-                    'style': 'stroke-width: 3px;stroke-linecap: round;',
-                    'cursor': 'pointer'
+                    'points': '50,5 100,5 125,30 125,80 100,105 50,105 25,80 25,30'
                 },
                 this.checkElement_);
 
