@@ -384,6 +384,7 @@ export class Button extends StatelessUIElement<ButtonProps> {
 
 export interface LinkProps extends ButtonProps {
     href?: string;
+    download?: string;
     target?: string;
 }
 
@@ -394,6 +395,7 @@ export class Link extends StatelessUIElement<LinkProps> {
                 id={this.props.id}
                 href={this.props.href}
                 target={this.props.target}
+                download={this.props.download}
                 role={this.props.role}
                 title={this.props.title}
                 tabIndex={this.props.tabIndex || 0}
@@ -960,15 +962,25 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             {this.props.buttons && this.props.buttons.length > 0 ?
                 <div className="actions">
                     {this.props.buttons.map(action =>
-                        <Button
-                            key={`action_${action.label}`}
-                            icon={action.icon}
-                            text={action.label}
-                            className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""}`}
-                            onClick={() => {
-                                action.onclick();
-                            }}
-                            onKeyDown={fireClickOnEnter} />
+                        action.url ?
+                            <Link
+                                key={`action_${action.label}`}
+                                icon={action.icon}
+                                text={action.label}
+                                className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""}`}
+                                href={action.url}
+                                target={!action.fileName ? '_blank' : undefined}
+                                download={action.fileName ? pxt.Util.htmlEscape(action.fileName) : undefined}
+                            />
+                            : <Button
+                                key={`action_${action.label}`}
+                                icon={action.icon}
+                                text={action.label}
+                                className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""}`}
+                                onClick={() => {
+                                    action.onclick();
+                                }}
+                                onKeyDown={fireClickOnEnter} />
                     )}
                 </div> : undefined}
             {closeIcon ? <div className="closeIcon" tabIndex={0}
