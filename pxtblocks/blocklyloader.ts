@@ -1848,7 +1848,7 @@ namespace pxt.blocks {
                 // (this is different from all of the other categories)
                 // so I had to change the character to the character we use for variables, '\uf124'
                 headingLabel.setAttribute('web-icon', '\uf124');
-                headingLabel.setAttribute('web-icon-color', getNamespaceColor('variables'));
+                headingLabel.setAttribute('web-icon-color', pxt.toolbox.getNamespaceColor('variables'));
                 xmlList.push(headingLabel);
             }
 
