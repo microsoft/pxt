@@ -7,12 +7,11 @@
 \end{figure}
 
 The key technical contribution of \MC is to provide users with a basic environment to write programs for MCUs, enabling a simple progression from visual block-based programming to text-based programming in Static TypeScript (STS), while leveraging C++ on the backend for efficient use of MCU resources.
-\MC uses the open-source Blockly and Monaco editors to allow the user to code with visual blocks or STS. The editing experience is parameterized by the fully-typed device runtime,
-which provides a set of categorized APIs to the end-user.
+\MC uses the open-source Blockly and Monaco editors to allow the user to code with visual blocks or STS. The editing experience is parameterized by the fully-typed device runtime, which provides a set of categorized APIs to the end-user.
 
 %Both C++ and TypeScript APIs can be specially annotated (minimally via the \emph{//\% block} comment) so that the \MC compiler generates the required Blocky metadata,
 
-Figure~\ref{fig:screenSnap} is a screenshot of the \MC web app for Adafruit's Circuit Playground Express (CPX) device.\footnote{\url{https://makecode.adafruit.com}} The web app has five sections: (A) the menu bar allows switching between the two editors; (B) the simulator shows the CPX board and provides feedback on user code executed in the browser; (C) the toolbox provides access to device-specific APIs and programming elements; (D) the programming canvas is where
+Figure~\ref{fig:screenSnap} is a screenshot of the \MC web app for Adafruit's Circuit Playground Express (CPX) device\footnote{\url{https://makecode.adafruit.com}}. The web app has five sections: (A) the menu bar allows switching between the two editors; (B) the simulator shows the CPX board and provides feedback on user code executed in the browser; (C) the toolbox provides access to device-specific APIs and programming elements; (D) the programming canvas is where
 editing takes place; (E) the download button invokes the compiler, producing a binary executable.
 
 The web app encapsulates all the components needed to deliver a programming experience for MCUs, free of the need for a C++ compiler for the compilation of user code. The web app is written in TypeScript and incorporates the TypeScript compiler and language service as well. The app is built from a \MC ``target'' which parameterizes the \MC framework for a particular device. The remaining subsections describe the essential components of the web app from Figure~\ref{fig:makecode}.
@@ -24,15 +23,15 @@ completion, static checking and refactoring made possible by types.
 As a starting point, every JavaScript program is a TypeScript program.  Types can be added gradually to
 JavaScript programs, supported by type inference.
 While TypeScript provides classes and interfaces with syntax like
-Java/C\#, their semantics are quite different, as they are based on JavaScript. Classes are simply syntactic sugar for creating objects that have code associated with them, but these objects are indeed
+Java/C\#, their semantics are quite different as they are based on JavaScript. Classes are simply syntactic sugar for creating objects that have code associated with them, but these objects are indeed
 JavaScript objects with all their dynamic semantics intact.
 
-Static TypeScript (STS) is closely related to Strong\-Script~\cite{StrongScriptECOOP15}, which extends TypeScript with a type constructor for \emph{concrete} types, allowing the programmer to choose between untyped, optionally-typed, and concretely typed code, which provides traditional type soundness guarantees, as in Java and C\#. STS can be seen to be StrongScript where every variable and expression has a concrete type. As in StrongScript, classes are nominally typed, which permits a more efficient and traditional property lookup for class instances. Currently, STS goes further than StrongScript by outlawing downcasts.
+Static TypeScript (STS) is closely related to Strong\-Script~\cite{StrongScriptECOOP15}, which extends TypeScript with a type constructor for \emph{concrete} types, allowing the programmer to choose between untyped, optionally-typed, and concretely typed code. This provides traditional type soundness guarantees, as in Java and C\#. STS can be seen to be StrongScript where every variable and expression has a concrete type. As in StrongScript, classes are nominally typed, which permits a more efficient and traditional property lookup for class instances. Currently, STS goes further than StrongScript by outlawing downcasts.
 
 \subsection{Device runtime and shim generation}
 \label{sec:shim-gen}
 
-A \MC target is defined, in part, by its device runtime, which is a combination of C++ and STS code, as shown in the lower-left of Figure~\ref{fig:makecode}. All the target's C++ files are precompiled (by a C++ compiler in the cloud) into a single binary, which is stored in the cloud, as well as in the HTML5 application cache. Additional runtime components may be authored in STS, which allows the device runtime to be extended with or without the use of C++, and permits components of the device runtime to be shared by both the device and simulator runtimes. The ability to author the device runtime in both STS and C++ is a unique aspect of \MCN's design.
+A \MC target is defined, in part, by its device runtime; which is a combination of C++ and STS code, as shown in the lower-left of Figure~\ref{fig:makecode}. All the target's C++ files are precompiled (by a C++ compiler in the cloud) into a single binary, which is stored in the cloud, as well as in the HTML5 application cache. Additional runtime components may be authored in STS, which allows the device runtime to be extended with or without the use of C++, and permits components of the device runtime to be shared by both the device and simulator runtimes. The ability to author the device runtime in both STS and C++ is a unique aspect of \MCN's design.
 
 Whether runtime components are authored in C++ or STS, all runtime APIs are exposed as fully-typed TypeScript definitions. A fully-typed runtime improves the end-user experience by making it easier to discover APIs; it also enables the type inference provided by the TypeScript compiler to infer types for (unannotated) user programs.
 
@@ -96,12 +95,12 @@ data structures must be careful to break cycles to ensure complete deallocation.
 
 \subsection{Browser compilation}
 
-When a user requests a download of the compiled binary, \MC first invokes the TypeScript language service to perform type inference and type checking on the
+When a user requests a download of the compiled binary, \MC first invokes the TypeScript language service to perform type inference and type checking on: the
 user's program, the device runtime written in STS, as well as the TypeScript declarations
 corresponding to the C++ device runtime. It then checks that the
 combined TypeScript program is within the STS subset through additional syntactic and type checks over the typed AST.  Assuming all the
 above checks pass, \MC then performs tree shaking of the AST to remove unused functions.
-The reduced AST then is compiled to an intermediate representation (IR) that makes explicit labelled control
+The reduced AST is then compiled to an intermediate representation (IR) that makes explicit labelled control
 flow among a sequence of instructions with conditional and unconditional jumps, heap cells, field accesses, store operations, and reference counting.
 
 There are three backends for code generation from the IR. The first backend generates JavaScript, for execution against the simulator runtime.  A second backend generates assembler, parameterized by a processor description.  Currently supported processors include ARM's Cortex class (Thumb instructions) and Atmel's ATmega class (AVR instructions). A separate assembler, also parameterized by an instruction encoder/decoder, generates machine code and resolves runtime references, producing a final binary executable. A third backend generates bytecode instructions. \MC can encode the resulting binary in several formats, including Intel's HEX format~\cite{IntelHEX} and the \UF format (created by the authors for simpler device flashing) documented in Section~\ref{sec:uf2}.
@@ -112,7 +111,7 @@ with two compilation strategies: untagged and tagged. Under the untagged strateg
 a JavaScript number is interpreted as a C++ \texttt{int} by default and the type system is used
 to statically distinguish primitive values from boxed values. As a result, the untagged
 strategy is not fully faithful to JavaScript semantics: there is no support for floating
-point and the \texttt{null} and \texttt{undefined} values are represented by the default integer value of zero. The untagged strategy is used for the micro:bit and Arduino Uno targets.
+point, and the \texttt{null} and \texttt{undefined} values are represented by the default integer value of zero. The untagged strategy is used for the micro:bit and Arduino Uno targets.
 
-In the tagged strategy, numbers are either tagged 31-bit signed integers, or if they do not fit, boxed doubles. Special constants like \texttt{false}, \texttt{null} and \texttt{undefined} are given special values and can be distinguished. The tagged execution strategy has the capability to fully support JavaScript semantics and
+In the tagged strategy, numbers are either tagged 31-bit signed integers, or if they do not fit, boxed doubles. Special constants like \texttt{false}, \texttt{null} and \texttt{undefined} are distinguished by specific values. The tagged execution strategy has the capability to fully support JavaScript semantics and
 is used by all ATSAMD21 targets, including the CPX.
