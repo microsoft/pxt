@@ -7,7 +7,7 @@ export interface Gallery {
 function parseExampleMarkdown(name: string, md: string): pxt.editor.ProjectCreationOptions {
     if (!md) return undefined;
 
-    const m =  /```(blocks?|typescript)\s+((.|\s)+?)\s*```/i.exec(md);
+    const m = /```(blocks?|typescript)\s+((.|\s)+?)\s*```/i.exec(md);
     if (!m) return undefined;
 
     const pm = /```package\s+((.|\s)+?)\s*```/i.exec(md);
@@ -19,11 +19,24 @@ function parseExampleMarkdown(name: string, md: string): pxt.editor.ProjectCreat
             .forEach(kv => dependencies[kv[0]] = kv[1] || "*");
     }
 
+    let src = m[2];
+
+    // extract text between first sample and title
+    let comment = md.substring(0, m.index)
+        .replace(/^(#+.*|\s*)$/igm, '')
+        .trim();
+    if (comment)
+        src =
+`/**
+${comment.split('\n').map(line => '* ' + line).join('\n')}
+*/
+` + src;
+
     return {
         name,
         filesOverride: {
             "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`,
-            "main.ts": m[2]
+            "main.ts": src
         },
         dependencies
     };
