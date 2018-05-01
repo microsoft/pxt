@@ -45,24 +45,33 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         pxt.Util.toArray(content.querySelectorAll(`.lang-blocks`))
             .forEach((langBlock: HTMLElement) => {
                 const code = langBlock.innerText;
-                langBlock.innerHTML = `<div class="ui segment raised loading"></div>`;
+                const wrapperDiv = document.createElement('div');
+                langBlock.innerHTML = '';
+                langBlock.appendChild(wrapperDiv);
+                wrapperDiv.className = 'ui segment raised loading';
                 if (MarkedContent.blockSnippetCache[code]) {
                     // Use cache
-                    langBlock.innerHTML = `<div class="ui segment raised">
-                                <img src="${MarkedContent.blockSnippetCache[code]}" /></div>`;
+                    const imgDiv = document.createElement('img');
+                    imgDiv.src = MarkedContent.blockSnippetCache[code];
+                    wrapperDiv.appendChild(imgDiv);
+                    pxsim.U.removeClass(wrapperDiv, 'loading');
                 } else {
                     parent.renderBlocksAsync({
                         action: "renderblocks", ts: code
                     } as pxt.editor.EditorMessageRenderBlocksRequest)
-                        .done((xml) => {
-                            if (xml) {
-                                langBlock.innerHTML = `<div class="ui segment raised">
-                                    <img src="${pxt.Util.htmlEscape(xml)}" /></div>`;
-                                MarkedContent.blockSnippetCache[code] = pxt.Util.htmlEscape(xml);
+                        .done((datauri) => {
+                            if (datauri) {
+                                MarkedContent.blockSnippetCache[code] = datauri;
+                                const imgDiv = document.createElement('img');
+                                imgDiv.src = MarkedContent.blockSnippetCache[code];
+                                wrapperDiv.appendChild(imgDiv);
+                                pxsim.U.removeClass(wrapperDiv, 'loading');
                             } else {
                                 // An error occured, show alternate message
-                                langBlock.innerHTML = `<div class="ui segment raised">
-                                    <span>${lf("Oops, something went wrong trying to render this block snippet.")}</span></div>`;
+                                const textDiv = document.createElement('span');
+                                textDiv.textContent = lf("Oops, something went wrong trying to render this block snippet.");
+                                wrapperDiv.appendChild(textDiv);
+                                pxsim.U.removeClass(wrapperDiv, 'loading');
                             }
                         })
                 }
@@ -78,8 +87,15 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     const mtxt = /^(([^\:\.]*?)[\:\.])?(.*)$/.exec(mbtn[2]);
                     const ns = mtxt[2] ? mtxt[2].trim().toLowerCase() : '';
                     const txt = mtxt[3].trim();
-                    const lev = mbtn[1].length == 1 ? `docs inlinebutton ui button ${txt.toLowerCase()}-button` : `docs inlineblock ${ns}`;
-                    inlineBlock.innerHTML = `<span class="${lev}">${pxt.Util.htmlEscape(pxt.U.rlf(txt))}</span>`
+                    const lev = mbtn[1].length == 1 ?
+                        `docs inlinebutton ui button ${pxt.Util.htmlEscape(txt.toLowerCase())}-button`
+                        : `docs inlineblock ${pxt.Util.htmlEscape(ns)}`;
+
+                    const inlineBlockDiv = document.createElement('span');
+                    inlineBlock.innerHTML = '';
+                    inlineBlock.appendChild(inlineBlockDiv);
+                    inlineBlockDiv.className = lev;
+                    inlineBlockDiv.textContent = pxt.Util.htmlEscape(pxt.U.rlf(txt));
                 }
             })
     }
