@@ -10,6 +10,8 @@
 \item \emph{a set of drivers}, that abstract microcontroller hardware components into higher level software components, each presented as a C++ class;
 \item \emph{a parameterized object model} composed from these components that represents a physical device.
 \end{enumerate}
+
+There are discussed in detail below.
 % TODO: add Fork on block
 
 \subsection{Message Bus and Events}
@@ -33,7 +35,7 @@ Continuing the example of detecting the brightness of a room used in Section~\re
     \caption{\label{fig:messageBus}Example of the \CO MessageBus.}
 \end{figure}
 
-Unlike simple function pointers, \CO event handlers can be parameterized by the event listener to provide decoupling between the context of the code raising the event. The receiver of an event can choose to either receive an event in context of the fiber that created it or can be decoupled and executed via an Asynchronous Procedure Call (APC). The former provides performance, while the latter provides decoupling of low level code (that may be executing, say, in an interrupt context) from user code. Each event handler may also define a threading model, so they can be reentrant or run-to-completion, depending upon the semantics required.
+Unlike simple function pointers, \CO event handlers can be parameterized by the event listener to provide decoupling from the context of the code raising the event. The receiver of an event can choose to either receive an event in context of the fiber that created it, or can be decoupled and executed via an Asynchronous Procedure Call (APC). The former provides performance, while the latter provides decoupling of low level code (that may be executing, say, in an interrupt context) from user code. Each event handler may also define a threading model, so they can be reentrant or run-to-completion depending upon the semantics required.
 
 \subsection{Fiber Scheduler}
 \CO provides a \emph{non-preemptive} fiber scheduler with asynchronous semantics and a power efficient implementation. \CO fibers can be created at any time but will only be descheduled as a result of an explicit call to yield(), sleep() or wait\_for\_event() on the MessageBus. The latter enables condition synchronization between fibers through a wait/notify mechanism. A round-robin approach is used to schedule runnable fibers. If at any time all fibers are descheduled, the MCU hardware is placed into a power efficient sleep state.
@@ -42,14 +44,14 @@ The \CO scheduler makes use of two novel mechanisms to optimize for MCU hardware
 
 Secondly, the \CO scheduler supports transparent APCs. Any function can be \emph{invoked} as an APC. Conceptually, this is equivalent to calling the given function in its own fiber. However, the \CO runtime provides a common-case transparent optimization for APCs we call \emph{fork-on-block} - whereby a fiber will only be created at the point at which the given function attempts a blocking operation such as sleep() or wait\_for\_event(). Functions which do not block therefore do not incur all of the context switch overhead.
 
-When invoking an APC, the scheduler snapshots the current processor context and stack pointer (but not the whole stack). If the scheduler is re-entered before the APC completes, a new fiber context is created at the point of descheduling, and placed on the appropriate wait queue. The previously stored context is then restored, and execution continues from the point at which the APC was first invoked. This mechanism provides a potentially high RAM savings for processing of MessageBus event handlers in particular.
+When invoking an APC, the scheduler snapshots the current processor context and stack pointer (but not the whole stack). If the scheduler is re-entered before the APC completes, a new fiber context is created at the point of descheduling, and placed on the appropriate wait queue. The previously stored context is then restored, and execution continues from the point at which the APC was first invoked. This mechanism provides a potentially high RAM saving for the processing of MessageBus event handlers in particular.
 
 \CON's scheduling and eventing models are shared by both high and low level languages, and therefore handled uniformly. As a result, when a foreign function call is mapped to C++, that C++ function is capable of blocking the calling fiber without infringing on the concurrency model of the higher level language. This enables, for example, a C++ device driver to block a JavaScript program when awaiting data without changing the behavior of other JavaScript code acting asynchronously (as in Figure~\ref{fig:screenSnap}).
 
 %To provide unity, \CO natively supports continuations in two ways. Firstly, through asynchronous procedure calls that may occur at any point in the future, where a condition and callback function are given (Figure~\ref{fig:messageBus}). Secondly, through the
 
 \subsection{Memory Management}
-\CO implements its own lightweight heap allocator, introducing reentrant versions of the libc malloc family of functions to permit universal access to heap memory in user or interrupt code. The heap allocator is flexible and reconfigurable, allowing the specification of multiple heaps across memory and it is optimized for repeat allocations of memory blocks that are commonplace in embedded systems.
+\CO implements its own lightweight heap allocator, introducing reentrant versions of the libc malloc family of functions, permitting universal access to heap memory in user or interrupt code. The heap allocator is flexible and reconfigurable, allowing the specification of multiple heaps across memory and it is optimized for repeat allocations of memory blocks that are commonplace in embedded systems.
 
 \CO also makes use of simple managed types, built using C++ reference counting mechanisms. C++ classes are provided for common types such as strings, images, and data buffers. A generic base class is also provided for the creation of other managed types. This simple approach brings the benefits of greater memory safety for application code, but with the expense of suffering from the issues related to circular references. We take the view that such scenarios are rare in MCU applications, justifying this approach over a more complex garbage collection scheme and its overhead.
 
@@ -63,7 +65,7 @@ When invoking an APC, the scheduler snapshots the current processor context and 
 
 This approach brings the benefits of abstraction and re\-usability to \CON, without losing the hardware specific benefits seen in flat abstraction models where every MCU is made to look the same, even though their capabilities are different. This can be seen in the Arduino and mbed APIs, for example.
 
-Finally, we group together the components of a physical device to form a \emph{device model}. This is a singleton C++ class that, through composition of device driver components, provides a configured representation of the capabilities of a device. Such a model provides for an elegant OO API for programming a device and a static representation that forms an ideal target for the \MC linker to bind high level STS interfaces to low level optimized code.
+Finally, we group together the components of a physical device to form a \emph{device model}. This is a singleton C++ class that, through composition of device driver components, provides a configured representation of the capabilities of a device. Such a model allows: an elegant OO API for programming a device, and a static representation that forms an ideal target for the MakeCode linker to bind high level STS interfaces to low level optimized code.
 
 % An example device model for the CPX is shown in Figure~\ref{fig:codalDeviceModel} for reference.
 
