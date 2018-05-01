@@ -300,10 +300,12 @@ namespace pxsim {
 
     function initAppcache() {
         if (typeof window !== 'undefined') {
-            if (window.applicationCache.status === window.applicationCache.UPDATEREADY) {
+            if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
                 reload();
-            }
-            window.applicationCache.addEventListener("updateready", () => reload());
+            window.applicationCache.addEventListener("updateready", () => {
+                if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
+                    reload();
+            });
         }
     }
 
