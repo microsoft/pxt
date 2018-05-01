@@ -25,12 +25,12 @@ function parseExampleMarkdown(name: string, md: string): pxt.editor.ProjectCreat
     let comment = md.substring(0, m.index)
         .replace(/^(#+.*|\s*)$/igm, '')
         .trim();
-    if (comment)
-        src =
-`/**
+    if (comment) {
+        src = `/**
 ${comment.split('\n').map(line => '* ' + line).join('\n')}
 */
 ` + src;
+    }
 
     return {
         name,
