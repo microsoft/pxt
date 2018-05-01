@@ -1411,6 +1411,10 @@ export class ProjectView
         simulator.dbgStepInto();
     }
 
+    dbgInsertBreakpoint() {
+        this.editor.insertBreakpoint();
+    }
+
     editText() {
         if (this.editor != this.textEditor) {
             this.updateEditorFile(this.textEditor).then(() => {
@@ -1868,10 +1872,8 @@ export class ProjectView
     }
 }
 
-export const appElement = document.getElementById('content');
-
 function render() {
-    ReactDOM.render(<ProjectView />, appElement);
+    ReactDOM.render(<ProjectView />, sui.appElement);
 }
 
 function getEditor() {

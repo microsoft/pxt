@@ -11,6 +11,7 @@ namespace pxt.toolbox {
         advanced: '#3c3c3c',
         addpackage: '#717171',
         search: '#000',
+        debug: '#e03030',
         default: '#dddddd'
     }
 
@@ -27,6 +28,7 @@ namespace pxt.toolbox {
         more: '\uf141',
         addpackage: '\uf055',
         search: '\uf002',
+        debug: '\uf111',
         default: '\uf12e'
     }
 

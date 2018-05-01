@@ -548,6 +548,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    insertBreakpoint() {
+        if (!this.editor) return;
+        const b = this.editor.newBlock(pxtc.TS_DEBUGGER_TYPE);
+        b.initSvg();
+        b.render();
+    }
+
     private _loadBlocklyPromise: Promise<void>;
     loadBlocklyAsync() {
         if (!this._loadBlocklyPromise)

@@ -187,6 +187,7 @@ namespace pxt.editor {
         dbgPauseResume(): void;
         dbgStepInto(): void;
         dbgStepOver(): void;
+        dbgInsertBreakpoint(): void;
 
         setBannerVisible(b: boolean): void;
         typecheckNow(): void;

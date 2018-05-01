@@ -1390,7 +1390,7 @@ namespace pxt.blocks {
     function compileDebuggeStatementBlock(e: Environment, b: Blockly.Block) {
         if (b.getFieldValue("ON_OFF") == "1") {
             return [
-                mkText("debugger;")
+                mkText("debugger;\n")
             ]
         }
         return [];
