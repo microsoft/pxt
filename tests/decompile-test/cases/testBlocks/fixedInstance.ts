@@ -205,3 +205,9 @@ namespace pins2 {
     //% blockId="fi_arg" block="fixedInstance arg %p"
     export function fixedInstanceArg(p : PwmPin): void {}
 }
+
+//% fixedInstances decompileIndirectFixedInstances
+declare interface ImageLike {
+    //% block="set pixel of %myImage=variables_get at x %x y %y to %c"
+    setPixel(x: number, y: number, color: number): void;
+}

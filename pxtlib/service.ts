@@ -129,6 +129,7 @@ namespace ts.pxtc {
         blockSetVariable?: string; // show block with variable assigment in toolbox. Set equal to a name to control the var name
         fixedInstances?: boolean;
         fixedInstance?: boolean;
+        decompileIndirectFixedInstances?: boolean; // Attribute on TYPEs with fixedInstances set to indicate that expressions with that type may be decompiled even if not a fixed instance
         constantShim?: boolean;
         indexedInstanceNS?: string;
         indexedInstanceShim?: string;
@@ -588,7 +589,8 @@ namespace ts.pxtc {
         "optionalVariableArgs",
         "blockHidden",
         "constantShim",
-        "blockCombine"
+        "blockCombine",
+        "decompileIndirectFixedInstances"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {

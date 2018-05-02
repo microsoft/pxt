@@ -2075,7 +2075,7 @@ ${output}</xml>`;
 
             if (api) {
                 const ns = env.blocks.apis.byQName[api.namespace];
-                if (ns && ns.attributes.fixedInstances && info.args.length) {
+                if (ns && ns.attributes.fixedInstances && !ns.attributes.decompileIndirectFixedInstances && info.args.length) {
                     const callInfo: pxtc.CallInfo = (info.args[0] as any).callInfo;
                     if (!callInfo || !env.attrs(callInfo).fixedInstance) {
                         return Util.lf("Fixed instance APIs can only be called directly from the fixed instance");
