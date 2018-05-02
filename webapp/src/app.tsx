@@ -1324,9 +1324,24 @@ export class ProjectView
         // render in sidedocs
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
         const mode = "blocks"
-        const path = encodeURIComponent(JSON.stringify(files));
-        const url = `${docsUrl}#project:${path}:${mode}:${pxt.Util.localeInfo()}`;
-        window.open(url, "_blank");
+        window.localStorage["printjob"] = JSON.stringify(files);
+        const url = `${docsUrl}#print:job:${mode}:${pxt.Util.localeInfo()}`;
+
+        core.dialogAsync({
+            header: lf("Print Code"),
+            disagreeLbl: lf("Close"),
+            size: "large",
+            htmlBody: `
+            <div class="ui container">
+                <div id="printcontainer" style="position:relative;height:0;padding-bottom:40%;overflow:hidden;">
+                    <iframe frameBorder="0"
+                        sandbox="allow-popups allow-forms allow-scripts allow-same-origin allow-modals"
+                        style="position:absolute;top:0;left:0;width:100%;height:100%;"
+                        src="${url}" />
+                </div>
+            </div>`
+        }).done(r => {
+        })
     }
 
     clearSerial() {
@@ -1700,7 +1715,7 @@ export class ProjectView
                     })
                     .catch(e => {
                         // Failed to decompile
-                        pxt.tickEvent('tutorial.faileddecompile', {tutorialId: tutorialId});
+                        pxt.tickEvent('tutorial.faileddecompile', { tutorialId: tutorialId });
                         core.errorNotification(lf("Oops, an error occured as we were loading the tutorial."));
                         // Reset state (delete the current project and exit the tutorial)
                         this.exitTutorial(true);
