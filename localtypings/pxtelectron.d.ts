@@ -27,5 +27,6 @@ declare namespace pxt.electron {
 
         sendUpdateStatusCheck: () => void;
         sendQuit: () => void;
+        sendOpenDevTools: () => void;
     }
 }
