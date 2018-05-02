@@ -1687,7 +1687,11 @@ ${output}</xml>`;
             const isTopLevel = isTopLevelComment(node);
 
             for (const commentRange of commentRanges) {
-                const commentText = fileText.substr(commentRange.pos, commentRange.end - commentRange.pos)
+                let commentText = fileText.substr(commentRange.pos, commentRange.end - commentRange.pos)
+                if (commentText) {
+                    // Strip windows line endings because they break the regex we use to extract content
+                    commentText = commentText.replace(/\r\n/g, "\n");
+                }
                 if (commentRange.kind === SyntaxKind.SingleLineCommentTrivia) {
                     appendMatch(commentText, 1, 3, singleLineCommentRegex)
                 }
