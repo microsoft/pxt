@@ -135,7 +135,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                     electron.openDevTools();
                     this.hide();
                 } else {
-
                     let homeUrl = pxt.appTarget.appTheme.homeUrl;
                     if (!/\/$/.test(homeUrl)) {
                         homeUrl += "/";
