@@ -717,6 +717,7 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
         package: pxt.MainPackage;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
+        apiInfo?: pxtc.ApisInfo;
         blocksSvg?: SVGSVGElement;
     }
 
@@ -751,12 +752,13 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)
-                            return <DecompileResult>{ package: mainPkg, compileJS: resp, compileBlocks: bresp };
+                            return <DecompileResult>{ package: mainPkg, compileJS: resp, compileBlocks: bresp, apiInfo: apis };
                         pxt.debug(bresp.outfiles["main.blocks"])
                         return <DecompileResult>{
                             package: mainPkg,
                             compileJS: resp,
                             compileBlocks: bresp,
+                            apiInfo: apis,
                             blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
                         };
                     })
@@ -779,7 +781,8 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
                         pxt.blocks.initializeAndInject(blocksInfo);
                         return <DecompileResult>{
                             package: mainPkg,
-                            blocksSvg: pxt.blocks.render(code, options)
+                            blocksSvg: pxt.blocks.render(code, options),
+                            apiInfo: apis
                         };
                     })
             });

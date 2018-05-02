@@ -36,6 +36,7 @@ namespace ts.pxtc.decompiler {
     interface DecompilerEnv {
         blocks: BlocksInfo;
         declaredFunctions: pxt.Map<boolean>;
+        attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
     }
 
     interface DecompileArgument {
@@ -335,7 +336,8 @@ namespace ts.pxtc.decompiler {
         }
         const env: DecompilerEnv = {
             blocks: blocksInfo,
-            declaredFunctions: {}
+            declaredFunctions: {},
+            attrs: attrs
         };
         const fileText = file.getFullText();
         let output = ""
@@ -405,6 +407,14 @@ ${output}</xml>`;
             result.success = false;
         }
 
+        function attrs(callInfo: pxtc.CallInfo): pxtc.CommentAttrs {
+            const blockInfo = blocksInfo.apis.byQName[callInfo.qName];
+            if (blockInfo) {
+                return blockInfo.attributes;
+            }
+            return undefined;
+        }
+
         function countBlock() {
             emittedBlocks++;
             if (emittedBlocks > MAX_BLOCKS) {
@@ -447,7 +457,8 @@ ${output}</xml>`;
                     error(expr)
                     return false;
                 }
-                return callInfo.attrs.blockId && !callInfo.attrs.handlerStatement && !callInfo.isExpression && hasStatementInput(callInfo);
+                const attributes = attrs(callInfo);
+                return attributes.blockId && !attributes.handlerStatement && !callInfo.isExpression && hasStatementInput(callInfo, attributes);
             }
             return false;
         }
@@ -824,32 +835,34 @@ ${output}</xml>`;
                 return undefined;
             }
 
-            if (callInfo.attrs.blockCombine)
+            const attributes = attrs(callInfo);
+
+            if (attributes.blockCombine)
                 return getPropertyGetBlock(n)
 
-            if (callInfo.attrs.blockId === "lists_length" || callInfo.attrs.blockId === "text_length") {
-                const r = mkExpr(U.htmlEscape(callInfo.attrs.blockId));
+            if (attributes.blockId === "lists_length" || attributes.blockId === "text_length") {
+                const r = mkExpr(U.htmlEscape(attributes.blockId));
                 r.inputs = [getValue("VALUE", n.expression)];
 
                 return r;
             }
 
-            let value = U.htmlEscape(callInfo.attrs.blockId || callInfo.qName);
+            let value = U.htmlEscape(attributes.blockId || callInfo.qName);
 
             const [parent,] = getParent(n);
             const parentCallInfo: pxtc.CallInfo = parent && (parent as any).callInfo;
-            if (asField || !(blockId || callInfo.attrs.blockIdentity) || parentCallInfo && parentCallInfo.qName === callInfo.attrs.blockIdentity) {
+            if (asField || !(blockId || attributes.blockIdentity) || parentCallInfo && parentCallInfo.qName === attributes.blockIdentity) {
                 return {
                     kind: "text",
                     value
                 }
             }
 
-            if (callInfo.attrs.enumval && parentCallInfo && parentCallInfo.attrs.useEnumVal) {
-                value = callInfo.attrs.enumval;
+            if (attributes.enumval && parentCallInfo && attributes.useEnumVal) {
+                value = attributes.enumval;
             }
 
-            let idfn = blockId ? blocksInfo.blocksById[blockId] : blocksInfo.apis.byQName[callInfo.attrs.blockIdentity];
+            let idfn = blockId ? blocksInfo.blocksById[blockId] : blocksInfo.apis.byQName[attributes.blockIdentity];
             let f = /%([a-zA-Z0-9_]+)/.exec(idfn.attributes.block);
             const r = mkExpr(U.htmlEscape(idfn.attributes.blockId));
             r.fields = [{
@@ -877,7 +890,7 @@ ${output}</xml>`;
 
         function getTaggedTemplateExpression(t: ts.TaggedTemplateExpression): ExpressionNode {
             const callInfo: pxtc.CallInfo = (t as any).callInfo;
-            const api = env.blocks.apis.byQName[callInfo.attrs.blockIdentity];
+            const api = env.blocks.apis.byQName[attrs(callInfo).blockIdentity];
             const comp = pxt.blocks.compileInfo(api);
 
             const r = mkExpr(api.attributes.blockId);
@@ -1050,11 +1063,12 @@ ${output}</xml>`;
                 return undefined;
             }
 
-            const res = mkStmt(info.attrs.blockId);
+            const attributes = attrs(info);
+            const res = mkStmt(attributes.blockId);
             res.fields = [];
 
             const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
-            const nc = info.attrs.imageLiteral * 5;
+            const nc = attributes.imageLiteral * 5;
             if (nc * 5 != leds.length) {
                 error(node, Util.lf("Invalid image pattern"));
                 return undefined;
@@ -1269,6 +1283,7 @@ ${output}</xml>`;
 
         function getCallStatement(node: ts.CallExpression, asExpression: boolean): StatementNode | ExpressionNode {
             const info: pxtc.CallInfo = (node as any).callInfo
+            const attributes = attrs(info);
 
             if (info.qName == "Math.pow") {
                 const r = mkExpr("math_arithmetic");
@@ -1290,7 +1305,7 @@ ${output}</xml>`;
                 }
             }
 
-            if (info.attrs.blockId === pxtc.PAUSE_UNTIL_TYPE) {
+            if (attributes.blockId === pxtc.PAUSE_UNTIL_TYPE) {
                 const r = mkStmt(pxtc.PAUSE_UNTIL_TYPE);
                 const lambda = node.arguments[0] as (ts.FunctionExpression | ts.ArrowFunction);
 
@@ -1308,7 +1323,7 @@ ${output}</xml>`;
                 return r;
             }
 
-            if (!info.attrs.blockId || !info.attrs.block) {
+            if (!attributes.blockId || !attributes.block) {
                 const builtin = pxt.blocks.builtinFunctionInfo[info.qName];
                 if (!builtin) {
                     const name = getVariableName(node.expression as ts.Identifier);
@@ -1321,10 +1336,10 @@ ${output}</xml>`;
                         return getTypeScriptStatementBlock(node);
                     }
                 }
-                info.attrs.blockId = builtin.blockId;
+                attributes.blockId = builtin.blockId;
             }
 
-            if (info.attrs.imageLiteral) {
+            if (attributes.imageLiteral) {
                 return getImageLiteralStatement(node, info);
             }
 
@@ -1344,7 +1359,7 @@ ${output}</xml>`;
             countBlock();
             const r = {
                 kind: asExpression ? "expr" : "statement",
-                type: info.attrs.blockId
+                type: attributes.blockId
             } as StatementNode;
 
             const addInput = (v: ValueNode) => (r.inputs || (r.inputs = [])).push(v);
@@ -1363,8 +1378,8 @@ ${output}</xml>`;
                 let e = arg.value;
                 const param = arg.param;
                 const paramInfo = arg.info;
-                if (i === 0 && info.attrs.defaultInstance) {
-                    if (e.getText() === info.attrs.defaultInstance) {
+                if (i === 0 && attributes.defaultInstance) {
+                    if (e.getText() === attributes.defaultInstance) {
                         return;
                     }
                     else {
@@ -1372,7 +1387,7 @@ ${output}</xml>`;
                     }
                 }
 
-                if (info.attrs.mutatePropertyEnum && i === info.args.length - 2) {
+                if (attributes.mutatePropertyEnum && i === info.args.length - 2) {
                     // Implicit in the blocks
                     return;
                 }
@@ -1392,7 +1407,7 @@ ${output}</xml>`;
                     // are dropdown fields (not value inputs) so we want to decompile the
                     // inner enum value as a field and not the shim block as a value
                     const shimCall: pxtc.CallInfo = (e as any).callInfo;
-                    if (shimCall && shimCall.attrs.shim === "TD_ID") {
+                    if (shimCall && attrs(shimCall).shim === "TD_ID") {
                         e = unwrapNode(shimCall.args[0]) as ts.Expression;
                     }
                 }
@@ -1407,7 +1422,7 @@ ${output}</xml>`;
                         else {
                             let arrow = e as ArrowFunction;
                             if (arrow.parameters.length) {
-                                if (info.attrs.optionalVariableArgs) {
+                                if (attributes.optionalVariableArgs) {
                                     r.mutation = {
                                         "numargs": arrow.parameters.length.toString()
                                     };
@@ -1416,7 +1431,7 @@ ${output}</xml>`;
                                     });
                                 }
                                 else {
-                                    const sym = blocksInfo.blocksById[info.attrs.blockId];
+                                    const sym = blocksInfo.blocksById[attributes.blockId];
                                     const paramDesc = sym.parameters[comp.thisParameter ? i - 1 : i];
                                     arrow.parameters.forEach((parameter, i) => {
                                         const arg = paramDesc.handlerParameters[i];
@@ -1430,11 +1445,12 @@ ${output}</xml>`;
                     case SK.PropertyAccessExpression:
                         const callInfo = (e as any).callInfo as pxtc.CallInfo;
                         const aName = U.htmlEscape(param.definitionName);
+                        const argAttrs = attrs(callInfo);
 
                         if (shadowBlockInfo && shadowBlockInfo.attributes.shim === "TD_ID") {
                             addInput(mkValue(aName, getPropertyAccessExpression(e as PropertyAccessExpression, false, param.shadowBlockId), param.shadowBlockId));
                         }
-                        else if (paramInfo && paramInfo.isEnum || callInfo && (callInfo.attrs.fixedInstance || callInfo.attrs.blockIdentity === info.qName)) {
+                        else if (paramInfo && paramInfo.isEnum || callInfo && (argAttrs.fixedInstance || argAttrs.blockIdentity === info.qName)) {
                             addField(getField(aName, (getPropertyAccessExpression(e as PropertyAccessExpression, true) as TextNode).value))
                         }
                         else {
@@ -1786,7 +1802,7 @@ ${output}</xml>`;
                 return checkIncrementorExpression(node as (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression));
             case SK.FunctionExpression:
             case SK.ArrowFunction:
-                return checkArrowFunction(node as ts.ArrowFunction);
+                return checkArrowFunction(node as ts.ArrowFunction, env);
             case SK.BinaryExpression:
                 return checkBinaryExpression(node as ts.BinaryExpression, env);
             case SK.ForStatement:
@@ -1893,13 +1909,13 @@ ${output}</xml>`;
             return undefined;
         }
 
-        function checkArrowFunction(n: ts.ArrowFunction) {
+        function checkArrowFunction(n: ts.ArrowFunction, env: DecompilerEnv) {
             let fail = false;
             if (n.parameters.length) {
                 let parent = getParent(n)[0];
                 if (parent && (parent as any).callInfo) {
                     let callInfo: pxtc.CallInfo = (parent as any).callInfo;
-                    if (callInfo.attrs.mutate === "objectdestructuring") {
+                    if (env.attrs(callInfo).mutate === "objectdestructuring") {
                         fail = n.parameters[0].name.kind !== SK.ObjectBindingPattern
                     }
                     else {
@@ -1957,6 +1973,8 @@ ${output}</xml>`;
                 return Util.lf("Function call not supported in the blocks");
             }
 
+            const attributes = env.attrs(info);
+
             if (!asExpression) {
                 if (info.isExpression) {
                     return Util.lf("No output expressions as statements");
@@ -1972,7 +1990,7 @@ ${output}</xml>`;
                 }
             }
 
-            if (info.attrs.blockId === pxtc.PAUSE_UNTIL_TYPE) {
+            if (attributes.blockId === pxtc.PAUSE_UNTIL_TYPE) {
                 const predicate = n.arguments[0];
                 if (n.arguments.length === 1 && checkPredicate(predicate)) {
                     return undefined;
@@ -1980,12 +1998,12 @@ ${output}</xml>`;
                 return Util.lf("Predicates must be inline expressions that return a value");
             }
 
-            const hasCallback = hasStatementInput(info);
-            if (hasCallback && !info.attrs.handlerStatement && !topLevel) {
+            const hasCallback = hasStatementInput(info, attributes);
+            if (hasCallback && !attributes.handlerStatement && !topLevel) {
                 return Util.lf("Events must be top level");
             }
 
-            if (!info.attrs.blockId || !info.attrs.block) {
+            if (!attributes.blockId || !attributes.block) {
                 const builtin = pxt.blocks.builtinFunctionInfo[info.qName];
                 if (!builtin) {
                     if (n.arguments.length === 0 && n.expression.kind === SK.Identifier) {
@@ -1998,7 +2016,7 @@ ${output}</xml>`;
                     }
                     return Util.lf("Function call not supported in the blocks");
                 }
-                info.attrs.blockId = builtin.blockId;
+                attributes.blockId = builtin.blockId;
             }
 
             const args = paramList(info, env.blocks);
@@ -2006,7 +2024,7 @@ ${output}</xml>`;
             const comp = pxt.blocks.compileInfo(api);
             const totalDecompilableArgs = comp.parameters.length + (comp.thisParameter ? 1 : 0);
 
-            if (info.attrs.imageLiteral) {
+            if (attributes.imageLiteral) {
                 // Image literals do not show up in the block string, so it won't be in comp
                 if (info.args.length - totalDecompilableArgs > 1) {
                     return Util.lf("Function call has more arguments than are supported by its block");
@@ -2017,7 +2035,7 @@ ${output}</xml>`;
                     return Util.lf("Only string literals supported for image literals")
                 }
                 const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
-                const nc = info.attrs.imageLiteral * 5;
+                const nc = attributes.imageLiteral * 5;
                 if (nc * 5 != leds.length) {
                     return Util.lf("Invalid image pattern");
                 }
@@ -2032,7 +2050,7 @@ ${output}</xml>`;
                 // Callbacks and default instance parameters do not appear in the block
                 // definition string so they won't show up in the above count
                 if (hasCallback) diff--;
-                if (info.attrs.defaultInstance) diff--;
+                if (attributes.defaultInstance) diff--;
 
                 if (diff > 0) {
                     return Util.lf("Function call has more arguments than are supported by its block");
@@ -2041,7 +2059,7 @@ ${output}</xml>`;
 
             if (comp.parameters.length || hasCallback) {
                 let fail: string;
-                const instance = info.attrs.defaultInstance || !!comp.thisParameter;
+                const instance = attributes.defaultInstance || !!comp.thisParameter;
                 args.forEach((arg, i) => {
                     if (fail || instance && i === 0) {
                         return;
@@ -2059,7 +2077,7 @@ ${output}</xml>`;
                 const ns = env.blocks.apis.byQName[api.namespace];
                 if (ns && ns.attributes.fixedInstances && info.args.length) {
                     const callInfo: pxtc.CallInfo = (info.args[0] as any).callInfo;
-                    if (!callInfo || !callInfo.attrs.fixedInstance) {
+                    if (!callInfo || !env.attrs(callInfo).fixedInstance) {
                         return Util.lf("Fixed instance APIs can only be called directly from the fixed instance");
                     }
                 }
@@ -2070,7 +2088,7 @@ ${output}</xml>`;
             function checkForDestructuringMutation() {
                 // If the mutatePropertyEnum is set, the array literal and the destructured
                 // properties must have matching names
-                if (info.attrs.mutatePropertyEnum && argumentDifference === 2 && info.args.length >= 2) {
+                if (attributes.mutatePropertyEnum && argumentDifference === 2 && info.args.length >= 2) {
                     const arrayArg = info.args[info.args.length - 2] as ArrayLiteralExpression;
                     const callbackArg = info.args[info.args.length - 1] as ArrowFunction;
 
@@ -2081,7 +2099,7 @@ ${output}</xml>`;
                         const allLiterals = !arrayArg.elements.some((e: PropertyAccessExpression) => {
                             if (e.kind === SK.PropertyAccessExpression && e.expression.kind === SK.Identifier) {
                                 propNames.push(e.name.text);
-                                return (e.expression as ts.Identifier).text !== info.attrs.mutatePropertyEnum;
+                                return (e.expression as ts.Identifier).text !== attributes.mutatePropertyEnum;
                             }
                             return true;
                         });
@@ -2133,7 +2151,8 @@ ${output}</xml>`;
                     }
                     else if (e.kind === SK.CallExpression) {
                         const callInfo: pxtc.CallInfo = (e as any).callInfo;
-                        if (callInfo && callInfo.attrs.shim === "TD_ID" && callInfo.args && callInfo.args.length === 1) {
+                        const attributes = env.attrs(callInfo);
+                        if (callInfo && attributes.shim === "TD_ID" && callInfo.args && callInfo.args.length === 1) {
                             const arg = unwrapNode(callInfo.args[0]);
                             if (checkEnumArgument(arg)) {
                                 return undefined;
@@ -2190,7 +2209,7 @@ ${output}</xml>`;
                 else if (e.kind === SK.ArrowFunction) {
                     const ar = e as ts.ArrowFunction;
                     if (ar.parameters.length) {
-                        if (info.attrs.mutate === "objectdestructuring") {
+                        if (attributes.mutate === "objectdestructuring") {
                             const param = unwrapNode(ar.parameters[0]) as ts.ParameterDeclaration;
                             if (param.kind === SK.Parameter && param.name.kind !== SK.ObjectBindingPattern) {
                                 return Util.lf("Object destructuring mutation callbacks can only have destructuring patters as arguments");
@@ -2223,7 +2242,7 @@ ${output}</xml>`;
 
                         const callInfo: pxtc.CallInfo = (e as any).callInfo;
 
-                        if (callInfo && callInfo.attrs.fixedInstance) {
+                        if (callInfo && env.attrs(callInfo).fixedInstance) {
                             return undefined;
                         }
 
@@ -2389,10 +2408,11 @@ ${output}</xml>`;
         function checkPropertyAccessExpression(n: ts.PropertyAccessExpression, env: DecompilerEnv) {
             const callInfo: pxtc.CallInfo = (n as any).callInfo;
             if (callInfo) {
-                if (callInfo.attrs.blockIdentity || callInfo.attrs.blockId === "lists_length" || callInfo.attrs.blockId === "text_length") {
+                const attributes = env.attrs(callInfo);
+                if (attributes.blockIdentity || attributes.blockId === "lists_length" || attributes.blockId === "text_length") {
                     return undefined;
                 }
-                else if (callInfo.attrs.blockCombine) {
+                else if (attributes.blockCombine) {
                     return checkExpression(n.expression, env)
                 }
                 else if (callInfo.decl.kind === SK.EnumMember) {
@@ -2424,7 +2444,7 @@ ${output}</xml>`;
                         return undefined;
                     }
                 }
-                else if (callInfo.attrs.fixedInstance && n.parent) {
+                else if (attributes.fixedInstance && n.parent) {
                     // Check if this is a fixedInstance with a method being called on it
                     if (n.parent.parent && n.parent.kind === SK.PropertyAccessExpression && n.parent.parent.kind === SK.CallExpression) {
                         const call = n.parent.parent as CallExpression;
@@ -2449,11 +2469,13 @@ ${output}</xml>`;
             return Util.lf("Invalid tagged template");
         }
 
-        if (!callInfo.attrs.blockIdentity) {
+        const attributes = env.attrs(callInfo);
+
+        if (!attributes.blockIdentity) {
             return Util.lf("Tagged template does not have blockIdentity set");
         }
 
-        const api = env.blocks.apis.byQName[callInfo.attrs.blockIdentity];
+        const api = env.blocks.apis.byQName[attributes.blockIdentity];
 
         if (!api) {
             return Util.lf("Could not find blockIdentity for tagged template")
@@ -2495,8 +2517,8 @@ ${output}</xml>`;
         return node && node.kind === SK.Identifier && (node as ts.Identifier).text === "undefined";
     }
 
-    function hasStatementInput(info: CallInfo): boolean {
-        if (info.attrs.blockId === pxtc.PAUSE_UNTIL_TYPE) return false;
+    function hasStatementInput(info: CallInfo, attributes: CommentAttrs): boolean {
+        if (attributes.blockId === pxtc.PAUSE_UNTIL_TYPE) return false;
         const parameters = (info.decl as FunctionLikeDeclaration).parameters;
         return info.args.some((arg, index) => arg && isFunctionExpression(arg));
     }
@@ -2531,9 +2553,10 @@ ${output}</xml>`;
         const sym = blocksInfo.apis.byQName[info.qName];
 
         if (sym) {
+            const attributes = blocksInfo.apis.byQName[info.qName].attributes;
             const comp = pxt.blocks.compileInfo(sym);
             const builtin = pxt.blocks.builtinFunctionInfo[info.qName]
-            let offset = info.attrs.imageLiteral ? 1 : 0;
+            let offset = attributes.imageLiteral ? 1 : 0;
 
             if (comp.thisParameter) {
                 res.push({
@@ -2542,7 +2565,7 @@ ${output}</xml>`;
                     param: comp.thisParameter
                 });
             }
-            else if (info.attrs.defaultInstance) {
+            else if (attributes.defaultInstance) {
                 res.push({
                     value: unwrapNode(info.args[0]) as Expression,
                     info: sym.parameters[0],
@@ -2550,7 +2573,7 @@ ${output}</xml>`;
                 });
             }
 
-            const hasThisArgInSymbol = !!(comp.thisParameter || info.attrs.defaultInstance);
+            const hasThisArgInSymbol = !!(comp.thisParameter || attributes.defaultInstance);
             if (hasThisArgInSymbol) {
                 offset++;
             }
