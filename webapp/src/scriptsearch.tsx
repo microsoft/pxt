@@ -6,7 +6,8 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
-import * as codecard from "./codecard"
+import * as codecard from "./codecard";
+import * as electron from "./electron";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -130,16 +131,21 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             const urlPathExec = /^\/@(.*)$/.exec(str);
             let urlPath = urlPathExec && urlPathExec[1];
             if (urlPath) {
-                let homeUrl = pxt.appTarget.appTheme.homeUrl;
-                if (!/\/$/.test(homeUrl)) {
-                    homeUrl += "/";
+                if (urlPath === "devtools" && electron.isPxtElectron) {
+                    electron.openDevTools();
+                    this.hide();
+                } else {
+                    let homeUrl = pxt.appTarget.appTheme.homeUrl;
+                    if (!/\/$/.test(homeUrl)) {
+                        homeUrl += "/";
+                    }
+                    urlPath = urlPath.replace(/^\//, "");
+                    pxt.winrt.releaseAllDevicesAsync()
+                        .then(() => {
+                            window.location.href = homeUrl + urlPath;
+                        })
+                        .done();
                 }
-                urlPath = urlPath.replace(/^\//, "");
-                pxt.winrt.releaseAllDevicesAsync()
-                    .then(() => {
-                        window.location.href = homeUrl + urlPath;
-                    })
-                    .done();
             }
             else {
                 this.setState({ searchFor: str });
