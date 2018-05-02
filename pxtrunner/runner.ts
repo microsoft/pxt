@@ -419,6 +419,11 @@ namespace pxt.runner {
             Promise.delay(100) // allow UI to update
                 .then(() => {
                     switch (doctype) {
+                        case "print":
+                            const data = window.localStorage["printjob"];
+                            delete window.localStorage["printjob"];
+                            return renderProjectFilesAsync(content, JSON.parse(data))
+                                .then(() => pxsim.print(1000));
                         case "project":
                             return renderProjectFilesAsync(content, JSON.parse(src))
                                 .then(() => pxsim.print(1000));
@@ -457,7 +462,7 @@ namespace pxt.runner {
         }
 
         function renderHash() {
-            let m = /^#(doc|md|tutorial|book|project|projectid):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
+            let m = /^#(doc|md|tutorial|book|project|projectid|print):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
                 const p = m[4] ? setEditorContextAsync(
