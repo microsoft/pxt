@@ -95,7 +95,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     inlineBlock.innerHTML = '';
                     inlineBlock.appendChild(inlineBlockDiv);
                     inlineBlockDiv.className = lev;
-                    inlineBlockDiv.textContent = pxt.Util.htmlEscape(pxt.U.rlf(txt));
+                    inlineBlockDiv.textContent = pxt.U.rlf(txt);
                 }
             })
     }

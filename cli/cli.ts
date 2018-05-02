@@ -1614,9 +1614,10 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     let pkg = readJson("package.json")
 
     nodeutil.mkdirP(path.join("built", "web"));
+    let lessParentPath = fs.existsSync("node_modules/pxt-core/node_modules/less/") ? 'node_modules/pxt-core' : '';
     return nodeutil.spawnAsync({
         cmd: "node",
-        args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar", "--no-ie-compat"]
+        args: [path.join(lessParentPath, "node_modules/less/bin/lessc"), "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar", "--no-ie-compat"]
     }).then(() => {
         const fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff")
         const url = "url(data:application/font-woff;charset=utf-8;base64,"
@@ -1637,7 +1638,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
             return Promise.resolve();
         return nodeutil.spawnAsync({
             cmd: "node",
-            args: ["node_modules/less/bin/lessc", "theme/blockly.less", "built/web/blockly.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar", "--no-ie-compat"]
+            args: [path.join(lessParentPath, "node_modules/less/bin/lessc"), "theme/blockly.less", "built/web/blockly.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar", "--no-ie-compat"]
         })
     }).then(() => {
         // run postcss with autoprefixer and rtlcss
