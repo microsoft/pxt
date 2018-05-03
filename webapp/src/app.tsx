@@ -415,9 +415,7 @@ export class ProjectView
             orphanException: brk => {
                 // TODO: start debugging session
                 // TODO: user friendly error message
-                core.warningNotification(lf("Program Error: {0}", brk.exceptionMessage));                const mainPkg = pkg.mainEditorPkg();
-                const f = mainPkg.outputPkg.setFile("output.txt", brk.exceptionMessage)
-                f.numDiagnosticsOverride = 1
+                core.warningNotification(lf("Program Error: {0}", brk.exceptionMessage));
             },
             highlightStatement: (stmt, brk) => {
                 if (this.editor) return this.editor.highlightStatement(stmt, brk);
