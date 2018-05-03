@@ -1,12 +1,10 @@
 # Microsoft MakeCode is replacing Touch Develop 
   
-~~ hint
-
-## UPDATE
+##~ hint
 
 We heard your feedback. To prevent disruption to the current school year and to help you better plan your transition to MakeCode, we are extending the retirement date of Touch Develop to June 22, 2019. Thanks for your support and feedback. 
 
-~~
+##~
 
 ## The Change Microsoft is Making 
 
