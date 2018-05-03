@@ -195,7 +195,7 @@ namespace ts.pxtc {
     }
 
 
-    export type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
+    export type BlockContentPart = BlockLabel | BlockParameter | BlockImage | BlockSeparator;
     export type BlockPart = BlockContentPart | BlockBreak;
 
     export interface BlockLabel {
@@ -218,6 +218,10 @@ namespace ts.pxtc {
     export interface BlockImage {
         kind: "image";
         uri: string;
+    }
+
+    export interface BlockSeparator {
+        kind: "separator";
     }
 
     export interface ParsedBlockDef {
@@ -325,6 +329,7 @@ namespace ts.pxtc {
         Word = 1 << 7,
         Image = 1 << 8,
         TaggedText = 1 << 9,
+        Hash = 1 << 10,
 
         TripleUnderscore = SingleUnderscore | DoubleUnderscore,
         TripleAsterisk = SingleAsterisk | DoubleAsterisk,
@@ -762,6 +767,9 @@ namespace ts.pxtc {
                 case "|":
                     newToken = { kind: TokenKind.Pipe };
                     break;
+                case "#":
+                    newToken = { kind: TokenKind.Hash };
+                    break;
                 case "\\":
                     if (strIndex < (def.length - 1)) newToken = { kind: TokenKind.Escape, content: def[1 + (strIndex++)] };
                     break;
@@ -871,6 +879,9 @@ namespace ts.pxtc {
             }
             else if (token == TokenKind.Pipe) {
                 parts.push({ kind: "break" });
+            }
+            else if (token == TokenKind.Hash) {
+                parts.push({ kind: "separator" } as BlockSeparator);
             }
         }
 

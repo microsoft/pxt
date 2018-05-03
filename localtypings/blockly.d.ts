@@ -574,6 +574,10 @@ declare namespace Blockly {
         forceRerender(): void;
     }
 
+    class FieldVerticalSeparator extends Field {
+        constructor();
+    }
+
     class FieldVariable extends Field {
         constructor(d: any);
     }
