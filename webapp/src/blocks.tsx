@@ -551,6 +551,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     insertBreakpoint() {
         if (!this.editor) return;
         const b = this.editor.newBlock(pxtc.TS_DEBUGGER_TYPE);
+        // move block roughly to the center of the screen
+        const m = this.editor.getMetrics();
+        b.moveBy(m.viewWidth / 2, m.viewHeight / 2);
         b.initSvg();
         b.render();
     }
