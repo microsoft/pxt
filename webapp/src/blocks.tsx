@@ -553,7 +553,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const b = this.editor.newBlock(pxtc.TS_DEBUGGER_TYPE);
         // move block roughly to the center of the screen
         const m = this.editor.getMetrics();
-        b.moveBy(m.viewWidth / 2, m.viewHeight / 2);
+        b.moveBy(m.viewWidth / 2, m.viewHeight / 3);
         b.initSvg();
         b.render();
     }
