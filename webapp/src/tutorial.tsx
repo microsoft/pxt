@@ -149,16 +149,18 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 
         const hide = () => this.setState({ visible: false });
         const next = () => {
+            hide();
             const nextStep = tutorialStep + 1;
             options.tutorialStep = nextStep;
             pxt.tickEvent(`tutorial.hint.next`, { tutorial: options.tutorial, step: nextStep });
             this.props.parent.setTutorialStep(nextStep);
         }
 
+        const isRtl = pxt.Util.isUserLanguageRtl();
         const actions: sui.ModalButton[] = [tutorialUnplugged ? {
             label: lf("Next"),
             onclick: next,
-            icon: 'check',
+            icon: `${isRtl ? 'left' : 'right'} chevron`,
             className: 'green'
         } : {
                 label: lf("Ok"),
@@ -169,7 +171,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 
         return <sui.Modal isOpen={visible} className="hintdialog"
             closeIcon={true} header={header} buttons={actions}
-            onClose={hide} dimmer={true} longer={true}
+            onClose={tutorialUnplugged ? next : hide} dimmer={true} longer={true}
             closeOnDimmerClick closeOnDocumentClick closeOnEscape>
             <md.MarkedContent markdown={tutorialHint} parent={this.props.parent} />
         </sui.Modal>;
