@@ -413,7 +413,9 @@ export class ProjectView
         this.allEditors.forEach(e => e.prepare())
         simulator.init(document.getElementById("boardview"), {
             orphanException: brk => {
-                // do something!
+                // TODO: start debugging session
+                // TODO: user friendly error message
+                core.warningNotification(lf("Program Error: {0}", brk.exceptionMessage));
             },
             highlightStatement: (stmt, brk) => {
                 if (this.editor) return this.editor.highlightStatement(stmt, brk);
