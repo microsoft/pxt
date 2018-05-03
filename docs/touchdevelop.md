@@ -1,5 +1,9 @@
 # Microsoft MakeCode is replacing Touch Develop 
   
+## UPDATE
+
+We heard your feedback. To prevent disruption to the current school year and to help you better plan your transition to MakeCode, we are extending the retirement date of Touch Develop to June 22, 2019. Thanks for your support and feedback”. 
+
 ## The Change Microsoft is Making 
 
 At Microsoft, we continually evaluate and invest in building the right tools to help every student learn the computer science skills they need to succeed in the future. Recently, we determined we needed to replace [Touch Develop](https://www.touchdevelop.com) with [Microsoft MakeCode](https://makecode.com) in order to provide a more holistic, hands-on computing education platform that will bring computer science to life through physical computing devices like the micro:bit and immersive experiences like Minecraft.  
@@ -10,13 +14,9 @@ At Microsoft, we continually evaluate and invest in building the right tools to 
  
 ## What is the impact of the change? 
 
-Microsoft [Touch Develop](https://www.touchdevelop.com), a project developed by Microsoft Research to provide computing education to any student on any device, will no longer be available as of May 23, 2018
+Microsoft [Touch Develop](https://www.touchdevelop.com), a project developed by Microsoft Research to provide computing education to any student on any device, will no longer be available as of June 22, 2019.
   
-As a result, customers using the “Creative Coding Through Games and Apps” (CCGA) course based on Touch Develop will no longer have access as of May 23, 2018. 
- 
-## What if we are still using CCGA or Touch Develop this term? 
-
-Microsoft advises that all teachers have scripts graded by the 23rd of May.  
+As a result, customers using the “Creative Coding Through Games and Apps” (CCGA) course based on Touch Develop will no longer have access as of June 22, 2019.
   
 ## What to expect next? 
 
