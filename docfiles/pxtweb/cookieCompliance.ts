@@ -72,19 +72,19 @@ namespace pxt {
 
     export function initAnalyticsAsync() {
         if (isNativeApp()) {
-            initializeAppInsights(true);
+            initializeAppInsightsInternal(true);
             return;
         }
 
         if (isSandboxMode()) {
-            initializeAppInsights(false);
+            initializeAppInsightsInternal(false);
             return;
         }
 
         getCookieBannerAsync(document.domain, detectLocale(), (bannerErr, info) => {
             if (bannerErr || info.Error) {
                 // Start app insights, just don't drop any cookies
-                initializeAppInsights(false);
+                initializeAppInsightsInternal(false);
                 return;
             }
 
@@ -112,10 +112,10 @@ namespace pxt {
             all(info.Js || [], injectScriptAsync, msccError => {
                 if (!msccError && typeof mscc !== "undefined") {
                     if (mscc.hasConsent()) {
-                        initializeAppInsights(true)
+                        initializeAppInsightsInternal(true)
                     }
                     else {
-                        mscc.on("consent", () => initializeAppInsights(true));
+                        mscc.on("consent", () => initializeAppInsightsInternal(true));
                     }
                 }
             });
@@ -189,7 +189,7 @@ namespace pxt {
         return true;
     }
 
-    function initializeAppInsights(includeCookie = false) {
+    export function initializeAppInsightsInternal(includeCookie = false) {
         // loadAppInsights is defined in docfiles/tracking.html
         const loadAI = (window as any).loadAppInsights;
         if (loadAI) {
