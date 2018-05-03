@@ -157,17 +157,12 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         }
 
         const isRtl = pxt.Util.isUserLanguageRtl();
-        const actions: sui.ModalButton[] = [tutorialUnplugged ? {
-            label: lf("Next"),
-            onclick: next,
-            icon: `${isRtl ? 'left' : 'right'} chevron`,
+        const actions: sui.ModalButton[] = [{
+            label: lf("Ok"),
+            onclick: tutorialUnplugged ? next : hide,
+            icon: 'check',
             className: 'green'
-        } : {
-                label: lf("Ok"),
-                onclick: hide,
-                icon: 'check',
-                className: 'green'
-            }]
+        }]
 
         return <sui.Modal isOpen={visible} className="hintdialog"
             closeIcon={true} header={header} buttons={actions}
