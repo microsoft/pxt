@@ -149,27 +149,24 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 
         const hide = () => this.setState({ visible: false });
         const next = () => {
+            hide();
             const nextStep = tutorialStep + 1;
             options.tutorialStep = nextStep;
             pxt.tickEvent(`tutorial.hint.next`, { tutorial: options.tutorial, step: nextStep });
             this.props.parent.setTutorialStep(nextStep);
         }
 
-        const actions: sui.ModalButton[] = [tutorialUnplugged ? {
-            label: lf("Next"),
-            onclick: next,
+        const isRtl = pxt.Util.isUserLanguageRtl();
+        const actions: sui.ModalButton[] = [{
+            label: lf("Ok"),
+            onclick: tutorialUnplugged ? next : hide,
             icon: 'check',
             className: 'green'
-        } : {
-                label: lf("Ok"),
-                onclick: hide,
-                icon: 'check',
-                className: 'green'
-            }]
+        }]
 
         return <sui.Modal isOpen={visible} className="hintdialog"
             closeIcon={true} header={header} buttons={actions}
-            onClose={hide} dimmer={true} longer={true}
+            onClose={tutorialUnplugged ? next : hide} dimmer={true} longer={true}
             closeOnDimmerClick closeOnDocumentClick closeOnEscape>
             <md.MarkedContent markdown={tutorialHint} parent={this.props.parent} />
         </sui.Modal>;
@@ -306,6 +303,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
 
         const currentStep = tutorialStep;
         const maxSteps = tutorialStepInfo.length;
+        const hasPrevious = tutorialReady && currentStep != 0;
         const hasNext = tutorialReady && currentStep != maxSteps - 1;
         const hasFinish = currentStep == maxSteps - 1;
         const hasHint = this.hasHint();
@@ -317,6 +315,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         const isRtl = pxt.Util.isUserLanguageRtl();
         return <div id="tutorialcard" className={`ui ${tutorialReady ? 'tutorialReady' : ''}`} >
             <div className='ui buttons'>
+                {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron`} className={`prevbutton right attached green ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="landscape only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={() => this.previousTutorialStep()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
                     <div className='avatar-image' onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter}></div>
                     {hasHint ? <sui.Button className="mini blue hintbutton hidelightbox" text={lf("Hint")} tabIndex={-1} onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
@@ -328,7 +327,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
                     </div>
                     <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={() => this.closeLightbox()} onKeyDown={sui.fireClickOnEnter} />
                 </div>
-                {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron`} rightIcon className={`nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} ariaLabel={lf("Go to the next step of the tutorial.")} onClick={() => this.nextTutorialStep()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron`} rightIcon className={`nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} textClass="landscape only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={() => this.nextTutorialStep()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={() => this.finishTutorial()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
