@@ -1,11 +1,7 @@
 \section{Evaluation}
 \label{sec:evaluate}
 
-Our platform has been actively deployed for over a year, bringing the benefits of a safe programming environment for MCUs to hundreds of thousands of active users. In this section we provide a broad, quantitative evaluation of the cost at which these benefits are realized. We do this with several micro-benchmarks that give insight into the performance of \MC and \CO across the Uno, micro:bit, and CPX devices. We break down results by layer (\CO and \MCN) to give an insight into how each performs:
-\begin{itemize}
-\item \emph{\CON}: the device runtime, against which we write C++ programs;
-\item \emph{\MC wrappers}: the C++ and STS wrapping \CO to expose it to \MCN, against which we write STS programs.
-\end{itemize}
+Our platform has been actively deployed for over a year, bringing the benefits of a safe programming environment for MCUs to hundreds of thousands of active users. In this section we provide a broad, quantitative evaluation of the cost at which these benefits are realized. We do this with several micro-benchmarks that give insight into the performance of \MC and \CO across the Uno, micro:bit, and CPX devices. We break down results by layer (\CO and \MCN) to give an insight into how each performs.
 
 \subsection{Benchmarks, Devices, and Methodology}
 
@@ -74,7 +70,7 @@ We performed this test in both STS and C++ and the resulting profiles can be see
 breaks the context switch down into three phases:
 (1) \CON, the time it takes to perform a context switch in \CON;
 (2) Stack, the time taken to page out the \MC stack; and
-(3) \MCN, the overhead added by \MC wrappers.
+(3) \MCN, the overhead added by \MCN.
 
 From these results, we observe that context switches generally take tens of microseconds. The cost of \CON's stack paging approach can also be a significant, but not dominant cost. The cost of stack paging would of course grow with stack depth. Figure~\ref{fig:context-vs-stack} profiles the time a context switch takes with an increasing stack size across all three devices in \CON. This is similar to the previous test, except we placed bytes (in powers of 2) on the stack of each fiber, starting from 64 and finishing at 1024. The difference in gradients, and ranges of values can be put down to device capability. For instance, the Uno has an 8-bit word size, which means more instructions are required to copy the stack, therefore as the stack size increases, so does context switch time. The vertical band indicates typical stack sizes for \MC programs based on a representative set of examples.
 
