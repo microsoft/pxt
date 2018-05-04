@@ -25,7 +25,6 @@ import * as tutorial from "./tutorial";
 import * as editortoolbar from "./editortoolbar";
 import * as simtoolbar from "./simtoolbar";
 import * as dialogs from "./dialogs";
-import * as importhelpers from "./import";
 import * as debug from "./debugger";
 import * as filelist from "./filelist";
 import * as container from "./container";
@@ -821,6 +820,98 @@ export class ProjectView
         new serial.ResourceImporter()
     ];
 
+
+    isHexFile(filename: string): boolean {
+        return /\.(hex|uf2)$/i.test(filename)
+    }
+
+    isBlocksFile(filename: string): boolean {
+        return /\.blocks$/i.test(filename)
+    }
+
+    isTypescriptFile(filename: string): boolean {
+        return /\.ts$/i.test(filename);
+    }
+
+    isProjectFile(filename: string): boolean {
+        return /\.(pxt|mkcd)$/i.test(filename)
+    }
+
+    isPNGFile(filename: string): boolean {
+        return pxt.appTarget.compile.saveAsPNG && /\.png$/i.test(filename);
+    }
+
+    isAssetFile(filename: string): boolean {
+        let exts = pxt.appTarget.runtime ? pxt.appTarget.runtime.assetExtensions : null
+        if (exts) {
+            let ext = filename.replace(/.*\./, "").toLowerCase()
+            return exts.indexOf(ext) >= 0
+        }
+        return false
+    }
+
+    importProjectCoreAsync(buf: Uint8Array) {
+        return pxt.lzmaDecompressAsync(buf)
+            .then(contents => {
+                let data = JSON.parse(contents) as pxt.cpp.HexFile;
+                this.importHex(data);
+            }).catch(e => {
+                core.warningNotification(lf("Sorry, we could not import this project."))
+                this.openHome();
+            });
+    }
+
+    importHexFile(file: File) {
+        if (!file) return;
+        pxt.cpp.unpackSourceFromHexFileAsync(file)
+            .done(data => this.importHex(data));
+    }
+
+    importBlocksFiles(file: File) {
+        if (!file) return;
+        ts.pxtc.Util.fileReadAsTextAsync(file)
+            .done(contents => {
+                this.newProject({
+                    filesOverride: { "main.blocks": contents, "main.ts": "  " },
+                    name: file.name.replace(/\.blocks$/i, '') || lf("Untitled")
+                })
+            })
+    }
+
+    importTypescriptFile(file: File) {
+        if (!file) return;
+        ts.pxtc.Util.fileReadAsTextAsync(file)
+            .done(contents => {
+                this.newProject({
+                    filesOverride: { "main.blocks": '', "main.ts": contents || "  " },
+                    name: file.name.replace(/\.ts$/i, '') || lf("Untitled")
+                })
+            })
+    }
+
+    importProjectFile(file: File) {
+        if (!file) return;
+        ts.pxtc.Util.fileReadAsBufferAsync(file)
+            .then(buf => this.importProjectCoreAsync(buf))
+    }
+
+    importPNGFile(file: File) {
+        if (!file) return;
+        ts.pxtc.Util.fileReadAsBufferAsync(file)
+            .then(buf => screenshot.decodeBlobAsync("data:image/png;base64," +
+                btoa(pxt.Util.uint8ArrayToString(buf))))
+            .then(buf => this.importProjectCoreAsync(buf))
+    }
+
+    importAssetFile(file: File) {
+        ts.pxtc.Util.fileReadAsBufferAsync(file)
+            .then(buf => {
+                let basename = file.name.replace(/.*[\/\\]/, "")
+                return pkg.mainEditorPkg().saveAssetAsync(basename, buf)
+            })
+            .done()
+    }
+
     importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
         const targetId = pxt.appTarget.id;
         if (!data || !data.meta) {
@@ -866,7 +957,7 @@ export class ProjectView
 
     initDragAndDrop() {
         draganddrop.setupDragAndDrop(document.body,
-            file => file.size < 1000000 && importhelpers.isHexFile(file.name) || importhelpers.isBlocksFile(file.name),
+            file => file.size < 1000000 && this.isHexFile(file.name) || this.isBlocksFile(file.name),
             files => {
                 if (files) {
                     pxt.tickEvent("dragandrop.open")
@@ -878,19 +969,19 @@ export class ProjectView
 
     importFile(file: File) {
         if (!file || pxt.shell.isReadOnly()) return;
-        if (importhelpers.isHexFile(file.name)) {
-            importhelpers.importHexFile(file)
-        } else if (importhelpers.isBlocksFile(file.name)) {
-            importhelpers.importBlocksFiles(file)
-        } else if (importhelpers.isTypescriptFile(file.name)) {
-            importhelpers.importTypescriptFile(file);
-        } else if (importhelpers.isProjectFile(file.name)) {
-            importhelpers.importProjectFile(file);
-        } else if (importhelpers.isAssetFile(file.name)) {
+        if (this.isHexFile(file.name)) {
+            this.importHexFile(file)
+        } else if (this.isBlocksFile(file.name)) {
+            this.importBlocksFiles(file)
+        } else if (this.isTypescriptFile(file.name)) {
+            this.importTypescriptFile(file);
+        } else if (this.isProjectFile(file.name)) {
+            this.importProjectFile(file);
+        } else if (this.isAssetFile(file.name)) {
             // assets need to go before PNG source import below, since target might want PNG assets
-            importhelpers.importAssetFile(file)
-        } else if (importhelpers.isPNGFile(file.name)) {
-            importhelpers.importPNGFile(file);
+            this.importAssetFile(file)
+        } else if (this.isPNGFile(file.name)) {
+            this.importPNGFile(file);
         } else {
             const importer = this.resourceImporters.filter(fi => fi.canImport(file))[0];
             if (importer) {
@@ -967,7 +1058,7 @@ export class ProjectView
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
-        this.setState({ home: true });
+        this.setState({ home: true, tracing: undefined, fullscreen: undefined });
         this.allEditors.forEach(e => e.setVisible(false));
         this.homeLoaded();
     }
@@ -1452,6 +1543,7 @@ export class ProjectView
             .then(blocksInfo => compiler.decompileSnippetAsync(req.ts, blocksInfo))
             .then(resp => {
                 const svg = pxt.blocks.render(resp, { snippetMode: true, layout: pxt.blocks.BlockLayout.Align });
+                // TODO: what if svg is undefined? handle that scenario
                 const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
                 return pxt.blocks.layout.blocklyToSvgAsync(svg, viewBox[0], viewBox[1], viewBox[2], viewBox[3]);
             }).then(re => re.xml);
