@@ -125,7 +125,9 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     setPreviousItem() {
         if (this.selectedIndex > 0) {
             const newIndex = --this.selectedIndex;
-            this.setSelection(this.items[newIndex], newIndex);
+            // Check if the previous item has a subcategory
+            let previousItem = this.items[newIndex];
+            this.setSelection(previousItem, newIndex);
         } else if (this.state.showSearchBox) {
             // Focus the search box if it exists
             const searchBox = this.refs.searchbox as ToolboxSearch;
@@ -149,6 +151,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     clear() {
         this.clearSelection();
         this.selectedIndex = 0;
+        this.selectedTreeRow = undefined;
     }
 
     clearSelection() {
@@ -182,6 +185,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             if (!handled) {
                 this.setState({ selectedItem: id, expandedItem: nameid, focusSearch: false })
                 this.selectedIndex = index;
+                this.selectedTreeRow = treeRow;
                 if (treeRow.advanced && !this.state.showAdvanced) this.showAdvanced();
 
                 if (!customClick) {
@@ -278,12 +282,11 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
     refreshSelection() {
         const { parent } = this.props;
-        if (!this.state.selectedItem) return;
-        const treeRow = this.items[this.selectedIndex];
-        if (treeRow.customClick) {
-            treeRow.customClick(parent);
+        if (!this.state.selectedItem || !this.selectedTreeRow) return;
+        if (this.selectedTreeRow.customClick) {
+            this.selectedTreeRow.customClick(parent);
         } else {
-            this.showFlyout(treeRow);
+            this.showFlyout(this.selectedTreeRow);
         }
     }
 
@@ -292,12 +295,13 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.showFlyout(searchTreeRow);
     }
 
+    private selectedTreeRow: ToolboxCategory;
     private showFlyout(treeRow: ToolboxCategory) {
         const { parent } = this.props;
-        const t0 = performance.now();
+        // const t0 = performance.now();
         parent.showFlyout(treeRow);
-        const t1 = performance.now();
-        pxt.debug("perf: call to showFlyout took " + (t1 - t0) + " milliseconds.");
+        // const t1 = performance.now();
+        // pxt.debug("perf: call to showFlyout took " + (t1 - t0) + " milliseconds.");
     }
 
     closeFlyout() {
@@ -320,15 +324,18 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         return categories.filter(category => category.advanced);
     }
 
-    private getAllCategoriesList(): ToolboxCategory[] {
+    private getAllCategoriesList(visibleOnly?: boolean): ToolboxCategory[] {
         const { categories, hasSearch, expandedItem } = this.state;
         const categoriesList: ToolboxCategory[] = [];
         if (hasSearch) categoriesList.push(ToolboxSearch.getSearchTreeRow());
         categories.forEach(category => {
             categoriesList.push(category);
-            if (category.subcategories) category.subcategories.forEach(subcategory => {
-                categoriesList.push(subcategory);
-            })
+            if (category.subcategories &&
+                (!visibleOnly || visibleOnly && category.nameid == expandedItem)) {
+                category.subcategories.forEach(subcategory => {
+                    categoriesList.push(subcategory);
+                })
+            }
         })
         return categoriesList;
     }
@@ -383,7 +390,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                     {nonAdvancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this)}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
-                                <CategoryItem key={subTreeRow.nameid} index={expandedItem == treeRow.nameid ? index++ : -1} toolbox={this} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection.bind(this)} />
+                                <CategoryItem key={subTreeRow.nameid} index={index++} toolbox={this} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection.bind(this)} />
                             )) : undefined}
                         </CategoryItem>
                     ))}
@@ -392,7 +399,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                     {showAdvanced ? advancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection.bind(this)}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
-                                <CategoryItem key={subTreeRow.nameid} toolbox={this} index={expandedItem == treeRow.nameid ? index++ : -1} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection.bind(this)} />
+                                <CategoryItem key={subTreeRow.nameid} toolbox={this} index={index++} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection.bind(this)} />
                             )) : undefined}
                         </CategoryItem>
                     )) : undefined}
