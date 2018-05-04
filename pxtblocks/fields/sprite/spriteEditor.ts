@@ -45,7 +45,7 @@ namespace pxtblockly {
         private root: svg.SVG;
 
         private palette: ColorPalette;
-        private paintSurface: BitmapImage;
+        private paintSurface: CanvasGrid;
         private preview: BitmapImage;
         private toolbar: Toolbar;
         private repoterBar: svg.Group;
@@ -98,12 +98,7 @@ namespace pxtblockly {
             });
             this.palette.setRootId("sprite-editor-palette");
 
-            this.paintSurface = new BitmapImage({
-                outerMargin: 0,
-                backgroundFill: 'url("#alpha-background")',
-                cellClass: "pixel-cell"
-            }, this.state.copy(), [null].concat(this.colors), this.root);
-            this.paintSurface.setRootId("sprite-editor-canvas");
+            this.paintSurface = new CanvasGrid(this.colors, this.state.copy());
 
             this.paintSurface.drag((col, row) => {
                 this.debug("gesture (" + PaintTool[this.activeTool] + ")");
@@ -135,7 +130,6 @@ namespace pxtblockly {
                 this.cursorInfo.text("");
             });
 
-            this.group.appendChild(this.paintSurface.getView());
             this.group.appendChild(this.palette.getView());
 
             this.toolbar = new Toolbar(this.group.group(), {
@@ -179,7 +173,8 @@ namespace pxtblockly {
             }
         }
 
-        render(el: HTMLElement): void {
+        render(el: HTMLDivElement): void {
+            this.paintSurface.render(el);
             el.appendChild(this.root.el);
             this.layout();
             this.root.attr({ "width": this.outerWidth() + "px", "height": this.outerHeight() + "px" });
@@ -196,10 +191,8 @@ namespace pxtblockly {
             this.palette.translate(PADDING, paintAreaTop);
 
             const paintAreaLeft = PADDING + this.palette.outerWidth() + PALETTE_CANVAS_MARGIN;
-
             this.paintSurface.setGridDimensions(CANVAS_HEIGHT);
-            const canvasLeft = paintAreaLeft + CANVAS_HEIGHT / 2 - this.paintSurface.outerWidth() / 2;
-            this.paintSurface.translate(canvasLeft, paintAreaTop);
+            this.paintSurface.updateBounds(paintAreaTop, paintAreaLeft, CANVAS_HEIGHT, CANVAS_HEIGHT);
 
             this.repoterBar.translate(paintAreaLeft, paintAreaTop + CANVAS_HEIGHT + REPORTER_BAR_CANVAS_MARGIN);
             this.canvasDimensions.at(CANVAS_HEIGHT - this.canvasDimensions.el.getComputedTextLength(), 0);
@@ -209,7 +202,6 @@ namespace pxtblockly {
 
             this.toolbar.translate(PADDING, PADDING);
             this.toolbar.setDimensions(this.width - PADDING * 2, TOOLBAR_HEIGHT);
-
         }
 
         setPreview(preview: BitmapImage, width: number) {
@@ -289,7 +281,6 @@ namespace pxtblockly {
             this.state = resizeBitmap(this.cachedState, width, height);
 
             this.paintSurface.restore(this.state, true);
-            this.paintSurface.setGridDimensions(CANVAS_HEIGHT);
 
             this.preview.restore(this.state, true);
             this.preview.setGridDimensions(this.previewWidth);

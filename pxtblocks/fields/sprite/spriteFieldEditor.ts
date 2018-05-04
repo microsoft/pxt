@@ -80,11 +80,14 @@ namespace pxtblockly {
          * @private
          */
         showEditor_() {
+            const windowSize = goog.dom.getViewportSize();
+            const scrollOffset = goog.style.getViewportPageOffset(document);
+
             // If there is an existing drop-down someone else owns, hide it immediately and clear it.
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.DropDownDiv.clearContent();
 
-            let contentDiv = Blockly.DropDownDiv.getContentDiv();
+            let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
 
             this.editor = new SpriteEditor(this.preview.bitmap());
             this.editor.setPreview(this.preview, PREVIEW_WIDTH);
@@ -107,13 +110,14 @@ namespace pxtblockly {
                 goog.style.setStyle(contentDiv, "overflow", null);
                 goog.style.setStyle(contentDiv, "max-height", null);
             });
-            this.editor.layout();
+
             goog.style.setHeight(contentDiv, this.editor.outerHeight() + 1);
             goog.style.setWidth(contentDiv, this.editor.outerWidth() + 1);
             goog.style.setStyle(contentDiv, "overflow", "hidden");
             goog.style.setStyle(contentDiv, "max-height", "500px");
-        }
 
+            this.editor.layout();
+        }
 
         private isInFlyout() {
             return (this.sourceBlock_.workspace.getParentSvg() as SVGElement).className.baseVal == "blocklyFlyout";
