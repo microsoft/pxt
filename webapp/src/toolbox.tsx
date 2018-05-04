@@ -366,8 +366,15 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
         const searchTreeRow = ToolboxSearch.getSearchTreeRow();
 
+        const appTheme = pxt.appTarget.appTheme;
+        const classes = sui.cx([
+            'pxtToolbox',
+            appTheme.invertedToolbox ? 'invertedToolbox' : '',
+            appTheme.coloredToolbox ? 'coloredToolbox' : ''
+        ])
+
         let index = 0;
-        return <div ref={e => this.rootElement = e} id={`${editorname}EditorToolbox`}>
+        return <div ref={e => this.rootElement = e} className={classes} id={`${editorname}EditorToolbox`}>
             <ToolboxStyle categories={this.items} />
             {showSearchBox ? <ToolboxSearch ref="searchbox" parent={parent} toolbox={this} editorname={editorname} /> : undefined}
             <div className="blocklyTreeRoot">
