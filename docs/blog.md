@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode for LEGO MINDSTORMS](/blog/lego/05-08-2018)
+
+May 8th, 2018 by [Jaqster](https://github.com/jaqster)
+
+Today we are incredibly happy to announce MakeCode for LEGO MINDSTORMS! This is the culmination of months of engineering, design and user testing work we’ve been doing with...
+**[Continue reading this blog post](/blog/lego/05-08-2018)**
+
+
 ## [Microsoft MakeCode for Cue](/blog/wonder-workshop/03-05-2018)
 
 March 5th, 2018
