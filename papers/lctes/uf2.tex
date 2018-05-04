@@ -1,7 +1,7 @@
 \section{\UF}
 \label{sec:uf2}
 
-The \UF bootloader enables efficient, universal microcontroller programming through a USB pen drive interface --- no drivers are required, as operating systems support pen drives out of the box. The \UF bootloader builds upon the work of DAPLink~\cite{GitHubAR5:online}, but offers a simpler implementation through the creation of a new flashing format, \UFN.
+The \UF bootloader enables efficient, universal microcontroller programming through a USB pen drive interface --- no drivers are required, as operating systems support pen drives out of the box. The \UF bootloader builds upon the work of DAPLink~\cite{GitHubAR5:online}, but offers a simpler implementation via a new flashing format, \UFN.
 
 DAPLink exposes a small virtual 512-byte block FAT file system (VFS), with an empty file allocation table and root directory. When the OS tries to read a block, DAPLink computes what should be there. During file system writes, DAP\-Link detects blocks of files in Intel HEX format~\cite{IntelHEX}, decodes them, and flashes the file's contents into the target microcontroller's memory. Other file system writes are ignored.
 
