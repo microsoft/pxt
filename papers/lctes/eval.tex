@@ -4,12 +4,12 @@
 Our platform has been actively deployed for over a year, bringing the benefits of a safe programming environment for MCUs to hundreds of thousands of active users. In this section we provide a broad, quantitative evaluation of the cost at which these benefits are realized. We do this with several micro-benchmarks that give insight into the performance of \MC and \CO across the Uno, micro:bit, and CPX devices. We break down results by layer (\CO and \MCN) to give an insight into how each performs:
 \begin{itemize}
 \item \emph{\CON}: the device runtime, against which we write C++ programs;
-\item \emph{\MCN wrappers}: the C++ and STS wrapping \CO to expose it to \MCN, against which we write STS programs.
+\item \emph{\MC wrappers}: the C++ and STS wrapping \CO to expose it to \MCN, against which we write STS programs.
 \end{itemize}
 
 \subsection{Benchmarks, Devices, and Methodology}
 
-To analyze the performance of our solution, we have written a suite of programs to evaluate different aspects of \MC and \CO  on a representative selection of real hardware devices. Throughout, we use the C++ \CO benchmarks as a baseline; the STS benchmarks show the overhead added by \MCN. These programs were written in both C++ and STS, and evaluated on the three devices listed in (Table~\ref{table:devices}): The micro:bit (Nordic nRF51 MCU), the CPX (Atmel ATSAMD21 MCU), and the Uno (Atmel ATmega MCU).
+To analyze the performance of our solution, we have written a suite of programs to evaluate different aspects of \MC and \CO  on a representative selection of real hardware devices. Throughout, we use the C++ \CO benchmarks as a baseline; the STS benchmarks show the overhead added by \MCN. These programs were written in both C++ and STS, and evaluated on the three devices listed in Table~\ref{table:devices}: The micro:bit (Nordic nRF51 MCU), the CPX (Atmel ATSAMD21 MCU), and the Uno (Atmel ATmega MCU).
 
 The Uno is the simplest of these devices,
 consisting of an 8-bit processor running at 16 MHz, with only 2kB of RAM and 32kB of flash.
@@ -52,7 +52,7 @@ MicroPython and similar environments cannot run on the Uno due to flash and RAM 
     \multicolumn{1}{|c|}{MicroPython} & -      & 101x      & 183x  \\ \hline
     \multicolumn{1}{|c|}{Espruino}    & -      & 1139x     & -     \\ \hline
     \end{tabular}
-    \caption{\label{table:vm-comparison} A comparison of execution speed between: native C++ with \CON; \MC compiled to native machine code; \MC compiled to AVR VM; MicroPython; and Espruino. The first line lists the C++ time, while subsequent lines are slowdowns with respect to the C++ time. The 6.4x slowdown of \MC VM compared to native \MC on AVR is compensated with 5x better code density.}
+    \caption{\label{table:vm-comparison} A comparison of execution speed between: native C++ with \CON; \MC compiled to native machine code; \MC compiled to AVR VM; MicroPython; and Espruino. The first line lists the C++ time, while subsequent lines are slowdowns with respect to the C++ time. The 6.4x slowdown of \MC VM compared to native \MC on the Uno is compensated with 5x better code density.}
     \vspace{-20pt}
 \end{table}
 
@@ -69,7 +69,7 @@ MicroPython and similar environments cannot run on the Uno due to flash and RAM 
 \caption{\label{fig:context-vs-stack}Time taken to perform a context switch against stack size.}
 \end{figure}
 
-To evaluate the performance of \CON's scheduler we conducted a test that created two fibers, continuously swapped context, and measured the time taken to complete the context switch.
+To evaluate the performance of \CON's scheduler we conducted a test that created two fibers, continuously swapped context, and measured the time taken to complete a context switch.
 We performed this test in both STS and C++ and the resulting profiles can be seen in Figure~\ref{fig:context-switch}, which
 breaks the context switch down into three phases:
 (1) \CON, the time it takes to perform a context switch in \CON;
