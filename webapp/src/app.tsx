@@ -92,12 +92,15 @@ export class ProjectView
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         const shouldShowHomeScreen = this.shouldShowHomeScreen();
         const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
+        const isHighContrast = /hc=(\w+)/.test(window.location.href);
+        if (isHighContrast) core.setHighContrast(true);
 
         this.state = {
             showFiles: false,
             home: shouldShowHomeScreen,
             active: document.visibilityState == 'visible',
-            collapseEditorTools: pxt.appTarget.simulator.headless || (!isSandbox && pxt.BrowserUtils.isMobile())
+            collapseEditorTools: pxt.appTarget.simulator.headless || (!isSandbox && pxt.BrowserUtils.isMobile()),
+            highContrast: isHighContrast
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
