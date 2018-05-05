@@ -199,7 +199,7 @@ namespace pxt.editor {
         loadBlocklyAsync(): Promise<void>;
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;
-        renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<string>;
+        renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<any>;
 
         toggleHighContrast(): void;
         pair(): void;
