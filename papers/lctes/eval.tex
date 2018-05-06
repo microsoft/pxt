@@ -72,7 +72,7 @@ breaks the context switch down into three phases:
 (2) Stack, the time taken to page out the \MC stack; and
 (3) \MCN, the overhead added by \MCN.
 
-From these results, we observe that context switches generally take tens of microseconds. The cost of \CON's stack paging approach can also be a significant, but not dominant cost. The cost of stack paging would of course grow with stack depth. Figure~\ref{fig:context-vs-stack} profiles the time a context switch takes with an increasing stack size across all three devices in \CON. This is similar to the previous test, except we placed bytes (in powers of 2) on the stack of each fiber, starting from 64 and finishing at 1024. The difference in gradients, and ranges of values can be put down to device capability. For instance, the Uno has an 8-bit word size, which means more instructions are required to copy the stack, therefore as the stack size increases, so does context switch time. The vertical band indicates typical stack sizes for \MC programs based on a representative set of examples.
+From these results, we observe that context switches generally take tens of microseconds. The cost of \CON's stack paging approach can also be a significant, but not dominant cost. The cost of stack paging would of course grow with stack depth. Figure~\ref{fig:context-vs-stack} profiles the time a context switch takes with an increasing stack size across all three devices in \CON. This is similar to the previous test, except we placed bytes (in powers of 2) on the stack of each fiber, starting from 64 and finishing at 1024. The difference in gradients, and ranges of values can be put down to device capability. For instance, the Uno has an 8-bit word size, which means more instructions are required to copy the stack, this results in a steeper gradient than the other two devices. The vertical band indicates typical stack sizes for \MC programs based on a representative set of examples.
 
 %For the uno, the context switch profile is for the native implementation only.
 
@@ -101,7 +101,8 @@ Flash consumption of a \MC binary~(kB)}
 \end{table}
 
 MCUs make use of internal non-volatile FLASH memory to store program code. Table~\ref{table:flash-consumption} shows the per device flash consumption of each software library used in the final \MC binary. To obtain these numbers, we analyzed the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library and supporting libraries.
-In comparison to other languages, \MC and \CO consume a small amount of flash: CircuitPython consumes 201 kB, MicroPython consumes 228 kB, and Espruino consumes 142 kB of flash. This means that users can write applications in \MCN, without the worry of running out of flash memory.
+\MC and \CO consume 108 kB of flash, whereas CircuitPython consumes 201 kB, MicroPython consumes 228 kB, and Espruino consumes 142 kB of flash.
+This means that users can write sizeable applications in \MCN, without the worry of running out of flash memory.
 
 From the bottom up, the profile of the standard library changes dramatically for each device: The Uno has a very lightweight standard library; the micro:bit uses 64-bit integer operations (for timers) which requires extra standard library functions; and the CPX requires software floating point operations pulling in more standard library functions.
 
@@ -151,7 +152,7 @@ While the TS compiler has been optimized for speed, \MCN's native compilation pr
 \subsection{Extensibility}
 
 % I think 'processor' could be understood as generic ARM or generic AVR, not a specific MCU with peripherals
-Creating a device in \CO is trivial once a MCU has been ported. The porting of a MCU is where we observe the largest development overhead, as low-level implementations of drivers for I2C, Serial, and SPI may have to be re-written. Due to \CON's abstraction model, once low-level drivers have been implemented, drivers for higher level components like Accelerometers (which depend on high-level interfaces for low-level drivers) can be immediately adopted if hardware is present. A similar technique is used in \MC for simulators.
+Adding a new device in \CO is trivial once a MCU has been ported. The porting of a MCU is where we observe the largest development overhead, as low-level implementations of drivers for I2C, Serial, and SPI may have to be re-written. Due to \CON's abstraction model, once low-level drivers have been implemented, drivers for higher level components like Accelerometers (which depend on high-level interfaces for low-level drivers) can be immediately adopted if hardware is present. A similar technique is used in \MC for simulators.
 
 % Not really a result, more of a description of design, with an anecdotal comment about speed.
 
