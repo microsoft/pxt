@@ -1,5 +1,4 @@
 \appendix
-\pagebreak
 
 \section{Artifact appendix}
 
@@ -30,11 +29,11 @@ This artifact allows others to reproduce the results seen in this paper for Make
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagebreak
 \subsection{Description}
 
 \subsubsection{How delivered}
-
-The artifact is available on GitHub:\\[5pt]\url{https://lancaster-university.github.io/lctes-artefact-evaluation/}\\[5pt] And a virtual machine, based on debian, containing all the required software to reproduce our results is available here:\\[5pt]\url{https://drive.google.com/open?id=1nxiorz6NRqjen89G59RCOEMklqAyaUv7}
+The artifact is available hosted on GitHub:\\[5pt]\url{https://lancaster-university.github.io/lctes-artefact-evaluation/}\\[5pt] Alternately, the latest release is available for download:\\[5pt]\url{https://doi.org/10.5281/zenodo.1242627}\\[5pt]Finally, a virtual machine, based on debian, containing all the required software to reproduce our results is available here:\\[5pt]\url{https://doi.org/10.5281/zenodo.1242605}
 
 \subsubsection{Hardware dependencies}
 
@@ -86,10 +85,14 @@ The virtual machine contains a folder named `evaluators' which is placed in the 
 
 Once logged in, and in the `evaluators' directory, you can view the tests as markdown files in the `docs' directory. Alternately, these markdown documents can also be viewed on the web by running `mkdocs serve' in the evaluators folder, or browsing to:\\[5pt]\url{https://lancaster-university.github.io/lctes-artefact-evaluation/}\\[5pt] Which is a pre-built, and hosted version produced from the same source.
 
-We recommend that you add the micro:bit usb device using the machine settings tab in virtual box as shown in the image below:\\
+We recommend that you add the micro:bit usb device using the machine settings tab in virtual box as shown in the image below:
 
+\begin{center}
 \includegraphics[width=\columnwidth]{images/virtualbox.png}
+\end{center}
 
-We also have a convenience script for mounting a shared folder between the host and the vm. Simply create a shared folder named `lctes-vm-dir' and run `sh mount.sh' (contained in evaluators) as a super user to mount the shared folder to vb-share (also contained in evaluators). Shared folder creation in VirtualBox is pictured below:\\
+We also have a convenience script for mounting a shared folder between the host and the vm. Simply create a shared folder named `lctes-vm-dir' and run `sh mount.sh' (contained in evaluators) as a super user to mount the shared folder to vb-share (also contained in evaluators). Shared folder creation in VirtualBox is pictured below:
 
+\begin{center}
 \includegraphics[width=\columnwidth]{images/shared-folder.png}
+\end{center}
