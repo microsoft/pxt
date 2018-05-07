@@ -1280,7 +1280,8 @@ namespace pxt.hex {
         else {
             let curr = getOnlineCdnUrl()
             if (curr) return (cdnUrlPromise = Promise.resolve(curr))
-            return (cdnUrlPromise = Cloud.privateGetAsync("clientconfig", /* forceLiveEndpoint */ pxt.webConfig.isStatic)
+            const forceLive = pxt.webConfig && pxt.webConfig.isStatic;
+            return (cdnUrlPromise = Cloud.privateGetAsync("clientconfig", forceLive)
                 .then(r => r.primaryCdnUrl));
         }
     }
