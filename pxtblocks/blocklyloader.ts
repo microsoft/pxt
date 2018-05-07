@@ -414,9 +414,11 @@ namespace pxt.blocks {
         return true;
     }
 
-    function newLabel(part: pxtc.BlockLabel | pxtc.BlockImage): Blockly.Field {
+    function newLabel(part: pxtc.BlockLabel | pxtc.BlockImage | pxtc.BlockSeparator): Blockly.Field {
         if (part.kind === "image") {
             return iconToFieldImage(part.uri);
+        } else if (part.kind == "separator") {
+            return new Blockly.FieldVerticalSeparator();
         }
 
         const txt = removeOuterSpace(part.text)
@@ -2570,6 +2572,9 @@ namespace pxt.blocks {
                     break;
                 case "image":
                 case "label":
+                    current.push(part);
+                    break;
+                case "separator":
                     current.push(part);
                     break;
             }
