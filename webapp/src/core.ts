@@ -147,6 +147,7 @@ export interface DialogOptions {
     disagreeClass?: string;
     disagreeIcon?: string;
     logos?: string[];
+    className?: string;
     header: string;
     body?: string;
     htmlBody?: string;

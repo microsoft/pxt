@@ -64,8 +64,13 @@ export class ConfirmDialog extends React.Component<core.ConfirmOptions, {}> {
             if (!btn.className) btn.className = "approve positive";
         })
 
+        const classes = sui.cx([
+            'coredialog',
+            options.className
+        ])
+
         return (
-            <sui.Modal isOpen={true} ref="modal" className="coredialog"
+            <sui.Modal isOpen={true} ref="modal" className={classes}
                 onClose={this.hide.bind(this)} size={size}
                 defaultOpen={true} buttons={buttons}
                 dimmer={true} closeIcon={options.hasCloseIcon}
