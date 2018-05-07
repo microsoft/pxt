@@ -29,28 +29,6 @@ export let pxtCoreDir: string = path.join(__dirname, "..");
 
 export function setTargetDir(dir: string) {
     targetDir = dir;
-
-    // The target should expose the path to its bundled pxt-core
-    let fallback = false;
-    let target: any;
-
-    try {
-        target = require(targetDir);
-    }
-    catch (e) {
-        // If we can't require the target, fallback to default location
-        fallback = true;
-    }
-
-    if (fallback || !target.pxtCoreDir || !fs.existsSync(target.pxtCoreDir)) {
-        pxtCoreDir = path.join(__dirname, "..");
-
-        if (pxtCoreDir !== targetDir) {
-            pxt.log("Could not determine target's pxt-core location, falling back to default: " + pxtCoreDir);
-        }
-    } else {
-        pxtCoreDir = target.pxtCoreDir;
-    }
 }
 
 export function readResAsync(g: events.EventEmitter) {
