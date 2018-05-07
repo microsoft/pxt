@@ -18,6 +18,16 @@ declare namespace pxt.electron {
         data: pxt.Map<string | number>;
     }
 
+    interface VersionInfo {
+        electronVersion: string;
+        chromiumVersion: string;
+        nodeVersion: string;
+        pxtTargetVersion: string;
+        pxtCoreVersion: string;
+        pxtElectronVersion: string;
+        isProd: number; // If the app is production, this will be set to 1
+    }
+
     // The object that gets injected into the window
     export interface PxtElectron {
         onTelemetry: (handler: (ev: TelemetryEvent) => void) => void;
@@ -28,5 +38,6 @@ declare namespace pxt.electron {
         sendUpdateStatusCheck: () => void;
         sendQuit: () => void;
         sendOpenDevTools: () => void;
+        versions: VersionInfo;
     }
 }
