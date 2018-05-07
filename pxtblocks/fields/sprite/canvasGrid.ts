@@ -9,14 +9,18 @@ namespace pxtblockly {
         private gesture: GestureState;
         private context: CanvasRenderingContext2D;
         private bounds: ClientRect;
+        private fadeAnimation: Fade;
 
         protected backgroundLayer: HTMLCanvasElement;
         protected paintLayer: HTMLCanvasElement;
+        protected overlayLayer: HTMLCanvasElement;
 
         constructor(protected palette: string[], public image: Bitmap) {
             this.backgroundLayer = document.createElement("canvas");
             this.paintLayer = document.createElement("canvas");
+            this.overlayLayer = document.createElement("canvas")
             this.context = this.paintLayer.getContext("2d");
+            this.hideOverlay();
         }
 
         repaint(): void {
@@ -65,9 +69,55 @@ namespace pxtblockly {
         }
 
         showOverlay(): void {
-            // TODO
+            if (this.fadeAnimation) {
+                this.fadeAnimation.kill();
+            }
+            this.overlayLayer.style.visibility = "visible";
+            const w = this.overlayLayer.width;
+            const h = this.overlayLayer.height;
+            const xOffset = this.cellWidth / 2;
+            const yOffset = this.cellHeight / 2;
+            const context = this.overlayLayer.getContext("2d");
+            const toastWidth = 100;
+            const toastHeight = 40;
+            const toastLeft = w / 2 - toastWidth / 2;
+            const toastTop = h / 2 - toastWidth / 4;
+
+            this.fadeAnimation = new Fade((opacity, dead) => {
+                if (dead) {
+                    this.hideOverlay();
+                    return;
+                }
+
+                context.clearRect(0, 0, w, h);
+                context.globalAlpha = opacity;
+                context.fillStyle = "#898989";
+
+                // After 32x32 the grid isn't easy to see anymore so skip it
+                if (this.image.width <= 32 && this.image.height <= 32) {
+                    for (let c = 1; c < this.image.width; c++) {
+                        context.fillRect(c * this.cellWidth, 0, 1, h);
+                    }
+                    for (let r = 1; r < this.image.height; r++) {
+                        context.fillRect(0, r * this.cellHeight, w, 1);
+                    }
+                }
+
+                context.fillRect(toastLeft, toastTop, toastWidth, toastHeight);
+                context.fillStyle = "#ffffff";
+                context.font = "30px sans-serif";
+                context.textBaseline = "middle";
+                context.textAlign = "center";
+
+                context.fillText(this.image.width.toString(), toastLeft + toastWidth / 2 - 25, toastTop  + toastHeight / 2);
+                context.fillText("x", toastLeft + 50, toastTop + toastHeight / 2, 10);
+                context.fillText(this.image.height.toString(), toastLeft + toastWidth / 2 + 25, toastTop + toastHeight / 2);
+            }, 750, 500);
         }
 
+        hideOverlay() {
+            this.overlayLayer.style.visibility = "hidden";
+        }
 
         resizeGrid(rowLength: number, numCells: number): void {
             this.repaint();
@@ -84,6 +134,8 @@ namespace pxtblockly {
             this.backgroundLayer.height = canvasHeight;
             this.paintLayer.width = canvasWidth;
             this.paintLayer.height = canvasHeight;
+            this.overlayLayer.width = canvasWidth;
+            this.overlayLayer.height = canvasHeight;
         }
 
         setGridDimensions(width: number, height = width, lockAspectRatio = true): void {
@@ -147,6 +199,7 @@ namespace pxtblockly {
         updateBounds(top: number, left: number, width: number, height: number) {
             this.layoutCanvas(this.backgroundLayer, top, left, width, height);
             this.layoutCanvas(this.paintLayer, top, left, width, height);
+            this.layoutCanvas(this.overlayLayer, top, left, width, height);
 
             this.redraw();
             this.drawBackground();
@@ -157,6 +210,7 @@ namespace pxtblockly {
         render(parent: HTMLDivElement) {
             parent.appendChild(this.backgroundLayer);
             parent.appendChild(this.paintLayer);
+            parent.appendChild(this.overlayLayer);
         }
 
         protected redraw() {
@@ -305,6 +359,42 @@ namespace pxtblockly {
             if (this.handlers[type]) {
                 this.handlers[type](this.lastCol, this.lastRow);
             }
+        }
+    }
+
+    class Fade {
+        start: number;
+        end: number;
+        slope: number;
+        dead: boolean;
+
+        constructor (protected draw: (opacity: number, dead: boolean) => void, delay: number, duration: number) {
+            this.start = Date.now() + delay;
+            this.end = this.start + duration;
+            this.slope = 1 / duration;
+            this.dead = false;
+
+            draw(1, false);
+
+            setTimeout(() => requestAnimationFrame(() => this.frame()), delay);
+        }
+
+        frame() {
+            if (this.dead) return;
+            const now = Date.now();
+            if (now < this.end) {
+                const v = 1 - (this.slope * (now - this.start));
+                this.draw(v, false);
+                requestAnimationFrame(() => this.frame());
+            }
+            else {
+                this.draw(0, true);
+                this.kill();
+            }
+        }
+
+        kill() {
+            this.dead = true;
         }
     }
 }
