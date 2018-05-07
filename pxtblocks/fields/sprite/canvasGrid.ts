@@ -1,6 +1,7 @@
 namespace pxtblockly {
     const alphaCellWidth = 5;
     const dropdownPaddding = 4;
+    const lightModeBackground = "#dedede";
 
     export class CanvasGrid {
         protected cellWidth: number = 16;
@@ -15,11 +16,20 @@ namespace pxtblockly {
         protected paintLayer: HTMLCanvasElement;
         protected overlayLayer: HTMLCanvasElement;
 
-        constructor(protected palette: string[], public image: Bitmap) {
-            this.backgroundLayer = document.createElement("canvas");
+        constructor(protected palette: string[], public image: Bitmap, protected lightMode = false) {
             this.paintLayer = document.createElement("canvas");
-            this.overlayLayer = document.createElement("canvas")
-            this.context = this.paintLayer.getContext("2d");
+
+            if (!this.lightMode) {
+                this.backgroundLayer = document.createElement("canvas");
+                this.overlayLayer = document.createElement("canvas")
+                this.context = this.paintLayer.getContext("2d");
+            }
+            else {
+                this.context = this.paintLayer.getContext("2d", { alpha: false });
+                this.context.fillStyle = lightModeBackground;
+                this.context.fill();
+            }
+
             this.hideOverlay();
         }
 
@@ -69,6 +79,8 @@ namespace pxtblockly {
         }
 
         showOverlay(): void {
+            if (this.lightMode) return;
+
             if (this.fadeAnimation) {
                 this.fadeAnimation.kill();
             }
@@ -116,7 +128,9 @@ namespace pxtblockly {
         }
 
         hideOverlay() {
-            this.overlayLayer.style.visibility = "hidden";
+            if (!this.lightMode) {
+                this.overlayLayer.style.visibility = "hidden";
+            }
         }
 
         resizeGrid(rowLength: number, numCells: number): void {
@@ -130,12 +144,15 @@ namespace pxtblockly {
             const canvasWidth = this.cellWidth * this.image.width;
             const canvasHeight = this.cellHeight * this.image.height;
 
-            this.backgroundLayer.width = canvasWidth;
-            this.backgroundLayer.height = canvasHeight;
             this.paintLayer.width = canvasWidth;
             this.paintLayer.height = canvasHeight;
-            this.overlayLayer.width = canvasWidth;
-            this.overlayLayer.height = canvasHeight;
+
+            if (!this.lightMode) {
+                this.backgroundLayer.width = canvasWidth;
+                this.backgroundLayer.height = canvasHeight;
+                this.overlayLayer.width = canvasWidth;
+                this.overlayLayer.height = canvasHeight;
+            }
         }
 
         setGridDimensions(width: number, height = width, lockAspectRatio = true): void {
@@ -166,8 +183,12 @@ namespace pxtblockly {
                 this.context.fillStyle = color;
                 this.context.fillRect(x, y, this.cellWidth, this.cellHeight);
             }
-            else {
+            else if (!this.lightMode) {
                 this.context.clearRect(x, y, this.cellWidth, this.cellHeight);
+            }
+            else {
+                this.context.fillStyle = lightModeBackground;
+                this.context.fillRect(x, y, this.cellWidth, this.cellHeight);
             }
         }
 
@@ -197,9 +218,12 @@ namespace pxtblockly {
         }
 
         updateBounds(top: number, left: number, width: number, height: number) {
-            this.layoutCanvas(this.backgroundLayer, top, left, width, height);
             this.layoutCanvas(this.paintLayer, top, left, width, height);
-            this.layoutCanvas(this.overlayLayer, top, left, width, height);
+
+            if (!this.lightMode) {
+                this.layoutCanvas(this.overlayLayer, top, left, width, height);
+                this.layoutCanvas(this.backgroundLayer, top, left, width, height);
+            }
 
             this.redraw();
             this.drawBackground();
@@ -208,9 +232,15 @@ namespace pxtblockly {
         }
 
         render(parent: HTMLDivElement) {
-            parent.appendChild(this.backgroundLayer);
+            if (!this.lightMode) {
+                parent.appendChild(this.backgroundLayer);
+            }
+
             parent.appendChild(this.paintLayer);
-            parent.appendChild(this.overlayLayer);
+
+            if (!this.lightMode) {
+                parent.appendChild(this.overlayLayer);
+            }
         }
 
         protected redraw() {
@@ -222,6 +252,7 @@ namespace pxtblockly {
         }
 
         protected drawBackground() {
+            if (this.lightMode) return;
             const context = this.backgroundLayer.getContext("2d", { alpha: false });
             const alphaCols = Math.ceil(this.paintLayer.width / alphaCellWidth);
             const alphaRows = Math.ceil(this.paintLayer.height / alphaCellWidth);

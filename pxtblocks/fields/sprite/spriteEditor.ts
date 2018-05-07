@@ -73,7 +73,7 @@ namespace pxtblockly {
         private height: number;
         private previewWidth: number;
 
-        constructor(bitmap: Bitmap) {
+        constructor(bitmap: Bitmap, protected lightMode = false) {
             this.colors = pxt.appTarget.runtime.palette.slice(1);
 
             this.columns = bitmap.width;
@@ -98,7 +98,7 @@ namespace pxtblockly {
             });
             this.palette.setRootId("sprite-editor-palette");
 
-            this.paintSurface = new CanvasGrid(this.colors, this.state.copy());
+            this.paintSurface = new CanvasGrid(this.colors, this.state.copy(), this.lightMode);
 
             this.paintSurface.drag((col, row) => {
                 this.debug("gesture (" + PaintTool[this.activeTool] + ")");
