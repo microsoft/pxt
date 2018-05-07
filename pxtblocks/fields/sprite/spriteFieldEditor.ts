@@ -38,7 +38,6 @@ namespace pxtblockly {
 
         private params: ParsedSpriteEditorOptions;
         private editor: SpriteEditor;
-        private preview: BitmapImage;
         private state: Bitmap;
 
         constructor(text: string, params: any, validator?: Function) {
@@ -89,8 +88,7 @@ namespace pxtblockly {
 
             let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
 
-            this.editor = new SpriteEditor(this.preview.bitmap());
-            this.editor.setPreview(this.preview, PREVIEW_WIDTH);
+            this.editor = new SpriteEditor(this.state);
             this.editor.render(contentDiv);
             this.editor.rePaint();
 
@@ -99,7 +97,8 @@ namespace pxtblockly {
 
             Blockly.DropDownDiv.setColour("#2c3e50", "#2c3e50");
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
-                this.state = this.preview.image;
+                this.state = this.editor.bitmap();
+                this.redrawPreview();
                 if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
                     Blockly.Events.fire(new Blockly.Events.BlockChange(
                         this.sourceBlock_, 'field', this.name, this.text_, this.getText()));
@@ -125,10 +124,8 @@ namespace pxtblockly {
 
         render_() {
             super.render_();
-            if (this.preview) {
-                this.size_.height = TOTAL_WIDTH
-                this.size_.width = TOTAL_WIDTH;
-            }
+            this.size_.height = TOTAL_WIDTH
+            this.size_.width = TOTAL_WIDTH;
         }
 
         getText() {
@@ -154,15 +151,13 @@ namespace pxtblockly {
                 return;
             }
             this.parseBitmap(newText);
-
-            if (this.preview) {
-                this.redrawPreview();
-            }
+            this.redrawPreview();
 
             super.setText(newText);
         }
 
         private redrawPreview() {
+            if (!this.fieldGroup_) return;
             this.fieldGroup_.innerHTML = "";
 
             const bg = new svg.Rect()
@@ -172,19 +167,16 @@ namespace pxtblockly {
                 .stroke("#898989", 1)
                 .corner(4);
 
-            const palette = pxt.U.clone(pxt.appTarget.runtime.palette);
-            palette[0] = null;
-
-            this.preview = new BitmapImage({
-                //backgroundFill: this.sourceBlock_.getColourSecondary(),
-                outerMargin: 2,
-                cellClass: "pixel-cell"
-            }, this.state, palette);
-
-            this.preview.translate(PADDING + BG_PADDING, PADDING + BG_PADDING);
-            this.preview.setGridDimensions(PREVIEW_WIDTH);
             this.fieldGroup_.appendChild(bg.el);
-            this.fieldGroup_.appendChild(this.preview.getView().el);
+
+            if (this.state) {
+                const data = this.renderPreview();
+                const img = new svg.Image()
+                    .src(data)
+                    .at(PADDING + BG_PADDING, PADDING + BG_PADDING)
+                    .size(PREVIEW_WIDTH, PREVIEW_WIDTH);
+                this.fieldGroup_.appendChild(img.el);
+            }
         }
 
         private parseBitmap(newText: string) {
@@ -254,6 +246,31 @@ namespace pxtblockly {
                     }
                 }
             }
+        }
+
+        private renderPreview() {
+            const colors = pxt.appTarget.runtime.palette.slice(1);
+            const canvas = document.createElement("canvas");
+            canvas.width = this.state.width;
+            canvas.height = this.state.height;
+            const context = canvas.getContext("2d", { alpha: false });
+
+            for (let c = 0; c < this.state.width; c++) {
+                for (let r = 0; r < this.state.height; r++) {
+                    const color = this.state.get(c, r);
+
+                    if (color) {
+                        context.fillStyle = colors[color - 1];
+                    }
+                    else {
+                        context.fillStyle = "#dedede";
+                    }
+
+                    context.fillRect(c, r, 1, 1);
+                }
+            }
+
+            return canvas.toDataURL();
         }
     }
 

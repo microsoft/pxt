@@ -46,7 +46,6 @@ namespace pxtblockly {
 
         private palette: ColorPalette;
         private paintSurface: CanvasGrid;
-        private preview: BitmapImage;
         private toolbar: Toolbar;
         private repoterBar: svg.Group;
         private cursorInfo: svg.Text;
@@ -71,7 +70,6 @@ namespace pxtblockly {
 
         private width: number;
         private height: number;
-        private previewWidth: number;
 
         constructor(bitmap: Bitmap, protected lightMode = false) {
             this.colors = pxt.appTarget.runtime.palette.slice(1);
@@ -204,16 +202,8 @@ namespace pxtblockly {
             this.toolbar.setDimensions(this.width - PADDING * 2, TOOLBAR_HEIGHT);
         }
 
-        setPreview(preview: BitmapImage, width: number) {
-            this.preview = preview;
-            this.previewWidth = width;
-        }
-
         rePaint() {
             this.paintSurface.repaint();
-            if (this.preview) {
-                this.preview.repaint();
-            }
         }
 
         setActiveColor(color: number, setPalette = false) {
@@ -279,12 +269,7 @@ namespace pxtblockly {
             this.rows = height;
 
             this.state = resizeBitmap(this.cachedState, width, height);
-
             this.paintSurface.restore(this.state, true);
-
-            this.preview.restore(this.state, true);
-            this.preview.setGridDimensions(this.previewWidth);
-
             this.canvasDimensions.text(`${this.columns}x${this.rows}`)
             this.layout();
 
@@ -312,6 +297,10 @@ namespace pxtblockly {
 
         outerHeight() {
             return this.height;
+        }
+
+        bitmap() {
+            return this.state;
         }
 
         protected drawReporterBar() {
@@ -344,11 +333,6 @@ namespace pxtblockly {
         private paintEdit(edit: Edit) {
             this.paintSurface.restore(this.state);
             this.paintSurface.applyEdit(edit);
-
-            if (this.preview) {
-                this.preview.restore(this.state);
-                this.preview.applyEdit(edit);
-            }
         }
 
         private commit() {
@@ -378,10 +362,6 @@ namespace pxtblockly {
         private restore(bitmap: Bitmap) {
             this.state.apply(bitmap);
             this.paintSurface.restore(bitmap, true);
-
-            if (this.preview) {
-                this.preview.restore(bitmap, true);
-            }
         }
 
         private updateUndoRedo() {
@@ -391,10 +371,6 @@ namespace pxtblockly {
 
         private paintCell(col: number, row: number, color: number) {
             this.paintSurface.writeColor(col, row, color);
-
-            if (this.preview) {
-                this.preview.writeColor(col, row, color);
-            }
         }
 
         private newEdit(color: number) {
