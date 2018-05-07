@@ -43,7 +43,6 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         const { parent } = this.props;
 
         pxt.Util.toArray(content.querySelectorAll(`.lang-blocks`))
-        .concat(pxt.Util.toArray(content.querySelectorAll(`.lang-block`)))
             .forEach((langBlock: HTMLElement) => {
                 const code = langBlock.innerHTML;
                 const wrapperDiv = document.createElement('div');
