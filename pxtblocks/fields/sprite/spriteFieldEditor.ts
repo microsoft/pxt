@@ -23,12 +23,13 @@ namespace pxtblockly {
         initHeight: number;
     }
 
-    // It's a square
-    const TOTAL_WIDTH = 55;
+    // 32 is specifically chosen so that we can scale the images for the default
+    // sprite sizes without getting browser anti-aliasing
+    const PREVIEW_WIDTH = 32;
     const PADDING = 5;
     const BG_PADDING = 4;
-    const BG_WIDTH = TOTAL_WIDTH - PADDING * 2;
-    const PREVIEW_WIDTH = TOTAL_WIDTH - PADDING * 2 - BG_PADDING * 2;
+    const BG_WIDTH = BG_PADDING * 2 + PREVIEW_WIDTH;
+    const TOTAL_WIDTH = PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
 
     // These are the characters used to compile, for a list of every supported character see parseBitmap()
     const hexChars = [".", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"];
@@ -39,9 +40,12 @@ namespace pxtblockly {
         private params: ParsedSpriteEditorOptions;
         private editor: SpriteEditor;
         private state: Bitmap;
+        private lightMode: boolean;
 
         constructor(text: string, params: any, validator?: Function) {
             super(text, validator);
+
+            this.lightMode = params.lightMode;
             this.params = parseFieldOptions(params);
 
             if (!this.state) {
@@ -88,7 +92,7 @@ namespace pxtblockly {
 
             let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
 
-            this.editor = new SpriteEditor(this.state);
+            this.editor = new SpriteEditor(this.state, this.lightMode);
             this.editor.render(contentDiv);
             this.editor.rePaint();
 
@@ -248,12 +252,33 @@ namespace pxtblockly {
             }
         }
 
+        /**
+         * Scales the image to 32x32 and returns a data uri. In light mode the preview
+         * is drawn with no transparency (alpha is filled with background color)
+         */
         private renderPreview() {
             const colors = pxt.appTarget.runtime.palette.slice(1);
             const canvas = document.createElement("canvas");
-            canvas.width = this.state.width;
-            canvas.height = this.state.height;
-            const context = canvas.getContext("2d", { alpha: false });
+            canvas.width = PREVIEW_WIDTH;
+            canvas.height = PREVIEW_WIDTH;
+
+            // Works well for all of our default sizes, does not work well if the size is not
+            // a multiple of 2 or is greater than 32 (i.e. from the decompiler)
+            const cellSize = Math.min(PREVIEW_WIDTH / this.state.width, PREVIEW_WIDTH / this.state.height);
+
+            // Center the image if it isn't square
+            const xOffset = Math.max(Math.floor((PREVIEW_WIDTH * (1 - (this.state.width / this.state.height))) / 2), 0);
+            const yOffset = Math.max(Math.floor((PREVIEW_WIDTH * (1 - (this.state.height / this.state.width))) / 2), 0);
+
+            let context: CanvasRenderingContext2D;
+            if (this.lightMode) {
+                context = canvas.getContext("2d", { alpha: false });
+                context.fillStyle = "#dedede";
+                context.fillRect(0, 0, PREVIEW_WIDTH, PREVIEW_WIDTH);
+            }
+            else {
+                context = canvas.getContext("2d");
+            }
 
             for (let c = 0; c < this.state.width; c++) {
                 for (let r = 0; r < this.state.height; r++) {
@@ -261,12 +286,12 @@ namespace pxtblockly {
 
                     if (color) {
                         context.fillStyle = colors[color - 1];
+                        context.fillRect(xOffset + c * cellSize, yOffset + r * cellSize, cellSize, cellSize);
                     }
-                    else {
+                    else if (this.lightMode) {
                         context.fillStyle = "#dedede";
+                        context.fillRect(xOffset + c * cellSize, yOffset + r * cellSize, cellSize, cellSize);
                     }
-
-                    context.fillRect(c, r, 1, 1);
                 }
             }
 
