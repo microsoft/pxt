@@ -93,3 +93,9 @@ export function initElectron(projectView: ProjectView): void {
 
     pxtElectron.sendUpdateStatusCheck();
 }
+
+export function openDevTools(): void {
+    if (pxtElectron) {
+        pxtElectron.sendOpenDevTools();
+    }
+}

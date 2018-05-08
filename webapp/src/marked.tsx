@@ -44,27 +44,27 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         pxt.Util.toArray(content.querySelectorAll(`.lang-blocks`))
             .forEach((langBlock: HTMLElement) => {
-                const code = langBlock.innerText;
+                const code = langBlock.innerHTML;
                 const wrapperDiv = document.createElement('div');
                 langBlock.innerHTML = '';
                 langBlock.appendChild(wrapperDiv);
                 wrapperDiv.className = 'ui segment raised loading';
                 if (MarkedContent.blockSnippetCache[code]) {
                     // Use cache
-                    const imgDiv = document.createElement('img');
-                    imgDiv.src = MarkedContent.blockSnippetCache[code];
-                    wrapperDiv.appendChild(imgDiv);
+                    const svg = Blockly.Xml.textToDom(MarkedContent.blockSnippetCache[code]);
+                    wrapperDiv.appendChild(svg);
                     pxsim.U.removeClass(wrapperDiv, 'loading');
                 } else {
                     parent.renderBlocksAsync({
                         action: "renderblocks", ts: code
                     } as pxt.editor.EditorMessageRenderBlocksRequest)
-                        .done((datauri) => {
-                            if (datauri) {
-                                MarkedContent.blockSnippetCache[code] = datauri;
-                                const imgDiv = document.createElement('img');
-                                imgDiv.src = MarkedContent.blockSnippetCache[code];
-                                wrapperDiv.appendChild(imgDiv);
+                        .done((resp: any) => {
+                            const svg = resp.svg;
+                            if (svg) {
+                                svg.setAttribute('height', `${svg.getAttribute('viewBox').split(' ')[3]}px`);
+                                // SVG serialization is broken on IE (SVG namespace issue), don't cache on IE
+                                if (!pxt.BrowserUtils.isIE()) MarkedContent.blockSnippetCache[code] = Blockly.Xml.domToText(svg);
+                                wrapperDiv.appendChild(svg);
                                 pxsim.U.removeClass(wrapperDiv, 'loading');
                             } else {
                                 // An error occured, show alternate message

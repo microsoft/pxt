@@ -303,7 +303,7 @@ namespace pxt.editor {
                         case "renderblocks": {
                             const rendermsg = data as EditorMessageRenderBlocksRequest;
                             p = p.then(() => projectView.renderBlocksAsync(rendermsg))
-                                .then((img: string) => { resp = img; });
+                                .then((r: any) => { resp = r.xml; });
                             break;
                         }
                         case "toggletrace": {

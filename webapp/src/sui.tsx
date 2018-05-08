@@ -923,6 +923,10 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             'modal transition visible active',
             className
         ]);
+        const portalClassName = cx([
+            core.highContrast ? 'hc' : '',
+            mountClasses
+        ])
         const closeIconName = closeIcon === true ? 'close' : closeIcon as string;
         const aria = {
             labelledby: header ? this.id + 'title' : undefined,
@@ -942,7 +946,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             shouldReturnFocusAfterClose={true} shouldFocusAfterRender={shouldFocusAfterRender}
             shouldCloseOnEsc={shouldCloseOnEsc || closeOnEscape}
             shouldCloseOnOverlayClick={shouldCloseOnOverlayClick || (closeOnDocumentClick || closeOnDimmerClick)}
-            portalClassName={mountClasses}
+            portalClassName={portalClassName}
             overlayClassName={`ui page modals dimmer transition ${isOpen ? 'visible active' : ''}`}
             className={classes}
             style={customStyles}

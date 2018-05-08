@@ -307,7 +307,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const editor = this;
 
         const oldAudioPlay = (Blockly as any).WorkspaceAudio.prototype.play;
-        (Blockly as any).WorkspaceAudio.prototype.play = function(name: string, opt_volume?: number) {
+        (Blockly as any).WorkspaceAudio.prototype.play = function (name: string, opt_volume?: number) {
             if (editor && editor.parent.state.mute) opt_volume = 0;
             oldAudioPlay.call(this, name, opt_volume);
         };
@@ -345,10 +345,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return this.editor ? pxt.blocks.blocksMetrics(this.editor) : undefined;
     }
 
+    private markIncomplete = false;
     isIncomplete() {
-        return this.editor ? this.editor.isDragging()
+        const incomplete = this.editor ? this.editor.isDragging()
             || (Blockly as any).WidgetDiv.isVisible()
             || (Blockly as any).DropDownDiv.isVisible() : false;
+        if (incomplete) this.markIncomplete = true;
+        return incomplete;
     }
 
     prepare() {
@@ -365,8 +368,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         (Blockly as any).Colours = blocklyColors;
         this.editor.addChangeListener((ev) => {
             Blockly.Events.disableOrphans(ev);
-            if (ev.type != 'ui') {
+            if (ev.type != 'ui' || this.markIncomplete) {
                 this.changeCallback();
+                this.markIncomplete = false;
             }
             if (ev.type == 'create') {
                 let blockId = ev.xml.getAttribute('type');
@@ -551,6 +555,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     insertBreakpoint() {
         if (!this.editor) return;
         const b = this.editor.newBlock(pxtc.TS_DEBUGGER_TYPE);
+        // move block roughly to the center of the screen
+        const m = this.editor.getMetrics();
+        b.moveBy(m.viewWidth / 2, m.viewHeight / 3);
         b.initSvg();
         b.render();
     }
@@ -581,7 +588,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 .then(() => {
                     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
                         return pxt.BrowserUtils.loadScriptAsync("fieldeditors.js")
-                            .then(() => pxt.editor.initFieldExtensionsAsync({ }))
+                            .then(() => pxt.editor.initFieldExtensionsAsync({}))
                             .then(res => {
                                 if (res.fieldEditors) {
                                     res.fieldEditors.forEach(fi => {
@@ -1014,8 +1021,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private filterBlocks(subns: string, blocks: toolbox.BlockDefinition[]) {
         return blocks.filter((block => !(block.attributes.blockHidden || block.attributes.deprecated)
             && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
-            || (subns && ((block.attributes.advanced && subns == 'more')
-                || (block.attributes.subcategory && subns == block.attributes.subcategory))))));
+                || (subns && ((block.attributes.advanced && subns == 'more')
+                    || (block.attributes.subcategory && subns == block.attributes.subcategory))))));
     }
 
     private getBuiltInBlocks(ns: string, subns: string) {
@@ -1276,11 +1283,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxt.Util.toArray(blockXml.querySelectorAll('shadow'))
                 .filter(shadow => !shadow.innerHTML)
                 .forEach((shadow, i) => {
-                let type = shadow.getAttribute('type');
-                const builtin = snippets.allBuiltinBlocks()[type];
-                let b = this.getBlockXml(builtin ? builtin : { name: type, attributes: { blockId: type } }, true);
-                if (b) shadow.innerHTML = b.innerHTML;
-            })
+                    let type = shadow.getAttribute('type');
+                    const builtin = snippets.allBuiltinBlocks()[type];
+                    let b = this.getBlockXml(builtin ? builtin : { name: type, attributes: { blockId: type } }, true);
+                    if (b) shadow.innerHTML = b.innerHTML;
+                })
         }
         return blockXml;
         function shouldShowBlock(fn: pxtc.SymbolInfo) {
