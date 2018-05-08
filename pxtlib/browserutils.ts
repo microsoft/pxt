@@ -421,15 +421,15 @@ namespace pxt.BrowserUtils {
     let loadBlocklyPromise: Promise<void>;
     export function loadBlocklyAsync(): Promise<void> {
         if (!loadBlocklyPromise) {
-            if (typeof Blockly === "undefined") { // not loaded yet?
-                pxt.debug(`blockly: delay load`);
-                loadBlocklyPromise =
-                    pxt.BrowserUtils.loadStyleAsync("blockly.css", ts.pxtc.Util.isUserLanguageRtl())
-                        .then(() => pxt.BrowserUtils.loadScriptAsync("pxtblockly.js"))
-                        .then(() => {
-                            pxt.debug(`blockly: loaded`)
-                        })
-            } else loadBlocklyPromise = Promise.resolve();
+            pxt.debug(`blockly: delay load`);
+            let p = pxt.BrowserUtils.loadStyleAsync("blockly.css", ts.pxtc.Util.isUserLanguageRtl());
+            // js not loaded yet?
+            if (typeof Blockly === "undefined")
+                p = p.then(() => pxt.BrowserUtils.loadScriptAsync("pxtblockly.js"));
+            p = p.then(() => {
+                pxt.debug(`blockly: loaded`)
+            });
+            loadBlocklyPromise = p;
         }
         return loadBlocklyPromise;
     }
