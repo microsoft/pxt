@@ -309,13 +309,13 @@ namespace pxtblockly {
                 .fontSize(REPORTER_BAR_HEIGHT, svg.LengthUnit.px)
                 .fontFamily("monospace")
                 .fill("white")
-                .alignmentBaseline("hanging")
+                .offset(0, 0.8, svg.LengthUnit.em)
                 .text(`${this.columns}x${this.rows}`);
 
             this.cursorInfo = this.repoterBar.draw("text")
                 .fontSize(REPORTER_BAR_HEIGHT, svg.LengthUnit.px)
                 .fontFamily("monospace")
-                .alignmentBaseline("hanging")
+                .offset(0, 0.8, svg.LengthUnit.em)
                 .fill("white");
         }
 

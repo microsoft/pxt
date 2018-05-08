@@ -305,8 +305,14 @@ namespace pxt.svgUtil {
             return this.setAttribute("font-size", lengthWithUnits(size, units));
         }
 
-        alignmentBaseline(type: string) {
-            return this.setAttribute("alignment-baseline", type);
+        offset(dx: number, dy: number, units: LengthUnit) {
+            if (dx !== 0) {
+                this.setAttribute("dx", lengthWithUnits(dx, units));
+            }
+            if (dy !== 0) {
+                this.setAttribute("dy", lengthWithUnits(dy, units));
+            }
+            return this;
         }
 
         anchor(type: "start" | "middle" | "end" | "inherit") {
