@@ -1333,13 +1333,17 @@ function maxMTimeAsync(dirs: string[]) {
 export interface BuildTargetOptions {
     localDir?: boolean;
     packaged?: boolean;
+    skipCore?: boolean;
 }
 
 export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     if (parsed && parsed.flags["cloud"]) {
         forceCloudBuild = true
     }
-    return internalBuildTargetAsync();
+    const opts: BuildTargetOptions = {};
+    if (parsed && parsed.flags["skipCore"])
+        opts.skipCore = true;
+    return internalBuildTargetAsync(opts);
 }
 
 export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
@@ -1850,6 +1854,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             pxt.log(`building ${dirname}`);
             const isPrj = /prj$/.test(dirname);
             const config = nodeutil.readPkgConfig(".")
+            const isCore = !!config.core;
             if (config.additionalFilePath) {
                 dirsToWatch.push(path.resolve(config.additionalFilePath));
             }
@@ -1860,7 +1865,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         cfg.bundledpkgs[path.basename(dirname)] = res
                     }
                 })
-                .then(() => testForBuildTargetAsync(isPrj))
+                .then(() => testForBuildTargetAsync(isPrj || (!options.skipCore && isCore)))
                 .then((compileOpts) => {
                     // For the projects, we need to save the base HEX file to the offline HEX cache
                     if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
@@ -2935,7 +2940,7 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
 
     if (!pkgOpts.extinfo || pkgOpts.extinfo.functions.length == 0) return
 
-    pxt.log("checking for missing sim implementations...")
+    pxt.debug("checking for missing sim implementations...")
 
     const sources = ["built/sim.d.ts", "node_modules/pxt-core/built/pxtsim.d.ts"];
     if (fs.existsSync("built/common-sim.d.ts")) {
@@ -5087,7 +5092,11 @@ function initCommands() {
         advanced: true,
         help: "Builds the current target",
         flags: {
-            cloud: { description: "forces build to happen in the cloud" }
+            cloud: { description: "forces build to happen in the cloud" },
+            skipCore: {
+                description: "skip native build of core packages",
+                aliases: ["skip-core", "skipcore", "sc"]
+            }
         }
     }, buildTargetAsync);
     p.defineCommand({
