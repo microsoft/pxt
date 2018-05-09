@@ -56,6 +56,15 @@ namespace pxt.blocks {
             console.error(`Field editor ${selector} not registered`);
             return null;
         }
+
+        if (!params) {
+            params = {};
+        }
+
+        Util.assert(params.lightMode == undefined, "lightMode is a reserved parameter for custom fields");
+
+        params.lightMode = pxt.options.light;
+
         let customField = registeredFieldEditors[selector];
         let instance = new customField.field(text, params, customField.validator);
         return instance;

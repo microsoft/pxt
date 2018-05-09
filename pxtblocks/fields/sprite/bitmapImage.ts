@@ -112,7 +112,7 @@ namespace pxtblockly {
                 .at(width / 2, height / 2)
                 .fontSize(30, svg.LengthUnit.px)
                 .fill("white")
-                .alignmentBaseline("middle")
+                // .alignmentBaseline("middle")
                 .anchor("middle");
 
             this.overlayFade = new Fade(this.overlay, 750, 500);

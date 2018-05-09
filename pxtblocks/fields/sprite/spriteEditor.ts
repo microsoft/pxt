@@ -45,8 +45,7 @@ namespace pxtblockly {
         private root: svg.SVG;
 
         private palette: ColorPalette;
-        private paintSurface: BitmapImage;
-        private preview: BitmapImage;
+        private paintSurface: CanvasGrid;
         private toolbar: Toolbar;
         private repoterBar: svg.Group;
         private cursorInfo: svg.Text;
@@ -71,9 +70,8 @@ namespace pxtblockly {
 
         private width: number;
         private height: number;
-        private previewWidth: number;
 
-        constructor(bitmap: Bitmap) {
+        constructor(bitmap: Bitmap, protected lightMode = false) {
             this.colors = pxt.appTarget.runtime.palette.slice(1);
 
             this.columns = bitmap.width;
@@ -98,12 +96,7 @@ namespace pxtblockly {
             });
             this.palette.setRootId("sprite-editor-palette");
 
-            this.paintSurface = new BitmapImage({
-                outerMargin: 0,
-                backgroundFill: 'url("#alpha-background")',
-                cellClass: "pixel-cell"
-            }, this.state.copy(), [null].concat(this.colors), this.root);
-            this.paintSurface.setRootId("sprite-editor-canvas");
+            this.paintSurface = new CanvasGrid(this.colors, this.state.copy(), this.lightMode);
 
             this.paintSurface.drag((col, row) => {
                 this.debug("gesture (" + PaintTool[this.activeTool] + ")");
@@ -135,7 +128,6 @@ namespace pxtblockly {
                 this.cursorInfo.text("");
             });
 
-            this.group.appendChild(this.paintSurface.getView());
             this.group.appendChild(this.palette.getView());
 
             this.toolbar = new Toolbar(this.group.group(), {
@@ -179,7 +171,8 @@ namespace pxtblockly {
             }
         }
 
-        render(el: HTMLElement): void {
+        render(el: HTMLDivElement): void {
+            this.paintSurface.render(el);
             el.appendChild(this.root.el);
             this.layout();
             this.root.attr({ "width": this.outerWidth() + "px", "height": this.outerHeight() + "px" });
@@ -196,10 +189,8 @@ namespace pxtblockly {
             this.palette.translate(PADDING, paintAreaTop);
 
             const paintAreaLeft = PADDING + this.palette.outerWidth() + PALETTE_CANVAS_MARGIN;
-
             this.paintSurface.setGridDimensions(CANVAS_HEIGHT);
-            const canvasLeft = paintAreaLeft + CANVAS_HEIGHT / 2 - this.paintSurface.outerWidth() / 2;
-            this.paintSurface.translate(canvasLeft, paintAreaTop);
+            this.paintSurface.updateBounds(paintAreaTop, paintAreaLeft, CANVAS_HEIGHT, CANVAS_HEIGHT);
 
             this.repoterBar.translate(paintAreaLeft, paintAreaTop + CANVAS_HEIGHT + REPORTER_BAR_CANVAS_MARGIN);
             this.canvasDimensions.at(CANVAS_HEIGHT - this.canvasDimensions.el.getComputedTextLength(), 0);
@@ -209,19 +200,10 @@ namespace pxtblockly {
 
             this.toolbar.translate(PADDING, PADDING);
             this.toolbar.setDimensions(this.width - PADDING * 2, TOOLBAR_HEIGHT);
-
-        }
-
-        setPreview(preview: BitmapImage, width: number) {
-            this.preview = preview;
-            this.previewWidth = width;
         }
 
         rePaint() {
             this.paintSurface.repaint();
-            if (this.preview) {
-                this.preview.repaint();
-            }
         }
 
         setActiveColor(color: number, setPalette = false) {
@@ -287,13 +269,7 @@ namespace pxtblockly {
             this.rows = height;
 
             this.state = resizeBitmap(this.cachedState, width, height);
-
             this.paintSurface.restore(this.state, true);
-            this.paintSurface.setGridDimensions(CANVAS_HEIGHT);
-
-            this.preview.restore(this.state, true);
-            this.preview.setGridDimensions(this.previewWidth);
-
             this.canvasDimensions.text(`${this.columns}x${this.rows}`)
             this.layout();
 
@@ -323,19 +299,23 @@ namespace pxtblockly {
             return this.height;
         }
 
+        bitmap() {
+            return this.state;
+        }
+
         protected drawReporterBar() {
             this.repoterBar = this.group.group();
             this.canvasDimensions = this.repoterBar.draw("text")
                 .fontSize(REPORTER_BAR_HEIGHT, svg.LengthUnit.px)
                 .fontFamily("monospace")
                 .fill("white")
-                .alignmentBaseline("hanging")
+                .offset(0, 0.8, svg.LengthUnit.em)
                 .text(`${this.columns}x${this.rows}`);
 
             this.cursorInfo = this.repoterBar.draw("text")
                 .fontSize(REPORTER_BAR_HEIGHT, svg.LengthUnit.px)
                 .fontFamily("monospace")
-                .alignmentBaseline("hanging")
+                .offset(0, 0.8, svg.LengthUnit.em)
                 .fill("white");
         }
 
@@ -353,11 +333,6 @@ namespace pxtblockly {
         private paintEdit(edit: Edit) {
             this.paintSurface.restore(this.state);
             this.paintSurface.applyEdit(edit);
-
-            if (this.preview) {
-                this.preview.restore(this.state);
-                this.preview.applyEdit(edit);
-            }
         }
 
         private commit() {
@@ -387,10 +362,6 @@ namespace pxtblockly {
         private restore(bitmap: Bitmap) {
             this.state.apply(bitmap);
             this.paintSurface.restore(bitmap, true);
-
-            if (this.preview) {
-                this.preview.restore(bitmap, true);
-            }
         }
 
         private updateUndoRedo() {
@@ -400,10 +371,6 @@ namespace pxtblockly {
 
         private paintCell(col: number, row: number, color: number) {
             this.paintSurface.writeColor(col, row, color);
-
-            if (this.preview) {
-                this.preview.writeColor(col, row, color);
-            }
         }
 
         private newEdit(color: number) {
