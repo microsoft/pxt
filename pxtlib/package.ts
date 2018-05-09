@@ -15,7 +15,9 @@ namespace pxt {
                 } else {
                     // If it's not from GH, assume it's a bundled package
                     // TODO: Add logic for shared packages if we enable that
-                    return JSON.parse(pxt.appTarget.bundledpkgs[Package.upgradePackageReference(id, fullVers)][CONFIG_NAME]) as pxt.PackageConfig;
+                    const updatedRef = Package.upgradePackageReference(id, fullVers);
+                    const bundledPkg = pxt.appTarget.bundledpkgs[updatedRef];
+                    return JSON.parse(bundledPkg[CONFIG_NAME]) as pxt.PackageConfig;
                 }
             });
         }
