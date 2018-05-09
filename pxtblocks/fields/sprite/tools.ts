@@ -11,6 +11,12 @@ namespace pxtblockly {
         Erase = 6,
     }
 
+    export class Cursor {
+        color: number;
+        width: number;
+        height: number;
+    }
+
     export abstract class Edit {
         protected startCol: number;
         protected startRow: number;

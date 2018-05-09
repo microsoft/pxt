@@ -781,13 +781,7 @@ export class ProjectView
             let curr = pkg.mainEditorPkg().header
             curr.isDeleted = true
             return workspace.saveAsync(curr, {})
-                .then(() => {
-                    if (workspace.getHeaders().length > 0) {
-                        this.openHome();
-                    } else {
-                        this.newProject();
-                    }
-                })
+                .then(() => this.openHome());
         })
     }
 
