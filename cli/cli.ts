@@ -3941,7 +3941,12 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
     const PNG: any = require("pngjs").PNG;
 
     const dir = parsed.arguments[0]
-    const metaInfo: SpriteGlobalMeta = nodeutil.readJson(dir + "/meta.json")
+    if (!dir)
+        U.userError("missing directory argument");
+    if (!nodeutil.existsDirSync(dir))
+        U.userError(`directory '${dir}' does not exist`);
+
+    const metaInfo: SpriteGlobalMeta = nodeutil.readJson(path.join(dir, "meta.json"))
     const jresources: pxt.Map<pxt.JRes> = {}
     const star = metaInfo.star
 
