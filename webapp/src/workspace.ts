@@ -84,7 +84,7 @@ export function initAsync() {
     pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
     pxt.debug(`workspace session: ${sessionID}`);
 
-    return impl.initAsync(pxt.appTarget.id)
+    return impl.initAsync(pxt.appTarget.id, pxt.appTarget.versions.target)
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {
@@ -106,6 +106,7 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
     const scrReq = {
         name: h.name,
         target: h.target,
+        targetVersion: h.targetVersion,
         description: meta.description,
         editor: h.editor,
         text: text,
@@ -199,6 +200,7 @@ export function installByIdAsync(id: string) {
                         meta: scr.meta,
                         editor: scr.editor,
                         target: scr.target,
+                        targetVersion: scr.target || pxt.appTarget.versions.target
                     }, files)))
 }
 

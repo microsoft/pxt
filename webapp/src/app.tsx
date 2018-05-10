@@ -797,6 +797,7 @@ export class ProjectView
         importAsync: (project, data) => {
             let h: pxt.workspace.InstallHeader = {
                 target: pxt.appTarget.id,
+                targetVersion: pxt.appTarget.versions.target,
                 editor: data.meta.editor,
                 name: data.meta.name,
                 meta: {},
@@ -938,6 +939,7 @@ export class ProjectView
         if (!h) {
             h = {
                 target: pxt.appTarget.id,
+                targetVersion: pxt.appTarget.versions.target,
                 editor: pxt.BLOCKS_PROJECT_NAME,
                 name: lf("Untitled"),
                 meta: {},
@@ -1129,6 +1131,7 @@ export class ProjectView
             pubId: "",
             pubCurrent: false,
             target: pxt.appTarget.id,
+            targetVersion: pxt.appTarget.versions.target,
             temporary: options.temporary
         }, files).then(hd => this.loadHeaderAsync(hd, { filters: options.filters }, options.inTutorial))
     }
