@@ -434,8 +434,8 @@ export function mainEditorPkg() {
 
 export function genFileName(extension: string): string {
     let sanitizedName = mainEditorPkg().header.name.replace(/[()\\\/.,?*^:<>!;'#$%^&|"\x00-\x1F ]\s/g, '');
-    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.fileNameInclusiveFilter) {
-        const rx = new RegExp(pxt.appTarget.appTheme.fileNameInclusiveFilter, 'g');
+    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.fileNameExclusiveFilter) {
+        const rx = new RegExp(pxt.appTarget.appTheme.fileNameExclusiveFilter, 'g');
         sanitizedName =  sanitizedName.replace(rx, '');
     }
     const fn = `${pxt.appTarget.nickname || pxt.appTarget.id}-${sanitizedName}${extension}`;

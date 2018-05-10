@@ -261,7 +261,7 @@ declare namespace pxt {
         defaultBlockGap?: number; // For targets to override block gap
         hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
         hideNewProjectButton?: boolean; // do not show the "new project" button in home page
-        fileNameInclusiveFilter?: string; // allowed character regex pattern
+        fileNameExclusiveFilter?: string; // anything that does not match this regex is removed from the filename
     }
 
     interface SocialOptions {
