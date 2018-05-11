@@ -98,11 +98,11 @@ namespace pxt.semver {
     export function inRange(rng: string, v: Version): boolean {
         let rngs = rng.split(' - ');
         if (rngs.length != 2) return false;
-        let min = tryParse(rngs[0]);
-        let max = tryParse(rngs[1]);
-        if (!min || !max) return false;
+        let minInclusive = tryParse(rngs[0]);
+        let maxExclusive = tryParse(rngs[1]);
+        if (!minInclusive || !maxExclusive) return false;
         if (!v) return true;
-        return cmp(min, v) >= 0 && cmp(v, max) >= 0;
+        return cmp(minInclusive, v) >= 0 && cmp(v, maxExclusive) < 0;
     }
 
     export function test() {
@@ -134,6 +134,13 @@ namespace pxt.semver {
                 else U.assert(x == 0)
             }
         }
+
+        const v = tryParse("1.2.3");
+        U.assert(inRange("0.1.2 - 2.2.3", v))
+        U.assert(inRange("1.2.3 - 2.2.3", v))
+        U.assert(!inRange("0.0.0 - 1.2.3", v))
+        U.assert(!inRange("1.2.4 - 4.2.3", v))
+        U.assert(!inRange("0.0.0 - 0.0.1", v))
     }
 
 }
