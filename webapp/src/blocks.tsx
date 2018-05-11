@@ -1296,11 +1296,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     const builtin = snippets.allBuiltinBlocks()[type];
                     let b = this.getBlockXml(builtin ? builtin : { name: type, attributes: { blockId: type } }, true);
                     /* tslint:disable:no-inner-html setting one element's contents to the other */
-                    if (b) shadow.innerHTML = b[0].innerHTML;
+                    if (b) shadow.innerHTML = b.innerHTML;
                     /* tslint:enable:no-inner-html */
                 })
         }
-        return [blockXml];
+        return blockXml;
         function shouldShowBlock(fn: pxtc.SymbolInfo) {
             if (fn.attributes.debug && !pxt.options.debug) return false;
             if (!shadow && (fn.attributes.deprecated || fn.attributes.blockHidden)) return false;
