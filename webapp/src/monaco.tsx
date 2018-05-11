@@ -28,6 +28,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     fileType: FileType = FileType.Unknown;
     extraLibs: pxt.Map<monaco.IDisposable>;
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
+    loadedMonaco: boolean;
     loadingMonaco: boolean;
     giveFocusOnLoading: boolean = false;
 
@@ -165,11 +166,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return compiler.decompileAsync(blockFile)
     }
 
+    private handleToolboxRef = (c: toolbox.Toolbox) => {
+        this.toolbox = c;
+    }
+
     display(): JSX.Element {
         return (
             <div id="monacoEditorArea" className="full-abs" style={{ direction: 'ltr' }}>
                 <div className={`monacoToolboxDiv ${this.toolbox && !this.toolbox.state.visible ? 'invisible' : ''}`}>
-                    <toolbox.Toolbox ref={e => this.toolbox = e} editorname="monaco" parent={this} />
+                    <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
                 </div>
                 <div id='monacoEditorInner' style={{ float: 'right' }} />
             </div>
@@ -235,7 +240,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     setHighContrast(hc: boolean) {
-        this.defineEditorTheme(hc, true);
+        if (this.loadedMonaco) this.defineEditorTheme(hc, true);
     }
 
     beforeCompile() {
@@ -283,6 +288,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return pxt.vs.initMonacoAsync(editorElement).then((editor) => {
             this.editor = editor;
             this.loadingMonaco = false;
+            this.loadedMonaco = true;
 
             this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
 
@@ -535,7 +541,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private hideFlyout() {
         // Hide the flyout
         let flyout = document.getElementById('monacoFlyoutWidget');
-        flyout.innerHTML = '';
+        pxsim.U.clear(flyout);
         flyout.style.display = 'none';
 
         // Hide the current toolbox category
@@ -1054,7 +1060,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         monacoFlyout.style.display = 'block';
         monacoFlyout.className = 'monacoFlyout';
         monacoFlyout.style.transform = 'none';
-        monacoFlyout.innerHTML = '';
+        pxsim.U.clear(monacoFlyout);
 
         return monacoFlyout;
     }
@@ -1356,7 +1362,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             monacoBlock.id = `monacoHexBlock${monacoHexBlockId}`;
             monacoBlock.className += ' monacoHexBlock';
             const styleBlock = document.createElement('style') as HTMLStyleElement;
-            styleBlock.innerHTML = `
+            styleBlock.appendChild(document.createTextNode(`
                     #monacoHexBlock${monacoHexBlockId}:before,
                     #monacoHexBlock${monacoHexBlockId}:after {
                         border-top: ${monacoBlockHeight / 2}px solid transparent;
@@ -1368,7 +1374,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     #monacoHexBlock${monacoHexBlockId}:after {
                         border-left: 17px solid ${color};
                     }
-                `;
+                `));
             monacoBlockArea.insertBefore(styleBlock, monacoBlock);
         } else if (fn.retType && fn.retType != "void") {
             // Show a round shape

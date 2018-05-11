@@ -21,7 +21,7 @@ namespace pxsim.visuals {
         light?: boolean
     }
 
-    export var mkBoardView = (opts: BoardViewOptions): BoardView => {
+    export let mkBoardView = (opts: BoardViewOptions): BoardView => {
         const boardVis = opts.visual as BoardImageDefinition;
         return new visuals.GenericBoardSvg({
             visualDef: boardVis,

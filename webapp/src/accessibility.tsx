@@ -17,6 +17,17 @@ export interface EditorAccessibilityMenuState {
 
 export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityMenuProps, EditorAccessibilityMenuState> {
 
+    constructor(props: EditorAccessibilityMenuProps) {
+        super(props);
+        this.state = {
+        }
+
+        this.openJavaScript = this.openJavaScript.bind(this);
+        this.showLanguagePicker = this.showLanguagePicker.bind(this);
+        this.toggleHighContrast = this.toggleHighContrast.bind(this);
+        this.goHome = this.goHome.bind(this);
+    }
+
     openJavaScript() {
         pxt.tickEvent("accmenu.editor.openJS", undefined, { interactiveConsent: true });
         this.props.parent.openJavaScript();
@@ -53,10 +64,10 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
         const {highContrast} = this.props.parent.state;
         const targetTheme = pxt.appTarget.appTheme;
         return <div className="ui accessibleMenu borderless fixed menu" role="menubar">
-            <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor") } onClick={() => this.openJavaScript() } />
-            {targetTheme.selectLanguage ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language") } onClick={() => this.showLanguagePicker() } /> : undefined}
-            {targetTheme.highContrast ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() } /> : undefined}
-            <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="home" text={lf("Go Home") } onClick={() => this.goHome() } />
+            <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor") } onClick={this.openJavaScript} />
+            {targetTheme.selectLanguage ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language") } onClick={this.showLanguagePicker} /> : undefined}
+            {targetTheme.highContrast ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={this.toggleHighContrast} /> : undefined}
+            <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="home" text={lf("Go Home") } onClick={this.goHome} />
         </div>;
     }
 }
@@ -71,6 +82,17 @@ export interface HomeAccessibilityMenuState {
 }
 
 export class HomeAccessibilityMenu extends data.Component<HomeAccessibilityMenuProps, HomeAccessibilityMenuState> {
+
+    constructor(props: HomeAccessibilityMenuProps) {
+        super(props);
+        this.state = {
+        }
+
+        this.newProject = this.newProject.bind(this);
+        this.importProjectDialog = this.importProjectDialog.bind(this);
+        this.showLanguagePicker = this.showLanguagePicker.bind(this);
+        this.toggleHighContrast = this.toggleHighContrast.bind(this);
+    }
 
     newProject() {
         pxt.tickEvent("accmenu.home.new", undefined, { interactiveConsent: true });
@@ -108,10 +130,10 @@ export class HomeAccessibilityMenu extends data.Component<HomeAccessibilityMenuP
         const {highContrast} = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         return <div className="ui accessibleMenu borderless fixed menu" role="menubar">
-            <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="add circle" text={lf("New Project") } onClick={() => this.newProject() } />
-            <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="upload" text={lf("Import Project") } onClick={() => this.importProjectDialog() } />
-            {targetTheme.selectLanguage ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language") } onClick={() => this.showLanguagePicker() } /> : undefined}
-            {targetTheme.highContrast ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() } /> : undefined}
+            <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="add circle" text={lf("New Project") } onClick={this.newProject} />
+            <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="upload" text={lf("Import Project") } onClick={this.importProjectDialog} />
+            {targetTheme.selectLanguage ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language") } onClick={this.showLanguagePicker} /> : undefined}
+            {targetTheme.highContrast ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={this.toggleHighContrast} /> : undefined}
         </div>;
     }
 }

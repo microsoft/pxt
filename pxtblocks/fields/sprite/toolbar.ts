@@ -320,7 +320,7 @@ namespace pxtblockly {
         }
 
         protected clearOptions() {
-            this.dropdownOptions.el.innerHTML = "";
+            pxsim.U.clear(this.dropdownOptions.el);
             this.optionButtons = undefined;
         }
     }

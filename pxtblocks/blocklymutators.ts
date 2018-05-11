@@ -370,7 +370,7 @@ namespace pxt.blocks {
                 properties.forEach(prop => {
                     this.parameters.push(prop.property);
                     if (prop.newName && prop.newName !== prop.property) {
-                        this.parameterRenames[prop.property] === prop.newName;
+                        this.parameterRenames[prop.property] = prop.newName;
                     }
                 });
 

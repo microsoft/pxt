@@ -72,7 +72,7 @@ namespace pxtblockly {
                 }
             }
             else {
-                this.overlay.el.innerHTML = "";
+                pxsim.U.clear(this.overlay.el);
                 if (this.overlayFade) {
                     this.overlayFade.kill();
                 }
@@ -155,7 +155,7 @@ namespace pxtblockly {
                 requestAnimationFrame(() => this.frame());
             }
             else {
-                this.target.el.innerHTML = "";
+                pxsim.U.clear(this.target.el);
             }
         }
 
