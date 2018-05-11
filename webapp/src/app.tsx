@@ -1903,7 +1903,6 @@ export class ProjectView
         theEditor = this;
 
         //  ${targetTheme.accentColor ? "inverted accent " : ''}
-        const settings: Cloud.UserSettings = (Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {}) || {}
         const targetTheme = pxt.appTarget.appTheme;
         const simOpts = pxt.appTarget.simulator;
         const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;

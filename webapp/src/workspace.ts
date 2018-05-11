@@ -204,7 +204,7 @@ export function installByIdAsync(id: string) {
                         meta: scr.meta,
                         editor: scr.editor,
                         target: scr.target,
-                        targetVersion: scr.targetVersion
+                        targetVersion: scr.meta && scr.meta.versions ? scr.meta.versions.target : undefined
                     }, files)))
 }
 
