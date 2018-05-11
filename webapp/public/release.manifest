@@ -5,7 +5,6 @@ CACHE:
 /blb/main.js
 /blb/pxtapp.js
 /blb/typescript.js
-/blb/marked/marked.min.js
 /blb/highlight.js/highlight.pack.js
 /blb/jquery.js
 /blb/pxtlib.js

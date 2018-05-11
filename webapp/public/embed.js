@@ -8,7 +8,6 @@
         "/blb/highlight.js/highlight.pack.js",
         "/blb/bluebird.min.js",
         "/blb/semantic.js",
-        "/blb/marked/marked.min.js",
         "/blb/target.js",
         "/blb/pxtembed.js"
     ]
