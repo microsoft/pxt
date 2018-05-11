@@ -695,6 +695,26 @@ export class ProjectView
 
         this.stopSimulator(true);
         this.clearSerial()
+
+        // version check
+        if (h.targetVersion && pxt.semver.majorCmp(h.targetVersion, pxt.appTarget.versions.target) == 0) {
+            // the script is a major version ahead, need to redirect
+            pxt.tickEvent('patch.maxversion');
+            const buttons: sui.ModalButton[] = [];
+            if (pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.homeUrl)
+                buttons.push({
+                    label: lf("Get latest"),
+                    icon: "external alternate",
+                    url: pxt.appTarget.appTheme.homeUrl,
+                    buttons
+                })
+            return core.dialogAsync({
+                header: lf("Oops, this project is too new!"),
+                body: lf("This project was created in a newer version of this editor. Please try again in that editor."),
+                disagreeLbl: lf("Ok")
+            }).then(() => this.openHome());
+        }
+
         Util.jsonMergeFrom(editorState || {}, this.state.editorState || {});
         return pkg.loadPkgAsync(h.id)
             .then(() => {
