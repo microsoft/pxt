@@ -4602,6 +4602,28 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     fs.writeFileSync("built/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), { encoding: "utf8" });
 
     let p = Promise.resolve();
+    // test targetconfig
+    if (nodeutil.fileExistsSync("targetconfig.json")) {
+        const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
+        if (targetConfig && targetConfig.galleries) {
+            Object.keys(targetConfig.galleries).forEach(k => {
+                pxt.log(`gallery ${k}`);
+                let gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
+                let gallery = pxt.gallery.parseGalleryMardown(gallerymd);
+                pxt.log(`found ${gallery.length} galleries`);
+                gallery.forEach(gal => gal.cards.forEach(card => {
+                    pxt.log(`card ${card.shortName || card.name}`);
+                    switch (card.cardType) {
+                        case "tutorial":
+                            break;
+                        case "example":
+                            break;
+                    }
+                }));
+            })
+        }
+    }
+
     if (compileSnippets)
         p = p.then(() => testSnippetsAsync(snippets, re));
     return p.then(() => {
