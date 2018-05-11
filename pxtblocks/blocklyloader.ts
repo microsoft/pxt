@@ -538,14 +538,8 @@ namespace pxt.blocks {
             }
         });
         if (fn.attributes.imageLiteral) {
-            for (let r = 0; r < 5; ++r) {
-                let ri = block.appendDummyInput();
-                for (let c = 0; c < fn.attributes.imageLiteral * 5; ++c) {
-                    if (c > 0 && c % 5 == 0) ri.appendField("  ");
-                    else if (c > 0) ri.appendField(" ");
-                    ri.appendField(new Blockly.FieldCheckbox("FALSE"), "LED" + c + r);
-                }
-            }
+            let ri = block.appendDummyInput();
+            ri.appendField(new pxtblockly.FieldMatrix("", { columns: fn.attributes.imageLiteral * 5 }), "LEDS");
         }
 
         if (fn.attributes.inlineInputMode === "external") {
