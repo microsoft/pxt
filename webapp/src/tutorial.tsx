@@ -15,19 +15,11 @@ type ISettingsProps = pxt.editor.ISettingsProps;
  * We'll run this step when we first start the tutorial to figure out what blocks are used so we can
  * filter the toolbox. 
  */
-export function getUsedBlocksAsync(tutorialId: string, tutorialmd: string): Promise<{ [index: string]: number }> {
-    tutorialmd = tutorialmd.replace(/((?!.)\s)+/g, "\n");
-
-    const regex = /```(sim|block|blocks|filterblocks)\s*\n([\s\S]*?)\n```/gmi;
-    let match: RegExpExecArray;
-    let code = '';
-    // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
-    while ((match = regex.exec(tutorialmd)) != null) {
-        code += "\n { \n " + match[2] + "\n } \n";
-    }
+export function getUsedBlocksAsync(tutorialId: string, tutorialmd: string): Promise<pxt.Map<number>> {
+    const code = pxt.tutorial.bundleTutorialCode(tutorialmd);
     return Promise.resolve()
         .then(() => {
-            const usedBlocks: { [index: string]: number } = {};
+            const usedBlocks: pxt.Map<number> = {};
 
             if (code == '') return Promise.resolve({});
             return compiler.getBlocksAsync()

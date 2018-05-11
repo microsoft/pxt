@@ -44,4 +44,17 @@ namespace pxt.tutorial {
         }
         return stepInfo;
     }
+
+    export function bundleTutorialCode(tutorialmd: string): string {
+        tutorialmd = tutorialmd.replace(/((?!.)\s)+/g, "\n");
+
+        const regex = /```(sim|block|blocks|filterblocks)\s*\n([\s\S]*?)\n```/gmi;
+        let match: RegExpExecArray;
+        let code = '';
+        // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
+        while ((match = regex.exec(tutorialmd)) != null) {
+            code += "\n { \n " + match[2] + "\n } \n";
+        }
+        return code;
+    }
 }
