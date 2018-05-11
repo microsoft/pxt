@@ -58,6 +58,14 @@ namespace pxtblockly {
                     this.matrixWidth = val;
                 }
             }
+
+            if (this.params.onColor !== undefined) {
+                this.onColor = this.params.onColor;
+            }
+
+            if (this.params.offColor !== undefined) {
+                this.offColor = this.params.offColor;
+            }
         }
 
         /**
@@ -140,7 +148,7 @@ namespace pxtblockly {
             const ty = y * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN;
 
             const cellG = pxsim.svg.child(this.elt, "g", { transform: `translate(${tx} ${ty})` }) as SVGGElement;
-            const cellRect = pxsim.svg.child(cellG, "rect", { 'cursor': 'pointer', width: FieldMatrix.CELL_WIDTH, height: FieldMatrix.CELL_WIDTH, fill: this.getColor(x, y), rx: FieldMatrix.CELL_CORNER_RADIUS }) as SVGRectElement;
+            const cellRect = pxsim.svg.child(cellG, "rect", { 'class': `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`, 'cursor': 'pointer', width: FieldMatrix.CELL_WIDTH, height: FieldMatrix.CELL_WIDTH, fill: this.getColor(x, y), rx: FieldMatrix.CELL_CORNER_RADIUS }) as SVGRectElement;
 
             const toggleRect = () => {
                 this.cellState[x][y] = this.currentDragState_;
