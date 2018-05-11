@@ -9,6 +9,8 @@ namespace pxt.workspace {
         temporary?: boolean; // don't serialize project
         // older script might miss this
         target: string;
+        // older scripts might miss this
+        targetVersion: string;
         pubId: string; // for published scripts
         pubCurrent: boolean; // is this exactly pubId, or just based on it
     }
@@ -43,7 +45,7 @@ namespace pxt.workspace {
         getHeaders(): Header[];
         getHeader(id: string): Header;
         getTextAsync(id: string): Promise<ScriptText>;
-        initAsync(target: string): Promise<void>;
+        initAsync(target: string, version: string): Promise<void>;
         saveAsync(h: Header, text?: ScriptText): Promise<void>;
         installAsync(h0: InstallHeader, text: ScriptText): Promise<Header>;
         saveToCloudAsync(h: Header): Promise<void>;

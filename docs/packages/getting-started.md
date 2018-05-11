@@ -2,7 +2,7 @@
 
 ## Step 1: Design blocks in the editor
 
-It is easiest to tinker and design your blocks from the editor itself. Use the [custom blocks feature](/blocks/custom) for this purpose.
+It is easiest to tinker and design your blocks from the editor itself. Use the [custom blocks feature](/defining-blocks) for this purpose.
 
 ## Step 2: GitHub setup
 
