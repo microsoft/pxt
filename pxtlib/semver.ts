@@ -102,7 +102,9 @@ namespace pxt.semver {
         let maxExclusive = tryParse(rngs[1]);
         if (!minInclusive || !maxExclusive) return false;
         if (!v) return true;
-        return cmp(minInclusive, v) >= 0 && cmp(v, maxExclusive) < 0;
+        const lwr = cmp(minInclusive, v);
+        const hr = cmp(v, maxExclusive);
+        return lwr <= 0 && hr < 0;
     }
 
     export function test() {
