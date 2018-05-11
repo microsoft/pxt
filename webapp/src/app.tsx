@@ -705,13 +705,13 @@ export class ProjectView
                 buttons.push({
                     label: lf("Get latest"),
                     icon: "external alternate",
-                    url: pxt.appTarget.appTheme.homeUrl,
-                    buttons
+                    url: pxt.appTarget.appTheme.homeUrl
                 })
             return core.dialogAsync({
                 header: lf("Oops, this project is too new!"),
                 body: lf("This project was created in a newer version of this editor. Please try again in that editor."),
-                disagreeLbl: lf("Ok")
+                disagreeLbl: lf("Ok"),
+                buttons
             }).then(() => this.openHome());
         }
 
