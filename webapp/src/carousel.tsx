@@ -44,6 +44,9 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         this.state = {
         }
 
+        this.childrenElements = [];
+        this.arrows = [];
+
         this.onLeftArrowClick = this.onLeftArrowClick.bind(this);
         this.onRightArrowClick = this.onRightArrowClick.bind(this);
     }
@@ -71,9 +74,8 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
     }
 
     public renderCore() {
-        this.childrenElements = [];
-        this.arrows = [];
-        const { rightDisabled, leftDisabled } = this.state || {} as any;
+        const { rightDisabled, leftDisabled } = this.state;
+
         return <div className="ui carouselouter">
             <span role="button" className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")}
                 tabIndex={leftDisabled ? -1 : 0} onClick={this.onLeftArrowClick} onKeyDown={sui.fireClickOnEnter} ref={this.handleArrowRefs}>
@@ -110,11 +112,11 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         if (left) {
             // Focus right most
             const prevElement = this.index + this.actualPageLength < prevIndex ? this.index + this.actualPageLength : prevIndex - 1;
-            (this.childrenElements[prevElement].firstChild as HTMLElement).focus();
+            if (this.childrenElements[prevElement]) (this.childrenElements[prevElement].firstChild as HTMLElement).focus();
         } else {
             // Focus left most
             const nextElement = this.index > prevIndex + this.actualPageLength ? this.index : prevIndex + this.actualPageLength;
-            (this.childrenElements[nextElement].firstChild as HTMLElement).focus();
+            if (this.childrenElements[nextElement]) (this.childrenElements[nextElement].firstChild as HTMLElement).focus();
         }
     }
 
