@@ -1081,11 +1081,14 @@ ${output}</xml>`;
                 error(node, Util.lf("Invalid image pattern"));
                 return undefined;
             }
+            let ledString = '';
             for (let r = 0; r < 5; ++r) {
                 for (let c = 0; c < nc; ++c) {
-                    res.fields.push(getField(`LED${c}${r}`, /[#*1]/.test(leds[r * nc + c]) ? "TRUE" : "FALSE"))
+                    ledString += /[#*1]/.test(leds[r * nc + c]) ? '#' : '.';
                 }
+                ledString += '\n';
             }
+            res.fields.push(getField(`LEDS`, `\`${ledString}\``));
 
             return res;
         }

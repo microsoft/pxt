@@ -1140,13 +1140,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return (f2.attributes.weight != undefined ? f2.attributes.weight : 50)
                 - (f1.attributes.weight != undefined ? f1.attributes.weight : 50);
         }).forEach((block) => {
-            let blockXml: Element;
+            let blockXmlList: Element[];
             if (block.type == "button") {
-                blockXml = this.getButtonXml(block as toolbox.ButtonDefinition);
+                blockXmlList = this.getButtonXml(block as toolbox.ButtonDefinition);
             } else {
-                blockXml = this.getBlockXml(block as toolbox.BlockDefinition);
+                blockXmlList = this.getBlockXml(block as toolbox.BlockDefinition);
             }
-            if (blockXml) this.flyoutXmlList.push(blockXml);
+            if (blockXmlList) this.flyoutXmlList = this.flyoutXmlList.concat(blockXmlList);
         })
     }
 
@@ -1155,8 +1155,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const searchBlocks = this.toolbox.getSearchBlocks();
 
         searchBlocks.forEach((block) => {
-            const blockXml = this.getBlockXml(block);
-            if (blockXml) this.flyoutXmlList.push(blockXml);
+            const blockXmlList = this.getBlockXml(block);
+            if (blockXmlList) this.flyoutXmlList = this.flyoutXmlList.concat(blockXmlList);
         })
 
         if (this.flyoutXmlList.length == 0) {
@@ -1194,8 +1194,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         let xmlList: Element[] = [];
         allBlocks.forEach((block) => {
-            const blockXml = this.getBlockXml(block);
-            if (blockXml) xmlList.push(blockXml);
+            const blockXmlList = this.getBlockXml(block);
+            if (blockXmlList) xmlList = xmlList.concat(blockXmlList);
         })
         this.showFlyoutInternal_(xmlList);
     }
@@ -1204,9 +1204,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     ////////////          Block methods           /////////////
     ///////////////////////////////////////////////////////////
 
-    private getBlockXml(block: toolbox.BlockDefinition, shadow?: boolean): Element {
+    private getBlockXml(block: toolbox.BlockDefinition, shadow?: boolean): Element[] {
         const that = this;
-        let blockXml: Element = undefined;
+        let blockXml: Element;
         // Check if the block is built in, ignore it as it's already defined in snippets
         if (block.attributes.blockBuiltin) {
             pxt.log("ignoring built in block: " + block.attributes.blockId);
@@ -1247,11 +1247,25 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         }
                         blockXml.appendChild(mutation);
                     });
+                } else if (comp.handlerArgs.length && !fn.attributes.optionalVariableArgs) {
+                    comp.handlerArgs.forEach(arg => {
+                        const getterblock = Blockly.Xml.textToDom(`
+    <value name="HANDLER_${arg.name}">
+    <shadow type="variables_get_reporter">
+    <field name="VAR" variabletype="">${arg.name}</field>
+    </shadow>
+    </value>`);
+                        blockXml.appendChild(getterblock);
+                    });
                 } else if (fn.attributes.mutateDefaults) {
                     const mutationValues = fn.attributes.mutateDefaults.split(";");
+                    const mutatedBlocks: Element[] = [];
                     mutationValues.forEach(mutation => {
-                        pxt.blocks.mutateToolboxBlock(blockXml, fn.attributes.mutate, mutation);
+                        const mutatedBlock = blockXml.cloneNode(true) as HTMLElement;
+                        pxt.blocks.mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
+                        mutatedBlocks.push(mutatedBlock);
                     });
+                    return mutatedBlocks;
                 } else if (fn.attributes.blockSetVariable != undefined && fn.retType) {
                     // if requested, wrap block into a "set variable block"
                     const rawName = fn.attributes.blockSetVariable;
@@ -1296,11 +1310,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     const builtin = snippets.allBuiltinBlocks()[type];
                     let b = this.getBlockXml(builtin ? builtin : { name: type, attributes: { blockId: type } }, true);
                     /* tslint:disable:no-inner-html setting one element's contents to the other */
-                    if (b) shadow.innerHTML = b.innerHTML;
+                    if (b) shadow.innerHTML = b[0].innerHTML;
                     /* tslint:enable:no-inner-html */
                 })
         }
-        return blockXml;
+        return [blockXml];
         function shouldShowBlock(fn: pxtc.SymbolInfo) {
             if (fn.attributes.debug && !pxt.options.debug) return false;
             if (!shadow && (fn.attributes.deprecated || fn.attributes.blockHidden)) return false;
@@ -1309,10 +1323,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    private getButtonXml(button: toolbox.ButtonDefinition) {
+    private getButtonXml(button: toolbox.ButtonDefinition): Element[] {
         this.editor.registerButtonCallback(button.attributes.blockId, (btn) => {
             button.callback();
         })
-        return pxt.blocks.createFlyoutButton(button.attributes.blockId, button.attributes.label);
+        return [pxt.blocks.createFlyoutButton(button.attributes.blockId, button.attributes.label)];
     }
 }

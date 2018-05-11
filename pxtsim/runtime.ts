@@ -309,8 +309,8 @@ namespace pxsim {
             return id;
         }
 
-        unregisterLiveObject(object: RefObject) {
-            U.assert(object.refcnt == 0, "ref count is not 0");
+        unregisterLiveObject(object: RefObject, keepAlive?: boolean) {
+            if (!keepAlive) U.assert(object.refcnt == 0, "ref count is not 0");
             delete this.liveRefObjs[object.id + ""]
         }
 
