@@ -82,7 +82,7 @@
           * common bug patterns in the code or enforce type safety.
           */
         "await-promise": true,
-        // pxt:override more work to be done here "forin": true,
+        "forin": true,
         "jquery-deferred-must-complete": true,
         "label-position": true,
         "match-default-export-name": true,
@@ -129,9 +129,9 @@
         "no-unused-expression": true,
         // pxt:override (TODO) "no-use-before-declare": true,
         "no-with-statement": true,
-        // pxt:override (TODO) "promise-function-async": true,
+        // pxt:override "promise-function-async": true,
         // pxt:override (TODO 1) "promise-must-complete": true,
-        // pxt:override (TODO) "radix": true,
+        // pxt:override "radix": true,
         "react-this-binding-issue": true,
         "react-unused-props-and-state": true,
         // pxt:override (TODO) "restrict-plus-operands": true, // the plus operand should really only be used for strings and numbers
