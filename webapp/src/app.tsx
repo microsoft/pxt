@@ -810,6 +810,7 @@ export class ProjectView
         importAsync: (project, data) => {
             let h: pxt.workspace.InstallHeader = {
                 target: pxt.appTarget.id,
+                targetVersion: data.meta.targetVersions ? data.meta.targetVersions.target : undefined,
                 editor: data.meta.editor,
                 name: data.meta.name,
                 meta: {},
@@ -951,6 +952,7 @@ export class ProjectView
         if (!h) {
             h = {
                 target: pxt.appTarget.id,
+                targetVersion: undefined, // unknown version
                 editor: pxt.BLOCKS_PROJECT_NAME,
                 name: lf("Untitled"),
                 meta: {},
@@ -1065,7 +1067,7 @@ export class ProjectView
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
-        this.setState({ home: true, tracing: undefined, fullscreen: undefined });
+        this.setState({ home: true, tracing: undefined, fullscreen: undefined, tutorialOptions: undefined, editorState: undefined });
         this.allEditors.forEach(e => e.setVisible(false));
         this.homeLoaded();
     }
@@ -1142,6 +1144,7 @@ export class ProjectView
             pubId: "",
             pubCurrent: false,
             target: pxt.appTarget.id,
+            targetVersion: pxt.appTarget.versions.target,
             temporary: options.temporary
         }, files).then(hd => this.loadHeaderAsync(hd, { filters: options.filters }, options.inTutorial))
     }
@@ -1949,7 +1952,6 @@ export class ProjectView
         theEditor = this;
 
         //  ${targetTheme.accentColor ? "inverted accent " : ''}
-        const settings: Cloud.UserSettings = (Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {}) || {}
         const targetTheme = pxt.appTarget.appTheme;
         const simOpts = pxt.appTarget.simulator;
         const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;

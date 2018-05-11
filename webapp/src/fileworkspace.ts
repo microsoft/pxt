@@ -6,6 +6,7 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 let allScripts: HeaderWithScript[] = [];
 let currentTarget: string;
+let currentTargetVersion: string;
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
@@ -62,6 +63,7 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
     let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
     let hd: Header = {
         target: currentTarget,
+        targetVersion: e.header ? e.header.targetVersion : currentTargetVersion,
         name: pkg.config.name,
         meta: {},
         editor: pxt.JAVASCRIPT_PROJECT_NAME,
@@ -89,10 +91,10 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
     }
 }
 
-function initAsync(target: string) {
+function initAsync(target: string, version: string) {
     allScripts = [];
     currentTarget = target;
-    // TODO check that target is correct.
+    currentTargetVersion = version;
     return syncAsync().then(() => { });
 }
 
@@ -188,7 +190,6 @@ function installAsync(h0: InstallHeader, text: ScriptText) {
     h.id = path;
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
-    h.target = currentTarget;
     const e: HeaderWithScript = {
         id: h.id,
         header: h,
