@@ -153,6 +153,7 @@ namespace pxtblockly {
             const toggleRect = () => {
                 this.cellState[x][y] = this.currentDragState_;
                 cellRect.setAttribute("fill", this.getColor(x, y));
+                cellRect.setAttribute('class', `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`);
                 this.updateValue();
             }
 
