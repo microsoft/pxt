@@ -356,7 +356,7 @@ namespace ts.pxtc.decompiler {
 
         let n: StatementNode;
         try {
-            n = codeBlock(stmts, undefined, true);
+            n = codeBlock(stmts, undefined, true, undefined, !options.snippetMode);
         }
         catch (e) {
             if ((<any>e).programTooLarge) {
@@ -914,7 +914,7 @@ ${output}</xml>`;
             else {
                 switch (node.kind) {
                     case SK.Block:
-                        return codeBlock((node as ts.Block).statements, next);
+                        return codeBlock((node as ts.Block).statements, next, topLevel);
                     case SK.ExpressionStatement:
                         return getStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node, asExpression, topLevel);
                     case SK.VariableStatement:
@@ -1605,7 +1605,7 @@ ${output}</xml>`;
             return r;
         }
 
-        function codeBlock(statements: NodeArray<Node>, next?: ts.Node[], topLevel = false, parent?: ts.Node) {
+        function codeBlock(statements: NodeArray<Node>, next?: ts.Node[], topLevel = false, parent?: ts.Node, emitOnStart = false) {
             const eventStatements: ts.Node[] = [];
             const blockStatements: ts.Node[] = next || [];
 
@@ -1624,7 +1624,6 @@ ${output}</xml>`;
 
             eventStatements.map(n => getStatementBlock(n, undefined, undefined, false, topLevel)).forEach(emitStatementNode);
 
-            const emitOnStart = topLevel && !options.snippetMode;
             if (blockStatements.length) {
                 // wrap statement in "on start" if top level
                 const stmt = getStatementBlock(blockStatements.shift(), blockStatements, parent, false, topLevel);
