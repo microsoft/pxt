@@ -1,0 +1,13 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="device_forever">
+<statement name="HANDLER">
+<block type="device_show_number">
+<value name="number">
+<shadow type="math_number">
+<field name="NUM">7</field>
+</shadow>
+</value>
+</block>
+</statement>
+</block>
+</xml>
