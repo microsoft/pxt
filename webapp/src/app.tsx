@@ -712,7 +712,9 @@ export class ProjectView
                 body: lf("This project was created in a newer version of this editor. Please try again in that editor."),
                 disagreeLbl: lf("Ok"),
                 buttons
-            }).then(() => this.openHome());
+            })
+            // TODO: find a better recovery for this.
+            .then(() => this.openHome());
         }
 
         Util.jsonMergeFrom(editorState || {}, this.state.editorState || {});
