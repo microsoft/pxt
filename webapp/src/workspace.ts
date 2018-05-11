@@ -152,13 +152,13 @@ export function saveScreenshotAsync(h: Header, data: string, icon: string) {
 }
 
 export function fixupFileNames(txt: ScriptText) {
-    if (!txt) return txt
-    for (let oldName in ["kind.json", "yelm.json"]) {
+    if (!txt) return txt;
+    ["kind.json", "yelm.json"].forEach(oldName => {
         if (!txt[pxt.CONFIG_NAME] && txt[oldName]) {
             txt[pxt.CONFIG_NAME] = txt[oldName]
             delete txt[oldName]
         }
-    }
+    })
     return txt
 }
 

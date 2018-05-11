@@ -35,11 +35,11 @@ namespace pxt {
             if (upgrades) {
                 upgrades.filter(rule => rule.type == "package")
                     .forEach(rule => {
-                        for (let match in rule.map) {
+                        Object.keys(rule.map).forEach(match => {
                             if (newPackage == match) {
                                 newPackage = rule.map[match];
                             }
-                        }
+                        });
                     });
             }
             return newPackage;
@@ -219,7 +219,7 @@ namespace pxt {
             if (ts && upgrades)
                 upgrades.filter(rule => rule.type == "missingPackage")
                     .forEach(rule => {
-                        for (const match in rule.map) {
+                        Object.keys(rule.map).forEach(match => {
                             const regex = new RegExp(match, 'g');
                             const pkg = rule.map[match];
                             ts.replace(regex, (m) => {
@@ -228,7 +228,7 @@ namespace pxt {
                                 }
                                 return "";
                             })
-                        }
+                        });
                     })
             return missing;
         }
@@ -341,10 +341,10 @@ namespace pxt {
             if (upgrades) {
                 upgrades.filter(rule => rule.type == "api")
                     .forEach(rule => {
-                        for (const match in rule.map) {
+                        Object.keys(rule.map).forEach(match => {
                             const regex = new RegExp(match, 'g');
                             updatedContents = updatedContents.replace(regex, rule.map[match]);
-                        }
+                        });
                     });
             }
             return updatedContents;
@@ -355,7 +355,7 @@ namespace pxt {
             this.config = cfg;
 
             const currentConfig = JSON.stringify(this.config);
-            for (const dep in this.config.dependencies) {
+            Object.keys(this.config.dependencies).forEach(dep => {
                 const value = Package.upgradePackageReference(dep, this.config.dependencies[dep]);
                 if (value != dep) {
                     delete this.config.dependencies[dep];
@@ -363,7 +363,7 @@ namespace pxt {
                         this.config.dependencies[value] = "*";
                     }
                 }
-            }
+            });
             if (JSON.stringify(this.config) != currentConfig) {
                 this.saveConfig();
             }
@@ -380,8 +380,10 @@ namespace pxt {
             // no core package? add the first one
             if (corePackages.length == 0) {
                 const allCorePkgs = pxt.Package.corePackages();
+                /* tslint:disable:no-unused-expression TODO(tslint): */
                 if (allCorePkgs.length)
                     this.config.dependencies[allCorePkgs[0].name];
+                /* tslint:enable:no-unused-expression */
             } else if (corePackages.length > 1) {
                 // keep last package
                 corePackages.pop();
@@ -614,8 +616,9 @@ namespace pxt {
                 dep.packageLocalizationStringsAsync(lang)
                     .then(depLoc => {
                         if (depLoc) // merge data
-                            for (let k in depLoc)
+                            Object.keys(depLoc).forEach(k => {
                                 if (!loc[k]) loc[k] = depLoc[k];
+                            })
                     })))
                 .then(() => loc);
         }
@@ -801,7 +804,7 @@ namespace pxt {
                 if (pjson) {
                     try {
                         let p = JSON.parse(pjson) as pxt.Map<pxsim.PartDefinition>;
-                        for (let k in p) {
+                        Object.keys(p).forEach(k => {
                             if (parts.indexOf(k) >= 0) {
                                 let part = res[k] = p[k];
                                 if (typeof part.visual.image === "string" && /\.svg$/i.test(part.visual.image)) {
@@ -810,7 +813,7 @@ namespace pxt {
                                     part.visual.image = `data:image/svg+xml,` + encodeURIComponent(f);
                                 }
                             }
-                        }
+                        });
                     } catch (e) {
                         pxt.reportError("parts", "invalid pxtparts.json file");
                     }

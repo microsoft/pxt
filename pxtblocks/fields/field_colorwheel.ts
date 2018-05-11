@@ -52,7 +52,13 @@ namespace pxtblockly {
 
         setReadout_(readout: Element, value: string) {
             const hexValue = this.colorWheel(parseInt(value), this.channel_);
-            readout.innerHTML = `<span class="blocklyColorReadout" style="background-color: ${hexValue};"></span>`;
+            // <span class="blocklyColorReadout" style="background-color: ${hexValue};"></span>
+            const readoutSpan = document.createElement('span');
+            readoutSpan.className = "blocklyColorReadout";
+            readoutSpan.style.backgroundColor = `${hexValue}`;
+
+            pxsim.U.clear(readout);
+            readout.appendChild(readoutSpan);
         }
 
         createColourStops_() {

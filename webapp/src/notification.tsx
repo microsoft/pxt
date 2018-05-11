@@ -29,6 +29,8 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
         this.delayTime = this.props.delayTime || 0;
         this.doneSleeping = this.sleepDone();
         this.bannerType = this.props.bannerType || "default";
+
+        this.handleClick = this.handleClick.bind(this);
     }
 
     componentDidMount() {
@@ -66,6 +68,11 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
         this.render();
     }
 
+    handleClick() {
+        this.hide("manual");
+        clearTimeout(this.timer);
+    }
+
     renderCore() {
         return (
             (this.props.parent.state.bannerVisible && this.doneSleeping) ?
@@ -76,7 +83,7 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
                         </div>
                     </div>
                     <div className="bannerRight">
-                        <sui.Icon icon="close" tabIndex={0} onClick={() => { this.hide("manual"); clearTimeout(this.timer) }} />
+                        <sui.Icon icon="close" tabIndex={0} onClick={this.handleClick} />
                     </div>
                 </div> :
                 <div></div>
@@ -85,6 +92,19 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
 }
 
 export class NotificationBanner extends data.Component<ISettingsProps, {}> {
+
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+        }
+
+        this.handleBannerClick = this.handleBannerClick.bind(this);
+    }
+
+    handleBannerClick() {
+        pxt.tickEvent("banner.linkClicked", undefined, { interactiveConsent: true });
+    }
+
     renderCore() {
         if (pxt.analytics.isCookieBannerVisible()) {
             // don't show any banner while cookie banner is up
@@ -106,10 +126,10 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         if (showWindowsStoreBanner) {
             return (
                 <GenericBanner parent={this.props.parent} delayTime={10000} displayTime={45000} sleepTime={604800}>
-                    <sui.Link className="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked", undefined, { interactiveConsent: true })}>
-                        <img className="bannerIcon" src={pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)}></img>
+                    <sui.Link className="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={this.handleBannerClick}>
+                        <img className="bannerIcon" src={pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)} alt={lf("Windows store logo")}></img>
                     </sui.Link>
-                    <sui.Link className="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked", undefined, { interactiveConsent: true })}>
+                    <sui.Link className="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={this.handleBannerClick}>
                         {lf("Want a faster download? Get the app!")}
                     </sui.Link>
                 </GenericBanner>

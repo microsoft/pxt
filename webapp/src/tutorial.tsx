@@ -59,9 +59,11 @@ export function getUsedBlocksAsync(tutorialId: string, tutorialmd: string): Prom
     let match: RegExpExecArray;
     let code = '';
     // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
+    /* tslint:disable:no-conditional-assignment */
     while ((match = regex.exec(tutorialmd)) != null) {
         code += "\n { \n " + match[2] + "\n } \n";
     }
+    /* tslint:enable:no-conditional-assignment */
     return Promise.resolve()
         .then(() => {
             const usedBlocks: { [index: string]: number } = {};
@@ -91,6 +93,8 @@ export function getUsedBlocksAsync(tutorialId: string, tutorialmd: string): Prom
 export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
+
+        this.openTutorialStep = this.openTutorialStep.bind(this);
     }
 
     openTutorialStep(step: number) {
@@ -110,14 +114,41 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
                 {tutorialStepInfo.map((step, index) =>
                     (index == currentStep) ?
                         <span className="step-label" key={'tutorialStep' + index}>
-                            <a className={`ui circular label ${currentStep == index ? 'blue selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} role="menuitem" aria-label={lf("Tutorial step {0}. This is the current step", index + 1)} tabIndex={0} onClick={() => this.openTutorialStep(index)} onKeyDown={sui.fireClickOnEnter}>{index + 1}</a>
+                            <TutorialMenuItemLink index={index}
+                                className={`ui circular label ${currentStep == index ? 'blue selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`}
+                                ariaLabel={lf("Tutorial step {0}. This is the current step", index + 1)}
+                                onClick={this.openTutorialStep}>{index + 1}</TutorialMenuItemLink>
                         </span> :
                         <span className="step-label" key={'tutorialStep' + index} data-tooltip={`${index + 1}`} data-inverted="" data-position="bottom center">
-                            <a className={`ui empty circular label ${!tutorialReady ? 'disabled' : ''} clear`} role="menuitem" aria-label={lf("Tutorial step {0}", index + 1)} tabIndex={0} onClick={() => this.openTutorialStep(index)} onKeyDown={sui.fireClickOnEnter}></a>
+                            <TutorialMenuItemLink index={index}
+                                className={`ui empty circular label ${!tutorialReady ? 'disabled' : ''} clear`}
+                                ariaLabel={lf("Tutorial step {0}", index + 1)}
+                                onClick={this.openTutorialStep} />
                         </span>
                 )}
             </div>
         </div>;
+    }
+}
+
+interface TutorialMenuItemLinkProps {
+    index: number;
+    className: string;
+    ariaLabel: string;
+    onClick: (index: number) => void;
+}
+
+export class TutorialMenuItemLink extends data.Component<TutorialMenuItemLinkProps, {}> {
+
+    handleClick = () => {
+        this.props.onClick(this.props.index);
+    }
+
+    renderCore() {
+        const { className, ariaLabel, index } = this.props;
+        return <a className={className} role="menuitem" aria-label={ariaLabel} tabIndex={0} onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>
+            {this.props.children}
+        </a>;
     }
 }
 
@@ -186,8 +217,13 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         this.state = {
         }
 
+        this.showHint = this.showHint.bind(this);
+        this.closeLightbox = this.closeLightbox.bind(this);
         this.tutorialCardKeyDown = this.tutorialCardKeyDown.bind(this);
         this.okButtonKeyDown = this.okButtonKeyDown.bind(this);
+        this.previousTutorialStep = this.previousTutorialStep.bind(this);
+        this.nextTutorialStep = this.nextTutorialStep.bind(this);
+        this.finishTutorial = this.finishTutorial.bind(this);
     }
 
     previousTutorialStep() {
@@ -316,20 +352,20 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         const isRtl = pxt.Util.isUserLanguageRtl();
         return <div id="tutorialcard" className={`ui ${tutorialReady ? 'tutorialReady' : ''}`} >
             <div className='ui buttons'>
-                {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron`} className={`prevbutton right attached green ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="landscape only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={() => this.previousTutorialStep()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron`} className={`prevbutton left attached green ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="landscape only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
-                    <div className='avatar-image' onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter}></div>
-                    {hasHint ? <sui.Button className="mini blue hintbutton hidelightbox" text={lf("Hint")} tabIndex={-1} onClick={() => this.showHint()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                    <div role="button" className='avatar-image' onClick={this.showHint} onKeyDown={sui.fireClickOnEnter}></div>
+                    {hasHint ? <sui.Button className="mini blue hintbutton hidelightbox" text={lf("Hint")} tabIndex={-1} onClick={this.showHint} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
-                        onClick={() => { this.showHint() }} onKeyDown={sui.fireClickOnEnter}>
+                        onClick={this.showHint} onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
                             <md.MarkedContent markdown={tutorialCardContent} parent={this.props.parent} />
                         </div>
                     </div>
-                    <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={() => this.closeLightbox()} onKeyDown={sui.fireClickOnEnter} />
+                    <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />
                 </div>
-                {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron`} rightIcon className={`nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} textClass="landscape only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={() => this.nextTutorialStep()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={() => this.finishTutorial()} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron`} rightIcon className={`nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} textClass="landscape only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={this.nextTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
     }

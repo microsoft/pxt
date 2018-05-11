@@ -137,12 +137,12 @@ namespace pxt.blocks {
 
             // build upgrade map
             const enums: Map<string> = {};
-            for (let k in info.apis.byQName) {
+            Object.keys(info.apis.byQName).forEach(k => {
                 let api = info.apis.byQName[k];
                 if (api.kind == pxtc.SymbolKind.EnumMember)
                     enums[api.namespace + '.' + (api.attributes.blockImportId || api.attributes.block || api.attributes.blockId || api.name)]
                         = api.namespace + '.' + api.name;
-            }
+            })
 
             // walk through blocks and patch enums
             const blocks = doc.getElementsByTagName("block");

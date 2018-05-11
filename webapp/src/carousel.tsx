@@ -39,10 +39,35 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
     private animationId: number;
     private childrenElements: HTMLDivElement[] = [];
 
+    constructor(props: ICarouselProps) {
+        super(props);
+        this.state = {
+        }
+
+        this.onLeftArrowClick = this.onLeftArrowClick.bind(this);
+        this.onRightArrowClick = this.onRightArrowClick.bind(this);
+    }
+
     componentWillReceiveProps(nextProps: ICarouselProps) {
         if (nextProps.selectedIndex != undefined) {
             this.setIndex(nextProps.selectedIndex);
         }
+    }
+
+    private handleContainerRef = (c: HTMLDivElement) => {
+        this.container = c;
+    }
+
+    private handleDragSurfaceRef = (c: HTMLDivElement) => {
+        this.dragSurface = c;
+    }
+
+    private handleArrowRefs = (c: HTMLSpanElement) => {
+        this.arrows.push(c);
+    }
+
+    private handleChildRefs = (c: HTMLDivElement) => {
+        if (c) this.childrenElements.push(c)
     }
 
     public renderCore() {
@@ -50,28 +75,36 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         this.arrows = [];
         const { rightDisabled, leftDisabled } = this.state || {} as any;
         return <div className="ui carouselouter">
-            <span className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")}
-                tabIndex={leftDisabled ? -1 : 0} onClick={() => this.onArrowClick(true)} onKeyDown={sui.fireClickOnEnter} ref={r => this.arrows.push(r)}>
+            <span role="button" className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")}
+                tabIndex={leftDisabled ? -1 : 0} onClick={this.onLeftArrowClick} onKeyDown={sui.fireClickOnEnter} ref={this.handleArrowRefs}>
                 <sui.Icon icon="circle angle left" />
             </span>
-            <div className="carouselcontainer" ref={r => this.container = r}>
-                <div className="carouselbody" ref={r => this.dragSurface = r}>
+            <div className="carouselcontainer" ref={this.handleContainerRef}>
+                <div className="carouselbody" ref={this.handleDragSurfaceRef}>
                     {
                         React.Children.map(this.props.children, (child, index) => child ?
-                            <div className={`carouselitem ${this.props.selectedIndex == index ? 'selected' : ''}`} ref={r => r && this.childrenElements.push(r)}>
+                            <div className={`carouselitem ${this.props.selectedIndex == index ? 'selected' : ''}`} ref={this.handleChildRefs}>
                                 {React.cloneElement(child as any, { tabIndex: this.isVisible(index) ? 0 : -1 })}
                             </div> : undefined)
                     }
                 </div>
             </div>
-            <span className={"carouselarrow right aligned" + (rightDisabled ? " arrowdisabled" : "")}
-                tabIndex={rightDisabled ? -1 : 0} onClick={() => this.onArrowClick(false)} onKeyDown={sui.fireClickOnEnter} ref={r => this.arrows.push(r)}>
+            <span role="button" className={"carouselarrow right aligned" + (rightDisabled ? " arrowdisabled" : "")}
+                tabIndex={rightDisabled ? -1 : 0} onClick={this.onRightArrowClick} onKeyDown={sui.fireClickOnEnter} ref={this.handleArrowRefs}>
                 <sui.Icon icon="circle angle right" />
             </span>
         </div>
     }
 
-    public onArrowClick(left: boolean) {
+    public onLeftArrowClick() {
+        this.onArrowClick(true);
+    }
+
+    public onRightArrowClick() {
+        this.onArrowClick(false);
+    }
+
+    private onArrowClick(left: boolean) {
         const prevIndex = this.index;
         this.setIndex(left ? this.index - this.actualPageLength : this.index + this.actualPageLength);
         if (left) {

@@ -57,7 +57,8 @@ namespace pxtblockly {
             contentDiv.setAttribute('role', 'menu');
             contentDiv.setAttribute('aria-haspopup', 'true');
             const options = this.getOptions();
-            for (let i = 0, option: any; option = options[i]; i++) {
+            for (let i = 0; i < options.length; i++) {
+                const option = options[i];
                 let content = (options[i] as any)[0]; // Human-readable text or image.
                 const value = (options[i] as any)[1]; // Language-neutral value.
                 // Icons with the type property placeholder take up space but don't have any functionality

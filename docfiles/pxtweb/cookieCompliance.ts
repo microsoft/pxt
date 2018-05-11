@@ -103,7 +103,9 @@ namespace pxt {
             }
 
             // The markup is trusted because it's from our backend, so it shouldn't need to be scrubbed
+            /* tslint:disable:no-inner-html */
             bannerDiv.innerHTML = info.Markup;
+            /* tslint:enable:no-inner-html */
 
             if (info.Css && info.Css.length) {
                 info.Css.forEach(injectStylesheet)

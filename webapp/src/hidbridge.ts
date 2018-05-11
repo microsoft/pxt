@@ -85,7 +85,7 @@ class BridgeIO implements pxt.HF2.PacketIO {
     onOOB(v: OOB) {
         if (v.op == "serial") {
             this.onSerial(U.fromHex(v.result.data), v.result.isError)
-        } else if (v.op = "event") {
+        } else if (v.op == "event") {
             this.onEvent(U.fromHex(v.result.data))
         }
     }

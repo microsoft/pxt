@@ -34,6 +34,10 @@ namespace pxsim {
             while (element.firstChild) element.removeChild(element.firstChild);
         }
 
+        export function clear(element: Element) {
+            this.removeChildren(element);
+        }
+
         export function assert(cond: boolean, msg = "Assertion failed") {
             if (!cond) {
                 debugger
@@ -86,7 +90,6 @@ namespace pxsim {
     }
 
     interface LR {
-        caller: LR;
         retPC: number;
         currFn: LabelFn;
         baseSP: number;

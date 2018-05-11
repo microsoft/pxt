@@ -66,9 +66,9 @@ namespace pxsim {
     }
 
     export class EventBus extends EventBusGeneric<number> {
-        queue(id: number | string, evid: number | string, value: number = 0) {
-            super.queue(id, evid, value);
-        }
+        // queue(id: number | string, evid: number | string, value: number = 0) {
+        //     super.queue(id, evid, value);
+        // }
     }
 
     export interface AnimationOptions {

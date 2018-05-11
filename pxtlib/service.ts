@@ -344,7 +344,7 @@ namespace ts.pxtc {
             return [];
 
         let parts: string[] = [];
-        for (let symbol in resp.usedSymbols) {
+        Object.keys(resp.usedSymbols).forEach(symbol => {
             let info = resp.usedSymbols[symbol]
             if (info && info.attributes.parts) {
                 let partsRaw = info.attributes.parts;
@@ -357,7 +357,7 @@ namespace ts.pxtc {
                     });
                 }
             }
-        }
+        });
 
         if (ignoreBuiltin) {
             const builtinParts = pxt.appTarget.simulator.boardDefinition.onboardComponents;
@@ -858,6 +858,7 @@ namespace ts.pxtc {
                 currentLabel = "";
             }
 
+            /* tslint:disable:possible-timing-attack TODO(tslint): look into this security issue */
             if (token == TokenKind.Parameter) {
                 const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type };
                 parts.push(param);
@@ -872,6 +873,7 @@ namespace ts.pxtc {
             else if (token == TokenKind.Pipe) {
                 parts.push({ kind: "break" });
             }
+            /* tslint:enable:possible-timing-attack */
         }
 
         if (open) return undefined; // error: style marks should terminate
