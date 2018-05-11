@@ -135,8 +135,6 @@ function installAsync(h0: InstallHeader, text: ScriptText) {
     h.id = ts.pxtc.Util.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
-    h.target = pxt.appTarget.id;
-    h.targetVersion = pxt.appTarget.versions.target;
     let e: HeaderWithScript = {
         id: h.id,
         header: h,

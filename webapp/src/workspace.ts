@@ -142,6 +142,7 @@ export function saveAsync(h: Header, text?: ScriptText) {
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
     checkSession();
+    U.assert(h0.target == pxt.appTarget.id);
     return impl.installAsync(h0, text)
 }
 

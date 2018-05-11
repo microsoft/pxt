@@ -190,8 +190,6 @@ function installAsync(h0: InstallHeader, text: ScriptText) {
     h.id = path;
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
-    h.target = currentTarget;
-    h.targetVersion = currentTargetVersion;
     const e: HeaderWithScript = {
         id: h.id,
         header: h,

@@ -68,8 +68,6 @@ function installAsync(h0: InstallHeader, text: ScriptText): Promise<Header> {
     h.id = ts.pxtc.Util.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
-    h.target = target;
-    h.targetVersion = targetVersion;
 
     return saveAsync(h, text).then(() => h);
 }
