@@ -188,6 +188,7 @@ namespace pxt.Cloud {
         description: string;
         editor?: string; // convention where empty means touchdevelop, for backwards compatibility
         target?: string;
+        targetVersion?: string;
         meta?: JsonScriptMeta; // only in lite, bag of metadata
     }
 }
