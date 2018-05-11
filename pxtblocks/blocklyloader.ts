@@ -390,8 +390,7 @@ namespace pxt.blocks {
         }
 
         let hash = JSON.stringify(fn);
-        /* tslint:disable:possible-timing-attack */
-        // TODO(tslint): look into this possible timing attack
+        /* tslint:disable:possible-timing-attack (not a security critical codepath) */
         if (cachedBlocks[id] && cachedBlocks[id].hash == hash) {
             return true;
         }

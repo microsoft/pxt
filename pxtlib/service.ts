@@ -858,7 +858,7 @@ namespace ts.pxtc {
                 currentLabel = "";
             }
 
-            /* tslint:disable:possible-timing-attack TODO(tslint): look into this security issue */
+            /* tslint:disable:possible-timing-attack  (not a security critical codepath) */
             if (token == TokenKind.Parameter) {
                 const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type };
                 parts.push(param);
