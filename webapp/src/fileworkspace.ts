@@ -63,7 +63,7 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
     let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
     let hd: Header = {
         target: currentTarget,
-        targetVersion: currentTargetVersion,
+        targetVersion: e.header ? e.header.targetVersion : currentTargetVersion,
         name: pkg.config.name,
         meta: {},
         editor: pxt.JAVASCRIPT_PROJECT_NAME,
