@@ -797,7 +797,7 @@ export class ProjectView
         importAsync: (project, data) => {
             let h: pxt.workspace.InstallHeader = {
                 target: pxt.appTarget.id,
-                targetVersion: pxt.appTarget.versions.target,
+                targetVersion: data.meta.targetVersions ? data.meta.targetVersions.target : undefined,
                 editor: data.meta.editor,
                 name: data.meta.name,
                 meta: {},
