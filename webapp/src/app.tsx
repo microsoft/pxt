@@ -699,7 +699,7 @@ export class ProjectView
         // version check, you should not load a script from 1 major version above.
         if (h.targetVersion && pxt.semver.majorCmp(h.targetVersion, pxt.appTarget.versions.target) < 0) {
             // the script is a major version ahead, need to redirect
-            pxt.tickEvent('patch.maxversion');
+            pxt.tickEvent('patch.maxversion', { targetVersion: h.targetVersion });
             const buttons: sui.ModalButton[] = [];
             if (pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.homeUrl)
                 buttons.push({
