@@ -94,19 +94,10 @@ namespace pxt.editor {
         Disabled = 2
     }
 
-    export interface TutorialStepInfo {
-        fullscreen?: boolean;
-        // no coding
-        unplugged?: boolean;
-        hasHint?: boolean;
-        contentMd?: string;
-        headerContentMd?: string;
-    }
-
     export interface TutorialOptions {
         tutorial?: string; // tutorial
         tutorialName?: string; // tutorial title
-        tutorialStepInfo?: TutorialStepInfo[];
+        tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
     }
