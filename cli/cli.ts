@@ -4507,6 +4507,15 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     let snipCount = 0;
     let snippets: CodeSnippet[] = [];
 
+    function addSnippet(snippet: CodeSnippet, entryPath: string, snipIndex: number) {
+        snippets.push(snippet);
+        const dir = path.join("built/snippets", snippet.type);
+        const fn = `${dir}/${entryPath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
+        nodeutil.mkdirP(dir);
+        fs.writeFileSync(fn, snippet.code);
+        snippet.file = fn;
+    }
+
     function pushUrl(url: string, toc: boolean) {
         // cache value
         if (!urls.hasOwnProperty(url)) {
@@ -4588,14 +4597,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         })
 
         // look for snippets
-        getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => {
-            snippets.push(snippet);
-            const dir = path.join("built/snippets", snippet.type);
-            const fn = `${dir}/${entrypath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
-            nodeutil.mkdirP(dir);
-            fs.writeFileSync(fn, snippet.code);
-            snippet.file = fn;
-        });
+        getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => addSnippet(snippet, entrypath, snipIndex));
     }
 
     pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in SUMMARY, ${snippets.length} snippets`);
@@ -4611,10 +4613,17 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
                 let gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
                 let gallery = pxt.gallery.parseGalleryMardown(gallerymd);
                 pxt.log(`found ${gallery.length} galleries`);
-                gallery.forEach(gal => gal.cards.forEach(card => {
+                gallery.forEach(gal => gal.cards.forEach((card, cardIndex) => {
                     pxt.log(`card ${card.shortName || card.name}`);
                     switch (card.cardType) {
                         case "tutorial":
+                            const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
+                            addSnippet(<CodeSnippet>{
+                                name: `${card.name}`,
+                                code: pxt.tutorial.bundleTutorialCode(tutorialMd),
+                                type: "blocks",
+                                ext: "ts"
+                            }, path.join("gallery", gal.name), cardIndex);
                             break;
                         case "example":
                             break;
