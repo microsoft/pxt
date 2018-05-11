@@ -201,7 +201,7 @@ export function installByIdAsync(id: string) {
                         meta: scr.meta,
                         editor: scr.editor,
                         target: scr.target,
-                        targetVersion: scr.target || pxt.appTarget.versions.target
+                        targetVersion: scr.targetVersion
                     }, files)))
 }
 
