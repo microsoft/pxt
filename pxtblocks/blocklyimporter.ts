@@ -103,12 +103,12 @@ namespace pxt.blocks {
         newnodes.forEach(n => dom.appendChild(n));
     }
 
-    export function importXml(targetVersion: string, xml: string, info: pxtc.BlocksInfo, skipReport = false): string {
+    export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.BlocksInfo, skipReport = false): string {
         try {
             const parser = new DOMParser();
             const doc = parser.parseFromString(xml, "application/xml");
 
-            const upgrades = pxt.patching.computePatches(targetVersion);
+            const upgrades = pxt.patching.computePatches(pkgTargetVersion);
             if (upgrades) {
                 // patch block types
                 upgrades.filter(up => up.type == "blockId")

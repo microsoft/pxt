@@ -5,7 +5,7 @@
 
 namespace pxt {
     export class Package {
-        static getConfigAsync(targetVersion:string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
+        static getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
             return Promise.resolve().then(() => {
                 if (pxt.github.isGithubId(fullVers)) {
                     const repoInfo = pxt.github.parseRepoId(fullVers);
@@ -15,7 +15,7 @@ namespace pxt {
                 } else {
                     // If it's not from GH, assume it's a bundled package
                     // TODO: Add logic for shared packages if we enable that
-                    const updatedRef = Package.upgradePackageReference(targetVersion, id, fullVers);
+                    const updatedRef = Package.upgradePackageReference(pkgTargetVersion, id, fullVers);
                     const bundledPkg = pxt.appTarget.bundledpkgs[updatedRef];
                     return JSON.parse(bundledPkg[CONFIG_NAME]) as pxt.PackageConfig;
                 }
