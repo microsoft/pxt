@@ -939,7 +939,7 @@ export class ProjectView
         if (!h) {
             h = {
                 target: pxt.appTarget.id,
-                targetVersion: pxt.appTarget.versions.target,
+                targetVersion: undefined, // unknown version
                 editor: pxt.BLOCKS_PROJECT_NAME,
                 name: lf("Untitled"),
                 meta: {},
