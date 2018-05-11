@@ -95,13 +95,13 @@ namespace pxt.semver {
         else return cmp(aa, bb)
     }
 
-    export function inRange(rng: string, v: string): boolean {
+    export function inRange(rng: string, v: Version): boolean {
         let rngs = rng.split(' - ');
         if (rngs.length != 2) return false;
         let min = tryParse(rngs[0]);
         let max = tryParse(rngs[1]);
-        let ver = tryParse(v);
-        if (!min || !max || !v) return false;
+        if (!min || !max) return false;
+        if (!v) return true;
         return cmp(min, v) >= 0 && cmp(v, max) >= 0;
     }
 
