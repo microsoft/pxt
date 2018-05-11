@@ -131,12 +131,15 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
 
 export function saveAsync(h: Header, text?: ScriptText) {
     checkSession();
+    U.assert(h.target == pxt.appTarget.id);
     if (text || h.isDeleted) {
         h.pubCurrent = false
         h.blobCurrent = false
         h.modificationTime = U.nowSeconds();
     }
     h.recentUse = U.nowSeconds();
+    // update version on save    
+    h.targetVersion = pxt.appTarget.versions.target;
     return impl.saveAsync(h, text)
 }
 
