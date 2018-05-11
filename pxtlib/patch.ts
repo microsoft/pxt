@@ -6,7 +6,7 @@ namespace pxt.patching {
         let r: ts.pxtc.UpgradePolicy[] = [];
         Object.keys(patches)
             .filter(rng => pxt.semver.inRange(rng, v))
-            .forEach(rng => r.concat(patches[rng]));
+            .forEach(rng => r = r.concat(patches[rng]));
         if (kind)
             r = r.filter(p => p.type == kind);
         return r.length ? r : undefined;
