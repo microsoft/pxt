@@ -1229,13 +1229,11 @@ namespace pxt.blocks {
         let state = "\n";
         let rows = 5;
         let columns = frames * 5;
-        let leds = b.getFieldValue("LEDS");
-        leds = leds.replace(/[ `\n]+/g, '');
         for (let i = 0; i < rows; ++i) {
             for (let j = 0; j < columns; ++j) {
                 if (j > 0)
                     state += ' ';
-                state += (leds[(i * rows) + j] === '#') ? "#" : ".";
+                state += /TRUE/.test(b.getFieldValue("LED" + j + i)) ? "#" : ".";
             }
             state += '\n';
         }
