@@ -4618,12 +4618,16 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
                     switch (card.cardType) {
                         case "tutorial":
                             const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
+                            const pkgs: pxt.Map<string> = {
+                                "blocksprj": "*"
+                            };
                             addSnippet(<CodeSnippet>{
                                 name: `${card.name}`,
                                 code: pxt.tutorial.bundleTutorialCode(tutorialMd),
                                 type: "blocks",
-                                ext: "ts"
-                            }, path.join("gallery", gal.name), cardIndex);
+                                ext: "ts",
+                                packages: pkgs
+                            }, "gallery" + gal.name, cardIndex);
                             break;
                         case "example":
                             break;
