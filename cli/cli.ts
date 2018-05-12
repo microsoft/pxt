@@ -4612,9 +4612,9 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
                 pxt.log(`gallery ${k}`);
                 let gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
                 let gallery = pxt.gallery.parseGalleryMardown(gallerymd);
-                pxt.log(`found ${gallery.length} galleries`);
+                pxt.debug(`found ${gallery.length} galleries`);
                 gallery.forEach(gal => gal.cards.forEach((card, cardIndex) => {
-                    pxt.log(`card ${card.shortName || card.name}`);
+                    pxt.debug(`card ${card.shortName || card.name}`);
                     switch (card.cardType) {
                         case "tutorial":
                             const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
