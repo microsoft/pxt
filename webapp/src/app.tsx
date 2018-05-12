@@ -110,6 +110,7 @@ export class ProjectView
         this.hideLightbox = this.hideLightbox.bind(this);
         this.openSimSerial = this.openSimSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
+        this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
     }
 
     shouldShowHomeScreen() {
@@ -2018,7 +2019,7 @@ export class ProjectView
         }
         return (
             <div id='root' className={rootClasses}>
-                {this.state.greenScreen ? <webcam.WebCam /> : undefined}
+                {this.state.greenScreen ? <webcam.WebCam close={this.toggleGreenScreen} /> : undefined}
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> : undefined}

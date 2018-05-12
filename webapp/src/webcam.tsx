@@ -4,7 +4,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 
 export interface WebCamProps {
-
+    close: () => void;
 }
 
 export class WebCam extends sui.UIElement<WebCamProps, {}> {
@@ -37,7 +37,8 @@ export class WebCam extends sui.UIElement<WebCamProps, {}> {
                             } as sui.ModalButton;
                         })
                 }).done(() => {
-                    // TODO: no stream selected..
+                    if (!this.deviceId)
+                        this.props.close();
                 });
             })
     }
