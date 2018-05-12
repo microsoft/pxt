@@ -3484,7 +3484,10 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                     const file = resp.ast.getSourceFile('main.ts');
                     const apis = pxtc.getApiInfo(opts, resp.ast);
                     const blocksInfo = pxtc.getBlocksInfo(apis);
-                    const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false })
+                    const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
+                        snippetMode: false,
+                        errorOnGreyBlocks: true
+                    })
                     const success = !!bresp.outfiles['main.blocks']
                     if (success) return addSuccess(name)
                     else return addFailure(fn, bresp.diagnostics)
