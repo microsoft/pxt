@@ -1133,3 +1133,41 @@ export class Loader extends UIElement<LoaderProps, {}> {
         </div>
     }
 }
+
+export interface WebCamProps {
+
+}
+
+export class WebCam extends UIElement<WebCamProps, {}> {
+    private stream: MediaStream;
+    private v: HTMLVideoElement;
+
+    componentDidMount() {
+        navigator.getUserMedia({ video: true },
+            stream => {
+                this.stream = stream;
+                this.v.srcObject = this.stream;
+            },
+            err => {
+                this.v.srcObject = undefined;
+                this.stream = undefined;
+            });
+    }
+
+    componentWillUnmount() {
+        if (this.stream) {
+            if (this.stream.stop)
+                this.stream.stop();
+            this.stream = undefined;
+            this.v.srcObject = undefined;
+        }
+    }
+
+    private handleVideoRef = (ref: any) => {
+        this.v = ref;
+    }
+
+    render() {
+        return <video ref={this.handleVideoRef} />
+    }
+}

@@ -1,0 +1,31 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+.greenscreen {
+    video {
+        position: absolute !important;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        height:100%;            
+    }
+
+    #maineditor, #filelist, .blocklyToolboxDiv, svg.blocklySvg {
+        background-color: transparent !important;
+        border: none !important;
+    }
+
+    .blocklyMainBackground {
+        fill-opacity: 0 !important;
+    }
+
+    .blocklyTreeRow {
+        background: white !important;
+        color: black !important;
+    }
+}

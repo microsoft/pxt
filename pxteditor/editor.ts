@@ -58,6 +58,7 @@ namespace pxt.editor {
         bannerVisible?: boolean;
 
         highContrast?: boolean;
+        greenScreen?: boolean;
 
         home?: boolean;
         hasError?: boolean;
@@ -193,6 +194,7 @@ namespace pxt.editor {
         renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<any>;
 
         toggleHighContrast(): void;
+        toggleGreenScreen(): void;
         pair(): void;
         launchFullEditor(): void;
 
