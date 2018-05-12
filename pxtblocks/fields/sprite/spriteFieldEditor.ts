@@ -162,7 +162,7 @@ namespace pxtblockly {
 
         private redrawPreview() {
             if (!this.fieldGroup_) return;
-            this.fieldGroup_.innerHTML = "";
+            pxsim.U.clear(this.fieldGroup_);
 
             const bg = new svg.Rect()
                 .at(PADDING, PADDING)

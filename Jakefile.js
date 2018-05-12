@@ -173,18 +173,16 @@ task("lint", [], { async: true }, function () {
     console.log('linting...')
     jake.exec([
         "cli",
-        "pxt-cli",
         "pxtblocks",
         "pxteditor",
         "pxtlib",
-        "pxtcompiler/emitter",
+        "pxtcompiler",
         "pxtrunner",
         "pxtsim",
         "pxtwinrt",
-        "webapp/src",
-        "docfiles/pxtweb",
-        "monacots"]
-        .map(function (d) { return "node node_modules/tslint/bin/tslint ./" + d + "/*.ts" })
+        "webapp",
+        "docfiles/pxtweb"]
+        .map(function (d) { return "node node_modules/tslint/bin/tslint --project ./" + d + "/tsconfig.json" })
         , { printStdout: true }, function () {
             console.log('linted.');
             complete();

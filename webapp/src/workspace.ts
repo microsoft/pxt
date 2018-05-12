@@ -84,7 +84,7 @@ export function initAsync() {
     pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
     pxt.debug(`workspace session: ${sessionID}`);
 
-    return impl.initAsync(pxt.appTarget.id)
+    return impl.initAsync(pxt.appTarget.id, pxt.appTarget.versions.target)
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {
@@ -106,6 +106,7 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
     const scrReq = {
         name: h.name,
         target: h.target,
+        targetVersion: h.targetVersion,
         description: meta.description,
         editor: h.editor,
         text: text,
@@ -130,17 +131,21 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
 
 export function saveAsync(h: Header, text?: ScriptText) {
     checkSession();
+    U.assert(h.target == pxt.appTarget.id);
     if (text || h.isDeleted) {
         h.pubCurrent = false
         h.blobCurrent = false
         h.modificationTime = U.nowSeconds();
     }
     h.recentUse = U.nowSeconds();
+    // update version on save    
+    h.targetVersion = pxt.appTarget.versions.target;
     return impl.saveAsync(h, text)
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
     checkSession();
+    U.assert(h0.target == pxt.appTarget.id);
     return impl.installAsync(h0, text)
 }
 
@@ -152,13 +157,13 @@ export function saveScreenshotAsync(h: Header, data: string, icon: string) {
 }
 
 export function fixupFileNames(txt: ScriptText) {
-    if (!txt) return txt
-    for (let oldName in ["kind.json", "yelm.json"]) {
+    if (!txt) return txt;
+    ["kind.json", "yelm.json"].forEach(oldName => {
         if (!txt[pxt.CONFIG_NAME] && txt[oldName]) {
             txt[pxt.CONFIG_NAME] = txt[oldName]
             delete txt[oldName]
         }
-    }
+    })
     return txt
 }
 
@@ -199,6 +204,7 @@ export function installByIdAsync(id: string) {
                         meta: scr.meta,
                         editor: scr.editor,
                         target: scr.target,
+                        targetVersion: scr.targetVersion
                     }, files)))
 }
 

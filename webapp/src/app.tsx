@@ -104,6 +104,11 @@ export class ProjectView
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
         if (shouldShowHomeScreen) this.homeLoaded();
+
+        this.hwDebug = this.hwDebug.bind(this);
+        this.hideLightbox = this.hideLightbox.bind(this);
+        this.openSimSerial = this.openSimSerial.bind(this);
+        this.openDeviceSerial = this.openDeviceSerial.bind(this);
     }
 
     shouldShowHomeScreen() {
@@ -270,6 +275,14 @@ export class ProjectView
 
     openSettings() {
         this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json"));
+    }
+
+    openSimSerial() {
+        this.openSerial(true);
+    }
+
+    openDeviceSerial() {
+        this.openSerial(false);
     }
 
     openSerial(isSim: boolean) {
@@ -453,7 +466,7 @@ export class ProjectView
             const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") ?
                 Date.parse(pxt.storage.getLocal("lastcriticalerror")) : Date.now();
             // don't refresh if we refreshed in the last minute
-            if (!isNaN(lastCriticalError) && Date.now() - lastCriticalError > 60 * 1000) {
+            if (!lastCriticalError || (!isNaN(lastCriticalError) && Date.now() - lastCriticalError > 60 * 1000)) {
                 pxt.storage.setLocal("lastcriticalerror", new Date().toISOString());
                 setTimeout(() => {
                     location.reload();
@@ -797,6 +810,7 @@ export class ProjectView
         importAsync: (project, data) => {
             let h: pxt.workspace.InstallHeader = {
                 target: pxt.appTarget.id,
+                targetVersion: data.meta.targetVersions ? data.meta.targetVersions.target : undefined,
                 editor: data.meta.editor,
                 name: data.meta.name,
                 meta: {},
@@ -938,6 +952,7 @@ export class ProjectView
         if (!h) {
             h = {
                 target: pxt.appTarget.id,
+                targetVersion: undefined, // unknown version
                 editor: pxt.BLOCKS_PROJECT_NAME,
                 name: lf("Untitled"),
                 meta: {},
@@ -1052,7 +1067,7 @@ export class ProjectView
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
-        this.setState({ home: true, tracing: undefined, fullscreen: undefined });
+        this.setState({ home: true, tracing: undefined, fullscreen: undefined, tutorialOptions: undefined, editorState: undefined });
         this.allEditors.forEach(e => e.setVisible(false));
         this.homeLoaded();
     }
@@ -1129,6 +1144,7 @@ export class ProjectView
             pubId: "",
             pubCurrent: false,
             target: pxt.appTarget.id,
+            targetVersion: pxt.appTarget.versions.target,
             temporary: options.temporary
         }, files).then(hd => this.loadHeaderAsync(hd, { filters: options.filters }, options.inTutorial))
     }
@@ -1780,7 +1796,7 @@ export class ProjectView
             })
             .then(() => pxt.Cloud.downloadMarkdownAsync(tutorialId))
             .then(tutorialmd => {
-                const stepInfo = tutorial.parseTutorialSteps(tutorialId, tutorialmd);
+                const stepInfo = pxt.tutorial.parseTutorialSteps(tutorialId, tutorialmd);
                 return tutorial.getUsedBlocksAsync(tutorialId, tutorialmd)
                     .then((usedBlocks) => {
                         let editorState: pxt.editor.EditorState = {
@@ -1869,7 +1885,11 @@ export class ProjectView
     toggleHighContrast() {
         const highContrastOn = !this.state.highContrast;
         pxt.tickEvent("app.highcontrast", { on: highContrastOn ? 1 : 0 });
-        this.setState({ highContrast: highContrastOn }, () => this.restartSimulator());
+        this.setState({ highContrast: highContrastOn }, () => {
+            if (!!this.state.header) { // in editor
+                this.restartSimulator()
+            }
+        });
         core.setHighContrast(highContrastOn);
         if (this.editor && this.editor.isReady) {
             this.editor.setHighContrast(highContrastOn);
@@ -1893,6 +1913,38 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
+    ////////////             REFS                 /////////////
+    ///////////////////////////////////////////////////////////
+
+    private handleHomeRef = (c: projects.Projects) => {
+        this.home = c;
+    }
+
+    private handleScriptSearchRef = (c: scriptsearch.ScriptSearch) => {
+        this.scriptSearch = c;
+    }
+
+    private handleExtensionRef = (c: extensions.Extensions) => {
+        this.extensions = c;
+    }
+
+    private handleImportDialogRef = (c: projects.ImportDialog) => {
+        this.importDialog = c;
+    }
+
+    private handleExitAndSaveDialogRef = (c: projects.ExitAndSaveDialog) => {
+        this.exitAndSaveDialog = c;
+    }
+
+    private handleShareEditorRef = (c: share.ShareEditor) => {
+        this.shareEditor = c;
+    }
+
+    private handleLanguagePickerRef = (c: lang.LanguagePicker) => {
+        this.languagePicker = c;
+    }
+
+    ///////////////////////////////////////////////////////////
     ////////////             RENDER               /////////////
     ///////////////////////////////////////////////////////////
 
@@ -1900,7 +1952,6 @@ export class ProjectView
         theEditor = this;
 
         //  ${targetTheme.accentColor ? "inverted accent " : ''}
-        const settings: Cloud.UserSettings = (Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {}) || {}
         const targetTheme = pxt.appTarget.appTheme;
         const simOpts = pxt.appTarget.simulator;
         const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
@@ -1976,12 +2027,12 @@ export class ProjectView
                         </div>
                         <simtoolbar.SimulatorToolbar parent={this} />
                         <div className="ui item portrait hide hidefullscreen">
-                            {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
+                            {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={this.hwDebug} /> : ''}
                         </div>
                         {useSerialEditor ?
                             <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={() => this.openSerial(true)} />
-                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={() => this.openSerial(false)} />
+                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} />
+                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} />
                             </div> : undefined}
                         {sandbox || isBlocks || this.editor == this.serialEditor ? undefined : <filelist.FileList parent={this} />}
                     </aside>
@@ -1995,7 +2046,7 @@ export class ProjectView
                             <accessibility.HomeAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> }
                             <projects.ProjectsMenu parent={this} />
                         </div>
-                        <projects.Projects parent={this} ref={v => this.home = v} />
+                        <projects.Projects parent={this} ref={this.handleHomeRef} />
                     </div>
                 </div> : undefined}
                 {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined}
@@ -2003,16 +2054,16 @@ export class ProjectView
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
                 </div> : undefined}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl} /> : undefined}
-                {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
-                {sandbox ? undefined : <extensions.Extensions parent={this} ref={v => this.extensions = v} />}
-                {inHome ? <projects.ImportDialog parent={this} ref={v => this.importDialog = v} /> : undefined}
-                {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={v => this.exitAndSaveDialog = v} />}
-                {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
-                {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
+                {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
+                {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
+                {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
+                {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
+                {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} />}
+                {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
-                    shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox.bind(this)} /> : undefined}
+                    shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
             </div>
         );
     }

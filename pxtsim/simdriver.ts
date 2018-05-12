@@ -182,7 +182,7 @@ namespace pxsim {
 
         private unload() {
             this.cancelFrameCleanup();
-            this.container.innerHTML = '';
+            pxsim.U.removeChildren(this.container);
             this.setState(SimulatorState.Unloaded);
         }
 

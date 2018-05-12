@@ -103,13 +103,13 @@ namespace pxt.blocks {
         newnodes.forEach(n => dom.appendChild(n));
     }
 
-    export function importXml(xml: string, info: pxtc.BlocksInfo, skipReport = false): string {
+    export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.BlocksInfo, skipReport = false): string {
         try {
             const parser = new DOMParser();
             const doc = parser.parseFromString(xml, "application/xml");
 
-            if (pxt.appTarget.compile) {
-                const upgrades = pxt.appTarget.compile.upgrades || [];
+            const upgrades = pxt.patching.computePatches(pkgTargetVersion);
+            if (upgrades) {
                 // patch block types
                 upgrades.filter(up => up.type == "blockId")
                     .forEach(up => Object.keys(up.map).forEach(type => {
@@ -137,12 +137,12 @@ namespace pxt.blocks {
 
             // build upgrade map
             const enums: Map<string> = {};
-            for (let k in info.apis.byQName) {
+            Object.keys(info.apis.byQName).forEach(k => {
                 let api = info.apis.byQName[k];
                 if (api.kind == pxtc.SymbolKind.EnumMember)
                     enums[api.namespace + '.' + (api.attributes.blockImportId || api.attributes.block || api.attributes.blockId || api.name)]
                         = api.namespace + '.' + api.name;
-            }
+            })
 
             // walk through blocks and patch enums
             const blocks = doc.getElementsByTagName("block");

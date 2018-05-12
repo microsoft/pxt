@@ -313,6 +313,7 @@ namespace ts.pxtc.decompiler {
     export interface DecompileBlocksOptions {
         snippetMode?: boolean; // do not emit "on start"
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
+        errorOnGreyBlocks?: boolean; // fail on grey blocks (usefull when testing docs)
 
         /*@internal*/
         includeGreyBlockMessages?: boolean; // adds error attributes to the mutations in typescript_statement blocks (for debug pruposes)
@@ -346,7 +347,7 @@ namespace ts.pxtc.decompiler {
         const workspaceComments: WorkspaceComment[] = [];
         const autoDeclarations: [string, ts.Node][] = [];
 
-        const getCommentRef = (() => {let currentCommentId = 0; return () => `${currentCommentId++}`})();
+        const getCommentRef = (() => { let currentCommentId = 0; return () => `${currentCommentId++}` })();
 
         ts.forEachChild(file, topLevelNode => {
             if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, env, false, true)) {
@@ -356,7 +357,7 @@ namespace ts.pxtc.decompiler {
 
         let n: StatementNode;
         try {
-            n = codeBlock(stmts, undefined, true);
+            n = codeBlock(stmts, undefined, true, undefined, !options.snippetMode);
         }
         catch (e) {
             if ((<any>e).programTooLarge) {
@@ -914,7 +915,7 @@ ${output}</xml>`;
             else {
                 switch (node.kind) {
                     case SK.Block:
-                        return codeBlock((node as ts.Block).statements, next);
+                        return codeBlock((node as ts.Block).statements, next, topLevel);
                     case SK.ExpressionStatement:
                         return getStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node, asExpression, topLevel);
                     case SK.VariableStatement:
@@ -1014,7 +1015,11 @@ ${output}</xml>`;
             }
         }
 
-        function getTypeScriptStatementBlock(node: ts.Node, prefix?: string, error?: string): StatementNode {
+        function getTypeScriptStatementBlock(node: ts.Node, prefix?: string, err?: string): StatementNode {
+
+            if (options.errorOnGreyBlocks)
+                error(node);
+
             const r = mkStmt(pxtc.TS_STATEMENT_TYPE);
             r.mutation = {}
 
@@ -1048,8 +1053,8 @@ ${output}</xml>`;
             const parts = text.split("\n");
             r.mutation["numlines"] = parts.length.toString();
 
-            if (error && options.includeGreyBlockMessages) {
-                r.mutation["error"] = U.htmlEscape(error);
+            if (err && options.includeGreyBlockMessages) {
+                r.mutation["error"] = U.htmlEscape(err);
             }
 
             parts.forEach((p, i) => {
@@ -1605,7 +1610,7 @@ ${output}</xml>`;
             return r;
         }
 
-        function codeBlock(statements: NodeArray<Node>, next?: ts.Node[], topLevel = false, parent?: ts.Node) {
+        function codeBlock(statements: NodeArray<Node>, next?: ts.Node[], topLevel = false, parent?: ts.Node, emitOnStart = false) {
             const eventStatements: ts.Node[] = [];
             const blockStatements: ts.Node[] = next || [];
 
@@ -1624,7 +1629,6 @@ ${output}</xml>`;
 
             eventStatements.map(n => getStatementBlock(n, undefined, undefined, false, topLevel)).forEach(emitStatementNode);
 
-            const emitOnStart = topLevel && !options.snippetMode;
             if (blockStatements.length) {
                 // wrap statement in "on start" if top level
                 const stmt = getStatementBlock(blockStatements.shift(), blockStatements, parent, false, topLevel);
@@ -1725,7 +1729,7 @@ ${output}</xml>`;
                         workspaceRefs.push(ref);
                     }
                     workspaceComments.push({ text, refId: ref });
-                    text  = '';
+                    text = '';
                     currentLine = '';
                 }
                 else {

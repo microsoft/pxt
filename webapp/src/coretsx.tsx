@@ -10,6 +10,15 @@ export class ConfirmDialog extends React.Component<core.ConfirmOptions, {}> {
     private resolve: any;
     private reject: any;
 
+    constructor(props: core.ConfirmOptions) {
+        super(props);
+        this.state = {
+        }
+
+        this.hide = this.hide.bind(this);
+        this.modalDidOpen = this.modalDidOpen.bind(this);
+    }
+
     hide() {
         this.close();
     }
@@ -69,16 +78,17 @@ export class ConfirmDialog extends React.Component<core.ConfirmOptions, {}> {
             options.className
         ])
 
+        /* tslint:disable:react-no-dangerous-html TODO(tslint): This needs to be reviewed with a security expert to allow for exception */
         return (
             <sui.Modal isOpen={true} ref="modal" className={classes}
-                onClose={this.hide.bind(this)} size={size}
+                onClose={this.hide} size={size}
                 defaultOpen={true} buttons={buttons}
                 dimmer={true} closeIcon={options.hasCloseIcon}
                 header={options.header}
                 closeOnDimmerClick={!options.hideCancel}
                 closeOnDocumentClick={!options.hideCancel}
                 closeOnEscape={!options.hideCancel}
-                modalDidOpen={this.modalDidOpen.bind(this)}
+                modalDidOpen={this.modalDidOpen}
             >
                 {options.body ? <p>{options.body}</p> : undefined}
                 {options.htmlBody ? <div dangerouslySetInnerHTML={{ __html: options.htmlBody }} /> : undefined}
@@ -91,6 +101,7 @@ export class ConfirmDialog extends React.Component<core.ConfirmOptions, {}> {
                     <sui.Button ref="copybtn" labelPosition='right' color="teal" className='copybtn' data-content={lf("Copied!")} />
                 </div> : undefined}
             </sui.Modal >)
+        /* tslint:enable:react-no-dangerous-html */
     }
 }
 

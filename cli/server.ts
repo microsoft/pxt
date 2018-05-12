@@ -84,7 +84,9 @@ type FsPkg = pxt.FsPkg;
 
 function readAssetsAsync(logicalDirname: string): Promise<any> {
     let dirname = path.join(userProjectsDir, logicalDirname, "assets")
+    /* tslint:disable:no-http-string */
     let pref = "http://" + serveOptions.hostname + ":" + serveOptions.port + "/assets/" + logicalDirname + "/"
+    /* tslint:enable:no-http-string */
     return readdirAsync(dirname)
         .catch(err => [])
         .then(res => Promise.map(res, fn => statAsync(path.join(dirname, fn)).then(res => ({
@@ -907,7 +909,9 @@ export function serveAsync(options: ServeOptions) {
     const serverjs = path.resolve(path.join(root, 'built', 'server.js'))
     if (nodeutil.fileExistsSync(serverjs)) {
         console.log('loading ' + serverjs)
+        /* tslint:disable:non-literal-require */
         require(serverjs);
+        /* tslint:disable:non-literal-require */
     }
 
     const serverPromise = new Promise<void>((resolve, reject) => {
@@ -917,7 +921,9 @@ export function serveAsync(options: ServeOptions) {
 
     return Promise.all([wsServerPromise, serverPromise])
         .then(() => {
+            /* tslint:disable:no-http-string */
             const start = `http://${serveOptions.hostname}:${serveOptions.port}/#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
+            /* tslint:enable:no-http-string */
             console.log(`---------------------------------------------`);
             console.log(``);
             console.log(`To launch the editor, open this URL:`);
