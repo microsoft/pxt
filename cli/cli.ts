@@ -4619,20 +4619,31 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
                     pxt.debug(`card ${card.shortName || card.name}`);
                     switch (card.cardType) {
                         case "tutorial":
-                            const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
-                            const pkgs: pxt.Map<string> = {
-                                "blocksprj": "*"
-                            };
-                            addSnippet(<CodeSnippet>{
-                                name: `${card.name}`,
-                                code: pxt.tutorial.bundleTutorialCode(tutorialMd),
-                                type: "blocks",
-                                ext: "ts",
-                                packages: pkgs
-                            }, "gallery" + gal.name, cardIndex);
-                            break;
+                            {
+                                const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
+                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                                addSnippet(<CodeSnippet>{
+                                    name: card.name,
+                                    code: pxt.tutorial.bundleTutorialCode(tutorialMd),
+                                    type: "blocks",
+                                    ext: "ts",
+                                    packages: pkgs
+                                }, "tutorial" + gal.name, cardIndex);
+                                break;
+                            }
                         case "example":
-                            break;
+                            {
+                                const exMd = nodeutil.resolveMd(docsRoot, card.url);
+                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
+                                addSnippet(<CodeSnippet>{
+                                    name: card.name,
+                                    code: prj.filesOverride["main.ts"],
+                                    type: "blocks",
+                                    ext: "ts",
+                                    packages: prj.dependencies
+                                }, "example" + gal.name, cardIndex);
+                                break;
+                            }
                     }
                 }));
             })
