@@ -409,11 +409,12 @@ namespace ts.pxtc {
     function emitStrings(bin: Binary) {
         for (let s of Object.keys(bin.strings)) {
             let lbl = bin.strings[s]
+            let utf8_s = Util.toUTF8(s)
             // string representation of DAL - 0xffff in general for ref-counted objects means it's static and shouldn't be incr/decred
             bin.otherLiterals.push(`
 .balign 4
-${lbl}meta: .short 0xffff, ${s.length}
-${lbl}: .string ${stringLiteral(s)}
+${lbl}meta: .short 0xffff, ${utf8_s.length}
+${lbl}: .string ${stringLiteral(utf8_s)}
 `)
         }
     }
