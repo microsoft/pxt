@@ -360,7 +360,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private prepareBlockly(forceHasCategories?: boolean) {
         let blocklyDiv = document.getElementById('blocksEditor');
-        blocklyDiv.innerHTML = '';
+        pxsim.U.clear(blocklyDiv);
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories));
         // set Blockly Colors
         let blocklyColors = (Blockly as any).Colours;
@@ -484,7 +484,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 <div id="blocksEditor"></div>
                 <toolbox.ToolboxTrashIcon />
                 {this.parent.state.debugging ?
-                    <debug.DebuggerVariables ref={e => this.debugVariables = e} parent={this.parent} /> : undefined}
+                    <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} /> : undefined}
             </div>
         )
     }
@@ -503,10 +503,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return blocksArea ? blocksArea.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLDivElement : undefined;
     }
 
+    handleToolboxRef = (c: toolbox.Toolbox) => {
+        this.toolbox = c;
+    }
+
     renderToolbox(immediate?: boolean) {
         if (pxt.shell.isReadOnly()) return;
         const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
-        const blocklyToolbox = <toolbox.Toolbox ref={e => this.toolbox = e} editorname="blocks" parent={this} />;
+        const blocklyToolbox = <toolbox.Toolbox ref={this.handleToolboxRef} editorname="blocks" parent={this} />;
 
         Util.assert(!!blocklyToolboxDiv);
         ReactDOM.render(blocklyToolbox, blocklyToolboxDiv);
@@ -733,6 +737,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return false;
     }
 
+    handleDebuggerVariablesRef = (c: debug.DebuggerVariables) => {
+        this.debugVariables = c;
+    }
+
     clearDebuggerVariables() {
         if (this.debugVariables) this.debugVariables.clear();
     }
@@ -750,8 +758,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         }
 
-        for (const k in vars) {
-            const variable = vars[k];
+        for (const variable of vars) {
             const value = getValueOfVariable(variable);
             if (this.debugVariables) this.debugVariables.set(variable, value);
         }
@@ -897,8 +904,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
                 const localDebug = pxt.Cloud.isLocalHost() && /^file:/.test(extension.installedVersion) && extension.extension.localUrl;
                 const debug = pxt.Cloud.isLocalHost() && /debugExtensions/i.test(window.location.href);
+                /* tslint:disable:no-http-string */
                 const url = debug ? "http://localhost:3232/extension.html"
                     : localDebug ? extension.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
+                /* tslint:enable:no-http-string */
                 this.parent.openExtension(extension.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
             });
     }
@@ -1300,7 +1309,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let type = shadow.getAttribute('type');
                     const builtin = snippets.allBuiltinBlocks()[type];
                     let b = this.getBlockXml(builtin ? builtin : { name: type, attributes: { blockId: type } }, true);
+                    /* tslint:disable:no-inner-html setting one element's contents to the other */
                     if (b) shadow.innerHTML = b[0].innerHTML;
+                    /* tslint:enable:no-inner-html */
                 })
         }
         return [blockXml];

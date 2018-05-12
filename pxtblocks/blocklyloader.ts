@@ -390,9 +390,11 @@ namespace pxt.blocks {
         }
 
         let hash = JSON.stringify(fn);
+        /* tslint:disable:possible-timing-attack (not a security critical codepath) */
         if (cachedBlocks[id] && cachedBlocks[id].hash == hash) {
             return true;
         }
+        /* tslint:enable:possible-timing-attack */
 
         if (Blockly.Blocks[fn.attributes.blockId]) {
             console.error("duplicate block definition: " + id);
@@ -1862,7 +1864,8 @@ namespace pxt.blocks {
             let xmlList: HTMLElement[] = [];
             if (variableModelList.length > 0) {
                 // variables getters first
-                for (let i = 0, variable: any; variable = variableModelList[i]; i++) {
+                for (let i = 0; i < variableModelList.length; i++) {
+                    const variable = variableModelList[i];
                     if (Blockly.Blocks['variables_get']) {
                         let blockText = '<xml>' +
                             '<block type="variables_get" gap="8">' +
@@ -2136,7 +2139,7 @@ namespace pxt.blocks {
                 let workspace = this.workspace;
                 option.callback = function () {
                     let def = Blockly.Procedures.getDefinition(name, workspace);
-                    def && def.select();
+                    if (def) def.select();
                 };
                 options.push(option);
             },
@@ -2365,7 +2368,7 @@ namespace pxt.blocks {
                 that.setInputsInline(false);
                 that.appendDummyInput('ON_OFF')
                     .appendField(new Blockly.FieldLabel(lf("breakpoint"), undefined), "DEBUGGER")
-                    .appendField(new pxtblockly.FieldBreakpoint("1", {'type': 'number'}), "ON_OFF");
+                    .appendField(new pxtblockly.FieldBreakpoint("1", { 'type': 'number' }), "ON_OFF");
 
                 setHelpResources(this,
                     pxtc.TS_DEBUGGER_TYPE,

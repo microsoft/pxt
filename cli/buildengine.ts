@@ -411,7 +411,8 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 enumVal = -1;
             }
 
-            if (inEnum && (m = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(ln))) {
+            const shouldExpand = inEnum && (m = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(ln));
+            if (shouldExpand) {
                 let v = m[3]
                 if (v) {
                     enumVal = expandInt(v)

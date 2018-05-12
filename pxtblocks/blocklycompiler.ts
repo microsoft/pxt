@@ -1525,9 +1525,9 @@ namespace pxt.blocks {
             else if (isMutatingBlock(b)) {
                 const declarations = b.mutation.getDeclaredVariables();
                 if (declarations) {
-                    for (const varName in declarations) {
+                    Object.keys(declarations).forEach(varName => {
                         trackLocalDeclaration(escapeVarName(varName, e), declarations[varName]);
-                    }
+                    });
                 }
             }
 

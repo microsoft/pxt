@@ -1,3 +1,4 @@
+/* tslint:disable:no-jquery-raw-elements TODO(tslint): get rid of jquery html() calls */
 
 namespace pxt.runner {
 

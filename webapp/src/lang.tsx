@@ -93,6 +93,9 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
         this.state = {
             visible: false
         }
+
+        this.hide = this.hide.bind(this);
+        this.changeLanguage = this.changeLanguage.bind(this);
     }
 
     languageList(): string[] {
@@ -140,7 +143,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
         return (
             <sui.Modal isOpen={this.state.visible}
                 size={modalSize}
-                onClose={() => this.hide()}
+                onClose={this.hide}
                 dimmer={true} header={lf("Select Language")}
                 closeIcon={true}
                 allowResetFocus={true}
@@ -151,22 +154,56 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 <div className="group">
                     <div className="ui cards centered" role="listbox">
                         {languageList.map(langId =>
-                            <codecard.CodeCardView className={`card-selected`}
+                            <LanguageCard
                                 key={langId}
+                                langId={langId}
                                 name={allLanguages[langId].localizedName}
                                 ariaLabel={allLanguages[langId].englishName}
-                                role="option"
                                 description={allLanguages[langId].englishName}
-                                onClick={() => this.changeLanguage(langId)}
+                                onClick={this.changeLanguage}
                             />
                         )}
                     </div>
                 </div>
-                <p>
-                    <br /><br />
-                    <a href={`https://crowdin.com/project/${targetTheme.crowdinProject}`} target="_blank" aria-label={lf("Help us translate")}>{lf("Help us translate")}</a>
-                </p>
+                {targetTheme.crowdinProject ?
+                    <p>
+                        <br /><br />
+                        <a href={`https://crowdin.com/project/${targetTheme.crowdinProject}`} target="_blank" rel="noopener noreferrer"
+                            aria-label={lf("Help us translate")}>{lf("Help us translate")}</a>
+                    </p> : undefined}
             </sui.Modal>
         );
+    }
+}
+
+interface LanguageCardProps {
+    langId: string;
+    name: string;
+    ariaLabel: string;
+    description: string;
+    onClick: (langId: string) => void;
+}
+
+class LanguageCard extends sui.StatelessUIElement<LanguageCardProps> {
+
+    constructor(props: LanguageCardProps) {
+        super(props);
+
+        this.handleClick = this.handleClick.bind(this);
+    }
+
+    handleClick() {
+        this.props.onClick(this.props.langId);
+    }
+
+    renderCore() {
+        const { name, ariaLabel, description } = this.props;
+        return <codecard.CodeCardView className={`card-selected`}
+            name={name}
+            ariaLabel={ariaLabel}
+            role="link"
+            description={description}
+            onClick={this.handleClick}
+        />
     }
 }

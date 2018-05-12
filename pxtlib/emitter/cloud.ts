@@ -1,11 +1,11 @@
 namespace pxt.Cloud {
     import Util = pxtc.Util;
 
-    export var apiRoot = "https://makecode.com/api/";
-    export var accessToken = "";
-    export var localToken = "";
+    export let apiRoot = "https://makecode.com/api/";
+    export let accessToken = "";
+    export let localToken = "";
     let _isOnline = true;
-    export var onOffline = () => { };
+    export let onOffline = () => { };
 
     function offlineError(url: string) {
         let e: any = new Error(Util.lf("Cannot access {0} while offline", url));

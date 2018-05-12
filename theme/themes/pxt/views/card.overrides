@@ -110,7 +110,7 @@
     border-top-right-radius: @borderRadius;
 }
 .ui.cardimage {
-    background-color: @secondaryColor;
+    background-color: @grey;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
