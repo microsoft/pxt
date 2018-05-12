@@ -49,12 +49,12 @@ namespace pxt.tutorial {
         tutorialmd = tutorialmd.replace(/((?!.)\s)+/g, "\n");
 
         const regex = /```(sim|block|blocks|filterblocks)\s*\n([\s\S]*?)\n```/gmi;
-        let match: RegExpExecArray;
         let code = '';
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
-        while ((match = regex.exec(tutorialmd)) != null) {
-            code += "\n { \n " + match[2] + "\n } \n";
-        }
+        tutorialmd.replace(regex, function(m0,m1,m2) {
+            code += "\n { \n " + m2 + "\n } \n";
+            return "";
+        });
         return code;
     }
 }
