@@ -3,14 +3,14 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui";
 import * as core from "./core";
 
-export class ConfirmDialog extends React.Component<core.ConfirmOptions, {}> {
+export class CoreDialog extends React.Component<core.PromptOptions, {}> {
 
     public promise: Promise<any>;
 
     private resolve: any;
     private reject: any;
 
-    constructor(props: core.ConfirmOptions) {
+    constructor(props: core.PromptOptions) {
         super(props);
         this.state = {
         }
@@ -90,6 +90,10 @@ export class ConfirmDialog extends React.Component<core.ConfirmOptions, {}> {
                 closeOnEscape={!options.hideCancel}
                 modalDidOpen={this.modalDidOpen}
             >
+                {options.type == 'prompt' ? <div className="ui fluid icon input">
+                    <input autoFocus type="text" id="promptDialogInput" placeholder={options.defaultValue} />
+                </div> : undefined}
+                {options.jsx}
                 {options.body ? <p>{options.body}</p> : undefined}
                 {options.htmlBody ? <div dangerouslySetInnerHTML={{ __html: options.htmlBody }} /> : undefined}
                 {options.input ? <div className="ui fluid action input">
@@ -105,14 +109,14 @@ export class ConfirmDialog extends React.Component<core.ConfirmOptions, {}> {
     }
 }
 
-let currentDialog: ConfirmDialog;
+let currentDialog: CoreDialog;
 
-export function renderConfirmDialogAsync(options: core.ConfirmOptions): Promise<void> {
+export function renderConfirmDialogAsync(options: core.PromptOptions): Promise<void> {
     return Promise.resolve()
         .delay(10)
         .then(() => {
             const wrapper = document.body.appendChild(document.createElement('div'));
-            currentDialog = ReactDOM.render(React.createElement(ConfirmDialog, options), wrapper);
+            currentDialog = ReactDOM.render(React.createElement(CoreDialog, options), wrapper);
 
             function cleanup() {
                 ReactDOM.unmountComponentAtNode(wrapper);

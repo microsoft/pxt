@@ -1439,15 +1439,17 @@ export class ProjectView
             header: lf("Print Code"),
             disagreeLbl: lf("Close"),
             size: "large",
-            htmlBody: `
-            <div class="ui container">
-                <div id="printcontainer" style="position:relative;height:0;padding-bottom:40%;overflow:hidden;">
-                    <iframe frameBorder="0"
-                        sandbox="allow-popups allow-forms allow-scripts allow-same-origin allow-modals"
-                        style="position:absolute;top:0;left:0;width:100%;height:100%;"
-                        src="${url}" />
+            jsx:
+                /* tslint:disable:react-iframe-missing-sandbox */
+                <div className="ui container">
+                    <div id="printcontainer" style={{ 'position': 'relative', 'height': 0, 'padding-bottom': '40%', 'overflow': 'hidden' }}>
+                        <iframe frameBorder="0"
+                            sandbox="allow-popups allow-forms allow-scripts allow-same-origin allow-modals"
+                            style={{ 'position': 'absolute', 'top': 0, 'left': 0, 'width': '100%', 'height': '100%' }}
+                            src={url} />
+                    </div>
                 </div>
-            </div>`
+            /* tslint:enable:react-iframe-missing-sandbox */
         }).done(r => {
         })
     }
