@@ -35,6 +35,7 @@ import * as sounds from "./sounds";
 import * as make from "./make";
 import * as blocklyToolbox from "./blocksSnippets";
 import * as monacoToolbox from "./monacoSnippets";
+import * as webcam from "./webcam";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -2017,7 +2018,7 @@ export class ProjectView
         }
         return (
             <div id='root' className={rootClasses}>
-                {this.state.greenScreen ? <sui.WebCam /> : undefined}
+                {this.state.greenScreen ? <webcam.WebCam /> : undefined}
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> : undefined}
