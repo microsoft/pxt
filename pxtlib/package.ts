@@ -346,22 +346,12 @@ namespace pxt {
             const upgrades = pxt.patching.computePatches(this.targetVersion(), "api");
             let updatedContents = fileContents;
             if (upgrades) {
-<<<<<<< HEAD
-                upgrades.filter(rule => rule.type == "api")
-                    .forEach(rule => {
-                        Object.keys(rule.map).forEach(match => {
-                            const regex = new RegExp(match, 'g');
-                            updatedContents = updatedContents.replace(regex, rule.map[match]);
-                        });
-                    });
-=======
                 upgrades.forEach(rule => {
                     for (const match in rule.map) {
                         const regex = new RegExp(match, 'g');
                         updatedContents = updatedContents.replace(regex, rule.map[match]);
                     }
                 });
->>>>>>> master
             }
             return updatedContents;
         }
@@ -371,20 +361,15 @@ namespace pxt {
             this.config = cfg;
 
             const currentConfig = JSON.stringify(this.config);
-<<<<<<< HEAD
-            Object.keys(this.config.dependencies).forEach(dep => {
-                const value = Package.upgradePackageReference(dep, this.config.dependencies[dep]);
-=======
             for (const dep in this.config.dependencies) {
                 const value = Package.upgradePackageReference(this.targetVersion(), dep, this.config.dependencies[dep]);
->>>>>>> master
                 if (value != dep) {
                     delete this.config.dependencies[dep];
                     if (value) {
                         this.config.dependencies[value] = "*";
                     }
                 }
-            });
+            }
             if (JSON.stringify(this.config) != currentConfig) {
                 this.saveConfig();
             }
