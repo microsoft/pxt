@@ -1147,17 +1147,23 @@ export class WebCam extends UIElement<WebCamProps, {}> {
             stream => {
                 this.stream = stream;
                 this.v.srcObject = this.stream;
+                this.v.play();
             },
             err => {
-                this.v.srcObject = undefined;
-                this.stream = undefined;
+                this.stop();
             });
     }
 
     componentWillUnmount() {
+    }
+
+    private stop() {
         if (this.stream) {
             if (this.stream.stop)
                 this.stream.stop();
+            const tracks = this.stream.getTracks();
+            if (tracks)
+                tracks.forEach(track => track.stop());
             this.stream = undefined;
             this.v.srcObject = undefined;
         }
