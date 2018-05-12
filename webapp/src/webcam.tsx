@@ -8,6 +8,7 @@ export interface WebCamProps {
 }
 
 export class WebCam extends sui.UIElement<WebCamProps, {}> {
+    private deviceId: string;
     private stream: MediaStream;
     private v: HTMLVideoElement;
 
@@ -16,12 +17,12 @@ export class WebCam extends sui.UIElement<WebCamProps, {}> {
             .then(devices => {
                 core.dialogAsync({
                     header: lf("Choose a camera"),
-                    hideCancel: devices.length > 0,
                     buttons: devices.filter(device => device.kind == "videoinput")
                         .map(device => {
                             return {
                                 label: device.label,
                                 onclick: () => {
+                                    this.deviceId = device.deviceId;
                                     navigator.mediaDevices.getUserMedia({
                                         video: { deviceId: { exact: device.deviceId } },
                                         audio: false
@@ -33,16 +34,20 @@ export class WebCam extends sui.UIElement<WebCamProps, {}> {
                                         this.stop();
                                     })
                                 }
-                            } as ModalButton;
+                            } as sui.ModalButton;
                         })
-                })
+                }).done(() => {
+                    // TODO: no stream selected..
+                });
             })
     }
 
     componentWillUnmount() {
+        this.stop();
     }
 
     private stop() {
+        this.deviceId = undefined;
         if (this.stream) {
             if (this.stream.stop)
                 this.stream.stop();
