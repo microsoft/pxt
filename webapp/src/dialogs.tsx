@@ -1,3 +1,5 @@
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 
 import * as core from "./core";
 
@@ -12,11 +14,23 @@ export function showAboutDialogAsync() {
         hideCancel: true,
         agreeLbl: lf("Ok"),
         agreeClass: "positive",
-        htmlBody: `
-${githubUrl ? `<p>${lf("{0} version:", pxt.Util.htmlEscape(pxt.appTarget.name))} <a href="${pxt.Util.htmlEscape(githubUrl)}/releases/tag/v${pxt.Util.htmlEscape(pxt.appTarget.versions.target)}" aria-label="${lf("{0} version : {1}", pxt.Util.htmlEscape(pxt.appTarget.name), pxt.Util.htmlEscape(pxt.appTarget.versions.target))}" target="_blank">${pxt.Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>` : ``}
-<p>${lf("{0} version:", "Microsoft MakeCode")} <a href="https://github.com/Microsoft/pxt/releases/tag/v${pxt.Util.htmlEscape(pxt.appTarget.versions.pxt)}" aria-label="${lf("{0} version: {1}", "Microsoft MakeCode", pxt.Util.htmlEscape(pxt.appTarget.versions.pxt))}" target="_blank">${pxt.Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
-${compileService && compileService.githubCorePackage && compileService.gittag ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${pxt.Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}" aria-label="${lf("{0} version: {1}", "C++ runtime", pxt.Util.htmlEscape(compileService.gittag))}" target="_blank">${pxt.Util.htmlEscape(compileService.gittag)}</a></p>` : ""}
-`
+        jsx: <div> {githubUrl ? <p>
+            {lf("{0} version:", pxt.Util.htmlEscape(pxt.appTarget.name))}
+            <a href={`${pxt.Util.htmlEscape(githubUrl)}/releases/tag/v${pxt.Util.htmlEscape(pxt.appTarget.versions.target)}`}
+                title={`${lf("{0} version : {1}", pxt.Util.htmlEscape(pxt.appTarget.name), pxt.Util.htmlEscape(pxt.appTarget.versions.target))}`}
+                target="_blank" rel="noopener noreferrer">{pxt.Util.htmlEscape(pxt.appTarget.versions.target)}</a>
+        </p> : undefined}
+            <p>{lf("{0} version:", "Microsoft MakeCode")}
+                <a href={`https://github.com/Microsoft/pxt/releases/tag/v${pxt.Util.htmlEscape(pxt.appTarget.versions.pxt)}`}
+                    title={`${lf("{0} version: {1}", "Microsoft MakeCode", pxt.Util.htmlEscape(pxt.appTarget.versions.pxt))}`}
+                    target="_blank" rel="noopener noreferrer">{pxt.Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
+            {compileService && compileService.githubCorePackage && compileService.gittag ?
+                <p>{lf("{0} version:", "C++ runtime")}
+                    <a href={`${pxt.Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}`}
+                        title={`${lf("{0} version: {1}", "C++ runtime", pxt.Util.htmlEscape(compileService.gittag))}`}
+                        target="_blank" rel="noopener noreferrer">${pxt.Util.htmlEscape(compileService.gittag)}</a></p> : undefined}
+        </div>
+
     }).done();
 }
 
@@ -28,24 +42,24 @@ export function showImportUrlDialogAsync() {
         onLoaded: (el) => {
             input = el.querySelectorAll('input')[0] as HTMLInputElement;
         },
-        htmlBody: `<div class="ui form">
-<div class="ui icon violet message">
-    <i class="user icon"></i>
-    <div class="content">
-        <h3 class="header">
-            ${lf("User-provided content")}
-        </h3>
-        <p>
-            ${lf("The content below is provided by a user, and is not endorsed by Microsoft.")}
-            ${lf("If you think it's not appropriate, please report abuse through Settings -> Report Abuse.")}
-        </p>
-    </div>
-</div>
-  <div class="ui field">
-    <label id="selectUrlToOpenLabel">${lf("Copy the URL of the project.")}</label>
-    <input type="url" tabindex="0" autofocus aria-describedby="selectUrlToOpenLabel" placeholder="${shareUrl}..." class="ui blue fluid"></input>
-  </div>
-</div>`,
+        jsx: <div className="ui form">
+            <div className="ui icon violet message">
+                <i className="user icon"></i>
+                <div className="content">
+                    <h3 className="header">
+                        {lf("User-provided content")}
+                    </h3>
+                    <p>
+                        {lf("The content below is provided by a user, and is not endorsed by Microsoft.")}
+                        {lf("If you think it's not appropriate, please report abuse through Settings -> Report Abuse.")}
+                    </p>
+                </div>
+            </div>
+            <div className="ui field">
+                <label id="selectUrlToOpenLabel">{lf("Copy the URL of the project.")}</label>
+                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder={`${shareUrl}...`} className="ui blue fluid"></input>
+            </div>
+        </div>,
     }).then(res => {
         if (res) {
             pxt.tickEvent("app.open.url");
@@ -72,12 +86,12 @@ export function showImportFileDialogAsync() {
         onLoaded: (el) => {
             input = el.querySelectorAll('input')[0] as HTMLInputElement;
         },
-        htmlBody: `<div class="ui form">
-<div class="ui field">
-<label id="selectFileToOpenLabel">${lf("Select a {0} file to open.", ext)}</label>
-<input type="file" tabindex="0" autofocus aria-describedby="selectFileToOpenLabel" class="ui blue fluid"></input>
-</div>
-</div>`,
+        jsx: <div className="ui form">
+            <div className="ui field">
+                <label id="selectFileToOpenLabel">{lf("Select a {0} file to open.", ext)}</label>
+                <input type="file" tabIndex={0} autoFocus aria-describedby="selectFileToOpenLabel" className="ui blue fluid"></input>
+            </div>
+        </div>,
     }).then(res => {
         if (res) {
             return input.files[0];
@@ -99,16 +113,16 @@ export function showReportAbuseAsync(pubId?: string) {
                 urlInput.value = (shareUrl + pubId);
         },
         agreeLbl: lf("Submit"),
-        htmlBody: `<div class="ui form">
-<div class="ui field">
-<label>${lf("What is the URL of the offensive project?")}</label>
-<input type="url" tabindex="0" autofocus placeholder="Enter project URL here..."></input>
-</div>
-<div class="ui field">
-<label>${lf("Why do you find it offensive?")}</label>
-<textarea></textarea>
-</div>
-</div>`,
+        jsx: <div className="ui form">
+            <div className="ui field">
+                <label>{lf("What is the URL of the offensive project?")}</label>
+                <input type="url" tabIndex={0} autoFocus placeholder="Enter project URL here..."></input>
+            </div>
+            <div className="ui field">
+                <label>{lf("Why do you find it offensive?")}</label>
+                <textarea></textarea>
+            </div>
+        </div>,
     }).done(res => {
         if (res) {
             pxt.tickEvent("app.reportabuse.send");
