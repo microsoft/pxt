@@ -8,7 +8,6 @@ import * as core from "./core";
 import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
-import * as gallery from "./gallery";
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
 
@@ -131,8 +130,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     chgCode(scr: pxt.CodeCard, loadBlocks: boolean, prj?: pxt.ProjectTemplate) {
         core.showLoading("changingcode", lf("loading..."));
         const name = scr.name.toLowerCase().replace(/\W/, '');
-        gallery.loadExampleAsync(name, scr.url)
-            .done(opts => {
+        pxt.gallery.loadExampleAsync(name, scr.url)
+            .done((opts: pxt.editor.ProjectCreationOptions) => {
                 if (opts) {
                     if (prj) opts.prj = prj;
                     if (loadBlocks) {
@@ -315,7 +314,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     }
 
     fetchGallery(path: string): pxt.CodeCard[] {
-        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as gallery.Gallery[];
+        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
         if (res) {
             if (res instanceof Error) {
                 this.hasFetchErrors = true;

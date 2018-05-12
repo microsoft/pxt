@@ -3484,7 +3484,10 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                     const file = resp.ast.getSourceFile('main.ts');
                     const apis = pxtc.getApiInfo(opts, resp.ast);
                     const blocksInfo = pxtc.getBlocksInfo(apis);
-                    const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false })
+                    const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
+                        snippetMode: false,
+                        errorOnGreyBlocks: true
+                    })
                     const success = !!bresp.outfiles['main.blocks']
                     if (success) return addSuccess(name)
                     else return addFailure(fn, bresp.diagnostics)
@@ -4510,6 +4513,15 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     let snipCount = 0;
     let snippets: CodeSnippet[] = [];
 
+    function addSnippet(snippet: CodeSnippet, entryPath: string, snipIndex: number) {
+        snippets.push(snippet);
+        const dir = path.join("built/snippets", snippet.type);
+        const fn = `${dir}/${entryPath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
+        nodeutil.mkdirP(dir);
+        fs.writeFileSync(fn, snippet.code);
+        snippet.file = fn;
+    }
+
     function pushUrl(url: string, toc: boolean) {
         // cache value
         if (!urls.hasOwnProperty(url)) {
@@ -4591,20 +4603,59 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         })
 
         // look for snippets
-        getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => {
-            snippets.push(snippet);
-            const dir = path.join("built/snippets", snippet.type);
-            const fn = `${dir}/${entrypath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
-            nodeutil.mkdirP(dir);
-            fs.writeFileSync(fn, snippet.code);
-            snippet.file = fn;
-        });
+        getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => addSnippet(snippet, entrypath, snipIndex));
     }
 
-    pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in SUMMARY, ${snippets.length} snippets`);
     fs.writeFileSync("built/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), { encoding: "utf8" });
 
     let p = Promise.resolve();
+    // test targetconfig
+    if (nodeutil.fileExistsSync("targetconfig.json")) {
+        const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
+        if (targetConfig && targetConfig.galleries) {
+            Object.keys(targetConfig.galleries).forEach(k => {
+                pxt.log(`gallery ${k}`);
+                let gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
+                let gallery = pxt.gallery.parseGalleryMardown(gallerymd);
+                pxt.debug(`found ${gallery.length} galleries`);
+                gallery.forEach(gal => gal.cards.forEach((card, cardIndex) => {
+                    pxt.debug(`card ${card.shortName || card.name}`);
+                    switch (card.cardType) {
+                        case "tutorial":
+                            {
+                                const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
+                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                                addSnippet(<CodeSnippet>{
+                                    name: card.name,
+                                    code: pxt.tutorial.bundleTutorialCode(tutorialMd),
+                                    type: "blocks",
+                                    ext: "ts",
+                                    packages: pkgs
+                                }, "tutorial" + gal.name, cardIndex);
+                                break;
+                            }
+                        case "example":
+                            {
+                                const exMd = nodeutil.resolveMd(docsRoot, card.url);
+                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
+                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                                pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
+                                addSnippet(<CodeSnippet>{
+                                    name: card.name,
+                                    code: prj.filesOverride["main.ts"],
+                                    type: "blocks",
+                                    ext: "ts",
+                                    packages: pkgs
+                                }, "example" + gal.name, cardIndex);
+                                break;
+                            }
+                    }
+                }));
+            })
+        }
+    }
+
+    pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in SUMMARY, ${snippets.length} snippets`);
     if (compileSnippets)
         p = p.then(() => testSnippetsAsync(snippets, re));
     return p.then(() => {

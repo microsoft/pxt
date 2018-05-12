@@ -313,6 +313,7 @@ namespace ts.pxtc.decompiler {
     export interface DecompileBlocksOptions {
         snippetMode?: boolean; // do not emit "on start"
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
+        errorOnGreyBlocks?: boolean; // fail on grey blocks (usefull when testing docs)
 
         /*@internal*/
         includeGreyBlockMessages?: boolean; // adds error attributes to the mutations in typescript_statement blocks (for debug pruposes)
@@ -346,7 +347,7 @@ namespace ts.pxtc.decompiler {
         const workspaceComments: WorkspaceComment[] = [];
         const autoDeclarations: [string, ts.Node][] = [];
 
-        const getCommentRef = (() => {let currentCommentId = 0; return () => `${currentCommentId++}`})();
+        const getCommentRef = (() => { let currentCommentId = 0; return () => `${currentCommentId++}` })();
 
         ts.forEachChild(file, topLevelNode => {
             if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, env, false, true)) {
@@ -1014,7 +1015,11 @@ ${output}</xml>`;
             }
         }
 
-        function getTypeScriptStatementBlock(node: ts.Node, prefix?: string, error?: string): StatementNode {
+        function getTypeScriptStatementBlock(node: ts.Node, prefix?: string, err?: string): StatementNode {
+
+            if (options.errorOnGreyBlocks)
+                error(node);
+
             const r = mkStmt(pxtc.TS_STATEMENT_TYPE);
             r.mutation = {}
 
@@ -1048,8 +1053,8 @@ ${output}</xml>`;
             const parts = text.split("\n");
             r.mutation["numlines"] = parts.length.toString();
 
-            if (error && options.includeGreyBlockMessages) {
-                r.mutation["error"] = U.htmlEscape(error);
+            if (err && options.includeGreyBlockMessages) {
+                r.mutation["error"] = U.htmlEscape(err);
             }
 
             parts.forEach((p, i) => {
@@ -1724,7 +1729,7 @@ ${output}</xml>`;
                         workspaceRefs.push(ref);
                     }
                     workspaceComments.push({ text, refId: ref });
-                    text  = '';
+                    text = '';
                     currentLine = '';
                 }
                 else {
