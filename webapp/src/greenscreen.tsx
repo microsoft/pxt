@@ -25,9 +25,9 @@ export class WebCam extends sui.UIElement<WebCamProps, {}> {
                 core.dialogAsync({
                     header: lf("Choose a camera"),
                     buttons: devices.filter(device => device.kind == "videoinput")
-                        .map(device => {
+                        .map((device, di) => {
                             return {
-                                label: device.label,
+                                label: device.label || lf("camera {0}", di),
                                 onclick: () => {
                                     this.deviceId = device.deviceId;
                                     navigator.mediaDevices.getUserMedia({
