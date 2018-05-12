@@ -4635,12 +4635,14 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
                             {
                                 const exMd = nodeutil.resolveMd(docsRoot, card.url);
                                 const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
+                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                                pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
                                 addSnippet(<CodeSnippet>{
                                     name: card.name,
                                     code: prj.filesOverride["main.ts"],
                                     type: "blocks",
                                     ext: "ts",
-                                    packages: prj.dependencies
+                                    packages: pkgs
                                 }, "example" + gal.name, cardIndex);
                                 break;
                             }
