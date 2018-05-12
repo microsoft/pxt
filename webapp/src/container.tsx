@@ -5,6 +5,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
+import * as greenscreen from "./greenscreen";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -238,7 +239,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} tabIndex={-1} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} tabIndex={-1} /> : undefined}
-            {targetTheme.greenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} tabIndex={-1} /> : undefined}
+            {targetTheme.greenScreen && greenscreen.isSupported() ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} tabIndex={-1} /> : undefined}
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }

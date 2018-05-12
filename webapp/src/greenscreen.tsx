@@ -7,6 +7,13 @@ export interface WebCamProps {
     close: () => void;
 }
 
+export function isSupported(): boolean {
+    return navigator
+        && !!navigator.mediaDevices
+        && !!navigator.mediaDevices.enumerateDevices
+        && !!navigator.mediaDevices.getUserMedia;
+}
+
 export class WebCam extends sui.UIElement<WebCamProps, {}> {
     private deviceId: string;
     private stream: MediaStream;
