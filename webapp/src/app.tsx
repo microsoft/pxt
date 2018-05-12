@@ -2021,7 +2021,7 @@ export class ProjectView
         }
         return (
             <div id='root' className={rootClasses}>
-                {this.state.greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
+                {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> : undefined}

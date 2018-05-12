@@ -11,7 +11,15 @@
         left: 0;
         top: 0;
         bottom: 0;
-        height:100%;            
+        height:100%;
+    }
+
+    #filelist, #downloadArea {
+        min-width:@simulatorWidthSmall;
+        max-width:@simulatorWidthSmall;
+    }
+    #maineditor {
+        left:@simulatorWidthSmall;
     }
 
     #maineditor, #filelist, .blocklyToolboxDiv, svg.blocklySvg,
@@ -27,6 +35,8 @@
 
     .blocklyTreeRow, .blocklyTreeRow.blocklyTreeSelected {
         background: white !important;
-        color: black !important;
+        .blocklyTreeIcon, .blocklyTreeLabel {
+            color: black !important;
+        }
     }
 }
