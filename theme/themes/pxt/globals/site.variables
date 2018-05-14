@@ -265,3 +265,9 @@
 @bannerBackgroundColor: black;
 @bannerContrastColor: white;
 @bannerLinkColor: #3eb1d0;
+
+
+/*-------------------
+    Greenscreen
+-------------------*/
+@greenScreenColor: #00ff00;

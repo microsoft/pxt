@@ -35,6 +35,7 @@ import * as sounds from "./sounds";
 import * as make from "./make";
 import * as blocklyToolbox from "./blocksSnippets";
 import * as monacoToolbox from "./monacoSnippets";
+import * as greenscreen from "./greenscreen";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -109,6 +110,7 @@ export class ProjectView
         this.hideLightbox = this.hideLightbox.bind(this);
         this.openSimSerial = this.openSimSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
+        this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
     }
 
     shouldShowHomeScreen() {
@@ -1898,6 +1900,12 @@ export class ProjectView
         }
     }
 
+    toggleGreenScreen() {
+        const greenScreenOn = !this.state.greenScreen;
+        pxt.tickEvent("app.greenscreen", { on: greenScreenOn ? 1 : 0 });
+        this.setState({ greenScreen: greenScreenOn });
+    }
+
     setBannerVisible(b: boolean) {
         this.setState({ bannerVisible: b });
     }
@@ -1964,7 +1972,7 @@ export class ProjectView
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header;
-        const { lightbox } = this.state;
+        const { lightbox, greenScreen } = this.state;
         const simDebug = (simOpts && !simOpts.enableTrace) || pxt.options.debug;
 
         const { hideMenuBar, hideEditorToolbar } = targetTheme;
@@ -1998,6 +2006,7 @@ export class ProjectView
             this.state.debugging ? "debugging" : "",
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
             isApp ? "app" : "",
+            greenScreen ? "greenscreen" : "",
             'full-abs'
         ];
         const rootClasses = sui.cx(rootClassList);
@@ -2012,6 +2021,7 @@ export class ProjectView
         }
         return (
             <div id='root' className={rootClasses}>
+                {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> : undefined}

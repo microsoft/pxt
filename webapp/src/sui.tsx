@@ -596,7 +596,7 @@ export interface IconProps extends UiProps {
 
 export const Icon: React.StatelessComponent<IconProps> = (props: IconProps) => {
     const { icon, className, onClick, onKeyDown, children, ...rest } = props;
-    return <i className={`icon ${icon} ${!!className}`}
+    return <i className={`icon ${icon} ${className}`}
         onClick={onClick}
         onKeyDown={onKeyDown || fireClickOnEnter}
         aria-hidden={true} role="presentation" {...rest}>
@@ -955,7 +955,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             header, headerClass, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
             shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, ...rest } = this.props;
-        const { marginTop, scrolling, mountClasses } = this.state
+        const { marginTop, scrolling, mountClasses } = this.state;
 
         const classes = cx([
             'ui',

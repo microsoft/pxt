@@ -5,6 +5,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
+import * as greenscreen from "./greenscreen";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -123,11 +124,13 @@ class DocsMenuItem extends sui.StatelessUIElement<DocsMenuItemProps> {
 
 export interface SettingsMenuProps extends ISettingsProps {
     highContrast: boolean;
+    greenScreen: boolean;
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface SettingsMenuState {
     highContrast?: boolean;
+    greenScreen?: boolean;
 }
 
 export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenuState> {
@@ -143,6 +146,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
+        this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.pair = this.pair.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
@@ -179,6 +183,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.toggleHighContrast();
     }
 
+    toggleGreenScreen() {
+        pxt.tickEvent("menu.togglegreenscreen", undefined, { interactiveConsent: true });
+        this.props.parent.toggleGreenScreen();
+    }
+
     showResetDialog() {
         pxt.tickEvent("menu.reset", undefined, { interactiveConsent: true });
         pxt.tickEvent("reset"); // Deprecated, will Feb 2018.
@@ -204,15 +213,19 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         if (nextProps.highContrast != undefined) {
             newState.highContrast = nextProps.highContrast;
         }
+        if (nextProps.greenScreen !== undefined) {
+            newState.greenScreen = nextProps.greenScreen;
+        }
         if (Object.keys(newState).length > 0) this.setState(newState)
     }
 
     shouldComponentUpdate(nextProps: SettingsMenuProps, nextState: SettingsMenuState, nextContext: any): boolean {
-        return this.state.highContrast != nextState.highContrast;
+        return this.state.highContrast != nextState.highContrast
+            || this.state.greenScreen != nextState.greenScreen;
     }
 
     renderCore() {
-        const { highContrast } = this.state;
+        const { highContrast, greenScreen } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
@@ -226,6 +239,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} tabIndex={-1} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} tabIndex={-1} /> : undefined}
+            {targetTheme.greenScreen && greenscreen.isSupported() ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} tabIndex={-1} /> : undefined}
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }
@@ -307,7 +321,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { home, header, highContrast } = this.props.parent.state;
+        const { home, header, highContrast, greenScreen } = this.props.parent.state;
         if (home) return <div />; // Don't render if we're on the home screen
 
         const targetTheme = pxt.appTarget.appTheme;
@@ -358,7 +372,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             {inTutorial ? <tutorial.TutorialMenuItem parent={this.props.parent} /> : undefined}
             <div className="right menu">
                 {docMenu ? <container.DocsMenu parent={this.props.parent} /> : undefined}
-                {sandbox || inTutorial ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} />}
+                {sandbox || inTutorial ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} />}
 
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial ? <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} /> : undefined}
