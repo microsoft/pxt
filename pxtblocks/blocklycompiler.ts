@@ -1263,6 +1263,7 @@ namespace pxt.blocks {
         isExpression?: boolean;
         imageLiteral?: number;
         hasHandler?: boolean;
+        handlerKey?: string;
         property?: boolean;
         namespace?: string;
         isIdentity?: boolean; // TD_ID shim
@@ -1460,6 +1461,7 @@ namespace pxt.blocks {
                         isExpression: fn.retType && fn.retType !== "void",
                         imageLiteral: fn.attributes.imageLiteral,
                         hasHandler: !!comp.handlerArgs.length || fn.parameters && fn.parameters.some(p => (p.type == "() => void" || !!p.properties)),
+                        handlerKey: fn.attributes.blockHandlerKey,
                         property: !fn.parameters,
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
@@ -1709,7 +1711,7 @@ namespace pxt.blocks {
             else if (call && call.hasHandler && !call.attrs.handlerStatement) {
                 // compute key that identifies event call
                 // detect if same event is registered already
-                const key = callKey(e, b);
+                const key = call.handlerKey || callKey(e, b);
                 flagDuplicate(key, b);
             } else {
                 // all non-events are disabled
