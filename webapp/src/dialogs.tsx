@@ -9,26 +9,37 @@ export function showAboutDialogAsync() {
     const compileService = pxt.appTarget.compileService;
     const description = pxt.appTarget.description || pxt.appTarget.title;
     const githubUrl = pxt.appTarget.appTheme.githubUrl;
+    const targetTheme = pxt.appTarget.appTheme;
+    const versions: pxt.TargetVersions = pxt.appTarget.versions;
+
     core.confirmAsync({
         header: lf("About"),
         hideCancel: true,
         agreeLbl: lf("Ok"),
         agreeClass: "positive",
-        jsx: <div> {githubUrl ? <p>
-            {lf("{0} version:", pxt.Util.htmlEscape(pxt.appTarget.name))}
-            <a href={`${pxt.Util.htmlEscape(githubUrl)}/releases/tag/v${pxt.Util.htmlEscape(pxt.appTarget.versions.target)}`}
-                title={`${lf("{0} version : {1}", pxt.Util.htmlEscape(pxt.appTarget.name), pxt.Util.htmlEscape(pxt.appTarget.versions.target))}`}
-                target="_blank" rel="noopener noreferrer">{pxt.Util.htmlEscape(pxt.appTarget.versions.target)}</a>
-        </p> : undefined}
-            <p>{lf("{0} version:", "Microsoft MakeCode")}
-                <a href={`https://github.com/Microsoft/pxt/releases/tag/v${pxt.Util.htmlEscape(pxt.appTarget.versions.pxt)}`}
-                    title={`${lf("{0} version: {1}", "Microsoft MakeCode", pxt.Util.htmlEscape(pxt.appTarget.versions.pxt))}`}
-                    target="_blank" rel="noopener noreferrer">{pxt.Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
+        jsx: <div>
+            {githubUrl && versions ?
+                <p>
+                    {lf("{0} version:", pxt.Util.htmlEscape(pxt.appTarget.name))}
+                    <a href={`${pxt.Util.htmlEscape(githubUrl)}/releases/tag/v${pxt.Util.htmlEscape(versions.target)}`}
+                        title={`${lf("{0} version : {1}", pxt.Util.htmlEscape(pxt.appTarget.name), pxt.Util.htmlEscape(versions.target))}`}
+                        target="_blank" rel="noopener noreferrer">{pxt.Util.htmlEscape(pxt.appTarget.versions.target)}</a>
+                </p> : undefined}
+            {versions ?
+                <p>{lf("{0} version:", "Microsoft MakeCode")}
+                    <a href={`https://github.com/Microsoft/pxt/releases/tag/v${pxt.Util.htmlEscape(versions.pxt)}`}
+                        title={`${lf("{0} version: {1}", "Microsoft MakeCode", pxt.Util.htmlEscape(versions.pxt))}`}
+                        target="_blank" rel="noopener noreferrer">{pxt.Util.htmlEscape(versions.pxt)}</a>
+                </p> : undefined}
             {compileService && compileService.githubCorePackage && compileService.gittag ?
                 <p>{lf("{0} version:", "C++ runtime")}
                     <a href={`${pxt.Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}`}
                         title={`${lf("{0} version: {1}", "C++ runtime", pxt.Util.htmlEscape(compileService.gittag))}`}
-                        target="_blank" rel="noopener noreferrer">${pxt.Util.htmlEscape(compileService.gittag)}</a></p> : undefined}
+                        target="_blank" rel="noopener noreferrer">{pxt.Util.htmlEscape(compileService.gittag)}</a></p> : undefined}
+            <p>
+                {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
+                {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
+            </p>
         </div>
 
     }).done();
