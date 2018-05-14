@@ -20,19 +20,19 @@ export function showAboutDialogAsync() {
         jsx: <div>
             {githubUrl && versions ?
                 <p>
-                    {lf("{0} version:", pxt.Util.htmlEscape(pxt.appTarget.name))}
+                    {lf("{0} version:", pxt.Util.htmlEscape(pxt.appTarget.name))} &nbsp;
                     <a href={`${pxt.Util.htmlEscape(githubUrl)}/releases/tag/v${pxt.Util.htmlEscape(versions.target)}`}
                         title={`${lf("{0} version : {1}", pxt.Util.htmlEscape(pxt.appTarget.name), pxt.Util.htmlEscape(versions.target))}`}
                         target="_blank" rel="noopener noreferrer">{pxt.Util.htmlEscape(pxt.appTarget.versions.target)}</a>
                 </p> : undefined}
             {versions ?
-                <p>{lf("{0} version:", "Microsoft MakeCode")}
+                <p>{lf("{0} version:", "Microsoft MakeCode")} &nbsp;
                     <a href={`https://github.com/Microsoft/pxt/releases/tag/v${pxt.Util.htmlEscape(versions.pxt)}`}
                         title={`${lf("{0} version: {1}", "Microsoft MakeCode", pxt.Util.htmlEscape(versions.pxt))}`}
                         target="_blank" rel="noopener noreferrer">{pxt.Util.htmlEscape(versions.pxt)}</a>
                 </p> : undefined}
             {compileService && compileService.githubCorePackage && compileService.gittag ?
-                <p>{lf("{0} version:", "C++ runtime")}
+                <p>{lf("{0} version:", "C++ runtime")} &nbsp;
                     <a href={`${pxt.Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}`}
                         title={`${lf("{0} version: {1}", "C++ runtime", pxt.Util.htmlEscape(compileService.gittag))}`}
                         target="_blank" rel="noopener noreferrer">{pxt.Util.htmlEscape(compileService.gittag)}</a></p> : undefined}
