@@ -44,9 +44,15 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
                 video: { deviceId: { exact: deviceId } },
                 audio: false
             }).then(stream => {
-                this.stream = stream;
-                this.v.srcObject = this.stream;
-                this.v.play();
+                try {
+                    this.stream = stream;
+                    this.v.srcObject = this.stream;
+                    this.v.play();
+                }
+                catch (e) {
+                    pxt.debug(`greenscreen: play failed, ${e}`)
+                    this.stop();
+                }
             }, err => {
                 this.stop();
             })
@@ -73,16 +79,21 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
     private stop() {
         this.deviceId = undefined;
         if (this.stream) {
-            if (this.stream.stop)
-                this.stream.stop();
-            const tracks = this.stream.getTracks();
-            if (tracks)
-                tracks.forEach(track => track.stop());
+            try {
+                if (this.stream.stop)
+                    this.stream.stop();
+            } catch (e) { }
+            try {
+                const tracks = this.stream.getTracks();
+                if (tracks)
+                    tracks.forEach(track => track.stop());
+            } catch (e) { }
             this.stream = undefined;
         }
         if (this.v) {
-            this.v.srcObject = undefined;
-            this.v = undefined;
+            try {
+                this.v.srcObject = undefined;
+            } catch (e) { }
         }
     }
 
