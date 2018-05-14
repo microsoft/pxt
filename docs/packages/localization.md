@@ -19,7 +19,7 @@ Here are the steps for adding string translations to a package:
     "README.md",
     "neopixel.ts",
     "_locales/ja/neopixel-strings.json",
-	"_locales/zh/neopixel-strings.json"
+    "_locales/zh/neopixel-strings.json"
 ],
 ```
 
