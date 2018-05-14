@@ -1709,7 +1709,7 @@ namespace pxt.blocks {
             else if (call && call.hasHandler && !call.attrs.handlerStatement) {
                 // compute key that identifies event call
                 // detect if same event is registered already
-                const key = callKey(e, b);
+                const key = call.attrs.blockHandlerKey || callKey(e, b);
                 flagDuplicate(key, b);
             } else {
                 // all non-events are disabled
