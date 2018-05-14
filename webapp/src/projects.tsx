@@ -221,7 +221,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 {targetTheme.selectLanguage ? <sui.Link className="item" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
                 {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
-                <sui.Link className="item" text={pxt.appTarget.versions ? `v${pxt.appTarget.versions.target}` : lf("About")} onClick={this.showAboutDialog} onKeyDown={sui.fireClickOnEnter} />
+                {pxt.appTarget.versions ? <sui.Link className="item" text={`v${pxt.appTarget.versions.target}`} onClick={this.showAboutDialog} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div> : undefined}
         </div>;
     }
