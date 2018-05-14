@@ -1235,7 +1235,7 @@ namespace pxt.blocks {
             for (let j = 0; j < columns; ++j) {
                 if (j > 0)
                     state += ' ';
-                state += (leds[(i * rows) + j] === '#') ? "#" : ".";
+                state += (leds[(i * columns) + j] === '#') ? "#" : ".";
             }
             state += '\n';
         }
