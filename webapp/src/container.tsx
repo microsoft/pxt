@@ -249,8 +249,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui mobile only divider"></div>
             {renderDocItems(this.props.parent, "mobile only")}
             <div className="ui divider"></div>
-            {targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies")} target="_blank" rel="noopener noreferrer" tabIndex={-1}>{lf("Privacy & Cookies")}</a> : undefined}
-            {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use")} target="_blank" rel="noopener noreferrer" tabIndex={-1}>{lf("Terms Of Use")}</a> : undefined}
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} tabIndex={-1} />
             {targetTheme.feedbackUrl ? <div className="ui divider"></div> : undefined}
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" tabIndex={-1}>{lf("Give Feedback")}</a> : undefined}
