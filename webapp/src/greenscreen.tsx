@@ -14,7 +14,7 @@ export interface WebCamState {
 }
 
 export function isSupported(): boolean {
-    return navigator
+    return typeof navigator !== undefined
         && !!navigator.mediaDevices
         && !!navigator.mediaDevices.enumerateDevices
         && !!navigator.mediaDevices.getUserMedia;
@@ -38,16 +38,19 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
     handleDeviceClick(deviceId: any) {
         this.setState({ hasPrompt: false });
         this.deviceId = deviceId;
-        navigator.mediaDevices.getUserMedia({
-            video: { deviceId: { exact: deviceId } },
-            audio: false
-        }).then(stream => {
-            this.stream = stream;
-            this.v.srcObject = this.stream;
-            this.v.play();
-        }, err => {
-            this.stop();
-        })
+        // deviceId is "" if green screen selected
+        if (this.deviceId) {
+            navigator.mediaDevices.getUserMedia({
+                video: { deviceId: { exact: deviceId } },
+                audio: false
+            }).then(stream => {
+                this.stream = stream;
+                this.v.srcObject = this.stream;
+                this.v.play();
+            }, err => {
+                this.stop();
+            })
+        }
     }
 
     handleClose() {
@@ -59,7 +62,7 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
     componentDidMount() {
         navigator.mediaDevices.enumerateDevices()
             .then(devices => {
-                this.setState({ devices: devices });
+                this.setState({ devices: devices.filter(device => device.kind == "videoinput") });
             })
     }
 
@@ -76,7 +79,10 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
             if (tracks)
                 tracks.forEach(track => track.stop());
             this.stream = undefined;
+        }
+        if (this.v) {
             this.v.srcObject = undefined;
+            this.v = undefined;
         }
     }
 
@@ -86,13 +92,18 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
 
     render() {
         const { hasPrompt, devices } = this.state;
-        return <div>
+        return <div className="videoContainer">
             <video ref={this.handleVideoRef} />
             {hasPrompt ?
                 <sui.Modal isOpen={hasPrompt} onClose={this.handleClose} closeIcon={true}
                     dimmer={true} header={lf("Choose a camera")}>
                     <div className={`ui cards ${!devices ? 'loading' : ''}`}>
-                        {devices && devices.filter(device => device.kind == "videoinput")
+                        <WebCamCard
+                            key={`devicegreenscreen`}
+                            icon='green video camera'
+                            onClick={this.handleDeviceClick}
+                            deviceId={""} header={lf("Green background")} />
+                        {devices && devices
                             .map((device, di) =>
                                 <WebCamCard
                                     key={`device${di}`}
