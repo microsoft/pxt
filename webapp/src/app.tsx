@@ -712,7 +712,7 @@ export class ProjectView
         this.clearSerial()
 
         // version check, you should not load a script from 1 major version above.
-        if (h.targetVersion && pxt.semver.majorCmp(h.targetVersion, pxt.appTarget.versions.target) < 0) {
+        if (h.targetVersion && pxt.semver.majorCmp(h.targetVersion, pxt.appTarget.versions.target) > 0) {
             // the script is a major version ahead, need to redirect
             pxt.tickEvent('patch.maxversion', { targetVersion: h.targetVersion });
             const buttons: sui.ModalButton[] = [];
