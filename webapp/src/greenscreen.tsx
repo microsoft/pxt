@@ -100,7 +100,7 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
                     <div className={`ui cards ${!devices ? 'loading' : ''}`}>
                         <WebCamCard
                             key={`devicegreenscreen`}
-                            icon='green video camera'
+                            icon='green tint'
                             onClick={this.handleDeviceClick}
                             deviceId={""} header={lf("Green background")} />
                         {devices && devices
