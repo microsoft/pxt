@@ -714,7 +714,8 @@ export class ProjectView
         const htv = h.targetVersion || "0.0.0";
         // a legacy script does not have a version -- or has a major version less
         // than the current version
-        if (pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) < 0)
+        const legacyProject = pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) < 0;
+        if (legacyProject)
             pxt.tickEvent(`patch.load.legacy`, { targetVersion: htv })
         // version check, you should not load a script from 1 major version above.
         if (pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) > 0) {
@@ -2437,6 +2438,9 @@ function initExtensionsAsync(): Promise<void> {
                 if (res.toolboxOptions.monacoToolbox) {
                     monacoToolbox.overrideToolbox(res.toolboxOptions.monacoToolbox);
                 }
+            }
+            if (res.blocklyPatch) {
+                pxt.blocks.extensionBlocklyPatch = res.blocklyPatch;
             }
         });
 }

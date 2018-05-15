@@ -103,6 +103,8 @@ namespace pxt.blocks {
         newnodes.forEach(n => dom.appendChild(n));
     }
 
+    export let extensionBlocklyPatch: (pkgTargetVersion: string, dom: Element) => void;
+
     export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.BlocksInfo, skipReport = false): string {
         try {
             const parser = new DOMParser();
@@ -151,6 +153,10 @@ namespace pxt.blocks {
 
             // patch floating blocks
             patchFloatingBlocks(doc.documentElement, info);
+
+            // apply extension patches
+            if (pxt.blocks.extensionBlocklyPatch)
+                pxt.blocks.extensionBlocklyPatch(pkgTargetVersion, doc.documentElement);
 
             // serialize and return
             return new XMLSerializer().serializeToString(doc);

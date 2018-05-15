@@ -268,6 +268,7 @@ namespace pxt.editor {
         saveProjectAsync?: (project: pxt.cpp.HexFile) => Promise<void>;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
         toolboxOptions?: IToolboxOptions;
+        blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
     }
 
     export interface FieldExtensionOptions {
