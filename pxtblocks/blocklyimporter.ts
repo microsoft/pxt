@@ -103,6 +103,10 @@ namespace pxt.blocks {
         newnodes.forEach(n => dom.appendChild(n));
     }
 
+    /**
+     * This callback is populated from the editor extension result. 
+     * Allows a target to provide version specific blockly updates
+     */
     export let extensionBlocklyPatch: (pkgTargetVersion: string, dom: Element) => void;
 
     export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.BlocksInfo, skipReport = false): string {
