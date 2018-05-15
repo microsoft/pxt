@@ -712,6 +712,8 @@ export class ProjectView
         this.clearSerial()
 
         const htv = h.targetVersion;
+        // a legacy script does not have a version -- or has a major version less
+        // than the current version
         const legacyProject = !htv || pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) < 0;
 
         // version check, you should not load a script from 1 major version above.
@@ -756,6 +758,8 @@ export class ProjectView
                 if (file.name === "main.ts") {
                     this.shouldTryDecompile = true;
                 }
+                // when opening a legacy project, open in monaco then decompile 
+                // to hit the decompilation paths
                 if (legacyProject && this.shouldTryDecompile) {
                     this.textEditor.openBlocksOnLoading = true;
                 }
