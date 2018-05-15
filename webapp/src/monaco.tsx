@@ -31,6 +31,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadedMonaco: boolean;
     loadingMonaco: boolean;
     giveFocusOnLoading: boolean = false;
+    openBlocksOnLoading: boolean = false;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -689,6 +690,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             }).finally(() => {
                 editorArea.removeChild(loading);
+                if (this.openBlocksOnLoading) {
+                    this.openBlocksOnLoading = false;
+                    this.openBlocks();
+                }
             });
     }
 

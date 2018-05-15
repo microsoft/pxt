@@ -753,6 +753,12 @@ export class ProjectView
                     if (!file.content) // empty blocks file, open javascript editor
                         file = main.lookupFile("this/" + file.getVirtualFileName()) || file
                 }
+                if (file.name === "main.ts") {
+                    this.shouldTryDecompile = true;
+                }
+                if (legacyProject && this.shouldTryDecompile) {
+                    this.textEditor.openBlocksOnLoading = true;
+                }
                 this.setState({
                     home: false,
                     showFiles: false,
@@ -764,10 +770,6 @@ export class ProjectView
                     sideDocsLoadUrl: '',
                     debugging: false
                 })
-
-                if (file.name === "main.ts") {
-                    this.shouldTryDecompile = true;
-                }
 
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h, this.state.editorState).done()
