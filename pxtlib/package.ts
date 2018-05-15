@@ -569,7 +569,6 @@ namespace pxt {
     export class MainPackage extends Package {
         public deps: Map<Package> = {};
         private _jres: Map<JRes>;
-        public _targetVersion: string;
 
         constructor(public _host: Host) {
             super("this", "file:.", null, null)
@@ -577,10 +576,6 @@ namespace pxt {
             this.addedBy = [this]
             this.level = 0
             this.deps[this.id] = this;
-        }
-
-        targetVersion(): string {
-            return this._targetVersion || (this.config && this.config.targetVersions && this.config.targetVersions.target);
         }
 
         installAllAsync() {
