@@ -25,6 +25,7 @@
     * [Getting started](/packages/getting-started)
     * [pxt.json](/packages/pxtJson)
     * [Package versioning](/packages/versioning)
+    * [Package localization](/packages/localization)
     * [Package approval](/packages/approval)
     * [Package extensions](/packages/extensions)
 * [Writing Docs](/writing-docs)
