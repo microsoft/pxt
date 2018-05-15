@@ -11,4 +11,21 @@ namespace pxt.patching {
             r = r.filter(p => p.type == kind);
         return r.length ? r : undefined;
     }
+
+    export function upgradePackageReference(pkgTargetVersion: string, pkg: string, val: string): string {
+        if (val != "*") return pkg;
+        const upgrades = pxt.patching.computePatches(pkgTargetVersion, "package");
+        let newPackage = pkg;
+        if (upgrades) {
+            upgrades.forEach(rule => {
+                    Object.keys(rule.map).forEach(match => {
+                        if (newPackage == match) {
+                            newPackage = rule.map[match];
+                        }
+                    });
+                });
+        }
+        return newPackage;
+    }
+
 }

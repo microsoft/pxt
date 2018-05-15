@@ -711,8 +711,11 @@ export class ProjectView
         this.stopSimulator(true);
         this.clearSerial()
 
+        const htv = h.targetVersion;
+        const legacyProject = !htv || pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) < 0;
+
         // version check, you should not load a script from 1 major version above.
-        if (h.targetVersion && pxt.semver.majorCmp(h.targetVersion, pxt.appTarget.versions.target) > 0) {
+        if (htv && pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) > 0) {
             // the script is a major version ahead, need to redirect
             pxt.tickEvent('patch.maxversion', { targetVersion: h.targetVersion });
             const buttons: sui.ModalButton[] = [];
@@ -728,8 +731,8 @@ export class ProjectView
                 disagreeLbl: lf("Ok"),
                 buttons
             })
-            // TODO: find a better recovery for this.
-            .then(() => this.openHome());
+                // TODO: find a better recovery for this.
+                .then(() => this.openHome());
         }
 
         Util.jsonMergeFrom(editorState || {}, this.state.editorState || {});
@@ -739,12 +742,14 @@ export class ProjectView
                 compiler.newProject();
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
-                let file = main.getMainFile()
+                let file = main.getMainFile();
                 if (e)
                     file = main.lookupFile(e.name) || file
-                if (!e && h.editor == pxt.JAVASCRIPT_PROJECT_NAME && !pkg.File.tsFileNameRx.test(file.getName()) && file.getVirtualFileName())
+                if ((!e && h.editor == pxt.JAVASCRIPT_PROJECT_NAME && !pkg.File.tsFileNameRx.test(file.getName()) && file.getVirtualFileName())
+                    || legacyProject)
                     file = main.lookupFile("this/" + file.getVirtualFileName()) || file;
-                if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName()) {
+                if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName()
+                    && !legacyProject) { // force open .js first
                     if (!file.content) // empty blocks file, open javascript editor
                         file = main.lookupFile("this/" + file.getVirtualFileName()) || file
                 }

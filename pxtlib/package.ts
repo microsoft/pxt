@@ -15,7 +15,7 @@ namespace pxt {
                 } else {
                     // If it's not from GH, assume it's a bundled package
                     // TODO: Add logic for shared packages if we enable that
-                    const updatedRef = Package.upgradePackageReference(pkgTargetVersion, id, fullVers);
+                    const updatedRef = pxt.patching.upgradePackageReference(pkgTargetVersion, id, fullVers);
                     const bundledPkg = pxt.appTarget.bundledpkgs[updatedRef];
                     return JSON.parse(bundledPkg[CONFIG_NAME]) as pxt.PackageConfig;
                 }
@@ -26,23 +26,6 @@ namespace pxt {
             const pkgs = pxt.appTarget.bundledpkgs;
             return Object.keys(pkgs).map(id => JSON.parse(pkgs[id][pxt.CONFIG_NAME]) as pxt.PackageConfig)
                 .filter(cfg => !!cfg);
-        }
-
-        static upgradePackageReference(pkgTargetVersion: string, pkg: string, val: string): string {
-            if (val != "*") return pkg;
-            const upgrades = pxt.patching.computePatches(pkgTargetVersion);
-            let newPackage = pkg;
-            if (upgrades) {
-                upgrades.filter(rule => rule.type == "package")
-                    .forEach(rule => {
-                        Object.keys(rule.map).forEach(match => {
-                            if (newPackage == match) {
-                                newPackage = rule.map[match];
-                            }
-                        });
-                    });
-            }
-            return newPackage;
         }
 
         public addedBy: Package[];
@@ -205,9 +188,9 @@ namespace pxt {
             // Build the RegExp that will determine whether the dependency is in use. Try to use upgrade rules,
             // otherwise fallback to the package's name
             let regex: RegExp = null;
-            const upgrades = pxt.patching.computePatches(this.targetVersion());
+            const upgrades = pxt.patching.computePatches(this.targetVersion(), "missingPackage");
             if (upgrades) {
-                upgrades.filter(rule => rule.type == "missingPackage").forEach((rule) => {
+                upgrades.forEach((rule) => {
                     Object.keys(rule.map).forEach((match) => {
                         if (rule.map[match] === pkgId) {
                             regex = new RegExp(match, "g");
@@ -342,7 +325,7 @@ namespace pxt {
                 });
         }
 
-        upgradeAPI(fileContents: string): string {
+        protected patchJavaScript(fileContents: string): string {
             const upgrades = pxt.patching.computePatches(this.targetVersion(), "api");
             let updatedContents = fileContents;
             if (upgrades) {
@@ -362,7 +345,7 @@ namespace pxt {
 
             const currentConfig = JSON.stringify(this.config);
             for (const dep in this.config.dependencies) {
-                const value = Package.upgradePackageReference(this.targetVersion(), dep, this.config.dependencies[dep]);
+                const value = pxt.patching.upgradePackageReference(this.targetVersion(), dep, this.config.dependencies[dep]);
                 if (value != dep) {
                     delete this.config.dependencies[dep];
                     if (value) {
@@ -586,6 +569,7 @@ namespace pxt {
     export class MainPackage extends Package {
         public deps: Map<Package> = {};
         private _jres: Map<JRes>;
+        public _targetVersion: string;
 
         constructor(public _host: Host) {
             super("this", "file:.", null, null)
@@ -593,6 +577,10 @@ namespace pxt {
             this.addedBy = [this]
             this.level = 0
             this.deps[this.id] = this;
+        }
+
+        targetVersion(): string {
+            return this._targetVersion || (this.config && this.config.targetVersions && this.config.targetVersions.target);
         }
 
         installAllAsync() {
@@ -676,7 +664,7 @@ namespace pxt {
             }
 
             const upgradeFile = (fn: string, cont: string) => {
-                let updatedCont = this.upgradeAPI(cont);
+                let updatedCont = this.patchJavaScript(cont);
                 if (updatedCont != cont) {
                     // save file (force write)
                     pxt.debug(`updating APIs in ${fn} (size=${cont.length})...`)
