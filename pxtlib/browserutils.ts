@@ -435,7 +435,7 @@ namespace pxt.BrowserUtils {
     }
 
     export function patchCdn(url: string): string {
-        if (!url) return url;
+        if (!url || !pxt.getOnlineCdnUrl()) return url;
         return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
     }
 
