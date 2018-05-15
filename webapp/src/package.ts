@@ -438,7 +438,7 @@ export function genFileName(extension: string): string {
     /* tslint:enable:no-control-regex */
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.fileNameExclusiveFilter) {
         const rx = new RegExp(pxt.appTarget.appTheme.fileNameExclusiveFilter, 'g');
-        sanitizedName =  sanitizedName.replace(rx, '');
+        sanitizedName = sanitizedName.replace(rx, '');
     }
     const fn = `${pxt.appTarget.nickname || pxt.appTarget.id}-${sanitizedName}${extension}`;
     return fn;
@@ -458,13 +458,13 @@ export function notifySyncDone(updated: pxt.Map<number>) {
 
 export function loadPkgAsync(id: string) {
     mainPkg = new pxt.MainPackage(theHost)
-    mainPkg._verspec = "workspace:" + id
+    mainPkg._verspec = "workspace:" + id;
 
     return theHost.downloadPackageAsync(mainPkg)
         .catch(core.handleNetworkError)
-        .then(() => theHost.readFile(mainPkg, pxt.CONFIG_NAME))
-        .then(str => {
-            if (!str) return Promise.resolve()
+        .then(() => JSON.parse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
+        .then(config => {
+            if (!config) return Promise.resolve()
             return mainPkg.installAllAsync()
                 .then(() => mainEditorPkg().afterMainLoadAsync())
                 .catch(e => {

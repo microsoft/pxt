@@ -15,7 +15,7 @@ namespace pxt {
                 } else {
                     // If it's not from GH, assume it's a bundled package
                     // TODO: Add logic for shared packages if we enable that
-                    const updatedRef = Package.upgradePackageReference(pkgTargetVersion, id, fullVers);
+                    const updatedRef = pxt.patching.upgradePackageReference(pkgTargetVersion, id, fullVers);
                     const bundledPkg = pxt.appTarget.bundledpkgs[updatedRef];
                     return JSON.parse(bundledPkg[CONFIG_NAME]) as pxt.PackageConfig;
                 }
@@ -26,23 +26,6 @@ namespace pxt {
             const pkgs = pxt.appTarget.bundledpkgs;
             return Object.keys(pkgs).map(id => JSON.parse(pkgs[id][pxt.CONFIG_NAME]) as pxt.PackageConfig)
                 .filter(cfg => !!cfg);
-        }
-
-        static upgradePackageReference(pkgTargetVersion: string, pkg: string, val: string): string {
-            if (val != "*") return pkg;
-            const upgrades = pxt.patching.computePatches(pkgTargetVersion);
-            let newPackage = pkg;
-            if (upgrades) {
-                upgrades.filter(rule => rule.type == "package")
-                    .forEach(rule => {
-                        Object.keys(rule.map).forEach(match => {
-                            if (newPackage == match) {
-                                newPackage = rule.map[match];
-                            }
-                        });
-                    });
-            }
-            return newPackage;
         }
 
         public addedBy: Package[];
@@ -205,9 +188,9 @@ namespace pxt {
             // Build the RegExp that will determine whether the dependency is in use. Try to use upgrade rules,
             // otherwise fallback to the package's name
             let regex: RegExp = null;
-            const upgrades = pxt.patching.computePatches(this.targetVersion());
+            const upgrades = pxt.patching.computePatches(this.targetVersion(), "missingPackage");
             if (upgrades) {
-                upgrades.filter(rule => rule.type == "missingPackage").forEach((rule) => {
+                upgrades.forEach((rule) => {
                     Object.keys(rule.map).forEach((match) => {
                         if (rule.map[match] === pkgId) {
                             regex = new RegExp(match, "g");
@@ -221,7 +204,7 @@ namespace pxt {
             return regex.test(ts);
         }
 
-        getMissingPackages(config: pxt.PackageConfig, ts: string): Map<string> {
+        private getMissingPackages(config: pxt.PackageConfig, ts: string): Map<string> {
             const upgrades = pxt.patching.computePatches(this.targetVersion(), "missingPackage");
             const missing: Map<string> = {};
             if (ts && upgrades)
@@ -342,18 +325,14 @@ namespace pxt {
                 });
         }
 
-        upgradeAPI(fileContents: string): string {
-            const upgrades = pxt.patching.computePatches(this.targetVersion(), "api");
-            let updatedContents = fileContents;
-            if (upgrades) {
-                upgrades.forEach(rule => {
-                    for (const match in rule.map) {
-                        const regex = new RegExp(match, 'g');
-                        updatedContents = updatedContents.replace(regex, rule.map[match]);
-                    }
-                });
+        protected upgradeFile(fn: string, cont: string) {
+            const updatedCont = pxt.patching.patchJavaScript(this.targetVersion(), cont);
+            if (updatedCont != cont) {
+                // save file (force write)
+                pxt.debug(`patching javascript in ${fn} (size=${cont.length})...`)
+                this.host().writeFile(this, fn, updatedCont, true)
             }
-            return updatedContents;
+            return updatedCont;
         }
 
         private parseConfig(cfgSrc: string) {
@@ -362,7 +341,7 @@ namespace pxt {
 
             const currentConfig = JSON.stringify(this.config);
             for (const dep in this.config.dependencies) {
-                const value = Package.upgradePackageReference(this.targetVersion(), dep, this.config.dependencies[dep]);
+                const value = pxt.patching.upgradePackageReference(this.targetVersion(), dep, this.config.dependencies[dep]);
                 if (value != dep) {
                     delete this.config.dependencies[dep];
                     if (value) {
@@ -416,6 +395,11 @@ namespace pxt {
 
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
+
+            initPromise = initPromise.then(() => {
+                this.getFiles().filter(fn => /\.ts$/.test(fn))
+                    .forEach(file => this.upgradeFile(file, this.readFile(file)));
+            })
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
                 if (this.level == 0)
@@ -675,16 +659,6 @@ namespace pxt {
                 }
             }
 
-            const upgradeFile = (fn: string, cont: string) => {
-                let updatedCont = this.upgradeAPI(cont);
-                if (updatedCont != cont) {
-                    // save file (force write)
-                    pxt.debug(`updating APIs in ${fn} (size=${cont.length})...`)
-                    this.host().writeFile(this, fn, updatedCont, true)
-                }
-                return updatedCont;
-            }
-
             return this.loadAsync()
                 .then(() => {
                     pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
@@ -706,7 +680,7 @@ namespace pxt {
                 .then(() => this.config.binaryonly || appTarget.compile.shortPointers || !opts.target.isNative ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
-                        files = U.mapMap(files, upgradeFile);
+                        files = U.mapMap(files, (f,c) => this.upgradeFile(f,c));
                         const headerString = JSON.stringify({
                             name: this.config.name,
                             comment: this.config.description,

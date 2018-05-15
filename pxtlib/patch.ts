@@ -11,4 +11,34 @@ namespace pxt.patching {
             r = r.filter(p => p.type == kind);
         return r.length ? r : undefined;
     }
+
+    export function upgradePackageReference(pkgTargetVersion: string, pkg: string, val: string): string {
+        if (val != "*") return pkg;
+        const upgrades = pxt.patching.computePatches(pkgTargetVersion, "package");
+        let newPackage = pkg;
+        if (upgrades) {
+            upgrades.forEach(rule => {
+                    Object.keys(rule.map).forEach(match => {
+                        if (newPackage == match) {
+                            newPackage = rule.map[match];
+                        }
+                    });
+                });
+        }
+        return newPackage;
+    }
+
+    export function patchJavaScript(pkgTargetVersion: string, fileContents: string): string {
+        const upgrades = pxt.patching.computePatches(pkgTargetVersion, "api");
+        let updatedContents = fileContents;
+        if (upgrades) {
+            upgrades.forEach(rule => {
+                for (const match in rule.map) {
+                    const regex = new RegExp(match, 'g');
+                    updatedContents = updatedContents.replace(regex, rule.map[match]);
+                }
+            });
+        }
+        return updatedContents;
+    }
 }

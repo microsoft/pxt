@@ -711,10 +711,16 @@ export class ProjectView
         this.stopSimulator(true);
         this.clearSerial()
 
+        const htv = h.targetVersion || "0.0.0";
+        // a legacy script does not have a version -- or has a major version less
+        // than the current version
+        const legacyProject = pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) < 0;
+        if (legacyProject)
+            pxt.tickEvent(`patch.load.legacy`, { targetVersion: htv })
         // version check, you should not load a script from 1 major version above.
-        if (h.targetVersion && pxt.semver.majorCmp(h.targetVersion, pxt.appTarget.versions.target) > 0) {
+        if (pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) > 0) {
             // the script is a major version ahead, need to redirect
-            pxt.tickEvent('patch.maxversion', { targetVersion: h.targetVersion });
+            pxt.tickEvent(`patch.load.future`, { targetVersion: htv })
             const buttons: sui.ModalButton[] = [];
             if (pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.homeUrl)
                 buttons.push({
@@ -728,8 +734,8 @@ export class ProjectView
                 disagreeLbl: lf("Ok"),
                 buttons
             })
-            // TODO: find a better recovery for this.
-            .then(() => this.openHome());
+                // TODO: find a better recovery for this.
+                .then(() => this.openHome());
         }
 
         Util.jsonMergeFrom(editorState || {}, this.state.editorState || {});
@@ -739,14 +745,17 @@ export class ProjectView
                 compiler.newProject();
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
-                let file = main.getMainFile()
+                let file = main.getMainFile();
                 if (e)
                     file = main.lookupFile(e.name) || file
-                if (!e && h.editor == pxt.JAVASCRIPT_PROJECT_NAME && !pkg.File.tsFileNameRx.test(file.getName()) && file.getVirtualFileName())
+                if ((!e && h.editor == pxt.JAVASCRIPT_PROJECT_NAME && !pkg.File.tsFileNameRx.test(file.getName()) && file.getVirtualFileName()))
                     file = main.lookupFile("this/" + file.getVirtualFileName()) || file;
                 if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName()) {
                     if (!file.content) // empty blocks file, open javascript editor
                         file = main.lookupFile("this/" + file.getVirtualFileName()) || file
+                }
+                if (file.name === "main.ts") {
+                    this.shouldTryDecompile = true;
                 }
                 this.setState({
                     home: false,
@@ -759,10 +768,6 @@ export class ProjectView
                     sideDocsLoadUrl: '',
                     debugging: false
                 })
-
-                if (file.name === "main.ts") {
-                    this.shouldTryDecompile = true;
-                }
 
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h, this.state.editorState).done()
@@ -2433,6 +2438,9 @@ function initExtensionsAsync(): Promise<void> {
                 if (res.toolboxOptions.monacoToolbox) {
                     monacoToolbox.overrideToolbox(res.toolboxOptions.monacoToolbox);
                 }
+            }
+            if (res.blocklyPatch) {
+                pxt.blocks.extensionBlocklyPatch = res.blocklyPatch;
             }
         });
 }
