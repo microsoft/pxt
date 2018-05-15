@@ -28,4 +28,17 @@ namespace pxt.patching {
         return newPackage;
     }
 
+    export function patchJavaScript(pkgTargetVersion: string, fileContents: string): string {
+        const upgrades = pxt.patching.computePatches(pkgTargetVersion, "api");
+        let updatedContents = fileContents;
+        if (upgrades) {
+            upgrades.forEach(rule => {
+                for (const match in rule.map) {
+                    const regex = new RegExp(match, 'g');
+                    updatedContents = updatedContents.replace(regex, rule.map[match]);
+                }
+            });
+        }
+        return updatedContents;
+    }
 }
