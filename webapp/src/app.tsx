@@ -717,7 +717,7 @@ export class ProjectView
         const legacyProject = pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) < 0;
         if (legacyProject)
             pxt.tickEvent(`patch.load.legacy`, { targetVersion: htv })
-        const futureProject = pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) > 0;
+        const futureProject = !legacyProject && pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) > 0;
 
         // version check, you should not load a script from 1 major version above.
         if (futureProject) {
