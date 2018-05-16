@@ -1,13 +1,13 @@
 \section{Related Work}
 \label{sec:related}
 %% potentially cut this
-\subsection{Novice programming environments}
+\subsection{Novice Programming Environments}
 
 Arduino~\cite{buildingArduino2014} is an environment for programming microcontrollers, aimed at novices. However, its C++ based APIs introduces barriers for novice programmers~\cite{blikstein2013gears}. Scratch~\cite{ScratchCACM2009} is a widely adopted, event-based visual programming environment designed to introduce novice programmers to computer science concepts. Extensions enable the programming of physical devices with Scratch. However, devices require constant tethered connections to operate, restricting potential projects~\cite{dougherty2012maker}. ArduBlock~\cite{Ardubloc28:online} brings visual programming to the Arduino, but it lacks the event-based blocks Scratch users are familiar with.
 
 With the environments above, additional software must be installed --- this creates barriers for novice users in restrictive environments. MakeCode and CODAL require \emph{no installation} to support a diverse user base and support \emph{event-based higher-level languages} to help beginners get a head start in the world of the microcontroller.
 
-\subsection{Virtual machine-based languages}
+\subsection{Virtual Machine-based Languages}
 
 Recently, virtual machines supporting most of the semantics of higher level languages like JavaScript, Java, and Python, have been ported to 32-bit microcontrollers by maker communities~\cite{dougherty2012maker}. Examples include: MicroPython~\cite{MicroPython}, CircuitPython, and Espruino~\cite{espruinoBook}. These VMs consume a large amount of RAM and flash memory, and run significantly slower than native languages.
 
@@ -15,7 +15,7 @@ The research community has worked to bring higher level languages to microcontro
 
 Our approach bears most similarity to~\cite{varma2004java}, where we compile higher level languages to an \emph{optimized, event-driven} C++ runtime (\CON).
 
-\subsection{Embedded runtime environments}
+\subsection{Embedded Runtime Environments}
 
 %Embedded runtime environments can range from simple C++ classes that control hardware, to real-time operating systems (RTOSs) with scheduling and memory management.
 
@@ -26,8 +26,7 @@ TinyOS~\cite{levis2005tinyos}, Contiki~\cite{dunkels2012contiki}, RIOT OS~\cite{
 
 Although the platforms above are widely used by C/C++ developers, none of these existing solutions align well with the programming paradigms seen in higher level languages. \CO \emph{bridges the semantic gap between the higher level language and the microcontroller}, offering appropriate abstractions and higher level primitives written natively in C++.
 
-\subsection{Flashing microcontrollers}
-
+\subsection{Flashing Microcontrollers}
 There are two common ways to transfer a program to the flash of a microcontroller: for embedded developers, a specialized debugger chip; for hobbyists, a custom serial protocol~\cite{AVRDUDEA15:online}. Both approaches require operating system drivers. ARM's mbed platform provides DAPLink~\cite{GitHubAR5:online}, firmware that presents itself to an external computer as a USB pen drive. DAPLink exposes a virtual file system that caters for normal file system behavior and handles the decoding of Intel HEX files~\cite{IntelHEX} --- the firmware consumes 66 kB of flash and 13 kB RAM. \UF contributes a new file format that \emph{greatly simplifies} the virtual file system approach, reducing complexity of the firmware and code size.
 
 % talk about old protocols for flashing protocols, talk about mbed, talk about UF2

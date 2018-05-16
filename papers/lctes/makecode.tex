@@ -28,7 +28,7 @@ JavaScript objects with all their dynamic semantics intact.
 
 Static TypeScript (STS) is closely related to Strong\-Script~\cite{StrongScriptECOOP15}, which extends TypeScript with a type constructor for \emph{concrete} types, allowing the programmer to choose between untyped, optionally-typed, and concretely typed code. This provides traditional type soundness guarantees, as in Java and C\#. STS can be seen to be StrongScript where every variable and expression has a concrete type. As in StrongScript, classes are nominally typed, which permits a more efficient and traditional property lookup for class instances. Currently, STS goes further than StrongScript by outlawing downcasts.
 
-\subsection{Device runtime and shim generation}
+\subsection{Device Runtime and Shim Generation}
 \label{sec:shim-gen}
 
 A \MC target is defined, in part, by its device runtime; which is a combination of C++ and STS code, as shown in the lower-left of Figure~\ref{fig:makecode}. All the target's C++ files are precompiled (by a C++ compiler in the cloud) into a single binary, which is stored in the cloud as well as in the HTML5 application cache. Additional runtime components may be authored in STS, which allows the device runtime to be extended without the use of C++, and permits components of the device runtime to be shared by both the device and simulator runtimes. The ability to author the device runtime in both STS and C++ is a unique aspect of \MCN's design.
@@ -93,7 +93,7 @@ up to three arguments and a return type) and collections, with mappings to STS.
 \MC does not yet include a garbage collector, so advanced users who create cyclic
 data structures must be careful to break cycles to ensure complete deallocation.
 
-\subsection{Browser compilation}
+\subsection{Browser Compilation}
 
 When a user requests a download of the compiled binary, \MC first invokes the TypeScript language service to perform type inference and type checking on the
 user's program, the device runtime written in STS, and the TypeScript declarations
