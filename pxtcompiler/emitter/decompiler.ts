@@ -2580,7 +2580,7 @@ ${output}</xml>`;
             if (comp.thisParameter) {
                 res.push({
                     value: unwrapNode(info.args[0]) as Expression,
-                    info: sym.parameters[0],
+                    info: null,
                     param: comp.thisParameter
                 });
             }
