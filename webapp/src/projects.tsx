@@ -330,7 +330,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                     key={'cloud' + scr.id}
                                     onClick={() => installScript(scr) }
                                     url={'/' + scr.id}
-                                    color="blue"
                                     />
                             ) }
                         </div>

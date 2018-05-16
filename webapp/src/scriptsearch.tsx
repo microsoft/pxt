@@ -251,7 +251,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 description={scr.description}
                                 url={"/" + scr.id}
                                 onClick={() => addUrl(scr) }
-                                color="red"
                                 role="option"
                                 />
                         ) }
@@ -274,7 +273,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 key={'gha' + scr.fullName}
                                 onClick={() => installGh(scr) }
                                 url={'github:' + scr.fullName}
-                                color="blue"
                                 imageUrl={pxt.github.repoIconUrl(scr) }
                                 label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
                                 role="option"
@@ -287,7 +285,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 key={'ghd' + scr.fullName}
                                 onClick={() => installGh(scr) }
                                 url={'github:' + scr.fullName}
-                                color="red"
                                 role="option"
                                 />
                         ) }
