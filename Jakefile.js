@@ -75,14 +75,16 @@ task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtru
 task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testlang', 'karma'])
 
 task('clean', function () {
-    expand(["built"]).forEach(f => {
-        try {
-            fs.unlinkSync(f)
-        } catch (e) {
-            console.log("cannot unlink:", f, e.message)
-        }
+    ["built", "temp"].forEach(d => {
+        expand([d]).forEach(f => {
+            try {
+                fs.unlinkSync(f)
+            } catch (e) {
+                console.log("cannot unlink:", f, e.message)
+            }
+        })
+        jake.rmRf(d)    
     })
-    jake.rmRf("built")
 })
 
 setupTest('testdecompiler', 'decompile-test', 'decompilerunner.js')

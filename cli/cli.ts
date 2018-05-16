@@ -3903,6 +3903,7 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
 export function cleanAsync(parsed: commandParser.ParsedCommand) {
     pxt.log('cleaning built folders')
     return rimrafAsync("built", {})
+        .then(() => rimrafAsync("temp", {}))
         .then(() => rimrafAsync("libs/**/built", {}))
         .then(() => rimrafAsync("projects/**/built", {}))
         .then(() => { });
@@ -4515,7 +4516,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
 
     function addSnippet(snippet: CodeSnippet, entryPath: string, snipIndex: number) {
         snippets.push(snippet);
-        const dir = path.join("built/snippets", snippet.type);
+        const dir = path.join("temp/snippets", snippet.type);
         const fn = `${dir}/${entryPath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
         nodeutil.mkdirP(dir);
         fs.writeFileSync(fn, snippet.code);
@@ -4606,7 +4607,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => addSnippet(snippet, entrypath, snipIndex));
     }
 
-    fs.writeFileSync("built/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), { encoding: "utf8" });
+    nodeutil.mkdirP("temp");
+    fs.writeFileSync("temp/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), { encoding: "utf8" });
 
     let p = Promise.resolve();
     // test targetconfig
