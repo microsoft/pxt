@@ -12,6 +12,7 @@ namespace pxt.workspace {
         target: string;
         pubId: string; // for published scripts
         pubCurrent: boolean; // is this exactly pubId, or just based on it
+        targetVersion?: string;
     }
 
     export interface Header extends InstallHeader {

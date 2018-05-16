@@ -587,6 +587,20 @@ export class ProjectView
         if (!h)
             return Promise.resolve()
 
+        const htv = h.targetVersion || "0.0.0";
+        // version check, you should not load a script from 1 major version above.
+        if (pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) > 0) {
+            // the script is a major version ahead, need to redirect
+            pxt.tickEvent(`patch.load.future`, { targetVersion: htv })
+            return core.dialogAsync({
+                header: lf("Oops, this project is too new!"),
+                body: lf("This project was created in a newer version of this editor. Please try again in that editor."),
+                disagreeLbl: lf("Ok")
+            }).then(() => {
+                this.newProject();
+            })
+        }
+
         this.stopSimulator(true);
         pxt.blocks.cleanBlocks();
         this.clearSerial();
@@ -714,7 +728,7 @@ export class ProjectView
     hexFileImporters: pxt.editor.IHexFileImporter[] = [{
         id: "default",
         canImport: data => pxt.cpp.matchTargetId(data, pxt.appTarget.id)
-            || (pxt.appTarget.aliases && pxt.appTarget.aliases.some(alias => pxt.cpp.matchTargetId(data, alias)))  
+            || (pxt.appTarget.aliases && pxt.appTarget.aliases.some(alias => pxt.cpp.matchTargetId(data, alias)))
         ,
         importAsync: (project, data) => {
             let h: pxt.workspace.InstallHeader = {
