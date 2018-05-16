@@ -85,15 +85,18 @@ function decompileTestAsync(filename: string) {
             baselineExists = false
         }
 
-        if (!baselineExists) {
-            return reject("Baseline does not exist for " + basename);
-        }
-
         return decompileAsyncWorker(filename, testBlocksDir)
             .then(decompiled => {
+                const outFile = path.join(replaceFileExtension(filename, ".local.blocks"));
+
+                if (!baselineExists) {
+                    fs.writeFileSync(outFile, decompiled)
+                    fail(`no baseline found for ${basename}, output written to ${outFile}`);
+                    return;
+                }
+
                 const baseline = fs.readFileSync(baselineFile, "utf8")
                 if (!compareBaselines(decompiled, baseline)) {
-                    const outFile = path.join(replaceFileExtension(filename, ".local.blocks"))
                     fs.writeFileSync(outFile, decompiled)
                     fail(`${basename} did not match baseline, output written to ${outFile}`);
                 }
@@ -118,23 +121,32 @@ function replaceFileExtension(file: string, extension: string) {
     return file && file.substr(0, file.length - path.extname(file).length) + extension;
 }
 
-function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-        const input = fs.readFileSync(f, "utf8")
-        const pkg = new pxt.MainPackage(new TestHost("decompile-pkg", input, dependency ? [dependency] : [], true));
+let cachedOpts: pxtc.CompileOptions;
 
-        pkg.getCompileOptionsAsync()
-            .then(opts => {
-                opts.ast = true;
-                opts.testMode = true;
-                opts.ignoreFileResolutionErrors = true;
-                const decompiled = pxtc.decompile(opts, "main.ts", true);
-                if (decompiled.success) {
-                    resolve(decompiled.outfiles["main.blocks"]);
-                }
-                else {
-                    reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
-                }
-            });
-    });
+function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
+    return getOptsAsync(dependency)
+        .then(opts => {
+            const input = fs.readFileSync(f, "utf8")
+            opts.fileSystem["main.ts"] = input;
+            opts.ast = true;
+            opts.testMode = true;
+            opts.ignoreFileResolutionErrors = true;
+            const decompiled = pxtc.decompile(opts, "main.ts", true);
+            if (decompiled.success) {
+                return decompiled.outfiles["main.blocks"];
+            }
+            else {
+                return Promise.reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
+            }
+        })
+}
+
+function getOptsAsync(dependency: string) {
+    if (!cachedOpts) {
+        const pkg = new pxt.MainPackage(new TestHost("decompile-pkg", "// TODO", dependency ? [dependency] : [], true));
+
+        return pkg.getCompileOptionsAsync()
+            .then(opts => cachedOpts = opts);
+    }
+    return Promise.resolve(cachedOpts);
 }

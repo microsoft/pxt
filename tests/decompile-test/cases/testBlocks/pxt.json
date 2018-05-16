@@ -8,7 +8,9 @@
         "expandableBlocks.ts",
         "fixedInstance.ts",
         "constantShim.ts",
-        "cp.ts"
+        "cp.ts",
+        "templateStrings.ts",
+        "classHandlerParameter.ts"
     ],
     "public": true,
     "dependencies": {},

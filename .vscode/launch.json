@@ -7,8 +7,8 @@
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
-			"args": ["serve", "--cloud"],
-			"cwd": "${workspaceRoot}/../pxt-adafruit",
+			"args": ["pyconv", "adafruit_seesaw.py"],
+			"cwd": "${workspaceRoot}/../pxt-adafruit/projects/Adafruit_CircuitPython_seesaw",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
 				"--nolazy"

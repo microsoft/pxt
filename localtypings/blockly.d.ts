@@ -574,6 +574,10 @@ declare namespace Blockly {
         forceRerender(): void;
     }
 
+    class FieldVerticalSeparator extends Field {
+        constructor();
+    }
+
     class FieldVariable extends Field {
         constructor(d: any);
     }
@@ -752,6 +756,7 @@ declare namespace Blockly {
         setTooltip(newTip: string | (() => void)): void;
         // Passing null will delete current text
         setWarningText(text: string): void;
+        setHighlightWarning(isHighlightingWarning: boolean): void;
         isEditable(): boolean;
         isInsertionMarker(): boolean;
         isShadow(): boolean;
@@ -762,6 +767,18 @@ declare namespace Blockly {
         getRelativeToSurfaceXY(): goog.math.Coordinate;
         getOutputShape(): number;
         getSvgRoot(): Element;
+    }
+
+    class WorkspaceComment {
+        getContent(): string;
+
+        getRelativeToSurfaceXY(): goog.math.Coordinate;
+        moveBy(x: number, y: number): void;
+        getHeightWidth(): { width: number; height: number; };
+        getBoundingRectangle(): {
+            topLeft: goog.math.Coordinate;
+            bottomRight: goog.math.Coordinate;
+        }
     }
 
     class Comment extends Icon {
@@ -875,6 +892,8 @@ declare namespace Blockly {
     class Workspace {
         scale: number;
         svgGroup_: any;
+        toolbox_: Toolbox;
+        flyout_: any; // Blockly.Flyout
         scrollbar: ScrollbarPair;
         svgBlockCanvas_: SVGGElement;
         options: Blockly.Options;
@@ -889,10 +908,12 @@ declare namespace Blockly {
         newBlock(prototypeName: string, opt_id?: string): Block;
         addTopBlock(block: Block): void;
         getAllBlocks(): Block[];
+        getAllVariables(): Blockly.VariableModel[];
         render(): void;
         clear(): void;
         dispose(): void;
         getTopBlocks(ordered: boolean): Block[];
+        getTopComments(ordered: boolean): WorkspaceComment[];
         getBlockById(id: string): Block;
         getAllBlocks(): Block[];
         traceOn(armed: boolean): void;
@@ -904,7 +925,9 @@ declare namespace Blockly {
         zoom(x: number, y: number, type: number): void;
         zoomCenter(type: number): void;
         scrollCenter(): void;
+        setScale(scale: number): void;
         highlightBlock(id: string): void;
+        centerOnBlock(id: string): void;
         glowBlock(id: string, state: boolean): void;
         glowStack(id: string, state: boolean): void;
         undo(redo?: boolean): void;
@@ -949,7 +972,7 @@ declare namespace Blockly {
         function domToPrettyText(dom: Element): string;
         function domToWorkspace(dom: Element, workspace: Workspace): string[];
         function textToDom(text: string): Element;
-        function workspaceToDom(workspace: Workspace): Element;
+        function workspaceToDom(workspace: Workspace, noid?: boolean): Element;
     }
 
     interface Options {
@@ -1012,8 +1035,7 @@ declare namespace Blockly {
     }
 
     namespace Variables {
-        function generateVariableFieldXml_(variableModel: VariableModel): void;
-        function allVariables(wp: Workspace): string[];
+        function generateVariableFieldXmlString(variableModel: VariableModel): string;
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
         let flyoutCategoryBlocks: (wp: Workspace) => HTMLElement[];
         function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;
@@ -1078,6 +1100,8 @@ declare namespace Blockly {
         function fire(ev: Abstract): void;
         function disableOrphans(ev: Abstract): void;
         function isEnabled(): boolean;
+        function enable(): boolean;
+        function disable(): boolean;
         class Abstract {
             type: string;
         }
@@ -1091,12 +1115,14 @@ declare namespace Blockly {
 
     class Toolbox {
         workspace_: Blockly.Workspace;
+        flyout_: any; // Blockly.Flyout
         RTL: boolean;
         horizontalLayout_: boolean;
         toolboxPosition: number;
         hasColours_: boolean;
         tree_: Blockly.Toolbox.TreeNode;
 
+        clearSelection(): void;
         constructor(workspace: Blockly.Workspace);
     }
 

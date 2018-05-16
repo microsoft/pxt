@@ -40,7 +40,7 @@ function getHeader(id: string) {
     return null
 }
 
-function initAsync(target: string) {
+function initAsync(target: string, version: string) {
     // TODO getAllAsync aware of target?
     return headers.getAllAsync().then(h => {
         allScripts = h
@@ -132,10 +132,9 @@ function saveAsync(h: Header, text: ScriptText) {
 
 function installAsync(h0: InstallHeader, text: ScriptText) {
     let h = <Header>h0
-    h.id = U.guidGen();
+    h.id = ts.pxtc.Util.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
-    h.target = pxt.appTarget.id;
     let e: HeaderWithScript = {
         id: h.id,
         header: h,

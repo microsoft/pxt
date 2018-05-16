@@ -1,3 +1,5 @@
+/* tslint:disable:no-inner-html TODO(tslint): get rid of jquery html() calls */
+
 /// <reference path="../built/pxtlib.d.ts" />
 /// <reference path="../built/pxteditor.d.ts" />
 /// <reference path="../built/pxtcompiler.d.ts" />
@@ -8,6 +10,8 @@ namespace pxt.runner {
     export interface SimulateOptions {
         id?: string;
         code?: string;
+        highContrast?: boolean;
+        light?: boolean;
     }
 
     class EditorPackage {
@@ -106,7 +110,7 @@ namespace pxt.runner {
         }
     }
 
-    export var mainPkg: pxt.MainPackage;
+    export let mainPkg: pxt.MainPackage;
 
     function getEditorPkg(p: pxt.Package) {
         let r: EditorPackage = (p as any)._editorPkg
@@ -140,9 +144,10 @@ namespace pxt.runner {
         Util.assert(!!pxt.appTarget);
 
         const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
-        const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-        const lang = mlang ? mlang[2] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+        const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+        const lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
         const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
+        const force = !!mlang && !!mlang[2];
         const versions = pxt.appTarget.versions;
 
         patchSemantic();
@@ -153,7 +158,8 @@ namespace pxt.runner {
             cfg.commitCdnUrl, lang,
             versions ? versions.pxtCrowdinBranch : "",
             versions ? versions.targetCrowdinBranch : "",
-            live)
+            live,
+            force)
             .then(() => {
                 mainPkg = new pxt.MainPackage(new Host());
             })
@@ -267,7 +273,9 @@ namespace pxt.runner {
                         parts: parts,
                         fnArgs: fnArgs,
                         cdnUrl: pxt.webConfig.commitCdnUrl,
-                        localizedStrings: Util.getLocalizedStrings()
+                        localizedStrings: Util.getLocalizedStrings(),
+                        highContrast: simOptions.highContrast,
+                        light: simOptions.light
                     };
                     if (pxt.appTarget.simulator)
                         runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
@@ -283,8 +291,8 @@ namespace pxt.runner {
         TypeScript
     }
 
-    export var languageMode = LanguageMode.Blocks;
-    export var editorLocale = "en";
+    export let languageMode = LanguageMode.Blocks;
+    export let editorLocale = "en";
 
     export function setEditorContextAsync(mode: LanguageMode, locale: string) {
         languageMode = mode;
@@ -340,10 +348,12 @@ namespace pxt.runner {
 
     function initEditorExtensionsAsync(): Promise<void> {
         let promise = Promise.resolve();
-        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
-            const opts: pxt.editor.ExtensionOptions = {};
-            promise = promise.then(() => pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js"))
-                .then(() => pxt.editor.initExtensionsAsync(opts))
+        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
+            const opts: pxt.editor.FieldExtensionOptions = {};
+            promise = promise
+                .then(() => pxt.BrowserUtils.loadBlocklyAsync())
+                .then(() => pxt.BrowserUtils.loadScriptAsync("fieldeditors.js"))
+                .then(() => pxt.editor.initFieldExtensionsAsync(opts))
                 .then(res => {
                     if (res.fieldEditors)
                         res.fieldEditors.forEach(fi => {
@@ -366,7 +376,8 @@ namespace pxt.runner {
             if (!msg) return; // no more work
 
             pxt.tickEvent("renderer.job")
-            jobPromise = runner.decompileToBlocksAsync(msg.code, msg.options)
+            jobPromise = pxt.BrowserUtils.loadBlocklyAsync()
+                .then(() => runner.decompileToBlocksAsync(msg.code, msg.options))
                 .then(result => result.blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(result.blocksSvg, 0, 0, result.blocksSvg.viewBox.baseVal.width, result.blocksSvg.viewBox.baseVal.height) : undefined)
                 .then(res => {
                     window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
@@ -411,13 +422,19 @@ namespace pxt.runner {
             Promise.delay(100) // allow UI to update
                 .then(() => {
                     switch (doctype) {
+                        case "print":
+                            const data = window.localStorage["printjob"];
+                            delete window.localStorage["printjob"];
+                            return renderProjectFilesAsync(content, JSON.parse(data))
+                                .then(() => pxsim.print(1000));
+                        case "project":
+                            return renderProjectFilesAsync(content, JSON.parse(src))
+                                .then(() => pxsim.print(1000));
+                        case "projectid":
+                            return renderProjectAsync(content, JSON.parse(src))
+                                .then(() => pxsim.print(1000));
                         case "doc":
                             return renderDocAsync(content, src);
-                        case "tutorial":
-                            let body = $('body');
-                            body.addClass('tutorial');
-                            $(loading).hide();
-                            return renderTutorialAsync(content, src);
                         case "book":
                             return renderBookAsync(content, src);
                         default:
@@ -448,7 +465,7 @@ namespace pxt.runner {
         }
 
         function renderHash() {
-            let m = /^#(doc|md|tutorial|book):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
+            let m = /^#(doc|md|tutorial|book|project|projectid|print):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
                 const p = m[4] ? setEditorContextAsync(
@@ -474,12 +491,65 @@ namespace pxt.runner {
     export function renderProjectAsync(content: HTMLElement, projectid: string, template = "blocks"): Promise<void> {
         return Cloud.privateGetTextAsync(projectid + "/text")
             .then(txt => JSON.parse(txt))
-            .then((files: Map<string>) => {
-                let md = `\`\`\`${template}
-${files["main.ts"]}
-\`\`\``;
-                return renderMarkdownAsync(content, md);
-            })
+            .then(files => renderProjectFilesAsync(content, files, projectid, template));
+    }
+
+    export function renderProjectFilesAsync(content: HTMLElement, files: Map<string>, projectid: string = null, template = "blocks"): Promise<void> {
+        const cfg = (JSON.parse(files[pxt.CONFIG_NAME]) || {}) as PackageConfig;
+
+        let md = `# ${cfg.name} ${cfg.version ? cfg.version : ''}
+
+`;
+        if (projectid)
+            md += `* ${pxt.appTarget.appTheme.shareUrl || "https://makecode.com/"}${projectid}
+
+`;
+        else
+            md += `* ${pxt.appTarget.appTheme.homeUrl}
+
+`;
+        const readme = "README.md";
+        if (files[readme])
+            md += files[readme].replace(/^#+/, "$0#") + '\n'; // bump all headers down 1
+
+        cfg.files.filter(f => f != pxt.CONFIG_NAME && f != readme)
+            .forEach(f => {
+                md += `
+## ${f}
+`;
+                if (/\.ts$/.test(f)) {
+                    md += `\`\`\`typescript
+${files[f]}
+\`\`\`
+`;
+                } else if (/\.blocks?$/.test(f)) {
+                    md += `\`\`\`blocksxml
+${files[f]}
+\`\`\`
+`;
+                } else {
+                    md += `\`\`\`${f.substr(f.indexOf('.'))}
+${files[f]}
+\`\`\`
+`;
+                }
+            });
+
+        if (cfg && cfg.dependencies) {
+            md += `
+## Packages
+
+${Object.keys(cfg.dependencies).map(k => `* ${k}, ${cfg.dependencies[k]}`).join('\n')}
+
+\`\`\`package
+${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n')}
+\`\`\`
+`;
+        }
+        const options: RenderMarkdownOptions = {
+            print: true
+        }
+        return renderMarkdownAsync(content, md, options);
     }
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
@@ -492,8 +562,15 @@ ${files["main.ts"]}
         summaryid = summaryid.replace(/^\//, "");
         pxt.tickEvent('book', { id: summaryid });
         pxt.log(`rendering book from ${summaryid}`)
+
+        // display loader
+        const $loader = $("#loading").find(".loader");
+        $loader.addClass("text").text(lf("Compiling your book (this may take a minute)"));
+
+        // start the work
         let toc: TOCMenuEntry[];
-        return pxt.Cloud.downloadMarkdownAsync(summaryid, editorLocale, pxt.Util.localizeLive)
+        return Promise.delay(100)
+            .then(() => pxt.Cloud.downloadMarkdownAsync(summaryid, editorLocale, pxt.Util.localizeLive))
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);
                 pxt.log(`TOC: ${JSON.stringify(toc, null, 2)}`)
@@ -595,6 +672,7 @@ ${files["main.ts"]}
         path?: string;
         tutorial?: boolean;
         blocksAspectRatio?: number;
+        print?: boolean; // render for print
     }
 
     export function renderMarkdownAsync(content: HTMLElement, md: string, options: RenderMarkdownOptions = {}): Promise<void> {
@@ -610,11 +688,12 @@ ${files["main.ts"]}
             || window.innerHeight < window.innerWidth ? 1.62 : 1 / 1.62;
         $(content).html(html);
         $(content).find('a').attr('target', '_blank');
-        return pxt.runner.renderAsync({
+        const renderOptions: ClientRenderOptions = {
             blocksAspectRatio: blocksAspectRatio,
             snippetClass: 'lang-blocks',
             signatureClass: 'lang-sig',
             blocksClass: 'lang-block',
+            blocksXmlClass: 'lang-blocksxml',
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',
             namespacesClass: 'lang-namespaces',
@@ -627,7 +706,12 @@ ${files["main.ts"]}
             tutorial: !!options.tutorial,
             showJavaScript: languageMode == LanguageMode.TypeScript,
             hexName: pxt.appTarget.id
-        }).then(() => {
+        }
+        if (options.print) {
+            renderOptions.showEdit = false;
+            renderOptions.simulator = false;
+        }
+        return pxt.runner.renderAsync(renderOptions).then(() => {
             // patch a elements
             $(content).find('a[href^="/"]').removeAttr('target').each((i, a) => {
                 $(a).attr('href', '#doc:' + $(a).attr('href').replace(/^\//, ''));
@@ -637,124 +721,16 @@ ${files["main.ts"]}
         });
     }
 
-    export function renderTutorialAsync(content: HTMLElement, tutorialid: string): Promise<void> {
-        tutorialid = tutorialid.replace(/^\//, "");
-
-        let initPromise = Promise.resolve();
-        if (pxt.Cloud.isLocalHost()) {
-            initPromise = waitForLocalTokenAsync();
-        }
-
-        return initPromise.then(() => pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive))
-            .then(tutorialmd => {
-                let steps = tutorialmd.split(/^##[^#].*$/gmi);
-                let newAuthoring = true;
-                if (steps.length <= 1) {
-                    // try again, using old logic.
-                    steps = tutorialmd.split(/^###[^#].*$/gmi);
-                    newAuthoring = false;
-                }
-                if (steps[0].indexOf("# Not found") == 0) {
-                    pxt.log(`Tutorial not found: ${tutorialid}`);
-                    throw new Error(`Tutorial not found: ${tutorialid}`);
-                }
-                let stepInfo: editor.TutorialStepInfo[] = [];
-                tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
-                    let info: editor.TutorialStepInfo = {
-                        fullscreen: /@(fullscreen|unplugged)/.test(s),
-                        unplugged: /@unplugged/.test(s)
-                    }
-                    stepInfo.push(info);
-                    return ""
-                });
-
-                if (steps.length < 1) return Promise.resolve();
-                let options = steps[0];
-                steps = steps.slice(1, steps.length); // Remove tutorial title
-
-                // Extract toolbox block ids
-                let toolboxSubset: { [index: string]: number } = {};
-                return Promise.resolve()
-                    .then(() => renderMarkdownAsync(content, tutorialmd, { tutorial: true }))
-                    .then(() => {
-                        let uptoSteps = steps.join();
-                        uptoSteps = uptoSteps.replace(/((?!.)\s)+/g, "\n");
-
-                        let regex = /```(sim|block|blocks|filterblocks)\s*\n([\s\S]*?)\n```/gmi;
-                        let match: RegExpExecArray;
-                        let code = '';
-                        while ((match = regex.exec(uptoSteps)) != null) {
-                            code += match[2] + "\n";
-                        }
-                        if (code != '') {
-                            return pxt.runner.decompileToBlocksAsync(code, {
-                                emPixels: 14,
-                                layout: pxt.blocks.BlockLayout.Flow,
-                                useViewWidth: true,
-                                package: undefined
-                            }).then((r) => {
-                                let blocksxml: string = r.compileBlocks.outfiles['main.blocks'];
-                                if (blocksxml) {
-                                    let headless = pxt.blocks.loadWorkspaceXml(blocksxml);
-                                    let allblocks = headless.getAllBlocks();
-                                    for (let bi = 0; bi < allblocks.length; ++bi) {
-                                        let blk = allblocks[bi];
-                                        toolboxSubset[blk.type] = 1;
-                                    }
-                                }
-                            }).catch(() => {
-                                pxt.log(`Failed to decompile tutorial: ${tutorialid}`);
-                                throw new Error(`Failed to decompile tutorial: ${tutorialid}`);
-                            })
-                        }
-                        return Promise.resolve();
-                    })
-                    .then(() => {
-                        // Split the steps
-                        const stepcontent = content.innerHTML.split(newAuthoring ? /<h2.*?>(.*?)<\/h2>/gi : /<h3.*?>(.*?)<\/h3>/gi);
-                        // drop first section
-                        stepcontent.shift();
-                        for (let i = 0; i < stepcontent.length; i += 2) {
-                            content.innerHTML = stepcontent[i + 1];
-                            stepInfo[i / 2].titleContent = (stepcontent[i] || "").replace(/@(fullscreen|unplugged)/g, "").trim();
-                            stepInfo[i / 2].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
-                            stepInfo[i / 2].ariaLabel = content.firstElementChild.textContent;
-                            stepInfo[i / 2].content = stepcontent[i + 1];
-                            stepInfo[i / 2].hasHint = content.childElementCount > 1;
-                        }
-                        content.innerHTML = '';
-                        // return the result
-                        window.parent.postMessage(<pxsim.TutorialLoadedMessage>{
-                            type: "tutorial",
-                            tutorial: tutorialid,
-                            subtype: "loaded",
-                            stepInfo: stepInfo,
-                            toolboxSubset: toolboxSubset
-                        }, "*");
-                    });
-            })
-            .catch((e: Error) => {
-                pxt.log(`Failed to load tutorial: ${tutorialid}`);
-                pxt.log(e.message);
-                // return the result
-                window.parent.postMessage(<pxsim.TutorialFailedMessage>{
-                    type: "tutorial",
-                    tutorial: tutorialid,
-                    subtype: "error"
-                }, "*");
-            })
-    }
-
     export interface DecompileResult {
         package: pxt.MainPackage;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
+        apiInfo?: pxtc.ApisInfo;
         blocksSvg?: SVGSVGElement;
     }
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
         // code may be undefined or empty!!!
-
         const packageid = options && options.packageId ? "pub:" + options.packageId :
             options && options.package ? "docs:" + options.package
                 : null;
@@ -776,7 +752,7 @@ ${files["main.ts"]}
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
-                        pxt.blocks.initBlocks(blocksInfo);
+                        pxt.blocks.initializeAndInject(blocksInfo);
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
                             resp.ast.getSourceFile("main.ts"),
@@ -784,13 +760,37 @@ ${files["main.ts"]}
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)
-                            return <DecompileResult>{ package: mainPkg, compileJS: resp, compileBlocks: bresp };
+                            return <DecompileResult>{ package: mainPkg, compileJS: resp, compileBlocks: bresp, apiInfo: apis };
                         pxt.debug(bresp.outfiles["main.blocks"])
                         return <DecompileResult>{
                             package: mainPkg,
                             compileJS: resp,
                             compileBlocks: bresp,
+                            apiInfo: apis,
                             blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
+                        };
+                    })
+            });
+    }
+
+    export function compileBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
+        const packageid = options && options.packageId ? "pub:" + options.packageId :
+            options && options.package ? "docs:" + options.package
+                : null;
+        return loadPackageAsync(packageid, "")
+            .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
+            .then(opts => {
+                opts.ast = true
+                const resp = pxtc.compile(opts)
+                const apis = pxtc.getApiInfo(opts, resp.ast);
+                return ts.pxtc.localizeApisAsync(apis, mainPkg)
+                    .then(() => {
+                        const blocksInfo = pxtc.getBlocksInfo(apis);
+                        pxt.blocks.initializeAndInject(blocksInfo);
+                        return <DecompileResult>{
+                            package: mainPkg,
+                            blocksSvg: pxt.blocks.render(code, options),
+                            apiInfo: apis
                         };
                     })
             });
@@ -807,7 +807,7 @@ ${files["main.ts"]}
         });
     }
 
-    export var initCallbacks: (() => void)[] = [];
+    export let initCallbacks: (() => void)[] = [];
     export function init() {
         initInnerAsync()
             .done(() => {

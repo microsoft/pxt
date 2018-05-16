@@ -1,11 +1,6 @@
-import * as workspace from "./workspace";
-import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
-import * as srceditor from "./srceditor"
 
-
-import Cloud = pxt.Cloud;
 import U = pxt.Util;
 
 function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
@@ -97,7 +92,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
 
             return ensureApisInfoAsync()
                 .then(() => {
-                    if (!resp.usedSymbols) return resp
+                    if (!resp.usedSymbols || !cachedApis) return resp
                     for (let k of Object.keys(resp.usedSymbols)) {
                         resp.usedSymbols[k] = U.lookup(cachedApis.byQName, k)
                     }
@@ -127,7 +122,7 @@ function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult
     return workerOpAsync("compile", { options: opts })
 }
 
-export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: B.Workspace, blockFile?: string): Promise<pxtc.CompileResult> {
+export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: Blockly.Workspace, blockFile?: string): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
@@ -187,6 +182,7 @@ function ensureApisInfoAsync(): Promise<void> {
     if (refreshApis || !cachedApis)
         return workerOpAsync("apiInfo", {})
             .then(apis => {
+                if (Object.keys(apis).length === 0) return undefined;
                 refreshApis = false;
                 return ts.pxtc.localizeApisAsync(apis, pkg.mainPkg);
             }).then(apis => {
@@ -199,7 +195,7 @@ export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
     return ensureApisInfoAsync()
         .then(() => {
             searchFor.localizedApis = cachedApis;
-            searchFor.localizedStrings = Util.getLocalizedStrings();
+            searchFor.localizedStrings = pxt.Util.getLocalizedStrings();
             return workerOpAsync("apiSearch", { search: searchFor })
         });
 }

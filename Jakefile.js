@@ -19,7 +19,10 @@ function tscIn(task, dir, builtDir) {
 function compileDir(name, deps) {
     if (!deps) deps = []
     let dd = expand([name].concat(deps))
-    file('built/' + name + '.js', dd, { async: true }, function () { tscIn(this, name, "built") })
+    let out = 'built/' + name + '.js';
+    file(out, dd, { async: true }, function () {
+        tscIn(this, name, "built")
+    })
 }
 
 function loadText(filename) {
@@ -27,7 +30,7 @@ function loadText(filename) {
 }
 
 function setupTest(taskName, testFolder, testFile) {
-    task(taskName, ['built/tests/'+ testFolder + '/runner.js'], { async: true }, function () {
+    task(taskName, ['built/tests/' + testFolder + '/runner.js'], { async: true }, function () {
         const args = " built/tests/" + testFolder + "/runner.js --reporter dot";
         if (os.platform() === "win32") {
             cmdIn(this, ".", path.resolve("node_modules/.bin/mocha.cmd") + args)
@@ -112,7 +115,7 @@ file('built/nodeutil.js', ['built/cli.js'])
 file('built/pxt.d.ts', ['built/cli.js'], function () {
     jake.cpR("built/cli.d.ts", "built/pxt.d.ts")
 })
-file('built/target.js', ['built/pxt.js'], { async: true }, function() {
+file('built/target.js', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, ".", "node built/pxt.js buildtarget");
 })
 file('built/typescriptServices.d.ts', ['node_modules/typescript/lib/typescriptServices.d.ts'], function () {
@@ -132,23 +135,24 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
 compileDir("pxtlib", "built/typescriptServices.d.ts")
 compileDir("pxtcompiler", ["built/pxtlib.js"])
 compileDir("pxtwinrt", ["built/pxtlib.js"])
-compileDir("pxtblocks", ["built/pxtlib.js"])
-compileDir("pxtrunner", ["built/pxtlib.js", "built/pxteditor.js", "built/pxtcompiler.js", "built/pxtsim.js", "built/pxtblocks.js"])
-compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblocks.js"])
-compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js"])
-compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js"])
+compileDir("pxtblocks", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtcompiler.js"])
+ju.catFiles("built/pxtblockly.js", expand(["webapp/public/blockly/blockly_compressed.js", "webapp/public/blockly/blocks_compressed.js", "webapp/public/blockly/msg/js/en.js", "built/pxtblocks.js"]), "")
+compileDir("pxtrunner", ["built/pxtlib.js", "built/pxteditor.js", "built/pxtcompiler.js", "built/pxtsim.js", "built/pxtblockly.js"])
+compileDir("pxtsim", ["built/pxtlib.js"])
+compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblockly.js"])
+compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtcompiler.js"])
 compileDir("backendutils", ['pxtlib/util.ts', 'pxtlib/docsrender.ts'])
 file("built/web/pxtweb.js", expand(["docfiles/pxtweb"]), { async: true }, function () { tscIn(this, "docfiles/pxtweb", "built") })
 
-task("karma", ["blocklycompilertest"], function() {
+task("karma", ["blocklycompilertest"], function () {
     runKarma(this, "");
 });
 
-task("karma-debug", ["blocklycompilertest"], function() {
+task("karma-debug", ["blocklycompilertest"], function () {
     runKarma(this, "--no-single-run");
 });
 
-task("blocklycompilertest", ["default"], { async: true }, function() {
+task("blocklycompilertest", ["default"], { async: true }, function () {
     cmdIn(this, "tests/blocklycompiler-test", "node ../../node_modules/typescript/bin/tsc")
 })
 
@@ -171,18 +175,16 @@ task("lint", [], { async: true }, function () {
     console.log('linting...')
     jake.exec([
         "cli",
-        "pxt-cli",
         "pxtblocks",
         "pxteditor",
         "pxtlib",
-        "pxtcompiler/emitter",
+        "pxtcompiler",
         "pxtrunner",
         "pxtsim",
         "pxtwinrt",
-        "webapp/src",
-        "docfiles/pxtweb",
-        "monacots"]
-        .map(function (d) { return "node node_modules/tslint/bin/tslint ./" + d + "/*.ts" })
+        "webapp",
+        "docfiles/pxtweb"]
+        .map(function (d) { return "node node_modules/tslint/bin/tslint --project ./" + d + "/tsconfig.json" })
         , { printStdout: true }, function () {
             console.log('linted.');
             complete();
@@ -273,10 +275,13 @@ task('wapp', [
     "built/web/pxtlib.js",
     "built/web/pxtcompiler.js",
     "built/web/pxtsim.js",
-    "built/web/pxtblocks.js",
+    "built/web/pxtblockly.js",
     "built/web/pxteditor.js",
     "built/web/pxtwinrt.js",
     'built/web/main.js',
+    'built/web/pxtapp.js',
+    'built/web/pxtworker.js',
+    'built/web/pxtembed.js',
     'built/web/worker.js',
     'built/web/fonts/icons.woff2',
     'built/web/icons.css',
@@ -288,7 +293,7 @@ task('wapp', [
 file("built/web/pxtlib.js", [
     "built/pxtlib.js",
     "built/pxtcompiler.js",
-    "built/pxtblocks.js",
+    "built/pxtblockly.js",
     "built/pxtsim.js",
     "built/pxtrunner.js",
     "built/pxteditor.js",
@@ -297,11 +302,10 @@ file("built/web/pxtlib.js", [
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.min.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
-    jake.cpR("node_modules/fuse.js/src/fuse.min.js", "built/web/fuse.min.js")
 
     jake.cpR("built/pxtlib.js", "built/web/")
     jake.cpR("built/pxtcompiler.js", "built/web/")
-    jake.cpR("built/pxtblocks.js", "built/web/")
+    jake.cpR("built/pxtblockly.js", "built/web/")
     jake.cpR("built/pxtsim.js", "built/web/")
     jake.cpR("built/pxtrunner.js", "built/web/")
     jake.cpR("built/pxteditor.js", "built/web/")
@@ -369,21 +373,21 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     // Fix for android keyboard issues:
     // Issue 1: getClientRects issue on Android 5.1 (Chrome 40), monaco-editor/#562
     monacoeditor = monacoeditor.replace(/FloatHorizontalRange\(Math\.max\(0, clientRect\.left - clientRectDeltaLeft\), clientRect\.width\)/gi,
-                `FloatHorizontalRange(Math.max(0, clientRect.right - clientRectDeltaLeft), clientRect.width)`)
+        `FloatHorizontalRange(Math.max(0, clientRect.right - clientRectDeltaLeft), clientRect.width)`)
     // Issue 2: Delete key is a composition input on Android 6+, monaco-editor/#563
     monacoeditor = monacoeditor.replace(/if \(typeInput\.text !== ''\)/gi,
-                `if (typeInput.text !== '' || (typeInput.text === '' && typeInput.replaceCharCnt == 1))`)
+        `if (typeInput.text !== '' || (typeInput.text === '' && typeInput.replaceCharCnt == 1))`)
     // Issue 3: Gboard on Android ignores the autocomplete field, and so I'm disabling composition updates on keyboards that support it.
     monacoeditor = monacoeditor.replace(/exports\.isChromev56 = \(userAgent\.indexOf\('Chrome\/56\.'\) >= 0/gi,
-                `exports.isAndroid = (userAgent.indexOf('Android') >= 0);\n    exports.isChromev56 = (userAgent.indexOf('Chrome/56.') >= 0`)
+        `exports.isAndroid = (userAgent.indexOf('Android') >= 0);\n    exports.isChromev56 = (userAgent.indexOf('Chrome/56.') >= 0`)
     monacoeditor = monacoeditor.replace(/var newState = _this\._textAreaState\.readFromTextArea\(_this\._textArea\);/gi,
-                `var newState = _this._textAreaState.readFromTextArea(_this._textArea);\n                if (browser.isAndroid) newState.selectionStart = newState.selectionEnd;`)
+        `var newState = _this._textAreaState.readFromTextArea(_this._textArea);\n                if (browser.isAndroid) newState.selectionStart = newState.selectionEnd;`)
     monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionstart', function \(e\) {/gi,
-                `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionstart', function (e) {\n                if (browser.isAndroid) return;`)
+        `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionstart', function (e) {\n                if (browser.isAndroid) return;`)
     monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionupdate', function \(e\) {/gi,
-                `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionupdate', function (e) {\n                if (browser.isAndroid) return;`)
+        `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionupdate', function (e) {\n                if (browser.isAndroid) return;`)
     monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionend', function \(e\) {/gi,
-                `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionend', function (e) {\n                if (browser.isAndroid) return;`)
+        `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionend', function (e) {\n                if (browser.isAndroid) return;`)
     fs.writeFileSync("built/web/vs/editor/editor.main.js", monacoeditor)
 
     jake.mkdirP("webapp/public/vs")
@@ -415,20 +419,52 @@ file('built/webapp/src/app.js', expand([
     "webapp",
     "built/web/pxtlib.js",
     "built/web/pxtsim.js",
-    "built/web/pxtblocks.js",
+    "built/web/pxtblockly.js",
     "built/web/pxteditor.js",
     "built/web/pxtwinrt.js"
 ]), { async: true }, function () {
     tscIn(this, "webapp", "built/webapp")
 })
 
-file('built/web/main.js', ["built/webapp/src/app.js"], { async: true }, function () {
-    cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js')
+file('built/web/main.js', ["built/web/pxtapp.js", "built/webapp/src/app.js"], { async: true }, function () {
+    if (process.env.PXT_ENV == 'production') {
+        cmdIn(this, ".", 'node node_modules/browserify/bin/cmd ./built/webapp/src/app.js -g ' +
+            '[ envify --NODE_ENV production ] -g uglifyify -o ./built/web/main.js')
+    } else {
+        cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js')
+    }
 })
+
+ju.catFiles('built/web/pxtapp.js', [
+    "node_modules/lzma/src/lzma_worker-min.js",
+    "built/web/pxtlib.js",
+    "built/web/pxtwinrt.js",
+    "built/web/pxteditor.js",
+    "built/web/pxtsim.js"
+])
 
 file('built/web/worker.js', ["built/webapp/src/app.js"], function () {
     jake.cpR("built/webapp/src/worker.js", "built/web/")
 })
+
+ju.catFiles('built/web/pxtworker.js', [
+    "built/web/typescript.js",
+    "node_modules/fuse.js/dist/fuse.min.js",
+    "node_modules/lzma/src/lzma_worker-min.js",
+    "built/web/pxtlib.js",
+    "built/web/pxtcompiler.js"
+], `"use strict";`, ["built/webapp/src/app.js"]);
+
+ju.catFiles('built/web/pxtembed.js', [
+    "built/web/typescript.js",
+    "node_modules/lzma/src/lzma_worker-min.js",
+    "built/web/pxtlib.js",
+    "built/web/pxtcompiler.js",
+    "built/web/pxtblockly.js",
+    "built/web/pxteditor.js",
+    "built/web/pxtsim.js",
+    "built/web/pxtrunner.js"
+]);
 
 file('built/web/fonts/icons.woff2', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes/default/assets/fonts", "built/web/")

@@ -1,37 +1,7 @@
 /// <reference path="../localtypings/blockly.d.ts" />
 /// <reference path="../built/pxtlib.d.ts" />
-import Util = pxt.Util;
-
-let lf = Util.lf;
 
 namespace pxt.blocks {
-    export const blockColors: Map<number | string> = {
-        loops: '#107c10',
-        logic: '#006970',
-        math: '#712672',
-        images: '#5C2D91',
-        variables: '#A80000',
-        functions: '#005a9e',
-        text: '#996600',
-        arrays: '#A94400',
-        advanced: '#3c3c3c'
-    }
-
-    export const blockIcons: Map<number | string> = {
-        loops: '\uf01e',
-        logic: '\uf074',
-        math: '\uf1ec',
-        variables: '\uf039',
-        functions: '\uf0cb',
-        text: '\uf035',
-        arrays: '\uf0cb'
-    }
-
-    export enum CategoryMode {
-        All,
-        None,
-        Basic
-    }
 
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
         "string": {
@@ -56,8 +26,105 @@ namespace pxt.blocks {
         }
     }
 
-    export function advancedTitle() { return Util.lf("{id:category}Advanced"); }
-    export function addPackageTitle() { return Util.lf("{id:category}Extensions"); }
+    // this keeps a bit of state for perf reasons
+    class ImageConverter {
+        private palette: Uint8Array
+        private start: number
+
+        logTime() {
+            if (this.start) {
+                let d = Date.now() - this.start
+                pxt.debug("Icon cration: " + d + "ms")
+            }
+        }
+
+        convert(jresURL: string): string {
+            if (!this.start)
+                this.start = Date.now()
+            const data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
+            const magic = data.charCodeAt(0)
+            const w = data.charCodeAt(1)
+            const h = data.charCodeAt(2)
+            if (magic != 0xe1 && magic != 0xe4)
+                return null
+
+            function htmlColorToBytes(hexColor: string) {
+                const v = parseInt(hexColor.replace(/#/, ""), 16)
+                return [(v >> 0) & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, 0]
+            }
+
+
+            if (!this.palette) {
+                let arrs = pxt.appTarget.runtime.palette.map(htmlColorToBytes)
+                this.palette = new Uint8Array(arrs.length * 4)
+                for (let i = 0; i < arrs.length; ++i) {
+                    this.palette[i * 4 + 0] = arrs[i][0]
+                    this.palette[i * 4 + 1] = arrs[i][1]
+                    this.palette[i * 4 + 2] = arrs[i][2]
+                    this.palette[i * 4 + 3] = arrs[i][3]
+                }
+            }
+
+            const bpp = magic & 0xf
+            const byteH = bpp == 1 ? (h + 7) >> 8 : ((h * 4 + 31) >> 5) << 2
+
+            let outByteW = (w + 3) & ~3
+
+            let bmpHeaderSize = 14 + 40 + this.palette.length
+            let bmpSize = bmpHeaderSize + outByteW * h
+            let bmp = new Uint8Array(bmpSize)
+
+            bmp[0] = 66
+            bmp[1] = 77
+            HF2.write32(bmp, 2, bmpSize)
+            HF2.write32(bmp, 10, bmpHeaderSize)
+            HF2.write32(bmp, 14, 40) // size of this header
+            HF2.write32(bmp, 18, w)
+            HF2.write32(bmp, 22, -h) // not upside down
+            HF2.write16(bmp, 26, 1) // 1 color plane
+            HF2.write16(bmp, 28, 8) // 8bpp
+            HF2.write32(bmp, 38, 2835) // 72dpi
+            HF2.write32(bmp, 42, 2835)
+            HF2.write32(bmp, 46, this.palette.length >> 2)
+
+            bmp.set(this.palette, 54)
+
+            let inP = 4
+            let outP = bmpHeaderSize
+
+            if (magic == 0xe1) {
+                let mask = 0x01
+                let v = data.charCodeAt(inP++)
+                for (let x = 0; x < w; ++x) {
+                    outP = bmpHeaderSize + x
+                    for (let y = 0; y < h; ++y) {
+                        bmp[outP] = (v & mask) ? 1 : 0
+                        outP += outByteW
+                        mask <<= 1
+                        if (mask == 0x100) {
+                            mask = 0x01
+                            v = data.charCodeAt(inP++)
+                        }
+                    }
+                }
+            } else {
+                for (let x = 0; x < w; x++) {
+                    outP = bmpHeaderSize + x
+                    for (let y = 0; y < h; y += 2) {
+                        let v = data.charCodeAt(inP++)
+                        bmp[outP] = v & 0xf
+                        outP += outByteW
+                        if (y != h - 1) {
+                            bmp[outP] = (v >> 4) & 0xf
+                            outP += outByteW
+                        }
+                    }
+                }
+            }
+
+            return "data:image/bmp;base64," + btoa(U.uint8ArrayToString(bmp))
+        }
+    }
 
     // Add numbers before input names to prevent clashes with the ones added by BlocklyLoader
     export const optionalDummyInputPrefix = "0_optional_dummy";
@@ -71,21 +138,27 @@ namespace pxt.blocks {
 
     type NamedField = { field: Blockly.Field, name?: string };
 
-    let usedBlocks: Map<boolean | string> = {}; // Maps a block ID to its translated category name, or to true if not in category mode
-    let updateUsedBlocks = false;
-
     // list of built-in blocks, should be touched.
-    const builtinBlocks: Map<{
-        block: B.BlockDefinition;
+    let _builtinBlocks: Map<{
+        block: Blockly.BlockDefinition;
         symbol?: pxtc.SymbolInfo;
-    }> = {};
-    Object.keys(Blockly.Blocks)
-        .forEach(k => builtinBlocks[k] = { block: Blockly.Blocks[k] });
+    }>;
+    export function builtinBlocks() {
+        if (!_builtinBlocks) {
+            _builtinBlocks = {};
+            Object.keys(Blockly.Blocks)
+                .forEach(k => _builtinBlocks[k] = { block: Blockly.Blocks[k] });
+        }
+        return _builtinBlocks;
+    }
     export const buildinBlockStatements: Map<boolean> = {
         "controls_if": true,
         "controls_for": true,
+        "pxt_controls_for": true,
         "controls_simple_for": true,
         "controls_repeat_ext": true,
+        "pxt_controls_for_of": true,
+        "controls_for_of": true,
         "variables_set": true,
         "variables_change": true,
         "device_while": true
@@ -98,14 +171,13 @@ namespace pxt.blocks {
         block: Blockly.BlockDefinition;
     }
     let cachedBlocks: Map<CachedBlock> = {};
-    let searchElementCache: Map<Node> = {};
 
     export function blockSymbol(type: string): pxtc.SymbolInfo {
         let b = cachedBlocks[type];
         return b ? b.fn : undefined;
     }
 
-    function createShadowValue(p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
+    function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
         defaultV = defaultV || p.defaultValue;
         shadowId = shadowId || p.shadowBlockId;
         let defaultValue: any;
@@ -136,7 +208,7 @@ namespace pxt.blocks {
         shadow.setAttribute("type", shadowId || typeInfo && typeInfo.block || p.type);
         shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
-        if (typeInfo) {
+        if (typeInfo && (!shadowId || typeInfo.block === shadowId || shadowId === "math_number_minmax")) {
             const field = document.createElement("field");
             shadow.appendChild(field);
 
@@ -162,17 +234,72 @@ namespace pxt.blocks {
 
             field.appendChild(value);
         }
-        else if (isVariable && defaultValue) {
+        else if (defaultValue) {
             const field = document.createElement("field");
-            shadow.appendChild(field);
-            field.setAttribute("name", "VAR");
             field.textContent = defaultValue;
+
+            if (isVariable) {
+                field.setAttribute("name", "VAR");
+                shadow.appendChild(field);
+            }
+            else if (shadowId) {
+                const shadowInfo = info.blocksById[shadowId];
+                if (shadowInfo && shadowInfo.attributes._def && shadowInfo.attributes._def.parameters.length) {
+                    const shadowParam = shadowInfo.attributes._def.parameters[0];
+                    field.setAttribute("name", shadowParam.name);
+                    shadow.appendChild(field);
+                }
+            }
+            else {
+                field.setAttribute("name", p.definitionName);
+                shadow.appendChild(field);
+            }
         }
 
         return value;
     }
 
-    function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo): HTMLElement {
+    export function createFlyoutHeadingLabel(name: string, color?: string, icon?: string, iconClass?: string) {
+        const headingLabel = createFlyoutLabel(name, color, icon, iconClass);
+        headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
+        return headingLabel;
+    }
+
+    export function createFlyoutGroupLabel(name: string, icon?: string, labelLineWidth?: string) {
+        const groupLabel = createFlyoutLabel(name, undefined, icon);
+        groupLabel.setAttribute('web-class', 'blocklyFlyoutGroup');
+        groupLabel.setAttribute('web-line', '1.5');
+        if (labelLineWidth) groupLabel.setAttribute('web-line-width', labelLineWidth);
+        return groupLabel;
+    }
+
+    function createFlyoutLabel(name: string, color?: string, icon?: string, iconClass?: string): HTMLElement {
+        // Add the Heading label
+        let headingLabel = goog.dom.createDom('label') as HTMLElement;
+        headingLabel.setAttribute('text', name);
+        if (color) {
+            headingLabel.setAttribute('web-icon-color', color);
+        }
+        if (icon) {
+            if (icon.length === 1) {
+                headingLabel.setAttribute('web-icon', icon);
+                if (iconClass) headingLabel.setAttribute('web-icon-class', iconClass);
+            }
+            else {
+                headingLabel.setAttribute('web-icon-class', `blocklyFlyoutIcon${name}`);
+            }
+        }
+        return headingLabel;
+    }
+
+    export function createFlyoutButton(callbackkey: string, label: string) {
+        let button = goog.dom.createDom('button') as Element;
+        button.setAttribute('text', label);
+        button.setAttribute('callbackkey', callbackkey);
+        return button;
+    }
+
+    export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo): HTMLElement {
         //
         // toolbox update
         //
@@ -184,7 +311,7 @@ namespace pxt.blocks {
             block.setAttribute("gap", pxt.appTarget.appTheme.defaultBlockGap.toString());
         if (comp.thisParameter) {
             const t = comp.thisParameter;
-            block.appendChild(createShadowValue(t, t.shadowBlockId || "variables_get", t.defaultValue || t.definitionName));
+            block.appendChild(createShadowValue(info, t, t.shadowBlockId || "variables_get", t.defaultValue || t.definitionName));
         }
         if (fn.parameters) {
             comp.parameters.filter(pr => !pr.isOptional &&
@@ -193,7 +320,7 @@ namespace pxt.blocks {
                     let shadowValue: Element;
                     let container: HTMLElement;
                     if (pr.range) {
-                        shadowValue = createShadowValue(pr, "math_number_minmax");
+                        shadowValue = createShadowValue(info, pr, "math_number_minmax");
                         container = document.createElement('mutation');
                         container.setAttribute('min', pr.range.min.toString());
                         container.setAttribute('max', pr.range.max.toString());
@@ -203,7 +330,7 @@ namespace pxt.blocks {
                             if (pr.fieldOptions['color']) container.setAttribute('color', pr.fieldOptions['color']);
                         }
                     } else {
-                        shadowValue = createShadowValue(pr);
+                        shadowValue = createShadowValue(info, pr);
                     }
                     if (pr.fieldOptions) {
                         if (!container) container = document.createElement('mutation');
@@ -220,7 +347,6 @@ namespace pxt.blocks {
                 block.appendChild(field);
             });
         }
-        searchElementCache[fn.attributes.blockId] = block.cloneNode(true);
         return block;
     }
 
@@ -239,359 +365,36 @@ namespace pxt.blocks {
         return result;
     }
 
-    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement, showCategories = CategoryMode.Basic, comp: pxt.blocks.BlockCompileInfo, filters?: BlockFilters) {
-        // identity function are just a trick to get an enum drop down in the block
-        // while allowing the parameter to be a number
-        if (fn.attributes.blockHidden)
-            return;
-
-        if (!fn.attributes.deprecated) {
-            let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-            let nsn = info.apis.byQName[ns];
-            let isAdvanced = nsn && nsn.attributes.advanced;
-
-            if (nsn) ns = nsn.attributes.block || ns;
-            let catName = ts.pxtc.blocksCategory(fn);
-            if (nsn && nsn.name)
-                catName = Util.capitalize(nsn.name);
-
-            let category = categoryElement(tb, catName);
-
-            if (showCategories === CategoryMode.All || showCategories == CategoryMode.Basic && !isAdvanced) {
-                if (!category) {
-                    let categories = getChildCategories(tb)
-                    let parentCategoryList = tb;
-
-                    pxt.debug('toolbox: adding category ' + ns)
-
-                    const nsWeight = (nsn ? nsn.attributes.weight : 50) || 50;
-                    const locCatName = Util.capitalize((nsn ? nsn.attributes.block : "") || catName);
-                    category = createCategoryElement(locCatName, catName, nsWeight);
-
-                    if (nsn && nsn.attributes.color) {
-                        category.setAttribute("colour", nsn.attributes.color);
-                    }
-                    else if (getNamespaceColor(ns)) {
-                        category.setAttribute("colour", getNamespaceColor(ns));
-                    }
-                    if (nsn && nsn.attributes.icon) {
-                        const nsnIconClassName = `blocklyTreeIcon${nsn.name.toLowerCase()}`.replace(/\s/g, '');
-                        appendToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
-                        category.setAttribute("iconclass", nsnIconClassName);
-                        category.setAttribute("expandedclass", nsnIconClassName);
-                        category.setAttribute("web-icon", nsn.attributes.icon);
-                    } else {
-                        category.setAttribute("iconclass", `blocklyTreeIconDefault`);
-                        category.setAttribute("expandedclass", `blocklyTreeIconDefault`);
-                        category.setAttribute("web-icon", "\uf12e");
-                    }
-                    if (nsn && nsn.attributes.groups) {
-                        category.setAttribute("groups", nsn.attributes.groups.join(', '));
-                    }
-                    if (nsn && nsn.attributes.groupIcons) {
-                        category.setAttribute("groupicons", nsn.attributes.groupIcons.join(', '));
-                    }
-                    if (nsn && nsn.attributes.labelLineWidth) {
-                        category.setAttribute("labellinewidth", nsn.attributes.labelLineWidth);
-                    }
-
-                    insertTopLevelCategory(category, tb, nsWeight, isAdvanced);
+    export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
+        // inject Blockly with all block definitions
+        return blockInfo.blocks
+            .map(fn => {
+                if (fn.attributes.blockBuiltin) {
+                    Util.assert(!!builtinBlocks()[fn.attributes.blockId]);
+                    builtinBlocks()[fn.attributes.blockId].symbol = fn;
+                } else {
+                    let comp = compileInfo(fn);
+                    let block = createToolboxBlock(blockInfo, fn, comp);
+                    injectBlockDefinition(blockInfo, fn, comp, block);
                 }
-                if (fn.attributes.advanced) {
-                    category = getOrAddSubcategoryByWeight(category, lf("More"), "More", 1, category.getAttribute("colour"), 'blocklyTreeIconmore')
-                }
-                else if (fn.attributes.subcategory) {
-                    const sub = fn.attributes.subcategory;
-                    const all = nsn.attributes.subcategories;
-                    if (all && all.indexOf(sub) !== -1) {
-                        // Respect the weights given by the package
-                        const weight = 10000 - all.indexOf(sub);
-                        category = getOrAddSubcategoryByWeight(category, sub, sub, weight, category.getAttribute("colour"), 'blocklyTreeIconmore')
-                    }
-                    else {
-                        // If no weight is specified, insert alphabetically after the weighted subcategories but above "More"
-                        category = getOrAddSubcategoryByName(category, sub, sub, category.getAttribute("colour"), 'blocklyTreeIconmore')
-                    }
-                    if (nsn && nsn.attributes.groups) {
-                        category.setAttribute("groups", nsn.attributes.groups.join(', '));
-                    }
-                    if (nsn && nsn.attributes.groupIcons) {
-                        category.setAttribute("groupicons", nsn.attributes.groupIcons.join(', '));
-                    }
-                }
-            }
-
-            if (showCategories === CategoryMode.Basic && isAdvanced &&
-                shouldUseBlockInSearch(fn.attributes.blockId, catName, filters)) {
-                usedBlocks[fn.attributes.blockId] = ns; // ns is localized already
-                updateUsedBlocks = true;
-            }
-
-            if (fn.attributes.optionalVariableArgs && fn.attributes.toolboxVariableArgs) {
-                const handlerArgs = comp.handlerArgs;
-                const mutationValues = fn.attributes.toolboxVariableArgs.split(";")
-                    .map(v => parseInt(v))
-                    .filter(v => v <= handlerArgs.length && v >= 0);
-
-                mutationValues.forEach(v => {
-                    const mutatedBlock = block.cloneNode(true) as HTMLElement;
-                    const mutation = document.createElement("mutation");
-                    mutation.setAttribute("numargs", v.toString());
-                    for (let i = 0; i < v; i++) {
-                        mutation.setAttribute("arg" + i, handlerArgs[i].name)
-                    }
-                    mutatedBlock.appendChild(mutation);
-
-                    if (showCategories !== CategoryMode.None) {
-                        insertBlock(mutatedBlock, category, fn.attributes.weight);
-                    } else {
-                        tb.appendChild(mutatedBlock);
-                    }
-                });
-            }
-            else if (fn.attributes.mutateDefaults) {
-                const mutationValues = fn.attributes.mutateDefaults.split(";");
-                mutationValues.forEach(mutation => {
-                    const mutatedBlock = block.cloneNode(true) as HTMLElement;
-                    mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
-                    if (showCategories !== CategoryMode.None) {
-                        insertBlock(mutatedBlock, category, fn.attributes.weight);
-                    } else {
-                        tb.appendChild(mutatedBlock);
-                    }
-                });
-            }
-            else {
-                if (showCategories !== CategoryMode.None && !(showCategories === CategoryMode.Basic && isAdvanced)) {
-                    insertBlock(block, category, fn.attributes.weight, fn.attributes.group);
-                    injectToolboxIconCss();
-                } else if (showCategories === CategoryMode.None) {
-                    tb.appendChild(block);
-                }
-            }
-        }
-
-    }
-
-    function insertBlock(bl: Element, cat: Element, weight?: number, group?: string) {
-        const isBuiltin = !!blockColors[cat.getAttribute("nameid")];
-        if (group) {
-            bl.setAttribute("group", group)
-        }
-        if (isBuiltin && weight > 50) {
-            bl.setAttribute("loaded", "true")
-
-            let first: Element;
-            for (let i = 0; i < cat.childNodes.length; i++) {
-                const n = cat.childNodes.item(i) as Element;
-                if (n.tagName === "block" && !n.getAttribute("loaded")) {
-                    first = n;
-                    break;
-                }
-            }
-
-            if (first) {
-                cat.insertBefore(bl, first);
-            }
-            else {
-                cat.appendChild(bl);
-            }
-        }
-        else {
-            cat.appendChild(bl)
-        }
-    }
-
-    let toolboxStyle: HTMLStyleElement;
-    let toolboxStyleBuffer: string = '';
-    export function appendToolboxIconCss(className: string, i: string): void {
-        if (toolboxStyleBuffer.indexOf(className) > -1) return;
-
-        if (i.length === 1) {
-            const icon = Util.unicodeToChar(i);
-            toolboxStyleBuffer += `
-                .blocklyTreeIcon.${className}::before {
-                    content: "${icon}";
-                }
-            `;
-        }
-        else {
-            toolboxStyleBuffer += `
-                .blocklyTreeIcon.${className} {
-                    background-image: url("${Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(i))}")!important;
-                    width: 30px;
-                    height: 100%;
-                    background-size: 20px !important;
-                    background-repeat: no-repeat !important;
-                    background-position: 50% 50% !important;
-                }
-            `;
-        }
-    }
-
-    export function injectToolboxIconCss(): void {
-        if (!toolboxStyle) {
-            toolboxStyle = document.createElement('style');
-            toolboxStyle.id = "blocklyToolboxIcons";
-            toolboxStyle.type = 'text/css';
-            let head = document.head || document.getElementsByTagName('head')[0];
-            head.appendChild(toolboxStyle);
-        }
-
-        if (toolboxStyle.sheet) {
-            toolboxStyle.textContent = toolboxStyleBuffer + namespaceStyleBuffer;
-        } else {
-            toolboxStyle.appendChild(document.createTextNode(toolboxStyleBuffer + namespaceStyleBuffer));
-        }
-    }
-
-    let namespaceStyleBuffer: string = '';
-    export function appendNamespaceCss(namespace: string, color: string) {
-        const ns = namespace.toLowerCase();
-        color = color || '#dddddd'; // Default toolbox color
-        if (namespaceStyleBuffer.indexOf(ns) > -1) return;
-        namespaceStyleBuffer += `
-            span.docs.${ns} {
-                background-color: ${color} !important;
-                border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
-            }
-        `;
-    }
-
-    function getChildCategories(parent: Element) {
-        const elements = parent.getElementsByTagName("category");
-        const result: Element[] = [];
-
-        for (let i = 0; i < elements.length; i++) {
-            if (elements[i].parentNode === parent) { // IE11: no parentElement
-                result.push(elements[i])
-            }
-        }
-
-        return result;
-    }
-
-    function insertTopLevelCategory(category: Element, tb: Element, nsWeight: number, isAdvanced: boolean) {
-        let categories = getChildCategories(tb);
-        if (isAdvanced) {
-            category.setAttribute("advanced", "true");
-        }
-
-        // Insert the category based on weight
-        let ci = 0;
-        for (ci = 0; ci < categories.length; ++ci) {
-            let cat = categories[ci];
-            const catAdvanced = cat.hasAttribute("advanced") && cat.getAttribute("advanced") !== "false";
-
-            // Advanced categories always come last
-            if (isAdvanced) {
-                if (!catAdvanced) {
-                    continue;
-                }
-            }
-            else if (catAdvanced) {
-                tb.insertBefore(category, cat);
-                break;
-            }
-
-            if (parseInt(cat.getAttribute("weight") || "50") < nsWeight) {
-                tb.insertBefore(category, cat);
-                break;
-            }
-        }
-        if (ci == categories.length)
-            tb.appendChild(category);
-    }
-
-    function getOrAddSubcategoryByWeight(parent: Element, name: string, nameid: string, weight: number, colour?: string, iconClass?: string) {
-        const existing = getFirstChildWithAttr(parent, "category", "nameid", nameid.toLowerCase())
-
-        if (existing) {
-            return existing;
-        }
-
-        const newCategory = createCategoryElement(name, nameid, weight, colour, iconClass);
-        const siblings = parent.getElementsByTagName("category");
-
-        let ci = 0;
-        for (ci = 0; ci < siblings.length; ++ci) {
-            let cat = siblings[ci];
-            if (parseInt(cat.getAttribute("weight") || "50") < weight) {
-                parent.insertBefore(newCategory, cat);
-                break;
-            }
-        }
-        if (ci == siblings.length)
-            parent.appendChild(newCategory);
-
-        return newCategory;
-    }
-
-    function getOrAddSubcategoryByName(parent: Element, name: string, nameid: string, colour?: string, iconClass?: string) {
-        const existing = getFirstChildWithAttr(parent, "category", "nameid", nameid.toLowerCase())
-        if (existing) {
-            return existing;
-        }
-
-        const newCategory = createCategoryElement(name, nameid, 100, colour, iconClass);
-
-        const siblings = parent.getElementsByTagName("category");
-        const filtered: Element[] = [];
-
-        let ci = 0;
-        let inserted = false;
-        let last: Element = undefined;
-        for (ci = 0; ci < siblings.length; ++ci) {
-            let cat = siblings[ci];
-            const sibWeight = parseInt(cat.getAttribute("weight") || "50")
-
-            if (sibWeight >= 1000) {
-                continue;
-            }
-            else if (sibWeight === 1) {
-                last = cat;
-                break;
-            }
-
-            filtered.push(cat);
-
-            if (!inserted && cat.getAttribute("name").localeCompare(name) >= 0) {
-                parent.insertBefore(newCategory, cat);
-                filtered.splice(filtered.length - 1, 0, newCategory);
-                inserted = true;
-            }
-        }
-
-        if (!inserted) {
-            filtered.push(newCategory);
-
-            if (last) {
-                parent.insertBefore(newCategory, last);
-            }
-            else {
-                parent.appendChild(newCategory);
-            }
-        }
-
-        filtered.forEach((e, i) => {
-            e.setAttribute("weight", (200 - i).toString());
-        });
-
-        return newCategory;
+                return fn;
+            });
     }
 
     function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo, blockXml: HTMLElement): boolean {
         let id = fn.attributes.blockId;
 
-        if (builtinBlocks[id]) {
+        if (builtinBlocks()[id]) {
             pxt.reportError("blocks", 'trying to override builtin block', { "details": id });
             return false;
         }
 
         let hash = JSON.stringify(fn);
+        /* tslint:disable:possible-timing-attack (not a security critical codepath) */
         if (cachedBlocks[id] && cachedBlocks[id].hash == hash) {
             return true;
         }
+        /* tslint:enable:possible-timing-attack */
 
         if (Blockly.Blocks[fn.attributes.blockId]) {
             console.error("duplicate block definition: " + id);
@@ -667,7 +470,7 @@ namespace pxt.blocks {
         const color =
             fn.attributes.color
             || (nsinfo ? nsinfo.attributes.color : undefined)
-            || getNamespaceColor(ns.toLowerCase())
+            || pxt.toolbox.getNamespaceColor(ns.toLowerCase())
             || 255;
 
         if (fn.attributes.help)
@@ -678,7 +481,6 @@ namespace pxt.blocks {
             block.setHelpUrl(`/pkg/${fn.pkg}#${encodeURIComponent(anchor.join('-'))}`)
         }
 
-        block.setTooltip(fn.attributes.jsDoc);
         block.setColour(color, fn.attributes.colorSecondary, fn.attributes.colorTertiary);
         let blockShape = Blockly.OUTPUT_SHAPE_ROUND;
         if (fn.retType == "boolean")
@@ -713,7 +515,6 @@ namespace pxt.blocks {
                 });
             }
         }
-
         // Add mutation to save and restore custom field settings
         appendMutation(block, {
             mutationToDom: (el: Element) => {
@@ -738,16 +539,9 @@ namespace pxt.blocks {
                 })
             }
         });
-
         if (fn.attributes.imageLiteral) {
-            for (let r = 0; r < 5; ++r) {
-                let ri = block.appendDummyInput();
-                for (let c = 0; c < fn.attributes.imageLiteral * 5; ++c) {
-                    if (c > 0 && c % 5 == 0) ri.appendField("  ");
-                    else if (c > 0) ri.appendField(" ");
-                    ri.appendField(new Blockly.FieldCheckbox("FALSE"), "LED" + c + r);
-                }
-            }
+            let ri = block.appendDummyInput();
+            ri.appendField(new pxtblockly.FieldMatrix("", { columns: fn.attributes.imageLiteral * 5 }), "LEDS");
         }
 
         if (fn.attributes.inlineInputMode === "external") {
@@ -774,11 +568,19 @@ namespace pxt.blocks {
             case "void": break; // do nothing
             //TODO
             default:
-                if (isArrayType(fn.retType)) {
-                    block.setOutput(true, ["Array", fn.retType]);
-                }
-                else {
-                    block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
+                if (fn.retType !== "T") {
+                    const opt_check = isArrayType(fn.retType) ? ["Array"] : [];
+
+                    const si_r = info.apis.byQName[fn.retType];
+                    if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
+                        opt_check.push(...si_r.extendsTypes);
+                    } else {
+                        opt_check.push(fn.retType);
+                    }
+
+                    block.setOutput(true, opt_check);
+                } else {
+                    block.setOutput(true);
                 }
         }
 
@@ -788,12 +590,12 @@ namespace pxt.blocks {
         block.setNextStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
 
         block.setTooltip(fn.attributes.jsDoc);
-
         function buildBlockFromDef(def: pxtc.ParsedBlockDef, expanded = false) {
             let anonIndex = 0;
             let firstParam = !expanded && !!comp.thisParameter;
 
             const inputs = splitInputs(def);
+            const imgConv = new ImageConverter()
 
             inputs.forEach(inputParts => {
                 const fields: NamedField[] = [];
@@ -825,11 +627,12 @@ namespace pxt.blocks {
                         let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
                         let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowBlockId;
                         let isConstantShim = !!fn.attributes.constantShim;
+                        let isCombined = pr.type == "@combined@"
                         let customField = pr.fieldEditor;
                         let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
                         let fieldType = pr.type;
 
-                        if (isEnum || isFixed || isConstantShim) {
+                        if (isEnum || isFixed || isConstantShim || isCombined) {
                             let syms: pxtc.SymbolInfo[];
 
                             if (isEnum) {
@@ -837,6 +640,9 @@ namespace pxt.blocks {
                             }
                             else if (isFixed) {
                                 syms = getFixedInstanceDropdownValues(info.apis, typeInfo.qName);
+                            }
+                            else if (isCombined) {
+                                syms = fn.combinedProperties.map(p => U.lookup(info.apis.byQName, p))
                             }
                             else {
                                 syms = getConstantDropdownValues(info.apis, fn.qName);
@@ -846,7 +652,13 @@ namespace pxt.blocks {
                                 console.error(`no instances of ${typeInfo.qName} found`)
                             }
                             const dd = syms.map(v => {
-                                const k = v.attributes.block || v.attributes.blockId || v.name;
+                                let k = v.attributes.block || v.attributes.blockId || v.name;
+                                let comb = v.attributes.blockCombine
+                                if (v.attributes.jresURL && !v.attributes.iconURL && U.startsWith(v.attributes.jresURL, "data:image/x-mkcd-f")) {
+                                    v.attributes.iconURL = imgConv.convert(v.attributes.jresURL)
+                                }
+                                if (!!comb)
+                                    k = k.replace(/@set/, "")
                                 return [
                                     v.attributes.iconURL || v.attributes.blockImage ? {
                                         src: v.attributes.iconURL || Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
@@ -945,6 +757,8 @@ namespace pxt.blocks {
 
                 fields.forEach(f => input.appendField(f.field, f.name));
             });
+
+            imgConv.logTime()
         }
     }
 
@@ -955,774 +769,28 @@ namespace pxt.blocks {
         return !!r;
     }
 
-    function removeCategory(tb: Element, name: string) {
-        let e = categoryElement(tb, name);
-        if (e && e.parentNode) // IE11: no parentElement
-            e.parentNode.removeChild(e);
-    }
-
-    export interface BlockFilters {
-        namespaces?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
-        blocks?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
-        defaultState?: FilterState; // hide, show or disable all by default
-    }
-
-    export enum FilterState {
-        Hidden = 0,
-        Visible = 1,
-        Disabled = 2
-    }
-
-    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters, extensions?: pxt.PackageConfig[]): Element {
-        init();
-
-        // create new toolbox and update block definitions
-        let tb = toolbox ? <Element>toolbox.cloneNode(true) : undefined;
-        blockInfo.blocks.sort((f1, f2) => {
-            let ns1 = blockInfo.apis.byQName[f1.attributes.blockNamespace || f1.namespace.split('.')[0]];
-            let ns2 = blockInfo.apis.byQName[f2.attributes.blockNamespace || f2.namespace.split('.')[0]];
-
-            if (ns1 && !ns2) return -1; if (ns2 && !ns1) return 1;
-            let c = 0;
-            if (ns1 && ns2) {
-
-                c = (ns2.attributes.weight || 50) - (ns1.attributes.weight || 50);
-                if (c != 0) return c;
-            }
-            c = (f2.attributes.weight || 50) - (f1.attributes.weight || 50);
-            return c;
-        })
-
-        searchElementCache = {};
-        usedBlocks = {};
-        let currentBlocks: Map<number> = {};
-        let showAdvanced = false;
-        const dbg = pxt.options.debug;
-        // create new toolbox and update block definitions
-        blockInfo.blocks
-            .filter(fn => !tb || !getFirstChildWithAttr(tb, "block", "type", fn.attributes.blockId))
-            .forEach(fn => {
-                if (fn.attributes.blockBuiltin) {
-                    Util.assert(!!builtinBlocks[fn.attributes.blockId]);
-                    builtinBlocks[fn.attributes.blockId].symbol = fn;
-                } else {
-                    let comp = compileInfo(fn);
-                    let block = createToolboxBlock(blockInfo, fn, comp);
-                    if (injectBlockDefinition(blockInfo, fn, comp, block)) {
-                        if (tb && (!fn.attributes.debug || dbg))
-                            injectToolbox(tb, blockInfo, fn, block, showCategories, comp);
-                        currentBlocks[fn.attributes.blockId] = 1;
-                        if (!showAdvanced && !fn.attributes.blockHidden && !fn.attributes.deprecated) {
-                            let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-                            let nsn = blockInfo.apis.byQName[ns];
-                            showAdvanced = showAdvanced || (nsn && nsn.attributes.advanced);
-                        }
-                    }
-                }
-            });
-
-        // remove unused blocks
-        Object
-            .keys(cachedBlocks).filter(k => !currentBlocks[k])
-            .forEach(k => removeBlock(cachedBlocks[k].fn));
-
-        // add extra blocks
-        if (tb && pxt.appTarget.runtime) {
-            const extraBlocks = pxt.appTarget.runtime.extraBlocks || [];
-            extraBlocks.push({
-                namespace: pxt.appTarget.runtime.onStartNamespace || "loops",
-                weight: pxt.appTarget.runtime.onStartWeight || 10,
-                type: ts.pxtc.ON_START_TYPE
-            })
-            extraBlocks.forEach(eb => {
-                let el = document.createElement("block");
-                el.setAttribute("type", eb.type);
-                el.setAttribute("weight", (eb.weight || 50).toString());
-                if (eb.gap) el.setAttribute("gap", eb.gap.toString());
-                if (eb.fields) {
-                    for (let f in eb.fields) {
-                        let fe = document.createElement("field");
-                        fe.setAttribute("name", f);
-                        fe.appendChild(document.createTextNode(eb.fields[f]));
-                        el.appendChild(fe);
-                    }
-                }
-                if (showCategories !== CategoryMode.None) {
-                    let cat = categoryElement(tb, eb.namespace);
-                    if (cat) {
-                        insertBlock(el, cat, eb.weight)
-                    } else {
-                        console.error(`trying to add block ${eb.type} to unknown category ${eb.namespace}`)
-                    }
-                } else {
-                    tb.appendChild(el);
-                }
-            })
-        }
-
-        // Add extension categories
-        if (tb && extensions && extensions.length > 0) {
-            // Add extensions buttons
-            extensions.forEach(config => {
-                const name = config.name;
-                const color = config.extension.color || '#7f8c8d';
-                const label = config.extension.label ? Util.rlf(config.extension.label) : Util.lf("Editor");
-                let button = goog.dom.createDom('button') as Element;
-                button.setAttribute('text', label);
-                button.setAttribute('callbackkey', `EXT${name}_BUTTON`);
-
-                const namespace = config.extension.namespace || name;
-                const isAdvanced = config.extension.advanced || false;
-                let insertButtonAtTop = (button: Element, cat: Element) => {
-                    let first: Element;
-                    for (let i = 0; i < cat.childNodes.length; i++) {
-                        const n = cat.childNodes.item(i) as Element;
-                        if (n.tagName === "block") {
-                            first = n;
-                            break;
-                        }
-                    }
-                    if (first) {
-                        cat.insertBefore(button, first);
-                    } else {
-                        cat.appendChild(button)
-                    }
-                }
-
-                if (showCategories !== CategoryMode.None) {
-                    if (showCategories === CategoryMode.All || showCategories == CategoryMode.Basic && !isAdvanced) {
-                        let cat = categoryElement(tb, namespace);
-                        if (cat) {
-                            insertButtonAtTop(button, cat)
-                        } else {
-                            // Create a new category
-                            const cat = createCategoryElement(Util.rlf(`{id:category}${name}`), name, 55, color, 'blocklyTreeIconextensions');
-                            insertTopLevelCategory(cat, tb, 55, false);
-                            insertButtonAtTop(button, cat);
-                        }
-                    }
-                } else {
-                    tb.appendChild(button);
-                }
-            })
-        }
-
-        if (tb && showCategories !== CategoryMode.None) {
-            // remove unused categories
-            let config = pxt.appTarget.runtime || {};
-            initBuiltinCategoryXml("Math", !config.mathBlocks);
-            initBuiltinCategoryXml("Variables", !config.variablesBlocks);
-            initBuiltinCategoryXml("Logic", !config.logicBlocks);
-            initBuiltinCategoryXml("Loops", !config.loopsBlocks);
-            initBuiltinCategoryXml("Text", !config.textBlocks);
-            initBuiltinCategoryXml("Arrays", !config.listsBlocks);
-            initBuiltinCategoryXml("Functions", !config.functionBlocks);
-
-            if (!config.listsBlocks && config.loopsBlocks) {
-                const cat = categoryElement(tb, "Loops");
-                if (cat) {
-                    cat.removeChild(getFirstChildWithAttr(cat, "block", "type", "controls_for_of"))
-                }
-            }
-
-            // Inject optional builtin blocks into categories
-            if (pxt.appTarget.runtime) {
-                const rt = pxt.appTarget.runtime;
-
-                maybeInsertBuiltinBlock(tb, mkPredicateBlock(pxtc.PAUSE_UNTIL_TYPE), rt.pauseUntilBlock);
-            }
-
-            // Load localized names for default categories
-            let cats = tb.getElementsByTagName('category');
-            for (let i = 0; i < cats.length; i++) {
-                cats[i].setAttribute('name',
-                    Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
-                // Append Namespace CSS
-                appendNamespaceCss(cats[i].getAttribute('name'), cats[i].getAttribute('colour'));
-            }
-
-            // update category colors and add heading
-            let topCats = getDirectChildren(tb, "category")
-
-            for (let i = 0; i < topCats.length; i++) {
-                const nsColor = getNamespaceColor(topCats[i].getAttribute('nameid'));
-                if (nsColor && nsColor != "") {
-                    topCats[i].setAttribute('colour', nsColor);
-                    // Update subcategory colours
-                    const subCats = getChildCategories(topCats[i]);
-                    for (let j = 0; j < subCats.length; j++) {
-                        subCats[j].setAttribute('colour', nsColor);
-                    }
-                }
-                const nsIcon = getNamespaceIcon(topCats[i].getAttribute('nameid'));
-                if (nsIcon && nsIcon != "") {
-                    topCats[i].setAttribute('web-icon', nsIcon);
-                }
-                if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
-                    // Add the Heading label
-                    let headingLabel = goog.dom.createDom('label');
-                    headingLabel.setAttribute('text', topCats[i].getAttribute('name'));
-                    headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
-                    headingLabel.setAttribute('web-icon-color', topCats[i].getAttribute('colour'));
-                    let icon = topCats[i].getAttribute('web-icon');
-                    let iconClass = topCats[i].getAttribute('web-icon-class');
-                    if (icon) {
-                        if (icon.length === 1) {
-                            headingLabel.setAttribute('web-icon', icon);
-                            if (iconClass) headingLabel.setAttribute('web-icon-class', iconClass);
-                        }
-                        else {
-                            toolboxStyleBuffer += `
-                                .blocklyFlyoutLabelIcon.blocklyFlyoutIcon${topCats[i].getAttribute('name')} {
-                                    display: inline-block !important;
-                                    background-image: url("${Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon))}")!important;
-                                    width: 1em;
-                                    height: 1em;
-                                    background-size: 1em!important;
-                                }
-                            `;
-                            injectToolboxIconCss();
-                            headingLabel.setAttribute('web-icon-class', `blocklyFlyoutIcon${topCats[i].getAttribute('name')}`);
-                        }
-                    }
-                    topCats[i].insertBefore(headingLabel, topCats[i].firstChild);
-                    // Add subcategory labels
-                    const subCats = getChildCategories(topCats[i]);
-                    for (let j = 0; j < subCats.length; j++) {
-                        let subHeadingLabel = goog.dom.createDom('label');
-                        subHeadingLabel.setAttribute('text', `${topCats[i].getAttribute('name')} > ${subCats[j].getAttribute('name')}`);
-                        subHeadingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
-                        subHeadingLabel.setAttribute('web-icon-color', topCats[i].getAttribute('colour'));
-                        subCats[j].insertBefore(subHeadingLabel, subCats[j].firstChild);
-                        if (icon) {
-                            if (icon.length == 1) {
-                                subHeadingLabel.setAttribute('web-icon', icon);
-                                if (iconClass) subHeadingLabel.setAttribute('web-icon-class', iconClass);
-                            } else {
-                                subHeadingLabel.setAttribute('web-icon-class', `blocklyFlyoutIcon${topCats[i].getAttribute('name')}`);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Do not remove this comment.
-        // These are used for category names.
-        // lf("{id:category}Loops")
-        // lf("{id:category}Logic")
-        // lf("{id:category}Variables")
-        // lf("{id:category}Math")
-        // lf("{id:category}Advanced")
-        // lf("{id:category}Functions")
-        // lf("{id:category}Arrays")
-        // lf("{id:category}Text")
-        // lf("{id:category}Search")
-        // lf("{id:category}More\u2026")
-
-        // update shadow types
-        if (tb) {
-            $(tb).find('shadow:empty').each((i, shadow) => {
-                let type = shadow.getAttribute('type');
-                let b = $(tb).find(`block[type="${type}"]`)[0];
-                if (b) shadow.innerHTML = b.innerHTML;
-            })
-        }
-
-        // Add the "Advanced" category
-        if (showAdvanced && tb && showCategories !== CategoryMode.None) {
-            const cat = createCategoryElement(advancedTitle(), "Advanced", 1, getNamespaceColor('advanced'), showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
-            insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
-            insertTopLevelCategory(cat, tb, 1, false);
-        }
-
-        if (tb && (!showAdvanced || showCategories === CategoryMode.All) && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
-            if (!showAdvanced) {
-                insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
-            }
-            // Add the "Add package" category
-            getOrAddSubcategoryByWeight(tb, addPackageTitle(), "Extensions", 1, "#717171", 'blocklyTreeIconaddpackage')
-        }
-
-        if (tb) {
-            const blocks = tb.getElementsByTagName("block");
-
-            for (let i = 0; i < blocks.length; i++) {
-                const b = blocks.item(i);
-                const bId = b.getAttribute("type");
-                const bCategoryId = b.parentElement && b.parentElement.nodeName === "category" ? b.parentElement.getAttribute("nameid") : undefined;
-                const bTranslatedCat = bCategoryId ? b.parentElement.getAttribute("name") : undefined;
-                if (shouldUseBlockInSearch(bId, bCategoryId, filters)) {
-                    usedBlocks[bId] = bTranslatedCat || true;
-                    updateUsedBlocks = true;
-                }
-            }
-
-            updateUsedBlocks = true;
-        }
-
-        // Filter the blocks
-        if (tb && filters) {
-            function filterBlocks(blocks: any, defaultState?: number) {
-                let hasChild: boolean = false;
-                for (let bi = 0; bi < blocks.length; ++bi) {
-                    let blk = blocks.item(bi);
-                    let type = blk.getAttribute("type");
-                    let blockState = filters.blocks && filters.blocks[type] != undefined ? filters.blocks[type] : (defaultState != undefined ? defaultState : filters.defaultState);
-                    switch (blockState) {
-                        case FilterState.Hidden:
-                            blk.parentNode.removeChild(blk); --bi; break;
-                        case FilterState.Disabled:
-                            blk.setAttribute("disabled", "true"); break;
-                        case FilterState.Visible:
-                            hasChild = true; break;
-                    }
-                }
-                return hasChild;
-            }
-
-            if (showCategories !== CategoryMode.None) {
-                // Go through namespaces and keep the ones with an override
-                let categories = tb.getElementsByTagName(`category`);
-                for (let ci = 0; ci < categories.length; ++ci) {
-                    let cat = categories.item(ci);
-                    let catName = cat.getAttribute("nameid");
-
-                    if (catName === "more" || catName === "advanced") {
-                        continue;
-                    }
-
-                    // The variables category is special and won't have any children so we
-                    // need to check manually
-                    if (catName === "variables" && (!filters.blocks ||
-                        filters.blocks["variables_set"] ||
-                        filters.blocks["variables_get"] ||
-                        filters.blocks["variables_change"]) &&
-                        (!filters.namespaces || filters.namespaces["variables"] !== FilterState.Disabled)) {
-                        continue;
-                    }
-
-                    let categoryState = filters.namespaces && filters.namespaces[catName] != undefined ? filters.namespaces[catName] : filters.defaultState;
-                    let blocks = cat.getElementsByTagName(`block`);
-
-                    let hasVisibleChildren = (catName == "variables" && filters.blocks)
-                        ? filters.blocks["variables_get"] || filters.blocks["variables_set"]
-                        : filterBlocks(blocks, categoryState);
-                    switch (categoryState) {
-                        case FilterState.Disabled:
-                            if (!hasVisibleChildren) {
-                                cat.setAttribute("disabled", "true");
-                                // disable sub categories
-                                let subcategories = cat.getElementsByTagName(`category`);
-                                for (let si = 0; si < subcategories.length; ++si) {
-                                    subcategories.item(si).setAttribute("disabled", "true");
-                                }
-                            } break;
-                        case FilterState.Visible:
-                        case FilterState.Hidden:
-                            if (!hasVisibleChildren) {
-                                cat.parentNode.removeChild(cat); --ci;
-                            } break;
-                    }
-                }
-                // If advanced has no children, remove the category
-                for (let ci = 0; ci < categories.length; ++ci) {
-                    let cat = categories.item(ci);
-                    let catName = cat.getAttribute("nameid");
-                    if (catName == "advanced" && cat.childNodes.length == 0) {
-                        cat.parentNode.removeChild(cat); --ci;
-                        // Remove separator
-                        const sep = tb.getElementsByTagName(`sep`)[0];
-                        sep.parentNode.removeChild(sep);
-                    } else {
-                        continue;
-                    }
-                }
-            } else {
-                let blocks = tb.getElementsByTagName(`block`);
-                filterBlocks(blocks);
-            }
-
-            if (showCategories !== CategoryMode.None) {
-                // Go through all categories, hide the ones that have no blocks inside
-                let categories = tb.getElementsByTagName(`category`);
-                for (let ci = 0; ci < categories.length; ++ci) {
-                    let cat = categories.item(ci);
-                    let catName = cat.getAttribute("nameid");
-                    // Don't do this for special blockly categories
-                    if (catName == "variables" || catName == "functions" || catName == "advanced") continue;
-                    let blockCount = cat.getElementsByTagName(`block`);
-                    if (blockCount.length == 0) {
-                        if (cat.parentNode) cat.parentNode.removeChild(cat);
-                    }
-                }
-            }
-        }
-
-        // Rearrange blocks in the flyout and add group labels
-        if (tb) {
-            let categories = tb.getElementsByTagName(`category`);
-            for (let ci = 0; ci < categories.length; ++ci) {
-                let cat = categories.item(ci);
-                let catName = cat.getAttribute("nameid");
-                if (catName === "advanced") continue;
-
-                let blocks = getDirectChildren(cat, `block`);
-                let groups = cat.getAttribute("groups");
-                let groupIcons = cat.getAttribute("groupicons");
-
-                let labelLineWidth = cat.getAttribute("labellinewidth");
-                let blockGroups: { [group: string]: Element[] } = {}
-                let sortedGroups: string[] = [];
-                if (groups) sortedGroups = groups.split(', ');
-
-                // Create a dict of group icon pairs
-                let groupIconsDict: { [group: string]: string } = {}
-                if (groups && groupIcons) {
-                    let groupIconsList = groupIcons.split(', ');
-                    for (let i = 0; i < sortedGroups.length; i++) {
-                        let icon = groupIconsList[i];
-                        groupIconsDict[sortedGroups[i]] = icon || '';
-                    }
-                }
-
-                // Organize the blocks into the different groups
-                for (let bi = 0; bi < blocks.length; ++bi) {
-                    let blk = blocks[bi];
-                    let group = blk.getAttribute("group") || 'other';
-                    if (!blockGroups[group]) blockGroups[group] = [];
-                    blockGroups[group].push(blk);
-                }
-
-                if (Object.keys(blockGroups).length > 1) {
-                    // Add any missing groups to the sorted groups list
-                    Object.keys(blockGroups).sort().forEach(group => {
-                        if (sortedGroups.indexOf(group) == -1) {
-                            sortedGroups.push(group);
-                        }
-                    })
-
-                    // Add the blocks to the xmlList
-                    let xmlList: Element[] = [];
-                    for (let bg = 0; bg < sortedGroups.length; ++bg) {
-                        let group = sortedGroups[bg];
-                        // Check if there are any blocks in that group
-                        if (!blockGroups[group] || !blockGroups[group].length) continue;
-
-                        // Add the group label
-                        if (group != 'other') {
-                            let groupLabel = goog.dom.createDom('label');
-                            groupLabel.setAttribute('text', pxt.Util.rlf(`{id:group}${group}`));
-                            groupLabel.setAttribute('web-class', 'blocklyFlyoutGroup');
-                            groupLabel.setAttribute('web-line', '1.5');
-                            if (groupIconsDict[group]) groupLabel.setAttribute('web-icon', groupIconsDict[group]);
-                            if (labelLineWidth) groupLabel.setAttribute('web-line-width', labelLineWidth);
-                            xmlList.push(groupLabel as HTMLElement);
-                        }
-
-                        // Add the blocks in that group
-                        if (blockGroups[group])
-                            blockGroups[group].forEach(groupedBlock => {
-                                cat.removeChild(groupedBlock);
-                                xmlList.push(groupedBlock);
-                            })
-                    }
-
-                    // Add the blocks back into the category
-                    xmlList.forEach(arrangedBlock => {
-                        cat.appendChild(arrangedBlock);
-                    })
-                }
-            }
-        }
-
-        return tb;
-
-
-        function initBuiltinCategoryXml(name: string, remove: boolean) {
-            if (remove) {
-                removeCategory(tb, name);
-                return;
-            }
-
-            const cat = categoryElement(tb, name);
-            if (cat) {
-                const attr = cat.getAttribute("advanced");
-                if (attr && attr !== "false") {
-                    showAdvanced = true;
-
-                    // Record all block usages in case this category doesn't show up
-                    // in the toolbox (i.e. advanced is collapsed)
-                    const blockElements = cat.getElementsByTagName("block");
-                    for (let i = 0; i < blockElements.length; i++) {
-                        const b = blockElements.item(i);
-                        const bId = b.getAttribute("type");
-                        const translatedCatName = Util.rlf(`{id:category}${name}`, []);
-                        if (shouldUseBlockInSearch(bId, name, filters)) {
-                            usedBlocks[bId] = translatedCatName;
-                        }
-                    }
-
-                    if (showCategories === CategoryMode.Basic) {
-                        removeCategory(tb, name);
-                    }
-                }
-            }
-        }
-    }
-
-    function maybeInsertBuiltinBlock(toolbox: Element, block: Element, options: pxt.BlockOptions) {
-        if (!options || !options.category) return;
-
-        const cat = categoryElement(toolbox, options.category || "Loops");
-        if (!cat) return;
-
-        const weight = options.weight == null ? 0 : options.weight;
-        insertBlock(block, cat, weight, options.group);
-    }
-
-    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters, extensions?: pxt.PackageConfig[]): Element {
-        init();
-        initTooltip(blockInfo);
-        initJresIcons(blockInfo);
-
-        let tb = createToolbox(blockInfo, toolbox, showCategories, filters, extensions);
-
-        // add trash icon to toolbox
-        if (!document.getElementById("blocklyTrashIcon")) {
-            let trashDiv = document.createElement('div');
-            trashDiv.id = "blocklyTrashIcon";
-            trashDiv.style.opacity = '0';
-            trashDiv.style.display = 'none';
-            let trashIcon = document.createElement('i');
-            trashIcon.className = 'trash icon';
-            trashDiv.appendChild(trashIcon);
-            const injectionDiv = document.getElementsByClassName('injectionDiv')[0];
-            if (injectionDiv) injectionDiv.appendChild(trashDiv);
-        }
-
-        return tb;
-    }
-
-    export let cachedSearchTb: Element;
-    export let cachedSearchTbAll: Element;
-    export function initSearch(workspace: Blockly.Workspace, tb: Element, tbAll: Element,
-        searchAsync: (searchFor: pxtc.service.SearchOptions) => Promise<pxtc.service.SearchInfo[]>,
-        updateToolbox: (tb: Element) => void) {
-
-        let blocklySearchInputField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
-        let blocklySearchInput = document.getElementById('blocklySearchInput') as HTMLElement;
-        let blocklyHiddenSearchLabel = document.getElementById('blocklySearchLabel') as HTMLElement;
-
-        let origClassName = 'ui fluid icon input';
-        if (!blocklySearchInput) {
-            let blocklySearchArea = document.createElement('div');
-            blocklySearchArea.id = 'blocklySearchArea';
-
-            blocklySearchInput = document.createElement('div');
-            blocklySearchInput.id = 'blocklySearchInput';
-            blocklySearchInput.className = origClassName;
-            blocklySearchInput.setAttribute("role", "search");
-
-            blocklySearchInputField = document.createElement('input');
-            blocklySearchInputField.type = 'text';
-            blocklySearchInputField.placeholder = lf("Search...");
-            blocklySearchInputField.id = 'blocklySearchInputField';
-            blocklySearchInputField.className = 'blocklySearchInputField';
-
-            // Append to dom
-            let blocklySearchInputIcon = document.createElement('i');
-            blocklySearchInputIcon.className = 'search icon';
-            blocklySearchInputIcon.setAttribute("role", "presentation");
-            blocklySearchInputIcon.setAttribute("aria-hidden", "true");
-
-            blocklyHiddenSearchLabel = document.createElement('div');
-            blocklyHiddenSearchLabel.className = 'accessible-hidden';
-            blocklyHiddenSearchLabel.id = 'blocklySearchLabel';
-            blocklyHiddenSearchLabel.setAttribute('aria-live', "polite");
-
-            blocklySearchInput.appendChild(blocklySearchInputField);
-            blocklySearchInput.appendChild(blocklySearchInputIcon);
-            blocklySearchInput.appendChild(blocklyHiddenSearchLabel);
-            blocklySearchArea.appendChild(blocklySearchInput);
-            const toolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0];
-            if (toolboxDiv) // Only add if a toolbox exists, eg not in sandbox mode
-                toolboxDiv.insertBefore(blocklySearchArea, toolboxDiv.firstChild);
-        }
-
-        const hasSearchFlyout = () => {
-            return document.getElementsByClassName('blocklyTreeIconsearch').length > 0;
-        }
-
-        const showSearchFlyout = () => {
-            const tree = (workspace as any).toolbox_.tree_;
-            // Show the search flyout
-            tree.setSelectedItem(tree.getChildren()[0]);
-        }
-
-        pxt.blocks.cachedSearchTb = tb;
-        pxt.blocks.cachedSearchTbAll = tbAll;
-        let previousSearchTerm = '';
-        const searchChangeHandler = Util.debounce(() => {
-            let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
-            let searchFor = searchField.value.toLowerCase();
-            let blocklyHiddenSearchLabel = document.getElementById('blocklySearchLabel') as HTMLElement;
-
-            blocklyHiddenSearchLabel.textContent = "";
-
-            if (searchFor != '') {
-                blocklySearchInput.className += ' loading';
-                previousSearchTerm = searchFor;
-
-                pxt.tickEvent("blocks.search", undefined, { interactiveConsent: true });
-                let searchTb = pxt.blocks.cachedSearchTb ? <Element>pxt.blocks.cachedSearchTb.cloneNode(true) : undefined;
-
-                let catName = 'Search';
-                let category = categoryElement(searchTb, catName);
-
-                if (!category) {
-                    let categories = getChildCategories(searchTb)
-                    let parentCategoryList = searchTb;
-
-                    const nsWeight = 101; // Show search category on top
-                    category = createCategoryElement(lf("{id:category}Search"), catName, nsWeight);
-                    category.setAttribute("colour", '#000');
-                    category.setAttribute("iconclass", 'blocklyTreeIconsearch');
-                    category.setAttribute("expandedclass", 'blocklyTreeIconsearch');
-
-                    // Insert the category based on weight
-                    let ci = 0;
-                    for (ci = 0; ci < categories.length; ++ci) {
-                        let cat = categories[ci];
-                        if (parseInt(cat.getAttribute("weight") || "50") < nsWeight) {
-                            parentCategoryList.insertBefore(category, cat);
-                            break;
-                        }
-                    }
-                    if (ci == categories.length)
-                        parentCategoryList.appendChild(category);
-                }
-
-                searchAsync({ term: searchFor, subset: updateUsedBlocks ? usedBlocks : undefined }).then(blocks => {
-                    pxt.log("searching for: " + searchFor);
-                    updateUsedBlocks = false;
-                    if (!blocks) return;
-
-                    if (blocks.length == 0) {
-                        blocklyHiddenSearchLabel.textContent = lf("No search results...");
-                    } else {
-                        blocklyHiddenSearchLabel.textContent = lf("{0} result matching '{1}'", blocks.length, blocklySearchInputField.value.toLowerCase());
-                    }
-
-                    if (blocks.length == 0) {
-                        let label = goog.dom.createDom('label');
-                        label.setAttribute('text', lf("No search results..."));
-                        category.appendChild(label);
-                        return;
-                    }
-                    blocks.forEach(info => {
-                        if (pxt.blocks.cachedSearchTbAll) {
-                            const type = info.id;
-
-                            let block = searchElementCache[type];
-                            if (!block) {
-                                // Catches built-in blocks that aren't loaded dynamically
-                                const existing = getFirstChildWithAttr(pxt.blocks.cachedSearchTbAll, "block", "type", type);
-                                if (existing) {
-                                    block = (searchElementCache[type] = existing.cloneNode(true));
-                                }
-                            }
-
-                            if (block) {
-                                category.appendChild(block);
-                            }
-                        }
-                    })
-                }).finally(() => {
-                    if (tb) {
-                        updateToolbox(searchTb);
-                        blocklySearchInput.className = origClassName;
-                        showSearchFlyout();
-                    }
-                })
-            } else if (previousSearchTerm != '') {
-                // Clearing search
-                updateToolbox(pxt.blocks.cachedSearchTb);
-                blocklySearchInput.className = origClassName;
-            }
-            // Search
-        }, 300, false);
-
-        blocklySearchInputField.oninput = searchChangeHandler;
-        blocklySearchInputField.onfocus = () => {
-            blocklySearchInputField.select();
-            let searchFor = blocklySearchInputField.value.toLowerCase();
-            if (searchFor != '') {
-                if (hasSearchFlyout()) showSearchFlyout();
-                else {
-                    previousSearchTerm = '';
-                    searchChangeHandler();
-                }
-            }
-        }
-        if (pxt.BrowserUtils.isTouchEnabled()) {
-            blocklySearchInputField.ontouchstart = () => {
-                blocklySearchInputField.focus();
-            };
-        }
-
-        // Override Blockly's toolbox keydown method to intercept characters typed and move the focus to the search input
-        (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown = function (e: any) {
-            const keyCode = e.which || e.keyCode;
-            const characterKey = (keyCode > 64 && keyCode < 91); // Letter keys
-            const spaceEnterKey = keyCode == 32 || keyCode == 13; // Spacebar or Enter keys
-            const ctrlCmdKey = (e.ctrlKey || e.metaKey); // Ctrl / Cmd keys
-            if (characterKey && !ctrlCmdKey) {
-                let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
-
-                let char = String.fromCharCode(keyCode);
-                searchField.focus();
-                searchField.value = searchField.value + char;
-                return true;
-            } else {
-                if (this.getTree() && this.getTree().toolbox_.horizontalLayout_) {
-                    let map: { [keyCode: number]: number } = {};
-                    let next = goog.events.KeyCodes.DOWN
-                    let prev = goog.events.KeyCodes.UP
-                    map[goog.events.KeyCodes.RIGHT] = this.rightToLeft_ ? prev : next;
-                    map[goog.events.KeyCodes.LEFT] = this.rightToLeft_ ? next : prev;
-                    map[goog.events.KeyCodes.UP] = goog.events.KeyCodes.LEFT;
-                    map[goog.events.KeyCodes.DOWN] = goog.events.KeyCodes.RIGHT;
-
-                    let newKeyCode = map[e.keyCode];
-                    e.keyCode = newKeyCode || e.keyCode;
-                }
-                return (Blockly.Toolbox.TreeNode as any).superClass_.onKeyDown.call(this, e);
-            }
-        }
-    }
-
-    export function removeSearch() {
-        let blocklySearchArea = document.getElementById('blocklySearchArea') as HTMLInputElement;
-
-        if (blocklySearchArea) {
-            blocklySearchArea.parentNode.removeChild(blocklySearchArea);
-        }
-    }
-
-    function categoryElement(tb: Element, nameid: string): Element {
-        return tb ? getFirstChildWithAttr(tb, "category", "nameid", nameid.toLowerCase()) : undefined;
-    }
-
     export function cleanBlocks() {
         pxt.debug('removing all custom blocks')
-        for (let b in cachedBlocks)
+        for (const b in cachedBlocks)
             removeBlock(cachedBlocks[b].fn);
     }
 
-    function removeBlock(fn: pxtc.SymbolInfo) {
-        delete Blockly.Blocks[fn.attributes.blockId];
-        delete cachedBlocks[fn.attributes.blockId];
+    /**
+     * Used by pxtrunner to initialize blocks in the docs
+     */
+    export function initializeAndInject(blockInfo: pxtc.BlocksInfo) {
+        init();
+        injectBlocks(blockInfo);
+    }
+
+    /**
+     * Used by main app to initialize blockly blocks.
+     * Blocks are injected separately by called injectBlocks
+     */
+    export function initialize(blockInfo: pxtc.BlocksInfo) {
+        init();
+        initTooltip(blockInfo);
+        initJresIcons(blockInfo);
     }
 
     let blocklyInitialized = false;
@@ -1751,16 +819,18 @@ namespace pxt.blocks {
         initLogic();
         initText();
         initDrag();
+        initDebugger();
+        initComments();
     }
 
     function setBuiltinHelpInfo(block: any, id: string) {
         const info = pxt.blocks.getBlockDefinition(id);
-        setHelpResources(block, id, info.name, info.tooltip, info.url, getNamespaceColor(info.category));
+        setHelpResources(block, id, info.name, info.tooltip, info.url, pxt.toolbox.getNamespaceColor(info.category));
     }
 
     function installBuiltinHelpInfo(id: string) {
         const info = pxt.blocks.getBlockDefinition(id);
-        installHelpResources(id, info.name, info.tooltip, info.url, getNamespaceColor(info.category));
+        installHelpResources(id, info.name, info.tooltip, info.url, pxt.toolbox.getNamespaceColor(info.category));
     }
 
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string, undeletable?: boolean) {
@@ -1859,12 +929,98 @@ namespace pxt.blocks {
                     ],
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": getNamespaceColor('loops')
+                    "colour": pxt.toolbox.getNamespaceColor('loops')
                 });
                 this.appendStatementInput("DO")
                     .appendField(deviceWhileDef.block["appendField"]);
 
                 setBuiltinHelpInfo(this, deviceWhileId);
+            }
+        };
+
+        // pxt_controls_for
+        const pxtControlsForId = "pxt_controls_for";
+        const pxtControlsForDef = pxt.blocks.getBlockDefinition(pxtControlsForId);
+        Blockly.Blocks[pxtControlsForId] = {
+            /**
+             * Block for 'for' loop.
+             * @this Blockly.Block
+             */
+            init: function () {
+                this.jsonInit({
+                    "message0": pxtControlsForDef.block["message0"],
+                    "args0": [
+                        {
+                            "type": "input_value",
+                            "name": "VAR",
+                            "variable": pxtControlsForDef.block["variable"],
+                            "check": "Variable"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "TO",
+                            "check": "Number"
+                        }
+                    ],
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": pxt.toolbox.getNamespaceColor('loops'),
+                    "inputsInline": true
+                });
+                this.appendStatementInput('DO')
+                    .appendField(pxtControlsForDef.block["appendField"]);
+
+                let thisBlock = this;
+                setHelpResources(this,
+                    pxtControlsForId,
+                    pxtControlsForDef.name,
+                    function () {
+                        return U.rlf(<string>pxtControlsForDef.tooltip,
+                            thisBlock.getInputTargetBlock('VAR') ? thisBlock.getInputTargetBlock('VAR').getField('VAR').getText() : '');
+                    },
+                    pxtControlsForDef.url,
+                    String(pxt.toolbox.getNamespaceColor('loops'))
+                );
+            },
+            /**
+             * Return all variables referenced by this block.
+             * @return {!Array.<string>} List of variable names.
+             * @this Blockly.Block
+             */
+            getVars: function (): any[] {
+                return [this.getField('VAR').getText()];
+            },
+            /**
+             * Notification that a variable is renaming.
+             * If the name matches one of this block's variables, rename it.
+             * @param {string} oldName Previous name of variable.
+             * @param {string} newName Renamed variable.
+             * @this Blockly.Block
+             */
+            renameVar: function (oldName: string, newName: string) {
+                const varField = this.getField('VAR');
+                if (Blockly.Names.equals(oldName, varField.getText())) {
+
+                    varField.setText(newName);
+                }
+            },
+            /**
+             * Add menu option to create getter block for loop variable.
+             * @param {!Array} options List of menu options to add to.
+             * @this Blockly.Block
+             */
+            customContextMenu: function (options: any[]) {
+                if (!this.isCollapsed()) {
+                    let option: any = { enabled: true };
+                    let name = this.getInputTargetBlock('VAR').getField('VAR').getText();
+                    option.text = lf("Create 'get {0}'", name);
+                    let xmlField = goog.dom.createDom('field', null, name);
+                    xmlField.setAttribute('name', 'VAR');
+                    let xmlBlock = goog.dom.createDom('block', null, xmlField) as HTMLElement;
+                    xmlBlock.setAttribute('type', 'variables_get');
+                    option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
+                    options.push(option);
+                }
             }
         };
 
@@ -1897,7 +1053,7 @@ namespace pxt.blocks {
                     ],
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": getNamespaceColor('loops'),
+                    "colour": pxt.toolbox.getNamespaceColor('loops'),
                     "inputsInline": true
                 });
                 this.appendStatementInput('DO')
@@ -1908,10 +1064,10 @@ namespace pxt.blocks {
                     controlsSimpleForId,
                     controlsSimpleForDef.name,
                     function () {
-                        return U.rlf(<string>controlsSimpleForDef.tooltip, thisBlock.getFieldValue('VAR'));
+                        return U.rlf(<string>controlsSimpleForDef.tooltip, thisBlock.getField('VAR').getText());
                     },
                     controlsSimpleForDef.url,
-                    String(getNamespaceColor('loops'))
+                    String(pxt.toolbox.getNamespaceColor('loops'))
                 );
             },
             /**
@@ -1920,7 +1076,7 @@ namespace pxt.blocks {
              * @this Blockly.Block
              */
             getVars: function (): any[] {
-                return [this.getFieldValue('VAR')];
+                return [this.getField('VAR').getText()];
             },
             /**
              * Notification that a variable is renaming.
@@ -1930,8 +1086,10 @@ namespace pxt.blocks {
              * @this Blockly.Block
              */
             renameVar: function (oldName: string, newName: string) {
-                if (Blockly.Names.equals(oldName, this.getFieldValue('VAR'))) {
-                    this.setFieldValue(newName, 'VAR');
+                const varField = this.getField('VAR');
+                if (Blockly.Names.equals(oldName, varField.getText())) {
+
+                    varField.setText(newName);
                 }
             },
             /**
@@ -1942,7 +1100,7 @@ namespace pxt.blocks {
             customContextMenu: function (options: any[]) {
                 if (!this.isCollapsed()) {
                     let option: any = { enabled: true };
-                    let name = this.getFieldValue('VAR');
+                    let name = this.getField('VAR').getText();
                     option.text = lf("Create 'get {0}'", name);
                     let xmlField = goog.dom.createDom('field', null, name);
                     xmlField.setAttribute('name', 'VAR');
@@ -1955,7 +1113,7 @@ namespace pxt.blocks {
         };
     }
 
-    export var onShowContextMenu: (workspace: Blockly.Workspace,
+    export let onShowContextMenu: (workspace: Blockly.Workspace,
         items: Blockly.ContextMenu.MenuItem[]) => void = undefined;
 
     /**
@@ -2053,6 +1211,12 @@ namespace pxt.blocks {
             let menuOptions: Blockly.ContextMenu.MenuItem[] = [];
             let topBlocks = this.getTopBlocks(true);
             let eventGroup = Blockly.utils.genUid();
+            let ws = this;
+
+            // Option to add a workspace comment.
+            if (this.options.comments) {
+                menuOptions.push((Blockly.ContextMenu as any).workspaceCommentOption(ws, e));
+            }
 
             // Add a little animation to collapsing and expanding.
             const DELAY = 10;
@@ -2260,24 +1424,6 @@ namespace pxt.blocks {
         };
     }
 
-    function collapseSubcategories(cat: Blockly.Toolbox.TreeNode, child?: Blockly.Toolbox.TreeNode) {
-        while (cat) {
-            if (cat.isUserCollapsible_ && cat.getTree() && cat != child && (!child || !isChild(child, cat))) {
-                cat.setExpanded(false);
-                cat.updateRow();
-            }
-            cat = cat.getParent();
-        }
-    }
-
-    function isChild(child: Blockly.Toolbox.TreeNode, parent: Blockly.Toolbox.TreeNode): boolean {
-        const myParent = child.getParent();
-        if (myParent) {
-            return myParent === parent || isChild(myParent, parent);
-        }
-        return false;
-    }
-
     function initOnStart() {
         // on_start
         const onStartDef = pxt.blocks.getBlockDefinition(ts.pxtc.ON_START_TYPE);
@@ -2294,7 +1440,7 @@ namespace pxt.blocks {
                             "name": "HANDLER"
                         }
                     ],
-                    "colour": (pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || getNamespaceColor('loops')
+                    "colour": (pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || pxt.toolbox.getNamespaceColor('loops')
                 });
 
                 setHelpResources(this,
@@ -2302,7 +1448,7 @@ namespace pxt.blocks {
                     onStartDef.name,
                     onStartDef.tooltip,
                     onStartDef.url,
-                    String((pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || getNamespaceColor('loops')),
+                    String((pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || pxt.toolbox.getNamespaceColor('loops')),
                     undefined, undefined,
                     pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartUnDeletable : false
                 );
@@ -2385,7 +1531,7 @@ namespace pxt.blocks {
             const blockDef = pxt.blocks.getBlockDefinition(ts.pxtc.PAUSE_UNTIL_TYPE);
             Blockly.Blocks[pxtc.PAUSE_UNTIL_TYPE] = {
                 init: function () {
-                    const color = blockOptions.color || getNamespaceColor('loops');
+                    const color = blockOptions.color || pxt.toolbox.getNamespaceColor('loops');
 
                     this.jsonInit({
                         "message0": blockDef.block["message0"],
@@ -2416,6 +1562,49 @@ namespace pxt.blocks {
             }
         }
 
+        // pxt_controls_for_of
+        const pxtControlsForOfId = "pxt_controls_for_of";
+        const pxtControlsForOfDef = pxt.blocks.getBlockDefinition(pxtControlsForOfId);
+        Blockly.Blocks[pxtControlsForOfId] = {
+            init: function () {
+                this.jsonInit({
+                    "message0": pxtControlsForOfDef.block["message0"],
+                    "args0": [
+                        {
+                            "type": "input_value",
+                            "name": "VAR",
+                            "variable": pxtControlsForOfDef.block["variable"],
+                            "check": "Variable"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "LIST",
+                            "check": "Array"
+                        }
+                    ],
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": pxt.toolbox.blockColors['loops'],
+                    "inputsInline": true
+                });
+
+                this.appendStatementInput('DO')
+                    .appendField(pxtControlsForOfDef.block["appendField"]);
+
+                let thisBlock = this;
+                setHelpResources(this,
+                    pxtControlsForOfId,
+                    pxtControlsForOfDef.name,
+                    function () {
+                        return U.rlf(<string>pxtControlsForOfDef.tooltip,
+                            thisBlock.getInputTargetBlock('VAR') ? thisBlock.getInputTargetBlock('VAR').getField('VAR').getText() : '');
+                    },
+                    pxtControlsForOfDef.url,
+                    String(pxt.toolbox.getNamespaceColor('loops'))
+                );
+            }
+        };
+
         // controls_for_of
         const controlsForOfId = "controls_for_of";
         const controlsForOfDef = pxt.blocks.getBlockDefinition(controlsForOfId);
@@ -2441,7 +1630,7 @@ namespace pxt.blocks {
                     ],
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": blockColors['loops'],
+                    "colour": pxt.toolbox.blockColors['loops'],
                     "inputsInline": true
                 });
 
@@ -2453,10 +1642,10 @@ namespace pxt.blocks {
                     controlsForOfId,
                     controlsForOfDef.name,
                     function () {
-                        return U.rlf(<string>controlsForOfDef.tooltip, thisBlock.getFieldValue('VAR'));
+                        return U.rlf(<string>controlsForOfDef.tooltip, thisBlock.getField('VAR').getText());
                     },
                     controlsForOfDef.url,
-                    String(getNamespaceColor('loops'))
+                    String(pxt.toolbox.getNamespaceColor('loops'))
                 );
             }
         };
@@ -2480,7 +1669,7 @@ namespace pxt.blocks {
                             "check": "Number"
                         }
                     ],
-                    "colour": blockColors['arrays'],
+                    "colour": pxt.toolbox.blockColors['arrays'],
                     "inputsInline": true
                 });
 
@@ -2517,7 +1706,7 @@ namespace pxt.blocks {
                     ],
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": blockColors['arrays'],
+                    "colour": pxt.toolbox.blockColors['arrays'],
                     "inputsInline": true
                 });
                 setBuiltinHelpInfo(this, listsIndexSetId);
@@ -2556,7 +1745,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "colour": getNamespaceColor('math')
+                    "colour": pxt.toolbox.getNamespaceColor('math')
                 });
 
                 let thisBlock = this;
@@ -2567,7 +1756,7 @@ namespace pxt.blocks {
                         return mathOp2Tooltips[block.getFieldValue('op')];
                     },
                     mathOp2Def.url,
-                    getNamespaceColor(mathOp2Def.category)
+                    pxt.toolbox.getNamespaceColor(mathOp2Def.category)
                 );
             }
         };
@@ -2588,7 +1777,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "colour": getNamespaceColor('math')
+                    "colour": pxt.toolbox.getNamespaceColor('math')
                 });
 
                 setBuiltinHelpInfo(this, mathOp3Id);
@@ -2629,7 +1818,7 @@ namespace pxt.blocks {
                 return mathArithmeticTooltips[block.getFieldValue('OP')];
             },
             mathArithmeticDef.url,
-            getNamespaceColor(mathArithmeticDef.category)
+            pxt.toolbox.getNamespaceColor(mathArithmeticDef.category)
         );
 
         // builtin math_modulo
@@ -2641,38 +1830,6 @@ namespace pxt.blocks {
         initMathOpBlock();
     }
 
-    export function getNamespaceColor(ns: string): string {
-        if (pxt.appTarget.appTheme.blockColors && pxt.appTarget.appTheme.blockColors[ns])
-            return pxt.appTarget.appTheme.blockColors[ns] as string;
-        if (blockColors[ns])
-            return blockColors[ns] as string;
-        return "";
-    }
-
-    export function getNamespaceIcon(ns: string): string {
-        if (pxt.appTarget.appTheme.blockIcons && pxt.appTarget.appTheme.blockIcons[ns]) {
-            return pxt.appTarget.appTheme.blockIcons[ns] as string;
-        }
-        if (blockIcons[ns]) {
-            return blockIcons[ns] as string;
-        }
-        return "";
-    }
-
-    export function initFlyouts(workspace: Blockly.Workspace) {
-        workspace.registerToolboxCategoryCallback(Blockly.VARIABLE_CATEGORY_NAME, Blockly.Variables.flyoutCategory);
-        workspace.registerToolboxCategoryCallback(Blockly.PROCEDURE_CATEGORY_NAME, Blockly.Procedures.flyoutCategory);
-    }
-
-    export function initExtensions(workspace: Blockly.Workspace, extensions: pxt.PackageConfig[], callBack?: (name: string) => void) {
-        extensions.forEach(config => {
-            const name = config.name;
-            workspace.registerButtonCallback(`EXT${name}_BUTTON`, function (button) {
-                callBack(name);
-            })
-        })
-    }
-
     function initVariables() {
         let varname = lf("{id:var}item");
         Blockly.Variables.flyoutCategory = function (workspace) {
@@ -2680,16 +1837,14 @@ namespace pxt.blocks {
 
             if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
                 // Add the Heading label
-                let headingLabel = goog.dom.createDom('label') as HTMLElement;
-                headingLabel.setAttribute('text', lf("Variables"));
-                headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
-                headingLabel.setAttribute('web-icon', getNamespaceIcon('variables'));
-                headingLabel.setAttribute('web-icon-color', getNamespaceColor('variables'));
+                let headingLabel = createFlyoutHeadingLabel(lf("Variables"),
+                    pxt.toolbox.getNamespaceColor('variables'),
+                    pxt.toolbox.getNamespaceIcon('variables'));
                 xmlList.push(headingLabel);
             }
 
             let button = goog.dom.createDom('button') as HTMLElement;
-            button.setAttribute('text', lf("Make a Variable"));
+            button.setAttribute('text', lf("Make a Variable..."));
             button.setAttribute('callbackkey', 'CREATE_VARIABLE');
 
             workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
@@ -2705,26 +1860,16 @@ namespace pxt.blocks {
         Blockly.Variables.flyoutCategoryBlocks = function (workspace) {
             let variableModelList = workspace.getVariablesOfType('');
             variableModelList.sort(Blockly.VariableModel.compareByName);
-            // In addition to the user's variables, we also want to display the default
-            // variable name at the top.  We also don't want this duplicated if the
-            // user has created a variable of the same name.
-            for (let i = 0, tempVar: any; tempVar = variableModelList[i]; i++) {
-                if (tempVar.name == varname) {
-                    variableModelList.splice(i, 1);
-                    break;
-                }
-            }
-            const defaultVar = new Blockly.VariableModel(workspace, varname);
-            variableModelList.unshift(defaultVar);
 
             let xmlList: HTMLElement[] = [];
             if (variableModelList.length > 0) {
                 // variables getters first
-                for (let i = 0, variable: any; variable = variableModelList[i]; i++) {
+                for (let i = 0; i < variableModelList.length; i++) {
+                    const variable = variableModelList[i];
                     if (Blockly.Blocks['variables_get']) {
                         let blockText = '<xml>' +
                             '<block type="variables_get" gap="8">' +
-                            Blockly.Variables.generateVariableFieldXml_(variable) +
+                            Blockly.Variables.generateVariableFieldXmlString(variable) +
                             '</block>' +
                             '</xml>';
                         let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
@@ -2738,7 +1883,7 @@ namespace pxt.blocks {
                     let gap = Blockly.Blocks['variables_change'] ? 8 : 24;
                     let blockText = '<xml>' +
                         '<block type="variables_set" gap="' + gap + '">' +
-                        Blockly.Variables.generateVariableFieldXml_(firstVariable) +
+                        Blockly.Variables.generateVariableFieldXmlString(firstVariable) +
                         '</block>' +
                         '</xml>';
                     let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
@@ -2760,7 +1905,7 @@ namespace pxt.blocks {
                     let gap = Blockly.Blocks['variables_get'] ? 20 : 8;
                     let blockText = '<xml>' +
                         '<block type="variables_change" gap="' + gap + '">' +
-                        Blockly.Variables.generateVariableFieldXml_(firstVariable) +
+                        Blockly.Variables.generateVariableFieldXmlString(firstVariable) +
                         '<value name="DELTA">' +
                         '<shadow type="math_number">' +
                         '<field name="NUM">1</field>' +
@@ -2793,6 +1938,9 @@ namespace pxt.blocks {
         const variablesGetDef = pxt.blocks.getBlockDefinition(variablesGetId);
         msg.VARIABLES_GET_CREATE_SET = variablesGetDef.block["VARIABLES_GET_CREATE_SET"];
         installBuiltinHelpInfo(variablesGetId);
+
+        const variablesReporterGetId = "variables_get_reporter";
+        installBuiltinHelpInfo(variablesReporterGetId);
 
         // Dropdown menu of variables_get
         msg.RENAME_VARIABLE = lf("Rename variable...");
@@ -2829,7 +1977,7 @@ namespace pxt.blocks {
                     "inputsInline": true,
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": getNamespaceColor('variables')
+                    "colour": pxt.toolbox.getNamespaceColor('variables')
                 });
 
                 setBuiltinHelpInfo(this, variablesChangeId);
@@ -2858,8 +2006,9 @@ namespace pxt.blocks {
                 .appendField((Blockly as any).Msg.PROCEDURES_DEFNORETURN_TITLE)
                 .appendField(nameField, 'NAME')
                 .appendField('', 'PARAMS');
-            this.setColour(getNamespaceColor('functions'));
+            this.setColour(pxt.toolbox.getNamespaceColor('functions'));
             this.arguments_ = [];
+            this.argumentVarModels_ = [];
             this.setStartHat(true);
             this.setStatements_(true);
             this.statementConnection_ = null;
@@ -2881,7 +2030,7 @@ namespace pxt.blocks {
                     .appendField(nameField, 'NAME');
                 this.setPreviousStatement(true);
                 this.setNextStatement(true);
-                this.setColour(getNamespaceColor('functions'));
+                this.setColour(pxt.toolbox.getNamespaceColor('functions'));
                 this.arguments_ = [];
                 this.quarkConnections_ = {};
                 this.quarkIds_ = null;
@@ -2990,7 +2139,7 @@ namespace pxt.blocks {
                 let workspace = this.workspace;
                 option.callback = function () {
                     let def = Blockly.Procedures.getDefinition(name, workspace);
-                    def && def.select();
+                    if (def) def.select();
                 };
                 options.push(option);
             },
@@ -3003,16 +2152,14 @@ namespace pxt.blocks {
 
             if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
                 // Add the Heading label
-                let headingLabel = goog.dom.createDom('label');
-                headingLabel.setAttribute('text', lf("Functions"));
-                headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
-                headingLabel.setAttribute('web-icon', getNamespaceIcon('functions'));
-                headingLabel.setAttribute('web-icon-class', 'blocklyFlyoutIconfunctions');
-                headingLabel.setAttribute('web-icon-color', getNamespaceColor('functions'));
-                xmlList.push(headingLabel as HTMLElement);
+                let headingLabel = createFlyoutHeadingLabel(lf("Functions"),
+                    pxt.toolbox.getNamespaceColor('functions'),
+                    pxt.toolbox.getNamespaceIcon('functions'),
+                    'blocklyFlyoutIconfunctions');
+                xmlList.push(headingLabel);
             }
 
-            const newFunction = lf("Make a Function");
+            const newFunction = lf("Make a Function...");
             const newFunctionTitle = lf("New function name:");
 
             // Add the "Make a function" button
@@ -3030,7 +2177,7 @@ namespace pxt.blocks {
                  * </xml>
                  */
                 let topBlock = workspace.getTopBlocks(true)[0];
-                let x = 0, y = 0;
+                let x = 10, y = 10;
                 if (topBlock) {
                     let xy = topBlock.getRelativeToSurfaceXY();
                     x = xy.x + (Blockly as any).SNAP_RADIUS * (topBlock.RTL ? -1 : 1);
@@ -3048,9 +2195,11 @@ namespace pxt.blocks {
                 xml.appendChild(block);
                 let newBlockIds = Blockly.Xml.domToWorkspace(xml, workspace);
                 // Close flyout and highlight block
-                (workspace as any).toolbox_.clearSelection();
+                Blockly.hideChaff();
                 let newBlock = workspace.getBlockById(newBlockIds[0]);
                 newBlock.select();
+                // Center on the new block so we know where it is
+                workspace.centerOnBlock(newBlock.id);
             }
 
             workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
@@ -3100,7 +2249,7 @@ namespace pxt.blocks {
                     let block = goog.dom.createDom('block');
                     block.setAttribute('type', templateName);
                     block.setAttribute('gap', '16');
-                    block.setAttribute('colour', getNamespaceColor('functions'));
+                    block.setAttribute('colour', pxt.toolbox.getNamespaceColor('functions'));
                     let field = goog.dom.createDom('field', null, name);
                     field.setAttribute('name', 'NAME');
                     block.appendChild(field);
@@ -3208,6 +2357,34 @@ namespace pxt.blocks {
         installBuiltinHelpInfo(textJoinId);
     }
 
+    function initDebugger() {
+
+        Blockly.Blocks[pxtc.TS_DEBUGGER_TYPE] = {
+            init: function () {
+                let that: Blockly.Block = this;
+                that.setColour(pxt.toolbox.getNamespaceColor('debug'))
+                that.setPreviousStatement(true);
+                that.setNextStatement(true);
+                that.setInputsInline(false);
+                that.appendDummyInput('ON_OFF')
+                    .appendField(new Blockly.FieldLabel(lf("breakpoint"), undefined), "DEBUGGER")
+                    .appendField(new pxtblockly.FieldBreakpoint("1", { 'type': 'number' }), "ON_OFF");
+
+                setHelpResources(this,
+                    pxtc.TS_DEBUGGER_TYPE,
+                    lf("Debugger statement"),
+                    lf("A debugger statement invokes any available debugging functionality"),
+                    '/javascript/debugger',
+                    pxt.toolbox.getNamespaceColor('debug')
+                );
+            }
+        };
+    }
+
+    function initComments() {
+        (Blockly.Msg as any).WORKSPACE_COMMENT_DEFAULT_TEXT = '';
+    }
+
     function initTooltip(blockInfo: pxtc.BlocksInfo) {
 
         const renderTip = (el: any) => {
@@ -3291,6 +2468,33 @@ namespace pxt.blocks {
         }
     }
 
+    function removeBlock(fn: pxtc.SymbolInfo) {
+        delete Blockly.Blocks[fn.attributes.blockId];
+        delete cachedBlocks[fn.attributes.blockId];
+    }
+
+    function categoryElement(tb: Element, nameid: string): Element {
+        return tb ? getFirstChildWithAttr(tb, "category", "nameid", nameid.toLowerCase()) : undefined;
+    }
+
+    function collapseSubcategories(cat: Blockly.Toolbox.TreeNode, child?: Blockly.Toolbox.TreeNode) {
+        while (cat) {
+            if (cat.isUserCollapsible_ && cat.getTree() && cat != child && (!child || !isChild(child, cat))) {
+                cat.setExpanded(false);
+                cat.updateRow();
+            }
+            cat = cat.getParent();
+        }
+    }
+
+    function isChild(child: Blockly.Toolbox.TreeNode, parent: Blockly.Toolbox.TreeNode): boolean {
+        const myParent = child.getParent();
+        if (myParent) {
+            return myParent === parent || isChild(myParent, parent);
+        }
+        return false;
+    }
+
     /**
      * <block type="pxt_wait_until">
      *     <value name="PREDICATE">
@@ -3300,7 +2504,7 @@ namespace pxt.blocks {
      *     </value>
      * </block>
      */
-    function mkPredicateBlock(type: string) {
+    export function mkPredicateBlock(type: string) {
         const block = document.createElement("block");
         block.setAttribute("type", type);
 
@@ -3308,16 +2512,22 @@ namespace pxt.blocks {
         value.setAttribute("name", "PREDICATE");
         block.appendChild(value);
 
-        const shadow = document.createElement("shadow");
-        shadow.setAttribute("type", "logic_boolean");
+        const shadow = mkFieldBlock("logic_boolean", "BOOL", "TRUE", true);
         value.appendChild(shadow);
 
-        const field = document.createElement("field");
-        field.setAttribute("name", "BOOL");
-        field.textContent = "TRUE";
-        shadow.appendChild(field);
-
         return block;
+    }
+
+    export function mkFieldBlock(type: string, fieldName: string, fieldValue: string, isShadow: boolean) {
+        const fieldBlock = document.createElement(isShadow ? "shadow" : "block");
+        fieldBlock.setAttribute("type", Util.htmlEscape(type));
+
+        const field = document.createElement("field");
+        field.setAttribute("name", Util.htmlEscape(fieldName));
+        field.textContent = Util.htmlEscape(fieldValue);
+        fieldBlock.appendChild(field);
+
+        return fieldBlock;
     }
 
     let jresIconCache: Map<string> = {};
@@ -3409,17 +2619,29 @@ namespace pxt.blocks {
         return str;
     }
 
-    function shouldUseBlockInSearch(blockId: string, namespaceId: string, filters: BlockFilters): boolean {
-        if (!filters) {
-            return true;
+    /**
+     * Blockly variable fields can't be set directly; you either have to use the
+     * variable ID or set the value of the model and not the field
+     */
+    export function setVarFieldValue(block: Blockly.Block, fieldName: string, newName: string) {
+        const varField = block.getField(fieldName);
+
+        // Check for an existing model with this name; otherwise we'll create
+        // a second variable with the same name and it will show up twice in the UI
+        const vars = block.workspace.getAllVariables();
+        let foundIt = false;
+        if (vars && vars.length) {
+            for (let v = 0; v < vars.length; v++) {
+                const model = vars[v];
+                if (model.name === newName) {
+                    varField.setValue(model.getId());
+                    foundIt = true;
+                }
+            }
         }
-        if (namespaceId) {
-            namespaceId = namespaceId.toLowerCase();
+        if (!foundIt) {
+            (varField as any).initModel();
+            (varField as any).getVariable().name = newName;
         }
-        const isNamespaceFiltered = filters.namespaces &&
-            (filters.namespaces[namespaceId] === FilterState.Disabled || filters.namespaces[namespaceId] === FilterState.Hidden);
-        const isBlockFiltered = filters.blocks &&
-            (filters.blocks[blockId] === FilterState.Disabled || filters.blocks[blockId] === FilterState.Hidden);
-        return !isNamespaceFiltered && !isBlockFiltered;
     }
 }

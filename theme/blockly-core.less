@@ -1,92 +1,110 @@
-
 /* Import all components */
+
 @import 'themes/default/globals/site.variables';
 @import 'themes/pxt/globals/site.variables';
-
 @import 'fieldeditors';
 
 /*******************************
-             Blockly
+        Blockly SVG
 *******************************/
-
-/* Lower Z index for BlocklyWidgetDiv and grid picker tooltips */
-.blocklyWidgetDiv {
-    z-index: @blocklyWidgetDivZIndex;
-}
-.blocklyDropDownDiv {
-    z-index: @blocklyDropdownDivZIndex;
-}
-
-.blocklyTooltipDiv {
-    border:none !important;
-    box-shadow: none !important;
-    background-color: transparent !important;
-    opacity: 1 !important;
-    /* wrap the JS text inside a blockly Tooltip */
-    overflow-wrap: break-word;
-}
-
-.blocklyToolboxDiv, .monacoToolboxDiv {
-    background: @blocklyToolboxColor !important;
-    z-index: @blocklyToolboxZIndex;
-    -webkit-transition: width 1s, background 0.3s; /* Safari */
-    -moz-transition: width 1s, background 0.3s; /* Mozilla */
-    -webkit-transition-timing-function: ease-in; /* Mozilla */
-    -o-transition: width 1s, background 0.3s; /* Opera */
-    transition: width 1s, background 0.3s;
-    transition-timing-function: ease-in;
-}
-.blocklyToolboxDiv.blocklyToolboxDeleting {
-    background: lighten(@red, 10%) !important;
-}
 
 svg.blocklySvg {
     background-color: @blocklySvgColor !important;
 }
-.hc svg.blocklySvg {
-    background-color: black !important;
-}
+
 #maineditor, #blocksEditor > div.loading {
     background: @blocklySvgColor;
 }
-#blocksEditor .injectionDiv svg {
-    overflow: visible;
+
+#blocksEditor {
+    position: absolute;
+    .injectionDiv svg {
+        overflow: visible;
+    }
+    > div.loading {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+        opacity: 0.7;
+    }
 }
 
-span.blocklyTreeLabel, text.blocklyText, input.blocklyHtmlInput, .blocklyDropDownDiv .goog-menuitem {
+.blocklyMainBackground {
+    stroke: none !important;
+}
+
+.rtl text.blocklyText {
+    text-align: right;
+}
+
+body.blocklyMinimalBody {
+    min-width: initial;
+    overflow: initial;
+}
+
+@supports (-ms-accelerator:true) {
+    .rtl .blocklyPreview {
+        right: 50%;
+        left: auto;
+    }
+}
+
+/*******************************
+        Blockly Text
+*******************************/
+
+text.blocklyText, input.blocklyHtmlInput, .blocklyDropDownDiv .goog-menuitem, textarea.blocklyCommentTextarea {
     font-family: @blocklyFont !important;
     font-weight: normal;
 }
+
+text.blocklyFlyoutLabelText, .blocklyFlyoutButton text.blocklyText {
+    font-family: @pageFont !important;
+}
+
 text.blocklyText.blocklyBoldText {
     font-weight: bold;
 }
+
 text.blocklyText.blocklyItalicizedText {
     font-style: italic;
 }
+
 text.blocklyText.blocklyBoldItalicizedText {
     font-weight: bold;
     font-style: italic;
 }
 
+
 /* Used by custom field in grey expression blocks */
+
 .blocklyGreyExpressionBlockText {
     color: white;
 }
 
-/* Blockly toolbox font size same as the page font */
-span.blocklyTreeLabel {
-    font-family: @pageFont !important;
-    font-weight: 200;
-    font-size: 1.15rem;
+
+/*******************************
+        Blockly Flyout
+*******************************/
+
+.blocklyFlyoutButton {
+    fill: none !important;
 }
 
-span.blocklyTreeLabel, text.blocklyText {
-    user-drag: none;
-    user-select: none;
-    -moz-user-select: none;
-    -webkit-user-drag: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
+.blocklyFlyoutButton:hover {
+    fill: @primaryColor !important;
+}
+
+.blocklyFlyoutButtonBackground {
+    stroke: @primaryColor !important;
+    stroke-width: 3px !important;
+}
+
+.blocklyFlyoutButton .blocklyText {
+    fill: white !important;
 }
 
 .blocklyFlyoutButtonShadow {
@@ -97,10 +115,12 @@ span.blocklyTreeLabel, text.blocklyText {
     fill: @flyoutLabelColor !important;
     font-size: 1rem;
 }
+
 .blocklyFlyoutHeading .blocklyFlyoutLabelText {
     fill: @flyoutLabelColor !important;
     font-size: 1.5rem;
 }
+
 .blocklyFlyoutLabelText:hover {
     fill: @flyoutLabelColor !important;
 }
@@ -109,320 +129,113 @@ span.blocklyTreeLabel, text.blocklyText {
     font-family: 'Icons';
     font-size: 1.5rem;
 }
+
 line.blocklyFlyoutLine {
     stroke: @flyoutLabelColor;
 }
 
+
 /* Opacity of blockly flyout background */
-.blocklyFlyoutBackground {
-    fill: @blocklyFlyoutColor;
+path.blocklyFlyoutBackground {
+    fill: @blocklyFlyoutColor !important;
     fill-opacity: @blocklyFlyoutColorOpacity !important;
 }
 
-div.blocklyTreeRow, span.blocklyTreeLabel {
-    cursor: pointer;
+
+/*******************************
+        Field divs
+*******************************/
+
+div.blocklyWidgetDiv {
+    position: fixed;
 }
 
-div.blocklyTreeRoot {
-    padding: 0;
+/* Lower Z index for BlocklyWidgetDiv and grid picker tooltips */
+
+.blocklyWidgetDiv {
+    z-index: @blocklyWidgetDivZIndex;
 }
 
-/* This horrendous selector and the next are for subcategories in the Blockly toolbox */
-div.blocklyTreeRoot div div div div div.blocklyTreeRow {
-    border-left-width: 12px !important;
-    padding-left: 0px !important;
+.blocklyDropDownDiv {
+    z-index: @blocklyDropdownDivZIndex;
 }
 
-div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
-    font-size: 1rem;
+.blocklyTooltipDiv {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    opacity: 1 !important;
+    /* wrap the JS text inside a blockly Tooltip */
+    overflow-wrap: break-word;
 }
 
-/* The trash icon inside the toolbox */
-#blocklyTrashIcon {
-    position: absolute;
-    top: 30%;
-    left: 0;
-    text-align: center;
-    width: 100px;
-    height: 80px;
-    z-index: @blocklyTrashIconZIndex;
-    font-size:5rem;
-    color: @trashIconColor;
-}
-
-/* Blockly / Monaco Toolbox Buttons */
-#blocklyToolboxButtons, #monacoToolboxButtons {
-    margin-top: 0.1rem;
-    font-size:3rem;
-}
-
-/* Blockly Search bar */
-.blocklySearchInputField {
-    border: 0 !important;
-    border-radius: 0 !important;
-}
-
-div.blocklyTreeIcon span {
-    vertical-align: middle;
-}
-
-/* Blockly toolbox icons */
-span.blocklyTreeIcon {
-    opacity: 1;
-    margin: 0.0em 0.25em 0.0em 0.25em;
-    width: 30px;
-    font-family: 'Icons';
-    font-style: normal;
-    font-weight: normal;
-    text-decoration: inherit;
-    text-align: center;
-    speak: none;
-    font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    -webkit-font-smoothing: antialiased;
-    backface-visibility: hidden;
-    font-size: 1.3rem;
-    height: 100%;
-    display: none;
-}
-.blocklyTreeSelected .blocklyTreeIcon{
-    color: white;
-}
-.blocklyTreeIcon.blocklyTreeIconsearch::before {
-    content: "\f002";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconDefault::before {
-    content: "\f12e";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconadvancedcollapsed::before {
-    content: "\f078";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconadvancedexpanded::before {
-    content: "\f077";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconmore::before {
-    content: "\f141";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconaddpackage::before {
-    content: "\f055";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconloops::before {
-    content: "\f01e";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconmath::before {
-    content: "\f1ec";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconlogic::before {
-    content: "\f074";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconvariables::before {
-    content: "\f039";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIcontext::before {
-    content: "\f035";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconarrays::before {
-    content: "\f0cb";
-    vertical-align: middle;
-}
-.blocklyTreeIcon.blocklyTreeIconfunctions {
-    font-family: xicon !important;
-}
-.blocklyTreeIcon.blocklyTreeIconfunctions::before {
-    content: "\f109";
-    vertical-align: middle;
-}
-.blocklyFlyoutLabelIcon.blocklyFlyoutIconfunctions {
-    font-family: xicon !important;
-}
 
 /* Blockly Slider field */
+
 .blocklyWidgetDiv .goog-slider-horizontal {
     background: white;
     border: 2px solid black;
     border-radius: 5px;
 }
 
-/* Fade out disabled blocks, but don't completely lose the colour */
-.blocklyDisabled > .blocklyPathDark {
-    display: block !important;
-    fill-opacity: 0.5;
-}
 
-/* This is to ensure the leds inside showLeds fill the entire checkbox */
+/* (microbit only) This is to ensure the leds inside showLeds fill the entire checkbox */
+
 text.blocklyCheckbox {
     fill: #ff3030 !important;
     text-shadow: 0px 0px 6px #f00;
     font-size: 17pt !important;
 }
 
-div.blocklyTreeRow {
-    height: 100%;
-}
+
+/*******************************
+        Blocks
+*******************************/
+
 
 /* Transulcent blocks when dragging */
+
 .blocklyDragging>.blocklyPath {
-   fill-opacity: 0.7;
+    fill-opacity: 0.7;
 }
 
-/* Scrollbars */
+
+/* Fade out disabled blocks, but don't completely lose the colour */
+
+.blocklyDisabled > .blocklyPathDark {
+    display: block !important;
+    fill-opacity: 0.5;
+}
+
+
+/*******************************
+        Scrollbars
+*******************************/
+
 .blocklyScrollbarBackground {
     fill: @blocklyScrollbarBackgroundColor;
 }
+
 .blocklyScrollbarHandle {
     fill: @blocklyScrollbarColor;
     opacity: @blocklyScrollbarOpacity;
 }
-.blocklyScrollbarBackground:hover+.blocklyScrollbarHandle, .blocklyScrollbarHandle:hover,
-.blocklyScrollbarBackground:active+.blocklyScrollbarHandle, .blocklyScrollbarHandle:active {
+
+.blocklyScrollbarBackground:hover+.blocklyScrollbarHandle, .blocklyScrollbarHandle:hover, .blocklyScrollbarBackground:active+.blocklyScrollbarHandle, .blocklyScrollbarHandle:active {
     stroke-width: 3;
     stroke: @blocklyScrollbarColor;
 }
+
 
 /*******************************
         Media Adjustments
 *******************************/
 
-/* Large Monitor */
-@media only screen and (min-width: @largeMonitorBreakpoint) {
-    /* Blockly */
-    div.blocklyTreeRow {
-        min-width: @blocklyRowWidthWide;
-        min-height: @blocklyRowHeightWide;
-    }
-    span.blocklyTreeIcon {
-        line-height: @blocklyRowHeightWide;
-        min-height: @blocklyRowHeightWide;
-    }
-    #blocklyTrashIcon {
-        width: @blocklyRowWidthWide;
-    }
-}
-
-/* Small Monitor */
-@media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
-    /* Blockly row */
-    div.blocklyTreeRow {
-        min-width: @blocklyRowWidthComputer;
-        min-height: @blocklyRowHeightComputer;
-    }
-    span.blocklyTreeIcon {
-        line-height: @blocklyRowHeightComputer;
-        min-height: @blocklyRowHeightComputer;
-    }
-    #blocklyTrashIcon {
-        width: @blocklyRowWidthComputer;
-    }
-}
-
-/* Tablet */
-@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
-    /* Blockly */
-    div.blocklyTreeRow {
-        min-width: @blocklyRowWidthTablet;
-        min-height: @blocklyRowHeightTablet;
-        border-left-width: 12px !important;
-    }
-    span.blocklyTreeIcon {
-        line-height: @blocklyRowHeightTablet;
-        min-height: @blocklyRowHeightTablet;
-    }
-    #blocklyTrashIcon {
-        width: @blocklyRowWidthTablet;
-    }
-    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
-        border-left-width: 18px !important;
-    }
-}
 
 /* Mobile */
+
 @media only screen and (max-width: @largestMobileScreen) {
-    div.blocklyTreeRow {
-        min-width: @blocklyRowWidthMobile;
-        min-height: @blocklyRowHeightMobile;
-        border-left-width: 6px !important;
-    }
-    span.blocklyTreeIcon {
-        line-height: @blocklyRowHeightMobile;
-        min-height: @blocklyRowHeightMobile;
-    }
-    #blocklyTrashIcon {
-        width: @blocklyRowWidthMobile;
-    }
-}
-
-/* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
-@media only screen and (min-width: @computerBreakpoint) {
-    /* Blockly */
-    div.blocklyTreeRow {
-        border-left-width: 12px !important;
-    }
-    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
-        border-left-width: 18px !important;
-    }
-}
-
-/* <= Small Monitor (Mobile + Tablet + Small Monitor) */
-@media only screen and (max-width: @largestSmallMonitor) {
-    /* Blockly */
-    span.blocklyTreeLabel {
-        font-size:1rem;
-    }
-}
-
-/* <= Tablet (Mobile + Tablet) */
-@media only screen and (max-width: @largestTabletScreen) {
-    /* Blockly */
-    span.blocklyTreeLabel {
-        font-size:1rem;
-    }
-}
-
-/* Mobile */
-@media only screen and (max-width: @largestMobileScreen) {
-    /* Hide blockly tree labels on mobile */
-    span.blocklyTreeLabel, div.blocklyTreeRow:hover span.blocklyTreeLabel, div.blocklyTreeRow.blocklyTreeSelected:hover span.blocklyTreeLabel{
-        display: none !important;
-    }
-    div.blocklyTreeRow {
-        padding-right: 0;
-        text-align: center;
-    }
-    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
-        border-left-width: 8px !important;
-    }
     text.blocklyCheckbox {
         font-size: 17pt !important;
     }
-    /* Blockly trash icon */
-    #blocklyTrashIcon {
-        font-size: 3rem;
-    }
-    /* Hide the blockly toolbox search */
-    #blocklySearchArea {
-        display: none !important;
-    }
-}
-
-
-/*******************************
-    Blockly Accessibility
-*******************************/
-
-.blocklyTreeRow:focus {
-    outline: none;
-}
-.blocklyTreeRow:not(.blocklyTreeSelected):focus {
-    background-color: #e4e4e4;
 }

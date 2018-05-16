@@ -243,11 +243,12 @@
         -webkit-transition: font-size 167ms cubic-bezier(.1, .9, .2, 1);
         transition: font-size 167ms cubic-bezier(.1, .9, .2, 1);
     }
-    .fix-top #makecode-header {
+    /* .fix-top flickers... */
+    #makecode-header {
         -webkit-box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.2);
         box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.2);
     }
-    .fix-top #makecode-header h1 {
+    #makecode-header h1 {
         font-size: 24px;
         padding-top: 12px;
     }

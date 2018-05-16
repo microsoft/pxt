@@ -5,13 +5,10 @@ import * as pkg from "./package"
 import * as core from "./core"
 import * as srceditor from "./srceditor"
 import * as sui from "./sui"
-import * as codecard from "./codecard"
 import * as data from "./data";
 
-import Cloud = pxt.Cloud
 import Util = pxt.Util
 
-const lf = Util.lf
 const maxEntriesPerChart: number = 4000;
 
 export class Editor extends srceditor.Editor {
@@ -92,6 +89,19 @@ export class Editor extends srceditor.Editor {
         window.addEventListener("message", this.processEvent.bind(this), false)
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme;
         this.lineColors = (serialTheme && serialTheme.lineColors) || this.lineColors;
+
+        this.goBack = this.goBack.bind(this);
+        this.toggleRecording = this.toggleRecording.bind(this);
+        this.downloadRaw = this.downloadRaw.bind(this);
+        this.downloadCSV = this.downloadCSV.bind(this);
+    }
+
+    private loadSmoothieChartsPromise: Promise<void>
+    private loadSmoothieChartsAsync(): Promise<void> {
+        if (!this.loadSmoothieChartsPromise) {
+            this.loadSmoothieChartsPromise = pxt.BrowserUtils.loadScriptAsync("smoothie/smoothie_compressed.js");
+        }
+        return this.loadSmoothieChartsPromise;
     }
 
     saveMessageForLater(m: pxsim.SimulatorSerialMessage) {
@@ -137,7 +147,7 @@ export class Editor extends srceditor.Editor {
 
         // is this a CSV data entry
         if (/^\s*(-?\d+(\.\d*)?)(\s*,\s*(-?\d+(\.\d*)?))+\s*,?\s*$/.test(data)) {
-            const parts = data.split(/\s*,\s*/).map(s => parseFloat(s))
+            data.split(/\s*,\s*/).map(s => parseFloat(s))
                 .filter(d => !isNaN(d))
                 .forEach((d, i) => {
                     const variable = "data." + (this.csvHeaders[i] || i);
@@ -170,23 +180,26 @@ export class Editor extends srceditor.Editor {
     }
 
     appendGraphEntry(source: string, variable: string, nvalue: number, receivedTime: number) {
-        //See if there is a "home chart" that this point belongs to -
-        //if not, create a new chart
-        let homeChart: Chart = undefined
-        for (let i = 0; i < this.charts.length; ++i) {
-            let chart = this.charts[i]
-            if (chart.shouldContain(source, variable)) {
-                homeChart = chart
-                break
-            }
-        }
-        if (!homeChart) {
-            homeChart = new Chart(source, variable, this.chartIdx, this.currentLineColors)
-            this.chartIdx++;
-            this.charts.push(homeChart)
-            this.chartRoot.appendChild(homeChart.getElement());
-        }
-        homeChart.addPoint(variable, nvalue, receivedTime)
+        this.loadSmoothieChartsAsync()
+            .then(() => {
+                //See if there is a "home chart" that this point belongs to -
+                //if not, create a new chart
+                let homeChart: Chart = undefined
+                for (let i = 0; i < this.charts.length; ++i) {
+                    let chart = this.charts[i]
+                    if (chart.shouldContain(source, variable)) {
+                        homeChart = chart
+                        break
+                    }
+                }
+                if (!homeChart) {
+                    homeChart = new Chart(source, variable, this.chartIdx, this.currentLineColors)
+                    this.chartIdx++;
+                    this.charts.push(homeChart)
+                    this.chartRoot.appendChild(homeChart.getElement());
+                }
+                homeChart.addPoint(variable, nvalue, receivedTime)
+            })
     }
 
     appendConsoleEntry(data: string) {
@@ -339,34 +352,46 @@ export class Editor extends srceditor.Editor {
         this.parent.openPreviousEditor()
     }
 
+    handleStartPauseRef = (c: any) => {
+        this.startPauseButton = c;
+    }
+
+    handleChartRootRef = (c: any) => {
+        this.chartRoot = c;
+    }
+
+    handleConsoleRootRef = (c: any) => {
+        this.consoleRoot = c;
+    }
+
     display() {
         return (
             <div id="serialArea">
                 <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <sui.Button title={lf("Go back")} class="ui icon circular small button editorBack" ariaLabel={lf("Go back")} onClick={this.goBack.bind(this)}>
+                            <sui.Button text={lf("Go back")} title={lf("Go back to the previous editor")} className="icon circular small editorBack left labeled" ariaLabel={lf("Go back")} onClick={this.goBack}>
                                 <sui.Icon icon="arrow left" />
                             </sui.Button>
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button title={lf("Export data")} class="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => this.downloadCSV()}>
+                        <sui.Button title={lf("Export data")} className="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={this.downloadCSV}>
                             <sui.Icon icon="download" />
                         </sui.Button>
-                        <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
+                        <StartPauseButton ref={this.handleStartPauseRef} active={this.active} toggle={this.toggleRecording} />
                         <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                     </div>
                 </div>
-                <div id="serialCharts" ref={e => this.chartRoot = e}></div>
+                <div id="serialCharts" ref={this.handleChartRootRef}></div>
                 <div id="consoleHeader" className="ui serialHeader">
                     <div className="rightHeader">
-                        <sui.Button title={lf("Copy text")} class="ui icon button editorExport" ariaLabel={lf("Copy text")} onClick={() => this.downloadRaw()}>
+                        <sui.Button title={lf("Copy text")} className="ui icon button editorExport" ariaLabel={lf("Copy text")} onClick={this.downloadRaw}>
                             <sui.Icon icon="copy" />
                         </sui.Button>
                     </div>
                 </div>
-                <div id="serialConsole" ref={e => this.consoleRoot = e}></div>
+                <div id="serialConsole" ref={this.handleConsoleRootRef}></div>
             </div>
         )
     }
@@ -384,7 +409,7 @@ export interface StartPauseButtonState {
     active?: boolean;
 }
 
-export class StartPauseButton extends data.Component<StartPauseButtonProps, StartPauseButtonState> {
+export class StartPauseButton extends data.PureComponent<StartPauseButtonProps, StartPauseButtonState> {
     constructor(props: StartPauseButtonProps) {
         super(props);
         this.state = {
@@ -396,7 +421,7 @@ export class StartPauseButton extends data.Component<StartPauseButtonProps, Star
         const { toggle } = this.props;
         const { active } = this.state;
 
-        return <sui.Button title={active ? lf("Pause recording") : lf("Start recording")} class={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
+        return <sui.Button title={active ? lf("Pause recording") : lf("Start recording")} className={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
             <sui.Icon icon={active ? "pause icon" : "circle icon"} />
         </sui.Button>
     }

@@ -1,19 +1,17 @@
 {
+    "rulesDirectory": [
+        "node_modules/tslint-microsoft-contrib"
+    ],
     "rules": {
-        "class-name": true,
-        "comment-format": [
-            false,
-            "check-space"
-        ],
         "indent": [
             true,
             "spaces"
         ],
-        "no-duplicate-variable": true,
-        "no-eval": true,
         "no-internal-module": true,
-        "no-trailing-whitespace": true,
-        "no-var-keyword": true,
+        "no-trailing-whitespace": [
+            true,
+            "ignore-comments"
+        ],
         "one-line": [
             true,
             "check-open-brace",
@@ -26,10 +24,6 @@
         "semicolon": [
             false,
             "always"
-        ],
-        "triple-equals": [
-            false,
-            "allow-null-check"
         ],
         "typedef-whitespace": [
             true,
@@ -51,6 +45,200 @@
             "check-decl",
             "check-operator",
             "check-type"
-        ]
+        ],
+
+        /**
+         * Security Rules. The following rules should be turned on because they find security issues
+         * or are recommended in the Microsoft Secure Development Lifecycle (SDL)
+         */
+        "insecure-random": false, // pxt-override from true
+        "no-banned-terms": true,
+        "no-cookies": false, // pxt-override from true
+        "no-delete-expression": true,
+        "no-disable-auto-sanitization": true,
+        "no-document-domain": true,
+        "no-document-write": true,
+        "no-eval": true,
+        "no-exec-script": true,
+        "no-function-constructor-with-string-args": true,
+        "no-http-string": [
+            true,
+            "http://www.w3.org/?.*"
+        ],
+        "no-inner-html": true,
+        "no-octal-literal": true,
+        // pxt:override "no-reserved-keywords": true,
+        "no-string-based-set-immediate": true,
+        "no-string-based-set-interval": true,
+        "no-string-based-set-timeout": true,
+        "non-literal-require": true,
+        "possible-timing-attack": true,
+        "react-anchor-blank-noopener": true,
+        "react-iframe-missing-sandbox": true,
+        "react-no-dangerous-html": true,
+
+        /**
+          * Common Bugs and Correctness. The following rules should be turned on because they find
+          * common bug patterns in the code or enforce type safety.
+          */
+        "await-promise": true,
+        // pxt:override (TODO) "forin": true,
+        "jquery-deferred-must-complete": true,
+        "label-position": true,
+        "match-default-export-name": true,
+        "mocha-avoid-only": true,
+        "mocha-no-side-effect-code": true,
+        // pxt:override "no-any": true,
+        "no-arg": true,
+        // pxt:override "no-backbone-get-set-outside-model": true,
+        // pxt:override "no-bitwise": true,
+        "no-conditional-assignment": true,
+        // pxt:override "no-console": [false, "debug", "info", "log", "time", "timeEnd", "trace"],
+        // pxt:override (more work to be done here) "no-constant-condition": true,
+        "no-control-regex": true,
+        // pxt:override "no-debugger": true,
+        "no-duplicate-super": true,
+        "no-duplicate-switch-case": true,
+        "no-duplicate-variable": true,
+        // pxt:override (TODO) "no-empty": true,
+        // pxt:override "no-floating-promises": true,
+        "no-for-in-array": true,
+        // pxt:override "no-implicit-dependencies": true,
+        "no-import-side-effect": true,
+        // pxt:override "no-increment-decrement": true,
+        "no-invalid-regexp": true,
+        "no-invalid-template-strings": true,
+        // pxt:override "no-invalid-this": true,
+        "no-jquery-raw-elements": true,
+        "no-misused-new": true,
+        "no-non-null-assertion": true,
+        // pxt:override (TODO) "no-object-literal-type-assertion": true,
+        // pxt:override "no-parameter-reassignment": true,
+        "no-reference-import": true,
+        "no-regex-spaces": true,
+        "no-sparse-arrays": true,
+        // pxt:override "no-string-literal": true,
+        "no-string-throw": true,
+        "no-submodule-imports": true,
+        "no-unnecessary-bind": true,
+        // pxt:override "no-unnecessary-callback-wrapper": true,
+        // pxt:override "no-unnecessary-initializer": true,
+        "no-unnecessary-override": true,
+        // pxt:override "no-unsafe-any": true,
+        "no-unsafe-finally": true,
+        "no-unused-expression": true,
+        // pxt:override (TODO) "no-use-before-declare": true,
+        "no-with-statement": true,
+        // pxt:override "promise-function-async": true,
+        // pxt:override (TODO 1) "promise-must-complete": true,
+        // pxt:override "radix": true,
+        "react-this-binding-issue": true,
+        "react-unused-props-and-state": true,
+        // pxt:override (TODO) "restrict-plus-operands": true, // the plus operand should really only be used for strings and numbers
+        // pxt:override "strict-boolean-expressions": true,
+        // pxt:override "switch-default": true,
+        // pxt:override "switch-final-break": true,
+        "triple-equals": [
+            false,
+            "allow-null-check"
+        ], // pxt-override
+        "use-isnan": true,
+        // pxt:override (TODO) "use-named-parameter": true,
+
+        /**
+          * Code Clarity. The following rules should be turned on because they make the code
+          * generally more clear to the reader.
+          */
+        //  "adjacent-overload-signatures": true,
+        //  "array-type": [true, "array"],
+        //  "arrow-parens": false, // for simple functions the parens on arrow functions are not needed
+        //  "ban-comma-operator": true, // possibly controversial
+        //  "binary-expression-operand-order": true,
+        //  "callable-types": true,
+        //  "chai-prefer-contains-to-index-of": true,
+        //  "chai-vague-errors": true,
+        "class-name": true,
+        "comment-format": [
+            false,
+            "check-space"
+        ], // pxt-override
+        //  "completed-docs": [true, "classes"],
+        //  "export-name": true,
+        //  "function-name": true,
+        //  "import-name": true,
+        //  "interface-name": true,
+        //  "jsdoc-format": true,
+        //  "max-classes-per-file": [true, 3],  // we generally recommend making one public class per file
+        //  "max-file-line-count": true,
+        //  "max-func-body-length": [true, 100, {"ignore-parameters-to-function-regex": "describe"}],
+        //  "max-line-length": [true, 140],
+        //  "member-access": true,
+        //  "member-ordering": [true, { "order": "fields-first" }],
+        //  "missing-jsdoc": true,
+        //  "mocha-unneeded-done": true,
+        //  "new-parens": true,
+        //  "no-construct": true,
+        //  "no-default-export": true,
+        //  "no-duplicate-imports": true,
+        //  "no-empty-interface": true,
+        //  "no-for-in": true,
+        //  "no-function-expression": true,
+        //  "no-inferrable-types": false, // turn no-inferrable-types off in order to make the code consistent in its use of type decorations
+        //  "no-multiline-string": true, // multiline-strings often introduce unnecessary whitespace into the string literals
+        //  "no-null-keyword": false, // turn no-null-keyword off and use undefined to mean not initialized and null to mean without a value
+        //  "no-parameter-properties": true,
+        //  "no-redundant-jsdoc": true,
+        //  "no-relative-imports": true,
+        //  "no-require-imports": true,
+        //  "no-return-await": true,
+        //  "no-shadowed-variable": true,
+        //  "no-suspicious-comment": true,
+        //  "no-this-assignment": true,
+        //  "no-typeof-undefined": true,
+        //  "no-unnecessary-class": true,
+        //  "no-unnecessary-field-initialization": true,
+        //  "no-unnecessary-local-variable": true,
+        //  "no-unnecessary-qualifier": true,
+        //  "no-unnecessary-type-assertion": true,
+        "no-unsupported-browser-code": true,
+        //  "no-useless-files": true,
+        "no-var-keyword": true,
+        //  "no-var-requires": true,
+        //  "no-void-expression": true,
+        //  "number-literal-format": true,
+        //  "object-literal-sort-keys": false, // turn object-literal-sort-keys off and sort keys in a meaningful manner
+        //  "one-variable-per-declaration": true,
+        //  "only-arrow-functions": false,  // there are many valid reasons to declare a function
+        //  "ordered-imports": true,
+        //  "prefer-array-literal": true,
+        //  "prefer-const": true,
+        //  "prefer-for-of": true,
+        //  "prefer-method-signature": true,
+        //  "prefer-object-spread": true,
+        //  "prefer-template": true,
+        //  "type-literal-delimiter": true,
+        //  "typedef": [true, "call-signature", "arrow-call-signature", "parameter", "arrow-parameter", "property-declaration", "variable-declaration", "member-variable-declaration"],
+        //  "underscore-consistent-invocation": true,
+        //  "unified-signatures": true,
+        //  "use-default-type-parameter": true,
+        //pxt: declared-above "variable-name": true,
+        /**
+          * Accessibility. The following rules should be turned on to guarantee the best user
+          * experience for keyboard and screen reader users.
+          */
+        "react-a11y-anchors": true,
+        "react-a11y-aria-unsupported-elements": true,
+        "react-a11y-event-has-role": true,
+        "react-a11y-image-button-has-alt": true,
+        "react-a11y-img-has-alt": true,
+        "react-a11y-lang": true,
+        "react-a11y-meta": true,
+        "react-a11y-props": true,
+        "react-a11y-proptypes": true,
+        "react-a11y-role": true,
+        "react-a11y-role-has-required-aria-props": true,
+        "react-a11y-role-supports-aria-props": true,
+        "react-a11y-tabindex-no-positive": true,
+        "react-a11y-titles": true
     }
 }

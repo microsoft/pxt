@@ -1,16 +1,9 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
-import * as workspace from "./workspace";
 import * as data from "./data";
-import * as sui from "./sui";
-import * as pkg from "./package";
 import * as core from "./core";
-import * as compiler from "./compiler";
-
-import * as codecard from "./codecard"
-import * as gallery from "./gallery";
+import * as sui from "./sui";
 import * as ext from "./extensionManager";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -28,7 +21,6 @@ interface ExtensionsState {
 }
 
 export class Extensions extends data.Component<ISettingsProps, ExtensionsState> implements ext.ExtensionHost {
-    private packagesConfig: pxt.PackagesConfig;
     private extensionWrapper: HTMLDivElement;
     private manager: ext.ExtensionManager;
 
@@ -42,6 +34,11 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         }
         this.manager = new ext.ExtensionManager(this);
         window.addEventListener("message", this.processMessage.bind(this), false)
+
+        this.hide = this.hide.bind(this);
+        this.updateDimensions = this.updateDimensions.bind(this);
+        this.onApprovedDecision = this.onApprovedDecision.bind(this);
+        this.onDeniedDecision = this.onDeniedDecision.bind(this);
     }
 
     processMessage(ev: MessageEvent) {
@@ -76,9 +73,11 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         frame.style.display = 'none';
 
         // reload project to update changes from the editor
+        core.showLoading("reloadproject", lf("loading..."));
         this.props.parent.reloadHeaderAsync()
             .done(() => {
                 this.send(this.state.extension, { type: "pxtpkgext", event: "exthidden" } as pxt.editor.HiddenEvent);
+                core.hideLoading("reloadproject");
             });
     }
 
@@ -137,7 +136,16 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
     }
 
     componentDidUpdate() {
-        this.updateDimensions();
+        setTimeout(() => {
+            this.updateDimensions();
+        }, 0);
+    }
+
+    componentWillUpdate(nextProps: any, nextState: ExtensionsState) {
+        if (nextState.extension && nextState.visible) {
+            // Start rendering the iframe earlier
+            const frame = Extensions.getFrame(nextState.extension, true);
+        }
     }
 
     handleExtensionRequest(request: pxt.editor.ExtensionRequest) {
@@ -162,6 +170,13 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 permissionExtName: id
             });
         });
+    }
+
+    private onApprovedDecision() {
+        this.onPermissionDecision(true);
+    }
+    private onDeniedDecision() {
+        this.onPermissionDecision(false);
     }
 
     private onPermissionDecision(approved: boolean) {
@@ -193,13 +208,30 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         frame.className = `extension-frame extension-frame-${name}`;
         frame.allowFullscreen = true;
         frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-        frame.sandbox.value = "allow-scripts allow-same-origin"
-        let frameUrl = '';
+        (frame as any).sandbox.value = "allow-scripts allow-same-origin"
         frame.frameBorder = "0";
         frame.style.display = "none";
 
         wrapper.appendChild(frame);
         return frame;
+    }
+
+    static hideAllFrames() {
+        const customContent = this.getCustomContent();
+        if (customContent) {
+            pxt.Util.toArray(customContent.getElementsByClassName(`extension-frame`)).forEach((frame: HTMLIFrameElement) => {
+                frame.style.zIndex = '10';
+            })
+        }
+    }
+
+    static showAllFrames() {
+        const customContent = this.getCustomContent();
+        if (customContent) {
+            pxt.Util.toArray(customContent.getElementsByClassName(`extension-frame`)).forEach((frame: HTMLIFrameElement) => {
+                frame.style.zIndex = '';
+            })
+        }
     }
 
     getIconForPermission(permission: ext.Permissions) {
@@ -232,27 +264,36 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         return "";
     }
 
+    private handleExtensionWrapperRef = (c: HTMLDivElement) => {
+        this.extensionWrapper = c;
+    }
+
     renderCore() {
-        const { visible, extension, url, consent, permissionRequest, permissionExtName } = this.state;
+        const { visible, extension, consent, permissionRequest, permissionExtName } = this.state;
         const needsConsent = !consent;
-        const theme = pxt.appTarget.appTheme;
+
+        if (permissionRequest) {
+            Extensions.hideAllFrames();
+        } else {
+            Extensions.showAllFrames();
+        }
 
         const action = needsConsent ? lf("Agree") : undefined;
         const actionClick = () => {
             this.submitConsent();
         };
-        const actions = action ? [{ label: action, onClick: actionClick }] : undefined;
+        const actions: sui.ModalButton[] = action ? [{ label: action, onclick: actionClick }] : undefined;
         if (!needsConsent && visible) this.initializeFrame();
         return (
-            <sui.Modal open={visible} className={`${needsConsent ? 'extensionconsentdialog' : 'extensiondialog'}`} size="fullscreen" closeIcon={false}
-                onClose={() => this.hide()} dimmer={true}
-                actions={actions}
-                onPositionChanged={() => this.updateDimensions()}
+            <sui.Modal isOpen={visible} className={`${needsConsent ? 'extensionconsentdialog' : 'extensiondialog'}`} size="fullscreen" closeIcon={false}
+                onClose={this.hide} dimmer={true} buttons={actions}
+                modalDidOpen={this.updateDimensions} shouldFocusAfterRender={false}
+                onPositionChanged={this.updateDimensions}
                 closeOnDimmerClick>
                 {consent ?
-                    <div id="extensionWrapper" data-frame={extension} ref={v => this.extensionWrapper = v}>
+                    <div id="extensionWrapper" data-frame={extension} ref={this.handleExtensionWrapperRef}>
                         {permissionRequest ?
-                            <sui.Modal className="extensionpermissiondialog basic" size="fullscreen" closeIcon={false} dimmer={true} open={true} dimmerClassName="permissiondimmer">
+                            <sui.Modal isOpen={true} className="extensionpermissiondialog basic" size="fullscreen" closeIcon={false} dimmer={true} dimmerClassName="permissiondimmer">
                                 <div className="permissiondialoginner">
                                     <div className="permissiondialogheader">
                                         {lf("Permission Request")}
@@ -262,7 +303,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                                     </div>
                                     <div className="ui inverted list">
                                         {permissionRequest.map(permission =>
-                                            <div className="item">
+                                            <div key={permission.toString()} className="item">
                                                 <sui.Icon icon={`${this.getIconForPermission(permission)} icon`} />
                                                 <div className="content">
                                                     <div className="header">{this.getDisplayNameForPermission(permission)}</div>
@@ -273,10 +314,10 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                                     </div>
                                 </div>
                                 <div className="actions">
-                                    <sui.Button text={lf("Deny")} class={`deny inverted`}
-                                        onClick={() => this.onPermissionDecision(false)} />
-                                    <sui.Button text={lf("Approve")} class={`approve inverted green`}
-                                        onClick={() => this.onPermissionDecision(true)} />
+                                    <sui.Button text={lf("Deny")} className={`deny inverted`}
+                                        onClick={this.onDeniedDecision} />
+                                    <sui.Button text={lf("Approve")} className={`approve inverted green`}
+                                        onClick={this.onApprovedDecision} />
                                 </div>
                             </sui.Modal>
                             : undefined
@@ -288,7 +329,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                                 <sui.Icon icon="user" />
                                 <div className="content">
                                     <h3 className="header">
-                                        User-provided content
+                                        {lf("User-provided content")}
                                     </h3>
                                     <p>
                                         {lf("This content is provided by a user, and is not endorsed by Microsoft.")}

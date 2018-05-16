@@ -35,7 +35,6 @@ pxt.setAppTarget({
 pxt.webConfig = {
     relprefix: undefined,
     workerjs: WEB_PREFIX + "/blb/worker.js",
-    tdworkerjs: undefined,
     monacoworkerjs: undefined,
     pxtVersion: undefined,
     pxtRelId: undefined,
@@ -59,10 +58,10 @@ class BlocklyCompilerTestHost implements pxt.Host {
 
     static createTestHostAsync() {
         if (!BlocklyCompilerTestHost.cachedFiles["pxt-core.d.ts"]) {
-            return pxt.Util.httpGetTextAsync(WEB_PREFIX + "/common/pxt-core.d.ts")
+            return ts.pxtc.Util.httpGetTextAsync(WEB_PREFIX + "/common/pxt-core.d.ts")
             .then(res => {
                 BlocklyCompilerTestHost.cachedFiles["pxt-core.d.ts"] = res;
-                return pxt.Util.httpGetTextAsync(WEB_PREFIX + "/common/pxt-helpers.ts")
+                return ts.pxtc.Util.httpGetTextAsync(WEB_PREFIX + "/common/pxt-helpers.ts")
             })
             .then(res => {
                 BlocklyCompilerTestHost.cachedFiles["pxt-helpers.ts"] = res;
@@ -139,7 +138,7 @@ class BlocklyCompilerTestHost implements pxt.Host {
     writeFile(module: pxt.Package, filename: string, contents: string): void {
         if (filename == pxt.CONFIG_NAME)
             return; // ignore config writes
-        throw Util.oops("trying to write " + module + " / " + filename)
+        throw ts.pxtc.Util.oops("trying to write " + module + " / " + filename)
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
@@ -186,7 +185,7 @@ function getBlocksInfoAsync(): Promise<pxtc.BlocksInfo> {
             // decompile to blocks
             let apis = pxtc.getApiInfo(opts, resp.ast);
             let blocksInfo = pxtc.getBlocksInfo(apis);
-            pxt.blocks.initBlocks(blocksInfo);
+            pxt.blocks.initializeAndInject(blocksInfo);
 
             cachedBlocksInfo = blocksInfo;
 

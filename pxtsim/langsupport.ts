@@ -1,7 +1,7 @@
 // APIs for language/runtime support (records, locals, function values)
 
 namespace pxsim {
-    export var quiet = false;
+    export let quiet = false;
 
     export function check(cond: boolean, msg: string = "sim: check failed") {
         if (!cond) {
@@ -82,12 +82,22 @@ namespace pxsim {
                 console.log(`RefObject id:${this.id} refs:${this.refcnt}`)
         }
 
+        // render a debug preview string
+        toDebugString(): string {
+            return "(object)";
+        }
+
         static toAny(o: any): any {
-            if (o instanceof RefMap)
-                return (<RefMap>o).toAny();
-            if (o instanceof RefCollection)
-                return (<RefCollection>o).toAny();
+            if (o && o.toAny) return o.toAny();
             return o;
+        }
+
+        static toDebugString(o: any): string {
+            if (o === null) return "null";
+            if (o === undefined) return "undefined;"
+            if (o.toDebugString) return o.toDebugString();
+            if (typeof o == "string") return JSON.stringify(o);
+            return o.toString();
         }
     }
 
@@ -327,8 +337,8 @@ namespace pxsim {
     }
 
     export namespace pxtcore {
-        export var incr = pxsim.incr;
-        export var decr = pxsim.decr;
+        export let incr = pxsim.incr;
+        export let decr = pxsim.decr;
 
         export function ptrOfLiteral(v: any) {
             return v;
@@ -378,8 +388,8 @@ namespace pxsim {
     }
 
     export namespace pxtrt {
-        export var incr = pxsim.incr;
-        export var decr = pxsim.decr;
+        export let incr = pxsim.incr;
+        export let decr = pxsim.decr;
 
         export function toInt8(v: number) {
             return ((v & 0xff) << 24) >> 24
@@ -572,7 +582,7 @@ namespace pxsim {
         }
 
         // these are never used in simulator; silence the warnings
-        export var getGlobalsPtr: any;
+        export let getGlobalsPtr: any;
     }
 
 
@@ -597,19 +607,19 @@ namespace pxsim {
         }
 
         // these are never used in simulator; silence the warnings
-        export var getNumGlobals: any;
-        export var RefRecord_destroy: any;
-        export var RefRecord_print: any;
-        export var anyPrint: any;
-        export var dumpDmesg: any;
-        export var getVTable: any;
-        export var valType: any;
-        export var typeOf: any;
-        export var lookupPin: any;
+        export let getNumGlobals: any;
+        export let RefRecord_destroy: any;
+        export let RefRecord_print: any;
+        export let anyPrint: any;
+        export let dumpDmesg: any;
+        export let getVTable: any;
+        export let valType: any;
+        export let typeOf: any;
+        export let lookupPin: any;
     }
 
     export namespace thread {
-        export var panic = pxtrt.panic;
+        export let panic = pxtrt.panic;
 
         export function pause(ms: number) {
             let cb = getResume();

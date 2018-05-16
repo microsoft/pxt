@@ -27,9 +27,6 @@ namespace ts.pxtc {
 
     */
 
-    export const vtableShift = 2;
-
-
     // TODO should be internal
     export namespace hex {
         let funcInfo: pxt.Map<FuncInfo> = {};
@@ -44,6 +41,7 @@ namespace ts.pxtc {
         let asmLabels: pxt.Map<boolean> = {};
         export let asmTotalSource: string = "";
         export const defaultPageSize = 0x400;
+        export let commBase = 0;
 
         // utility function
         function swapBytes(str: string) {
@@ -135,10 +133,10 @@ namespace ts.pxtc {
             }
         }
 
-        export function encodeVTPtr(ptr: number) {
-            let vv = ptr >> vtableShift
+        export function encodeVTPtr(ptr: number, opts: CompileOptions) {
+            let vv = ptr >> opts.target.vtableShift
             assert(vv < 0xffff)
-            assert(vv << vtableShift == ptr)
+            assert(vv << opts.target.vtableShift == ptr)
             return vv
         }
 
@@ -147,6 +145,8 @@ namespace ts.pxtc {
                 return;
 
             let funs: FuncInfo[] = extInfo.functions;
+
+            commBase = extInfo.commBase || 0
 
             currentSetup = extInfo.sha;
             currentHexInfo = hexinfo;
@@ -338,6 +338,8 @@ namespace ts.pxtc {
         }
 
         export function lookupFunctionAddr(name: string) {
+            if (name == "_pxt_comm_base")
+                return commBase
             let inf = lookupFunc(name)
             if (inf)
                 return inf.value
@@ -419,6 +421,8 @@ namespace ts.pxtc {
 
             // store the size of the program (in 16 bit words)
             buf[17] = buf.length
+            // store commSize
+            buf[20] = bin.commSize
 
             let zeros: number[] = []
             for (let i = 0; i < bytecodePaddingSize >> 1; ++i)
@@ -539,9 +543,9 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_NUMBER}
         }
     }
 
-    export function vtableToAsm(info: ClassInfo) {
+    export function vtableToAsm(info: ClassInfo, opts: CompileOptions) {
         let s = `
-        .balign ${1 << vtableShift}
+        .balign ${1 << opts.target.vtableShift}
 ${info.id}_VT:
         .short ${info.refmask.length * 4 + 4}  ; size in bytes
         .byte ${info.vtable.length + 2}, 0  ; num. methods
@@ -594,7 +598,8 @@ ${hex.hexPrelude()}
     .short ${bin.globalsWords}   ; num. globals
     .short 0 ; patched with number of words resulting from assembly
     .word _pxt_config_data
-    .word 0 ; reserved
+    .short 0 ; patched with comm section size
+    .short 0 ; reserved
     .word 0 ; reserved
 `
         let snippets: AssemblerSnippets = null;
@@ -608,7 +613,7 @@ ${hex.hexPrelude()}
         })
 
         bin.usedClassInfos.forEach(info => {
-            asmsource += vtableToAsm(info)
+            asmsource += vtableToAsm(info, opts)
         })
 
         U.iterMap(bin.codeHelpers, (code, lbl) => {
@@ -792,6 +797,8 @@ __flash_checksums:
         bin.writeFile(pxtc.BINARY_ASM, src)
         bin.numStmts = cres.breakpoints.length
         let res = assemble(opts.target, bin, src)
+        if (res.thumbFile.commPtr)
+            bin.commSize = res.thumbFile.commPtr - hex.commBase
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
         if (res.buf) {
@@ -827,4 +834,41 @@ __flash_checksums:
     }
 
     export let validateShim = hex.validateShim;
+
+    export function f4EncodeImg(w: number, h: number, bpp: number, getPix: (x: number, y: number) => number) {
+        let r = hex2(0xe0 | bpp) + hex2(w) + hex2(h) + "00"
+        let ptr = 4
+        let curr = 0
+        let shift = 0
+
+        let pushBits = (n: number) => {
+            curr |= n << shift
+            if (shift == 8 - bpp) {
+                r += hex2(curr)
+                ptr++
+                curr = 0
+                shift = 0
+            } else {
+                shift += bpp
+            }
+        }
+
+        for (let i = 0; i < w; ++i) {
+            for (let j = 0; j < h; ++j)
+                pushBits(getPix(i, j))
+            while (shift != 0)
+                pushBits(0)
+            if (bpp > 1) {
+                while (ptr & 3)
+                    pushBits(0)
+            }
+        }
+
+        return r
+
+        function hex2(n: number) {
+            return ("0" + n.toString(16)).slice(-2)
+        }
+
+    }
 }

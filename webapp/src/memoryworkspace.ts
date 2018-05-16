@@ -1,8 +1,3 @@
-import * as db from "./db";
-import * as core from "./core";
-import * as pkg from "./package";
-import * as data from "./data";
-import * as ws from "./workspace";
 
 type Header = pxt.workspace.Header;
 type Project = pxt.workspace.Project;
@@ -10,19 +5,20 @@ type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 type InstallHeader = pxt.workspace.InstallHeader;
 import U = pxt.Util;
-import Cloud = pxt.Cloud;
 
 export let projects: pxt.Map<Project> = {};
 let target = "";
+let targetVersion = "";
 
 export function merge(prj: Project) {
     let h: Header = prj.header;
     if (!h) {
         prj.header = h = {
-            id: U.guidGen(),
+            id: ts.pxtc.Util.guidGen(),
             recentUse: U.nowSeconds(),
             modificationTime: U.nowSeconds(),
             target: target,
+            targetVersion: targetVersion,
             _rev: undefined,
             blobId: undefined,
             blobCurrent: undefined,
@@ -40,7 +36,7 @@ export function merge(prj: Project) {
 }
 
 function getHeaders(): Header[] {
-    return Util.values(projects).map(p => p.header);
+    return pxt.Util.values(projects).map(p => p.header);
 }
 
 function getHeader(id: string): Header {
@@ -53,8 +49,9 @@ function getTextAsync(id: string): Promise<ScriptText> {
     return Promise.resolve(p ? p.text : undefined);
 }
 
-function initAsync(trg: string): Promise<void> {
+function initAsync(trg: string, version: string): Promise<void> {
     target = trg;
+    targetVersion = trg;
     return Promise.resolve();
 }
 
@@ -68,10 +65,9 @@ function saveAsync(h: Header, text?: ScriptText): Promise<void> {
 
 function installAsync(h0: InstallHeader, text: ScriptText): Promise<Header> {
     let h = <Header>h0
-    h.id = U.guidGen();
+    h.id = ts.pxtc.Util.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
-    h.target = pxt.appTarget.id;
 
     return saveAsync(h, text).then(() => h);
 }

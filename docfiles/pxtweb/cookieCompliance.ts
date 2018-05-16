@@ -4,7 +4,7 @@
 declare var process: any;
 
 namespace pxt {
-    type Map<T> = {[index: string]: T};
+    type Map<T> = { [index: string]: T };
 
     interface CookieBannerInfo {
         /* Does the banner need to be shown? */
@@ -45,7 +45,7 @@ namespace pxt {
 
     class TelemetryQueue<A, B, C> {
         private q: [A, B, C][] = [];
-        constructor (private log: (a?: A, b?: B, c?: C) => void) {
+        constructor(private log: (a?: A, b?: B, c?: C) => void) {
             queues.push(this);
         }
 
@@ -72,14 +72,19 @@ namespace pxt {
 
     export function initAnalyticsAsync() {
         if (isNativeApp()) {
-            initializeAppInsights(true);
+            initializeAppInsightsInternal(true);
+            return;
+        }
+
+        if (isSandboxMode()) {
+            initializeAppInsightsInternal(false);
             return;
         }
 
         getCookieBannerAsync(document.domain, detectLocale(), (bannerErr, info) => {
             if (bannerErr || info.Error) {
                 // Start app insights, just don't drop any cookies
-                initializeAppInsights(false);
+                initializeAppInsightsInternal(false);
                 return;
             }
 
@@ -98,14 +103,23 @@ namespace pxt {
             }
 
             // The markup is trusted because it's from our backend, so it shouldn't need to be scrubbed
+            /* tslint:disable:no-inner-html */
             bannerDiv.innerHTML = info.Markup;
+            /* tslint:enable:no-inner-html */
 
             if (info.Css && info.Css.length) {
                 info.Css.forEach(injectStylesheet)
             }
 
             all(info.Js || [], injectScriptAsync, msccError => {
-                initializeAppInsights(!msccError && typeof mscc !== "undefined" && mscc.hasConsent());
+                if (!msccError && typeof mscc !== "undefined") {
+                    if (mscc.hasConsent()) {
+                        initializeAppInsightsInternal(true)
+                    }
+                    else {
+                        mscc.on("consent", () => initializeAppInsightsInternal(true));
+                    }
+                }
             });
         });
     }
@@ -133,7 +147,7 @@ namespace pxt {
     }
 
     function getCookieBannerAsync(domain: string, locale: string, cb: Callback<CookieBannerInfo>) {
-        httpGetAsync(`https://makecode.com/api/mscc/${domain}/${locale}`, function(err, resp) {
+        httpGetAsync(`https://makecode.com/api/mscc/${domain}/${locale}`, function (err, resp) {
             if (err) {
                 cb(err);
                 return;
@@ -177,7 +191,7 @@ namespace pxt {
         return true;
     }
 
-    function initializeAppInsights(includeCookie = false) {
+    export function initializeAppInsightsInternal(includeCookie = false) {
         // loadAppInsights is defined in docfiles/tracking.html
         const loadAI = (window as any).loadAppInsights;
         if (loadAI) {
@@ -249,10 +263,20 @@ namespace pxt {
     }
 
     /**
-     * Checks for winrt
+     * Checks for winrt and pxt-electron
      */
     function isNativeApp(): boolean {
-        return typeof Windows !== "undefined";
+        return typeof Windows !== "undefined" ||
+            (typeof window !== "undefined" && !!(window as any).pxtElectron);
+    }
+    /**
+     * checks for sandbox
+     */
+    function isSandboxMode(): boolean {
+        //This is restricted set from pxt.shell.isSandBoxMode and specific to share page
+        //We don't want cookie notification in the share page
+        const sandbox = /sandbox=1|#sandbox|#sandboxproject/i.test(window.location.href)
+        return sandbox;
     }
 
     // No promises, so here we are

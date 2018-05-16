@@ -54,6 +54,8 @@ namespace ts.pxtc {
                 return SymbolKind.Method;
             case SK.PropertyDeclaration:
             case SK.PropertySignature:
+            case SK.GetAccessor:
+            case SK.SetAccessor:
                 return SymbolKind.Property;
             case SK.FunctionDeclaration:
                 return SymbolKind.Function;
@@ -111,6 +113,10 @@ namespace ts.pxtc {
         return false
     }
 
+    function isReadonly(decl: Declaration) {
+        return decl.modifiers && decl.modifiers.some(m => m.kind == SK.ReadonlyKeyword)
+    }
+
     function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
         function typeOf(tn: TypeNode, n: Node, stripParams = false) {
             let t = typechecker.getTypeAtLocation(n)
@@ -164,7 +170,7 @@ namespace ts.pxtc {
                     }
             }
 
-            return {
+            let r: SymbolInfo = {
                 kind,
                 namespace: m ? m[1] : "",
                 name: m ? m[2] : qName,
@@ -172,7 +178,7 @@ namespace ts.pxtc {
                 pkg,
                 extendsTypes,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
-                parameters: !hasParams ? null : (Util.toArray(decl.parameters)).map((p, i) => {
+                parameters: !hasParams ? null : Util.toArray(decl.parameters).map((p, i) => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
                     let minVal = attributes.paramMin && attributes.paramMin[n];
@@ -228,6 +234,13 @@ namespace ts.pxtc {
                 }),
                 snippet: service.getSnippet(decl, attributes)
             }
+
+            if (stmt.kind === SK.GetAccessor ||
+                ((stmt.kind === SK.PropertyDeclaration || stmt.kind === SK.PropertySignature) && isReadonly(stmt as Declaration))) {
+                r.isReadOnly = true
+            }
+
+            return r
         }
         return null;
     }
@@ -329,14 +342,14 @@ namespace ts.pxtc {
                 return
             }
 
-            // if (!isExported(stmt as Declaration)) return; ?
-
             if (isExported(stmt as Declaration)) {
                 if (!stmt.symbol) {
                     console.warn("no symbol", stmt)
                     return;
                 }
                 let qName = getFullName(typechecker, stmt.symbol)
+                if (stmt.kind == SK.SetAccessor)
+                    qName += "@set" // otherwise we get a clash with the getter
                 let si = createSymbolInfo(typechecker, qName, stmt)
                 if (si) {
                     let existing = U.lookup(res.byQName, qName)
@@ -362,6 +375,8 @@ namespace ts.pxtc {
                 if (mod.body.kind == SK.ModuleBlock) {
                     let blk = <ModuleBlock>mod.body
                     blk.statements.forEach(collectDecls)
+                } else if (mod.body.kind == SK.ModuleDeclaration) {
+                    collectDecls(mod.body)
                 }
             } else if (stmt.kind == SK.InterfaceDeclaration) {
                 let iface = stmt as InterfaceDeclaration
@@ -612,11 +627,6 @@ namespace ts.pxtc.service {
         decompile: v => {
             return decompile(v.options, v.fileName);
         },
-        compileTd: v => {
-            let res = compile(v.options);
-            return getApiInfo(host.opts, res.ast, true);
-        },
-
         assemble: v => {
             return {
                 words: processorInlineAssemble(host.opts.target, v.fileContent)
@@ -652,6 +662,10 @@ namespace ts.pxtc.service {
         apiInfo: () => {
             lastBlocksInfo = undefined;
             lastFuse = undefined;
+            if (host.opts === emptyOptions) {
+                // Host was reset, don't load apis with empty options
+                return undefined;
+            }
             return lastApiInfo = getApiInfo(host.opts, service.getProgram());
         },
         blocksInfo: v => blocksInfoOp(v as any),
@@ -695,7 +709,8 @@ namespace ts.pxtc.service {
                                 name: blockDef.name,
                                 jsdoc: typeof blockDef.tooltip === "string" ? <string>blockDef.tooltip : (<pxt.Map<string>>blockDef.tooltip)[v],
                                 block: v,
-                                field: [op, v]
+                                field: [op, v],
+                                builtinBlock: true
                             }));
                         }
                     }
@@ -704,10 +719,10 @@ namespace ts.pxtc.service {
                             id,
                             name: blockDef.name,
                             jsdoc: computeSearchProperty(blockDef.tooltip, blockDef.tooltipSearch, blockDef),
-                            block: computeSearchProperty(blockDef.block, blockDef.blockTextSearch, blockDef)
+                            block: computeSearchProperty(blockDef.block, blockDef.blockTextSearch, blockDef),
+                            builtinBlock: true
                         });
                     }
-
                 }
             }
 

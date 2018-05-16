@@ -9,6 +9,8 @@ namespace pxt.workspace {
         temporary?: boolean; // don't serialize project
         // older script might miss this
         target: string;
+        // older scripts might miss this
+        targetVersion: string;
         pubId: string; // for published scripts
         pubCurrent: boolean; // is this exactly pubId, or just based on it
     }
@@ -33,11 +35,17 @@ namespace pxt.workspace {
         text?: ScriptText;
     }
 
+    export interface Asset {
+        name: string;
+        size: number;
+        url: string;
+    }
+
     export interface WorkspaceProvider {
         getHeaders(): Header[];
         getHeader(id: string): Header;
         getTextAsync(id: string): Promise<ScriptText>;
-        initAsync(target: string): Promise<void>;
+        initAsync(target: string, version: string): Promise<void>;
         saveAsync(h: Header, text?: ScriptText): Promise<void>;
         installAsync(h0: InstallHeader, text: ScriptText): Promise<Header>;
         saveToCloudAsync(h: Header): Promise<void>;
@@ -46,5 +54,8 @@ namespace pxt.workspace {
         loadedAsync(): Promise<void>;
         // optional screenshot support
         saveScreenshotAsync?: (h: Header, screenshot: string, icon: string) => Promise<void>;
+        // asset (large binary file) support
+        saveAssetAsync?: (id: string, filename: string, data: Uint8Array) => Promise<void>;
+        listAssetsAsync?: (id: string) => Promise<Asset[]>;
     }
 }

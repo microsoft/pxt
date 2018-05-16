@@ -8,7 +8,7 @@ simulator files.
 
 ## Category
 
-Each top-level javascript namespace is used to populate a category in the Block Editor toolbox. The name will automatically be capitalized in the toolbox.
+Each top-level TypeScript namespace is used to populate a category in the Block Editor toolbox. The name will automatically be capitalized in the toolbox.
 
 ```typescript-ignore
 namespace basic {
@@ -54,7 +54,9 @@ you can specify the `blockId` and `block` parameters.
 export function showNumber(v: number, interval: number = 150): void
 { }
 ```
-* `blockId` is a constant, unique id for the block. This id is serialized in block code so changing it will break your users.
+* `blockId` is a constant, unique id for the block. This id is serialized in block code so changing 
+  it will break your users. If not specified, it is derived from namespace and function names, 
+  so renaming your functions or namespaces will break both your TypeScript and Blocks users.
 * `block` contains the syntax to build the block structure (more below).
 
 Other optional attributes can also be used:
@@ -274,7 +276,7 @@ class Message {
 }
 ```
 
-* when annotating an instance method, you need to specify the ``%this`` parameter in the block syntax definition.
+* when annotating an instance method, you need to specify the ``%this`` parameter in the block syntax definition. It can be called something else, eg ``%msg``.
 
 You will need to expose a factory method to create your objects as needed. For the example above, we add a function that creates the message:
 
@@ -316,10 +318,10 @@ It is possible to expose these instances in a manner similar to an enum:
 
 ```typescript-ignore
 //% fixedInstances
+//% blockNamespace=pins
 class DigitalPin {
     ...
     //% blockId=device_set_digital_pin block="digital write|pin %name|to %value"
-    //% blockNamespace=pins
     digitalWrite(value: number): void { ... }
 }
 
@@ -363,6 +365,11 @@ even in different libraries or namespaces.
 
 This feature is often used with `indexedInstance*` attributes.
 
+The `blockNamespace` attribute specifies which drawer in the toolbox will
+be used for this block. It can be specified on methods or on classes (to apply
+to all methods in the class). Often, you will want to also set `color=...`,
+also either on class or method.
+
 It is also possible to define the instances to be used in blocks in TypeScript,
 for example:
 
@@ -378,6 +385,39 @@ when it is used, even though it is initialized with something that can possibly
 have side effects. This happens automatically when there is no initializer,
 or the initializer is a simple constant, but for function calls and constructors
 you have to include `whenUsed`.
+
+### Properties
+
+Fields and get/set accessors of classes defined in TypeScript can be exposed in blocks.
+Typically, you want a single block for all getters for a given type, a single block
+for setters, and possibly a single block for updates (compiling to the ``+=`` operator).
+This can be done automatically with `//% blockCombine` annotation, for example:
+
+```typescript
+class Foo {
+    //% blockCombine
+    x: number;
+    //% blockCombine
+    y: number;
+    // exposed with custom name
+    //% blockCombine block="foo bar"
+    foo_bar: number;
+    
+    // not exposed
+    _bar: number;
+    _qux: number;
+
+    // exposed as read-only (only in the getter block)
+    //% blockCombine
+    get bar() { return this._bar }
+
+    // exposed in both getter and setter
+    //% blockCombine
+    get qux() { return this._qux }
+    //% blockCombine
+    set qux(v: number) { if (v != 42) this._qux = v }
+}
+```
 
 ## Ordering
 
@@ -402,6 +442,12 @@ this macro allows to define groups of blocks. The default ``blockGap`` value is 
 //% blockGap=14
 ...
 ```
+
+## Variable assignment
+
+If a block instantiates a custom object, like a sprite, it's most likely that the user
+will want to store in a variable. Add ``blockSetVariable`` to modify the toolbox entry
+to include the variable.
 
 ## Testing your Blocks
 

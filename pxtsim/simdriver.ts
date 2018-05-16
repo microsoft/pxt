@@ -38,9 +38,11 @@ namespace pxsim {
         partDefinitions?: pxsim.Map<PartDefinition>;
         mute?: boolean;
         highContrast?: boolean;
+        light?: boolean;
         cdnUrl?: string;
         localizedStrings?: pxsim.Map<string>;
         refCountingDebug?: boolean;
+        version?: string;
     }
 
     export interface HwDebugger {
@@ -90,8 +92,30 @@ namespace pxsim {
         private setState(state: SimulatorState) {
             if (this.state != state) {
                 this.state = state;
+                this.freeze(this.state == SimulatorState.Paused); // don't allow interaction when pause
                 if (this.options.onStateChanged)
                     this.options.onStateChanged(this.state);
+            }
+        }
+
+        private freeze(value: boolean) {
+            const cls = "pause-overlay";
+            if (!value) {
+                pxsim.util.toArray(this.container.querySelectorAll(`div.simframe div.${cls}`))
+                    .forEach(overlay => overlay.parentElement.removeChild(overlay));
+            } else {
+                pxsim.util.toArray(this.container.querySelectorAll("div.simframe"))
+                    .forEach(frame => {
+                        if (frame.querySelector(`div.${cls}`))
+                            return;
+                        const div = document.createElement("div");
+                        div.className = cls;
+                        div.onclick = (ev) => {
+                            ev.preventDefault();
+                            return false;
+                        };
+                        frame.appendChild(div);
+                    })
             }
         }
 
@@ -119,16 +143,18 @@ namespace pxsim {
             }
         }
 
-        private createFrame(): HTMLDivElement {
+        private createFrame(light?: boolean): HTMLDivElement {
             const wrapper = document.createElement("div") as HTMLDivElement;
             wrapper.className = 'simframe';
 
             const frame = document.createElement('iframe') as HTMLIFrameElement;
             frame.id = 'sim-frame-' + this.nextId()
             frame.allowFullscreen = true;
+            frame.setAttribute('allow', 'autoplay; fullscreen');
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-            frame.sandbox.value = "allow-scripts allow-same-origin"
+            (frame.sandbox as any).value = "allow-scripts allow-same-origin"
             let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
+            frame.className = 'no-select'
             if (this.runOptions.aspectRatio)
                 wrapper.style.paddingBottom = (100 / this.runOptions.aspectRatio) + "%";
             frame.src = simUrl + '#' + frame.id;
@@ -141,6 +167,7 @@ namespace pxsim {
         }
 
         public stop(unload = false) {
+            this.clearDebugger();
             this.postMessage({ type: 'stop' });
             this.setState(SimulatorState.Stopped);
             if (unload) this.unload();
@@ -156,7 +183,7 @@ namespace pxsim {
 
         private unload() {
             this.cancelFrameCleanup();
-            this.container.innerHTML = '';
+            pxsim.U.removeChildren(this.container);
             this.setState(SimulatorState.Unloaded);
         }
 
@@ -223,6 +250,7 @@ namespace pxsim {
         }
 
         public run(js: string, opts: SimulatorRunOptions = {}) {
+            this.clearDebugger();
             this.runOptions = opts;
             this.runId = this.nextId();
             this.addEventListeners();
@@ -237,9 +265,11 @@ namespace pxsim {
                 partDefinitions: opts.partDefinitions,
                 mute: opts.mute,
                 highContrast: opts.highContrast,
+                light: opts.light,
                 cdnUrl: opts.cdnUrl,
                 localizedStrings: opts.localizedStrings,
-                refCountingDebug: opts.refCountingDebug
+                refCountingDebug: opts.refCountingDebug,
+                version: opts.version
             }
 
             this.applyAspectRatio();
@@ -249,7 +279,7 @@ namespace pxsim {
             let frame = this.container.getElementsByTagName("iframe").item(0) as HTMLIFrameElement;
             // lazy allocate iframe
             if (!frame) {
-                let wrapper = this.createFrame();
+                let wrapper = this.createFrame(opts.light);
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
             } else this.startFrame(frame);
@@ -291,7 +321,7 @@ namespace pxsim {
                             this.options.revealElement(frame);
                     }
                     break;
-                case 'simulator':  this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
+                case 'simulator': this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
                 case 'serial': break; //handled elsewhere
                 case 'pxteditor':
                 case 'custom':
@@ -345,7 +375,7 @@ namespace pxsim {
                     return;
             }
 
-            this.postMessage({type: 'debugger', subtype: msg } as pxsim.DebuggerMessage)
+            this.postMessage({ type: 'debugger', subtype: msg } as pxsim.DebuggerMessage)
         }
 
         public setBreakpoints(breakPoints: number[]) {
@@ -357,14 +387,41 @@ namespace pxsim {
             this.postDebuggerMessage("traceConfig", { interval: intervalMs });
         }
 
+        public variablesAsync(id: number): Promise<VariablesMessage> {
+            return this.postDebuggerMessageAsync("variables", { variablesReference: id } as DebugProtocol.VariablesArguments)
+                .then(msg => msg as VariablesMessage, e => undefined)
+        }
+
         private handleSimulatorCommand(msg: pxsim.SimulatorCommandMessage) {
             if (this.options.onSimulatorCommand) this.options.onSimulatorCommand(msg);
+        }
+
+        private debuggerSeq = 1;
+        private debuggerResolvers: Map<{ resolve: (msg: DebuggerMessage | PromiseLike<DebuggerMessage>) => void; reject: (error: any) => void; }> = {};
+
+        private clearDebugger() {
+            const e = new Error("Debugging cancelled");
+            Object.keys(this.debuggerResolvers)
+                .forEach(k => {
+                    const { reject } = this.debuggerResolvers[k];
+                    reject(e);
+                })
+            this.debuggerResolvers = {};
+            this.debuggerSeq++;
         }
 
         private handleDebuggerMessage(msg: pxsim.DebuggerMessage) {
             if (msg.subtype !== "trace") {
                 console.log("DBG-MSG", msg.subtype, msg)
             }
+
+            // resolve any request
+            if (msg.seq) {
+                const { resolve } = this.debuggerResolvers[msg.seq];
+                if (resolve)
+                    resolve(msg);
+            }
+
             switch (msg.subtype) {
                 case "warning":
                     if (this.options.onDebuggerWarning)
@@ -388,14 +445,34 @@ namespace pxsim {
                         this.options.onTraceMessage(msg as pxsim.TraceMessage);
                     }
                     break;
+                default:
+                    const seq = msg.req_seq;
+                    if (seq) {
+                        const { resolve } = this.debuggerResolvers[seq];
+                        if (resolve) {
+                            delete this.debuggerResolvers[seq];
+                            resolve(msg)
+                        }
+                    }
+                    break;
             }
         }
 
-        private postDebuggerMessage(subtype: string, data: any = {}) {
-            let msg: pxsim.DebuggerMessage = JSON.parse(JSON.stringify(data))
+        private postDebuggerMessageAsync(subtype: string, data: any = {}): Promise<DebuggerMessage> {
+            return new Promise((resolve, reject) => {
+                const seq = this.debuggerSeq++;
+                this.debuggerResolvers[seq.toString()] = { resolve, reject };
+                this.postDebuggerMessage(subtype, data, seq);
+            })
+        }
+
+        private postDebuggerMessage(subtype: string, data: any = {}, seq?: number) {
+            const msg: pxsim.DebuggerMessage = JSON.parse(JSON.stringify(data))
             msg.type = "debugger"
-            msg.subtype = subtype
-            this.postMessage(msg)
+            msg.subtype = subtype;
+            if (seq)
+                msg.seq = seq;
+            this.postMessage(msg);
         }
 
         private nextId(): string {

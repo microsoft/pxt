@@ -14,8 +14,10 @@ namespace pxsim {
         code: string;
         mute?: boolean;
         highContrast?: boolean;
+        light?: boolean;
         cdnUrl?: string;
         localizedStrings?: Map<string>;
+        version?: string;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
@@ -120,9 +122,8 @@ namespace pxsim {
     export interface TutorialStepInfo {
         fullscreen?: boolean;
         hasHint?: boolean;
-        content?: string;
-        headerContent?: string;
-        ariaLabel?: string;
+        contentMd?: string;
+        headerContentMd?: string;
     }
 
     export interface TutorialLoadedMessage extends TutorialMessage {
@@ -167,13 +168,19 @@ namespace pxsim {
         height?: number;
     }
 
-    function print() {
-        try {
-            window.print();
+    export function print(delay: number = 0) {
+        function p() {
+            try {
+                window.print();
+            }
+            catch (e) {
+                // oops
+            }
         }
-        catch (e) {
-            // oops
-        }
+
+        if (delay)
+            setTimeout(p, delay);
+        else p();
     }
 
     export namespace Embed {
@@ -293,15 +300,20 @@ namespace pxsim {
 
     function initAppcache() {
         if (typeof window !== 'undefined') {
-            if (window.applicationCache.status === window.applicationCache.UPDATEREADY) {
+            if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
                 reload();
-            }
-            window.applicationCache.addEventListener("updateready", () => reload());
+            window.applicationCache.addEventListener("updateready", () => {
+                if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
+                    reload();
+            });
         }
     }
 
     export function reload() {
-        Runtime.postMessage({ type: "simulator", command: "reload" } as SimulatorCommandMessage)
+        // Continuously send message just in case the editor isn't ready to handle it yet
+        setInterval(() => {
+            Runtime.postMessage({ type: "simulator", command: "reload" } as SimulatorCommandMessage)
+        }, 500)
     }
 }
 

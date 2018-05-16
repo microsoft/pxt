@@ -4,11 +4,8 @@
 /// <reference path="util.ts"/>
 
 namespace pxt {
-
-    const lf = U.lf;
-
     export class Package {
-        static getConfigAsync(id: string, fullVers: string): Promise<pxt.PackageConfig> {
+        static getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
             return Promise.resolve().then(() => {
                 if (pxt.github.isGithubId(fullVers)) {
                     const repoInfo = pxt.github.parseRepoId(fullVers);
@@ -18,7 +15,9 @@ namespace pxt {
                 } else {
                     // If it's not from GH, assume it's a bundled package
                     // TODO: Add logic for shared packages if we enable that
-                    return JSON.parse(pxt.appTarget.bundledpkgs[Package.upgradePackageReference(id, fullVers)][CONFIG_NAME]) as pxt.PackageConfig;
+                    const updatedRef = pxt.patching.upgradePackageReference(pkgTargetVersion, id, fullVers);
+                    const bundledPkg = pxt.appTarget.bundledpkgs[updatedRef];
+                    return JSON.parse(bundledPkg[CONFIG_NAME]) as pxt.PackageConfig;
                 }
             });
         }
@@ -27,23 +26,6 @@ namespace pxt {
             const pkgs = pxt.appTarget.bundledpkgs;
             return Object.keys(pkgs).map(id => JSON.parse(pkgs[id][pxt.CONFIG_NAME]) as pxt.PackageConfig)
                 .filter(cfg => !!cfg);
-        }
-
-        static upgradePackageReference(pkg: string, val: string): string {
-            if (val != "*") return pkg;
-            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
-            let newPackage = pkg;
-            if (upgrades) {
-                upgrades.filter(rule => rule.type == "package")
-                    .forEach(rule => {
-                        for (let match in rule.map) {
-                            if (newPackage == match) {
-                                newPackage = rule.map[match];
-                            }
-                        }
-                    });
-            }
-            return newPackage;
         }
 
         public addedBy: Package[];
@@ -74,6 +56,14 @@ namespace pxt {
             let p = this.verProtocol()
             if (p) return this.version().slice(p.length + 1)
             return this.version()
+        }
+
+        targetVersion(): string {
+            return (this.parent && this.parent != <Package>this)
+                ? this.parent.targetVersion()
+                : this.config.targetVersions
+                    ? this.config.targetVersions.target
+                    : undefined;
         }
 
         commonDownloadAsync(): Promise<Map<string>> {
@@ -198,9 +188,9 @@ namespace pxt {
             // Build the RegExp that will determine whether the dependency is in use. Try to use upgrade rules,
             // otherwise fallback to the package's name
             let regex: RegExp = null;
-            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
+            const upgrades = pxt.patching.computePatches(this.targetVersion(), "missingPackage");
             if (upgrades) {
-                upgrades.filter(rule => rule.type == "missingPackage").forEach((rule) => {
+                upgrades.forEach((rule) => {
                     Object.keys(rule.map).forEach((match) => {
                         if (rule.map[match] === pkgId) {
                             regex = new RegExp(match, "g");
@@ -214,23 +204,22 @@ namespace pxt {
             return regex.test(ts);
         }
 
-        getMissingPackages(config: pxt.PackageConfig, ts: string): Map<string> {
-            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
+        private getMissingPackages(config: pxt.PackageConfig, ts: string): Map<string> {
+            const upgrades = pxt.patching.computePatches(this.targetVersion(), "missingPackage");
             const missing: Map<string> = {};
             if (ts && upgrades)
-                upgrades.filter(rule => rule.type == "missingPackage")
-                    .forEach(rule => {
-                        for (const match in rule.map) {
-                            const regex = new RegExp(match, 'g');
-                            const pkg = rule.map[match];
-                            ts.replace(regex, (m) => {
-                                if (!config.dependencies[pkg]) {
-                                    missing[pkg] = "*";
-                                }
-                                return "";
-                            })
-                        }
-                    })
+                upgrades.forEach(rule => {
+                    Object.keys(rule.map).forEach(match => {
+                        const regex = new RegExp(match, 'g');
+                        const pkg = rule.map[match];
+                        ts.replace(regex, (m) => {
+                            if (!config.dependencies[pkg]) {
+                                missing[pkg] = "*";
+                            }
+                            return "";
+                        })
+                    });
+                })
             return missing;
         }
 
@@ -245,7 +234,7 @@ namespace pxt {
                 .then(() => {
                     // Get the package config if it's not already provided
                     if (typeof pkgOrId === "string") {
-                        return Package.getConfigAsync(pkgOrId, version);
+                        return Package.getConfigAsync(this.targetVersion(), pkgOrId, version);
                     } else {
                         return Promise.resolve(pkgOrId as PackageConfig);
                     }
@@ -336,19 +325,14 @@ namespace pxt {
                 });
         }
 
-        upgradeAPI(fileContents: string): string {
-            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
-            let updatedContents = fileContents;
-            if (upgrades) {
-                upgrades.filter(rule => rule.type == "api")
-                    .forEach(rule => {
-                        for (const match in rule.map) {
-                            const regex = new RegExp(match, 'g');
-                            updatedContents = updatedContents.replace(regex, rule.map[match]);
-                        }
-                    });
+        protected upgradeFile(fn: string, cont: string) {
+            const updatedCont = pxt.patching.patchJavaScript(this.targetVersion(), cont);
+            if (updatedCont != cont) {
+                // save file (force write)
+                pxt.debug(`patching javascript in ${fn} (size=${cont.length})...`)
+                this.host().writeFile(this, fn, updatedCont, true)
             }
-            return updatedContents;
+            return updatedCont;
         }
 
         private parseConfig(cfgSrc: string) {
@@ -357,7 +341,7 @@ namespace pxt {
 
             const currentConfig = JSON.stringify(this.config);
             for (const dep in this.config.dependencies) {
-                const value = Package.upgradePackageReference(dep, this.config.dependencies[dep]);
+                const value = pxt.patching.upgradePackageReference(this.targetVersion(), dep, this.config.dependencies[dep]);
                 if (value != dep) {
                     delete this.config.dependencies[dep];
                     if (value) {
@@ -381,8 +365,10 @@ namespace pxt {
             // no core package? add the first one
             if (corePackages.length == 0) {
                 const allCorePkgs = pxt.Package.corePackages();
+                /* tslint:disable:no-unused-expression TODO(tslint): */
                 if (allCorePkgs.length)
                     this.config.dependencies[allCorePkgs[0].name];
+                /* tslint:enable:no-unused-expression */
             } else if (corePackages.length > 1) {
                 // keep last package
                 corePackages.pop();
@@ -410,11 +396,17 @@ namespace pxt {
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
 
+            initPromise = initPromise.then(() => {
+                this.getFiles().filter(fn => /\.ts$/.test(fn))
+                    .forEach(file => this.upgradeFile(file, this.readFile(file)));
+            })
+
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
                 if (this.level == 0)
                     initPromise = initPromise.then(() => this.patchCorePackage());
                 initPromise = initPromise.then(() => {
                     if (this.config.files.indexOf("board.json") < 0) return
+                    pxt.setAppTargetVariant(this.config.compileServiceVariant)
                     const def = appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json")) as pxsim.BoardDefinition;
                     def.id = this.config.name;
                     appTarget.appTheme.boardName = def.boardName || lf("board");
@@ -451,6 +443,8 @@ namespace pxt {
                     } else {
                         mod = new Package(id, ver, this.parent, this)
                         this.parent.deps[id] = mod
+                        // we can have "core---nrf52" to be used instead of "core" in other packages
+                        this.parent.deps[id.replace(/---.*/, "")] = mod
                         return mod.loadAsync(isInstall)
                     }
                 })
@@ -459,6 +453,10 @@ namespace pxt {
             return initPromise
                 .then(() => loadDepsRecursive(this.config.dependencies))
                 .then(() => {
+                    // get paletter config loading deps, so the more higher level packages take precedence
+                    if (this.config.palette && appTarget.runtime)
+                        appTarget.runtime.palette = U.clone(this.config.palette)
+
                     if (this.level === 0) {
                         // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
                         const mainTs = this.readFile("main.ts");
@@ -530,26 +528,42 @@ namespace pxt {
                 const code = pxt.Util.userLanguage();
                 return Promise.all(filenames.map(
                     fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
-                        .then(tr => Util.jsonMergeFrom(r, tr))
-                        .catch(e => pxt.log(`error while downloading ${targetId}/${fn}-strings.json`)))
+                        .then(tr => {
+                            if (tr && Object.keys(tr).length) {
+                                Util.jsonMergeFrom(r, tr);
+                            } else {
+                                pxt.tickEvent("translations.livetranslationsfailed", { "filename": fn });
+                                Util.jsonMergeFrom(r, this.bundledStringsForFile(lang, fn));
+                            }
+                        })
+                        .catch(e => {
+                            pxt.tickEvent("translations.livetranslationsfailed", { "filename": fn });
+                            pxt.log(`error while downloading ${targetId}/${fn}-strings.json`);
+                            Util.jsonMergeFrom(r, this.bundledStringsForFile(lang, fn));
+                        }))
                 ).then(() => r);
             }
             else {
-                const files = this.config.files;
                 filenames.map(name => {
-                    let fn = `_locales/${lang.toLowerCase()}/${name}-strings.json`;
-                    if (files.indexOf(fn) > -1)
-                        return JSON.parse(this.readFile(fn)) as Map<string>;
-                    if (lang.length > 2) {
-                        fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${name}-strings.json`;
-                        if (files.indexOf(fn) > -1)
-                            return JSON.parse(this.readFile(fn)) as Map<string>;
-                    }
-                    return undefined;
+                    return this.bundledStringsForFile(lang, name);
                 }).filter(d => !!d).forEach(d => Util.jsonMergeFrom(r, d));
-
                 return Promise.resolve(r);
             }
+        }
+
+        bundledStringsForFile(lang: string, filename: string): Map<string> {
+            let r: Map<string> = {};
+            const files = this.config.files;
+            let fn = `_locales/${lang.toLowerCase()}/${filename}-strings.json`;
+            if (files.indexOf(fn) > -1)
+                r = JSON.parse(this.readFile(fn)) as Map<string>;
+            if (lang.length > 2) {
+                fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${filename}-strings.json`;
+                if (files.indexOf(fn) > -1)
+                    r = JSON.parse(this.readFile(fn)) as Map<string>;
+            }
+
+            return r;
         }
     }
 
@@ -592,8 +606,9 @@ namespace pxt {
                 dep.packageLocalizationStringsAsync(lang)
                     .then(depLoc => {
                         if (depLoc) // merge data
-                            for (let k in depLoc)
+                            Object.keys(depLoc).forEach(k => {
                                 if (!loc[k]) loc[k] = depLoc[k];
+                            })
                     })))
                 .then(() => loc);
         }
@@ -609,6 +624,17 @@ namespace pxt {
                 this._jres = {}
                 for (const pkg of this.sortedDeps()) {
                     pkg.parseJRes(this._jres)
+                }
+                if (appTarget.runtime && appTarget.runtime.palette) {
+                    const palBuf = appTarget.runtime.palette
+                        .map(s => ("000000" + parseInt(s.replace(/#/, ""), 16).toString(16)).slice(-6))
+                        .join("")
+                    this._jres["__palette"] = {
+                        id: "__palette",
+                        data: palBuf,
+                        dataEncoding: "hex",
+                        mimeType: "application/x-palette"
+                    }
                 }
             }
             return this._jres
@@ -633,16 +659,6 @@ namespace pxt {
                 }
             }
 
-            const upgradeFile = (fn: string, cont: string) => {
-                let updatedCont = this.upgradeAPI(cont);
-                if (updatedCont != cont) {
-                    // save file (force write)
-                    pxt.debug(`updating APIs in ${fn} (size=${cont.length})...`)
-                    this.host().writeFile(this, fn, updatedCont, true)
-                }
-                return updatedCont;
-            }
-
             return this.loadAsync()
                 .then(() => {
                     pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
@@ -664,7 +680,7 @@ namespace pxt {
                 .then(() => this.config.binaryonly || appTarget.compile.shortPointers || !opts.target.isNative ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
-                        files = U.mapMap(files, upgradeFile);
+                        files = U.mapMap(files, (f,c) => this.upgradeFile(f,c));
                         const headerString = JSON.stringify({
                             name: this.config.name,
                             comment: this.config.description,
@@ -677,16 +693,18 @@ namespace pxt {
                         const programText = JSON.stringify(files)
                         return lzmaCompressAsync(headerString + programText)
                             .then(buf => {
-                                opts.embedMeta = JSON.stringify({
-                                    compression: "LZMA",
-                                    headerSize: headerString.length,
-                                    textSize: programText.length,
-                                    name: this.config.name,
-                                    eURL: pxt.appTarget.appTheme.embedUrl,
-                                    eVER: pxt.appTarget.versions ? pxt.appTarget.versions.target : "",
-                                    pxtTarget: appTarget.id,
-                                })
-                                opts.embedBlob = ts.pxtc.encodeBase64(U.uint8ArrayToString(buf))
+                                if (buf) {
+                                    opts.embedMeta = JSON.stringify({
+                                        compression: "LZMA",
+                                        headerSize: headerString.length,
+                                        textSize: programText.length,
+                                        name: this.config.name,
+                                        eURL: pxt.appTarget.appTheme.embedUrl,
+                                        eVER: pxt.appTarget.versions ? pxt.appTarget.versions.target : "",
+                                        pxtTarget: appTarget.id,
+                                    })
+                                    opts.embedBlob = ts.pxtc.encodeBase64(U.uint8ArrayToString(buf))
+                                }
                             });
                     } else {
                         return Promise.resolve()
@@ -736,7 +754,7 @@ namespace pxt {
                 })
         }
 
-        compressToFileAsync(editor?: string): Promise<Uint8Array> {
+        saveToJsonAsync(editor?: string): Promise<pxt.cpp.HexFile> {
             return this.filesToBePublishedAsync(true)
                 .then(files => {
                     const project: pxt.cpp.HexFile = {
@@ -748,8 +766,13 @@ namespace pxt {
                         },
                         source: JSON.stringify(files, null, 2)
                     }
-                    return pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
+                    return project;
                 });
+        }
+
+        compressToFileAsync(editor?: string): Promise<Uint8Array> {
+            return this.saveToJsonAsync(editor)
+                .then(project => pxt.lzmaCompressAsync(JSON.stringify(project, null, 2)));
         }
 
         computePartDefinitions(parts: string[]): pxt.Map<pxsim.PartDefinition> {
@@ -761,7 +784,7 @@ namespace pxt {
                 if (pjson) {
                     try {
                         let p = JSON.parse(pjson) as pxt.Map<pxsim.PartDefinition>;
-                        for (let k in p) {
+                        Object.keys(p).forEach(k => {
                             if (parts.indexOf(k) >= 0) {
                                 let part = res[k] = p[k];
                                 if (typeof part.visual.image === "string" && /\.svg$/i.test(part.visual.image)) {
@@ -770,7 +793,7 @@ namespace pxt {
                                     part.visual.image = `data:image/svg+xml,` + encodeURIComponent(f);
                                 }
                             }
-                        }
+                        });
                     } catch (e) {
                         pxt.reportError("parts", "invalid pxtparts.json file");
                     }

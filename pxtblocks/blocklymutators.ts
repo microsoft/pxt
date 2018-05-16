@@ -273,7 +273,8 @@ namespace pxt.blocks {
             }
 
             const declarationString =  this.parameters.map(param => {
-                const declaredName = this.block.getFieldValue(param);
+                const varField = this.block.getField(param);
+                const declaredName = varField && varField.getText();
                 const escapedParam = escapeVarName(param, e);
                 if (declaredName !== param) {
                     this.parameterRenames[param] = declaredName;
@@ -296,21 +297,21 @@ namespace pxt.blocks {
             const result: pxt.Map<string> = {};
 
             this.parameters.forEach(param => {
-                result[this.block.getFieldValue(param)] = this.parameterTypes[param];
+                result[this.getVarFieldValue(param)] = this.parameterTypes[param];
             });
 
             return result;
         }
 
         public isDeclaredByMutation(varName: string): boolean {
-            return this.parameters.some(param => this.block.getFieldValue(param) === varName)
+            return this.parameters.some(param => this.getVarFieldValue(param) === varName)
         }
 
         public mutationToDom(): Element {
             // Save the parameters that are currently visible to the DOM along with their names
             const mutation = document.createElement("mutation");
             const attr = this.parameters.map(param => {
-                const varName = this.block.getFieldValue(param);
+                const varName = this.getVarFieldValue(param);
                 if (varName !== param) {
                     this.parameterRenames[param] = Util.htmlEscape(varName);
                 }
@@ -369,14 +370,26 @@ namespace pxt.blocks {
                 properties.forEach(prop => {
                     this.parameters.push(prop.property);
                     if (prop.newName && prop.newName !== prop.property) {
-                        this.parameterRenames[prop.property] === prop.newName;
+                        this.parameterRenames[prop.property] = prop.newName;
                     }
                 });
 
                 this.updateVisibleProperties();
 
                 // Override any names that the user has changed
-                properties.filter(p => !!p.newName).forEach(p => this.block.setFieldValue(p.newName, p.property));
+                properties.filter(p => !!p.newName).forEach(p => this.setVarFieldValue(p.property, p.newName));
+            }
+        }
+
+        protected getVarFieldValue(fieldName: string): string {
+            const varField = this.block.getField(fieldName);
+            return varField && varField.getText();
+        }
+
+        protected setVarFieldValue(fieldName: string, newValue: string) {
+            const varField = this.block.getField(fieldName);
+            if (this.block.getField(fieldName)) {
+                setVarFieldValue(this.block, fieldName, newValue);
             }
         }
 
@@ -428,7 +441,7 @@ namespace pxt.blocks {
 
             this.currentlyVisible.forEach(param => {
                 if (this.parameters.indexOf(param) === -1) {
-                    const name = this.block.getFieldValue(param);
+                    const name = this.getVarFieldValue(param);
 
                     // Persist renames
                     if (name !== param) {

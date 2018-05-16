@@ -1,0 +1,110 @@
+/* Import all components */
+
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+
+@import (reference) "semantic.less";
+
+/*******************************
+        Debugger
+*******************************/
+
+/* Debugger toolbar */
+.debugtoolbar {
+    position: absolute;
+    top: @mainMenuHeight;
+    z-index: @debuggerToolsZIndex;
+    .ui.menu {
+        box-shadow: 0 2px 8px #a8a8a8;
+        border-radius: 0 !important;
+        border: 0 !important;
+        .item {
+            padding-left: 10px;
+            padding-right: 10px;
+            border-radius: 0 !important;
+        }
+    }
+}
+
+/* Debugger toolbar handle */
+.ui.item.dbg-handle {
+    cursor: move;
+    background: #7F8C8D !important;
+    .icon {
+        color: white;
+    }
+}
+
+/* Debugger toolbar buttons */
+.ui.button.dbg-btn .icon.blue {
+    color: #72BDFF !important;
+}
+
+.ui.button.dbg-btn .icon.red {
+    color: #F6876D !important;
+}
+
+.ui.button.dbg-btn .icon.green {
+    color: #87D282 !important;
+}
+
+/* Debugger variables view */
+.ui.segment.debugvariables {
+    position: absolute;
+    right: 1rem;
+    top: 3.5rem;
+    margin-top: 0rem;
+    
+    .ui.middle.aligned.list {
+        overflow-y: auto;
+        max-height: 25rem;
+    }
+
+    .variable {
+        color: white;
+    }
+    .variable.changed {
+        outline: solid 2px yellow;
+    }
+    .variable .varname {
+        font-weight: bold;
+    }
+    .variable .detail {
+        background:white;
+        color:black;
+    }
+    .previousval {
+        text-decoration: line-through;
+        font-size: 90%;
+        margin-left: 0.5rem;
+    }
+}
+
+.ui.segment.debugvariables.frozen {
+    background: #eee;
+}
+/* sim overlay */
+div.simframe div.pause-overlay {
+    background:black;
+    opacity: 0.01;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: 100;    
+}
+
+/* Old debugger view */
+#root .debuggerview h4 {
+    margin: 0.9em 0 0 0;
+}
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+    .debugtoolbar {
+        top: @mobileMenuHeight;
+    }
+}

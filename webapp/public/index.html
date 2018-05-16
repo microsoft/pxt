@@ -8,17 +8,12 @@
 
     <!-- @include appmeta.html -->
 
-    <link id="blocklycss" rel="stylesheet" data-rtl="/blb/rtlblockly.css" href="/blb/blockly.css" type="text/css">
     <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" type="text/css">
-    <style type="text/css">
-        @import "/blb/custom.css";
-        @import "/blb/icons.css";
-    </style>
 </head>
 
 <body class="main">
     <div id='loading' class="ui active dimmer">
-        <div class="ui large loader"></div>
+        <div class="ui large main loader"></div>
     </div>
 
     <div id='custom-content'>
@@ -44,17 +39,7 @@
         var pxtConfig = null;
     </script>
     <!-- @include apptracking.html -->
-    <script type="text/javascript" src="/blb/jquery.js"></script>
-    <script type="text/javascript" src="/blb/blockly/blockly_compressed.js"></script>
-    <script type="text/javascript" src="/blb/blockly/blocks_compressed.js"></script>
-    <script type="text/javascript" src="/blb/blockly/msg/js/en.js"></script>
-    <script type="text/javascript" src="/blb/smoothie/smoothie_compressed.js"></script>
-    <script type="text/javascript" src="/blb/semantic.js"></script>
-    <script type="text/javascript" src="/blb/pxtlib.js"></script>
-    <script type="text/javascript" src="/blb/pxtblocks.js"></script>
-    <script type="text/javascript" src="/blb/pxtwinrt.js"></script>
-    <script type="text/javascript" src="/blb/pxteditor.js"></script>
-    <script type="text/javascript" src="/blb/pxtsim.js"></script>
+    <script type="text/javascript" src="/blb/pxtapp.js"></script>
     <script type="text/javascript" src="/blb/target.js"></script>
     <script id="mainscript" type="text/javascript" src="/blb/main.js"></script>
     <xml id="blocklyToolboxDefinitionCategory" style="display: none">
@@ -90,7 +75,11 @@
             "vs/language/typescript/lib/typescriptServices": "/blb/vs/language/typescript/lib/typescriptServices.js",
             "vs/language/typescript/src/mode": "/blb/vs/language/typescript/src/mode.js",
             "vs/language/typescript/src/worker": "/blb/vs/language/typescript/src/worker.js",
-            "lzma/lzma_worker-min.js": "/blb/lzma/lzma_worker-min.js"
+            "lzma/lzma_worker-min.js": "/blb/lzma/lzma_worker-min.js",
+            "smoothie/smoothie_compressed.js": "/blb/smoothie/smoothie_compressed.js",
+            "pxtblockly.js": "/blb/pxtblockly.js",
+            "blockly.css": "/blb/blockly.css",
+            "rtlblockly.css": "/blb/rtlblockly.css"
         }
     </script>
 </body>

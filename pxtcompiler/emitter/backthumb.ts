@@ -18,6 +18,7 @@ namespace ts.pxtc {
         "numops::adds": "_numops_adds",
         "numops::subs": "_numops_subs",
         "numops::orrs": "_numops_orrs",
+        "numops::eors": "_numops_eors",
         "numops::ands": "_numops_ands",
         "pxt::toInt": "_numops_toInt",
         "pxt::fromInt": "_numops_fromInt",

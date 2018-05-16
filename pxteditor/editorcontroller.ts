@@ -303,7 +303,7 @@ namespace pxt.editor {
                         case "renderblocks": {
                             const rendermsg = data as EditorMessageRenderBlocksRequest;
                             p = p.then(() => projectView.renderBlocksAsync(rendermsg))
-                                .then((img: string) => { resp = img; });
+                                .then((r: any) => { resp = r.xml; });
                             break;
                         }
                         case "toggletrace": {
@@ -388,7 +388,7 @@ namespace pxt.editor {
     export function postHostMessageAsync(msg: EditorMessageRequest): Promise<EditorMessageResponse> {
         return new Promise<EditorMessageResponse>((resolve, reject) => {
             const env = Util.clone(msg);
-            env.id = Util.guidGen();
+            env.id = ts.pxtc.Util.guidGen();
             if (msg.response)
                 pendingRequests[env.id] = { resolve, reject };
             window.parent.postMessage(env, "*");

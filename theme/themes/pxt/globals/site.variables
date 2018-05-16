@@ -61,7 +61,7 @@
 */
 
 @tallEditorBreakpoint: 44rem;
-@thinEditorBreakpoint: 24rem;
+@thinEditorBreakpoint: 50rem;
 
 /*--------------
    Form Input
@@ -109,10 +109,15 @@
 @loaderImageUrl: "../docs/static/loader.svg";
 @loaderImage: data-uri(@loaderImageUrl);
 
+@includePoweredByLogos: false;
 @poweredBySmallUrl: "../docs/static/logo/Powered-By-Microsoft-logo-small.png";
-@poweredBySmall: data-uri(@poweredBySmallUrl);
+@poweredBySmall: none;
 @poweredByLargeUrl: "../docs/static/logo/Powered-By-Microsoft-logo.png";
-@poweredByLarge: data-uri(@poweredByLargeUrl);
+@poweredByLarge: none;
+.includePoweredByLogos() when not (@includePoweredByLogos = false) {
+  @poweredBySmall: data-uri(@poweredBySmallUrl);
+  @poweredByLarge: data-uri(@poweredByLargeUrl);
+}
 
 @docsAvatarImageUrl: none;
 @docsAvatarImage: none;
@@ -174,7 +179,8 @@
    Editor
 --------------------*/
 
-@blocklyToolboxColor: rgba(0, 0, 0, 0.05);
+@blocklyToolboxColor: white;
+@blocklyToolboxText: #575E75;
 @trashIconColor: @primaryColor;
 
 /*-------------------
@@ -187,6 +193,7 @@
 @editorCloseColor: black;
 @editorCloseColorHover: darken(@editorCloseColor, 25%);
 @serialConsoleFont: @blocklyFont;
+@serialConsoleBackground: @simulatorBackground;
 
 /*-------------------
    Blockly
@@ -258,3 +265,9 @@
 @bannerBackgroundColor: black;
 @bannerContrastColor: white;
 @bannerLinkColor: #3eb1d0;
+
+
+/*-------------------
+    Greenscreen
+-------------------*/
+@greenScreenColor: #00ff00;

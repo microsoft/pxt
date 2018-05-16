@@ -24,33 +24,11 @@ export interface SpawnOptions {
 }
 
 //This should be correct at startup when running from command line
-export var targetDir: string = process.cwd();
-export var pxtCoreDir: string = path.join(__dirname, "..");
+export let targetDir: string = process.cwd();
+export let pxtCoreDir: string = path.join(__dirname, "..");
 
 export function setTargetDir(dir: string) {
     targetDir = dir;
-
-    // The target should expose the path to its bundled pxt-core
-    let fallback = false;
-    let target: any;
-
-    try {
-        target = require(targetDir);
-    }
-    catch (e) {
-        // If we can't require the target, fallback to default location
-        fallback = true;
-    }
-
-    if (fallback || !target.pxtCoreDir || !fs.existsSync(target.pxtCoreDir)) {
-        pxtCoreDir = path.join(__dirname, "..");
-
-        if (pxtCoreDir !== targetDir) {
-            pxt.log("Could not determine target's pxt-core location, falling back to default: " + pxtCoreDir);
-        }
-    } else {
-        pxtCoreDir = target.pxtCoreDir;
-    }
 }
 
 export function readResAsync(g: events.EventEmitter) {
@@ -167,7 +145,9 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
     let u = <http.RequestOptions><any>url.parse(options.url)
 
     if (u.protocol == "https:") isHttps = true
+    /* tslint:disable:no-http-string */
     else if (u.protocol == "http:") isHttps = false
+    /* tslint:enable:no-http-string */
     else return Promise.reject("bad protocol: " + u.protocol)
 
     u.headers = Util.clone(options.headers) || {}

@@ -3,17 +3,26 @@ import * as pkg from "./package";
 import * as srceditor from "./srceditor"
 import * as sui from "./sui";
 import * as core from "./core";
-import * as codecard from "./codecard"
+import * as data from "./data";
 
-import Cloud = pxt.Cloud;
 import Util = pxt.Util;
-
-const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
     config: pxt.PackageConfig = {} as any;
     isSaving: boolean;
     changeMade: boolean = false;
+
+    private nameInput: sui.Input;
+
+    constructor(public parent: pxt.editor.IProjectView) {
+        super(parent);
+
+        this.editSettingsText = this.editSettingsText.bind(this);
+        this.save = this.save.bind(this);
+        this.setFileName = this.setFileName.bind(this);
+        this.isUserConfigActive = this.isUserConfigActive.bind(this);
+        this.applyUserConfig = this.applyUserConfig.bind(this);
+    }
 
     prepare() {
         this.isReady = true
@@ -27,73 +36,76 @@ export class Editor extends srceditor.Editor {
         return false
     }
 
-    display() {
+    save() {
         const c = this.config
-        const save = () => {
-            this.isSaving = true;
-            if (!c.name) {
-                // Error saving no name
-                core.errorNotification(lf("Please choose a project name. It can't be blank."));
-                this.isSaving = false;
-                return;
+        this.isSaving = true;
+        if (!c.name) {
+            // Error saving no name
+            core.errorNotification(lf("Please choose a project name. It can't be blank."));
+            this.isSaving = false;
+            return;
+        }
+        const f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
+        f.setContentAsync(JSON.stringify(this.config, null, 4) + "\n").then(() => {
+            pkg.mainPkg.config.name = c.name;
+            this.parent.setState({ projectName: c.name });
+            this.parent.forceUpdate()
+            Util.nextTick(this.changeCallback)
+            this.isSaving = false;
+            this.changeMade = true;
+            // switch to previous coding experience
+            this.parent.openPreviousEditor();
+            core.resetFocus();
+        })
+    }
+
+    setFileName(v: string) {
+        const c = this.config
+        c.name = v;
+        this.parent.forceUpdate();
+    }
+
+    isUserConfigActive(uc: pxt.CompilationConfig) {
+        const cfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
+        const ucfg = Util.jsonFlatten(uc.config);
+        return !Object.keys(ucfg).some(k => ucfg[k] === null ? !!cfg[k] : cfg[k] !== ucfg[k]);
+    }
+
+    applyUserConfig(uc: pxt.CompilationConfig) {
+        const cfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
+        const ucfg = Util.jsonFlatten(uc.config);
+        if (this.isUserConfigActive(uc)) {
+            Object.keys(ucfg).forEach(k => delete cfg[k]);
+        } else {
+            Object.keys(ucfg).forEach(k => cfg[k] = ucfg[k]);
+        }
+        // update cfg
+        if (Object.keys(cfg).length) {
+            if (!this.config.yotta) this.config.yotta = {};
+            Object.keys(cfg).filter(k => cfg[k] === null).forEach(k => delete cfg[k]);
+            this.config.yotta.config = Util.jsonUnFlatten(cfg);
+        } else {
+            if (this.config.yotta) {
+                delete this.config.yotta.config;
+                if (!Object.keys(this.config.yotta).length)
+                    delete this.config.yotta;
             }
-            const f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
-            f.setContentAsync(JSON.stringify(this.config, null, 4) + "\n").then(() => {
-                pkg.mainPkg.config.name = c.name;
-                this.parent.setState({ projectName: c.name });
-                this.parent.forceUpdate()
-                Util.nextTick(this.changeCallback)
-                this.isSaving = false;
-                this.changeMade = true;
-                // switch to previous coding experience
-                this.parent.openPreviousEditor();
-                core.resetFocus();
-            })
         }
-        const setFileName = (v: string) => {
-            c.name = v;
-            this.parent.forceUpdate();
-        }
-        const deleteProject = () => {
-            this.parent.removeProject();
-        }
-        const initCard = () => {
-            if (!c.card) c.card = {}
-        }
-        const card = c.card || {};
+        // trigger update            
+        this.save();
+    }
+
+    private handleNameInputRef = (c: sui.Input) => {
+        this.nameInput = c;
+    }
+
+    display() {
+        const c = this.config;
         let userConfigs: pxt.CompilationConfig[] = [];
         pkg.allEditorPkgs().map(ep => ep.getKsPkg())
             .filter(dep => !!dep && dep.isLoaded && !!dep.config && !!dep.config.yotta && !!dep.config.yotta.userConfigs)
             .forEach(dep => userConfigs = userConfigs.concat(dep.config.yotta.userConfigs));
 
-        const isUserConfigActive = (uc: pxt.CompilationConfig) => {
-            const cfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
-            const ucfg = Util.jsonFlatten(uc.config);
-            return !Object.keys(ucfg).some(k => ucfg[k] === null ? !!cfg[k] : cfg[k] !== ucfg[k]);
-        }
-        const applyUserConfig = (uc: pxt.CompilationConfig) => {
-            const cfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
-            const ucfg = Util.jsonFlatten(uc.config);
-            if (isUserConfigActive(uc)) {
-                Object.keys(ucfg).forEach(k => delete cfg[k]);
-            } else {
-                Object.keys(ucfg).forEach(k => cfg[k] = ucfg[k]);
-            }
-            // update cfg
-            if (Object.keys(cfg).length) {
-                if (!this.config.yotta) this.config.yotta = {};
-                Object.keys(cfg).filter(k => cfg[k] === null).forEach(k => delete cfg[k]);
-                this.config.yotta.config = Util.jsonUnFlatten(cfg);
-            } else {
-                if (this.config.yotta) {
-                    delete this.config.yotta.config;
-                    if (!Object.keys(this.config.yotta).length)
-                        delete this.config.yotta;
-                }
-            }
-            // trigger update            
-            save();
-        }
         return (
             <div className="ui content">
                 <h3 className="ui small header">
@@ -102,17 +114,17 @@ export class Editor extends srceditor.Editor {
                     </div>
                 </h3>
                 <div className="ui segment form text">
-                    <sui.Input id={"fileNameInput"} label={lf("Name") } ariaLabel={lf("Type a name for your project") } value={c.name} onChange={setFileName}/>
+                    <sui.Input ref={this.handleNameInputRef} id={"fileNameInput"} label={lf("Name")} ariaLabel={lf("Type a name for your project")} value={c.name || ''} onChange={this.setFileName} />
                     {userConfigs.map(uc =>
-                        <sui.Checkbox
+                        <UserConfigCheckbox
                             key={`userconfig-${uc.description}`}
-                            inputLabel={uc.description}
-                            checked={isUserConfigActive(uc) }
-                            onChange={() => applyUserConfig(uc) } />
-                    ) }
+                            uc={uc}
+                            isUserConfigActive={this.isUserConfigActive}
+                            applyUserConfig={this.applyUserConfig} />
+                    )}
                     <sui.Field>
-                        <sui.Button text={lf("Save") } class={`green ${this.isSaving ? 'disabled' : ''}`} onClick={() => save() } />
-                        <sui.Button text={lf("Edit Settings As text") } onClick={() => this.editSettingsText() } />
+                        <sui.Button text={lf("Save")} className={`green ${this.isSaving ? 'disabled' : ''}`} onClick={this.save} />
+                        <sui.Button text={lf("Edit Settings As text")} onClick={this.editSettingsText} />
                     </sui.Field>
                 </div>
             </div>
@@ -151,6 +163,7 @@ export class Editor extends srceditor.Editor {
 
     loadFileAsync(file: pkg.File): Promise<void> {
         this.config = JSON.parse(file.content)
+        if (this.nameInput) this.nameInput.clearValue();
         this.setDiagnostics(file, this.snapshotState())
         this.changeMade = false;
         return Promise.resolve();
@@ -161,5 +174,42 @@ export class Editor extends srceditor.Editor {
             return this.parent.reloadHeaderAsync();
         }
         return Promise.resolve();
+    }
+}
+
+interface UserConfigCheckboxProps {
+    uc: pxt.CompilationConfig;
+    isUserConfigActive: (uc: pxt.CompilationConfig) => boolean;
+    applyUserConfig: (uc: pxt.CompilationConfig) => void;
+}
+
+class UserConfigCheckbox extends data.Component<UserConfigCheckboxProps, {}> {
+    constructor(props: UserConfigCheckboxProps) {
+        super(props);
+        this.state = {
+        }
+        this.isUserConfigActive = this.isUserConfigActive.bind(this);
+        this.applyUserConfig = this.applyUserConfig.bind(this);
+    }
+
+    isUserConfigActive() {
+        const { applyUserConfig, isUserConfigActive, uc } = this.props;
+        return isUserConfigActive(uc);
+    }
+
+    applyUserConfig() {
+        const { applyUserConfig, isUserConfigActive, uc } = this.props;
+        applyUserConfig(uc);
+    }
+
+    renderCore() {
+        const { uc } = this.props;
+        const isChecked = this.isUserConfigActive();
+
+        return <sui.Checkbox
+            key={`userconfig-${uc.description}`}
+            inputLabel={uc.description}
+            checked={isChecked}
+            onChange={this.applyUserConfig} />
     }
 }

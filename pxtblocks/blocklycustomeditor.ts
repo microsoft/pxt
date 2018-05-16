@@ -38,6 +38,8 @@ namespace pxt.blocks {
         registerFieldEditor('toggledownup', pxtblockly.FieldToggleDownUp);
         registerFieldEditor('togglehighlow', pxtblockly.FieldToggleHighLow);
         registerFieldEditor('colornumber', pxtblockly.FieldColorNumber);
+        registerFieldEditor('images', pxtblockly.FieldImages);
+        registerFieldEditor('sprite', pxtblockly.FieldSpriteEditor);
     }
 
     export function registerFieldEditor(selector: string, field: Blockly.FieldCustomConstructor, validator?: any) {
@@ -54,6 +56,15 @@ namespace pxt.blocks {
             console.error(`Field editor ${selector} not registered`);
             return null;
         }
+
+        if (!params) {
+            params = {};
+        }
+
+        Util.assert(params.lightMode == undefined, "lightMode is a reserved parameter for custom fields");
+
+        params.lightMode = pxt.options.light;
+
         let customField = registeredFieldEditors[selector];
         let instance = new customField.field(text, params, customField.validator);
         return instance;

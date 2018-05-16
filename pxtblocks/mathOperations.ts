@@ -46,7 +46,7 @@ namespace pxt.blocks {
                 return (mathOpDef.tooltip as Map<string>)[block.getFieldValue("OP")];
             },
             mathOpDef.url,
-            getNamespaceColor(mathOpDef.category)
+            pxt.toolbox.getNamespaceColor(mathOpDef.category)
         );
 
         function onOperatorSelect(b: Blockly.Block, op: string) {

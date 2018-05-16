@@ -21,7 +21,8 @@ let docfilesdirs = [""]
 let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let packagedDir = ""
-let localHexDir = path.join("built", "hexcache");
+let localHexCacheDir = path.join("built", "hexcache");
+let serveOptions: ServeOptions;
 
 function setupDocfilesdirs() {
     docfilesdirs = [
@@ -81,6 +82,23 @@ function throwError(code: number, msg: string = null) {
 type FsFile = pxt.FsFile;
 type FsPkg = pxt.FsPkg;
 
+function readAssetsAsync(logicalDirname: string): Promise<any> {
+    let dirname = path.join(userProjectsDir, logicalDirname, "assets")
+    /* tslint:disable:no-http-string */
+    let pref = "http://" + serveOptions.hostname + ":" + serveOptions.port + "/assets/" + logicalDirname + "/"
+    /* tslint:enable:no-http-string */
+    return readdirAsync(dirname)
+        .catch(err => [])
+        .then(res => Promise.map(res, fn => statAsync(path.join(dirname, fn)).then(res => ({
+            name: fn,
+            size: res.size,
+            url: pref + fn
+        }))))
+        .then(res => ({
+            files: res
+        }))
+}
+
 function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
     let dirname = path.join(userProjectsDir, logicalDirname)
     let r: FsPkg = undefined;
@@ -138,6 +156,16 @@ function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, ico
         writeUriAsync("screenshot", screenshotUri),
         writeUriAsync("icon", iconUri)
     ]).then(() => { });
+}
+
+function writePkgAssetAsync(logicalDirname: string, data: any) {
+    const dirname = path.join(userProjectsDir, logicalDirname, "assets")
+
+    nodeutil.mkdirP(dirname)
+    return writeFileAsync(dirname + "/" + data.name, new Buffer(data.data, data.encoding || "base64"))
+        .then(() => ({
+            name: data.name
+        }))
 }
 
 function writePkgAsync(logicalDirname: string, data: FsPkg) {
@@ -201,7 +229,7 @@ function getCachedHexAsync(sha: string): Promise<any> {
         return Promise.resolve();
     }
 
-    let hexFile = path.resolve(localHexDir, sha + ".hex");
+    let hexFile = path.resolve(localHexCacheDir, sha + ".hex");
 
     return existsAsync(hexFile)
         .then((results) => {
@@ -253,6 +281,11 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     else if (cmd == "POST pkg")
         return readJsonAsync()
             .then(d => writePkgAsync(innerPath, d))
+    else if (cmd == "POST pkgasset")
+        return readJsonAsync()
+            .then(d => writePkgAssetAsync(innerPath, d))
+    else if (cmd == "GET pkgasset")
+        return readAssetsAsync(innerPath)
     else if (cmd == "POST deploy" && pxt.commands.deployCoreAsync)
         return readJsonAsync()
             .then(pxt.commands.deployCoreAsync)
@@ -324,13 +357,13 @@ export function expandHtml(html: string) {
 export function expandDocTemplateCore(template: string) {
     template = template
         .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
-        (full, fn) => {
-            return `
+            (full, fn) => {
+                return `
 <!-- include ${fn} -->
 ${expandDocFileTemplate(fn)}
 <!-- end include ${fn} -->
 `
-        })
+            })
     return template
 }
 
@@ -657,7 +690,6 @@ function readMd(pathname: string): string {
     return `# Not found ${pathname}\nChecked:\n` + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join("")
 }
 
-let serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
@@ -747,6 +779,19 @@ export function serveAsync(options: ServeOptions) {
             const name = path.join(userProjectsDir, elts[1], "icon.jpeg");
             return existsAsync(name)
                 .then(exists => exists ? sendFile(name) : error(404));
+        }
+
+        if (elts[0] == "assets") {
+            if (/^[a-z0-9\-_]/.test(elts[1]) && !/[\/\\]/.test(elts[1]) && !/^[.]/.test(elts[2])) {
+                let filename = path.join(userProjectsDir, elts[1], "assets", elts[2])
+                if (nodeutil.fileExistsSync(filename)) {
+                    return sendFile(filename)
+                } else {
+                    return error(404, "Asset not found")
+                }
+            } else {
+                return error(400, "Invalid asset path")
+            }
         }
 
         if (options.packaged) {
@@ -864,7 +909,9 @@ export function serveAsync(options: ServeOptions) {
     const serverjs = path.resolve(path.join(root, 'built', 'server.js'))
     if (nodeutil.fileExistsSync(serverjs)) {
         console.log('loading ' + serverjs)
+        /* tslint:disable:non-literal-require */
         require(serverjs);
+        /* tslint:disable:non-literal-require */
     }
 
     const serverPromise = new Promise<void>((resolve, reject) => {
@@ -874,7 +921,9 @@ export function serveAsync(options: ServeOptions) {
 
     return Promise.all([wsServerPromise, serverPromise])
         .then(() => {
+            /* tslint:disable:no-http-string */
             const start = `http://${serveOptions.hostname}:${serveOptions.port}/#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
+            /* tslint:enable:no-http-string */
             console.log(`---------------------------------------------`);
             console.log(``);
             console.log(`To launch the editor, open this URL:`);

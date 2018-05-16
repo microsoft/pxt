@@ -84,7 +84,7 @@ body#docs.tutorial {
     position: relative;
     padding: 0;
     border: 0;
-    border-radius: 5px 0px 0px 5px;
+    border-radius: 0px;
     background: @tutorialSegmentBackground;
 }
 
@@ -166,6 +166,12 @@ i.icon.avatar-image {
     background-image: @avatarImage;
 }
 
+/* Tutorial blocks */
+
+.ui.segment .blocklyPreview {
+    width: 100%;
+}
+
 /******************************
     Hint button
 ******************************/
@@ -204,7 +210,6 @@ span.docs.inlinebutton {
     border-radius: 0.2rem;
     white-space: nowrap;
     background-color: @primaryColor;
-    border: 1px solid lighten(@primaryColor, 20%);
     color: @white;
 }
 
@@ -232,6 +237,13 @@ code.lang-filterblocks {
 .ui.modal.hintdialog .content p {
     font-size: 16px;
     line-height: 25px;
+}
+
+.ui.modal.hintdialog {
+    .ui.segment {
+        display: flex;
+        min-height: 100px;
+    }
 }
 
 

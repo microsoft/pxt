@@ -1,22 +1,31 @@
-import { BuiltinCategoryDefinition, MonacoBlockDefinition } from "./monaco";
+import { BuiltinCategoryDefinition, BlockDefinition } from "./toolbox";
+
+import * as monaco from "./monaco";
+
 export const loops: BuiltinCategoryDefinition = {
     name: lf("{id:category}Loops"),
     nameid: 'loops',
     blocks: [
         {
-            name: "while",
+            name: "loops_while",
+            snippetName: "while",
             snippet: `while(true) {\n\n}`,
             attributes: {
+                blockId: 'device_while',
+                weight: 48,
                 jsDoc: lf("Repeat code while condition is true")
             }
         },
         {
-            name: "for",
+            name: "loops_for",
+            snippetName: "for",
             snippet: `for(let i = 0; i < 5; i++) {\n\n}`,
             attributes: {
+                blockId: 'pxt_controls_for',
+                weight: 47,
                 jsDoc: lf("Repeat code a number of times in a loop")
             }
-        },
+        }
     ],
     attributes: {
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
@@ -31,23 +40,31 @@ export const logic: BuiltinCategoryDefinition = {
     nameid: 'logic',
     blocks: [
         {
-            name: "if",
+            name: "logic_if",
+            snippetName: "if",
             snippet: `if (true) {\n\n}`,
             attributes: {
+                blockId: 'controls_if',
+                weight: 49,
                 jsDoc: lf("Runs code if the condition is true")
             }
         },
         {
-            name: "if",
+            name: "logic_if_else",
+            snippetName: "if",
             snippet: `if (true) {\n\n} else {\n\n}`,
             attributes: {
+                blockId: 'controls_if',
+                weight: 48,
                 jsDoc: lf("Runs code if the condition is true; else run other code")
             }
         },
         {
-            name: "switch",
+            name: "logic_switch",
+
+            snippetName: "switch",
             snippet:
-`switch(item) {
+                `switch(item) {
     case 0:
         break;
     case 1:
@@ -56,7 +73,7 @@ export const logic: BuiltinCategoryDefinition = {
             attributes: {
                 jsDoc: lf("Runs different code based on a value")
             }
-        },
+        }
     ],
     attributes: {
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
@@ -71,26 +88,32 @@ export const variables: BuiltinCategoryDefinition = {
     nameid: 'variables',
     blocks: [
         {
-            name: "let",
+            name: "var_let",
+            snippetName: "let",
             snippet: `let item: number`,
             snippetOnly: true,
             attributes: {
+                blockId: 'variables_set',
                 jsDoc: lf("Declares a variable named 'item'")
             }
         },
         {
-            name: "equals",
+            name: "var_equals",
+            snippetName: "equals",
             snippet: `item = 0`,
             snippetOnly: true,
             attributes: {
+                blockId: 'variables_get',
                 jsDoc: lf("Assigns a value to a variable")
             }
         },
         {
-            name: "change",
+            name: "var_change",
+            snippetName: "change",
             snippet: `item += 1`,
             snippetOnly: true,
             attributes: {
+                blockId: 'variables_change',
                 jsDoc: lf("Changes the value of item by 1")
             }
         },
@@ -108,90 +131,108 @@ export const maths: BuiltinCategoryDefinition = {
     nameid: 'math',
     blocks: [
         {
-            name: "plus",
+            name: "Math.plus",
+            snippetName: "plus",
             snippet: `1 + 1`,
             snippetOnly: true,
             attributes: {
+                weight: 90,
+                blockId: "math_arithmetic",
                 jsDoc: lf("Adds two numbers together")
             },
             retType: "number"
         },
         {
-            name: "minus",
+            name: "Math.minus",
+            snippetName: "minus",
             snippet: `1 - 1`,
             snippetOnly: true,
             attributes: {
+                weight: 89,
+                blockId: "math_arithmetic",
                 jsDoc: lf("Subtracts the value of one number from another")
             },
             retType: "number"
         },
         {
-            name: "multiply",
+            name: "Math.multiply",
+            snippetName: "multiply",
             snippet: `1 * 1`,
             snippetOnly: true,
             attributes: {
+                weight: 88,
+                blockId: "math_arithmetic",
                 jsDoc: lf("Multiplies two numbers together")
             },
             retType: "number"
         },
         {
-            name: "divide",
+            name: "Math.divide",
+            snippetName: "divide",
             snippet: `1 / 1`,
             snippetOnly: true,
             attributes: {
+                weight: 87,
+                blockId: "math_arithmetic",
                 jsDoc: lf("Returns the quotient of one number divided by another")
             },
             retType: "number"
         },
         {
-            name: "remainder",
+            name: "Math.remainder",
+            snippetName: "remainder",
             snippet: `1 % 2`,
             snippetOnly: true,
             attributes: {
+                weight: 80,
+                blockId: "math_modulo",
                 jsDoc: lf("Returns the remainder of one number divided by another")
             },
             retType: "number"
         },
         {
-            name: "max",
+            name: "Math.max",
+            snippetName: "max",
             snippet: `Math.max(1, 2)`,
             attributes: {
+                weight: 75,
+                blockId: "math_op2",
                 jsDoc: lf("Returns the largest of two numbers")
             },
             retType: "number"
         },
         {
-            name: "min",
+            name: "Math.min",
+            snippetName: "min",
             snippet: `Math.min(1, 2)`,
             attributes: {
+                weight: 74,
+                blockId: "math_op2",
                 jsDoc: lf("Returns the smallest of two numbers")
             },
             retType: "number"
         },
         {
-            name: "abs",
+            name: "Math.abs",
+            snippetName: "abs",
             snippet: `Math.abs(-1)`,
             attributes: {
+                weight: 70,
+                blockId: "math_op3",
                 jsDoc: lf("Returns the absolute value of a number")
             },
             retType: "number"
         },
         {
-            name: "randomRange",
+            name: "Math.randomRange",
+            snippetName: "randomRange",
             snippet: `Math.randomRange(0, 10)`,
             attributes: {
+                weight: 65,
                 jsDoc: lf("Returns a random number between min and max")
             },
             retType: "number"
-        },
-        {
-            name: "randomBoolean",
-            snippet: `Math.randomBoolean()`,
-            attributes: {
-                jsDoc: lf("Randomly returns either true or false")
-            },
-            retType: "boolean"
-        },
+        }
     ],
     attributes: {
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
@@ -201,69 +242,37 @@ export const maths: BuiltinCategoryDefinition = {
     }
 };
 
-export const text: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Text"),
-    nameid: 'text',
-    custom: true,
+export const functions: BuiltinCategoryDefinition = {
+    name: lf("{id:category}Functions"),
+    nameid: 'functions',
     blocks: [
         {
-            name: "length",
-            snippet: `"".length`,
-            snippetOnly: true,
+            name: "functionDef",
+            snippetName: "function doSomething",
+            snippet: `function doSomething() {\n\n}`,
             attributes: {
-                jsDoc: lf("Returns the number of characters in a string")
-            },
-            retType: "number"
+                blockId: 'procedures_defnoreturn',
+                jsDoc: lf("Define a function")
+            }
         },
         {
-            name: "concat",
-            snippet: `"" + 5`,
-            snippetOnly: true,
+            name: "functionCall",
+            snippetName: "doSomething",
+            snippet: `doSomething()`,
             attributes: {
-                jsDoc: lf("Combines a string with a number, boolean, string, or other object into one string")
-            },
-            retType: "string"
-        },
-        {
-            name: "compare",
-            snippet: `"".compare("")`,
-            attributes: {
-                jsDoc: lf("Compares one string against another alphabetically and returns a number")
-            },
-            retType: "number"
-        },
-        {
-            name: "parseInt",
-            snippet: `parseInt("5")`,
-            attributes: {
-                jsDoc: lf("Converts a number written as text into a number")
-            },
-            retType: "number"
-        },
-        {
-            name: "substr",
-            snippet: `"".substr(0, 0)`,
-            attributes: {
-                jsDoc: lf("Returns the part of a string starting at a given index with the given length")
-            },
-            retType: "string"
-        },
-        {
-            name: "charAt",
-            snippet: `"".charAt(0)`,
-            attributes: {
-                jsDoc: lf("Returns the character at the given index")
-            },
-            retType: "string"
+                blockId: 'procedures_callnoreturn',
+                jsDoc: lf("Call a function")
+            }
         },
     ],
     attributes: {
         advanced: true,
-        icon: "text",
+        weight: 50.08,
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+        icon: "functions",
         paramDefl: {}
     }
-}
+};
 
 export const arrays: BuiltinCategoryDefinition = {
     name: lf("{id:category}Arrays"),
@@ -271,99 +280,120 @@ export const arrays: BuiltinCategoryDefinition = {
     custom: true,
     blocks: [
         {
-            name: "create",
+            name: "array_create",
+            snippetName: "create",
             snippet: `let ${lf("{id:snippets}list")} = [1, 2, 3];`,
             snippetOnly: true,
             attributes: {
                 weight: 100,
+                blockId: "lists_create_with",
                 jsDoc: lf("Creates a new Array")
             },
             retType: "array"
         },
         {
-            name: "length",
+            name: "array_length",
+            snippetName: "length",
             snippet: `${lf("{id:snippets}list")}.length`,
             snippetOnly: true,
             attributes: {
                 weight: 99,
+                blockId: "lists_length",
                 jsDoc: lf("Returns the number of values in an Array")
             },
             retType: "number"
         },
         {
-            name: "get",
+            name: "array_get",
+            snippetName: "get",
             snippet: `${lf("{id:snippets}list")}[0]`,
             snippetOnly: true,
             attributes: {
                 weight: 98,
+                blockId: "lists_index_get",
                 jsDoc: lf("Returns the value in the Array at the given index")
             }
         },
         {
-            name: "set",
+            name: "array_set",
+            snippetName: "set",
             snippet: `${lf("{id:snippets}list")}[0] = 1`,
             snippetOnly: true,
             attributes: {
                 weight: 97,
+                blockId: "lists_index_set",
                 jsDoc: lf("Overwrites the value in an Array at the given index")
             }
         },
         {
-            name: "push",
+            name: "array_push",
+            snippetName: "push",
             snippet: `${lf("{id:snippets}list")}.push(1)`,
             attributes: {
                 weight: 96,
+                blockId: "array_push",
                 jsDoc: lf("Adds a value to the end of an Array")
             }
         },
         {
-            name: "pop",
+            name: "arary_pop",
+            snippetName: "pop",
             snippet: `${lf("{id:snippets}list")}.pop()`,
             attributes: {
                 weight: 95,
+                blockId: "array_pop",
                 jsDoc: lf("Removes and returns the value at the end of an Array")
             },
             retType: "object"
         },
         {
-            name: "insertAt",
+            name: "array_insertAt",
+            snippetName: "insertAt",
             snippet: `${lf("{id:snippets}list")}.insertAt(0, 0)`,
             attributes: {
                 weight: 50,
+                blockId: "array_insertAt",
                 jsDoc: lf("Inserts a value into the Array at the given index"),
                 advanced: true
             }
         },
         {
-            name: "removeAt",
+            name: "array_removeAt",
+            snippetName: "removeAt",
             snippet: `${lf("{id:snippets}list")}.removeAt(0)`,
             attributes: {
                 weight: 49,
+                blockId: "array_removeat",
                 jsDoc: lf("Removes a value from the Array at the given index and returns it"),
                 advanced: true
             },
             retType: "object"
         },
         {
-            name: "shift",
+            name: "array_shift",
+            snippetName: "shift",
             snippet: `${lf("{id:snippets}list")}.shift()`,
             attributes: {
                 weight: 48,
+                blockId: "array_shift",
                 jsDoc: lf("Removes and returns the value at the front of an Array"),
                 advanced: true
             }
         },
         {
-            name: "unshift",
+            name: "array_unshift",
+            snippetName: "unshift",
             snippet: `${lf("{id:snippets}list")}.unshift(0)`,
             attributes: {
                 weight: 47,
+                blockId: "array_unshift",
                 jsDoc: lf("Inserts a value at the beginning of an Array"),
                 advanced: true
             }
         },
         {
-            name: "indexOf",
+            name: "array_indexOf",
+            snippetName: "indexOf",
             snippet: `["A", "B", "C"].indexOf("B")`,
             attributes: {
                 weight: 46,
@@ -373,7 +403,8 @@ export const arrays: BuiltinCategoryDefinition = {
             retType: "number"
         },
         {
-            name: "reverse",
+            name: "array_reverse",
+            snippetName: "reverse",
             snippet: `${lf("{id:snippets}list")}.reverse()`,
             attributes: {
                 weight: 45,
@@ -384,42 +415,110 @@ export const arrays: BuiltinCategoryDefinition = {
     ],
     attributes: {
         advanced: true,
-        color: pxt.blocks.blockColors["arrays"].toString(),
+        weight: 50.07,
         icon: "arrays",
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         paramDefl: {}
     }
 }
 
-export const functions: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Functions"),
-    nameid: 'functions',
+export const text: BuiltinCategoryDefinition = {
+    name: lf("{id:category}Text"),
+    nameid: 'text',
+    custom: true,
     blocks: [
         {
-            name: "function doSomething",
-            snippet: `function doSomething() {\n\n}`,
+            name: "text_length",
+            snippetName: "length",
+            snippet: `"".length`,
+            snippetOnly: true,
             attributes: {
-                jsDoc: lf("Define a function")
-            }
+                blockId: 'text_length',
+                jsDoc: lf("Returns the number of characters in a string")
+            },
+            retType: "number"
         },
         {
-            name: "doSomething",
-            snippet: `doSomething()`,
+            name: "text_concat",
+            snippetName: "concat",
+            snippet: `"" + 5`,
+            snippetOnly: true,
             attributes: {
-                jsDoc: lf("Call a function")
-            }
+                blockId: 'text_join',
+                jsDoc: lf("Combines a string with a number, boolean, string, or other object into one string")
+            },
+            retType: "string"
+        },
+        {
+            name: "text_compare",
+            snippetName: "compare",
+            snippet: `"".compare("")`,
+            attributes: {
+                blockId: 'string_compare',
+                jsDoc: lf("Compares one string against another alphabetically and returns a number")
+            },
+            retType: "number"
+        },
+        {
+            name: "text_parseInt",
+            snippetName: "parseInt",
+            snippet: `parseInt("5")`,
+            attributes: {
+                blockId: 'string_parseint',
+                jsDoc: lf("Converts a number written as text into a number")
+            },
+            retType: "number"
+        },
+        {
+            name: "text_substr",
+            snippetName: "substr",
+            snippet: `"".substr(0, 0)`,
+            attributes: {
+                blockId: 'string_substr',
+                jsDoc: lf("Returns the part of a string starting at a given index with the given length")
+            },
+            retType: "string"
+        },
+        {
+            name: "text_charAt",
+            snippetName: "charAt",
+            snippet: `"".charAt(0)`,
+            attributes: {
+                blockId: 'string_get',
+                jsDoc: lf("Returns the character at the given index")
+            },
+            retType: "string"
         },
     ],
     attributes: {
         advanced: true,
+        weight: 50.06,
+        icon: "text",
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-        color: pxt.blocks.blockColors["functions"].toString(),
-        icon: "functions",
+        paramDefl: {}
+    }
+}
+
+export const extensions: BuiltinCategoryDefinition = {
+    name: pxt.toolbox.addPackageTitle(),
+    nameid: 'addpackage',
+    blocks: [],
+    custom: true,
+    customClick: (theEditor: monaco.Editor) => {
+        theEditor.closeFlyout();
+        theEditor.showPackageDialog();
+        return true;
+    },
+    attributes: {
+        advanced: true,
+        weight: -1,
+        icon: "addpackage",
+        callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         paramDefl: {}
     }
 };
 
-let pauseUntil: MonacoBlockDefinition;
+let pauseUntil: BlockDefinition;
 
 export function getPauseUntil() {
     if (pauseUntil) return pauseUntil;
@@ -433,11 +532,13 @@ export function getPauseUntil() {
         }
 
         pauseUntil = {
-            name: callName,
+            name: 'pause_until',
+            snippetName: callName,
             snippet,
             attributes: {
+                blockNamespace: opts.category || "loops",
                 weight: opts.weight == null ? 0 : opts.weight,
-                jsDoc: pxt.blocks.blockDefinitions()[pxtc.PAUSE_UNTIL_TYPE].tooltip  as string,
+                jsDoc: lf("Pause execution of code until the given boolean expression is true"),
                 advanced: false
             },
             noNamespace: true
@@ -448,15 +549,16 @@ export function getPauseUntil() {
 }
 
 export function getBuiltinCategory(ns: string) {
-        switch (ns) {
-            case loops.nameid: return loops;
-            case logic.nameid: return logic;
-            case variables.nameid: return variables;
-            case maths.nameid: return maths;
-            case text.nameid: return text;
-            case arrays.nameid: return arrays;
-            case functions.nameid: return functions;
-        }
+    switch (ns) {
+        case loops.nameid: return loops;
+        case logic.nameid: return logic;
+        case variables.nameid: return variables;
+        case maths.nameid: return maths;
+        case text.nameid: return text;
+        case arrays.nameid: return arrays;
+        case functions.nameid: return functions;
+        case extensions.nameid: return extensions;
+    }
     return undefined;
 }
 
@@ -469,16 +571,70 @@ export function isBuiltin(ns: string) {
         case text.nameid:
         case arrays.nameid:
         case functions.nameid:
+        case extensions.nameid:
             return true;
     }
     return false;
 }
 
-export function overrideCategory(ns: string, def: pxt.editor.MonacoToolboxCategoryDefinition) {
+let builtinBlockCacheById: pxt.Map<[BlockDefinition, string]>;
+let builtinBlockCacheByName: pxt.Map<[BlockDefinition, string]>;
+function cacheBuiltInBlocks() {
+    if (builtinBlockCacheById) return;
+    builtinBlockCacheById = {};
+    builtinBlockCacheByName = {};
+    [loops, logic, maths, text, arrays, variables, functions].forEach((builtin => {
+        builtin.blocks.forEach(block => {
+            if (block.type) return; // Block type is assumed to be empty
+            if (!(block as BlockDefinition).snippet) return;
+            if (block.attributes.blockId && !builtinBlockCacheById[block.attributes.blockId]) {
+                builtinBlockCacheById[block.attributes.blockId] = [block, builtin.nameid];
+            }
+            if (!builtinBlockCacheByName[block.name]) {
+                builtinBlockCacheByName[block.name] = [block, builtin.nameid];
+            }
+        })
+    }))
+}
+
+export function allBuiltinBlocks() {
+    cacheBuiltInBlocks();
+    // Add pause until built in block
+    const pauseUntil = this.getPauseUntil();
+    if (pauseUntil) {
+        builtinBlockCacheById[pxtc.PAUSE_UNTIL_TYPE] = pauseUntil;
+    }
+    return builtinBlockCacheById;
+}
+
+export function allBuiltinBlocksByName() {
+    cacheBuiltInBlocks();
+    // Add pause until built in block
+    const pauseUntil = this.getPauseUntil();
+    if (pauseUntil) {
+        builtinBlockCacheByName[pxtc.PAUSE_UNTIL_TYPE] = pauseUntil;
+    }
+    return builtinBlockCacheByName;
+}
+
+export function clearBuiltinBlockCache() {
+    builtinBlockCacheById = undefined;
+    builtinBlockCacheByName = undefined;
+}
+
+export function overrideCategory(ns: string, def: pxt.editor.ToolboxCategoryDefinition) {
     const cat = getBuiltinCategory(ns);
     if (def && cat) {
+        if (Object.keys(def).length === 0) {
+            cat.removed = true;
+        }
+
         if (def.name) {
             cat.name = def.name;
+        }
+
+        if (def.icon) {
+            cat.attributes.icon = def.icon;
         }
 
         if (def.weight !== undefined) {
@@ -489,66 +645,73 @@ export function overrideCategory(ns: string, def: pxt.editor.MonacoToolboxCatego
             cat.attributes.advanced = def.advanced;
         }
 
-        if (def.removed !== undefined) {
-            cat.removed = def.removed;
+        if (def.groups != undefined) {
+            cat.groups = def.groups;
         }
 
         if (def.blocks) {
             let currentWeight = 100;
-            if (def.appendBlocks) {
-                currentWeight = 50;
-                def.blocks.forEach((b, i) => {
-                    if (b.weight) {
-                        currentWeight = b.weight;
-                    }
-                    else {
-                        currentWeight --;
-                    }
+            cat.blocks = def.blocks.map((b, i) => {
+                if (b.weight) {
+                    currentWeight = b.weight;
+                }
+                else {
+                    currentWeight--;
+                }
 
-                    const blk = {
-                        name: b.name,
-                        snippet: b.snippet,
-                        snippetOnly: b.snippetOnly,
-                        attributes: {
-                            weight: currentWeight,
-                            advanced: b.advanced,
-                            jsDoc: b.jsDoc,
-                            group: b.group,
-                        },
-                        noNamespace: true,
-                        retType: b.retType
-                    }
-                    cat.blocks.push(blk);
-                });
-            } else {
-                cat.blocks = def.blocks.map((b, i) => {
-                    if (b.weight) {
-                        currentWeight = b.weight;
-                    }
-                    else {
-                        currentWeight --;
-                    }
-
-                    return {
-                        name: b.name,
-                        snippet: b.snippet,
-                        snippetOnly: b.snippetOnly,
-                        attributes: {
-                            weight: currentWeight,
-                            advanced: b.advanced,
-                            jsDoc: b.jsDoc,
-                            group: b.group,
-                        },
-                        noNamespace: true,
-                        retType: b.retType
-                    }
-                });
-            }
+                return blockFromJson(b, currentWeight);
+            });
         }
     }
 }
 
-export function overrideToolbox(def: pxt.editor.MonacoToolboxDefinition) {
+function blockFromJson(b: pxt.editor.ToolboxBlockDefinition, currentWeight?: number): BlockDefinition {
+    return {
+        name: b.name,
+        snippet: b.snippet,
+        snippetName: b.snippetName,
+        snippetOnly: b.snippetOnly,
+        attributes: {
+            blockId: b.blockId,
+            weight: currentWeight || b.weight,
+            advanced: b.advanced,
+            jsDoc: b.jsDoc,
+            group: b.group,
+        },
+        noNamespace: true,
+        retType: b.retType,
+        blockXml: b.blockXml
+    }
+}
+
+function blockToJson(b: BlockDefinition): pxt.editor.ToolboxBlockDefinition {
+    return {
+        name: b.name,
+        snippet: b.snippet,
+        snippetName: b.snippetName,
+        snippetOnly: b.snippetOnly,
+        retType: b.retType,
+        weight: b.attributes.weight,
+        advanced: b.attributes.advanced,
+        jsDoc: b.attributes.jsDoc,
+        group: b.attributes.group,
+        blockXml: b.blockXml,
+        blockId: b.attributes.blockId
+    }
+}
+
+function categoryToJson(c: BuiltinCategoryDefinition): pxt.editor.ToolboxCategoryDefinition {
+    return {
+        name: c.name,
+        icon: c.attributes.icon,
+        color: c.attributes.color,
+        weight: c.attributes.weight,
+        advanced: c.attributes.advanced,
+        blocks: (c.blocks) ? c.blocks.map(b => blockToJson(b)) : []
+    }
+}
+
+export function overrideToolbox(def: pxt.editor.ToolboxDefinition) {
     overrideCategory(loops.nameid, def.loops);
     overrideCategory(logic.nameid, def.logic);
     overrideCategory(variables.nameid, def.variables);
@@ -556,4 +719,16 @@ export function overrideToolbox(def: pxt.editor.MonacoToolboxDefinition) {
     overrideCategory(text.nameid, def.text);
     overrideCategory(arrays.nameid, def.arrays);
     overrideCategory(functions.nameid, def.functions);
+}
+
+export function getToolboxDefinition(): pxt.editor.ToolboxDefinition {
+    return {
+        loops: categoryToJson(getBuiltinCategory(loops.nameid)),
+        logic: categoryToJson(getBuiltinCategory(logic.nameid)),
+        variables: categoryToJson(getBuiltinCategory(variables.nameid)),
+        maths: categoryToJson(getBuiltinCategory(maths.nameid)),
+        text: categoryToJson(getBuiltinCategory(text.nameid)),
+        arrays: categoryToJson(getBuiltinCategory(arrays.nameid)),
+        functions: categoryToJson(getBuiltinCategory(functions.nameid))
+    }
 }

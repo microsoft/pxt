@@ -5,15 +5,18 @@ import * as core from "./core";
 import U = pxt.U
 
 interface SimulatorConfig {
-    highlightStatement(stmt: pxtc.LocationInfo): void;
+    // return true if a visible breakpoint was found
+    orphanException(brk: pxsim.DebuggerBreakpointMessage): void;
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean;
     restartSimulator(): void;
+    onStateChanged(state: pxsim.SimulatorState): void;
     editor: string;
 }
 
 export const FAST_TRACE_INTERVAL = 100;
 export const SLOW_TRACE_INTERVAL = 500;
 
-export var driver: pxsim.SimulatorDriver;
+export let driver: pxsim.SimulatorDriver;
 let nextFrameId: number = 0;
 const themes = ["blue", "red", "green", "yellow"];
 let config: SimulatorConfig;
@@ -23,58 +26,100 @@ let displayedModals: pxt.Map<boolean> = {};
 export let simTranslations: pxt.Map<string>;
 let dirty = false;
 
-let $debugger: JQuery;
+let debuggerDOM: HTMLElement;
 
 export function setTranslations(translations: pxt.Map<string>) {
     simTranslations = translations;
 }
 
 export function init(root: HTMLElement, cfg: SimulatorConfig) {
-    $(root).html(
-        `
-        <div id="simulators" class='simulator'>
-        </div>
-        <div id="debugger" class="ui item landscape only">
-        </div>
-        `
-    )
-    $debugger = $('#debugger')
+    if (!root) return;
+    pxsim.U.clear(root);
+    const simulatorsDiv = document.createElement('div');
+    simulatorsDiv.id = 'simulators';
+    simulatorsDiv.className = 'simulator';
+    root.appendChild(simulatorsDiv);
+    const debuggerDiv = document.createElement('div');
+    debuggerDiv.id = 'debugger';
+    debuggerDiv.className = 'ui item landscape only';
+    root.appendChild(debuggerDiv);
+
+    debuggerDOM = document.getElementById('debugger')
     let options: pxsim.SimulatorDriverOptions = {
         revealElement: (el) => {
-            ($(el) as any).transition({
-                animation: pxt.appTarget.appTheme.simAnimationEnter || 'fly right in',
-                duration: '0.5s',
+            if (pxt.options.light) return;
+            // Play enter animation
+            const animation = pxt.appTarget.appTheme.simAnimationEnter || 'fly right in';
+            el.style.animationDuration = '500ms';
+            const animationClasses = `${animation} visible transition animating`;
+            pxsim.U.addClass(el, animationClasses);
+            Promise.resolve().delay(500).then(() => {
+                pxsim.U.removeClass(el, animationClasses);
+                el.style.animationDuration = '';
             })
         },
         removeElement: (el, completeHandler) => {
             if (pxt.appTarget.simulator.headless) {
-                $(el).addClass('simHeadless');
-                completeHandler();
+                pxsim.U.addClass(el, 'simHeadless');
+                if (completeHandler) completeHandler();
             }
             else {
-                ($(el) as any).transition({
-                    animation: pxt.appTarget.appTheme.simAnimationExit || 'fly right out',
-                    duration: '0.5s',
-                    onComplete: function () {
-                        if (completeHandler) completeHandler();
-                        $(el).remove();
-                    }
-                }).on('error', () => {
-                    // Problem with animation, still complete
+                if (pxt.options.light) {
                     if (completeHandler) completeHandler();
-                    $(el).remove();
+                    pxsim.U.remove(el);
+                    return;
+                }
+                // Play exit animation
+                const animation = pxt.appTarget.appTheme.simAnimationExit || 'fly right out';
+                el.style.animationDuration = '500ms';
+                const animationClasses = `${animation} visible transition animating`;
+                pxsim.U.addClass(el, animationClasses);
+                Promise.resolve().delay(500).then(() => {
+                    pxsim.U.removeClass(el, `animating`);
+                    el.style.animationDuration = '';
+
+                    if (completeHandler) completeHandler();
+                    pxsim.U.remove(el);
                 })
             }
         },
         unhideElement: (el) => {
-            $(el).removeClass("simHeadless");
+            pxsim.U.removeClass(el, "simHeadless");
         },
         onDebuggerBreakpoint: function (brk) {
-            updateDebuggerButtons(brk)
-            let brkInfo = lastCompileResult.breakpoints[brk.breakpointId]
-            if (config) config.highlightStatement(brkInfo)
-            if (brk.exceptionMessage) {
-                core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
+            // walk stack until breakpoint is found
+            // and can be highlighted
+            let highlighted = false;
+            if (config) {
+                let frameid = 0;
+                let brkid = brk.breakpointId;
+                while (!highlighted) {
+                    // try highlight current statement
+                    if (brkid) {
+                        const brkInfo = lastCompileResult.breakpoints[brkid];
+                        highlighted = config.highlightStatement(brkInfo, brk);
+                    }
+                    // try next frame
+                    if (!highlighted) {
+                        frameid++;
+                        const frame = brk.stackframes ? brk.stackframes[frameid] : undefined;
+                        // no more frames, done
+                        if (!frame) break;
+                        brkid = frame.breakpointId;
+                    }
+                }
+            }
+            // no exception and no highlighting, keep going
+            if (!brk.exceptionMessage && config && !highlighted) {
+                // keep going until breakpoint is hit
+                driver.resume(pxsim.SimulatorDebuggerCommand.StepInto);
+                return;
+            }
+            // we had an expected but could not find a block            
+            if (!highlighted && brk.exceptionMessage) {
+                pxt.debug(`runtime error: ${brk.exceptionMessage}`);
+                pxt.debug(brk.exceptionStack);
+                if (config) config.orphanException(brk);
             }
             postSimEditorEvent("stopped", brk.exceptionMessage);
         },
@@ -96,13 +141,14 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onDebuggerResume: function () {
             postSimEditorEvent("resumed");
             if (config) config.highlightStatement(null)
-            updateDebuggerButtons()
         },
         onStateChanged: function (state) {
             if (state === pxsim.SimulatorState.Stopped) {
                 postSimEditorEvent("stopped");
+            } else if (state === pxsim.SimulatorState.Running) {
+                this.onDebuggerResume();
             }
-            updateDebuggerButtons()
+            cfg.onStateChanged(state);
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
             switch (msg.command) {
@@ -137,7 +183,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                         core.confirmAsync(modalOpts)
                             .then((selection) => {
                                 if (hasTrustedLink && selection == 1) {
-                                    window.open(msg.linkButtonHref,'_blank');
+                                    window.open(msg.linkButtonHref, '_blank');
                                 }
                             })
                             .done();
@@ -150,9 +196,8 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         stoppedClass: getStoppedClass()
     };
-    driver = new pxsim.SimulatorDriver($('#simulators')[0], options);
+    driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
-    updateDebuggerButtons();
 }
 
 function postSimEditorEvent(subtype: string, exception?: string) {
@@ -170,7 +215,6 @@ export function setState(editor: string, tutMode?: boolean) {
     if (config && config.editor != editor) {
         config.editor = editor;
         config.highlightStatement(null)
-        updateDebuggerButtons();
     }
 
     tutorialMode = tutMode;
@@ -185,7 +229,7 @@ export function isDirty(): boolean { // in need of a restart?
     return dirty;
 }
 
-export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult, mute?: boolean, highContrast?: boolean) {
+export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult, mute?: boolean, highContrast?: boolean, light?: boolean) {
     makeClean();
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
@@ -200,11 +244,13 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
         debug,
         fnArgs,
         highContrast,
+        light,
         aspectRatio: parts.length ? pxt.appTarget.simulator.partsAspectRatio : pxt.appTarget.simulator.aspectRatio,
         partDefinitions: pkg.computePartDefinitions(parts),
         cdnUrl: pxt.webConfig.commitCdnUrl,
         localizedStrings: simTranslations,
-        refCountingDebug: pxt.options.debug
+        refCountingDebug: pxt.options.debug,
+        version: pkg.version()
     }
     postSimEditorEvent("started");
 
@@ -213,7 +259,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
 
 export function mute(mute: boolean) {
     driver.mute(mute);
-    $debugger.empty();
+    pxsim.U.removeChildren(debuggerDOM);
 }
 
 export function stop(unload?: boolean) {
@@ -221,7 +267,7 @@ export function stop(unload?: boolean) {
 
     makeClean();
     driver.stop(unload);
-    $debugger.empty();
+    pxsim.U.removeChildren(debuggerDOM);
 }
 
 export function hide(completeHandler?: () => void) {
@@ -229,7 +275,7 @@ export function hide(completeHandler?: () => void) {
         makeDirty();
     }
     driver.hide(completeHandler);
-    $debugger.empty();
+    pxsim.U.removeChildren(debuggerDOM);
 }
 
 export function unhide() {
@@ -244,7 +290,33 @@ export function proxy(message: pxsim.SimulatorCustomMessage) {
     if (!driver) return;
 
     driver.postMessage(message);
-    $debugger.empty();
+    pxsim.U.removeChildren(debuggerDOM);
+}
+
+export function dbgPauseResume() {
+    if (driver.state == pxsim.SimulatorState.Paused) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.Resume);
+    } else if (driver.state == pxsim.SimulatorState.Running) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.Pause);
+    }
+}
+
+export function dbgStepOver() {
+    if (driver.state == pxsim.SimulatorState.Paused) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.StepOver);
+    }
+}
+
+export function dbgStepInto() {
+    if (driver.state == pxsim.SimulatorState.Paused) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.StepInto);
+    }
+}
+
+export function dbgStepOut() {
+    if (driver.state == pxsim.SimulatorState.Paused) {
+        driver.resume(pxsim.SimulatorDebuggerCommand.StepOut);
+    }
 }
 
 function makeClean() {
@@ -266,15 +338,23 @@ function getStoppedClass() {
     return undefined;
 }
 
-function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {
+/*
+function updateDebuggerButtonsInternal(brk: pxsim.DebuggerBreakpointMessage = null) {
     function btn(icon: string, name: string, label: string, click: () => void) {
-        let b = $(`<button class="ui mini button teal" title="${Util.htmlEscape(label)}"></button>`)
-        if (icon) b.addClass("icon").append(`<i class="${icon} icon"></i>`)
-        if (name) b.append(Util.htmlEscape(name));
-        return b.click(click)
+        let b = document.createElement('button');
+        b.className = `ui mini button teal ${icon ? 'icon' : ''}`;
+        b.title = pxt.Util.htmlEscape(label);
+        if (icon) {
+            let i = document.createElement('i');
+            i.className = `${icon} icon`;
+            b.appendChild(i);
+        }
+        if (name) b.appendChild(document.createTextNode(pxt.Util.htmlEscape(name)));
+        b.addEventListener('click', click);
+        return b;
     }
 
-    $debugger.empty();
+    pxsim.U.removeChildren(debuggerDOM);
     if (!driver.runOptions.debug) return;
     let advanced = config.editor == 'tsprj';
 
@@ -282,23 +362,27 @@ function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {
         let $resume = btn("play", lf("Resume"), lf("Resume execution"), () => driver.resume(pxsim.SimulatorDebuggerCommand.Resume));
         let $stepOver = btn("xicon stepover", lf("Step over"), lf("Step over next function call"), () => driver.resume(pxsim.SimulatorDebuggerCommand.StepOver));
         let $stepInto = btn("xicon stepinto", lf("Step into"), lf("Step into next function call"), () => driver.resume(pxsim.SimulatorDebuggerCommand.StepInto));
-        $debugger.append($resume).append($stepOver)
+        debuggerDOM.appendChild($resume).appendChild($stepOver)
         if (advanced)
-            $debugger.append($stepInto);
+            debuggerDOM.appendChild($stepInto);
     } else if (driver.state == pxsim.SimulatorState.Running) {
         let $pause = btn("pause", lf("Pause"), lf("Pause execution on the next instruction"), () => driver.resume(pxsim.SimulatorDebuggerCommand.Pause));
-        $debugger.append($pause);
+        debuggerDOM.appendChild($pause);
     }
 
-    if (!brk || !advanced) return
+    if (!brk || !advanced) return;
 
     function vars(hd: string, frame: pxsim.Variables) {
-        let frameView = $(`<div><h4>${U.htmlEscape(hd)}</h4></div>`)
+        let frameView = document.createElement('div');
+        let heading = document.createElement('h4');
+        heading.appendChild(document.createTextNode(hd));
+        frameView.appendChild(heading);
         for (let k of Object.keys(frame)) {
             let v = frame[k]
             let sv = ""
             switch (typeof (v)) {
                 case "number": sv = v + ""; break;
+                case "boolean": sv = v + ""; break;
                 case "string": sv = JSON.stringify(v); break;
                 case "object":
                     if (v == null) sv = "null";
@@ -309,16 +393,18 @@ function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {
                 default: U.oops()
             }
             let n = k.replace(/___\d+$/, "")
-            frameView.append(`<div>${U.htmlEscape(n)}: ${U.htmlEscape(sv)}</div>`)
+            frameView.appendChild(document.createElement('div').appendChild(document.createTextNode(`${n}: ${sv}`)));
         }
         return frameView
     }
 
-    let dbgView = $(`<div class="ui segment debuggerview"></div>`)
-    dbgView.append(vars(U.lf("globals"), brk.globals))
+    let dbgView = document.createElement('div');
+    dbgView.className = "ui segment debuggerview";
+    dbgView.appendChild(vars(U.lf("globals"), brk.globals))
     brk.stackframes.forEach(sf => {
         let info = sf.funcInfo as pxtc.FunctionLocationInfo
-        dbgView.append(vars(info.functionName, sf.locals))
+        dbgView.appendChild(vars(info.functionName, sf.locals))
     })
-    $('#debugger').append(dbgView)
+    debuggerDOM.appendChild(dbgView);
 }
+*/

@@ -1,7 +1,5 @@
 import * as React from "react";
-import * as workspace from "./workspace";
 import * as core from "./core";
-import * as gallery from "./gallery";
 
 export type Action = () => void;
 export type AnyComponent = Component<any, any>;
@@ -38,7 +36,7 @@ mountVirtualApi("cloud-search", {
 })
 
 mountVirtualApi("gallery", {
-    getAsync: p => gallery.loadGalleryAsync(stripProtocol(decodeURIComponent(p))).catch((e) => {
+    getAsync: p => pxt.gallery.loadGalleryAsync(stripProtocol(decodeURIComponent(p))).catch((e) => {
         return Promise.resolve(e);
     }),
     expirationTime: p => 3600 * 1000
@@ -66,10 +64,27 @@ mountVirtualApi("gh-pkgcfg", {
     isOffline: () => !Cloud.isOnline(),
 })
 
+let targetConfigPromise: Promise<pxt.TargetConfig> = undefined;
 mountVirtualApi("target-config", {
-    getAsync: query =>
-        pxt.targetConfigAsync().catch(core.handleNetworkError),
-    expirationTime: p => 60 * 1000,
+    getAsync: query => {
+        if (!targetConfigPromise)
+            targetConfigPromise = pxt.targetConfigAsync()
+                .then(js => {
+                    if (js) {
+                        pxt.storage.setLocal("targetconfig", JSON.stringify(js))
+                        invalidate("target-config");
+                        invalidate("gh-search");
+                        invalidate("gh-pkgcfg");
+                    }
+                    return js;
+                })
+                .catch(core.handleNetworkError);
+        // return cached value or try again
+        const cfg = JSON.parse(pxt.storage.getLocal("targetconfig") || "null") as pxt.TargetConfig;
+        if (cfg) return Promise.resolve(cfg);
+        return targetConfigPromise;
+    },
+    expirationTime: p => 24 * 3600 * 1000,
     isOffline: () => !Cloud.isOnline()
 })
 
@@ -141,7 +156,7 @@ function notify(ce: CacheEntry) {
     }
 
     if (ce.components.length > 0)
-        ce.components.forEach(c => Util.nextTick(() =>  c.forceUpdate()))
+        ce.components.forEach(c => Util.nextTick(() => c.forceUpdate()))
 }
 
 function getVirtualApi(path: string) {
@@ -279,6 +294,28 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
 
     render() {
         unsubscribe(this)
+        this.renderCoreOk = true;
+        return this.renderCore();
+    }
+}
+
+export class PureComponent<TProps, TState> extends React.PureComponent<TProps, TState> {
+    renderCoreOk = false;
+
+    constructor(props: TProps) {
+        super(props);
+        this.state = <any>{}
+    }
+
+    child(selector: string) {
+        return core.findChild(this, selector)
+    }
+
+    renderCore(): JSX.Element {
+        return null;
+    }
+
+    render() {
         this.renderCoreOk = true;
         return this.renderCore();
     }

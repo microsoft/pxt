@@ -107,7 +107,7 @@ namespace pxt.vs {
             outDir: "built",
             rootDir: ".",
             noLib: true,
-            mouseWheelZoom: true
+            mouseWheelZoom: false
         });
 
         // maximum idle time
@@ -123,7 +123,7 @@ namespace pxt.vs {
             fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', 'monospace'",
             scrollBeyondLastLine: false,
             language: "typescript",
-            mouseWheelZoom: true,
+            mouseWheelZoom: false,
             wordBasedSuggestions: true,
             lineNumbersMinChars: 3,
             formatOnPaste: true,
@@ -134,7 +134,6 @@ namespace pxt.vs {
             dragAndDrop: true,
             matchBrackets: true,
             occurrencesHighlight: false,
-            mouseWheelScrollSensitivity: 0.5,
             quickSuggestionsDelay: 200,
             theme: inverted ? 'vs-dark' : 'vs',
             //accessibilitySupport: 'on',

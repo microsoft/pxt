@@ -1,3 +1,7 @@
 /*******************************
          Site Overrides
 *******************************/
+
+.ui.dropdown, .ui.buttons {
+    margin-right: 0.25rem;
+}

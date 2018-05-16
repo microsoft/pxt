@@ -10,11 +10,11 @@ namespace pxt.winrt.workspace {
     type InstallHeader = pxt.workspace.InstallHeader;
     import U = pxt.Util;
     import Cloud = pxt.Cloud;
-    const lf = U.lf
 
     let folder: Windows.Storage.StorageFolder;
     let allScripts: HeaderWithScript[] = [];
     let currentTarget: string;
+    let currentTargetVersion: string;
 
     interface HeaderWithScript {
         id: string;
@@ -57,6 +57,7 @@ namespace pxt.winrt.workspace {
         let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
         let hd: Header = {
             target: currentTarget,
+            targetVersion: e.header ? e.header.targetVersion : currentTargetVersion,
             name: pkg.config.name,
             meta: {},
             editor: pxt.JAVASCRIPT_PROJECT_NAME,
@@ -84,9 +85,10 @@ namespace pxt.winrt.workspace {
         }
     }
 
-    function initAsync(target: string): Promise<void> {
+    function initAsync(target: string, version: string): Promise<void> {
         allScripts = [];
         currentTarget = target;
+        currentTargetVersion = version;
         const applicationData = Windows.Storage.ApplicationData.current;
         const localFolder = applicationData.localFolder;
         pxt.debug(`winrt: initializing workspace`)
@@ -188,7 +190,6 @@ namespace pxt.winrt.workspace {
         h.id = path;
         h.recentUse = U.nowSeconds()
         h.modificationTime = h.recentUse;
-        h.target = currentTarget;
         const e: HeaderWithScript = {
             id: h.id,
             header: h,

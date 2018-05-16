@@ -3,31 +3,29 @@ CACHE MANIFEST
 CACHE:
 /blb/semantic.js
 /blb/main.js
+/blb/pxtapp.js
 /blb/typescript.js
 /blb/marked/marked.min.js
 /blb/highlight.js/highlight.pack.js
-/blb/lzma/lzma_worker-min.js
-/blb/fuse.min.js
 /blb/jquery.js
 /blb/pxtlib.js
 /blb/pxtcompiler.js
-/blb/pxtblocks.js
+/blb/pxtblockly.js
 /blb/pxtwinrt.js
 /blb/pxteditor.js
 /blb/pxtsim.js
+/blb/pxtembed.js
+/blb/pxtworker.js
+/blb/pxtweb.js
 /blb/blockly.css
 /blb/semantic.css
 /blb/rtlsemantic.css
-/blb/custom.css
-/blb/icons.css
 @defaultLocaleStrings@
 @cachedHexFiles@
 @targetEditorJs@
+@targetFieldEditorsJs@
 
 # blockly
-/blb/blockly/blockly_compressed.js
-/blb/blockly/blocks_compressed.js
-/blb/blockly/msg/js/en.js
 /cdn/blockly/media/sprites.png
 /cdn/blockly/media/click.mp3
 /cdn/blockly/media/disconnect.wav
@@ -58,6 +56,9 @@ https://az416426.vo.msecnd.net/scripts/a/ai.0.js
 @monacoworkerjs@
 
 @timestamp@
+
+# target
+@targetImages@
 
 /blb/target.js
   

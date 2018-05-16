@@ -1,21 +1,11 @@
 namespace pxsim.util {
     export function injectPolyphils() {
-        // Polyfill for Uint8Array.slice for IE and Safari
-        // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.slice
-        // TODO: Move this polyfill to a more appropriate file. It is left here for now because moving it causes a crash in IE; see PXT issue #1301.
-        if (!Uint8Array.prototype.slice) {
-            Object.defineProperty(Uint8Array.prototype, 'slice', {
-                value: Array.prototype.slice,
-                writable: true,
-                enumerable: true
-            });
-        }
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill
-        if (!Uint8Array.prototype.fill) {
-            Object.defineProperty(Uint8Array.prototype, 'fill', {
+        if (!Array.prototype.fill) {
+            Object.defineProperty(Array.prototype, 'fill', {
                 writable: true,
                 enumerable: true,
-                value: function (value: Uint8Array) {
+                value: function (value: Array<any>) {
 
                     // Steps 1-2.
                     if (this == null) {
@@ -55,6 +45,52 @@ namespace pxsim.util {
                     // Step 13.
                     return O;
                 }
+            });
+        }
+        // Polyfill for Uint8Array.slice for IE and Safari
+        // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.slice
+        // TODO: Move this polyfill to a more appropriate file. It is left here for now because moving it causes a crash in IE; see PXT issue #1301.
+        if (!Uint8Array.prototype.slice) {
+            Object.defineProperty(Uint8Array.prototype, 'slice', {
+                value: Array.prototype.slice,
+                writable: true,
+                enumerable: true
+            });
+        }
+        if (!Uint16Array.prototype.slice) {
+            Object.defineProperty(Uint16Array.prototype, 'slice', {
+                value: Array.prototype.slice,
+                writable: true,
+                enumerable: true
+            });
+        }
+        if (!Uint32Array.prototype.slice) {
+            Object.defineProperty(Uint32Array.prototype, 'slice', {
+                value: Array.prototype.slice,
+                writable: true,
+                enumerable: true
+            });
+        }
+        // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.fill
+        if (!Uint8Array.prototype.fill) {
+            Object.defineProperty(Uint8Array.prototype, 'fill', {
+                value: Array.prototype.fill,
+                writable: true,
+                enumerable: true
+            });
+        }
+        if (!Uint16Array.prototype.fill) {
+            Object.defineProperty(Uint16Array.prototype, 'fill', {
+                value: Array.prototype.fill,
+                writable: true,
+                enumerable: true
+            });
+        }
+        if (!Uint32Array.prototype.fill) {
+            Object.defineProperty(Uint32Array.prototype, 'fill', {
+                value: Array.prototype.fill,
+                writable: true,
+                enumerable: true
             });
         }
     }
@@ -125,5 +161,15 @@ namespace pxsim.util {
             result += "/" + path;
         });
         return result;
+    }
+
+    export function toArray<T>(a: ArrayLike<T> | ReadonlyArray<T>): T[] {
+        if (Array.isArray(a)) {
+            return a;
+        }
+        let r: T[] = []
+        for (let i = 0; i < a.length; ++i)
+            r.push(a[i])
+        return r
     }
 }

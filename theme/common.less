@@ -9,6 +9,22 @@
              Layout
 *******************************/
 
+html {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-size:16px;
+}
+  
+body {
+    height: 100%;
+    padding: 0;
+    overflow: auto;
+    margin: 0;
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+}
+
 * {
   min-height: 0;
   min-width: 0;
@@ -143,10 +159,13 @@
 
 #filelist .menu {
     width: 100%;
+    margin: 0;
+    margin-top: 1rem;
 }
 
 #filelist .nested.item {
-    padding-left: 4rem;
+    padding: .92857143em 1.14285714em;
+    padding-left: 2rem;
 }
 
 #filelist .header {
@@ -155,32 +174,6 @@
 
 #simulators {
     text-align: center;
-}
-
-/* Cookie Message */
-#cookiemsg {
-   position: absolute;
-   right: 2rem;
-   bottom: 12rem;
-   width: 18rem;
-   text-align: left;
-   z-index: @aboveEverythingZIndex;
-}
-
-#cookiemsg > a {
-   color: white;
-   text-decoration: underline;
-}
-
-#cookiemsg > .ui.button.icon.clear {
-    color: white !important;
-}
-#cookiemsg > .ui.button.icon.clear:hover, #cookiemsg > .ui.button.icon.clear:focus {
-    color: darken(white, 20%) !important;
-}
-
-.collapsedEditorTools #cookiemsg {
-   bottom: 6rem;
 }
 
 /* Simulator */
@@ -345,12 +338,12 @@ div.simframe > iframe {
 }
 
 #msg > div {
-    display: inline-block;
+    display: inline-block !important;
     z-index: @editorMessageZIndex;
 }
 
 #msg > div:empty {
-   display: none;
+   display: none !important;
 }
 
 /* Scrollbars */
@@ -504,6 +497,33 @@ Avatar
 /* Json editor */
 #pxtJsonEditor .ui.content {
     padding: 1rem;
+}
+
+.rtl #fileNameInput {
+    text-align: right;
+}
+
+/* Simulator effects */
+
+.grayscale {
+    -moz-filter: grayscale(1);
+    -webkit-filter: grayscale(1);
+    filter: grayscale(1);
+}
+
+.sepia {
+    -webkit-filter: sepia(1);
+    filter: sepia(1);
+}
+
+.blur {
+    -moz-filter: blur(1);
+    -webkit-filter: blur(1);
+    filter: blur(1);
+}
+
+.highlight {
+    border-bottom: 2px solid #FFC107;
 }
 
 /* Modulator */
@@ -685,9 +705,6 @@ p.ui.font.small {
     .collapsedEditorTools #maineditor {
         left: 0;
     }
-    #cookiemsg {
-        bottom: 7.5rem;
-    }
 
     /* Full screen */
     .fullscreensim #filelist {
@@ -717,8 +734,7 @@ p.ui.font.small {
         background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
         background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
     }
-    .fullscreensim #simulator .ui.item:not(.simtoolbar),
-        .fullscreensim #simulator .ui.menu,
+    .fullscreensim #simulator .hidefullscreen,
         .fullscreensim .menubar .ui.item:not(.logo),
         .fullscreensim #maineditor,
         .fullscreensim #editortools,
@@ -730,14 +746,14 @@ p.ui.font.small {
         z-index: @sandboxFooterZIndex;
         bottom: 1rem;
     }
-    .fullscreensim .ui.menu {
+    .fullscreensim #mainmenu {
         background: transparent !important;
     }
     .fullscreensim #filelist .simtoolbar {
         position: fixed;
         bottom: 1rem;
-        left:auto;
-        right:auto;
+        left: auto;
+        right: auto;
     }
     .fullscreensim #simulators {
         position: relative;
@@ -932,9 +948,6 @@ p.ui.font.small {
         .sandbox #msg {
         bottom: 1.5rem !important;
     }
-    .sandbox #cookiemsg {
-        bottom: 3rem;
-    }
     .sandbox #editortools {
         display: none;
     }
@@ -1012,15 +1025,6 @@ p.ui.font.small {
     }
     .simView div.simframe:only-child > iframe {
         max-width: 100%;
-    }
-    .sandbox #cookiemsg {
-        left: 0;
-        right: 0;
-        margin-left: 0.2rem;
-        margin-right: 0.2rem;
-        width: inherit;
-        bottom: 1.5rem;
-        padding: 0.3rem;
     }
 }
 

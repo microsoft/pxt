@@ -4,7 +4,7 @@ the documentation for the functions in a package namespace are included with the
 
 ## Step 0: Document tree discussion
 
-Documentation for namespace functions almost always goes under the _/reference_ document path. Other standard document paths are _/blocks_ and _/types_ but these are for the documents related to built-in blocks. If a package has other related documents that aren't for namespace functions, such as hardware associated with the API in the package, these are place under another path, like _/device_, in the package.
+Documentation for namespace functions almost always goes under the _/reference_ document path. Other standard document paths are _/blocks_ and _/types_ but these are for the documents related to built-in blocks. If a package has other related documents that aren't for namespace functions, such as hardware associated with the API in the package, these are placed under another path, like _/device_, in the package.
 
 ### Document file layout
 
@@ -238,7 +238,7 @@ Open a new browser page and navigate to ``localhost:3232/reference/tropic``. You
 
 Go back over to the editor and in the blocks view, right-click one of the blocks from the **Tropic** package. Select **help** in the menu and see the reference show up in the doc slider.
 
-**NEXT:** add a [class and use object instances](./objects-instances) to your package namespace.
+**NEXT:** add a [class and use object instances](./objects-instances) in your package namespace.
 
 ## See also
 

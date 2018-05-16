@@ -664,7 +664,8 @@ namespace ts.pxtc.ir {
                     case ir.SK.Jmp:
                         s.lbl = U.lookup(lbls, s.lblName)
                         if (!s.lbl) oops("missing label: " + s.lblName)
-                        s.lbl.lblNumUses++
+                        if (!s.lbl.lblNumUses) s.lbl.lblNumUses = 1
+                        else s.lbl.lblNumUses++
                         break;
                     case ir.SK.StackEmpty:
                     case ir.SK.Label:

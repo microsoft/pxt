@@ -102,7 +102,7 @@ export const buildEngines: Map<BuildEngine> = {
 }
 
 // once we have a different build engine, set this appropriately
-export var thisBuild = buildEngines['yotta']
+export let thisBuild = buildEngines['yotta']
 
 export function setThisBuild(b: BuildEngine) {
     thisBuild = b;
@@ -119,7 +119,8 @@ function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
 }
 
 function patchCodalHexInfo(extInfo: pxtc.ExtensionInfo) {
-    let hexPath = thisBuild.buildPath + "/build/" + pxt.appTarget.compileService.codalBinary + ".hex"
+    let bin = pxt.appTarget.compileService.codalBinary
+    let hexPath = thisBuild.buildPath + "/build/" + bin + ".hex"
     return {
         hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
     }
@@ -410,7 +411,8 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 enumVal = -1;
             }
 
-            if (inEnum && (m = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(ln))) {
+            const shouldExpand = inEnum && (m = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(ln));
+            if (shouldExpand) {
                 let v = m[3]
                 if (v) {
                     enumVal = expandInt(v)
@@ -429,22 +431,28 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         return outp
     }
 
-    if (mainPkg && mainPkg.getFiles().indexOf(constName) >= 0 &&
-        (force || !fs.existsSync(constName))) {
+    if (mainPkg && (force ||
+        (mainPkg.getFiles().indexOf(constName) >= 0 && !fs.existsSync(constName)))) {
         pxt.log(`rebuilding ${constName}...`)
         let files: string[] = []
+        let foundConfig = false
 
-        if (mainPkg.config.dalDTS) {
-            for (let dn of mainPkg.config.dalDTS.includeDirs) {
-                dn = buildEngine.buildPath + "/" + dn
-                if (U.endsWith(dn, ".h")) files.push(dn)
-                else {
-                    let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
-                    U.pushRange(files, here)
+        for (let d of mainPkg.sortedDeps()) {
+            if (d.config.dalDTS) {
+                for (let dn of d.config.dalDTS.includeDirs) {
+                    dn = buildEngine.buildPath + "/" + dn
+                    if (U.endsWith(dn, ".h")) files.push(dn)
+                    else {
+                        let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
+                        U.pushRange(files, here)
+                    }
                 }
+                excludeSyms = d.config.dalDTS.excludePrefix || excludeSyms
+                foundConfig = true
             }
-            excludeSyms = mainPkg.config.dalDTS.excludePrefix || excludeSyms
-        } else {
+        }
+
+        if (!foundConfig) {
             let incPath = buildEngine.buildPath + "/yotta_modules/microbit-dal/inc/"
             if (!fs.existsSync(incPath))
                 incPath = buildEngine.buildPath + "/yotta_modules/codal/inc/";

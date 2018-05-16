@@ -25,7 +25,7 @@ namespace pxt.blocks {
         }
     }
 
-    export function initVariableArgsBlock(b: B.Block, handlerArgs: pxt.blocks.HandlerArg[]) {
+    export function initVariableArgsBlock(b: Blockly.Block, handlerArgs: pxt.blocks.HandlerArg[]) {
         let currentlyVisible = 0;
         let actuallyVisible = 0;
 
@@ -69,7 +69,8 @@ namespace pxt.blocks {
                 el.setAttribute("numArgs", currentlyVisible.toString());
 
                 for (let j = 0; j < currentlyVisible; j++) {
-                    let varName = b.getFieldValue("HANDLER_" + handlerArgs[j].name);
+                    const varField = b.getField("HANDLER_" + handlerArgs[j].name);
+                    let varName = varField && varField.getText();
                     el.setAttribute("arg" + j, varName);
                 }
 
@@ -82,8 +83,11 @@ namespace pxt.blocks {
                 updateShape();
 
                 for (let j = 0; j < currentlyVisible; j++) {
-                    let varName = saved.getAttribute("arg" + j);
-                    b.setFieldValue(varName, "HANDLER_" + handlerArgs[j].name);
+                    const varName = saved.getAttribute("arg" + j);
+                    const fieldName = "HANDLER_" + handlerArgs[j].name;
+                    if (b.getField(fieldName)) {
+                        setVarFieldValue(b, fieldName, varName);
+                    }
                 }
             }
         });

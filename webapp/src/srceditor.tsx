@@ -1,9 +1,5 @@
 import * as pkg from "./package";
-import * as core from "./core";
-import * as data from "./data";
-import * as app from "./app";
 import * as React from "react";
-
 
 export type ViewState = any;
 export type ProjectView = pxt.editor.IProjectView;
@@ -109,17 +105,19 @@ export class Editor implements pxt.editor.IEditor {
         return Promise.resolve('');
     }
 
-    highlightStatement(brk: pxtc.LocationInfo) { }
+    highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean { return false; }
 
     clearHighlightedStatements() { }
-
-    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories = pxt.blocks.CategoryMode.All): Element {
-        return null
-    }
 
     setHighContrast(hc: boolean) {}
 
     hasEditorToolbar() {
         return true
+    }
+
+    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories?: boolean) {
+    }
+
+    insertBreakpoint() {
     }
 }

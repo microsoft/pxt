@@ -25,7 +25,7 @@ num = 6.7
 num = 10.083
 ```
 
-## Arithmetic binary operation (+, -, \*, /)
+### Arithmetic binary operation (+, -, \*, /)
 
 The operations for basic arithmetic: add, subtract, multiply, and divide.
 
@@ -38,14 +38,45 @@ let divide = 8/4;
 
 ### Remainder (%)
 
-This is a extra operator for division. You can find out how much is left over if one number doesn't
-divide into the other number evenly.
+This is a extra operator for division. You can find out how much is left over if one number doesn't divide into the other number evenly.
 
-We know that 4 / 2 = 2, so 2 divides into 4 evenly. But, 5 / 2 = 2 with a remainder of 1. So, the
-remainder operation, 5 % 2 = 1, gives the number that's left over from a division operation.
+We know that 4 / 2 = 2, so 2 divides into 4 evenly. But, 5 / 2 = 2 with a remainder of 1. So, the remainder operation, 5 % 2 = 1, gives the number that's left over from a division operation.
 
 ```block
 let remainder = 7%4;
+```
+
+### Exponent (\*\*)
+
+The exponent operator will multiply the number on the left by itself for the amount of times of the number on its right. That is, 4 \*\* 2 = 4 \* 4 and 2 \*\* 3 = 2 \* 2 \* 2. The area of a square that has sides with a length of `5` is equal to one side multiplied by another. For a square, all sides are equal, so:
+
+```block
+let side = 5;
+let area = side * side;
+```
+
+But using the exponent operator, this is the same as:
+
+```block
+let side = 5;
+let area = side ** 2;
+```
+
+The volume of a cube is three sides multiplied together. The two volumes are the same:
+
+```block
+let side = 5;
+let volume1 = side * side * side;
+let volume2 = side ** 3;
+```
+## Square root
+
+The square root of a number is another number that when multiplied by itself it becomes the original number. You know that `2 * 2` equals `4` so the square root of `4` is `2`. It's called a _square root_ because the area of a _square_ is the length of two equal sides multplied together. The _root_ is the length of a side.
+
+```block
+let side = 5
+let square = side * side
+let root = Math.sqrt(side)
 ```
 
 ## Absolute value

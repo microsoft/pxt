@@ -68,7 +68,7 @@ function setupSidebar() {
             }
         })
         .sidebar(
-        'attach events', '#togglesidebar'
+            'attach events', '#togglesidebar'
         );
 
     $('.ui.dropdown')
@@ -186,53 +186,65 @@ function setupSemantic() {
 
 function setupBlocklyAsync() {
     let promise = Promise.resolve();
-    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
+    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
         let opts = {};
         promise = promise.then(function () {
-                return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
-            }).then(function () {
-                return pxt.editor.initExtensionsAsync(opts)
-            }).then(function (res) {
-                if (res.fieldEditors)
-                    res.fieldEditors.forEach(function (fi) {
-                        pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                    })
-            })
+            return pxt.BrowserUtils.loadScriptAsync("fieldeditors.js")
+        }).then(function () {
+            return pxt.editor.initFieldExtensionsAsync(opts)
+        }).then(function (res) {
+            if (res.fieldEditors)
+                res.fieldEditors.forEach(function (fi) {
+                    pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                })
+        })
+    }
+
+    // backward compatibility: load editor
+    if (pxt.appTarget.versions &&
+        pxt.semver.strcmp(pxt.appTarget.versions.pxt, "3.9.0") < 0 &&
+        pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
+        let opts = {};
+        promise = promise.then(function () {
+            return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
+        }).then(function () {
+            return pxt.editor.initExtensionsAsync(opts)
+        }).then(function (res) {
+            if (res.fieldEditors)
+                res.fieldEditors.forEach(function (fi) {
+                    pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                })
+        })
     }
     return promise;
 }
 
 function renderSnippets() {
-    var codeElems = $('code')
-    for (var i = 0; i < codeElems.length; i++) {
-        codeElems[i].className = codeElems[i].className.replace('-ignore', '')
-    }
-
     var downloadScreenshots = /screenshots=1/i.test(window.location.href);
     var path = window.location.href.split('/').pop().split(/[?#]/)[0];
     ksRunnerReady(function () {
         setupSidebar();
         setupSemantic();
         setupBlocklyAsync()
-        .then(function () {
-            return pxt.runner.renderAsync({
-                snippetClass: 'lang-blocks',
-                signatureClass: 'lang-sig',
-                blocksClass: 'lang-block',
-                shuffleClass: 'lang-shuffle',
-                simulatorClass: 'lang-sim',
-                linksClass: 'lang-cards',
-                namespacesClass: 'lang-namespaces',
-                codeCardClass: 'lang-codecard',
-                packageClass: 'lang-package',
-                projectClass: 'lang-project',
-                snippetReplaceParent: true,
-                simulator: true,
-                hex: true,
-                hexName: path,
-                downloadScreenshots: downloadScreenshots
-            });
-        }).done();
+            .then(function () {
+                return pxt.runner.renderAsync({
+                    snippetClass: 'lang-blocks',
+                    signatureClass: 'lang-sig',
+                    blocksClass: 'lang-block',
+                    shuffleClass: 'lang-shuffle',
+                    simulatorClass: 'lang-sim',
+                    linksClass: 'lang-cards',
+                    namespacesClass: 'lang-namespaces',
+                    codeCardClass: 'lang-codecard',
+                    packageClass: 'lang-package',
+                    projectClass: 'lang-project',
+                    snippetReplaceParent: true,
+                    simulator: true,
+                    hex: true,
+                    hexName: path,
+                    downloadScreenshots: downloadScreenshots
+                });
+            }).done();
     });
 }
 

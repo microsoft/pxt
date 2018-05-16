@@ -1,14 +1,12 @@
 import * as db from "./db";
 import * as core from "./core";
-import * as pkg from "./package";
 import * as data from "./data";
-import * as ws from "./workspace"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
-const lf = U.lf
 let allScripts: HeaderWithScript[] = [];
 let currentTarget: string;
+let currentTargetVersion: string;
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
@@ -65,6 +63,7 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
     let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
     let hd: Header = {
         target: currentTarget,
+        targetVersion: e.header ? e.header.targetVersion : currentTargetVersion,
         name: pkg.config.name,
         meta: {},
         editor: pxt.JAVASCRIPT_PROJECT_NAME,
@@ -92,11 +91,11 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
     }
 }
 
-function initAsync(target: string) {
+function initAsync(target: string, version: string) {
     allScripts = [];
     currentTarget = target;
-    // TODO check that target is correct.
-    return syncAsync().then(() => {});
+    currentTargetVersion = version;
+    return syncAsync().then(() => { });
 }
 
 function fetchTextAsync(e: HeaderWithScript): Promise<ScriptText> {
@@ -191,7 +190,6 @@ function installAsync(h0: InstallHeader, text: ScriptText) {
     h.id = path;
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
-    h.target = currentTarget;
     const e: HeaderWithScript = {
         id: h.id,
         header: h,
@@ -234,6 +232,20 @@ function loadedAsync(): Promise<void> {
     return Promise.resolve();
 }
 
+function saveAssetAsync(id: string, filename: string, data: Uint8Array): Promise<void> {
+    return apiAsync("pkgasset/" + id, {
+        encoding: "base64",
+        name: filename,
+        data: btoa(ts.pxtc.Util.uint8ArrayToString(data))
+    }).then(resp => {
+    })
+}
+
+function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
+    return apiAsync("pkgasset/" + id).then(r => r.files)
+}
+
+
 export const provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
@@ -245,5 +257,7 @@ export const provider: WorkspaceProvider = {
     syncAsync,
     resetAsync,
     loadedAsync,
-    saveScreenshotAsync
+    saveScreenshotAsync,
+    saveAssetAsync,
+    listAssetsAsync
 }

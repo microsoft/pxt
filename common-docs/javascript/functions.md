@@ -48,11 +48,11 @@ provide a lightweight syntax for functions. Arrow functions are used extensively
 many APIs. For example:
 
 ```typescript
-function forever(handler: Action) {
-    // call handler in a loop...
+function foo(handler: Action) {
+    // call handler ...
 }
 
-forever(() => { // arrow function!
+foo(() => { // arrow function!
    // do something
 })
 ```

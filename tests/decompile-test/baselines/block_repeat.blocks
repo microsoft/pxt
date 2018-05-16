@@ -10,8 +10,12 @@
 <statement name="DO">
 </statement>
 <next>
-<block type="controls_simple_for">
+<block type="pxt_controls_for">
+<value name="VAR">
+<shadow type="variables_get_reporter">
 <field name="VAR">r</field>
+</shadow>
+</value>
 <value name="TO">
 <shadow type="math_whole_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">

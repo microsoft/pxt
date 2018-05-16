@@ -211,7 +211,9 @@ namespace pxsim.visuals {
         let removeAll = <T>(arr: T[], e: T): number => {
             let res = 0;
             let idx: number;
+            /* tslint:disable:no-conditional-assignment */
             while (0 <= (idx = arr.indexOf(e))) {
+                /* tslint:enable:no-conditional-assignment */
                 arr.splice(idx, 1);
                 res += 1;
             }
@@ -392,7 +394,7 @@ namespace pxsim.visuals {
 
             mkChannel(BAR_HEIGHT + MID_HEIGHT / 2, CHANNEL_HEIGHT, "sim-bb-mid-channel");
             mkChannel(BAR_HEIGHT, SMALL_CHANNEL_HEIGHT, "sim-bb-sml-channel");
-            mkChannel(BAR_HEIGHT + MID_HEIGHT, SMALL_CHANNEL_HEIGHT), "sim-bb-sml-channel";
+            mkChannel(BAR_HEIGHT + MID_HEIGHT, SMALL_CHANNEL_HEIGHT, "sim-bb-sml-channel");
 
             //-----pins
             const getMidTopOrBot = (rowIdx: number) => rowIdx < BREADBOARD_MID_ROWS / 2.0 ? "b" : "t";

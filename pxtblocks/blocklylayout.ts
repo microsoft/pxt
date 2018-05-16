@@ -5,7 +5,7 @@ namespace pxt.blocks.layout {
         useViewWidth?: boolean;
     }
 
-    export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newXml: string): string {
+    export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, newXml: string): string {
         const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
         // position blocks
         alignBlocks(blockInfo, oldWs, newWs);
@@ -13,19 +13,19 @@ namespace pxt.blocks.layout {
         return injectDisabledBlocks(oldWs, newWs);
     }
 
-    function injectDisabledBlocks(oldWs: B.Workspace, newWs: B.Workspace): string {
-        const oldDom = Blockly.Xml.workspaceToDom(oldWs);
-        const newDom = Blockly.Xml.workspaceToDom(newWs);
+    function injectDisabledBlocks(oldWs: Blockly.Workspace, newWs: Blockly.Workspace): string {
+        const oldDom = Blockly.Xml.workspaceToDom(oldWs, true);
+        const newDom = Blockly.Xml.workspaceToDom(newWs, true);
         Util.toArray(oldDom.childNodes)
             .filter(n => n.nodeType == Node.ELEMENT_NODE && n.localName == "block" && (<Element>n).getAttribute("disabled") == "true")
             .forEach(n => newDom.appendChild(newDom.ownerDocument.importNode(n, true)));
-        const updatedXml = Blockly.Xml.domToPrettyText(newDom);
+        const updatedXml = Blockly.Xml.domToText(newDom);
         return updatedXml;
     }
 
-    function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newWs: B.Workspace) {
+    function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, newWs: Blockly.Workspace) {
         let env: pxt.blocks.Environment;
-        let newBlocks: pxt.Map<B.Block[]>; // support for multiple events with similar name
+        let newBlocks: pxt.Map<Blockly.Block[]>; // support for multiple events with similar name
         oldWs.getTopBlocks(false).filter(ob => !ob.disabled)
             .forEach(ob => {
                 const otp = ob.xy_;
@@ -50,9 +50,15 @@ namespace pxt.blocks.layout {
 
     declare function unescape(escapeUri: string): string;
 
-    export function verticalAlign(ws: B.Workspace, emPixels: number) {
-        let blocks = ws.getTopBlocks(true);
+    export function verticalAlign(ws: Blockly.Workspace, emPixels: number) {
         let y = 0
+        let comments = ws.getTopComments(true);
+        comments.forEach(comment => {
+            comment.moveBy(0, y)
+            y += comment.getHeightWidth().height
+            y += emPixels; //buffer
+        })
+        let blocks = ws.getTopBlocks(true);
         blocks.forEach(block => {
             block.moveBy(0, y)
             y += block.getHeightWidth().height
@@ -60,21 +66,21 @@ namespace pxt.blocks.layout {
         })
     };
 
-    export function flow(ws: B.Workspace, opts?: FlowOptions) {
+    export function flow(ws: Blockly.Workspace, opts?: FlowOptions) {
         if (opts) {
             if (opts.useViewWidth) {
                 const metrics = ws.getMetrics();
 
                 // Only use the width if in portrait, otherwise the blocks are too spread out
                 if (metrics.viewHeight > metrics.viewWidth) {
-                    flowBlocks(ws.getTopBlocks(true), undefined, metrics.viewWidth)
+                    flowBlocks(ws.getTopComments(true), ws.getTopBlocks(true), undefined, metrics.viewWidth)
                     return;
                 }
             }
-            flowBlocks(ws.getTopBlocks(true), opts.ratio);
+            flowBlocks(ws.getTopComments(true), ws.getTopBlocks(true), opts.ratio);
         }
         else {
-            flowBlocks(ws.getTopBlocks(true));
+            flowBlocks(ws.getTopComments(true), ws.getTopBlocks(true));
         }
     }
 
@@ -83,11 +89,11 @@ namespace pxt.blocks.layout {
             && !BrowserUtils.isUwpEdge(); // TODO figure out why screenshots are not working in UWP; disable for now
     }
 
-    export function screenshotAsync(ws: B.Workspace): Promise<string> {
+    export function screenshotAsync(ws: Blockly.Workspace): Promise<string> {
         return toPngAsync(ws);
     }
 
-    export function toPngAsync(ws: B.Workspace): Promise<string> {
+    export function toPngAsync(ws: Blockly.Workspace): Promise<string> {
         return toSvgAsync(ws)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
@@ -126,7 +132,7 @@ namespace pxt.blocks.layout {
 
     const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
 
-    export function toSvgAsync(ws: B.Workspace): Promise<{
+    export function toSvgAsync(ws: Blockly.Workspace): Promise<{
         width: number; height: number; xml: string;
     }> {
         if (!ws)
@@ -141,7 +147,7 @@ namespace pxt.blocks.layout {
 
     export function serializeNode(sg: Node): string {
         const xmlString = new XMLSerializer().serializeToString(sg)
-            .replace(new RegExp('&nbsp;','g'), '&#160;'); // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml     
+            .replace(new RegExp('&nbsp;','g'), '&#160;'); // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml
         return xmlString;
     }
 
@@ -163,7 +169,8 @@ namespace pxt.blocks.layout {
         const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}">${xmlString}</svg>`;
         const xsg = new DOMParser().parseFromString(svgXml, "image/svg+xml");
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
-        const customCssHref = (document.getElementById("blocklycss") as HTMLLinkElement).href;
+        const isRtl = Util.isUserLanguageRtl();
+        const customCssHref = (document.getElementById(`style-${isRtl ? 'rtl' : ''}blockly.css`) as HTMLLinkElement).href;
         return pxt.BrowserUtils.loadAjaxAsync(customCssHref)
             .then((customCss) => {
                 const blocklySvg = Util.toArray(document.head.querySelectorAll("style"))
@@ -221,39 +228,168 @@ namespace pxt.blocks.layout {
         return Promise.all(p).then(() => { })
     }
 
-    function flowBlocks(blocks: Blockly.Block[], ratio: number = 1.62, maxWidth?: number) {
-        const gap = 16;
+    interface Formattable {
+        value: Blockly.Block | Blockly.WorkspaceComment;
+        children?: Formattable[];
+        width: number;
+        height: number;
+
+        // Relative to parent (if any)
+        x?: number;
+        y?: number;
+    }
+
+    function flowBlocks(comments: Blockly.WorkspaceComment[], blocks: Blockly.Block[], ratio: number = 1.62, maxWidth?: number) {
+        // Margin between blocks and their comments
+        const innerGroupMargin = 13;
+
+        // Margin between groups of blocks and comments
+        const outerGroupMargin = 45;
+
+        // Workspace margins
         const marginx = 20;
         const marginy = 20;
+
+        const groups: Formattable[] = [];
+        const commentMap: Map<Blockly.WorkspaceComment> = {};
+
+        comments.forEach(comment => {
+            const ref: string = (comment as any).data;
+            if (ref != undefined) {
+                commentMap[ref] = comment;
+            }
+            else {
+                groups.push(formattable(comment));
+            }
+        });
+
+        let onStart: Formattable;
+
+        blocks.forEach(block => {
+            const commentRefs = (block as any).data;
+            if (commentRefs) {
+                const refs = commentRefs.split(";");
+                const children: Formattable[] = [];
+                for (let i = 0; i < refs.length; i++) {
+                    const comment = commentMap[refs[i]];
+                    if (comment) {
+                        children.push(formattable(comment))
+                        delete commentMap[refs[i]];
+                    }
+                }
+
+                if (children.length) {
+                    groups.push({ value: block, width: -1, height: -1, children });
+                    return;
+                }
+            }
+            const f = formattable(block);
+
+            if (block.type === pxtc.ON_START_TYPE) {
+                onStart = f;
+            }
+            else {
+                groups.push(f);
+            }
+        });
+
+        if (onStart) {
+            groups.unshift(onStart);
+        }
+
+        // Collect the comments that were not linked to a top-level block
+        // and puth them in on start (if it exists)
+        Object.keys(commentMap).sort((a, b) => {
+            // These are strings of integers (eg "0", "17", etc.) with no duplicates
+            if (a.length === b.length) {
+                return a > b ? -1 : 1;
+            }
+            else {
+                return a.length > b.length ? -1 : 1;
+            }
+        }).forEach(key => {
+            if (commentMap[key]) {
+                if (onStart) {
+                    if (!onStart.children) {
+                        onStart.children = [];
+                    }
+                    onStart.children.push(formattable(commentMap[key]));
+                }
+                else {
+                    // Stick the comments in the front so that they show up in the top left
+                    groups.unshift(formattable(commentMap[key]));
+                }
+            }
+        });
+
+        let surfaceArea = 0;
+        for (let i = 0; i < groups.length; i++) {
+            const group = groups[i];
+            if (group.children) {
+                const valueDimensions = group.value.getHeightWidth();
+                group.x = 0;
+                group.y = 0;
+
+                let x = valueDimensions.width + innerGroupMargin;
+                let y = 0;
+
+                // Lay comments out to the right of the parent node
+                for (let j = 0; j < group.children.length; j++) {
+                    const child = group.children[j];
+                    child.x = x;
+                    child.y = y;
+                    y += child.height + innerGroupMargin;
+                    group.width = Math.max(group.width, x + child.width);
+                }
+
+                group.height = Math.max(y - innerGroupMargin, valueDimensions.height);
+            }
+
+            surfaceArea += (group.height + innerGroupMargin) * (group.width + innerGroupMargin);
+        }
 
         let maxx: number;
         if (maxWidth > marginx) {
             maxx = maxWidth - marginx;
         }
         else {
-            // compute total block surface and infer width
-            let surface = 0;
-            for (let block of blocks) {
-                let s = block.getHeightWidth();
-                surface += s.width * s.height;
-            }
-            maxx = Math.sqrt(surface) * ratio;
+            maxx = Math.sqrt(surfaceArea) * ratio;
         }
 
         let insertx = marginx;
         let inserty = marginy;
-        let endy = 0;
-        for (let block of blocks) {
-            let r = block.getBoundingRectangle();
-            let s = block.getHeightWidth();
-            // move block to insertion point
-            block.moveBy(insertx - r.topLeft.x, inserty - r.topLeft.y);
-            insertx += s.width + gap;
-            endy = Math.max(endy, inserty + s.height + gap);
-            if (insertx > maxx) { // start new line
+        let rowBottom = 0;
+
+        for (let i = 0; i < groups.length; i++) {
+            const group = groups[i];
+            if (group.children) {
+                moveFormattable(group, insertx + group.x, inserty + group.y);
+                for (let j = 0; j < group.children.length; j++) {
+                    const child = group.children[j];
+                    moveFormattable(child, insertx + child.x, inserty + child.y);
+                }
+            }
+            else {
+                moveFormattable(group, insertx, inserty);
+            }
+
+            insertx += group.width + outerGroupMargin;
+            rowBottom = Math.max(rowBottom, group.height + outerGroupMargin);
+
+            if (insertx > maxx) {
                 insertx = marginx;
-                inserty = endy;
+                inserty = rowBottom;
             }
         }
+
+        function moveFormattable(f: Formattable, x: number, y: number) {
+            const bounds = f.value.getBoundingRectangle();
+            f.value.moveBy(x - bounds.topLeft.x, y - bounds.topLeft.y);
+        }
+    }
+
+    function formattable(entity: Blockly.Block | Blockly.WorkspaceComment): Formattable {
+        const hw = entity.getHeightWidth();
+        return { value: entity, height: hw.height, width: hw.width }
     }
 }

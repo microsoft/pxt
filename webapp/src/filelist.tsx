@@ -1,8 +1,6 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
-import * as workspace from "./workspace";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";
@@ -11,7 +9,8 @@ import * as core from "./core";
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 interface FileListState {
-    expands: pxt.Map<boolean>;
+    currentFile?: pxt.editor.IFile;
+    expandedPkg?: string;
 }
 
 const customFile = "custom.ts";
@@ -20,12 +19,33 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
-            expands: {}
+        }
+
+        this.toggleVisibility = this.toggleVisibility.bind(this);
+        this.handleCustomBlocksClick = this.handleCustomBlocksClick.bind(this);
+        this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
+        this.setFile = this.setFile.bind(this);
+        this.removeFile = this.removeFile.bind(this);
+        this.removePkg = this.removePkg.bind(this);
+        this.updatePkg = this.updatePkg.bind(this);
+        this.togglePkg = this.togglePkg.bind(this);
+    }
+
+    componentWillReceiveProps(nextProps: ISettingsProps) {
+        const currentFile = nextProps.parent.state.currFile;
+        // Set the current package as expanded
+        if (this.state.currentFile != currentFile) {
+            let expandedPkg = undefined;
+            pkg.allEditorPkgs().forEach(p => {
+                if (this.packageContainsFile(p, currentFile)) {
+                    expandedPkg = p.getPkgId();
+                }
+            })
+            this.setState({ expandedPkg: expandedPkg, currentFile: currentFile });
         }
     }
 
-    private removePkg(e: React.MouseEvent<HTMLElement>, p: pkg.EditorPackage) {
-        e.stopPropagation();
+    private removePkg(p: pkg.EditorPackage) {
         core.confirmAsync({
             header: lf("Remove {0} package", p.getPkgId()),
             body: lf("You are about to remove a package from your project. Are you sure?"),
@@ -41,62 +61,71 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         })
     }
 
-    private removeFile(e: React.MouseEvent<HTMLElement>, f: pkg.File) {
-        e.stopPropagation();
+    private setFile(f: pkg.File) {
+        this.props.parent.setSideFile(f);
+    }
+
+    private removeFile(f: pkg.File) {
         this.props.parent.removeFile(f);
     }
 
-    private updatePkg(e: React.MouseEvent<HTMLElement>, p: pkg.EditorPackage) {
-        e.stopPropagation();
+    private updatePkg(p: pkg.EditorPackage) {
         pkg.mainEditorPkg().updateDepAsync(p.getPkgId())
             .then(() => this.props.parent.reloadHeaderAsync())
             .done()
     }
 
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
+        const { currentFile } = this.state;
         const deleteFiles = pkg.getPkgId() == "this";
         const parent = this.props.parent;
         return pkg.sortedFiles().map(file => {
             let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
             return (
-                <a key={file.getName() }
-                    onClick={() => parent.setSideFile(file) }
-                    tabIndex={0}
-                    role="treeitem"
-                    aria-label={parent.state.currFile == file ? lf("{0}, it is the current opened file in the JavaScript editor", file.name) : file.name}
-                    onKeyDown={sui.fireClickOnEnter}
-                    className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
-                    >
+                <FileTreeItem key={file.getName()} file={file}
+                    onItemClick={this.setFile}
+                    onItemRemove={this.removeFile}
+                    isActive={currentFile == file}
+                    hasDelete={deleteFiles && /\.blocks$/i.test(file.getName())}
+                    className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
+                >
                     {file.name} {meta.isSaved ? "" : "*"}
-                    {/\.ts$/.test(file.name) ? <sui.Icon icon="align left" /> : /\.blocks$/.test(file.name) ? <sui.Icon icon="puzzle" /> : undefined }
+                    {/\.ts$/.test(file.name) ? <sui.Icon icon="align left" /> : /\.blocks$/.test(file.name) ? <sui.Icon icon="puzzle" /> : undefined}
                     {meta.isReadonly ? <sui.Icon icon="lock" /> : null}
                     {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
-                    {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" title={lf("Delete file {0}", file.name)} onClick={(e) => this.removeFile(e, file) } onKeyDown={(e) => e.stopPropagation()} /> : ''}
-                </a>);
+                </FileTreeItem>);
         })
     }
 
     private packageOf(p: pkg.EditorPackage) {
-        const expands = this.state.expands;
-        let del = p.getPkgId() != pxt.appTarget.id
+        const expandedPkg = this.state.expandedPkg;
+        const del = p.getPkgId() != pxt.appTarget.id
             && p.getPkgId() != "built"
+            && p.getPkgId() != "assets"
             && p.getPkgId() != pxt.appTarget.corepkg
-            && !p.getKsPkg().config.core
+            && p.getKsPkg().config && !p.getKsPkg().config.core
             && p.getKsPkg().level <= 1;
-        let upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
-        return [<div key={"hd-" + p.getPkgId() } className="header link item" role="treeitem" aria-expanded={expands[p.getPkgId()]} aria-label={lf("{0}, {1}", p.getPkgId(), expands[p.getPkgId()] ? lf("expanded") : lf("collapsed"))} onClick={() => this.togglePkg(p) } tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
-            <sui.Icon icon={`chevron ${expands[p.getPkgId()] ? "down" : "right"} icon`} />
-            {upd ? <sui.Button class="primary label" icon="refresh" title={lf("Refresh package {0}", p.getPkgId())} onClick={(e) => this.updatePkg(e, p) } onKeyDown={(e) => e.stopPropagation()} /> : ''}
-            {del ? <sui.Button class="primary label" icon="trash" title={lf("Delete package {0}", p.getPkgId())} onClick={(e) => this.removePkg(e, p) } onKeyDown={(e) => e.stopPropagation()} /> : ''}
-            {p.getPkgId() }
-        </div>
-        ].concat(expands[p.getPkgId()] ? this.filesOf(p) : [])
+        const upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
+        const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + p.getPkgId());
+        return [<PackgeTreeItem key={"hd-" + p.getPkgId()}
+            pkg={p} isActive={expandedPkg == p.getPkgId()} onItemClick={this.togglePkg}
+            hasDelete={del} onItemRemove={this.removePkg}
+            hasRefresh={upd} onItemRefresh={this.updatePkg} >
+            {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
+            {p.getPkgId()}
+            {expandedPkg == p.getPkgId() ?
+                <div role="group" className="menu">
+                    {this.filesOf(p)}
+                </div> : undefined}
+        </PackgeTreeItem>]
+    }
+
+    private packageContainsFile(pkg: pkg.EditorPackage, f: pxt.editor.IFile) {
+        return pkg.sortedFiles().filter(file => file == f).length > 0;
     }
 
     private togglePkg(p: pkg.EditorPackage) {
-        const expands = this.state.expands;
-        expands[p.getPkgId()] = !expands[p.getPkgId()];
-        this.forceUpdate();
+        this.setState({ expandedPkg: this.state.expandedPkg == p.getPkgId() ? undefined : p.getPkgId() });
     }
 
     private filesWithHeader(p: pkg.EditorPackage) {
@@ -105,6 +134,15 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private toggleVisibility() {
         this.props.parent.setState({ showFiles: !this.props.parent.state.showFiles });
+    }
+
+    private handleCustomBlocksClick(e: React.MouseEvent<any>) {
+        this.addCustomBlocksFile();
+        e.stopPropagation();
+    }
+
+    private handleButtonKeydown(e: React.KeyboardEvent<HTMLElement>) {
+        e.stopPropagation();
     }
 
     private addCustomBlocksFile() {
@@ -116,7 +154,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             return this.props.parent.updateFileAsync(customFile, `
 /**
  * ${lf("Use this file to define custom functions and blocks.")}
- * ${lf("Read more at {0}", pxt.appTarget.appTheme.homeUrl + 'blocks/custom' )}
+ * ${lf("Read more at {0}", pxt.appTarget.appTheme.homeUrl + 'blocks/custom')}
  */
 
 enum MyEnum {
@@ -159,13 +197,124 @@ namespace custom {
         const show = !!this.props.parent.state.showFiles;
         const targetTheme = pxt.appTarget.appTheme;
         const plus = show && !pkg.mainEditorPkg().files[customFile]
-        return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only`}>
-            <div role="treeitem" aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={() => this.toggleVisibility() } tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
-                {lf("Explorer") }
+        const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
+        return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
+            <div role="treeitem" aria-selected={show} aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
+                {lf("Explorer")}
                 <sui.Icon icon={`chevron ${show ? "down" : "right"} icon`} />
-                {plus ? <sui.Button class="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={(e) => {this.addCustomBlocksFile(); e.stopPropagation();} } onKeyDown={(e) => e.stopPropagation()} /> : undefined }
+                {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
+                {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
-            {show ? Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined }
+            {show ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
         </div>;
+    }
+}
+
+interface FileTreeItemProps extends React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement> {
+    file: pkg.File;
+    onItemClick: (fn: pkg.File) => void;
+    onItemRemove: (fn: pkg.File) => void;
+    isActive: boolean;
+    hasDelete?: boolean;
+}
+
+class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
+    constructor(props: FileTreeItemProps) {
+        super(props);
+
+        this.handleClick = this.handleClick.bind(this);
+        this.handleRemove = this.handleRemove.bind(this);
+        this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
+    }
+
+    handleClick(e: React.MouseEvent<HTMLElement>) {
+        this.props.onItemClick(this.props.file);
+        e.stopPropagation();
+    }
+
+    handleRemove(e: React.MouseEvent<HTMLElement>) {
+        this.props.onItemRemove(this.props.file);
+        e.stopPropagation();
+    }
+
+    private handleButtonKeydown(e: React.KeyboardEvent<HTMLElement>) {
+        e.stopPropagation();
+    }
+
+    renderCore() {
+        const { onClick, onItemClick, onItemRemove, isActive, hasDelete, file, ...rest } = this.props;
+
+        return <a
+            onClick={this.handleClick}
+            tabIndex={0}
+            role="treeitem"
+            aria-selected={isActive}
+            aria-label={isActive ? lf("{0}, it is the current opened file in the JavaScript editor", file.name) : file.name}
+            onKeyDown={sui.fireClickOnEnter}
+            {...rest}>
+            {this.props.children}
+
+            {hasDelete ? <sui.Button className="primary label" icon="trash"
+                title={lf("Delete file {0}", file.name)}
+                onClick={this.handleRemove}
+                onKeyDown={this.handleButtonKeydown} /> : ''}
+        </a>
+    }
+}
+
+interface PackageTreeItemProps {
+    pkg: pkg.EditorPackage;
+    onItemClick: (p: pkg.EditorPackage) => void;
+    onItemRemove: (p: pkg.EditorPackage) => void;
+    onItemRefresh: (p: pkg.EditorPackage) => void;
+    isActive?: boolean;
+    hasRefresh?: boolean;
+    hasDelete?: boolean;
+}
+
+class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
+    constructor(props: PackageTreeItemProps) {
+        super(props);
+
+        this.handleClick = this.handleClick.bind(this);
+        this.handleRemove = this.handleRemove.bind(this);
+        this.handleRefresh = this.handleRefresh.bind(this);
+        this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
+    }
+
+    handleClick() {
+        this.props.onItemClick(this.props.pkg);
+    }
+
+    handleRefresh(e: React.MouseEvent<HTMLElement>) {
+        this.props.onItemRefresh(this.props.pkg);
+        e.stopPropagation();
+    }
+
+    handleRemove(e: React.MouseEvent<HTMLElement>) {
+        this.props.onItemRemove(this.props.pkg);
+        e.stopPropagation();
+    }
+
+    private handleButtonKeydown(e: React.KeyboardEvent<HTMLElement>) {
+        e.stopPropagation();
+    }
+
+    renderCore() {
+        const { onItemClick, onItemRemove, onItemRefresh,
+            isActive, hasRefresh, hasDelete, pkg: p, ...rest } = this.props;
+
+        return <div className="header link item" role="treeitem"
+            aria-selected={isActive} aria-expanded={isActive}
+            aria-label={lf("{0}, {1}", p.getPkgId(), isActive ? lf("expanded") : lf("collapsed"))}
+            onClick={this.handleClick} tabIndex={0} onKeyDown={sui.fireClickOnEnter} {...rest}>
+            <sui.Icon icon={`chevron ${isActive ? "down" : "right"} icon`} />
+            {hasRefresh ? <sui.Button className="primary label" icon="refresh" title={lf("Refresh package {0}", p.getPkgId())}
+                onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} /> : ''}
+            {hasDelete ? <sui.Button className="primary label" icon="trash" title={lf("Delete package {0}", p.getPkgId())}
+                onClick={this.handleRemove} onKeyDown={this.handleButtonKeydown} /> : ''}
+
+            {this.props.children}
+        </div>
     }
 }

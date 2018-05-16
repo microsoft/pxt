@@ -367,7 +367,6 @@ namespace ts.pxtc {
     export interface CallInfo {
         decl: Declaration;
         qName: string;
-        attrs: CommentAttrs;
         args: Expression[];
         isExpression: boolean;
         isAutoCreate?: boolean;
@@ -447,15 +446,6 @@ namespace ts.pxtc {
             return cached
         let res = parseCommentString(getComments(node))
         res._name = getName(node)
-        if (node0.kind == SK.FunctionDeclaration && res.block === "true" && !res.blockId) {
-            const fn = node0 as ts.FunctionDeclaration;
-            if ((fn.symbol as any).parent) {
-                res.blockId = `${(fn.symbol as any).parent.name}_${getDeclName(fn)}`;
-                res.block = `${U.uncapitalize(node.symbol.name)}${fn.parameters.length ? '|' + fn.parameters
-                    .filter(p => !p.questionToken)
-                    .map(p => `${U.uncapitalize((p.name as ts.Identifier).text)} %${(p.name as Identifier).text}`).join('|') : ''}`;
-            }
-        }
         node.pxtCommentAttrs = res
         return res
     }
@@ -1804,7 +1794,6 @@ ${lbl}: .short 0xffff
             let callInfo: CallInfo = {
                 decl,
                 qName: getFullName(checker, decl.symbol),
-                attrs,
                 args: [],
                 isExpression: true
             };
@@ -2149,7 +2138,6 @@ ${lbl}: .short 0xffff
             let callInfo: CallInfo = {
                 decl,
                 qName: decl ? getFullName(checker, decl.symbol) : "?",
-                attrs,
                 args: args.slice(0),
                 isExpression: hasRet
             };
@@ -2523,59 +2511,29 @@ ${lbl}: .short 0xffff
                     }
                 }
 
-                // even-out
-                for (let l of matrix)
-                    while (l.length < maxLen)
-                        l.push(0)
-
-                let r = ""
-
+                let bpp = 8
                 if (attrs.groups.length <= 2) {
-                    r = "f1" + hex2(maxLen) + hex2(matrix.length)
-                    for (let l of matrix) {
-                        let mask = 0x80
-                        let v = 0
-                        for (let n of l) {
-                            if (mask == 0) {
-                                r += hex2(v)
-                                mask = 0x80
-                                v = 0
-                            }
-                            if (n) v |= mask
-                            mask >>= 1
-                        }
-                        r += hex2(v)
-                    }
+                    bpp = 1
                 } else if (attrs.groups.length <= 16) {
-                    r = "f4" + hex2(maxLen) + hex2(matrix.length)
-                    for (let l of matrix) {
-                        for (let n of l)
-                            r += n.toString(16)
-                        if (r.length & 1)
-                            r += "0"
-                    }
-                } else {
-                    r = "f8" + hex2(maxLen) + hex2(matrix.length)
-                    for (let l of matrix)
-                        for (let n of l)
-                            r += hex2(n)
+                    bpp = 4
                 }
-
-                return r
-
-                function hex2(n: number) {
-                    return ("0" + n.toString(16)).slice(-2)
-                }
+                return f4EncodeImg(maxLen, matrix.length, bpp, (x, y) => matrix[y][x] || 0)
             }
+
             function parseHexLiteral(s: string) {
-                if (s == "" && currJres) {
-                    if (!currJres.dataEncoding || currJres.dataEncoding == "base64") {
-                        s = U.toHex(U.stringToUint8Array(ts.pxtc.decodeBase64(currJres.data)))
-                    } else if (currJres.dataEncoding == "hex") {
-                        s = currJres.data
+                let thisJres = currJres
+                if (s[0] == '_' && s[1] == '_' && opts.jres[s]) {
+                    thisJres = opts.jres[s]
+                    s = ""
+                }
+                if (s == "" && thisJres) {
+                    if (!thisJres.dataEncoding || thisJres.dataEncoding == "base64") {
+                        s = U.toHex(U.stringToUint8Array(ts.pxtc.decodeBase64(thisJres.data)))
+                    } else if (thisJres.dataEncoding == "hex") {
+                        s = thisJres.data
                     } else {
                         userError(9271, lf("invalid jres encoding '{0}' on '{1}'",
-                            currJres.dataEncoding, currJres.id))
+                            thisJres.dataEncoding, thisJres.id))
                     }
                 }
                 let res = ""
@@ -2599,6 +2557,14 @@ ${lbl}: .short 0xffff
                 throw unhandled(node, lf("invalid tagged template"), 9265)
             let attrs = parseComments(decl)
             let res: ir.Expr
+
+            let callInfo: CallInfo = {
+                decl,
+                qName: decl ? getFullName(checker, decl.symbol) : "?",
+                args: [node.template],
+                isExpression: true
+            };
+            (node as any).callInfo = callInfo;
 
             function handleHexLike(pp: (s: string) => string) {
                 if (node.template.kind != SK.NoSubstitutionTemplateLiteral)
@@ -3089,6 +3055,7 @@ ${lbl}: .short 0xffff
                     case "numops::subs":
                     case "numops::eors":
                     case "numops::ands":
+                    case "numops::orrs":
                         return "@nomask@" + n
                 }
             }
@@ -4366,6 +4333,7 @@ ${lbl}: .short 0xffff
         sourceHash = "";
         checksumBlock: number[];
         numStmts = 1;
+        commSize = 0;
 
         strings: pxt.Map<string> = {};
         hexlits: pxt.Map<string> = {};

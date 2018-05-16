@@ -39,6 +39,7 @@ namespace pxt.editor {
         projectName?: string;
 
         tutorialOptions?: TutorialOptions;
+        lightbox?: boolean;
 
         running?: boolean;
         resumeOnVisibility?: boolean;
@@ -53,11 +54,14 @@ namespace pxt.editor {
         mute?: boolean;
         embedSimView?: boolean;
         tracing?: boolean;
+        debugging?: boolean;
         bannerVisible?: boolean;
 
         highContrast?: boolean;
+        greenScreen?: boolean;
 
         home?: boolean;
+        hasError?: boolean;
     }
 
     export interface EditorState {
@@ -91,21 +95,10 @@ namespace pxt.editor {
         Disabled = 2
     }
 
-    export interface TutorialStepInfo {
-        fullscreen?: boolean;
-        // no coding
-        unplugged?: boolean;
-        hasHint?: boolean;
-        content?: string;
-        titleContent?: string;
-        headerContent?: string;
-        ariaLabel?: string;
-    }
-
     export interface TutorialOptions {
         tutorial?: string; // tutorial
         tutorialName?: string; // tutorial title
-        tutorialStepInfo?: TutorialStepInfo[];
+        tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
     }
@@ -114,6 +107,8 @@ namespace pxt.editor {
         state: IAppState;
         setState(st: IAppState): void;
         forceUpdate(): void;
+
+        reloadEditor(): void;
 
         openBlocks(): void;
         openJavaScript(giveFocusOnLoading?: boolean): void;
@@ -138,8 +133,6 @@ namespace pxt.editor {
         newProject(options?: ProjectCreationOptions): void;
         createProjectAsync(options: ProjectCreationOptions): Promise<void>;
         importProjectDialog(): void;
-        importFileDialog(): void;
-        importUrlDialog(): void;
         removeProject(): void;
         editText(): void;
 
@@ -166,8 +159,8 @@ namespace pxt.editor {
 
         startStopSimulator(): void;
         stopSimulator(unload?: boolean): void;
-        restartSimulator(): void;
-        startSimulator(): void;
+        restartSimulator(debug?: boolean): void;
+        startSimulator(debug?: boolean): void;
         runSimulator(): void;
         expandSimulator(): void;
         collapseSimulator(): void;
@@ -178,12 +171,15 @@ namespace pxt.editor {
         toggleMute(): void;
         openInstructions(): void;
         closeFlyout(): void;
+        printCode(): void;
 
-        setBanner(b: boolean): void;
+        toggleDebugging(): void;
+        dbgPauseResume(): void;
+        dbgStepInto(): void;
+        dbgStepOver(): void;
+        dbgInsertBreakpoint(): void;
 
-        startTutorial(tutorialId: string, tutorialTitle?: string): void;
-
-        addPackage(): void;
+        setBannerVisible(b: boolean): void;
         typecheckNow(): void;
 
         openExtension(extension: string, url: string, consentRequired?: boolean): void;
@@ -192,21 +188,14 @@ namespace pxt.editor {
         fireResize(): void;
         updateEditorLogo(left: number, rgba?: string): void;
 
+        loadBlocklyAsync(): Promise<void>;
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;
-        renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<string>;
+        renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<any>;
 
-        // obsolete, may go away
-        convertTouchDevelopToTypeScriptAsync(td: string): Promise<string>;
-
-        selectLang(): void;
         toggleHighContrast(): void;
-        share(): void;
-        about(): void;
-        reset(): void;
+        toggleGreenScreen(): void;
         pair(): void;
-        showReportAbuse(): void;
-        exitAndSave(): void;
         launchFullEditor(): void;
 
         settings: EditorSettings;
@@ -216,6 +205,23 @@ namespace pxt.editor {
         isJavaScriptActive(): boolean;
 
         editor: IEditor;
+
+        startTutorial(tutorialId: string, tutorialTitle?: string): void;
+        showLightbox(): void;
+        hideLightbox(): void;
+
+        showReportAbuse(): void;
+        showLanguagePicker(): void;
+        showShareDialog(): void;
+        showAboutDialog(): void;
+
+        showImportUrlDialog(): void;
+        showImportFileDialog(): void;
+
+        showResetDialog(): void;
+        showExitAndSaveDialog(): void;
+
+        showPackageDialog(): void;
     }
 
     export interface IHexFileImporter {
@@ -244,12 +250,13 @@ namespace pxt.editor {
 
 
     export interface ExtensionOptions {
-
+        blocklyToolbox: ToolboxDefinition;
+        monacoToolbox: ToolboxDefinition;
     }
 
     export interface IToolboxOptions {
-        blocklyXml?: string;
-        monacoToolbox?: MonacoToolboxDefinition;
+        blocklyToolbox?: ToolboxDefinition;
+        monacoToolbox?: ToolboxDefinition;
     }
 
     export interface ExtensionResult {
@@ -257,26 +264,45 @@ namespace pxt.editor {
         resourceImporters?: IResourceImporter[];
         beforeCompile?: () => void;
         deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
+        saveOnlyAsync?: (r: ts.pxtc.CompileResult) => Promise<void>;
+        saveProjectAsync?: (project: pxt.cpp.HexFile) => Promise<void>;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
-        fieldEditors?: IFieldCustomOptions[];
         toolboxOptions?: IToolboxOptions;
+        blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
     }
 
-    export interface MonacoToolboxDefinition {
-        loops?: MonacoToolboxCategoryDefinition;
-        logic?: MonacoToolboxCategoryDefinition;
-        variables?: MonacoToolboxCategoryDefinition;
-        maths?: MonacoToolboxCategoryDefinition;
-        text?: MonacoToolboxCategoryDefinition;
-        arrays?: MonacoToolboxCategoryDefinition;
-        functions?: MonacoToolboxCategoryDefinition;
+    export interface FieldExtensionOptions {
     }
 
-    export interface MonacoToolboxCategoryDefinition {
+    export interface FieldExtensionResult {
+        fieldEditors?: IFieldCustomOptions[];
+    }
+
+    export interface ToolboxDefinition {
+        loops?: ToolboxCategoryDefinition;
+        logic?: ToolboxCategoryDefinition;
+        variables?: ToolboxCategoryDefinition;
+        maths?: ToolboxCategoryDefinition;
+        text?: ToolboxCategoryDefinition;
+        arrays?: ToolboxCategoryDefinition;
+        functions?: ToolboxCategoryDefinition;
+    }
+
+    export interface ToolboxCategoryDefinition {
         /**
          * The display name for the category
          */
         name?: string;
+
+        /**
+         * The icon of this category
+         */
+        icon?: string;
+
+        /**
+         * The color of this category
+         */
+        color?: string;
 
         /**
          * The weight of the category relative to other categories in the toolbox
@@ -289,52 +315,29 @@ namespace pxt.editor {
         advanced?: boolean;
 
         /**
-         * Whether or not the category should be removed
-         */
-        removed?: boolean;
-
-        /**
          * Blocks to appear in the category. Specifying this field will override
          * all existing blocks in the category. The ordering of the blocks is
          * determined by the ordering of this array.
          */
-        blocks?: MonacoToolboxBlockDefinition[];
+        blocks?: ToolboxBlockDefinition[];
 
         /**
-         * Whether or not to replace or append blocks
+         * Ordering of category groups
          */
-        appendBlocks?: boolean;
+        groups?: string[],
     }
 
-    export interface MonacoToolboxBlockDefinition {
+    export interface ToolboxBlockDefinition {
         /**
-         * Name of the API or construct, used in highlighting of snippet. For function
-         * calls, should match the name of the function
+         * Internal id used to refer to this block or snippet, must be unique
          */
         name: string;
-
-        /**
-         * Snippet of code to insert when dragged into editor
-         */
-        snippet: string;
 
         /**
          * Group label used to categorize block.  Blocks are arranged with other
          * blocks that share the same group.
          */
         group?: string,
-
-        /**
-         * Description of code to appear in the hover text
-         */
-        jsDoc?: string
-
-        /**
-         * Display just the snippet and nothing else. Should be set to true for
-         * language constructs (eg. for-loops) and to false for function
-         * calls (eg. Math.random())
-         */
-        snippetOnly?: boolean;
 
         /**
          * Indicates an advanced API. Advanced APIs appear after basic ones in the
@@ -350,11 +353,53 @@ namespace pxt.editor {
         weight?: number;
 
         /**
+         * Description of code to appear in the hover text
+         */
+        jsDoc?: string
+
+        /**
+         * Snippet of code to insert when dragged into editor
+         */
+        snippet?: string;
+
+        /**
+         * Name used for highlighting the snippet, uses name if not defined
+         */
+        snippetName?: string;
+
+        /**
+         * Display just the snippet and nothing else. Should be set to true for
+         * language constructs (eg. for-loops) and to false for function
+         * calls (eg. Math.random())
+         */
+        snippetOnly?: boolean;
+
+        /**
          * The return type of the block. This is used to determine the shape of the block rendered.
          */
         retType?: string;
+
+        /**
+         * The block definition in XML for the blockly toolbox.
+         */
+        blockXml?: string;
+
+        /**
+         * The Blockly block id used to identify this block.
+         */
+        blockId?: string;
     }
 
-    export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;
+    export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>
+        = opts => Promise.resolve<ExtensionResult>({});
+
+    export let initFieldExtensionsAsync: (opts: FieldExtensionOptions) => Promise<FieldExtensionResult>
+        = opts => Promise.resolve<FieldExtensionResult>({});
+
+    export interface NativeHostMessage {
+        name?: string;
+        download?: string;
+        save?: string;
+    }
 }
 

@@ -154,7 +154,7 @@ export function encodeBlobAsync(dataURL: string, blob: Uint8Array) {
                 0,
             ])
 
-            Util.assert(header.length == imageHeaderSize)
+            pxt.Util.assert(header.length == imageHeaderSize)
 
             function encode(img: Uint8ClampedArray, ptr: number, bpp: number, data: ArrayLike<number>) {
                 let shift = 0
@@ -194,7 +194,7 @@ export function encodeBlobAsync(dataURL: string, blob: Uint8Array) {
             let ptr = 4
             // next, the header
             ptr = encode(imgdat.data, ptr, bpp, header)
-            Util.assert((ptr & 3) == 0)
+            pxt.Util.assert((ptr & 3) == 0)
             if (addedLines == 0)
                 ptr = encode(imgdat.data, ptr, bpp, blob)
             else {
@@ -216,7 +216,7 @@ export function encodeBlobAsync(dataURL: string, blob: Uint8Array) {
 
 export function testBlobEncodeAsync(dataURL: string, sz = 10000) {
     let blob = new Uint8Array(sz)
-    Util.getRandomBuf(blob)
+    pxt.Util.getRandomBuf(blob)
     return encodeBlobAsync(dataURL, blob)
         .then(url => {
             let img = document.createElement("img")
@@ -225,9 +225,9 @@ export function testBlobEncodeAsync(dataURL: string, sz = 10000) {
             return decodeBlobAsync(url)
         })
         .then(resBlob => {
-            Util.assert(resBlob.length == blob.length)
+            pxt.Util.assert(resBlob.length == blob.length)
             for (let i = 0; i < blob.length; ++i) {
-                Util.assert(resBlob[i] == blob[i])
+                pxt.Util.assert(resBlob[i] == blob[i])
             }
         })
 }

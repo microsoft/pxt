@@ -1,6 +1,6 @@
 # Objects and instances
 
-To create objects to associate certain operations more logically, you can have classes in your namespace. In the `tropic` package, the **pick** function simply returns a **boolean** to indicate that the action was successful or not. The **pick** function would make more sense if it actually returned a `fruit` object like a `banana` if successful.
+To create objects that associate certain operations more logically, you can have classes in your namespace. In the `tropic` package, the **pick** function simply returns a **boolean** to indicate that the action was successful or not. The **pick** function would make more sense if it actually returned a `fruit` object like a `banana` if successful.
 
 ## Step 1: Make a fruit object
 
