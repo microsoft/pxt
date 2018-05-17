@@ -80,7 +80,9 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
             if (!/\/$/.test(shareUrl)) shareUrl += '/';
             let rootUrl = pxt.appTarget.appTheme.embedUrl
             if (!/\/$/.test(rootUrl)) rootUrl += '/';
-
+            const v = pxt.semver.tryParse(pxt.appTarget.versions.target);
+            if (v)
+                rootUrl += `v${v.major}/`;
             let currentPubId = (header ? header.pubId : undefined) || this.state.currentPubId;
 
             ready = (!!currentPubId && header.pubCurrent);
