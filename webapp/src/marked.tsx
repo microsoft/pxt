@@ -44,7 +44,11 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         pxt.Util.toArray(content.querySelectorAll(`.lang-blocks`))
             .forEach((langBlock: HTMLElement) => {
-                const code = langBlock.innerHTML;
+                // Can't use innerHTML here because it escapes certain characters (e.g. < and >)
+                // Also can't use innerText because IE strips out the newlines from the code
+                // textContent seems to work in all browsers and return the "pure" text
+                const code = langBlock.textContent;
+
                 const wrapperDiv = document.createElement('div');
                 pxsim.U.clear(langBlock);
                 langBlock.appendChild(wrapperDiv);
