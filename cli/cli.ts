@@ -4499,6 +4499,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     if (!nodeutil.existsDirSync("docs"))
         return Promise.resolve();
     const docsRoot = nodeutil.targetDir;
+    const docsTemplate = server.expandDocFileTemplate("docs.html")
     const summaryMD = nodeutil.resolveMd(docsRoot, "SUMMARY");
 
     if (!summaryMD) {
@@ -4618,7 +4619,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             broken++;
         }
         // look for broken urls
-        md.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
+        md.replace(/]\( (\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
             let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
             // remove hash
             url = url.replace(/#.*$/, '');
@@ -4629,6 +4630,19 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             }
             return '';
         })
+
+        // look for broken macros
+        try {
+            const r = pxt.docs.renderMarkdown({
+                template: docsTemplate,
+                markdown: md,
+                theme: pxt.appTarget.appTheme,
+                throwOnError: true
+            });
+        } catch (e) {
+            pxt.log(`${entrypath}: ${e}`);
+            broken++;
+        }
 
         // look for snippets
         getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => addSnippet(snippet, entrypath, snipIndex));
