@@ -4490,11 +4490,12 @@ function cherryPickAsync(parsed: commandParser.ParsedCommand) {
 function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     return internalCheckDocsAsync(
         !!parsed.flags["snippets"],
-        parsed.flags["re"] as string
+        parsed.flags["re"] as string,
+        !!parsed.flags["fix"]
     )
 }
 
-function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise<void> {
+function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean): Promise<void> {
     if (!nodeutil.existsDirSync("docs"))
         return Promise.resolve();
     const docsRoot = nodeutil.targetDir;
@@ -4513,6 +4514,32 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     let broken = 0;
     let snipCount = 0;
     let snippets: CodeSnippet[] = [];
+
+    // scan and fix image links
+    if (fix) {
+        pxt.log('patching links');
+        nodeutil.allFiles("docs")
+            .filter(f => /\.md/.test(f))
+            .forEach(f => {
+                let md = fs.readFileSync(f, { encoding: "utf8" });
+                let newmd = md.replace(/]\((\/static\/[^)]+?)\.(png|jpg)(\s+"[^"]+")?\)/g, (m: string, p: string, ext: string, comment: string) => {
+                    let fn = path.join(docsRoot, "docs", `${p}.${ext}`);
+                    if (fs.existsSync(fn))
+                        return m;
+                    // try finding other file
+                    let next = ext == "png" ? "jpg" : "png";
+                    if (!fs.existsSync(path.join(docsRoot, "docs", `${p}.${next}`))) {
+                        pxt.log(`could not patch ${fn}`)
+                        return m;
+                    }
+                    return `](${p}.${next}${comment ? " " : ""}${comment || ""})`;
+                });
+                if (md != newmd) {
+                    pxt.log(`patching ${f}`)
+                    fs.writeFileSync(f, newmd, { encoding: "utf8" })
+                }
+            });
+    }
 
     function addSnippet(snippet: CodeSnippet, entryPath: string, snipIndex: number) {
         snippets.push(snippet);
@@ -4585,7 +4612,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         checked++;
         const entrypath = todo.pop();
         pxt.debug(`checking ${entrypath}`)
-        const md = (urls[entrypath] as string) || nodeutil.resolveMd(docsRoot, entrypath);
+        let md = (urls[entrypath] as string) || nodeutil.resolveMd(docsRoot, entrypath);
         if (!md) {
             pxt.log(`unable to resolve ${entrypath}`)
             broken++;
@@ -5184,6 +5211,9 @@ function initCommands() {
             re: {
                 description: "regular expression that matches the snippets to test",
                 argument: "regex"
+            },
+            fix: {
+                description: "Fix links if possible"
             }
         }
     }, checkDocsAsync);
