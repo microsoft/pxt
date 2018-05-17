@@ -1482,7 +1482,9 @@ namespace pxt.hex {
                 buf = ""
                 let cnt = parseInt(nxt, 16)
                 while (cnt-- > 0) {
+                    /* tslint:disable:no-octal-literal */
                     buf += "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+                    /* tslint:enable:no-octal-literal */
                 }
             } else {
                 buf = ts.pxtc.decodeBase64(nxt)

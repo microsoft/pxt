@@ -29,9 +29,9 @@ namespace pxt.svgUtil {
             this.el = elt(type) as T;
         }
         attr(attributes: Map<string | number | boolean>): this {
-            for (const at in attributes) {
+            Object.keys(attributes).forEach(at => {
                 this.setAttribute(at, attributes[at]);
-            }
+            });
             return this;
         }
 

@@ -58,6 +58,7 @@ namespace pxt.editor {
         bannerVisible?: boolean;
 
         highContrast?: boolean;
+        greenScreen?: boolean;
 
         home?: boolean;
         hasError?: boolean;
@@ -94,19 +95,10 @@ namespace pxt.editor {
         Disabled = 2
     }
 
-    export interface TutorialStepInfo {
-        fullscreen?: boolean;
-        // no coding
-        unplugged?: boolean;
-        hasHint?: boolean;
-        contentMd?: string;
-        headerContentMd?: string;
-    }
-
     export interface TutorialOptions {
         tutorial?: string; // tutorial
         tutorialName?: string; // tutorial title
-        tutorialStepInfo?: TutorialStepInfo[];
+        tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
     }
@@ -202,6 +194,7 @@ namespace pxt.editor {
         renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<any>;
 
         toggleHighContrast(): void;
+        toggleGreenScreen(): void;
         pair(): void;
         launchFullEditor(): void;
 
@@ -275,6 +268,7 @@ namespace pxt.editor {
         saveProjectAsync?: (project: pxt.cpp.HexFile) => Promise<void>;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
         toolboxOptions?: IToolboxOptions;
+        blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
     }
 
     export interface FieldExtensionOptions {

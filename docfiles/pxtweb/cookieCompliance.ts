@@ -103,7 +103,9 @@ namespace pxt {
             }
 
             // The markup is trusted because it's from our backend, so it shouldn't need to be scrubbed
+            /* tslint:disable:no-inner-html */
             bannerDiv.innerHTML = info.Markup;
+            /* tslint:enable:no-inner-html */
 
             if (info.Css && info.Css.length) {
                 info.Css.forEach(injectStylesheet)
@@ -261,11 +263,14 @@ namespace pxt {
     }
 
     /**
-     * Checks for winrt and pxt-electron
+     * Checks for winrt, pxt-electron and Code Connection
      */
     function isNativeApp(): boolean {
-        return typeof Windows !== "undefined" ||
-            (typeof window !== "undefined" && !!(window as any).pxtElectron);
+        const hasWindow = typeof window !== "undefined";
+        const isUwp = typeof Windows !== "undefined";
+        const isPxtElectron = hasWindow && !!(window as any).pxtElectron;
+        const isCC = hasWindow && !!(window as any).ipcRenderer;
+        return isUwp || isPxtElectron || isCC;
     }
     /**
      * checks for sandbox

@@ -46,7 +46,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             .forEach((langBlock: HTMLElement) => {
                 const code = langBlock.innerHTML;
                 const wrapperDiv = document.createElement('div');
-                langBlock.innerHTML = '';
+                pxsim.U.clear(langBlock);
                 langBlock.appendChild(wrapperDiv);
                 wrapperDiv.className = 'ui segment raised loading';
                 if (MarkedContent.blockSnippetCache[code]) {
@@ -92,7 +92,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         : `docs inlineblock ${pxt.Util.htmlEscape(ns)}`;
 
                     const inlineBlockDiv = document.createElement('span');
-                    inlineBlock.innerHTML = '';
+                    pxsim.U.clear(inlineBlock);
                     inlineBlock.appendChild(inlineBlockDiv);
                     inlineBlockDiv.className = lev;
                     inlineBlockDiv.textContent = pxt.U.rlf(txt);
@@ -113,7 +113,9 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         })
 
         // Render the markdown and add it to the content div
+        /* tslint:disable:no-inner-html (marked content is already sanitized) */
         content.innerHTML = marked(markdown);
+        /* tslint:enable:no-inner-html */
 
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
         this.renderInlineBlocks(content);

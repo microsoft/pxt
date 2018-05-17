@@ -248,6 +248,7 @@ declare namespace pxt {
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         extendFieldEditors?: boolean; // wether a target specific fieldeditors.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
+        greenScreen?: boolean; // display webcam stream in background
         selectLanguage?: boolean; // add language picker to settings menu
         availableLocales?: string[]; // the list of enabled language codes
         useUploadMessage?: boolean; // change "Download" text to "Upload"
@@ -261,6 +262,7 @@ declare namespace pxt {
         defaultBlockGap?: number; // For targets to override block gap
         hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
         hideNewProjectButton?: boolean; // do not show the "new project" button in home page
+        fileNameExclusiveFilter?: string; // anything that does not match this regex is removed from the filename
     }
 
     interface SocialOptions {
@@ -324,7 +326,7 @@ declare namespace ts.pxtc {
         flashEnd?: number;
         flashUsableEnd?: number;
         flashChecksumAddr?: number;
-        upgrades?: UpgradePolicy[];
+        patches?: pxt.Map<UpgradePolicy[]>; // semver range -> upgrade policies        
         openocdScript?: string;
         onStartText?: boolean;
         stackAlign?: number; // 1 word (default), or 2

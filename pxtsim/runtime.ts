@@ -26,12 +26,16 @@ namespace pxsim {
             });
         }
 
-        export function remove(element: HTMLElement) {
+        export function remove(element: Element) {
             element.parentElement.removeChild(element);
         }
 
-        export function removeChildren(element: HTMLElement) {
+        export function removeChildren(element: Element) {
             while (element.firstChild) element.removeChild(element.firstChild);
+        }
+
+        export function clear(element: Element) {
+            removeChildren(element);
         }
 
         export function assert(cond: boolean, msg = "Assertion failed") {
@@ -86,7 +90,6 @@ namespace pxsim {
     }
 
     interface LR {
-        caller: LR;
         retPC: number;
         currFn: LabelFn;
         baseSP: number;
@@ -306,8 +309,8 @@ namespace pxsim {
             return id;
         }
 
-        unregisterLiveObject(object: RefObject) {
-            U.assert(object.refcnt == 0, "ref count is not 0");
+        unregisterLiveObject(object: RefObject, keepAlive?: boolean) {
+            if (!keepAlive) U.assert(object.refcnt == 0, "ref count is not 0");
             delete this.liveRefObjs[object.id + ""]
         }
 

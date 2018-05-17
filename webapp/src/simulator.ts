@@ -34,13 +34,16 @@ export function setTranslations(translations: pxt.Map<string>) {
 
 export function init(root: HTMLElement, cfg: SimulatorConfig) {
     if (!root) return;
-    root.innerHTML =
-        `
-        <div id="simulators" class='simulator'>
-        </div>
-        <div id="debugger" class="ui item landscape only">
-        </div>
-        `;
+    pxsim.U.clear(root);
+    const simulatorsDiv = document.createElement('div');
+    simulatorsDiv.id = 'simulators';
+    simulatorsDiv.className = 'simulator';
+    root.appendChild(simulatorsDiv);
+    const debuggerDiv = document.createElement('div');
+    debuggerDiv.id = 'debugger';
+    debuggerDiv.className = 'ui item landscape only';
+    root.appendChild(debuggerDiv);
+
     debuggerDOM = document.getElementById('debugger')
     let options: pxsim.SimulatorDriverOptions = {
         revealElement: (el) => {

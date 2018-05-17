@@ -435,7 +435,7 @@ namespace pxt.BrowserUtils {
     }
 
     export function patchCdn(url: string): string {
-        if (!url) return url;
+        if (!url || !pxt.getOnlineCdnUrl()) return url;
         return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
     }
 
@@ -445,8 +445,9 @@ namespace pxt.BrowserUtils {
             if (theme.accentColor) {
                 let style = document.createElement('style');
                 style.type = 'text/css';
-                style.innerHTML = `.ui.accent { color: ${theme.accentColor}; }
-                .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${theme.accentColor}; }`;
+                style.appendChild(document.createTextNode(
+                    `.ui.accent { color: ${theme.accentColor}; }
+                .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${theme.accentColor}; }`));
                 document.getElementsByTagName('head')[0].appendChild(style);
             }
         }

@@ -1,3 +1,5 @@
+/* tslint:disable:forin cli only run in node */
+
 const MaxColumns = 100;
 const argRegex = /^(-+)?(.+)$/;
 
@@ -34,7 +36,7 @@ export interface Command {
 
 export interface ParsedCommand {
     name: string;
-    arguments: string[];
+    args: string[];
     flags: { [index: string]: boolean | string | number };
 }
 
@@ -85,7 +87,7 @@ export class CommandParser {
         if (command.anyArgs)
             return command._callback({
                 name: command.name,
-                arguments: args.slice(1),
+                args: args.slice(1),
                 flags
             });
 
@@ -165,7 +167,7 @@ export class CommandParser {
 
         return command._callback({
             name: command.name,
-            arguments: parsedArgs,
+            args: parsedArgs,
             flags
         });
     }

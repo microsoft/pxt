@@ -35,6 +35,7 @@ import * as sounds from "./sounds";
 import * as make from "./make";
 import * as blocklyToolbox from "./blocksSnippets";
 import * as monacoToolbox from "./monacoSnippets";
+import * as greenscreen from "./greenscreen";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -104,6 +105,12 @@ export class ProjectView
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
         if (shouldShowHomeScreen) this.homeLoaded();
+
+        this.hwDebug = this.hwDebug.bind(this);
+        this.hideLightbox = this.hideLightbox.bind(this);
+        this.openSimSerial = this.openSimSerial.bind(this);
+        this.openDeviceSerial = this.openDeviceSerial.bind(this);
+        this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
     }
 
     shouldShowHomeScreen() {
@@ -270,6 +277,14 @@ export class ProjectView
 
     openSettings() {
         this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json"));
+    }
+
+    openSimSerial() {
+        this.openSerial(true);
+    }
+
+    openDeviceSerial() {
+        this.openSerial(false);
     }
 
     openSerial(isSim: boolean) {
@@ -453,7 +468,7 @@ export class ProjectView
             const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") ?
                 Date.parse(pxt.storage.getLocal("lastcriticalerror")) : Date.now();
             // don't refresh if we refreshed in the last minute
-            if (!isNaN(lastCriticalError) && Date.now() - lastCriticalError > 60 * 1000) {
+            if (!lastCriticalError || (!isNaN(lastCriticalError) && Date.now() - lastCriticalError > 60 * 1000)) {
                 pxt.storage.setLocal("lastcriticalerror", new Date().toISOString());
                 setTimeout(() => {
                     location.reload();
@@ -695,6 +710,34 @@ export class ProjectView
 
         this.stopSimulator(true);
         this.clearSerial()
+
+        const htv = h.targetVersion || "0.0.0";
+        // a legacy script does not have a version -- or has a major version less
+        // than the current version
+        const legacyProject = pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) < 0;
+        if (legacyProject)
+            pxt.tickEvent(`patch.load.legacy`, { targetVersion: htv })
+        // version check, you should not load a script from 1 major version above.
+        if (pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) > 0) {
+            // the script is a major version ahead, need to redirect
+            pxt.tickEvent(`patch.load.future`, { targetVersion: htv })
+            const buttons: sui.ModalButton[] = [];
+            if (pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.homeUrl)
+                buttons.push({
+                    label: lf("Get latest"),
+                    icon: "external alternate",
+                    url: pxt.appTarget.appTheme.homeUrl
+                })
+            return core.dialogAsync({
+                header: lf("Oops, this project is too new!"),
+                body: lf("This project was created in a newer version of this editor. Please try again in that editor."),
+                disagreeLbl: lf("Ok"),
+                buttons
+            })
+                // TODO: find a better recovery for this.
+                .then(() => this.openHome());
+        }
+
         Util.jsonMergeFrom(editorState || {}, this.state.editorState || {});
         return pkg.loadPkgAsync(h.id)
             .then(() => {
@@ -702,14 +745,17 @@ export class ProjectView
                 compiler.newProject();
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
-                let file = main.getMainFile()
+                let file = main.getMainFile();
                 if (e)
                     file = main.lookupFile(e.name) || file
-                if (!e && h.editor == pxt.JAVASCRIPT_PROJECT_NAME && !pkg.File.tsFileNameRx.test(file.getName()) && file.getVirtualFileName())
+                if ((!e && h.editor == pxt.JAVASCRIPT_PROJECT_NAME && !pkg.File.tsFileNameRx.test(file.getName()) && file.getVirtualFileName()))
                     file = main.lookupFile("this/" + file.getVirtualFileName()) || file;
                 if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName()) {
                     if (!file.content) // empty blocks file, open javascript editor
                         file = main.lookupFile("this/" + file.getVirtualFileName()) || file
+                }
+                if (file.name === "main.ts") {
+                    this.shouldTryDecompile = true;
                 }
                 this.setState({
                     home: false,
@@ -722,10 +768,6 @@ export class ProjectView
                     sideDocsLoadUrl: '',
                     debugging: false
                 })
-
-                if (file.name === "main.ts") {
-                    this.shouldTryDecompile = true;
-                }
 
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h, this.state.editorState).done()
@@ -797,6 +839,7 @@ export class ProjectView
         importAsync: (project, data) => {
             let h: pxt.workspace.InstallHeader = {
                 target: pxt.appTarget.id,
+                targetVersion: data.meta.targetVersions ? data.meta.targetVersions.target : undefined,
                 editor: data.meta.editor,
                 name: data.meta.name,
                 meta: {},
@@ -938,6 +981,7 @@ export class ProjectView
         if (!h) {
             h = {
                 target: pxt.appTarget.id,
+                targetVersion: undefined, // unknown version
                 editor: pxt.BLOCKS_PROJECT_NAME,
                 name: lf("Untitled"),
                 meta: {},
@@ -1052,7 +1096,7 @@ export class ProjectView
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
-        this.setState({ home: true, tracing: undefined, fullscreen: undefined });
+        this.setState({ home: true, tracing: undefined, fullscreen: undefined, tutorialOptions: undefined, editorState: undefined });
         this.allEditors.forEach(e => e.setVisible(false));
         this.homeLoaded();
     }
@@ -1129,6 +1173,7 @@ export class ProjectView
             pubId: "",
             pubCurrent: false,
             target: pxt.appTarget.id,
+            targetVersion: pxt.appTarget.versions.target,
             temporary: options.temporary
         }, files).then(hd => this.loadHeaderAsync(hd, { filters: options.filters }, options.inTutorial))
     }
@@ -1421,15 +1466,17 @@ export class ProjectView
             header: lf("Print Code"),
             disagreeLbl: lf("Close"),
             size: "large",
-            htmlBody: `
-            <div class="ui container">
-                <div id="printcontainer" style="position:relative;height:0;padding-bottom:40%;overflow:hidden;">
-                    <iframe frameBorder="0"
-                        sandbox="allow-popups allow-forms allow-scripts allow-same-origin allow-modals"
-                        style="position:absolute;top:0;left:0;width:100%;height:100%;"
-                        src="${url}" />
+            jsx:
+                /* tslint:disable:react-iframe-missing-sandbox */
+                <div className="ui container">
+                    <div id="printcontainer" style={{ 'position': 'relative', 'height': 0, 'padding-bottom': '40%', 'overflow': 'hidden' }}>
+                        <iframe frameBorder="0"
+                            sandbox="allow-popups allow-forms allow-scripts allow-same-origin allow-modals"
+                            style={{ 'position': 'absolute', 'top': 0, 'left': 0, 'width': '100%', 'height': '100%' }}
+                            src={url} />
+                    </div>
                 </div>
-            </div>`
+            /* tslint:enable:react-iframe-missing-sandbox */
         }).done(r => {
         })
     }
@@ -1780,7 +1827,7 @@ export class ProjectView
             })
             .then(() => pxt.Cloud.downloadMarkdownAsync(tutorialId))
             .then(tutorialmd => {
-                const stepInfo = tutorial.parseTutorialSteps(tutorialId, tutorialmd);
+                const stepInfo = pxt.tutorial.parseTutorialSteps(tutorialId, tutorialmd);
                 return tutorial.getUsedBlocksAsync(tutorialId, tutorialmd)
                     .then((usedBlocks) => {
                         let editorState: pxt.editor.EditorState = {
@@ -1869,11 +1916,21 @@ export class ProjectView
     toggleHighContrast() {
         const highContrastOn = !this.state.highContrast;
         pxt.tickEvent("app.highcontrast", { on: highContrastOn ? 1 : 0 });
-        this.setState({ highContrast: highContrastOn }, () => this.restartSimulator());
+        this.setState({ highContrast: highContrastOn }, () => {
+            if (!!this.state.header) { // in editor
+                this.restartSimulator()
+            }
+        });
         core.setHighContrast(highContrastOn);
         if (this.editor && this.editor.isReady) {
             this.editor.setHighContrast(highContrastOn);
         }
+    }
+
+    toggleGreenScreen() {
+        const greenScreenOn = !this.state.greenScreen;
+        pxt.tickEvent("app.greenscreen", { on: greenScreenOn ? 1 : 0 });
+        this.setState({ greenScreen: greenScreenOn });
     }
 
     setBannerVisible(b: boolean) {
@@ -1893,6 +1950,38 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
+    ////////////             REFS                 /////////////
+    ///////////////////////////////////////////////////////////
+
+    private handleHomeRef = (c: projects.Projects) => {
+        this.home = c;
+    }
+
+    private handleScriptSearchRef = (c: scriptsearch.ScriptSearch) => {
+        this.scriptSearch = c;
+    }
+
+    private handleExtensionRef = (c: extensions.Extensions) => {
+        this.extensions = c;
+    }
+
+    private handleImportDialogRef = (c: projects.ImportDialog) => {
+        this.importDialog = c;
+    }
+
+    private handleExitAndSaveDialogRef = (c: projects.ExitAndSaveDialog) => {
+        this.exitAndSaveDialog = c;
+    }
+
+    private handleShareEditorRef = (c: share.ShareEditor) => {
+        this.shareEditor = c;
+    }
+
+    private handleLanguagePickerRef = (c: lang.LanguagePicker) => {
+        this.languagePicker = c;
+    }
+
+    ///////////////////////////////////////////////////////////
     ////////////             RENDER               /////////////
     ///////////////////////////////////////////////////////////
 
@@ -1900,7 +1989,6 @@ export class ProjectView
         theEditor = this;
 
         //  ${targetTheme.accentColor ? "inverted accent " : ''}
-        const settings: Cloud.UserSettings = (Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {}) || {}
         const targetTheme = pxt.appTarget.appTheme;
         const simOpts = pxt.appTarget.simulator;
         const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
@@ -1911,7 +1999,7 @@ export class ProjectView
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header;
-        const { lightbox } = this.state;
+        const { lightbox, greenScreen } = this.state;
         const simDebug = (simOpts && !simOpts.enableTrace) || pxt.options.debug;
 
         const { hideMenuBar, hideEditorToolbar } = targetTheme;
@@ -1945,6 +2033,7 @@ export class ProjectView
             this.state.debugging ? "debugging" : "",
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
             isApp ? "app" : "",
+            greenScreen ? "greenscreen" : "",
             'full-abs'
         ];
         const rootClasses = sui.cx(rootClassList);
@@ -1959,6 +2048,7 @@ export class ProjectView
         }
         return (
             <div id='root' className={rootClasses}>
+                {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
                 {hideMenuBar ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> : undefined}
@@ -1976,12 +2066,12 @@ export class ProjectView
                         </div>
                         <simtoolbar.SimulatorToolbar parent={this} />
                         <div className="ui item portrait hide hidefullscreen">
-                            {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug()} /> : ''}
+                            {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={this.hwDebug} /> : ''}
                         </div>
                         {useSerialEditor ?
                             <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={() => this.openSerial(true)} />
-                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={() => this.openSerial(false)} />
+                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} />
+                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} />
                             </div> : undefined}
                         {sandbox || isBlocks || this.editor == this.serialEditor ? undefined : <filelist.FileList parent={this} />}
                     </aside>
@@ -1995,7 +2085,7 @@ export class ProjectView
                             <accessibility.HomeAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> }
                             <projects.ProjectsMenu parent={this} />
                         </div>
-                        <projects.Projects parent={this} ref={v => this.home = v} />
+                        <projects.Projects parent={this} ref={this.handleHomeRef} />
                     </div>
                 </div> : undefined}
                 {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined}
@@ -2003,16 +2093,16 @@ export class ProjectView
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
                 </div> : undefined}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl} /> : undefined}
-                {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
-                {sandbox ? undefined : <extensions.Extensions parent={this} ref={v => this.extensions = v} />}
-                {inHome ? <projects.ImportDialog parent={this} ref={v => this.importDialog = v} /> : undefined}
-                {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={v => this.exitAndSaveDialog = v} />}
-                {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
-                {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
+                {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
+                {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
+                {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
+                {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
+                {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} />}
+                {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
-                    shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox.bind(this)} /> : undefined}
+                    shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
             </div>
         );
     }
@@ -2348,6 +2438,9 @@ function initExtensionsAsync(): Promise<void> {
                 if (res.toolboxOptions.monacoToolbox) {
                     monacoToolbox.overrideToolbox(res.toolboxOptions.monacoToolbox);
                 }
+            }
+            if (res.blocklyPatch) {
+                pxt.blocks.extensionBlocklyPatch = res.blocklyPatch;
             }
         });
 }
