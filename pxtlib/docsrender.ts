@@ -357,6 +357,7 @@ namespace pxt.docs {
         locale?: Map<string>;
         ghEditURLs?: string[];
         repo?: { name: string; fullName: string; tag?: string };
+        throwOnError?: boolean; // check for missing macros
     }
 
     export function renderMarkdown(opts: RenderOptions): string {
@@ -392,19 +393,19 @@ namespace pxt.docs {
         let template = opts.template
         template = template
             .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
-            (full, fn) => {
-                let cont = (opts.theme.htmlDocIncludes || {})[fn] || ""
-                return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
-            })
+                (full, fn) => {
+                    let cont = (opts.theme.htmlDocIncludes || {})[fn] || ""
+                    return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
+                })
 
         template = template
             .replace(/<!--\s*@(ifn?def)\s+(\w+)\s*-->([^]*?)<!--\s*@endif\s*-->/g,
-            (full, cond, sym, inner) => {
-                if ((cond == "ifdef" && pubinfo[sym]) || (cond == "ifndef" && !pubinfo[sym]))
-                    return `<!-- ${cond} ${sym} -->${inner}<!-- endif -->`
-                else
-                    return `<!-- ${cond} ${sym} endif -->`
-            })
+                (full, cond, sym, inner) => {
+                    if ((cond == "ifdef" && pubinfo[sym]) || (cond == "ifndef" && !pubinfo[sym]))
+                        return `<!-- ${cond} ${sym} -->${inner}<!-- endif -->`
+                    else
+                        return `<!-- ${cond} ${sym} endif -->`
+                })
 
         if (opts.locale)
             template = translate(template, opts.locale).text
@@ -481,7 +482,12 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         })
 
         // replace pre-template in markdown
-        markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
+        markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => {
+            let macro = pubinfo[param];
+            if (!macro && opts.throwOnError)
+                U.userError(`unknown macro ${param}`);
+            return macro || 'unknown macro'
+        });
 
         let html = markedInstance(markdown)
 
@@ -503,8 +509,11 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
                     pubinfo[cmd] = args
                 } else {
                     expansion = U.lookup(d.macros, cmd)
-                    if (expansion == null)
+                    if (expansion == null) {
+                        if (opts.throwOnError)
+                            U.userError(`Unknown command: @${cmd}`);
                         return error(`Unknown command: @${cmd}`)
+                    }
                 }
 
                 let ivars: Map<string> = {
@@ -526,7 +535,9 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
                     endBox = parts[1]
                     return parts[0].replace("@ARGS@", args)
                 } else {
-                    return error(`Unknown box: ~${cmd}`)
+                    if (opts.throwOnError)
+                        U.userError(`Unknown box: ~ ${cmd}`);
+                    return error(`Unknown box: ~ ${cmd}`)
                 }
             }
         })
