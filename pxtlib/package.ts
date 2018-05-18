@@ -335,7 +335,7 @@ namespace pxt {
             return updatedCont;
         }
 
-        private parseConfig(cfgSrc: string) {
+        private parseConfig(cfgSrc: string, targetVersion?: string) {
             const cfg = <PackageConfig>JSON.parse(cfgSrc);
             this.config = cfg;
 
@@ -348,6 +348,11 @@ namespace pxt {
                         this.config.dependencies[value] = "*";
                     }
                 }
+            }
+            if (targetVersion) {
+                this.config.targetVersions = {
+                    target: targetVersion
+                };
             }
             if (JSON.stringify(this.config) != currentConfig) {
                 this.saveConfig();
@@ -379,7 +384,7 @@ namespace pxt {
             }
         }
 
-        loadAsync(isInstall = false): Promise<void> {
+        loadAsync(isInstall = false, targetVersion?: string): Promise<void> {
             if (this.isLoaded) return Promise.resolve();
 
             let initPromise = Promise.resolve()
@@ -397,8 +402,11 @@ namespace pxt {
                 initPromise = initPromise.then(() => this.downloadAsync())
 
             initPromise = initPromise.then(() => {
-                this.getFiles().filter(fn => /\.ts$/.test(fn))
-                    .forEach(file => this.upgradeFile(file, this.readFile(file)));
+                if (this.level == 0) {
+                    pxt.debug(`upgrading files, target version ${this.targetVersion()}`)
+                    this.getFiles().filter(fn => /\.ts$/.test(fn))
+                        .forEach(file => this.upgradeFile(file, this.readFile(file)));
+                }
             })
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
@@ -582,8 +590,8 @@ namespace pxt {
             this.deps[this.id] = this;
         }
 
-        installAllAsync() {
-            return this.loadAsync(true)
+        installAllAsync(targetVersion?: string) {
+            return this.loadAsync(true, targetVersion);
         }
 
         sortedDeps() {

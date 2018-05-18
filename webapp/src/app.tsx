@@ -708,6 +708,7 @@ export class ProjectView
         if (!h)
             return Promise.resolve()
 
+        pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         this.stopSimulator(true);
         this.clearSerial()
 
