@@ -456,7 +456,7 @@ export function notifySyncDone(updated: pxt.Map<number>) {
 
 }
 
-export function loadPkgAsync(id: string) {
+export function loadPkgAsync(id: string, targetVersion?: string) {
     mainPkg = new pxt.MainPackage(theHost)
     mainPkg._verspec = "workspace:" + id;
 
@@ -464,8 +464,8 @@ export function loadPkgAsync(id: string) {
         .catch(core.handleNetworkError)
         .then(() => JSON.parse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
         .then(config => {
-            if (!config) return Promise.resolve()
-            return mainPkg.installAllAsync()
+            if (!config) return Promise.resolve();
+            return mainPkg.installAllAsync(targetVersion)
                 .then(() => mainEditorPkg().afterMainLoadAsync())
                 .catch(e => {
                     core.errorNotification(lf("Cannot load package: {0}", e.message))
