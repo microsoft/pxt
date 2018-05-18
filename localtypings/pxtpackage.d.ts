@@ -5,7 +5,7 @@ declare namespace pxt {
 
     interface TargetVersions {
         target: string;
-        pxt: string;
+        pxt?: string;
         pxtCrowdinBranch?: string;
         targetCrowdinBranch?: string;
         tag?: string;

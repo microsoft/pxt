@@ -1198,7 +1198,11 @@ function readLocalPxTarget() {
         process.exit(1)
     }
     nodeutil.setTargetDir(process.cwd())
-    let cfg: pxt.TargetBundle = readJson("pxtarget.json")
+    const cfg: pxt.TargetBundle = readJson("pxtarget.json");
+    cfg.versions = {
+        target: readJson("package.json")["version"]
+    };
+
     return cfg
 }
 
