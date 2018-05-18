@@ -442,7 +442,7 @@ namespace pxt.docs {
                 const relative = href.indexOf('/') == 0;
                 const target = !relative ? '_blank' : '';
                 if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
-                return `<a href="${href}" ${title ? `aria-label="${title}"` : ''} ${target ? `target="${target}"`: ''}>${text}</a>`;
+                return `<a href="${href}" ${title ? `aria-label="${title}"` : ''} ${target ? `target="${target}"` : ''}>${text}</a>`;
             }
             renderer.heading = function (text: string, level: number, raw: string) {
                 let m = /(.*)#([\w\-]+)\s*$/.exec(text)
