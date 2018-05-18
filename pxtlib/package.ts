@@ -335,7 +335,7 @@ namespace pxt {
             return updatedCont;
         }
 
-        private parseConfig(cfgSrc: string, targetVersion: string) {
+        private parseConfig(cfgSrc: string, targetVersion?: string) {
             const cfg = <PackageConfig>JSON.parse(cfgSrc);
             this.config = cfg;
 
