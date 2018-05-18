@@ -264,6 +264,7 @@ export function readPkgConfig(dir: string) {
             }
         }
     }
+    if (!js.targetVersions) js.targetVersions = pxt.appTarget.versions;
     return js
 }
 

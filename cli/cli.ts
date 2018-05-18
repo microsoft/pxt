@@ -1122,7 +1122,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                             // path config before storing
                             const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                             if (/^\//.test(config.icon)) config.icon = opts.localDir + "docs" + config.icon;
-                            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+                            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
                         })
                         data = new Buffer((isJs ? targetJsPrefix : '') + JSON.stringify(trg, null, 2), "utf8")
                     } else {
@@ -1143,7 +1143,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                             if (config.icon) config.icon = uploadArtFile(config.icon);
                             res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
                         })
-                        content = JSON.stringify(trg, null, 2);
+                        content = JSON.stringify(trg, null, 4);
                         if (isJs)
                             content = targetJsPrefix + content
                     }
@@ -1198,7 +1198,11 @@ function readLocalPxTarget() {
         process.exit(1)
     }
     nodeutil.setTargetDir(process.cwd())
-    let cfg: pxt.TargetBundle = readJson("pxtarget.json")
+    const cfg: pxt.TargetBundle = readJson("pxtarget.json");
+    cfg.versions = {
+        target: readJson("package.json")["version"]
+    };
+
     return cfg
 }
 
@@ -1228,14 +1232,14 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
                     .filter(f => fs.existsSync(f))
                     .forEach(f => host.fileOverrides[path.relative(overridePath, f)] = fs.readFileSync(f, "utf8"));
 
-                pxt.log(`file overrides: ${Object.keys(host.fileOverrides).join(', ')}`)
+                pxt.debug(`file overrides: ${Object.keys(host.fileOverrides).join(', ')}`)
             } else {
                 pxt.debug(`override folder ${overridePath} not present`);
             }
         }
 
         process.chdir(pkgPath);
-        mainPkg = new pxt.MainPackage(host)
+        mainPkg = new pxt.MainPackage(host);
         return f(mainPkg, dirname);
     })
         .finally(() => process.chdir(prev))
@@ -1903,7 +1907,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         .filter(ip => fs.existsSync("docs" + ip))
                         .forEach(ip => config.icon = ip);
 
-                res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+                res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
             })
 
 
