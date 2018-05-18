@@ -438,11 +438,13 @@ namespace pxt.docs {
                 if (m) return `<li class="${m[1] == ' ' ? 'unchecked' : 'checked'}">` + text.slice(m[0].length) + '</li>\n'
                 return '<li>' + text + '</li>\n';
             }
+            const linkRenderer = renderer.link;
             renderer.link = function (href: string, title: string, text: string) {
                 const relative = href.indexOf('/') == 0;
                 const target = !relative ? '_blank' : '';
                 if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
-                return `<a href="${href}" ${title ? `aria-label="${title}"` : ''} ${target ? `target="${target}"` : ''}>${text}</a>`;
+                const html = linkRenderer.call(renderer, href, title, text);
+                return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
             }
             renderer.heading = function (text: string, level: number, raw: string) {
                 let m = /(.*)#([\w\-]+)\s*$/.exec(text)
