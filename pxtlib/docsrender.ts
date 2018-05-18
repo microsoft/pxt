@@ -1,5 +1,5 @@
 /// <reference path='../localtypings/pxtarget.d.ts' />
-/// <reference path="util.ts"/>
+/// <reference path="commonutil.ts"/>
 
 namespace pxt.docs {
     declare var require: any;

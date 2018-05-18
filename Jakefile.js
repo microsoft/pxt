@@ -141,7 +141,7 @@ compileDir("pxtrunner", ["built/pxtlib.js", "built/pxteditor.js", "built/pxtcomp
 compileDir("pxtsim", ["built/pxtlib.js"])
 compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblockly.js"])
 compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtcompiler.js"])
-compileDir("backendutils", ['pxtlib/util.ts', 'pxtlib/docsrender.ts'])
+compileDir("backendutils", ['pxtlib/commonutil.ts', 'pxtlib/docsrender.ts'])
 file("built/web/pxtweb.js", expand(["docfiles/pxtweb"]), { async: true }, function () { tscIn(this, "docfiles/pxtweb", "built") })
 
 task("karma", ["blocklycompilertest"], function () {
