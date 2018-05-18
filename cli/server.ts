@@ -310,7 +310,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             });
     else if (cmd == "GET md" && pxt.appTarget.id + "/" == innerPath.slice(0, pxt.appTarget.id.length + 1)) {
         // innerpath start with targetid
-        return Promise.resolve(readMd(innerPath.slice(pxt.appTarget.id.length + 1)))
+        const mdPath = innerPath.slice(pxt.appTarget.id.length + 1);
+        const m = /^\/(v\d+)(.*)/.exec(mdPath);
+        return Promise.resolve(readMd(m ? m[2] : mdPath))
     }
     else if (cmd == "GET config" && pxt.appTarget.id + "/targetconfig" == innerPath) {
         // target config
@@ -892,6 +894,8 @@ export function serveAsync(options: ServeOptions) {
                 sendFile(webFile)
             }
         } else {
+            const m = /^\/(v\d+)(.*)/.exec(pathname);
+            if (m) pathname = m[2];
             let md = readMd(pathname)
             let html = pxt.docs.renderMarkdown({
                 template: expandDocFileTemplate("docs.html"),
