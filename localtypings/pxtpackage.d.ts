@@ -13,6 +13,11 @@ declare namespace pxt {
         commits?: string; // URL
     }
 
+    interface Size {
+        width: number;
+        height: number;
+    }
+
     /**
      * The schema for the pxt.json package files
      */
@@ -37,6 +42,7 @@ declare namespace pxt {
         platformio?: PlatformIOConfig;
         compileServiceVariant?: string;
         palette?: string[];
+        screenSize?: Size;
         yotta?: YottaConfig;
         npmDependencies?: Map<string>;
         card?: CodeCard;

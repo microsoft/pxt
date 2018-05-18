@@ -88,6 +88,7 @@ declare namespace pxt {
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
         assetExtensions?: string[];
         palette?: string[];
+        screenSize?: Size;
     }
 
     interface AppAnalytics {

@@ -326,17 +326,26 @@ namespace pxtblockly {
                     continue;
                 }
 
-                const width = parseInt(pair[0]);
-                const height = parseInt(pair[1]);
+                let width = parseInt(pair[0]);
+                let height = parseInt(pair[1]);
 
                 if (isNaN(width) || isNaN(height)) {
                     continue;
                 }
 
+                const screenSize = pxt.appTarget.runtime && pxt.appTarget.runtime.screenSize;
+                if (width < 0 && screenSize)
+                    width = screenSize.width;
+                if (height < 0 && screenSize)
+                    height = screenSize.height;
+
                 sizes.push([width, height]);
             }
-
-            parsed.sizes = sizes;
+            if (sizes.length > 0) {
+                parsed.sizes = sizes;
+                parsed.initWidth = sizes[0][0];
+                parsed.initHeight = sizes[0][1];
+            }
         }
 
         parsed.initColor = withDefault(opts.initColor, parsed.initColor);
