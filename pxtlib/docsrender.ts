@@ -85,6 +85,7 @@ namespace pxt.docs {
         theme: AppTheme;
         params: Map<string>;
         filepath?: string;
+        versionPath?: string;
         ghEditURLs?: string[];
 
         finish?: () => string;
@@ -196,6 +197,7 @@ namespace pxt.docs {
             }
             if (m.path && !/^(https?:|\/)/.test(m.path))
                 return error("Invalid link: " + m.path)
+            if (/^\//.test(m.path) && d.versionPath) m.path = `/${d.versionPath}${m.path}`;
             mparams["LINK"] = m.path
             if (tocPath.indexOf(m) >= 0) {
                 mparams["ACTIVE"] = 'active';
@@ -354,6 +356,7 @@ namespace pxt.docs {
         theme?: AppTheme;
         pubinfo?: Map<string>;
         filepath?: string;
+        versionPath?: string;
         locale?: Map<string>;
         ghEditURLs?: string[];
         repo?: { name: string; fullName: string; tag?: string };
@@ -413,6 +416,7 @@ namespace pxt.docs {
             html: template,
             theme: opts.theme,
             filepath: opts.filepath,
+            versionPath: opts.versionPath,
             ghEditURLs: opts.ghEditURLs,
             params: pubinfo,
         }
@@ -433,6 +437,12 @@ namespace pxt.docs {
                 const m = /^\s*\[( |x)\]/i.exec(text);
                 if (m) return `<li class="${m[1] == ' ' ? 'unchecked' : 'checked'}">` + text.slice(m[0].length) + '</li>\n'
                 return '<li>' + text + '</li>\n';
+            }
+            renderer.link = function (href: string, title: string, text: string) {
+                const relative = href.indexOf('/') == 0;
+                const target = !relative ? '_blank' : '';
+                if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
+                return `<a href="${href}" ${title ? `aria-label="${title}"` : ''} ${target ? `target="${target}"`: ''}>${text}</a>`;
             }
             renderer.heading = function (text: string, level: number, raw: string) {
                 let m = /(.*)#([\w\-]+)\s*$/.exec(text)
