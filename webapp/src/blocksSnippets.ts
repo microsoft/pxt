@@ -113,14 +113,13 @@ export const logic: BuiltinCategoryDefinition = {
             </value>
         </block>`
         }, {
-            name: "logic_compare_gt",
+            name: "logic_compare_eq",
             attributes: {
                 blockId: "logic_compare",
                 group: lf("Comparison"),
                 weight: 47
             },
             blockXml: `<block type="logic_compare" gap="8">
-            <field name="OP">GT</field>
             <value name="A">
                 <shadow type="math_number">
                     <field name="NUM">0</field>
