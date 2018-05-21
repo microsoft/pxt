@@ -29,8 +29,8 @@ namespace pxt.winrt {
     }
 
     export function initAsync(importHexImpl?: (hex: pxt.cpp.HexFile, createNewIfFailed?: boolean) => void) {
-        const hasPArentController = !!pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.allowParentController;
-        if (!isWinRT() || hasPArentController) return Promise.resolve();
+        const hasParentController = !!pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.allowParentController;
+        if (!isWinRT() || hasParentController) return Promise.resolve();
 
         const uiCore = Windows.UI.Core;
         const navMgr = uiCore.SystemNavigationManager.getForCurrentView();
