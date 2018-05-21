@@ -43,19 +43,19 @@ TypeScript can figure the return type out by looking at the return statements, s
 
 ## Arrow Functions
 
-Arrow functions (also known as "lamba" functions) 
-provide a lightweight syntax for functions. Arrow functions are used extensively to provide event handlers for
-many APIs. For example:
+Arrow functions, also known as _lambda_ functions, provide a lightweight syntax for functions. Arrow functions are used extensively to provide event handlers for many APIs. For example:
 
 ```typescript
-function forever(handler: Action) {
-    // call handler in a loop...
+function foo(handler: Action) {
+    // call handler ...
 }
 
-forever(() => { // arrow function!
+foo(() => { // arrow function!
    // do something
 })
 ```
+
+Often, a function like ``foo()`` will save the arrow function ``handler`` in a variable to run the code inside the function later when a certain condition occurs. Arrow functions serve as a kind of shortcut to provide extra code to run without having to write a separate formal function for that purpose. In this way arrow, or lambda, functions are thought of as "anonymous" functions.
 
 [Read more about arrow functions...](http://devdocs.io/javascript/functions/arrow_functions)
 
