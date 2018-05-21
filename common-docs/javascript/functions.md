@@ -59,6 +59,36 @@ Often, a function like ``foo()`` will save the arrow function ``handler`` in a v
 
 [Read more about arrow functions...](http://devdocs.io/javascript/functions/arrow_functions)
 
+## Anonymous Functions
+
+Anonymous functions are used just like arrow functions. They're called "anonymous" because the function doesn't have a name and isn't called using a name. The function is used directly ("inline") or it's remembered by variable and used later by it's _reference_ from the variable.
+
+Here's an example similar to the one shown for arrow functions but this time the ``foo()`` function uses an anonymous function directly:
+
+```typescript
+function foo(handler: Action) {
+    // call handler ...
+}
+
+foo(function() { // use an inline function
+   // do something
+})
+```
+
+You can set a variable to remember the function and use that variable as a reference to the anonymous function:
+
+```typescript
+function foo(handler: Action) {
+    // call handler ...
+}
+
+let anon = function() { // anonymous function, set it to a variable
+    // do something
+}
+
+foo(anon)
+```
+
 ## Optional and Default Parameters
 
 In TypeScript, the number of arguments given to a function has to match the number of parameters the function expects.
