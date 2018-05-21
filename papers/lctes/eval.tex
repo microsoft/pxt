@@ -38,7 +38,7 @@ MicroPython and similar environments cannot run on the Uno due to flash and RAM 
 
 \begin{table}[]
     \centering
-
+    \caption{\label{table:vm-comparison} A comparison of execution speed between: native C++ with \CON; \MC compiled to native machine code; \MC compiled to AVR VM; MicroPython; and Espruino. The first line lists the C++ time, while subsequent lines are slowdowns with respect to the C++ time. The 6.4x slowdown of \MC VM compared to native \MC on the Uno is compensated with 5x better code density.}
     \begin{tabular}{c|c|c|c|}
     \cline{2-4}
     \multicolumn{1}{l|}{}             & UNO    & micro:bit & CPX   \\ \cline{1-4}
@@ -48,8 +48,6 @@ MicroPython and similar environments cannot run on the Uno due to flash and RAM 
     \multicolumn{1}{|c|}{MicroPython} & -      & 101x      & 183x  \\ \hline
     \multicolumn{1}{|c|}{Espruino}    & -      & 1139x     & -     \\ \hline
     \end{tabular}
-    \caption{\label{table:vm-comparison} A comparison of execution speed between: native C++ with \CON; \MC compiled to native machine code; \MC compiled to AVR VM; MicroPython; and Espruino. The first line lists the C++ time, while subsequent lines are slowdowns with respect to the C++ time. The 6.4x slowdown of \MC VM compared to native \MC on the Uno is compensated with 5x better code density.}
-    \vspace{-20pt}
 \end{table}
 
 
@@ -83,9 +81,11 @@ To gauge the cost of asynchronous operations in \CON, we tested three commonly u
 Non-blocking APC calls, the best case, have a small overhead of 32 bytes of RAM and 4.01 microseconds of processing time. Blocking APC calls, the worst case, incur a large overhead of 204 bytes of RAM and 32.4 microseconds of processor time. Creating a fiber costs 136 bytes of RAM and 35.4 microseconds of processing time. These results highlight the performance gains of the opportunistic fork-on-block mechanism over a naive approach that would execute every event handler in a separate fiber.
 
 \subsection{Flash Memory Usage}
-
 \begin{table}[t]
 \centering
+\caption{\label{table:flash-consumption}
+Flash consumption of a \MC binary~(kB)}
+\vspace{-10pt}
 \begin{tabular}{c|c|c|c|}
 \cline{2-4}
                                                                                                 & CPX & micro:bit & Uno  \\ \hline
@@ -94,10 +94,7 @@ Non-blocking APC calls, the best case, have a small overhead of 32 bytes of RAM 
 \multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}Supporting Libraries\end{tabular}} & 14.99 & 24.28     & -    \\ \hline
 \multicolumn{1}{|c|}{C++ Standard Library}                                                     & 43.14 & 24        & 1.03 \\ \hline
 \end{tabular}
-
-\caption{\label{table:flash-consumption}
-Flash consumption of a \MC binary~(kB)}
-\vspace{-25pt}
+\vspace{-10pt}
 \end{table}
 
 MCUs make use of internal non-volatile FLASH memory to store program code. Table~\ref{table:flash-consumption} shows the per device flash consumption of each software library used in the final \MC binary. To obtain these numbers, we analyzed the final map file produced after compilation. The ordering of the table aligns with the composition of the software layer: \MC builds on \CO which builds on the C++ standard library and supporting libraries.
@@ -112,6 +109,8 @@ The size of \CO and \MC scales linearly with the amount of functionality a devic
 
 \begin{table}[t]
 \centering
+\caption{\label{table:ram-consumption}Static RAM consumption of a \MC binary~(kB)}
+\vspace{-10pt}
 \begin{tabular}{c|c|c|c|}
 \cline{2-4}
                                                                                                 & CPX & micro:bit & Uno   \\ \hline
@@ -120,8 +119,7 @@ The size of \CO and \MC scales linearly with the amount of functionality a devic
 \multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}Supporting Libraries\end{tabular}} & 0.312 & 0.923     & -     \\ \hline
 \multicolumn{1}{|c|}{C++ Standard Library}                                                     & 0.161 & 0.149     & 0.074 \\ \hline
 \end{tabular}
-\caption{\label{table:ram-consumption}Static RAM consumption of a \MC binary~(kB)}
-\vspace{-20pt}
+\vspace{-10pt}
 \end{table}
 
 Table~\ref{table:ram-consumption} shows the per device RAM consumption of each software library used in the final \MC binary. To obtain these numbers, we analyzed the final map file produced after compilation. At runtime, \MC dynamically allocates additional memory: 1.56 kB for the CPX, 560 bytes for the micro:bit, and 644 bytes for the Uno. We also can see that in all cases, the RAM consumption of \MC and \CO is well within the RAM available of each device.
