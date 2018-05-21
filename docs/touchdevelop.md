@@ -5,7 +5,7 @@
 ## What is happening?
 Microsoft is delaying the retirement of the Touch Develop platform until June 22, 2019.  We made this decision primarily in response to customer feedback that our initial plan for retirement on May 23, 2018 conflicted with current school calendars and with curriculum planning for the upcoming academic year.
 
-We continue to be committed to replacing Touch Develop by Microsoft MakeCode, a holistic hands-on computing education platform that brings computer science to life through physical computing devices like the micro bit and immersive experiences like Minecraft.   
+We continue to be committed to replacing Touch Develop by [Microsoft MakeCode](www.makecode.com), a holistic hands-on computing education platform that brings computer science to life through physical computing devices like the micro bit and immersive experiences like Minecraft.   
 
 Microsoft will continue to support our education customers using current Touch Develop courseware to ensure a smooth transition. However, we are making some changes in order to comply with regulatory requirements and better protect users’ personal data. Here are the key Touch Develop changes and dates to remember:
 
