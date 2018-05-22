@@ -200,7 +200,7 @@ namespace pxsim {
             return (x / y) >> 0
         }
 
-        export function round(n: number) { return Math.round(n) }        
+        export function round(n: number) { return Math.round(n) }
         export function ceil(n: number) { return Math.ceil(n) }
         export function floor(n: number) { return Math.floor(n) }
         export function sqrt(n: number) { return Math.sqrt(n) }
