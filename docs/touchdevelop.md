@@ -1,37 +1,56 @@
-# Microsoft MakeCode is replacing Touch Develop 
-  
-## The Change Microsoft is Making 
+# FAQ: Changes to Touch Develop
 
-At Microsoft, we continually evaluate and invest in building the right tools to help every student learn the computer science skills they need to succeed in the future. Recently, we determined we needed to replace [Touch Develop](https://www.touchdevelop.com) with [Microsoft MakeCode](https://makecode.com) in order to provide a more holistic, hands-on computing education platform that will bring computer science to life through physical computing devices like the micro:bit and immersive experiences like Minecraft.  
- 
-## What is Microsoft MakeCode? 
+**Updated 5/17/2018**
 
-[MakeCode](https://makecode.com) is Microsoft’s programming environment for beginners. We are working hard to bring more courses to MakeCode, to make it a great place for educators and students. Currently, MakeCode supports programming of several hardware devices and Minecraft.  
- 
-## What is the impact of the change? 
+## What is happening?
+Microsoft is delaying the retirement of the Touch Develop platform until June 22, 2019.  We made this decision primarily in response to customer feedback that our initial plan for retirement on May 23, 2018 conflicted with current school calendars and with curriculum planning for the upcoming academic year.
 
-Microsoft [Touch Develop](https://www.touchdevelop.com), a project developed by Microsoft Research to provide computing education to any student on any device, will no longer be available as of May 23, 2018
-  
-As a result, customers using the “Creative Coding Through Games and Apps” (CCGA) course based on Touch Develop will no longer have access as of May 23, 2018. 
- 
-## What if we are still using CCGA or Touch Develop this term? 
+We continue to be committed to replacing Touch Develop by Microsoft MakeCode, a holistic hands-on computing education platform that brings computer science to life through physical computing devices like the micro bit and immersive experiences like Minecraft.   
 
-Microsoft advises that all teachers have scripts graded by the 23rd of May.  
-  
-## What to expect next? 
+Microsoft will continue to support our education customers using current Touch Develop courseware to ensure a smooth transition. However, we are making some changes in order to comply with regulatory requirements and better protect users’ personal data. Here are the key Touch Develop changes and dates to remember:
 
-We know that providing high quality curriculum that maps to real-world skills is vital to you. The good news is that we are building new curriculum based on Microsoft MakeCode (which will support a new sprite-based game engine). Some of the benefits of this new curriculum are: 
-* It will support coding with Blocks and TypeScript/JavaScript giving learners at different levels the flexibility to progress at their own pace;
-* It will be expanded to include the fundamentals of Beginning Computer Science, including events, coordinates, variables, iteration, conditionals, functions, arrays, algorithms, and more, through a variety of hands-on activities. 
-* It will be aligned with CSTA standards.
- 
-This new Introductory Computer Science curriculum will be available to existing Microsoft Imagine Academy customers for feedback in late May, with an expected full product launch later this summer.  When the beta launches in May, we will include an initial set of lessons for each topic area, as well as an introduction, educator lessons, and even a few advanced topics. 
-  
-## More information
+* **May 23, 2018:**  Touch Develop will no longer support sign-in or cloud variables (read on below);
+* **June 22, 2019:** Touch Develop platform will retire.
 
-* Read more about the [retirement of Touch Develop](/tdteam), from the Touch Develop team;
-* If you have questions about Touch Develop please talk to us on yammer at [Touch Develop](https://www.yammer.com/microsoftteachers/#/threads/inGroup?type=in_group&feedId=6287047&view=all);
-* For questions around CCGA please talk to us on Yammer at [CCGA Educators](https://www.yammer.com/microsoftteachers/#/threads/inGroup?type=in_group&feedId=6454453&view=all);
-* Read more about [transitioning from Touch Develop to MakeCode](/td2mkcd);
-* Learn more about Microsoft MakeCode at [makecode.com](https://makecode.com).
+## What does this mean?
+
+Even though the retirement of the Touch Develop platform is being delayed one year, Microsoft is removing support for user accounts (and thus sign in) and you will no longer be able to access your Touch Develop scripts and resources that are stored in the Touch Develop cloud as of May 23, 2018. As of May 23, 2018, all user data will be deleted from the Touch Develop cloud, including both unpublished and published scripts, as well as art resources.  Your browser may have cached local copies of your scripts that are still accessible, but you should not count on this.
+
+Until June 22, 2019, you will still be able to use Touch Develop to create, edit and run scripts (which are stored in your browser’s local storage), but you will be unable to publish these scripts to the Touch Develop cloud or to upload art resources to the Touch Develop cloud.  You will be able use Touch Develop’s “save” feature to save a script to a file on disk and then to later load these files back into Touch Develop.
+
+## How can I save my scripts?
+
+As shown below, each script’s home page has a “save” button (shown circled in blue). 
+Click on the “save” button to save your script to disk as a JSON file. 
+You can then share this file via email or store it wherever you like.
+We encourage users to save important scripts before May 23, 2018 or they will be deleted.
+
+![](/static/td/fileSave.png)
+
+## How can I load a saved script into Touch Develop?
+
+Open the Touch Develop web app (http://www.touchdevelop.com/app), find the JSON file you want to load, and drag and drop this file into the web browser. Touch Develop will open the file for you.
+
+## What about the “Creative Computing for Games and Apps” (CCGA) course?
+
+All the content for CCGA, as well as the Touch Develop documentation and tutorials, will remain in place until June 22, 2019.  For more information about using CCGA going forward, see http://www.touchdevelop.com/ccga.
+
+## How does Microsoft MakeCode relate to this change?
+
+At Microsoft, we continually evaluate and invest in building the right tools to help every student learn the computer science skills they need to succeed in the future. We determined we needed to replace Touch Develop with Microsoft MakeCode in order to provide a more holistic, hands-on computing education platform that will bring computer science to life through physical computing devices like the micro:bit and immersive experiences like Minecraft. We are building a new games-based curriculum based on Microsoft MakeCode, which will support a new sprite-based game engine. 
+
+## How can I save the art resources associated with a script?
+
+When you are editing a script, you can navigate to the home page of each art resource that the script uses, as shown below. This page will contain a preview of the image. If you right click on the image, a menu will allow you to save that image to disk. 
+
+![](/static/td/artResource.png)
+
+## How can I use images that aren’t in the Touch Develop cloud?
+
+Unfortunately, you will only be able to refer to images you find in the Touch Develop cloud (via search, for example). 
+
+## Where do I go if I have questions?
+
+Contact customer support at: https://support.microsoft.com/en-us/contactus/ 
+
 

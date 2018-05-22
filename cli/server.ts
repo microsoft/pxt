@@ -84,7 +84,9 @@ type FsPkg = pxt.FsPkg;
 
 function readAssetsAsync(logicalDirname: string): Promise<any> {
     let dirname = path.join(userProjectsDir, logicalDirname, "assets")
+    /* tslint:disable:no-http-string */
     let pref = "http://" + serveOptions.hostname + ":" + serveOptions.port + "/assets/" + logicalDirname + "/"
+    /* tslint:enable:no-http-string */
     return readdirAsync(dirname)
         .catch(err => [])
         .then(res => Promise.map(res, fn => statAsync(path.join(dirname, fn)).then(res => ({
@@ -308,7 +310,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             });
     else if (cmd == "GET md" && pxt.appTarget.id + "/" == innerPath.slice(0, pxt.appTarget.id.length + 1)) {
         // innerpath start with targetid
-        return Promise.resolve(readMd(innerPath.slice(pxt.appTarget.id.length + 1)))
+        const mdPath = innerPath.slice(pxt.appTarget.id.length + 1);
+        const m = /^(v\d+)\/(.*)/.exec(mdPath);
+        return Promise.resolve(readMd(m ? m[2] : mdPath))
     }
     else if (cmd == "GET config" && pxt.appTarget.id + "/targetconfig" == innerPath) {
         // target config
@@ -890,6 +894,8 @@ export function serveAsync(options: ServeOptions) {
                 sendFile(webFile)
             }
         } else {
+            const m = /^\/(v\d+)(.*)/.exec(pathname);
+            if (m) pathname = m[2];
             let md = readMd(pathname)
             let html = pxt.docs.renderMarkdown({
                 template: expandDocFileTemplate("docs.html"),
@@ -907,7 +913,9 @@ export function serveAsync(options: ServeOptions) {
     const serverjs = path.resolve(path.join(root, 'built', 'server.js'))
     if (nodeutil.fileExistsSync(serverjs)) {
         console.log('loading ' + serverjs)
+        /* tslint:disable:non-literal-require */
         require(serverjs);
+        /* tslint:disable:non-literal-require */
     }
 
     const serverPromise = new Promise<void>((resolve, reject) => {
@@ -917,7 +925,9 @@ export function serveAsync(options: ServeOptions) {
 
     return Promise.all([wsServerPromise, serverPromise])
         .then(() => {
+            /* tslint:disable:no-http-string */
             const start = `http://${serveOptions.hostname}:${serveOptions.port}/#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
+            /* tslint:enable:no-http-string */
             console.log(`---------------------------------------------`);
             console.log(``);
             console.log(`To launch the editor, open this URL:`);

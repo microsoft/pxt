@@ -70,7 +70,6 @@ function renderAsync(container: HTMLElement): Promise<HTMLIFrameElement> {
 export function makeAsync(): Promise<void> {
     let iframe: HTMLIFrameElement;
     return core.dialogAsync({
-        hideCancel: true,
         header: lf("Make"),
         size: "large",
         htmlBody: `

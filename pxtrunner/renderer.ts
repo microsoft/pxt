@@ -1,3 +1,4 @@
+/* tslint:disable:no-jquery-raw-elements TODO(tslint): get rid of jquery html() calls */
 
 namespace pxt.runner {
 
@@ -226,9 +227,10 @@ namespace pxt.runner {
             if (!cjs) return;
             let file = r.compileJS.ast.getSourceFile("main.ts");
             let info = decompileCallInfo(file.statements[0]);
-            if (!info) return;
-
-            let block = Blockly.Blocks[info.attrs.blockId];
+            if (!info || !r.apiInfo) return;
+            const symbolInfo = r.apiInfo.byQName[info.qName];
+            if (!symbolInfo) return;
+            let block = Blockly.Blocks[symbolInfo.attributes.blockId];
             let xml = block && block.codeCard ? block.codeCard.blocksXml : undefined;
 
             let s = xml ? $(pxt.blocks.render(xml)) : r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
@@ -362,8 +364,12 @@ namespace pxt.runner {
                         const file = r.compileJS.ast.getSourceFile("main.ts");
                         const stmt = file.statements[0];
                         const info = decompileCallInfo(stmt);
-                        if (info && info.attrs.help)
-                            $newel = $(`<a class="ui link"/>`).attr("href", `/reference/${info.attrs.help}`).append($newel);
+                        if (info && r.apiInfo) {
+                            const symbolInfo = r.apiInfo.byQName[info.qName];
+                            if (symbolInfo && symbolInfo.attributes.help) {
+                                $newel = $(`<a class="ui link"/>`).attr("href", `/reference/${symbolInfo.attributes.help}`).append($newel);
+                            }
+                        }
                         $el.replaceWith($newel);
                     }
                     return Promise.delay(1, renderNextAsync());
@@ -413,12 +419,16 @@ namespace pxt.runner {
             ul.attr("role", "listbox");
             const addItem = (card: pxt.CodeCard) => {
                 if (!card) return;
+                const mC = /^\/(v\d+)/.exec(card.url);
+                const mP = /^\/(v\d+)/.exec(window.location.pathname);
+                if (card.url && !mC && mP) card.url = `/${mP[1]}/${card.url}`;
                 ul.append(pxt.docs.codeCard.render(card, { hideHeader: true, shortName: true }));
             }
             stmts.forEach(stmt => {
                 let info = decompileCallInfo(stmt);
-                if (info) {
-                    let block = Blockly.Blocks[info.attrs.blockId];
+                if (info && r.apiInfo && r.apiInfo.byQName[info.qName]) {
+                    const attributes = r.apiInfo.byQName[info.qName].attributes;
+                    let block = Blockly.Blocks[attributes.blockId];
                     if (ns) {
                         let ii = r.compileBlocks.blocksInfo.apis.byQName[info.qName];
                         let nsi = r.compileBlocks.blocksInfo.apis.byQName[ii.namespace];
@@ -428,8 +438,8 @@ namespace pxt.runner {
                             description: nsi.attributes.jsDoc,
                             blocksXml: block && block.codeCard
                                 ? block.codeCard.blocksXml
-                                : info.attrs.blockId
-                                    ? `<xml xmlns="http://www.w3.org/1999/xhtml"><block type="${info.attrs.blockId}"></block></xml>`
+                                : attributes.blockId
+                                    ? `<xml xmlns="http://www.w3.org/1999/xhtml"><block type="${attributes.blockId}"></block></xml>`
                                     : undefined
                         })
                     } else if (block) {
@@ -441,8 +451,8 @@ namespace pxt.runner {
                         // no block available here
                         addItem({
                             name: info.qName,
-                            description: info.attrs.jsDoc,
-                            url: info.attrs.help || undefined
+                            description: attributes.jsDoc,
+                            url: attributes.help || undefined
                         })
                     }
                 } else
@@ -542,6 +552,10 @@ namespace pxt.runner {
             cd.className = "ui cards";
             cd.setAttribute("role", "listbox")
             cards.forEach(card => {
+                // patch card url with version if necessary
+                const mC = /^\/(v\d+)/.exec(card.url);
+                const mP = /^\/(v\d+)/.exec(window.location.pathname);
+                if (card.url && !mC && mP) card.url = `/${mP[1]}${card.url}`;
                 const cardEl = pxt.docs.codeCard.render(card, options);
                 cd.appendChild(cardEl)
                 // automitcally display package icon for approved packages

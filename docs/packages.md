@@ -19,6 +19,7 @@ In this scenario, PXT dynamically loads the neopixel packages directly from GitH
 * [Package getting started guide](/packages/getting-started)
 * Package configuration via [pxt.json](/packages/pxtJson) file
 * [Package versioning](/packages/versioning)
+* [Package localization](/packages/localization)
 * [Package approval](/packages/approval)
 
 ## [Editor extensions](/packages/extensions)

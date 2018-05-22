@@ -89,6 +89,11 @@ export class Editor extends srceditor.Editor {
         window.addEventListener("message", this.processEvent.bind(this), false)
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme;
         this.lineColors = (serialTheme && serialTheme.lineColors) || this.lineColors;
+
+        this.goBack = this.goBack.bind(this);
+        this.toggleRecording = this.toggleRecording.bind(this);
+        this.downloadRaw = this.downloadRaw.bind(this);
+        this.downloadCSV = this.downloadCSV.bind(this);
     }
 
     private loadSmoothieChartsPromise: Promise<void>
@@ -347,34 +352,46 @@ export class Editor extends srceditor.Editor {
         this.parent.openPreviousEditor()
     }
 
+    handleStartPauseRef = (c: any) => {
+        this.startPauseButton = c;
+    }
+
+    handleChartRootRef = (c: any) => {
+        this.chartRoot = c;
+    }
+
+    handleConsoleRootRef = (c: any) => {
+        this.consoleRoot = c;
+    }
+
     display() {
         return (
             <div id="serialArea">
                 <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <sui.Button text={lf("Go back")} title={lf("Go back to the previous editor")} className="icon circular small editorBack left labeled" ariaLabel={lf("Go back")} onClick={this.goBack.bind(this)}>
+                            <sui.Button text={lf("Go back")} title={lf("Go back to the previous editor")} className="icon circular small editorBack left labeled" ariaLabel={lf("Go back")} onClick={this.goBack}>
                                 <sui.Icon icon="arrow left" />
                             </sui.Button>
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button title={lf("Export data")} className="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={() => this.downloadCSV()}>
+                        <sui.Button title={lf("Export data")} className="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={this.downloadCSV}>
                             <sui.Icon icon="download" />
                         </sui.Button>
-                        <StartPauseButton ref={e => this.startPauseButton = e} active={this.active} toggle={this.toggleRecording.bind(this)} />
+                        <StartPauseButton ref={this.handleStartPauseRef} active={this.active} toggle={this.toggleRecording} />
                         <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                     </div>
                 </div>
-                <div id="serialCharts" ref={e => this.chartRoot = e}></div>
+                <div id="serialCharts" ref={this.handleChartRootRef}></div>
                 <div id="consoleHeader" className="ui serialHeader">
                     <div className="rightHeader">
-                        <sui.Button title={lf("Copy text")} className="ui icon button editorExport" ariaLabel={lf("Copy text")} onClick={() => this.downloadRaw()}>
+                        <sui.Button title={lf("Copy text")} className="ui icon button editorExport" ariaLabel={lf("Copy text")} onClick={this.downloadRaw}>
                             <sui.Icon icon="copy" />
                         </sui.Button>
                     </div>
                 </div>
-                <div id="serialConsole" ref={e => this.consoleRoot = e}></div>
+                <div id="serialConsole" ref={this.handleConsoleRootRef}></div>
             </div>
         )
     }

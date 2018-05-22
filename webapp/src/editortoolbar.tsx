@@ -9,6 +9,19 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
+
+        this.saveProjectName = this.saveProjectName.bind(this);
+        this.compile = this.compile.bind(this);
+        this.saveFile = this.saveFile.bind(this);
+        this.undo = this.undo.bind(this);
+        this.redo = this.redo.bind(this);
+        this.zoomIn = this.zoomIn.bind(this);
+        this.zoomOut = this.zoomOut.bind(this);
+        this.startStopSimulator = this.startStopSimulator.bind(this);
+        this.restartSimulator = this.restartSimulator.bind(this);
+        this.toggleTrace = this.toggleTrace.bind(this);
+        this.toggleDebugging = this.toggleDebugging.bind(this);
+        this.toggleCollapse = this.toggleCollapse.bind(this);
     }
 
     saveProjectName(name: string, view?: string) {
@@ -138,39 +151,39 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     <div className="ui equal width grid">
                         <div className="left aligned column">
                             <div className="ui icon small buttons">
-                                <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} className={`collapse-button ${collapsed ? 'collapsed' : ''} ${hideEditorFloats ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", collapseTooltip, hideEditorFloats ? lf("Disabled") : "")} title={collapseTooltip} onClick={() => this.toggleCollapse('mobile')} />
-                                {headless && run ? <sui.Button className={`play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('mobile')} /> : undefined}
-                                {headless && restart ? <sui.Button key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile')} /> : undefined}
-                                {headless && trace ? <sui.Button key='tracebtn' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace('mobile')} /> : undefined}
-                                {headless && debug ? <sui.Button key='debugbtn' className={`debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onClick={() => this.toggleDebugging('mobile')} /> : undefined}
-                                {compileBtn ? <sui.Button className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} ariaLabel={lf("Download your code")} onClick={() => this.compile('mobile')} /> : undefined}
+                                <EditorToolbarButton icon={`${collapsed ? 'toggle up' : 'toggle down'}`} className={`collapse-button ${collapsed ? 'collapsed' : ''} ${hideEditorFloats ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", collapseTooltip, hideEditorFloats ? lf("Disabled") : "")} title={collapseTooltip} onButtonClick={this.toggleCollapse} view='mobile' />
+                                {headless && run ? <EditorToolbarButton className={`play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onButtonClick={this.startStopSimulator} view='mobile' /> : undefined}
+                                {headless && restart ? <EditorToolbarButton key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onButtonClick={this.restartSimulator} view='mobile' /> : undefined}
+                                {headless && trace ? <EditorToolbarButton key='tracebtn' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onButtonClick={this.toggleTrace} view='mobile' /> : undefined}
+                                {headless && debug ? <EditorToolbarButton key='debugbtn' className={`debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onButtonClick={this.toggleDebugging} view='mobile' /> : undefined}
+                                {compileBtn ? <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} ariaLabel={lf("Download your code")} onButtonClick={this.compile} view='mobile' /> : undefined}
                             </div>
                         </div>
                         <div className="right aligned column">
                             {!readOnly ?
                                 <div className="ui icon small buttons">
-                                    <sui.Button icon='save' className={`editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onClick={() => this.saveFile('mobile')} />
-                                    {showUndoRedo ? <sui.Button icon='xicon undo' className={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} title={lf("Undo")} onClick={() => this.undo('mobile')} /> : undefined}
+                                    <EditorToolbarButton icon='save' className={`editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='mobile' />
+                                    {showUndoRedo ? <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} title={lf("Undo")} onButtonClick={this.undo} view='mobile' /> : undefined}
                                 </div> : undefined}
                         </div>
                         <div className="right aligned column">
                             {showZoomControls ?
                                 <div className="ui icon small buttons">
-                                    <sui.Button icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn('mobile')} />
-                                    <sui.Button icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut('mobile')} />
+                                    <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view='mobile' />
+                                    <EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view='mobile' />
                                 </div> : undefined}
                         </div>
                     </div> :
                     <div className="ui equal width grid">
                         <div className="left aligned two wide column">
                             <div className="ui vertical icon small buttons">
-                                {run ? <sui.Button className={`play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('mobile')} /> : undefined}
-                                {restart ? <sui.Button key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile')} /> : undefined}
+                                {run ? <EditorToolbarButton className={`play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onButtonClick={this.startStopSimulator} view='mobile' /> : undefined}
+                                {restart ? <EditorToolbarButton key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onButtonClick={this.restartSimulator} view='mobile' /> : undefined}
                             </div>
                             {showCollapsed ?
                                 <div className="row" style={{ paddingTop: "1rem" }}>
                                     <div className="ui vertical icon small buttons">
-                                        <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} className={`collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} ariaLabel={lf("{0}, {1}", collapseTooltip, collapsed ? lf("Collapsed") : "Expanded")} onClick={() => this.toggleCollapse('mobile')} />
+                                        <EditorToolbarButton icon={`${collapsed ? 'toggle up' : 'toggle down'}`} className={`collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} ariaLabel={lf("{0}, {1}", collapseTooltip, collapsed ? lf("Collapsed") : "Expanded")} onButtonClick={this.toggleCollapse} view='mobile' />
                                     </div>
                                 </div> : undefined}
                         </div>
@@ -182,16 +195,16 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     <div className="row">
                                         <div className="column">
                                             <div className="ui icon large buttons">
-                                                <sui.Button icon='xicon undo' className={`editortools-btn undo-editortools-btn ${!hasUndo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} title={lf("Undo")} onClick={() => this.undo('mobile')} />
+                                                <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn ${!hasUndo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} title={lf("Undo")} onButtonClick={this.undo} view='mobile' />
                                             </div>
                                         </div>
                                     </div>}
                                 <div className="row" style={readOnly || !showUndoRedo ? undefined : { paddingTop: 0 }}>
                                     <div className="column">
                                         <div className="ui icon large buttons">
-                                            {trace ? <sui.Button key='tracebtn' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace('mobile')} /> : undefined}
-                                            {debug ? <sui.Button key='debugbtn' className={`debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onClick={() => this.toggleDebugging('mobile')} /> : undefined}
-                                            {compileBtn ? <sui.Button className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} onClick={() => this.compile('mobile')} /> : undefined}
+                                            {trace ? <EditorToolbarButton key='tracebtn' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onButtonClick={this.toggleTrace} view='mobile' /> : undefined}
+                                            {debug ? <EditorToolbarButton key='debugbtn' className={`debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onButtonClick={this.toggleDebugging} view='mobile' /> : undefined}
+                                            {compileBtn ? <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} onButtonClick={this.compile} view='mobile' /> : undefined}
                                         </div>
                                     </div>
                                 </div>
@@ -205,46 +218,46 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         {headless ?
                             <div className="left aligned six wide column">
                                 <div className="ui icon buttons">
-                                    <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} className={`collapse-button ${collapsed ? 'collapsed' : ''} ${hideEditorFloats ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", collapseTooltip, hideEditorFloats ? lf("Disabled") : "")} title={collapseTooltip} onClick={() => this.toggleCollapse('tablet')} />
-                                    {run ? <sui.Button role="menuitem" className={`play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('tablet')} /> : undefined}
-                                    {restart ? <sui.Button key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet')} /> : undefined}
-                                    {debug ? <sui.Button key='debug' className={`debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onClick={() => this.toggleDebugging('table')} /> : undefined}
-                                    {compileBtn ? <sui.Button className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} onClick={() => this.compile('tablet')} /> : undefined}
+                                    <EditorToolbarButton icon={`${collapsed ? 'toggle up' : 'toggle down'}`} className={`collapse-button ${collapsed ? 'collapsed' : ''} ${hideEditorFloats ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", collapseTooltip, hideEditorFloats ? lf("Disabled") : "")} title={collapseTooltip} onButtonClick={this.toggleCollapse} view='tablet' />
+                                    {run ? <EditorToolbarButton role="menuitem" className={`play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onButtonClick={this.startStopSimulator} view='tablet' /> : undefined}
+                                    {restart ? <EditorToolbarButton key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onButtonClick={this.restartSimulator} view='tablet' /> : undefined}
+                                    {debug ? <EditorToolbarButton key='debug' className={`debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onButtonClick={this.toggleDebugging} view='tablet' /> : undefined}
+                                    {compileBtn ? <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} onButtonClick={this.compile} view='tablet' /> : undefined}
                                 </div>
                             </div> :
                             <div className="left aligned six wide column">
                                 <div className="ui icon buttons">
-                                    <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} className={`collapse-button ${collapsed ? 'collapsed' : ''} ${hideEditorFloats ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", collapseTooltip, hideEditorFloats ? lf("Disabled") : "")} title={collapseTooltip} onClick={() => this.toggleCollapse('tablet')} />
-                                    {compileBtn ? <sui.Button className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} text={downloadText} title={compileTooltip} onClick={() => this.compile('tablet')} /> : undefined}
+                                    <EditorToolbarButton icon={`${collapsed ? 'toggle up' : 'toggle down'}`} className={`collapse-button ${collapsed ? 'collapsed' : ''} ${hideEditorFloats ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", collapseTooltip, hideEditorFloats ? lf("Disabled") : "")} title={collapseTooltip} onButtonClick={this.toggleCollapse} view='tablet' />
+                                    {compileBtn ? <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} text={downloadText} title={compileTooltip} onButtonClick={this.compile} view='tablet' /> : undefined}
                                 </div>
                             </div>}
                         <div className="column four wide">
                             {readOnly ? undefined :
-                                <sui.Button icon='save' className={`small editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onClick={() => this.saveFile('tablet')} />}
+                                <EditorToolbarButton icon='save' className={`small editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />}
                         </div>
                         <div className="column six wide right aligned">
                             {showUndoRedo ?
                                 <div className="ui icon small buttons">
-                                    <sui.Button icon='xicon undo' className={`editortools-btn undo-editortools-btn ${!hasUndo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} title={lf("Undo")} onClick={() => this.undo('tablet')} />
-                                    <sui.Button icon='xicon redo' className={`editortools-btn redo-editortools-btn ${!hasRedo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Red"), !hasRedo ? lf("Disabled") : "")} title={lf("Redo")} onClick={() => this.redo('tablet')} />
+                                    <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn ${!hasUndo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} title={lf("Undo")} onButtonClick={this.undo} view='tablet' />
+                                    <EditorToolbarButton icon='xicon redo' className={`editortools-btn redo-editortools-btn ${!hasRedo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Red"), !hasRedo ? lf("Disabled") : "")} title={lf("Redo")} onButtonClick={this.redo} view='tablet' />
                                 </div> : undefined}
                             {showZoomControls ?
                                 <div className="ui icon small buttons">
-                                    <sui.Button icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn('tablet')} />
-                                    <sui.Button icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut('tablet')} />
+                                    <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view='tablet' />
+                                    <EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view='tablet' />
                                 </div> : undefined}
                         </div>
                     </div>
                     : <div className="ui grid">
                         <div className="left aligned two wide column">
                             <div className="ui vertical icon small buttons">
-                                {run ? <sui.Button role="menuitem" className={`play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('tablet')} /> : undefined}
-                                {restart ? <sui.Button key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet')} /> : undefined}
+                                {run ? <EditorToolbarButton role="menuitem" className={`play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onButtonClick={this.startStopSimulator} view='tablet' /> : undefined}
+                                {restart ? <EditorToolbarButton key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onButtonClick={this.restartSimulator} view='tablet' /> : undefined}
                             </div>
                             {showCollapsed ?
                                 <div className="row" style={{ paddingTop: "1rem" }}>
                                     <div className="ui vertical icon small buttons">
-                                        <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} className={`collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} ariaLabel={lf("{0}, {1}", collapseTooltip, collapsed ? lf("Collapsed") : "Expanded")} onClick={() => this.toggleCollapse('tablet')} />
+                                        <EditorToolbarButton icon={`${collapsed ? 'toggle up' : 'toggle down'}`} className={`collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} ariaLabel={lf("{0}, {1}", collapseTooltip, collapsed ? lf("Collapsed") : "Expanded")} onButtonClick={this.toggleCollapse} view='tablet' />
                                     </div>
                                 </div> : undefined}
                         </div>
@@ -254,7 +267,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             <div className="ui grid right aligned">
                                 {compileBtn ? <div className="row">
                                     <div className="column">
-                                        <sui.Button role="menuitem" className={`primary large fluid download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} text={downloadText} title={compileTooltip} onClick={() => this.compile('tablet')} />
+                                        <EditorToolbarButton role="menuitem" className={`primary large fluid download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} text={downloadText} title={compileTooltip} onButtonClick={this.compile} view='tablet' />
                                     </div>
                                 </div> : undefined}
                                 {showProjectRename ?
@@ -262,14 +275,13 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                         <div className="column">
                                             <div className="ui item large right labeled fluid input projectname-input projectname-tablet" title={lf("Pick a name for your project")}>
                                                 <label htmlFor="fileNameInput1" id="fileNameInputLabel1" className="accessible-hidden">{lf("Type a name for your project")}</label>
-                                                <input id="fileNameInput1"
+                                                <EditorToolbarSaveInput id="fileNameInput1"
                                                     type="text"
                                                     aria-labelledby="fileNameInputLabel1"
                                                     placeholder={lf("Pick a name...")}
                                                     value={projectName || ''}
-                                                    onChange={(e) => this.saveProjectName((e.target as any).value, 'tablet')}>
-                                                </input>
-                                                <sui.Button icon='save' className={`large right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onClick={() => this.saveFile('tablet')} />
+                                                    onChangeValue={this.saveProjectName} view='tablet' />
+                                                <EditorToolbarButton icon='save' className={`large right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />
                                             </div>
                                         </div>
                                     </div> : undefined}
@@ -282,20 +294,20 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                         <div className="column">
                                             {showUndoRedo ?
                                                 <div className="ui icon large buttons">
-                                                    <sui.Button icon='xicon undo' className={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo")} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} onClick={() => this.undo()} />
-                                                    <sui.Button icon='xicon redo' className={`editortools-btn redo-editortools-btn} ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo")} ariaLabel={lf("{0}, {1}", lf("Redo"), !hasRedo ? lf("Disabled") : "")} onClick={() => this.redo()} />
+                                                    <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo")} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} onButtonClick={this.undo} view='tablet' />
+                                                    <EditorToolbarButton icon='xicon redo' className={`editortools-btn redo-editortools-btn} ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo")} ariaLabel={lf("{0}, {1}", lf("Redo"), !hasRedo ? lf("Disabled") : "")} onButtonClick={this.redo} view='tablet' />
                                                 </div> : undefined}
                                             {showZoomControls ?
                                                 <div className="ui icon large buttons">
-                                                    <sui.Button icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
-                                                    <sui.Button icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
+                                                    <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view='tablet' />
+                                                    <EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view='tablet' />
                                                 </div> : undefined}
                                         </div>
                                     </div> : undefined}
                                 <div className="row" style={showUndoRedo || showZoomControls ? { paddingTop: 0 } : {}}>
                                     <div className="column">
-                                        {trace ? <sui.Button key='tracebtn' className={`large trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace('tablet')} /> : undefined}
-                                        {debug ? <sui.Button key='debugbtn' className={`large debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onClick={() => this.toggleDebugging('tablet')} /> : undefined}
+                                        {trace ? <EditorToolbarButton key='tracebtn' className={`large trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onButtonClick={this.toggleTrace} view='tablet' /> : undefined}
+                                        {debug ? <EditorToolbarButton key='debugbtn' className={`large debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onButtonClick={this.toggleDebugging} view='tablet' /> : undefined}
                                     </div>
                                 </div>
                             </div>
@@ -307,18 +319,18 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     <div id="downloadArea" className="ui column items">{headless ?
                         <div className="ui item">
                             <div className="ui icon large buttons">
-                                {showCollapsed ? <sui.Button icon={`${collapseEditorTools ? 'toggle ' + (isRtl ? 'left' : 'right') : 'toggle ' + (isRtl ? 'right' : 'left')}`} className={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('computer')} /> : undefined}
-                                {run ? <sui.Button role="menuitem" className={`large play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('computer')} /> : undefined}
-                                {restart ? <sui.Button key='restartbtn' className={`large restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('computer')} /> : undefined}
-                                {trace ? <sui.Button key='tracebtn' className={`large trace-button ${tracing ? 'orange' : ''}`} icon="xicon trace" title={traceTooltip} onClick={() => this.toggleTrace('computer')} /> : undefined}
-                                {debug ? <sui.Button key='debugbtn' className={`large debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onClick={() => this.toggleDebugging('computer')} /> : undefined}
-                                {compileBtn ? <sui.Button icon={downloadIcon} className={`primary large download-button ${downloadButtonClasses}`} title={compileTooltip} onClick={() => this.compile('computer')} /> : undefined}
+                                {showCollapsed ? <EditorToolbarButton icon={`${collapseEditorTools ? 'toggle ' + (isRtl ? 'left' : 'right') : 'toggle ' + (isRtl ? 'right' : 'left')}`} className={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onButtonClick={this.toggleCollapse} view='computer' /> : undefined}
+                                {run ? <EditorToolbarButton role="menuitem" className={`large play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onButtonClick={this.startStopSimulator} view='computer' /> : undefined}
+                                {restart ? <EditorToolbarButton key='restartbtn' className={`large restart-button`} icon="refresh" title={restartTooltip} onButtonClick={this.restartSimulator} view='computer' /> : undefined}
+                                {trace ? <EditorToolbarButton key='tracebtn' className={`large trace-button ${tracing ? 'orange' : ''}`} icon="xicon trace" title={traceTooltip} onButtonClick={this.toggleTrace} view='computer' /> : undefined}
+                                {debug ? <EditorToolbarButton key='debugbtn' className={`large debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onButtonClick={this.toggleDebugging} view='computer' /> : undefined}
+                                {compileBtn ? <EditorToolbarButton icon={downloadIcon} className={`primary large download-button ${downloadButtonClasses}`} title={compileTooltip} onButtonClick={this.compile} view='computer' /> : undefined}
                             </div>
                         </div> :
                         <div className="ui item">
-                            {showCollapsed ? <sui.Button icon={`${collapseEditorTools ? 'toggle ' + (isRtl ? 'left' : 'right') : 'toggle ' + (isRtl ? 'right' : 'left')}`} className={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('computer')} /> : undefined}
-                            {debug ? <sui.Button key='debugbtn' icon="xicon bug" className={`large debug-button ${debugging ? 'orange' : ''}`} title={debugTooltip} onClick={() => this.toggleDebugging('computer')} /> : undefined}
-                            {compileBtn ? <sui.Button icon={downloadIcon} className={`primary huge fluid download-button ${downloadButtonClasses}`} text={downloadText} title={compileTooltip} onClick={() => this.compile('computer')} /> : undefined}
+                            {showCollapsed ? <EditorToolbarButton icon={`${collapseEditorTools ? 'toggle ' + (isRtl ? 'left' : 'right') : 'toggle ' + (isRtl ? 'right' : 'left')}`} className={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onButtonClick={this.toggleCollapse} view='computer' /> : undefined}
+                            {debug ? <EditorToolbarButton key='debugbtn' icon="xicon bug" className={`large debug-button ${debugging ? 'orange' : ''}`} title={debugTooltip} onButtonClick={this.toggleDebugging} view='computer' /> : undefined}
+                            {compileBtn ? <EditorToolbarButton icon={downloadIcon} className={`primary huge fluid download-button ${downloadButtonClasses}`} text={downloadText} title={compileTooltip} onButtonClick={this.compile} view='computer' /> : undefined}
                         </div>
                     }
                     </div>
@@ -326,30 +338,78 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         <div className="column left aligned">
                             <div className={`ui right labeled input projectname-input projectname-computer`} title={lf("Pick a name for your project")}>
                                 <label htmlFor="fileNameInput2" id="fileNameInputLabel2" className="accessible-hidden">{lf("Type a name for your project")}</label>
-                                <input id="fileNameInput2"
+                                <EditorToolbarSaveInput id="fileNameInput2" view='computer'
                                     type="text"
                                     aria-labelledby="fileNameInputLabel2"
                                     placeholder={lf("Pick a name...")}
                                     value={projectName || ''}
-                                    onChange={(e) => this.saveProjectName((e.target as any).value, 'computer')}>
-                                </input>
-                                <sui.Button icon='save' className={`small right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onClick={() => this.saveFile('computer')} />
+                                    onChangeValue={this.saveProjectName} />
+                                <EditorToolbarButton icon='save' className={`small right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='computer' />
                             </div>
                         </div> : undefined}
                     <div className="column right aligned">
                         {showUndoRedo ?
                             <div className="ui icon small buttons">
-                                <sui.Button icon='xicon undo' className={`editortools-btn undo-editortools-btn ${!hasUndo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} title={lf("Undo")} onClick={() => this.undo('computer')} />
-                                <sui.Button icon='xicon redo' className={`editortools-btn redo-editortools-btn ${!hasRedo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Redo"), !hasRedo ? lf("Disabled") : "")} title={lf("Redo")} onClick={() => this.redo('computer')} />
+                                <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn ${!hasUndo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} title={lf("Undo")} onButtonClick={this.undo} view='computer' />
+                                <EditorToolbarButton icon='xicon redo' className={`editortools-btn redo-editortools-btn ${!hasRedo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Redo"), !hasRedo ? lf("Disabled") : "")} title={lf("Redo")} onButtonClick={this.redo} view='computer' />
                             </div> : undefined}
                         {showZoomControls ?
                             <div className="ui icon small buttons">
-                                <sui.Button icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn('computer')} />
-                                <sui.Button icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut('computer')} />
+                                <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view='computer' />
+                                <EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view='computer' />
                             </div> : undefined}
                     </div>
                 </div>
             </div>
         </div>;
+    }
+}
+
+interface EditorToolbarButtonProps extends sui.ButtonProps {
+    view: string;
+    onButtonClick: (view: string) => void;
+}
+
+class EditorToolbarButton extends sui.StatelessUIElement<EditorToolbarButtonProps> {
+    constructor(props: EditorToolbarButtonProps) {
+        super(props);
+        this.state = {
+        }
+
+        this.handleClick = this.handleClick.bind(this);
+    }
+
+    handleClick() {
+        const { onButtonClick, view } = this.props;
+        onButtonClick(view);
+    }
+
+    renderCore() {
+        const { onClick, onButtonClick, ...rest } = this.props;
+        return <sui.Button {...rest} onClick={this.handleClick} />;
+    }
+}
+
+interface EditorToolbarSaveInputProps extends React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement> {
+    view: string;
+    onChangeValue: (value: string, view: string) => void;
+}
+
+class EditorToolbarSaveInput extends sui.StatelessUIElement<EditorToolbarSaveInputProps> {
+
+    constructor(props: EditorToolbarSaveInputProps) {
+        super(props);
+
+        this.handleChange = this.handleChange.bind(this);
+    }
+
+    handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const { onChangeValue, view } = this.props;
+        onChangeValue((e.target as any).value, view);
+    }
+
+    renderCore() {
+        const { onChange, onChangeValue, view, ...rest } = this.props;
+        return <input onChange={this.handleChange} {...rest} />
     }
 }

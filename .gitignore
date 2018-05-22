@@ -6,6 +6,7 @@ webapp/public/closure-library
 node_modules
 *.sw?
 built
+temp
 packaged
 gh-pages
 /typings

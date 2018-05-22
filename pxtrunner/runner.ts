@@ -1,3 +1,5 @@
+/* tslint:disable:no-inner-html TODO(tslint): get rid of jquery html() calls */
+
 /// <reference path="../built/pxtlib.d.ts" />
 /// <reference path="../built/pxteditor.d.ts" />
 /// <reference path="../built/pxtcompiler.d.ts" />
@@ -374,7 +376,8 @@ namespace pxt.runner {
             if (!msg) return; // no more work
 
             pxt.tickEvent("renderer.job")
-            jobPromise = runner.decompileToBlocksAsync(msg.code, msg.options)
+            jobPromise = pxt.BrowserUtils.loadBlocklyAsync()
+                .then(() => runner.decompileToBlocksAsync(msg.code, msg.options))
                 .then(result => result.blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(result.blocksSvg, 0, 0, result.blocksSvg.viewBox.baseVal.width, result.blocksSvg.viewBox.baseVal.height) : undefined)
                 .then(res => {
                     window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
@@ -419,6 +422,11 @@ namespace pxt.runner {
             Promise.delay(100) // allow UI to update
                 .then(() => {
                     switch (doctype) {
+                        case "print":
+                            const data = window.localStorage["printjob"];
+                            delete window.localStorage["printjob"];
+                            return renderProjectFilesAsync(content, JSON.parse(data))
+                                .then(() => pxsim.print(1000));
                         case "project":
                             return renderProjectFilesAsync(content, JSON.parse(src))
                                 .then(() => pxsim.print(1000));
@@ -457,7 +465,7 @@ namespace pxt.runner {
         }
 
         function renderHash() {
-            let m = /^#(doc|md|tutorial|book|project|projectid):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
+            let m = /^#(doc|md|tutorial|book|project|projectid|print):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
                 const p = m[4] ? setEditorContextAsync(
@@ -717,6 +725,7 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
         package: pxt.MainPackage;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
+        apiInfo?: pxtc.ApisInfo;
         blocksSvg?: SVGSVGElement;
     }
 
@@ -751,12 +760,13 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)
-                            return <DecompileResult>{ package: mainPkg, compileJS: resp, compileBlocks: bresp };
+                            return <DecompileResult>{ package: mainPkg, compileJS: resp, compileBlocks: bresp, apiInfo: apis };
                         pxt.debug(bresp.outfiles["main.blocks"])
                         return <DecompileResult>{
                             package: mainPkg,
                             compileJS: resp,
                             compileBlocks: bresp,
+                            apiInfo: apis,
                             blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
                         };
                     })
@@ -779,7 +789,8 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
                         pxt.blocks.initializeAndInject(blocksInfo);
                         return <DecompileResult>{
                             package: mainPkg,
-                            blocksSvg: pxt.blocks.render(code, options)
+                            blocksSvg: pxt.blocks.render(code, options),
+                            apiInfo: apis
                         };
                     })
             });

@@ -1,6 +1,5 @@
 import * as React from "react";
 import * as core from "./core";
-import * as gallery from "./gallery";
 
 export type Action = () => void;
 export type AnyComponent = Component<any, any>;
@@ -37,7 +36,7 @@ mountVirtualApi("cloud-search", {
 })
 
 mountVirtualApi("gallery", {
-    getAsync: p => gallery.loadGalleryAsync(stripProtocol(decodeURIComponent(p))).catch((e) => {
+    getAsync: p => pxt.gallery.loadGalleryAsync(stripProtocol(decodeURIComponent(p))).catch((e) => {
         return Promise.resolve(e);
     }),
     expirationTime: p => 3600 * 1000

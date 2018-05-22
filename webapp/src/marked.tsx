@@ -44,27 +44,31 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         pxt.Util.toArray(content.querySelectorAll(`.lang-blocks`))
             .forEach((langBlock: HTMLElement) => {
-                const code = langBlock.innerText;
+                // Can't use innerHTML here because it escapes certain characters (e.g. < and >)
+                // Also can't use innerText because IE strips out the newlines from the code
+                // textContent seems to work in all browsers and return the "pure" text
+                const code = langBlock.textContent;
+
                 const wrapperDiv = document.createElement('div');
-                langBlock.innerHTML = '';
+                pxsim.U.clear(langBlock);
                 langBlock.appendChild(wrapperDiv);
                 wrapperDiv.className = 'ui segment raised loading';
                 if (MarkedContent.blockSnippetCache[code]) {
                     // Use cache
-                    const imgDiv = document.createElement('img');
-                    imgDiv.src = MarkedContent.blockSnippetCache[code];
-                    wrapperDiv.appendChild(imgDiv);
+                    const svg = Blockly.Xml.textToDom(MarkedContent.blockSnippetCache[code]);
+                    wrapperDiv.appendChild(svg);
                     pxsim.U.removeClass(wrapperDiv, 'loading');
                 } else {
                     parent.renderBlocksAsync({
                         action: "renderblocks", ts: code
                     } as pxt.editor.EditorMessageRenderBlocksRequest)
-                        .done((datauri) => {
-                            if (datauri) {
-                                MarkedContent.blockSnippetCache[code] = datauri;
-                                const imgDiv = document.createElement('img');
-                                imgDiv.src = MarkedContent.blockSnippetCache[code];
-                                wrapperDiv.appendChild(imgDiv);
+                        .done((resp: any) => {
+                            const svg = resp.svg;
+                            if (svg) {
+                                svg.setAttribute('height', `${svg.getAttribute('viewBox').split(' ')[3]}px`);
+                                // SVG serialization is broken on IE (SVG namespace issue), don't cache on IE
+                                if (!pxt.BrowserUtils.isIE()) MarkedContent.blockSnippetCache[code] = Blockly.Xml.domToText(svg);
+                                wrapperDiv.appendChild(svg);
                                 pxsim.U.removeClass(wrapperDiv, 'loading');
                             } else {
                                 // An error occured, show alternate message
@@ -92,10 +96,10 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         : `docs inlineblock ${pxt.Util.htmlEscape(ns)}`;
 
                     const inlineBlockDiv = document.createElement('span');
-                    inlineBlock.innerHTML = '';
+                    pxsim.U.clear(inlineBlock);
                     inlineBlock.appendChild(inlineBlockDiv);
                     inlineBlockDiv.className = lev;
-                    inlineBlockDiv.textContent = pxt.Util.htmlEscape(pxt.U.rlf(txt));
+                    inlineBlockDiv.textContent = pxt.U.rlf(txt);
                 }
             })
     }
@@ -113,7 +117,9 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         })
 
         // Render the markdown and add it to the content div
+        /* tslint:disable:no-inner-html (marked content is already sanitized) */
         content.innerHTML = marked(markdown);
+        /* tslint:enable:no-inner-html */
 
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
         this.renderInlineBlocks(content);

@@ -8,6 +8,6 @@
         "newLine": "LF",
         "sourceMap": false,
         "lib": ["dom", "dom.iterable", "scripthost", "es6"],
-        "types": ["jquery", "highlight.js", "marked", "bluebird"]
+        "types": ["highlight.js", "marked", "bluebird"]
     }
 }

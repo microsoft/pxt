@@ -129,7 +129,6 @@ namespace pxtblockly {
                 .fontFamily(this.props.iconFont)
                 .text(this.props.iconString)
                 .anchor("middle")
-                .alignmentBaseline("middle");
 
             if (this.props.iconClass) {
                 this.icon.setClass(this.props.iconClass);
@@ -137,7 +136,8 @@ namespace pxtblockly {
         }
 
         protected layoutContent(contentWidth: number, contentHeight: number, top: number, left: number) {
-            this.icon.at(left + contentWidth / 2, top + contentHeight / 2)
+            this.icon.at(left + contentWidth / 2, top)
+                .offset(0, 0.8, svg.LengthUnit.em)
                 .fontSize(contentHeight, svg.LengthUnit.px);
         }
     }

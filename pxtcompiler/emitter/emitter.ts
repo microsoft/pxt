@@ -367,7 +367,6 @@ namespace ts.pxtc {
     export interface CallInfo {
         decl: Declaration;
         qName: string;
-        attrs: CommentAttrs;
         args: Expression[];
         isExpression: boolean;
         isAutoCreate?: boolean;
@@ -1795,7 +1794,6 @@ ${lbl}: .short 0xffff
             let callInfo: CallInfo = {
                 decl,
                 qName: getFullName(checker, decl.symbol),
-                attrs,
                 args: [],
                 isExpression: true
             };
@@ -2140,7 +2138,6 @@ ${lbl}: .short 0xffff
             let callInfo: CallInfo = {
                 decl,
                 qName: decl ? getFullName(checker, decl.symbol) : "?",
-                attrs,
                 args: args.slice(0),
                 isExpression: hasRet
             };
@@ -2564,7 +2561,6 @@ ${lbl}: .short 0xffff
             let callInfo: CallInfo = {
                 decl,
                 qName: decl ? getFullName(checker, decl.symbol) : "?",
-                attrs,
                 args: [node.template],
                 isExpression: true
             };

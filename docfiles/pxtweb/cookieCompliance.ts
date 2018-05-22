@@ -72,19 +72,19 @@ namespace pxt {
 
     export function initAnalyticsAsync() {
         if (isNativeApp()) {
-            initializeAppInsights(true);
+            initializeAppInsightsInternal(true);
             return;
         }
 
         if (isSandboxMode()) {
-            initializeAppInsights(false);
+            initializeAppInsightsInternal(false);
             return;
         }
 
         getCookieBannerAsync(document.domain, detectLocale(), (bannerErr, info) => {
             if (bannerErr || info.Error) {
                 // Start app insights, just don't drop any cookies
-                initializeAppInsights(false);
+                initializeAppInsightsInternal(false);
                 return;
             }
 
@@ -103,7 +103,9 @@ namespace pxt {
             }
 
             // The markup is trusted because it's from our backend, so it shouldn't need to be scrubbed
+            /* tslint:disable:no-inner-html */
             bannerDiv.innerHTML = info.Markup;
+            /* tslint:enable:no-inner-html */
 
             if (info.Css && info.Css.length) {
                 info.Css.forEach(injectStylesheet)
@@ -112,10 +114,10 @@ namespace pxt {
             all(info.Js || [], injectScriptAsync, msccError => {
                 if (!msccError && typeof mscc !== "undefined") {
                     if (mscc.hasConsent()) {
-                        initializeAppInsights(true)
+                        initializeAppInsightsInternal(true)
                     }
                     else {
-                        mscc.on("consent", () => initializeAppInsights(true));
+                        mscc.on("consent", () => initializeAppInsightsInternal(true));
                     }
                 }
             });
@@ -189,7 +191,7 @@ namespace pxt {
         return true;
     }
 
-    function initializeAppInsights(includeCookie = false) {
+    export function initializeAppInsightsInternal(includeCookie = false) {
         // loadAppInsights is defined in docfiles/tracking.html
         const loadAI = (window as any).loadAppInsights;
         if (loadAI) {
@@ -261,11 +263,14 @@ namespace pxt {
     }
 
     /**
-     * Checks for winrt and pxt-electron
+     * Checks for winrt, pxt-electron and Code Connection
      */
     function isNativeApp(): boolean {
-        return typeof Windows !== "undefined" ||
-            (typeof window !== "undefined" && !!(window as any).pxtElectron);
+        const hasWindow = typeof window !== "undefined";
+        const isUwp = typeof Windows !== "undefined";
+        const isPxtElectron = hasWindow && !!(window as any).pxtElectron;
+        const isCC = hasWindow && !!(window as any).ipcRenderer;
+        return isUwp || isPxtElectron || isCC;
     }
     /**
      * checks for sandbox
