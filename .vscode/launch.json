@@ -26,7 +26,7 @@
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
-			"args": ["pyconv", "adafruit_seesaw.py"],
+			"args": ["pyconv", "adafruit_seesaw"],
 			"cwd": "${workspaceRoot}/../pxt-adafruit/projects/Adafruit_CircuitPython_seesaw",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
