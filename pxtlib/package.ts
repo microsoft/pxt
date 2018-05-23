@@ -615,6 +615,12 @@ namespace pxt {
                     deps.forEach(id => rec(this.resolveDep(id)))
                     ids.push(p.id)
                 }
+                if (p.level == 0 && p.config && p.config.testDependencies) {
+                    const deps = Object.keys(p.config.testDependencies);
+                    deps.sort((a, b) => U.strcmp(a, b))
+                    deps.forEach(id => rec(this.resolveDep(id)))
+                    ids.push(p.id)
+                }
             }
             rec(this)
             return ids.map(id => this.resolveDep(id))
