@@ -2917,7 +2917,6 @@ export function formatAsync(parsed: commandParser.ParsedCommand) {
 function runCoreAsync(res: pxtc.CompileResult) {
     let f = res.outfiles[pxtc.BINARY_JS]
     if (f) {
-        // TODO: non-microbit specific load
         pxsim.initCurrentRuntime = pxsim.initBareRuntime
         let r = new pxsim.Runtime({
             type: "run",
@@ -2927,14 +2926,14 @@ function runCoreAsync(res: pxtc.CompileResult) {
             if (msg.type == "serial") {
                 let d = (msg as any).data
                 if (typeof d == "string") d = d.replace(/\n$/, "")
-                console.log("SERIAL:", d)
+                console.log("serial: ", d)
             }
         }
         r.errorHandler = (e) => {
             throw e;
         }
         r.run(() => {
-            console.log("DONE")
+            console.log("-- done")
             pxsim.dumpLivePointers();
         })
     }
