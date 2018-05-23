@@ -384,6 +384,15 @@ namespace pxt {
             }
         }
 
+        dependencies(): pxt.Map<string> {
+            const dependencies = Util.clone(this.config.dependencies);
+            // add test dependencies if nedeed
+            if (this.level == 0 && this.config.testDependencies) {
+                Util.jsonMergeFrom(dependencies, this.config.testDependencies);
+            }
+            return dependencies;
+        }
+
         loadAsync(isInstall = false, targetVersion?: string): Promise<void> {
             if (this.isLoaded) return Promise.resolve();
 
@@ -438,8 +447,8 @@ namespace pxt {
                 })
             }
 
-            const loadDepsRecursive = (dependencies: Map<string>) => {
-                return U.mapStringMapAsync(dependencies, (id, ver) => {
+            const loadDepsRecursive = (deps: Map<string>) => {
+                return U.mapStringMapAsync(deps, (id, ver) => {
                     let mod = this.resolveDep(id)
                     ver = ver || "*"
                     if (mod) {
@@ -459,7 +468,7 @@ namespace pxt {
             }
 
             return initPromise
-                .then(() => loadDepsRecursive(this.config.dependencies))
+                .then(() => loadDepsRecursive(this.dependencies()))
                 .then(() => {
                     // get paletter config loading deps, so the more higher level packages take precedence
                     if (this.config.palette && appTarget.runtime)
@@ -691,7 +700,7 @@ namespace pxt {
                 .then(() => this.config.binaryonly || appTarget.compile.shortPointers || !opts.target.isNative ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
-                        files = U.mapMap(files, (f,c) => this.upgradeFile(f,c));
+                        files = U.mapMap(files, (f, c) => this.upgradeFile(f, c));
                         const headerString = JSON.stringify({
                             name: this.config.name,
                             comment: this.config.description,

@@ -2750,7 +2750,9 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
                 "dependencies",
                 "files",
                 "testFiles",
-                "public"
+                "testDependencies",
+                "public",
+                "targetVersions"
             ]
 
             config.files = pkgFiles.filter(s => !/test/.test(s));

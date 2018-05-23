@@ -37,6 +37,7 @@ declare namespace pxt {
         files: string[];
         simFiles?: string[];
         testFiles?: string[];
+        testDependencies?: pxt.Map<string>;
         public?: boolean;
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
