@@ -1871,7 +1871,7 @@ function isEmpty(b: B.JsNode): boolean {
 
 // TODO look at scopes of let
 
-function toTS(mod: py.Module) {
+function toTS(mod: py.Module): B.JsNode[] {
     U.assert(mod.kind == "Module")
     resetCtx(mod)
     if (!mod.vars) mod.vars = {}
@@ -1987,7 +1987,12 @@ export function convertAsync(fns: string[]) {
             for (let i = 0; i < 5; ++i) {
                 currIteration = i
                 U.iterMap(js, (fn: string, js: any) => {
-                    toTS(js)
+                    pxt.log(`converting ${fn}`);
+                    try {
+                        toTS(js)
+                    } catch (e) {
+                        console.log(e);
+                    }
                 })
             }
 
