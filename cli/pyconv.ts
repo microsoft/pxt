@@ -1947,7 +1947,7 @@ export function convertAsync(fns: string[]) {
     pxt.log(`files (${pkgFilesKeys.length}):\n   ${pkgFilesKeys.join('\n   ')}`);
 
     return nodeutil.spawnWithPipeAsync({
-        cmd: process.env["PYTHON3"] || /^win/i.test(process.platform) ? "py" : "python3",
+        cmd: process.env["PYTHON3"] || (/^win/i.test(process.platform) ? "py" : "python3"),
         args: [],
         input: convPy.replace("@files@", JSON.stringify(pkgFilesKeys)),
         silent: true
