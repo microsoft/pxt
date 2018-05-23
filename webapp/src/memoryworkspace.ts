@@ -51,7 +51,7 @@ function getTextAsync(id: string): Promise<ScriptText> {
 
 function initAsync(trg: string, version: string): Promise<void> {
     target = trg;
-    targetVersion = trg;
+    targetVersion = version;
     return Promise.resolve();
 }
 
