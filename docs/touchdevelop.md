@@ -47,7 +47,7 @@ When you are editing a script, you can navigate to the home page of each art res
 
 ## How can I use images that aren’t in the Touch Develop cloud?
 
-Unfortunately, you will only be able to refer to images you find in the Touch Develop cloud (via search, for example). 
+Unfortunately, you will only be able to refer to images you find in the Touch Develop cloud (via search, for example).  If your script has broken images, you will have to patch each broken image by searching for a new image in the Touch Develop editor (to replace the broken image with).
 
 ## Where do I go if I have questions?
 
