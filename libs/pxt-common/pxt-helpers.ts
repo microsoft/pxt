@@ -199,6 +199,7 @@ namespace Math {
      */
     //%
     export function roundWithPrecision(x: number, digits: number): number {
+        digits = digits | 0;
         if (digits <= 0) return Math.round(x);
         let d = Math.pow(10, digits);
         return Math.round(x * d) / d;
