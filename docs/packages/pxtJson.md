@@ -29,6 +29,7 @@ interface PackageConfig {
     targetVersions?: TargetVersions; // versions of the target/pxt the package was compiled against
 
     testFiles?: string[];
+    testDependencies?: string[];
     simFiles?: string[];
 
     binaryonly?: boolean;
