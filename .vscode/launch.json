@@ -7,8 +7,8 @@
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
-			"args": ["buildtarget"],
-			"cwd": "${workspaceRoot}/../pxt-adafruit",
+			"args": ["build"],
+			"cwd": "${workspaceRoot}/../pxt-adafruit/projects/pxt-seesaw",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
 				"--nolazy"
@@ -21,7 +21,7 @@
 			"outFiles": []
 		},
 		{
-			"name": "Launch",
+			"name": "PyConv",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",

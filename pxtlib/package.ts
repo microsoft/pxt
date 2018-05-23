@@ -385,7 +385,9 @@ namespace pxt {
         }
 
         dependencies(): pxt.Map<string> {
-            const dependencies = Util.clone(this.config.dependencies);
+            if (!this.config) return {};
+
+            const dependencies = Util.clone(this.config.dependencies || {});
             // add test dependencies if nedeed
             if (this.level == 0 && this.config.testDependencies) {
                 Util.jsonMergeFrom(dependencies, this.config.testDependencies);
@@ -608,19 +610,13 @@ namespace pxt {
             let ids: string[] = []
             let rec = (p: Package) => {
                 if (!p || U.lookup(visited, p.id)) return;
-                visited[p.id] = true
-                if (p.config && p.config.dependencies) {
-                    const deps = Object.keys(p.config.dependencies);
-                    deps.sort((a, b) => U.strcmp(a, b))
-                    deps.forEach(id => rec(this.resolveDep(id)))
-                    ids.push(p.id)
-                }
-                if (p.level == 0 && p.config && p.config.testDependencies) {
-                    const deps = Object.keys(p.config.testDependencies);
-                    deps.sort((a, b) => U.strcmp(a, b))
-                    deps.forEach(id => rec(this.resolveDep(id)))
-                    ids.push(p.id)
-                }
+                visited[p.id] = true;
+
+                const dependencies = p.dependencies();
+                const deps = Object.keys(dependencies);
+                deps.sort((a, b) => U.strcmp(a, b))
+                deps.forEach(id => rec(this.resolveDep(id)))
+                ids.push(p.id)
             }
             rec(this)
             return ids.map(id => this.resolveDep(id))
