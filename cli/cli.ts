@@ -2923,10 +2923,21 @@ function runCoreAsync(res: pxtc.CompileResult) {
             code: f
         })
         pxsim.Runtime.messagePosted = (msg) => {
-            if (msg.type == "serial") {
-                let d = (msg as any).data
-                if (typeof d == "string") d = d.replace(/\n$/, "")
-                console.log("serial: ", d)
+            switch (msg.type) {
+                case "serial":
+                    {
+                        const m = <pxsim.SimulatorSerialMessage>msg;
+                        let d = m.data;
+                        if (typeof d == "string") d = d.replace(/\n$/, "")
+                        console.log("serial: ", d);
+                    }
+                case "i2c":
+                    {
+                        const m = <pxsim.SimulatorI2CMessage>msg;
+                        let d = m.data;
+                        if (d)
+                            console.log(`i2c: ${d}`);
+                    }
             }
         }
         r.errorHandler = (e) => {
