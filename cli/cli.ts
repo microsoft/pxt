@@ -2931,6 +2931,7 @@ function runCoreAsync(res: pxtc.CompileResult) {
                         if (typeof d == "string") d = d.replace(/\n$/, "")
                         console.log("serial: ", d);
                     }
+                    break;
                 case "i2c":
                     {
                         const m = <pxsim.SimulatorI2CMessage>msg;
@@ -2938,6 +2939,13 @@ function runCoreAsync(res: pxtc.CompileResult) {
                         if (d)
                             console.log(`i2c: ${d}`);
                     }
+                    break;
+                default:
+                    {
+                        const m = <pxsim.SimulatorMessage>msg;
+                        console.log(`${m.type}: ${JSON.stringify(m)}`);
+                    }
+                    break;
             }
         }
         r.errorHandler = (e) => {
