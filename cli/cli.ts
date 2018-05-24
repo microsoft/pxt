@@ -609,6 +609,49 @@ function justBumpPkgAsync() {
         .then(() => nodeutil.runGitAsync("tag", "v" + mainPkg.config.version))
 }
 
+function tagReleaseAsync(parsed: commandParser.ParsedCommand) {
+    const tag = parsed.args[0] as string;
+    const version = parsed.args[1] as string;
+    const npm = !!parsed.flags["npm"];
+
+    // check that ...-ref.json exists for that tag
+    const fn = path.join('docs', tag + "-ref.json");
+    pxt.log(`checking ${fn}`)
+    if (!fn)
+        U.userError(`file ${fn} does not exist`);
+    const v = pxt.semver.normalize(version);
+    const npmPkg = `pxt-${pxt.appTarget.id}`;
+    if (!pxt.appTarget.appTheme.githubUrl)
+        U.userError('pxtarget theme missing "githubUrl" entry');
+    // check that tag exists in github
+    pxt.log(`checking github ${pxt.appTarget.appTheme.githubUrl} tag v${v}`);
+    return U.requestAsync({
+            url: pxt.appTarget.appTheme.githubUrl.replace(/\/$/, '') + "/releases/tag/v" + v,
+            method: "GET"
+        })
+        // check that release exists in npm
+        .then(() => {
+            if (!npm) return Promise.resolve();
+            pxt.log(`checking npm ${npmPkg} release`)
+            return nodeutil.npmRegistryAsync(npmPkg)
+                .then(registry => {
+                    // verify that npm version exists
+                    if (!registry.versions[v])
+                        U.userError(`cannot find npm package ${npmPkg}@${v}`);
+                    nodeutil.runNpmAsync(`dist-tag rm ${npmPkg} dev`);
+                })
+        })
+        // all good update ref file
+        .then(() => {
+            // update index file
+            fs.writeFileSync(fn, JSON.stringify({
+                "appref": "v" + v
+            }, null, 4))
+            // TODO commit changes
+            console.log(`please commit ${fn} changes`);
+        })
+}
+
 function bumpAsync(parsed?: commandParser.ParsedCommand) {
     const bumpPxt = parsed && parsed.flags["update"];
     const upload = parsed && parsed.flags["upload"];
@@ -5069,6 +5112,15 @@ function initCommands() {
             upload: { description: "(package only) Upload after bumping" }
         }
     }, bumpAsync);
+
+    p.defineCommand({
+        name: "tag",
+        help: "tags a release",
+        argString: "<tag> <version>",
+        flags: {
+            npm: { description: "updates tags on npm packages as well" }
+        }
+    }, tagReleaseAsync);
 
     p.defineCommand({
         name: "build",
