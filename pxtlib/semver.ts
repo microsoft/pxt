@@ -72,6 +72,10 @@ namespace pxt.semver {
         return null
     }
 
+    export function normalize(v: string): string {
+        return stringify(parse(v));
+    }
+
     export function stringify(v: Version) {
         let r = v.major + "." + v.minor + "." + v.patch
         if (v.pre.length)
