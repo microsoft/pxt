@@ -486,28 +486,20 @@ function travisAsync() {
     }
 
     const branch = process.env.TRAVIS_BRANCH || "local"
-    const isMaster = branch == "master";
-    const latest = isMaster ? "latest" : "git-" + branch;
-    const npmTag = isMaster ? "" : branch;
+    const latest = branch == "master" ? "latest" : "git-" + branch
     // upload locs on build on master
     const uploadLocs = /^(master|v\d+\.\d+\.\d+)$/.test(process.env.TRAVIS_BRANCH)
         && /^false$/.test(process.env.TRAVIS_PULL_REQUEST);
-
-    function npmPublishAsync() {
-        if (!npmPublish) return Promise.resolve();
-        return npmTag ? nodeutil.runNpmAsync("publish", "--tag", npmTag) : nodeutil.runNpmAsync("publish");
-    }
 
     console.log("TRAVIS_TAG:", rel);
     console.log("TRAVIS_BRANCH:", process.env.TRAVIS_BRANCH);
     console.log("TRAVIS_PULL_REQUEST:", process.env.TRAVIS_PULL_REQUEST);
     console.log("uploadLocs:", uploadLocs);
-    console.log("latest:", latest);    
-    console.log('npm tag', npmTag);
+    console.log("latest:", latest);
 
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
-        let p = npmPublishAsync()
+        let p = npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve();
         if (uploadLocs)
             p = p
                 .then(() => execCrowdinAsync("upload", "built/strings.json"))
@@ -518,7 +510,7 @@ function travisAsync() {
     } else {
         return internalBuildTargetAsync()
             .then(() => internalCheckDocsAsync(true))
-            .then(() => npmPublishAsync())
+            .then(() => npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve())
             .then(() => {
                 if (!process.env["PXT_ACCESS_TOKEN"]) {
                     // pull request, don't try to upload target
