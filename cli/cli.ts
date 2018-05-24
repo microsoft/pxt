@@ -497,9 +497,14 @@ function travisAsync() {
     console.log("uploadLocs:", uploadLocs);
     console.log("latest:", latest);
 
+    function npmPublishAsync() {
+        if (!npmPublish) return Promise.resolve();
+        return nodeutil.runNpmAsync("publish", "--tag=staged");
+    }
+
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
-        let p = npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve();
+        let p = npmPublishAsync();
         if (uploadLocs)
             p = p
                 .then(() => execCrowdinAsync("upload", "built/strings.json"))
@@ -510,7 +515,7 @@ function travisAsync() {
     } else {
         return internalBuildTargetAsync()
             .then(() => internalCheckDocsAsync(true))
-            .then(() => npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve())
+            .then(() => npmPublishAsync())
             .then(() => {
                 if (!process.env["PXT_ACCESS_TOKEN"]) {
                     // pull request, don't try to upload target
