@@ -638,7 +638,7 @@ function tagReleaseAsync(parsed: commandParser.ParsedCommand) {
                     // verify that npm version exists
                     if (!registry.versions[v])
                         U.userError(`cannot find npm package ${npmPkg}@${v}`);
-                    nodeutil.runNpmAsync(`dist-tag rm ${npmPkg} dev`);
+                    return nodeutil.runNpmAsync(`dist-tag`, `rm`, `${npmPkg}`, `dev`);
                 })
         })
         // all good update ref file
