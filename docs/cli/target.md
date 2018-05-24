@@ -6,7 +6,7 @@ Installs the compiled editor files.
 
 ## ~ hint
 
-This command only works for editors that have been open sourced.
+This command only works for editors that are open sourced.
 
 ## ~
 
@@ -16,13 +16,13 @@ pxt target TARGET [tag]
 
 ## Description
 
-This commands runs ``npm`` and installs the packaged editor files. You'll need to run this command before being able to build or serve an editor locally.
+This commands runs ``npm`` and installs the packaged editor files. You need to run this command before you can build or serve an editor locally.
 
 ## Flags:
 
 ### TARGETID
 
-This is the identifier for the editor. It is the value of the ``id`` field in the ``pxtarget.json`` file in each editor repository.
+The identifier for the editor. It is the value for the ``id`` field in the ``pxtarget.json`` file which is each editor's repository.
 
 * for micro:bit, ``microbit``
 * for Circuit Playground, ``adafruit``,
@@ -30,4 +30,4 @@ This is the identifier for the editor. It is the value of the ``id`` field in th
 
 ### tag (optional)
 
-Allows to specify an optional NPM distribution tag.
+Allow the addition of an optional NPM distribution tag.
