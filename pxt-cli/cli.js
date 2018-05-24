@@ -59,7 +59,7 @@ function findPxtJs() {
 function target(n,t) {
     if (!fs.existsSync("node_modules"))
         fs.mkdirSync("node_modules")
-    console.log(`Installing pxt-${n} locally; don't worry about package.json warnings.`)
+    console.log(`Installing pxt-${n} ${t || ""} locally; don't worry about package.json warnings.`)
     child_process.execSync(`npm install pxt-${n} ${t ? `--tag ${t}` : ''}`, {
         stdio: "inherit"
     })
