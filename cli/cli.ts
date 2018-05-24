@@ -499,7 +499,7 @@ function travisAsync() {
 
     function npmPublishAsync() {
         if (!npmPublish) return Promise.resolve();
-        return nodeutil.runNpmAsync("publish", "--tag=staged");
+        return nodeutil.runNpmAsync("publish", "--tag=dev");
     }
 
     let pkg = readJson("package.json")
