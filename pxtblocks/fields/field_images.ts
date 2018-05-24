@@ -1,6 +1,7 @@
 namespace pxtblockly {
     export interface FieldImagesOptions extends pxtblockly.FieldImageDropdownOptions {
         sort?: boolean;
+        addLabel?: string;
     }
 
     export class FieldImages extends pxtblockly.FieldImageDropdown implements Blockly.FieldCustom {
@@ -8,10 +9,13 @@ namespace pxtblockly {
 
         private shouldSort_: boolean;
 
+        protected addLabel_: boolean;
+
         constructor(text: string, options: FieldImagesOptions, validator?: Function) {
             super(text, options, validator);
 
             this.shouldSort_ = options.sort;
+            this.addLabel_ = !!options.addLabel;
         }
 
         /**
@@ -93,6 +97,11 @@ namespace pxtblockly {
                 button.setAttribute('data-value', value);
                 buttonImg.setAttribute('data-value', value);
                 button.appendChild(buttonImg);
+                if (this.addLabel_) {
+                    const buttonText = this.createTextNode_(content.alt);
+                    buttonText.setAttribute('data-value', content.alt);
+                    button.appendChild(buttonText);
+                }
                 contentDiv.appendChild(button);
             }
             contentDiv.style.width = (this as any).width_ + 'px';
@@ -123,6 +132,13 @@ namespace pxtblockly {
             } else if (this.box_) {
                 this.box_.setAttribute('fill', this.sourceBlock_.getColourTertiary());
             }
+        }
+
+        private createTextNode_(text: string) {
+            const textSpan = document.createElement('span');
+            textSpan.setAttribute('class', 'blocklyDropdownTextLabel');
+            textSpan.textContent = text;
+            return textSpan;
         }
     }
 }
