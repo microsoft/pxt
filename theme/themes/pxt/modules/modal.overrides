@@ -3,16 +3,17 @@
 *******************************/
 
 
-/* Full screen dialog */
-.modals.dimmer .ui.home.scrolling.modal {
-    width: 100% !important;
-    height: 100% !important;
+/* Full screen modal */
+.modals.dimmer .ui.fullscreen.modal,
+.modals.dimmer .ui.fullscreen.scrolling.modal {
+    position: absolute !important;
     margin: 0 !important;
-    padding: 0 !important;
-}
-
-.ui.home.dimmer {
-    transition: none;
+    border-radius: 0 !important;
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: 'touch';
+    user-select: none;
 }
 
 /* Fix for a semantic hover issue when hovering over the modal's search box */

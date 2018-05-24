@@ -67,8 +67,8 @@
    Form Input
 ---------------*/
 
-@inputPlaceholderColor: lighten(@inputColor, 25);
-@inputPlaceholderFocusColor: lighten(@inputColor, 10);
+@inputPlaceholderColor: lighten(@inputColor, 45);
+@inputPlaceholderFocusColor: lighten(@inputColor, 35);
 
 /*-------------------
      Neutral Text
@@ -167,6 +167,13 @@
 
 @fullscreenBackgroundGradientStart: @mainMenuInvertedBackground;
 @fullscreenBackgroundGradientEnd: @simulatorBackground;
+
+/*-------------------
+   Extensions
+--------------------*/
+
+@extensionsHeaderBackground: @mainMenuInvertedBackground;
+@extensionsBackground: @blocklySvgColor;
 
 /*-------------------
    Side Docs
