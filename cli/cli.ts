@@ -5016,7 +5016,7 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
     let errors = 0;
     let todo: string[];
     const repos: pxt.Map<{ fullname: string; tag: string }> = {};
-    const pkgsroot = path.join("built", "ghpkgs");
+    const pkgsroot = path.join("temp", "ghpkgs");
 
     function gitAsync(dir: string, ...args: string[]) {
         return nodeutil.spawnAsync({
