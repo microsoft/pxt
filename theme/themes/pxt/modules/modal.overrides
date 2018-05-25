@@ -8,6 +8,8 @@
 .modals.dimmer .ui.fullscreen.scrolling.modal {
     position: absolute !important;
     margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
     border-radius: 0 !important;
     height: 100%;
     width: 100%;
