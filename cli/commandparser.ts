@@ -96,7 +96,6 @@ export class CommandParser {
 
         for (let i = 1; i < args.length; i++) {
             const match = argRegex.exec(args[i]);
-
             if (!match) {
                 continue;
             }
@@ -107,15 +106,16 @@ export class CommandParser {
                 }
 
                 const flagName = command._aliasMap[match[2]];
-
-                if (!flagName) {
-                    if (match[2] == "debug" || match[2] == "d") {
-                        pxt.options.debug = true;
-                        pxt.debug = console.log;
+                const debugFlag = flagName || match[2];
+                if (debugFlag == "debug" || debugFlag == "d" || debugFlag == "dbg") {
+                    pxt.options.debug = true;
+                    pxt.debug = console.log;
+                    pxt.log(`debug mode`);
+                    if (!flagName)
                         continue;
-                    }
-                    throw new Error(`Unrecognized flag '${match[2]}' for command '${command.name}'`)
                 }
+                if (!flagName)
+                    throw new Error(`Unrecognized flag '${match[2]}' for command '${command.name}'`)
 
                 const flagDefinition = command.flags[flagName];
 

@@ -276,7 +276,9 @@ export function readPkgConfig(dir: string) {
             }
         }
     }
-    if (!js.targetVersions) js.targetVersions = pxt.appTarget.versions;
+    // don't inject version number
+    // as they get serialized later on
+    // if (!js.targetVersions) js.targetVersions = pxt.appTarget.versions;
     return js
 }
 
@@ -352,6 +354,14 @@ export function existsDirSync(name: string): boolean {
     }
     catch (e) {
         return false;
+    }
+}
+
+export function writeFileSync(path: string, data: any, options?: { encoding?: string | null; mode?: number | string; flag?: string; } | string | null) {
+    fs.writeFileSync(path, data, options);
+    if (pxt.options.debug) {
+        const stats = fs.statSync(path);
+        pxt.log(`  + ${path} ${stats.size > 1000000 ? (stats.size / 1000000).toFixed(2) + ' m' : stats.size > 1000 ? (stats.size / 1000).toFixed(2) + 'k' : stats.size}b`)
     }
 }
 
