@@ -359,8 +359,10 @@ export function existsDirSync(name: string): boolean {
 
 export function writeFileSync(path: string, data: any, options?: { encoding?: string | null; mode?: number | string; flag?: string; } | string | null) {
     fs.writeFileSync(path, data, options);
-    const stats = fs.statSync(path);
-    pxt.log(`  + ${path} ${stats.size > 1000000 ? (stats.size / 1000000).toFixed(2) + ' m' : stats.size > 1000 ? (stats.size / 1000).toFixed(2) + 'k' : stats.size}b`)
+    if (pxt.options.debug) {
+        const stats = fs.statSync(path);
+        pxt.log(`  + ${path} ${stats.size > 1000000 ? (stats.size / 1000000).toFixed(2) + ' m' : stats.size > 1000 ? (stats.size / 1000).toFixed(2) + 'k' : stats.size}b`)
+    }
 }
 
 export function openUrl(startUrl: string, browser: string) {
