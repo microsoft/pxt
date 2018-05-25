@@ -2,7 +2,7 @@
 
 ## Web application
 
-**[MakeCode](@homeurl@)** is an **HTML5 web application** that's automatically cached locally when first viewed in your browser. After the web app is loaded and once the code blocks have compiled for the **first** time, you will have everything you need to continue working without an internet connection. This is true for the all of the blocks you see in the editor when it's first loaded. If you decide to add a [package](/packages), it's possible that you'll again need to connect to the internet to allow the code in the new package to compile.
+**[MakeCode](@homeurl@)** is an **HTML5 web application** that's automatically cached locally (saved to your computer or device) when first viewed in your browser. After the web app has loaded you will have everything you need to continue working without an internet connection. If you decide to add a [package](/packages), it's possible that you'll again need to connect to the internet to allow the code in the new package to compile.
 
 ### How does it work?
 
