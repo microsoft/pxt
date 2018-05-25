@@ -349,7 +349,7 @@ namespace pxt {
                     }
                 }
             }
-            if (targetVersion && !this.config.targetVersions) {
+            if (targetVersion) {
                 this.config.targetVersions = {
                     target: targetVersion
                 };
