@@ -626,9 +626,9 @@ function tagReleaseAsync(parsed: commandParser.ParsedCommand) {
     // check that tag exists in github
     pxt.log(`checking github ${pxt.appTarget.appTheme.githubUrl} tag v${v}`);
     return U.requestAsync({
-            url: pxt.appTarget.appTheme.githubUrl.replace(/\/$/, '') + "/releases/tag/v" + v,
-            method: "GET"
-        })
+        url: pxt.appTarget.appTheme.githubUrl.replace(/\/$/, '') + "/releases/tag/v" + v,
+        method: "GET"
+    })
         // check that release exists in npm
         .then(() => {
             if (!npm) return Promise.resolve();
@@ -2414,7 +2414,6 @@ class Host
             }
         }
         check(p)
-
         if (U.endsWith(filename, ".uf2"))
             fs.writeFileSync(p, contents, { encoding: "base64" })
         else if (U.endsWith(filename, ".elf"))
@@ -2424,6 +2423,8 @@ class Host
             })
         else
             fs.writeFileSync(p, contents, { encoding: "utf8" })
+        const stats = fs.statSync(filename);
+        pxt.log(`  + ${filename} ${stats.size > 1000000 ? (stats.size / 1000000).toFixed(2) + ' m' : stats.size > 1000 ? (stats.size / 1000).toFixed(2) + 'k' : stats.size}b`)
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
@@ -3668,6 +3669,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
     let compileOptions: pxtc.CompileOptions;
     let compileResult: pxtc.CompileResult;
     ensurePkgDir();
+    pxt.log(`building ${process.cwd()}`)
     return prepBuildOptionsAsync(buildOpts.mode)
         .then((opts) => {
             compileOptions = opts;

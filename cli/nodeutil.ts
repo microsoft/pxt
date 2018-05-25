@@ -276,7 +276,9 @@ export function readPkgConfig(dir: string) {
             }
         }
     }
-    if (!js.targetVersions) js.targetVersions = pxt.appTarget.versions;
+    // don't inject version number
+    // as they get serialized later on
+    // if (!js.targetVersions) js.targetVersions = pxt.appTarget.versions;
     return js
 }
 
