@@ -354,6 +354,7 @@ declare namespace ts.pxtc {
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
         name?: string;
+        warnDiv?: boolean; // warn when emitting division operator
 
         alwaysDecompileOnStart?: boolean; // decompiler only
 

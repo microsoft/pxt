@@ -3644,6 +3644,7 @@ interface BuildCoreOptions {
     mode: BuildOption;
 
     debug?: boolean;
+    compat?: boolean;
 
     // docs
     locs?: boolean;
@@ -3671,6 +3672,10 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
     return prepBuildOptionsAsync(buildOpts.mode)
         .then((opts) => {
             compileOptions = opts;
+            if (buildOpts.compat) {
+                pxt.debug(`warning on division operators`);
+                opts.warnDiv = true;
+            }
             opts.breakpoints = buildOpts.mode === BuildOption.DebugSim;
             if (buildOpts.debug) {
                 opts.breakpoints = true
@@ -4241,8 +4246,8 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
     if (parsed.flags["debug"]) {
         mode = BuildOption.DebugSim;
     }
-
-    return buildCoreAsync({ mode })
+    const compat = !!parsed.flags["compat"];
+    return buildCoreAsync({ mode, compat })
         .then((compileOpts) => { });
 }
 
@@ -5043,7 +5048,7 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
         const pkgdir = path.join(pkgsroot, pkgpgh);
         return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
             .then(() => pxtAsync(pkgdir, "install"))
-            .then(() => pxtAsync(pkgdir, "build"))
+            .then(() => pxtAsync(pkgdir, "build", "--compat"))
             .catch(e => {
                 errors++;
                 pxt.log(e);
@@ -5129,7 +5134,8 @@ function initCommands() {
         onlineHelp: true,
         flags: {
             cloud: { description: "Force build to happen in the cloud" },
-            debug: { description: "Emit debug information with build" }
+            debug: { description: "Emit debug information with build" },
+            compat: { description: "Perform additional compatilibity checks"}
         }
     }, buildAsync);
 
