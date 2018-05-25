@@ -1834,7 +1834,9 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                 }
 
                 if (fileName === pxt.CONFIG_NAME) {
-                    newProject.config = nodeutil.readPkgConfig(projectPath)
+                    newProject.config = nodeutil.readPkgConfig(projectPath);
+                    if (!newProject.config.targetVersions)
+                        newProject.config.targetVersions = pxt.appTarget.versions;
                     U.iterMap(newProject.config.dependencies, (k, v) => {
                         if (/^file:/.test(v)) {
                             newProject.config.dependencies[k] = "*";
