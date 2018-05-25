@@ -5002,12 +5002,13 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
     return Promise.resolve();
 }
 
-function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void> {
+function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     pxt.log(`testing github packages`);
     if (!fs.existsSync("targetconfig.json")) {
         pxt.log(`targetconfig.json not found`);
         return Promise.resolve();
     }
+    const compat = !!parsed.flags["compat"];
     const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
     const packages = targetConfig.packages;
     if (!packages) {
@@ -5048,7 +5049,7 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
         const pkgdir = path.join(pkgsroot, pkgpgh);
         return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
             .then(() => pxtAsync(pkgdir, "install"))
-            .then(() => pxtAsync(pkgdir, "build", "--compat"))
+            .then(() => compat ? pxtAsync(pkgdir, "build", "--compat") : pxtAsync(pkgdir, "build"))
             .catch(e => {
                 errors++;
                 pxt.log(e);
@@ -5437,7 +5438,13 @@ function initCommands() {
         advanced: true
     }, gendocsAsync);
 
-    simpleCmd("testghpkgs", "Download and build github packages", testGithubPackagesAsync);
+    p.defineCommand({
+        name: "testghpkgs",
+        help: "Download and build approved github packages",
+        flags: {
+            compat: { description: "Execute additional compat checks"}
+        }
+    }, testGithubPackagesAsync);
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);
