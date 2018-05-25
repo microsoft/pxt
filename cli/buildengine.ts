@@ -203,7 +203,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
             if (fs.existsSync(fn))
                 existing = fs.readFileSync(fn, "utf8")
             if (existing !== v)
-                fs.writeFileSync(fn, v)
+                nodeutil.writeFileSync(fn, v)
         })
     }
 

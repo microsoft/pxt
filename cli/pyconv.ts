@@ -1955,7 +1955,7 @@ export function convertAsync(fns: string[]) {
         .then(buf => {
             pxt.debug(`analyzing python AST (${buf.length} bytes)`)
             let js = JSON.parse(buf.toString("utf8"))
-            fs.writeFileSync("pyast.json", JSON.stringify(js, null, 2), { encoding: "utf8" })
+            nodeutil.writeFileSync("pyast.json", JSON.stringify(js, null, 2), { encoding: "utf8" })
             const rec = (v: any): any => {
                 if (Array.isArray(v)) {
                     for (let i = 0; i < v.length; ++i)

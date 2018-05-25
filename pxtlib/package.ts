@@ -349,7 +349,7 @@ namespace pxt {
                     }
                 }
             }
-            if (targetVersion) {
+            if (targetVersion && !this.config.targetVersions) {
                 this.config.targetVersions = {
                     target: targetVersion
                 };
@@ -412,13 +412,12 @@ namespace pxt {
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
 
-            initPromise = initPromise.then(() => {
-                if (this.level == 0) {
+            if (isInstall && this.level == 0)
+                initPromise = initPromise.then(() => {
                     pxt.debug(`upgrading files, target version ${this.targetVersion()}`)
                     this.getFiles().filter(fn => /\.ts$/.test(fn))
                         .forEach(file => this.upgradeFile(file, this.readFile(file)));
-                }
-            })
+                })
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
                 if (this.level == 0)
@@ -759,6 +758,7 @@ namespace pxt {
                     let cfg = U.clone(this.config)
                     delete cfg.installedVersion
                     delete cfg.additionalFilePath
+                    if (!cfg.targetVersions) cfg.targetVersions = pxt.appTarget.versions;
                     U.iterMap(cfg.dependencies, (k, v) => {
                         if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {
                             cfg.dependencies[k] = "*"

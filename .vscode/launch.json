@@ -2,7 +2,26 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "DebugBuild",
+			"name": "DebugBuildTarget",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": ["buildtarget"],
+			"cwd": "${workspaceRoot}/../pxt-adafruit",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
+			"name": "DebugBuildPackage",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
