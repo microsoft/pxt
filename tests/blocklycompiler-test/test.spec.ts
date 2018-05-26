@@ -219,6 +219,10 @@ function blockTestAsync(name: string) {
             const compiledTs = res.source.trim().replace(/\s+/g, " ");
             const baselineTs = tsFile.trim().replace(/\s+/g, " ");
 
+            if (compiledTs !== baselineTs) {
+                console.log(compiledTs);
+            }
+
             chai.assert(compiledTs === baselineTs, "Compiled result did not match baseline");
         }, err => fail('Compiling blocks failed'));
 }
@@ -355,6 +359,10 @@ describe("blockly compiler", function() {
 
         it("should implicitly convert arguments marked as toString to a string", done => {
             blockTestAsync("to_string_arg").then(done, done);
+        });
+
+        it("should convert handler parameters to draggable variables", done => {
+            blockTestAsync("draggable_parameters").then(done, done);
         });
     });
 
