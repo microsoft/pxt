@@ -330,15 +330,16 @@ function updateCodalBuildAsync() {
     let cs = pxt.appTarget.compileService
     return codalGitAsync("checkout", cs.gittag)
         .then(
-        () => /^v\d+/.test(cs.gittag) ? Promise.resolve() : codalGitAsync("pull"),
-        e =>
-            codalGitAsync("checkout", "master")
-                .then(() => codalGitAsync("pull")))
+            () => /^v\d+/.test(cs.gittag) ? Promise.resolve() : codalGitAsync("pull"),
+            e =>
+                codalGitAsync("checkout", "master")
+                    .then(() => codalGitAsync("pull")))
         .then(() => codalGitAsync("checkout", cs.gittag))
 }
 
 // TODO: DAL specific code should be lifted out
-export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage, force = false) {
+export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage, rebuild = false,
+    create = false) {
     let constName = "dal.d.ts"
     let vals: Map<string> = {}
     let done: Map<string> = {}
@@ -431,8 +432,8 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         return outp
     }
 
-    if (mainPkg && (force ||
-        (mainPkg.getFiles().indexOf(constName) >= 0 && !fs.existsSync(constName)))) {
+    if (mainPkg && (create ||
+        (mainPkg.getFiles().indexOf(constName) >= 0 && (rebuild || !fs.existsSync(constName))))) {
         pxt.log(`rebuilding ${constName}...`)
         let files: string[] = []
         let foundConfig = false

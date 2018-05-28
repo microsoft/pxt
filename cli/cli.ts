@@ -3588,7 +3588,7 @@ function gdbAsync(c: commandParser.ParsedCommand) {
 function buildDalDTSAsync() {
     ensurePkgDir()
     return mainPkg.loadAsync()
-        .then(() => build.buildDalConst(build.thisBuild, mainPkg, true))
+        .then(() => build.buildDalConst(build.thisBuild, mainPkg, true, true))
 }
 
 function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult> {
