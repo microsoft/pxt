@@ -4334,6 +4334,7 @@ ${lbl}: .short 0xffff
         checksumBlock: number[];
         numStmts = 1;
         commSize = 0;
+        packedSource: string;
 
         strings: pxt.Map<string> = {};
         hexlits: pxt.Map<string> = {};

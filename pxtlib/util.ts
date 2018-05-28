@@ -546,7 +546,7 @@ namespace ts.pxtc.Util {
         return res;
     }
 
-    export function uint8ArrayToString(input: Uint8Array) {
+    export function uint8ArrayToString(input: ArrayLike<number>) {
         let len = input.length;
         let res = ""
         for (let i = 0; i < len; ++i)

@@ -509,6 +509,24 @@ namespace ts.pxtc {
                     Util.pushRange(myhex, app)
             }
 
+            if (bin.packedSource) {
+                if (uf2) {
+                    U.userError("TODO")
+                } else {
+                    upper = 0x20000000
+                    addr = 0
+                    myhex.push(hexBytes([0x02, 0x00, 0x00, 0x04, upper >> 8, upper & 0xff]))
+                    for (let i = 0; i < bin.packedSource.length; i += 16) {
+                        let bytes = [0x10, (addr >> 8) & 0xff, addr & 0xff, 0]
+                        for (let j = 0; j < 16; ++j) {
+                            bytes.push((bin.packedSource.charCodeAt(i + j) || 0) & 0xff)
+                        }
+                        myhex.push(hexBytes(bytes))
+                        addr += 16
+                    }
+                }
+            }
+
             if (uf2)
                 return [UF2.serializeFile(uf2)]
             else
@@ -720,46 +738,56 @@ ${hex.hexPrelude()}
         }
     }
 
-    function addSource(meta: string, binstring: string) {
+    function addSource(blob: string) {
+        let res = ""
+
+        for (let i = 0; i < blob.length; ++i) {
+            let v = blob.charCodeAt(i) & 0xff
+            if (v <= 0xf)
+                res += "0" + v.toString(16)
+            else
+                res += v.toString(16)
+        }
+
+        return `
+    .balign 16
+_stored_program: .hex ${res}
+`
+    }
+
+    function packSource(meta: string, binstring: string) {
         let metablob = Util.toUTF8(meta)
         let totallen = metablob.length + binstring.length
 
-        if (totallen > 40000) {
-            return "; program too long\n";
-        }
+        let res = "\x41\x14\x0E\x2F\xB8\x2F\xA2\xBB"
 
-        let str =
-            `
-    .balign 16
-    .hex 41140E2FB82FA2BB
-    .short ${metablob.length}
-    .short ${binstring.length}
-    .short 0, 0   ; future use
+        res += U.uint8ArrayToString([
+            metablob.length & 0xff, metablob.length >> 8,
+            binstring.length & 0xff, binstring.length >> 8,
+            0, 0, 0, 0
+        ])
 
-_stored_program: .string "`
+        res += metablob
+        res += binstring
 
-        let addblob = (b: string) => {
-            for (let i = 0; i < b.length; ++i) {
-                let v = b.charCodeAt(i) & 0xff
-                if (v <= 0xf)
-                    str += "\\x0" + v.toString(16)
-                else
-                    str += "\\x" + v.toString(16)
-            }
-        }
+        if (res.length % 2)
+            res += "\x00"
 
-        addblob(metablob)
-        addblob(binstring)
-
-        str += "\"\n"
-        return str
+        return res
     }
 
     export function processorEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
         let src = serialize(bin, opts)
         src = patchSrcHash(bin, src)
-        if (opts.embedBlob)
-            src += addSource(opts.embedMeta, ts.pxtc.decodeBase64(opts.embedBlob))
+        let sourceAtTheEnd = false
+        if (opts.embedBlob) {
+            bin.packedSource = packSource(opts.embedMeta, ts.pxtc.decodeBase64(opts.embedBlob))
+            // TODO more dynamic check for source size
+            if (!bin.target.noSourceInFlash && bin.packedSource.length < 40000) {
+                src += addSource(bin.packedSource)
+                bin.packedSource = null // no need to append anymore
+            }
+        }
         let checksumWords = 8
         let pageSize = hex.flashCodeAlign(opts.target)
         if (opts.target.flashChecksumAddr) {
