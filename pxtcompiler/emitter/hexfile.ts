@@ -823,7 +823,6 @@ __flash_checksums:
 `
         }
         bin.writeFile(pxtc.BINARY_ASM, src)
-        bin.numStmts = cres.breakpoints.length
         let res = assemble(opts.target, bin, src)
         if (res.thumbFile.commPtr)
             bin.commSize = res.thumbFile.commPtr - hex.commBase
