@@ -445,6 +445,7 @@ namespace pxt.cpp {
                         return "boolean";
                     case "StringData*": return "string";
                     case "String": return "string";
+                    case "ImageLiteral_": return "string";
                     case "ImageLiteral": return "string";
                     case "Action": return "() => void";
 
@@ -478,6 +479,9 @@ namespace pxt.cpp {
                     case "TValue": return "T";
                     case "bool": return "B";
                     case "double": return "D"
+
+                    case "ImageLiteral_":
+                        return "T"
 
                     default:
                         if (U.lookup(knownEnums, tp))

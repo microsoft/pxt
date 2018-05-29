@@ -3322,6 +3322,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitBrk(node: Node) {
+            bin.numStmts++
             if (!opts.breakpoints)
                 return
             let src = getSourceFileOfNode(node)
@@ -4334,6 +4335,7 @@ ${lbl}: .short 0xffff
         checksumBlock: number[];
         numStmts = 1;
         commSize = 0;
+        packedSource: string;
 
         strings: pxt.Map<string> = {};
         hexlits: pxt.Map<string> = {};
@@ -4348,6 +4350,7 @@ ${lbl}: .short 0xffff
             this.strings = {}
             this.hexlits = {}
             this.doubles = {}
+            this.numStmts = 0
         }
 
         addProc(proc: ir.Procedure) {

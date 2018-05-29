@@ -507,6 +507,14 @@ namespace ts.pxtc.thumb {
                 // RULE: beq .next; b .somewhere; .next: -> bne .somewhere
                 ln.update("bne " + lnNext.words[1])
                 lnNext.update("")
+            } else if (lnop == "push" && ln.numArgs[0] == 0x4000 && lnNext.getOp() == "push") {
+                // RULE: push {lr}; push {X, ...} -> push {lr, X, ...}
+                ln.update(lnNext.text.replace("{", "{lr, "))
+                lnNext.update("")
+            } else if (lnop == "pop" && lnNext.getOp() == "pop" && lnNext.numArgs[0] == 0x8000) {
+                // RULE: pop {X, ...}; pop {pc} -> push {X, ..., pc}
+                ln.update(ln.text.replace("}", ", pc}"))
+                lnNext.update("")
             } else if (lnop == "push" && lnNext.getOp() == "pop" && ln.numArgs[0] == lnNext.numArgs[0]) {
                 // RULE: push {X}; pop {X} -> nothing
                 assert(ln.numArgs[0] > 0)
