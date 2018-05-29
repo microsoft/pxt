@@ -145,6 +145,7 @@ namespace pxt {
         runUrl?: string; // "/beta---run"
         docsUrl?: string; // "/beta---docs"
         isStatic?: boolean;
+        verprefix?: string; // "v1"
     }
 
     export function localWebConfig() {
