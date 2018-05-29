@@ -128,7 +128,6 @@ namespace pxt {
 
     export interface WebConfig {
         relprefix: string; // "/beta---",
-        verprefix: string; // "v1"
         workerjs: string;  // "/beta---worker",
         monacoworkerjs: string; // "/beta---monacoworker",
         pxtVersion: string; // "?",
@@ -146,6 +145,7 @@ namespace pxt {
         runUrl?: string; // "/beta---run"
         docsUrl?: string; // "/beta---docs"
         isStatic?: boolean;
+        verprefix?: string; // "v1"
     }
 
     export function localWebConfig() {
