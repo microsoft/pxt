@@ -978,6 +978,8 @@ namespace ts.pxtc {
 
             hex.setupFor(opts.target, opts.extinfo || emptyExtInfo(), opts.hexinfo);
             hex.setupInlineAssembly(opts);
+        } else {
+            opts.target.taggedInts = false
         }
 
         let bin = new Binary()
