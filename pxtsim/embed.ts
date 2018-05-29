@@ -31,12 +31,14 @@ namespace pxsim {
     }
 
     export interface SimulatorDocMessage extends SimulatorMessage {
+        type: "localtoken" | "docfailed";
         docType?: string;
         src?: string;
         localToken?: string;
     }
 
     export interface SimulatorFileLoadedMessage extends SimulatorMessage {
+        type: "fileloaded";
         name: string;
         locale: string;
         content?: string;
@@ -52,9 +54,11 @@ namespace pxsim {
     }
 
     export interface SimulatorDocsReadyMessage extends SimulatorMessage {
+        type: "popoutcomplete";
     }
 
     export interface SimulatorStateMessage extends SimulatorMessage {
+        type: "status";
         frameid?: string;
         runtimeid?: string;
         state: string;
@@ -124,6 +128,12 @@ namespace pxsim {
         type: "tutorial";
         tutorial: string;
         subtype: string;
+    }
+
+    export interface ImportFileMessage extends SimulatorMessage {
+        type: "importfile";
+        filename: string;
+        parts: (string | ArrayBuffer)[];
     }
 
     export interface TutorialStepInfo {

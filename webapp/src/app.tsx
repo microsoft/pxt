@@ -2648,17 +2648,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 ipcRenderer.sendToHost("sendToApp", ev.data);
             else if (window.parent && window != window.parent)
                 window.parent.postMessage(ev.data, "*");
+            return;
         }
 
         if (m.type == "tutorial" || m.type == "popoutcomplete") {
             if (theEditor && theEditor.editor)
                 theEditor.handleMessage(m);
+            return;
         }
         if (m.type === "sidedocready" && Cloud.isLocalHost() && Cloud.localToken) {
             container.SideDocs.notify({
                 type: "localtoken",
                 localToken: Cloud.localToken
             } as pxsim.SimulatorDocMessage);
+            return;
+        }
+        if (m.type == "importfile") {
+            const msg = m as pxsim.ImportFileMessage;
+            if (theEditor)
+                theEditor.importFile(new File(msg.parts, msg.filename));
+            return;
         }
     }, false);
 })
