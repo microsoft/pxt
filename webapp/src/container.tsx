@@ -275,6 +275,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     }
 
     brandIconClick() {
+        const hasHome = !pxt.shell.isControllerMode();
+        if (!hasHome) return;
+
         pxt.tickEvent("menu.brand", undefined, { interactiveConsent: true });
         this.props.parent.showExitAndSaveDialog();
     }
@@ -323,7 +326,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         if (home) return <div />; // Don't render if we're on the home screen
 
         const targetTheme = pxt.appTarget.appTheme;
-        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
+        const isController = pxt.shell.isControllerMode();
+        const homeEnabled = !isController;
+        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController;
         const sandbox = pxt.shell.isSandboxMode();
         const tutorialOptions = this.props.parent.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
@@ -344,14 +349,14 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
             {!sandbox ? <div className="left menu">
-                <a aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={this.brandIconClick} onKeyDown={sui.fireClickOnEnter}>
+                <a href={isController ? targetTheme.logoUrl : undefined} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={this.brandIconClick} onKeyDown={sui.fireClickOnEnter}>
                     {logo || portraitLogo
                         ? <img className={`ui logo ${logo ? " portrait hide" : ''}`} src={logo || portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
                         : <span className="name">{targetTheme.boardName}</span>}
                     {portraitLogo ? (<img className='ui mini image portrait only' src={portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
                 </a>
                 {targetTheme.betaUrl ? <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
-                {!inTutorial ? <sui.Item className="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={this.goHome} /> : null}
+                {!inTutorial && homeEnabled ? <sui.Item className="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={this.goHome} /> : null}
                 {!inTutorial && header && sharingEnabled ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}
                 {inTutorial ? <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
             </div> : <div className="left menu">
