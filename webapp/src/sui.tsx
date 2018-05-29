@@ -64,7 +64,7 @@ export function fireClickOnEnter(e: React.KeyboardEvent<HTMLElement>): void {
 export class UIElement<T, S> extends data.Component<T, S> {
 }
 
-export class StatelessUIElement<T> extends data.Component<T, {}> {
+export class StatelessUIElement<T> extends data.PureComponent<T, {}> {
 }
 
 ///////////////////////////////////////////////////////////
@@ -435,7 +435,7 @@ export class Field extends data.Component<{
 ////////////             Input                /////////////
 ///////////////////////////////////////////////////////////
 
-export class Input extends data.Component<{
+export interface InputProps {
     label?: string;
     inputLabel?: string;
     class?: string;
@@ -451,7 +451,23 @@ export class Input extends data.Component<{
     id?: string;
     ariaLabel?: string;
     autoFocus?: boolean;
-}, { value: string }> {
+}
+
+export class Input extends data.Component<InputProps, { value: string }> {
+    constructor(props: InputProps) {
+        super(props);
+        this.state = {
+            value: props.value
+        }
+
+        this.copy = this.copy.bind(this);
+        this.handleClick = this.handleClick.bind(this);
+        this.handleChange = this.handleChange.bind(this);
+    }
+
+    componentWillReceiveProps(newProps: InputProps) {
+        this.setState({ value: newProps.value });
+    }
 
     clearValue() {
         this.setState({ value: undefined });
@@ -478,22 +494,28 @@ export class Input extends data.Component<{
         }
     }
 
+    handleClick(e: React.MouseEvent<any>) {
+        if (this.props.selectOnClick) {
+            (e.target as any).setSelectionRange(0, 9999);
+        }
+    }
+
+    handleChange(e: React.ChangeEvent<any>) {
+        const newValue = (e.target as any).value;
+        if (!this.props.readOnly && (!this.state || this.state.value !== newValue)) {
+            this.setState({ value: newValue })
+        }
+        if (this.props.onChange) {
+            this.props.onChange(newValue);
+        }
+    }
+
     renderCore() {
         let p = this.props
         let copyBtn = p.copy && document.queryCommandSupported('copy')
-            ? <Button className="ui right labeled primary icon button" text={lf("Copy")} icon="copy" onClick={() => this.copy()} />
+            ? <Button className="ui right labeled primary icon button" text={lf("Copy")} icon="copy" onClick={this.copy} />
             : null;
-
-        let value = (this.state && this.state.value !== undefined) ? this.state.value : p.value;
-
-        const onChange = (newValue: string) => {
-            if (!p.readOnly && (!this.state || this.state.value !== newValue)) {
-                this.setState({ value: newValue })
-            }
-            if (p.onChange) {
-                p.onChange(newValue);
-            }
-        };
+        const { value } = this.state;
 
         return (
             <Field ariaLabel={p.ariaLabel} htmlFor={p.id} label={p.label}>
@@ -504,19 +526,19 @@ export class Input extends data.Component<{
                         id={p.id}
                         className={p.class || ""}
                         type={p.type || "text"}
-                        placeholder={p.placeholder} value={value}
+                        placeholder={p.placeholder} value={value || ''}
                         readOnly={!!p.readOnly}
-                        onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
-                        onChange={v => onChange((v.target as any).value)} />
+                        onClick={this.handleClick}
+                        onChange={this.handleChange} />
                         : <textarea
                             id={p.id}
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "")}
                             rows={p.lines}
                             placeholder={p.placeholder}
-                            value={value}
+                            value={value || ''}
                             readOnly={!!p.readOnly}
-                            onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
-                            onChange={v => onChange((v.target as any).value)}>
+                            onClick={this.handleClick}
+                            onChange={this.handleChange}>
                         </textarea>}
                     {copyBtn}
                 </div>
@@ -529,20 +551,33 @@ export class Input extends data.Component<{
 ////////////           Checkbox               /////////////
 ///////////////////////////////////////////////////////////
 
-export class Checkbox extends data.Component<{
+export interface CheckBoxProps {
     label?: string;
     inputLabel?: string;
     class?: string;
     checked?: boolean;
     onChange: (v: string) => void;
-}, {}> {
+}
+
+export class Checkbox extends data.Component<CheckBoxProps, {}> {
+    constructor(props: CheckBoxProps) {
+        super(props);
+        this.state = {
+        }
+
+        this.handleChange = this.handleChange.bind(this);
+    }
+
+    handleChange(v: React.ChangeEvent<any>) {
+        this.props.onChange(v.target.value)
+    }
 
     renderCore() {
         const p = this.props;
         return <Field label={p.label}>
             <div className={"ui toggle checkbox"}>
-                <input type="checkbox" checked={p.checked}
-                    onChange={v => p.onChange((v.target as any).value)} />
+                <input type="checkbox" checked={p.checked} aria-checked={p.checked}
+                    onChange={this.handleChange} />
                 {p.inputLabel ? <label>{p.inputLabel}</label> : undefined}
             </div>
         </Field>;
@@ -561,7 +596,7 @@ export interface IconProps extends UiProps {
 
 export const Icon: React.StatelessComponent<IconProps> = (props: IconProps) => {
     const { icon, className, onClick, onKeyDown, children, ...rest } = props;
-    return <i className={`icon ${icon} ${!!className}`}
+    return <i className={`icon ${icon} ${className ? className : ''}`}
         onClick={onClick}
         onKeyDown={onKeyDown || fireClickOnEnter}
         aria-hidden={true} role="presentation" {...rest}>
@@ -656,7 +691,7 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
         ]);
 
         if (children) {
-            return <div className={classes} onClick={this.handleClick}>{children}</div>
+            return <div role="menuitem" className={classes} onClick={this.handleClick}>{children}</div>
         }
 
         return (
@@ -843,6 +878,9 @@ export class Modal extends React.Component<ModalProps, ModalState> {
         this.id = ts.pxtc.Util.guidGen();
         this.state = {
         }
+
+        this.onRequestClose = this.onRequestClose.bind(this);
+        this.afterOpen = this.afterOpen.bind(this);
     }
 
     private afterOpen() {
@@ -905,13 +943,20 @@ export class Modal extends React.Component<ModalProps, ModalState> {
         this.animationRequestId = requestAnimationFrame(this.setPositionAndClassNames);
     }
 
+    private onRequestClose() {
+        const { onClose } = this.props;
+        this.onClose();
+        onClose();
+    }
+
     render() {
         const { isOpen, size, longer, basic, className,
             onClose, closeIcon, children,
             header, headerClass, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
             shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, ...rest } = this.props;
-        const { marginTop, scrolling, mountClasses } = this.state
+        const { marginTop, scrolling, mountClasses } = this.state;
+        const isFullscreen = size == 'fullscreen';
 
         const classes = cx([
             'ui',
@@ -923,6 +968,10 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             'modal transition visible active',
             className
         ]);
+        const portalClassName = cx([
+            core.highContrast ? 'hc' : '',
+            mountClasses
+        ])
         const closeIconName = closeIcon === true ? 'close' : closeIcon as string;
         const aria = {
             labelledby: header ? this.id + 'title' : undefined,
@@ -933,16 +982,12 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                 marginTop: marginTop
             }
         }
-        const onRequestClose = () => {
-            this.onClose();
-            onClose();
-        }
         return <ReactModal isOpen={isOpen} ref="modal" appElement={appElement}
-            onRequestClose={onRequestClose} onAfterOpen={this.afterOpen.bind(this)}
+            onRequestClose={this.onRequestClose} onAfterOpen={this.afterOpen}
             shouldReturnFocusAfterClose={true} shouldFocusAfterRender={shouldFocusAfterRender}
             shouldCloseOnEsc={shouldCloseOnEsc || closeOnEscape}
             shouldCloseOnOverlayClick={shouldCloseOnOverlayClick || (closeOnDocumentClick || closeOnDimmerClick)}
-            portalClassName={mountClasses}
+            portalClassName={portalClassName}
             overlayClassName={`ui page modals dimmer transition ${isOpen ? 'visible active' : ''}`}
             className={classes}
             style={customStyles}
@@ -950,7 +995,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             {header ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
                 {header}
                 {helpUrl ?
-                    <a className={`ui huge icon clear`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)}>
+                    <a className={`ui huge icon clear helpIcon`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)}>
                         <Icon icon="help" />
                     </a>
                     : undefined}
@@ -972,22 +1017,44 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                                 target={!action.fileName ? '_blank' : undefined}
                                 download={action.fileName ? pxt.Util.htmlEscape(action.fileName) : undefined}
                             />
-                            : <Button
+                            : <ModalButtonElement
                                 key={`action_${action.label}`}
-                                icon={action.icon}
-                                text={action.label}
-                                className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""}`}
-                                onClick={() => {
-                                    action.onclick();
-                                }}
-                                onKeyDown={fireClickOnEnter} />
+                                {...action} />
                     )}
                 </div> : undefined}
-            {closeIcon ? <div className="closeIcon" tabIndex={0}
+            {closeIcon && !isFullscreen ? <div role="button" className="closeIcon" tabIndex={0}
                 onClick={onClose}
                 onKeyDown={fireClickOnEnter}
             ><Icon icon="close remove circle" /> </div> : undefined}
+            {isFullscreen ?
+                <Button text={lf("Go back")} title={lf("Go back to the editor")} className="icon circular small editorBack left labeled" ariaLabel={lf("Go back")} onClick={onClose} onKeyDown={fireClickOnEnter}>
+                    <Icon icon="arrow left" />
+                </Button> : undefined}
         </ReactModal>
+    }
+}
+
+class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
+    constructor(props: ModalButton) {
+        super(props);
+        this.state = {
+        }
+
+        this.handleClick = this.handleClick.bind(this);
+    }
+
+    handleClick() {
+        this.props.onclick();
+    }
+
+    renderCore() {
+        const action = this.props;
+        return <Button
+            icon={action.icon}
+            text={action.label}
+            className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""}`}
+            onClick={this.handleClick}
+            onKeyDown={fireClickOnEnter} />
     }
 }
 

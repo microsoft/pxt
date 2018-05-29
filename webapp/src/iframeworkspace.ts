@@ -18,8 +18,8 @@ function getTextAsync(id: string): Promise<ScriptText> {
     return mem.provider.getTextAsync(id);
 }
 
-function initAsync(trg: string): Promise<void> {
-    return mem.provider.initAsync(trg);
+function initAsync(trg: string, ver: string): Promise<void> {
+    return mem.provider.initAsync(trg, ver);
 }
 
 function saveAsync(header: Header, text?: ScriptText): Promise<void> {

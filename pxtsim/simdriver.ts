@@ -150,6 +150,7 @@ namespace pxsim {
             const frame = document.createElement('iframe') as HTMLIFrameElement;
             frame.id = 'sim-frame-' + this.nextId()
             frame.allowFullscreen = true;
+            frame.setAttribute('allow', 'autoplay');
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             (frame.sandbox as any).value = "allow-scripts allow-same-origin"
             let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
@@ -182,7 +183,7 @@ namespace pxsim {
 
         private unload() {
             this.cancelFrameCleanup();
-            this.container.innerHTML = '';
+            pxsim.U.removeChildren(this.container);
             this.setState(SimulatorState.Unloaded);
         }
 

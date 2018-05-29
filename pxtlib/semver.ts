@@ -72,6 +72,10 @@ namespace pxt.semver {
         return null
     }
 
+    export function normalize(v: string): string {
+        return stringify(parse(v));
+    }
+
     export function stringify(v: Version) {
         let r = v.major + "." + v.minor + "." + v.patch
         if (v.pre.length)
@@ -93,6 +97,18 @@ namespace pxt.semver {
         if (!aa && !bb)
             return U.strcmp(a, b)
         else return cmp(aa, bb)
+    }
+
+    export function inRange(rng: string, v: Version): boolean {
+        let rngs = rng.split(' - ');
+        if (rngs.length != 2) return false;
+        let minInclusive = tryParse(rngs[0]);
+        let maxExclusive = tryParse(rngs[1]);
+        if (!minInclusive || !maxExclusive) return false;
+        if (!v) return true;
+        const lwr = cmp(minInclusive, v);
+        const hr = cmp(v, maxExclusive);
+        return lwr <= 0 && hr < 0;
     }
 
     export function test() {
@@ -124,6 +140,13 @@ namespace pxt.semver {
                 else U.assert(x == 0)
             }
         }
+
+        const v = tryParse("1.2.3");
+        U.assert(inRange("0.1.2 - 2.2.3", v))
+        U.assert(inRange("1.2.3 - 2.2.3", v))
+        U.assert(!inRange("0.0.0 - 1.2.3", v))
+        U.assert(!inRange("1.2.4 - 4.2.3", v))
+        U.assert(!inRange("0.0.0 - 0.0.1", v))
     }
 
 }

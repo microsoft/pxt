@@ -75,14 +75,16 @@ task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtru
 task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testlang', 'karma'])
 
 task('clean', function () {
-    expand(["built"]).forEach(f => {
-        try {
-            fs.unlinkSync(f)
-        } catch (e) {
-            console.log("cannot unlink:", f, e.message)
-        }
+    ["built", "temp"].forEach(d => {
+        expand([d]).forEach(f => {
+            try {
+                fs.unlinkSync(f)
+            } catch (e) {
+                console.log("cannot unlink:", f, e.message)
+            }
+        })
+        jake.rmRf(d)    
     })
-    jake.rmRf("built")
 })
 
 setupTest('testdecompiler', 'decompile-test', 'decompilerunner.js')
@@ -133,13 +135,13 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
 compileDir("pxtlib", "built/typescriptServices.d.ts")
 compileDir("pxtcompiler", ["built/pxtlib.js"])
 compileDir("pxtwinrt", ["built/pxtlib.js"])
-compileDir("pxtblocks", ["built/pxtlib.js"])
+compileDir("pxtblocks", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtcompiler.js"])
 ju.catFiles("built/pxtblockly.js", expand(["webapp/public/blockly/blockly_compressed.js", "webapp/public/blockly/blocks_compressed.js", "webapp/public/blockly/msg/js/en.js", "built/pxtblocks.js"]), "")
 compileDir("pxtrunner", ["built/pxtlib.js", "built/pxteditor.js", "built/pxtcompiler.js", "built/pxtsim.js", "built/pxtblockly.js"])
-compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblockly.js"])
+compileDir("pxtsim", ["built/pxtlib.js"])
 compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblockly.js"])
-compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js"])
-compileDir("backendutils", ['pxtlib/util.ts', 'pxtlib/docsrender.ts'])
+compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtcompiler.js"])
+compileDir("backendutils", ['pxtlib/commonutil.ts', 'pxtlib/docsrender.ts'])
 file("built/web/pxtweb.js", expand(["docfiles/pxtweb"]), { async: true }, function () { tscIn(this, "docfiles/pxtweb", "built") })
 
 task("karma", ["blocklycompilertest"], function () {
@@ -173,18 +175,16 @@ task("lint", [], { async: true }, function () {
     console.log('linting...')
     jake.exec([
         "cli",
-        "pxt-cli",
         "pxtblocks",
         "pxteditor",
         "pxtlib",
-        "pxtcompiler/emitter",
+        "pxtcompiler",
         "pxtrunner",
         "pxtsim",
         "pxtwinrt",
-        "webapp/src",
-        "docfiles/pxtweb",
-        "monacots"]
-        .map(function (d) { return "node node_modules/tslint/bin/tslint ./" + d + "/*.ts" })
+        "webapp",
+        "docfiles/pxtweb"]
+        .map(function (d) { return "node node_modules/tslint/bin/tslint --project ./" + d + "/tsconfig.json" })
         , { printStdout: true }, function () {
             console.log('linted.');
             complete();

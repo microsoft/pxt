@@ -203,7 +203,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
             if (fs.existsSync(fn))
                 existing = fs.readFileSync(fn, "utf8")
             if (existing !== v)
-                fs.writeFileSync(fn, v)
+                nodeutil.writeFileSync(fn, v)
         })
     }
 
@@ -411,7 +411,8 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 enumVal = -1;
             }
 
-            if (inEnum && (m = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(ln))) {
+            const shouldExpand = inEnum && (m = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(ln));
+            if (shouldExpand) {
                 let v = m[3]
                 if (v) {
                     enumVal = expandInt(v)

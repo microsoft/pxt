@@ -160,6 +160,7 @@ namespace ts.pxtc {
         groupIcons?: string[];
         labelLineWidth?: string;
         handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
+        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events 
         afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
 
         // on interfaces
@@ -344,7 +345,7 @@ namespace ts.pxtc {
             return [];
 
         let parts: string[] = [];
-        for (let symbol in resp.usedSymbols) {
+        Object.keys(resp.usedSymbols).forEach(symbol => {
             let info = resp.usedSymbols[symbol]
             if (info && info.attributes.parts) {
                 let partsRaw = info.attributes.parts;
@@ -357,7 +358,7 @@ namespace ts.pxtc {
                     });
                 }
             }
-        }
+        });
 
         if (ignoreBuiltin) {
             const builtinParts = pxt.appTarget.simulator.boardDefinition.onboardComponents;
@@ -858,6 +859,7 @@ namespace ts.pxtc {
                 currentLabel = "";
             }
 
+            /* tslint:disable:possible-timing-attack  (not a security critical codepath) */
             if (token == TokenKind.Parameter) {
                 const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type };
                 parts.push(param);
@@ -872,6 +874,7 @@ namespace ts.pxtc {
             else if (token == TokenKind.Pipe) {
                 parts.push({ kind: "break" });
             }
+            /* tslint:enable:possible-timing-attack */
         }
 
         if (open) return undefined; // error: style marks should terminate

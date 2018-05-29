@@ -1280,7 +1280,9 @@ namespace pxt.hex {
         else {
             let curr = getOnlineCdnUrl()
             if (curr) return (cdnUrlPromise = Promise.resolve(curr))
-            return (cdnUrlPromise = Cloud.privateGetAsync("clientconfig").then(r => r.primaryCdnUrl));
+            const forceLive = pxt.webConfig && pxt.webConfig.isStatic;
+            return (cdnUrlPromise = Cloud.privateGetAsync("clientconfig", forceLive)
+                .then(r => r.primaryCdnUrl));
         }
     }
 
@@ -1480,7 +1482,9 @@ namespace pxt.hex {
                 buf = ""
                 let cnt = parseInt(nxt, 16)
                 while (cnt-- > 0) {
+                    /* tslint:disable:no-octal-literal */
                     buf += "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+                    /* tslint:enable:no-octal-literal */
                 }
             } else {
                 buf = ts.pxtc.decodeBase64(nxt)

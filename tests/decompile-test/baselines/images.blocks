@@ -1,133 +1,32 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
-<block type="pxt-on-start">
-<statement name="HANDLER">
-<block type="device_show_leds">
-<field name="LED00">FALSE</field>
-<field name="LED10">FALSE</field>
-<field name="LED20">FALSE</field>
-<field name="LED30">FALSE</field>
-<field name="LED40">FALSE</field>
-<field name="LED01">FALSE</field>
-<field name="LED11">TRUE</field>
-<field name="LED21">FALSE</field>
-<field name="LED31">TRUE</field>
-<field name="LED41">FALSE</field>
-<field name="LED02">FALSE</field>
-<field name="LED12">FALSE</field>
-<field name="LED22">FALSE</field>
-<field name="LED32">FALSE</field>
-<field name="LED42">FALSE</field>
-<field name="LED03">TRUE</field>
-<field name="LED13">FALSE</field>
-<field name="LED23">FALSE</field>
-<field name="LED33">FALSE</field>
-<field name="LED43">TRUE</field>
-<field name="LED04">FALSE</field>
-<field name="LED14">TRUE</field>
-<field name="LED24">TRUE</field>
-<field name="LED34">TRUE</field>
-<field name="LED44">FALSE</field>
-<next>
-<block type="variables_set">
-<field name="VAR">x</field>
-<value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
-<block type="device_build_image">
-<field name="LED00">FALSE</field>
-<field name="LED10">FALSE</field>
-<field name="LED20">FALSE</field>
-<field name="LED30">FALSE</field>
-<field name="LED40">FALSE</field>
-<field name="LED01">FALSE</field>
-<field name="LED11">TRUE</field>
-<field name="LED21">FALSE</field>
-<field name="LED31">TRUE</field>
-<field name="LED41">FALSE</field>
-<field name="LED02">FALSE</field>
-<field name="LED12">FALSE</field>
-<field name="LED22">FALSE</field>
-<field name="LED32">FALSE</field>
-<field name="LED42">FALSE</field>
-<field name="LED03">FALSE</field>
-<field name="LED13">TRUE</field>
-<field name="LED23">TRUE</field>
-<field name="LED33">TRUE</field>
-<field name="LED43">FALSE</field>
-<field name="LED04">TRUE</field>
-<field name="LED14">FALSE</field>
-<field name="LED24">FALSE</field>
-<field name="LED34">FALSE</field>
-<field name="LED44">TRUE</field>
-</block>
-</value>
-<next>
-<block type="variables_set">
-<field name="VAR">y</field>
-<value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
-<block type="device_build_big_image">
-<field name="LED00">FALSE</field>
-<field name="LED10">FALSE</field>
-<field name="LED20">FALSE</field>
-<field name="LED30">FALSE</field>
-<field name="LED40">FALSE</field>
-<field name="LED50">FALSE</field>
-<field name="LED60">FALSE</field>
-<field name="LED70">FALSE</field>
-<field name="LED80">FALSE</field>
-<field name="LED90">FALSE</field>
-<field name="LED01">FALSE</field>
-<field name="LED11">TRUE</field>
-<field name="LED21">TRUE</field>
-<field name="LED31">TRUE</field>
-<field name="LED41">FALSE</field>
-<field name="LED51">FALSE</field>
-<field name="LED61">TRUE</field>
-<field name="LED71">TRUE</field>
-<field name="LED81">TRUE</field>
-<field name="LED91">FALSE</field>
-<field name="LED02">FALSE</field>
-<field name="LED12">TRUE</field>
-<field name="LED22">FALSE</field>
-<field name="LED32">TRUE</field>
-<field name="LED42">FALSE</field>
-<field name="LED52">FALSE</field>
-<field name="LED62">TRUE</field>
-<field name="LED72">FALSE</field>
-<field name="LED82">TRUE</field>
-<field name="LED92">FALSE</field>
-<field name="LED03">FALSE</field>
-<field name="LED13">TRUE</field>
-<field name="LED23">TRUE</field>
-<field name="LED33">TRUE</field>
-<field name="LED43">FALSE</field>
-<field name="LED53">FALSE</field>
-<field name="LED63">TRUE</field>
-<field name="LED73">TRUE</field>
-<field name="LED83">TRUE</field>
-<field name="LED93">FALSE</field>
-<field name="LED04">FALSE</field>
-<field name="LED14">FALSE</field>
-<field name="LED24">FALSE</field>
-<field name="LED34">FALSE</field>
-<field name="LED44">FALSE</field>
-<field name="LED54">FALSE</field>
-<field name="LED64">FALSE</field>
-<field name="LED74">FALSE</field>
-<field name="LED84">FALSE</field>
-<field name="LED94">FALSE</field>
-</block>
-</value>
-</block>
-</next>
-</block>
-</next>
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;mb.ts&#34; &#47;&#62;</comment>
-</block>
-</statement>
-</block>
-</xml>
+    <block type="pxt-on-start">
+    <statement name="HANDLER">
+    <block type="device_show_leds">
+    <field name="LEDS">&#96;.....&#10;.&#35;.&#35;.&#10;.....&#10;&#35;...&#35;&#10;.&#35;&#35;&#35;.&#10;&#96;</field>
+    <next>
+    <block type="variables_set">
+    <field name="VAR">x</field>
+    <value name="VALUE">
+    <shadow type="math_number"><field name="NUM">0</field></shadow>
+    <block type="device_build_image">
+    <field name="LEDS">&#96;.....&#10;.&#35;.&#35;.&#10;.....&#10;.&#35;&#35;&#35;.&#10;&#35;...&#35;&#10;&#96;</field>
+    </block>
+    </value>
+    <next>
+    <block type="variables_set">
+    <field name="VAR">y</field>
+    <value name="VALUE">
+    <shadow type="math_number"><field name="NUM">0</field></shadow>
+    <block type="device_build_big_image">
+    <field name="LEDS">&#96;..........&#10;.&#35;&#35;&#35;..&#35;&#35;&#35;.&#10;.&#35;.&#35;..&#35;.&#35;.&#10;.&#35;&#35;&#35;..&#35;&#35;&#35;.&#10;..........&#10;&#96;</field>
+    </block>
+    </value>
+    </block>
+    </next>
+    </block>
+    </next>
+    <comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;mb.ts&#34; &#47;&#62;</comment>
+    </block>
+    </statement>
+    </block>
+    </xml>

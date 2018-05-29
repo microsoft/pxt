@@ -8,6 +8,7 @@ import U = pxt.Util;
 
 export let projects: pxt.Map<Project> = {};
 let target = "";
+let targetVersion = "";
 
 export function merge(prj: Project) {
     let h: Header = prj.header;
@@ -17,6 +18,7 @@ export function merge(prj: Project) {
             recentUse: U.nowSeconds(),
             modificationTime: U.nowSeconds(),
             target: target,
+            targetVersion: targetVersion,
             _rev: undefined,
             blobId: undefined,
             blobCurrent: undefined,
@@ -47,8 +49,9 @@ function getTextAsync(id: string): Promise<ScriptText> {
     return Promise.resolve(p ? p.text : undefined);
 }
 
-function initAsync(trg: string): Promise<void> {
+function initAsync(trg: string, version: string): Promise<void> {
     target = trg;
+    targetVersion = version;
     return Promise.resolve();
 }
 
@@ -65,7 +68,6 @@ function installAsync(h0: InstallHeader, text: ScriptText): Promise<Header> {
     h.id = ts.pxtc.Util.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
-    h.target = pxt.appTarget.id;
 
     return saveAsync(h, text).then(() => h);
 }

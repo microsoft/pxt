@@ -40,7 +40,7 @@ Open the HTML editor for your blog or website and paste it with your content
 If you self host a Wordpress blog you can install the [iframe-plugin][] and then write the following in your blog-post (again, replacing the `PROJECTID` with your project's identifier):
 
 ```
-[iframe src="@projectid@/#pub:PROJECTID"]
+[iframe src="@homeurl@/#pub:PROJECTID"]
 ```
 
 ### Blogger

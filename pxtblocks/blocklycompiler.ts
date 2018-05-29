@@ -1229,11 +1229,13 @@ namespace pxt.blocks {
         let state = "\n";
         let rows = 5;
         let columns = frames * 5;
+        let leds = b.getFieldValue("LEDS");
+        leds = leds.replace(/[ `\n]+/g, '');
         for (let i = 0; i < rows; ++i) {
             for (let j = 0; j < columns; ++j) {
                 if (j > 0)
                     state += ' ';
-                state += /TRUE/.test(b.getFieldValue("LED" + j + i)) ? "#" : ".";
+                state += (leds[(i * columns) + j] === '#') ? "#" : ".";
             }
             state += '\n';
         }
@@ -1523,9 +1525,9 @@ namespace pxt.blocks {
             else if (isMutatingBlock(b)) {
                 const declarations = b.mutation.getDeclaredVariables();
                 if (declarations) {
-                    for (const varName in declarations) {
+                    Object.keys(declarations).forEach(varName => {
                         trackLocalDeclaration(escapeVarName(varName, e), declarations[varName]);
-                    }
+                    });
                 }
             }
 
@@ -1707,7 +1709,7 @@ namespace pxt.blocks {
             else if (call && call.hasHandler && !call.attrs.handlerStatement) {
                 // compute key that identifies event call
                 // detect if same event is registered already
-                const key = callKey(e, b);
+                const key = call.attrs.blockHandlerKey || callKey(e, b);
                 flagDuplicate(key, b);
             } else {
                 // all non-events are disabled

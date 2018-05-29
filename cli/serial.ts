@@ -203,7 +203,7 @@ export function flashSerialAsync(c: commandParser.ParsedCommand) {
     let SerialPort = require("serialport");
     let listAsync: () => Promise<SerialPortInfo[]> = Promise.promisify(SerialPort.list) as any
 
-    let f = fs.readFileSync(c.arguments[0])
+    let f = fs.readFileSync(c.args[0])
     let blocks = pxtc.UF2.parseFile(f as any)
     let s: Serial
 

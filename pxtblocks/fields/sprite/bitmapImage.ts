@@ -72,7 +72,7 @@ namespace pxtblockly {
                 }
             }
             else {
-                this.overlay.el.innerHTML = "";
+                pxsim.U.clear(this.overlay.el);
                 if (this.overlayFade) {
                     this.overlayFade.kill();
                 }
@@ -112,7 +112,7 @@ namespace pxtblockly {
                 .at(width / 2, height / 2)
                 .fontSize(30, svg.LengthUnit.px)
                 .fill("white")
-                .alignmentBaseline("middle")
+                // .alignmentBaseline("middle")
                 .anchor("middle");
 
             this.overlayFade = new Fade(this.overlay, 750, 500);
@@ -155,7 +155,7 @@ namespace pxtblockly {
                 requestAnimationFrame(() => this.frame());
             }
             else {
-                this.target.el.innerHTML = "";
+                pxsim.U.clear(this.target.el);
             }
         }
 

@@ -23,12 +23,13 @@ namespace pxtblockly {
         initHeight: number;
     }
 
-    // It's a square
-    const TOTAL_WIDTH = 55;
+    // 32 is specifically chosen so that we can scale the images for the default
+    // sprite sizes without getting browser anti-aliasing
+    const PREVIEW_WIDTH = 32;
     const PADDING = 5;
     const BG_PADDING = 4;
-    const BG_WIDTH = TOTAL_WIDTH - PADDING * 2;
-    const PREVIEW_WIDTH = TOTAL_WIDTH - PADDING * 2 - BG_PADDING * 2;
+    const BG_WIDTH = BG_PADDING * 2 + PREVIEW_WIDTH;
+    const TOTAL_WIDTH = PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
 
     // These are the characters used to compile, for a list of every supported character see parseBitmap()
     const hexChars = [".", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"];
@@ -38,11 +39,13 @@ namespace pxtblockly {
 
         private params: ParsedSpriteEditorOptions;
         private editor: SpriteEditor;
-        private preview: BitmapImage;
         private state: Bitmap;
+        private lightMode: boolean;
 
         constructor(text: string, params: any, validator?: Function) {
             super(text, validator);
+
+            this.lightMode = params.lightMode;
             this.params = parseFieldOptions(params);
 
             if (!this.state) {
@@ -80,14 +83,16 @@ namespace pxtblockly {
          * @private
          */
         showEditor_() {
+            const windowSize = goog.dom.getViewportSize();
+            const scrollOffset = goog.style.getViewportPageOffset(document);
+
             // If there is an existing drop-down someone else owns, hide it immediately and clear it.
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.DropDownDiv.clearContent();
 
-            let contentDiv = Blockly.DropDownDiv.getContentDiv();
+            let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
 
-            this.editor = new SpriteEditor(this.preview.bitmap());
-            this.editor.setPreview(this.preview, PREVIEW_WIDTH);
+            this.editor = new SpriteEditor(this.state, this.lightMode);
             this.editor.render(contentDiv);
             this.editor.rePaint();
 
@@ -96,7 +101,8 @@ namespace pxtblockly {
 
             Blockly.DropDownDiv.setColour("#2c3e50", "#2c3e50");
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
-                this.state = this.preview.image;
+                this.state = this.editor.bitmap();
+                this.redrawPreview();
                 if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
                     Blockly.Events.fire(new Blockly.Events.BlockChange(
                         this.sourceBlock_, 'field', this.name, this.text_, this.getText()));
@@ -107,13 +113,14 @@ namespace pxtblockly {
                 goog.style.setStyle(contentDiv, "overflow", null);
                 goog.style.setStyle(contentDiv, "max-height", null);
             });
-            this.editor.layout();
+
             goog.style.setHeight(contentDiv, this.editor.outerHeight() + 1);
             goog.style.setWidth(contentDiv, this.editor.outerWidth() + 1);
             goog.style.setStyle(contentDiv, "overflow", "hidden");
             goog.style.setStyle(contentDiv, "max-height", "500px");
-        }
 
+            this.editor.layout();
+        }
 
         private isInFlyout() {
             return (this.sourceBlock_.workspace.getParentSvg() as SVGElement).className.baseVal == "blocklyFlyout";
@@ -121,10 +128,8 @@ namespace pxtblockly {
 
         render_() {
             super.render_();
-            if (this.preview) {
-                this.size_.height = TOTAL_WIDTH
-                this.size_.width = TOTAL_WIDTH;
-            }
+            this.size_.height = TOTAL_WIDTH
+            this.size_.width = TOTAL_WIDTH;
         }
 
         getText() {
@@ -150,16 +155,14 @@ namespace pxtblockly {
                 return;
             }
             this.parseBitmap(newText);
-
-            if (this.preview) {
-                this.redrawPreview();
-            }
+            this.redrawPreview();
 
             super.setText(newText);
         }
 
         private redrawPreview() {
-            this.fieldGroup_.innerHTML = "";
+            if (!this.fieldGroup_) return;
+            pxsim.U.clear(this.fieldGroup_);
 
             const bg = new svg.Rect()
                 .at(PADDING, PADDING)
@@ -168,19 +171,16 @@ namespace pxtblockly {
                 .stroke("#898989", 1)
                 .corner(4);
 
-            const palette = pxt.U.clone(pxt.appTarget.runtime.palette);
-            palette[0] = null;
-
-            this.preview = new BitmapImage({
-                //backgroundFill: this.sourceBlock_.getColourSecondary(),
-                outerMargin: 2,
-                cellClass: "pixel-cell"
-            }, this.state, palette);
-
-            this.preview.translate(PADDING + BG_PADDING, PADDING + BG_PADDING);
-            this.preview.setGridDimensions(PREVIEW_WIDTH);
             this.fieldGroup_.appendChild(bg.el);
-            this.fieldGroup_.appendChild(this.preview.getView().el);
+
+            if (this.state) {
+                const data = this.renderPreview();
+                const img = new svg.Image()
+                    .src(data)
+                    .at(PADDING + BG_PADDING, PADDING + BG_PADDING)
+                    .size(PREVIEW_WIDTH, PREVIEW_WIDTH);
+                this.fieldGroup_.appendChild(img.el);
+            }
         }
 
         private parseBitmap(newText: string) {
@@ -251,6 +251,52 @@ namespace pxtblockly {
                 }
             }
         }
+
+        /**
+         * Scales the image to 32x32 and returns a data uri. In light mode the preview
+         * is drawn with no transparency (alpha is filled with background color)
+         */
+        private renderPreview() {
+            const colors = pxt.appTarget.runtime.palette.slice(1);
+            const canvas = document.createElement("canvas");
+            canvas.width = PREVIEW_WIDTH;
+            canvas.height = PREVIEW_WIDTH;
+
+            // Works well for all of our default sizes, does not work well if the size is not
+            // a multiple of 2 or is greater than 32 (i.e. from the decompiler)
+            const cellSize = Math.min(PREVIEW_WIDTH / this.state.width, PREVIEW_WIDTH / this.state.height);
+
+            // Center the image if it isn't square
+            const xOffset = Math.max(Math.floor((PREVIEW_WIDTH * (1 - (this.state.width / this.state.height))) / 2), 0);
+            const yOffset = Math.max(Math.floor((PREVIEW_WIDTH * (1 - (this.state.height / this.state.width))) / 2), 0);
+
+            let context: CanvasRenderingContext2D;
+            if (this.lightMode) {
+                context = canvas.getContext("2d", { alpha: false });
+                context.fillStyle = "#dedede";
+                context.fillRect(0, 0, PREVIEW_WIDTH, PREVIEW_WIDTH);
+            }
+            else {
+                context = canvas.getContext("2d");
+            }
+
+            for (let c = 0; c < this.state.width; c++) {
+                for (let r = 0; r < this.state.height; r++) {
+                    const color = this.state.get(c, r);
+
+                    if (color) {
+                        context.fillStyle = colors[color - 1];
+                        context.fillRect(xOffset + c * cellSize, yOffset + r * cellSize, cellSize, cellSize);
+                    }
+                    else if (this.lightMode) {
+                        context.fillStyle = "#dedede";
+                        context.fillRect(xOffset + c * cellSize, yOffset + r * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+
+            return canvas.toDataURL();
+        }
     }
 
     function parseFieldOptions(opts: FieldSpriteEditorOptions) {
@@ -280,17 +326,26 @@ namespace pxtblockly {
                     continue;
                 }
 
-                const width = parseInt(pair[0]);
-                const height = parseInt(pair[1]);
+                let width = parseInt(pair[0]);
+                let height = parseInt(pair[1]);
 
                 if (isNaN(width) || isNaN(height)) {
                     continue;
                 }
 
+                const screenSize = pxt.appTarget.runtime && pxt.appTarget.runtime.screenSize;
+                if (width < 0 && screenSize)
+                    width = screenSize.width;
+                if (height < 0 && screenSize)
+                    height = screenSize.height;
+
                 sizes.push([width, height]);
             }
-
-            parsed.sizes = sizes;
+            if (sizes.length > 0) {
+                parsed.sizes = sizes;
+                parsed.initWidth = sizes[0][0];
+                parsed.initHeight = sizes[0][1];
+            }
         }
 
         parsed.initColor = withDefault(opts.initColor, parsed.initColor);

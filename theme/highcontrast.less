@@ -9,6 +9,10 @@
         High Contrast
 *******************************/
 
+@selected: #10C8CD;
+@disabled: #3ff23f;
+@hcYellow: yellow;
+
 /* Messages */
 #msg .hc {
     background-color: black !important;
@@ -17,11 +21,32 @@
     color: white !important;
 }
 
+@HCRootBackground: black;
+@HCblocklySvgColor: black;
+@HCsimulatorBackground: black;
+@HCblocklySvgColor: black;
+
+@HCmainMenuBackground: white;
+@HCmainMenuTextColor: black;
+@HCmainMenuInverseTextColor: white;
+
+@HCblocklyToolboxColor: white;
+@HCblocklyTreeLabelColor: black;
+@HCblocklyTreeLabelSelectedColor: white;
+
+@HCeditorToolsBackground: black;
+
+@HCbuttonBackground: white;
+@HCbuttonTextColor: black;
+
+@HChomeScreenBackground: black;
+
+@HCaccessibleMenuBackground: black;
+@HCaccessibleMenuColor: white;
+
 .hc {
 
-@selected: #10C8CD;
-@disabled: #3ff23f;
-@hcYellow: yellow;
+    /* Focus */
 
     *[tabindex='0']:focus,
     *[tabindex*='d1']:focus,
@@ -56,18 +81,51 @@
         outline: none !important;
     }
 
-    /* root */
-    #root {
-        background: black !important;
+    /* Blockly toolbox */
+    .pxtToolbox:not(.invertedToolbox) {
+        span.blocklyTreeLabel {
+            color: @HCblocklyTreeLabelColor;
+        }
+        .blocklyTreeSelected span.blocklyTreeLabel {
+            color: @HCblocklyTreeLabelSelectedColor;
+        }
     }
 
-    /* Simulator */
+    /* Blockly flyout */
+    path.blocklyFlyoutBackground {
+        fill: @HCblocklySvgColor !important;
+        fill-opacity: 1 !important;
+        stroke-width: 4px;
+        stroke: white;
+    }
+    .monacoFlyout {
+        background: @HCblocklySvgColor !important;
+        border-right: 4px solid white !important;
+    }
+
+    /* Main editor areas */
+
+    #root {
+        background: @HCRootBackground !important;
+    }
     #filelist {
-        background: black !important;
+        background: @HCsimulatorBackground !important;
 
         #boardview {
-            background: black !important;
+            background: @HCsimulatorBackground !important;
         }
+    }
+    svg.blocklySvg {
+        background-color: @HCblocklySvgColor !important;
+    }
+
+    .blocklyMainBackground {
+        fill: transparent !important;
+    }
+
+    .blocklyToolboxDiv, .monacoToolboxDiv {
+        background: @HCblocklyToolboxColor !important;
+        border-right: 0px !important;
     }
 
     /* Menu bar */
@@ -76,41 +134,57 @@
         color: @selected !important;
     }
 
-    .menubar .editor-menuitem {
-        border: none !important;
-    }
+    #mainmenu:not(.inverted), #homemenu:not(.inverted) {
+        background-color: @HCmainMenuBackground !important;
+        color: @HCmainMenuTextColor !important;
+        border-bottom: 4px solid white;
 
-    .menubar .accessibleMenu > .item:focus,
-    .menubar .editor-menuitem > .item:focus:not(.active) {
-        i, span {
-            color: @selected !important;
+        .ui.item {
+            color: @HCmainMenuTextColor;
+        }
+        .item.editor-menuitem .ui.grid {
+            border: 1px solid black !important;
+        }
+    }
+    #mainmenu.inverted, #homemenu.inverted {
+        background-color: @HCmainMenuTextColor !important;
+        color: @HCmainMenuBackground !important;
+        border-bottom: 4px solid white;
+
+        .ui.item {
+            color: @HCmainMenuBackground;
+        }
+        .item.editor-menuitem .ui.grid {
+            border: 1px solid white !important;
         }
     }
 
-    .menubar .ui.inverted.menu, .menubar .accessibleMenu .ui.item.link.inverted:hover {
+    /* Editor switch toggle */
+    .menubar .ui.menu.fixed .item.editor-menuitem .ui.grid {
         background: black !important;
-        border-bottom: 1px solid white;
-    }
-
-    .menubar .ui.menu.inverted.fixed .ui.item.editor-menuitem .active.item {
-        color: white !important;
-    }
-
-    .menubar .accessibleMenu .ui.item.link {
-        color: white !important;
+        .item:not(.active) {
+            opacity: 1 !important;
+            color: @HCmainMenuInverseTextColor !important;
+        }
+        .item.active {
+            background: white !important;
+            color: @HCmainMenuTextColor !important;
+        }
     }
 
     /* Editor toolbar */
+    #editortools, #downloadArea {
+        background: @HCeditorToolsBackground !important;
+    }
     #editortools {
-        background: black !important;
-        border-top: 1px solid white;
+        border-top: 4px solid white;
     }
 
     /* Buttons */
     .ui.button {
-        background: black !important;
-        color: white !important;
-        border: 1px solid white !important;
+        background: @HCbuttonBackground !important;
+        color: @HCbuttonTextColor !important;
+        border: 1px solid @HCbuttonTextColor !important;
 
         &:focus {
             color: @selected !important;
@@ -119,6 +193,10 @@
             i, span {
                 color: @selected !important;
             }
+        }
+
+        .inverted.icon {
+            color: @HCbuttonTextColor !important;
         }
     }
 
@@ -131,32 +209,126 @@
         }
     }
 
-    .ui.button.download-button:hover > span,
-    .ui.button.download-button:hover > i {
-        color: white !important;
-    }
-
     /* Inputs */
     .ui.input input {
-        background: black !important;
-        color: white !important;
-        border: 1px solid white !important;
+        background: white !important;
+        color: black !important;
+        border: 1px solid black !important;
     }
     input::placeholder {
-        color: @hcYellow !important;
+        color: @selected !important;
+    }
+
+    /* Home screen */
+    .projectsdialog, .projectsdialog .tabsegment {
+        background: @HChomeScreenBackground !important;
+        color: white !important;
+        border-color: white !important;
+
+        .header {
+            opacity: 1 !important;
+            color: white;
+        }
+
+        .homefooter a {
+            color: white !important
+        }
+    }
+
+    /* Cards */
+    .card {
+        background: black !important;
+        border: 2px solid white !important;
+        border-radius: initial !important;
+        box-shadow: initial !important;
+
+        .header, .description, .meta {
+            color: white !important;
+        }
+
+        &:hover {
+            .header, .description, .meta {
+                color: @hcYellow !important;
+            }
+        }
+
+        &:focus {
+            .header, .description, .meta {
+                color: @selected !important;
+            }
+        }
+
+        .ui.orange.labels .label, .ui.orange.label {
+            background: @disabled !important;
+            border-color: @disabled !important;
+            color: black !important;
+        }
+    }
+
+    /* File menu */
+    .filemenu {
+        .item, .ui.button {
+            background: black !important;
+            color: white !important;
+            border: 1px solid white !important;
+        }
+        .item:focus, .item.active {
+            background: @selected !important;
+
+            span {
+                color: black !important;
+            }
+        }
+    }
+
+    /* PxtJson */
+    #maineditor {
+        border-left: 1px solid white !important;
+    }
+
+    /* Serial editor */
+
+    #serialPreview div {
+        color: white;
+    }
+
+    #serialCharts .ui.segment {
+        background-color: #fff;
+    }
+
+    #serialEditor {
+        background-color: #000;
+    }
+
+    #serialHeader .ui.header {
+        color: black;
+    }
+
+    #serialConsole {
+        background-color: #000;
+        color: #fff;
+        border-color: #fff;
+    }
+
+    #serialPreview .label {
+        border: 10px solid #fff !important;
+        &:hover {
+            border-color: darken(#fff, 10.0) !important;
+        }
+    }
+
+    .ui.button.labeled.icon.editorBack {
+        background: white !important;
     }
 
     /* Hyperlinks */
     a {
-        color: @hcYellow !important;
+        color: @selected !important;
     }
 
     #sidedocsbar {
-        background-color: black !important;
-
         a {
-            color: white !important;
-            outline: 1px solid white !important;
+            color: black !important;
 
             &:focus {
                 color: @selected !important;
@@ -168,26 +340,14 @@
         }
     }
 
-    /** Top menu **/
-    #mainmenu, #downloadArea {
-        background-color: black !important;
-        color: white !important;
-    }
-    
-    /* Items */
-    .ui.item {
-        background: black !important;
-        color: white !important;
-    }
-
     /* Dropdown */
     .ui.menu .ui.dropdown .menu {
         border: 1px solid white !important;
     }
 
     .ui.menu .ui.dropdown .menu, .ui.menu .ui.dropdown .menu > .item {
-        background: black !important;
-        color: white !important;
+        background: white !important;
+        color: black !important;
 
         &:focus {
             color: @selected !important;
@@ -205,31 +365,9 @@
         border-top: 1px solid white !important;
     }
 
-    /* Editor switch toggle */
-    .menubar .ui.menu .item.editor-menuitem {
-        border: 1px solid white !important;
-    }
-
-    .menubar .ui.menu .item.editor-menuitem .active {
-        background: @selected !important;
-        color: black !important;
-    }
-
-    /* Modals */
-    .ui.modal {
-        border: 2px solid white !important;
-        border-radius: initial !important;
-        box-shadow: initial !important;
-    }
-
-    .ui.modal, .ui.modal > .header, .ui.modal > .content, .ui.modal > .actions, .ui.modal > .segment {
-        background: black !important;
-        color: white !important;
-    }
-
     /* Tab list in Modals*/
     .ui.secondary.menu > .item:not(.active), .ui.secondary.pointing.menu > .item:not(.active), .ui.secondary.inverted.menu .link.item:not(.active) {
-        color: white !important;
+        color: black !important;
         border: 1px solid white !important;
     }
 
@@ -239,47 +377,6 @@
         border: 2px solid @selected !important;
         border-radius: initial !important;
         box-shadow: initial !important;
-    }
-
-    .projectsdialog .tabsegment, .ui.modal .ui.inverted.segment, .ui.modal .ui.primary.inverted.segment {
-        background: black !important;
-        color: white !important;
-        border-color: white !important;
-
-        .header {
-            opacity: 1 !important;
-            color: white;
-        }
-    }
-
-    /* Cards */
-    .card {
-        background: black !important;
-        border: 2px solid white !important;
-        border-radius: initial !important;
-        box-shadow: initial !important;
-
-        .header, .description, .meta {
-            color: white !important;
-        }
-
-        &:focus {
-            .header, .description, .meta {
-                color: @selected !important;
-            }
-        }
-
-        .ui.orange.labels .label, .ui.orange.label {
-            background: @disabled !important;
-            border-color: @disabled !important;
-            color: black !important;
-        }
-    }
-
-    #cookiemsg {
-        background: black !important;
-        border-radius: 0em;
-        border: 1px solid white !important;
     }
 
     /* Tutorial */
@@ -307,105 +404,37 @@
         border-color: @selected !important;
     }
 
-    /* Blockly / Monaco toolbox */
-    .blocklyTreeSelected {
-        background: @selected !important;
-    }
 
-    .blocklyToolboxDiv, .monacoToolboxDiv {
-        background: black !important;
-        border-left: 1px solid white !important;
-        border-right: 1px solid white !important;
-    }
+    /* Modals */
+    .ui.modal {
+        border: 2px solid black !important;
+        border-radius: initial !important;
+        box-shadow: initial !important;
 
-    .blocklyTreeLabel, .blocklyTreeIcon {
-        color: white !important;
-    }
-
-    .blocklyFlyoutButtonBackground {
-        fill: black !important;
-    }
-
-    .monacoFlyout {
-        background: black !important;
-        border-right: 1px solid white !important;
-    }
-
-    /* Editor toolbox */
-    .filemenu {
-        .item {
-            background: black !important;
-            color: white !important;
-            border: 1px solid white !important;
-        }
-
-        .item:focus, .item.active {
-            background: @selected !important;
-
-            span {
-                color: black !important;
-            }
+        > .closeIcon .close {
+            color: black !important;
         }
     }
 
-    /* PxtJson */
-    #maineditor {
-        border-left: 1px solid white !important;
+    .ui.modal, .ui.modal > .header, .ui.modal > .content, .ui.modal > .actions, .ui.modal > .segment {
+        background: white !important;
+        color: black !important;
     }
 
-    #maineditor, .ui.segment.form {
-        background: black !important;
-
-        label {
-            color: white !important;
+    /* Accessible menu */
+    .ui.menu.accessibleMenu, #accessibleMenu {
+        .ui.item.link {
+            color: @HCaccessibleMenuColor !important;
+            background: @HCaccessibleMenuBackground !important;
         }
     }
+}
 
-    #serialPreview div {
-        color: #fff;
-    }
-
-    #serialCharts .ui.segment {
-        background-color: #fff;
-    }
-
-    #serialEditor {
-        background-color: #000;
-    }
-
-    #serialHeader .ui.header {
-        color: #fff;
-    }
-
-    #serialConsole {
-        background-color: #000;
-        color: #fff;
-        border-color: #fff;
-    }
-
-    #serialPreview .label {
-        border: 10px solid #fff !important;
-        &:hover {
-            border-color: darken(#fff, 10.0) !important;
-        }
-    }
-
-    /* Blockly blocks */
-    .blocklyPath {
-        stroke-width: 4px !important;
-        fill: black;
-    }
-    .blocklyBlockBackground {
-        stroke-width: 2px;
-        fill: black;
-    }
-    .blocklyText {
-        fill: white;
-    }
-    path.blocklyFlyoutBackground {
-        fill: black !important;
-        stroke-width: 1px;
-        stroke: white;
-        border-right: 1px solid white !important;
+/* > Small Monitor */
+@media only screen and (min-width: @computerBreakpoint) {
+    /* Hide the editor toolbor in tutorial mode */
+    .hc.tutorial #editortools  {
+        background: transparent !important;
+        border-top: 0px;
     }
 }

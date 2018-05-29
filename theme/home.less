@@ -17,10 +17,7 @@
 #homescreen {
     background: lighten(@homeScreenBackground, 10%);
     z-index: @homeScreenZIndex;
-}
-
-.inHome > *:not(#homescreen):not(#cookiemsg) {
-    visibility: hidden;
+    user-select: none;
 }
 
 .projectsdialog {

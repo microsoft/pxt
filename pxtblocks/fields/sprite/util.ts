@@ -3,7 +3,7 @@ namespace pxtblockly {
         if (!overrides) {
             return base;
         }
-        for (var key in overrides) {
+        for (let key in overrides) {
             base[key] = overrides[key];
         }
         return base;

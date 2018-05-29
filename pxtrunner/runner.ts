@@ -1,3 +1,5 @@
+/* tslint:disable:no-inner-html TODO(tslint): get rid of jquery html() calls */
+
 /// <reference path="../built/pxtlib.d.ts" />
 /// <reference path="../built/pxteditor.d.ts" />
 /// <reference path="../built/pxtcompiler.d.ts" />
@@ -374,7 +376,8 @@ namespace pxt.runner {
             if (!msg) return; // no more work
 
             pxt.tickEvent("renderer.job")
-            jobPromise = runner.decompileToBlocksAsync(msg.code, msg.options)
+            jobPromise = pxt.BrowserUtils.loadBlocklyAsync()
+                .then(() => runner.decompileToBlocksAsync(msg.code, msg.options))
                 .then(result => result.blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(result.blocksSvg, 0, 0, result.blocksSvg.viewBox.baseVal.width, result.blocksSvg.viewBox.baseVal.height) : undefined)
                 .then(res => {
                     window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{

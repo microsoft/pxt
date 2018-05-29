@@ -26,7 +26,7 @@ C:\srecord_dir
 
 ## Setting up a workspace
 
-For every PXT target you will need to create a directory for your projects.
+For every PXT target (editor) you will need to create a directory for your projects.
 Let's say you want to install `microbit` target, and name the directory `microbit`:
 
 ```
@@ -86,6 +86,7 @@ where ``EMBEDURL`` is the published project URL.
 
 Run ``pxt help`` for the list of all commands. The following list of links contains more info on specific commands.
 
+* [target](/cli/target), downloads the editor tools
 * [build](/cli/build), builds the current project
 * [deploy](/cli/deploy), builds and deploys the current project
 * [login](/cli/login), store a GitHub token
@@ -93,5 +94,5 @@ Run ``pxt help`` for the list of all commands. The following list of links conta
 * [update](/cli/update), updates the ``pxt-core`` dependency and runs installation steps
 * [checkdocs](/cli/checkdocs), validates the documentation links and snippets
 * [staticpkg](/cli/staticpkg), compiles editor into flat file system
-* [cherrypick](/cli/cherrypick), recursive cherry picking
+* [buildsprites](/cli/buildsprites), encode sprite images into a jres resource
 * [hidserial](/cli/hidserial), monitor `serial.write(...)` from certain boards

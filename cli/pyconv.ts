@@ -460,7 +460,7 @@ for fn in @files@:
     js[fn] = to_json(ast.parse(open(fn, "r").read()))
 print(json.dumps(js))
 `
-/* tslint:enable */
+/* tslint:enable:no-trailing-whitespace */
 
 const nameMap: Map<string> = {
     "Expr": "ExprStmt",
@@ -1463,7 +1463,9 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
                     else {
                         let ee = elts.shift()
                         let et = ee ? expr(ee) : B.mkText("???")
+                        /* tslint:disable:no-invalid-template-strings */
                         res.push(B.mkText("${"), et, B.mkText("}"))
+                        /* tslint:enable:no-invalid-template-strings */
                     }
                     return ""
                 })
@@ -1869,7 +1871,7 @@ function isEmpty(b: B.JsNode): boolean {
 
 // TODO look at scopes of let
 
-function toTS(mod: py.Module) {
+function toTS(mod: py.Module): B.JsNode[] {
     U.assert(mod.kind == "Module")
     resetCtx(mod)
     if (!mod.vars) mod.vars = {}
@@ -1910,12 +1912,13 @@ export function convertAsync(fns: string[]) {
     let primFiles =
         U.toDictionary(mainFiles.length ? mainFiles : nodeutil.allFiles(fns[0]),
             s => s.replace(/\\/g, "/"))
-    let files = U.concat(fns.map(f => nodeutil.allFiles(f))).map(f => f.replace(/\\/g, "/"))
-    let dirs: Map<number> = {}
+    let files = U.concat(fns.map(f => nodeutil.allFiles(f))).map(f => f.replace(/\\/g, "/"));
+    let dirs: Map<number> = {};
     for (let f of files) {
-        for (let suff of ["/docs/conf.py", "/conf.py", "/setup.py", "/README.md", "/README.rst"]) {
+        for (let suff of ["/docs/conf.py", "/conf.py", "/setup.py", "/README.md", "/README.rst", "/__init__.py"]) {
             if (U.endsWith(f, suff)) {
-                dirs[f.slice(0, f.length - suff.length)] = 1
+                const dirName = f.slice(0, f.length - suff.length);
+                dirs[dirName] = 1;
             }
         }
     }
@@ -1941,10 +1944,10 @@ export function convertAsync(fns: string[]) {
     }
 
     const pkgFilesKeys = Object.keys(pkgFiles);
-    pxt.debug(`files (${pkgFilesKeys.length}):\n   ${pkgFilesKeys.join('\n   ')}`);
+    pxt.log(`files (${pkgFilesKeys.length}):\n   ${pkgFilesKeys.join('\n   ')}`);
 
     return nodeutil.spawnWithPipeAsync({
-        cmd: /^win/i.test(process.platform) ? "py" : "python3",
+        cmd: process.env["PYTHON3"] || (/^win/i.test(process.platform) ? "py" : "python3"),
         args: [],
         input: convPy.replace("@files@", JSON.stringify(pkgFilesKeys)),
         silent: true
@@ -1952,7 +1955,7 @@ export function convertAsync(fns: string[]) {
         .then(buf => {
             pxt.debug(`analyzing python AST (${buf.length} bytes)`)
             let js = JSON.parse(buf.toString("utf8"))
-            fs.writeFileSync("pyast.json", JSON.stringify(js, null, 2), { encoding: "utf8" })
+            nodeutil.writeFileSync("pyast.json", JSON.stringify(js, null, 2), { encoding: "utf8" })
             const rec = (v: any): any => {
                 if (Array.isArray(v)) {
                     for (let i = 0; i < v.length; ++i)
@@ -1984,7 +1987,12 @@ export function convertAsync(fns: string[]) {
             for (let i = 0; i < 5; ++i) {
                 currIteration = i
                 U.iterMap(js, (fn: string, js: any) => {
-                    toTS(js)
+                    pxt.log(`converting ${fn}`);
+                    try {
+                        toTS(js)
+                    } catch (e) {
+                        console.log(e);
+                    }
                 })
             }
 

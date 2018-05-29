@@ -41,24 +41,6 @@ function add(x: number, y: number): number {
 
 TypeScript can figure the return type out by looking at the return statements, so you can optionally leave this off in many cases.
 
-## Arrow Functions
-
-Arrow functions (also known as "lamba" functions) 
-provide a lightweight syntax for functions. Arrow functions are used extensively to provide event handlers for
-many APIs. For example:
-
-```typescript
-function foo(handler: Action) {
-    // call handler ...
-}
-
-foo(() => { // arrow function!
-   // do something
-})
-```
-
-[Read more about arrow functions...](http://devdocs.io/javascript/functions/arrow_functions)
-
 ## Optional and Default Parameters
 
 In TypeScript, the number of arguments given to a function has to match the number of parameters the function expects.
@@ -142,4 +124,53 @@ let result1 = buildName("Bob");                  // error, too few parameters
 let result2 = buildName("Bob", "Adams", "Sr.");  // error, too many parameters
 let result3 = buildName("Bob", "Adams");         // okay and returns "Bob Adams"
 let result4 = buildName(undefined, "Adams");     // okay and returns "Will Adams"
+```
+
+## Arrow Functions
+
+Arrow functions, also known as _lambda_ functions, provide a lightweight syntax for functions. Arrow functions are used extensively to provide event handlers for many APIs. For example:
+
+```typescript
+function foo(handler: Action) {
+    // call handler ...
+}
+
+foo(() => { // arrow function!
+   // do something
+})
+```
+
+Often, a function like ``foo()`` will save the arrow function ``handler`` in a variable to run the code inside the function later when a certain condition occurs. Arrow functions serve as a kind of shortcut to provide extra code to run without having to write a separate formal function for that purpose. In this way arrow, or lambda, functions are thought of as "anonymous" functions.
+
+[Read more about arrow functions...](http://devdocs.io/javascript/functions/arrow_functions)
+
+
+## Anonymous Functions
+
+Anonymous functions are used just like arrow functions. They're called "anonymous" because the function doesn't have a name and isn't called using a name. The function is remembered by it's _reference_. This means that a variable is used to remember the function or the function is used directly ("inline").
+
+Here's an example similar to the one shown for arrow functions but this time the ``foo()`` function uses an anonymous function directly:
+
+```typescript
+function foo(handler: Action) {
+    // call handler ...
+}
+
+foo(function() { // use an inline function
+   // do something
+})
+```
+
+Also, you can set a variable to remember the function and use that variable as a reference to the anonymous function:
+
+```typescript
+function foo(handler: Action) {
+    // call handler ...
+}
+
+let anon = function() { // anonymous function, set it to a variable
+    // do something
+}
+
+foo(anon)
 ```

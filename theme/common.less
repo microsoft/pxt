@@ -159,10 +159,13 @@ body {
 
 #filelist .menu {
     width: 100%;
+    margin: 0;
+    margin-top: 1rem;
 }
 
 #filelist .nested.item {
-    padding-left: 4rem;
+    padding: .92857143em 1.14285714em;
+    padding-left: 2rem;
 }
 
 #filelist .header {
@@ -171,32 +174,6 @@ body {
 
 #simulators {
     text-align: center;
-}
-
-/* Cookie Message */
-#cookiemsg {
-   position: absolute;
-   right: 2rem;
-   bottom: 12rem;
-   width: 18rem;
-   text-align: left;
-   z-index: @aboveEverythingZIndex;
-}
-
-#cookiemsg > a {
-   color: white;
-   text-decoration: underline;
-}
-
-#cookiemsg > .ui.button.icon.clear {
-    color: white !important;
-}
-#cookiemsg > .ui.button.icon.clear:hover, #cookiemsg > .ui.button.icon.clear:focus {
-    color: darken(white, 20%) !important;
-}
-
-.collapsedEditorTools #cookiemsg {
-   bottom: 6rem;
 }
 
 /* Simulator */
@@ -545,7 +522,8 @@ Avatar
     filter: blur(1);
 }
 
-.highlight {
+// clashes with highlighted typescript code snippets
+svg .highlight {
     border-bottom: 2px solid #FFC107;
 }
 
@@ -727,9 +705,6 @@ p.ui.font.small {
     }
     .collapsedEditorTools #maineditor {
         left: 0;
-    }
-    #cookiemsg {
-        bottom: 7.5rem;
     }
 
     /* Full screen */
@@ -974,9 +949,6 @@ p.ui.font.small {
         .sandbox #msg {
         bottom: 1.5rem !important;
     }
-    .sandbox #cookiemsg {
-        bottom: 3rem;
-    }
     .sandbox #editortools {
         display: none;
     }
@@ -1054,15 +1026,6 @@ p.ui.font.small {
     }
     .simView div.simframe:only-child > iframe {
         max-width: 100%;
-    }
-    .sandbox #cookiemsg {
-        left: 0;
-        right: 0;
-        margin-left: 0.2rem;
-        margin-right: 0.2rem;
-        width: inherit;
-        bottom: 1.5rem;
-        padding: 0.3rem;
     }
 }
 

@@ -45,7 +45,9 @@ namespace pxt.blocks {
         try {
             let text = blocksXml || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`;
             let xml = Blockly.Xml.textToDom(text);
+            Blockly.Events.disable();
             Blockly.Xml.domToWorkspace(xml, workspace);
+            Blockly.Events.enable();
 
             switch (options.layout) {
                 case BlockLayout.Align:
@@ -67,7 +69,7 @@ namespace pxt.blocks {
             pxt.U.toArray(svg.querySelectorAll('.blocklyBlockCanvas,.blocklyBubbleCanvas'))
                 .forEach(el => el.setAttribute('transform', `translate(${-metrics.contentLeft}, ${-metrics.contentTop}) scale(1)`));
             const blocklyMainBackground = svg.querySelectorAll('.blocklyMainBackground')[0];
-            blocklyMainBackground.parentElement.removeChild(blocklyMainBackground);
+            blocklyMainBackground.parentNode.removeChild(blocklyMainBackground);
             svg.setAttribute('viewBox', `0 0 ${metrics.contentWidth} ${metrics.contentHeight}`)
             svg.removeAttribute('width');
             svg.removeAttribute('height');

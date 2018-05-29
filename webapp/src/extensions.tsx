@@ -34,6 +34,11 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         }
         this.manager = new ext.ExtensionManager(this);
         window.addEventListener("message", this.processMessage.bind(this), false)
+
+        this.hide = this.hide.bind(this);
+        this.updateDimensions = this.updateDimensions.bind(this);
+        this.onApprovedDecision = this.onApprovedDecision.bind(this);
+        this.onDeniedDecision = this.onDeniedDecision.bind(this);
     }
 
     processMessage(ev: MessageEvent) {
@@ -106,17 +111,18 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
     private updateDimensions() {
         if (this.extensionWrapper) {
-            // Resize current frame
+            // Resize current frame to fit full screen
+            const topOffsetHeight = 60; //px
             const extension = this.extensionWrapper.getAttribute('data-frame');
             if (extension) {
                 const frame = Extensions.getFrame(extension, false);
                 const extensionDialog = document.getElementsByClassName('extensiondialog')[0];
                 if (extensionDialog && frame) {
                     const bb = extensionDialog.getBoundingClientRect();
-                    frame.width = `${this.extensionWrapper.clientWidth}px`;
-                    frame.height = `${this.extensionWrapper.clientHeight}px`;
-                    frame.style.top = `${bb.top + this.extensionWrapper.offsetTop}px`;
-                    frame.style.left = `${bb.left + this.extensionWrapper.offsetLeft}px`;
+                    frame.width = `${window.innerWidth}px`;
+                    frame.height = `${window.innerHeight - topOffsetHeight}px`;
+                    frame.style.top = `${topOffsetHeight}px`;
+                    frame.style.left = `${0}px`;
                 }
             }
         }
@@ -165,6 +171,13 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 permissionExtName: id
             });
         });
+    }
+
+    private onApprovedDecision() {
+        this.onPermissionDecision(true);
+    }
+    private onDeniedDecision() {
+        this.onPermissionDecision(false);
     }
 
     private onPermissionDecision(approved: boolean) {
@@ -252,6 +265,10 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         return "";
     }
 
+    private handleExtensionWrapperRef = (c: HTMLDivElement) => {
+        this.extensionWrapper = c;
+    }
+
     renderCore() {
         const { visible, extension, consent, permissionRequest, permissionExtName } = this.state;
         const needsConsent = !consent;
@@ -270,14 +287,14 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         if (!needsConsent && visible) this.initializeFrame();
         return (
             <sui.Modal isOpen={visible} className={`${needsConsent ? 'extensionconsentdialog' : 'extensiondialog'}`} size="fullscreen" closeIcon={false}
-                onClose={() => this.hide()} dimmer={true} buttons={actions}
-                modalDidOpen={this.updateDimensions.bind(this)} shouldFocusAfterRender={false}
-                onPositionChanged={this.updateDimensions.bind(this)}
+                onClose={this.hide} dimmer={true} buttons={actions}
+                modalDidOpen={this.updateDimensions} shouldFocusAfterRender={false}
+                onPositionChanged={this.updateDimensions}
                 closeOnDimmerClick>
                 {consent ?
-                    <div id="extensionWrapper" data-frame={extension} ref={v => this.extensionWrapper = v}>
+                    <div id="extensionWrapper" data-frame={extension} ref={this.handleExtensionWrapperRef}>
                         {permissionRequest ?
-                            <sui.Modal isOpen={true} className="extensionpermissiondialog basic" size="fullscreen" closeIcon={false} dimmer={true} dimmerClassName="permissiondimmer">
+                            <sui.Modal isOpen={true} className="extensionpermissiondialog basic" closeIcon={false} dimmer={true} dimmerClassName="permissiondimmer">
                                 <div className="permissiondialoginner">
                                     <div className="permissiondialogheader">
                                         {lf("Permission Request")}
@@ -299,9 +316,9 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                                 </div>
                                 <div className="actions">
                                     <sui.Button text={lf("Deny")} className={`deny inverted`}
-                                        onClick={() => this.onPermissionDecision(false)} />
+                                        onClick={this.onDeniedDecision} />
                                     <sui.Button text={lf("Approve")} className={`approve inverted green`}
-                                        onClick={() => this.onPermissionDecision(true)} />
+                                        onClick={this.onApprovedDecision} />
                                 </div>
                             </sui.Modal>
                             : undefined

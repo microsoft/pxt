@@ -21,11 +21,10 @@ namespace pxt.winrt {
     }
 
     export function initSerial() {
-        const hasFilter = !!pxt.appTarget.serial.nameFilter ||
-            (pxt.appTarget.serial.vendorId && pxt.appTarget.serial.productId);
-        if (!pxt.appTarget.serial
-            || !pxt.appTarget.serial.log
-            || !hasFilter) return;
+        const hasDeviceFilter = !!pxt.appTarget.serial &&
+            (!!pxt.appTarget.serial.nameFilter || (!!pxt.appTarget.serial.vendorId && !!pxt.appTarget.serial.productId));
+        const canLogSerial = !!pxt.appTarget.serial && pxt.appTarget.serial.log;
+        if (!canLogSerial || !hasDeviceFilter) return;
 
         const sd = Windows.Devices.SerialCommunication.SerialDevice;
         let serialDeviceSelector: string;

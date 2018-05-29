@@ -3,12 +3,21 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui";
 import * as core from "./core";
 
-export class ConfirmDialog extends React.Component<core.ConfirmOptions, {}> {
+export class CoreDialog extends React.Component<core.PromptOptions, {}> {
 
     public promise: Promise<any>;
 
     private resolve: any;
     private reject: any;
+
+    constructor(props: core.PromptOptions) {
+        super(props);
+        this.state = {
+        }
+
+        this.hide = this.hide.bind(this);
+        this.modalDidOpen = this.modalDidOpen.bind(this);
+    }
 
     hide() {
         this.close();
@@ -64,17 +73,27 @@ export class ConfirmDialog extends React.Component<core.ConfirmOptions, {}> {
             if (!btn.className) btn.className = "approve positive";
         })
 
+        const classes = sui.cx([
+            'coredialog',
+            options.className
+        ])
+
+        /* tslint:disable:react-no-dangerous-html TODO(tslint): This needs to be reviewed with a security expert to allow for exception */
         return (
-            <sui.Modal isOpen={true} ref="modal" className="coredialog"
-                onClose={this.hide.bind(this)} size={size}
+            <sui.Modal isOpen={true} ref="modal" className={classes}
+                onClose={this.hide} size={size}
                 defaultOpen={true} buttons={buttons}
                 dimmer={true} closeIcon={options.hasCloseIcon}
                 header={options.header}
                 closeOnDimmerClick={!options.hideCancel}
                 closeOnDocumentClick={!options.hideCancel}
                 closeOnEscape={!options.hideCancel}
-                modalDidOpen={this.modalDidOpen.bind(this)}
+                modalDidOpen={this.modalDidOpen}
             >
+                {options.type == 'prompt' ? <div className="ui fluid icon input">
+                    <input autoFocus type="text" id="promptDialogInput" placeholder={options.defaultValue} />
+                </div> : undefined}
+                {options.jsx}
                 {options.body ? <p>{options.body}</p> : undefined}
                 {options.htmlBody ? <div dangerouslySetInnerHTML={{ __html: options.htmlBody }} /> : undefined}
                 {options.input ? <div className="ui fluid action input">
@@ -86,17 +105,18 @@ export class ConfirmDialog extends React.Component<core.ConfirmOptions, {}> {
                     <sui.Button ref="copybtn" labelPosition='right' color="teal" className='copybtn' data-content={lf("Copied!")} />
                 </div> : undefined}
             </sui.Modal >)
+        /* tslint:enable:react-no-dangerous-html */
     }
 }
 
-let currentDialog: ConfirmDialog;
+let currentDialog: CoreDialog;
 
-export function renderConfirmDialogAsync(options: core.ConfirmOptions): Promise<void> {
+export function renderConfirmDialogAsync(options: core.PromptOptions): Promise<void> {
     return Promise.resolve()
         .delay(10)
         .then(() => {
             const wrapper = document.body.appendChild(document.createElement('div'));
-            currentDialog = ReactDOM.render(React.createElement(ConfirmDialog, options), wrapper);
+            currentDialog = ReactDOM.render(React.createElement(CoreDialog, options), wrapper);
 
             function cleanup() {
                 ReactDOM.unmountComponentAtNode(wrapper);

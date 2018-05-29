@@ -29,28 +29,6 @@ export let pxtCoreDir: string = path.join(__dirname, "..");
 
 export function setTargetDir(dir: string) {
     targetDir = dir;
-
-    // The target should expose the path to its bundled pxt-core
-    let fallback = false;
-    let target: any;
-
-    try {
-        target = require(targetDir);
-    }
-    catch (e) {
-        // If we can't require the target, fallback to default location
-        fallback = true;
-    }
-
-    if (fallback || !target.pxtCoreDir || !fs.existsSync(target.pxtCoreDir)) {
-        pxtCoreDir = path.join(__dirname, "..");
-
-        if (pxtCoreDir !== targetDir) {
-            pxt.log("Could not determine target's pxt-core location, falling back to default: " + pxtCoreDir);
-        }
-    } else {
-        pxtCoreDir = target.pxtCoreDir;
-    }
 }
 
 export function readResAsync(g: events.EventEmitter) {
@@ -113,6 +91,18 @@ export function runNpmAsync(...args: string[]) {
     return runNpmAsyncWithCwd(".", ...args);
 }
 
+export interface NpmRegistry {
+    _id: string;
+    _name: string;
+    "dist-tags": pxt.Map<string>;
+    "versions": pxt.Map<any>;
+}
+
+export function npmRegistryAsync(pkg: string): Promise<NpmRegistry> {
+    // TODO: use token if available
+    return Util.httpGetJsonAsync(`https://registry.npmjs.org/${pkg}`);
+}
+
 export function runNpmAsyncWithCwd(cwd: string, ...args: string[]) {
     return spawnAsync({
         cmd: addCmd("npm"),
@@ -167,7 +157,9 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
     let u = <http.RequestOptions><any>url.parse(options.url)
 
     if (u.protocol == "https:") isHttps = true
+    /* tslint:disable:no-http-string */
     else if (u.protocol == "http:") isHttps = false
+    /* tslint:enable:no-http-string */
     else return Promise.reject("bad protocol: " + u.protocol)
 
     u.headers = Util.clone(options.headers) || {}
@@ -284,6 +276,9 @@ export function readPkgConfig(dir: string) {
             }
         }
     }
+    // don't inject version number
+    // as they get serialized later on
+    // if (!js.targetVersions) js.targetVersions = pxt.appTarget.versions;
     return js
 }
 
@@ -359,6 +354,14 @@ export function existsDirSync(name: string): boolean {
     }
     catch (e) {
         return false;
+    }
+}
+
+export function writeFileSync(path: string, data: any, options?: { encoding?: string | null; mode?: number | string; flag?: string; } | string | null) {
+    fs.writeFileSync(path, data, options);
+    if (pxt.options.debug) {
+        const stats = fs.statSync(path);
+        pxt.log(`  + ${path} ${stats.size > 1000000 ? (stats.size / 1000000).toFixed(2) + ' m' : stats.size > 1000 ? (stats.size / 1000).toFixed(2) + 'k' : stats.size}b`)
     }
 }
 

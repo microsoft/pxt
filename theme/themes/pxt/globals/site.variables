@@ -67,8 +67,8 @@
    Form Input
 ---------------*/
 
-@inputPlaceholderColor: lighten(@inputColor, 25);
-@inputPlaceholderFocusColor: lighten(@inputColor, 10);
+@inputPlaceholderColor: lighten(@inputColor, 45);
+@inputPlaceholderFocusColor: lighten(@inputColor, 35);
 
 /*-------------------
      Neutral Text
@@ -169,6 +169,13 @@
 @fullscreenBackgroundGradientEnd: @simulatorBackground;
 
 /*-------------------
+   Extensions
+--------------------*/
+
+@extensionsHeaderBackground: @mainMenuInvertedBackground;
+@extensionsBackground: @blocklySvgColor;
+
+/*-------------------
    Side Docs
 --------------------*/
 
@@ -265,3 +272,9 @@
 @bannerBackgroundColor: black;
 @bannerContrastColor: white;
 @bannerLinkColor: #3eb1d0;
+
+
+/*-------------------
+    Greenscreen
+-------------------*/
+@greenScreenColor: #00ff00;

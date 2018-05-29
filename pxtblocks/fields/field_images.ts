@@ -1,6 +1,7 @@
 namespace pxtblockly {
     export interface FieldImagesOptions extends pxtblockly.FieldImageDropdownOptions {
         sort?: boolean;
+        addLabel?: string;
     }
 
     export class FieldImages extends pxtblockly.FieldImageDropdown implements Blockly.FieldCustom {
@@ -8,10 +9,13 @@ namespace pxtblockly {
 
         private shouldSort_: boolean;
 
+        protected addLabel_: boolean;
+
         constructor(text: string, options: FieldImagesOptions, validator?: Function) {
             super(text, options, validator);
 
             this.shouldSort_ = options.sort;
+            this.addLabel_ = !!options.addLabel;
         }
 
         /**
@@ -34,7 +38,8 @@ namespace pxtblockly {
             contentDiv.setAttribute('aria-haspopup', 'true');
             const options = this.getOptions();
             if (this.shouldSort_) options.sort();
-            for (let i = 0, option: any; option = options[i]; i++) {
+            for (let i = 0; i < options.length; i++) {
+                const option = options[i];
                 let content = (options[i] as any)[0]; // Human-readable text or image.
                 const value = (options[i] as any)[1]; // Language-neutral value.
                 // Icons with the type property placeholder take up space but don't have any functionality
@@ -92,6 +97,11 @@ namespace pxtblockly {
                 button.setAttribute('data-value', value);
                 buttonImg.setAttribute('data-value', value);
                 button.appendChild(buttonImg);
+                if (this.addLabel_) {
+                    const buttonText = this.createTextNode_(content.alt);
+                    buttonText.setAttribute('data-value', content.alt);
+                    button.appendChild(buttonText);
+                }
                 contentDiv.appendChild(button);
             }
             contentDiv.style.width = (this as any).width_ + 'px';
@@ -122,6 +132,13 @@ namespace pxtblockly {
             } else if (this.box_) {
                 this.box_.setAttribute('fill', this.sourceBlock_.getColourTertiary());
             }
+        }
+
+        private createTextNode_(text: string) {
+            const textSpan = document.createElement('span');
+            textSpan.setAttribute('class', 'blocklyDropdownTextLabel');
+            textSpan.textContent = text;
+            return textSpan;
         }
     }
 }

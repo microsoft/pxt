@@ -29,9 +29,9 @@ namespace pxt.svgUtil {
             this.el = elt(type) as T;
         }
         attr(attributes: Map<string | number | boolean>): this {
-            for (const at in attributes) {
+            Object.keys(attributes).forEach(at => {
                 this.setAttribute(at, attributes[at]);
-            }
+            });
             return this;
         }
 
@@ -49,12 +49,12 @@ namespace pxt.svgUtil {
         }
 
         appendClass(className: string): this {
-            this.el.classList.add(className);
+            addClass(this.el, className);
             return this;
         }
 
         removeClass(className: string): void {
-            this.el.classList.remove(className);
+            removeClass(this.el, className);
         }
 
         title(text: string) {
@@ -305,8 +305,14 @@ namespace pxt.svgUtil {
             return this.setAttribute("font-size", lengthWithUnits(size, units));
         }
 
-        alignmentBaseline(type: string) {
-            return this.setAttribute("alignment-baseline", type);
+        offset(dx: number, dy: number, units: LengthUnit) {
+            if (dx !== 0) {
+                this.setAttribute("dx", lengthWithUnits(dx, units));
+            }
+            if (dy !== 0) {
+                this.setAttribute("dy", lengthWithUnits(dy, units));
+            }
+            return this;
         }
 
         anchor(type: "start" | "middle" | "end" | "inherit") {
@@ -432,6 +438,28 @@ namespace pxt.svgUtil {
         path(cb: (d: PathContext) => void): this {
             cb(this.d);
             return this.update();
+        }
+    }
+
+    export class Image extends Drawable<SVGImageElement> {
+        constructor() { super("image") }
+
+        src(url: string) {
+            return this.setAttribute("href", url);
+        }
+
+        width(width: number, unit = LengthUnit.px): this {
+            return this.setAttribute("width", lengthWithUnits(width, unit));
+        }
+
+        height(height: number, unit = LengthUnit.px): this {
+            return this.setAttribute("height", lengthWithUnits(height, unit));
+        }
+
+        size(width: number, height: number, unit = LengthUnit.px): this {
+            this.width(width, unit);
+            this.height(height, unit);
+            return this;
         }
     }
 
@@ -612,6 +640,16 @@ namespace pxt.svgUtil {
             case LengthUnit.percent: return value + "%";
             default: return value.toString();
         }
+    }
+
+    function addClass(el: SVGElement, cls: string) {
+        if (el.classList) el.classList.add(cls);
+        else if (el.className.baseVal.indexOf(cls) < 0) el.className.baseVal += ' ' + cls;
+    }
+
+    function removeClass(el: SVGElement, cls: string) {
+        if (el.classList) el.classList.remove(cls);
+        else el.className.baseVal = el.className.baseVal.replace(cls, '').replace(/\s{2,}/, ' ');
     }
 }
 

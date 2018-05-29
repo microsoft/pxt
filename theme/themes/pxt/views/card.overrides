@@ -36,6 +36,22 @@
     }
 }
 
+/*-------------------
+        Link
+--------------------*/
+
+.ui.cards a.card:focus,
+.ui.link.cards .card:focus,
+a.ui.card:focus,
+.ui.link.card:focus {
+  cursor: pointer;
+  z-index: @linkHoverZIndex;
+  background: @linkHoverBackground;
+  border: @linkHoverBorder;
+  box-shadow: @linkHoverBoxShadow;
+  transform: @linkHoverTransform;
+  outline: none;
+}
 
 /* New project card */
 
@@ -110,9 +126,16 @@
     border-top-right-radius: @borderRadius;
 }
 .ui.cardimage {
-    background-color: @secondaryColor;
+    background-color: @grey;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
     height: 9rem;
+}
+
+/* Icons as images in cards */
+.ui.card > .imageicon {
+    display: flex;
+    justify-content: center;
+    background: rgba(0,0,0,0.1);
 }

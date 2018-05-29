@@ -5,12 +5,17 @@ declare namespace pxt {
 
     interface TargetVersions {
         target: string;
-        pxt: string;
+        pxt?: string;
         pxtCrowdinBranch?: string;
         targetCrowdinBranch?: string;
         tag?: string;
         branch?: string;
         commits?: string; // URL
+    }
+
+    interface Size {
+        width: number;
+        height: number;
     }
 
     /**
@@ -32,11 +37,13 @@ declare namespace pxt {
         files: string[];
         simFiles?: string[];
         testFiles?: string[];
+        testDependencies?: pxt.Map<string>;
         public?: boolean;
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
         compileServiceVariant?: string;
         palette?: string[];
+        screenSize?: Size;
         yotta?: YottaConfig;
         npmDependencies?: Map<string>;
         card?: CodeCard;

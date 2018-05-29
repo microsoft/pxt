@@ -421,21 +421,21 @@ namespace pxt.BrowserUtils {
     let loadBlocklyPromise: Promise<void>;
     export function loadBlocklyAsync(): Promise<void> {
         if (!loadBlocklyPromise) {
-            if (typeof Blockly === "undefined") { // not loaded yet?
-                pxt.debug(`blockly: delay load`);
-                loadBlocklyPromise =
-                    pxt.BrowserUtils.loadStyleAsync("blockly.css", ts.pxtc.Util.isUserLanguageRtl())
-                        .then(() => pxt.BrowserUtils.loadScriptAsync("pxtblockly.js"))
-                        .then(() => {
-                            pxt.debug(`blockly: loaded`)
-                        })
-            } else loadBlocklyPromise = Promise.resolve();
+            pxt.debug(`blockly: delay load`);
+            let p = pxt.BrowserUtils.loadStyleAsync("blockly.css", ts.pxtc.Util.isUserLanguageRtl());
+            // js not loaded yet?
+            if (typeof Blockly === "undefined")
+                p = p.then(() => pxt.BrowserUtils.loadScriptAsync("pxtblockly.js"));
+            p = p.then(() => {
+                pxt.debug(`blockly: loaded`)
+            });
+            loadBlocklyPromise = p;
         }
         return loadBlocklyPromise;
     }
 
     export function patchCdn(url: string): string {
-        if (!url) return url;
+        if (!url || !pxt.getOnlineCdnUrl()) return url;
         return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
     }
 
@@ -445,8 +445,9 @@ namespace pxt.BrowserUtils {
             if (theme.accentColor) {
                 let style = document.createElement('style');
                 style.type = 'text/css';
-                style.innerHTML = `.ui.accent { color: ${theme.accentColor}; }
-                .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${theme.accentColor}; }`;
+                style.appendChild(document.createTextNode(
+                    `.ui.accent { color: ${theme.accentColor}; }
+                .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${theme.accentColor}; }`));
                 document.getElementsByTagName('head')[0].appendChild(style);
             }
         }
@@ -495,7 +496,7 @@ namespace pxt.BrowserUtils {
             // path config before storing
             const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
             if (config.icon) config.icon = patchCdn(config.icon);
-            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 2);
+            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
         })
     }
 

@@ -142,13 +142,16 @@ export interface PromptOptions extends ConfirmOptions {
 }
 
 export interface DialogOptions {
+    type?: string;
     hideCancel?: boolean;
     disagreeLbl?: string;
     disagreeClass?: string;
     disagreeIcon?: string;
     logos?: string[];
+    className?: string;
     header: string;
     body?: string;
+    jsx?: JSX.Element;
     htmlBody?: string;
     input?: string;
     inputValue?: string; // set if input is enabled
@@ -162,6 +165,7 @@ export interface DialogOptions {
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
+    if (!options.type) options.type = 'dialog';
     if (!options.hideCancel) {
         if (!options.buttons) options.buttons = [];
         options.buttons.push({
@@ -170,7 +174,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
             icon: options.disagreeIcon || "cancel"
         })
     }
-    return coretsx.renderConfirmDialogAsync(options);
+    return coretsx.renderConfirmDialogAsync(options as PromptOptions);
 }
 
 export function hideDialog() {
@@ -178,6 +182,7 @@ export function hideDialog() {
 }
 
 export function confirmAsync(options: ConfirmOptions): Promise<number> {
+    options.type = 'confirm';
     if (!options.buttons) options.buttons = []
 
     let result = 0
@@ -223,6 +228,7 @@ export function confirmDelete(what: string, cb: () => Promise<void>) {
 }
 
 export function promptAsync(options: PromptOptions): Promise<string> {
+    options.type = 'prompt';
     if (!options.buttons) options.buttons = []
 
     let result = "";
@@ -238,10 +244,6 @@ export function promptAsync(options: PromptOptions): Promise<string> {
             }
         })
     }
-
-    options.htmlBody = `<div class="ui fluid icon input">
-                            <input autoFocus type="text" id="promptDialogInput" value="${options.defaultValue}">
-                        </div>`;
 
     options.onLoaded = (ref: HTMLElement) => {
         let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;

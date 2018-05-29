@@ -24,3 +24,15 @@ Your pull request should:
 * Pass all unit tests
 * Have a clear commit message
 * Include adequate tests
+
+## Issue tracker guidance
+
+Going ahead all user facing issues should go to issue tracker in a specific target. For example any issue which impacts microbit user should go to pxt-microbit issue tracker. PXT releases one target every friday and we can look at that target repo issue tracker and triage all issues which are relevant just for that target. 
+
+It is possible, issue is underlying PXT issue and can prop up in multiple editors. Even then file it on the target repo where you reproduce it. Scanning PXT repo every Friday is not a manageable thing to do if we file all the issues there. Duplicates will be closed when we continuously release each target.
+
+When to use PXT repo issue tracker?
+*	Future enhancement request which is not specific to any targets. Such as delete option for projects in the home screen or a teacher mode.
+*	Any bugs by open source developers who are using PXT to build their own editor and running into issues. 
+*	Some targets don’t have issue tracker which is open such as Minecraft. Guidance for external users is to file in pxt. Internal bugs should still go to pxt-minecraft. 
+*	Catch all other bugs. 
