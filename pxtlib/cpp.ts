@@ -1063,19 +1063,6 @@ int main() {
         return res;
     }
 
-    function fileReadAsArrayBufferAsync(f: File): Promise<ArrayBuffer> { // ArrayBuffer
-        if (!f)
-            return Promise.resolve<ArrayBuffer>(null);
-        else {
-            return new Promise<ArrayBuffer>((resolve, reject) => {
-                let reader = new FileReader();
-                reader.onerror = (ev) => resolve(null);
-                reader.onload = (ev) => resolve(reader.result);
-                reader.readAsArrayBuffer(f);
-            });
-        }
-    }
-
     function fromUTF8Bytes(binstr: ArrayLike<number>): string {
         if (!binstr) return ""
 
@@ -1188,7 +1175,7 @@ int main() {
     export function unpackSourceFromHexFileAsync(file: File): Promise<HexFile> { // string[] (guid)
         if (!file) return undefined;
 
-        return fileReadAsArrayBufferAsync(file).then(data => {
+        return pxt.Util.fileReadAsBufferAsync(file).then(data => {
             let a = new Uint8Array(data);
             return unpackSourceFromHexAsync(a);
         });
