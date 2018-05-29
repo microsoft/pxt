@@ -174,6 +174,7 @@ namespace ts.pxtc {
         mutatePropertyEnum?: string;
         inlineInputMode?: string; // can be inline, external, or auto
         expandableArgumentMode?: string; // can be disabled, enabled, or toggle
+        draggableParameters?: boolean;
 
         optionalVariableArgs?: boolean;
         toolboxVariableArgs?: string;
@@ -593,7 +594,8 @@ namespace ts.pxtc {
         "blockHidden",
         "constantShim",
         "blockCombine",
-        "decompileIndirectFixedInstances"
+        "decompileIndirectFixedInstances",
+        "draggableParameters"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {

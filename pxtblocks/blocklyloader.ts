@@ -340,12 +340,36 @@ namespace pxt.blocks {
                         shadowValue.firstChild.appendChild(container);
                     block.appendChild(shadowValue);
                 })
-            comp.handlerArgs.forEach(arg => {
-                const field = document.createElement("field");
-                field.setAttribute("name", "HANDLER_" + arg.name);
-                field.textContent = arg.name;
-                block.appendChild(field);
-            });
+            if (fn.attributes.draggableParameters) {
+                comp.handlerArgs.forEach(arg => {
+                    // <value name="HANDLER_DRAG_PARAM_arg">
+                    // <shadow type="variables_get_reporter">
+                    //     <field name="VAR">defaultName</field>
+                    // </shadow>
+                    // </value>
+                    const value = document.createElement("value");
+                    value.setAttribute("name", "HANDLER_DRAG_PARAM_" + arg.name);
+
+                    const shadow = document.createElement("shadow");
+                    shadow.setAttribute("type", "variables_get_reporter");
+
+                    const field = document.createElement("field");
+                    field.setAttribute("name", "VAR");
+                    field.textContent = Util.htmlEscape(arg.name);
+
+                    shadow.appendChild(field);
+                    value.appendChild(shadow);
+                    block.appendChild(value);
+                });
+            }
+            else {
+                comp.handlerArgs.forEach(arg => {
+                    const field = document.createElement("field");
+                    field.setAttribute("name", "HANDLER_" + arg.name);
+                    field.textContent = arg.name;
+                    block.appendChild(field);
+                });
+            }
         }
         return block;
     }
@@ -504,9 +528,20 @@ namespace pxt.blocks {
             initExpandableBlock(block, fn.attributes._expandedDef, comp, shouldToggle, () => buildBlockFromDef(fn.attributes._expandedDef, true));
         }
         else if (comp.handlerArgs.length) {
+            /**
+             * We support three modes for handler parameters: variable dropdowns,
+             * expandable variable dropdowns with +/- buttons (used for chat commands),
+             * and as draggable variable blocks
+             */
             hasHandler = true;
             if (fn.attributes.optionalVariableArgs) {
                 initVariableArgsBlock(block, comp.handlerArgs);
+            }
+            else if (fn.attributes.draggableParameters) {
+                comp.handlerArgs.forEach(arg => {
+                    const i = block.appendValueInput("HANDLER_DRAG_PARAM_" + arg.name);
+                    i.setCheck("Variable");
+                });
             }
             else {
                 let i = block.appendDummyInput();
